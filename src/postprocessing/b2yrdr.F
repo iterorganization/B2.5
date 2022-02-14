@@ -6,6 +6,8 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_ppout
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -18,7 +20,7 @@
 *
 *  1. purpose
 *
-*     B2YRDR is a postprocessor for b2. It reads and displays a table
+*     B2YRDR is a postprocessor for B2. It reads and displays a table
 *     of atomic rate coefficients.
 *
 *
@@ -26,7 +28,7 @@
 *
 *     This routine displays a table of atomic rate coefficients for the
 *     processes of ionisation, recombination, heat loss, and charge
-*     exchange. The table is in the form required for use by the b2
+*     exchange. The table is in the form required for use by the B2
 *     code /1,2/. It is read from unit ninp(1) and is stored in the
 *     common block /b2cmrc/.
 *
@@ -97,13 +99,13 @@
       parameter (ndismx=20)
       integer nidis, njdis, idis(0:ndismx-1), jdis(0:ndismx-1)
       integer idum(0:9)
-      logical lt0, lt1, lt2
       integer i, is, is1, nx, ny, ns, ns1
-      character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
+      character id*8, lblrc*120, lblcp*120
+      character cnamip*80, cvalip*80, line*80, ligne*80
 *   ..procedures
-      logical streql, strmas
-      external subini, subend, xertst, xerrab, cfverr, cfruch
-      external cfruin, streql, strmas, ipsetc, ipgeti, gacwk, gdawk
+      logical streql, is_comment
+      external xertst, xerrab, cfruch
+      external cfruin, streql, ipgeti, gacwk, gdawk, is_comment
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------
@@ -125,9 +127,9 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
@@ -139,7 +141,7 @@
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
 *     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
-*     zamin, zamax and zn used elsewhere in b2.
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are
@@ -248,6 +250,7 @@
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
 *   ..read label
       call cfruch (ninp(1), 120, lblrc, 'label')
+      call get_AM_flag (lblrc, b2frates_flag)
 *   ..write label
       write (nout(0),'(/4x,a/4x,a)') lblrc(1:60), lblrc(61:120)
 *   ..read output control
@@ -274,9 +277,16 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),*,end=2,err=97) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-       call ipsetc (cnamip, cvalip)
+       read (ninp(0),*,end=2,err=97) line
+       if (.not.is_comment(line)) then
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
+       endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
@@ -289,7 +299,7 @@
 *   ..read atomic rate data
       write(*,*) 'ns1 =',ns1
       call alloc_b2mod_ppout(nx,ny,ns1)
-      call read_b2mod_ppout('rates', ninp(1), lblrc)
+      call read_b2mod_ppout('rates', ninp(1), b2frates_flag)
       call b2rurc (ninp(1), b2frates_version)
 *   ..check input data
       do i = 0, nidis-1
@@ -303,22 +313,22 @@
 *   ..write credit
 *     (Look for 'adpak', 'strahl' or 'adas' as a substring of the label to
 *     decide what credit to write. This is not a rigorous test!)
-      lt0 = strmas(lblrc,'adpak')
-      lt1 = strmas(lblrc,'strahl')
-      lt2 = strmas(lblrc,'adas')
-      if (lt0.and..not.lt1.and..not.lt2) then
+      select case (b2frates_flag)
+      case ('adpak')
        call b2wfr0 (nout(0))
-      else if (lt1.and..not.lt0.and..not.lt2) then
+      case ('strahl')
        call b2wfr1 (nout(0))
-      else if (lt2.and..not.lt0.and..not.lt1) then
+      case ('adas')
        call b2wfr2 (nout(0))
-      else
+      case ('amns')
+       call b2wfr3 (nout(0))
+      case default
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, ADAS,'//
+     &   ' the ADPAK package, the STRAHL package, ADAS, AMNS,'//
      &   ' or from some other source.'
-      endif
+      end select
 *   ..write rtns, rtzmin, rtzmax, rtzn
       write (nout(0),'(/2x,a,i3)')
      &  'number of species in this table: ',rtns
@@ -349,12 +359,13 @@
        endif
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is), 
+     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is),
+     &   fix_recomb, zmax_recomb,
      &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzn(is), rtlsa(0,0,is),
-     &   rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
+     &   rtnt, rtn, rtnn, rtzn(is), fix_recomb, zmax_recomb,
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop
        is = is1

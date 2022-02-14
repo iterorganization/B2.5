@@ -3,11 +3,12 @@
 
       subroutine b2wsst (nspc, nx, ny, ns, crx, cry, bb, vol, hx, hy,
      &  qz, qc, qcb, gs, pbs, cell_width, cell_height,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch,
-     &  ne, ni, pr, ro, rz, fne, fni, wrk0, wrk1)
+     &  pr, ro, rz, wrk0, wrk1)
       use b2mod_types
+      use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspc, nx, ny, ns
@@ -18,14 +19,7 @@
      &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     *  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny)
@@ -43,7 +37,7 @@
 *
 *     This routine is available for use as the occasion may require;
 *     it is a suitable location for code to produce output that is of
-*     interest only for a specific application of b2.
+*     interest only for a specific application of B2.
 *     The basic version of b2wsst produces no output.
 *
 *
@@ -58,10 +52,7 @@
 *     crx, cry, bb, vol, hx, hy, qz, qc, qcb, gs, pbs - real*8 array, input.
 *     See the calling routine for description.
 *
-*     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     See the calling routine for description.
-*
-*     ne, ni, pr, ro, rz, fne, fni - (-1:nx,-1:ny) real*8 array, input.
+*     pr, ro, rz - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0, wrk1 - (-1:nx,-1:ny) real*8 array, workspace.
@@ -76,25 +67,10 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is
+      integer n2
 *   ..procedures
-      real (kind=R8) ::
-     *  b2ssum, rfnax, rfnay, rfhex, rfhey,
-     &  rfhix, rfhiy, rfchx, rfchy, rfnex, rfney, rfnix, rfniy
-      external subini, subend, xertst, b2ssum
+      external xertst
       external b2xvsg, b2xvff, b2xvgm, b2xvps
-      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
-      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
-      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
-      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
-      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
-      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
-      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
-      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
-      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
-      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
-      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
-      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
 
 *-----------------------------------------------------------------------
 *.computation

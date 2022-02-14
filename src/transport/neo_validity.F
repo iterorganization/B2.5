@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,  !cjk
+      subroutine neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,  !cjk
      &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &  deltawn, deltawt, omega, deltab, deltapar, vtha)
       use b2mod_types
@@ -15,11 +15,12 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
       real (kind=R8) ::
-     *   cr(-1:nx,-1:ny),safetyfactor(-1:ny)
+     *   safetyfactor(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   nuab(-1:nx,-1:ny,0:ns,0:ns), nua(-1:nx,-1:ny,0:ns),
@@ -31,15 +32,15 @@
      &   deltab(-1:nx,-1:ny,0:ns), deltapar(-1:nx,-1:ny,0:ns),
      &   vtha(-1:nx,-1:ny,0:ns)
 
-      real min_value
+      real (kind=R8) :: min_value
 c     minimum value for real arrays to avoid division by zero
-      parameter (min_value=1.e-8)
+      parameter (min_value=1.e-8_R8)
 c     conversion of constants to CGS units
-      real erg, cm, gauss, gramm
-      parameter (erg=1.e7, cm=1.e2, gauss=1.e4, gramm=1.e3)
-      real eV_cgs, e_cgs, c_cgs
+      real (kind=R8) :: erg, cm, gauss, gramm
+      parameter (erg=1.e7_R8, cm=1.e2_R8, gauss=1.e4_R8, gramm=1.e3_R8)
+      real (kind=R8) :: eV_cgs, e_cgs, c_cgs
       parameter (eV_cgs=ev*erg,
-     &           e_cgs=qe*c*10., c_cgs=c*cm)
+     &           e_cgs=qe*c*10._R8, c_cgs=c*cm)
       real (kind=R8) ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
      &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
@@ -88,8 +89,6 @@ c     conversion of constants to CGS units
 *   ..local variables
       integer n2, ix, iy, is, is2, ixref, iyref
       save ixref, iyref
-      real (kind=R8) ::
-     *   hy1(-1:nx,-1:ny)
       real (kind=R8) ::
      &   gradient, lnab, minlnlt, crmin, crmax
       real (kind=R8) ::
@@ -160,13 +159,6 @@ c     conversion of constants to CGS units
       deltab(:,:,:)=0._R8
       deltapar(:,:,:)=0._R8
       rmaj_(:)=0._R8
-
-*   ..calculate hy-projection
-      do ix=-1,nx
-        do iy=-1,ny
-          hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-        enddo
-      enddo
 
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep
@@ -450,23 +442,22 @@ c     conversion of constants to CGS units
 *   ..return
       call subend ()
       return
-      end
+      end subroutine neo_validity
 
-      subroutine chang_hinton(nx,ny,ns,jsep,jxa,lambda,safetyfactor,
-     1 cr,cz,crx,bb,ne,te,ti,na,transport)
+      subroutine chang_hinton(nx,ny,ns,jsep,jxa,safetyfactor,
+     1 ne,te,ti,na,transport)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_external
+      use b2mod_subsys
       implicit none
-c#     include "b2cmpa.h"
       integer nx,ny,ns,jsep,jxa
-      real (kind=R8) :: lambda,
-     1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     2 bb(-1:nx,-1:ny,0:3),
+      real (kind=R8) ::
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
      2 transport(-1:nx,-1:ny,0:ns-1)
@@ -474,13 +465,15 @@ c#     include "b2cmpa.h"
       integer ix,iy,is,irmin,irmax, is_fuel
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
-     2 bave,epsilon,lnlam,vthi,omegaci,
+     2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
-      external subini, subend, xertst
+      real (kind=R8) :: lnlam(-1:nx,-1:ny)
+      external xertst
 
       call subini ('chang_hinton')
       transport=0.0_R8
+      call b2tlnl(nx,ny,1,te,ti,ne,lnlam)
       do iy=-1,jsep
         if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
         ix=jxa
@@ -510,14 +503,7 @@ c#     include "b2cmpa.h"
      1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
         epsilon=(crmax-crmin)/(crmax+crmin)
         if (b2plot_debug.ge.8) write(*,*) 'epsilon: ',epsilon
-        if (lambda.lt.0.0_R8) then
-          lnlam=max(-lambda,17.3_R8-
-     1     log(ne(ix,iy)/1e20_R8)/2.0_R8+
-     2     1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-        else
-          lnlam = lambda
-        endif
-        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam
+        if (b2plot_debug.ge.8) write(*,*) 'lnlam: ',lnlam(ix,iy)
         cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
         cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
         cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
@@ -569,7 +555,7 @@ c#     include "b2cmpa.h"
             if (b2plot_debug.ge.8) write(*,*) 'rhoi: ',rhoi
             taui=12.0_R8*pi**1.5_R8*eps0**2*
      1       (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
+     2       (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam(ix,iy))
             if (b2plot_debug.ge.8) write(*,*) 'taui: ',taui
             nui=1.0_R8/taui
             nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/
@@ -611,7 +597,7 @@ c#     include "b2cmpa.h"
       enddo
       call subend ()
       return
-      end
+      end subroutine chang_hinton
 
 
 

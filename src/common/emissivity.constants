@@ -1,3 +1,6 @@
+#ifdef CONSTANTS_PROVIDED
+c     constants are now inherited from b2mod_constants
+#else
 c     -------------------------------------------------------------------------
 c     constants used in emissivity.f
 c     -------------------------------------------------------------------------
@@ -10,3 +13,4 @@ c     -------------------------------------------------------------------------
       real (kind=R8) ::
      *   const_h
       parameter (const_h=6.62607015e-34_R8)
+#endif

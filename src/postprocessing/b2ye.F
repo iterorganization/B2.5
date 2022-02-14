@@ -1,7 +1,7 @@
 
-*     B2YE is a post-processor for b2. It calculates statistical errors
+*     B2YE is a post-processor for B2. It calculates statistical errors
 *     based on averaged quantities collected during the averaging phase
-*     of a b2 calculation.
+*     of a B2 calculation.
 
       program b2ye
 
@@ -11,6 +11,7 @@
       use b2mod_b2cmpa
 #ifndef NO_CDF
       use b2mod_mwti
+     , , only : rwcdf
 #endif
 #ifdef B25_EIRENE
       use eirmod_infcop
@@ -30,27 +31,18 @@
       real (kind=R8), allocatable, save ::
      *      nemxip_av(:,:),  temxip_av(:,:),  timxip_av(:,:),
      *      nemxap_av(:,:),  temxap_av(:,:),  timxap_av(:,:),
-     *      pomxip_av(:,:),  pomxap_av(:,:),
-     *      nemxip_std(:,:), temxip_std(:,:), timxip_std(:,:),
-     *      nemxap_std(:,:), temxap_std(:,:), timxap_std(:,:),
-     *      pomxip_std(:,:), pomxap_std(:,:)
+     *      pomxip_av(:,:),  pomxap_av(:,:)
       real (kind=R8), allocatable, save ::
      *      nesepi_av(:,:),  tesepi_av(:,:),  tisepi_av(:,:),
      *      nesepm_av(:,:),  tesepm_av(:,:),  tisepm_av(:,:),
      *      nesepa_av(:,:),  tesepa_av(:,:),  tisepa_av(:,:),
-     *      posepi_av(:,:),  posepm_av(:,:),  posepa_av(:,:),
-     *      nesepi_std(:,:), tesepi_std(:,:), tisepi_std(:,:),
-     *      nesepm_std(:,:), tesepm_std(:,:), tisepm_std(:,:),
-     *      nesepa_std(:,:), tesepa_std(:,:), tisepa_std(:,:),
-     *      posepi_std(:,:), posepm_std(:,:), posepa_std(:,:)
+     *      posepi_av(:,:),  posepm_av(:,:),  posepa_av(:,:)
       real (kind=R8), allocatable :: dum(:)
       real (kind=R8) :: tstepn(1), eps_s, tmax, meansample, t1, t2
       logical b2ye_tprf, ex
       character(5) :: rw
       integer :: io, iex, iun, idum(3), ns, varid, nbatch
-      character lble*120, lbli*120, check*10
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
+      character lbli*120, check*10
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
       intrinsic floor
@@ -77,8 +69,10 @@
         call cfruch (iun, 120, lbli, 'label')
         call b2ruzd (iun, b2faveri_version, ns,
      &    zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-        call cfruin (iun, 1, naver, 'naver')
-        call cfruin (iun, 1, ntotdt, 'ntotdt')
+        call cfruin (iun, 1, idum, 'naver')
+        naver = idum(1)
+        call cfruin (iun, 1, idum, 'ntotdt')
+        ntotdt = idum(1)
       else
         write (*,*) ' file b2favere not found '
         write (*,*) ' results are questionable! '
@@ -102,9 +96,9 @@
      .               ' not present in b2batch.nc'
           goto 999
         endif
-        write(*,*)' reading batch averages from b2time.nc'
+        write(*,*) ' reading batch averages from b2time.nc'
       else
-        write(*,*)' reading batch averages from b2batch.nc'
+        write(*,*) ' reading batch averages from b2batch.nc'
         iret = nf_open('b2batch.nc',NF_NOWRITE,ncid)
       endif
 
@@ -196,7 +190,7 @@
         write (iout,'(a16,5es12.4)') ' nemxip ', meansample, tmax,
      .               t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nemxip ',
+        write (iout,'(a16,5es12.4)') ' constant nemxip ',
      .               nemxip_av(1,1),0.,0.,0.,0.
       end if
 
@@ -207,7 +201,7 @@
         write (iout,'(a16,5es12.4)') ' temxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant temxip ',
+        write (iout,'(a16,5es12.4)') ' constant temxip ',
      .               temxip_av(1,1),0.,0.,0.,0.
       end if
 
@@ -218,7 +212,7 @@
         write (iout,'(a16,5es12.4)') ' timxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant timxip ',
+        write (iout,'(a16,5es12.4)') ' constant timxip ',
      .               timxip_av(1,1),0.,0.,0.,0.
       end if
 
@@ -229,7 +223,7 @@
         write (iout,'(a16,5es12.4)') ' pomxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant pomxip ',
+        write (iout,'(a16,5es12.4)') ' constant pomxip ',
      .               pomxip_av(1,1),0.,0.,0.,0.
       end if
 
@@ -240,7 +234,7 @@
         write (iout,'(a16,5es12.4)') ' nemxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nemxap ',
+        write (iout,'(a16,5es12.4)') ' constant nemxap ',
      .               nemxap_av(1,1),0.,0.,0.,0.
       end if
 
@@ -251,7 +245,7 @@
         write (iout,'(a16,5es12.4)') ' temxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant temxap ',
+        write (iout,'(a16,5es12.4)') ' constant temxap ',
      .               temxap_av(1,1),0.,0.,0.,0.
       end if
 
@@ -262,7 +256,7 @@
         write (iout,'(a16,5es12.4)') ' timxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant timxap ',
+        write (iout,'(a16,5es12.4)') ' constant timxap ',
      .               timxap_av(1,1),0.,0.,0.,0.
       end if
 
@@ -273,7 +267,7 @@
         write (iout,'(a16,5es12.4)') ' pomxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant pomxap ',
+        write (iout,'(a16,5es12.4)') ' constant pomxap ',
      .               pomxap_av(1,1),0.,0.,0.,0.
       end if
 
@@ -284,7 +278,7 @@
         write (iout,'(a16,5es12.4)') ' nesepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nesepi ',
+        write (iout,'(a16,5es12.4)') ' constant nesepi ',
      .               nesepi_av(1,1),0.,0.,0.,0.
       end if
 
@@ -295,7 +289,7 @@
         write (iout,'(a16,5es12.4)') ' tesepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tesepi ',
+        write (iout,'(a16,5es12.4)') ' constant tesepi ',
      .               tesepi_av(1,1),0.,0.,0.,0.
       end if
 
@@ -306,7 +300,7 @@
         write (iout,'(a16,5es12.4)') ' tisepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tisepi ',
+        write (iout,'(a16,5es12.4)') ' constant tisepi ',
      .               tisepi_av(1,1),0.,0.,0.,0.
       end if
 
@@ -317,7 +311,7 @@
         write (iout,'(a16,5es12.4)') ' posepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant posepi ',
+        write (iout,'(a16,5es12.4)') ' constant posepi ',
      .               posepi_av(1,1),0.,0.,0.,0.
       end if
 
@@ -328,7 +322,7 @@
         write (iout,'(a16,5es12.4)') ' nesepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nesepm ',
+        write (iout,'(a16,5es12.4)') ' constant nesepm ',
      .               nesepm_av(1,1),0.,0.,0.,0.
       end if
 
@@ -339,7 +333,7 @@
         write (iout,'(a16,5es12.4)') ' tesepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tesepm ',
+        write (iout,'(a16,5es12.4)') ' constant tesepm ',
      .               tesepm_av(1,1),0.,0.,0.,0.
       end if
 
@@ -350,7 +344,7 @@
         write (iout,'(a16,5es12.4)') ' tisepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tisepm ',
+        write (iout,'(a16,5es12.4)') ' constant tisepm ',
      .               tisepm_av(1,1),0.,0.,0.,0.
       end if
 
@@ -361,7 +355,7 @@
         write (iout,'(a16,5es12.4)') ' posepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant posepm ',
+        write (iout,'(a16,5es12.4)') ' constant posepm ',
      .               posepm_av(1,1),0.,0.,0.,0.
       end if
 
@@ -372,7 +366,7 @@
         write (iout,'(a16,5es12.4)') ' nesepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant nesepa ',
+        write (iout,'(a16,5es12.4)') ' constant nesepa ',
      .               nesepa_av(1,1),0.,0.,0.,0.
       end if
 
@@ -383,7 +377,7 @@
         write (iout,'(a16,5es12.4)') ' tesepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tesepa ',
+        write (iout,'(a16,5es12.4)') ' constant tesepa ',
      .               tesepa_av(1,1),0.,0.,0.,0.
       end if
 
@@ -394,7 +388,7 @@
         write (iout,'(a16,5es12.4)') ' tisepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant tisepa ',
+        write (iout,'(a16,5es12.4)') ' constant tisepa ',
      .               tisepa_av(1,1),0.,0.,0.,0.
       end if
 
@@ -405,7 +399,7 @@
         write (iout,'(a16,5es12.4)') ' posepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
-        write (iout,'(a16,5es12.4)') 'constant posepa ',
+        write (iout,'(a16,5es12.4)') ' constant posepa ',
      .               posepa_av(1,1),0.,0.,0.,0.
       end if
 

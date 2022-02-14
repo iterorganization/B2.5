@@ -15,6 +15,7 @@
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
@@ -583,7 +584,7 @@
             if (.not.ex.or.stim.ge.0.0_R8) then
               ntstep = 0
               call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
-              status=nf_open(filename,NF_WRITE,ncid)
+              status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
               call check_cdf_status(status)
               write(6,'(a)') trim(filename)//' will be created'
             else if (ex.and.stim.lt.0.0_R8) then
@@ -603,21 +604,21 @@
               ntstep = dimsize(1)
               status=nf_close(ncid)
               call check_cdf_status(status)
-              status=nf_open(filename,NF_WRITE,ncid)
+              status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
               call check_cdf_status(status)
               write(6,'(a)') trim(filename)//' will be appended'
             else
               ntstep = 0
               write(6,'(a)') trim(filename)//' will be replaced'
               call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
-              status=nf_open(filename,NF_WRITE,ncid)
+              status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
               call check_cdf_status(status)
             end if
             write(6,'(a,i8)') trim(filename)//' : ntstep = ', ntstep
             if (ntstep.eq.0) call write_cdf_char_variable(ncid,-1,
      *       'species',species_name(0:ns-1))
           else
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
           endif
           ntstep=ntstep+1

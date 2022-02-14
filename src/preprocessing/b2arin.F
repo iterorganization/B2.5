@@ -4,6 +4,7 @@
       subroutine b2arin (nrid, nnucm, nzmax, tlo, thi, nlo, nhi,
      &  nnuc, nz, izlo, izhi, flag, tailep)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid, nnucm, nzmax
@@ -69,7 +70,7 @@
 *
 *     izlo, izhi - (0:nnucm-1) integer array, output.
 *     For inuc in (0:nnuc-1), (izlo(inuc):izhi(inuc)) specifies the
-*     range of atomic charge state represented in b2 for the nuclear
+*     range of atomic charge state represented in B2 for the nuclear
 *     species inuc. It will hold that
 *       0.le.izlo(inuc).le.izhi(inuc)+1 and izhi(inuc).le.nz(inuc).
 *     For inuc in (nnuc:nnucm-1), (izlo(inuc),izhi(inuc)) will hold
@@ -77,7 +78,7 @@
 *
 *     flag - character*8, output.
 *     flag specifies which code is to be used to calculate the rate
-*     coefficients. Its value may be 'adpak' or 'strahl'.
+*     coefficients. Its value may be 'adpak', 'strahl', 'adas' or 'amns'.
 *
 *     tailep - real.
 *     tailep specifies a smoothing parameter for the temperature
@@ -92,7 +93,7 @@
       integer inuc
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
 
 *-----------------------------------------------------------------------
 *.computation
@@ -154,10 +155,8 @@
        flag = 'strahl'
       else if (streql(flag0,'adas')) then
        flag = 'adas'
-#ifdef ITM
       else if (streql(flag0,'amns')) then
        flag = 'amns'
-#endif
       else
        call xerrab ('faulty input flag, flag='//flag0)
       endif
@@ -187,4 +186,4 @@
 *-----------------------------------------------------------------------
 *.end b2arin
 
-      end
+      end subroutine b2arin

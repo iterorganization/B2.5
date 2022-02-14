@@ -4,7 +4,10 @@
       subroutine b2ux5p (nx, ny, aa5, itcnt, resfun, corfun, name)   !srv 18.03.10
       use b2mod_types
       use b2mod_ma28
+      use b2mod_ilutern
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -70,9 +73,17 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
+      external xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
+!!FR The save variables used by ilutern need to be declared threadprivate 
+!!FR to ensure that each thread accesses its own copy of these and not a 
+!!FR global version. The iluter and slv5pt specific arrays have also been
+!!FR declared threadprivate to ensure any attempts to allocate them on 
+!!FR multiple threads will work. However, the code will be stopped if 
+!!FR the iluter or slv5pt are used as these have not been parallelised.
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (ncall, style, acpar, cpu)
       data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -155,13 +166,23 @@
 *    ..use iluter
        iters = min(itmax,4)
        itpar = itcnt*iters
-       call iluter (nx+2, ny+2, aa5, resfun, iters, acpar, itpar,
+!!FR iluter and slv5pt are not parallelised thus we need to stop the 
+!!FR code if attempting to run them in parallel
+       if (in_parallel()) then
+        stop 'STOP: iluter not parallelised, re-run in serial'
+       else
+        call iluter (nx+2, ny+2, aa5, resfun, iters, acpar, itpar,
      &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+       endif
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
-       call slv5pt (nx+2, ny+2, aa5, resfun, iters, corfun, nrmc,
+       if (in_parallel()) then
+        stop 'STOP: slv5pt not parallelised, re-run in serial'
+       else
+        call slv5pt (nx+2, ny+2, aa5, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+       endif
       else if (style.eq.2) then
 *    ..use ma28
         call ilutern(NX+2, NY+2, NX+2,

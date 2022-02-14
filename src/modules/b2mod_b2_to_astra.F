@@ -13,6 +13,7 @@ csw 09jan2014 extra module to define some arrays
      , ,only: b2eatcr, mlcmp
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use eirdiag ! IGNORE
@@ -118,9 +119,6 @@ csw 09jan2014 remove declaration p,x,cb,cc,cd from here
 c        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
 c     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
         real (kind=R8) :: DSEVAL, DFMIN, arg, y(0:nxd-1)
-
-        real (kind=R8) :: sy
-        sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
 
 csw 09jan2014 add extra allocates
         allocate(p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),

@@ -43,11 +43,13 @@ cank }
      *   BC_LIST_Y(:,:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
-	  character*256, allocatable, save :: con_fn(:)
+      character*256, allocatable, save :: con_fn(:)
       character*256, allocatable, save :: mom_fn(:)
       character*256, allocatable, save :: ene_fn(:)
       character*256, allocatable, save :: eni_fn(:)
-      character*256, allocatable, save :: pot_fn(:)								
+      character*256, allocatable, save :: pot_fn(:)
+      logical, allocatable, save ::
+     *   core_boundary(:)
 #else
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
@@ -74,11 +76,12 @@ cank }
       integer, save :: NYISO2(NNISOD)
       real (kind=R8), save :: NIISO(0:nsdmax-1)
       integer, save :: lcbs(NBCD)
-	  character*256, save :: con_fn(NBCD)
+      character*256, save :: con_fn(NBCD)
       character*256, save :: mom_fn(NBCD)
       character*256, save :: ene_fn(NBCD)
       character*256, save :: eni_fn(NBCD)
-      character*256, save :: pot_fn(NBCD)	
+      character*256, save :: pot_fn(NBCD)
+      logical, save :: core_boundary(NBCD)
 #endif
       integer, save :: boundary_namelist
       logical, save :: boundary_namelist_set = .false.
@@ -90,7 +93,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
-      logical, save :: lbndusr,lfeedback
+      logical, save :: lbndusr, lfeedback
       logical, save :: write_nml_bnd = .true.
       character*256, save :: boundary_filename
       real (kind=R8), save :: boundary_time_mod
@@ -112,6 +115,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 
       subroutine get_boundary_namelist
       implicit none
+      external ipgeti
 
 cxpb The default is to force usage of b2.boundary.namelist for DN cases
       if (boundary_namelist_set) return
@@ -123,13 +127,14 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       boundary_namelist_set = .true.
       return
       end subroutine get_boundary_namelist
-      
+
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
       implicit none
-      integer nx ,ny, ns
-      real (kind=R8) :: tim
+      integer, intent(in) :: nx ,ny, ns
+      real (kind=R8), intent(in) :: tim
       integer ix, iy, is, ib
       logical done, catch_up
+      external xertst
 
       call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
       call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
@@ -142,21 +147,30 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       else
          bc_elm_count=0
       endif
-      catch_up=boundary_time_mod.gt.0.0_R8
+      if(boundary_time_mod.gt.0.0_R8) then
+        catch_up=mod(tim,boundary_time_mod).ge.boundary_time_switch.and.
+     1           boundary_time_switch.gt.0.0_R8
+      else if (boundary_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.boundary_time_switch
+      else
+        catch_up=.false.
+      end if
       do while(catch_up)
-         if(mod(tim,boundary_time_mod).gt.boundary_time_switch)
-     1        then
-            write(*,*) 'b2stbc: catching up ...'
-            call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-            call xertst (nbc.le.nbcd,
+        write(*,*) 'b2stbc: catching up ...'
+        call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+        call xertst (nbc.le.nbcd,
      1           'increase DEF_NBC in DIMENSIONS.F')
-            call xertst (nniso.le.nnisod,
+        call xertst (nniso.le.nnisod,
      1           'increase DEF_NISO in DIMENSIONS.F')
-            call write_b2mod_boundary_namelist
-            catch_up=boundary_time_mod.gt.0.0_R8
-         else
-            catch_up=.false.
-         endif
+        call write_b2mod_boundary_namelist
+        if(boundary_time_mod.gt.0.0_R8) then
+          catch_up=boundary_time_switch.gt.0.0_R8.and.
+     1     mod(tim,boundary_time_mod).ge.boundary_time_switch
+        else if (boundary_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.boundary_time_switch
+        else
+          catch_up=.false.
+        endif
       enddo
       if(nniso.gt.0) then
          done=.true.
@@ -244,36 +258,47 @@ cxpb overwrite the defaults with the namelist data
 
       subroutine catchup_b2mod_boundary(nx, ny, ns, tim)
       implicit none
-      integer nx, ny, ns
-      real (kind=R8) :: tim
+      integer, intent(in) :: nx, ny, ns
+      real (kind=R8), intent(in) :: tim
+      logical catch_up
+      external xertst
 
       if(boundary_time_mod.gt.0.0_R8) then
-         write(*,'(a,1p,3(1x,e14.7),2i4)')
+        write(*,'(a,1p,3(1x,e14.7),2i4)')
      .       'ELM: ', tim, mod(tim,boundary_time_mod),
      1        boundary_time_switch,
      2        int(tim/boundary_time_mod),
      3        bc_elm_count
-         if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
-     1        int(tim/boundary_time_mod).gt.bc_elm_count) then
-            bc_elm_count=int(tim/boundary_time_mod)
-            call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-            call xertst (nbc.le.nbcd,
-     1           'increase DEF_NBC in DIMENSIONS.F')
-            call xertst (nniso.le.nnisod,
-     1           'increase DEF_NISO in DIMENSIONS.F')
-            call write_b2mod_boundary_namelist
-         endif
+        catch_up=
+     1   (mod(tim,boundary_time_mod).ge.boundary_time_switch.and.
+     1    boundary_time_switch.gt.0.0_R8).or.
+     2    int(tim/boundary_time_mod).gt.bc_elm_count
+      else if (boundary_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.boundary_time_switch
+        if(catch_up) write(*,'(a,a)')
+     .   'Switching to next boundary namelist file ',
+     .    trim(boundary_filename)
+      else
+        catch_up=.false.
+      end if
+      if(catch_up) then
+        if(boundary_time_mod.gt.0.0_R8)
+     >   bc_elm_count=int(tim/boundary_time_mod)
+        call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+        call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+        call xertst (nniso.le.nnisod,
+     .                           'increase DEF_NISO in DIMENSIONS.F')
+        call write_b2mod_boundary_namelist
       endif
+      return
 
       end subroutine catchup_b2mod_boundary
 
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
       implicit none
-      integer nxd, nyd, nsd, nbcd_in, nnisod_in
+      integer, intent(in) :: nxd, nyd, nsd, nbcd_in, nnisod_in
       integer ix, iy
-#ifndef ALLOCATE_AND_NAMELIST
-      external xertst
-#endif
+      external ipgeti, xertst
 
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(CONPAR(0:nsd-1,nbcd_in,3))
@@ -304,6 +329,7 @@ cxpb overwrite the defaults with the namelist data
       allocate(ene_fn(nbcd_in))
       allocate(eni_fn(nbcd_in))
       allocate(pot_fn(nbcd_in))
+      allocate(core_boundary(nbcd_in))
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
@@ -338,6 +364,7 @@ cxpb overwrite the defaults with the namelist data
       gammai=1.0_R8
       gammae=0.5_R8
       lbndusr=.false.
+      core_boundary=.false.
 !DPC-2003-10-23 set as a ipget parameter      lfeedback=.false.
       nniso=0
       nxiso1=-2
@@ -398,6 +425,7 @@ cxpb Have to do this here already in case the namelist is not used
       end subroutine alloc_b2mod_boundary
 
       subroutine dealloc_b2mod_boundary
+      implicit none
 
       if (.not.allocated(iffboundx)) return
 #ifdef ALLOCATE_AND_NAMELIST
@@ -429,6 +457,7 @@ cxpb Have to do this here already in case the namelist is not used
       deallocate(ene_fn)
       deallocate(eni_fn)
       deallocate(pot_fn)
+      deallocate(core_boundary)
 #endif
       deallocate(iffboundx)
       deallocate(iffboundy)
@@ -440,16 +469,22 @@ cxpb Have to do this here already in case the namelist is not used
 
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)
       implicit none
-      integer nx, ny, ns
-      logical dotest
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(in) :: dotest
       integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found
 
-      logical :: file_ok, todo, assigned
+      logical file_ok, todo, assigned, is_closed
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
+      external find_file, xerrab, xertst
+
+      real (kind=R8) :: potpar_inter(NBCD,2)
+      logical :: file_exit
 
       filename=boundary_filename
+      boundary_time_mod = 0.0_R8
+      boundary_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -500,81 +535,68 @@ c.. Make a list of core boundaries
         end if
         allocate(done(nbc))
         done=.false.
+        assigned=.false.
         do ib=1,nbc
           if(bcchar(ib).eq.'S') then
             if(old_style(ib)) then
-              if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
-     .           on_closed_surface(bcend(ib),bcpos(ib))) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
-                  end if
-                end if
-              endif
+              is_closed = on_closed_surface(bcstart(ib),bcpos(ib)).and.
+     .                    on_closed_surface(bcend(ib),bcpos(ib))
             else
-              found = .true.
+              is_closed = .true.
               do ix = 1, bc_list_size(ib)
-                found = found .and.
+                is_closed = is_closed .and.
      .           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
               end do
-              if (found) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
-                  end if
-                endif
-              endif
-            endif
-          endif
-        enddo
+            end if
+            if(.not.todo.and.is_closed) then
+              ncbs=ncbs+1
+              lcbs(ncbs)=ib
+              done(ncbs)=.true.
+              core_boundary(ib)=.true.
+            else if (todo.and.is_closed) then
+              ic = 1
+              assigned = .false.
+              do while (ic.le.ncbs)
+                if (lcbs(ic).eq.ib) then
+                  call xertst(.not.done(ic),
+     .             'Core boundary already assigned!')
+                  core_boundary(ib) = .true.
+                  assigned = .true.
+                  done(ic) = .true.
+                end if
+                ic = ic + 1
+              end do
+              if (.not.assigned) then
+                ncbs = ncbs + 1
+                done(ncbs) = .true.
+                lcbs(ncbs) = ib
+                core_boundary(ib) = .true.
+                write(*,*) 'Added boundary ',ib,
+     .           ' to list of core boundaries'
+              end if
+            else if (todo.and.nnreg(0).eq.1.and..not.assigned) then
+              do ic = 1, ncbs
+                if (lcbs(ic).eq.ib) then
+                  core_boundary(ib) = .true.
+                  done(ic) = .true.
+                end if
+              end do
+              assigned=.true.
+            end if
+          end if
+        end do
         if (ny.gt.1) then
           if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
             call xertst(1.le.ncbs, 'faulty parameters ncbs')
           end if
         end if
         do ib = 1, ncbs
-          call xertst (done(ib),
-     .     'Did not find all declared core boundaries!')
           call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
      .     'faulty parameter lcbs')
+          call xertst (done(ib),
+     .     'Did not find all declared core boundaries!')
+          call xertst (core_boundary(lcbs(ib)),
+     .     'Faulty declaration of core boundaries!')
         enddo
         deallocate(done)
       endif
@@ -582,6 +604,20 @@ c.. Make a list of core boundaries
         if (.not.file_ok) write(*,*) 'No ',trim(filename)
         write(*,*) 'Testing skipped!'
         return
+      endif
+
+      !..zml if there is bcpot=14 where floating boundary condition is
+      !used, potpar(ib,2) is taken from the file potpar_continue in
+      !which the last target potential is saved...
+      filename='../potpar_continue'
+      INQUIRE(file=trim(filename),exist=file_exit)
+      if (file_exit) then
+        open(1,file=trim(filename))
+        read(1,*) potpar_inter
+        close(1)
+        do ib=1,nbc
+          if (bcpot(ib).eq.14) potpar(ib,2)=potpar_inter(ib,2)
+        enddo
       endif
 
 *   ..test input
@@ -955,7 +991,7 @@ c.. Test consistency with region boundaries
       use b2mod_plasma
       implicit none
       real (kind=R8) :: get_phi_applied
-      integer boundary_namelist, ix, iy
+      integer, intent(in) :: boundary_namelist, ix, iy
       integer i, ib
       logical found
 

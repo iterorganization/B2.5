@@ -1,5 +1,7 @@
       subroutine b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -13,28 +15,10 @@
 *     pbs thus contains the parallel contact area.
 *     ------------------------------------------------------------------
       integer n2, ix, iy, ncall, area_fix
-      real (kind=R8) ::
-     *   t1, p0x, p0y, p1x, p1y
-      intrinsic sqrt, min, max
-      external subini, subend, xertst, b2xvsg, b2xvff, ipgeti
-      real (kind=R8) ::
-     *   trim1, norm, cosang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      real (kind=R8) :: t1
+      external xertst, b2xvsg, b2xvff, ipgeti
       save ncall, area_fix
       data ncall/0/, area_fix/3/
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     and cosang(p0x,p0y,p1x,p1y) is cos(t), where t is the complementary 
-*     angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *   ..preliminaries
       call subini ('b2xgbs')
@@ -49,7 +33,8 @@
       call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl', '.gt.')
       call b2xvsg (n2, wbbv(-1,-1,3), 1, 'wbbv', '.gt.')
 *   ..test edge values of gs
-      call b2xvff (nx, ny, gs, 'gs')
+      call b2xvfx (nx, ny, gs(-1,-1,0), 'gs')
+      call b2xvfy (nx, ny, gs(-1,-1,1), 'gs')
 *   ..compute pbs(,,0:1)
       do iy = -1, ny
        do ix = -1, nx
@@ -65,7 +50,8 @@
 *   ..test sign of pbs
 !      call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                      !srv 11.01.13
 *   ..test edge values of pbs
-      call b2xvff (nx, ny, pbs, 'pbs')
+      call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+      call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *   ..return
       ncall = ncall + 1
       call subend ()
@@ -76,6 +62,8 @@
       subroutine b2xgbs1 (nx1, ny1, 
      . bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
       integer nx1, ny1
       integer bottomiy1(-1:nx1,-1:ny1)
@@ -92,28 +80,10 @@
 *     pbs1 thus contains the parallel contact area.
 *     ------------------------------------------------------------------
       integer n2, ix, iy, ncall, area_fix
-      real (kind=R8) ::
-     *   t1, p0x, p0y, p1x, p1y
-      intrinsic sqrt, min, max
-      external subini, subend, xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
-      real (kind=R8) ::
-     *   trim1, norm, cosang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      real (kind=R8) :: t1
+      external xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
       save ncall, area_fix
       data ncall/0/, area_fix/3/
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     and cosang(p0x,p0y,p1x,p1y) is cos(t), where t is the complementary 
-*     angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *   ..preliminaries
       call subini ('b2xgbs1')

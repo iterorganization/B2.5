@@ -6,9 +6,10 @@
      *  calf(:,:,:),
      *  cdna(:,:,:,:),
      *  cdpa(:,:,:,:),
-     *  cddi(:,:,:,:),                                                !srv 13.10.06
-     *  cdnahz(:,:,:,:),                                              !srv 09.01.01
-     *  cdpahz(:,:,:,:),                                              !srv 09.01.01
+     *  cddi(:,:,:,:),                                                  !srv 13.10.06
+     *  cdde(:,:,:),                                                    !som 03.11.21
+     *  cdnahz(:,:,:,:),                                                !srv 09.01.01
+     *  cdpahz(:,:,:,:),                                                !srv 09.01.01
      *  ceqp(:,:),
      *  chce(:,:,:),
      *  chci(:,:,:),
@@ -21,20 +22,25 @@
      *  cvsa(:,:,:,:),
      *  cthe(:,:,:),
      *  cthi(:,:,:),
-     *  csigin(:,:,:,:,:),                                            !xpb
-     *  cvlahz(:,:,:,:),                                              !srv 09.01.01
-     *  cvmahz(:,:,:,:),                                              !srv 15.12.05
-     *  cvsahz(:,:,:,:),                                              !srv 09.01.01
-     *  cvsa_cl(:,:,:,:),                                             !srv 04.10.99
-     *  cvsahz_cl(:,:,:,:),                                           !srv 09.01.01
+     *  csigin(:,:,:,:,:),                                              !xpb
+     *  cvlahz(:,:,:,:),                                                !srv 09.01.01
+     *  cvmahz(:,:,:,:),                                                !srv 15.12.05
+     *  cvsahz(:,:,:,:),                                                !srv 09.01.01
+     *  cvsa_cl(:,:,:,:),                                               !srv 04.10.99
+     &  cvsa_drho(:,:,:,:),                                             !som 16.08.21
+     *  cvsahz_cl(:,:,:,:),                                             !srv 09.01.01
+     &  cvsahz_drho(:,:,:,:),                                           !som 18.08.21
+     *  chci_a(:,:,:,:), 
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
+     *  csig_stoch(:,:,:),                                              !srv 24.08.21
+     *  chce_stoch(:,:,:),                                              !srv 24.08.21
      *  fllime(:,:),
      *  fllimi(:,:),
      *  fllim0fna(:,:,:,:),
      *  fllim0fhi(:,:,:,:),
      *  fllimvisc(:,:,:),
-     *  fllim_ki(:,:),                                                !srv 13.01.17 {
+     *  fllim_ki(:,:),                                                  !srv 13.01.17 {
      *  fllim_ke(:,:),
      *  fllim_al(:,:),
      *  fllim_al_c(:,:),
@@ -43,22 +49,24 @@
      *  f_luc_et(:,:),
      *  f_luc_sg(:,:),
      *  f_luc_al(:,:),
+     *  alpha1(:,:),                                                    !som 05.10.21
      *  alfx_c(:,:),
-     *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17 }
-     *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
+     *  sigx_c(:,:),                                                    !iyv 19.11.13 08.10.14 !srv 13.01.17 }
+     *  kt_neo(:,:)                                                     !iys 02.12.13 08.10.14
 
       contains
 
       subroutine alloc_b2mod_transport(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd
+      integer, intent(in) :: nxd,nyd,nsd
 
       allocate(calf(-1:nxd,-1:nyd,0:1))
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cdpa(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 13.10.06
-      allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
+      allocate(cddi(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !srv 13.10.06
+      allocate(cdde(-1:nxd,-1:nyd,0:1))                                 !som 03.11.21
+      allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(ceqp(-1:nxd,-1:nyd))
       allocate(chce(-1:nxd,-1:nyd,0:1))
       allocate(chci(-1:nxd,-1:nyd,0:1))
@@ -71,25 +79,30 @@
       allocate(cvsa(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cthe(-1:nxd,-1:nyd,0:nsd-1))
       allocate(cthi(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))             !xpb
-      allocate(cvlahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 15.12.05
-      allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
-      allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 04.10.99
-      allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !srv 09.01.01
+      allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))               !xpb
+      allocate(cvlahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 15.12.05
+      allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
+      allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                      !srv 04.10.99
+      allocate(cvsa_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !som 16.08.21
+      allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 09.01.01
+      allocate(cvsahz_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !som 18.08.21
+      allocate(chci_a(-1:nxd,-1:nyd,0:1,0:nsd-1)) 
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
+      allocate(csig_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
+      allocate(chce_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
       allocate(fllime(-1:nxd,-1:nyd))
-      fllime=0.0_R8
+      fllime=1.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))
-      fllimi=0.0_R8
+      fllimi=1.0_R8
       allocate(fllim0fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      fllim0fna=0.0_R8
+      fllim0fna=1.0_R8
       allocate(fllim0fhi(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      fllim0fhi=0.0_R8
+      fllim0fhi=1.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
-      fllimvisc=0.0_R8
-      allocate(fllim_ki(-1:nxd,-1:nyd))                               !srv 13.01.17 {
+      fllimvisc=1.0_R8
+      allocate(fllim_ki(-1:nxd,-1:nyd))                                 !srv 13.01.17 {
       allocate(fllim_ke(-1:nxd,-1:nyd))
       allocate(fllim_al(-1:nxd,-1:nyd))
       allocate(fllim_al_c(-1:nxd,-1:nyd))
@@ -98,9 +111,10 @@
       allocate(f_luc_et(-1:nxd,-1:nyd))
       allocate(f_luc_sg(-1:nxd,-1:nyd))
       allocate(f_luc_al(-1:nxd,-1:nyd))
-      allocate(sigx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13
-      allocate(alfx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13 08.10.14 ! srv 13.01.17 }
-      allocate(kt_neo(-1:nxd,-1:nyd))                                 !iys 02.12.13 08.10.14
+      allocate(alpha1(-1:nxd,-1:nyd))                                   !som 05.10.21
+      allocate(sigx_c(-1:nxd,-1:nyd))                                   !iys 19.11.13
+      allocate(alfx_c(-1:nxd,-1:nyd))                                   !iys 19.11.13 08.10.14 ! srv 13.01.17 }
+      allocate(kt_neo(-1:nxd,-1:nyd))                                   !iys 02.12.13 08.10.14
       kt_neo = 0.0_R8
 
       return
@@ -114,6 +128,7 @@
       deallocate(cdna)
       deallocate(cdpa)
       deallocate(cddi)
+      deallocate(cdde)
       deallocate(cdnahz)
       deallocate(cdpahz)
       deallocate(ceqp)
@@ -133,15 +148,20 @@
       deallocate(cvmahz)
       deallocate(cvsahz)
       deallocate(cvsa_cl)
+      deallocate(cvsa_drho)                                      !som 16.08.21
       deallocate(cvsahz_cl)
+      deallocate(cvsahz_drho)                                    !som 18.08.21
+      deallocate(chci_a) 
       deallocate(csig_cl)
       deallocate(calf_cl)
+      deallocate(csig_stoch)                                     !srv 24.08.21
+      deallocate(chce_stoch)                                     !srv 24.08.21
       deallocate(fllime)
       deallocate(fllimi)
       deallocate(fllim0fna)
       deallocate(fllim0fhi)
       deallocate(fllimvisc)
-      deallocate(fllim_ki)                                 !srv 13.01.17 {
+      deallocate(fllim_ki)                                       !srv 13.01.17 {
       deallocate(fllim_ke)
       deallocate(fllim_al)
       deallocate(fllim_al_c)
@@ -150,8 +170,9 @@
       deallocate(f_luc_et)
       deallocate(f_luc_sg)
       deallocate(f_luc_al)
-      deallocate(sigx_c)                                   !iys 19.11.13
-      deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17 }
+      deallocate(alpha1)                                         !som 05.10.21
+      deallocate(sigx_c)                                         !iys 19.11.13
+      deallocate(alfx_c)                                         !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
 
       return
@@ -159,7 +180,8 @@
 
       subroutine read_b2mod_transport(nread)
       implicit none
-      integer nread
+      integer, intent(in) :: nread
+      external cfrure
 
       call cfrure (nread, size(calf), calf, 'calf')
       call cfrure (nread, size(cdna), cdna, 'cdna')
@@ -187,20 +209,20 @@
         call cfrure (nread, size(fllime), fllime, 'fllime')
         call cfrure (nread, size(fllimi), fllimi, 'fllimi')
       else
-        fllime=0.0_R8
-        fllimi=0.0_R8
+        fllime=1.0_R8
+        fllimi=1.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.017') then
         call cfrure (nread, size(fllim0fna), fllim0fna, 'fllim0fna')
         call cfrure (nread, size(fllim0fhi), fllim0fhi, 'fllim0fhi')
       else
-        fllim0fna=0.0_R8
-        fllim0fhi=0.0_R8
+        fllim0fna=1.0_R8
+        fllim0fhi=1.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.020') then
         call cfrure (nread, size(fllimvisc), fllimvisc, 'fllimvisc')
       else
-        fllimvisc=0.0_R8
+        fllimvisc=1.0_R8
       endif
       if(b2fplasma_version.ge.'03.000.006') then
         call cfrure (nread, size(f_luc_ke), f_luc_ke, 'f_luc_ke')
@@ -213,15 +235,15 @@
         call cfrure (nread, size(fllim_al), fllim_al, 'fllim_al')
         call cfrure (nread, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
       else
-        f_luc_ke=0.0_R8
-        f_luc_ki=0.0_R8
-        f_luc_et=0.0_R8
-        f_luc_sg=0.0_R8
-        f_luc_al=0.0_R8
-        fllim_ke=0.0_R8
-        fllim_ki=0.0_R8
-        fllim_al=0.0_R8
-        fllim_al_c=0.0_R8
+        f_luc_ke=1.0_R8
+        f_luc_ki=1.0_R8
+        f_luc_et=1.0_R8
+        f_luc_sg=1.0_R8
+        f_luc_al=1.0_R8
+        fllim_ke=1.0_R8
+        fllim_ki=1.0_R8
+        fllim_al=1.0_R8
+        fllim_al_c=1.0_R8
       endif
 
       return
@@ -229,7 +251,8 @@
 
       subroutine write_b2mod_transport(nwrite)
       implicit none
-      integer nwrite
+      integer, intent(in) :: nwrite
+      external cfwure
 
       call cfwure (nwrite, size(calf), calf, 'calf')
       call cfwure (nwrite, size(cdna), cdna, 'cdna')

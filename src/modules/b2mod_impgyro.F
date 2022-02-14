@@ -2,27 +2,40 @@
 
       use b2mod_external
 
+#if MPI_MOD > 0
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
-      private
-
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
-
-      integer :: mpi_err,mpi_stat,mpi_dum
-      integer :: mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
+#endif
+#endif
+      private
 
-      integer :: mpi_err,mpi_stat,mpi_dum
+#ifdef USE_MPI
+      integer :: mpi_err,mpi_stat(mpi_status_size)
+      integer :: mpi_rank,mpi_size,mpi_local
+#else
+#ifdef USE_IMPGYRO
+      integer :: mpi_err,mpi_stat(mpi_status_size)
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
-
       logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
-     &                      !    by ionization/recombination
+     &                      !    by ionisation/recombination
      &     im_cc (:,:,:),   ! ion momentum source by Coulomb collision
      &     ie_cc (:,:),     ! ion heat source by Coulomb collision
      &     ee_rd (:,:),     ! electron heat source by radiation
@@ -53,6 +66,12 @@
       logical brestarted
       integer fd
  
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
+      call xertst (0.le.ismain.and.ismain.lt.nsd,
+     * 'faulty argument ismain')
+
       filename='use_impgyro'
       call find_file(filename,use_impgyro)
       if ( .not. use_impgyro ) return
@@ -373,7 +392,7 @@ cxpb
       write (*,*) 'b2ig: running impgyro ...'
 
 #ifdef USE_MPI
-      if (mpi_rank.eq.0)then
+      if (mpi_rank.eq.0) then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,
@@ -391,7 +410,7 @@ cxpb
       end if
 #else
 #ifdef USE_IMPGYRO
-      if (mpi_rank.eq.0)then
+      if (mpi_rank.eq.0) then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,

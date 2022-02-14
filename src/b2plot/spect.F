@@ -54,7 +54,7 @@ c
      &   , DRCOFI )
 
 C
-        if (ifail .gt. 0)   then
+        if (ifail .gt. 0) then
           write (*,3003) ifail,is,iz0,iz1-1
  3003     format (
      >     ' >>> error in dhdata: ifail =',i3,/,
@@ -332,6 +332,7 @@ cc    -------------------------------------------------------------------------
 
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 
 #     include "emissivity.constants"
@@ -362,7 +363,6 @@ cc    -------------------------------------------------------------------------
      *   f
       integer index
       integer count,cc
-      external subini, subend
 
       call subini ('GetEmissivity')
       do count=1,dim
@@ -465,6 +465,7 @@ c     -------------------------------------------------------------------------
       subroutine GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,T)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
 #     include "emissivity.dimensions"
@@ -486,7 +487,6 @@ c     -------------------------------------------------------------------------
       character CINDM(NSTORE)*2
       character DSNREQ*256
       character ESYM*2
-      external subini, subend
 
 c     initialising
       call subini ('GetInfo')
@@ -523,6 +523,7 @@ C
      &                 )
 C
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -573,7 +574,7 @@ C                           ANALYSED.
 C                           1ST DIMENSION: ELECTRON TEMPERATURE INDEX
 C                           2ND DIMENSION: ELECTRON DENSITY     INDEX
 C  OUTPUT: (R*8)  PECA()  = SPLINE INTERPOLATED OR  EXTRAPOLATED
-C                           IONIZATIONS/PHOTON FOR THE USER ENTERED
+C                           IONISATIONS/PHOTON FOR THE USER ENTERED
 C                           ELECTRON TEMPERATURE/DENSITY PAIRS.
 C                           DIMENSION: TEMPERATURE/DENSITY PAIR INDEX
 C
@@ -692,7 +693,7 @@ C-----------------------------------------------------------------------
       LOGICAL LTRNG(ITVAL)          , LDRNG(ITVAL)
 C-----------------------------------------------------------------------
       EXTERNAL   R8FUN1
-      external   subini, subend, xertst
+      external   xertst
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
@@ -804,6 +805,7 @@ CX
      &                 TITLX  , IRCODE
      &               )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 
 C-----------------------------------------------------------------------
@@ -1059,8 +1061,6 @@ C-----------------------------------------------------------------------
      &            EXTLST /' '/   , IZ0LST /0/   , IZLAST /0/       ,
      &            IUNIT  /15/
 C-----------------------------------------------------------------------
-      external subini, subend
-C-----------------------------------------------------------------------
 C
       call subini ('spec')
       IRCODE = 0
@@ -1092,7 +1092,7 @@ C
      &              (UIDLST .NE. UIDIN)  .OR.
      &              (GRPLST .NE. GRPIN)  .OR.
      &              (TYPLST .NE. TYPIN)  .OR.
-     &              (EXTLST .NE. EXTIN)      )  THEN
+     &              (EXTLST .NE. EXTIN)      ) THEN
 C
                   CALL E3FILE( IUNIT , IZ0IN , IZIN , IRCODE , DSNREQ )
                      IF (IRCODE .EQ. 0) THEN
@@ -1402,7 +1402,7 @@ C-----------------------------------------------------------------------
 C
 C  ****************** FORTRAN77 SUBROUTINE: E3TITL *********************
 C
-C  PURPOSE:  TO CREATE THE DESCRIPTIVE TITLE FOR SELECTED DATA BLOCK.
+C  PURPOSE: TO CREATE THE DESCRIPTIVE TITLE FOR SELECTED DATA BLOCK.
 C
 C  CALLING PROGRAM: ADAS503/SPEC
 C
@@ -1610,14 +1610,15 @@ CX
      &                   PEC
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
 C  ****************** FORTRAN77 SUBROUTINE: E3DATA *********************
 C
-C  PURPOSE:  TO  FETCH  DATA  FROM  INPUT PHOTON EMISSIVITY FILE
-C            FOR A GIVEN EMITTING ION (ELEMENT AND CHARGE).
-C            (MEMBER STORED IN IONELEC.DATA - MEMBER PREFIX 'PEC#').
+C  PURPOSE: TO FETCH DATA FROM INPUT PHOTON EMISSIVITY FILE
+C           FOR A GIVEN EMITTING ION (ELEMENT AND CHARGE).
+C           (MEMBER STORED IN IONELEC.DATA - MEMBER PREFIX 'PEC#').
 C
 C  CALLING PROGRAM: ADAS503/SPEC
 C
@@ -1780,7 +1781,7 @@ C-----------------------------------------------------------------------
      &           CKEY3                 , CKEY4                ,
      &           CKEY5                 , CKEY6
       LOGICAL    STREQL
-      EXTERNAL   SUBINI, SUBEND, XERRAB, STREQL
+      EXTERNAL   XERRAB, STREQL
 C
 C-----------------------------------------------------------------------
 C
@@ -2159,10 +2160,10 @@ C
 CX  I/O   : (C*6)  USERID   = USERID UNDER WHICH ADAS DATA IS STORED
 CX                           (IF BLANK DEFAULTS TO DEFUID)
 CX
-CX         (C*6)  DEFUID   = PARAMETER = DEFAULT USER ID FOR ADAS DATA
-CX                                      SOURCE
+CX          (C*6)  DEFUID   = PARAMETER = DEFAULT USER ID FOR ADAS DATA
+CX                                        SOURCE
 CX
-CX         (C*6)  ADASID   = CURRENT ADAS DATA SOURCE USER ID
+CX          (C*6)  ADASID   = CURRENT ADAS DATA SOURCE USER ID
 C
 C  I/O   : (C*80)  USERID   = USERID UNDER WHICH ADAS DATA IS STORED
 C                           (IF BLANK DEFAULTS TO DEFUID)
@@ -2262,6 +2263,7 @@ CX
      &                   DY    , LINTRP
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -2487,7 +2489,7 @@ C-----------------------------------------------------------------------
       SAVE NOPT
       SAVE X    , H     , Q     , D1   , D2   , D3
 C-----------------------------------------------------------------------
-      EXTERNAL SUBINI, SUBEND, XERTST
+      EXTERNAL XERTST
 C***********************************************************************
       CALL SUBINI ('xxsple')
       CALL XERTST (NKNOTS .GE. NIN,
@@ -2590,7 +2592,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 C EXTRAPOLATE: LOW 'XOUT' VALUE  - IF EXTRAPOLATION SWITCHED ON
 C-----------------------------------------------------------------------
-               ELSEIF (XK .LE. XIN(1))   THEN
+               ELSEIF (XK .LE. XIN(1)) THEN
                   INTER     = 2
                   LINTRP(K) = .FALSE.
                   AGRL(2)   = 0.0_R8
@@ -2703,23 +2705,23 @@ C
       ILENC  = LEN(CSTRNG)
       CALL XXSLEN(SSTRNG,I,ILENS)
 C
-         IF ( (ILENC .GE. ILENS)  .AND.  (ILENS .GT. 0) ) THEN
+      IF ( (ILENC .GE. ILENS)  .AND.  (ILENS .GT. 0) ) THEN
 C
-           DO 1 I=1,1+ILENC-ILENS
+        DO 1 I=1,1+ILENC-ILENS
 C
-              IF (CSTRNG(I:I-1+ILENS) .EQ. SSTRNG(1:ILENS)) THEN
-                 IF (IFIRST .EQ. 0) IFIRST = I
-                 ILAST = I
-              ENDIF
+          IF (CSTRNG(I:I-1+ILENS) .EQ. SSTRNG(1:ILENS)) THEN
+            IF (IFIRST .EQ. 0) IFIRST = I
+            ILAST = I
+          ENDIF
 C
-    1      CONTINUE
+    1   CONTINUE
 C
-         ENDIF
+      ENDIF
 C
 C-----------------------------------------------------------------------
 C
-       RETURN
-       END SUBROUTINE XXFCHR
+      RETURN
+      END SUBROUTINE XXFCHR
 CX UNIX PORT - SCCS info: Module @(#)xfesym.for 1.1 Date 5/25/95
 CX
       FUNCTION XFESYM ( IZ0 )
@@ -2761,12 +2763,12 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       CHARACTER*2  XFESYM
 C-----------------------------------------------------------------------
-         IF ( (IZ0 .GT. size(elements)) .OR. (IZ0 .LT. 0) ) THEN
-            XFESYM = ' '
-         ELSE
-            XFESYM = elements(IZ0)
-         ENDIF
-         call lower_case(XFESYM)                  !srv 14.10.13
+      IF ( (IZ0 .GT. size(elements)) .OR. (IZ0 .LT. 0) ) THEN
+        XFESYM = ' '
+      ELSE
+        XFESYM = elements(IZ0)
+      ENDIF
+      call lower_case(XFESYM)                          !srv 14.10.13
 C-----------------------------------------------------------------------
       RETURN
       END FUNCTION XFESYM
@@ -2899,9 +2901,9 @@ C-----------------------------------------------------------------------
 C
       IKEY   = 0
 C
-         DO 1 I = 1,LENKEY
-            IF (CKEY(I:I) .NE. ' ') IKEY = I
-    1    CONTINUE
+      DO 1 I = 1,LENKEY
+        IF (CKEY(I:I) .NE. ' ') IKEY = I
+    1 CONTINUE
 C
       IF (IKEY .EQ. 0) GOTO 999
 C
@@ -2913,22 +2915,22 @@ C
   100 IPOS1 = INDEX( CTEXT(IPOS1:LENTXT) , CKEY(1:IKEY) ) + IPOS1 - 1
       IPOS2 = IPOS1 + IKEY
 C
-         IF (IPOS2 .GT. LENTXT) THEN
-            GOTO 999
-         ELSEIF (IPOS1 .EQ. 1) THEN
-            IPOS1 = IPOS2
-         ELSEIF (IPOS1 .NE. 0) THEN
-            IPOS1 = IPOS1 - 1
-               IF ( (CTEXT(IPOS1:IPOS1) .EQ. ' '   )
+      IF (IPOS2 .GT. LENTXT) THEN
+        GOTO 999
+      ELSEIF (IPOS1 .EQ. 1) THEN
+        IPOS1 = IPOS2
+      ELSEIF (IPOS1 .NE. 0) THEN
+        IPOS1 = IPOS1 - 1
+        IF ( (CTEXT(IPOS1:IPOS1) .EQ. ' '   )
      &                        .OR.
-     &              (CTEXT(IPOS1:IPOS1) .EQ. CBREAK) ) THEN
-                  IPOS1 = IPOS2
-               ELSE
-                  GOTO 999
-               ENDIF
-         ELSE
-            GOTO 999
-         ENDIF
+     &       (CTEXT(IPOS1:IPOS1) .EQ. CBREAK) ) THEN
+          IPOS1 = IPOS2
+        ELSE
+          GOTO 999
+        ENDIF
+      ELSE
+        GOTO 999
+      ENDIF
 C
 C-----------------------------------------------------------------------
 C ESTABLISH IF EQUAL SIGN EXISTS AFTER THE KEY (SEPERATED BY BLANKS).
@@ -2937,25 +2939,25 @@ C
       IPOS2 = INDEX( CTEXT(IPOS1:LENTXT) , '=' )
       IPOS3 = IPOS2 + IPOS1
 C
-         IF (IPOS3 .GT. LENTXT) THEN
-            GOTO 999
-         ELSEIF (IPOS2 .EQ. 1) THEN
-            IPOS2 = IPOS3
-         ELSEIF (IPOS2 .NE. 0) THEN
-            IPOS2 = IPOS3 - 2
-               IF (CTEXT(IPOS1:IPOS2) .EQ. ' ') THEN
-                  IPOS2 = IPOS3
-               ELSE
+      IF (IPOS3 .GT. LENTXT) THEN
+        GOTO 999
+      ELSEIF (IPOS2 .EQ. 1) THEN
+        IPOS2 = IPOS3
+      ELSEIF (IPOS2 .NE. 0) THEN
+        IPOS2 = IPOS3 - 2
+        IF (CTEXT(IPOS1:IPOS2) .EQ. ' ') THEN
+          IPOS2 = IPOS3
+        ELSE
 C
 C- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C SEE IF VALID KEY EXISTS FURTHER DOWN THE 'CTEXT' STRING.
 C- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C
-                  GOTO 100
-               ENDIF
-         ELSE
-            GOTO 999
-         ENDIF
+          GOTO 100
+        ENDIF
+      ELSE
+        GOTO 999
+      ENDIF
 C
 C-----------------------------------------------------------------------
 C FIND SEPERATOR CHARACTER AND IDENTIFY RESPONSE (IF PRESENT).
@@ -3055,7 +3057,7 @@ C-----------------------------------------------------------------------
       END DO
 C-----------------------------------------------------------------------
       RETURN
-      END  FUNCTION I4EIZ0
+      END FUNCTION I4EIZ0
 
       subroutine CalculateEmissivity(is,iwl,idwl)
       use b2mod_types

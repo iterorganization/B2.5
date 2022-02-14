@@ -1,6 +1,8 @@
       subroutine b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, kapx, conx)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, mode
       real (kind=R8) ::
@@ -16,10 +18,9 @@
      *   t0, t1, kaps, kapsn
       intrinsic max, sqrt
       real (kind=R8) ::
-     *   harm, smin, smax
-      external subini, subend, xertst, smin, smax
+     *   smin, smax
+      external xertst, smin, smax
       external b2xvsg, b2xxgs
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txfx')
@@ -95,4 +96,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txfx

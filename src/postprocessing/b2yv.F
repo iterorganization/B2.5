@@ -16,6 +16,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_elements
+      use b2mod_xerset
 #ifdef WINDOWS
 ! AVDef is the AViz module file
       use AVDef    ! IGNORE
@@ -56,7 +57,7 @@
       character hlp_frm*22
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, xerrab, cfopen, cfruin
+      external prgini, prgend, xertst, xerrab, cfopen, cfruin
 *   ..initialize input/output unit numbers
       data ninp/50,51,52,53,54,55/
       data nout/60,61,62,63,64,65,66,67/
@@ -120,7 +121,8 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)                       !srv 25.11.02
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)
@@ -165,7 +167,7 @@
      &     adjustr(is_codes(icase)),nint(zamin(icase))
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = na(ix,iy,icase)
+            M(iy,ix) = real(na(ix,iy,icase),R4)
           enddo
         enddo
       elseif(ns.le.icase .and. icase.le.ns-1+ns )then
@@ -175,7 +177,7 @@
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = ua(ix,iy,icase-ns)
+            M(iy,ix) = real(ua(ix,iy,icase-ns),R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns )then
@@ -183,7 +185,7 @@
         write(axis3,"('Temperature of electrons',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = te(ix,iy)/ev
+            M(iy,ix) = real(te(ix,iy)/ev,R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns+1 )then
@@ -191,14 +193,14 @@
         write(axis3,"('Temperature of ions',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = ti(ix,iy)/ev
+            M(iy,ix) = real(ti(ix,iy)/ev,R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns+2 )then
         write(title,"('Electric potential')")
         do iy = -1,ny
           do ix = -1,nx
-            M(iy,ix) = po(ix,iy)
+            M(iy,ix) = real(po(ix,iy),R4)
           enddo
         enddo
       elseif(icase .eq. ns+ns+3 )then
@@ -206,9 +208,10 @@
         M=0.0d0
         do iy=0,ny
           do ix=-1,nx
-            M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     *                /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-     *                *2.0e0_R8
+            M(iy,ix)=real(
+     *      -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
+     *      /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     *      *2.0e0_R8,R4)
           enddo
         enddo
       else
@@ -279,4 +282,4 @@
 *-----------------------------------------------------------------------
 *.end b2yv
 
-      end
+      end program b2yv

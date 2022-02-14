@@ -12,16 +12,9 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
-ifndef SOLPS_CPP
-EQUIVS += -DGFORTRAN
-endif
+DEFINES += -DDOFLUSH
 
-CPP = /lib/cpp -traditional -DNO_IEEE
-CPPOPTS = -P -I${srcdir} ${EQUIVS}
-SED = sed s:\#PREC\#:d:g
-SED =
-LINK_MOD = 
+CPP = /lib/cpp -traditional
 
 ifdef USE_MPI
 FC = mpif90
@@ -33,61 +26,7 @@ FC = gfortran
 endif
 endif
 
-ifdef SOLPS_DEBUG
-FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
-else
-FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
-endif
-
-ifdef IMAS_VERSION
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-gfortran ggd --libs`
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-gfortran --libs` -lggd-gfortran
-else
-GGD_MINOR_VERSION ?= 0
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
-endif
-endif
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
-endif
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran
-IMASLIBS = ${LD_UAL}
-endif
-
-DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
-DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
-
-INCMOD = -B
-MOD = mod
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
-endif
-
-LD = $(FC)
-# LDOPTS = -Bstatic
-
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

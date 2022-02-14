@@ -23,15 +23,16 @@ c  version : 27.07.2000 22:52
      .  wldnm_res(nmol,nsgmx),     !incident molecule flux
      .  ewlda_res(natm,nsgmx),     !incident energy flux of atoms
      .  ewldm_res(nmol,nsgmx),     !incident energy flux of molecules
+     .  ewldt_res(nsgmx),          !total energy wall load from Eirene particles
      .  ewldea_res(natm,nsgmx),    !emitted energy flux of atoms
      .  ewldem_res(nmol,nsgmx),    !net incident energy flux due of molecules
      .  ewldrp_res(nsgmx),         !kinetic energy of reflected neutrals originated from ions
-     .  ewldmr_res(nmol,nsgmx),    !energy due to recombination of atoms into molecules
+     .  ewldmr_res(nmol,nsgmx),    !energy due to recombination of atoms and atomic ions into molecules
      .  wldspt_res(nsgmx),         !flux of sputtered wall material
      .  wldspta_res(natm,nsgmx),   !sputtered flux for each type of emitted atom
      .  wldsptm_res(nmol,nsgmx),   !sputtered flux for each type of emitted molecule
-     .  wlpump(nspz,nlimps),       ! pumped flux for each type of pumped particle
-     .  wlpump_res(nspz,nsgmx),    ! pumped flux for each type of pumped particle
+     .  wlpump(nspz,nlimps),       !pumped flux for each type of pumped particle
+     .  wlpump_res(nspz,nsgmx),    !resolved pumped flux for each type of pumped particle
      .  sarea_res(nsgmx)           !area of the surface elements
 
 CVK NEUTRAL FLUXES, SPATIALLY RESOLVED ON NON-DEFAULT STANDARD SURFACES (NDS)
@@ -68,7 +69,6 @@ C
 
       integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype(nlimps)
       integer lkindp(npls), lkindm(nmol), lkindi(nion)
-      logical lhalpha,lvib
 c
       common /eirdiag/ dab2,dmb2,dib2,tab2,tmb2,tib2,
      1 rfluxa,rfluxm,refluxa,refluxm,
@@ -77,14 +77,13 @@ c
      4 srcml,edissml,wldnek,wldnep,wldna,ewlda,wldnm,ewldm,wldra,wldrm,
      5 wldpp,wldpa,wldpm,wldpeb,wldspt,wldspta,wldsptm,
      6 wlarea, wlabsrp, wlpump,
-     7 wldna_res, wldnm_res, ewlda_res, ewldm_res, wldspt_res,
+     7 wldna_res, wldnm_res, ewlda_res, ewldm_res, ewldt_res, wldspt_res,
      8 ewldea_res, ewldem_res, ewldrp_res, ewldmr_res, sarea_res,
      9 wldspta_res, wldsptm_res, wlpump_res,
      i nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype,
      2 lkindp,lkindm,lkindi,
      3 eirdiag_nds_ind,eirdiag_nds_typ,eirdiag_nds_srf,
      4 eirdiag_nds_start,eirdiag_nds_end,
-     l lhalpha,lvib,
      c eirtxt
 c
 #ifndef NO_SAVE
@@ -96,7 +95,7 @@ c***	srcml	:   power loss due to molecules, including
 c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
 c***	wldnek	:   heat transferred with neutrals
-c***	wldnep	:   potential energy released by neutrals
+c***	wldnep	:   energy released by recombination into molecules
 c***	wldna	:   flux of atoms impinging onto the surface
 c***	ewlda	:   their average energy
 c***	wldnm	:   flux of molecules impinging onto the surface

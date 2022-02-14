@@ -1,10 +1,13 @@
-      subroutine b2txsy (nx, ny, vol, hy, qz, fun, funsy)
+      subroutine b2txsy (nx, ny, vol, hy, fun, funsy)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     *   vol(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  fun(-1:nx,-1:ny), funsy(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXSY computes the integrals over cell y-faces of a function
@@ -13,10 +16,7 @@
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer ix, iy
-      real (kind=R8) ::
-     *   hy1
-      external subini, subend, b2xxgs
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsy')
 *   ..compute funsy
@@ -38,4 +38,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txsy

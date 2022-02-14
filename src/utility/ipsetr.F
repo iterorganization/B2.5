@@ -15,4 +15,4 @@
       call ipsetc (cnam, cval0)
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine ipsetr

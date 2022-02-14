@@ -3,11 +3,12 @@
       use b2mod_geo
       use b2mod_movies
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
-      real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
+#     include <netcdf.inc>
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #else
@@ -16,8 +17,8 @@
 #endif
 #endif
       integer :: status
-      integer :: idim, ivar, iatt, iret, ib, it, ih, idum,
-     1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
+      integer :: idim, ivar, iatt, ib, it, ih, idum,
+     1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
      4 index(NF_MAX_VAR_DIMS)
@@ -32,12 +33,10 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_movies_cdf')
       write(*,*) 'b2co_movies_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2movies.nc file
@@ -126,14 +125,14 @@ c prepare the b2movies.nc.xxxx file
       extension='xxxx'
 #else
 #ifdef NAGFOR
-        call get_environment_variable('PLASMASTATE',
-     .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('PLASMASTATE',value=plasmastate)
-          extension=plasmastate(lenval-3:lenval)
-        elseif (ierror.eq.1) then
-          extension='xxxx'
-        endif
+      call get_environment_variable('PLASMASTATE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        extension=plasmastate(lenval-3:lenval)
+      elseif (ierror.eq.1) then
+        extension='xxxx'
+      endif
 #else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)

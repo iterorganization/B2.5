@@ -12,13 +12,23 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DNO_PROCESS -DNO_CDF
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+
+DEFINES += -DNO_CDF
 ifndef SOLPS_CPP
-EQUIVS += -DNAGFOR
+DEFINES += -DNAGFOR
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = /afs/ipp-garching.mpg.de/@sys/bin/f90
@@ -26,9 +36,14 @@ FCOPTS = -O -Nl99 -x77 # -mismatch
 INCMOD = -I
 MOD = mod
 
+ifdef USE_OPENMP
+FCOPTS += -openmp
+endif
+
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST

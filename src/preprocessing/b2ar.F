@@ -3,6 +3,7 @@
 
       program b2ar
       use b2mod_types
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -105,7 +106,7 @@
       integer io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
       external b2ardr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54/

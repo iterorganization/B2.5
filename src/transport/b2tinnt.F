@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tinnt (nx, ny, ns, facdrift, fac_ExB,
-     &       ismain, ismain0, vol, gs, hx, hy, qz, qc, bb,               !srv 08.07.09 { !srv 20.10.17
+     &       vol, gs, hx, hy, qz, qc, bb,                                !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin)                         !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_indirect
@@ -13,17 +13,20 @@
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, ismain0
+      integer nx, ny, ns                                                  !som 04.11.21
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                       !srv 20.10.17
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
+     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1), 
+     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
      & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -38,17 +41,18 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-     
+
 *   ..local variables
       integer, save :: pot_eq = 1                                         !srv 26.07.06
       integer, save :: mode = 1
       integer, save :: iout = 0
       integer, save :: use_eirene, area_fix
       integer, save :: fchin_in_core = 0                                  !srv 16.11.17
-      integer n2, ix, iy, is, is0, iamain
+      integer, save :: no_current = 0
+      integer n2, ix, iy, is, is0, ia                                     !som 04.11.21
 #ifdef B25_EIRENE
-      integer ia, im
-      character chns*3
+      integer im
+      character chns*3, chns0*3                                           !som 04.11.21
 #endif
       integer, save :: ncall = 0, style = 1
       real (kind=R8), save :: fch_ion_neutral = 0.0_R8
@@ -59,13 +63,12 @@
      *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
+     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny),
+     &   csigia(-1:nx,-1:ny,0:1),                                         !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
+      real (kind=R8) :: mu                                                !som 05.11.21
 *   ..procedures
-      real (kind=R8) ::
-     *   hy1                                                              !srv 07.07.14
-      external subini, subend, ipgeti, xertst
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                  !srv 07.07.14
+      external ipgeti, xertst
 *   ..initialisation
       data use_eirene/0/, area_fix/3/
 *-----------------------------------------------------------------------
@@ -84,6 +87,7 @@
         call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
         call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
         call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
+        call ipgeti ('b2tfhe_no_current', no_current)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -93,12 +97,13 @@
       facdriftm = maxval(facdrift)                                        !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
+     &               .and. no_current.eq.0
      .               .and. fch_ion_neutral .ne. 0.0e0_R8) then            !srv 26.07.06 01.07.99
         if (use_eirene.ne.0) then
           fchin = 0.0e0_R8                                                !srv 15.02.11 {
 *   ..calculate section
 ! From 5.2: Using the diffusivity of room temperature hydrogen gas
-          sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)
+!         sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)
 ! From 5.0/5.1: Using the CX rate
 !        k = 0
 !        found = .false.
@@ -111,11 +116,20 @@
 !     &       expu(rlcx(ix,iy,0,ismain,k)+rlcx(ix,iy,1,ismain,k)*t0)
 !        else go back to diffusivity relation
 *   ..calculate sigin
-          call xertst(is_neutral(ismain0),
-     .   'ismain0 not a neutral species!')
-          call xertst(nint(zn(ismain)).eq.1.and.nint(zn(ismain0)).eq.1,
-     .   'ion-neutral current computation only supported for H/D/T !') 
-          iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
+!         call xertst(is_neutral(ismain0),
+!    .   'ismain0 not a neutral species!')
+!         call xertst(nint(zn(ismain)).eq.1.and.nint(zn(ismain0)).eq.1,
+!    .   'ion-neutral current computation only supported for H/D/T !')
+!         iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
+         do is0 = 0, ns-1                                                 !som 04.11.21 {
+          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then 
+           ia = b2eatcr(is0)           ! ia should correspond to atom of hydrogen isotope
+           do is = 0, ns-1
+            if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then 
+
+            mu=am(is)*am(is0)/(am(is)+am(is0))                            !som 05.11.21
+            sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)*sqrt(1.0_R8/mu)
+
 !*   ..get density in the guard cells (boundaries)
 !      do ix = -1, nx
 !       do iy = -1, ny
@@ -143,18 +157,18 @@
 !        endif
 !       enddo
 !      enddo
-          sigi(:,:) = am(ismain)*mp*na(:,:,ismain)*sec/
-     .                              (2.0_R8*bb(:,:,3)**2)
+          sigi(:,:) = mu*mp*na(:,:,is)*sec/                               !som 05.11.21
+     .                              (bb(:,:,3)**2)
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)
-          sigia(:,:) = sigi(:,:)*dab2(0:nx+1,0:ny+1,iamain,1)
+          sigia(:,:) = sigi(:,:)*dab2(0:nx+1,0:ny+1,ia,1)                 !som 04.11.21
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
      &                                             csigia(-1,-1,0))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigi,
      &                                             csigia(-1,-1,1))
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
-     &                                 csigin(-1,-1,0,ismain,ismain0))
+     &                                 csigin(-1,-1,0,is,is0))            !som 04.11.21
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigia,
-     &                                 csigin(-1,-1,1,ismain,ismain0))
+     &                                 csigin(-1,-1,1,is,is0))            !som 04.11.21
           if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face
             call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
@@ -162,28 +176,28 @@
           else
 *   ..interpolate na in the left and bottom cell face
            call intfaceh(nx, ny, leftix, leftiy, vol,
-     *                 na(-1,-1,ismain), nal(-1,-1,ismain))
+     *                 na(-1,-1,is), nal(-1,-1,is))                       !som 04.11.21
            call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                 na(-1,-1,ismain), nab(-1,-1,ismain))
+     &                 na(-1,-1,is), nab(-1,-1,is))                       !som 04.11.21
           endif
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
 *      ..get fluxes divided by area
           do iy=-1,ny
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2) then
-                fnan(ix,iy,0,ismain0)=pfluxa(ix+1,iy+1,iamain,1) !/gs(ix,iy,0)
+                fnan(ix,iy,0,is0)=pfluxa(ix+1,iy+1,ia,1) !/gs(ix,iy,0)    !som 04.11.21
               else
-                fnan(ix,iy,0,ismain0)=0.0_R8
+                fnan(ix,iy,0,is0)=0.0_R8
               endif
               if(bottomiy(ix,iy).ne.-2) then
-                fnan(ix,iy,1,ismain0)=rfluxa(ix+1,iy+1,iamain,1) !/gs(ix,iy,1)
+                fnan(ix,iy,1,is0)=rfluxa(ix+1,iy+1,ia,1) !/gs(ix,iy,1)    !som 04.11.21
               else
-                fnan(ix,iy,1,ismain0)=0.0_R8
+                fnan(ix,iy,1,is0)=0.0_R8
               endif
             enddo
           enddo
 *       ..get fluxes in the cell centre
-          fnac(:,:,:,ismain0) = fnan(:,:,:,ismain0)
+          fnac(:,:,:,is0) = fnan(:,:,:,is0)                               !som 04.11.21
 
 !!! These mapping routines seems to be not necessary here, since [rp]flux[am]
 !!! comes already in cell centers                         ! IYS 27.01.2017
@@ -198,23 +212,23 @@
 !        call intfaceh(nx,ny,leftix,leftiy,vol,vntrc(-1,-1,0),vntrl)
 
 *      ..interpolate fluxes in the cell face
-          call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,ismain0),
-     &                                        fnan(-1,-1,0,ismain0))
+          call intfaceh(nx,ny,leftix,leftiy,vol,fnac(-1,-1,1,is0),
+     &                                          fnan(-1,-1,0,is0))        !som 04.11.21
           if(style.eq.0) then
             do iy=0,ny-1
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then
                   fchin(ix,iy,0)=fchin(ix,iy,0)+
-     &              csigin(ix,iy,0,ismain,ismain0)*(
+     &              csigin(ix,iy,0,is,is0)*(                              !som 04.11.21
      &            ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &              -(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
-     &               +til(ix,iy)*(log(na(ix,iy,ismain))-
-     &                    log(na(leftix(ix,iy),leftiy(ix,iy),ismain))))/
-     &                     (qe*rza(ix,iy,ismain)) )*
+     &               +til(ix,iy)*(log(na(ix,iy,is))-
+     &                    log(na(leftix(ix,iy),leftiy(ix,iy),is))))/
+     &                     (qe*rza(ix,iy,is)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
@@ -224,17 +238,17 @@
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then
                   fchin(ix,iy,0)=fchin(ix,iy,0)+
-     &              csigin(ix,iy,0,ismain,ismain0)*(
+     &              csigin(ix,iy,0,is,is0)*(                              !som 04.11.21
      &             ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
-     &               -(na(ix,iy,ismain)*ti(ix,iy)-
-     &              na(leftix(ix,iy),leftiy(ix,iy),ismain)*
+     &               -(na(ix,iy,is)*ti(ix,iy)-
+     &              na(leftix(ix,iy),leftiy(ix,iy),is)*
      &              ti(leftix(ix,iy),leftiy(ix,iy)))/
-     &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )*
+     &              (nal(ix,iy,is)*qe*rza(ix,iy,is)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &         +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &        +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)*
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -248,20 +262,20 @@
 
 *      ..interpolate fluxes in the cell face
           call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                   fnac(-1,-1,0,ismain0), fnan(-1,-1,1,ismain0))
+     &                   fnac(-1,-1,0,is0), fnan(-1,-1,1,is0))
           if(style.eq.0) then
             do iy=0,ny
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
                   fchin(ix,iy,1)=fchin(ix,iy,1)+
-     &              csigin(ix,iy,1,ismain,ismain0)*(
+     &              csigin(ix,iy,1,is,is0)*(                              !som 04.11.21
      &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &            -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
-     &              tib(ix,iy)*(log(na(ix,iy,ismain))-
-     &                  log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain)))
-     &              )/(qe*rza(ix,iy,ismain))
+     &              tib(ix,iy)*(log(na(ix,iy,is))-
+     &                log(na(bottomix(ix,iy),bottomiy(ix,iy),is))))/
+     &              (qe*rza(ix,iy,is))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,is0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -273,14 +287,14 @@
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
                   fchin(ix,iy,1)=fchin(ix,iy,1)+
-     &              csigin(ix,iy,1,ismain,ismain0)*(  ! csigia(ix,iy,1)*(
+     &              csigin(ix,iy,1,is,is0)*(  ! csigia(ix,iy,1)*(         !som 04.11.21
      &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     &            -(na(ix,iy,ismain)*ti(ix,iy)-
-     &                      na(bottomix(ix,iy),bottomiy(ix,iy),ismain)*
+     &            -(na(ix,iy,is)*ti(ix,iy)-
+     &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
+     &             (nab(ix,iy,is)*qe*rza(ix,iy,is))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,is0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -288,6 +302,10 @@
               enddo
             enddo
           endif                                                           !srv 15.02.11 }
+            endif
+           enddo
+          endif
+         enddo                                                            !som 04.11.21 }
 
           if(fchin_in_core.eq.0) then                                     !srv 16.11.17 {
             do iy=-1,ny
@@ -302,12 +320,15 @@
         else
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then
-*    ..test sign of ne, te, csigin, chce
+*    ..test sign of ne, te, chce
             call b2xvsg (n2, te, 1, 'te', '.gt.')
-            call b2xvsg (n2*2*ns*ns, csigin, 1, 'csigin', '.ge.')
-*    ..test edge values of csigin
+*    ..test edge values and sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
+                call b2xvsg (n2, csigin(-1,-1,0,is,is0), 1, 'csigin',
+     .            '.ge.')
+                call b2xvsg (n2, csigin(-1,-1,1,is,is0), 1, 'csigin',
+     .            '.ge.')
                 call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
               enddo
             enddo
@@ -470,12 +491,26 @@
        call my_out(70,nx,ny,sigia,'b2tinnt_sigia')
        call my_out(70,nx,ny,csigia(-1,-1,0),'b2tinnt_csigiax')
        call my_out(70,nx,ny,csigia(-1,-1,1),'b2tinnt_csigiay')
-       call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),
-     &                                      'b2tinnt_csiginx')
-       call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),
-     &                                      'b2tinnt_csiginy')
-       call my_out(70,nx,ny,fnan(-1,-1,0,ismain0),'b2tinnt_fnanx')
-       call my_out(70,nx,ny,fnan(-1,-1,1,ismain0),'b2tinnt_fnany')
+       do is0 = 0, ns-1                                                   !som 04.11.21 {
+        if (is_neutral(is0).and.nint(zn(is0)).eq.1) then 
+         write (chns0,'(i3.3)') is0
+         do is = 0, ns-1
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
+           write (chns,'(i3.3)') is
+           call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),
+     &                                      'b2tinnt_csiginx'
+     &                                       //chns//'_'//chns0)
+           call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),
+     &                                      'b2tinnt_csiginy'
+     &                                       //chns//'_'//chns0)
+          endif
+         enddo
+         call my_out(70,nx,ny,fnan(-1,-1,0,is0),'b2tinnt_fnanx'
+     &                                       //chns0)
+         call my_out(70,nx,ny,fnan(-1,-1,1,is0),'b2tinnt_fnany'
+     &                                       //chns0)
+        endif
+       enddo                                                              !som 04.11.21 }
        call my_out(70,nx,ny,fchin(-1,-1,0),'b2tinnt_fchinx')
        call my_out(70,nx,ny,fchin(-1,-1,1),'b2tinnt_fchiny')
 !       call my_out(70,nx,ny,vntrc(-1,-1,0),'b2tinnt_vntrcx')
@@ -491,4 +526,4 @@
 *-----------------------------------------------------------------------
 *.end b2tinnt
 
-      end
+      end subroutine b2tinnt

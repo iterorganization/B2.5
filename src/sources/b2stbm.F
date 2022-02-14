@@ -14,6 +14,8 @@
       use b2mod_impgyro
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
+      use b2mod_geo
+     , , only : divide_by_poloidal_areas
       use b2mod_sources
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
@@ -21,8 +23,9 @@
      1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
      2          b2stbm_shi0to3, balance_netcdf
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -74,7 +77,7 @@
 *   ..procedures
       real (kind=R8) ::
      * smin, smax
-      external subini, subend, xertst, sfill,
+      external xertst, sfill,
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
 *   ..initialisation
@@ -105,9 +108,11 @@
       endif !}
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -219,8 +224,8 @@ cxpb Must convert fluxes to flux densities
         else
           na0(:,:,is) = na(:,:,is)
           ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
-          fna0(:,:,0,is) = fna(:,:,0,is)/gs(:,:,0)/qc(:,:)
-          fna0(:,:,1,is) = fna(:,:,1,is)/gs(:,:,1)
+          call divide_by_poloidal_areas(nx,ny,fna(-1,-1,0,is),
+     .                                       fna0(-1,-1,0,is))
         end if
       end do
       do is = 1, nnmoli
@@ -246,16 +251,11 @@ cxpb Must convert fluxes to flux densities
           ti0(ix,iy) = (ti0(ix,iy) + 
      .                  ti(ix,iy)*ni(ix,iy,0)) /
      .                 (na_tot(ix,iy) + ni(ix,iy,0))
-          fhi0(ix,iy,0) = fhi0(ix,iy,0) + 
-     .     fhi(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fhi0(ix,iy,1) = fhi0(ix,iy,1) + 
-     .     fhi(ix,iy,1)/gs(ix,iy,1)
-          fhe0(ix,iy,0) = fhe(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fhe0(ix,iy,1) = fhe(ix,iy,1)/gs(ix,iy,1)
-          fch0(ix,iy,0) = fch(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fch0(ix,iy,1) = fch(ix,iy,1)/gs(ix,iy,1)
         end do
       end do
+      call divide_by_poloidal_areas(nx,ny,fhi,fhi0)
+      call divide_by_poloidal_areas(nx,ny,fhe,fhe0)
+      call divide_by_poloidal_areas(nx,ny,fch,fch0)
 
       if (ncall.eq.0 .or.
      & (main_call .and. mod(ncall,impgyro_mod).eq.0)) then
@@ -305,7 +305,7 @@ cxpb And then derive: ua_ext
          if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
      .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
 cxpb Computing ua from fa is what we really want to do
-         if (.false.) then
+         if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,ny
             do ix=-1,nx
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
@@ -470,6 +470,16 @@ cxpb
           end if
         end do
       end do
+
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
 
       b2stbm_sna(:,:,:)=sna0(:,:,0,:)+sna0(:,:,1,:)*na(:,:,:)
       b2stbm_smo(:,:,:)=smo0(:,:,0,:)+smo0(:,:,1,:)*ua(:,:,:)

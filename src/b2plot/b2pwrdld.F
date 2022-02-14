@@ -7,22 +7,26 @@ c*** Calculates radiation load onto the specified wall sections
 c*** The list of the wall segments is to be specified in lwldrad
 c======================================================================
       use b2mod_types
+      use b2mod_geo
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_sources
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
 #     include "DIMENSIONS.F"
 #     include "rdload.inc"
-      integer i,j,k,l,m,is,ix,iy,n_hlperr,iatm,
+      integer i,j,k,l,m,is,ix,iy,n_hlperr,iatm,imol,iion,
      ,        l_errt(nsgmx),l_errs(nsgmx)
       real (kind=R8) ::
      *   u
 #ifdef DBG
       integer lun_w
-      parameter (lun_w=76)
+      parameter (lun_w=96)
       character tab
 #endif
 c======================================================================
@@ -59,7 +63,9 @@ c
       print *,'lbnd(i):'
       print '(20i4)',(lbnd(i),i=1,nplgs)
       print *,'luwrk:'
-      print '(20i4)',luwrk
+      print '(20i4)',(luwrk(i),i=1,nsgmx)
+      print *,'lewrk:'
+      print '(20i4)',(lewrk(i),i=1,nsgmx)
 #endif
 
       k=0
@@ -89,10 +95,10 @@ c
       print '(20i4)',(ltrg(i),i=1,ntrg)
 
       open(lun_w,file='layout-w.dat')
-      write(lun_w,'(6a)') '#Wall layout : ',label
-      write(lun_w,'(6a)') '#R',tab,'Z'
+      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+      write(lun_w,'(3a)') '# R',tab,'Z'
       do i=1,nplgs
-        write(lun_w,*) xp(i),tab,yp(i)
+        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
       end do
       close(lun_w)
 #endif
@@ -110,6 +116,12 @@ c
           end do
           do is=1,natmi
             u=u-eneutrad(ix+1,iy+1,is,0)
+          end do
+          do is=1,nmoli
+            u=u-emolrad(ix+1,iy+1,is,0)
+          end do
+          do is=1,nioni
+            u=u-eionrad(ix+1,iy+1,is,0)
           end do
           k=k+1
           ssrcm(k)=u
@@ -145,6 +157,8 @@ c
       call rlcomp
 c      write(*,*) 'b2pwrdld: after rlcomp'
       write(*,*)   '  Total radiation         : ',ttsrc
+      if (add_rad.gt.0.0_R8)
+     >  write(*,*) '(of which add. core rad.) : ',add_rad*1.0e6
       if (irdparm.eq.1) then
         write(*,*) '  Reaching the targets    : ',tttrg
       else if (irdparm.eq.2) then
@@ -204,6 +218,18 @@ c*** Calculate the radiation load split by impurity species from B2
                 if (latmscl(iatm).eq.j)
      >            ssrcm(k)=ssrcm(k)-eneutrad(ix+1,iy+1,iatm,0)
               end do !}
+              do imol=1,nmoli !{
+                iatm = lmolscl(imol)
+                if (iatm.eq.0) cycle
+                if (latmscl(iatm).eq.j)
+     >            ssrcm(k)=ssrcm(k)-emolrad(ix+1,iy+1,imol,0)
+              end do !}
+              do iion=1,nioni !{
+                iatm = lionscl(iion)
+                if (iatm.eq.0) cycle
+                if (latmscl(iatm).eq.j)
+     >            ssrcm(k)=ssrcm(k)-eionrad(ix+1,iy+1,iion,0)
+              end do !}
               do is=eb2spcr(j),eb2spcr(j)+nfluids(j)
                 ssrcm(k)=ssrcm(k)+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
               end do
@@ -232,13 +258,14 @@ c*** Calculate the radiation load split by impurity species from B2
       end if !}
 
 #ifdef DBG
-        print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
+      print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
 #endif
       if(ildparm.eq.98 .and. nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then !{
 
 c*** Calculate the radiation load from the core sources
 
-        write(*,*) '  Extra radiation from the core: ',1.0e6_R8*add_rad
+        write(*,*) '  Extra radiation from the core       : ',
+     .   1.0e6_R8*add_rad
         do i=1,nplgs !{
           radld(i)=0.0_R8
         end do !}
@@ -252,8 +279,10 @@ c*** Calculate the radiation load from the core sources
         end do !}
         nsrc=k
         call rlcomp
-        write(*,*) '  Total radiation      : ',ttsrc
-        write(*,*) '  Reaching the targets : ',tttrg
+#ifdef DBG
+        write(*,*) '  Total additional core radiation     : ',ttsrc
+#endif
+        write(*,*) '  Core radiation reaching the targets : ',tttrg
         k=0
         is=1
         do i=1,nwldrad !{

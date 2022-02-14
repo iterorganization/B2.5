@@ -29,7 +29,7 @@ c
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
-      real (kind=R8), allocatable ::  RADARR(:,:)
+      real (kind=R8), allocatable :: RADARR(:,:)
       real (kind=R8), allocatable :: 
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
@@ -107,7 +107,7 @@ c
       integer i, is, iss
       character*18 hlp_frm
       logical streql
-      external streql
+      external streql, ipgeti, xertst, xerrab
 
       call xertst(1.le.nxd, 'faulty input nxd')
       call xertst(1.le.nyd, 'faulty input nyd')

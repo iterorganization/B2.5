@@ -1,23 +1,24 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
-     &  floi, coni)
+      subroutine b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+     &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),           !srv 02.01.07
-     &  floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)             !srv 02.01.07
+     *  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),               !srv 02.01.07
+     &  floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)                !srv 02.01.07
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.declarations
@@ -28,7 +29,7 @@
      *   xfac
       save ncall, xfac
 *   ..procedures
-      external subini, subend, xertst, ipgetr
+      external xertst, ipgetr
       external b2xvsg, b2xvff
 *   ..initialisation
       data ncall/0/, xfac/1.0_R8/
@@ -51,8 +52,9 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test edge values of cdpa
+*    ..test sign and edge values of cdpa
        do is = 0, ns-1
+        call b2xvsg (n2*2*ns, cdpa, 1, 'cdpa', '.ge.')
         call b2xvff (nx, ny, cdpa(-1,-1,0,is), 'cdpa')
        enddo
 *    ..test edge values of floe, cone, floi, coni
@@ -64,8 +66,7 @@
        call b2xvff (nx, ny, coni(-1,-1,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
        call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                !srv 02.01.07 }
-*    ..test sign of cdpa, cone, coni
-       call b2xvsg (n2*2*ns, cdpa, 1, 'cdpa', '.ge.')
+*    ..test sign of cone, coni
        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')
        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')
       endif
@@ -106,6 +107,7 @@
         enddo
        enddo
       enddo
+
 *   ..correct y-components
       do is = 0, ns-1
        do iy = -1, ny
@@ -150,4 +152,4 @@
 *-----------------------------------------------------------------------
 *.end b2tfcc
 
-      end
+      end subroutine b2tfcc

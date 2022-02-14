@@ -70,15 +70,17 @@
 
 *   ..local variables
 #ifdef WINDOWS
-      integer(2) ::  iresult
-      logical(4) ::  lresult
+      integer(2) :: iresult
+      logical(4) :: lresult
+#else
+#ifdef NAGFOR
+      integer status, ierror
 #endif
-      logical(4) ::  b2fstate_exist
+#endif
+      logical(4) :: b2fstate_exist
       integer npoint
       real (kind=R8) :: cpu_s, cpu_f, func, fcain, fab, shift
       character*12 hlp_frm
-*   ..procedures
-!      external xerset, xertst
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -134,11 +136,20 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
       endif
 #else
+#ifdef NAGFOR
+      call system('./B2mnOpt.exe', status, ierror)
+#else
       call system('./B2mnOpt.exe')
+#endif
       inquire(file='b2fstate',exist=b2fstate_exist)
       if(b2fstate_exist) then
+#ifdef NAGFOR
+       call system('rm b2fstati', status, ierror)
+       call system('cp b2fstate b2fstati', status, ierror)
+#else
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
+#endif
       endif
 #endif	 
       call cpu_time(cpu_f)
@@ -299,13 +310,13 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       logical(1) :: l_ne_outer_mdpl
       character(*) :: fnm_ne_outer_mdpl
       integer :: ny, npoint, ndat_ne, number_exp
-      real (kind=R8) ::  func, dif(1:number_exp),
+      real (kind=R8) :: func, dif(1:number_exp),
      &   cy_ne_outer_mdpl(-1:ny), 
      &   ne_outer_mdpl_mod(-1:ny), b_ne_outer_mdpl_mod(-1:ny),
      & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
      & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)  
       
-      integer ::  iy
+      integer :: iy
       real (kind=R8) :: nemod, dseval
       character(128) :: fmt 
 

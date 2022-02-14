@@ -24,19 +24,24 @@ module b2mod_ual_io_data
 #ifdef IMAS
 #if IMAS_MINOR_VERSION > 11
 #if IMAS_MINOR_VERSION > 14
-    use b2mod_ual_io_grid &
+    use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #else
-    use b2mod_ual_io_grid &
+    use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_dynamic
 #endif
+    use ids_schemas &  ! IGNORE
+     & , only : IDS_real
+    use ids_grid_object &  ! IGNORE
+     & , only : GridObject
     use b2mod_ual_io_grid &
-     & , only : IDS_real, GridObject, &
-     &          getGridSubsetObject, SPACE_POLOIDALPLANE, &
-     &          GridWriteData, IDS_CLASS_CELL, IDS_CLASS_NODE, &
-     &          IDS_CLASS_POLOIDALRADIAL_FACE
-    use ids_grid_subgrid  & ! IGNORE
-     & , only : getGridSubsetSize
+     & , only : SPACE_POLOIDALPLANE, &
+     &          IDS_CLASS_CELL, IDS_CLASS_NODE, &
+     &          IDS_CLASS_POLOIDALRADIAL_EDGE
+    use ids_grid_subgrid  &    ! IGNORE
+     & , only : getGridSubsetObject, getGridSubsetSize
+    use ids_grid_structured &  ! IGNORE
+     & , only : GridWriteData
 
     implicit none
 
@@ -52,7 +57,7 @@ contains
     !! Below here: service routines to transform data from B2 to IMAS IDS
 
     !> Transform data from B2 to IDS cell
-    function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetId, gmap,  &
+    function b2_IMAS_Transform_Data_B2_To_IDS_Cell( grid, gridSubsetInd, gmap,  &
             &   b2CellData ) result( idsdata )
 #if IMAS_MINOR_VERSION > 14
         type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
@@ -61,21 +66,21 @@ contains
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
-        integer, intent(in) :: gridSubsetId !< ID (base index) of the
+        integer, intent(in) :: gridSubsetInd !< Index of the
             !< grid subset the data is to be stored on
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        real(IDS_real), intent(in)  :: b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )
+        real(IDS_real), intent(in) :: b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )
         real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handing data field values
+                !< handling data field values
 
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid,  &
-            &   gridSubsetId, gmap, b2CellData = b2CellData )
+            &   gridSubsetInd, gmap, b2CellData = b2CellData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Cell
 
     !> Transform data from B2 to IDS face
-    function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetId, gmap,  &
+    function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetInd, gmap,  &
             &   b2FaceData ) result( idsdata )
 #if IMAS_MINOR_VERSION > 14
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
@@ -84,26 +89,26 @@ contains
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
-        integer, intent(in) :: gridSubsetId !< ID (base index) of the
+        integer, intent(in) :: gridSubsetInd !< Index of the
             !< grid subset the data is to be stored on
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        real(IDS_real), intent(in) ::   &
+        real(IDS_real), intent(in) ::  &
             &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 )   !< Face data
-            !< given on the 2D B2 data structure
+            !< given on the 2-D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata !< Array for
-            !< handing data field values
+            !< handling data field values
 
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid,  &
-            &   gridSubsetId, gmap, b2FaceData = b2FaceData )
+            &   gridSubsetInd, gmap, b2FaceData = b2FaceData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Face
 
     !! TODO: find a way to include this subroutine in the
     !! b2_IMAS_Transform_Data_B2_To_IDS interface
 
     !> Transform data from B2 to IDS vertex
-    function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetId,   &
+    function b2_IMAS_Transform_Data_B2_To_IDS_Vertex( grid, gridSubsetInd,   &
             &   gmap, b2VertexData ) result( idsdata )
 #if IMAS_MINOR_VERSION > 14
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
@@ -112,25 +117,25 @@ contains
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
-        integer, intent(in)         :: gridSubsetId !< ID (base index) of the
+        integer, intent(in)         :: gridSubsetInd !< Index of the
             !< grid subset the data is to be stored on
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
             !< b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
         real(IDS_real), intent(in)  :: b2VertexData( -1:gmap%b2nx, -1:gmap%b2ny )
-            !< Array holding vertex coordinates (2D space)
+            !< Array holding vertex coordinates (2-D space)
         real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-            !< handing data field values
+            !< handling data field values
 
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,   &
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetInd,   &
             &   gmap, b2VertexData = b2VertexData )
     end function b2_IMAS_Transform_Data_B2_To_IDS_Vertex
 
-    !> Transform a quantity stored on faces from a 2d B2 array into a 1d IMAS
-    !! IDS array for a given grid subset id. Either b2CellData or b2FaceData
+    !> Transform a quantity stored on faces from a 2-D B2 array into a 1-D IMAS
+    !! IDS array for a given grid subset ID. Either b2CellData or b2FaceData
     !! must be given. Do not use this directly, use the provided general
     !! interface b2_IMAS_Transform_Data_B2_To_IDS instead.
-    function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetId,  &
+    function b2_IMAS_Transform_Data_B2_To_IDS_General( grid, gridSubsetInd,  &
             &   gmap, b2CellData, b2FaceData, b2VertexData ) result( idsdata )
 #if IMAS_MINOR_VERSION > 14
         type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
@@ -139,79 +144,82 @@ contains
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #endif
-        integer, intent(in) :: gridSubsetId !< Base grid subset index
+        integer, intent(in) :: gridSubsetInd !< Base grid subset index
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
         real(IDS_real), intent(in), optional :: &
             &   b2CellData( -1:gmap%b2nx, -1:gmap%b2ny )      !< Cell data given
-            !< on the 2D B2 data structure
+            !< on the 2-D B2 data structure
         real(IDS_real), intent(in), optional :: &
             &   b2FaceData( -1:gmap%b2nx, -1:gmap%b2ny, 0:1 ) !< Face data
-            !< given on the 2D B2 data structure
+            !< given on the 2-D B2 data structure
         real(IDS_real), intent(in), optional :: &
             &   b2VertexData( -1:gmap%b2nx, -1:gmap%b2ny )    !< Vertex data
-            !< given on the 2D B2 data structure
+            !< given on the 2-D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata      !< Array for
-            !< handing data field values
+            !< handling data field values
 
         !! Internal variables
-        integer :: nobjs    !< Total number of objects
-        integer :: iobj     !< Object index (iterator)
-        integer :: ifc      !< Face index
-        integer :: icv      !< Cell index
-        integer :: ivx      !< vertex index
+        integer :: nObjs    !< Total number of objects
+        integer :: iObj     !< Object index (iterator)
+        integer :: iFc      !< Face index
+        integer :: iCv      !< Cell index
+        integer :: iVx      !< vertex index
         type(GridObject) :: curObj
+
+        !! Procedures
+        external xertst
 
         !! .neqv. is xor (exclusive or)
         !! (http://de.wikibooks.org/wiki/Fortran:_Fortran_95:_Logische_Ausdr%C3%BCcke)
         !! TODO: FIX
         !call assert( present(b2CellData) .neqv. present(b2FaceData) )
         !! Allocate result vector according to grid subset size
-        nobjs = getGridSubsetSize( grid%grid_subset( gridSubsetId ) )
-        allocate( idsdata( nobjs ) )
+        nObjs = getGridSubsetSize( grid%grid_subset( gridSubsetInd ) )
+        allocate( idsdata( nObjs ) )
         !! Collect all data items for the grid subset objects
-        do iobj = 1, nobjs
+        do iObj = 1, nObjs
             !! Get the object descriptor
-            curObj = getGridSubsetObject( grid%grid_subset( gridSubsetId ), iobj )
+            curObj = getGridSubsetObject( grid%grid_subset( gridSubsetInd ), iObj )
             if( present( b2CellData ) ) then
                 !! Cell data case
                 !! check that it is a cell
                 call xertst( all( curObj%cls == IDS_CLASS_CELL ),   &
                     &   "Assert error 1 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
-                !! get the subobject index for the face in the 2d poloidal
+                !! get the subobject index for the face in the 2-D poloidal
                 !! plane space
-                icv = curObj%ind(SPACE_POLOIDALPLANE)
-                if( icv .eq. 0 ) then
-                   idsdata( iobj ) = 0.0 !! TODO DP skip when no index present
+                iCv = curObj%ind( SPACE_POLOIDALPLANE )
+                if( iCv .eq. 0 ) then
+                   idsdata( iObj ) = 0.0 !! TODO DP skip when no index present
                 else
                                 !! copy data
-                   idsdata( iobj ) =   &
-                      & b2CellData( gmap%mapCvix( icv ), gmap%mapCviy( icv ) )
+                   idsdata( iObj ) =   &
+                      & b2CellData( gmap%mapCvix( iCv ), gmap%mapCviy( iCv ) )
                 end if
             else if( present( b2FaceData ) ) then
                 !! Face data case
                 !! check that it is a face
                 call xertst( all( curObj%cls ==             &
-                    &   IDS_CLASS_POLOIDALRADIAL_FACE ),    &
+                    &   IDS_CLASS_POLOIDALRADIAL_EDGE ),    &
                     &   "Assert error 2 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
-                !! get the subobject index for the face in the 2d poloidal
+                !! get the subobject index for the face in the 2-D poloidal
                 !! plane space
-                ifc = curObj%ind( SPACE_POLOIDALPLANE )
+                iFc = curObj%ind( SPACE_POLOIDALPLANE )
                 !! copy data
-                idsdata( iobj ) = b2FaceData( gmap%mapFcix( ifc ),  &
-                    &   gmap%mapFciy( ifc ), gmap%mapFcIFace( ifc ) )
+                idsdata( iObj ) = b2FaceData( gmap%mapFcix( iFc ),  &
+                    &   gmap%mapFciy( iFc ), gmap%mapFcIFace( iFc ) )
             else if( present( b2VertexData )) then
                 !! Vertex/Node data case
                 !! check that it is a vertex
                 call xertst( all( curObj%cls == IDS_CLASS_NODE ),   &
                     &   "Assert error 3 in b2_IMAS_Transform_Data_B2_To_IDS_General!" )
-                !! get the subobject index for the face in the 2d poloidal
+                !! get the subobject index for the face in the 2-D poloidal
                 !! plane space
-                ivx = curObj%ind( SPACE_POLOIDALPLANE )
+                iVx = curObj%ind( SPACE_POLOIDALPLANE )
                 !! copy data
-                idsdata( iobj ) =   &
-                    &   b2VertexData( gmap%mapVxix( ivx ), gmap%mapVxiy( ivx ) )
+                idsdata( iObj ) =   &
+                    &   b2VertexData( gmap%mapVxix( iVx ), gmap%mapVxiy( iVx ) )
             end if
         end do
     end function b2_IMAS_Transform_Data_B2_To_IDS_General
@@ -270,15 +278,15 @@ contains
     cpodata => b2ITMTransformDataB2ToCPOGeneral( grid, subgridId, gmap, b2VertexData = b2VertexData )
   end function b2ITMTransformDataB2ToCPOVertex
 
-!> Transform a quantity stored on faces from a 2d B2 array into a 1d CPO array for a given
-!> subgrid id. Either b2CellData or b2FaceData must be given. Do not use this directly,
-!> use the provided general interface b2ITMTransformDataB2ToCPO instead.
+!> Transform a quantity stored on faces from a 2-D B2 array into a 1-D CPO array for a
+!> given subgrid ID. Either b2CellData or b2FaceData must be given. Do not use this
+!> directly, use the provided general interface b2ITMTransformDataB2ToCPO instead.
 !>
 !> @param grid The CPO grid description
-!> @param subgridId Id of the subgrid the data is to be stored on.
+!> @param subgridId ID of the subgrid the data is to be stored on.
 !> @param gmap The grid mapping as computed by b2ITMCreateMap
-!> @param b2CellData Cell data given on the 2d b2 data structure
-!> @param b2FaceData Face data given on the 2d b2 data structure
+!> @param b2CellData Cell data given on the 2-D B2 data structure
+!> @param b2FaceData Face data given on the 2-D B2 data structure
 
   function b2ITMTransformDataB2ToCPOGeneral( grid, subgridId, gmap, b2CellData, b2FaceData, b2VertexData ) result( cpodata )
     real(ITM_R8), dimension(:), pointer :: cpodata
@@ -291,7 +299,7 @@ contains
     real(ITM_R8), intent(in), optional :: b2VertexData(-1:gmap%b2nx, -1:gmap%b2ny)
 
     !! internal
-    integer :: nobjs, iobj, ifc, icv, ivx
+    integer :: nObjs, iObj, iFc, iCv, iVx
     type(GridObject) :: curObj
 
     !! .neqv. is xor (exclusive or)
@@ -300,41 +308,41 @@ contains
     !call assert( present(b2CellData) .neqv. present(b2FaceData) )
 
     !! Allocate result vector according to subgrid size
-    nobjs = gridSubGridSize( grid%subgrids(subgridId) )
-    allocate( cpodata(nobjs) )
+    nObjs = gridSubGridSize( grid%subgrids(subgridId) )
+    allocate( cpodata(nObjs) )
 
     !! Collect all data items for the subgrid objects
-    do iobj = 1, nobjs
+    do iObj = 1, nObjs
         !! Get the object descriptor
-        curObj = subGridGetObject( grid%subgrids(subgridId), iobj )
+        curObj = subGridGetObject( grid%subgrids(subgridId), iObj )
 
         if (present(b2CellData)) then
             !! Cell data case
             !! check that it is a cell
             call xertst( all( curObj%cls == CLASS_CELL(1:SPACE_COUNT) ), &
                 "Assert error 1 (cell test) in b2ITMTransformDataB2ToCPOGeneral" )
-            !! get the subobject index for the face in the 2d poloidal plane space
-            icv = curObj%ind(SPACE_POLOIDALPLANE)
+            !! get the subobject index for the face in the 2-D poloidal plane space
+            iCv = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
-            cpodata(iobj) = b2CellData( gmap%mapCvix(icv), gmap%mapCviy(icv) )
+            cpodata(iObj) = b2CellData( gmap%mapCvix(iCv), gmap%mapCviy(iCv) )
         else if (present(b2FaceData)) then
             !! Face data case
             !! check that it is a face
-            call xertst( all( curObj%cls == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) ), &
+            call xertst( all( curObj%cls == CLASS_POLOIDALRADIAL_EDGE(1:SPACE_COUNT) ), &
                 "Assert error 2 (face test) in b2ITMTransformDataB2ToCPOGeneral" )
-            !! get the subobject index for the face in the 2d poloidal plane space
-            ifc = curObj%ind(SPACE_POLOIDALPLANE)
+            !! get the subobject index for the face in the 2-D poloidal plane space
+            iFc = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
-            cpodata(iobj) = b2FaceData( gmap%mapFcix(ifc), gmap%mapFciy(ifc), gmap%mapFcIFace(ifc) )
+            cpodata(iObj) = b2FaceData( gmap%mapFcix(iFc), gmap%mapFciy(iFc), gmap%mapFcIFace(iFc) )
         else if (present(b2VertexData)) then
             !! Vertex/Node data case
             !! check that it is a vertex
             call xertst( all( curObj%cls == CLASS_NODE(1:SPACE_COUNT) ), &
                 "Assert error 3 (vertex test) in b2ITMTransformDataB2ToCPOGeneral" )
-            !! get the subobject index for the face in the 2d poloidal plane space
-            ivx = curObj%ind(SPACE_POLOIDALPLANE)
+            !! get the subobject index for the face in the 2-D poloidal plane space
+            iVx = curObj%ind(SPACE_POLOIDALPLANE)
             !! copy data
-            cpodata(iobj) = b2VertexData( gmap%mapVxix(ivx), gmap%mapVxiy(ivx) )
+            cpodata(iObj) = b2VertexData( gmap%mapVxix(iVx), gmap%mapVxiy(iVx) )
         end if
 
     end do

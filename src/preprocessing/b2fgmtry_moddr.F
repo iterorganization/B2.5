@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny
@@ -43,9 +44,9 @@
       external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
-      real (kind=R8), allocatable :: br(:,:,:), bz(:,:,:),qcdiff(:,:),
-     .           vldiff(:,:),sxdiff(:,:),hxdiff(:,:), hydiff(:,:)
-      real (kind=R8) :: pi, s213,r213,s143,r143, t0
+      real (kind=R8), allocatable :: br(:,:,:), bz(:,:,:), qcdiff(:,:),
+     .           vldiff(:,:), sxdiff(:,:), hxdiff(:,:), hydiff(:,:)
+      real (kind=R8) :: pi, s213, r213, s143, r143, t0
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -204,7 +205,8 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm=idum(0)
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       call cfrure (ninp(1), 100, parg, 'parg')
 
@@ -321,9 +323,7 @@
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
-     &  cell_width, cell_height)
+      call b2wugm (nout(1), nx, ny)
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
 
@@ -338,14 +338,6 @@
 * ..return
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.error conditions
-
-   91 call xerrab ('error trying to read heading *param')
-   92 call xerrab ('error trying to read parg')
-   93 call xerrab
-     1 ('error trying to read non-default internal parameters')
 
 *-----------------------------------------------------------------------
 *.end b2fgmtry_moddr

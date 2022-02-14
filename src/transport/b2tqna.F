@@ -2,10 +2,11 @@
 *.specification
 
       subroutine b2tqna (nx, ny, ns, nscx, iscx, bb, na,
-     &   te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,    !srv 15.12.05
+     &   te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,        !srv 15.12.05
      &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &   hvi0, hve0, wrk0)
       use b2mod_types
+      use b2mod_math
       use b2mod_rates
       use b2mod_transport_namelist
       use b2mod_input_profile
@@ -18,11 +19,14 @@
       use b2mod_ranges
       use b2mod_external
       use b2mod_neoclassical
+      use b2mod_geo
+     &                    , only : hy1
       use b2mod_geo_corner
      &                    , only : lengthy, nmdpl                 !srv 26.11.04
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
@@ -31,8 +35,7 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), conn(-1:ny),
-     &  qz(-1:nx,-1:ny,0:1)
+     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), conn(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
@@ -111,22 +114,18 @@
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
      1  dcx, dion, vcx, lcx, lion, din, dnn,
-     1  cutlo, cutll, poloidal_scale_factor
+     1  poloidal_scale_factor
       real (kind=R8) ::
-     *  t0, t1, min_df0, max_df0,
-     *  min_df0_tmp, max_df0_tmp, hy1(-1:nx,-1:ny)
+     *  min_df0, max_df0,
+     *  min_df0_tmp, max_df0_tmp
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
-      integer elm_count
       save ncall, new_df0, ixref, transport_namelist, user_transport,
-     1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
+     1  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
      2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno,
      3  neutral_sources_rescale
-      logical catch_up
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, sfill, machsfr, ipgeti, ipgetr
-      real (kind=R8) ::
-     *  expu, addup, machsfr
+      external sfill, ipgeti, ipgetr
 *   ..initialisation
       data ncall/0/, new_df0/0/, transport_namelist/0/, diagno/0/,
      1  user_transport/0/, transport_inputfile/0/,
@@ -134,9 +133,6 @@
      3  pfr_rescale/1.0_R8/, divsol_rescale/1.0_R8/,
      4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
      5  neutral_sources_rescale/1.0_R8/
-*   ..statement functions
-      addup(t0,t1)=t0+t1
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *-----------------------------------------------------------------------
 *.computation
 * ..preliminaries
@@ -161,28 +157,6 @@
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument b2tqna_ixref')
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
-        if(transport_namelist.eq.1) then
-          call alloc_transport_namelist(ns)
-          call read_b2mod_transport_namelist
-          call write_b2mod_transport_namelist
-          if(transport_time_mod.gt.0.0_R8) then
-            elm_count=tim/transport_time_mod
-          else
-            elm_count=0
-          endif
-          catch_up=transport_time_mod.gt.0.0_R8
-          do while(catch_up)
-            if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1       then
-              write(*,*) 'b2tqna: catching up ...'
-              call read_b2mod_transport_namelist
-              call write_b2mod_transport_namelist
-              catch_up=transport_time_mod.gt.0.0_R8
-            else
-              catch_up=.false.
-            endif
-          enddo
-        endif
         call ipgetr ('b2tqna_ballooning', ballooning)
         call ipgetr ('b2tqna_bb_ref', bb_ref)
         call ipgetr ('b2tqna_ballooning_rescale', ballooning_rescale)
@@ -199,18 +173,6 @@
         call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
         call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
-      else
-        if(transport_namelist.eq.1.and.
-     1   transport_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
-     1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
-            call read_b2mod_transport_namelist
-            call write_b2mod_transport_namelist
-          endif
-        endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -230,12 +192,10 @@
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
       endif
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..compute auxiliary wrk0
       do iy = -1, ny
        do ix = -1, nx
-        hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
         wrk0(ix,iy) = sqrt(ti(ix,iy)/mp)
        enddo
       enddo
@@ -491,17 +451,16 @@ cxpb Corrected for dimensionality
 c do nothing
       elseif(user_transport.eq.1) then
         call set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
-     &  wrk0)
+     &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, wrk0)
       elseif(user_transport.eq.2) then
         call set_transport_swy(nx, ny, ns,
      &   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
       elseif(user_transport.eq.3) then
         call set_transport_eta(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &   hy, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
+     &   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
       elseif(user_transport.eq.4) then
         call set_transport_xpb(nx, ny, ns, bb, na, ne, te, ti, ni,
-     &   hx, hy, qz, dna0, vla0)
+     &   hx, dna0, vla0)
 c mw added transport
       elseif(user_transport.eq.5) then
         call set_transport_mw(nx, ny, ns, ne, jsep, jxa,
@@ -510,19 +469,19 @@ c mw end
       elseif(user_transport.eq.6) then                                    !srv 13.06.08
 !! FIXME: Need to fix clash with ank blobby transport model
         call set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0,
+     &  hy, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0,
      &  alf0, wrk0)
 !! FIXME: in routines below, remove hvi0, hve0 ???
       elseif(user_transport.eq.7) then
         call set_transport_disruption(nx, ny, ns,
      1   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
-     2   na, ne, te, ti, crx, hy1)
+     2   na, ne, te, ti)
       elseif(user_transport.eq.8) then
         if(ncall.eq.0) then
           call alloc_b2mod_neoclassical(nx,ny,nsdecl,mmx)
         endif
-        call set_transport_neo(nx, ny, ns, hx, hy, vol, crx, cry,
-     &   conn, qz, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
+        call set_transport_neo(nx, ny, ns, hx, vol, crx, cry,
+     &   conn, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
      &   hci0, hcib, hce0, sig0, alf0, hvi0, hve0)
 c ank added blobby transport
 !! FIXME: Was user_transport.eq.6 in 4.x, 5.0/5.1
@@ -642,21 +601,22 @@ cdpc
       end subroutine b2tqna
 
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
-     &  wrk0)
+     &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, wrk0)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1)
+     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
@@ -676,10 +636,7 @@ cdpc
       save ncall, ixref, iyref, required_te_gradient,
      1  d_old, ratio
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
-      external ipgeti, ipgetr, xertst, b2xvsg
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+      external ipgeti, ipgetr, b2xvsg
 *   ..initialisation
       data ncall/0/, required_te_gradient/5.0e4_R8/
 
@@ -769,7 +726,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       end subroutine set_transport
 
       subroutine set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne,     !srv 12.06.08 {
-     &  ne2, hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0,
+     &  ne2, hy, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0,
      &  sig0, alf0, wrk0)
       use b2mod_types
       use b2mod_indirect
@@ -782,14 +739,14 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1)
+     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), hy(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
@@ -835,10 +792,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       character chns*3                                                !srv 05.11.03
       save ncall
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
-      external ipgeti, ipgetr, xertst, b2xvsg
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+      external ipgeti, ipgetr, b2xvsg
 *   ..initialisation
       data ncall/0/
 
@@ -1052,9 +1006,9 @@ c
         call my_out(70,nx,ny,vma0(-1,-1,0,is),
      &                              'set_transport_srv_vma0x'//chns)
         call my_out(70,nx,ny,vma0(-1,-1,1,is),
-     &                             'set_transport_srv_vma0y'//chns)
+     &                              'set_transport_srv_vma0y'//chns)
         call my_out(70,nx,ny,hcib(-1,-1,is),
-     &                             'set_transport_srv_hcib'//chns)
+     &                              'set_transport_srv_hcib'//chns)
        enddo
        call my_out(70,nx,ny,hci0,'set_transport_srv_hci0')
        call my_out(70,nx,ny,hce0,'set_transport_srv_hce0')
@@ -1102,6 +1056,8 @@ c
        end function barrier2
 
        subroutine defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic) !srv 13.11.02 01.03.07 09.03.17
+        use b2mod_geo
+     ,  , only : hy1
         implicit none
         integer :: nx, ny, itype, ns
         real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                    !srv 17.04.06 {
@@ -1124,6 +1080,87 @@ c
 
        if(nncut > 0) then                                         !srv 25.02.16
         select case (itype)
+         case (10)                                                !etm 24.07.19 {
+          mintopcut=minval(topcut(1:nncut))
+*   ..modification of case (9)
+          do iy = -1, ny                  ! for SOL and PR region
+           do ix = -1, nx
+            if(.not.on_closed_surface(ix,iy)) then
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+               fdnc(ix,iy,is) =    alfa3
+               fvsc(ix,iy,is) = vs_alfa3
+               ftic(ix,iy,is) = ti_alfa3
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa3
+            endif
+           enddo
+          enddo
+          step = 0.  ! no step
+          do iy = mintopcut,ny          ! for SOL region
+           do ix=-1,nx
+            if(mod(region(ix,iy,0),4).eq.2) then
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+
+               fdnc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, delta2-step,
+     &          alfa2, delta2, alfa3)
+               fvsc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, vs_delta2-step,
+     &          vs_alfa2, vs_delta2, vs_alfa3)
+               ftic(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, ti_delta2-step,
+     &          ti_alfa2, ti_delta2, ti_alfa3)
+              endif
+             enddo
+             ftec(ix,iy)= barrier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, te_delta2-step,
+     &          te_alfa2, te_delta2, te_alfa3)
+            endif
+           enddo
+          enddo
+
+          step = 0.  ! no step
+          do iy = -1, mintopcut-1   ! for inner surfaces
+           do ix = -1, nx
+            if(on_closed_surface(ix,iy)) then
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+               fdnc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -delta1, 1.0_R8, -delta1+step, alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+               fvsc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -vs_delta1, 1.0_R8, -vs_delta1+step, vs_alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+               ftic(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -ti_delta1, 1.0_R8, -ti_delta1+step, ti_alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+              endif
+             enddo
+             ftec(ix,iy)= barrier1(crdy_c_cell(nmdpl,iy),
+     &          -te_delta1, 1.0_R8, -te_delta1+step, te_alfa1,
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
+            endif
+           enddo
+          enddo                                                   !srv 2.05.09 }
+
+          do iy = -1, ny                  ! special multiplier below X-pt
+           do ix = -1, nx
+            if(mod(region(ix,iy,0),4).ne.1 .and.   ! NOT Core
+     &         mod(region(ix,iy,0),4).ne.2) then   ! NOT SOL
+             do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+               fdnc(ix,iy,is)   =    alfa4
+               fvsc(ix,iy,is)   = vs_alfa4
+               ftic(ix,iy,is)   = ti_alfa4
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa4
+            endif
+           enddo
+          enddo
          case(9)                                                !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
 *   ..modification of case (5). It is used barrier function
@@ -1168,7 +1205,7 @@ c
 
           step = maxval(hy(nmdpl,-1:mintopcut-1))
           do iy = -1, mintopcut-1   ! for inner surfaces
-           do ix=-1,nx
+           do ix = -1, nx
             if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
@@ -1303,11 +1340,11 @@ c
             t0 = 0.0e0_R8
             t1 = 0.0e0_R8
             mintopcut=min(topcut(1)-1,topcut(2)-1)
-            do iy = 0,mintopcut    ! for inner surfaces
-             do ix=0,nx
+            do iy = 0, mintopcut    ! for inner surfaces
+             do ix = 0, nx
               if(on_closed_surface(ix,iy)) then
-               t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
-               t1 = t1 +vol(ix,iy)/hy1(ix,iy)
+               t0 = t0 + bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
+               t1 = t1 + vol(ix,iy)/hy1(ix,iy)
               endif
              enddo
             enddo
@@ -1333,10 +1370,10 @@ c
              t1 = 0.0e0_R8
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
-              do ix=0,nx
+              do ix = 0, nx
                if(on_closed_surface(ix,iy)) then
-                t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-                t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+                t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+                t1 = t1 + vol(ix,iy)/hy1(ix,iy)**2
                endif
               enddo
              enddo
@@ -1410,7 +1447,7 @@ c
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)  =    alfa3
+               fdnc(ix,iy,is) =    alfa3
                fvsc(ix,iy,is) = vs_alfa3
                ftic(ix,iy,is) = ti_alfa3
                fvlc(ix,iy,1,is) = vl_alfa3                      !srv 19.04.10
@@ -1426,13 +1463,13 @@ c
             if(mod(region(ix,iy,0),4).eq.2) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)  = alfa2
+               fdnc(ix,iy,is) = alfa2
                fvsc(ix,iy,is) = vs_alfa2
                ftic(ix,iy,is) = ti_alfa2
                fvlc(ix,iy,1,is) = vl_alfa2                        !srv 19.04.10
               endif
              enddo
-             ftec(ix,iy)    = te_alfa2
+             ftec(ix,iy) = te_alfa2
             endif
            enddo
           enddo
@@ -1475,17 +1512,17 @@ c
            t0 = 0.0e0_R8
            t1 = 0.0e0_R8
            do iy = 0, mintopcut-1   ! for inner surfaces
-            do ix=0,nx
+            do ix = 0, nx
              if(on_closed_surface(ix,iy)) then
-              t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-              t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+              t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+              t1 = t1 + vol(ix,iy)/hy1(ix,iy)**2
              endif
             enddo
            enddo
            bbaverage = (t0/t1)**(-1.0e0_R8/alf)
 
            do iy = topdelta2+1, ny                    ! for SOL region
-            do ix = -1,nx
+            do ix = -1, nx
              if(mod(region(ix,iy,0),4).eq.2) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
@@ -1505,7 +1542,7 @@ c
            enddo
 
            do iy = -1, bottomdelta1-1                 ! for inner surfaces
-            do ix = -1,nx
+            do ix = -1, nx
              if(on_closed_surface(ix,iy)) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
@@ -1584,6 +1621,7 @@ c
       use b2mod_constants
       use b2mod_time
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1726,7 +1764,7 @@ c
       end subroutine set_transport_swy
 
       subroutine set_transport_eta(nx, ny, ns, bb, na,
-     1  te, ti, ni, ne, ne2, hy,
+     1  te, ti, ni, ne, ne2,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
       use b2mod_types
       use b2mod_indirect
@@ -1734,13 +1772,14 @@ c
       use b2mod_transport_models
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), hy(-1:nx,-1:ny)
+     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
@@ -1756,7 +1795,7 @@ c
       logical models_found
       save ncall, ixref, iyref, eta, eta_floor, eta_ceiling, eta_alpha
 *   ..procedures
-      external ipgeti, ipgetr, xertst, b2xvsg
+      external ipgeti, ipgetr, b2xvsg
 *   ..initialisation
       data ncall/0/, eta /2.0_R8/,
      1 eta_floor/0.1_R8/, eta_ceiling/10.0_R8/, eta_alpha/0.5_R8/
@@ -1851,28 +1890,29 @@ c
       end subroutine set_transport_eta
 
       subroutine set_transport_xpb(nx, ny, ns,
-     & bb, na, ne, te, ti, ni, hx, hy, qz, dna0, vla0)
+     & bb, na, ne, te, ti, ni, hx, dna0, vla0)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo
-     & , only : crx
+     & , only : crx, hy1
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1)
+     &  hx(-1:nx,-1:ny)
 *   ..input/output arguments (changed on exit)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1),
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *   ..local variables
-      integer, save ::  ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
+      integer, save :: ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
       real (kind=R8), save ::
      *  alpha, min_df0, max_df0,
      *  wb, seglen, perimeter, L_perp
@@ -1880,12 +1920,9 @@ c
      *  pe(-1:nx,-1:ny), pri(-1:nx,-1:ny), pp(-1:nx,-1:ny),
      *  coss(-1:nx,-1:ny), R, width(-1:nx), rzb(-1:nx,-1:ny)
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
-      external subini, subend, ipgetr, xertst, xerrab
+      external ipgetr, xerrab
       external b2xvsg, b2xppe, b2xppb
       intrinsic sin, log, max, min
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, alpha/1.0_R8/, min_df0/0.0_R8/, max_df0/1.0e30_R8/
 
@@ -2059,6 +2096,7 @@ c under development
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -2379,6 +2417,7 @@ c MW working end 3
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_transport_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -2391,14 +2430,11 @@ c MW working end 3
       real (kind=R8) :: dx(-1:nx), dy(-1:ny), p_p(-1:nx), p_r(-1:ny)
       real (kind=R8) :: dbegin, dend, fac
 *   ..procedures
-      real (kind=R8) :: hy1
       intrinsic max
-      external subini, subend, xerrab
+      external xerrab
 *   ..initialisation
       save ncall, ibegin, iend
       data ncall /0/
-*   ..statement functions
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
 c*** "Blobby" convection following S. Krasheninnikov
 c*** Here we assume the power radial profile of the outward velocity,
@@ -2476,8 +2512,9 @@ c*** We only apply this in the outer SOL region
 
       subroutine set_transport_disruption(nx, ny, ns,
      & dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
-     & na, ne, te, ti, crx, hy1)
+     & na, ne, te, ti)
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_transport_namelist
       use b2mod_input_profile
@@ -2485,12 +2522,12 @@ c*** We only apply this in the outer SOL region
       use b2mod_time
       use b2mod_b2cmpt
       use b2mod_transport_disruption
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   te(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     *   ti(-1:nx,-1:ny), hy1(-1:nx,-1:ny)
+     *   te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..in/out arguments
       real (kind=R8) ::
      *   dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
@@ -2509,7 +2546,7 @@ c*** We only apply this in the outer SOL region
       data ncall/0/
 
 *   ..procedures
-      external ipgeti, ipgetr, xertst
+      external ipgeti, ipgetr
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('set_transport_disruption')
@@ -2611,8 +2648,8 @@ c*** We only apply this in the outer SOL region
 
       end subroutine set_transport_disruption
 
-      subroutine set_transport_neo(nx, ny, ns, hx, hy, vol,
-     &  crx, cry, conn, qz, bb, na, te, ti, ni, ne,
+      subroutine set_transport_neo(nx, ny, ns, hx, vol,
+     &  crx, cry, conn, bb, na, te, ti, ni, ne,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  hvi0, hve0)
       use b2mod_types
@@ -2625,14 +2662,17 @@ c*** We only apply this in the outer SOL region
       use b2mod_time
       use b2mod_transpbgr_namelist
       use b2mod_external
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &   ne(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &   vol(-1:nx,-1:ny), conn(-1:ny), qz(-1:nx,-1:ny,0:1),
+     &   ne(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &   vol(-1:nx,-1:ny), conn(-1:ny),
      &   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -2691,11 +2731,8 @@ c*** We only apply this in the outer SOL region
      &   tforce(0:nsdecl,0:nzdecl-1,1:2,-1:ny)
 
 *   ..procedures
-      real (kind=R8) :: hy1
-      external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav,
+      external ipgeti, ipgetr, b2xvsg, fluxav, sfluxav,
      &         tfluxav, neodv, neochi
-*   ..statement functions
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
 *   ..set the contribution ic
 *     0 --- classical particle flux
@@ -3023,7 +3060,7 @@ c      enddo
           ilpb=thet
           do ix=-1,nx
            if (on_closed_surface(ix,iy)) then
-            theta(ix,iy)=2._R8*pi*theta(ix,iy)/ilpb
+            theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
            endif
           enddo
         enddo
@@ -3421,7 +3458,7 @@ c      close(14)
 !           write(15) ((bb(ix,iy,1),ix=-1,nx),iy=-1,ny)
 !           write(15) ((bb(ix,iy,2),ix=-1,nx),iy=-1,ny)
 !           write(15) ((bb(ix,iy,3),ix=-1,nx),iy=-1,ny)
-!           write(15) ((hy(ix,iy),ix=-1,nx),iy=-1,ny)
+!           write(15) ((hy1(ix,iy),ix=-1,nx),iy=-1,ny)
 !           do ispecies=0, nsl-1
 !             write(15) m(ispecies)
 !             if (ispecies.ne.nsl-1) then

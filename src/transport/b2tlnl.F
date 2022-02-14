@@ -4,6 +4,7 @@
       subroutine b2tlnl (nx, ny, icase, te, ti, ne, lnlam)              !srv 01.07.09 {
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, icase                                             !srv 20.09.11
@@ -33,9 +34,10 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       real (kind=R8), save :: lambda=-5.0e0_R8
+      !$OMP THREADPRIVATE(ncall, lambda)
       save ncall
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg
 *   ..initialization
       data ncall/0/
@@ -73,7 +75,7 @@
 * ..compute lnlam
       if (lambda.lt.0.0_R8) then
         select case(icase)
-         case(0)      ! Braginsky formula
+         case(0)      ! Braginskii formula
           do iy = -1, ny
            do ix = -1, nx
             if(te(ix,iy)/ev .le. 50.0_R8) then
@@ -86,6 +88,7 @@
      &                            2.30_R8*log10(te(ix,iy)/ev))
             endif
             if(lnlam(ix,iy).le.0.0_R8) then
+             !$OMP MASTER
              open(70,file='info_b2tlnl.dat')
              write(70,"(a)")
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
@@ -96,6 +99,7 @@
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
              write(*,"(2i5,3es13.4)")
      &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
+             !$OMP END MASTER
              call xertst (lnlam(ix,iy).gt.0.0_R8,
      &                  'Negative Coulomb logarithm')     !srv 12.01.16
             endif
@@ -140,4 +144,4 @@
 *-----------------------------------------------------------------------
 *.end b2tlnl
 
-      end                                                            !srv 01.07.09 }
+      end subroutine b2tlnl                                          !srv 01.07.09 }

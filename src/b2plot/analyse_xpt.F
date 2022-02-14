@@ -23,25 +23,23 @@ c=====================================================
       use b2mod_plasma
       use b2mod_sources
       use b2mod_indirect
+      use b2mod_numerics_namelist
       implicit none
       integer lun
       integer n_points
       parameter (n_points=8)
       integer i,j,k,is
       integer ix(n_points),iy(n_points), ixx(n_points)
-      real (kind=R8) :: fl_nx,fl_ny,fl_nt,dtim
+      real (kind=R8) :: fl_nx,fl_ny,fl_nt
       real (kind=R8), allocatable ::
      ,  div_nx(:),div_ny(:),div_nt(:),ddt_ni(:),tot(:),rel(:),
      ,  scl(:),s_ni(:),s_io(:),s_nt(:),f_nxp(:),f_nyp(:),
      ,  f_nxm(:),f_nym(:),nt0(:),nt(:)
       character hlp(16)*4,frm*24
-      data dtim /1.0_R8/
-      save dtim
       data hlp /'tot','rel','scl','d/dt','Sni','div','divx',
      ,  'divy','ni ','ni0','Snn','Sio','jx+','jx-','jy+','jy-'/
 c=====================================================
 c
-      call ipgetr('b2mndr_dtim',dtim)
 c*** Set the indices of the cells in question
 
       ix(1)=leftcut(1)-1
@@ -80,7 +78,7 @@ c*** Set the indices of the cells in question
 
 c*** Calculate the balances for each cell in question
       
-      write(lun,*) 'time step= ',dtim
+      write(lun,*) 'time step= ',dteff
       do i=1,n_points !{
         write(lun,'(/1x,a,i2,a,3i5,1p,3e14.6)') 'Point ',i,
      ,                ',  ix,iy,ixx,R,Z,V=',ix(i),iy(i),ixx(i),
@@ -124,7 +122,7 @@ c*** Calculate the balances for each cell in question
           is=is+1
           nt(j)=nt(j)*vol(ix(i),iy(i))
           nt0(j)=nt0(j)*vol(ix(i),iy(i))
-          ddt_ni(j)=(nt(j)-nt0(j))/dtim
+          ddt_ni(j)=(nt(j)-nt0(j))/dteff
           fl_nt=nt(j)
           s_nt(j)=s_ni(j)+s_io(j)
           div_nx(j)=f_nxp(j)-f_nxm(j)
@@ -160,4 +158,4 @@ c*** Calculate the balances for each cell in question
       deallocate(s_ni,s_io,s_nt)
 
       return
-      end
+      end subroutine analyse_xpt

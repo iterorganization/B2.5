@@ -8,6 +8,8 @@
       use b2mod_indirect
       use b2mod_balance !djm Jan2017
      & , only : b2sicf_smo0to3, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb                                             !srv 28.01.02
@@ -39,8 +41,9 @@
      *    phm0, phm1
       real (kind=R8) :: wrks(-1:nx,-1:ny)
       save ncall, style, phm0, phm1
+      !$OMP THREADPRIVATE(ncall, style, phm0, phm1, iout)
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
 *   ..initialization
       data ncall/0/, style/0/, phm0/1.0e0_R8/, phm1/1.0e0_R8/         !srv 18.01.02
@@ -59,6 +62,13 @@
        call xertst (0.le.style.and.style.lt.2,
      &   'faulty internal parameter style')
        call ipgeti ('b2sicf_iout', iout)
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2SICF OpenMP warning: no file output in ',
+     &              'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

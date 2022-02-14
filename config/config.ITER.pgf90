@@ -1,96 +1,32 @@
 # Test whether necessary variables are set
+NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 LD_MSCL   ?= `pkg-config mscl --libs`
+ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lz -lpthread -lXrender -lbz2 -lgfortran
-LD_NAG    ?= -L${SOLPSLIB} -lblaslapack
+endif
+LD_NAG    ?= `pkg-config openblas --libs`
 LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
-
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-ifndef SOLPS_CPP
-ifdef USE_MPI
-EQUIVS += -DGFORTRAN
-else
-ifdef USE_IMPGYRO
-EQUIVS += -DGFORTRAN
-else
-EQUIVS += -DPGF90
-endif
-endif
-endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
 SED = sed s:\#PREC\#:d:g
-LINK_MOD = 
-
-FC = pgf90
-LD = pgf90
 
 ifndef SOLPS_CPP
-DEFINES += -DPGF90
-endif
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
-DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD   = -I
-FCOPTS   = -Mbackslash
-LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
-ifdef SOLPS_DEBUG
-FCOPTS  += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-LDOPTS  += -g -C
-else
-#FCOPTS  += -O2
-#FCOPTS  += -fast
-FCOPTS  += -fast -Mvect=nofuse
-endif
-endif
-ifdef USE_MPI
-FCOPTS  += -Mmpi=mpich
-INCMODS += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
+DEFINES += -DNO_NAG -DNO_21
 endif
 
-DBLFC = ${FC}
+ifdef AMNS_PREFIX
+DEFINES += -DAMNS
+INCMODS += `pkg-config amns --cflags`
+LD_UAL  += `pkg-config amns --libs`
+endif
+
+LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
+
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 
-MOD = mod
-
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-ifdef IMAS_VERSION
-GGD_VERSION ?= ${EBVERSIONGGD}
-UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-pgi ggd --libs`
-INCMODS += `pkg-config imas-pgi ggd --cflags`
-else
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-LD_UAL  ?= `pkg-config imas-pgi --libs` -lggd-pgi
-INCMODS += `pkg-config imas-pgi --cflags`
-else
-GGD_MINOR_VERSION ?= 0
-LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
-INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
-endif
-endif
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
-endif
-IMASLIBS = ${LD_UAL}
-endif
-
-LCPP = ${LD_SONNET}
+GGD_VERSION ?= `pkg-config ggd --modversion`
 
 #!!!Local Variables:
 #!!! mode: Makefile

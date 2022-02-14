@@ -6,6 +6,7 @@
       use b2mod_geo
       use b2mod_geo2
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -14,7 +15,7 @@
 *  1. purpose
 *
 *     B2AG (main program) prepares a geometry and magnetic field for
-*     b2. This program calls the driver routine b2agdr for the actual
+*     B2. This program calls the driver routine b2agdr for the actual
 *     computation.
 *
 *
@@ -26,7 +27,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ag prepares the geometry and magnetic
-*     field for a b2 calculation.
+*     field for a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2agdr to control the actual computation.
@@ -86,7 +87,7 @@
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
       external b2agx0, b2agdr
 *   ..initialise input/output units
       data ninp/50,51/

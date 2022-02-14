@@ -3,7 +3,9 @@
 
       subroutine b2wurc (nput, version)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput
@@ -50,18 +52,15 @@
 
 *   ..local variables
       logical lt0
-      integer k, k1, idum(0:9)
+      integer k, idum(0:9)
       real (kind=R8) ::
-     *   cutlo, t0
+     *   t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
 *   ..procedures
-      intrinsic log
-      logical lnext
       real (kind=R8) ::
-     *   machsfr, smax
-      external subini, subend, xertst, machsfr, cfverw, cfwure, cfwuin
+     *   smax
+      external xertst, cfwure, cfwuin
       external smax
-      lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -69,8 +68,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2wurc')
-*   ..set cutlo
-      cutlo = machsfr()
+*   ..set cutll
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test /b2cmrc/ dimensions
@@ -89,13 +88,13 @@
        if (k.eq.rtns-1) then
         lt0 = .true.
        else
-        lt0 = .not.lnext(k,k+1)
+        lt0 = .not.lrtnext(k,k+1)
        endif
 *      (the meaning of lt0 is 'species k cannot ionise to k+1')
        if (lt0) then
 *       (ionisation rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlsa(0,0,k),1)
-        call xertst (t0.lt.log(cutlo), 'faulty entry in rtlsa table')
+        call xertst (t0.lt.cutll, 'faulty entry in rtlsa table')
        endif
       enddo
 *   ..test recombination rate coefficients
@@ -103,13 +102,13 @@
        if (k.eq.0) then
         lt0 = .true.
        else
-        lt0 = .not.lnext(k-1,k)
+        lt0 = .not.lrtnext(k-1,k)
        endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
        if (lt0) then
 *       (recombination rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlra(0,0,k),1)
-        call xertst (t0.lt.log(cutlo), 'faulty entry in rtlra table')
+        call xertst (t0.lt.cutll, 'faulty entry in rtlra table')
        endif
       enddo
 *   ..test charge exchange rate coefficients
@@ -117,13 +116,13 @@
        if (k.eq.0) then
         lt0 = .true.
        else
-        lt0 = .not.lnext(k-1,k)
+        lt0 = .not.lrtnext(k-1,k)
        endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
        if (lt0) then
 *       (charge exchange rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlcx(0,0,k),1)
-        call xertst (t0.lt.log(cutlo), 'faulty entry in rtlcx table')
+        call xertst (t0.lt.cutll, 'faulty entry in rtlcx table')
        endif
       enddo
 
@@ -170,6 +169,11 @@
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlz2, 'rtlz2')
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlpt, 'rtlpt')
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlpi, 'rtlpi')
+      end if
+      if (version.ge.'03.000.007') then
+        idum(0) = fix_recomb
+        idum(1) = zmax_recomb
+        call cfwuin (nput, 2, idum, 'fix_recomb,zmax_recomb')
       end if
 
 * ..return

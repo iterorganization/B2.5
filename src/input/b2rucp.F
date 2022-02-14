@@ -7,6 +7,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ns
@@ -277,7 +278,7 @@
 *   ..local variables
       integer ireg, idum(0:9)
 *   ..procedures
-      external subini, subend, xertst, cfruin, cfrure
+      external xertst, cfruin, cfrure
       external b2xvcp, b2ruzd
 
 *-----------------------------------------------------------------------
@@ -343,3 +344,135 @@
 *.end b2rucp
 
       end subroutine b2rucp
+
+      subroutine b2rucp_flip(ns)
+      use b2mod_types
+      use b2mod_b2cmpb
+      use b2mod_b2cmpt
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer ns
+*   ..local variables
+      integer i, ireg
+      integer cbirwe1, cbirea1, cbnrwe1, cbnrea1
+      real (kind=R8) :: dist,
+     *  cbrbrk1(0:cbnrmx-1),
+     &  cbsna1(0:7,0:ns-1,0:cbnrmx-1),
+     &  cbsmo1(0:7,0:ns-1,0:cbnrmx-1),
+     &  cbshi1(0:7,0:ns-1,0:cbnrmx-1),
+     &  cbshe1(0:7,0:cbnrmx-1), cbsch1(0:7,0:cbnrmx-1)
+      real (kind=R8) ::
+     *  cbrec1(0:7,0:ns-1,0:cbnrmx-1),
+     &  cbmsa1(0:7,0:cbnrmx-1), cbmsb1(0:7,0:ns-1,0:cbnrmx-1)
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2RUCP_FLIP flips the location of the inner and outer divertors
+*     as part of the mapping between USN and LSN geometries
+*
+*-----------------------------------------------------------------------
+*.computation
+
+      cbnrwe1 = cbnrea
+      cbnrea1 = cbnrwe
+      cbirwe1 = cbirwe
+      cbirea1 = cbirwe1 + cbnrwe1
+
+! Flip South boundaries
+      if (cbnrso.eq.3) then
+        ireg = cbirso
+        i = cbirso + cbnrso - 1
+        cbrbrk1(ireg) = min(1.0_R8,cbrbrk(i))-cbrbrk(i-1)
+        cbsna1(0:7,0:ns-1,ireg) = cbsna(0:7,0:ns-1,i)
+        cbsmo1(0:7,0:ns-1,ireg) = cbsmo(0:7,0:ns-1,i)
+        cbshi1(0:7,0:ns-1,ireg) = cbshi(0:7,0:ns-1,i)
+        cbshe1(0:7,ireg) = cbshe(0:7,i)
+        cbsch1(0:7,ireg) = cbsch(0:7,i)
+        cbrec1(0:7,0:ns-1,ireg) = cbrec(0:7,0:ns-1,i)
+        cbmsa1(0:7,ireg) = cbmsa(0:7,i)
+        cbmsb1(0:7,0:ns-1,ireg) = cbmsb(0:7,0:ns-1,i)
+        ireg = cbirso + cbnrso - 1
+        i = cbirso
+        cbrbrk1(ireg-1) = 1.0_R8 - cbrbrk(i)
+        cbsna1(0:7,0:ns-1,ireg) = cbsna(0:7,0:ns-1,i)
+        cbsmo1(0:7,0:ns-1,ireg) = cbsmo(0:7,0:ns-1,i)
+        cbshi1(0:7,0:ns-1,ireg) = cbshi(0:7,0:ns-1,i)
+        cbshe1(0:7,ireg) = cbshe(0:7,i)
+        cbsch1(0:7,ireg) = cbsch(0:7,i)
+        cbrec1(0:7,0:ns-1,ireg) = cbrec(0:7,0:ns-1,i)
+        cbmsa1(0:7,ireg) = cbmsa(0:7,i)
+        cbmsb1(0:7,0:ns-1,ireg) = cbmsb(0:7,0:ns-1,i)
+      end if
+
+! Flip North boundaries
+      do i = cbirno, cbirno+cbnrno-1
+        ireg = cbirno+cbnrno-1 - (i - cbirno)
+        if (i.gt.cbirno) then
+          dist = cbrbrk(i+1) - cbrbrk(i)
+        else
+          dist = cbrbrk(i)
+        endif
+        dist = min(1.0_R8,dist)
+        if (ireg.lt.cbirno+cbnrno-1) cbrbrk1(ireg) = 1.0_R8 - dist
+        cbrbrk1(ireg) = cbrbrk(i)
+        cbsna1(0:7,0:ns-1,ireg) = cbsna(0:7,0:ns-1,i)
+        cbsmo1(0:7,0:ns-1,ireg) = cbsmo(0:7,0:ns-1,i)
+        cbshi1(0:7,0:ns-1,ireg) = cbshi(0:7,0:ns-1,i)
+        cbshe1(0:7,ireg) = cbshe(0:7,i)
+        cbsch1(0:7,ireg) = cbsch(0:7,i)
+        cbrec1(0:7,0:ns-1,ireg) = cbrec(0:7,0:ns-1,i)
+        cbmsa1(0:7,ireg) = cbmsa(0:7,i)
+        cbmsb1(0:7,0:ns-1,ireg) = cbmsb(0:7,0:ns-1,i)
+      end do
+
+! Read West target data
+      do i = cbirwe, cbirwe+cbnrwe-1
+        ireg = cbirea1 + i - cbirwe
+        cbrbrk1(ireg) = cbrbrk(i)
+        cbsna1(0:7,0:ns-1,ireg) = cbsna(0:7,0:ns-1,i)
+        cbsmo1(0:7,0:ns-1,ireg) = cbsmo(0:7,0:ns-1,i)
+        cbshi1(0:7,0:ns-1,ireg) = cbshi(0:7,0:ns-1,i)
+        cbshe1(0:7,ireg) = cbshe(0:7,i)
+        cbsch1(0:7,ireg) = cbsch(0:7,i)
+        cbrec1(0:7,0:ns-1,ireg) = cbrec(0:7,0:ns-1,i)
+        cbmsa1(0:7,ireg) = cbmsa(0:7,i)
+        cbmsb1(0:7,0:ns-1,ireg) = cbmsb(0:7,0:ns-1,i)
+      end do
+
+! Read East target data
+      do i = cbirea, cbirea+cbnrea-1
+        ireg = cbirwe1 + i - cbirea
+        cbrbrk1(ireg) = cbrbrk(i)
+        cbsna1(0:7,0:ns-1,ireg) = cbsna(0:7,0:ns-1,i)
+        cbsmo1(0:7,0:ns-1,ireg) = cbsmo(0:7,0:ns-1,i)
+        cbshi1(0:7,0:ns-1,ireg) = cbshi(0:7,0:ns-1,i)
+        cbshe1(0:7,ireg) = cbshe(0:7,i)
+        cbsch1(0:7,ireg) = cbsch(0:7,i)
+        cbrec1(0:7,0:ns-1,ireg) = cbrec(0:7,0:ns-1,i)
+        cbmsa1(0:7,ireg) = cbmsa(0:7,i)
+        cbmsb1(0:7,0:ns-1,ireg) = cbmsb(0:7,0:ns-1,i)
+      end do
+
+! Overwrite old arrays
+      do ireg = cbirwe1, cbirwe1+cbnrwe1+cbnrea1+1
+        cbrbrk(ireg) = cbrbrk1(ireg)
+        cbsna(0:7,0:ns-1,ireg) = cbsna1(0:7,0:ns-1,ireg)
+        cbsmo(0:7,0:ns-1,ireg) = cbsmo1(0:7,0:ns-1,ireg)
+        cbshi(0:7,0:ns-1,ireg) = cbshi1(0:7,0:ns-1,ireg)
+        cbshe(0:7,ireg) = cbshe1(0:7,ireg)
+        cbsch(0:7,ireg) = cbsch1(0:7,ireg)
+        cbrec(0:7,0:ns-1,ireg) = cbrec1(0:7,0:ns-1,ireg)
+        cbmsa(0:7,ireg) = cbmsa1(0:7,ireg)
+        cbmsb(0:7,0:ns-1,ireg) = cbmsb1(0:7,0:ns-1,ireg)
+      end do
+
+      cbnrwe = cbnrwe1
+      cbnrea = cbnrea1
+      cbirwe = cbirwe1
+      cbirea = cbirea1
+
+      return
+      end subroutine b2rucp_flip

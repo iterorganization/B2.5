@@ -5,7 +5,9 @@ c###### calls   ma30    mc20    mc22    mc23    mc24
      & (n, nz, a, licn, irn, lirn,icn,u,ikeep,iw, w, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy4, bd2copy4, bd3copy4
+#endif
 c this subroutine performs the LU factorisation of a.
 c
 c the parameters are as follows.....
@@ -126,6 +128,9 @@ c
       common /ma30fdc4/ mirncp, micncp, mirank, mirn, micn
       common /mc23bdc4/ mlp, numnz, num, large, abort
       common /lpivotc4/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
+      !$OMP THREADPRIVATE(/ma28edc4/,/ma28fdc4/,/ma28gdc4/,/ma28hdc4/)
+      !$OMP THREADPRIVATE(/ma30idc4/,/ma30edc4/,/ma30fdc4/)
+      !$OMP THREADPRIVATE(/mc23bdc4/,/lpivotc4/)
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      *  newpos, knum, length, move
@@ -315,7 +320,9 @@ c set flag if the only error is due to duplicate elements.
      &  (n, nz, a, licn, ivect, jvect, icn, ikeep, iw, w, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy4, bd2copy4
+#endif
 c this subroutine factorises a matrix of a similar sparsity
 c     pattern to that previously factorised by ma28a/ad.
 c the parameters are as follows ...
@@ -387,6 +394,8 @@ c
       common /ma30edc4/ nlp, aborta, abortb, abort3
       common /ma30gdc4/ meps, mrmin
       common /ma30idc4/ tol1, big1, ndrop1, nsrch1, lbig1
+      !$OMP THREADPRIVATE(/ma28edc4/,/ma28fdc4/,/ma28gdc4/,/ma28hdc4/)
+      !$OMP THREADPRIVATE(/ma30edc4/,/ma30gdc4/,/ma30idc4/)
 c
       integer i1, idup, iend
 c
@@ -458,7 +467,9 @@ c set flag if the only error is due to duplicate elements.
       subroutine ma28cdcopy4(n, a, licn, icn, ikeep, rhs, w, mtype)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy4, bd2copy4
+#endif
 c
 c this subroutine uses the factors from ma28a/ad or ma28b/bd to
 c     solve a system of equations without iterative refinement.
@@ -502,6 +513,7 @@ c     data or ma28a/ad.
      * irank, abort1, abort2
       common /ma28gdc4/ idisp
       common /ma30hdc4/ mresid
+      !$OMP THREADPRIVATE(/ma28fdc4/,/ma28gdc4/,/ma30hdc4/)
 c
 c this call performs the solution of the set of equations.
       call ma30cdcopy4(n, icn, a, licn, ikeep, ikeep(1,4), ikeep(1,5),
@@ -529,6 +541,7 @@ c     it also calculates the largest element in the input matrix.
       logical lblock, grow, blockl
       common /ma28edc4/ lp, mp, lblock, grow
       common /ma28gdc4/ idisp
+      !$OMP THREADPRIVATE(/ma28edc4/,/ma28gdc4/)
 c
       integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
@@ -577,7 +590,8 @@ c perform some validity checks on iold and jold.
    30     inew = iw1(iold,1)
           jnew = iw1(jold,2)
 c are we in a valid block and is it diagonal or off-diagonal?
-          if (iw1(inew,3)-iw1(jnew,3)) 40, 60, 50
+          if ((iw1(inew,3)-iw1(jnew,3)).eq.0) goto 60
+          if ((iw1(inew,3)-iw1(jnew,3)).gt.0) goto 50
    40     iflag = -13
           if (lp.ne.0) write (lp,99998) iold, jold
           go to 180
@@ -595,7 +609,8 @@ c binary search of ordered list  .. element in l part of row.
           do 100 jdummy=1,n
             midpt = (j1+j2)/2
             jcomp = iabs(icn(midpt)+0)
-            if (jnew-jcomp) 80, 130, 90
+            if ((jnew-jcomp).eq.0) goto 130
+            if ((jnew-jcomp).gt.0) goto 90
    80       j2 = midpt
             go to 100
    90       j1 = midpt
@@ -648,7 +663,9 @@ c also calculate maximum element of a.
      * ikeep, rhs, x, r, w, mtype, prec, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy4
+#endif
 c this subroutine uses the factors from an earlier call to ma28a/ad
 c     or ma28b/bd to solve the system of equations with iterative
 c     refinement.
@@ -719,6 +736,7 @@ c
       common /ma28edc4/ lp, mp, lblock, grow
       common /ma28hdc4/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
+      !$OMP THREADPRIVATE(/ma28edc4/,/ma28hdc4/)
 c
       integer i, iterat, nrow, ncol
 c
@@ -852,6 +870,9 @@ c######alias ma30adcopy4
      * irn, lirn, lenc, ifirst, lastr, nextr, lastc, nextc, iptr, ipc,
      * u, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c if  the user requires a more convenient data interface then the ma28
 c     package should be used.  the ma28 subroutines call the ma30
@@ -1032,6 +1053,7 @@ c for comments of common block variables see block data subprogram.
       common /ma30fdc4/ irncp, icncp, irank, minirn, minicn
       common /ma30idc4/ tol, big, ndrop, nsrch, lbig
       common /lpivotc4/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
+      !$OMP THREADPRIVATE(/ma30edc4/,/ma30fdc4/,/ma30idc4/,/lpivotc4/)
 c
       integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii,
      * lc, lr, nc, nr, nz, nz2, nzpc,
@@ -1045,14 +1067,10 @@ c
       integer(kind=I8) :: jcost, kcost                   !srv 26.02.11 12.03.15
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
 #endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       msrch = nsrch
       ndrop = 0
       do 1272 kk=1,10
@@ -1264,7 +1282,8 @@ c a pass with l equal to 2 is only performed in the case of singularity.
             do 330 nz=nz2,n
               if (jcost.le.int((nz-1),I8)**2) go to 420               !srv 26.02.11 12.03.15
               ijfir = ifirst(nz)
-              if (ijfir) 230, 220, 240
+              if (ijfir.lt.0) goto 230
+              if (ijfir.gt.0) goto 240
   220         if (ll.eq.1) nzmin = nz + 1
               go to 330
   230         ll = 2
@@ -1286,7 +1305,20 @@ c first calculate multiplier threshold level.
                 do 250 jj=j1,j2
                   amax = max(amax,abs(a(jj)))
   250           continue
+#ifdef DBG
+                if(amax.ge.tiny(1.0_R8).and.u.ge.tiny(1.0_R8)) then
+                  product = log(amax) + log(u)
+                  if (product.ge.cutll) then
+                    au = amax*u
+                  else
+                    au = cutlo
+                  endif
+                else
+                  au = cutlo
+                end if
+#else
                 au = amax*u
+#endif
                 isrch = isrch + 1
 c scan row for possible pivots
                 do 260 jj=j1,j2
@@ -1568,7 +1600,18 @@ c if pivot is zero, rest of column is and so multiplier is zero.
      &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
      &                 a(ijpos).le.-tiny(1.0_R8))) then
                   product = log(abs(a(jj))) - log(abs(a(ijpos)))
-                  if (product.ge.cutlo) au = -a(jj)/a(ijpos)
+                  if (product.ge.cutll) then
+                    au = -a(jj)/a(ijpos)
+                  else
+                    if ((a(jj).ge.tiny(1.0_R8).and.
+     &                   a(ijpos).ge.tiny(1.0_R8)).or.
+     &                  (a(jj).le.-tiny(1.0_R8).and.
+     &                   a(ijpos).le.-tiny(1.0_R8))) then
+                      au = -cutlo
+                    else
+                      au = cutlo
+                    end if
+                  end if
                 end if 
 #else
                 au = -a(jj)/a(ijpos)
@@ -1615,7 +1658,7 @@ c innermost loop.
      &           (a(pivrow).ge.tiny(1.0_R8).or.
      &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
-                if (product.ge.cutlo) a(jj) = a(jj) + au*a(pivrow)
+                if (product.ge.cutll) a(jj) = a(jj) + au*a(pivrow)
               end if
 #else
               a(jj) = a(jj) + au*a(pivrow)
@@ -1764,12 +1807,18 @@ c innermost fill-in loop which also resets icn.
               if((au   .ge.tiny(1.0_R8).or.au   .le.-tiny(1.0_R8)).and.
      &           (a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(jj)))
-                if (product.ge.cutlo) then
+                if (product.ge.cutll) then
                   anew = au*a(jj)
                   aanew = abs(anew)
                 else
-                  anew = 0.0_R8
-                  aanew = 0.0_R8
+                  if ((a(jj).ge. tiny(1.0_R8).and.au.ge. tiny(1.0_R8))
+     &            .or.(a(jj).le.-tiny(1.0_R8).and.au.le.-tiny(1.0_R8)))
+     &             then
+                    anew = cutlo
+                  else
+                    anew = -cutlo
+                  end if
+                  aanew = cutlo
                 end if
               else
                 anew = 0.0_R8
@@ -1853,7 +1902,8 @@ c     ordering arrays.
             go to 890
   850       ifir = ifirst(nz)
             ifirst(nz) = i
-            if (ifir) 860, 880, 870
+            if (ifir.eq.0) goto 880
+            if (ifir.gt.0) goto 870
   860       lastr(i) = ifir
             nextr(i) = 0
             go to 890
@@ -1904,7 +1954,8 @@ c adjust column ordering arrays.
             go to 970
   924       ifir = ifirst(nz)
             lastc(j) = 0
-            if (ifir) 930, 940, 950
+            if (ifir.eq.0) goto 940
+            if (ifir.gt.0) goto 950
   930       ifirst(nz) = -j
             ifir = -ifir
             lastc(ifir) = j
@@ -2012,6 +2063,9 @@ c
       subroutine ma30bdcopy4(n, icn, a, licn, lenr, lenrl,idisp,ip,iq,w,
      * iw, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30b/bd performs the lu decomposition of the diagonal blocks of a
 c     new matrix paq of the same sparsity pattern, using information
@@ -2066,18 +2120,15 @@ c see block data for comments on variables in common.
       common /ma30edc4/ lp, abort1, abort2, abort3
       common /ma30idc4/ tol, big, ndrop, nsrch, lbig
       common /ma30gdc4/ eps, rmin
+      !$OMP THREADPRIVATE(/ma30edc4/,/ma30idc4/,/ma30gdc4/)
 c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       stab = eps.le.one
       rmin = eps
       ising = 0
@@ -2121,10 +2172,16 @@ c form multiplier au.
      &        (a(ipivj).ge. tiny(1.0_R8).or.
      &         a(ipivj).le.-tiny(1.0_R8))) then
             product = log(abs(w(j))) - log(abs(a(ipivj)))
-            if (product.ge.cutlo) then
+            if (product.ge.cutll) then
               au = -w(j)/a(ipivj)
             else
-              au = 0.0_R8
+              if ((w(j).ge. tiny(1.0_R8).and.a(ipivj).ge. tiny(1.0_R8))
+     &        .or.(w(j).le.-tiny(1.0_R8).and.a(ipivj).le.-tiny(1.0_R8)))
+     &         then
+                au = -cutlo
+              else
+                au = cutlo
+              end if
             end if
           else
             au = 0.0_R8
@@ -2147,7 +2204,7 @@ c innermost loop.
      &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
-              if (product.ge.cutlo) w(jay) = w(jay) + au*a(jayjay)
+              if (product.ge.cutll) w(jay) = w(jay) + au*a(jayjay)
             end if
 #else
             w(jay) = w(jay) + au*a(jayjay)
@@ -2219,6 +2276,9 @@ c
       subroutine ma30cdcopy4(n, icn, a, licn,lenr,lenrl,lenoff,idisp,ip,
      * iq, x, w, mtype)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30c/cd uses the factors produced by ma30a/ad or ma30b/bd to solve
 c     ax=b or a transpose x=b when the matrix p1*a*q1 (paq) is block
@@ -2279,20 +2339,17 @@ c
       integer icn(licn), lenr(n), lenrl(n), lenoff(n), ip(n), iq(n)
 c see block data for comments on variables in common.
       common /ma30hdc4/ resid
+      !$OMP THREADPRIVATE(/ma30hdc4/)
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
      * iend, iback, ifirst, ilast, iblock, iblend,
      * jpiv, jpivp1, lt, ltend, numblk
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
 #endif
 c
       data zero /0.0e0_R8/
 c
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero
@@ -2343,7 +2400,7 @@ c ltend is the end of row i in the off-diagonal blocks.
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
             product = log(abs(a(jj))) + log(abs(w(j)))
-            if (product.ge.cutlo) wi = wi - a(jj)*w(j)
+            if (product.ge.cutll) wi = wi - a(jj)*w(j)
           end if
 #else
           wi = wi - a(jj)*w(j)
@@ -2363,7 +2420,7 @@ c iend is the end of the l part of row i in the lu decomposition.
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
             product = log(abs(a(jj))) + log(abs(w(j)))
-            if (product.ge.cutlo) wi = wi + a(jj)*w(j)
+            if (product.ge.cutll) wi = wi + a(jj)*w(j)
           end if
 #else
           wi = wi + a(jj)*w(j)
@@ -2411,7 +2468,7 @@ c jump if row ii of u has no nonzeros.
             if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &         (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
               product = log(abs(a(jj))) + log(abs(w(j)))
-              if (product.ge.cutlo) wii = wii - a(jj)*w(j)
+              if (product.ge.cutll) wii = wii - a(jj)*w(j)
             end if
 #else
             wii = wii - a(jj)*w(j)
@@ -2558,6 +2615,7 @@ c
 c see block data for comments on variables in common.
       integer irncp, icncp, irank, minirn, minicn
       common /ma30fdc4/ irncp, icncp, irank, minirn, minicn
+      !$OMP THREADPRIVATE(/ma30fdc4/)
 c
       integer j, jpos, k, kn, kl
 c
@@ -3071,6 +3129,7 @@ c###### calls   mc13    mc21
       integer icn(licn),lenr(n),ip(n),iq(n),lenoff(n),iw(n,5)
       integer lp,numnz,num,large
       common /mc23bdc4/ lp,numnz,num,large,abort
+      !$OMP THREADPRIVATE(/mc23bdc4/)
 c input ... n,icn .. a,icn,lenr ....
       integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold,
      * jold, jnew, ilend, iblock, irowb, irowe, jnpos, leni, nz
@@ -3310,6 +3369,7 @@ c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
       end subroutine mc24adcopy4
+#ifndef GFORTRAN
       block data bd1copy4
       use b2mod_types
       implicit none
@@ -3445,6 +3505,7 @@ c
       common /ma28hdc4/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
 c     common /ma28gdc4/ idisp(2)
+      !$OMP THREADPRIVATE(/ma28edc4/,/ma28fdc4/,/ma28hdc4/)
       data eps /1.0e-4_R8/
       data tol /0.0e0_R8/, cgce /0.5e0_R8/
       data lp /6/, mp /6/
@@ -3598,6 +3659,7 @@ c
       common /ma30edc4/ lp, abort1, abort2, abort3
       common /ma30gdc4/ eps, rmin
       common /ma30idc4/ tol, big, ndrop, nsrch, lbig
+      !$OMP THREADPRIVATE(/ma30edc4/,/ma30gdc4/,/ma30idc4/)
       data eps /1.0e-4_R8/, tol /0.0e0_R8/, big /0.0e0_R8/
       data lp /6/, nsrch /32768/
       data lbig /.false./
@@ -3609,5 +3671,75 @@ c
       integer lp,numnz,num,large
       logical abort
       common /mc23bdc4/ lp,numnz,num,large,abort
+      !$OMP THREADPRIVATE(/mc23bdc4/)
       data lp/6/,abort/.false./
       end block data bd3copy4                                           !srv 02.04.18 }
+#else
+      subroutine set_data_bd1copy4
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
+      integer lp, mp
+      integer irncp, icncp, minirn, minicn, irank
+      integer ndrop, maxit, noiter, nsrch, istart
+      logical lblock, grow
+      logical abort1, abort2
+      logical lbig
+      common /ma28edc4/ lp, mp, lblock, grow
+      common /ma28fdc4/ eps, rmin, resid, irncp, icncp, minirn, minicn,
+     * irank, abort1, abort2
+      common /ma28hdc4/ tol, themax, big, dxmax, errmax, dres, cgce,
+     * ndrop, maxit, noiter, nsrch, istart, lbig
+      !$OMP THREADPRIVATE(/ma28edc4/,/ma28fdc4/,/ma28hdc4/)
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      cgce = 0.5e0_R8
+      lp = 6
+      mp = 6
+      maxit = 16
+      nsrch = 32768
+      istart = 0
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      lblock = .true.
+      grow = .true.
+      end subroutine set_data_bd1copy4
+      subroutine set_data_bd2copy4
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin
+      real (kind=R8) :: tol, big
+      integer lp
+      integer ndrop, nsrch
+      logical abort1, abort2, abort3
+      logical lbig
+      common /ma30edc4/ lp, abort1, abort2, abort3
+      common /ma30gdc4/ eps, rmin
+      common /ma30idc4/ tol, big, ndrop, nsrch, lbig
+      !$OMP THREADPRIVATE(/ma30edc4/,/ma30gdc4/,/ma30idc4/)
+      lp = 6
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      nsrch = 32768
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      abort3 = .false.
+      end subroutine set_data_bd2copy4
+      subroutine set_data_bd3copy4
+      use b2mod_types
+      implicit none
+      integer lp, numnz, num, large
+      logical abort
+      common /mc23bdc4/ lp, numnz, num, large, abort
+      !$OMP THREADPRIVATE(/mc23bdc4/)
+      lp = 6
+      abort = .false.
+      end subroutine set_data_bd3copy4
+#endif

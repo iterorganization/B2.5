@@ -3,6 +3,11 @@
 
       subroutine b2sqcx (nx, ny, ns, ev, amh0, th0, rlcx0, rcx)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -43,18 +48,14 @@
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is
       real (kind=R8) ::
-     *   phm0, cutlo, cutll, t0
+     *   phm0
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny)
       save ncall, styl0, phm0
 *   ..procedures
-      intrinsic log, exp, max, dim
-      real (kind=R8) ::
-     *   machsfr, expu
-      external subini, subend, xertst, ipgeti, ipgetr, machsfr
+      intrinsic log
+      external xertst, ipgeti, ipgetr, machsfr
       external b2xvsg
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
       data ncall/0/, styl0/0/, phm0/1.0_R8/
 
@@ -86,17 +87,36 @@
        call b2xvsg (n2, th0, 1, 'th0', '.gt.')
       endif
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SQCX
+!$OMP PARALLEL
+!$OMP& default(none)
+!$OMP& private(is,iy,ix)
+!$OMP& shared(ns, ny, nx, styl0, rcx, phm0, rlcx0, wrk0)
+!$OMP& shared(th0, amh0, ev)
+#endif
+
+#ifndef NO_OPENMP_B2SQCX
+!$OMP DO schedule(static)
+#endif
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
       do iy = -1, ny
        do ix = -1, nx
         wrk0(ix,iy) = log(th0(ix,iy)/(amh0*ev))
        enddo
       enddo
+#ifndef NO_OPENMP_B2SQCX
+!$OMP END DO
+#endif
 
 * ..main computation
 *   ..compute rate coefficients
+#ifndef NO_OPENMP_B2SQCX
+!$OMP DO schedule(static)
+#endif
       do is = 0, ns-1
        if (styl0.eq.0.or.is.lt.2) then
         do iy = -1, ny
@@ -115,7 +135,13 @@
         enddo
        endif
       enddo
-
+#ifndef NO_OPENMP_B2SQCX
+!$OMP END DO
+!$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
 * ..return
       ncall = ncall+1
       call subend ()

@@ -2,13 +2,15 @@
 *.specification
 
       subroutine b2wfrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
-     &  rtn, nn, zamin, zamax, zn, 
+     &  rtn, nn, zamin, zamax, zn, fix_recomb, zmax_recomb,
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, 
-     &  jdis(0:njdis-1), nt, nn
+     &  jdis(0:njdis-1), nt, nn, fix_recomb, zmax_recomb
       real (kind=R8) ::
      *  rtt(0:nt), rtn(0:nn), 
      &  zamin(0:ns0-1), zamax(0:ns0-1), zn(0:ns0-1),
@@ -25,7 +27,7 @@
 *  1. purpose
 *
 *     B2WFRC writes to a formatted file a table of atomic rate
-*     coefficients that has been prepared for b2.
+*     coefficients that has been prepared for B2.
 *
 *
 *  3. description
@@ -146,16 +148,8 @@
 
 *   ..local variables
       integer i, j, k, ind
-      real (kind=R8) ::
-     *   cutll, t0
 *   ..procedures
-      intrinsic max, exp, log
-      real (kind=R8) ::
-     *   machsfr, expu1
-      external subini, subend, xertst, machsfr, b2xvsg
-      expu1(t0) = exp(max(t0,cutll))
-*     (expu1 is the exponential function with underflow set to a tiny
-*     positive value.)
+      external xertst, b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -170,7 +164,7 @@
       call b2xvsg (nt+1, rtt, 1, 'rtt', '.gt.')
       call b2xvsg (nn+1, rtn, 1, 'rtn', '.gt.')
 *   ..set cutll
-      cutll = log(machsfr())
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..write summary of table
 *   ..write rtsa as function of rtt for several rtn
@@ -221,6 +215,18 @@
      &    zamin(k), zamax(k), zn(k), (expu1(rtlqa(i,j,k)),j=0,nn)
        enddo
       enddo
+*   ..write rtqa (with fix_recomb) as function of rtn for several rtt
+      if (fix_recomb.ne.0) then
+       do k = 0, ns0-1
+        if (nint(zn(k)).gt.zmax_recomb) cycle
+        do ind = 0, nidis-1
+         i = idis(ind)
+         write (nprt,102) 'rtqa[with fix_recomb](',i,',0:nn,',k,')',
+     &    zamin(k), zamax(k), zn(k),
+     &   (expu1(rtlqa(i,j,k))-expu1(rtlra(i,j,k))*rtlpi(i,j,k),j=0,nn)
+        enddo
+       enddo
+      endif
 *   ..write rtcx as function of rtt for several rtn
       do k = 1, ns0-1
        do ind = 0, njdis-1
@@ -316,4 +322,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfrc
 
-      end
+      end subroutine b2wfrc

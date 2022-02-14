@@ -2,15 +2,17 @@
 *.specification
 
       subroutine b2wgrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
-     &  rtn, nn, zn, 
+     &  rtn, nn, zn, fix_recomb, zmax_recomb,
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #     include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, jdis(0:njdis-1),
-     &  nt, nn
+     &  nt, nn, fix_recomb, zmax_recomb
       real (kind=R8) ::
      *   rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
      &  rtlsa(0:nt,0:nn,0:ns0-1), rtlra(0:nt,0:nn,0:ns0-1),
@@ -26,7 +28,7 @@
 *  1. purpose
 *
 *     B2WGRC displays a table of atomic rate coefficients that has been
-*     prepared for b2.
+*     prepared for B2.
 *
 *
 *  3. description
@@ -144,18 +146,11 @@
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   cutll, rydberg, Ei, Ef, t0, zmin, zmax
+     *  Rydberg, Ei, Ef, zmin, zmax
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
-      intrinsic nint, int, max, exp, log
-      real (kind=R8) ::
-     *   machsfr, expu1
-      real (kind=R4) small_real_constant
-      external subini, subend, xertst, pagini, pagend, machsfr,
-     &  dashdc, curved_d
-      expu1(t0) = exp(max(t0,cutll))+small_real_constant
-*     (expu1 is the exponential function with underflow set to a tiny
-*     positive value.)
+      intrinsic nint, int, log
+      external xertst, pagini, pagend, dashdc, curved_d
 
 *-----------------------------------------------------------------------
 *.computation
@@ -171,10 +166,8 @@
       allocate (wn(0:nn))
       allocate (wt(0:nt))
 *   ..set cutll
-      cutll = log(2.0_R8*machsfr())
-      small_real_constant=tiny(small_real_constant)
-*!!   (increase cutll if a floating point error occurs.)
-      rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
+      if (.not.b2mod_math_initialised) call b2mod_math_init
+      Rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
 *   ..set izn0
       izn0 = nint(zn(0))
 *   ..compute ionisation potential scale
@@ -201,7 +194,7 @@
      &   'rtt', 'rtsa', header)
        do k = 0, ns0-2
         do i = 0, nt
-         wt(i) = expu1(rtlsa(i,j,k))
+         wt(i) = expu4(rtlsa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -226,7 +219,7 @@
      &   'rtn', 'rtsa', header)
        do k = 0, ns0-2
         do j = 0, nn
-         wn(j) = expu1(rtlsa(i,j,k))
+         wn(j) = expu4(rtlsa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -251,7 +244,7 @@
      &   'rtt', 'rtra', header)
        do k = 1, ns0-1
         do i = 0, nt
-         wt(i) = expu1(rtlra(i,j,k))
+         wt(i) = expu4(rtlra(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -276,7 +269,7 @@
      &   'rtn', 'rtra', header)
        do k = 1, ns0-1
         do j = 0, nn
-         wn(j) = expu1(rtlra(i,j,k))
+         wn(j) = expu4(rtlra(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -301,7 +294,7 @@
      &   'rtt', 'rtqa', header)
        do k = 0, ns0-1
         do i = 0, nt
-         wt(i) = expu1(rtlqa(i,j,k))
+         wt(i) = expu4(rtlqa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -326,7 +319,7 @@
      &   'rtn', 'rtqa', header)
        do k = 0, ns0-1
         do j = 0, nn
-         wn(j) = expu1(rtlqa(i,j,k))
+         wn(j) = expu4(rtlqa(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -336,6 +329,108 @@
        enddo
        call pagend ()
       enddo
+*   ..plot rtqa (with fix_recomb) as function of rtt for several rtn
+      if (fix_recomb.ne.0.and.izn0.le.zmax_recomb) then
+       do ind = 0, njdis-1
+        j = jdis(ind)
+        zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'ENERGY LOSS RATE COEFS(recomb), Z0 =',izn0,', NE =',rtn(j)
+        write (nprt,fmtp) '+rtqa(recomb)', header
+        call pagini (3, rtt(0), rtt(nt), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtt', 'rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do i = 0, nt
+          wt(i) = expu4(rtlqa(i,j,k))-expu4(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wt(0:nt)),R4).gt.0) then
+          call curved_d (rtt, wt, nt+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+       do ind = 0, njdis-1
+        j = jdis(ind)
+        zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'NEG(ENERGY LOSS RATE COEFS(recomb)), Z0 =',izn0,
+     &                                      ', NE =',rtn(j)
+        write (nprt,fmtp) '-rtqa(recomb)', header
+        call pagini (3, rtt(0), rtt(nt), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtt', '-rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do i = 0, nt
+          wt(i) = -expu4(rtlqa(i,j,k))+expu4(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wt(0:nt)),R4).gt.0) then
+          call curved_d (rtt, wt, nt+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+*   ..plot rtqa (with fix_recomb) as function of rtn for several rtt
+       do ind = 0, nidis-1
+        i = idis(ind)
+        zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'ENERGY LOSS RATE COEFS(recomb), Z0 =',izn0,', TE =',rtt(i)
+        write (nprt,fmtp) '+rtqa(recomb)', header
+        call pagini (3, rtn(0), rtn(nn), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtn', 'rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do j = 0, nn
+          wn(j) = expu4(rtlqa(i,j,k))-expu4(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wn(0:nn)),R4).gt.0) then
+          call curved_d (rtn, wn, nn+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+       do ind = 0, nidis-1
+        i = idis(ind)
+        zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
+        kmax = int(zmax)
+        kmin = int(zmin)-1
+        kmin = max(kmin, kmax - 8)
+        write (header,'(a,i2,a,1pe9.2)')
+     &   'NEG(ENERGY LOSS RATE COEFS(recomb)), Z0 =',izn0,
+     &                                      ', TE =',rtt(i)
+        write (nprt,fmtp) '-rtqa(recomb)', header
+        call pagini (3, rtn(0), rtn(nn), 10.0_R8**kmin, 10.0_R8**kmax,
+     &   'rtn', '-rtqa (fix_recomb)', header)
+        do k = 0, ns0-1
+         do j = 0, nn
+          wn(j) = -expu4(rtlqa(i,j,k))+expu4(rtlra(i,j,k))*rtlpi(i,j,k)
+         enddo
+         write (chk,'(i3)') k
+*$$$     call dashdc (chdc//chk, 10, 1)
+         if(real(maxval(wn(0:nn)),R4).gt.0) then
+          call curved_d (rtn, wn, nn+1)
+         endif
+        enddo
+        call pagend ()
+       enddo
+      endif
 *   ..plot rtcx as function of rtt for several rtn
       do ind = 0, njdis-1
        j = jdis(ind)
@@ -351,7 +446,7 @@
      &   'rtt', 'rtcx', header)
        do k = 1, ns0-1
         do i = 0, nt
-         wt(i) = expu1(rtlcx(i,j,k))
+         wt(i) = expu4(rtlcx(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -376,7 +471,7 @@
      &   'rtn', 'rtcx', header)
        do k = 1, ns0-1
         do j = 0, nn
-         wn(j) = expu1(rtlcx(i,j,k))
+         wn(j) = expu4(rtlcx(i,j,k))
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
@@ -464,7 +559,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ei*rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ei*Rydberg+0.5_R8,
      &   'rtt', 'rtpt', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -482,7 +577,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ei*rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ei*Rydberg+0.5_R8,
      &   'rtn', 'rtpt', header)
        do k = 0, ns0-1
         do j = 0, nn
@@ -500,7 +595,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'EFFECTIVE IONISATION POT.,    Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpi', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ef*rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ef*Rydberg+0.5_R8,
      &   'rtt', 'rtpi', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -518,7 +613,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'EFFECTIVE IONISATION POT.,    Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpi', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ef*rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ef*Rydberg+0.5_R8,
      &   'rtn', 'rtpi', header)
        do k = 0, ns0-1
         do j = 0, nn

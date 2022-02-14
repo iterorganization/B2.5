@@ -35,18 +35,19 @@ c  Tp = Target surface temperature (K).
       subroutine heatdiff1D(ibnd,ns0,Q,dt,Tp,output)
       use b2mod_types
       use b2mod_wall
+      use b2mod_heatdiff_common
+     &    , only: dx, x0, xn, x, Qtot, Tcbc, active, iwall, ns
+      use b2mod_subsys
       implicit none
       external lines2c
 
       integer i
-      integer ibnd, ns0, iwall, output, ns
+      integer ibnd, ns0, output
 
-      logical active
-      real (kind=R8) :: Q, dt, Qtot, Tcbc
+      real (kind=R8) :: Q, dt
       real (kind=R8) :: Tp(ndepth_nml)
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
-      real (kind=R8) :: x(ndepth)
-      real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
+      real (kind=R8) :: t0, tn
 
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
@@ -56,20 +57,17 @@ c  Tp = Target surface temperature (K).
       integer iwk(ndepth_nml)
       external mstep
 #else
+      integer :: itask, itrace, ind, ifail
+      real (kind=R8) :: acc
       external pdedef, bndary, D03PCF
 #endif
       integer, save :: ncall = 0
-      common /zzline/ dx,x0,xn,x
-      common /phyparams/ Qtot,Tcbc,active
-      common /location/ iwall, ns
 
       integer, save :: npde, nw, niw
-      integer :: itask, itrace, ind, ifail
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
-      real (kind=R8) :: acc
-
-      external xertst, subini, subend
+      !$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
+      external xertst
 
       call subini('heatdiff1D')
       if (ncall.eq.0) then
@@ -188,16 +186,14 @@ c The above dependence follows the reference
       use b2mod_types
       use b2mod_wall
       use b2mod_layer
+      use b2mod_heatdiff_common
+     &    , only: Qtot, Tcbc, xn, x
       implicit none
 
       integer i, ibnd
-      logical active
-      real (kind=R8) :: Qtot, Tcbc, KAb, KBb, Tc, KAc, KBc, Tl, KAl, KBl
-      real (kind=R8) :: dx(ndepth-1), x0, xn
-      real (kind=R8) :: x(ndepth), xx(ndepth_nml), uu(ndepth_nml)
+      real (kind=R8) :: KAb, KBb, Tc, KAc, KBc, Tl, KAl, KBl
+      real (kind=R8) :: xx(ndepth_nml), uu(ndepth_nml)
 
-      common /zzline/ dx,x0,xn,x
-      common /phyparams/ Qtot,Tcbc,active
 
       KAb = matbulk_Kappa_KA(ibnd)
       KBb = matbulk_Kappa_KB(ibnd)
@@ -245,16 +241,17 @@ c_______________________________________________________________________
       subroutine lines2c(ibnd,ns,t,n,u,du)
       use b2mod_types
       use b2mod_wall
+      use b2mod_heatdiff_common
+     &    , only: x, dx
 
       implicit none
 
       integer ns,n,i,j,ibnd
       real (kind=R8) :: ux,uxx
-      real (kind=R8) :: x(ndepth),u(ndepth_nml),uu(ndepth_nml+1),
+      real (kind=R8) :: u(ndepth_nml),uu(ndepth_nml+1),
      .                  du(ndepth_nml),t
       real (kind=R8) :: a0, b0, c0, an, bn, cn
-      real (kind=R8) :: dx(ndepth-1), x0, xn, Ts, Td
-      common /zzline/ dx,x0,xn,x
+      real (kind=R8) :: Ts, Td
 
 c      print*,t,' ',n,' InpVars ',u
 c Maximum no. of equations that can be solved is np.
@@ -327,13 +324,12 @@ c are the outputs from the subroutine.
 
       subroutine coefbc(ibnd,nd,ns,t,Ts,Td,a0,b0,c0,an,bn,cn)
       use b2mod_types
+      use b2mod_heatdiff_common
+     &    , only: Qtot, Tcbc, active
 
       implicit none
       integer ibnd, nd, ns
       real (kind=R8) :: a0,b0,c0,an,bn,cn,t,Ts,Td
-      real (kind=R8) :: Qtot, Tcbc
-      logical active
-      common /phyparams/ Qtot,Tcbc,active
       real (kind=R8) :: Kappa, qevap, qrad, cond_coef
       external Kappa, qevap, qrad, cond_coef
 
@@ -833,13 +829,14 @@ c     Steel   | -14321.9 | 9.44    |
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
       implicit none
       integer ibnd, ns, is, itrack
       logical, save :: lfirst
       real (kind=R8) :: Ts, Tv, flxthev, qevap, Vapor_temp, qthev
       real (kind=R8), save :: therm_evap
       data lfirst /.true./, therm_evap /0.0_R8/
-      external subini, subend, ipgetr
+      external ipgetr
       intrinsic min
 
 c  Ts       ->  temperature of the plate in Kelvin.
@@ -848,11 +845,13 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
+        !$OMP CRITICAL (heatdiff1D)
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
+        !$OMP END CRITICAL (heatdiff1D)
       endif
 
       do is = 0, ns-1
@@ -883,6 +882,8 @@ c  Checking inputs
       subroutine pdedef(npde, T, X, U, UX, P, Q, R, ires)
       use b2mod_types
       use b2mod_wall
+      use b2mod_heatdiff_common
+     &    , only: iwall
       implicit none
       integer npde, ires
       real (kind=R8) :: T, X, U(NPDE), UX(NPDE),
@@ -891,12 +892,6 @@ c  Checking inputs
 
       real (kind=R8) :: Cp, Kappa, mass_density
       external Cp, Kappa, mass_density
-
-      logical active
-      real (kind=R8) :: Qtot, Tcbc
-      common /phyparams/ Qtot,Tcbc,active
-      integer :: iwall, ns
-      common /location/ iwall, ns
 
       if (X.le.target_depth(iwall,1)) then
         ih = 1
@@ -929,18 +924,15 @@ c  Checking inputs
 
       subroutine bndary (npde, T, U, UX, iposb, beta, gamma, ires)
       use b2mod_types
+      use b2mod_heatdiff_common
+     &    , only: Qtot, Tcbc, active, iwall, ns
       implicit none
       integer npde, iposb, ires
       real (kind=R8) :: T, U(npde), UX(npde), beta(npde), gamma(npde)
-      real (kind=R8) :: Qtot, Tcbc, cond_coef
-      logical active
+      real (kind=R8) :: cond_coef
 
       real (kind=R8) :: qrad, qevap
       external qrad, qevap
-
-      common /phyparams/ Qtot,Tcbc,active
-      integer :: iwall, ns
-      common /location/ iwall, ns
 
       if (iposb.eq.0) then  ! LHS BC : x=0 : Heat flux imposed
         beta(1)=-1.0_R8

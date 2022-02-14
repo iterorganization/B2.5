@@ -1,0 +1,79 @@
+# Test whether necessary variables are set
+MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
+ifdef NCARG_ROOT
+LD_NCARG    ?= `pkg-config ncarg --libs`
+endif
+ifdef USE_MPI
+LD_NETCDF   ?= `pkg-config pnetcdf --libs`
+else
+LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
+endif
+LD_MSCL     ?= -L${SOLPSLIB} -lmscl
+LD_NAG      ?= -mkl
+
+DEFINES += -DNO_OPT
+
+CPP      = /lib/cpp -traditional -ffreestanding
+
+FC       = ftn
+
+INCMOD   = -I
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+# OpenMP compiler options for intel: -openmp is enough
+# Might also want -parallel to auto-parallelize loops without openmp directives
+ifndef SOLPS_DEBUG
+FCOPTS  += -O2
+else
+FCOPTS  += -O0 -g -C -traceback -fpe0 -debug all -check all
+endif
+ifdef USE_MPI
+FCOPTS  += ${MPI_CPP}
+endif
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
+endif
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+FCOPTS  += -vec_report0
+LDOPTS  += -i_dynamic
+endif
+
+ifdef IMAS_VERSION
+UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
+else
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort
+else
+GGD_MINOR_VERSION ?= 0
+LD_UAL  ?= `pkg-config imas-lowlevel imas-ifort --libs`
+endif
+endif
+INCMODS += -I${IMAS_PREFIX}/include/ifort
+ifndef SOLPS_CPP
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+endif
+IMASLIBS = ${LD_UAL}
+endif
+
+ifdef USE_MPI
+LDLIBES += ${LD_MPI}
+endif
+
+LDOPTS  += -dynamic -fpic -mcmodel=medium -shared-intel
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

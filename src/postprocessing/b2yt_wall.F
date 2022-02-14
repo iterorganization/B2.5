@@ -1,18 +1,24 @@
-      subroutine b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
+      subroutine b2yt_wall_init
+     . (nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts,flip)
       use b2mod_types
       use b2mod_geo2
       use b2mod_wall
       use b2mod_wall2
       use b2mod_layer
       use b2mod_b2cmpb
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
       integer nncut1, nx1, ny1, nncut, nx, ny, nlim, nsts
-      integer ix, iy, ixn, iyn, is, ibnd, ibnd1, idir, ireg,
-     .        nxtl1, nxtr1
+      logical flip
+      integer ix, iy, ixn, iyn, is, is1, ibnd, ibnd1, idir, ireg,
+     .        nxtl1, nxtr1, first_east, first_west,
+     .        first_north, first_south, last_north, last_south
       real (kind=R8) :: ub, lb, ub1, lb1
+      integer, allocatable :: iseg1(:)
+      logical, allocatable :: flip_segment(:)
       real (kind=R8) :: rratio
-      external subini, subend, xertst, get_nxt, rratio
+      external xertst, get_nxt, rratio
 
       call subini('b2yt_wall_init')
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
@@ -144,6 +150,12 @@ cxpb  Northern boundaries (excluding diverted island)
         end select DIRVALUE
       enddo
       nsegments = nsegments - 1
+      allocate(iseg1(nsegments))
+      allocate(flip_segment(nsegments))
+      flip_segment = .false.
+      do is = 1, nsegments
+        iseg1(is) = is
+      end do
 
 cxpb  We now identify the b2ah region numbers
       do ibnd = 1, nbnd1
@@ -181,6 +193,48 @@ cxpb  We now identify the b2ah region numbers
           imapreg(ibnd) = -1
         endif
       enddo
+      if (flip) then
+        first_east = 0
+        first_west = 0
+        first_north = 0
+        first_south = 0
+        last_north = 0
+        last_south = 0
+! Careful that we travel the South side backwards
+        do is = 1, nsegments
+          if (imapreg(wall_begin1(is)).eq.cbirea) first_east = is
+          if (imapreg(wall_begin1(is)).eq.cbirwe) first_west = is
+          if (imapreg(wall_begin1(is)).eq.cbirno) first_north = is
+          if (imapreg(wall_begin1(is)).eq.cbirno+cbnrno-1)
+     >                                            last_north = is
+          if (imapreg(wall_begin1(is)).eq.cbirso+cbnrso-1)
+     >                                            first_south = is
+          if (imapreg(wall_begin1(is)).eq.cbirso) last_south = is
+        end do
+        call xertst(first_east.gt.0, 'Did not find East segment !')
+        call xertst(first_west.gt.0, 'Did not find West segment !')
+        call xertst(first_north.gt.0 .and. last_north.ge.first_north,
+     .   'Did not find North segments !')
+        call xertst(first_south.gt.0 .and. last_south.ge.first_south,
+     .   'Did not find South segments !')
+        do is = 1, nsegments
+          if (imapreg(wall_begin1(is)).ge.cbirno .and.
+     &        imapreg(wall_begin1(is)).le.cbirno+cbnrno-1) then
+            flip_segment(is) = .true.
+            iseg1(is) = last_north-(is-first_north)
+          elseif (imapreg(wall_begin1(is)).ge.cbirso .and.
+     &            imapreg(wall_begin1(is)).le.cbirso+cbnrso-1) then
+            flip_segment(is) = .true.
+            iseg1(is) = last_south-(is-first_south)
+          elseif (imapreg(wall_begin1(is)).ge.cbirwe .and.
+     &            imapreg(wall_begin1(is)).le.cbirwe+cbnrwe-1) then
+            iseg1(is) = is-first_west+first_east
+          elseif (imapreg(wall_begin1(is)).ge.cbirea .and.
+     &            imapreg(wall_begin1(is)).le.cbirea+cbnrea-1) then
+            iseg1(is) = is-first_east+first_west
+          end if
+        end do
+      end if
 
       do is = nsegments+1, nwall_segments
         wall_begin1(is) = nbnd1+1
@@ -192,31 +246,45 @@ cxpb  We now identify the b2ah region numbers
 
 cxpb We map per segment
 cxpb We interpolate according to the area along the segment
-      do is= 1, nsegments
-        acc_area(wall_begin(is)) = plate_area(wall_begin(is))
-        do ibnd = wall_begin(is)+1, wall_end(is)
-          acc_area(ibnd) = acc_area(ibnd-1) + plate_area(ibnd)
-        enddo
-        do ibnd = wall_begin(is), wall_end(is)-1
-          acc_area(ibnd) = acc_area(ibnd)/acc_area(wall_end(is))
-        end do
-        acc_area(wall_end(is)) = 1.0_R8
-        acc_area1(wall_begin1(is)) = plate_area1(wall_begin1(is))
-        do ibnd = wall_begin1(is)+1, wall_end1(is)
+cxpb If we flip the topology, the segment ordering has changed!
+      do is = 1, nsegments
+        is1 = iseg1(is)
+        if (flip_segment(is)) then
+          acc_area(wall_begin(is)) = plate_area(wall_begin(is))
+          do ibnd = wall_begin(is)+1, wall_end(is)
+            acc_area(ibnd) = acc_area(ibnd-1) + plate_area(ibnd)
+          enddo
+          do ibnd = wall_begin(is), wall_end(is)-1
+            acc_area(ibnd) = acc_area(ibnd)/acc_area(wall_end(is))
+          end do
+          acc_area(wall_end(is)) = 1.0_R8
+        else
+          acc_area(wall_begin(is)) = plate_area(wall_end(is))
+          do ibnd = wall_begin(is)+1, wall_end(is)
+            acc_area(ibnd) = acc_area(ibnd-1) +
+     .       plate_area(wall_end(is)-(ibnd-wall_begin(is)))
+          enddo
+          do ibnd = wall_begin(is), wall_end(is)-1
+            acc_area(ibnd) = acc_area(ibnd)/acc_area(wall_end(is))
+          end do
+          acc_area(wall_end(is)) = 1.0_R8
+        end if
+        acc_area1(wall_begin1(is1)) = plate_area1(wall_begin1(is1))
+        do ibnd = wall_begin1(is1)+1, wall_end1(is1)
           acc_area1(ibnd) = acc_area1(ibnd-1) + plate_area1(ibnd)
         enddo
-        do ibnd = wall_begin1(is), wall_end1(is)-1
-          acc_area1(ibnd) = acc_area1(ibnd)/acc_area1(wall_end1(is))
+        do ibnd = wall_begin1(is1), wall_end1(is1)-1
+          acc_area1(ibnd) = acc_area1(ibnd)/acc_area1(wall_end1(is1))
         end do
-        acc_area1(wall_end1(is)) = 1.0_R8
+        acc_area1(wall_end1(is1)) = 1.0_R8
 cxpb The contr_area(ibnd,ibnd1) array contains the fraction of the plate area from
 cxpb old wall element ibnd that is to be found as part of new wall element ibnd1
 cxpb lb and ub are lower and upper interval bounds
         ibnd = wall_begin(is)
         lb = 0.0_R8
-        ibnd1 = wall_begin1(is)
+        ibnd1 = wall_begin1(is1)
         lb1 = 0.0_R8
-        do while (ibnd.le.wall_end(is) .and. ibnd1.le.wall_end1(is))
+        do while (ibnd.le.wall_end(is) .and. ibnd1.le.wall_end1(is1))
           ub = acc_area(ibnd)
           ub1 = acc_area1(ibnd1)
           if (lb.le.lb1 .and. ub.lt.ub1) then
@@ -251,11 +319,13 @@ cxpb lb and ub are lower and upper interval bounds
         end do
       end do  ! nsegments
 
+      deallocate(iseg1)
+      deallocate(flip_segment)
       call subend()
       return
       end subroutine b2yt_wall_init
 
-      subroutine b2yt_wall(nx1,ny1,ns,ns1,
+      subroutine b2yt_wall(ns,ns1,
      *   natm,natm1,nmol,nmol1,nion,nion1,
      *   is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      *   itrack1,itrack2,itrack3)
@@ -266,19 +336,18 @@ cxpb lb and ub are lower and upper interval bounds
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
 
-      integer nx1, ny1, ns, ns1, natm, natm1, nmol, nmol1, nion, nion1
-      integer nwrite
+      integer ns, ns1, natm, natm1, nmol, nmol1, nion, nion1
       integer itrack1, itrack2, itrack3
       integer iatm1(natm), imol1(nmol), iion1(nion)
       real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1), zn1(0:ns1-1)
       logical is_neutral1(0:ns1-1), l_chem_sput
 
-      integer ix, iy, iz, is, ibnd, ibnd1, imax, i, itrack
+      integer iz, is, ibnd, ibnd1, imax, i
       integer ibegin, iend, iw, iw1, ifail
-      integer ndepth1
       integer nsm, natmm, nmolm, nionm, nwallm
       real (kind=R8) :: sum
       real (kind=R8), allocatable :: wall_data(:,:)
@@ -288,18 +357,14 @@ cxpb lb and ub are lower and upper interval bounds
       real (kind=R8), allocatable :: yy(:), yy1(:)
       real (kind=R8), allocatable :: fa(:,:), fx(:), d(:)
       real (kind=R8) :: fb(3,ndepth), fc(3)
-      logical wall_namelist_used, layer_model
-      save layer_model
-      data layer_model/.false./
+      logical wall_namelist_used
       character*400 line
       character*256 filename
-      character*17 numstr
       logical found
 
-      intrinsic max, min
-      logical streql
-      external xertst, subini, subend
-      external convert_bundle_r, streql
+      intrinsic max
+      external xertst
+      external convert_bundle_r
       external E01BEF, E01BFF
 
       call subini('b2yt_wall')
@@ -439,7 +504,7 @@ cxpb Copy data arrays into new geometry
         do iw1 = 1, nbnd1
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .     zn1(sput_dst)
+     .     nint(zn1(sput_dst))
         end do
         track_source = 0.0_R8
         do iw = 1, nbnd
@@ -470,10 +535,10 @@ cxpb Copy data arrays into new geometry
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           if (itrack2.eq.2) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst2)
+     .       nint(zn1(sput_dst2))
           else if (itrack2.eq.1) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst)
+     .       nint(zn1(sput_dst))
           end if
         end do
         track_source = 0.0_R8
@@ -505,13 +570,13 @@ cxpb Copy data arrays into new geometry
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           if (itrack3.eq.3) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst3)
+     .       nint(zn1(sput_dst3))
           else if (itrack3.eq.2) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst2)
+     .       nint(zn1(sput_dst2))
           else if (itrack3.eq.1) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst)
+     .       nint(zn1(sput_dst))
           endif
         end do
         track_source = 0.0_R8
@@ -703,9 +768,23 @@ cxpb but in computational space
       deallocate(wall_data)
       call subend()
       return
+      end subroutine b2yt_wall
 
 * ..finalise time-dependent wall data
-      entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      subroutine b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      use b2mod_wall
+      use b2mod_wall2
+      use b2mod_layer
+      implicit none
+      integer, intent(in) :: nwrite, nx1, ny1, ns1
+      integer :: i, is, ix, iy, ibnd1, itrack
+      logical :: wall_namelist_used
+      character*400 line
+      character*17 numstr
+
+      logical streql
+      external streql
+
       wall_namelist_used = ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.
@@ -941,8 +1020,7 @@ cxpb  Use explicit writing of non-default elements only
       write(99,'(a1)') '/'
       close(99)
       return
-
-      end subroutine b2yt_wall
+      end subroutine b2yt_wall_final
 
       subroutine b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
      .  natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
@@ -1076,7 +1154,7 @@ cxpb Now for each new species, we do the space mapping
       logical is_neutral1(0:ns1-1)
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
-      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nion)
+      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nionm)
       integer iw, iatm, imol, iion
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
       real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion)
@@ -1122,4 +1200,3 @@ cxpb Now for each new species, we do the space mapping
 
       return
       end subroutine b2yt_wall_bundle_sum
-

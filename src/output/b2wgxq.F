@@ -4,6 +4,8 @@
       subroutine b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc,
      &  scal)
       use b2mod_types
+      use b2mod_gnmap2
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc
@@ -27,7 +29,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a log-contour plot of some quantity on a
-*     cartesian representation of the b2 mesh.
+*     cartesian representation of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -68,7 +70,7 @@
       integer ix0, iy0, ix1, iy1, ixb, iyb
       character headr2*120
 *   ..procedures
-      external subini, subend, xertst, pagini, pagend, cpseti, gndfm2
+      external xertst, pagini, pagend, cpseti
       external b2xxmm, b2wgyq
 
 *-----------------------------------------------------------------------
@@ -145,4 +147,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgxq
 
-      end
+      end subroutine b2wgxq

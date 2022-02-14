@@ -20,7 +20,11 @@
       use b2mod_ppout
       use b2mod_diag
       use b2mod_work
+      use b2mod_math
       use b2mod_external
+      use b2mod_numerics_namelist
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -29,26 +33,24 @@
 *   ..common blocks
 *   ..local variables
       integer is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
-      integer external_species
-      integer itim, itcnt, n2
+      integer numerics_namelist, external_species
+      integer itim, itcnt, n2, nsmin, nsmax
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
-      real (kind=R8) :: t0, t1
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
+      integer, save :: b2mndt_style = 1
 *   ..initialisation
-      save ismain, external_species
-      data ismain/1/, external_species/0/
+      save ismain, numerics_namelist, external_species, nsmin, nsmax
+      data ismain/1/, numerics_namelist/0/, external_species/0/
 *   ..procedures
-      logical ltst, is_comment, cfendf
-      intrinsic sqrt
-      external subini, subend, xertst, xerrab, is_comment
-      external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
+      logical is_comment, cfendf
+      external xertst, xerrab, is_comment
+      external cfruch, cfruin, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *   ..subprogram start-up calls
       call subini ('b2pldr')
@@ -75,7 +77,8 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
@@ -115,7 +118,8 @@
 *   ..read atomic rate data
       call cfverr (ninp(5), b2frates_version)
       call cfruch (ninp(5), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(5), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(5), b2frates_flag)
       call b2rurc (ninp(5), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -192,17 +196,37 @@
       enddo
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     * leftix,leftiy,rightix,rightiy,
-     * bottomix,bottomiy,topix,topiy,region,bb,wbbc)                     !xpb
+! { IYS 05.02.2020
+! And it seems to be not necessary here after the call to b2rugm above
+!!      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+!!     * leftix,leftiy,rightix,rightiy,
+!!     * bottomix,bottomiy,topix,topiy,region,bb,wbbc)                     !xpb
+! IYS 05.02.2020 }
 *   ..compute extrapolated wbbc(:,:,3) component
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+!!      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
       if (external_species.ne.0) then
         call read_b2mod_external(nx,ny,ns,ismain)
       else
         call alloc_b2mod_external_dummy(nx,ny)
+      endif
+cxpb initialize the numerics data
+      call ipgeti ('b2mndt_style', b2mndt_style)
+      call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
+      call alloc_b2mod_numerics(nx,ny,ns)
+      if(b2mndt_style.eq.2) then
+        solvemt=.false.
+        solveet=.false.
+      endif
+      if(numerics_namelist.ge.1) then
+        nsmin = 0
+        nsmax = ns
+        call ipgeti ('b2news_nsmin', nsmin)
+        call ipgeti ('b2news_nsmax', nsmax)
+        nsmin = max(0,min(nsmin,ns))
+        nsmax = max(0,min(nsmax,ns))
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
       endif
 *   ..process
       call b2plot(nx,ny,ns)

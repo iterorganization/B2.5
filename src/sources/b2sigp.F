@@ -10,6 +10,8 @@
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
      &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
      &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -47,9 +49,11 @@
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0
+      !$OMP THREADPRIVATE(ncall, style, iout, iout_b2npmo, iout_b2wdat)
+      !$OMP THREADPRIVATE(pot_eq, no_current, pressure_restriction)
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
       data ncall/0/
@@ -139,10 +143,9 @@
 !     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
 !                      THIS REGION, USE B2SIGP_STYLE = 1
                 if (ncall.lt.3) then
-                 write(*,'(a,i4,a,i4)')
-     &       'warning, tot. press. balance will not be exact at ix=',
-     &            ix,',iy=',iy
-                 write(*,*) 'Use b2sigp_style.eq.1 or 2'
+                 write(*,'(a,i4,a,i4,a)') 'warning, '//
+     &            'tot. press. balance will not be exact in cell (',
+     &             ix,',',iy,')'
                 end if
                 b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
      &           (vol(ix,iy)/hx(ix,iy))*
@@ -214,6 +217,8 @@
             endif
           enddo
         enddo
+        if (balance_netcdf.ne.0.and.ncall.lt.3)
+     >   write(*,*) 'Use b2sigp_style.eq.1 or 2'
       elseif(style.eq.1) then                                         !srv 02.07.08 {
         do iy = -1, ny
           do ix = -1, nx
@@ -424,11 +429,20 @@ cxpb apply restriction to pressure gradient for minority ions and neutrals
       endif
 
       if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
+       if (in_parallel()) then
+          !$OMP MASTER
+          if (ncall==0) then
+            write(*,*) 'b2sigp OpenMP warning: no file output ',
+     &                 'in parallel mode'
+          end if
+          !$OMP END MASTER
+       else
         write (chns,'(i3.3)') isb
 !       do k=0,3
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !       enddo
+        call my_out(70,nx,ny,smbgp(-1,-1,0),'b2sigp_smogp'//chns)
         if(style.eq.0 .or. style.eq.1 ) then
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpe'//chns)
@@ -436,6 +450,7 @@ cxpb apply restriction to pressure gradient for minority ions and neutrals
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpo'//chns)
         endif
+       end if
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance

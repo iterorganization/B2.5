@@ -6,14 +6,13 @@
 c--------------------------------------------------------------------
 c     this subroutine does the error handling
 c--------------------------------------------------------------------
-
+      use b2mod_subsys
       implicit none
 
       integer ::
      *        n,ifile, iwarn1, iwarn2, iwarn3, iwarn4, iwarn5,
      +        iwarn6, iwarn7
       logical nlwarn
-      external subini, subend, xerrab
 
       data ifile / 0 /
       data iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, iwarn6, iwarn7

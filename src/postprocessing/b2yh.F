@@ -10,6 +10,7 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -17,7 +18,7 @@
 *
 *  1. purpose
 *
-*     B2YH (main program) is a postprocessor for b2. It reads and
+*     B2YH (main program) is a postprocessor for B2. It reads and
 *     displays the table of physics parameters. This program calls the
 *     driver routine b2yhdr for the actual computation.
 *
@@ -30,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yh performs postprocessing of the
-*     result of a b2 calculation. It displays in a convenient format
+*     result of a B2 calculation. It displays in a convenient format
 *     the table of physics parameters.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -69,7 +70,7 @@
       logical ex
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin, cfruch
+      external prgini, prgend, xertst, cfopen, cfruin, cfruch
       external b2yhdr, b2rugm
 *   ..initialise input/output units
       data ninp/50,51,52/
@@ -111,9 +112,9 @@
       call cfopen (nout(0),'b2yh.prt','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fparam_version)				 !xpb
-      call cfverr (ninp(2), b2fgmtry_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fparam_version)                            !xpb
+      call cfverr (ninp(2), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(2), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -131,7 +132,8 @@
       call cfruch (ninp(2), 120, lblgm, 'label')
       call cfruin (ninp(2), 1, idum, 'isymm')
       call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..call principal driver routine
       call b2yhdr (ninp, nout, nx, ns)

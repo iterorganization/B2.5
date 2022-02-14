@@ -4,7 +4,12 @@
       subroutine b2spel (nx, ny, ns, ev, te, ne, 
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -60,14 +65,9 @@
       real (kind=R8) ::
      *   rlte, rlne, fxte, fxne, t0, t1, tt
 *   ..procedures
-      intrinsic min, max, log
-      real (kind=R8) ::
-     *   trimg
-      external subini, subend, xertst
+      intrinsic log
+      external xertst
       external b2xvsg
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
 *   ..initialisation
       data ncall/0/
 
@@ -94,7 +94,22 @@
 *   ..initialise indices for interpolation
       ite = 0
       ine = 0
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 *   ..loop over cells
+#ifndef NO_OPENMP_B2SPEL
+!$OMP PARALLEL DO default(none) shared(nx,ny,ns) private(ix,iy,is)
+!$OMP& FIRSTPRIVATE(ite, ine)
+!$OMP& private(ltst0, rlte, rlne, fxte, fxne, t0, t1, tt)
+!$OMP& shared(rtlt, te, ev, rtnt, rtln, rtnn, rtlsa, rlsa, rtlra, rlra)
+!$OMP& shared(ne, rtlqa, rlqa, rtlrd, rlrd, rtlbr, rlbr, rtlza, rlza)
+!$OMP& shared(rtlz2, rlz2, rtlpt, rlpt, rtlpi, rlpi)
+#endif
+      do is = 0, ns-1
+*     The IS loop is moved outside, so that we can calculate parallel in
+*     IS. This will ensure that the output arrays are distributed along
+*     the slowest varying index is.
       do iy = -1, ny
        do ix = -1, nx
 *     ..set ltst0
@@ -141,7 +156,6 @@
 *     ..compute coefficient for linear interpolation
         fxne = (rlne-rtln(ine))/(rtln(ine+1)-rtln(ine))
 *     ..compute log-log rate coefficients
-        do is = 0, ns-1
 *      ..compute ionisation rate coefficient
          t0 = (1.0_R8-fxne)*rtlsa(ite,ine,is)+
      &        fxne*rtlsa(ite,ine+1,is)
@@ -259,9 +273,15 @@
          endif
          rlpi(ix,iy,0,is) =  
      .    (1.0_R8-fxte)*t0+fxte*t1-rlpi(ix,iy,1,is)*rlte
-        enddo
-       enddo
-      enddo
+        enddo ! ix = -1, nx
+       enddo ! iy = -1, ny
+      enddo ! is = 0, ns - 1
+#ifndef NO_OPENMP_B2SPEL
+!$OMP END PARALLEL DO
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
 
 * ..return
       ncall = ncall+1

@@ -21,9 +21,17 @@
       use b2mod_par_opt
       use b2mod_exp_file_names
       use b2mod_driver
+      use b2mod_xerset
+#ifdef USE_MPI
+#if MPI_MOD > 0
+      use mpi      ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_MOD < 1
       include 'mpif.h'
+#endif
 #endif
 
 *-----------------------------------------------------------------------
@@ -31,7 +39,7 @@
 *
 *  1. purpose
 *
-*     B2MN_OPT is the main program for the b2 code. The code solves a
+*     B2MN_OPT is the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.
@@ -44,7 +52,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The b2 code /1,2/ solves a system of fluid equations that models
+*     The B2 code /1,2/ solves a system of fluid equations that models
 *     a multi-species plasma in a two-dimensional geometry. Its main
 *     application is simulation of the edge plasma in tokamaks.
 *
@@ -139,7 +147,7 @@
       logical file_open
       real (kind=R8) :: cpu_s, cpu_f
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET

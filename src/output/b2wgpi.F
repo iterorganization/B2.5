@@ -9,6 +9,7 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -32,7 +33,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results
-*     from a b2 calculation. The routine operates as an interface
+*     from a B2 calculation. The routine operates as an interface
 *     to b2wgpj.
 *
 *
@@ -50,7 +51,7 @@
      2 ni(-1:nx,-1:ny,0:1), 
      3 rz(-1:nx,-1:ny), pr(-1:nx,-1:ny), pz(-1:nx,-1:ny)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xpni, b2xppr, b2xppz, b2xpro, b2xpfe, b2xpfi, b2wgpj
 
 *-----------------------------------------------------------------------

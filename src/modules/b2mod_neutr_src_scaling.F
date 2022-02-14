@@ -58,6 +58,7 @@ cxpb The actual used size is (0:natmi,nstra) but natmi is not known yet
       implicit none
 #     include "DIMENSIONS.F"
       integer nread, ns, nstra, idum(0:9)
+      external cfruin, cfrure
 
       if(b2fplasma_version.ge.'01.001.024') then
         call cfruin (nread, 1, idum, 'nstra')
@@ -77,6 +78,7 @@ cxpb The actual used size is (0:natmi,nstra) but natmi is not known yet
       subroutine write_b2mod_neutr_src_scaling(nwrite,nstra)
       implicit none
       integer nwrite, nstra, idum(0:9)
+      external cfwuin, cfwure
 
       if(newversion.ge.'01.001.024') then
         idum(0)=nstra

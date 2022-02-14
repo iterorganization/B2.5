@@ -11,6 +11,7 @@
       use b2mod_transport
       use b2mod_work
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns, itim
@@ -54,7 +55,7 @@
 *     It will hold that 0.le.tim.
 *
 *     dtim - real, input.
-*     dtim specifies the timestep for the present call to b2mndt.
+*     dtim specifies the effective timestep for the present call to b2mndt.
 *     It will hold that 0.lt.dtim.
 *
 *     na0, ua0, te0, ti0, po0 - real*8 array, input.
@@ -81,7 +82,7 @@
       real (kind=R8) ::
      *   rdum(0:9)
 *   ..procedures
-      external subini, subend, xertst, b2scopy, b2saxpy, cfwuin, cfwure
+      external xertst, b2scopy, b2saxpy, cfwuin, cfwure
       external b2xvsg, b2xvfx
 *   ..initialisation
       data ncall/0/

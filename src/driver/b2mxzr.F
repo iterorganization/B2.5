@@ -5,6 +5,7 @@
      &  respo)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -39,7 +40,7 @@
       integer ncall, is, ix, iy
       save ncall
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvfx, b2xxgs
 *   ..initialisation
       data ncall/0/
@@ -119,4 +120,4 @@
 *-----------------------------------------------------------------------
 *.end b2mxzr
 
-      end
+      end subroutine b2mxzr

@@ -1,5 +1,6 @@
       subroutine b2xtvx (nx, ny, nx1, ny1, fun, fun1, wrk)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer nx, ny, nx1, ny1
       real (kind=R8) ::
@@ -10,11 +11,9 @@
       integer ix1, iy1, ix, iy
       real (kind=R8) ::
      *   t0, t1, t2
-      intrinsic min, max
       external b2xvfx, rratio
       real (kind=R8) ::
-     *   med, rratio
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
+     *   rratio
 *     ------------------------------------------------------------------
 *   ..test edge values of fun
       call b2xvfx (nx, ny, fun, 'b2xtvx--fun')
@@ -65,4 +64,4 @@
       enddo
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2xtvx

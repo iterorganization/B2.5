@@ -23,6 +23,9 @@ c=====================================================
       use b2mod_b2plot
       use b2mod_sources
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
       parameter (lun=96)
@@ -46,6 +49,12 @@ c
               do is=1,natmi
                   u=u-eneutrad(ix+1,iy+1,is,0)
               end do
+              do is=1,nmoli
+                  u=u-emolrad(ix+1,iy+1,is,0)
+              end do
+              do is=1,nioni
+                  u=u-eionrad(ix+1,iy+1,is,0)
+              end do
               u=1.e-6_R8*u/vol(ix,iy)
               write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),u
   700         format(1x,2i4,3e17.7)
@@ -53,4 +62,5 @@ c
       end do
       print*,'Wrote file radsrc.b2e'
 c
-      end
+      return
+      end subroutine b2prdl

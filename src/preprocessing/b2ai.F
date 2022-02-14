@@ -8,6 +8,7 @@
       use b2mod_work
       use b2mod_plasma
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -15,7 +16,7 @@
 *
 *  1. purpose
 *
-*     B2AI (main program) prepares an initial plasma state for b2.
+*     B2AI (main program) prepares an initial plasma state for B2.
 *     This program calls the driver routine b2aidr for the actual
 *     computation.
 *
@@ -27,7 +28,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2ai prepares an initial state for a b2
+*     The complete program b2ai prepares an initial state for a B2
 *     calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -77,7 +78,7 @@
       integer ninp(0:3), nout(0:1), nx, ny, ns, io                   !srv 22.12.09
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
       external b2aix0, b2aidr
 *   ..initialise input/output units
       data ninp/50,51,52,53/                                         !srv 22.12.09

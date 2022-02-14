@@ -13,6 +13,7 @@
       use b2mod_transport
       use b2mod_work
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -31,7 +32,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yn displays the progress of the inner
-*     b2 iterations.
+*     B2 iterations.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2yndr to control the actual computation.
@@ -70,7 +71,7 @@
       integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9), io
       logical file_open
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgfin, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2yndr
 *   ..initialise input/output units

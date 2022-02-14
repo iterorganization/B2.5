@@ -1,29 +1,36 @@
 module b2mod_mwti
   use b2mod_types , only : R8
+  use b2mod_subsys
   implicit none
   private
   public :: b2mwti, output_ds, dealloc_b2mod_mwti
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
          nesepa_av(:), tesepa_av(:), tisepa_av(:), &
          posepi_av(:), posepm_av(:), posepa_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_av(:), temxip_av(:), timxip_av(:), &
          nemxap_av(:), temxap_av(:), timxap_av(:), &
          pomxip_av(:), pomxap_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_std(:), tesepi_std(:), tisepi_std(:), &
          nesepm_std(:), tesepm_std(:), tisepm_std(:), &
          nesepa_std(:), tesepa_std(:), tisepa_std(:), &
          posepi_std(:), posepm_std(:), posepa_std(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
+
 #ifndef NO_CDF
+# include <netcdf.inc>
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
+  character*(maxncnam), save :: timsav, batchsav
+  integer, save :: ntsav, nasav
+  data timsav /'!!!! INVALID NAME !!!!'/
 #endif
+
 contains
 
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
@@ -46,7 +53,7 @@ contains
     use b2mod_external
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
-    use eirmod_extrab25
+    use eirmod_wneutrals
 #endif
 #endif
     implicit none
@@ -82,7 +89,7 @@ contains
     !.declarations
 
     !   ..local variables
-    integer ncall, ntstep, nastep
+    integer ncall
     real (kind=R8) :: &
          fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
          fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
@@ -96,8 +103,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax), tpmxip(nncutmax), &
-         tpmxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         tpmxip(nncutmax), tpmxap(nncutmax)
     real (kind=R8) :: &
          fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
          fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &
@@ -118,13 +125,14 @@ contains
          nya, nyi, nybl, nybr, nytl, nytr, nc
 
     !   ..procedures
-    external subini, subend, xertst, ipgeti, batch_average
+    external xertst, ipgeti, batch_average
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
+    integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), dims(1), iret
-    integer nvars, natts, ndims, unlimid, nastepid
+    integer imap(maxvdims), iret
+    integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
@@ -143,13 +151,14 @@ contains
     character*5 rw
     character*256, save :: filename, filename_av
     real(kind=R8) :: rratio
-    external rratio
+    external ipgetr, get_jsep, find_file, rratio, &
+             check_cdf_status, batch_average_sq
 #endif
     !   ..initialisation
-    save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
+    save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nc, nya, nyi, nybl, nybr, nytl, nytr, nastep
+         nc, nya, nyi, nybl, nybr, nytl, nytr
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -172,10 +181,10 @@ contains
       call ipgeti ('b2mwti_target_offset',target_offset)
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
-      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
-      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
+      call output_ds(ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
+      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
+      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
+      call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
       if (nnreg(0).eq.8) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.ixtl.lt.nx)
@@ -185,8 +194,8 @@ contains
         do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and. ixtr.lt.nx)
           ixtr=ixtr+1
         enddo
-        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
-        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
+        call output_ds(ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
+        call output_ds(ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
@@ -256,7 +265,7 @@ contains
             nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
             ncid, .false., iret)
           call check_cdf_status(iret)
-          iret = nf_open(trim(filename),NCWRITE,ncid)
+          iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
         else if (ex.and.stim.lt.0.0_R8) then
           rw='read'
@@ -270,7 +279,7 @@ contains
           ntstep = nint(tstepn(1))
           iret = nf_close(ncid)
           write(6,'(a)') trim(filename)//' will be appended'
-          iret = nf_open(trim(filename),NCWRITE,ncid)
+          iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
         else
           ntstep = 0
@@ -279,7 +288,7 @@ contains
             nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
             write_2d, ncid, .false., iret)
           call check_cdf_status(iret)
-          iret = nf_open(trim(filename),NCWRITE,ncid)
+          iret = nf_open(trim(filename),or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(iret)
         end if
         write(*,*) 'ntstep = ', ntstep
@@ -305,7 +314,7 @@ contains
               nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
               ncid, .true., iret)
             call check_cdf_status(iret)
-            iret = nf_open(trim(filename_av),NCWRITE,ncid)
+            iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
           else if (ex.and.stim.lt.0.0_R8) then
             rw='read'
@@ -338,7 +347,7 @@ contains
                nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
                write_2d, ncid, .true., iret)
             endif
-            iret = nf_open(trim(filename_av),NCWRITE,ncid)
+            iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
           else
             nastep = 0
@@ -347,7 +356,7 @@ contains
               nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, &
               write_2d, ncid, .true., iret)
             call check_cdf_status(iret)
-            iret = nf_open(trim(filename_av),NCWRITE,ncid)
+            iret = nf_open(trim(filename_av),or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(iret)
           end if
           write(*,*) 'nastep = ', nastep
@@ -500,7 +509,7 @@ contains
     ix = -1 ! 1
     ix_off  = ix + target_offset
     do iy = iylstrt,iylend
-      call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+      call calc_fet(ix,iy,'L',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
       fnixip(1) = fnixip(1) + fnitmp
       feexip(1) = feexip(1) + feetmp
       feixip(1) = feixip(1) + feitmp
@@ -521,7 +530,7 @@ contains
     ix = nx ! 2
     ix_off  = ix - target_offset
     do iy = iyrstrt,iyrend
-      call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+      call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
       fnixap(1) = fnixap(1) + fnitmp
       feexap(1) = feexap(1) + feetmp
       feixap(1) = feixap(1) + feitmp
@@ -541,7 +550,7 @@ contains
       ix = ixtr ! 3
       ix_off  = ix + target_offset
       do iy = iytrstrt,iytrend
-        call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+        call calc_fet(ix,iy,'L',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
         fnixap(2) = fnixap(2) + fnitmp
         feexap(2) = feexap(2) + feetmp
         feixap(2) = feixap(2) + feitmp
@@ -560,7 +569,7 @@ contains
       ix = ixtl ! 4
       ix_off  = ix - target_offset
       do iy = iytlstrt,iytlend
-        call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+        call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
         fnixip(2) = fnixip(2) + fnitmp
         feexip(2) = feexip(2) + feetmp
         feixip(2) = feixip(2) + feitmp
@@ -585,14 +594,14 @@ contains
       do ic = 1, nncut
         do iy = -1,jsep
           ix = leftcut(ic) ! 5
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisipp(ic) = fnisipp(ic) + fnitmp
           feesipp(ic) = feesipp(ic) + feetmp
           feisipp(ic) = feisipp(ic) + feitmp
           fchsipp(ic) = fchsipp(ic) + fchtmp
           fetsipp(ic) = fetsipp(ic) + fettmp
           ix = rightcut(ic) ! 6
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisapp(ic) = fnisapp(ic) + fnitmp
           feesapp(ic) = feesapp(ic) + feetmp
           feisapp(ic) = feisapp(ic) + feitmp
@@ -601,14 +610,14 @@ contains
         enddo
         do iy = jsep+1,ny
           ix = leftcut(ic) ! 7
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisip(ic) = fnisip(ic) + fnitmp
           feesip(ic) = feesip(ic) + feetmp
           feisip(ic) = feisip(ic) + feitmp
           fchsip(ic) = fchsip(ic) + fchtmp
           fetsip(ic) = fetsip(ic) + fettmp
           ix = rightcut(ic) ! 8
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisap(ic) = fnisap(ic) + fnitmp
           feesap(ic) = feesap(ic) + feetmp
           feisap(ic) = feisap(ic) + feitmp
@@ -625,7 +634,7 @@ contains
       do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 9
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -634,7 +643,7 @@ contains
         endif
         if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
           iy = ny ! 10
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -643,7 +652,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 11
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -655,7 +664,7 @@ contains
       do ix = -1,nx
         if(region(ix,ny,0).eq.5) then
           iy = ny ! 12
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -664,7 +673,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 13
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -676,7 +685,7 @@ contains
       do ix = -1,nx
         if(mod(region(ix,ny,0),4).eq.2) then
           iy = ny ! 14
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(region(ix,ny,0)/4+1) = fniyip(region(ix,ny,0)/4+1) + fnitmp
           feeyip(region(ix,ny,0)/4+1) = feeyip(region(ix,ny,0)/4+1) + feetmp
           feiyip(region(ix,ny,0)/4+1) = feiyip(region(ix,ny,0)/4+1) + feitmp
@@ -685,7 +694,7 @@ contains
         endif
         if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
           iy = ny ! 15
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -694,7 +703,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3 .or. region(ix,-1,0).eq.8) then
           iy = -1 ! 16
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -703,7 +712,7 @@ contains
         endif
         if(region(ix,ny,0).eq.4 .or. region(ix,ny,0).eq.7) then
           iy = ny ! 17
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(2) = fniyap(2) + fnitmp
           feeyap(2) = feeyap(2) + feetmp
           feiyap(2) = feiyap(2) + feitmp
@@ -712,7 +721,7 @@ contains
         endif
         if(region(ix,-1,0).eq.4 .or. region(ix,-1,0).eq.7) then
           iy = -1 ! 18
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(2) = fniyap(2) + fnitmp
           feeyap(2) = feeyap(2) + feetmp
           feiyap(2) = feiyap(2) + feitmp
@@ -724,7 +733,7 @@ contains
       do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 19
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -735,7 +744,7 @@ contains
     else
       do ix = -1,nx
         iy = ny ! 20
-        call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+        call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
         fniyip(1) = fniyip(1) + fnitmp
         feeyip(1) = feeyip(1) + feetmp
         feiyip(1) = feiyip(1) + feitmp
@@ -852,27 +861,27 @@ contains
       endif
       posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
     endif
-    nesepa(nncut+1:nncutmax) = 0.0_R8
-    tesepa(nncut+1:nncutmax) = 0.0_R8
-    tisepa(nncut+1:nncutmax) = 0.0_R8
-    tpsepa(nncut+1:nncutmax) = 0.0_R8
-    posepa(nncut+1:nncutmax) = 0.0_R8
-    nesepm(nncut+1:nncutmax) = 0.0_R8
-    tesepm(nncut+1:nncutmax) = 0.0_R8
-    tisepm(nncut+1:nncutmax) = 0.0_R8
-    posepm(nncut+1:nncutmax) = 0.0_R8
-    dnsepm(nncut+1:nncutmax) = 0.0_R8
-    dpsepm(nncut+1:nncutmax) = 0.0_R8
-    kesepm(nncut+1:nncutmax) = 0.0_R8
-    kisepm(nncut+1:nncutmax) = 0.0_R8
-    vxsepm(nncut+1:nncutmax) = 0.0_R8
-    vysepm(nncut+1:nncutmax) = 0.0_R8
-    vssepm(nncut+1:nncutmax) = 0.0_R8
-    nesepi(nncut+1:nncutmax) = 0.0_R8
-    tesepi(nncut+1:nncutmax) = 0.0_R8
-    tisepi(nncut+1:nncutmax) = 0.0_R8
-    tpsepi(nncut+1:nncutmax) = 0.0_R8
-    posepi(nncut+1:nncutmax) = 0.0_R8
+    nesepa(nc+1:nncutmax) = 0.0_R8
+    tesepa(nc+1:nncutmax) = 0.0_R8
+    tisepa(nc+1:nncutmax) = 0.0_R8
+    tpsepa(nc+1:nncutmax) = 0.0_R8
+    posepa(nc+1:nncutmax) = 0.0_R8
+    nesepm(nc+1:nncutmax) = 0.0_R8
+    tesepm(nc+1:nncutmax) = 0.0_R8
+    tisepm(nc+1:nncutmax) = 0.0_R8
+    posepm(nc+1:nncutmax) = 0.0_R8
+    dnsepm(nc+1:nncutmax) = 0.0_R8
+    dpsepm(nc+1:nncutmax) = 0.0_R8
+    kesepm(nc+1:nncutmax) = 0.0_R8
+    kisepm(nc+1:nncutmax) = 0.0_R8
+    vxsepm(nc+1:nncutmax) = 0.0_R8
+    vysepm(nc+1:nncutmax) = 0.0_R8
+    vssepm(nc+1:nncutmax) = 0.0_R8
+    nesepi(nc+1:nncutmax) = 0.0_R8
+    tesepi(nc+1:nncutmax) = 0.0_R8
+    tisepi(nc+1:nncutmax) = 0.0_R8
+    tpsepi(nc+1:nncutmax) = 0.0_R8
+    posepi(nc+1:nncutmax) = 0.0_R8
 #endif
     !
     temxip(1:nc) = temxip(1:nc)/ev
@@ -971,7 +980,7 @@ contains
 !wdk only write time data if lwti is true
     if (lwti) then
       rw = 'write'
-      iret = nf_open(filename, NCWRITE, ncid)
+      iret = nf_open(filename, or(NF_WRITE,NF_SHARE), ncid)
       call check_cdf_status(iret)
       imap(1)=1
       tstepn(1) = ntstep
@@ -1204,25 +1213,25 @@ contains
     !
       slice=0.0_R8
       do iy = iylstrt, iylend
-        call calc_fet(-1,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+        call calc_fet(-1,iy,'L',1._R8,nx,ny,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dl',imap,slice(iylstrt),iret)
 
       slice=0.0_R8
       do iy = iyrstrt, iyrend
-        call calc_fet(nx,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+        call calc_fet(nx,iy,'R',1._R8,nx,ny,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
         slice=0.0_R8
         do iy = iytlstrt, iytlend
-          call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+          call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ismain,BoRiS,slice(iy))
         enddo
         call rwcdf(rw,ncid,'ft3dtl',imap,slice(iytlstrt),iret)
 
         slice=0.0_R8
         do iy = iytrstrt, iytrend
-          call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+          call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ismain,BoRiS,slice(iy))
         enddo
         call rwcdf(rw,ncid,'ft3dtr',imap,slice(iytrstrt),iret)
       endif
@@ -1274,14 +1283,18 @@ contains
       slice=0.0_R8
       if(minval(xymap(-1,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(-1,0),1)
-        slice(0:ny-1)=target_temp(xymap(-1,0:ny-1),1)
+        do iy=0,ny-1
+          slice(iy)=target_temp(xymap(-1,iy),1)
+        end do
         slice(ny)=target_temp(xymap(-1,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dl',imap,slice,iret)
       slice=0.0_R8
       if(minval(xymap(nx,0:ny-1)).gt.0) then
         slice(-1)=target_temp(xymap(nx,0),1)
-        slice(0:ny-1)=target_temp(xymap(nx,0:ny-1),1)
+        do iy=0,ny-1
+          slice(iy)=target_temp(xymap(nx,iy),1)
+        end do
         slice(ny)=target_temp(xymap(nx,ny-1),1)
       endif
       call rwcdf(rw,ncid,'tp3dr',imap,slice,iret)
@@ -1289,14 +1302,18 @@ contains
         slice=0.0_R8
         if(minval(xymap(ixtl,0:ny-1)).gt.0) then
           slice(-1)=target_temp(xymap(ixtl,0),1)
-          slice(0:ny-1)=target_temp(xymap(ixtl,0:ny-1),1)
+          do iy=0,ny-1
+            slice(iy)=target_temp(xymap(ixtl,iy),1)
+          end do
           slice(ny)=target_temp(xymap(ixtl,ny-1),1)
         endif
         call rwcdf(rw,ncid,'tp3dtl',imap,slice,iret)
         slice=0.0_R8
         if(minval(xymap(ixtr,0:ny-1)).gt.0) then
           slice(-1)=target_temp(xymap(ixtr,0),1)
-          slice(0:ny-1)=target_temp(xymap(ixtr,0:ny-1),1)
+          do iy=0,ny-1
+            slice(iy)=target_temp(xymap(ixtr,iy),1)
+          end do
           slice(ny)=target_temp(xymap(ixtr,ny-1),1)
         endif
         call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)
@@ -1309,30 +1326,30 @@ contains
 !wdk only write batch data if lwav is true
     if (lwav) then
       rw = 'write'
-      iret = nf_open(filename_av, NCWRITE, ncid)
+      iret = nf_open(filename_av, or(NF_WRITE,NF_SHARE), ncid)
       call check_cdf_status(iret)
 !wdk compute the standard deviation from average and average of squares
       fac = rratio(ntim_batch,ntim_batch - 1)
-      nesepm_std = ((nesepm_std - nesepm_av**2)*fac)**0.5
-      tesepm_std = ((tesepm_std - tesepm_av**2)*fac)**0.5
-      tisepm_std = ((tisepm_std - tisepm_av**2)*fac)**0.5
-      posepm_std = ((posepm_std - posepm_av**2)*fac)**0.5
-      nesepi_std = ((nesepi_std - nesepi_av**2)*fac)**0.5
-      tesepi_std = ((tesepi_std - tesepi_av**2)*fac)**0.5
-      tisepi_std = ((tisepi_std - tisepi_av**2)*fac)**0.5
-      posepi_std = ((posepi_std - posepi_av**2)*fac)**0.5
-      nesepa_std = ((nesepa_std - nesepa_av**2)*fac)**0.5
-      tesepa_std = ((tesepa_std - tesepa_av**2)*fac)**0.5
-      tisepa_std = ((tisepa_std - tisepa_av**2)*fac)**0.5
-      posepa_std = ((posepa_std - posepa_av**2)*fac)**0.5
-      nemxip_std = ((nemxip_std - nemxip_av**2)*fac)**0.5
-      temxip_std = ((temxip_std - temxip_av**2)*fac)**0.5
-      timxip_std = ((timxip_std - timxip_av**2)*fac)**0.5
-      pomxip_std = ((pomxip_std - pomxip_av**2)*fac)**0.5
-      nemxap_std = ((nemxap_std - nemxap_av**2)*fac)**0.5
-      temxap_std = ((temxap_std - temxap_av**2)*fac)**0.5
-      timxap_std = ((timxap_std - timxap_av**2)*fac)**0.5
-      pomxap_std = ((pomxap_std - pomxap_av**2)*fac)**0.5
+      nesepm_std(1:nc) = (abs(nesepm_std(1:nc) - nesepm_av(1:nc)**2)*fac)**0.5
+      tesepm_std(1:nc) = (abs(tesepm_std(1:nc) - tesepm_av(1:nc)**2)*fac)**0.5
+      tisepm_std(1:nc) = (abs(tisepm_std(1:nc) - tisepm_av(1:nc)**2)*fac)**0.5
+      posepm_std(1:nc) = (abs(posepm_std(1:nc) - posepm_av(1:nc)**2)*fac)**0.5
+      nesepi_std(1:nc) = (abs(nesepi_std(1:nc) - nesepi_av(1:nc)**2)*fac)**0.5
+      tesepi_std(1:nc) = (abs(tesepi_std(1:nc) - tesepi_av(1:nc)**2)*fac)**0.5
+      tisepi_std(1:nc) = (abs(tisepi_std(1:nc) - tisepi_av(1:nc)**2)*fac)**0.5
+      posepi_std(1:nc) = (abs(posepi_std(1:nc) - posepi_av(1:nc)**2)*fac)**0.5
+      nesepa_std(1:nc) = (abs(nesepa_std(1:nc) - nesepa_av(1:nc)**2)*fac)**0.5
+      tesepa_std(1:nc) = (abs(tesepa_std(1:nc) - tesepa_av(1:nc)**2)*fac)**0.5
+      tisepa_std(1:nc) = (abs(tisepa_std(1:nc) - tisepa_av(1:nc)**2)*fac)**0.5
+      posepa_std(1:nc) = (abs(posepa_std(1:nc) - posepa_av(1:nc)**2)*fac)**0.5
+      nemxip_std(1:nc) = (abs(nemxip_std(1:nc) - nemxip_av(1:nc)**2)*fac)**0.5
+      temxip_std(1:nc) = (abs(temxip_std(1:nc) - temxip_av(1:nc)**2)*fac)**0.5
+      timxip_std(1:nc) = (abs(timxip_std(1:nc) - timxip_av(1:nc)**2)*fac)**0.5
+      pomxip_std(1:nc) = (abs(pomxip_std(1:nc) - pomxip_av(1:nc)**2)*fac)**0.5
+      nemxap_std(1:nc) = (abs(nemxap_std(1:nc) - nemxap_av(1:nc)**2)*fac)**0.5
+      temxap_std(1:nc) = (abs(temxap_std(1:nc) - temxap_av(1:nc)**2)*fac)**0.5
+      timxap_std(1:nc) = (abs(timxap_std(1:nc) - timxap_av(1:nc)**2)*fac)**0.5
+      pomxap_std(1:nc) = (abs(pomxap_std(1:nc) - pomxap_av(1:nc)**2)*fac)**0.5
 
 !wdk write into b2time.nc
       imap(1)=1
@@ -1513,8 +1530,18 @@ contains
     ! variable shapes
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
+    ! CDF format variable
+    integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
+    ! Procedures
+    external ipgeti, check_cdf_status
+
     ! Create and enter define mode
-    iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
+    call ipgeti ('b2mndr_cdf_default', cdf_default)
+    if (cdf_default.eq.3 .or. cdf_default.eq.4) then
+      iret = nf_create(trim(filename), or(ncclob,nf_netcdf4), ncid)
+    else
+      iret = nf_create(trim(filename), ncclob, ncid)
+    end if
     call check_cdf_status(iret)
     ! define dimensions
     if (.not.batch_only) then
@@ -2137,7 +2164,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feixipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 49, 'integrated poloidal tot energy flux, Western edge')
+      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 60, 'integrated poloidal total internal energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetxipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2157,7 +2184,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feixapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 49, 'integrated poloidal tot energy flux, Eastern edge')
+      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 60, 'integrated poloidal total internal energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetxapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2303,7 +2330,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feiyipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 47, 'integrated radial tot energy flux, main chamber')
+      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 58, 'integrated radial total internal energy flux, main chamber')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetyipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2323,7 +2350,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feiyapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 50, 'integrated radial tot energy flux, divertor region')
+      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 61, 'integrated radial total internal energy flux, divertor region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetyapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2379,7 +2406,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 58, 'poloidal total energy flux, into Western separatrix throat')
+      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 67, 'poloidal total internal energy flux, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2399,7 +2426,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 58, 'poloidal total energy flux, into Eastern separatrix throat')
+      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 67, 'poloidal total internal energy flux, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2419,7 +2446,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisippid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 49, 'poloidal total energy flux, core x-pt flux region')
+      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 58, 'poloidal total internal energy flux, core x-pt flux region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsippid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -2439,7 +2466,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisappid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 52, 'poloidal total energy flux, x-pt private flux region')
+      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 61, 'poloidal total internal energy flux, x-pt private flux region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsappid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -3037,21 +3064,20 @@ contains
   end subroutine b2crtimecdf
 
   subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
-#     include <netcdf.inc>
+#   include <netcdf.inc>
 
     character*(*) rw,data_name
     integer ncid,imap(*),iret,i,varid,dimlen
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
-    character*(*) timnam,batchnam
-    character*(maxncnam) timsav,batchsav
-    integer ntsav,ntstep,nasav,nastep
     integer :: istride, imax
+#ifdef DBG
+    logical, parameter :: debug = .true.
+#else
     logical, parameter :: debug = .false.
-    save timsav,ntsav,batchsav,nasav
-    data timsav /'!!!! INVALID NAME !!!!'/
-    external subini, subend, xerrab
+#endif
+    external check_cdf_status, xerrab
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
@@ -3064,7 +3090,7 @@ contains
     if (debug) write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
     if (debug) write(*,*) "Variable has nvdims=", nvdims
-    if (debug) write(*,*) "Input imap(:)=", imap(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
     call check_cdf_status(iret)
     mycount(1) = 1 ! for scalars
@@ -3083,8 +3109,8 @@ contains
         start(i)=1
       endif
     enddo
-    if (debug) write(*,*) "start(:)=", start(1:nvdims)
-    if (debug) write(*,*) "mycount(:)=", mycount(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "start(:)=", start(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1
@@ -3117,41 +3143,42 @@ contains
 
     call subend ()
     return
+  end subroutine rwcdf
     !
-    entry rwcdf_settime(timnam,ntstep)
+  subroutine rwcdf_settime(timnam,ntstep)
+    implicit none
+    character*(*) timnam
+    integer ntstep
     write(*,*) 'Saving ',trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
     return
+  end subroutine rwcdf_settime
     !
-    entry rwcdf_setbatch(batchnam,nastep)
+  subroutine rwcdf_setbatch(batchnam,nastep)
+    implicit none
+    character*(*) batchnam
+    integer nastep
     write(*,*) 'Saving ',trim(batchnam),' as the batch dimension'
     write(*,*) 'nastep = ',nastep
     batchsav=batchnam
     nasav=nastep
     return
-  end subroutine rwcdf
+  end subroutine rwcdf_setbatch
 #endif
 !
-  subroutine output_ds(crx,cry,nx,ny,iref,target_offset, &
-       jsep,iystart,iyend,filename)
+  subroutine output_ds(ny,iref,target_offset,jsep,iystart,iyend,filename)
+    use b2mod_geo
     use b2mod_indirect
     implicit none
-    integer nx,ny,iref,jsep,iystart,iyend,target_offset
-    real (kind=R8) :: &
-         crx(-1:nx,-1:ny,0:3),cry(-1:nx,-1:ny,0:3)
+    integer ny,iref,jsep,iystart,iyend,target_offset
     real (kind=R8) :: &
          ds(-1:ny), ds_offset
     character*(*) filename
-    integer ix,iy
-    external subini, subend, xertst
+    integer iy
+    external xertst
     intrinsic sqrt
-    real (kind=R8) :: &
-         cr,cz
-
-    cr(ix,iy)=0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-    cz(ix,iy)=0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
 
     call subini ('output_ds')
     iystart=-1
@@ -3195,25 +3222,27 @@ contains
   end subroutine output_ds
 
 
-  subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
+  subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
+    use b2mod_plasma   , only : fna, fhe, fhi, fch, fht, fhj
     use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
     use b2mod_external , only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
     use b2mod_constants , only : ev, mp
     use b2mod_geo , only : hx, hy, qz, gs
     implicit none
     integer, intent(in) :: ix, iy
-    integer, intent(in) :: ismain, nx, ny, ns
+    integer, intent(in) :: ismain, nx, ny
     real(kind=R8), intent(in) :: BoRiS, fac_flux
     real(kind=R8), intent(out) :: fet
     real(kind=R8), intent(out), Optional :: fni0, fee0, fei0, fch0, pwr
     character(len=1) :: side
     ! Local vars
     integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
-    real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
+    real(kind=R8) :: kintmp, rpttmp, taf
     real(kind=R8) :: h(-1:nx,-1:ny)
-    ! computation
+    ! Procedures
+    external xerrab
 
+    ! Computation
     select case (side)
     case ('l','L')
       ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
@@ -3250,16 +3279,7 @@ contains
     if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
     if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
     if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
-    fet = fac_flux*(fhe(ix_flux,iy_flux,idir) + fhi(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
-    tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir)*tef*(1.0_R8-BoRiS)
-    do is=0,ns-1
-      fet = fet + &
-        fac_flux*(fhm(ix_flux,iy_flux,idir,is)+ &
-                  fna(ix_flux,iy_flux,idir,is)*tif)*(1.0_R8-BoRiS) + &
-        fac_flux*fhp(ix_flux,iy_flux,idir,is)
-    enddo
+    fet = fac_flux*(fht(ix_flux,iy_flux,idir) - fhj(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
     do is=0,ns_ext-1
       kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))

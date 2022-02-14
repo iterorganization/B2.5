@@ -13,6 +13,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_lbfill
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, ns
@@ -24,13 +26,13 @@
 *
 *  1. purpose
 *
-*     B2YMDR is a postprocessor for b2. It is meant to produce movie
+*     B2YMDR is a postprocessor for B2. It is meant to produce movie
 *     output.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It displays the
+*     This routine is a postprocessor for the B2 code. It displays the
 *     evolution of the plasma state. This routine does not require any
 *     metric information.
 *
@@ -71,8 +73,8 @@
      *   tim, dtim, rdum(0:9)
 *   ..procedures
       logical streql, cfendf
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, cfrure, cfendf
       external b2wgdt, b2ruzd
 
 *-----------------------------------------------------------------------

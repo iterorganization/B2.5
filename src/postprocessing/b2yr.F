@@ -10,6 +10,7 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_work
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -17,7 +18,7 @@
 *
 *  1. purpose
 *
-*     B2YR (main program) is a postprocessor for b2. It reads and
+*     B2YR (main program) is a postprocessor for B2. It reads and
 *     displays a table of atomic rate coefficients. This program calls
 *     the driver routine b2yrdr for the actual computation.
 *
@@ -30,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This program displays a table of atomic rate coefficients that
-*     has been prepared for the b2 code.
+*     has been prepared for the B2 code.
 *
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -69,8 +70,7 @@
       integer ninp(0:3), nout(0:1), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, gnopen, gopks, gclks,
-     &  gclwk
+      external prgini, prgend, cfopen, gnopen, gopks, gclks, gclwk
       external b2yrdr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53/

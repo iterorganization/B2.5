@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_geo
+      use b2mod_math
       use b2mod_time
       use b2mod_work
       use b2mod_plasma
@@ -12,6 +13,8 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:3), nout(0:1), nx, ny, ns                  !srv 22.12.09
@@ -24,13 +27,13 @@
 *  1. purpose
 *
 *     B2AIDR prepares and writes to an external file an initial plasma
-*     state for b2.
+*     state for B2.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine prepares and writes to an external file an initial
-*     plasma state for b2.
+*     plasma state for B2.
 *     The initial plasma state is characterised by constant densities
 *     and temperatures and vanishing flow.
 *
@@ -66,9 +69,8 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, js, i, is0, idum(0:9)
+      integer n2, is, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                            !srv 22.12.09
-      real (kind=R8) :: t0, t1                                      !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
@@ -89,24 +91,17 @@
      &  veecrb1(:,:,:), vedia1(:,:,:),
      &  floe_noc1(:,:,:), floi_noc1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
-      character lblps*120, lblgm*120, id*8, id0*8, line*500
+      character lblps*120, lblgm*120, id*8, id0*8, line*500, ligne*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
       real (kind=R8) ::
-     *  amtol, naini(0:ns-1), ttini, na_min
-      parameter (amtol=1.0e-2_R8)
+     *  naini(0:ns-1), ttini, na_min
       logical oldversion, ex
       character*256 filename
 *   ..procedures
       logical streql, is_comment
-      logical ltst                                                  !srv 22.12.09
-      logical lnext
-      external subini, subend, xertst, xerrab, sfill, streql,
-     &  cfwuch, cfwuin, is_comment
+      external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))       !srv 22.12.09
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *  ..initialisation
       save na_min
       data na_min/1.0e4_R8/
@@ -147,8 +142,8 @@
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell,
 *     projected onto the poloidal direction, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-*     uadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     uadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     uadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     uadia is computed at cell faces otherwise (default)
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
@@ -160,8 +155,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vadia is computed at cell faces otherwise (default)
 *
 *     wadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let wadiax(,,)=wadia(,,0,) and wadiay(,)=wadia(,,1,).)
@@ -173,8 +168,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     wadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     wadia is computed at cell faces otherwise (default)
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -186,8 +181,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
 *     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
-*     vedia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vedia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vedia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vedia is computed at cell faces otherwise (default)
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -199,8 +194,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vaecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vaecrb is computed at cell faces otherwise (default)
 *
 *     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
@@ -212,8 +207,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
 *     the ExB drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
-*     veecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     veecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     veecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     veecrb is computed at cell faces otherwise (default)
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
@@ -489,9 +484,13 @@
     1 continue
        read (ninp(1),'(a)',end=2,err=94) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -520,7 +519,8 @@
 *     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
       call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 
       if(read_b2fstate.ne.0) then
@@ -639,7 +639,7 @@
          fna_mdf(:,:,:,is)     = fna_mdf1(:,:,:,is)
          fna_fcor(:,:,:,is)    = fna_fcor1(:,:,:,is)
          fna_nodrift(:,:,:,is) = fna_nodrift1(:,:,:,is)
-         fna_he(:,:,:,is)      = fna_he(:,:,:,is)
+         fna_he(:,:,:,is)      = fna_he1(:,:,:,is)
          fnaPSch(:,:,:,is)     = fnaPSch1(:,:,:,is)
          fna_eir(:,:,:,is)     = fna_eir1(:,:,:,is)
          fna_32(:,:,:,is)      = fna_321(:,:,:,is)
@@ -656,6 +656,8 @@
          call sfill (n2*2, 0.0_R8, fna_32(-1,-1,0,is), 1)
          call sfill (n2*2, 0.0_R8, fna_52(-1,-1,0,is), 1)
        enddo
+       vedia     = vedia1
+       veecrb    = veecrb1
        fne_eir   = fne_eir1
        fne_32    = fne_321
        fne_52    = fne_521

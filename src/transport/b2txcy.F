@@ -1,11 +1,18 @@
-      subroutine b2txcy (nx, ny, mode, vol, gs, hy, qz, kapy, cony)
+      subroutine b2txcy (nx, ny, mode, vol, gs, hy, qz,
+     &  kapy, cony)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hy(-1:nx,-1:ny), 
-     &   qz(-1:nx,-1:ny,0:1), kapy(-1:nx,-1:ny), cony(-1:nx,-1:ny)
+     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &   hy(-1:nx,-1:ny),
+     &   qz(-1:nx,-1:ny,0:1),
+     &   kapy(-1:nx,-1:ny), cony(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXCY computes conductances between neighbouring cells in the
 *     y-direction, given the conductivities.
@@ -14,18 +21,15 @@
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      real (kind=R8) ::
-     *   hy1, harm
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcy')
 *   ..test mode
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcy--faulty argument mode')
+
 *   ..compute cony
       if (mode.eq.-1) then
 *    ..use harmonic averaging
@@ -102,4 +106,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txcy

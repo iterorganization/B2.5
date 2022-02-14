@@ -10,6 +10,7 @@
      &             balance_netcdf
       use b2mod_geo_corner
      &     , only: nmdpl
+      use b2mod_subsys
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -20,7 +21,7 @@
       integer, allocatable, save :: nxdata(:,:,:)
       real(kind=R8), allocatable, save :: sdata(:,:,:,:)
       real(kind=R8), allocatable, save :: xdata(:,:,:,:)
-      integer, allocatable, save  :: ndata(:,:,:)
+      integer, allocatable, save :: ndata(:,:,:)
       real(kind=R8), allocatable, save :: tdata(:,:,:,:)
       integer, allocatable, save :: addspec(:,:,:)
 #else
@@ -87,7 +88,7 @@
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
-!*     Inputfile:  b2.sources.profile                                     *
+!*     Inputfile: b2.sources.profile                                     *
 !**************************************************************************
       integer :: nx,ny,ns,nc
       integer :: ix,iy,i,ireg
@@ -137,16 +138,26 @@
    
       if(nc.eq.0) then
         if(sources_time_mod.gt.0.0_R8) then
-          elm_count=tim/sources_time_mod
+          elm_count=int(tim/sources_time_mod)
         else
           elm_count=0
         endif
-        catch_up=sources_time_mod.gt.0.0_R8
+        if(sources_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,sources_time_mod).ge.sources_time_switch.and.
+     &             sources_time_switch.gt.0.0_R8
+        else if (sources_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.sources_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up)
-          if(mod(tim,sources_time_mod).gt.sources_time_switch) then
-            write(*,*) 'sources: catching up...'
-            call read_source_profile
-            catch_up=sources_time_mod.gt.0.0_R8
+          write(*,*) 'sources: catching up...'
+          call read_source_profile
+          if(sources_time_mod.gt.0.0_R8) then
+            catch_up=mod(tim,sources_time_mod).ge.sources_time_switch
+     &        .and.sources_time_switch.gt.0.0_R8
+          else if (sources_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.sources_time_switch
           else
             catch_up=.false.
           endif
@@ -156,17 +167,28 @@
           write(*,'(a,1p,3e12.4,2i6)') 'SOURCES: ',
      .     tim,mod(tim,sources_time_mod),
      1     sources_time_switch,int(tim/sources_time_mod),elm_count
-          if(mod(tim,sources_time_mod).gt.sources_time_switch.or.
-     1     int(tim/sources_time_mod).gt.elm_count) then
-            elm_count=tim/sources_time_mod 
-            call read_source_profile
-            new_files = .true.
-          endif
+          catch_up=
+     1    (mod(tim,sources_time_mod).ge.sources_time_switch.and.
+     1     sources_time_switch.gt.0.0_R8).or.
+     2     int(tim/sources_time_mod).gt.elm_count
+        else if (sources_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.sources_time_switch
+          if (catch_up) write(*,'(a,a)')
+     .     'Switching to next sources profile datafile ',
+     .      trim(sources_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(sources_time_mod.gt.0.0_R8)
+     >     elm_count=int(tim/sources_time_mod)
+          call read_source_profile
+          new_files = .true.
         endif
       endif
  
       if (new_files) then
-        if (maxval(nsdata).gt.0) open (96,file='dx2')
+        if (maxval(nxdata).gt.0) open (96,file='dx2')
         if (maxval(nxdata).gt.0) open (95,file='dx1')
         if (maxval(nsdata).gt.0) open (94,file='da1')
         if (maxval(nsdata).gt.0) open (93,file='da2')
@@ -287,9 +309,9 @@
      &             'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
                   if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
+                  if (new_files) write (96,*) xr(ix),xf(ix)
                 endif
               endif
-              if (new_files) write (96,*) xr(ix),xf(ix)
             enddo
             if (nc.eq.0.or.debug) then
               if (ndat.gt.0) then
@@ -305,9 +327,9 @@
      &           'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
                 if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
+                if (new_files) write (94,*) pr(iy),pf(iy)
               endif
             endif
-            if (new_files) write (94,*) pr(iy),pf(iy)
           enddo
     1     continue
         enddo
@@ -353,6 +375,16 @@
    99 write (*,*) 'Error in reading the dsp file'
   100 continue
 
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
+
       ext_sna(:,:,:)=sna0(:,:,0,:)
       ext_smo(:,:,:)=smo0(:,:,0,:)
       ext_sne(:,:)=sne0(:,:,0)
@@ -390,6 +422,8 @@ cdjm Jan2017 Keep linearised sources for balance
 
 !  read the profile data
       filename=sources_filename
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(92,file=filename)
@@ -408,8 +442,9 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 !     write(*,profile)
       return
-
+#ifdef USE_MPI
   999 call xerrab ('Error while reading PROFILE namelist!')
+#endif
       end subroutine read_source_profile
 
       end subroutine source_input
@@ -423,7 +458,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !*     subroutine for reading in experimental transport coefficients from *
 !*     the midplane and calculating transport coefficients                *
 !*     for B2.5 (written by Heimo Buerbaumer 1999)                        *
-!*     Inputfile:  b2.transport.inputfile                                 *
+!*     Inputfile: b2.transport.inputfile                                 *
 !**************************************************************************
       use b2mod_time
       use b2mod_constants
@@ -471,7 +506,7 @@ cdjm Jan2017 Keep linearised sources for balance
      5   elm_ix_begin, elm_ix_end, no_div
 
       data transport_filename/'b2.transport.inputfile'/,
-     1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
+     1 transport_time_mod/0.0_R8/, transport_time_switch/0.0_R8/
 
       if(ncall.eq.0) then
         call xertst(NNREGMAX.ge.nnreg(0),
@@ -481,18 +516,27 @@ cdjm Jan2017 Keep linearised sources for balance
         call read_transport_input         
 !  read the profile data
         if(transport_time_mod.gt.0.0_R8) then
-          elm_count=tim/transport_time_mod
+          elm_count=int(tim/transport_time_mod)
         else
           elm_count=0
         endif
-        catch_up=transport_time_mod.gt.0.0_R8
+        if(transport_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,transport_time_mod).ge.transport_time_switch
+     &      .and.transport_time_switch.gt.0.0_R8
+        else if (transport_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.transport_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up) 
-          if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1     then           
-            write(*,*) 'transport_input: catching up ...'
-            filename=transport_filename
-            call read_transport_input
-            catch_up=transport_time_mod.gt.0.0_R8
+          write(*,*) 'transport_input: catching up ...'
+          filename=transport_filename
+          call read_transport_input
+          if(transport_time_mod.gt.0.0_R8) then
+            catch_up=transport_time_switch.gt.0.0_R8.and.
+     .       mod(tim,transport_time_mod).ge.transport_time_switch
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
           else
             catch_up=.false.
           endif
@@ -502,13 +546,24 @@ cdjm Jan2017 Keep linearised sources for balance
           write(*,'(a,1p,3(1x,e14.7),2i4)')
      .     'ELM: ',tim,mod(tim,transport_time_mod),
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
-            filename=transport_filename
-            new_files = .true.
-            call read_transport_input
-          endif
+          catch_up=
+     1    (mod(tim,transport_time_mod).ge.transport_time_switch.and.
+     1     transport_time_switch.gt.0.0_R8).or.
+     2     int(tim/transport_time_mod).gt.elm_count
+        else if (transport_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.transport_time_switch
+          if (catch_up) write(*,'(a,a)')
+     .     'Switching to next transport namelist file ',
+     .      trim(transport_filename)
+        else
+          catch_up=.false.
+        endif
+        if(catch_up) then
+          if(transport_time_mod.gt.0.0_R8)
+     >     elm_count=int(tim/transport_time_mod)
+          filename=transport_filename
+          new_files = .true.
+          call read_transport_input
         endif
       endif
 
@@ -524,7 +579,7 @@ cdjm Jan2017 Keep linearised sources for balance
      >   scaling_width(isc) = 0.5_R8*
      .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
-      if (elm_time_period.gt.0.)then
+      if (elm_time_period.gt.0.) then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
      &           mod(tim,elm_time_period).le.elm_time_end
       else  
@@ -801,6 +856,8 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
+      transport_time_mod=0.0_R8
+      transport_time_switch=0.0_R8
       call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
@@ -817,7 +874,9 @@ c*** Clear data to forget previous profiles
         call xerrab (' No '//trim(filename))
       endif
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading TRANSPORT inputfile!')
+#endif
       end subroutine read_transport_input
 
       end subroutine transport_input
@@ -839,7 +898,7 @@ c*** Clear data to forget previous profiles
       integer ixref, iyref
       character*256 filename
       logical exist
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
@@ -860,8 +919,7 @@ c*** Clear data to forget previous profiles
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-        call output_ds(crx,cry,nx,ny,ixref,0,
-     1   iyref,iyastrt,iyaend,'dsp')
+        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
@@ -934,7 +992,7 @@ c*** Clear data to forget previous profiles
       integer jxi, jxa, jsep, ncall
       integer ixref, iyref
       integer ireg
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, ncall
       data ncall/0/

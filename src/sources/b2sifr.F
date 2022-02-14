@@ -10,10 +10,14 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_plasma
+     &     , only : roxa
       use b2mod_balance                                              !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
      &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -35,7 +39,6 @@
      *   lnlam(-1:nx,-1:ny),
      *   smbtf_cthe(-1:nx,-1:ny), !djm Jul2018
      *   smbtf_cthi(-1:nx,-1:ny)
-*     ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -69,12 +72,11 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic sqrt, sign, abs
-      real (kind=R8) ::
-     *   roxa
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvfx, b2xvsg, b2xxgs
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
+      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase) 
+      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
       save ncall, styl0, styl1, 
      &  phm0, phm1, phm2, phm3, limthii, limthee
       data ncall/0/, styl0/0/, styl1/0/, 
@@ -105,6 +107,13 @@
        call xertst (0.0_R8.le.limthii.and.0.0_R8.le.limthee,
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+          write(*,*) 'B2SIFR OpenMP warning: no file output in ',
+     &               'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')

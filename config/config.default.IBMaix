@@ -15,7 +15,19 @@ ifndef LD_SONNET
   $(error LD_SONNET not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DIBMaix
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+DEFINES += -DIBMaix
+
+ifndef SOLPS_CPP
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
 
 CPP = /usr/ccs/lib/cpp
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
@@ -47,7 +59,8 @@ OBJDEST = -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${NAG} -lmass
 

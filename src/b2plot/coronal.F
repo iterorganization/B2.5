@@ -5,15 +5,17 @@ c     =========================================================================
 c     -------------------------------------------------------------------------
 c     subroutine getsa:
 c     calculating the ionisation and recombination coefficents rsa and rra for
-c     impurity belonging to the same homonuclear sequence as species i, for 
+c     impurity belonging to the same isonuclear sequence as species i, for
 c     all charge states, at temperature T in eV and ne=1e16/m3.
 c     -------------------------------------------------------------------------
 
       subroutine getsa(ns,rcsa,rcra,T)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 
@@ -24,23 +26,13 @@ c     -------------------------------------------------------------------------
      *   rcra(0:ns-1), rcsa(0:ns-1), rlte, rlne,
      *   rclra(0:1,0:ns-1), rclsa(0:1,0:ns-1)
       real (kind=R8) ::
-     *   cutlo, cutll, t0, t1, tt, wrk0, ne0, fxte, fxne
-      real (kind=R8) ::
-     *   machsfr, expu, trimg
+     *   t0, t1, tt, wrk0, ne0, fxte, fxne
 
       integer is,ite,ine
       logical ltst0
-      external subini, subend
-      intrinsic log, dim, exp, max, min
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-      trimg(t0,t1,tt) = max(t0,min(t1,tt))
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
+      intrinsic log
 
       call subini('getsa')
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 
       wrk0 = log(T)
       ne0 = log(1.0e16_R8)
@@ -138,6 +130,7 @@ c     -------------------------------------------------------------------------
       subroutine callgetsa(ns,T,i)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 
@@ -155,7 +148,7 @@ c     -------------------------------------------------------------------------
       integer c1,c2
       real (kind=R8) ::
      *   result
-      external subini, subend, xertst
+      external xertst
       intrinsic abs
 
       call subini('callgetsa')
@@ -220,6 +213,7 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
@@ -241,7 +235,6 @@ c     -------------------------------------------------------------------------
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
 
-      external subini, subend
       external b2spel, b2sqel
 
       call subini('corora')
@@ -306,6 +299,7 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
@@ -333,7 +327,6 @@ c     -------------------------------------------------------------------------
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
       integer co1,co2
 
-      external subini, subend
       external b2spel, b2sqel
 
       call subini('coroni')
@@ -398,7 +391,7 @@ c     coronal equilibrium
           work(-1:nx,-1:ny,co1,iwrk)=
      .     n(-1:nx,-1:ny,co1)*ntot(-1:nx,-1:ny,isstart)
         enddo
-c Move on to next homonuclear sequence
+c Move on to next isonuclear sequence
         is0 = is 
       enddo
 

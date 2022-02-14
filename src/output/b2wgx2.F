@@ -1,20 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wgx2 (nx, ny, header, crx, cry, fun, iloc, scal,
+      subroutine b2wgx2 (nx, ny, header, fun, iloc, scal,
      &  fa0, fa1, ncnta, fb0, fb1, ncntb)
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc, ncnta, ncntb
       character header*(*)
       real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3),
-     &  cry(-1:nx,-1:ny,0:3), fun(-1:nx,-1:ny)
+     *  fun(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   scal, fa0, fa1, fb0, fb1
+     *  scal, fa0, fa1, fb0, fb1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -29,7 +29,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a contour plot of some quantity on a
-*     sequence of cartesian representations of the b2 mesh.
+*     sequence of cartesian representations of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -39,9 +39,6 @@
 *
 *     header - character*(*), input.
 *     header specifies a label for the plots.
-*
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     See the calling routine for description.
 *
 *     fun - (-1:nx,-1:ny) real*8 array, input.
 *     fun specifies the function of which a contour plot is to be made.
@@ -115,7 +112,7 @@
      *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny)
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst
+      external xertst
       external b2wgxp, b2xgxy
 
 *-----------------------------------------------------------------------
@@ -140,7 +137,7 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..make plot
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   fun, iloc, scal, fa0, fa1, ncnta, fb0, fb1, ncntb)
@@ -153,4 +150,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx2
 
-      end
+      end subroutine b2wgx2

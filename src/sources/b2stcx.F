@@ -12,9 +12,15 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
+#ifdef WITH_FTIMINGS
+      use timings
+#endif     
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, is0, ismain
@@ -22,7 +28,8 @@
      *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                       !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -42,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, k
+      integer ncall, styl0, n2, ix, iy, is, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -56,15 +63,10 @@
 #endif
       save ncall, styl0, rg0
 *   ..procedures
-      intrinsic abs
-      logical lnext
       real (kind=R8) ::
-     *  samax, roxa
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+     *  samax
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
 *!!   (rg0 for numerical stabilisation; needs experiments.)
@@ -90,13 +92,15 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+!       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     * 'faulty argument ismain')
 *   ..test is0
       call xertst (0.le.is0.and.is0.lt.ns-1, 'faulty argument is0')
       call xertst (lnext(is0,is0+1),
@@ -131,6 +135,19 @@ ctmp.dpc
       call sfill (n2*4*ns, 0.0_R8, smq0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
 *   ..compute sources due to charge exchange
+#ifndef NO_OPENMP_B2STCX
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!$OMP PARALLEL DO default(none) private(is, ix, iy)
+!$OMP& private(t0, t1, t2, du0, du1)
+!$OMP& shared(ns, nx, ny, is0, BoRiS, rg0, styl0)
+!$OMP& shared(rightix, leftix, topiy, bottomiy, region, hz)
+!$OMP& shared(rcx, vol, sna0, na, rcxna, am, shi0, rcxhi, smq0, ua)
+!$OMP& reduction(+: rcxnareg, rcxhireg, rcxmoreg)
+!$OMP& shared(rcxmo, zamin, zamax, zn)
+#endif
+      do iy = -1, ny
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source
@@ -138,7 +155,6 @@ ctmp.dpc
 *        (This is a special case: charge exchange between H0 and H1,
 *        for which there is no particle source.)
         else
-         do iy = -1, ny
           do ix = -1, nx
            if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -163,11 +179,9 @@ ctmp.dpc
             rcxnareg(region(ix,iy,0),is0)=
      1       rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
            endif
-          enddo
          enddo
         endif
 *     ..heat source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -185,10 +199,8 @@ ctmp.dpc
            rcxhi(ix,iy,is)=rcxhi(ix,iy,is)+t1
            rcxhireg(region(ix,iy,0),is)=rcxhireg(region(ix,iy,0),is)+t1
           endif
-         enddo
         enddo
 *     ..parallel momentum source
-        do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
@@ -279,9 +291,21 @@ ctmp.dpc
      1       rcxmoreg(region(ix,iy,0),is0)-t2*ua(ix,iy,is0)
           endif
          enddo
-        enddo
-       endif
+        endif
+       enddo
       enddo
+#ifndef NO_OPENMP_B2STCX
+!$OMP END PARALLEL DO
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+#endif
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 3, shi0)
 
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
@@ -349,7 +373,6 @@ ctmp.dpc
            enddo
         enddo
       endif
-
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

@@ -6,6 +6,7 @@
       use b2mod_types
       use b2mod_b2cmgs
       use b2mod_cellhelper
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -55,7 +56,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst, smin, smax
+      external xertst, smin, smax
       external b2xvsg, b2xvfx, b2xvfy
 
 *-----------------------------------------------------------------------
@@ -132,6 +133,7 @@
       use b2mod_types
       use b2mod_b2cmgs
       use b2mod_cellhelper
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, bottomiy1(-1:nx,-1:ny)
@@ -182,7 +184,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst, smin, smax
+      external xertst, smin, smax
       external b2xvsg, b2xvfx, b2xvfy1
 
 *-----------------------------------------------------------------------

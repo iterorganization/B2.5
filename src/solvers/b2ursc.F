@@ -4,6 +4,7 @@
       subroutine b2ursc (nx, ny, fun, sfn, ffn, resfn)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -25,7 +26,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine computes the residual of a scalar conservation
-*     equation, integrated over cells of the b2 mesh. The equation has
+*     equation, integrated over cells of the B2 mesh. The equation has
 *     the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
@@ -47,8 +48,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       save ncall
+      !$OMP THREADPRIVATE (ncall)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialisation
       data ncall/0/

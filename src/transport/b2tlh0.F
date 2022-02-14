@@ -1,17 +1,20 @@
-      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti,
+      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, na, ti,
      & hcib, chcb, hcimx, fllim0fhi)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     *  vol(-1:nx,-1:ny),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
+     *  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),
@@ -31,14 +34,11 @@
      *  flux_limit_min_ti
       save ncall, alpha, gamma, flux_limit_min_ti, hcimx_flag
 *   ..initialisation
-      data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
+      data ncall/0/, alpha/1.0_R8/, gamma/1.0_R8/,
      *     flux_limit_min_ti/0.0_R8/, hcimx_flag/1/
 *   ..procedures
       intrinsic max, abs, sqrt
-      real (kind=R8) ::
-     *   hy1
-      external subini, subend, xertst, ipgetr, ipgeti
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      external xertst, ipgetr, ipgeti
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')
@@ -68,10 +68,8 @@
       if (alpha.eq.0.0_R8) then
         hcimx(:,:,0,:) = hcib(:,:,:)
         hcimx(:,:,1,:) = hcib(:,:,:)
-        goto 100
-      endif
 
-      if(flux_limit_style.eq.0) then                              !srv 13.06.08
+      elseif(flux_limit_style.eq.0) then                          !srv 13.06.08
 
        do ix = -1, nx
          do iy = -1, ny
@@ -197,6 +195,7 @@
      .            **(1.0_R8/gamma)
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)/t2
                  maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+                 fllim0fhi(ix,iy,0,is) = t2
                else
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)
                endif
@@ -222,6 +221,7 @@
      .            **(1.0_R8/gamma)
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)/t2
                  maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+                 fllim0fhi(ix,iy,1,is) = t2
                 else
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)
                 endif
@@ -276,12 +276,10 @@
        end do
       endif                                                       !srv 13.06.08 }
 
-  100 continue
-
-       if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
+      if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
+      if (iout.ne.0) then
         allocate(w1(-1:nx,-1:ny))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
@@ -306,11 +304,11 @@
          end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
-       endif
+      endif
 
 *   ..return
       ncall = ncall + 1
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2tlh0

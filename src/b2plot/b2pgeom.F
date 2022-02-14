@@ -42,9 +42,9 @@ c=======================================================================
         ofile='gm_sep.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# Separatrix shape'
-        write(lun,'(3a)',err=998) '#',label
-        write(lun,'(3a)',err=998) '#R',tab,'Z'
+        write(lun,' (a)',err=998) '# Separatrix shape'
+        write(lun,'(2a)',err=998) '# ',trim(label)
+        write(lun,'(3a)',err=998) '# R',tab,'Z'
         do i=0,nx !{
           write(lun,'(1p,e15.7,a,e15.7)',err=998) crx(i,k,2),tab,
      ,                                                        cry(i,k,2)
@@ -54,36 +54,33 @@ c=======================================================================
         ofile='gm_SOL.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# SOL magnetic surfaces'
-        write(lun,'(3a)',err=998) '#',label
+        write(lun,' (a)',err=998) '# SOL magnetic surfaces'
+        write(lun,'(2a)',err=998) '# ',trim(label)
         write(hlp_frmr,'(a,i3,a)')
-     -    '(1h#,',ny-k,'(1hR,i2.2,a,1hZ,i2.2,a))'
-        write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=k,ny-1)
-        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(ny-k),'(e14.7,a))'
+     ,    '(a,4x,',ny-k,'(a1,i2.2,13x,a1,i2.2,13x))'
+        write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=k,ny-1)
+        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(ny-k),'(e14.7,2x))'
         do i=0,nx !{
-          write(lun,hlp_frmr,err=998) (crx(i,j,2),tab,cry(i,j,2),tab,
-     ,                                                         j=k,ny-1)
+          write(lun,hlp_frmr,err=998) (crx(i,j,2),cry(i,j,2),j=k,ny-1)
         end do !}
         close(lun)
 
         ofile='gm_PFR.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# PFR magnetic surfaces'
-        write(lun,'(3a)',err=998) '#',label
-        write(hlp_frmr,'(a,i2,a)')
-     ,   '(1h#,',k+1,'(1hR,i2.2,a,1hZ,i2.2,a))'
-        write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=0,k)
-        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,a))'
+        write(lun,' (a)',err=998) '# PFR magnetic surfaces'
+        write(lun,'(2a)',err=998) '# ',trim(label)
+        write(hlp_frmr,'(a,i3,a)')
+     ,   '(a,4x,',k+1,'(a1,i2.2,13x,a1,i2.2,13x))'
+        write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=0,k)
+        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,2x))'
         i1=0
         i2=leftcut(1)-1
         do l=1,2 !{
           do i=i1,i2 !{
-            write(lun,hlp_frmr,err=998) (crx(i,j,2),tab,cry(i,j,2),tab,
-     ,                                                            j=0,k)
+            write(lun,hlp_frmr,err=998) (crx(i,j,2),cry(i,j,2),j=0,k)
           end do !}
-          write(lun,hlp_frmr,err=998) (crx(i2,j,3),tab,cry(i2,j,3),tab,
-     ,                                                            j=0,k)
+          write(lun,hlp_frmr,err=998) (crx(i2,j,3),cry(i2,j,3),j=0,k)
           i1=rightcut(1)
           i2=nx-1
         end do !}
@@ -92,20 +89,18 @@ c=======================================================================
         ofile='gm_core.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# core magnetic surfaces'
-        write(lun,'(3a)',err=998) '#',label
-        write(hlp_frmr,'(a,i2,a)')
-     ,   '(1h#,',k+1,'(1hR,i2.2,a,1hZ,i2.2,a))'
-        write(lun,hlp_frmr,err=998) (i,tab,i,tab,i=0,k)
-        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,a))'
+        write(lun,' (a)',err=998) '# Core magnetic surfaces'
+        write(lun,'(2a)',err=998) '# ',trim(label)
+        write(hlp_frmr,'(a,i3,a)')
+     ,    '(a,4x,',k+1,'(a1,i2.2,13x,a1,i2.2,13x))'
+        write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=0,k)
+        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,2x))'
         i1=leftcut(1)
         i2=rightcut(1)-1
         do i=i1,i2 !{
-          write(lun,hlp_frmr,err=998) (crx(i,j,2),tab,cry(i,j,2),tab,
-     ,                                                            j=0,k)
+          write(lun,hlp_frmr,err=998) (crx(i,j,2),cry(i,j,2),j=0,k)
         end do !}
-        write(lun,hlp_frmr,err=998) (crx(i2,j,3),tab,cry(i2,j,3),tab,
-     ,                                                            j=0,k)
+        write(lun,hlp_frmr,err=998) (crx(i2,j,3),cry(i2,j,3),j=0,k)
 
         close (lun)
       else if(nncut.eq.2) then !}{ === double null ===
@@ -128,4 +123,4 @@ c=======================================================================
   999 write(0,*) 'b2pgeom: unable to open file ',ofile
       return
 c=======================================================================
-      end
+      end subroutine b2pgeom

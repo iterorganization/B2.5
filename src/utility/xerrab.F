@@ -1,5 +1,7 @@
       subroutine xerrab (messg)
       use b2mod_types
+      use b2mod_subsys
+      use b2mod_xerset
       implicit none
       character messg*(*)
 *     ------------------------------------------------------------------
@@ -16,7 +18,7 @@
       logical lwf, lbot
       character fform*12, srname*8
       logical streql
-      external xerget, streql, subxnd
+      external streql, b25_mpi_stop
 *     ------------------------------------------------------------------
 *     Note: Any routine that is called by xerrab must not call xerrab,
 *     directly or indirectly. Routines xerget and streql are trivial

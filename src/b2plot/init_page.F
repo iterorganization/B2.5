@@ -57,24 +57,24 @@ c     the line format common
         return
       endif
       if(dirty_graph.or.(new_page.and.dirty_page)) call end_page
-      xlo=min(1.0e30_R8,max(-1.0e30_R8,xlod))
-      xhi=min(1.0e30_R8,max(-1.0e30_R8,xhid))
-      ylo=min(1.0e30_R8,max(-1.0e30_R8,ylod))
-      yhi=min(1.0e30_R8,max(-1.0e30_R8,yhid))
+      xlo=real(min(1.0e30_R8,max(-1.0e30_R8,xlod)),R4)
+      xhi=real(min(1.0e30_R8,max(-1.0e30_R8,xhid)),R4)
+      ylo=real(min(1.0e30_R8,max(-1.0e30_R8,ylod)),R4)
+      yhi=real(min(1.0e30_R8,max(-1.0e30_R8,yhid)),R4)
       if(xlo.eq.xhi) then
-        xlo=min(xlo*0.9,xlo*1.1)
-        xhi=max(xhi*0.9,xhi*1.1)
+        xlo=min(xlo*0.9_R4,xlo*1.1_R4)
+        xhi=max(xhi*0.9_R4,xhi*1.1_R4)
         if(xlo.eq.xhi) then
-          xlo=-1.0
-          xhi=+1.0
+          xlo=-1.0_R4
+          xhi=+1.0_R4
         endif
       endif
       if(ylo.eq.yhi) then
-        ylo=min(ylo*0.9,ylo*1.1)
-        yhi=max(yhi*0.9,yhi*1.1)
+        ylo=min(ylo*0.9_R4,ylo*1.1_R4)
+        yhi=max(yhi*0.9_R4,yhi*1.1_R4)
         if(ylo.eq.yhi) then
-          ylo=-1.0
-          yhi=+1.0
+          ylo=-1.0_R4
+          yhi=+1.0_R4
         endif
       endif
       if(b2plot_debug.ge.8) write(*,*) xlo,xhi,ylo,yhi
@@ -162,7 +162,7 @@ c     the line format common
 
       n_page=max(nx_page,ny_page)
       itxtwdth=max(nint(12*lbsz/N_PAGE),4)
-      txtwdth=rratio(itxtwdth,1024)
+      txtwdth=real(rratio(itxtwdth,1024),R4)
       offset=0
       if(nx_page.gt.ny_page) offset=1
       if(nx_page/ny_page.gt.3) offset=offset+((nx_page/ny_page)-1)/2
@@ -194,6 +194,10 @@ c     the line format common
         if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
      .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
+        if(.not.streql(xlabel,' ')) reserve_bottom =
+     .   reserve_bottom+txtwdth*2*n_page
+        if(.not.streql(ylabel,' ')) reserve_left =
+     .   reserve_left+txtwdth*2*n_page
       else
         reserve_bottom=0.0
         reserve_top=0.0
@@ -301,6 +305,26 @@ c     the line format common
         endif
         call gsplci(1)
       endif
+      if(.not.streql(xlabel,' ')) then
+        if(xcol.gt.1) call gsplci(xcol)
+        if(noax.gt.0) then
+         CALL PLCHHQ(reserve_left+(1.0-reserve_right-reserve_left)/2.0,
+     1        txtwdth*1*n_page,
+     1        XLABEL(1:LNBLNK(YLABEL)),
+     1        1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
+        call gsplci(1)
+      endif
+      if(.not.streql(ylabel,' ')) then
+        if(xcol.gt.1) call gsplci(xcol)
+        if(noax.gt.0) then
+         CALL PLCHHQ(txtwdth*1*n_page,
+     1        reserve_bottom+(1.0-reserve_top-reserve_bottom)/2.0,
+     1        YLABEL(1:LNBLNK(YLABEL)),
+     1        1.0/100.0/N_PAGE*lbsz,90.0,0.0)
+        endif
+        call gsplci(1)
+      endif
 
       if(b2plot_debug.ge.6) write(*,*) 'SET: ',
      1   reserve_left*XSIZE+XPOS,
@@ -357,7 +381,7 @@ c     the line format common
       call gasetr('WMJ',1.)
       call gasetr('WMN',1.)
       call gstxfp(1,0)
-      call pcseti('FN',0)
+!      call pcseti('FN',0)
 #endif
       return
       end subroutine init_page

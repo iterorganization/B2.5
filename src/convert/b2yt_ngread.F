@@ -1,5 +1,5 @@
 c
-C RHW 18.08.92:  UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
+C RHW 18.08.92: UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
 *//B2YT_NGREAD//
 *=======================================================================
@@ -18,10 +18,10 @@ C
 
       subroutine b2yt_ngread(solps_version, eirene_format, nx1, ny1,
      . natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1, nfla,
-     . no_sputtering, savestratum, non_commensurate, e_bundle_contr,
-     . jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
-     . bottomiy1,
-     . hx, hy, qc, hx1, hy1, qc1, gs1)
+     . no_sputtering, savestratum, non_commensurate, flip,
+     . e_bundle_contr, jsep1, region1,
+     . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
+     . hx, hy, qc, hxx, hyy, qc1, gs1)
 c
 c  version : 06.11.97 22:11
 c
@@ -31,9 +31,11 @@ c
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_clogau
+      use eirmod_cinit
 #endif
       implicit none
 
@@ -48,11 +50,11 @@ c
       real (kind=R8) :: e_bundle_contr(npls1,nfla)
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1),
+     *  hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1),
      *  gs1(-1:nx1,-1:ny1,0:2)
       character*4 solps_version
       character*8 eirene_format
-      logical savestratum(0:nstraid), no_sputtering
+      logical flip, savestratum(0:nstraid), no_sputtering
 
 *  -- LOCAL SCALARS --
       integer is, nplsi
@@ -77,6 +79,8 @@ c
       real (kind=R8), allocatable :: wlabsrp1(:,:)
       real (kind=R8), allocatable :: wlpump1(:,:)
       real (kind=R8), allocatable :: eneutrad1(:,:,:)
+      real (kind=R8), allocatable :: emolrad1(:,:,:)
+      real (kind=R8), allocatable :: eionrad1(:,:,:)
       real (kind=R8), allocatable :: wldna1res(:,:), wldnm1res(:,:)
       real (kind=R8), allocatable :: ewlda1res(:,:), ewldm1res(:,:)
       real (kind=R8), allocatable :: ewldea1res(:,:), ewldem1res(:,:)
@@ -84,7 +88,7 @@ c
       real (kind=R8), allocatable :: wldspta1(:,:,:), wldsptm1(:,:,:)
       real (kind=R8), allocatable :: ewldmr1res(:,:), sarea1res(:)
       real (kind=R8), allocatable :: wlpump1res(:,:), ewldrp1res(:)
-      real (kind=R8), allocatable :: wldspt1res(:)
+      real (kind=R8), allocatable :: wldspt1res(:), ewldt1res(:)
       real (kind=R8), allocatable :: data1res(:)
       real (kind=R8), allocatable :: area_res_contr(:,:)
       real (kind=R8), allocatable ::
@@ -109,7 +113,6 @@ c
       external ipgeti, streql, get_B25_hash
       external convert_eirdiag, conformal_convert
 #endif
-      external subini, subend
 
 *=======================================================================
 *//COMPUTATION//
@@ -129,13 +132,9 @@ C
 *
 
       rewind (44)
-#ifndef HPUX
-      open(unit=45,file='fort.44.2',status='unknown')
-      write(*,*) 'Writing fort.44.2'
-#else
-      open(unit=45,file='ftn44.2',status='unknown')
-      write(*,*) 'Writing ftn44.2'
-#endif
+      filename=fort_lc//'44.2'
+      open(unit=45,file=filename,status='unknown')
+      write(*,*) 'Writing '//trim(filename)
 C
       READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
@@ -153,17 +152,10 @@ C
       WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_B25_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
-#ifndef HPUX
-      write(*,'(a,5i4)')
-     . ' Dimensions in fort.44 =   ',nnx,nny,natmi,nmoli,nioni
-      write(*,'(a,5i4)')
-     . ' Dimensions in fort.44.2 = ',nx1,ny1,natm1,nmol1,nioni
-#else
-      write(*,'(a,5i4)')
-     . ' Dimensions in ftn44 =   ',nnx,nny,natmi,nmoli,nion1
-      write(*,'(a,5i4)')
-     . ' Dimensions in ftn44.2 = ',nx1,ny1,natm1,nmol1,nion1
-#endif
+      write(*,'(3a,5i4)')
+     . ' Dimensions in ',fort_lc,'44 =   ',nnx,nny,natmi,nmoli,nioni
+      write(*,'(3a,5i4)')
+     . ' Dimensions in ',fort_lc,'44.2 = ',nx1,ny1,natm1,nmol1,nion1
       write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -174,11 +166,7 @@ C
       n2 = nx1*ny1
       filename='input.dat'
       call find_file(filename,ex)
-#ifndef HPUX
-      filename='fort.33'
-#else
-      filename='ftn33'
-#endif
+      filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
 c
 * labels
@@ -201,28 +189,32 @@ C
       do 12 IS = 1, NMOLI
         READ (44,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
-      allocate(textmn1(0:nmol1-1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
-      end do
-      do is = 1, nmol1
-        WRITE(45,'(A8)') TEXTMN1(IS-1)
-      end do
-      deallocate(textmn1)
+      if (nmol1.gt.0) then
+        allocate(textmn1(0:nmol1-1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
+        end do
+        do is = 1, nmol1
+          WRITE(45,'(A8)') TEXTMN1(IS-1)
+        end do
+        deallocate(textmn1)
+      end if
 C
 * test ions
 C
       do 13 IS = 1, NIONI
         READ (44,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
-      allocate(textin1(0:nion1-1))
-      do is = 1, nioni
-        if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
-      end do
-      do is = 1, nion1
-        WRITE(45,'(A8)') TEXTIN1(IS-1)
-      end do
-      deallocate(textin1)
+      if (nion1.gt.0) then
+        allocate(textin1(0:nion1-1))
+        do is = 1, nioni
+          if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
+        end do
+        do is = 1, nion1
+          WRITE(45,'(A8)') TEXTIN1(IS-1)
+        end do
+        deallocate(textin1)
+      end if
 C
 * data
 * neutral atoms
@@ -236,7 +228,7 @@ C
           field(0:nx+1,0:ny+1) = dab2(0:nx+1,0:ny+1,is,1)
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, dab1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -266,7 +258,7 @@ C
           end if
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, tab1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -290,7 +282,7 @@ C
             field(0:nx+1,0:ny+1) = dmb2(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, dmb1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -322,7 +314,7 @@ C
             end if
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, tmb1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -347,7 +339,7 @@ C
             field(0:nx+1,0:ny+1) = dib2(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, dib1(0,0,iion1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -379,7 +371,7 @@ C
             end if
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, tib1(0,0,iion1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -401,14 +393,12 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfy (nx, ny, nx1, ny1,
-     &        field, rfa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+          call b2xtfy (nx, ny, nx1, ny1, field, rfa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
         end if
       end do
       call write_title(45,'rfluxa',n2*natm1)
@@ -425,14 +415,12 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfy (nx, ny, nx1, ny1,
-     &        field, rfm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+            call b2xtfy (nx, ny, nx1, ny1, field, rfm1(0,0,imol1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
           end if
         end do
         call write_title(45,'rfluxm',n2*nmol1)
@@ -449,14 +437,12 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pfa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+          call b2xtfx (nx, ny, nx1, ny1, field, pfa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         end if
       end do
       call write_title(45,'pfluxa',n2*natm1)
@@ -473,14 +459,12 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pfm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+            call b2xtfx (nx, ny, nx1, ny1, field, pfm1(0,0,imol1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
           end if
         end do
         call write_title(45,'pfluxm',n2*nmol1)
@@ -497,14 +481,12 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = refluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfy (nx, ny, nx1, ny1,
-     &        field, refa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+          call b2xtfy (nx, ny, nx1, ny1, field, refa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
         end if
       end do
       call write_title(45,'refluxa',n2*natm1)
@@ -521,14 +503,12 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = refluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfy (nx, ny, nx1, ny1,
-     &        field, refm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+            call b2xtfy (nx, ny, nx1, ny1, field, refm1(0,0,imol1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
           end if
         end do
         call write_title(45,'refluxm',n2*nmol1)
@@ -545,14 +525,12 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pefluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pefa1(0,0,iatm1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+          call b2xtfx (nx, ny, nx1, ny1, field, pefa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         end if
       end do
       call write_title(45,'pefluxa',n2*natm1)
@@ -569,14 +547,12 @@ C
         do is = 1, nmoli
           if (imol1(is).ne.0) then
             field(0:nx+1,0:ny+1) = pefluxm(0:nx+1,0:ny+1,is,1)
-            call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pefm1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc,
-     &        jsep, jsep1, region, region1,
+            call b2xtfx (nx, ny, nx1, ny1, field, pefm1(0,0,imol1(is)),
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
           end if
         end do
         call write_title(45,'pefluxm',n2*nmol1)
@@ -591,7 +567,7 @@ C
       field(0:nx+1,0:ny+1) = emiss(0:nx+1,0:ny+1,1,1)
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emiss1(0,0),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -600,7 +576,7 @@ C
       field(0:nx+1,0:ny+1) = emissmol(0:nx+1,0:ny+1,1,1)
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emissmol1(0,0),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -624,7 +600,7 @@ C
             field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, srcml1(0,0,imol1(is)),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -640,7 +616,7 @@ C
             field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, edissml1(0,0,imol1(is),0),
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc,
      &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
@@ -666,13 +642,8 @@ C
      & then
         if (jvft44 .ge. 20130210) then
           call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
-#ifndef HPUX
-          write(6,'(2a)') 'In this fort.44 version,',
+          write(6,'(4a)') 'In this ',fort_lc,'44 version,',
      .                    ' the eneutrad data is summed over species!'
-#else
-          write(6,'(2a)') 'In this ftn44 version,',
-     .                    ' the eneutrad data is summed over species!'
-#endif
           do is = 2, natmi
             eneutrad(:,:,is,0) = 0.0_R8
           end do
@@ -684,22 +655,12 @@ C
         read (44,'(3i6)') nlimi,nstsi,nstrai
         if (nlim1.ne.nlimi) then
           if (nlimi.eq.nlim1+1) then
-#ifndef HPUX
-            write(0,*) 'NLIM in fort.44 file is 1 greater than '//
-     ,                 'NLIM in Eirene input file'
-#else
-            write(0,*) 'NLIM in ftn44 file is 1 greater than '//
-     ,                 'NLIM in Eirene input file'
-#endif
+            write(0,*) 'NLIM in '//fort_lc//'44 file is 1 '//
+     ,                 'greater than NLIM in Eirene input file'
             write(0,*) 'Assuming dummy wall to be removed!'
           else
-#ifndef HPUX
             call xerrab
-     .       ('Mismatched NLIM between fort.44 and input file')
-#else
-            call xerrab
-     .       ('Mismatched NLIM between ftn44 and input file')
-#endif
+     .       ('Mismatched NLIM between '//fort_lc//'44 and input file')
           end if
         end if
         nstra1 = 0
@@ -1175,13 +1136,8 @@ cank
      &        streql(solps_version,'5.1').or.
      &        streql(eirene_format,'facelift')) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
-#ifndef HPUX
-            write(6,'(2a)') 'In this fort.44 version,',
+            write(6,'(4a)') 'In this ',fort_lc,'44 version,',
      .                      ' the eneutrad data is summed over species!'
-#else
-            write(6,'(2a)') 'In this ftn44 version,',
-     .                      ' the eneutrad data is summed over species!'
-#endif
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8
             end do
@@ -1196,7 +1152,7 @@ cank
               field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
               call b2xtvc(nx, ny, nx1, ny1,
      &         field, eneutrad1(0,0,iatm1(is)),
-     &         nncutmax, non_commensurate,
+     &         nncutmax, non_commensurate, flip,
      &         nnreg, nncut, periodic_bc,
      &         jsep, jsep1, region, region1,
      &         leftcut, leftcut1, rightcut, rightcut1,
@@ -1208,6 +1164,55 @@ cank
           call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
      .                         nx1,ny1,natm1,1,1)
           deallocate(eneutrad1)
+        end if
+
+        if (jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+          if (nmol1.gt.0) then
+            allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+            do is = 1, nmoli
+              if (imol1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, emolrad1(0,0,imol1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'emolrad',n2*nmol1)
+            call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                           nx1,ny1,nmol1,1,1)
+            deallocate(emolrad1)
+          end if
+          if (nion1.gt.0) then
+            allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
+            do is = 1, nioni
+              if (iion1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eionrad1(0,0,iion1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'eionrad',n2*nion1)
+            call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
+     .                           nx1,ny1,nion1,1,1)
+            deallocate(eionrad1)
+          end if
         end if
 
         if(jvft44 .ge. 20080706) then
@@ -1272,6 +1277,7 @@ cank
             IF(.NOT.ALLOCATED(wldna_res))
      >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                ewldt_res(NCL),
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                wldspt_res(NCL), sarea_res(NCL),
@@ -1328,6 +1334,10 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
             end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              READ (44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
+            end if
             allocate(sarea1res(NCL1))
             allocate(wldna1res(natm1,NCL1), ewlda1res(natm1,NCL1),
      .               ewldea1res(natm1,NCL1))
@@ -1335,6 +1345,7 @@ cank
      .               ewldem1res(nmol1,NCL1), ewldmr1res(nmol1,NCL1))
             allocate(ewldrp1res(NCL1))
             allocate(wldspt1res(NCL1))
+            allocate(ewldt1res(NCL1))
             allocate(data1res(NCLM))
             if (jvftnew .ge. 20170328)
      >       allocate(wldspta1res(natm1,NCL1),wldsptm1res(nmol1,NCL1))
@@ -1350,13 +1361,21 @@ cank
             call b2yt_res_map ( NCL, NCL1, NCLM,
      .       area_res_contr, data1res)
             ewldrp1res(1:NCL1) = data1res(1:NCL1)
-            if (no_sputtering) then
+            if (no_sputtering.or.jvft44.lt.20170228) then
               wldspt1res(:) = 0.0_R8
             else
               data1res(1:NCL) = wldspt_res(1:NCL)
               call b2yt_res_map ( NCL, NCL1, NCLM,
      .         area_res_contr, data1res)
               wldspt1res(1:NCL1) = data1res(1:NCL1)
+            end if
+            if (jvft44.lt.20201006) then
+              ewldt1res(:) = 0.0_R8
+            else
+              data1res(1:NCL) = ewldt_res(1:NCL)
+              call b2yt_res_map ( NCL, NCL1, NCLM,
+     .         area_res_contr, data1res)
+              ewldt1res(1:NCL1) = data1res(1:NCL1)
             end if
             do is = 1, natmi
               if (iatm1(is).ne.0) then
@@ -1507,12 +1526,17 @@ cank
      ,                                                       i=1,ncl1)
               deallocate (wlpump1res)
             end if
+            if (jvftnew.ge.20201006) then
+              call write_title(45,'ewldt_res',ncl1)
+              WRITE(45,'(6e15.7)') (ewldt1res(i),i=1,NCL1)
+            end if
             deallocate(sarea1res)
             deallocate(wldna1res, ewlda1res, ewldea1res)
             deallocate(wldnm1res, ewldm1res, ewldem1res)
             deallocate(ewldmr1res)
             deallocate(ewldrp1res)
             deallocate(wldspt1res)
+            deallocate(ewldt1res)
             deallocate(data1res)
             deallocate(area_res_contr)
             if (jvftnew .ge. 20170328)
@@ -1549,6 +1573,11 @@ cank
               call read_title(44)
               read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
               write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
+              READ (44,1028)
+              WRITE(45,1028)
+            END IF
+            IF (jvft44.ge.20201006) THEN
+              call read_title(44)
               READ (44,1028)
               WRITE(45,1028)
             END IF
@@ -1670,13 +1699,8 @@ cank
         if(streql(solps_version,'5.1')) then
           if (jvft44.ge.20130210) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
-#ifndef HPUX
-            write(6,'(2a)') 'In this fort.44 version,',
+            write(6,'(4a)') 'In this ',fort_lc,'44 version,',
      .                      ' the eneutrad data is summed over species!'
-#else
-            write(6,'(2a)') 'In this ftn44 version,',
-     .                      ' the eneutrad data is summed over species!'
-#endif
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8
             end do
@@ -1686,7 +1710,7 @@ cank
                 field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eneutrad1(0,0,iatm1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1710,7 +1734,7 @@ cank
                 field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
                 call b2xtvc(nx, ny, nx1, ny1,
      &           field, eneutrad1(0,0,iatm1(is)),
-     &           nncutmax, non_commensurate,
+     &           nncutmax, non_commensurate, flip,
      &           nnreg, nncut, periodic_bc,
      &           jsep, jsep1, region, region1,
      &           leftcut, leftcut1, rightcut, rightcut1,
@@ -1724,16 +1748,64 @@ cank
             deallocate(eneutrad1)
           end if
         end if
+        if(jvft44.ge.20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
+          end do
+          if (nmol1.gt.0) then
+            allocate(emolrad1(0:nx1+1,0:ny1+1,nmol1))
+            do is = 1, nmoli
+              if (imol1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = emolrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, emolrad1(0,0,imol1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'emolrad',n2*nmol1)
+            call eirene_neutr(45,nx1,ny1,nmol1,emolrad1,
+     .                           nx1,ny1,nmol1,1,1)
+            deallocate(emolrad1)
+          end if
+          if (nion1.gt.0) then
+            allocate(eionrad1(0:nx1+1,0:ny1+1,nion1))
+            do is = 1, nioni
+              if (iion1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eionrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eionrad1(0,0,iion1(is)),
+     &           nncutmax, non_commensurate, flip,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call write_title(45,'eionrad',n2*nion1)
+            call eirene_neutr(45,nx1,ny1,nion1,eionrad1,
+     .                           nx1,ny1,nion1,1,1)
+            deallocate(eionrad1)
+          end if
+        end if
       end if
       if(jvft44.ge.960513) nlimi = nlim1
 
+   99 CONTINUE
+ 1028 format()
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
       close(44)
       close(45)
- 1028 format()
 C
       call subend ()
       RETURN
@@ -1741,7 +1813,7 @@ C
 *=======================================================================
 *//END B2YT_NGREAD//
 
-      END
+      END SUBROUTINE B2YT_NGREAD
 
       subroutine b2yt_area_res_map ( NCL, NCL1, nstsi, nx, ny, nx1, ny1,
      .  non_commensurate, sarea_res, sarea1res, area_res_contr,
@@ -2062,7 +2134,3 @@ c       = 4 : center
 
       return
       end function convert_eirdiag
-
-
-
-

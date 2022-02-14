@@ -12,7 +12,7 @@
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
      *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     *          cr, cz, natmi, nmoli, nioni, wklng,
+     *          natmi, nmoli, nioni, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
@@ -34,14 +34,15 @@
       use b2mod_version
 #ifdef B25_EIRENE
       use eirmod_cinit
-     * , only : eirene_init_cinit
+     * , only : eirene_init_cinit, fort_lc
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_comprt
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
-      use eirmod_extrab25
+      use eirmod_infcop
+      use eirmod_wneutrals
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -50,7 +51,9 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_subsys
       implicit none
+
 #     include <DIMENSIONS.F>
 #ifdef MDSPLUS
 #     include "mdslib.inc"
@@ -66,17 +69,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::
-     3   energy_balance(-1:nxd,-1:nyd),
-     3   pr(-1:nxd,-1:nyd), energy_balance2(-1:nxd,-1:nyd),
-     4   energy_balance_old(-1:nxd,-1:nyd)
-      real (kind=R8) ::
-     3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fmo(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhp(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
-     4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
+      real (kind=R8) ::  pr(-1:nxd,-1:nyd)
 
       integer ispecies(0:nsd_local-1)
 
@@ -95,7 +88,7 @@ c
       integer i, icnt, nsw
       integer itmp(-1:nxd,-1:nyd)
       real (kind=R8) ::
-     *   rdummy, rtmp, temp(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
+     *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
      5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
      5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
      6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
@@ -127,12 +120,13 @@ c
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 
 c Function to check the correct parameters!
 c
       call subini('b2mds')
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex) then
@@ -181,14 +175,16 @@ c
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local)
-      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,
+     1 natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -211,8 +207,6 @@ c
 #endif
 #endif
 #endif
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
 #ifdef MDSPLUS
       cr_x=0.0_R8
       cz_x=0.0_R8
@@ -244,13 +238,28 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .eq. 1) then
             imi=nint(am(is))
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(nint(am(is)).ne.nuclear_mass(il)) then
+              if(nint(am(is)).lt.10) then
+                write(textsp(iss),'(a1,i1,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else if (nint(am(is)).lt.100) then
+                write(textsp(iss),'(a1,i2,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else
+                write(textsp(iss),'(a1,i3,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -305,9 +314,12 @@ c
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+      endif
       if(allocated(fhi_ext)) fht=fht+fhi_ext
       do is=0,ns_ext-1
         do iy=-1,ny
@@ -334,171 +346,6 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      .         (pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
      .          pt_ext(ix,iy,is))*ev
             endif
-          enddo
-        enddo
-      enddo
-c calculate divergences of the various fluxes
-      do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-              div_fna(ix,iy,is)=
-     1         +fna(rightix(ix,iy),rightiy(ix,iy),0,is)-fna(ix,iy,0,is)
-     2         +fna(topix(ix,iy),topiy(ix,iy),1,is)-fna(ix,iy,1,is)
-              div_fmo(ix,iy,is)=
-     1         +fmo(rightix(ix,iy),rightiy(ix,iy),0,is)-fmo(ix,iy,0,is)
-     2         +fmo(topix(ix,iy),topiy(ix,iy),1,is)-fmo(ix,iy,1,is)
-              div_fhm(ix,iy,is)=
-     1         +fhm(rightix(ix,iy),rightiy(ix,iy),0,is)-fhm(ix,iy,0,is)
-     2         +fhm(topix(ix,iy),topiy(ix,iy),1,is)-fhm(ix,iy,1,is)
-              div_fhp(ix,iy,is)=
-     1         +fhp(rightix(ix,iy),rightiy(ix,iy),0,is)-fhp(ix,iy,0,is)
-     2         +fhp(topix(ix,iy),topiy(ix,iy),1,is)-fhp(ix,iy,1,is)
-            else
-              div_fna(ix,iy,is)=0.0_R8
-              div_fmo(ix,iy,is)=0.0_R8
-              div_fhm(ix,iy,is)=0.0_R8
-              div_fhp(ix,iy,is)=0.0_R8
-            endif
-          enddo
-        enddo
-      enddo
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            div_fhet(ix,iy)=
-     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0)-fhet(ix,iy,0)
-     2       +fhet(topix(ix,iy),topiy(ix,iy),1)-fhet(ix,iy,1)
-            div_fhit(ix,iy)=
-     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0)-fhit(ix,iy,0)
-     2       +fhit(topix(ix,iy),topiy(ix,iy),1)-fhit(ix,iy,1)
-            div_fch(ix,iy)=
-     1       +fch(rightix(ix,iy),rightiy(ix,iy),0)-fch(ix,iy,0)
-     2       +fch(topix(ix,iy),topiy(ix,iy),1)-fch(ix,iy,1)
-            div_fhj(ix,iy)=0
-     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0)-fhj(ix,iy,0)
-     2       +fhj(topix(ix,iy),topiy(ix,iy),1)-fhj(ix,iy,1)
-          else
-            div_fhet(ix,iy)=0.0_R8
-            div_fhit(ix,iy)=0.0_R8
-            div_fch(ix,iy)=0.0_R8
-            div_fhj(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
-c calculate the energy balance
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            energy_balance(ix,iy)=-div_fhet(ix,iy)-div_fhit(ix,iy)-
-     1       div_fhj(ix,iy)
-            do is=0,ns-1
-              energy_balance(ix,iy)=energy_balance(ix,iy)-
-     1         div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-div_fhp(ix,iy,is)
-            enddo
-c the viscous piece is still missing!
-          else
-            energy_balance(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
-c additional sources
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            energy_balance2(ix,iy)=
-c boundary conditions (species independent)
-     1         +b2stbc_she(ix,iy)+b2stbc_shi(ix,iy)
-     2         +b2stbc_sch(ix,iy)*po(ix,iy)
-c recycling (species independent)
-     1         +b2stbr_she(ix,iy)+b2stbr_shi(ix,iy)
-     2         +b2stbr_sch(ix,iy)*po(ix,iy)
-c other sources (species independent)
-     1         +b2stbm_she(ix,iy)+b2stbm_shi(ix,iy)
-     2         +b2stbm_sch(ix,iy)*po(ix,iy)
-c external sources (species independent)
-     1         +ext_she(ix,iy)+ext_shi(ix,iy)
-     2         +ext_sch(ix,iy)*po(ix,iy)
-            do is=0,ns-1
-              energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c radiation (electron cooling rate)
-     1         -rqahe(ix,iy,is)
-c boundary conditions (species dependent)
-     3         +b2stbc_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -b2stbc_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-c recycling (species dependent)
-     3         +b2stbr_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -b2stbr_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-c other sources (species dependent)
-     3         +b2stbm_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -b2stbm_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-c external sources (species dependent)
-     3         +ext_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     4         -ext_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-              if(is_neutral(is)) then
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c charge exchange (neutral H/D/T)
-     1           +rcxmo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     2           -rcxna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-              else
-c charge exchange from is --> is-1
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-     1           -rcxmo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-     2           +rcxna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-              endif
-            enddo
-            do is=0,ns-2
-              energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c ionisation from is --> is+1
-     1         +rsana(ix,iy,is)*rpi(ix,iy,is+1)*ev
-     2         +rsana(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     3         -rsamo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-c recombination from is+1 --> is
-     4         -rrana(ix,iy,is+1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     5         +rramo(ix,iy,is+1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              if(.not.is_neutral(is+1)) then
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c charge exchange from is+1 --> is (receiving)
-     1           -rcxna(ix,iy,is+1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     2           +rcxmo(ix,iy,is+1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              endif
-            enddo
-            do is=1,ns-1
-              energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c recombination is --> is-1
-     1         -rrana(ix,iy,is)*rpi(ix,iy,is)*ev
-     2         +rrana(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     3         -rramo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-c ionisation from is-1 --> is
-     4         -rsana(ix,iy,is-1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     5         +rsamo(ix,iy,is-1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              if(is_neutral(is-1)) then
-                energy_balance2(ix,iy)=energy_balance2(ix,iy)
-c charge exchange for H+/D+/T+
-     1           +rcxna(ix,iy,is-1)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
-     2           -rcxmo(ix,iy,is-1)*ua(ix,iy,is)*(1.0_R8-BoRiS)
-              endif
-            enddo
-          else
-            energy_balance2(ix,iy)=0.0_R8
-          endif
-        enddo
-      enddo
-c alternative (failed) calculation of energy balance (elegant, but flawed)
-      do iy=-1,ny
-        do ix=-1,nx
-          energy_balance_old(ix,iy)=div_fhet(ix,iy)+div_fhit(ix,iy)-
-     1     po(ix,iy)*div_fch(ix,iy)
-          do is=0,ns-1
-            energy_balance_old(ix,iy)=energy_balance_old(ix,iy)-
-     1       ua(ix,iy,is)*div_fmo(ix,iy,is)-
-     2       rpt(ix,iy,is)*ev*div_fna(ix,iy,is)+
-     3       div_fhm(ix,iy,is)*(1.0_R8-BoRiS)-
-     4       rqahe(ix,iy,is)
           enddo
         enddo
       enddo
@@ -563,11 +410,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call get_wall_data(nx,ny,ns,BoRiS,ex)
 
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
 #else
       ex = .false.
@@ -583,9 +426,12 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       else
         open(unit=44,file=filename)
         call ngread(ismain,iflag)
-        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
-        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
-        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
+        if (natmi.gt.0)
+     .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
+        if (nmoli.gt.0)
+     .   textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
+        if (nioni.gt.0)
+     .   textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
       endif
 
 !XXX
@@ -593,7 +439,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       if(in_jxi.ge.-1) jxi=in_jxi
       if(in_jxa.ge.-1) jxa=in_jxa
       if(in_jxi.ge.-1) jsep=in_jsep
-    5 continue
       write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
 
 #ifdef MDSPLUS
@@ -620,77 +465,141 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       tdi='build_with_units($,"m")'
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cr(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cr,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cz(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cz,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
+#else
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+1,ny+2,0),cr_x,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx+1,ny+2,0),cr_x,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_X'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+1,ny+2,0),cz_x,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
      * descr2(idtype_double,nx+1,ny+2,0),cz_x,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+2,ny+1,0),cr_y,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+1,0),cr_y,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_Y'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+2,ny+1,0),cz_y,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+1,0),cz_y,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:R'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2_i3(idtype_double,nx+2,ny+2,4,0),crx,
+     * 0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+2,4,0),crx,
      * 0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:Z'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),
+     * trim(tdi)//char(0),
+     * descr2_i3(idtype_double,nx+2,ny+2,4,0),cry,
+     * 0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+2,4,0),cry,
      * 0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      hy1(-1:nx,-1:ny)=hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
       do ix=-1,nx
         dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
         do iy=jsep+2,ny
@@ -716,23 +625,41 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'dspar :',(dspar(ix,jsep),ix=-1,nx)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSRAD'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dsrad,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+2,0),dsrad,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPOL'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dspol,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+2,0),dspol,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSPAR'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nx+2,ny+2,0),dspar,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx+2,ny+2,0),dspar,0)
+#endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
@@ -775,8 +702,11 @@ c 23: fht definition changed to 5/2 formulation
 c 24: removed drift velocity contributions from kinrgy
 c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
+c 27: Added EMOLRAD and EIONRAD arrays
+c 28: Corrected calculation of fht, now using fn[ae]_53
+c 29: Same indexing error was also present in emolrad and eionrad
 
-      dbversion=26
+      dbversion=29
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -791,15 +721,21 @@ c
       do is=1,ns-1
         textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
       enddo
-      do is=ns,ns+natmi-1
-        textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
-      enddo
-      do is=ns+natmi,ns+natmi+nmoli-1
-        textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
-      enddo
-      do is=ns+natmi+nmoli,ns+natmi+nmoli+nioni-1
-        textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
-      enddo
+      if (natmi.gt.0) then
+        do is=ns,ns+natmi-1
+          textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
+        enddo
+      end if
+      if (nmoli.gt.0) then
+        do is=ns+natmi,ns+natmi+nmoli-1
+          textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
+        enddo
+      end if
+      if (nioni.gt.0) then
+        do is=ns+natmi+nmoli,ns+natmi+nmoli+nioni-1
+          textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
+        enddo
+      end if
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTWL',
      1 ns+natmi+nmoli+nioni,textwl)
       call mds_put_string('\TOP.IDENT:WALL_SPECIES',textwl_cat)
@@ -849,10 +785,17 @@ c
           tdi='build_with_units($,"m")'
           write(*,'(a,a,a,a)')
      1     'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',' with ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+          status=mdsput2(
+     *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
+     *     descr2_i2(idtype_double,4,icnt,0),vesl,
+     *     0)
+#else
           status=mdsput2(
      *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
      *     descr2(idtype_double,4,icnt,0),vesl,
      *     0)
+#endif
           call mds_err_msg(status)
           deallocate(vesl)
         else
@@ -917,7 +860,12 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,hy1,'')
+      do iy=-1,ny
+       do ix=-1,nx
+        temp(ix,iy)=hy1(ix,iy)
+       end do
+      end do
+      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
      1 nx+2,ny+2,fllime,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',
@@ -1276,9 +1224,15 @@ c
 
       tdi='build_with_units($,"K")'
       mds_signal_name='\TOP.SNAPSHOT:WALL_TEMP'
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
+      status=mdsput2(
+     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
+     * descr2_i2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)
+#else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)
+#endif
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
@@ -1388,6 +1342,10 @@ c
      1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1   tmp(ix,iy,is)=emolrad(ix+1,iy+1,is+1,0)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EMOLRAD','W',nx+2,
+     1   ny+2,nmoli,tmp,'TEXTMN','')
       endif
 #endif
 #ifdef B25_EIRENE
@@ -1399,6 +1357,10 @@ c
         forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
      1   tmp(ix,iy,is)=tib2(ix+1,iy+1,is+1,1)/ev
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
+     1   ny+2,nioni,tmp,'TEXTIN','')
+        forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
+     1   tmp(ix,iy,is)=eionrad(ix+1,iy+1,is+1,0)
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EIONRAD','W',nx+2,
      1   ny+2,nioni,tmp,'TEXTIN','')
       endif
 #endif
@@ -1533,7 +1495,9 @@ c
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_INFCOP
       CALL EIRENE_EXTRAB25_CLEANUP
+      CALL EIRENE_WNEUTRALS_DEALLOC
 #else
       call dealloc_b2mod_braeir
       call dealloc_b2mod_eirbra

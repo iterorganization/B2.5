@@ -76,6 +76,8 @@
       call xertst (.not.errdim,
      1 'faulty NXMAX, NYMAX and/or NSDMAX')
 #endif
+      sputter_yield=0.0_R8
+      sputter_yield2=0.0_R8
       ntargsp=0
       target_index=0
       target_intcode=-1
@@ -144,14 +146,18 @@
       found = maxval(sputter_yield).gt.0.0_R8 .or.
      .        maxval(sputter_yield2).gt.0.0_R8
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading SPUTTER_SAVE namelist!')
+#endif
       end subroutine read_b2mod_sputter_namelist
 
       subroutine write_b2mod_sputter_namelist(nwrite,nx,ny,ns,edition)
+      use b2mod_math
       implicit none
       integer nwrite, nx, ny, ns
       character*4 edition
       integer ix, iy, is, ib
+      real (kind=R8) :: tmp1, tmp2
       character*256 filename
 
       if(maxval(sputter_yield).gt.0.0_R8.or.
@@ -176,13 +182,22 @@ cxpb  Replaced with explicit writing of nonzero elements only
      &            sputter_yield2(ix,iy,is,1).ne.0.0_R8 .or.
      &            sputter_yield2(ix,iy,is,2).ne.0.0_R8) then
                 do ib = 1, 2
+                  if (abs(sputter_yield(ix,iy,is,ib)).lt.cutlo) then
+                    tmp1 = 0.0_R8
+                  else
+                    tmp1 = sputter_yield(ix,iy,is,ib)
+                  end if
+                  if (abs(sputter_yield2(ix,iy,is,ib)).lt.cutlo) then
+                    tmp2 = 0.0_R8
+                  else
+                    tmp2 = sputter_yield2(ix,iy,is,ib)
+                  end if
                   write(nwrite,
      &             '(a14,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,'//
      &              'a17,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,a1)')
-     .             'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=',
-     .              sputter_yield(ix,iy,is,ib),
-     .           ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',
-     .              sputter_yield2(ix,iy,is,ib),','
+     .             'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=' ,tmp1,
+     .           ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',tmp2,
+     .           ','
                 end do
               end if
             end do
@@ -198,6 +213,7 @@ cxpb  Replaced with explicit writing of nonzero elements only
       subroutine read_sputter_data(nsd,column,sput_model,refl_model)
       use b2mod_b2cmpa
       use b2mod_elements
+      use b2mod_subsys
       implicit none
       integer nsd, column, sput_model, refl_model
       integer nfile
@@ -221,7 +237,6 @@ cxpb  Replaced with explicit writing of nonzero elements only
 #else
       character*2 sputter_codes(0:100)
 #endif
-      external subini, subend
 
       if(sputter_initialised) return
       call subini ('read_sputter_data')
@@ -1114,7 +1129,7 @@ c         and have to be modified for angular incidence.
       real (kind=R8) :: pwr2by3, z123z223sum,
      @  tpev, am2byam1, stoppwr, stoppwr1, stoppwr2,
      @  yldparres, eobyetf, ethbyeo, eth, etf, gamma
-        integer issput, itargsp
+      integer issput, itargsp
 c  Inputs to the code
 
 c  eo   -> incident ion energy (in eV).
@@ -1299,30 +1314,23 @@ c  surface assuming a 1-D steady state, heat diffusion with a
 c  thermal conductivity that varies with temperature as
 c   K(T) = 1/(KA * T + KB)
 
-      subroutine heatdiff0D(ibnd,qin,qel,Tp)
+      subroutine heatdiff0D(ibnd,Qtot,Tp)
+      use b2mod_math
       implicit none
       integer ibnd
-      real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
-      real (kind=R8), save :: cutll, cutlo
-      logical, save  :: lfirst, coating
-      real (kind=R8) :: t0
-      real (kind=R8) :: machsfr, expu2, layer_Kappa
-      external machsfr, layer_Kappa
-      intrinsic dim, exp, min, max
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somewhat arbitrary level.)
-*   ..initialisation
-      data lfirst /.true./
+      real (kind=R8) :: Qtot, TL, L, K, KB, KA, Tp, Tc, Td
+      logical, save  :: coating
+      !$OMP THREADPRIVATE(coating)
+      real (kind=R8) :: layer_Kappa
+      external layer_Kappa
 
 c  Inputs:
-c  qin -> incident ion heat flux (Joules/m^2/sec)
-c  qel -> incident electron heat flux (Joules/m^2/sec)
-c  TL -> Temperature at x=L (x=0 is plasma facing surface,
-c                            x=L is the cold end).
-c  L  -> Thickness of the target plate (m).
-c  KB -> parameter in the expression for conductivity (see above)
-c  KA -> parameter in the expression for conductivity (see above)
+c  Qtot -> incident heat flux (Joules/m^2/sec)
+c  TL   -> Temperature at x=L (x=0 is plasma facing surface,
+c                              x=L is the cold end).
+c  L    -> Thickness of the target plate (m).
+c  KB   -> parameter in the expression for conductivity (see above)
+c  KA   -> parameter in the expression for conductivity (see above)
 
 c  Outputs:
 c  Tp -> Surface temperature (at x=0) (in Kelvins).
@@ -1338,20 +1346,12 @@ c  Td -> Temperature at interface between mixing layer and original wall materia
 c  Remarks:
 c  Consider adding the option of layer_thermal_contact
 
-*   ..set cutll, cutlo
-      if (lfirst) then
-        cutll = log(machsfr())
-        cutlo = max(machsfr(),exp(cutll))
-        lfirst = .false.
-      end if
-
       TL = backplate_temp(ibnd)
       L = plate_thickness(ibnd)
       if (L.eq.0.0_R8) then
         Tp = TL
         return
       endif
-      Qtot = qel + qin
       coating = coating_thickness(ibnd).gt.0.0_R8 .and.
      . (coating_thickness(ibnd)+layer_thickness(ibnd)).gt.0.0_R8
       if (.not. coating) then
@@ -1462,12 +1462,11 @@ c
 
       integer i, n
       integer, save :: icount
-      real (kind=R8) :: th, z1, z2, e, a1, a2, r, r0, as1, as2, sl,
+      real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
      *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
      *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
      *  psiden1, psiden2, psi, sklfact, r0heavy, feps
-      real (kind=R8) :: f, fneps, rne
-      intrinsic sqrt, tan
+      intrinsic sqrt
 c
 c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * *
 c
@@ -1574,11 +1573,6 @@ c  z2 = 91 - 92
 
       data icount/0/
 
-      f(z1,z2) = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
-      fneps(e,z1,a1,z2,a2) = 0.032534_R8 * e /
-     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
-      rne(th) = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
-     .  ( 2.0_R8 * as2 ) )
   600 format('  undefined projectile is called  ')
       n = 1
       go to 1
@@ -1586,7 +1580,6 @@ c  z2 = 91 - 92
       entry reion(energy,nz1,m1,ibnd,theta)
 
 c  energy backscattering coefficient of light ions
-
       n = 0
     1 if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4
@@ -1615,6 +1608,7 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       delta = a1 / a2
 c     write(*,*)'delta = ',delta
       if (delta.gt.4.5_R8 .and. icount.le.100) then
+        !$OMP ATOMIC
         icount = icount + 1
         write(*,'(a,f7.2,a)')
      .   'delta projectile/target > 4.5', delta, '. Continuing...'
@@ -1650,7 +1644,7 @@ c     write(*,*)'delta = ',delta
         else
           fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
         end if
-   30   tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
+        tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
         beta2 = tau * ( tau + 2.0_R8 ) / ( tau + 1.0_R8 ) ** 2
         epsb = 1.022e6_R8 * beta2 / z2 / fi0
         if ( z1 .le. 2.9_R8) then
@@ -1658,7 +1652,7 @@ c     write(*,*)'delta = ',delta
         else
           ch = 5.0_R8
         endif
-   60   sb = 61.474_R8 / fmu * w *
+        sb = 61.474_R8 / fmu * w *
      .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 )
      .   / fi0 / epsb
         sb = 2.0_R8 * eps / rangen(eps) + sl * sb / (0.25_R8 * sl
@@ -1752,6 +1746,29 @@ c       write(*,*) 'did light projectile calculation for rnion'
         return
       endif
 
+      contains
+
+      function f(z1,z2)
+      real(kind=R8) :: f, z1, z2
+      f = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
+      return
+      end function f
+
+      function fneps(e,z1,a1,z2,a2)
+      real(kind=R8) :: fneps, e, z1, a1, z2, a2
+      fneps = 0.032534_R8 * e /
+     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
+      return
+      end function fneps
+
+      function rne(th)
+      real(kind=R8) :: rne, th
+      intrinsic tan
+      rne = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
+     .  ( 2.0_R8 * as2 ) )
+      return
+      end function rne
+
       end function rnion
 c
       function rangen(epsiln)
@@ -1795,8 +1812,8 @@ c  gamma( 0 , x ) = - eibar( - x )      for x < 0
           f = 1.0_R8
           t = - z
    20     q = t + p
-          if ( abs(p-q) - conver ) 30,30,22
-   22     p = q
+          if ( (abs(p-q) - conver).le.0.0_R8 ) goto 30
+          p = q
           t = - z * f * t
           f = f + 1.0_R8
           t = t / f ** 2

@@ -10,12 +10,16 @@ c***
 c***  zaveraev.dat with the data for V. Zaveryaev
 c----------------------------------------------------------------------
       use b2mod_diag
+      use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
 c
@@ -91,4 +95,4 @@ c
       deallocate(hlp_f)
 c
       return
-      end
+      end subroutine b2pzavrv

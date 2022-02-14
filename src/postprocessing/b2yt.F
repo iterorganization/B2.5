@@ -11,6 +11,7 @@
       use b2mod_b2plot
       use b2mod_version
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 #include "DIMENSIONS.F"
 
@@ -19,7 +20,7 @@
 *
 *  1. purpose
 *
-*     B2YT (main program) is a postprocessor for b2. It transfers
+*     B2YT (main program) is a postprocessor for B2. It transfers
 *     the plasma state to a mesh of different size and/or a different
 *     species bundling. It also attempts
 *     to re-write a new set of input files consistent with the new
@@ -34,7 +35,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2yt transfers the result of a b2
+*     The complete program b2yt transfers the result of a B2
 *     calculation to a mesh of different size.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -86,8 +87,8 @@
       integer io
       logical file_open
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, cfruin
-      external b2ytdr, b2ytx0, ipsetc, ipgeti
+      external prgini, prgfin, xertst, cfopen, cfruin
+      external b2ytdr, b2ytx0, ipgeti
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56,57,58/
       data nout/60,61,62,63,64,65,66/
@@ -142,10 +143,10 @@
       call cfopen (nout(5),'b2yt.files','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fstate_version)				 !xpb
-      call cfverr (ninp(3), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(4), b2frates_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fstate_version)                            !xpb
+      call cfverr (ninp(3), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(4), b2frates_version)                            !xpb
       call cfverr (ninp(8), b2fparam_version)                            !xpb
 *   ..obtain nx, ny, ns from old state file
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')

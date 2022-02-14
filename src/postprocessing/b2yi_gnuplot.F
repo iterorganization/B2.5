@@ -10,6 +10,7 @@
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -17,9 +18,9 @@
 *
 *  1. purpose
 *
-*     B2YI (main program) is a postprocessor for b2. It reads and
+*     B2YI_GNUPLOT (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
-*     b2yidr for the actual computation.
+*     b2yidr_gnuplot for the actual computation.
 *
 *
 *  2. specification
@@ -29,11 +30,11 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2yi performs postprocessing of the
-*     result of a b2 calculation.
+*     The complete program b2yi_gnuplot performs postprocessing of the
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
-*     routine b2yidr to control the actual computation.
+*     routine b2yidr_gnuplot to control the actual computation.
 *
 *     The input units are:
 *     ninp(0): formatted; provides output control parameters.
@@ -69,7 +70,7 @@
       integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9), io
       logical file_open, ex
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, cfruin
+      external prgini, prgfin, xertst, cfopen, cfruin
       external b2yidr_gnuplot
 *   ..initialise input/output units
       data ninp/50,51,52,53,54/
@@ -118,10 +119,10 @@
       if (ex) call cfopen (ninp(4),'b2mn.dat','old','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fstate_version)				 !xpb
-      call cfverr (ninp(2), b2frates_version)				 !xpb
-      call cfverr (ninp(3), b2fgmtry_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fstate_version)                            !xpb
+      call cfverr (ninp(2), b2frates_version)                            !xpb
+      call cfverr (ninp(3), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(3), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -138,7 +139,7 @@
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
       call b2yidr_gnuplot (ninp, nout, nx, ny, ns)
 *   ..close files

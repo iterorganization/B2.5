@@ -4,6 +4,7 @@
       subroutine b2yidr (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_rates
@@ -18,6 +19,9 @@
       use b2mod_ppout
       use b2mod_geo_corner
 !      use b2mod_work
+      use b2mod_ipmain
+      use b2mod_lbfill
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -29,15 +33,15 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a postprocessor for b2. It reads and displays the
+*     B2YIDR is a postprocessor for B2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *
 *
@@ -75,7 +79,7 @@
 *   ..common blocks
 *   ..local variables
       integer is, iftp, idum(0:9), ismain
-      real (kind=R8) :: t0, t1,
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
@@ -86,14 +90,12 @@
       save ismain
       data ismain/1/
 *   ..procedures
-      intrinsic abs
-      logical streql, ltst, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, lbfilx, cfruin, is_comment
+      logical streql, is_comment
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
-      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      external ipgeti, b2rfcp, b2rflb, b2xxid
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -255,7 +257,8 @@
       isymm = idum(0)
 *   ..read geometry and metric
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read plasma state file
       call cfruch (ninp(1), 120, lblmn, 'label')
@@ -276,7 +279,8 @@
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..read atomic rate data
       call cfruch (ninp(2), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(2), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(2), b2frates_flag)
       call b2rurc (ninp(2), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -308,8 +312,7 @@
      &  'style of contour plots:', iftp,
      &  'idout:', idout
 *   ..write state
-      call b2wfpi (nout(0), idout, nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout, nx, ny, ns)
 *   ..activate graphics on nout(1)
       call gacwk (nout(1))
 *   ..mark contour style

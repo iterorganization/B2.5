@@ -12,6 +12,7 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_transport_nspecies
       use b2mod_anomalous_transport
       use b2mod_work
       use b2mod_ma28
@@ -22,12 +23,27 @@
       use b2mod_b2_to_astra
       use b2mod_astra_to_b2
       use b2mod_external
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_xerset
+#if MPI_MOD > 0
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
 #endif
 #endif
 
@@ -36,7 +52,7 @@
 *
 *  1. purpose
 *
-*     B2MOD_MAIN contains the main program for the b2 code. The code solves a
+*     B2MOD_MAIN contains the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.
@@ -153,7 +169,7 @@
 *   ..procedures
       character*32 get_B25_hash
       external get_B25_hash
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
 #ifdef JET
@@ -203,6 +219,9 @@ csw
 #endif
 #endif
 
+#ifdef WITH_FTIMINGS
+      call timer%enable()
+#endif
       call prgini ('b2mn')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -220,14 +239,14 @@ csw
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
+*   ..obtain version numbers                                             !xpb
       B25_git_version = get_B25_hash()
       call cfverw (nout(0), newversion)
       write(6,'(4a)')
      &  'Running with VERSION ',newversion,' ', trim(B25_git_version)
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstati_version)				 !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstati_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -317,11 +336,28 @@ csw
       call dealloc_b2mod_indirect
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
+      call dealloc_b2mod_transport_nspecies
       call dealloc_b2mod_astra_to_b2
       call dealloc_b2mod_b2_to_astra
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
       call prgend ()
+
+#ifdef WITH_FTIMINGS
+      write(*,'(a)') "####"
+      write(*,'(a)') "# Full Timings"
+      call timer%print("b2mn")
+      write(*,'(a)') "#"
+      write(*,'(a)') "####"
+      write(*,*)
+
+      write(*,'(a)') "####"
+      write(*,'(a)') "# Sorted timings, not listing entries < 0.5s"
+      call timer%sort()
+      call timer%print("b2mn", threshold=0.5_R8)
+      write(*,'(a)') "#"
+      write(*,'(a)') "####"
+#endif
 
 #ifdef USE_MPI
 #ifdef B25_EIRENE

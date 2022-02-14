@@ -10,10 +10,14 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_plasma
+     &     , only : roxa
       use b2mod_balance                                               !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
      &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -35,7 +39,6 @@
      &   lnlam(-1:nx,-1:ny),
      *   smbtf_cthe(-1:nx,-1:ny), !djm Jul2018
      *   smbtf_cthi(-1:nx,-1:ny)
-*     ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -69,12 +72,11 @@
       integer :: zlitest
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *   roxa
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
+      external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialisation
+      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest) 
+      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
       save ncall, styl0, styl1, 
      1     phm0, phm1, phm2, phm3, limthii, limthee, zlitest
       data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
@@ -108,6 +110,13 @@ csw 24sep2013
        call xertst (0.0_R8.le.limthii.and.0.0_R8.le.limthee,
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+          write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
+     &               'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
@@ -245,7 +254,7 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           smptb(ix,iy) = smptb(ix,iy) - t0*hz(ix,iy)*
      &         (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
      &         +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
-     1         (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)
+     1          vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
           if (balance_netcdf.ne.0) then
             smbtf_cthe(ix,iy) = smbtf_cthe(ix,iy)-t0* !djm Jul2018
      &                  phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)*
@@ -271,9 +280,9 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk//chns)                    !srv 07.02.12
           call my_out(70,nx,ny,smbch(-1,-1,k),
-     *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
+     *                'b2sifr_smoch'//chk//chns)                    !srv 07.02.12
          enddo
-      endif                                                            !srv 17.06.02 }
+      endif                                                         !srv 17.06.02 }
 
 cdjm Jan2017 Store the linearised sources for balance
       if (balance_netcdf.ne.0) then
@@ -291,4 +300,4 @@ cdjm Jan2017 Store the linearised sources for balance
 *-----------------------------------------------------------------------
 *.end b2sifr_
 
-      end                                                             !srv 01.07.05 }
+      end subroutine b2sifr_                                        !srv 01.07.05 }

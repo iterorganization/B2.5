@@ -12,8 +12,7 @@
 *=======================================================================
 *//DECLARATIONS//
 
-      SUBROUTINE B2WAOS (NPRT, nx, ny, ns,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      SUBROUTINE B2WAOS (NPRT, nx, ny, ns)
 
       use b2mod_types
       use b2mod_time
@@ -22,21 +21,16 @@
      . , only : label
       use b2mod_geo
       use b2mod_transport_namelist
-!pb      use b2mod_plasma
+      use b2mod_plasma
       use b2mod_b2cmpa
       use b2mod_boundary_namelist
       use b2mod_residuals
       use b2mod_external
       use b2mod_rates
+      use b2mod_subsys
       implicit none
 
       integer, intent(in) :: nprt, nx, ny, ns
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny)
 
       integer ncall, model
       integer, save :: style = 1
@@ -45,45 +39,15 @@
       INTEGER :: IX, IY, IS, IB, IXR, IYR
       REAL (KIND=R8) :: T0,RZO,CS,MACH,T1
       real (kind=R8) ::
-     * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
-     2 ni(-1:nx,-1:ny,0:1),
      3 rz(-1:nx,-1:ny), pz(-1:nx,-1:ny)
 
 *  -- PROCEDURES --
       REAL (KIND=R8) ::
-     .      X, Y, XF, YF, RVX, RVY, RDX, RDY, RSX, RSY, PITX, PITY,
      .      SFEE, SFEI, SFNI(NBCD,0:NS)
       REAL (KIND=R8) :: sxhelp,syhelp
       real (kind=R8) :: XX(-1:NX,6), YY(-1:NY,6)
       real (kind=R8) :: b2tqca_phm0, b2treq_phm0
-      real (kind=R8) ::
-     * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
-     &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       EXTERNAL XERRAB
-      X(IX)   = XX(IX,1)
-      Y(IY)   = YY(IY,1)
-      XF(IX)  = XX(IX,2)
-      YF(IY)  = YY(IY,2)
-      RVX(IX) = XX(IX,3)
-      RVY(IY) = YY(IY,3)
-      RDX(IX) = XX(IX,4)
-      RDY(IY) = YY(IY,4)
-      RSX(IX) = XX(IX,5)
-      RSY(IY) = YY(IY,5)
-      PITX(IX) = XX(IX,6)
-      PITY(IY) = YY(IY,6)
-      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
-      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
-      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
-      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
-      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
-      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
-      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
-      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
-      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
-      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
-      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
-      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
 
       data ncall/0/, b2tqca_phm0/1.0_R8/, model/3/, b2treq_phm0/1.0_R8/
 
@@ -244,13 +208,14 @@
          T0 = SUM(HY(IX,-1:ny))
          IF (IX .LT. NX) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3, 2X, 2D11.3)')
-     .         IX, X(IX), RVX(IX), RDX(IX), T0, RVX(IX)/(RDX(IX)*T0),
-     .         PITX(IX), RVX(IX)/RDX(IX), XF(IX), RSX(IX)
+     .         IX, XX(IX,1), XX(IX,3), XX(IX,4),
+     .         T0, XX(IX,3)/(XX(IX,4)*T0),
+     .             XX(IX,6), XX(IX,3)/XX(IX,4), XX(IX,2), XX(IX,5)
          ELSE IF (IX .EQ. NX) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3)')
-     .         NX, X(NX), RVX(NX), RDX(NX),
-     .         T0, RVX(NX)/(RDX(NX)*T0),
-     .         PITX(NX), RVX(NX)/RDX(NX)
+     .         NX, XX(NX,1), XX(NX,3), XX(NX,4),
+     .         T0, XX(NX,3)/(XX(NX,4)*T0),
+     .             XX(NX,6), XX(NX,3)/XX(NX,4)
          END IF
       END DO
 
@@ -259,13 +224,14 @@
          T0 = SUM(HX(-1:NX,IY))
          IF (IY .EQ. NY) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3)')
-     .         NY, Y(NY), RVY(NY), T0, RDY(NY),
-     .         RVY(NY)/(T0*RDY(NY)),
-     .         PITY(NY), RVY(NY)/RDY(NY)
+     .         NY, YY(NY,1), YY(NY,3), T0, YY(NY,4),
+     .         YY(NY,3)/(T0*YY(NY,4)),
+     .         YY(NY,6), YY(NY,3)/YY(NY,4)
          ELSE IF (IY .LT. NY) THEN
             WRITE (NPRT, '(2X, I3, 1X, 1P, 7D11.3, 2X, 2D11.3)')
-     .         IY, Y(IY), RVY(IY), T0, RDY(IY), RVY(IY)/(T0*RDY(IY)),
-     .         PITY(IY), RVY(IY)/RDY(IY), YF(IY), RSY(IY)
+     .         IY, YY(IY,1), YY(IY,3),
+     .         T0, YY(IY,4), YY(IY,3)/(T0*YY(IY,4)),
+     .             YY(IY,6), YY(IY,3)/YY(IY,4), YY(IY,2), YY(IY,5)
          END IF
       END DO
 
@@ -273,8 +239,10 @@
 
 !      CALL PHYPRT (NS, MI, ZI, NPRT)
 
-      IF (MINVAL(AM(1:NS)) .LT. 0 .OR.
-     .      MINVAL(ZN(1:NS)) .LT. 0) THEN
+      IF (MINVAL(AM(0:NS-1)) .LT. 0 .OR.
+     .    MINVAL(ZN(0:NS-1)) .LT. 0 .OR.
+     .    MINVAL(ZAMIN(0:NS-1)) .LT. 0 .OR.
+     .    MINVAL(ZAMAX(0:NS-1)) .LT. 0) THEN
          CALL XERRAB ('B2WAOS -- FAULTY ARGUMENT MI, ZI')
       END IF
 
@@ -285,7 +253,7 @@
      .      '(//1x,A,I12,4(/1x,A,ES12.2),5(/1x,a,es12.2,a,i6))')
      .      ' SPECIES   ', is,
      .      ' MASS MU   ', am(is),
-     .      ' CHARGE ZI ', zn(is),
+     .      ' CHARGE ZI ', (zamin(is)+zamax(is)),
      .      ' EL.TH.DIF ', PARM_HCE,
      .      ' IO.TH.DIF ', PARM_HCI(is),
      .      ' PAR.VIS   ', b2tqca_phm0, '  model flag ', model,
@@ -310,17 +278,18 @@
       WRITE (NPRT, 111)
       DO IX = -1, NX-1
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
-     .      XF(IX), RSX(IX), RFHEX(IX), RFHIX(IX), RFCHX(IX),
-     .      RFNEX(IX), RFNIX(IX),
-     .      (RFNAX(IX,IS), IS = 0, NS-1)
+     .      XX(IX,2), XX(IX,5),
+     .      RFHEX(NX,NY,IX), RFHIX(NX,NY,IX), RFCHX(NX,NY,IX),
+     .      RFNEX(NX,NY,IX), RFNIX(NX,NY,IX),
+     .     (RFNAX(NX,NY,IX,IS), IS = 0, NS-1)
       ENDDO
 
       WRITE (NPRT, 112)
       DO IY = NY, 0, -1
          WRITE (NPRT, '(1PE12.3, E11.3, 2X, 2D11.3, (T50, 10D11.3))')
-     .      YF(IY), RSY(IY), RFHEY(IY), RFHIY(IY), RFCHY(IY),
-     .      RFNEY(IY), RFNIY(IY),
-     .      (RFNAY(IY,IS), IS = 0, NS-1)
+     .      YY(IY,2), YY(IY,5), RFHEY(NX,IY), RFHIY(NX,IY),
+     .            RFCHY(NX,IY), RFNEY(NX,IY), RFNIY(NX,IY),
+     .      (RFNAY(NX,IY,IS), IS = 0, NS-1)
       END DO
 
       WRITE (NPRT,1112)
@@ -341,23 +310,30 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      NE(IX,BCPOS(IB)),
      .      PZ(IX,BCPOS(IB)), (NA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,BCPOS(IB)+1,1), FHE(IX,BCPOS(IB)+1,1)/SYhelp,
-     .      FHI(IX,BCPOS(IB)+1,1)/SYhelp,
-     .      SUM(ZN(0:ns-1)*FNA(IX,BCPOS(IB)+1,1,0:NS-1))/syhelp,
-     .         PO(IX,BCPOS(IB)),
-     .      (FNA(IX,BCPOS(IB)+1,1,IS)/SYhelp, IS = 0, NS-1)
+     .           GS(IX,BCPOS(IB)+1,1),
+     .          FHE(IX,BCPOS(IB)+1,1)/SYhelp,
+     .          FHI(IX,BCPOS(IB)+1,1)/SYhelp,
+     .      SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
+     .          FNA(IX,BCPOS(IB)+1,1,0:NS-1))/syhelp,
+     .           PO(IX,BCPOS(IB)),
+     .         (FNA(IX,BCPOS(IB)+1,1,IS)/SYhelp, IS = 0, NS-1)
           WRITE (NPRT, '((1X, T13, 2ES11.3, (T59,6D11.3)))')
-     .        FHE(IX,BCPOS(IB)+1,1)/(FNA(IX,BCPOS(IB)+1,1,1)+1.D-30)
+     .            FHE(IX,BCPOS(IB)+1,1)/
+     .        SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
+     .            FNA(IX,BCPOS(IB)+1,1,0:NS-1))
      .                        /TE(IX,BCPOS(IB)),
-     .        FHI(IX,BCPOS(IB)+1,1)/(FNA(IX,BCPOS(IB)+1,1,1)+1.D-30)
+     .            FHI(IX,BCPOS(IB)+1,1)/
+     .        SUM(FNA(IX,BCPOS(IB)+1,1,0:NS-1))
      .                        /TI(IX,BCPOS(IB)),
      .        (UA(IX,BCPOS(IB)+1,IS), IS = 0, NS-1),
      .        (UA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,BCPOS(IB)+1,1),
-     .      FHE(IX,BCPOS(IB)+1,1), FHI(IX,BCPOS(IB)+1,1),
-     .      SUM(ZN(0:ns-1)*FNA(IX,BCPOS(IB)+1,1,0:NS-1)),
-     .      (FNA(IX,BCPOS(IB)+1,1,IS), IS = 0, NS-1)
+     .           GS(IX,BCPOS(IB)+1,1),
+     .          FHE(IX,BCPOS(IB)+1,1),
+     .          FHI(IX,BCPOS(IB)+1,1),
+     .      SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
+     .          FNA(IX,BCPOS(IB)+1,1,0:NS-1)),
+     .         (FNA(IX,BCPOS(IB)+1,1,IS), IS = 0, NS-1)
           SFEE=SFEE+FHE(IX,BCPOS(IB)+1,1)
           SFEI=SFEI+FHI(IX,BCPOS(IB)+1,1)
           DO IS = 0, NS-1
@@ -379,23 +355,27 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      NE(IX,BCPOS(IB)),
      .      PZ(IX,BCPOS(IB)), (NA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,BCPOS(IB),1), FHE(IX,BCPOS(IB),1)/SYhelp,
-     .      FHI(IX,BCPOS(IB),1)/SYhelp,
-     .      SUM(ZN(0:NS-1)*FNA(IX,BCPOS(IB),1,0:NS-1)) /
-     .         SYhelp, Po(IX,BCPOS(IB)),
-     .      (FNA(IX,BCPOS(IB),1,IS)/SYhelp, IS = 0, NS-1)
+     .           GS(IX,BCPOS(IB),1),
+     .          FHE(IX,BCPOS(IB),1)/SYhelp,
+     .          FHI(IX,BCPOS(IB),1)/SYhelp,
+     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*
+     .          FNA(IX,BCPOS(IB),1,0:NS-1))/SYhelp,
+     .           PO(IX,BCPOS(IB)),
+     .         (FNA(IX,BCPOS(IB),1,IS)/SYhelp, IS = 0, NS-1)
           WRITE (NPRT, '((1X, T13, 3ES11.3, (T59,6D11.3)))')
-     .      FHE(IX,BCPOS(IB),1)/(FNA(IX,BCPOS(IB),1,1)+1.D-30)
+     .          FHE(IX,BCPOS(IB),1)/
+     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*FNA(IX,BCPOS(IB),1,0:NS-1))
      .                        /TE(IX,BCPOS(IB)),
-     .      FHI(IX,BCPOS(IB),1)/(FNA(IX,BCPOS(IB),1,1)+1.D-30)
+     .          FHI(IX,BCPOS(IB),1)/
+     .      SUM(FNA(IX,BCPOS(IB),1,0:NS-1))
      .                        /TI(IX,BCPOS(IB)),
      .      (UA(IX,BCPOS(IB)-1,IS), IS = 0, NS-1),
      .      (UA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,BCPOS(IB),1),
-     .      FHE(IX,BCPOS(IB),1), FHI(IX,BCPOS(IB),1),
-     .      SUM(ZN(0:NS-1)*FNA(IX,BCPOS(IB),1,0:NS-1)),
-     .      (FNA(IX,BCPOS(IB),1,IS), IS = 0, NS-1)
+     .           GS(IX,BCPOS(IB),1),
+     .          FHE(IX,BCPOS(IB),1), FHI(IX,BCPOS(IB),1),
+     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*FNA(IX,BCPOS(IB),1,0:NS-1)),
+     .         (FNA(IX,BCPOS(IB),1,IS), IS = 0, NS-1)
           SFEE=SFEE-FHE(IX,BCPOS(IB),1)
           SFEI=SFEI-FHI(IX,BCPOS(IB),1)
           DO IS = 0, NS-1
@@ -416,11 +396,12 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      NE(BCPOS(IB),IY), PZ(BCPOS(IB),IY),
      .      (NA(BCPOS(IB),IY,IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
-     .      GS(BCPOS(IB)+1,IY,0), FHE(BCPOS(IB)+1,IY,0)/SXhelp,
-     .      FHI(BCPOS(IB)+1,IY,0)/SXhelp,
-     .      SUM(ZN(0:NS-1)*FNA(BCPOS(IB)+1,IY,1,0:ns-1)) /
-     .         SXhelp, PO(BCPOS(IB),IY),
-     .      (FNA(BCPOS(IB)+1,IY,1,IS)/SXhelp, IS = 0, NS-1)
+     .           GS(BCPOS(IB)+1,IY,0), FHE(BCPOS(IB)+1,IY,0)/SXhelp,
+     .          FHI(BCPOS(IB)+1,IY,0)/SXhelp,
+     .      SUM(RZA(BCPOS(IB)+1,IY,0:NS-1)*
+     .          FNA(BCPOS(IB)+1,IY,0,0:ns-1))/SXhelp,
+     .           PO(BCPOS(IB),IY),
+     .         (FNA(BCPOS(IB)+1,IY,0,IS)/SXhelp, IS = 0, NS-1)
           RZO = 0.0_R8
           DO IS = 0, NS-1
             IF (IS_NEUTRAL(IS)) CYCLE
@@ -429,16 +410,20 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
           CS = SQRT(PZ(BCPOS(IB),IY) / RZO)
           MACH=-UA(BCPOS(IB),IY,1)/CS
           WRITE (NPRT, '((1X, T13, 4ES11.3, T70,6D11.3))')
-     .      FHE(BCPOS(IB)+1,IY,0)/(FNA(BCPOS(IB)+1,IY,0,1)+1.E-30)
+     .          FHE(BCPOS(IB)+1,IY,0)/
+     .      SUM(RZA(BCPOS(IB)+1,IY,0:NS-1)*
+     .          FNA(BCPOS(IB)+1,IY,0,0:NS-1))
      .                        /TE(BCPOS(IB),IY),
-     .      FHI(BCPOS(IB)+1,IY,0)/(FNA(BCPOS(IB)+1,IY,0,1)+1.E-30)
+     .          FHI(BCPOS(IB)+1,IY,0)/
+     .      SUM(FNA(BCPOS(IB)+1,IY,0,0:NS-1))
      .                        /TI(BCPOS(IB),IY),
      .      MACH,(UA(BCPOS(IB),IY,IS),IS=0,NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
-     .      GS(BCPOS(IB)+1,IY,0),
-     .      FHE(BCPOS(IB)+1,IY,0),FHI(BCPOS(IB)+1,IY,0),
-     .      SUM(ZN(0:NS-1)*FNA(BCPOS(IB)+1,IY,0,0:NS-1)),
-     .      (FNA(BCPOS(IB)+1,IY,0,IS), IS = 0, NS-1)
+     .           GS(BCPOS(IB)+1,IY,0),
+     .          FHE(BCPOS(IB)+1,IY,0), FHI(BCPOS(IB)+1,IY,0),
+     .      SUM(RZA(BCPOS(IB)+1,IY,0:NS-1)*
+     .          FNA(BCPOS(IB)+1,IY,0,0:NS-1)),
+     .         (FNA(BCPOS(IB)+1,IY,0,IS), IS = 0, NS-1)
           SFEE=SFEE+FHE(BCPOS(IB)+1,IY,0)
           SFEI=SFEI+FHI(BCPOS(IB)+1,IY,0)
           DO IS = 0, NS-1
@@ -462,8 +447,8 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      GS(IX,IY,0), FHE(IX,IY,0)/SXhelp,
      .      FHI(IX,IY,0)/SXhelp,
-     .      SUM(ZN(0:NS-1)*FNA(IX,IY,0,0:NS-1)) /
-     .         SXhelp, PO(BCPOS(IB),IY),
+     .      SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0:NS-1))/SXhelp,
+     .      PO(BCPOS(IB),IY),
      .      (FNA(IX,IY,0,IS)/SXhelp, IS = 0, NS-1)
           RZO = 0.0_R8
           DO IS = 0, NS-1
@@ -473,14 +458,15 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
           CS = SQRT(PZ(BCPOS(IB),IY) / RZO)
           MACH=UA(IX,IY,1)/CS
           WRITE (NPRT, '((1X, 5ES11.3, T70,6D11.3))')
-     .    FHE(IX,IY,0)/(FNA(IX,IY,0,1)+1.E-30)/TE(BCPOS(IB),IY),
-     .    FHI(IX,IY,0)/(FNA(IX,IY,0,1)+1.E-30)/TI(BCPOS(IB),IY),
+     .    FHE(IX,IY,0)/SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0:NS-1))
+     .                /TE(BCPOS(IB),IY),
+     .    FHI(IX,IY,0)/SUM(FNA(IX,IY,0,0:NS-1))/TI(BCPOS(IB),IY),
      .    MACH,
      .    (UA(IX,IY,IS),IS=0,NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
      .      GS(IX,IY,0),
      .      FHE(IX,IY,0), FHI(IX,IY,0),
-     .      SUM(ZN(0:NS-1)*FNA(IX,IY,0,0:NS-1)),
+     .      SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0:NS-1)),
      .      (FNA(IX,IY,0,IS), IS = 0, NS-1)
           SFEE=SFEE-FHE(IX,IY,0)
           SFEI=SFEI-FHI(IX,IY,0)
@@ -590,64 +576,11 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
 
  1001 FORMAT ('  TIME (SECONDS):', 2X, 1D11.4)
 
- 1113 FORMAT (/' SOUTH EDGE:',I3, '   AT POSITION IY:', I3 //
-     .      T8, 'IX', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'UP', T74, 'UD', T85, 'NI(1)', T96, 'NI(..)'/
-     .      T8, 'SY', T16, 'FEEY/SY', T27, 'FEIY/SY', T38, 'FNEY/SY',
-     .      T51, 'PHI', T63, 'DD', T74, 'CD',
-     .      T82, 'FNIY/SY', T93, 'FNIY/SY'/
-     .      T5, 'SINANGY',
-     .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52 ,'VO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
-     .      T62, 'FNIY', T73,  'FNIY')
-
- 1114 FORMAT (/' NORTH EDGE:',I3, '   AT POSITION IY:', I3 //
-     .      T8, 'IX', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'UP', T74, 'UD', T85, 'NI(1)', T96, 'NI(..)' /
-     .      T8, 'SY', T16, 'FEEY/SY', T27, 'FEIY/SY', T38, 'FNEY/SY',
-     .      T51, 'PHI', T63, 'DD', T74, 'CD',
-     .      T82, 'FNIY/SY', T93, 'FNIY/SY'/
-     .      T5, 'SINANGY',
-     .      T16, 'DELTAE', T27, 'DELTAI', T39, 'VV', T52,'VO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SY/SQ(1-SINYQ)',
-     .      T16, 'FEEY', T27, 'FEIY', T38, 'FNEY',
-     .      T62, 'FNIY', T73,  'FNIY')
-
- 1115 FORMAT (/'  WEST EDGE:',I3, '   AT POSITION IX:', I3 //
-     .      T8, 'IY', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'CC', T74, 'CP', T85, 'NI(1)', T96, 'NI(..)' /
-     .      T8, 'SX', T16, 'FEEX/SX', T27, 'FEIX/SX', T38, 'FNEX/SX',
-     .      T51, 'PHI', T63, 'UD', T74, 'CD',
-     .      T82, 'FNIX/SX', T93, 'FNIX/SX'/
-     .      T5, 'SINANGX',
-     .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52,'UO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
-     .      T62, 'FNIX', T73,  'FNIX')
-
- 1116 FORMAT (/'  EAST EDGE:',I3, '   AT POSITION :', I3 //
-     .      T8, 'IY', T19, 'TE', T30, 'TI', T41, 'NE', T52, 'PZ',
-     .      T63, 'CC', T74, 'CP', T85, 'NI(1)', T96, 'NI(..)' /
-     .      T8, 'SX', T16, 'FEEX/SX', T27, 'FEIX/SX', T38, 'FNEX/SX',
-     .      T51, 'PHI', T63, 'UD', T74, 'CD',
-     .      T82, 'FNIX/SX', T93, 'FNIX/SX'/
-     .      T5, 'SINANGX',
-     .      T16, 'DELTAE', T27, 'DELTAI', T38, 'MACH', T52,'UO',
-     .      T63, 'UU(1)', T74,  'UU(..)' /
-     .      T3, 'SX/SQ(1-SINXQ)',
-     .      T16, 'FEEX', T27, 'FEIX', T38, 'FNEX',
-     .      T62, 'FNIX', T73,  'FNIX')
-
-
 *=======================================================================
-*//END B2PRNT//
+*//END B2WAOS//
 
-      END
-*//B2PRNT//
+      END SUBROUTINE B2WAOS
+*//B2WAOS//
 
 *//B2PRNTI//
 *=======================================================================
@@ -743,7 +676,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
 *=======================================================================
 *//END B2PRNTI//
 
-      END
+      END SUBROUTINE B2PRNTI
 CRHW:BREIASLB.IPRI   AUSDRUCK VON 2-DIM. ARRAYS ALS INTEGER-ZAHLEN
 C                    DIESE ROUTINE IST AN DIE BRAAMS-ROUTINEN ANGEPASST.
 C                    DIE X-KOORDINATE (1. INDEX) LAEUFT SENKRECHT
@@ -788,11 +721,11 @@ C
       DO 12 IX=-1,NX
 CCCCC    JX(IX) = IX
 C
-        IF (ZMAX.GT.0.0)   THEN
+        IF (ZMAX.GT.0.0) THEN
            DO 13 IY=-1,NY
              SIGF = 1.0
              IF (Z(IX,IY).LT.0.0)   SIGF = -1.0
-             IZ(IX,IY) = 100.0 * Z(IX,IY)/ZMAX + 0.5*SIGF
+             IZ(IX,IY) = INT(100.0 * Z(IX,IY)/ZMAX + 0.5*SIGF)
    13      CONTINUE
 C
         ELSE
@@ -849,5 +782,5 @@ C
   205 FORMAT (1X,I4,' | ',40I4)
 CC201 FORMAT (/,' IX =',34I4,/,' IY',/)
 C
-      END
+      END SUBROUTINE IPRI
 

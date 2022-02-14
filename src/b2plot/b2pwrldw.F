@@ -71,5 +71,6 @@ c
         irdparm=1
         call b2pwrldt
       end if
+      return
 c======================================================================
-      end
+      end subroutine b2pwrldw

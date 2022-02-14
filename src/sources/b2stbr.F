@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nx, ny, ns, nxtl, nxtr,
+      subroutine b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fna_mdf, fhe, fhi, fch, fne, fni, rsa, !iyv 07.03.18
+     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  na, ua, te, ti, po, ne, ni,
+     &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa,
      &  bb, sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
@@ -18,6 +19,8 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
@@ -29,11 +32,14 @@
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
 #ifdef B25_EIRENE
+      use b2mod_eirene
+     ,  , only : eirene_mc
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
-     ,          ext_sna
-      use eirmod_extrab25
+     ,          sne0_eir_tot, sch0_eir_tot, ext_sna
+      use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -49,7 +55,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
@@ -58,11 +64,12 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),    !iyv 07.03.18
-     &  fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
+     &  fht(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
       logical main_call
@@ -91,7 +98,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k               !iyv 07.03.18
+      integer n2, ix, iy, is, ib, ic, ibnd, itrack, k                   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
       integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
@@ -106,9 +113,9 @@
       integer ia, im, ip
       character ch3*3
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),     !IYS 27.01.17
-     &  sna_eir_tot(nspecies), sna_puff(nspecies),
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi),
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol),                                 !IYS 27.01.17
+     &  sna_puff(nspecies),  !sna_eir_tot(nspecies), 
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
 #endif
@@ -144,10 +151,8 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
       real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
-      logical new_sputter_namelist
+      logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
@@ -160,13 +165,10 @@
       character*256, save :: filename
 #endif
 *   ..procedures
-      logical lnext
-      external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
+      external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-      intrinsic abs, mod
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
+      intrinsic mod
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -186,7 +188,7 @@
      *     in_size_of_table/200000/,
      1     use_eirene/0/, neutral_rescale/1.0_R8/,
      *     neutral_sources_rescale/1.0_R8/, output/0/,
-     1     coreregno/1/, coreregn2/4/, core_sources_rescale/1.0_R8/,
+     1     coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
      7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
@@ -327,6 +329,11 @@
      *       neutral_sources_rescale)
         if(use_eirene.eq.0) neutral_rescale=1.0_R8
         if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
+        if(nnreg(0).le.2) then
+          coreregno = 0
+        else
+          coreregno = 1
+        endif
         call ipgeti ('b2stbc_coreregno', coreregno)
         call xertst (cbirso.le.coreregno.and.
      1   coreregno.le.cbirso+cbnrso-1,
@@ -355,22 +362,35 @@
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
      2     neutrals_count
-          if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
-     1     int(tim/neutrals_time_mod).gt.neutrals_count) then
-            neutrals_count=tim/neutrals_time_mod
-            call read_neutrals_namelist(nx, ny, ns, .true.)
-            new_sputter_namelist=.true.
-            call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
-            call write_b2mod_neutrals_namelist
-          endif
+          catch_up=
+     1    (mod(tim,neutrals_time_mod).ge.neutrals_time_switch.and.
+     1     neutrals_time_switch.gt.0.0_R8).or.
+     2     int(tim/neutrals_time_mod).gt.neutrals_count
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.neutrals_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next neutrals namelist file ',
+     .      trim(neutrals_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(neutrals_time_mod.gt.0.0_R8)
+     >     neutrals_count=int(tim/neutrals_time_mod)
+          call read_neutrals_namelist(nx, ny, ns, .true.)
+          new_sputter_namelist=.true.
+          call xertst (nstrat.le.nstraid,
+     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+          call write_b2mod_neutrals_namelist
         endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -387,7 +407,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -398,6 +419,7 @@
 *   ..test edge values of fluxes
       do is = 0, ns-1
        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+       call b2xvff (nx, ny, fna_mdf(-1,-1,0,is), 'fna_mdf')
       enddo
       call b2xvff (nx, ny, fhe, 'fhe')
       call b2xvff (nx, ny, fhi, 'fhi')
@@ -447,9 +469,22 @@ c   --> better solution wanted here..
           if(is_neutral(is).and.lnext(is,is+1)) then
             do iy=-1,ny
               do ix=-1,nx
-                f_redep(ix,iy,is) = 1.0_R8 /
-     1           ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
-     2           (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                if (redep_alpha.gt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb R. Dux et al., Nucl. Fusion 51 (2011) 053002
+                  f_redep(ix,iy,is) = 1.0_R8 /
+     1             ( 1.0_R8 + redep_alpha*(qe*bb(ix,iy,3)/(am(is)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy)))**2 )
+                else if (redep_alpha.lt.0.0_R8) then
+cxpb The prompt redeposition fraction formula below is from:
+cxpb D. Tskhakaya et al., JNM 463 (2015) 624
+cxpb Recommended value is abs(redep_alpha) = 0.01
+cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
+                  f_redep(ix,iy,is) = 1.0_R8 / ( 1.0_R8 +
+     1              abs(redep_alpha)*(ti(ix,iy)/te(ix,iy))*
+     2             (qe*bb(ix,iy,3)/(am(ismain)*mp)/
+     2             (rsa(ix,iy,is)*ne(ix,iy))) )
+                end if
               enddo
             enddo
             if(main_call.and.output.ge.1) then
@@ -472,9 +507,9 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+        call b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
+     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   neutral_sources_rescale, core_sources_rescale,
@@ -501,9 +536,9 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+        call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
+     &   hx, gs,
+     &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
@@ -659,8 +694,7 @@ c   --> better solution wanted here..
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
-        datm_eir = 0.0_R8                                                !srv 29.04.10
-        call eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,      !srv 29.04.10 {
+        call eirene_mc(nx, ny, ns, dtim, BoRiS,                     !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 
@@ -685,31 +719,31 @@ c   --> better solution wanted here..
           end do
 
 !  Add contribution from Eirene core boundary fluxes
-!         do ia = 1, nnatmi
+!          do k = 1, ncns
+!            ix = nnlimi + lcns(k)
+!            do ia = 1, nnatmi
 !           if (latmscl(ia).eq.b2espcr(is)) then
-!             do k = 1, ncns
-!               ix = nnlimi + lcns(k)
-!               sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
+!              sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
 !     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
-!               do im = 1, nnmoli
-!                 if (mlcmp(ia,im).gt.0) then
+!              do im = 1, nnmoli
+!                if (mlcmp(ia,im).gt.0) then
 !                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
 !     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
-!                 end if
-!               end do
-!             end do
+!                end if
+!              end do
+!            end do
 !           end if
-!         end do
+!          end do
 
-          sna_eir_tot= 0.0_R8
+          sna_eir= 0.0_R8
           ext_sna_tot= 0.0_R8
           do ix=-1, nx
             do iy=-1,ny
               do is = 0, ns-1
                 if( is_neutral(is) ) cycle
                 k = b2espcr(is)
-                sna_eir_tot(k) = sna_eir_tot(k) +
+                sna_eir(k) = sna_eir(k) +
      &           sna0_eir(ix,iy,0,is) +
      &           sna0_eir(ix,iy,1,is)*na(ix,iy,is)
                 ext_sna_tot(k) = ext_sna_tot(k) + ext_sna(ix,iy,is)
@@ -753,20 +787,24 @@ c   --> better solution wanted here..
 
 
           if ( iout .ne. 0 ) then
-            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir_tot',
+            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir',
      &  'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
             do k = 1, nspecies
-              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir_tot(k),
+              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir(k),
      &      sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k), t1(k)
             enddo
 
-            write(*,'(a3,3a17)') 'ia','dG/sna_eir_tot','t1(ia)','t(ia)'
+            write(*,'(a3,3a17)') 'ia','dG/sna_eir','t1(ia)','t(ia)'
           endif
 
           do k = 1, nspecies
-            t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+            if (sna_eir(k).ne.0.0_R8) then
+              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
-     &            sna_eir_tot(k)
+     &            sna_eir(k)
+            else
+              t01(k) = 0.0_R8
+            end if
             t1(k) = t01(k)* ( 1.0_R8 - exp(-c_pumpavr) ) +
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
@@ -774,6 +812,7 @@ c   --> better solution wanted here..
      &              max( min( taumax,t1(k) ), -taumax )
             if ( iout .ne. 0 )
      &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
+            sna_eir(k) = sna_eir(k)*t(k)
           enddo
 
           do is = 0, ns-1
@@ -782,6 +821,18 @@ c   --> better solution wanted here..
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
             sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
             sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+
+! { IYS 12.01.2018, 
+!      sna_eir = 0.0_R8
+!          if (ank_tracing .gt. 0) then    
+!            do iy = -1, ny
+!              do ix = -1, nx
+!                sna_eir(k) = sna_eir(k)*t(k)
+!     &              sna0(ix,iy,0,is) + 
+!     &              sna0(ix,iy,1,is) * na(ix,iy,is)
+!              enddo
+!            enddo
+!          endif     ! IYS 12.01.2018 }
 !            else
 !!            write(*,'(a,i3, a5, i3, a3)')
 !!     &   'Source correction is not applied for sputtered particles k=',
@@ -791,8 +842,8 @@ c   --> better solution wanted here..
 
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
 
-*       compute total eirene sources for averaging
-cwdk only total eirene source are averaged!
+*       compute total Eirene sources for averaging
+cwdk only total Eirene source are averaged!
 cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
 cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
@@ -812,7 +863,7 @@ cwdk       down in this routine
 *       get averaged sources
         if (ird_aver > 0) then
 
-cwdk if ird_aver > 0, all sources computed by eirene are overwritten (!!!),
+cwdk if ird_aver > 0, all sources computed by Eirene are overwritten (!!!),
 cwdk i.e. fully replaced by the averaged values from b2faveri
           sna0_eir = 0.0_R8
           smo0_eir = 0.0_R8
@@ -822,9 +873,10 @@ cwdk i.e. fully replaced by the averaged values from b2faveri
 cwdk get the averaged sources
           call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
      &                            she0_eir_tot, shi0_eir_tot,
+     &                            sch0_eir_tot, sne0_eir_tot,
      &                            nx, ny, ns)
 
-cwdk note: only total eirene source are averaged!
+cwdk note: only total Eirene source are averaged!
 cwdk these are now put back into the constant part of the sources (0-component)
           do is = 0,ns-1
             sna0_eir(:,:,0,is) = sna0_eir_tot(:,:,is)
@@ -870,16 +922,6 @@ cwdk these are now put back into the constant part of the sources (0-component)
         endif
 #endif
         do ia = 1, nnatmi
-!         is = eb2spcr(ia)  ! IYS 27.01.2017
-         do iy = -1,ny
-          do ix = -1,nx
-! IYS 27.01.2017
-!           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
-!           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
-! IYS 27.01.2017
-           datm_eir(ix,iy,ia)   = dab2(ix+1,iy+1,ia,1)
-          enddo
-         enddo
 ! IYS 27.01.2017
 ! interpolate atom fluxes to cell faces (for output only)
          flxtmp(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,ia,1)
@@ -892,11 +934,6 @@ cwdk these are now put back into the constant part of the sources (0-component)
         enddo
 ! IYS 27.01.2017
         do im = 1, nmol
-         do iy = -1,ny
-          do ix = -1,nx
-           dmol_eir(ix,iy,im)   = dmb2(ix+1,iy+1,im,1)
-          enddo
-         enddo
 ! interpolate molecule fluxes to cell faces (for output only)
          flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,
@@ -914,6 +951,16 @@ cwdk these are now put back into the constant part of the sources (0-component)
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
         call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
       endif
+
+*   ..zero out contributions in dead cells
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
 
 * ..sources
       b2stbr_sna(-1:nx,-1:ny,0:ns-1)=
@@ -981,7 +1028,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           enddo
           if (.not.over_erosion) then
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)
+     1       dteff*plate_time_factor(ibnd)
             do itrack = 1, ntargsp
               if (.not.equilibrium(itrack)) then
                 if (sput_frac_flag.ne.0)
@@ -1005,7 +1052,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             enddo
           else
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)*t_frac
+     1       dteff*plate_time_factor(ibnd)*t_frac
             do itrack = 1, ntargsp
               particle_inventory(ibnd,itrack)= max( 0.0_R8,
      .         particle_inventory(ibnd,itrack)+t_frac*
@@ -1048,7 +1095,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             write(6,'(a)') trim(filename)//' will be created'
             call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
           else if (ex.and.stim.lt.0.0_R8) then
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             status=nf_inq(ncid,ndims,nvars,natts,unlimid)
             call check_cdf_status(status)
@@ -1066,7 +1113,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write(6,'(a,i8)') trim(filename)//' : ntstep_b2wall = ',
      .                                          ntstep_b2wall
           if (ntstep_b2wall.eq.0) then
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             write(*,*) 'Writing track_species'
             call write_cdf_char_variable(ncid,-1,
@@ -1081,7 +1128,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         endif
         if(main_call.and.mod(ncall,b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
-          status=nf_open(filename,NF_WRITE,ncid)
+          status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(status)
           call write_cdf_variable(ncid,ntstep_b2wall,
      *     'plate_time',plate_time(1:nbnd))
@@ -1228,6 +1275,18 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        endif
       endif                                                           !srv 11.09.09 }
 
+      if (iout.eq.1 .and. use_eirene.gt.0 ) then   ! IYS to output fluxes seen by Eirene
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        if (.not. is_neutral(is)) then
+        call my_out(70,nx,ny,
+     .              fna(-1:nx,-1:ny,0,is),'b2stbr_fnax'//chns)
+        call my_out(70,nx,ny,
+     .              fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
+        endif
+       enddo 
+      endif                                                           
+
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
@@ -1240,6 +1299,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 *.end b2stbr
 
       subroutine b2stbr_neutr_scl(nx, ny, ns)
+#ifdef B25_EIRENE
+      use b2mod_eirene
+     , , only : neutr_scl
+#endif
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns
       integer ncall, use_eirene, ank_mods
@@ -1249,8 +1313,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       if (ncall.eq.0) then
         call xertst(0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
         call xertst(1.le.ns, 'faulty argument ns')
-        call ipgeti('b2mndr_eirene',use_eirene)
-        call ipgeti('eirene_ank_mods',ank_mods)
+        call ipgeti('b2mndr_eirene', use_eirene)
+        call ipgeti('eirene_ank_mods', ank_mods)
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
 #ifdef B25_EIRENE
@@ -1279,6 +1343,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -1307,7 +1372,7 @@ c        write(*,*) 'Called neutr_scl'
       character*256 filename
 *   ..procedures
       intrinsic mod
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr
+      external xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,
      *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/
@@ -1374,29 +1439,36 @@ c        write(*,*) 'Called neutr_scl'
       call ipgetr ('b2stbr_plate_thick', plate_thick)
       call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 
-cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       new_sputter_namelist=neutrals_namelist.eq.1.or.use_eirene.ne.0
-      call read_neutrals_namelist
-     1   (nx, ny, ns, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
      &   'Increase DEF_NSTRA in DIMENSIONS.F')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
-        neutrals_count=tim/neutrals_time_mod
+        neutrals_count=int(tim/neutrals_time_mod)
       else
         neutrals_count=0
       endif
-      catch_up=neutrals_time_mod.gt.0.0_R8
+      if(neutrals_time_mod.gt.0.0_R8) then
+        catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &    .and.neutrals_time_switch.gt.0.0_R8
+      else if (neutrals_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.neutrals_time_switch
+      else
+        catch_up=.false.
+      end if
       do while(catch_up)
-        if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch) then
-          write(*,*) 'b2stbr_init: catching up ...'
-          call read_neutrals_namelist(nx, ny, ns, .true.)
-          new_sputter_namelist=.true.
-          call xertst (nstrat.le.nstraid,
+        write(*,*) 'b2stbr_init: catching up ...'
+        call read_neutrals_namelist(nx, ny, ns, .true.)
+        new_sputter_namelist=.true.
+        call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
-          call write_b2mod_neutrals_namelist
-          catch_up=neutrals_time_mod.gt.0.0_R8
+        call write_b2mod_neutrals_namelist
+        if(neutrals_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &      .and.neutrals_time_switch.gt.0.0_R8
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.neutrals_time_switch
         else
           catch_up=.false.
         endif
@@ -1466,9 +1538,6 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       if (sputter_namelist_used) then
         call read_b2mod_sputter_namelist
      .     (99,'    ',sputter_namelist_used)
-      else
-        sputter_yield =0.0_R8
-        sputter_yield2=0.0_R8
       endif
       nx_sp = nx_tmp
       ny_sp = ny_tmp
@@ -1481,4 +1550,3 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 *.end b2stbr_init
 
       end subroutine b2stbr_init
-

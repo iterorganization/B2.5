@@ -1,5 +1,6 @@
       function smax (n, sx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       real (kind=R8) ::
      *   smax
@@ -16,8 +17,7 @@
       real (kind=R8) ::
      *   t
       intrinsic max
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
+      external xerrab
 *     ------------------------------------------------------------------
       if (n.lt.1.or.incx.eq.0) then
        call xerrab ('smax--error, n.lt.1.or.incx.eq.0')
@@ -39,4 +39,4 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end function smax

@@ -191,7 +191,7 @@ contains
     subroutine read_b2fgmtry()
         !! Internal variables
         character(len=120) :: lblgm
-        integer ::  i, j, k
+        integer :: i, j, k
 
         !! Program start_up calls
         call prgini( 'b2_ual_write_deprecated' )

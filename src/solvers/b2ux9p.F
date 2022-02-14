@@ -3,8 +3,11 @@
 
       subroutine b2ux9p (nx, ny, aa9, itcnt, resfun, corfun, name)    !sv 13.10.06 {
       use b2mod_types
+      use b2mod_ilutern_9
       use b2mod_ma28_for_9diag
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -72,14 +75,15 @@
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
+      !$OMP THREADPRIVATE(indexes, iasave, jasave, nz)
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
-     &  slv5pt, iluter, xerrab
+      external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
+      !$OMP THREADPRIVATE(ncall, style, acpar, cpu)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -125,6 +129,8 @@
        write(*,*) 'Allocating space for solver b2ux9p'
        if (style.eq.0) then
         call xerrab ('b2ux9p: Style 0 is not implemented')
+! if the error abort is removed, then make sure to define OMP threadprivate
+! attribute for the workspace arguments
 *    ..obtain workspace for iluter
         allocate(aaf(1:n2*5))
         allocate(wrk0(1:n2))
@@ -133,6 +139,8 @@
         allocate(iwrk(1:1))
       else if (style.eq.1) then
         call xerrab ('b2ux9p: Style 1 is not implemented')
+! if the error abort is removed, then make sure to define OMP threadprivate
+! attribute for the workspace arguments
 *    ..obtain workspace for slv5pt
         allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
         allocate(wrk0(1:n2))
@@ -190,12 +198,13 @@
 *-----------------------------------------------------------------------
 *.end b2ux9p
 
-      end
+      end subroutine b2ux9p
 
       subroutine storage_9 (nx, ny, aa9, nnz, ia, ja, a, k,            !sv 22.11.06
      *                      indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *  ..input
       integer nx, ny, nnz
@@ -232,10 +241,20 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
+      !$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
 
       if(ncall.eq.0) then
         call ipgeti ('storage_9_kwrite_fmt', kwrite_fmt)
         call ipgeti ('storage_9_kwrite_bnr', kwrite_bnr)
+        if (in_parallel() .and. 
+     &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+         !$OMP MASTER
+         write(*,*) 'storage_9 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+         !$OMP END MASTER
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif
       endif
 
       n = (nx+2)*(ny+2)
@@ -487,5 +506,5 @@
 
       ncall = ncall + 1
 
-      end                                                             !sv 22.11.06
+      end subroutine storage_9                                        !sv 22.11.06
 

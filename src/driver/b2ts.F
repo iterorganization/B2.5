@@ -15,6 +15,7 @@
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -22,7 +23,7 @@
 *
 *  1. purpose
 *
-*     B2TS (main program) is a postprocessor for b2.
+*     B2TS (main program) is a postprocessor for B2.
 *
 *
 *  2. specification
@@ -33,7 +34,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ts performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2tsdr to control the actual computation.
@@ -68,7 +69,7 @@
       integer ninp(0:4), nx, ny, ns, idum(0:9), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
 !      external b2tsdr
 *   ..initialise input units
       data ninp/50,51,52,53,54/
@@ -108,10 +109,10 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       call cfopen (ninp(4),'b2fplasma','old','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstate_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstate_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
       nx = idum(0)

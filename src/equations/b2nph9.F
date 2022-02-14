@@ -2,12 +2,14 @@
 *.specification
 
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
-     &  solvereg, solvireg, solvpreg, solvmreg,
-     &  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam,
-     &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
+     &  rxf, dtim, BoRiS, fac_ExB,                                      !srv 07.07.21
+     &  hx, hy, vol, bb, pbs, lnlam,
+     &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
+     &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
-     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht,  !srv 10.11.02
-     &  corte, corti, ierr)
+     &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
+     &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_tallies                                                 !srv 22.05.18
@@ -16,13 +18,20 @@
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
+      use b2mod_subsys
+      use b2mod_sources
+     , , only : shedt, shidt                                            !srv 31.01.21
+      use b2mod_numerics_namelist                                       !srv 07.07.21 {
+     & , only : dtee, dtei, time_factor
+      use b2mod_plasma
+     , , only : tep, tip, nep, nip, nap, kinrgyp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
-     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),             !srv 07.06.00 02.06.99
-     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                         !srv 07.05.08 01.07.09
+     *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),       !srv 07.06.00 02.06.99 07.07.21
+     *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
      &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),           !srv 02.01.07
@@ -33,11 +42,15 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), fne(-1:nx,-1:ny,0:1),
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
-     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)   !srv 07.07.09
+     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),  !srv 07.07.09
+     4  fchstoch(-1:nx,-1:ny,0:1)                                       !srv 24.08.21
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
+     *  solvtreg(0:nregionv),                                           !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -46,7 +59,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
-     *   reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
+     *  reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
      &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
      &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                    !srv 10.11.02
 *   ..common blocks
@@ -78,7 +91,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       real (kind=R8) ::
-     *   rxg, pcm0, pcm1
+     *   rxg, pcm0, pcm1, t0, ttim                                      !srv 07.07.21
       real (kind=R8) ::
      * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                    !srv 02.01.07
      1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                   !srv 02.01.07
@@ -88,14 +101,17 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: style = 1                                        !srv 09.07.08
+      integer, save :: get_residuals = 0                                !srv 22.05.18
+      integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       character chns*3                                                  !srv 17.07.05
+      logical warning_e, warning_i
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, lwget, b2saxpy
+      external xertst, ipgetr, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
-      data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -108,6 +124,7 @@
 *     of the correction equation, with the effect of limiting the
 *     computed correction. rxg is dimensionless and of order unity;
 *     smaller values of rxg imply stronger damping.
+*     Not used if running in time-dependent mode.
 *
 *     pcm0 - real.
 *     ...
@@ -123,9 +140,33 @@
       call subini ('b2nph9')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2nph9_rxg', rxg)                                  !srv 02.01.07 {
-       call ipgetr ('b2nph9_pcm0', pcm0)
-       call ipgetr ('b2nph9_pcm1', pcm1)                                !srv 02.01.07 }
+       call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
+       if(style_b2mndt.eq.2) then
+         rxg = huge(1.0_R8)
+         pcm0 = 0.0_R8
+         pcm1 = 0.0_R8
+         warning_e = .false.
+         warning_i = .false.
+         do iy = -1, ny
+           do ix = -1, nx
+             warning_e = warning_e .or.
+     .        rxf*dtee(region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
+             warning_i = warning_i .or.
+     .        rxf*dtei(region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
+           enddo
+         enddo
+         if (warning_e) write(6,*) 'rxf*dtee*time_factor should be 1 !'
+         if (warning_i) write(6,*) 'rxf*dtei*time_factor should be 1 !'
+         if (warning_e .or. warning_i)
+     >    write(6,*) 'Time derivative terms may be inacurrate !'
+       else
+         rxg = 1.0_R8
+         pcm0 = 1.0_R8
+         pcm1 = 1.0_R8
+         call ipgetr ('b2nph9_rxg', rxg)                                !srv 02.01.07 {
+         call ipgetr ('b2nph9_pcm0', pcm0)
+         call ipgetr ('b2nph9_pcm1', pcm1)                              !srv 02.01.07 }
+       endif                                                            !srv 07.07.21 }
        call xertst (0.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
@@ -136,6 +177,7 @@
        call ipgeti ('b2nph9_iout', iout)                                !srv 02.01.07
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
+       call ipgeti ('get_residuals', get_residuals)                     !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -146,7 +188,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
         call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                     !srv 02.01.07
@@ -184,17 +227,29 @@
       endif
 
 * ..main computation
+      tep = te                                                          !srv 07.07.21 {
+      tip = ti
+      if(style_b2mndt.eq.2) then
+*  .. calculate time-dependent source
+        call b2shdt (nx, ny, ns, dtim, BoRiS,
+     &   vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
+*  .. add contribution from time-dependent source
+        she = she+shedt
+        she(:,:,0)=she(:,:,0)-1.5_R8*(ne-nep)*tep/dtim*vol
+        shi = shi+shidt
+        shi(:,:,0)=shi(:,:,0)-1.5_R8*(ni(:,:,0)-nip(:,:,0))*tip/dtim*vol
+      endif                                                             !srv 07.07.21 }
+
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, qz, vol, bb, pbs,                                       !xpb !srv 05.07.17
-     &  lnlam, na, ua, ue, te, ti, po, ne, ni,                          !srv 01.07.09
-     &  fch, cvsa, fchdia, uadia, wadia, vaecrb,                        !xpb
-     &  she0, shi0)                                                     !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,            !srv 01.07.09
+     &  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)  !xpb !srv 24.08.21
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, qz, vol, bb, pbs, lnlam,
-     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)     !srv 07.06.00 02.06.99 07.07.09
+     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
+     *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
@@ -204,14 +259,25 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
 
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
+        call my_out(70,nx,ny,te,'b2nph9_te_inp')
+        call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
+      endif                                                             !srv 31.01.21
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-      call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      if ((solving(4).and.any(solvereg(0:nregionv))).or.
+     &                    get_residuals.eq.1) then                      !srv 22.05.18
+        call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+      endif                                                             !srv 22.05.18
+      if ((solving(4).and.any(solvireg(0:nregionv))).or.
+     &                   get_residuals.eq.1) then                       !srv 22.05.18
+        call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      endif                                                             !srv 22.05.18
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
@@ -229,13 +295,20 @@ cdjm Jan2017 update particle source components for balance
       endif
 
 *   ..compute final resht, reshe, reshi
-      do iy = -1, ny
+      b2qie=0.0_R8
+      do iy = -1, ny                                                    !srv 22.05.18
        do ix = -1, nx
-        resht(ix,iy) = reshe(ix,iy) + reshi(ix,iy)
-        reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
-        reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
+        b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
        enddo
-      enddo                                                             !srv 18.09.09 30.01.09 }
+      enddo                                                             !srv 22.05.18
+
+      if ((solving(4).and.any(solvereg(0:nregionv)))                    !srv 22.05.18 {
+     &    .or.get_residuals.eq.1) reshe = reshe - shei
+      if ((solving(4).and.any(solvireg(0:nregionv)))
+     &    .or.get_residuals.eq.1) reshi = reshi + shei
+      if (solving(4).and.any(solvereg(0:nregionv)).and.                 ! if total equation is not solved then resht = 0
+     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
+     &   resht = reshe + reshi                                          !srv 22.05.18 }
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out(70,nx,ny,shei,'b2nph9_shei')
@@ -269,6 +342,12 @@ cdjm Jan2017 update particle source components for balance
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_shi')
       endif                                                             !srv 17.07.05 01.11.10 }
+
+      if (iout.eq.1) then
+        call my_out(70,nx,ny,te,'b2nph9_te0')
+        call my_out(70,nx,ny,ti,'b2nph9_ti0')
+      endif
+
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2ush9 (nx, ny, ns, nregionv, itcnt,
@@ -277,7 +356,7 @@ cdjm Jan2017 update particle source components for balance
      &   resht, reshe, reshi, cortt, corte, corti, wrkf, wrkc, aa9)
 *   ..apply correction
         call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
-     &   solvereg, solvireg, solvpreg, solvmreg,
+     &   solvereg, solvireg, solvtreg, solvpreg, solvmreg,              !srv 22.05.18
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
       endif
@@ -297,6 +376,34 @@ cdjm Jan2017 update particle source components for balance
       elseif (iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,te,'b2nph9_te')
         call my_out(70,nx,ny,ti,'b2nph9_ti')
+        if(style_b2mndt.eq.2) then                                      !srv 07.07.21
+         wrk0=1.5_R8*vol*ne*(te-tep)/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_nedtedt')
+         wrk0=1.5_R8*vol*tep*(ne-nep)/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_tednedt')
+         wrk0=1.5_R8*vol*ni(:,:,0)*(ti-tip)/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_nidtidt')
+         wrk0=1.5_R8*vol*tip*(ni(:,:,0)-nip(:,:,0))/dtim
+         call my_out(70,nx,ny,wrk0,'b2nph9_tidnidt')
+        else
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
+           t0 = 1.5_R8*vol(ix,iy)/ttim
+           wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-nep(ix,iy)*tep(ix,iy))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'b2nph9_dnetedt')
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
+           t0 = 1.5_R8*vol(ix,iy)/ttim
+           wrk0(ix,iy)=(ni(ix,iy,0)*ti(ix,iy)-
+     &                  nip(ix,iy,0)*tip(ix,iy))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'b2nph9_dnitidt')
+        endif                                                           !srv 07.07.21 }
       end if
 
 * ..return
@@ -307,4 +414,4 @@ cdjm Jan2017 update particle source components for balance
 *-----------------------------------------------------------------------
 *.end b2nph9                                                            !srv 02.01.07 }
 
-      end
+      end subroutine b2nph9

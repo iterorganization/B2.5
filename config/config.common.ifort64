@@ -1,0 +1,48 @@
+EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+DEFINES += -DGRREAL=4 -DDOFLUSH
+
+CPPOPTS  = -P -I${srcdir} ${EQUIVS}
+SED      = sed s:\#PREC\#:d:g
+SED      =
+LINK_MOD =
+
+DBLFC    = ${FC}
+DBLSED   = sed -e s:\#PREC\#:d:g
+DBLSED   = 
+
+ifndef SOLPS_CPP
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
+MOD      = mod
+
+BLD      = ar rucv
+
+GRLIBES  = ${LD_NCARG}
+PLLIBES  = ${LD_MSCL}
+LDLIBES += ${LD_NETCDF} ${LD_NAG}
+
+ifdef LD_CATALYST
+CXX      = c++
+CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+endif
+
+ifdef PERFMON
+LDLIBES += -L${SOLPSLIB} -lperf
+endif
+
+LD       = ${FC}
+
+LCPP     = ${LD_SONNET}
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

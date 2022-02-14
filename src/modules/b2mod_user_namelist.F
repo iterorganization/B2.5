@@ -71,7 +71,13 @@ c----------------------------------------------------------------------
       subroutine alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       implicit none
       integer nx, ns, nlim, nmol, ntns
+      external xertst
 
+      call xertst(0.le.nx, 'faulty argument nx')
+      call xertst(1.le.ns, 'faulty argument ns')
+      call xertst(0.le.nlim, 'faulty argument nlim')
+      call xertst(0.le.nmol, 'faulty argument nmol')
+      call xertst(0.le.ntns, 'faulty argument ntns')
       if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
@@ -124,6 +130,7 @@ c***  Standard set-up:
 
       subroutine read_b2mod_user_namelist(nx,ns)
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
       integer nx, ns
 
@@ -133,7 +140,7 @@ c***  Standard set-up:
       logical old_style, done
       integer, save :: use_eirene, neutrals_namelist
       logical, save :: hydrogen, helium, neon
-      external subini, subend, ipgeti
+      external ipgeti, find_file, xertst
 
       call subini ('readuser')
       call ipgeti ('b2mndr_eirene', use_eirene)
@@ -284,15 +291,18 @@ c*** Set default values according to current species list
 
       call subend ()
       return
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading USER namelist!')
+#endif
+      end subroutine read_b2mod_user_namelist
 
-      entry write_b2mod_user_namelist(nx,ns)
+      subroutine write_b2mod_user_namelist
+      implicit none
 
       if (written) return
       if (user_namelist_used.and.write_nml_user) write(*,user)
       written = .true.
       return
-
-  999 call xerrab ('Error while reading FEEDBACK namelist!')
-      end subroutine read_b2mod_user_namelist
+      end subroutine write_b2mod_user_namelist
 
       end module b2mod_user_namelist

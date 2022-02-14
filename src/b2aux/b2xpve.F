@@ -8,9 +8,9 @@
       implicit none
       integer nx, ny, ns
       real (kind=R8) ::
-     &   qe, rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1), 
-     &   alfx_c(-1:nx,-1:ny), sigx_c(-1:nx,-1:ny),  
-     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny), 
+     &   qe, rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),
+     &   alfx_c(-1:nx,-1:ny), sigx_c(-1:nx,-1:ny),
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &   ue_ext(-1:nx,-1:ny), ne_ext(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -44,23 +44,23 @@
           if(leftix(ix,iy).ne.-2 ) then
             wrksig(ix,iy) =
      &           ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &	         (ne(ix,iy)*te(ix,iy)                                      
-     &	         -ne(leftix(ix,iy),leftiy(ix,iy))*                         
-     &            te(leftix(ix,iy),leftiy(ix,iy)))*                         
-     &	  (2.0_R8/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)) ) 
-     &    /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8 
+     &           (ne(ix,iy)*te(ix,iy)
+     &           -ne(leftix(ix,iy),leftiy(ix,iy))*
+     &            te(leftix(ix,iy),leftiy(ix,iy)))*
+     &    (2.0_R8/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)) )
+     &    /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
 
-            wrkalf(ix,iy) = 
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))      
+            wrkalf(ix,iy) =
+     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
      &        /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-          endif 
+          endif
         enddo
       enddo
 
       do iy=-1,ny
         do ix=-1,nx
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-	      ve(ix,iy)=-( sigx_c(ix,iy)*
+            ve(ix,iy)=-( sigx_c(ix,iy)*
      &         (wrksig(ix,iy)+wrksig(rightix(ix,iy),rightiy(ix,iy)))-
      &                       phm2*alfx_c(ix,iy)*
      &         (wrkalf(ix,iy)+wrkalf(rightix(ix,iy),rightiy(ix,iy))))

@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -34,7 +35,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the residuals and the corrections
-*     computed in the course of a b2 calculation.
+*     computed in the course of a B2 calculation.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -96,8 +97,7 @@
       real (kind=R8) ::
      *  samax, scal10
       logical strmas
-      external subini, subend, xertst, samax, b2scopy, sfill,
-     &  scal10, strmas
+      external xertst, samax, b2scopy, sfill, scal10, strmas
       external b2xpne, b2xpni, b2xxgs, b2wgxp
 
 *-----------------------------------------------------------------------
@@ -152,7 +152,7 @@
        write (nprt,fmtp) '+cpne', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (ni) residual
       if (strmas(idout,'cpni')) then
@@ -177,7 +177,7 @@
        write (nprt,fmtp) '+cpni', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (te) residual
       if (strmas(idout,'cpte')) then
@@ -201,7 +201,7 @@
        write (nprt,fmtp) '+cpte', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (ti) residual
       if (strmas(idout,'cpti')) then
@@ -225,7 +225,7 @@
        write (nprt,fmtp) '+cpti', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (po) residual
       if (strmas(idout,'cppo')) then
@@ -249,7 +249,7 @@
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (na) residual
       if (strmas(idout,'cpna')) then
@@ -275,7 +275,7 @@
         write (nprt,fmtp) '+cpna', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	  24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1    24, -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plots of (ua) residual
@@ -302,7 +302,7 @@
         write (nprt,fmtp) '+cpua', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	  24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1    24, -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plot of (ua) residual, all species
@@ -328,7 +328,7 @@
        write (nprt,fmtp) '+cpua', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 
 * ..make plots of corrections
@@ -341,7 +341,7 @@
        write (nprt,fmtp) '+cppr', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (te) correction
       if (strmas(idout,'cpte')) then
@@ -402,7 +402,7 @@
        write (nprt,fmtp) '+cpua', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   corut, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 
 * ..return

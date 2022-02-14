@@ -13,8 +13,9 @@
      *  ffbz1(:,:,:),
      *  fpsi1(:,:,:),
      *  gs1(:,:,:),
-     *  hx1(:,:),
-     *  hy1(:,:),
+     *  hxx(:,:),
+     *  hyy(:,:),
+     *  hz1(:,:),
      *  qz1(:,:,:),
      *  qc1(:,:),
      *  qcb1(:,:),
@@ -43,6 +44,7 @@
      *  region1(:,:,:),
      *  resignore1(:,:,:),
      *  cflags1(:,:,:)
+      logical, save :: LSN1
 
       type(B2GridMap), save :: gmap1
 
@@ -59,8 +61,9 @@
       allocate(ffbz1(-1:nxd,-1:nyd,0:3))
       allocate(fpsi1(-1:nxd,-1:nyd,0:3))
       allocate(gs1(-1:nxd,-1:nyd,0:2))
-      allocate(hx1(-1:nxd,-1:nyd))
-      allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hxx(-1:nxd,-1:nyd))
+      allocate(hyy(-1:nxd,-1:nyd))
+      allocate(hz1(-1:nxd,-1:nyd))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd))
       allocate(qcb1(-1:nxd,-1:nyd))
@@ -87,6 +90,7 @@
       allocate(region1(-1:nxd,-1:nyd,0:2))
       allocate(resignore1(-1:nxd,-1:nyd,1:2))
       allocate(cflags1(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
+      LSN1 = .true.
       b2mod_geo2_allocated = .true.
       end subroutine alloc_b2mod_geo2
 
@@ -101,8 +105,9 @@
          deallocate(fpsi1)
          deallocate(wbbc1)
          deallocate(gs1)
-         deallocate(hx1)
-         deallocate(hy1)
+         deallocate(hxx)
+         deallocate(hyy)
+         deallocate(hz1)
          deallocate(qz1)
          deallocate(qc1)
          deallocate(qcb1)
@@ -233,5 +238,43 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
       return
 
       end function interpolateToVertices1
+
+      function cr1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr1
+      cr1 = 0.25_R8*(crx1(ix,iy,0)+crx1(ix,iy,1)+
+     .               crx1(ix,iy,2)+crx1(ix,iy,3))
+      return
+      end function cr1
+
+      function cz1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz1
+      cz1 = 0.25_R8*(cry1(ix,iy,0)+cry1(ix,iy,1)+
+     .               cry1(ix,iy,2)+cry1(ix,iy,3))
+      return
+      end function cz1
+
+      function dist1(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist1
+      dist1 = norm (
+     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
+      return
+      end function dist1
+
+      function distc1(ix1,iy1,ip1,ix2,iy2,ip2)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
+      real(kind=R8) :: distc1
+      distc1 = norm(crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2),
+     .              cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))
+      return
+      end function distc1
 
       end module b2mod_geo2

@@ -5,6 +5,7 @@
      &  rtt, nt, rtn, nn, 
      &  rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nz, npart, 
@@ -51,7 +52,7 @@
 *     coefficients are supplied.
 *
 *     npart - integer, input.
-*     npart specifies the number of partition of the homonuclear sequence.
+*     npart specifies the number of partition of the isonuclear sequence.
 *
 *     nidis - integer, input.
 *     nidis specifies the dimension of the array idis.
@@ -153,7 +154,7 @@
 *   ..local variables
       integer i, j, k, ind
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation
@@ -334,6 +335,7 @@
        enddo
       enddo
 
+      write (nprt,'()')
 * ..return
       call subend ()
       return

@@ -316,6 +316,8 @@
       subroutine read_b2mod_tallies(nread)
       implicit none
       integer nread
+      external xertst
+
       call xertst(0.lt.nread, 'faulty argument nread')
 
       return
@@ -324,6 +326,8 @@
       subroutine write_b2mod_tallies(nwrite)
       implicit none
       integer nwrite
+      external xertst
+
       call xertst(0.lt.nwrite, 'faulty argument nwrite')
 
       return
@@ -340,6 +344,7 @@
       integer :: status, varid, ndims, dimids(NF_MAX_VAR_DIMS),
      1 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
      2 time_dep
+      external check_cdf_status
 
       if(ntstep.ge.0) then
         time_dep=1
@@ -378,6 +383,7 @@
       integer :: status, varid, ndims, dimids(NF_MAX_VAR_DIMS),
      1 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
      2 time_dep
+      external check_cdf_status
 
       if(ntstep.ge.0) then
         time_dep=1
@@ -410,6 +416,7 @@
       character*(*) :: varname, units, long_name
 #include <netcdf.inc>
       integer :: status, varid
+      external check_cdf_status
 
       status=nf_def_var(ncid,varname,vartype,ndims,vdims,varid)
       call check_cdf_status(status)
@@ -430,6 +437,7 @@
       integer :: status, 
      1 vregid, xregid, yregid, nsid, tid, varid, specid
       integer :: vdims(3)
+      external check_cdf_status
 
       status=nf_create(filename,NF_WRITE,ncid)
       call check_cdf_status(status)

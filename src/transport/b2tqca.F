@@ -1,18 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqca (nx, ny, ns, lnlam, bb, na, te, ti, ne, ne2,       !srv 01.07.09
+      subroutine b2tqca (nx, ny, ns, lnlam, na, te, ti, ne, ne2,           !srv 01.07.09
      1 vsa, hci)
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),   !srv 01.07.09
+     *  lnlam(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),                        !srv 01.07.09
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &  ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -64,7 +66,7 @@
       integer ncall, model, style, n2, ix, iy, is, js
       integer, save :: icase = 0                                      !srv 20.09.11
       integer, save :: iout = 0, iout_b2wdat=0,                       !srv 16.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0 
+     &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, ft,
@@ -72,12 +74,9 @@
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
       save ncall, model, phm0, style
 *   ..procedures
-      intrinsic abs, sqrt
-      real (kind=R8) ::
-     *  pitx
-      external subini, subend, xertst, sfill, ipgetr, ipgeti
+      intrinsic sqrt
+      external xertst, sfill, ipgetr, ipgeti
       external b2xvsg
-      pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, model/1/, style/1/
 
@@ -123,8 +122,6 @@
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test bb
-        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *    ..test state
         call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
         call b2xvsg (n2, ti, 1, 'ti', '.gt.')
@@ -228,8 +225,6 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
 !        call my_out(70,nx,ny,ti,'b2tqca_ti')
 !        call my_out(70,nx,ny,ne,'b2tqca_ne')
 !        call my_out(70,nx,ny,ne2,'b2tqca_ne2')
-!        call my_out(70,nx,ny,bb(-1,-1,0),'b2tqca_Bx')
-!        call my_out(70,nx,ny,bb(-1,-1,3),'b2tqca_BB')
       endif                                                          !srv 16.06.08 }
 
       if(iout_b2wdat.eq.4) then                                      !srv 16.06.08 30.01.10 {

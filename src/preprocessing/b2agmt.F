@@ -1,23 +1,25 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmt (nx, ny, isymm, 
+      subroutine b2agmt (nx, ny, isymm,
      & crx, cry, vol, hx, hy, qz, qc, qcb, gs,
      & cell_width, cell_height, leftix, leftiy, bottomiy)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
       integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
-     &  bottomiy(-1:nx,-1:ny) 
+     &  bottomiy(-1:nx,-1:ny)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
+     &  gs(-1:nx,-1:ny,0:2), qcb(-1:nx,-1:ny),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
@@ -43,13 +45,13 @@
 *
 *     isymm - integer, input.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
-*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
+*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
 *
 *     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
@@ -82,11 +84,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     qcb - (-1:nx,-1:ny) real*8 array, output.
@@ -112,41 +114,22 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i, j
+      integer n2, ix, iy, i
       integer volhmk
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1
+     *   width, centroid(0:1), t0, t1
       real (kind=R8) ::
      *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
       integer, save :: qc_style = 1
 *   ..procedures
-      intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
-      external subini, subend, xertst, ipgetr, ipgeti
+     &  sin_t, cos_t, sin_tl, cos_tl, tt
+      external xertst, ipgetr, ipgeti
       external b2xvsg
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
       save volhmk, width
 
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     sinang(p0x,p0y,p1x,p1y) is sin(t), and cosang(p0x,p0y,p1x,p1y)
-*     is cos(t), where t is the complementary angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -176,7 +159,7 @@
         hy(ix,iy) = norm((crx(ix,iy,2)+crx(ix,iy,3))/2.0_R8-
      &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
      &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
-     &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8) 
+     &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8)
         qz(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -191,6 +174,44 @@
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+        if (qc_style .eq. 2) then
+          sin_t = sinang (
+     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+          cos_t = cosang (
+     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+          if (leftix(ix,iy) .gt. -2) then
+            sin_tl = sinang (
+     &        (crx(ix,iy,0)+crx(ix,iy,2))-
+     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        (cry(ix,iy,0)+cry(ix,iy,2))-
+     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+           cos_tl = cosang (
+     &        (crx(ix,iy,0)+crx(ix,iy,2))-
+     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        (cry(ix,iy,0)+cry(ix,iy,2))-
+     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+            tt = sqrt(0.25_R8 * (cos_t + 1.0_R8) * (cos_tl + 1.0_R8))
+            qc(ix,iy) =
+     &             tt - 0.25_R8 * sin_t * sin_tl / tt
+          else
+            tt = 0.5_R8 * (cos_t + 1.0_R8)
+            qc(ix,iy) =
+     &             tt  - 0.25_R8 * sin_t * sin_t / tt
+          endif
+        endif
+
         qcb(ix,iy) = 1.0_R8
         cell_width(ix,iy) = hx(ix,iy)
         cell_height(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -214,6 +235,10 @@
         endif
        enddo
       enddo
+      call nancheck(nx, ny, qz(-1:nx,-1:ny,0), 'b2agmt: qz(,,0)')
+      call nancheck(nx, ny, qz(-1:nx,-1:ny,1), 'b2agmt: qz(,,1)')
+      call nancheck(nx, ny, qc, 'b2agmt: qc')
+      call nancheck(nx, ny, qcb, 'b2agmt: qcb')
 *   ..test sign of qz(,,1) and qc(,)
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in
@@ -329,7 +354,7 @@
 *   ..test sign of vol
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 
-*   ..improved computation of qc 
+*   ..improved computation of qc
 cwdk  based on average field direction of neighboring cells
 cwdk  avoids artificial reduction of poloidal contact area at faces for
 cwdk  curvilinear grids; angle between left face and average direction of top/bottom
@@ -338,7 +363,7 @@ cwdk  faces is not representative for orthogonality of left face to field!
 cwdk   poloidal unit vector in cell centers, ebc
        do iy = -1, ny
         do ix = -1, nx
-         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2))
          t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
          ebc(ix,iy,0) = t0/norm(t0,t1)
          ebc(ix,iy,1) = t1/norm(t0,t1)
@@ -352,7 +377,7 @@ cwdk   computation of qc
         do ix = -1, nx
 cwdk     note: qc in left ghosts unchanged
          if (leftix(ix,iy).ne.-2) then
-          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1), 
+          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1),
      &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
          endif
          if(qc(ix,iy).le.0.0_R8) then
@@ -385,7 +410,7 @@ C                                           0-1
       implicit none
       real (kind=R8) :: XquadCentroid
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
+
       XquadCentroid =
      & ( XtriangleCentroid(x0,y0,x1,y1,x3,y3)
      & * triangleArea(x0,y0,x1,y1,x3,y3)
@@ -402,7 +427,7 @@ C                                           0-1
       implicit none
       real (kind=R8) :: YquadCentroid
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
+
       YquadCentroid =
      & ( YtriangleCentroid(x0,y0,x1,y1,x3,y3)
      & * triangleArea(x0,y0,x1,y1,x3,y3)
@@ -434,5 +459,13 @@ C Coordinates of centroid of a triangle given by vertex coordinates
       return
       end function YtriangleCentroid
 
-      end subroutine b2agmt
+      function dist(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
 
+      end subroutine b2agmt

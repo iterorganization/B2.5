@@ -7,6 +7,7 @@
       use b2mod_version
       use b2mod_indirect
       use b2mod_geo_corner
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -14,7 +15,7 @@
 *
 *  1. purpose
 *
-*     B2AH (main program) prepares default physics parameters for b2.
+*     B2AH (main program) prepares default physics parameters for B2.
 *     This program calls the driver routine b2ahdr for the actual
 *     computation.
 *
@@ -27,7 +28,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ah prepares a file of default physics
-*     parameters for a b2 calculation.
+*     parameters for a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2ahdr to control the actual computation.
@@ -64,7 +65,7 @@
       character*120 lblgm
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin, cfruch
+      external prgini, prgend, cfopen, cfruin, cfruch
       external b2ahx0, b2ahdr, b2rugm
 *   ..initialise input/output units
       data ninp/50,51/
@@ -101,8 +102,8 @@
       call cfopen (nout(1),'b2fpardf','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -117,7 +118,8 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..call principal driver routine
       call b2ahdr (ninp, nout, nx, ns)

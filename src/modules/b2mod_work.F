@@ -12,13 +12,11 @@
      *  floe_noc(:,:,:),                                          !srv 28.10.02
      *  floi_noc(:,:,:),                                          !srv 28.10.02
      *  pcca(:,:,:,:),  pccm(:,:,:),
-     *  avisper(:,:,:),                                           !srv 05.07.00
-     *  bvisper(:,:,:),                                           !srv 05.07.00
-     *  cvisper(:,:,:),                                           !srv 05.07.00
+     *  avisper_a(:,:,:,:),                                       !srv 05.07.00
+     *  bvisper_a(:,:,:,:),                                       !srv 05.07.00
+     *  cvisper_a(:,:,:,:),                                       !srv 05.07.00
      *  wrk0(:,:),  wrk1(:,:)
-      real (kind=R8), allocatable, save :: 
-     &  facdrift_profile(:,:), fac_ExB_profile(:,:), ds(:),
-     1	fac_vis_profile(:,:)
+      real (kind=R8), allocatable, save :: ds(:)
 
       contains
 
@@ -49,19 +47,16 @@
       allocate(floi_noc(-1:nxd,-1:nyd,0:1))                       !srv 28.10.02
       allocate(pcca(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(pccm(-1:nxd,-1:nyd,0:1))
-      allocate(avisper(-1:nxd,-1:nyd,0:1))                        !srv 05.07.00
-      allocate(bvisper(-1:nxd,-1:nyd,0:1))                        !srv 05.07.00
-      allocate(cvisper(-1:nxd,-1:nyd,0:1))                        !srv 05.07.00
+      allocate(avisper_a(-1:nxd,-1:nyd,0:1,0:nsd-1))              !srv 05.07.00
+      allocate(bvisper_a(-1:nxd,-1:nyd,0:1,0:nsd-1))              !srv 05.07.00
+      allocate(cvisper_a(-1:nxd,-1:nyd,0:1,0:nsd-1))              !srv 05.07.00
       allocate(wrk0(-1:nxd,-1:nyd))
       allocate(wrk1(-1:nxd,-1:nyd))
-      allocate(facdrift_profile(-1:nxd,-1:nyd))
-      allocate(fac_ExB_profile(-1:nxd,-1:nyd))
-      allocate(fac_vis_profile(-1:nxd,-1:nyd))
       allocate(ds(-1:nyd+2))
 
-      avisper=0.0_R8                                              !srv 05.07.00
-      bvisper=0.0_R8                                              !srv 05.07.00
-      cvisper=0.0_R8                                              !srv 05.07.00
+      avisper_a=0.0_R8                                            !srv 05.07.00
+      bvisper_a=0.0_R8                                            !srv 05.07.00
+      cvisper_a=0.0_R8                                            !srv 05.07.00
       conb=0.0_R8
       conc=0.0_R8
       cone=0.0_R8
@@ -88,9 +83,6 @@
       pccm=0.0_R8
       wrk0=0.0_R8
       wrk1=0.0_R8
-      facdrift_profile=1.0_R8
-      fac_ExB_profile=1.0_R8
-      fac_vis_profile=1.0_R8
       ds=0.0_R8
 
       end subroutine alloc_b2mod_work
@@ -121,14 +113,11 @@
       deallocate(floi_noc)
       deallocate(pcca)
       deallocate(pccm)
-      deallocate(avisper)
-      deallocate(bvisper)
-      deallocate(cvisper)
+      deallocate(avisper_a)
+      deallocate(bvisper_a)
+      deallocate(cvisper_a)
       deallocate(wrk0)
       deallocate(wrk1)
-      deallocate(facdrift_profile)
-      deallocate(fac_ExB_profile)
-      deallocate(fac_vis_profile)
       deallocate(ds)
       return
       end subroutine dealloc_b2mod_work

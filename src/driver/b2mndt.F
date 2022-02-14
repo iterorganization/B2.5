@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mndt (nout, nx, ny, ns, nxtl, nxtr, ismain, ismain0,
+      subroutine b2mndt (nout, nx, ny, ns, ismain, ismain0,
      . nscx, iscx, itim, dtim, ntim, ierr)
       use b2mod_types
       use b2mod_geo
@@ -11,20 +11,25 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_transport_nspecies
       use b2mod_indirect
       use b2mod_constants
       use b2mod_diag
       use b2mod_work
       use b2mod_time
+      use b2mod_file
+      use b2mod_batch
       use b2mod_b2cmpa
+      use b2mod_average
       use b2mod_external
       use b2mod_neoclassical
       use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:5), nx, ny, ns, nxtl, nxtr, ismain, ismain0,
+      integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: iav_run = 0
@@ -41,7 +46,7 @@
 *
 *  1. purpose
 *
-*     B2MNDT performs one implicit timestep for the b2 system of
+*     B2MNDT performs one implicit timestep for the B2 system of
 *     equations.
 *
 *
@@ -50,7 +55,7 @@
 *     For a detailed description of the equations and the method of
 *     solution, see the references cited in the main program unit.
 *
-*     This routine performs one timestep for the b2 equations.
+*     This routine performs one timestep for the B2 equations.
 *     An outline of the procedure follows.
 *     ..test input arguments
 *     ..compute auxiliary quantities
@@ -92,19 +97,20 @@
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, nasum, na0sum, 
-     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
-     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
+     &  acorte, acorti, acorpo, nasum, na0sum,
+     &  lnlam(-1:nx,-1:ny),                                             !srv 11.10.02
+     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),        !iyv 06.02.14
+     &  fna_53(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fne_53(-1:nx,-1:ny,0:1)
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
-      external subini, subend, xertst, ipgeti, ipgetr, smin,
-     &  smax, b2sasum, samax
+      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
-      data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/, rxf/0.5_R8/
+      data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/
       data itcnt/0/, density_control/0/, ramp_slow/0/, BoRiS/0.0_R8/
       data no_solve/0/
       data nstg_areshe/0.0_R8/, nstg_areshi/0.0_R8/, nstg_aresco/0.0_R8/
@@ -119,8 +125,10 @@
       if (ncall.eq.0) then
        nsmin=0
        nsmax=ns
-       call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
-       call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
+       call ipgeti ('b2mndt_style', style)                              !srv 18.06.08
+       call xertst (-1.le.style.and.2.ge.style,
+     &   'faulty internal parameter style')                             !srv 07.07.21
+       call ipgeti ('b2news_guard_flows', guard_flows)                  !srv 18.06.08
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))
          call ipgeti ('b2mndt_nstg1', nstg(1))
@@ -138,6 +146,12 @@
        call ipgeti ('b2mndt_moitlv', moitlv)
        call xertst (-1.le.moitlv.and.moitlv.le.3,
      &   'faulty internal parameter moitlv')
+       if (style.eq.2) then
+         write(*,*) 'Running in time-dependent mode'
+         rxf = 1.0_R8
+       else
+         rxf = 0.5_R8
+       end if
        call ipgetr ('b2mndt_rxf', rxf)
        call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      &   'faulty internal parameter rxf')
@@ -159,12 +173,11 @@
      &      'faulty internal parameter nstg_aresco')
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
-       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 06.02.14
-       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
-       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
+       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
+       call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)              !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
-     &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
-       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
+     &   'faulty internal parameter ntim_step_out')                     !srv 31.01.07 }
+       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
          nsmin=ns
@@ -232,7 +245,7 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-        call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
+        call set_facdrift_fac_ExB_init(nx,ny,ramp_slow)
       endif
 *   ..initialise error parameter
       ierr = 0
@@ -301,33 +314,37 @@ ctmp.dpc
           call b2xpni (nx, ny, ns, na, ni)
           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
           call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-*   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
-     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
+* ..compute transport coefficients
           call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
-     2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
+     2       cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,       !srv 13.10.06 !som 03.11.21
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
-     5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     *       cvsahz_drho, cvsa_drho,                                     !som 18.08.21
+     *       chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
+     *       cvsa_hAdp_albe, cvsa_hBdp_al,                               !som 20.10.21
+     5       fllim0fhi, fllimvisc, csig_cl, calf_cl,
+     &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
-!          if(style.ne.0) then                                           !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                    fchanml)                                       !srv 20.09.06 }
-            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
-     &                    fac_vis, fchvispar)
-            call b2tiner (nx, ny, ns, vol,
-     &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
-            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,      !srv 10.10.17
-     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,       !srv 10.10.17
-     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
+!          if(style.gt.0) then                                           !srv 18.06.08 {
+            call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,       !srv 20.09.06 }!som 02.11.21
+     &              fchanml_a, fchanml)                                  !srv 08.09.21
+            call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,       !srv 20.09.06 { 19.02.21
+     & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
+            call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
+     &                    facdrift, fchinert_a, fchinert)                !srv 08.09.21
+            call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,              !srv 10.10.17 19.02.21
+     &                    po, ti, na, avisper_a, bvisper_a, cvisper_a,
+     &                    fchvisper_a, fchvisper)
+            call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
+     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
-          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,   !srv 05.06.18
-     &     te, po, vedia, veecrb)
+          call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb) !srv 05.06.18
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -341,20 +358,24 @@ ctmp.dpc
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
+          wrong_flow = .false.
           main_call = ntim.ne.0
-          call b2sral (nx, ny, ns, nxtl, nxtr,
+          call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, lnlam,      !srv 09.01.01 02.04.18
+     &     vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                  !srv 09.01.01 02.04.18
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
-     &     fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
+     &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
+     &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &     cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,      !xpb
+     &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
+     &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
+     &     cvla, chce, chve, chci, chvi, calf,                           !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call)
@@ -364,8 +385,15 @@ ctmp.dpc
           call b2srsm (nx, ny, ns,
      &     dtim, vol, na, ua, te, ti, ne, ni,
      &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
+*     ..stabilise the source coefficients                                !srv 07.07.21 {
+          if(style.eq.2 .and. use_b2srst.eq.1)
+     &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
+     &      ni, sna, smo, she, shi, sch, sne)
+*       (smq is inherently stable.)                                      !srv 07.07.21 }
 *     ..include contributions due to timestep
-          call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
+*     .. contributions due to timestep when style.eq.2 will be done in corresponding subroutines
+          if(style.ne.2)                                                 !srv 07.07.21
+     &    call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
      &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
@@ -377,7 +405,7 @@ ctmp.dpc
           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
 *     ..stabilise the source coefficients
-          if(use_b2srst.eq.1)
+          if(style.ne.2 .and. use_b2srst.eq.1)                           !srv 07.07.21
      &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
      &      ni, sna, smo, she, shi, sch, sne)
 *       (smq is inherently stable.)
@@ -387,12 +415,17 @@ ctmp.dpc
 *      ..basic iterative step
            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
            if(style.eq.0) then                                           !srv 01.07.08
-            call b2news (nx, ny, ns, nxtl, nxtr,
+            call b2news (nx, ny, ns,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
-           else                                                          !srv 01.07.08 {
-            call b2news_(nx, ny, ns, nxtl, nxtr,
+           else if (style.eq.1) then                                     !srv 01.07.08 {
+            call b2news_(nx, ny, ns,
      &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
+           else if(style.eq.2) then                                      !srv 07.07.08 {
+            call b2news_m(nx, ny, ns,
+     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 07.07.21 }
+           else if (style.eq.-1) then ! SOLPS4.x conversion run option
+             ier0 = 0
            endif                                                         !srv 01.07.08 )
            flush(6)
            if(ier0.eq.10) then
@@ -458,10 +491,10 @@ ctmp.dpc
            if (ank_tracing.ne.0) then
              if (ncall.eq.0.and.istg(2).eq.0) then
                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-               call b2filei(1,ns,nnreg)
+               call b2filei(ns,nnreg(0))
              end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >        call b2filew(istg(2),ns,nnreg)
+     >        call b2filew(istg(2),nnreg(0))
            endif
 *      ..update iteration counter
            itcnt = itcnt+1
@@ -487,29 +520,35 @@ ctmp.dpc
              call b2tfnb (nx, ny, is, ismain,
      &          guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,    !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
      &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
-     &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
-     &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
+     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is),
+     &          vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
+     &          wadia(-1,-1,0,is), ne, te, ti, bb,
+     &          hx, hy, hz, gs, qc, po,                                  !srv 19.05.03 08.10.04 04.02.05
+     &          cvla(-1,-1,0,is), cdna(-1,-1,0,is),
+     &          cdpa(-1,-1,0,is),
      &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
-     &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,is),
-     &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
+     &          cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
+     &          fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),        !srv 08.09.21
+     &          fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
+     &          fchvisq_a(-1,-1,0,is),                                   !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
      &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &          fna_53(-1,-1,0,is),
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+           call b2tfed (nx, ny, facdrift, fac_ExB,
      &      te, po, vedia, veecrb)
 *      ..compute other fluxes
+           call b2xpfe (nx, ny, ns, ns_ext, qe,
+     &      rza, za_ext, fna_53, fa_ext, fch_p, fne_53)                  !ajs 06.04.20
            call b2xpen (nx, ny, ns,
-     1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2      fhm, fhp, fhj, fht)
+     1      fna, fna_53, fne_53, fch, fhe, fhi, kinrgy, ua, cvsa,
+     2      rpt, te, ti, po, BoRiS, fhm, fhp, fhj, fht)
 *      ..compute ue, electron parallel velocity
            ue=0.0_R8
            do iy=-1,ny
@@ -544,11 +583,12 @@ ctmp.dpc
 *      ..compute energy sources
            solving = .false.
            call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
-     &      solveee, solveei, solvepo, solvemo,
-     &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
+     &      solveee, solveei, solveet, solvepo, solvemo,               !srv 22.05.18
+     &      rxf, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                !srv 07.07.21
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
-     &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
-     &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
+     &      fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,
+     &      fchdia, uadia, wadia, vadia,                               !srv 09.07.08 07.07.09 24.08.21
+     &      vaecrb, na, ua, ue, te, ti, po, ne, ni, fhe, fhi,          !srv 09.07.08
      &      shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
          endif
 *     ..save total heat sources for printout at end of run
@@ -576,4 +616,3 @@ ctmp.dpc
 *.end b2mndt
 
       end subroutine b2mndt
-

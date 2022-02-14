@@ -3,6 +3,7 @@
       use b2mod_indirect
       use b2mod_balance !djm Jan2017
      & , only : b2nxdv_smo0to3, balance_netcdf
+      use b2mod_subsys
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
@@ -15,8 +16,9 @@
 *     ------------------------------------------------------------------
       integer ncall, ix, iy
       integer, save :: style = 1                                       !srv 26.10.08
+      !$OMP THREADPRIVATE(ncall, style)
       save ncall
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 *     ------------------------------------------------------------------
@@ -59,4 +61,4 @@ cdjm Store the total change in linearised source for balance
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2nxdv

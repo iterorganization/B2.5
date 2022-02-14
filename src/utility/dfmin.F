@@ -94,7 +94,7 @@ C
 C
 C     check if parabola acceptable
 C
-   30 IF(ABS(P).GE.ABS(0.5_R8*Q*R)) GO TO 40
+      IF(ABS(P).GE.ABS(0.5_R8*Q*R)) GO TO 40
       IF(P.LE.Q*(A-X)) GO TO 40
       IF(P.GE.Q*(B-X)) GO TO 40
 C
@@ -157,4 +157,4 @@ C     end of main loop
 C
    90 DFMIN=X
       RETURN
-      END
+      END FUNCTION DFMIN

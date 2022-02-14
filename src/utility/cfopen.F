@@ -1,8 +1,8 @@
       subroutine cfopen (ioun, chname, chstat, chform)
       use b2mod_types
       implicit none
-      integer ioun
-      character chname*(*), chstat*(*), chform*(*)
+      integer, intent(in) :: ioun
+      character, intent(in) :: chname*(*), chstat*(*), chform*(*)
 *     ------------------------------------------------------------------
 *     CFOPEN opens an external file. The file may be formatted or
 *     unformatted.
@@ -17,7 +17,7 @@
       parameter (fform0='formatted')
       intrinsic len
       logical streql
-      external xertst, xerrab, xerget, chcase, streql
+      external xertst, xerrab, chcase, streql
 *     ------------------------------------------------------------------
 *!!   Note 0: set fform0 to the desired mode for un*formatted output.
 *!!   Note 1, on porting this routine to another operating system:
@@ -73,4 +73,4 @@
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfopen

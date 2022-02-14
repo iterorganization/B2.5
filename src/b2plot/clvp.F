@@ -23,11 +23,8 @@ c*** The data dimensions must be nx, ny, and 1, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer i,j,k,l,m,n,kk,ll,mm,nn,ixx,iyy,npoplv
+      integer i,j,k,l,m,n,kk,ll,mm,nn,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
-c=======================================================================
-      ixx(i)=mod(i-1,nx)+1-1
-      iyy(i)=(i-1)/nx+1-1
 c=======================================================================
 c      print *,'=== clvp: ',npplvp,npplvm !###
 
@@ -142,7 +139,7 @@ c     ,                wrk_hlp(ind_hlp(mm)),wrk_hlp(ind_hlp(mm-1))  !###
             t=t+abs(wrk_hlp(k)*vol(i,j))
             v=v+vol(i,j)
             if(t.ge.f) then !{
-              ll=t/d
+              ll=int(t/d)
               if(ll-1.gt.l+1) then !{
                 w_hlp=0.0_R8
                 if(kk.gt.0) w_hlp=wrk_hlp(kk)
@@ -176,6 +173,22 @@ c*** Transfer the data to the plotting routines
 
       call clvs(l,wrk_hlp,l)
       return
+
+      contains
+
+      integer function ixx(i)
+      implicit none
+      integer, intent(in) :: i
+      ixx = mod(i-1,nx)+1-1
+      return
+      end function ixx
+
+      integer function iyy(i)
+      implicit none
+      integer, intent(in) :: i
+      iyy = (i-1)/nx+1-1
+      return
+      end function iyy
 c=======================================================================
       end subroutine clvp
 
@@ -313,7 +326,7 @@ c     ,              ewrk_hlp(ind_hlp(mm)),ewrk_hlp(ind_hlp(mm-1))  !###
             t=t+abs(ewrk_hlp(k)*triangle_vol(k))
             v=v+triangle_vol(k)
             if(t.ge.f) then !{
-              ll=t/d
+              ll=int(t/d)
               if(ll-1.gt.l+1) then !{
                 e_hlp=0.0_R8
                 if(kk.gt.0) e_hlp=ewrk_hlp(kk)
@@ -481,7 +494,7 @@ c     ,              wwrk_hlp(ind_hlp(mm)),wwrk_hlp(ind_hlp(mm-1))  !###
             t=t+abs(wwrk_hlp(k)*wall_area(k))
             v=v+wall_area(k)
             if(t.ge.f) then !{
-              ll=t/d
+              ll=int(t/d)
               if(ll-1.gt.l+1) then !{
                 w_hlp=0.0_R8
                 if(kk.gt.0) w_hlp=wwrk_hlp(kk)
@@ -543,11 +556,8 @@ c*** The data dimensions must be nbnd and ndepth_nml, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer i,j,k,l,m,n,kk,ll,mm,nn,ixx,iyy,npoplv
+      integer i,j,k,l,m,n,kk,ll,mm,nn,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
-c=======================================================================
-      ixx(i)=mod(i-1,nbnd)+1
-      iyy(i)=(i-1)/nbnd+1
 c=======================================================================
 c      print *,'=== tclvp: ',npplvp,npplvm !###
 
@@ -654,7 +664,7 @@ c     ,            twrk_hlp(indt_hlp(mm)),twrk_hlp(indt_hlp(mm-1))  !###
             t=t+abs(twrk_hlp(k)*target_vol(i,j))
             v=v+target_vol(i,j)
             if(t.ge.f) then !{
-              ll=t/d
+              ll=int(t/d)
               if(ll-1.gt.l+1) then !{
                 w_hlp=0.0_R8
                 if(kk.gt.0) w_hlp=twrk_hlp(kk)
@@ -688,6 +698,22 @@ c*** Transfer the data to the plotting routines
 
       call tclvs(l,twrk_hlp,l)
       return
+
+      contains
+
+      integer function ixx(i)
+      implicit none
+      integer, intent(in) :: i
+      ixx = mod(i-1,nbnd)+1
+      return
+      end function ixx
+
+      integer function iyy(i)
+      implicit none
+      integer, intent(in) :: i
+      iyy = (i-1)/nbnd+1
+      return
+      end function iyy
 c=======================================================================
       end subroutine tclvp
 

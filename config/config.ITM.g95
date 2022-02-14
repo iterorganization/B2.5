@@ -1,28 +1,35 @@
 # Test whether necessary variables are set
-ifndef LD_MSCL
- LD_MSCL = -L${MSCL_ROOT} -lmscl
+MSCL_ROOT   ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl
+MDSPLUS_DIR ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/MDSPLUS
+NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NCARG
+GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
+NAGDIR      ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/nag
+LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+LD_NAG      ?= -L${NAGDIR} -lnag
+NCDIR       ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NETCDF
+LD_NETCDF   ?=
+LD_SONNET   ?= -L${SOLPSLIB} -lsonnet
+
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+DEFINES += -DDOFLUSH # -DNO_CDF
+
+ifndef SOLPS_CPP
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
 endif
-ifndef LD_NCARG
-  LD_NCARG = -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
-endif
-ifndef LD_NAG
-  LD_NAG = -L${SOLPSLIB} -lblaslapack
-endif
-ifndef LD_NETCDF
-  NCDIR      = /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NETCDF
-  LD_NETCDF  = 
-endif
-ifndef LD_SONNET
-  LD_SONNET  = -L${SOLPSLIB} -lsonnet
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = g95
 
@@ -35,7 +42,7 @@ endif
 DBLFC = ${FC}
 DDBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 INCMOD = -I
 MOD = mod
@@ -43,7 +50,8 @@ OBJDEST = -fmod=${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
@@ -55,7 +63,7 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifndef SOLPS_CPP
-EQUIVS   += -DITM
+DEFINES += -DITM -DNO_CDF -DNO_NAG
 endif
 
 ifdef IMAS_VERSION
@@ -78,7 +86,7 @@ INCMODS  += `pkg-config imas-lowlevel imas-g95 --cflags`
 endif
 endif
 ifndef SOLPS_CPP
-EQUIVS   += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
 endif
 IMASLIBS  = ${LD_UAL} -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lstdc++
 endif

@@ -4,6 +4,7 @@ C ========== Parse extralabel for customisation =====================
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
       use f90_unix_proc      ! IGNORE
@@ -15,14 +16,20 @@ C ===================================================================
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
       integer lnblnk
       logical streql
-      external lnblnk, subini, subend, xertst, xerrab, streql
+      external lnblnk, xertst, xerrab, streql
       character var*256,envvar*256,systemarg*256
       character*1 backslash
+#ifdef NAGFOR
+      integer status, ierror
+#endif
 #ifdef USE_PXFGETENV
-      integer lenval, ierror
+      integer lenval
+#ifndef NAGFOR
+      integer ierror
+#endif
 #else
 #ifdef NAGFOR
-      integer lenval, ierror
+      integer lenval
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -32,7 +39,7 @@ C ===================================================================
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
       call subini ('customise_label')
-      backslash='\\'
+      backslash=char(92)
       icpos=1
       jcpos=1
       elength=lnblnk(locallabel)
@@ -208,11 +215,20 @@ C ===================================================================
       call xertst(iend.lt.elength.or.locallabel(iend:iend).eq.'`',
      1 'You did not close `')
       systemarg='echo `'//locallabel(icpos:iend-1)//'` > /tmp/tmp.xxx'
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
       call system(systemarg)
+#endif
       open(99,file='/tmp/tmp.xxx')
       read(99,'(a)') envvar
       close(99)
-      call system('/bin/rm /tmp/tmp.xxx')
+      systemarg='/bin/rm /tmp/tmp.xxx'
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
+      call system(systemarg)
+#endif
       tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
       jcpos=jcpos+lnblnk(envvar)
       icpos=iend+1
@@ -267,6 +283,7 @@ C ===================================================================
 c
       subroutine set_wallbarlabel(locallabel)
 C ===================================================================
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
@@ -278,6 +295,7 @@ C ===================================================================
 c
       subroutine set_targetbarlabel(locallabel)
 C ===================================================================
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel

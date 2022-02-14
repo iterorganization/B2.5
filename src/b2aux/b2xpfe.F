@@ -3,6 +3,10 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_indirect
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, ns_ext
       real (kind=R8) ::
@@ -21,38 +25,55 @@
       call subini ('b2xpfe')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fne, 1)
-      do is = 0, ns-1
-        do iy = -1, ny
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2XPFE
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ix, iy, is)
+!$OMP& SHARED(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
+!$OMP& SHARED(leftix, leftiy, vol, bottomix, bottomiy)
+#endif /* NO_OPENMP_B2XPFE */
+      do iy = -1, ny
+        do is = 0, ns-1
           do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) 
-     >        fne(ix,iy,0) = fne(ix,iy,0) + fna(ix,iy,0,is)*
+            if (leftix(ix,iy).ne.-2) then
+              fne(ix,iy,0) = fne(ix,iy,0) + fna(ix,iy,0,is)*
      .         (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
      .          rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            if (bottomiy(ix,iy).ne.-2) 
-     >        fne(ix,iy,1) = fne(ix,iy,1) + fna(ix,iy,1,is)*
+            endif
+            if (bottomiy(ix,iy).ne.-2) then
+              fne(ix,iy,1) = fne(ix,iy,1) + fna(ix,iy,1,is)*
      .         (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      .          rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            endif
           enddo
         enddo
-      enddo
-      do is = 0, ns_ext-1
-        do iy = -1, ny
+        do is = 0, ns_ext-1
           do ix = -1, nx
-            if (leftix(ix,iy).ne.-2) 
-     >        fne(ix,iy,0) = fne(ix,iy,0) + fa_ext(ix,iy,0,is)*
+            if (leftix(ix,iy).ne.-2) then
+              fne(ix,iy,0) = fne(ix,iy,0) + fa_ext(ix,iy,0,is)*
      .         (za_ext(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
      .          za_ext(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            if (bottomiy(ix,iy).ne.-2) 
-     >        fne(ix,iy,1) = fne(ix,iy,1) + fa_ext(ix,iy,1,is)*
+            endif
+            if (bottomiy(ix,iy).ne.-2) then
+              fne(ix,iy,1) = fne(ix,iy,1) + fa_ext(ix,iy,1,is)*
      .         (za_ext(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      .          za_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            endif
           enddo
         enddo
       enddo
+#ifndef NO_OPENMP_B2XPFE
+      !$OMP END PARALLEL DO
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
       call b2saxpy (n2*2, -1.0_R8/qe, fch, 1, fne, 1)
       call subend ()
       return

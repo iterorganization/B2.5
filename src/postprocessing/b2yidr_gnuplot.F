@@ -4,6 +4,7 @@
       subroutine b2yidr_gnuplot (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -19,6 +20,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -30,15 +33,15 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a postprocessor for b2. It reads and displays the
+*     B2YIDR_GNUPLOT is a postprocessor for B2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *
 *
@@ -76,7 +79,7 @@
 *   ..common blocks
 *   ..local variables
       integer is, idum(0:9), ismain
-      real (kind=R8) :: t0, t1,
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
@@ -87,12 +90,10 @@
       save ismain
       data ismain/1/
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
-      external subini, subend, xertst, cfruch, b2rugm, cfruin, b2xvps
+      logical is_comment
+      external xertst, cfruch, b2rugm, cfruin, b2xvps
       external b2rups, b2ruzd, b2wgpi_gnuplot, b2rurc, b2spel, b2sqel
-      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      external ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -251,7 +252,8 @@
       isymm = idum(0)
 *   ..read geometry and metric
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
@@ -272,7 +274,8 @@
       call b2xpni (nx, ny, ns, na, ni)
 *   ..read atomic rate data
       call cfruch (ninp(2), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(2), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(2), b2frates_flag)
       call b2rurc (ninp(2), b2frates_version)
 *    ..compute log-log electron rate coefficients
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,

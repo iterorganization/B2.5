@@ -3,6 +3,7 @@
 
       subroutine b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -73,7 +74,7 @@
      *   t0
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation
@@ -112,4 +113,4 @@
 *-----------------------------------------------------------------------
 *.end b2agbb
 
-      end
+      end subroutine b2agbb

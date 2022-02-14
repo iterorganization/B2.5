@@ -17,6 +17,7 @@
       use b2mod_neutr_src_scaling
       use b2mod_ppout
       use b2mod_external
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -24,7 +25,7 @@
 *
 *  1. purpose
 *
-*     B2PL (main program) is a postprocessor for b2. It reads and
+*     B2PL (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2xddr for the actual computation.
 *
@@ -37,7 +38,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2pl performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2pldr to control the actual computation.
@@ -78,7 +79,7 @@
 *   ..procedures
       character*32 get_B25_hash
       external get_B25_hash
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2pldr
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56/

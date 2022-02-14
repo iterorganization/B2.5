@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ns
@@ -58,7 +59,7 @@
       logical found
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 
 *-----------------------------------------------------------------------

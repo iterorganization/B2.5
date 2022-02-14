@@ -10,6 +10,10 @@
       use b2mod_balance !djm Jan2017
      1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
      2          b2srst_shi0to3, balance_netcdf
+      use b2mod_subsys
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                   !srv 01.07.08
@@ -47,13 +51,13 @@
      &  shest(-1:nx,-1:ny,0:3), shist(-1:nx,-1:ny,0:3),
      &  schst(-1:nx,-1:ny,0:3), snest(-1:nx,-1:ny,0:1),
      &  wrk0(-1:nx,-1:ny)
-      character chns*3, chk*1                                        !srv 11.09.09 }
+      character chns*3, chk*1                                         !srv 11.09.09 }
       real (kind=R8) ::
      *   rf0, rf1, rf2, rf3, t0
       save ncall, rf0, rf1, rf2, rf3, use_eirene
 *   ..procedures
       intrinsic min, max
-      external subini, subend, xertst, ipgetr, b2xvsg
+      external xertst, ipgetr, b2xvsg
 *   ..initialisation
       data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/,
      * use_eirene/0/
@@ -111,6 +115,21 @@
 
 *  ..stabilise
 *   ..modify sna
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SRST
+!$OMP PARALLEL
+!$OMP& default(none)
+!$OMP& private(is, iy, ix, t0)
+!$OMP& shared(nx,ns,ny,guard_flows,is_neutral,use_eirene)
+!$OMP& shared(leftix,rightix,bottomiy,topiy)
+!$OMP& shared(na,rf0,rf1,rf2,rf3,ua,te,ti,po,ne,sne,snest)
+! these are the result arrays:
+!$OMP& shared(sna,smo,she,shi,sch)
+!$OMP& shared(snast,smost,shest,shist,schst)
+!$OMP DO
+#endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -134,7 +153,13 @@
         enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }
       enddo
+#ifndef NO_OPENMP_B2SRST
+!$OMP END DO NOWAIT
+#endif
 *   ..modify smo
+#ifndef NO_OPENMP_B2SRST
+!$OMP DO
+#endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -149,7 +174,13 @@
         enddo
        enddo
       enddo
+#ifndef NO_OPENMP_B2SRST
+!$OMP END DO NOWAIT
+#endif
 *   ..modify she, shi, sch
+#ifndef NO_OPENMP_B2SRST
+!$OMP DO
+#endif
       do iy = -1, ny
        do ix = -1, nx
 *     ..modify she(,,0:1)
@@ -185,7 +216,13 @@
      &   min(sne(ix,iy,1)*ne(ix,iy),-rf3*t0,(1.0_R8+rf3)*t0)
        enddo
       enddo
+#ifndef NO_OPENMP_B2SRST
+!$OMP END DO
+#endif
 
+#ifndef NO_OPENMP_B2SRST
+!$OMP WORKSHARE
+#endif
 *   ..calculate the source coefficients of numerical stabilisation.
       snast = sna - snast
       smost = smo - smost
@@ -193,6 +230,13 @@
       shist = shi - shist
       schst = sch - schst
       snest = sne - snest
+#ifndef NO_OPENMP_B2SRST
+!$OMP END WORKSHARE
+!$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
 
 cdjm Jan2017 Store for balance
       if (balance_netcdf.ne.0) then
@@ -205,7 +249,7 @@ cdjm Jan2017 Store for balance
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
 !         write (chns,'(i3.3)') is
-!         wrk0=smost(:,:,0,is)+              !srv 07.10.09
+!         wrk0=smost(:,:,0,is)+                             !srv 07.10.09
 !     &        smost(:,:,1,is)*ua(:,:,is)+
 !     &        smost(:,:,2,is)*na(:,:,is)*mp*am(is)+
 !     &        smost(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -216,14 +260,14 @@ cdjm Jan2017 Store for balance
 !          iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1) then
 !       do is = 0, ns-1
 !         write (chns,'(i3.3)') is
-!         wrk0=snast(:,:,0,is)+              !srv 07.10.09
+!         wrk0=snast(:,:,0,is)+                             !srv 07.10.09
 !     &        snast(:,:,1,is)*na(:,:,is)
 !         call my_out(70,nx,ny,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &          then
-        wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
+        wrk0=shest(:,:,0)+shest(:,:,1)*te+                  !srv 07.10.09
      &       shest(:,:,2)*ne + shest(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2srst_shest')
         wrk0=shist(:,:,0)+shist(:,:,1)*ti+
@@ -236,7 +280,7 @@ cdjm Jan2017 Store for balance
 !        call my_out(70,nx,ny,wrk0,'b2srst_schst')
 !      endif
 
-      if (iout.eq.1) then                       !srv 11.09.09 {
+      if (iout.eq.1) then                                   !srv 11.09.09 {
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           do k=0,3

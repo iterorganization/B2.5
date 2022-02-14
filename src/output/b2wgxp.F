@@ -4,6 +4,8 @@
       subroutine b2wgxp (nx, ny, header, xc, xf, yc, yf, fun, iloc,
      &  scal, fa0, fa1, ncnta, fb0, fb1, ncntb)
       use b2mod_types
+      use b2mod_gnmap2
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc, ncnta, ncntb
@@ -26,7 +28,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine produces a contour plot of some b2 quantity on a
+*     This routine produces a contour plot of some B2 quantity on a
 *     rectangular mesh.
 *
 *
@@ -88,7 +90,7 @@
       integer ix0, iy0, ix1, iy1, ixb, iyb
       character headr2*120
 *   ..procedures
-      external subini, subend, xertst, pagini, pagend, cpseti, gndfm2
+      external xertst, pagini, pagend, cpseti
       external b2xxmm, b2wgyp
 
 *-----------------------------------------------------------------------
@@ -169,4 +171,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgxp
 
-      end
+      end subroutine b2wgxp

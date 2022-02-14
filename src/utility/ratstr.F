@@ -4,7 +4,9 @@
       subroutine ratstr (nrid, nz, rtt, nt, rtn, nn, 
      &  rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
@@ -60,7 +62,7 @@
 *!!   IMPORTANT NOTE 0: This STRAHL package does not include rate
 *!!   coefficients for charge exchange. The value returned by the
 *!!   present code is the responsibility of BJB, who has no expertise
-*!!   in this matter. The cx rate coefficients supplied here for
+*!!   in this matter. The CX rate coefficients supplied here for
 *!!   helium might be particularly bad. (See the code for further
 *!!   comments.)
 *
@@ -177,9 +179,9 @@
       real (kind=R8) ::
      *  cm3, rydbrg, zlradf, bremsf, zexp1, zexp2, zexp3,
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
-     &  zs7, zz, zzz, cxcoef, temp, dens
+     &  zs7, zz, zzz, cxcoef
       real (kind=R8) ::
-     *   cutlo, cutll, t0, t1, t2
+     *  t0, t1, t2
       parameter (nzm=99)
       parameter (cm3=1.0e-6_R8, 
      &  zlradf=2.6e-30_R8/ev, bremsf=1.69e-38_R8/ev, 
@@ -193,18 +195,8 @@
      &  x1(0:nzm-1), x2(0:nzm-1), z1(0:nzm-1), z2(0:nzm-1),
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
-      intrinsic real, sqrt, log, exp, min, dim, max
-      external subini, subend, xertst, xerrab
-      real (kind=R8) ::
-     *  sei1, hydfud, expu, machsfr
-      sei1(zz) = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
-*     (sei1(z) is an approximation to the scaled exponential integral
-*     exp(z)*E1(z))
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-      hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
-     1 temp**(-0.60_R8))
-*!!   (hydfud is the fudge factor for the density dependence in the
-*!!   hydrogen ionisation rate coefficient; see the code.)
+      intrinsic real, sqrt, log, exp, min
+      external xertst, xerrab
 
 *-----------------------------------------------------------------------
 *.computation
@@ -213,8 +205,7 @@
 *   ..subprogram start-up calls
       call subini ('ratstr')
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..test nz, nt, nn
       call xertst (0.lt.nz.and.nz.le.nzm, 'ratstr--faulty argument nz')
       call xertst (0.le.nt.and.0.le.nn,
@@ -330,9 +321,9 @@
 *        (lower limit: ...)
          klo = nint(qz(k-1))
 *        (upper limit: collision limit, stop at klo+20)
-         khi = min (klo+20.0_R8,
+         khi = int( min (klo+20.0_R8,
      &     126.0_R8*real(k)**zexp3*(rtt(i)/rydbrg)**zexp1/
-     &     (rtn(j)*cm3)**zexp2)
+     &     (rtn(j)*cm3)**zexp2) )
          do kk = klo, khi
           zy1 = (real(k)/(kk+1))**2*rydbrg/rtt(i)
           rtra(i,j,k) = rtra(i,j,k)+
@@ -564,5 +555,25 @@
 
 *-----------------------------------------------------------------------
 *.end ratstr
+
+      contains
+
+      function hydfud(temp,dens)
+*!!   (hydfud is the fudge factor for the density dependence in the
+*!!   hydrogen ionisation rate coefficient; see the code.)
+      implicit none
+      real(kind=R8) :: hydfud, temp, dens
+      hydfud = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*temp**(-0.60_R8))
+      return
+      end function hydfud
+
+      function sei1(zz)
+*     (sei1(z) is an approximation to the scaled exponential integral
+*     exp(z)*E1(z))
+      implicit none
+      real(kind=R8) :: sei1, zz
+      sei1 = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
+      return
+      end function sei1
 
       end subroutine ratstr

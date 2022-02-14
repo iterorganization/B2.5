@@ -5,6 +5,8 @@
      . aa9, name)                                                       !sv 13.10.06
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -51,8 +53,9 @@
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2)
       save ncall
+      !$OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
 *   ..initialization
       data ncall/0/
@@ -66,6 +69,12 @@
 *   ..set internal parameters on first call                              !sv 25.08.99
       if (ncall.eq.0) then                                               !sv 06.07.06 {
        call ipgeti ('b2uxm9_iout', iout)                                 !sv 13.10.06
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2uxm9 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif                                                              !sv 06.07.06 }
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -128,8 +137,8 @@
          else
           ixb = bottomix(ix,iy)
           iyb = bottomiy(ix,iy)
-          aaf(ix,iy,-2) = - conb(ixb,iyb,1,0) +
-     &                      conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1)
+          aaf(ix,iy,-2) = -conb(ixb,iyb,1,0) +
+     &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1)
          endif
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
@@ -217,14 +226,14 @@
             if(bottomix(ixr,iyr) .eq. rightix(ixb,iyb) .and.
      &       bottomiy(ixr,iyr) .eq. rightiy(ixb,iyb)) then
               aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
-     &                     conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
-     &                   - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
+     &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
+     &                 - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
               aa9(ix,iy,-5) = 0.0e0_R8
             else
               aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
-     &                     conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
+     &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,1)
               aa9(ix,iy,-5) = aa9(ix,iy,-5) -                         !sv 28.05.08
-     &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
+     &                   conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,0)
             endif
          endif
 *       Case (ix+1,iy+1)
@@ -240,14 +249,14 @@
             if(topix(ixr,iyr) .eq. rightix(ixt,iyt) .and.
      &       topiy(ixr,iyr) .eq. rightiy(ixt,iyt)) then
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
-     &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)+
-     &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
+     &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)+
+     &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
               aa9(ix,iy,6) = 0.0e0_R8
             else
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
-     &                      conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
+     &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0)
               aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08
-     &                      conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
+     &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1)
             endif
          endif
 
@@ -273,4 +282,4 @@
 *-----------------------------------------------------------------------
 *.end b2uxm9
 
-      end
+      end subroutine b2uxm9

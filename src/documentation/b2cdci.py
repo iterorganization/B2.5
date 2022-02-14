@@ -3,6 +3,8 @@
 Generates b2cdci.F
 """
 from __future__ import print_function
+import os
+import re
 import sys
 import xml.etree.ElementTree as ET
 import textwrap
@@ -39,18 +41,36 @@ def fort_switch(name, default, category, note):
     return fort
 
 xml_name = "b2input.xml"
-dtd_name = "xhtml-symbol.ent"
-xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
 
 f = open(xml_name, 'r')
 xml_text = f.read()
 f.close()
 
-f = open(dtd_name, 'r')
-dtd_text = f.read()
-f.close()
+# The following flag deactivates resolving entities, namely Greek and math
+# symbols from the definitions dtd file. Default entities such as &lt; &gt;
+# &amp; are resolved by ElementTree
+if 'DO_NOT_RESOLVE_ENTITIES' in os.environ:
+    DO_NOT_RESOLVE_ENTITIES=1
+else:
+    DO_NOT_RESOLVE_ENTITIES=0
 
-text_to_process = xml_text.replace(xml_entities, dtd_text)
+if DO_NOT_RESOLVE_ENTITIES:
+    commands = set(re.findall('&(.+?);', xml_text))
+    text_to_process = xml_text
+    for command in commands:
+        # The following entities are supported by default.
+        if command in ["lt", "gt", "amp"]:
+            continue
+        text_to_process = text_to_process.replace(f'&{command};', f'\\{command}')
+else:
+    dtd_name = "xhtml-symbol.ent"
+    xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
+
+    f = open(dtd_name, 'r')
+    dtd_text = f.read()
+    f.close()
+    text_to_process = xml_text.replace(xml_entities, dtd_text)
+
 tree = ET.ElementTree(ET.fromstring(text_to_process))
 root = tree.getroot()
 

@@ -8,6 +8,9 @@
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
      , , only : corr_core_dn
+      use b2mod_subsys
+      use b2mod_plasma                                                  !srv 07.07.21
+     & , only : uap
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, isb
@@ -33,18 +36,21 @@
 *   ..local variables
       integer ncall, ix, iy, ireg
       save ncall
+      !$OMP THREADPRIVATE (ncall)
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
+      integer, save :: nrings, jxi, jxa, jsep
       real (kind=R8), save :: na_min = 1.0e4_R8
+      !$OMP THREADPRIVATE(na_min, nrings, jxi, jxa, jsep)
       real (kind=R8) :: t0,
      *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
       logical too_low_density                                             ! IYS 27.11.2017
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2xxgs
+      external xertst, ipgetr, b2xxgs
 *   ..initialisation
-      data ncall/0/
+      data ncall/0/, nrings/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -54,7 +60,9 @@
       call subini ('b2upco')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgetr ('b2mndr_na_min', na_min)                              ! IYS 27.11.2017
+       call ipgeti ('nrings_for_no_speedup_averaging', nrings)            ! IYS 27.03.2019
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -87,7 +95,7 @@
         pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
-      if(corr_core_dn(isb).ne.1.0_R8 .and. 
+      if(corr_core_dn(isb).ne.1.0_R8 .and.
      &               (.not. is_neutral(isb))) then               !srv 25.07.17 {  IYS 19.12.2017
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
         tt0 = 0.0e0_R8
@@ -95,7 +103,8 @@
         tt2 = 0.0e0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
+            if(on_closed_surface(ix,iy) .and.
+     *         iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
               tt0(iy) = tt0(iy) + vol(ix,iy)
               tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
               tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
@@ -108,7 +117,8 @@
 ! If it happens, cancel the smoothing of the correction for the whole
 ! flux surface where such event happens.
           do ix = -1,nx
-            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
+            if(on_closed_surface(ix,iy) .and.
+     *         iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then    ! IYS 27.03.2019
               t0 = pb(ix,iy)+tt2(iy)/tt0(iy) +
      *         corr_core_dn(isb)*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))   ! IYS 19.12.2017
               if (t0 .lt. pb(ix,iy)*na_min / nb(ix,iy)) then
@@ -137,12 +147,14 @@
             enddo
           endif
         enddo                                             !lk 30.06.2017}
-      else         ! do not smooth the correction 
+      else         ! do not smooth the correction
         nb = nb_
         pb = pb_
       endif                                                !srv 25.07.17 }
 *   ..compute new ub
       if (ua_solve) then
+       if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8))
+     &    uap(:,:,isb) = ub                                             !srv 07.07.21
        do iy = -1, ny
         do ix = -1, nx
 *       (note the further damping on the velocity correction)
@@ -165,5 +177,5 @@
 *-----------------------------------------------------------------------
 *.end b2upco
 
-      end
+      end subroutine b2upco
 

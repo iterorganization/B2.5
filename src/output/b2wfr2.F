@@ -9,6 +9,7 @@
 *$$$  call subini ('b2wfr2')
       write (nprt,101)
       write (nprt,102)
+      write (nprt,'()')
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
@@ -43,4 +44,4 @@
      &  'Heifetz and J. C. Weisheit, ''Survey of Atomic Processes in'/,
      &  ' Edge Plasmas'', J. Nuclear Mater. 121 (1984) 10-16.')
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2wfr2

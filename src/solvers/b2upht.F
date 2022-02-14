@@ -2,15 +2,17 @@
 *.specification
 
       subroutine b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
-     &  solvereg, solvireg, solvpreg, solvmreg,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
      &  rxf, pcm0, cortt, corte, corti,
      &  pccm0, na, ua, te, ti, po, ne, ni, wrk0, vol)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
      , , only : corr_core_dt, add_te_corr_to_po                ! IYS 19.12.2017, 21.09.2018
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -19,6 +21,7 @@
      &  corti(-1:nx,-1:ny), pccm0(-1:nx,-1:ny), vol(-1:nx,-1:ny)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
+     &  solvtreg(0:nregionv),                                            !srv 22.05.18
      &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -40,19 +43,16 @@
 *   ..local variables
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
-     *  ctt, dte, dti, t0, t1, t2
+     *  ctt, dte, dti, t0
       real (kind=R8) :: 
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
+      integer, save :: nrings, jxi, jxa, jsep
       save ncall, stylec, pot_eq
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *  med
-      external subini, subend, xertst, ipgeti, b2xvsg
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
+      external xertst, ipgeti, b2xvsg
 *   ..initialisation
-      data ncall/0/, stylec/0/, pot_eq/1/
+      data ncall/0/, stylec/0/, pot_eq/1/, nrings/0/
 *!!   (stylec is a numerical switch, needs experiments)
 
 *-----------------------------------------------------------------------
@@ -65,7 +65,9 @@
       n2=(nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgeti ('b2upht_stylec', stylec)
+       call ipgeti ('nrings_for_no_speedup_averaging', nrings)     ! IYS 27.03.2019
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
        call ipgeti ('b2news_poteq', pot_eq)
       endif
@@ -96,7 +98,7 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (stylec.eq.0) then
-         if (solvereg(ireg).and.solvireg(ireg)) then
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
           dte = rxf*max(-te(ix,iy),(corte(ix,iy)+cortt(ix,iy))/2.0_R8)
           dti = rxf*max(-ti(ix,iy),(corti(ix,iy)+cortt(ix,iy))/2.0_R8)
          else
@@ -104,8 +106,8 @@
           dti = rxf*max(-ti(ix,iy),corti(ix,iy))
          endif
         else if (stylec.eq.1) then
-         ctt = cortt(ix,iy)-med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
-         if (solvereg(ireg).and.solvireg(ireg)) then
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
+          ctt = cortt(ix,iy)-med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
           dte = rxf*max(-te(ix,iy),corte(ix,iy)+ctt)
           dti = rxf*max(-ti(ix,iy),corti(ix,iy)+ctt)
          else
@@ -129,7 +131,7 @@
         dti1(ix,iy) = dti
 *   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
         if(on_closed_surface(ix,iy) .and. 
-     *                                 bottomiy(ix,iy).ne.-2) then
+     *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
           tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
           tt2(iy) = tt2(iy) + vol(ix,iy)*ne(ix,iy)
@@ -142,7 +144,7 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if(on_closed_surface(ix,iy) .and. 
-     *                                 bottomiy(ix,iy).ne.-2) then
+     *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           dti1(ix,iy) = tt1(iy)/tt0(iy) +
      *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
           dte1(ix,iy) = tt3(iy)/tt2(iy) +

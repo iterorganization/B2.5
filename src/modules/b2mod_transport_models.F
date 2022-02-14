@@ -72,7 +72,9 @@
       found = maxval(eta_hce_mult).ne.1.0_R8 .or.
      .        minval(eta_hce_mult).ne.1.0_R8
       return
+#ifdef USE_MPI
   999 call xerrab ('Error while reading TRANSPORT_MODELS namelist!')
+#endif
       end subroutine read_b2mod_transport_models
 
       subroutine write_b2mod_transport_models(nwrite,edition)

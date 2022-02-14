@@ -3,8 +3,10 @@
 
       subroutine b2rurc (nget, version)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget
@@ -24,7 +26,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine reads from unit (nget) a table of atomic rate data,
-*     covering ionisation, recombination, electron heat loss, 
+*     covering ionisation, recombination, electron heat loss,
 *     charge exchange and radiation with neutral hydrogen. Unit nget
 *     must be connected to an un*formatted file.
 *     See the code to discern the required format of the input file.
@@ -51,21 +53,21 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
 *      rtzmin, rtzmax, rtzn - (0:rtns-1) real*8 array.
-*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic 
+*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic
 *     charge range, and rtzn(is) specifies the nuclear charge
-*     of atomic species (is). 
+*     of atomic species (is).
 *     The izhi(inuc)-izlo(inuc)+1 charge states for each nuclear
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
-*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
-*     zamin, zamax and zn used elsewhere in b2.
+*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are
@@ -117,22 +119,22 @@
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlza(i,j,k) specifies
 *     the effective charge state at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlza has dimension e. 
+*     superstage k. rtlza has dimension e.
 *      rtlz2 - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlz2(i,j,k) specifies
 *     the effective squared charge at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlz2 has dimension e**2. 
+*     superstage k. rtlz2 has dimension e**2.
 *      rtlpt - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpt(i,j,k) specifies
 *     the cumulative ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k. rtlpt has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k. rtlpt has dimension eV.
 *      rtlpi - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpi(i,j,k) specifies
 *     the effective ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k from superstage k-1. rtlpi has dimension eV.
 *
 *
 *  8. further comments
@@ -144,19 +146,15 @@
 
 *   ..local variables
       logical lt0
-      integer k, k1, idum(0:9)
+      integer k, idum(0:9)
       real (kind=R8) ::
-     *   cutlo, lnzero, t0
+     *   lnzero, t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
-      intrinsic log
-      logical lnext
       real (kind=R8) ::
-     *   machsfr, smax
-      external subini, subend, xertst, machsfr, smax, cfrure, cfruin,
-     1 cfverr
-      lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
+     *   smax
+      external xertst, smax, cfrure, cfruin
 
 *-----------------------------------------------------------------------
 *.computation
@@ -166,17 +164,17 @@
       call subini ('b2rurc')
 *   ..test nget
       call xertst (1.le.nget, 'faulty argument nget')
-*   ..set cutlo
-      cutlo = machsfr()
+*   ..set cutll
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..read rate coefficients
 *   ..read dimensions
       call cfruin (nget, 3, idum, 'rtnt,rtnn,rtns')
       call alloc_b2mod_b2cmrc(idum(0), idum(1), idum(2))
 *   ..read species data
-      if (version.lt.'01.001.024') then 
-        allocate(rtza(0:idum(2)-1))   
-        allocate(rtza2(0:idum(2)-1))   
+      if (version.lt.'01.001.024') then
+        allocate(rtza(0:idum(2)-1))
+        allocate(rtza2(0:idum(2)-1))
         call cfrure (nget, rtns, rtza, 'rtza')
         call cfrure (nget, rtns, rtzn, 'rtzn')
         call cfrure (nget, rtns, rtza2, 'rtza2')
@@ -197,17 +195,17 @@
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
-      if(version.ge.'01.001.016') then  
+      if(version.ge.'01.001.016') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlrd, 'rtlrd')
       else
         rtlrd=lnzero
       endif
-      if(version.ge.'01.001.019') then  
+      if(version.ge.'01.001.019') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlbr, 'rtlbr')
       else
         rtlbr=lnzero
       endif
-      if(version.ge.'01.001.024') then  
+      if(version.ge.'01.001.024') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlza, 'rtlza')
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlz2, 'rtlz2')
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlpt, 'rtlpt')
@@ -220,7 +218,15 @@
           rtlpt(0:rtnt,0:rtnn,k)=(potmin(k)+potmax(k))/2.0_R8
           rtlpi(0:rtnt,0:rtnn,k)=(potimin(k)+potimax(k))/2.0_R8
         enddo
-      endif 
+      endif
+      if (version.ge.'03.000.007') then
+        call cfruin (nget, 2, idum, 'fix_recomb,zmax_recomb')
+        fix_recomb = idum(0)
+        zmax_recomb = idum(1)
+      else
+        fix_recomb = 0 ! corresponding to the default pre-3.0.7 version
+        zmax_recomb = 1
+      endif
 
 * ..test rate coefficients
 *   ..test ionisation rate coefficients
@@ -228,13 +234,13 @@
         if (k.eq.rtns-1) then
           lt0 = .true.
         else
-          lt0 = .not.lnext(k,k+1)
+          lt0 = .not.lrtnext(k,k+1)
         endif
 *      (the meaning of lt0 is 'species k cannot ionise to k+1')
         if (lt0) then
 *       (ionisation rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlsa(0,0,k),1)
-          call xertst (t0.lt.log(cutlo), 'faulty entry in rtlsa table')
+          call xertst (t0.lt.cutll, 'faulty entry in rtlsa table')
         endif
       enddo
 *   ..test recombination rate coefficients
@@ -242,13 +248,13 @@
         if (k.eq.0) then
           lt0 = .true.
         else
-          lt0 = .not.lnext(k-1,k)
+          lt0 = .not.lrtnext(k-1,k)
         endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
         if (lt0) then
 *       (recombination rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlra(0,0,k),1)
-          call xertst (t0.lt.log(cutlo), 'faulty entry in rtlra table')
+          call xertst (t0.lt.cutll, 'faulty entry in rtlra table')
         endif
       enddo
 *   ..test charge exchange rate coefficients
@@ -256,13 +262,13 @@
         if (k.eq.0) then
           lt0 = .true.
         else
-          lt0 = .not.lnext(k-1,k)
+          lt0 = .not.lrtnext(k-1,k)
         endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
         if (lt0) then
 *       (charge exchange rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlcx(0,0,k),1)
-          call xertst (t0.lt.log(cutlo), 'faulty entry in rtlcx table')
+          call xertst (t0.lt.cutll, 'faulty entry in rtlcx table')
         endif
       enddo
 
@@ -272,3 +278,44 @@
 *-----------------------------------------------------------------------
 *.end b2rurc
       end subroutine b2rurc
+
+      subroutine get_AM_flag (label, flag)
+      implicit none
+      character*120 label
+      character*8 flag
+      integer i, lt(4)
+      logical found
+      logical streql
+      external streql
+
+      flag = 'unknown'
+      found = .false.
+      lt(1) = index(label,'ADPAK')
+      lt(2) = index(label,'STRAHL')
+      lt(3) = index(label,'ADAS')
+      lt(4) = index(label,'AMNS')
+      do i = 1, 4
+        if (lt(i).eq.0) cycle
+        if (found) then
+          flag = 'multiple'
+        else
+          select case (i)
+          case (1)
+            flag = 'adpak'
+          case (2)
+            flag = 'strahl'
+          case (3)
+            flag = 'adas'
+          case (4)
+            flag = 'amns'
+          end select
+        end if
+        found = .true.
+      end do
+      call xertst(.not.streql(flag,'unknown'),
+     . 'Could not identify A&M data package !')
+      call xertst(.not.streql(flag,'multiple'),
+     . 'Ambiguous multiple A&M data package setting !')
+
+      return
+      end subroutine get_AM_flag

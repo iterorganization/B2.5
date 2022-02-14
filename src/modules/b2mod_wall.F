@@ -1,6 +1,7 @@
       module b2mod_wall
       use b2mod_types
       use b2mod_layer
+      use b2mod_subsys
       implicit none
 
       integer ndepth, nwall_segments, nsegments, nline
@@ -96,6 +97,7 @@ cxpb Data file material properties
 
       integer, allocatable, save :: imapw(:),
      *  imapreg(:), wall_begin(:), wall_end(:)
+      integer, save :: xymap_tmp(-1:DEF_NXD,-1:DEF_NYD)
 
 cxpb Data file material properties
       character*32, allocatable, save :: surface_long_name(:)
@@ -202,7 +204,6 @@ cxpb element: xymap(ix,iy)
       logical errdim
       external xertst
 #endif
-      external subini, subend
 
       call subini('b2mod_wall_init')
 cxpb  Geometric information
@@ -236,9 +237,14 @@ cxpb  Geometric information
       subroutine alloc_b2mod_wall(ns,natm,nmol,nion)
       implicit none
       integer ns, natm, nmol, nion
-      external subini, subend, xertst
+      external xertst
 
       call subini('b2mod_wall')
+*   ..test arguments
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.natm, 'faulty argument natm')
+      call xertst (0.le.nmol, 'faulty argument nmol')
+      call xertst (0.le.nion, 'faulty argument nion')
 #ifdef ALLOCATE_AND_NAMELIST
 cxpb  Namelist data
       allocate(inertial_cooling(nwall))
@@ -470,6 +476,7 @@ cxpb Data file material properties
      *  matbulk_Cp_B3,
      *  matbulk_Cp_B4)
 
+      return
       end subroutine dealloc_b2mod_wall
 
       subroutine read_b2mod_wall_namelist(nread,edition,found)
@@ -479,7 +486,7 @@ cxpb Data file material properties
       logical found
       character*256 filename
       logical file_ok
-      external xertst
+      external find_file, xertst
 
       if (edition.eq.'    ') then
         filename = 'b2.wall_save.parameters'
@@ -1195,6 +1202,7 @@ cxpb Normalise surface constituents
 #include <netcdf.inc>
       integer :: status, nwallid, ntrackid, ntwoid, tid
       integer :: vdims(3)
+      external check_cdf_status
 
       write(*,*) 'Creating the definitions for b2wall.nc'
 

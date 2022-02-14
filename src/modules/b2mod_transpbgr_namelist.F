@@ -33,8 +33,9 @@
         write(*,*) 'No b2.transpbgr.parameters file found'
       endif
       return
-
+#ifdef USE_MPI
   999 call xerrab ('Error while reading TRANSPBGR namelist!')
+#endif
       end subroutine read_b2mod_transpbgr_namelist
 
       subroutine write_b2mod_transpbgr_namelist

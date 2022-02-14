@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx,
-     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
+     &  hx, gs,
+     &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  coreregno, coreregn2, output,
@@ -24,30 +24,34 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_boundary_namelist
+      use b2mod_numerics_namelist
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_geo
+     , , only : hy1
+      use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
       integer coreregno, coreregn2, sput_src,
      *   sput_chem_model, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
-      real (kind=R8) :: dtim, BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
+      real (kind=R8) :: BoRiS,
+     *  hx(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
-     *  f_redep(-1:nx,-1:ny,0:ns-1)
+     *  fht(-1:nx,-1:ny,0:1), f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale,
      &  sput_frc, sput_phys, sput_chem_alpha, sput_phys_alpha,
@@ -86,18 +90,14 @@
       character charns*3, chark*1
       character*15 hlp_frm
       real (kind=R8) ::
-     *   amtol, t0, t1, t2, t3, qin, qel, surface_temp,
+     *   t0, t1, t2, t3, qpl, qex, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   redep_max, yself_max
-      parameter (amtol=1.0e-2_R8)
       logical lcore
 *   ..procedures
       intrinsic abs, max, exp
-      external subini, subend, xertst
-      external b2xvsg, b2xvff, smin, smax
-      real (kind=R8) ::
-     *   smax, smin, hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+      external xertst
+      external b2xvsg, b2xvff
 *   ..initialisation
       save ncall
       data ncall/0/
@@ -122,13 +122,6 @@
 *         of charged species (is) to (is+1) (intended mainly for the
 *         core boundary)
 *
-*     Description of some local variables:
-*
-*     amtol - real.
-*     amtol specifies the mass difference (in amu) up to which two
-*     species may be considered the same for the purpose of the
-*     recycling model.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -147,21 +140,8 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+*    ..test sign of hx
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
-     &  'faulty argument range qz(,,0)')
-       call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8,
-     &  'faulty argument range qz(,,1)')
-*    ..test sign of pbs
-!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
-*    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -215,7 +195,7 @@
      .         gs(topix(ibegin+iy-1,-1),topiy(ibegin+iy-1,-1),1)
             end do
             list_y(1:isize) = -1
-            call prehd2D(ns,isize,list_x,list_y,dtim,-1,
+            call prehd2D(ns,isize,list_x,list_y,dteff,-1,
      &       topix(ibegin:iend,-1),topiy(ibegin:iend,-1),1,area,BoRiS)
             deallocate(list_x,list_y,area)
           endif
@@ -257,7 +237,7 @@
               list_x(iy) = ibegin + iy - 1
             end do
             list_y(1:isize) = ny
-            call prehd2D(ns,isize,list_x,list_y,dtim,+1,
+            call prehd2D(ns,isize,list_x,list_y,dteff,+1,
      &        list_x,list_y,1,
      &        gs(ibegin:iend,ny,1),BoRiS)
             deallocate(list_x,list_y)
@@ -306,7 +286,7 @@
                 riy(i) = rightiy(ix,ibegin + i - 1)
                 area(i) = gs(rix(i),riy(i),0)
               end do
-              call prehd2D(ns,isize,list_x,list_y,dtim,-1,
+              call prehd2D(ns,isize,list_x,list_y,dteff,-1,
      &          rix,riy,0,area,BoRiS)
               deallocate(list_x,list_y,rix,riy,area)
             endif
@@ -352,7 +332,7 @@
                 list_y(i) = ibegin + i - 1
                 area(i) = gs(ix,ibegin + i - 1,0)
               end do
-              call prehd2D(ns,isize,list_x,list_y,dtim,+1,
+              call prehd2D(ns,isize,list_x,list_y,dteff,+1,
      &          list_x,list_y,0,area,BoRiS)
               deallocate(list_x,list_y,area)
             endif
@@ -435,13 +415,13 @@ c lcore           is this a core element
       real (kind=R8) hh, hhn, Phi_app, area, pof,
      *  redep_self_sputter, redep_self_energy,
      *  wrk(ndepth_nml)
+#ifdef DBG
+      real (kind=R8) product
+#endif
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack
-      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf
-      logical lnext
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
+      integer is0, is1, is2, is, k, iwall, itrack
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf
 
       iwall=xymap(ix,iy)
       tef = (te(ix,iy)*hhn+te(ixn,iyn)*hh)/(hhn+hh)
@@ -455,27 +435,18 @@ c lcore           is this a core element
       endif
       zaf(0:ns-1) =
      &  (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      rpf(0:ns-1) =
-     &  (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir)+
-     &                        fhi_ext(ixf,iyf,idir)))/area
-      do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,is))
-     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS)
-     &        +rpf(is)*ev)/area
-      enddo
+      qpl = max(0.0_R8,isign*fht(ixf,iyf,idir))/area
+      qex = max(0.0_R8,isign*fhi_ext(ixf,iyf,idir))/area
       do is=0,ns_ext-1
          ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
          taf =
      &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
+         qex = qex + max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
      &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
      &           taf)*(1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir)+
-     &       fne(ixf,iyf,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -484,13 +455,13 @@ c lcore           is this a core element
             call xerrab ('Invalid iwall setting!')
          endif
          if (plate_model.eq.0) then
-            call heatdiff0D(iwall,qin,qel,surface_temp)
+            call heatdiff0D(iwall,qpl+qex,surface_temp)
             target_temp(iwall,1) = surface_temp
          else if (plate_model.eq.1) then
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
-              call heatdiff1D(iwall,ns,qin+qel,
-     .           dtim*plate_time_factor(iwall),wrk,output)
+              call heatdiff1D(iwall,ns,qpl+qex,
+     .           dteff*plate_time_factor(iwall),wrk,output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             endif
             surface_temp = target_temp(iwall,1)
@@ -530,21 +501,21 @@ cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
-     1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
+     1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
             vbar = sqrt(8.0_R8 * ti(ix,iy) / (pi * am(is) * mp))
             Pflx = Pflx + na(ix,iy,is)*vbar*alpha *
-     1           neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
+     1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
          sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+cbrec(0,is,ireg)*t0
          itrack=track_index(is0)
          if(itrack.gt.0.and.itrack.le.ntrack
      1        .and.iwall.gt.0.and.main_call) then
             deposition(iwall,itrack)=deposition(iwall,itrack)+
-     1           dtim*plate_time_factor(iwall)*
+     1           dteff*plate_time_factor(iwall)*
      2           (1.0_R8-cbrec(0,is,ireg))*t0
          endif
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
@@ -561,6 +532,22 @@ c chemical sputtering
      &         sput_dst.ge.0.and.sput_dst.lt.ns) then
                if(sput_chem_model.eq.1) then
                   if (Ei.gt.0.0_R8) then
+#ifdef DBG
+                     product =-((sput_chem_cutoff_alpha/Ei)
+     &                         **sput_chem_cutoff_beta)
+                     if(product.gt.cutll) then
+                        t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
+     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                        chemical_sputtering(iwall,is) =
+     .                    (sput_frc+cbrec(4,is,ireg)) *
+     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                     else
+                        t1=0.0_R8
+                        chemical_sputtering(iwall,is) = 0.0_R8
+                     end if
+#else
                      t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
@@ -568,6 +555,7 @@ c chemical sputtering
      .                    (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+#endif
                   else
                      t1=0.0_R8
                      chemical_sputtering(iwall,is) = 0.0_R8
@@ -593,7 +581,7 @@ c chemical sputtering
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                if(sputter_energy_on.ne.0) then
                   if(ncall .ne. 0 .or. sputter_namelist_used) then
                      t2=(sputter_yield2(ix,iy,is,1)+sput_chem_alpha*t2)/
@@ -652,11 +640,11 @@ c physical sputtering
 cxpb  We count here as eroded all the sputtered material, including the promptly redeposited fraction
 cxpb  We add this promptly redeposited fraction in the deposited material
                  erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1            dtim*plate_time_factor(iwall)*t1/
+     1            dteff*plate_time_factor(iwall)*t1/
      2            (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
                  deposition(iwall,itrack) = deposition(iwall,itrack) +
-     1            dtim*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
+     1            dteff*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2            (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter))
                endif
@@ -719,7 +707,7 @@ c thermal evaporation of species is if bulk or tracked
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
@@ -743,7 +731,7 @@ c radiation enhanced sublimation  ! the plate is assumed to be carbon !!!
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
@@ -762,7 +750,7 @@ c back scattering
                if(itrack.gt.0.and.itrack.le.ntrack
      1              .and.iwall.gt.0.and.main_call) then
                   deposition(iwall,itrack)=deposition(iwall,itrack)-
-     1                 dtim*plate_time_factor(iwall)*t1
+     1                 dteff*plate_time_factor(iwall)*t1
                endif
                backscattering(iwall,is) = reflect(is,Ei*ev,iwall)
                backscattering_energy(iwall,is) =

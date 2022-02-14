@@ -5,12 +5,15 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
+      use b2mod_aggs
       use b2mod_version
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1
@@ -23,12 +26,12 @@
 *  1. purpose
 *
 *     B2AGDR computes and writes to an external file the specification
-*     of a b2 geometry and magnetic field.
+*     of a B2 geometry and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This subroutine computes and writes out a specification of a b2
+*     This subroutine computes and writes out a specification of a B2
 *     geometry and magnetic field. Summary information will be written
 *     to unit nout(0), which must be connected to a formatted file.
 *     A complete specification of the geometry and the magnetic field
@@ -93,7 +96,7 @@
       integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
-      character line*500
+      character line*500, ligne*500
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
@@ -105,7 +108,7 @@
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
+      external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
@@ -240,7 +243,7 @@
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     crx1, cry1, fpsi1, ffbz1, vol1, 
-*     hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 arrays.
+*     hxx, hyy, qz1, qc1, gs1, pbs1 - real*8 arrays.
 *     These arrays characterise the geometry on the auxiliary mesh.
 *
 *     lblgm - character*120.
@@ -310,15 +313,19 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-      redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
-      call ipgeti ('b2agdr_redef_pbs', redef_pbs)
+      redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
+      call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
       call ipgeti ('b2agdr_redef_qc',  redef_qc )
       call ipgeti ('b2agmt_qc_style',  qc_style )
       if (redef_qc .eq. 1 .and. qc_style .eq. 1) then
@@ -333,11 +340,7 @@
 *!!   be generated with dimensions (nx1,ny1).
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
-     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
-     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
-     3 topix1,topiy1,bottomix1,bottomiy1,
-     4 leftcut1,rightcut1,bottomcut1,topcut1,
-     5 periodic_bc,nncut,nncutmax)
+     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax)
       call init_region(nx1,ny1,nncut,nncutmax,
      1 leftcut1,rightcut1,topcut1,bottomcut1,
      1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
@@ -411,16 +414,13 @@
 *   ..compute geometry and flux/field functions on auxiliary mesh
       if(istyle.ge.0) then
         call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
-      else
-        fpsi1=0.0_R8
-        ffbz1=0.0_R8
       endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
-     & hx1, hy1, qz1, qc1, qcb1, gs1,
+     & hxx, hyy, qz1, qc1, qcb1, gs1,
      & cell_width1, cell_height1, leftix1, leftiy1, bottomiy1)
 *   ..improved computation of qc based on interpolation of qz values
-cwdk  attempt to avoid artificial reduction of poloidal contact area at faces for
+cwdk  avoids artificial reduction of poloidal contact area between faces for
 cwdk  curvilinear grids; angle between left face and average direction of top/bottom
 cwdk  faces is not representative for orthogonality of left face to field!
       if (redef_qc.eq.1.and.qc_style.eq.0) then
@@ -478,7 +478,7 @@ cwdk  faces is not representative for orthogonality of left face to field!
      1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qcb1,
+     & vol1, hxx, hyy, qz1, qc1, qcb1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
@@ -490,10 +490,11 @@ cwdk  faces is not representative for orthogonality of left face to field!
      2 topix1, topiy1, bottomix1, bottomiy1,
      3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
 *   ..correct pbsx on the proper mesh
-      if(redef_pbs.ne.0) then
-        call b2agbs (nx, ny, nncutmax, leftix, rightix, region,
-     1   bb, wbbl, gs, qz, qc, hx, hy, vol, pbs,
-     2   cell_width, cell_height)
+      if(redef_gmtry.ne.0) then
+        call b2agbs (nx, ny, nncutmax,
+     1   leftix, rightix, rightiy, bottomiy, topiy, region, crx, cry,
+     1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
+     2   pbs, cell_width, cell_height)
       end if
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
@@ -573,9 +574,9 @@ cdpc-debug
         write(*,*) 'b2agdr sanity check: vol ',
      1   maxval(abs(vol1-vol))
         write(*,*) 'b2agdr sanity check: hx  ',
-     1   maxval(abs(hx1-hx))
+     1   maxval(abs(hxx-hx))
         write(*,*) 'b2agdr sanity check: hy  ',
-     1   maxval(abs(hy1-hy))
+     1   maxval(abs(hyy-hy))
         write(*,*) 'b2agdr sanity check: qz  ',
      1   maxval(abs(qz1-qz))
         write(*,*) 'b2agdr sanity check: qc  ',
@@ -598,11 +599,7 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, hx, hy, qz, 
-     &   fpsi, ffbz, bb)
-      else
-        fpsi=0.0_R8
-        ffbz=0.0_R8
+        call b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')
@@ -736,13 +733,11 @@ cdpc-debug
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
-     &  cell_width, cell_height)
+      call b2wugm (nout(1), nx, ny)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
-     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .true.)
       mapInitialized = .true.
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')

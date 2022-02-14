@@ -10,6 +10,7 @@
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -17,7 +18,7 @@
 *
 *  1. purpose
 *
-*     B2YP (main program) is a postprocessor for b2. It displays the
+*     B2YP (main program) is a postprocessor for B2. It displays the
 *     plasma state. This program calls the driver routine b2ypdr for
 *     the actual computation.
 *
@@ -30,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yp performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2ypdr to control the actual computation.
@@ -71,7 +72,7 @@
       integer ninp(0:5), nout(0:2), nx, ny, ns, idum(0:9), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgend, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2ypdr
 *   ..initialise input/output units

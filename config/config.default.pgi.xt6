@@ -12,13 +12,28 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DPERF_TIMER
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+DEFINES += -DPERF_TIMER
+ifdef SOLPS_OPENMP
+DEFINES += -D_OPENMP
+endif
+
+ifndef SOLPS_CPP
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
 
 CPP = cpp -C -traditional
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = ftn
 
@@ -30,10 +45,15 @@ FCOPTS = -O3
 LDOPTS =
 endif
 
+ifdef SOLPS_OPENMP
+FCOPTS += -mp=nonuma
+LDOPTS += -mp=nonuma
+endif
+
 DBLFC=${FC}
 DDBLOPTION=
 DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLSED =
 
 # -I is used to specify search path for modules
 INCMOD = -I
@@ -42,7 +62,8 @@ OBJDEST = -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL} -lcgm -lngmath 
+GRLIBES = ${LD_NCARG} -lcgm -lngmath
+PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST

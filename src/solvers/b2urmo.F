@@ -1,12 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nx, ny, isb, ub, rob, smb, flub, cvsb,
-     .  resmb, fmb)                                                     !srv 02.06.11
+      subroutine b2urmo (nx, ny, isb, ub, rob,
+     .  smb, flub, cvsb, resmb, fmb)                                    !srv 02.06.11
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_balance                                                 !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -16,9 +19,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1)
-*   ..local variables
-      real (kind=R8) ::
-     *   conhyb !djm Jan2018 viscosity coefficient associated with hybrid correction
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -33,7 +33,7 @@
 *
 *     This routine computes the residual of the parallel momentum
 *     balance equation for one species, integrated over the cells of
-*     the b2 mesh. The equation has the form
+*     the B2 mesh. The equation has the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
 *       resmb = rhs-div(flux) .
@@ -54,19 +54,18 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0       !srv 06.07.06
-      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0           !srv 11.09.09
-      character chns*3                                            !srv 02.06.11
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
+      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0                 !srv 11.09.09
+      character chns*3                                                  !srv 02.06.11
       save ncall
+      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
+     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo,               !srv 11.09.09
+     *   conhyb !djm Jan2018 viscosity coefficient associated with hybrid correction
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hybr
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
       data ncall/0/
 
@@ -187,6 +186,14 @@
        enddo
       enddo
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
+       if (in_parallel()) then
+        !$OMP MASTER
+        if (ncall==0) then
+          write(*,*) 'b2urmo OpenMP warning: no file output ',
+     &               'in parallel mode'
+        end if
+        !$OMP END MASTER
+       else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,flv(-1,-1,0),
      &      'b2urmo_etaPat_graduax'//chns)
@@ -194,6 +201,7 @@
      &      'b2urmo_etaPat_graduay'//chns)
 !       call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
 !       call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
+       end if
       endif      
 * ..compute residual
 *   ..contribution from right hand side
@@ -229,7 +237,7 @@ cxpb  cells with no bottom neighbour
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
           resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
-        elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy)  then
+        elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
 cxpb  standard case
          resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
      &     -fmb(topix(ix,iy),topiy(ix,iy),1)

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qcb1,
+     & vol1, hxx, hyy, qz1, qc1, qcb1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
@@ -15,38 +15,43 @@
      3 leftcut1, rightcut1, bottomcut1, topcut1,
      $ cflags1)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_geo2
+     , , only : dist1
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
       real (kind=R8) ::
-     *  vol1(-1:nx1,-1:ny1), hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1),
-     &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1), qcb1(-1:nx1,-1:ny1),
+     *  vol1(-1:nx1,-1:ny1), hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1),
+     &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1),
+     &  qcb1(-1:nx1,-1:ny1),
      &  gs1(-1:nx1,-1:ny1,0:2),
-     1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
+     1  crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
+     2  bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
      3  fpsi1(-1:nx1,-1:ny1,0:3), ffbz1(-1:nx1,-1:ny1,0:3),
      4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
      &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
      5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
       integer
      *  leftix1(-1:nx1,-1:ny1), leftiy1(-1:nx1,-1:ny1),
-     1	rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
-     2	topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
-     3	bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
-     4	leftcut1(1:nncutmax), rightcut1(1:nncutmax),
+     1  rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
+     2  topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
+     3  bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
+     4  leftcut1(1:nncutmax), rightcut1(1:nncutmax),
      5  bottomcut1(1:nncutmax), topcut1(1:nncutmax)
       integer, intent(in) :: cflags1(-1:nx1,-1:ny1, CARREOUT_NCELLFLAGS)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
-     1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
+     1  gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
@@ -64,7 +69,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine takes as input the metric coefficients on a fine
-*     mesh: vol1, hx1, hy1, qz1, qc1 and gs1.  It computes the metric
+*     mesh: vol1, hxx, hyy, qz1, qc1 and gs1.  It computes the metric
 *     coefficients on a corresponding coarsened mesh.
 *
 *
@@ -75,7 +80,7 @@
 *     dimensions of the coarse mesh.
 *     See the calling routine for description.
 *
-*     vol1, hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 array, input.
+*     vol1, hxx, hyy, qz1, qc1, gs1, pbs1 - real*8 array, input.
 *     These arrays hold the metric coefficients on the fine mesh.
 *     See below for detailed description.
 *
@@ -150,18 +155,10 @@
       real (kind=R8) ::
      *   t0, t1, t2, t3, t4, t5
       logical iniso, error
-      integer i, j
       integer pbs_from_basis_mesh
-      real (kind=R8) ::
-     *   p0x, p0y
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *   norm, dist1
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      dist1(ix,iy,i,j) = norm (
-     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation
       save pbs_from_basis_mesh
@@ -177,7 +174,7 @@
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.nx1.and.1.le.ny1, 'faulty input nx1, ny1')
 *   ..test input metric
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qcb1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qcb1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..read input switch
       call ipgeti ('b2agmx_pbs_from_basis_mesh', pbs_from_basis_mesh)
@@ -656,7 +653,7 @@ cdpc-end
           do jy1 = 0, ky1-1
             t1 = 0.0_R8
             do jx1 = 0, kx1-1
-              t1 = t1+hx1(ix1+jx1,iy1+jy1)**2/vol1(ix1+jx1,iy1+jy1)
+              t1 = t1+hxx(ix1+jx1,iy1+jy1)**2/vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1/t1
           enddo
@@ -667,8 +664,8 @@ cdpc-end
           do jx1 = 0, kx1-1
             t1 = 0.0_R8
             do jy1 = 0, ky1-1
-              t1 = t1+(hy1(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
-     &	       vol1(ix1+jx1,iy1+jy1)
+              t1 = t1+(hyy(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
+     &         vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1.0_R8/t1
           enddo
@@ -809,7 +806,7 @@ cxpb  extra test since cases beyond double-null are not yet coded
 
 cxpb  extra code to allow for overwriting the pbs array with the 
 cxpb  working mesh values
-      if (pbs_from_basis_mesh.eq.0 .or. redef_pbs.eq.1) then
+      if (pbs_from_basis_mesh.eq.0 .or. redef_gmtry.eq.1) then
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)

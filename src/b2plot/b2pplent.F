@@ -22,7 +22,7 @@ c***      g   is the emissivity at the grid edge
 c***      h,i characterise radiation profile outside the separatrix
 c***
 c***   The normalisation constant A ensures the correct value of
-c***   the integral:  Qtot = r0rad
+c***   the integral: Qtot = r0rad
 c***
 c*** Output files:
 c***
@@ -49,16 +49,13 @@ c*** Grid sub-division for calculation of sources
 c
 c*** Local variables
       integer i,j,k,l,ix,iy,jmp,jtp
-      real (kind=R8) :: rd_in, rd_out, x, a, b, cc, d, e, f, a0, a1, a2
+      real (kind=R8) :: x, a, b, cc, d, e, f, a0, a1, a2
       real (kind=R8) :: sga,bgd,sgd,sgb
       real (kind=R8) :: initparm(10), r0rad
       real (kind=R8) :: q_tmp(nnr,nnz)
       real (kind=R8), allocatable :: qpr_tmp(:), qpz_tmp(:)
       real (kind=R8) :: r,z,bq,dr,dz,qmx,qmn,rmp,ztp,ztt,pwr_tot
       logical found
-c----------------------------------------------------------------------
-      rd_in(x)=a+b*x**cc+d*(1.0_R8-x**e)**f
-      rd_out(x)=a0+x*(a1+x*a2)
 c----------------------------------------------------------------------
 c*** Calculate the coefficients for radiation profiles
 c
@@ -233,4 +230,21 @@ c
       close(lun)
       deallocate(qpr_tmp,qpz_tmp)
       return
-      end
+
+      contains
+
+      function rd_in(x)
+      implicit none
+      real(kind=R8) :: rd_in, x
+      rd_in = a+b*x**cc+d*(1.0_R8-x**e)**f
+      return
+      end function rd_in
+
+      function rd_out(x)
+      implicit none
+      real(kind=R8) :: rd_out, x
+      rd_out = a0+x*(a1+x*a2)
+      return
+      end function rd_out
+
+      end subroutine b2pplentd

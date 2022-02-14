@@ -99,7 +99,7 @@ c                                       !number of particles per cell
      *   deltat                         !timestep between plots
       logical ls_active(0:ns-1)         !species active?
       integer isclvl(0:ns-1),iscol(0:ns-1)
-      character*16 texttraj(1:ns)
+      character*19 texttraj(1:ns)
 
       integer zaehler,zaehler2,ip,randzaehler
 
@@ -1165,7 +1165,8 @@ c find where particles need to be added
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
-            nadd=warr(ix,iy,is)/swarr*np-iwarr(ix,iy,is)+addval+nadd
+            nadd=int(warr(ix,iy,is)/swarr*np)
+     .             -iwarr(ix,iy,is)+nint(addval)+nadd
             if(nadd .gt. 0 .and. ikilled .gt. 0) then
               ipt=index_arr(ix,iy,is)
               ipto=0
@@ -1352,18 +1353,20 @@ cdpc split logical and data
       K  = MOD(KL/169, 178) + 1
       L  = MOD(KL, 169)
 *
-      DO 300 II= 1, 97
+      DO II= 1, 97
          S= 0.0_R8
          T= 0.5_R8
-         DO 250 JJ= 1,24
+         DO JJ= 1,24
             M = MOD(MOD(I*J,179)*K, 179)
             I = J
             J = K
             K = M
             L = MOD(53*L+1, 169)
             IF ( MOD(L*M,64)  .GE.  32) S = S + T
-  250       T = 0.5_R8*T
-  300 U(II) = S
+            T = 0.5_R8*T
+         END DO
+         U(II) = S
+      END DO
       C  =   362436.0_R8/16777216.0_R8
       CD =  7654321.0_R8/16777216.0_R8
       CM = 16777213.0_R8/16777216.0_R8

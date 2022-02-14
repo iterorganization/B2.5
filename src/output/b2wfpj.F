@@ -1,25 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, ni, pr, ro, rz, fne, fni, wrk0)
+      subroutine b2wfpj (nprt, idout, nx, ny, ns, pr, ro, rz, wrk0)
       use b2mod_types
       use b2mod_rates
+      use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
       character idout*(*)
       real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
-      real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -57,8 +51,7 @@
 *     nx, ny, ns - integer, input.
 *     See the calling routine for description.
 *
-*     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     ne, ni, pr, ro, rz, fne, fni - real*8 array, input.
+*     pr, ro, rz - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0 - (-1:nx,-1:ny) real*8 array, workspace.
@@ -75,24 +68,9 @@
 *   ..local variables
       integer n2, ix, iy, is, ix0, iy0, ix1, iy1
 *   ..procedures
-      real (kind=R8) ::
-     * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
-     &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       logical strmas
-      external subini, subend, xertst, strmas, b2ssum
+      external xertst, strmas
       external b2xvsg, b2xvff, b2xvps, b2xxmm, b2xppb
-      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
-      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
-      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
-      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
-      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
-      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
-      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
-      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
-      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
-      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
-      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
-      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -108,14 +86,10 @@
 *   ..test plasma state
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-*   ..test sign of ni, pr, ro, rz
-      call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+*   ..test sign of pr, ro, rz
       call b2xvsg (n2, pr, 1, 'pr', '.gt.')
       call b2xvsg (n2, ro, 1, 'ro', '.gt.')
       call b2xvsg (n2, rz, 1, 'rz', '.gt.')
-*   ..test edge values of fne, fni
-      call b2xvff (nx, ny, fne, 'fne')
-      call b2xvff (nx, ny, fni, 'fni')
 
 * ..write the state
 *   ..write pzmm segment?
@@ -175,7 +149,7 @@
        write (nprt,105) (is,is=0,ns-1)
        do ix = 0, nx
         write (nprt,'(2x,i4,1p,(t10,10e11.3))')
-     &    ix, (rfnax(ix,is),is=0,ns-1)
+     &    ix, (rfnax(nx,ny,ix,is),is=0,ns-1)
        enddo
       endif
 *   ..write pfzx segment?
@@ -185,7 +159,8 @@
        write (nprt,106)
        do ix = 0, nx
         write (nprt,'(2x,i4,1p,(t10,5e11.3))')
-     &    ix, rfnex(ix), rfnix(ix), rfhex(ix), rfhix(ix), rfchx(ix)
+     &    ix, rfnex(nx,ny,ix), rfnix(nx,ny,ix), rfhex(nx,ny,ix),
+     &        rfhix(nx,ny,ix), rfchx(nx,ny,ix)
        enddo
       endif
 *   ..write pfny segment?
@@ -195,7 +170,7 @@
        write (nprt,107) (is,is=0,ns-1)
        do iy = 0, ny
         write (nprt,'(2x,i4,1p,(t10,10e11.3))')
-     &    iy, (rfnay(iy,is),is=0,ns-1)
+     &    iy, (rfnay(nx,iy,is),is=0,ns-1)
        enddo
       endif
 *   ..write pfzy segment?
@@ -205,7 +180,8 @@
        write (nprt,108)
        do iy = 0, ny
         write (nprt,'(2x,i4,1p,(t10,5e11.3))')
-     &    iy, rfney(iy), rfniy(iy), rfhey(iy), rfhiy(iy), rfchy(iy)
+     &    iy, rfney(nx,iy), rfniy(nx,iy),
+     &        rfhey(nx,iy), rfhiy(nx,iy), rfchy(nx,iy)
        enddo
       endif
 *   ..write pzso segment?
@@ -335,4 +311,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfpj
 
-      end
+      end subroutine b2wfpj

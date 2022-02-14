@@ -3,6 +3,7 @@
 
       program b2yq
       use b2mod_types
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -10,7 +11,7 @@
 *
 *  1. purpose
 *
-*     B2YQ (main program) is a postprocessor for b2. It provides a
+*     B2YQ (main program) is a postprocessor for B2. It provides a
 *     quick display of the evolution data. This program calls the driver
 *     routine b2yqdr for the actual computation.
 *
@@ -23,7 +24,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yq provides a quick display of the
-*     evolution of a b2 calculation.
+*     evolution of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2yqdr to control the actual computation.
@@ -62,8 +63,7 @@
       integer ninp(0:1), nout(0:1), nscr(0:0), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, gnopen, gopks, gclks,
-     &  gclwk
+      external prgini, prgend, cfopen, gnopen, gopks, gclks, gclwk
       external b2yqdr
 *   ..initialise input/output units
       data ninp/50,51/

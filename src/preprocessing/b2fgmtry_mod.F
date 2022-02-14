@@ -6,6 +6,7 @@
       use b2mod_geo
       use b2mod_geo2
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
 
 *-----------------------------------------------------------------------
@@ -14,7 +15,7 @@
 *  1. purpose
 *
 *     B2FGMTRY_MOD (main program) modifies a geometry saved in b2fgmtry
-*     and creates a new file b2fgmtry_mod for b2. 
+*     and creates a new file b2fgmtry_mod for B2.
 *
 *
 *  2. specification
@@ -28,7 +29,7 @@
 *
 *     The input units are:
 *     ninp(0): formatted; provides geometric parameters.
-*     ninp(1): un*formatted; old specification of the geomrey
+*     ninp(1): un*formatted; old specification of the geometry
 *
 *     The output units are:
 *     nout(0): formatted; provides summary printed output.
@@ -83,7 +84,7 @@
       integer ninp(0:1), nout(0:1), io
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
 *   ..initialise input/output units
       data ninp/50,51/
       data nout/60,61/

@@ -2,6 +2,7 @@
      &  delpo)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, nregionv
       real (kind=R8) ::
@@ -14,7 +15,7 @@
 *     ------------------------------------------------------------------
       integer ncall, n2, ix, iy, ireg
       save ncall
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
       data ncall/0/
@@ -45,4 +46,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2nxdp

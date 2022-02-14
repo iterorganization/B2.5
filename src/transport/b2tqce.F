@@ -1,18 +1,19 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig,
-     &                   alf)                                            !srv 01.07.09
+      subroutine b2tqce (nx, ny, lnlam, te, ti, ne, ne2, hce, sig, alf)  !srv 01.07.09
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), te(-1:nx,-1:ny),        !srv 01.07.09
+     *  lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),                             !srv 01.07.09
      &  ti(-1:nx,-1:ny), ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -74,36 +75,9 @@
       parameter (ce = 3.16e0_R8)
       save ncall, model
 *   ..procedures
-      intrinsic abs, sqrt
-      real (kind=R8) ::
-     *  pitx, fke, fse, fal, fke_Zh
-      external subini, subend, xertst, sfill
+      intrinsic sqrt
+      external xertst, sfill
       external b2xvsg, ipgeti
-      pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
-      fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
-      fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
-      fal(z) = -1.25_R8*z/(1.0_R8+0.41_R8*z)
-      fke_Zh(z) = (3.9_R8+2.3_R8/z)/(0.31_R8+1.2_R8/z+0.41_R8/z**2)     !srv 02.12.10
-      real (kind=R8) c11e, c13e, c15e
-      parameter (c11e = 1.0000_R8, c13e = 0.9487_R8, c15e =-0.8964_R8)
-      real (kind=R8) c31e
-      parameter (c31e = c13e)
-      real (kind=R8) c33e, c35e, c55e
-      c33e(z) = 1.3000_R8 + 0.5657_R8/z
-      c35e(z) =-1.3040_R8 - 0.3207_R8/z
-      c55e(z) = 1.5464_R8 + 0.9091_R8/z
-      real (kind=R8) c53e
-      c53e(z) = c35e(z)
-      real (kind=R8) d13e, d15e, d35e
-      d13e(z) = c11e   *c33e(z) - c13e   *c13e
-      d15e(z) = c11e   *c55e(z) - c15e   *c15e
-      d35e(z) = c33e(z)*c55e(z) - c35e(z)*c35e(z)
-      real (kind=R8) h135e, h153e, h315e
-      h135e(z) = c15e   *c33e(z) - c13e   *c35e(z)
-      h153e(z) = c13e   *c55e(z) - c15e   *c53e(z)
-      h315e(z) = c35e(z)*c11e    - c31e   *c15e
-      real (kind=R8) f135e
-      f135e(z) = c55e(z)*d13e(z) - c35e(z)*h315e(z) - c15e   *h135e(z)
 *   ..initialisation
       data ncall/0/, model/1/
 
@@ -157,8 +131,6 @@
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test bb
-       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *    ..test state
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
@@ -176,7 +148,7 @@
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       if (model.eq.1.or.model.eq.3) then
-        ctaue = t0*sqrt(me)						 !xpb
+        ctaue = t0*sqrt(me)                                                !xpb
       else if (model.eq.2) then
         ctaue = 3.5e11_R8             ! lower precision as per SOLPS4.0
       endif
@@ -189,7 +161,7 @@
        do iy = -1, ny
         do ix = -1, nx
          t0 = te(ix,iy)/ev
-         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)	   !xpb !srv 01.07.09
+         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)          !xpb !srv 01.07.09
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
@@ -224,7 +196,7 @@
        do iy = -1, ny
         do ix = -1, nx
          t0 = te(ix,iy)/ev
-         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)	   !xpb !srv 01.07.09
+         tau(ix,iy) = (ctaue/lnlam(ix,iy))*t0*sqrt(t0)/ne2(ix,iy)        !xpb !srv 01.07.09
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
@@ -301,4 +273,4 @@
 *-----------------------------------------------------------------------
 *.end b2tqce
 
-      end
+      end subroutine b2tqce

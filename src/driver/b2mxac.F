@@ -4,6 +4,7 @@
       subroutine b2mxac (nx, ny, ns, corpa, corua, corut, corte, corti,
      &  corpo, acorpa, acorua, acorut, acorte, acorti, acorpo)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -41,7 +42,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   samax
-      external subini, subend, xertst, samax
+      external xertst, samax
       external b2xvfx
 *   ..initialisation
       data ncall/0/
@@ -79,4 +80,4 @@
 *-----------------------------------------------------------------------
 *.end b2mxac
 
-      end
+      end subroutine b2mxac

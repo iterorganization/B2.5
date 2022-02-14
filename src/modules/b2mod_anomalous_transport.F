@@ -13,8 +13,8 @@
      *   dna0(:,:,:),
      *   vsa0(:,:,:),
      *   vla0(:,:,:,:),
-     *   csig_an(:,:,:),                                                !xpb 
-     *   calf_an(:,:,:),                                                !xpb 
+     *   csig_an(:,:,:),                                                !xpb
+     *   calf_an(:,:,:),                                                !xpb
      *   cvsa_an(:,:,:,:),                                              !srv 04.10.99 11.06.08
      *   vma0(:,:,:,:)                                                  !srv 15.12.05 11.06.08
 
@@ -66,6 +66,7 @@
       subroutine read_b2mod_anomalous_transport(nread)
       implicit none
       integer nread
+      external cfrure, cfrure_opt
 
       if(b2fplasma_version.gt.'01.001.001') then
         call cfrure (nread, size(sig0), sig0, 'sig0')
@@ -89,6 +90,7 @@
       subroutine write_b2mod_anomalous_transport(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       if(newversion.gt.'01.001.001') then
         call cfwure (nwrite, size(sig0), sig0, 'sig0')
