@@ -68,17 +68,17 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2sigp.lt.3) then
-*    ..test sign of nb, ti, ne, te, rzb
+*    ..test sign of nb, ti, tn, ne, te, rzb
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
-       call b2xvsg (nCv, ti, 1, 'tn', '.gt.')
+       call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, rzb, 1, 'rzb', '.ge.')
       endif
 
 * ..choose the correct temperature
-      if (switch%tn_style.eq.2.and.is_neutral(isb)) then
+      if (switch%tn_style.eq.2.and.is_neutral(isb).and.zn(is).eq.1) then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti
@@ -99,7 +99,7 @@
           else
            wrk0(ix,iy) = nb(ix,iy)*tb(ix,iy)-
      &      nb(leftix(ix,iy),leftiy(ix,iy))*
-     &      ti(leftix(ix,iy),leftiy(ix,iy))
+     &      tb(leftix(ix,iy),leftiy(ix,iy))
            wrk1(ix,iy) = ne(ix,iy)*te(ix,iy)-
      &      ne(leftix(ix,iy),leftiy(ix,iy))*
      &      te(leftix(ix,iy),leftiy(ix,iy))
@@ -110,7 +110,7 @@
      &                   ne(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy))/
      &                 (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
           endif
-          wrk3(ix,iy) = nb(ix,iy)*ti(ix,iy)                          !djm Jan2017
+          wrk3(ix,iy) = nb(ix,iy)*tb(ix,iy)                          !djm Jan2017
           wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
          enddo
         enddo

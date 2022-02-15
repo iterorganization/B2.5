@@ -364,14 +364,9 @@ cxpb Corrected for dimensionality
      &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
             if(cfhci(7,is).ne.0.0_R8)
      &       dfhcb = dfhcb!WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-*      ..compute vsa0, hci0
+*      ..compute vsa0, hcib
             vsa0(iCv,is) = dfvsb*mp*am(is)*pl%na(iCv,is)
             hcib(iCv,is)=dfhcb*pl%na(iCv,is)
-            if (.not.is_neutral(is)) then
-              hci0(iCv) = hci0(iCv)+hcib(iCv,is)
-            else
-              hcn0(iCv) = hcn0(iCv)+hcib(iCv,is)
-            endif
 *      ..compute hvi0
             hvi0(iCv,0) = 0.0_R8
             hvi0(iCv,1) = 0.0_R8
@@ -379,9 +374,25 @@ cxpb Corrected for dimensionality
         write(*,'(a,i3,1p,2g14.7)') 'is,min_df0,max_df0 ',
      .   is, min_df0_tmp, max_df0_tmp
       enddo
-      if (switch%tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
-        hci0 = hci0+hcn0
-      endif
+*   ..compute hci0, hcn0
+      do is = 0, ns-1
+*     ..compute hci0
+        if (switch%tn_style.eq.0) then              !! default combined ion-neutral, add neutral contribution to "total" hci0
+          hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
+*     ..compute hcn0
+        if (is_neutral(is).and.zn(is).eq.1) then
+          hcn0 = hcn0 + hcib(:,is)
+        endif
+      enddo
 *   ..compute hce0, sig0, alf0
       do iCv = 1, nCv
 *     ..compute dfhce, dfsig, dfalf
@@ -3618,19 +3629,29 @@ c*******************************************************************************
         endif 
       enddo !! end loop over species
 
-c recompute hci0 and hcn0
+*   ..recompute hci0, hcn0
       hci0 = 0.0_R8
       hcn0 = 0.0_R8
-      do is =0, ns-1
-        if (.not.is_neutral(is)) then
+      do is = 0, ns-1
+*     ..compute hci0
+        if (switch%tn_style.eq.0) then
           hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
         else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
+*     ..compute hcn0
+        if (is_neutral(is).and.zn(is).eq.1) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
-      if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
-        hci0 = hci0+hcn0
-      endif
+
+
 
 *   ..return
       call subend ()
