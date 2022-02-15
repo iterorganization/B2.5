@@ -386,7 +386,7 @@ cmb   b2recyc is set negative here to check whether the field was read. If not r
         endif
       enddo
 cmb  Default Franck-condon energy is 2eV per atom
-      e_fc= 2.0_R8  
+      e_fc= 3.0_R8  
 cmb  Default is to accelerate ions everywhere with sheath potential (target & wall) 
       accel_ion = 1
       RCION=0.0_R8
