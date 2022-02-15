@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, BoRiS, 
-     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni,
+     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
      &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
      &  rza, rz2, st_ext, she0, shi0, shn0)
       use b2mod_types
@@ -36,7 +36,8 @@
       real (kind=R8) :: BoRiS,
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
-     &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv)
+     &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
+     &  nn(nCv)
       real (kind=R8) ::
      *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
@@ -226,17 +227,32 @@
         do iCv = 1, mpg%nCi
           t0 = -switch%b2sihs_phm1*(na(iCv,is)/ni(iCv,0))
      &                                      *(1.0_R8-BoRiS)*wrkc(iCv)  !srv 21.07.05 {
-          if (.not.is_neutral(is).or.switch%tn_style.eq.0) then
+          if (switch%tn_style.eq.0) then
             shidu(iCv,0) = shidu(iCv,0)+
      &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &         ti(iCv)
             shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
      &                     -switch%b2sihs__rf1*abs(t0)
-          else
-            t0 = t0*tn(iCv)/ti(iCv) 
-            shidun(iCv,0) = shidun(iCv,0)+
+          elseif (switch%tn_style.eq.1) then
+           if (.not.is_neutral(is)) then
+            shidu(iCv,0) = shidu(iCv,0)+
      &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &         ti(iCv)
+            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
+     &                     -switch%b2sihs__rf1*abs(t0)
+           endif
+          else
+           if (.not.is_neutral(is).or.zn(is).ne.1) then
+            shidu(iCv,0) = shidu(iCv,0)+
+     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
+     &         ti(iCv)
+            shidu(iCv,3) = shidu(iCv,3)+min(0.0e0_R8,t0)
+     &                     -switch%b2sihs__rf1*abs(t0)
+           else
+            t0 = t0*ni(iCv,0)/nn(iCv)
+            shidun(iCv,0) = shidun(iCv,0)+
+     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*nn(iCv,0)*
+     &         tn(iCv)
             shidun(iCv,3) = shidun(iCv,3)+min(0.0e0_R8,t0)-
      &         switch%b2sihs__rf1*abs(t0)
           endif
@@ -251,20 +267,12 @@
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_divua0to3 = shidu
 !WG_TODO      endif
-
-      if (.not.switch%use_eirene) then
-        if (switch%tn_style.eq.0) then
-          call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shidu, 1)                !srv 11.09.09
-          call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
-        else
-          shidun(:,3) = shidun(:,3)*ni(:,0)*ti/(ni(:,0)-ni(:,1))/tn
-      	  call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)  
-          call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
-        endif
+      if (switch%tn_style.lt.2) then
+        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)    
       else
-        call b2saxpy (nCv*4, 1.0e0_R8, shidu, 1, shi0, 1)
-      endif  
-
+        call b2saxpy (nCv*4, 1.0e0_R8, shidu , 1, shi0, 1)  
+        call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
+      endif
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
@@ -342,27 +350,49 @@
          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
         endif
         do iCv = 1, mpg%nCi
-           t0 = switch%b2sihs_phm2*(1.0_R8-BoRiS)*visc(iCv,0)
-           t1 = switch%b2sihs_phm8*(1.0_R8-BoRiS)*visc(iCv,1)
+          t0 = switch%b2sihs_phm2*(1.0_R8-BoRiS)*visc(iCv,0)
+          t1 = switch%b2sihs_phm8*(1.0_R8-BoRiS)*visc(iCv,1)
+          if (switch%tn_style.eq.0) then
+            shivc(iCv,0) = shivc(iCv,0)+
+     &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
+            shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
+     &                     (ni(iCv,0)*ti(iCv))
+            shiva(iCv,0) = shiva(iCv,0)+
+     &                     (1.0e0_R8+switch%b2sihs__rf2)*t1
+            shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
+     &                     (ni(iCv,0)*ti(iCv))
+          elseif (switch%tn_style.eq.1) then
            if (.not.is_neutral(is)) then
-             shivc(iCv,0) = shivc(iCv,0)+
-     &                      (1.0e0_R8+switch%b2sihs__rf2)*t0
-             shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
-     &                      (ni(iCv,0)*ti(iCv))
-             shiva(iCv,0) = shiva(iCv,0)+
-     &                      (1.0e0_R8+switch%b2sihs__rf2)*t1
-             shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
-     &                      (ni(iCv,0)*ti(iCv))
-           else
-             shivcn(iCv,0) = shivcn(iCv,0) + 
-     &                       (1.0e0_R8+switch%b2sihs__rf2)*t0
-             shivcn(iCv,3) = shivcn(iCv,3) - switch%b2sihs__rf2*t0/
-     &                       (ni(iCv,0)*ti(iCv))
-             shivan(iCv,0) = shivan(iCv,0) + 
-     &                       (1.0e0_R8+switch%b2sihs__rf2)*t1
-             shivan(iCv,3) = shivan(iCv,3) - switch%b2sihs__rf2*t1/
-     &                       (ni(iCv,0)*ti(iCv))
+            shivc(iCv,0) = shivc(iCv,0)+
+     &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
+            shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
+     &                     (ni(iCv,0)*ti(iCv))
+            shiva(iCv,0) = shiva(iCv,0)+
+     &                     (1.0e0_R8+switch%b2sihs__rf2)*t1
+            shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
+     &                     (ni(iCv,0)*ti(iCv))
            endif
+          else
+           if (.not.is_neutral(is).or.zn(is).ne.1) then
+            shivc(iCv,0) = shivc(iCv,0)+
+     &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
+            shivc(iCv,3) = shivc(iCv,3)-switch%b2sihs__rf2*t0/
+     &                     (ni(iCv,0)*ti(iCv))
+            shiva(iCv,0) = shiva(iCv,0)+
+     &                     (1.0e0_R8+switch%b2sihs__rf2)*t1
+            shiva(iCv,3) = shiva(iCv,3)-switch%b2sihs__rf2*t1/
+     &                     (ni(iCv,0)*ti(iCv))
+           else
+            shivcn(iCv,0) = shivcn(iCv,0) + 
+     &                      (1.0e0_R8+switch%b2sihs__rf2)*t0
+            shivcn(iCv,3) = shivcn(iCv,3) - switch%b2sihs__rf2*t0/
+     &                      (nn(iCv)*tn(iCv))
+            shivan(iCv,0) = shivan(iCv,0) + 
+     &                      (1.0e0_R8+switch%b2sihs__rf2)*t1
+            shivan(iCv,3) = shivan(iCv,3) - switch%b2sihs__rf2*t1/
+     &                      (nn(iCv)*tn(iCv))
+           endif
+          endif
 !WG_TODO           b2visa(mpg%cvReg(iCv))=b2visa(mpg%cvReg(iCv))+t0+t1
 !WG_TODO           b2sihs_visa(iCv)=b2sihs_visa(iCv)+t0+t1
         enddo
@@ -371,19 +401,12 @@
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_visa0to3 = shivc+shiva
 !WG_TODO      endif
-      if (switch%tn_style.eq.0) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shivc, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shiva, 1)
+      if (switch%tn_style.lt.2) then
        call b2saxpy (nCv*4, 1.0e0_R8, shivc , 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shiva , 1, shi0, 1)
-      elseif (switch%tn_style.eq.1) then
-       call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
       elseif (switch%tn_style.eq.2) then
-       shivcn(:,3) = shivcn(:,3)*ni(:,0)*ti/(ni(:,0)-ni(:,1))/tn
-       shivan(:,3) = shivan(:,3)*ni(:,0)*ti/(ni(:,0)-ni(:,1))/tn
-       call b2saxpy (nCv*4, 1.0e0_R8, shivc, 1, shi0, 1)
-       call b2saxpy (nCv*4, 1.0e0_R8, shiva, 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shivc , 1, shi0, 1)
+       call b2saxpy (nCv*4, 1.0e0_R8, shiva , 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivcn, 1, shn0, 1)
        call b2saxpy (nCv*4, 1.0e0_R8, shivan, 1, shn0, 1)
       endif
