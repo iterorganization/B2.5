@@ -2005,10 +2005,10 @@ c spatially hybrid neutrals
         call xerrab('spatial hybrid neutrals must be with eirene')
       endif
 
-      if(s%spatial_hybrid.ne.0.and.s%pot_eq.eq.1) then
-        call xerrab('spatial hybrid neutrals not yet developed'//
-     &               'with drifts and currents')
-      endif
+c      if(s%spatial_hybrid.ne.0.and.s%pot_eq.eq.1) then
+c        call xerrab('spatial hybrid neutrals not yet developed'//
+c     &               'with drifts and currents')
+c      endif
 
       if(s%spatial_hybrid.ne.0.and.s%ineustra.eq.0) then
         call xerrab('spatial hybrid needs neutral strata')
