@@ -1557,8 +1557,10 @@ c check the bounds of the switches themselves
 
 c tn_style
 c tn_style = 0: default combined ion-neutral energy equation
-c tn_style = 1: pure-ion energy equation
-c tn_style = 2: separate ion and neutral energy equations
+c tn_style = 1: pure-ion energy equation;
+c               after solving ti-equation, tn is set equal to ti
+c tn_style = 2: separate neutral energy equation for hydrogenic atoms (H/D/T) solved for tn
+c               all ions and non-hydrogenic atoms combined into ti-equation
       if (s%tn_style.lt.0.or.s%tn_style.gt.2) then
         call xerrab('tn_tyle should be 0, 1 or 2')
       endif

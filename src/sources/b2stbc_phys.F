@@ -87,7 +87,6 @@
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
-      real (kind=R8) :: hcz0(nCv)
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
       real (kind=R8) ::
@@ -247,19 +246,9 @@ c        call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 
-*     ..pre-compute some quantities for core BCs with drifts
+*   ..pre-compute some quantities for core BCs with drifts
       call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
      &  geo%vxOnedBsq, dOnedBsq)
-
-*     ..pre-compute hcz0 (heat conductivity of all charged states)
-      hcz0 = 0.0_R8
-      do is = 0, ns-1
-        if (.not.is_neutral(is)) then
-          do iCv = 1,nCv
-            hcz0(iCv) = hcz0(iCv) + co%hcib(iCv,is)
-          enddo
-        endif
-      enddo
       pzsum     = 0.0_R8
       naua2sum  = 0.0e0_R8
       volsum    = 0.0_R8
@@ -6470,15 +6459,19 @@ cghgh
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           sy = geo%fcS(iFc)
           srw%shi0(iCv1,0) = 0.0_R8
-          if (switch%tn_style.eq.0.and.switch%recycle_afn.eq.0) then !! default, include also contribution from fluid neutrals in hci0.
-          srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*
-     &                    sy
-          else
-          srw%shi0(iCv1,1) = -hcz0(iCv1)/enipar(ib,1)*
-     &                    sy
+          if (switch%recycle_afn.eq.0 .or. switch%tn_style.ne.0) then
+            !! Note that
+            !! if tn_style=0: hci0 includes contributions from all ions and all fluid neutrals
+            !! if tn_style=1: hci0 includes contributions from ions only
+            !! if tn_style=2: hci0 includes contributions from all ions and non-hydrogenic neutrals
+            srw%shi0(iCv1,1) = -co%hci0(iCv1)/enipar(ib,1)*sy
+          else                                                       !! tn_style=0.and.recycle_afn=1 => take out hydrogenic atoms
+            srw%shi0(iCv1,1) = -(co%hci0(iCv1)-co%hcn0(iCv1))/
+     &        enipar(ib,1)*sy
           endif
           do is = 0, ns-1
-            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0) then
+            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0 .or.
+     &         (switch%tn_style.eq.2.and.zn(is).ne.1)) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) + 
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) + 

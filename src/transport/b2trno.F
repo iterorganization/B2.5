@@ -342,15 +342,18 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
       do is = 0, ns-1
 c the logic statements below could be simplfied but for now we go for readability
         if (switch%tn_style.eq.0) then                             !! default combined ion-neutral energy equation
-          co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
-        elseif (switch%tn_style.eq.1.and..not.is_neutral(is)) then !! pure ion energy equation, only ion contributions
-          co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
+          co%chci = co%chci + co%chcb(:,:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is)) then                             !! pure ion energy equation, only ion contributions
+          co%chci = co%chci + co%chcb(:,:,is)
+         endif
         else                                                       !! separate ion-neutral energy equation
-          if (.not.is_neutral(is)) then
-            co%chci(:,:) = co%chci(:,:) + co%chcb(:,:,is)
-          else
-            co%chcn(:,:) = co%chcn(:,:) + co%chcb(:,:,is)
+          if (.not.is_neutral(is).or.zn(is).ne.1) then
+            co%chci = co%chci + co%chcb(:,:,is)
           endif
+        endif
+        if (is_neutral(is).and.zn(is).eq.1) then                   !! hcn for hydrogenic atoms
+         co%chcn = co%chcn + co%chcb(:,:,is)
         endif
       enddo 
 

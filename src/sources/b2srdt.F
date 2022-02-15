@@ -204,7 +204,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
 
             sr%shn(iCv,0) = sr%shn(iCv,0)+
-     &       1.5_R8*t0*(ni0(iCv,0)-ni0(iCv,1))*tn0(iCv)
+     &       1.5_R8*t0*nn0(iCv)*tn0(iCv)
 *           shndt(iCv,1) = (unchanged)
 *           shndt(iCv,2) = (otherwise unchanged)
             sr%shn(iCv,3) = sr%shn(iCv,3)-1.5_R8*t0
