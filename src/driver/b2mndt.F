@@ -283,7 +283,7 @@ c checks for use of new energy equations
 *    ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
          call b2spcx (nCv, ns, ev, am(iscx(k)), st%pl%ti, st%dv%ne,
-     &     st%rt%rlcx(1,0,0,k))
+     &     st%rt%rlcx(1:nCv,0:1,0:ns-1,k))
         enddo
 ctmp.dpc
         if (nscx.ge.1) then
