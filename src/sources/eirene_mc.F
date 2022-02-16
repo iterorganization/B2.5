@@ -433,7 +433,7 @@ csw 26feb2013
       end if !}
 
 !! set logical lneustra
-      lneustra = switch%ineustra > 0
+      lneustra = switch%spatial_hybrid.ne.0
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then 
           kin_frac_hyb = 1.0_R8
