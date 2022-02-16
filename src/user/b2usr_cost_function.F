@@ -1,8 +1,10 @@
-      subroutine b2usr_cost_function(nCv, nFc, nVx, ns, mpg, st, geo,
-     & BoRiS, J)
+      subroutine b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, st,
+     & st_ext, BoRiS, J)
       use b2mod_types
       use b2mod_constants
       use b2mod_user_namelist
+      use b2mod_b2cmpa
+     & , only : am
       use b2us_map
       use b2us_plasma
       use b2us_geo
@@ -20,6 +22,7 @@
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
       type(B2State), intent (in)    :: st
+      type(B2StateExt), intent (in) :: st_ext
       real(kind=R8) :: BoRiS, J(nncf)
       integer :: nCv, nFc, nVx, ns
       integer :: icf, ic1, ic2, iCv, ncall, n1, n2, ii,
@@ -27,7 +30,7 @@
       logical, save :: first_call=.true.
       logical :: inrange
       real (kind=R8) :: qq, prior, lll, lll_cum
-      real (kind=R8) :: gradr(nCv), funv(nVx)
+      real (kind=R8) :: gradr(nCv), funv(nVx), pz(nCv), rz(nCv), cs(nCv)
 #ifdef TEST_MAP
       integer, parameter :: nn=50
       real (kind=R8), save :: xx(nn), dd(nn), ff(nn)
@@ -189,6 +192,13 @@
                 call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
      &            funv, gradr)
                 TMP1(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
+              case (10) !ion saturation current
+                call b2xprz (nCv, ns, mp, am, st%pl%na, rz, st_ext)
+                call b2xppz (nCv, ns, st%dv%ne, st%pl%na, st%pl%te,
+     &            st%pl%ti, pz, st_ext)
+                cs   = sqrt(pz/rz)
+                TMP1(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))*
+     &            cs(mpg%cfReg(ic1:ic2))*eV
               case default
                write(*,*) cftype(iicf)
                call xerrab ('cftype for sum out of bounds for cftype=6')
@@ -235,6 +245,22 @@
             gradr = gradr/ev
             call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
      &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
+            do iCv = 1, n2
+              J(icf) = J(icf) + vvdata(icf,iCv)*
+     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+            end do
+            J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
+     &               2.0_R8
+          case (10) !ion saturation current
+            call b2xprz (nCv, ns, mp, am, st%pl%na, rz, st_ext)
+            call b2xppz (nCv, ns, st%dv%ne, st%pl%na, st%pl%te,
+     &        st%pl%ti, pz, st_ext)
+            cs   = sqrt(pz/rz)
+            ! Calculate saturation current as ne*cs*eV
+            TMP1(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))*
+     &        cs(mpg%cfReg(ic1:ic2))*eV
+            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
+     &        TMP1(1:n1),TMP2(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + vvdata(icf,iCv)*
      &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
