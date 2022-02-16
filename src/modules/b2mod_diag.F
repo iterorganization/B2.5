@@ -179,7 +179,7 @@ c
           atoms_list(is)=species_list(latmscl(is))
         end if
       end do
-      if (switch%ineustra > 0) then
+      if (switch%spatial_hybrid.ne.0) then
        do is = 0, nsd-1
          if (is_neutral(is)) then
            i= i+1
