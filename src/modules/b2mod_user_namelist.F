@@ -247,7 +247,7 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.9) call xerrab ('cftype>9 not coded ')
+          if (cftype(icf).gt.10) call xerrab ('cftype>10 not coded ')
           if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
      &     'cftype(1)=0 but no other cost functions are defined')
           if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
@@ -261,11 +261,11 @@ c***  Standard setup:
      &     cfstart(icf).lt.2 .and. cfend(icf).lt.2) call xerrab (
      &     'cost functions type 0/6 requires cfstart/cfend>1')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
-     &        (cftype(icf).ge.7 .and. cftype(icf).le.9)) 
+     &        (cftype(icf).ge.7 .and. cftype(icf).le.10)) 
      >         cfread(icf) = .true.
-          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false. ! FIXME add jsat 
+          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false.
           if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
-     &      call xerrab('cftype 5 must be defined using faces!') ! FIXME add jsat 
+     &      call xerrab('cftype 5 must be defined using faces!')  
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
