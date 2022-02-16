@@ -59,7 +59,6 @@ c Advanced fluid neutral models
       integer :: use_uy_uz_1
       integer :: remove_FC_el
       integer :: spatial_hybrid
-      integer :: ineustra
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
       integer :: do_volrec
@@ -564,7 +563,6 @@ c Advanced fluid neutral models
       s % use_uy_uz_1 = 0
       s % remove_FC_el = 0
       s % spatial_hybrid = 0
-      s % ineustra = 0
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
@@ -1059,7 +1057,6 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_use_uy_uz_1', s % use_uy_uz_1)
       call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)  
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)   
-      call ipgeti ('eirene_neutr_strata', s % ineustra)  
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb) 
       call ipgeti ('b2mn_do_volrec', s % do_volrec) 
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
@@ -2009,10 +2006,6 @@ c      if(s%spatial_hybrid.ne.0.and.s%pot_eq.eq.1) then
 c        call xerrab('spatial hybrid neutrals not yet developed'//
 c     &               'with drifts and currents')
 c      endif
-
-      if(s%spatial_hybrid.ne.0.and.s%ineustra.eq.0) then
-        call xerrab('spatial hybrid needs neutral strata')
-      endif
 
       if(s%use_auto_spatial_hyb.ne.0.and.s%spatial_hybrid.eq.0) then
         call xerrab('automatic spatial hybrid needs spatial hybrid')
