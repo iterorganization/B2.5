@@ -278,7 +278,6 @@ csw
 !    CALL XERTST(1 .LE. idum(2) .AND. idum(2) .LE. ns, &
 !&         'faulty input ns from plasma differentiated state file')
 !    CALL CFOPEN(nout(9), 'b2fdiffe', 'new', 'un*formatted')
-!    call cfopen (nout(10),'b2ftraced','new','un*formatted')
 *   ..obtain external state
       call alloc_mapping (mpg)
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
