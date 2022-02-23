@@ -142,7 +142,14 @@ endif
 # If compiling with Paraview Catalyst
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
-SOLPSINCLUDE += $(shell paraview-config --include)
+PARAVIEW_MAJOR_VERSION ?= `paraview --version | cut -d '.' -f 1 | cut -d ' ' -f 3`
+ifeq ($(shell test ${PARAVIEW_MAJOR_VERSION} -gt 4; echo $$?),0)
+PARAVIEW_INCLUDE ?= $(shell paraview-config --cppflags)
+else
+PARAVIEW_INCLUDE ?= $(shell paraview-config --include)
+endif
+else
+PARAVIEW_INCLUDE =
 endif
 
 # Local includes
