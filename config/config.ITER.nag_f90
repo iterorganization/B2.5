@@ -52,7 +52,7 @@ INCMODS += -I${EBROOTOPENMPI}/include
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+CXXFLAGS = -std=c++11
 endif
 
 LD = nagfor
