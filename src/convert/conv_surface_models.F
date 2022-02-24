@@ -464,7 +464,7 @@
         imodel = imodel + 1 
         istb = istb + 1
         write (nblk3,'(a1,i3,a2,a)')
-     .    '*',imodel,bcchar(istra),' boundary from B2.5'
+     .    '*',imodel,bcchar(ib),' boundary from B2.5'
         write (nblk3,'(5i6)')
      .    imodel, idim(istb), ipos(istb), istart(istb), iend(istb)
         write (nblk3,'(12i6)') 2, 2, 0, 0, 0, imodel, 0, 0, 0
