@@ -299,6 +299,7 @@ csw
       subroutine b2mn_step(J)
       use b2mod_types
       use b2mod_b2cmpt
+      use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_user_namelist

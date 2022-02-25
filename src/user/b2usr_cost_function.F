@@ -146,7 +146,7 @@
               J(icf) = max(J(icf),st%pl%te(mpg%cfReg(iCv)))
             enddo
             J(icf) = J(icf)/ev
-          case (5) !max heat flux on desired FCs
+          case (5) !max heat flux density on desired FCs
             do iFc = ic1, ic2
               qq = 0.0
               iCv = min(mpg%fcCv(mpg%cfReg(iFc),1),
@@ -161,7 +161,7 @@
      &               (st%rt%rpt(iCv,is)*ev + 
      &               (1-BoRiS)*(st%dv%kinrgy(iCv,is)+st%pl%ti(iCv)))
               end do
-              qq = qq*mpg%cfFcOr(iFc)
+              qq = qq*mpg%cfFcOr(iFc)/geo%fcS(mpg%cfReg(iFc))
               J(icf) = max(J(icf),qq)*cfweight(icf)
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate

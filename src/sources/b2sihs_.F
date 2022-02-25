@@ -25,7 +25,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sihs_, ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
-     &           ncall_b2sifrtf
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          my_out_folder, ncall_b2sifrtf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17
