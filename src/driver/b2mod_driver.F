@@ -1901,7 +1901,7 @@ cwdk  set some integers
 #ifdef FIXED_POINT
       state0 = state
 ! $AD FP-LOOP "state"
-      do while (res_max.ge.res_quit)
+      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
 #else
     1 continue
 #endif
