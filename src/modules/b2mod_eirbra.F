@@ -5,15 +5,15 @@ c
 C     EIRENE TO BRAAMS
 c
       real (kind=R8), allocatable ::
-     ,  sni(:,:,:), smo(:,:,:), see(:,:), sei(:,:),
+     ,  sni(:,:,:), smo(:,:,:), see(:,:), sei(:,:,:),
      ,  sni_papl(:,:,:), sni_pmpl(:,:,:),
      ,  sni_pipl(:,:,:), sni_pppl(:,:,:),
      ,  smo_mapl(:,:,:), smo_mmpl(:,:,:),
      ,  smo_mipl(:,:,:), smo_cppv(:,:,:),
      ,  see_eael(:,:), see_emel(:,:),
      ,  see_eiel(:,:), see_epel(:,:),
-     ,  sei_eapl(:,:), sei_empl(:,:),
-     ,  sei_eipl(:,:), sei_eppl(:,:),
+     ,  sei_eapl(:,:,:), sei_empl(:,:,:),
+     ,  sei_eipl(:,:,:), sei_eppl(:,:,:),
      ,  fluxh(:,:),
      ,  srcstrn(:),
      ,  volsumn(:), volsumm(:), volsumei(:), volsumee(:),
@@ -36,7 +36,7 @@ C
       allocate(sni(ncv,nsd,nstrad))
       allocate(smo(ncv,nsd,nstrad))
       allocate(see(ncv,nstrad))
-      allocate(sei(ncv,nstrad))
+      allocate(sei(ncv,nsd,nstrad))
       allocate(sni_papl(ncv,nsd,nstrad))
       allocate(sni_pmpl(ncv,nsd,nstrad))
       allocate(sni_pipl(ncv,nsd,nstrad))
@@ -49,10 +49,10 @@ C
       allocate(see_emel(ncv,nstrad))
       allocate(see_eiel(ncv,nstrad))
       allocate(see_epel(ncv,nstrad))
-      allocate(sei_eapl(ncv,nstrad))
-      allocate(sei_empl(ncv,nstrad))
-      allocate(sei_eipl(ncv,nstrad))
-      allocate(sei_eppl(ncv,nstrad))
+      allocate(sei_eapl(ncv,nsd,nstrad))
+      allocate(sei_empl(ncv,nsd,nstrad))
+      allocate(sei_eipl(ncv,nsd,nstrad))
+      allocate(sei_eppl(ncv,nsd,nstrad))
       allocate(fluxh(10,nstrad))
       allocate(srcstrn(nstrad))
       allocate(volsumn(nstrad))
