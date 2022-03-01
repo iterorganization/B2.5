@@ -293,7 +293,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
      &    dv%flon,dv%conn)
 
-      endif
+
 
       if (switch%solve_keps.gt.0) then
 
