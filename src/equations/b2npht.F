@@ -237,13 +237,8 @@ c residuals for separate neutral energy equation
       if (switch % tn_style.eq.2) then   !! separate neutral energy equation
        if (any(solvnreg(0:nregionv)).or.switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
-        if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, denn, pl%tn, shn0, dv%fhn,
-     &     dv%reshn)
-        else
-          call xerrab('non-default energy equations not yet developed'// 
-     &                 'for mdf fluxes')
-        endif
+         call b2ursd (nCv, nFc, geo, mpg, denn, pl%tn, shn0, dv%fhn,
+     &               dv%reshn)
        endif
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation

@@ -113,7 +113,7 @@ c     output for analysis/debugging
       real (kind=R8) :: fmomni_out(nCv),fmomrefl_out(nCv),
      &                  fmomrec_out(nCv), feneni_out(nCv),
      &                  fenerefl_out(nCv), fenerec_out(nCv),
-     &                  fnni_out(nCv) 
+     &                  fnni_out(nCv), fnii_out(nCv), fn_mol_out(nCv)
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
       intrinsic abs, mod, exp
@@ -260,13 +260,27 @@ c     initialize debugging/analysis arrays
         fenerefl_out = 0.0_R8
         feneni_out   = 0.0_R8
         fnni_out     = 0.0_R8
+        fnii_out     = 0.0_R8
         fna_mol      = 0.0_R8  !nh 30.03.21
+        fn_mol_out   = 0.0_R8
+
+c erectc/mrecyc warning
+        do istra =1,nstrat
+          do is=0,ns-1
+            if(erecyc(is,istra)>0.0_R8.or.
+     &      mrecyc(is,istra)>0.0_R8) then
+             write(*,*)'kul_recycle incompatible with user-defined '//
+     &       'momentum and energy recycling coefficients > 0'
+            endif
+          enddo
+        enddo
 
         dnn = 0.0_R8
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       endif !! end pre-computations KUL fluid neutrals
 
+      
       do istra = 1, nstrat
 #ifdef WG_TODO
         sput_dst_bulk=targsp(istra,1)
@@ -516,6 +530,8 @@ c for KUL recycling/reflection model
         call my_out_us(70,nCv,0,feneni_out,'AFN_feneni')
         call my_out_us(70,nCv,0,fenerefl_out,'AFN_fenerefl')
         call my_out_us(70,nCv,0,fnni_out,'AFN_fnni')
+        call my_out_us(70,nCv,0,fnii_out,'AFN_fnii')
+        call my_out_us(70,nCv,0,fn_mol_out,'AFN_fn_mol')
       endif
 
 #ifdef WG_TODO
@@ -887,12 +903,9 @@ c   Nuclear Fusion 57.11 (2017): 116043.
            cosa = geo%fcQalf(iFc,0)
            sina = geo%fcQalf(iFc,1)
 
-
 !! end of preliminary calculations
-           if(erecyc(is,istra)>0.0_R8.or.
-     2      mrecyc(is,istra)>0.0_R8)
-     3     write(*,*)'recycle_afn incompatible with user-defined '//
-     4     'momentum and energy recycling coefficients > 0'
+
+    
 
            if (is.ne.is0) then !! ion species, recycling
 
@@ -938,6 +951,8 @@ cmb   net neutral energy source from recycling
              if (switch%AFN_out.ne.0) then
                fmomrec_out(iCv)   = fmomrec
                fenerec_out(iCv)   = fenerec
+               fnii_out(iCv)     = t0
+               fn_mol_out(iCv)   = fn_mol_out(iCv) + fna_mol(iFc,is)
              endif
 
            else !! this else belongs to "if(.not.(is.eq.is0))", hence 'is' will be neutral here
@@ -1073,6 +1088,7 @@ cnh  adding the reflected particle source (with the molecular part subtracted)
                feneni_out(iCv)   = feneni
                fenerefl_out(iCv) = fenerefl
                fnni_out(iCv)     = fnni
+               fn_mol_out(iCv)   = fn_mol_out(iCv) + fna_mol(iFc,is)
              endif
 
              smon = (fmomni+fmomrefl)*geo%cvhz(iCv)*
