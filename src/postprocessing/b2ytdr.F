@@ -4788,6 +4788,15 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 IF (streql(REAC,'0.8')) REAC='0.8T'
                 IF (streql(REAC,'7.0c') .and. streql(H123,'H.11'))
      .           REAC='7.0a'
+                ! Correct a common mass scaling error
+                IF (streql(REAC,'2.1.5')) idum(1)=1
+                IF (streql(REAC,'2.1.8')) idum(1)=1
+                IF (streql(REAC,'2.2.9')) idum(1)=2
+                IF (streql(REAC,'2.2.5g')) idum(1)=2
+                IF (streql(REAC,'2.2.10')) idum(1)=2
+              END IF
+              IF (streql(FILNAM,'HYDHEL')) THEN
+                IF (streql(REAC,'3.1.8')) idum(1)=1
               END IF
               WRITE(REAC_LINE(ILINE)(1:16),'(I3,A1,A6,A1,A4,A1)')
      .         IREAC1(I),' ',FILNAM,' ',H123,' '
