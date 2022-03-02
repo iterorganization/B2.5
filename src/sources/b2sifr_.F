@@ -135,8 +135,8 @@ csw 24sep2013
 *   ..compute vti32
       vti32 = geo%cvVol/((ti/ev)*sqrt(ti/ev))*geo%cvHz
 *   ..compute gti,gte
-      call grad_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
-      call grad_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
+      call gradc_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
 * ..compute friction
 *   ..initialise to 0
       smbch = 0.0_R8
