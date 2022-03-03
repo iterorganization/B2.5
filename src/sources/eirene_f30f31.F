@@ -69,8 +69,8 @@
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
       real (kind=R8) :: wght(nFc,2)
-      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fluid_frac_hyb(nFc),
-     &                             fnn_inc(nFc,0:ns-1)
+      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),
+     &                   fluid_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
