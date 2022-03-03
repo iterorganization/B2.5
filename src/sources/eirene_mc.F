@@ -79,15 +79,12 @@ csw 19oct2012, added save attribute!!!
 #endif
       integer use_recyceir
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
+     * recyc_hlp,vthe,t0,t0n,t1,t1n,rf0,dua,t2,t3,t4,f,
 #ifdef WG_RM
      * ndes, private_flux_puff, nesepm_sol,
      * nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
 #endif
-     * recyctmp, kin_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
-     * recyc_hlp,vthe,t0,t0n,t1,t1n,rf0,dua,t2,t3,t4,f,
-     * ndes, private_flux_puff, nesepm_sol,
-     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
+     * recyctmp,
      * kin_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
      * fluid_frac_hyb(nFc), !! only relevant for generalized spatially hybrid models
      * fnn_inc(nFc,0:ns-1) !! incident fluid neutral flux
