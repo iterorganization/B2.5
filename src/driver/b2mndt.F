@@ -395,10 +395,13 @@ ctmp.dpc
      &       geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st%sr, 
      &       st%srw, st_ext, st%psnc, st%psnl, ier0)
            flush(6)
+#ifdef WG_TODO
+! ier0 seems not appearing anymore in b2news. Additioanlly, irreducible loops should be avoided for Adjoint AD
            if(ier0.eq.10) then
              ierr=ier0
              goto 99999
            endif
+#endif
            call xertst (ier0.eq.0, 'error return from b2news')
 *!!      (should develop other error handling)
            ierr = ier0
@@ -567,7 +570,9 @@ ctmp.dpc
       if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
 
 * ..return
-99999 continue
+#ifdef WG_TODO
+99999 continue !remove if ierr=10 not supported anymore
+#endif
       ncall_b2mndt = ncall_b2mndt+1
       call subend ()
       return
