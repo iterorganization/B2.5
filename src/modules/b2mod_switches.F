@@ -499,6 +499,9 @@ c b2trno
 c Feedback
       integer :: b2stbc_feedback
 
+c Med
+      integer :: med_style
+
       end type switches
 
       contains
@@ -987,6 +990,9 @@ c b2stbc_phys
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
+
+c med
+      s % med_style = 0
 
       return
       end subroutine set_defaults_switches
@@ -1529,6 +1535,9 @@ c b2trno
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
 
+c Med
+      call ipgeti ('b2mndr_med_style', s%med_style)
+
       return
       end subroutine read_switches
 
@@ -1951,6 +1960,10 @@ c b2upco
 c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
+
+c med
+      call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
+     &  'faulty parameter b2mndr_med_style')
          
 
       return
@@ -1999,6 +2012,8 @@ c     *             vis_per .ne. 0.0_R8 .or.
 c     *             fch_stochastic .ne. 0.0_R8 .or.
 c     *             dia_cur .ne. 0.0e0_R8 .or. vis_par .ne. 0.0_R8, 
 c     *             'No radial current terms!') 
+      call xertst(s%fch_anomalous.ge.0.0_R8 .and. 
+     &  s%fch_anomalous.le.1.0_R8,' Invalid fch_anomalous')
 
 c spatially hybrid neutrals
       if(s%spatial_hybrid.ne.0.and.s%use_eirene.eq.0) then

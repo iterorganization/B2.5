@@ -70,8 +70,7 @@
      &  wrkc(nCv), wrkf(nFc,0:1),
      &  wrkv(nVx),                      !srv 02.06.99
      &  wrkc1(nCv),                                         !srv 28.08.02
-     &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1),
-     &  dumm0(nFc,0:1), dumm1(nFc,0:1)
+     &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1)
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)  !lk 31.01.08 }
       real (kind=R8) :: 
      *  shidu(nCv,0:3), shidd(nCv,0:3),               !srv 11.09.09 {

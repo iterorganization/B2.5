@@ -28,8 +28,9 @@
       real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
      *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
-     *  dist, distp, dint, sum,
+     *  dist, distp, dint,
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
+      integer sum
       character*16 hlp_frm
       logical wall_namelist_used, default_cooling, correct_quadrant
       logical error
@@ -430,7 +431,7 @@ cxpb For mixed materials, if unspecified, use normal material constituents
      1     matsurf_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))
         end if
 cxpb  normalise the layer constituents relative concentrations
-        sum = 0.0_R8
+        sum = 0
         do i = 1, layer_nconstituents(ibnd)
           sum = sum + layer_nrelconstituents(ibnd,i)
         enddo
@@ -939,7 +940,8 @@ cxpb Use 1-D equilibrium profile
       implicit none
       integer ns, nz, ibnd
       integer i, is, itrack, icoat
-      real (kind=R8) :: sum, sput_frac(0:ntrack)
+      real (kind=R8) :: sput_frac(0:ntrack)
+      integer :: sum
       logical surface_only, found
       character*24 filename
       integer, save :: ncall, hd_linlog, sput_frac_flag
@@ -1109,7 +1111,7 @@ cxpb  The first target element must be at least layer_depth thick
             call xerrab ('Deep bulk material surface file not found!')
           endif
 cxpb Normalise surface constituents
-          sum = 0.0_R8
+          sum = 0
           do i = 1, matsurf_nconstituents(ibnd)
             sum = sum + matsurf_nrelconstituents(ibnd,i)
           end do
