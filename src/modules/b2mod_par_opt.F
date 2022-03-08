@@ -24,7 +24,8 @@
       integer, save :: spatial_points(nvmx) = 0
       integer :: idd, ipp
       logical :: file_ok
-      real (kind=R8) :: typeold(nvmx), rangeold(nvmx,2), parold(nvmx,2)
+      real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
+      integer :: typeold(nvmx)
       private optimization
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
