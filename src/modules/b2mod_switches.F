@@ -1965,37 +1965,45 @@ c check the inter-consistency of different switches (e.g. certain combinations o
       implicit none
       type(switches), intent(in out) :: s
 
-       if (s % tn_style.ne.0.and.s % mdf_fhi.eq.1) then
-         call xerrab('mdf_fhi not yet available for'//
+      if (s % tn_style.ne.0.and.s % mdf_fhi.eq.1) then
+        call xerrab('mdf_fhi not yet available for'//
      &               'non-default energy equation')
-       endif
+      endif
 
-       if (s%pot_eq.ne.1.and.s%no_current.ne.1) then
-         call xerrab ('If b2news_poteq.ne.1,'// 
+      if (s%pot_eq.ne.1.and.s%no_current.ne.1) then
+        call xerrab ('If b2news_poteq.ne.1,'// 
      &                  'then b2tfhe_no_current must be 1!')
-       endif
+      endif
 
       if (s%tn_style.ne.0.and.s%stylec.ne.0) then
-        call xerrab('b2upht stylec =/= 0 not yet available for'//
+       call xerrab('b2upht stylec =/= 0 not yet available for'//
      &                  'non-default energy equation')
       endif
 
-       if(s%fch_pTe .eq. 1.0_R8) s%alfTeEh = 0.0_R8                          !srv 16.04.10
-       call xertst (.not.(0.0_R8.ne.s%alfTeEh.and.0.0_R8.ne.s%fch_pTe),
+      if(s%fch_pTe .eq. 1.0_R8) s%alfTeEh = 0.0_R8                          !srv 16.04.10
+      call xertst (.not.(0.0_R8.ne.s%alfTeEh.and.0.0_R8.ne.s%fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
 
-        call xertst (.not.(0.ne.s%b2tfnb_alpha.and.0.ne.s%b2tlc0_alpha),      !srv 14.10.09
+      call xertst (.not.(0.ne.s%b2tfnb_alpha.and.0.ne.s%b2tlc0_alpha),      !srv 14.10.09
      &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
      &   'from zero ') 
 
-c TODO
-c       call xertst(fch_ion_neutral .ne. 0.0e0_R8 .or. 
-c     *             fch_anomalous .ne. 0.0e0_R8 .or.
-c     *             vis_q .ne. 0.0_R8 .or. fch_inert .ne. 0.0_R8 .or.
-c     *             vis_per .ne. 0.0_R8 .or.
-c     *             fch_stochastic .ne. 0.0_R8 .or.
-c     *             dia_cur .ne. 0.0e0_R8 .or. vis_par .ne. 0.0_R8, 
-c     *             'No radial current terms!') 
+      if (s%pot_eq .eq. 1) call xertst(s%prl_cur .gt. 0.0e0_R8,
+     &  'No parallel current!')
+
+      if (s%pot_eq .eq. 1) then
+       call xertst(s%fch_ion_neutral .gt. 0.0e0_R8 .or. 
+     *             s%fch_anomalous .gt. 0.0e0_R8 .or.
+     *             s%fhe_vis_q .gt. 0.0_R8 .or.  !fnb/fhe?
+     *             s%fch_inert .gt. 0.0_R8 .or.
+     *             s%fhe_vis_per .gt. 0.0_R8 .or. !fnb/fhe?
+     *             s%fch_stochastic .gt. 0.0_R8 .or.
+     *             s%dia_cur .gt. 0.0e0_R8 .or. 
+     *             s%fhe_vis_par .gt. 0.0_R8, 
+     *             'No radial current terms!') 
+      endif
+      call xertst(s%fch_anomalous.ge.0.0_R8 .and. 
+     &  s%fch_anomalous.le.1.0_R8,' Invalid fch_anomalous')
 
 c spatially hybrid neutrals
       if(s%spatial_hybrid.ne.0.and.s%use_eirene.eq.0) then
@@ -2023,15 +2031,15 @@ c k-enstrophy model
       endif
 
 c b2stel
-       call xertst(.not.(adpak_used.and.s%fix_recomb_energy.ne.0),
+      call xertst(.not.(adpak_used.and.s%fix_recomb_energy.ne.0),
      &   'fix_recomb_energy should not be used with ADPAK rates!')
-       if(s%fix_recomb_energy.ne.0) then
+      if(s%fix_recomb_energy.ne.0) then
          write(*,*)
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
-       endif
+      endif
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
-       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
+      if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
 
       return
       end subroutine check_consistency_switches
