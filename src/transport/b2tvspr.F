@@ -9,9 +9,9 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : my_out_folder,
+     & , only : my_out_folder
 #ifdef WG_DEBUG
-     &          my_out_sf                                               !srv 27.06.21
+     &        , my_out_sf                                               !srv 27.06.21
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
