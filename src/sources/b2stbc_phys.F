@@ -3430,7 +3430,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),0)
 
-	        IF (BCCHAR(IB).EQ.'W') THEN
+            IF (BCCHAR(IB).EQ.'W') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) = 
      &               UBIG*profile(BC_LIST_Y(IY,IB),0)*
@@ -3460,6 +3460,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * The density is calculated by dividing this pressure by the 
 * temperature at the edge. This temperature is gotten from the 
 * variable, so it is not fixed.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
 * ---------------------------------------------------------------------
 
         case (29)
@@ -4588,7 +4590,7 @@ cxpb  and max(,,) statement for stability
 *     
 *     This boudary condition is build out of the temperatures, 
 *     density and parallel velocity profiles. These profiles may 
-*     be flat (bc=1), but also bccon=15,21, bceni=15 and bcene=15
+*     be flat (bc=1), but also bccon=28,30, bceni=15 and bcene=15
 *     could be applied. In case of non-flat profiles, if ***par(,,2) > 0.0, 
 *     the profiles of the individual bc's are taken, using ***par(,,1) as
 *     Ti, Te, Ni or ua, otherwise the profiles are used directly from the input file. 
@@ -4607,9 +4609,9 @@ cxpb  and max(,,) statement for stability
      1            MOMPAR(IS,IB,1),' on ',BCCHAR(IB),
      2           boundary_location(ib),' for species ',IS
           endif
-          call xertst(BCCON(IS,IB).eq.1.or.BCCON(IS,IB).eq.15
-     1         .or.BCCON(IS,IB).eq.21,
-     2         'BCMOM = 21, BCCON should be 1, 15 or 21!')
+          call xertst(BCCON(IS,IB).eq.1.or.BCCON(IS,IB).eq.28
+     1         .or.BCCON(IS,IB).eq.30,
+     2         'BCMOM = 21, BCCON should be 1, 28 or 30!')
 
           filename='../' // con_fn(ib)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
@@ -4644,7 +4646,7 @@ cxpb  and max(,,) statement for stability
             CALL XERRAB
      1       ('B2STBC -- BCMOM=19, OPTION NOT AVAILABLE FOR N,S')
           ENDIF
-		  
+
 * -- BCMOM=20 -- Parallel velocity with defined mach number.
 * ---------------------------------------------------------------------
 * This boundary condition is developed for use at the inlet 
@@ -9254,8 +9256,6 @@ cxpb Careful here because of BC number clash
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,enipar(ib,1),enipar(ib,2),0)
 
-				
-						   
           IF (BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)= 
@@ -9263,7 +9263,6 @@ cxpb Careful here because of BC number clash
      .             SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=
      &             -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
-				   
             ENDDO
           ELSEIF (BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
@@ -9274,20 +9273,12 @@ cxpb Careful here because of BC number clash
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
      .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
      &             LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
-										   
-										 
-					 
-				   
             ENDDO
-																	
-																
-																	 
-																		
           ENDIF
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=15, NOT AVAILABLE FOR N,S')
         ENDIF
-		
+
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
       case default
         write(*,*) BCENI(IB)
@@ -10203,9 +10194,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             ! current is converged for given potential, determine new potential
             currentCounter(ib) = 0
             potpar(ib, 2) = potpar(ib, 2) + potpar(ib, 1) * t0
-            WRITE (*, *) 'RCW: current, new:', 
-     *           currentNew(ib), potpar(ib,2)
-            WRITE (*, *) 'RCW: potential, new:', 
+            WRITE (*, *) 'RCW: potential, current:', 
      *           potpar(ib,2), currentNew(ib)
           END IF
         ENDIF
