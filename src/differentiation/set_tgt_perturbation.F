@@ -1,4 +1,4 @@
-      subroutine set_tgt_perturbation(swtichdiff)
+      subroutine set_tgt_perturbation(switchdiff)
       use b2mod_types
       use b2mod_par_opt_diffv
       use b2mod_transport_namelist_diffv
@@ -6,7 +6,7 @@
       use b2mod_boundary_namelist_diffv
       use b2mod_switches_diffv
       implicit none
-      type(switches), intent(inout) :: switchdiff
+      type(switches_diffv), intent(inout) :: switchdiff
       integer :: idir, ii, ip, isigma
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
 !     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out

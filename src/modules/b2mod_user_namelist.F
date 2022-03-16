@@ -218,6 +218,13 @@ c***  Standard setup:
       call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+! Here we need to guarantee ordering of CVs. With classical grids the conversion 
+! is done such that CVs are ordered from left to right and bottom to top wrt 
+! the structured computational domain. With fully unstructured grids this is not guaranteed.
+! IDEA: project the cell center onto the segment and order CVs based on distance wrt one of the segment's extremes
+! SAME FOR IMP
+      call xertst(m%isClassicalGrid, 
+     & ' OMP list need to be revised for fully unstructured grids') 
       do ic=2,nomp
         if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
      & call xerrab('OMP LIST NOT SORTED')
@@ -606,7 +613,7 @@ c*** Set default values according to current species list
       ic = ic + 1 
       end do
       if (.not.found) write(*,*) ('Did not find separatrix location. '
-     &  // 'Check specification IMP in b2.user.paramters.')
+     &  // 'Check specification RZOMP in b2.user.paramters.')
       ifssep = 0 !flux surface of separatrix
       ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
       ic2 = omp(icsepomp) !cv of flux tube just outside sep
