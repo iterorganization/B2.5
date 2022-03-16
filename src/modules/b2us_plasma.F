@@ -1621,6 +1621,8 @@ cwdk move to dv
 
 *   ..read fluxes
       call cfrure (ninp, nFc*2*ns, st % dv % fna, 'fna')
+      call cfrure (ninp, nFc*2,    st % dv % fne, 'fne')
+      call cfrure (ninp, nFc*2,    st % dv % fni, 'fni')
       call cfrure (ninp, nFc*2,    st % dv % fhe, 'fhe')
       call cfrure (ninp, nFc*2,    st % dv % fhi, 'fhi')
       call cfrure (ninp, nFc*2,    st % dv % fhn, 'fhn')
@@ -1794,6 +1796,8 @@ cwdk move to dv
 
 *   ..save fluxes
       call cfwure (nout, nFc*2*ns, st % dv % fna, 'fna')
+      call cfwure (nout, nFc*2,    st % dv % fne, 'fne')
+      call cfwure (nout, nFc*2,    st % dv % fni, 'fni')
       call cfwure (nout, nFc*2,    st % dv % fhe, 'fhe')
       call cfwure (nout, nFc*2,    st % dv % fhi, 'fhi')
       call cfwure (nout, nFc*2,    st % dv % fhn, 'fhn')
