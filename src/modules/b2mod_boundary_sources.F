@@ -46,38 +46,38 @@
        implicit none
        integer nx, ny, ns
 
-       integer ib, is, ix, iy
-	 logical ltemp, lexist
+       integer is, ix, iy
+       logical lexist
 
          inquire(file='../bv_na.dat',exist=lexist)
          call xertst(lexist,'../bv_na.dat does not exist')
-	   open(70,file='../bv_na.dat')
-          read (70,*) (((bv_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-	   close(70)
+         open(70,file='../bv_na.dat')
+         read (70,*) (((bv_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+         close(70)
 
          inquire(file='../bv_ua.dat',exist=lexist)
          call xertst(lexist,'../bv_ua.dat  does not exist')
-	   open(70,file='../bv_ua.dat')
-          read (70,*) (((bv_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-	   close(70)
+         open(70,file='../bv_ua.dat')
+         read (70,*) (((bv_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+         close(70)
 
          inquire(file='../bv_te.dat',exist=lexist)
          call xertst(lexist,'../bv_te.dat  does not exist')
-	   open(70,file='../bv_te.dat')
-          read (70,*) ((bv_te(ix,iy),ix=-1,nx),iy=-1,ny)
-	   close(70)
+         open(70,file='../bv_te.dat')
+         read (70,*) ((bv_te(ix,iy),ix=-1,nx),iy=-1,ny)
+         close(70)
 
          inquire(file='../bv_ti.dat',exist=lexist)
          call xertst(lexist,'../bv_ti.dat  does not exist')
-	   open(70,file='../bv_ti.dat')
-          read (70,*) ((bv_ti(ix,iy),ix=-1,nx),iy=-1,ny)
-	   close(70)
+         open(70,file='../bv_ti.dat')
+         read (70,*) ((bv_ti(ix,iy),ix=-1,nx),iy=-1,ny)
+         close(70)
 
          inquire(file='../bv_po.dat',exist=lexist)
          call xertst(lexist,'../bv_po.dat does not exist')
-	   open(70,file='../bv_po.dat')
-          read (70,*) ((bv_po(ix,iy),ix=-1,nx),iy=-1,ny)
-	   close(70)
+         open(70,file='../bv_po.dat')
+         read (70,*) ((bv_po(ix,iy),ix=-1,nx),iy=-1,ny)
+         close(70)
  
       end subroutine read_boundary_sources
 

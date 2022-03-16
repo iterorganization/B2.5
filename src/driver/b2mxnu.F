@@ -1,5 +1,6 @@
       subroutine b2mxnu (n, funp, fun0, funq)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer n
       real (kind=R8) ::
@@ -24,7 +25,7 @@
       intrinsic min, max, abs
       real (kind=R8) ::
      *   med
-      external subini, subend, b2scopy
+      external b2scopy
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *     ------------------------------------------------------------------
 *     Must set eps to a small non-negative value. eps.eq.0 is safest,

@@ -11,10 +11,8 @@
       use b2mod_b2plot
       use b2mod_version
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
@@ -87,13 +85,10 @@
 *   ..local variables
       integer ninp(0:8), nout(0:6), nx1, ny1, idum(0:9)
       integer io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, cfruin
-      external b2ytdr, b2ytx0, ipsetc, ipgeti
+      external prgini, prgfin, xertst, cfopen, cfruin
+      external b2ytdr, b2ytx0, ipgeti
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56,57,58/
       data nout/60,61,62,63,64,65,66/
@@ -131,16 +126,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yt_mpi_child'
-      endif
-#endif
       call prgini ('b2yt')
 *   ..open files
       call cfopen (ninp(0),'b2yt.dat','old','formatted')
@@ -158,10 +143,10 @@
       call cfopen (nout(5),'b2yt.files','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fstate_version)				 !xpb
-      call cfverr (ninp(3), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(4), b2frates_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fstate_version)                            !xpb
+      call cfverr (ninp(3), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(4), b2frates_version)                            !xpb
       call cfverr (ninp(8), b2fparam_version)                            !xpb
 *   ..obtain nx, ny, ns from old state file
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')
@@ -211,10 +196,6 @@
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
       call prgfin ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yt'
 
 *-----------------------------------------------------------------------

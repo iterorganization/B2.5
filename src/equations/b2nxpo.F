@@ -63,7 +63,7 @@
           if(t1.gt.1.0_R8) then
             DO IY = 1, BC_LIST_SIZE(IB)
               write(*,*) ' Old potential, residual (W) : ',
-     .	       bc_list_x(iy,ib),bc_list_y(iy,ib),
+     .         bc_list_x(iy,ib),bc_list_y(iy,ib),
      .         po(bc_list_x(iy,ib),bc_list_y(iy,ib)),
      .         respo(bc_list_x(iy,ib),bc_list_y(iy,ib))
               vte = sqrt(bcint(te,nx,ny,iy,ib)/me)*
@@ -100,7 +100,7 @@
           if(t1.gt.1.0_R8) then
             DO IY = 1, BC_LIST_SIZE(IB)
               write(*,*) ' Old potential, residual (E) : ',
-     .	       bc_list_x(iy,ib),bc_list_y(iy,ib),
+     .         bc_list_x(iy,ib),bc_list_y(iy,ib),
      .         po(bc_list_x(iy,ib),bc_list_y(iy,ib)),
      .         respo(bc_list_x(iy,ib),bc_list_y(iy,ib))
               vte = sqrt(bcint(te,nx,ny,iy,ib)/me)*
@@ -148,7 +148,7 @@
         endif
         if(region(-1,iy,0).ne.0 .and. t1.gt.1.0_R8) then
           write(*,*) ' Old potential, residual (west) : ',
-     .	   iy,po(-1,iy),respo(-1,iy)
+     .     iy,po(-1,iy),respo(-1,iy)
 *    ..compute cell-faced quantities
           tef = (te(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &           te(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
@@ -200,7 +200,7 @@
         endif
         if(region(nx,iy,0).ne.0 .and. t1.gt.1.0_R8) then
           write(*,*) ' Old potential, residual (east) : ',
-     .	   iy,po(nx,iy),respo(nx,iy)
+     .     iy,po(nx,iy),respo(nx,iy)
 *    ..compute cell-faced quantities
           tef = (te(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &           te(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/

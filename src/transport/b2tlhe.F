@@ -2,6 +2,7 @@
      &  chvemx)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -20,7 +21,7 @@
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
-      external subini, subend, xertst, b2xvsg, ipgeti
+      external xertst, b2xvsg, ipgeti
       pit(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
       data ncall/0/, area_fix/3/, model/1/
@@ -65,9 +66,9 @@ cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same informa
 c           as case b2tqce_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhe), and 
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-	    chvemx(ix,iy) = cflme * gs(ix,iy,0) *
-     .	     (ne(ix,iy)*pit(ix,iy)*sqrt(t0/me)*t0 +
-     .	      ne(leftix(ix,iy),leftiy(ix,iy))*
+            chvemx(ix,iy) = cflme * gs(ix,iy,0) *
+     .       (ne(ix,iy)*pit(ix,iy)*sqrt(t0/me)*t0 +
+     .        ne(leftix(ix,iy),leftiy(ix,iy))*
      .        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/me)*t1)/
      .       ((ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*max(t0,t1))  
             if (area_fix.ge.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy,0)

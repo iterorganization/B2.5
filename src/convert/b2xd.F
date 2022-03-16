@@ -12,13 +12,11 @@
       use b2mod_transport
       use b2mod_anomalous_transport
       use b2mod_work
+      use b2mod_xerset
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -72,12 +70,9 @@
 
 *   ..local variables
       integer ninp(0:4), nout(0:2), io, nx, ny, ns, idum(0:9)
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2xddr
 *   ..initialise input/output units
       data ninp/50,51,52,53,54/
@@ -112,16 +107,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2xd_mpi_child'
-      endif
-#endif
       call prgini ('b2xd')
 *   ..open files
 c      call cfopen (ninp(0),'b2yp.dat','old','formatted')
@@ -190,10 +175,6 @@ c      call cfopen (ninp(0),'b2yp.dat','old','formatted')
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2xd'
 
 *-----------------------------------------------------------------------

@@ -24,9 +24,11 @@ c
       use b2mod_b2plot
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_subsys
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_clogau
+      use eirmod_cinit
 #endif
       implicit none
 
@@ -53,7 +55,7 @@ c
 
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 
 *=======================================================================
 *//COMPUTATION//
@@ -67,6 +69,8 @@ C
       do is = 0, ns-1
         if (.not.is_neutral(is)) nplsi = nplsi + 1
       end do
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'faulty argument ismain')
 
 #ifdef B25_EIRENE
 C
@@ -79,13 +83,8 @@ C
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-#ifndef HPUX
-      write(*,'(a,5i4)')
-     . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
-#else
-      write(*,'(a,5i4)')
-     . ' Dimensions in ftn44 = ',nnx,nny,natmi,nmoli,nioni
-#endif
+      write(*,'(3a,t27,5i5)')
+     . ' Dimensions in ',fort_lc,'44 = ',nnx,nny,natmi,nmoli,nioni
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -96,11 +95,7 @@ C
       allocate(ft44data(0:nx+1,0:ny+1))
       filename='input.dat'
       call find_file(filename,ex)
-#ifndef HPUX
-      filename='fort.33'
-#else
-      filename='ftn33'
-#endif
+      filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
 c
 * labels
@@ -112,12 +107,9 @@ C
         call strip_spaces(charns)
         atoms_list(is)=charns(1:2)
    11 CONTINUE
-      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
-#ifndef HPUX
-      write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
-#else
-      write(*,hlp_frm) 'atoms_list (ftn44) : ', atoms_list(1:natmi)
-#endif
+      write(hlp_frm,'(a7,i3,a8)') '(1x,3a,',natmi,'(a2,1x))'
+      write(*,hlp_frm) 'atoms_list (',fort_lc,'44) : ',
+     . (trim(atoms_list(is)),is=1,natmi)
 C
 * neutral molecules
 C
@@ -172,49 +164,49 @@ C
 C
       do 114 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
- 114  CONTINUE
+  114 CONTINUE
 
 * neutral molecules radial particle flux
 C
       do 115 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
- 115  CONTINUE
+  115 CONTINUE
 
 * neutral atom poloidal particle flux
 C
       do 214 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
- 214  CONTINUE
+  214 CONTINUE
 
 * neutral molecules poloidal particle flux
 C
       do 215 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
- 215  CONTINUE
+  215 CONTINUE
 
 * neutral atom radial energy flux
 C
       do 314 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
- 314  CONTINUE
+  314 CONTINUE
 
 * neutral molecules radial energy flux
 C
       do 415 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
- 415  CONTINUE
+  415 CONTINUE
 
 * neutral atom poloidal energy flux
 C
       do 514 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
- 514  CONTINUE
+  514 CONTINUE
 
 * neutral molecules poloidal energy flux
 C
       do 515 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
- 515  CONTINUE
+  515 CONTINUE
 
       call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
       call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
@@ -387,6 +379,12 @@ cank-960727
         if (jvft44 .ge. 20170328) then
           call rdneutrs(44,wldspta,natmi)
           call rdneutrs(44,wldsptm,nmoli)
+          do j = 1, natmi
+            eirspta(j) = sum(wldspta(:,j,0))
+          enddo
+          do j = 1, nmoli
+            eirsptm(j) = sum(wldsptm(:,j,0))
+          enddo
         end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
@@ -466,11 +464,24 @@ cank
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
      ,                          i=1,nstsi)
+
+          do j=1,k+nplsi
+            eirpump(j) = sum(wlpump(j,:))
+          end do
         end if
 
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
+          end do
+        end if
+
+        if(jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
           end do
         end if
 
@@ -487,6 +498,7 @@ cank
             IF(.NOT.ALLOCATED(wldna_res))
      >         ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
      .                  ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL),
+     .                  ewldt_res(NCL),
      .                  ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL),
      .                  ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                  wldspt_res(NCL), sarea_res(NCL),
@@ -543,6 +555,10 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
             end if
+            if (jvft44.ge.20201006) then
+              call read_title(44)
+              read(44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
+            end if
           ELSE
             call read_title(44)
             READ (44,1028)
@@ -577,6 +593,10 @@ cank
               READ (44,1028)
               call read_title(44)
               READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+            end if
+            if (jvft44.ge.20201006) then
               call read_title(44)
               READ (44,1028)
             end if
@@ -615,11 +635,19 @@ cank
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
         end if
- 999    continue
+  999   continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
+          end do
+        end if
+        if(jvft44 .ge. 20180323) then
+          do is = 1, nmoli
+            call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
+          end do
+          do is = 1, nioni
+            call gfsub2(44,ndx,ndy,nnx,nny,eionrad(:,:,is,0))
           end do
         end if
       end if
@@ -643,20 +671,25 @@ cc<<<
       call extend(pefluxm,ndx,ndy,nmol,nnx,nny,nmoli)
       call extend(emiss,ndx,ndy,1,nnx,nny,1)
       call extend(emissmol,ndx,ndy,1,nnx,nny,1)
+cxpb We do not extend the volumetric losses quantities
 cank 960511
-      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
-      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
+cxpb
+cxpb 20180323
 cxpb
       deallocate(ft44data)
-#endif
+ 1028 format()
       NFEND = 1
+   99 CONTINUE
+#endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
- 1028 format()
 C
       call subend ()
       RETURN

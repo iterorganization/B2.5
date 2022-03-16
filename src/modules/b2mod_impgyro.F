@@ -2,20 +2,34 @@
 
       use b2mod_external
 
+#if MPI_MOD > 0
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
-      private
-
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
-
-      integer::mpi_err,mpi_stat,mpi_dum
-      integer::mpi_rank,mpi_size,mpi_local
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
+#endif
+#endif
+      private
 
-      integer::mpi_err,mpi_stat,mpi_dum
-      integer::mpi_rank,mpi_size,mpi_local
+#ifdef USE_MPI
+      integer :: mpi_err,mpi_stat(mpi_status_size)
+      integer :: mpi_rank,mpi_size,mpi_local
+#else
+#ifdef USE_IMPGYRO
+      integer :: mpi_err,mpi_stat(mpi_status_size)
+      integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
 
@@ -44,16 +58,21 @@
       use b2mod_elements
       implicit none
       integer nxd,nyd,nsd,ismain
-      integer is,iss,is1,ix,iy,len
+      integer is,iss,ix,iy
       integer, save::ikmn,ikmx
       real(kind=R8), allocatable::pdum (:), pot(:)
       character*256 filename
       logical open_file
-      integer lnblnk
-      external xertst, xerrab, open_file, lnblnk
+      external xertst, xerrab, open_file
       logical brestarted
       integer fd
  
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
+      call xertst (0.le.ismain.and.ismain.lt.nsd,
+     * 'faulty argument ismain')
+
       filename='use_impgyro'
       call find_file(filename,use_impgyro)
       if ( .not. use_impgyro ) return
@@ -303,7 +322,7 @@ cxpb
 
       integer,intent(in)::nx,ny,ns,ns_ext
 
-      real(8),intent(in)::
+      real(kind=R8),intent(in) ::
      &  bb (-1:nx,-1:ny,0:3),
      &  na (-1:nx,-1:ny,0:ns-1),
      &  ne (-1:nx,-1:ny),
@@ -316,7 +335,7 @@ cxpb
      &  fhi (-1:nx,-1:ny,0:1),
      &  fch (-1:nx,-1:ny,0:1)
 
-      real(8),intent(out)::
+      real(kind=R8),intent(out) ::
      &  sna_ext (-1:nx,-1:ny,0:ns-1),
      &  sne_ext (-1:nx,-1:ny),
      &  smo_ext (-1:nx,-1:ny,0:ns-1),

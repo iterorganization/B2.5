@@ -6,6 +6,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -36,7 +37,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   roxa
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvfx
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation

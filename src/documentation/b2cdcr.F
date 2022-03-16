@@ -332,7 +332,11 @@
 *     to the electron-atom collision processes of ionisation,
 *     recombination, and radiation.
 *
-*     B2TBFL computes the total flux through the boundaries
+*     B2TANML computes the X and Y components of the anomalous current
+*     for each species and calculates the X and Y components of
+*     the total anomalous current.
+*
+*     B2TBFL computes the total flux through the boundaries.
 *
 *     B2TDIA computes the X and Y components of the divergent part of
 *     the diamagnetic current
@@ -730,9 +734,9 @@
 *     SUBXND is employed to build down the stack when the program
 *     is terminated because of an error condition.
 *
-*     IPMAIN is a group of routines (entry points in ipmain) that
-*     operate on a collection of names and values representing 
-*     "internal parameters" in a code. The entry points are ipsetc, 
+*     IPMAIN is a group of routines that
+*     operate on a collection of names and values representing
+*     "internal parameters" in a code. The entry points are ipsetc,
 *     ipgetc, and ipfini.
 *     IPSETC saves the value of an internal parameter.
 *     IPGETC returns the value of an internal parameter.
@@ -840,20 +844,20 @@
 *
 *   ..2d Auxiliary routines for discretised PDEs
 *
-*     ILU5F computes the ILU factorisation of a 2d-5point matrix.
+*     ILU5F computes the ILU factorisation of a 2d 5-point matrix.
 *
-*     ILU5G computes the ILU factorisation of a 2d-5point matrix and
+*     ILU5G computes the ILU factorisation of a 2d 5-point matrix and
 *     applies the factors for one iteration of an update equation.
 *
 *     ILU5S solves an equation of the form L*U*x=r, where L and U are
-*     the factors in an ILU factorisation of a 2d-5point matrix.
+*     the factors in an ILU factorisation of a 2d 5-point matrix.
 *
 *     ILUTER performs a number of iterations of the Stone strongly
 *     implicit procedure for a system of equations of five-point form.
 *
-*     SIP5F computes the SIP-ILU factorisation of a 2d-5point matrix.
+*     SIP5F computes the SIP-ILU factorisation of a 2d 5-point matrix.
 *
-*     SIP5G computes the SIP-ILU factorisation of a 2d-5point matrix,
+*     SIP5G computes the SIP-ILU factorisation of a 2d 5-point matrix,
 *     and applies the factors for one iteration of an update equation.
 *
 *     SLV5PT solves a five-point system of equations by a direct

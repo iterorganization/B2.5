@@ -12,7 +12,7 @@
       use b2mod_constants
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra
@@ -103,7 +103,7 @@ c*** Global values
      ,     (equg_tmp(7),  hlp_zefs), (equg_tmp(8),  hlp_zefn),
      ,     (equg_tmp(9),  hlp_brms), (equg_tmp(10), hlp_rdim),
      ,     (equg_tmp(11), hlp_rdnu), (equg_tmp(12), hlp_rdtt)
-      character hlp_hg(nglb_tmp)*8
+      character*8 hlp_hg(nglb_tmp)
 c
 c*** Values by regions
       integer nrgn_tmp, nrg_tmp, nr_tmp
@@ -125,7 +125,7 @@ c*** Values by regions
      , (equr_tmp(1,7), eesum),     (equr_tmp(1,8), eisum),
      , (equr_tmp(1,9), kisum),
      , (equr_tmp(1,10), nesum),    (equr_tmp(1,11), volsum)
-      character*2 hlp_hr(nrgn_tmp)*8
+      character*8 hlp_hr(nrgn_tmp)
 c
 c*** Values by species
       integer nspc_tmp, nsp_tmp, ns_tmp
@@ -136,7 +136,7 @@ c*** Values by species
       real (kind=R8) ::
      *     ssni_tmp(DEF_NATM), Natm_tmp(DEF_NATM)
       equivalence (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp)
-      character*2 hlp_hs(nspc_tmp)*8
+      character*8 hlp_hs(nspc_tmp)
 
 c*** added 20010716
 c#ifdef SCL_IMP_RCI
@@ -147,7 +147,7 @@ c    *     equs1_tmp(nsd,nspc1_tmp)
 c      real(kind=R8) ::
 c    *      rrci_tmp(nsd)
 c      equivalence (equs1_tmp(1,1), rrci_tmp)
-c      character*2 hlp_hs1(nspc_tmp)*8
+c      character*8 hlp_hs1(nspc_tmp)
 c#endif
 c
 c*** Values by species and regions
@@ -164,7 +164,7 @@ c*** Values by species and regions
       equivalence 
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
-      character*2 hlp_ha(nsar_tmp)*8
+      character*8 hlp_ha(nsar_tmp)
 c
 c*** Values by strata
       integer nstr_tmp, nf_tmp, nfl_tmp
@@ -201,7 +201,10 @@ c*** Local variables of general use
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm,imol ! IYS 29.09.2017
+      integer iatm
+#ifdef B25_EIRENE
+      integer imol ! IYS 29.09.2017
+#endif
 c#ifdef SCL_IMP_RCI
 c     integer iy
 c#endif
@@ -758,10 +761,8 @@ c
 c=======================================================================
 c#ifndef SCL_IMP_RCI
   700 format('#   ',10i8/'#  ',a)
-  701 format(a1,3x,10i8)
 c#else
 c  700 format('#   ',11i8/'#  ',a)
-c  701 format(a1,3x,11i8)
 c#endif
 c=======================================================================
       end subroutine b2wrint

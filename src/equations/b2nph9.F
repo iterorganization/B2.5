@@ -15,6 +15,7 @@
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
@@ -94,7 +95,7 @@
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, lwget, b2saxpy
+      external xertst, ipgetr, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
       data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/
@@ -148,8 +149,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
         call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')          !srv 02.01.07
@@ -252,23 +253,23 @@ cdjm Jan2017 update particle source components for balance
 !        call my_out(70,nx,ny,te,'b2nph9_te_input')
 !        call my_out(70,nx,ny,ti,'b2nph9_ti_input')
 !        call my_out(70,nx,ny,po,'b2nph9_po_input')
-	call my_out(70,nx,ny,reshe,'b2nph9_reshe')
-	call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2nph9_fhex')
-	call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2nph9_fhey')
-	call my_out(70,nx,ny,fhe(-1,-1,0,1),'b2nph9_fhexy')
-	call my_out(70,nx,ny,fhe(-1,-1,1,0),'b2nph9_fheyx')
+        call my_out(70,nx,ny,reshe,'b2nph9_reshe')
+        call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2nph9_fhex')
+        call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2nph9_fhey')
+        call my_out(70,nx,ny,fhe(-1,-1,0,1),'b2nph9_fhexy')
+        call my_out(70,nx,ny,fhe(-1,-1,1,0),'b2nph9_fheyx')
         call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
         call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
         call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
         call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                   she0(:,:,3)*te*ne
-	call my_out(70,nx,ny,wrk0,'b2nph9_she')
-	call my_out(70,nx,ny,reshi,'b2nph9_reshi')
-	call my_out(70,nx,ny,fhi(-1,-1,0,0),'b2nph9_fhix')
-	call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2nph9_fhiy')
-	call my_out(70,nx,ny,fhi(-1,-1,0,1),'b2nph9_fhixy')
-	call my_out(70,nx,ny,fhi(-1,-1,1,0),'b2nph9_fhiyx')
+        call my_out(70,nx,ny,wrk0,'b2nph9_she')
+        call my_out(70,nx,ny,reshi,'b2nph9_reshi')
+        call my_out(70,nx,ny,fhi(-1,-1,0,0),'b2nph9_fhix')
+        call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2nph9_fhiy')
+        call my_out(70,nx,ny,fhi(-1,-1,0,1),'b2nph9_fhixy')
+        call my_out(70,nx,ny,fhi(-1,-1,1,0),'b2nph9_fhiyx')
         call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
         call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
         call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')

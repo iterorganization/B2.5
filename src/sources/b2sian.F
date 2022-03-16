@@ -9,6 +9,8 @@
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
      & , only : b2sian_smo0to3, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -38,10 +40,11 @@
       real (kind=R8) ::
      *    phm0
       save ncall, phm0
+      !$OMP THREADPRIVATE(ncall, phm0, iout)
 *   ..procedures
       real (kind=R8) ::
      *   hy1
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialization
@@ -57,6 +60,13 @@
       if (ncall.eq.0) then
        call ipgetr ('b2sian_phm0', phm0)
        call ipgeti ('b2sian_iout', iout)
+        if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2SIAN OpenMP warning: no file output in ',
+     &              'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

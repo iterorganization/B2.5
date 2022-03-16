@@ -16,6 +16,9 @@ c----------------------------------------------------------------------
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
 c
@@ -42,7 +45,7 @@ c
         end if
         k1=k1+i+1
       end do
- 10   continue
+   10 continue
       do j=1,natmi
         print *,j,' :',textan(j-1)
         stmp=textan(j-1)

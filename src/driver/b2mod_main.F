@@ -22,13 +22,27 @@
       use b2mod_b2_to_astra
       use b2mod_astra_to_b2
       use b2mod_external
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_xerset
+#if MPI_MOD > 0
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
-#     include <git_version_B25.h>
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
 #endif
 #endif
 
@@ -149,9 +163,12 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
 #endif
+      character*32 B25_git_version
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      character*32 get_B25_hash
+      external get_B25_hash
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
 #ifdef JET
@@ -193,7 +210,7 @@ csw
       endif
 #else
 #ifdef USE_IMPGYRO
-      write(*,*) 'b2ig: running B25EIRENE'
+      write(*,*) 'b2ig: running B2.5-EIRENE'
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
@@ -201,6 +218,9 @@ csw
 #endif
 #endif
 
+#ifdef WITH_FTIMINGS
+      call timer%enable()
+#endif
       call prgini ('b2mn')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -218,13 +238,14 @@ csw
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
+*   ..obtain version numbers                                             !xpb
+      B25_git_version = get_B25_hash()
       call cfverw (nout(0), newversion)
       write(6,'(4a)')
-     &  'Running with VERSION ',newversion,' ', git_version_B25
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstati_version)				 !xpb
+     &  'Running with VERSION ',newversion,' ', trim(B25_git_version)
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstati_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -319,6 +340,22 @@ csw
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
       call prgend ()
+
+#ifdef WITH_FTIMINGS
+      write(*,'(a)') "####"
+      write(*,'(a)') "# Full Timings"
+      call timer%print("b2mn")
+      write(*,'(a)') "#"
+      write(*,'(a)') "####"
+      write(*,*)
+
+      write(*,'(a)') "####"
+      write(*,'(a)') "# Sorted timings, not listing entries < 0.5s"
+      call timer%sort()
+      call timer%print("b2mn", threshold=0.5_R8)
+      write(*,'(a)') "#"
+      write(*,'(a)') "####"
+#endif
 
 #ifdef USE_MPI
 #ifdef B25_EIRENE

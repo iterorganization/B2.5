@@ -23,16 +23,21 @@ c
       use b2mod_b2plot
       use b2mod_b2cmfs
       use b2mod_constants
+      use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cestim
+      use eirmod_cinit
       use eirmod_comusr
      , , only: eirene_alloc_comusr
       use eirmod_coutau
      , , only: eirene_alloc_coutau
+#else
+      use b2mod_eirbra
 #endif
+      use b2mod_subsys
       implicit none
 
 *  -- LOCAL SCALARS --
@@ -44,11 +49,8 @@ c
 #endif
 
 *  -- PROCEDURES --
-      external subini, subend
 #ifdef B25_EIRENE
       external ipgetr, xertst
-      real (kind=R8) :: triangleArea
-      external triangleArea
 *   ..initialisation
       data width /1.0_R8/
       save width
@@ -72,11 +74,7 @@ C
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
 
-#ifndef HPUX
-      filename='fort.46'
-#else
-      filename='ftn46'
-#endif
+      filename=fort_lc//'46'
       call find_file(filename,ex)
       if (.not.ex) then
         call subend ()
@@ -105,11 +103,8 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
         WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
         WRITE (*,*) ' IN ELEMENTS AND NEIGHBOR FILES'
         WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
-#ifndef HPUX
-        call xerrab('Mismatch between fort.34 and fort.35 files!')
-#else
-        call xerrab('Mismatch between ftn34 and ftn35 files!')
-#endif
+        CALL XERRAB
+     .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'35 files!')
       END IF
 
       CALL EIRENE_ALLOC_CTRIG
@@ -125,11 +120,7 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
       IF(IO.GT.0) THEN
 C TO READ THE FILE PRODUCED BY DOS
-#ifndef HPUX
-        WRITE(*,*) "Cannot read fort.33 in regular way"
-#else
-        WRITE(*,*) "Cannot read ftn33 in regular way"
-#endif
+        WRITE(*,*) "Cannot read "//fort_lc//"33 in regular way"
         WRITE(*,*) "Trying to read line by line..."
         REWIND 33
         READ(33,*) NRKNOT
@@ -166,31 +157,8 @@ C
         xtrian(i)=xtrian(i)/100.0_R8
         ytrian(i)=ytrian(i)/100.0_R8
       end do
-      do i=1,ntrii
-        triangle_area(i)=triangleArea(
-     .   xtrian(necke(1,i)), ytrian(necke(1,i)),
-     .   xtrian(necke(2,i)), ytrian(necke(2,i)),
-     .   xtrian(necke(3,i)), ytrian(necke(3,i)))
-      end do
-      if (isymm.eq.0) then ! slab geometry
-        do i=1,ntrii
-          triangle_vol(i)=triangle_area(i)*width
-        end do
-      else if (isymm.eq.1 .or. isymm.eq.2) then
-*    ..case of rotational symmetry about crx=0 axis
-        do i=1,ntrii
-          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
-     .     (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
-     .      3.0_R8
-        end do
-      else if (isymm.eq.3 .or. isymm.eq.4) then
-*    ..case of rotational symmetry about cry=0 axis
-        do i=1,ntrii
-          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
-     .     (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/
-     .      3.0_R8
-        end do
-      end if
+      call compute_triangle_area
+      call compute_triangle_vol
   
       rewind (46)
 C
@@ -199,20 +167,12 @@ C
         WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
         WRITE (*,*) ' IN GRID AND DATA FILES'
         WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
-#ifndef HPUX
-        call xerrab('Mismatch between fort.34 and fort.46 files!')
-#else
-        call xerrab('Mismatch between ftn34 and ftn46 files!')
-#endif
+        call xerrab
+     .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
-#ifndef HPUX
-      write(*,'(a,4i6)')
-     . ' Dimensions in fort.46 = ',ntrii,natmi,nmoli,nioni
-#else
-      write(*,'(a,4i6)')
-     . ' Dimensions in ftn46 = ',ntrii,natmi,nmoli,nioni
-#endif
+      write(*,'(3a,4i6)')
+     . ' Dimensions in ',fort_lc,'46 = ',ntrii,natmi,nmoli,nioni
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -240,47 +200,47 @@ C
 * densities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * average energies
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * X-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * Y-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * Z-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,max(natmi,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,max(nmoli,1))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,max(nioni,1))
 
 * Volumes
 C
@@ -303,10 +263,10 @@ C
         call read_title(46)
         read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
       end if
+   99 CONTINUE
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
 C
       call subend ()
       RETURN
@@ -314,32 +274,82 @@ C
 *=======================================================================
 *//END NTREAD//
 
-#ifndef HPUX
-1983  WRITE(*,*)
-     w     "ERROR IN NTREAD: CANNOT OPEN FORT.33 ",
+#ifdef B25_EIRENE
+ 1983 WRITE(*,*)
+     w     "ERROR IN NTREAD: CANNOT OPEN "//FORT//"33 ",
      .     "(NODES OF TRIANGULAR GRID)"
-      call xerrab('Cannot open fort.33 file!')
-1984  WRITE(*,*)
-     w     "ERROR IN NTREAD: CANNOT OPEN FORT.34 ",
+      call xerrab('Cannot open '//fort_lc//'33 file!')
+ 1984 WRITE(*,*)
+     w     "ERROR IN NTREAD: CANNOT OPEN "//FORT//"34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open fort.34 file!')
-1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FORT.35 ",
+      call xerrab('Cannot open '//fort_lc//'34 file!')
+ 1985 WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN "//FORT//"35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open fort.35 file!')
-#else
-1983  WRITE(*,*)
-     w     "ERROR IN NTREAD: CANNOT OPEN FTN33 ",
-     .     "(NODES OF TRIANGULAR GRID)"
-      call xerrab('Cannot open ftn33 file!')
-1984  WRITE(*,*)
-     w     "ERROR IN NTREAD: CANNOT OPEN FTN34 ",
-     .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open ftn34 file!')
-1985  WRITE(*,*) "ERROR IN NTREAD: CANNOT OPEN FTN35 ",
-     .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open ftn35 file!')
+      call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
-      END
+      END SUBROUTINE NTREAD
+
+#ifdef B25_EIRENE
+      subroutine compute_triangle_area
+      use b2mod_b2plot
+      use b2mod_indirect
+      use eirmod_ctrig
+      implicit none
+      integer i
+
+      do i=1,ntrii
+        triangle_area(i)=triangleArea(
+     .   xtrian(necke(1,i)), ytrian(necke(1,i)),
+     .   xtrian(necke(2,i)), ytrian(necke(2,i)),
+     .   xtrian(necke(3,i)), ytrian(necke(3,i)))
+      end do
+      return
+      end subroutine compute_triangle_area
+
+      subroutine compute_triangle_vol
+      use b2mod_types
+      use b2mod_b2cmfs
+      use b2mod_b2plot
+      use b2mod_constants
+      use eirmod_ctrig
+      implicit none
+      integer i
+      real (kind=R8) :: width
+*   ..initialisation
+      data width /1.0_R8/
+      save width
+*   ..procedures
+      external ipgetr, xertst
+
+*   ..read input data
+      call ipgetr ('b2agmt_1d_width', width)
+      call xertst (0.0_R8.lt.width, 'faulty input width')
+*   ..test isymm
+      call xertst (0.le.isymm.and.isymm.le.4,
+     &  'faulty argument isymm')
+
+      if (isymm.eq.0) then ! slab geometry
+        do i=1,ntrii
+          triangle_vol(i)=triangle_area(i)*width
+        end do
+      else if (isymm.eq.1 .or. isymm.eq.2) then
+*    ..case of rotational symmetry about crx=0 axis
+        do i=1,ntrii
+          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .     (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
+     .      3.0_R8
+        end do
+      else if (isymm.eq.3 .or. isymm.eq.4) then
+*    ..case of rotational symmetry about cry=0 axis
+        do i=1,ntrii
+          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .     (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/
+     .      3.0_R8
+        end do
+      end if
+      return
+      end subroutine compute_triangle_vol
+#endif
 
 
 

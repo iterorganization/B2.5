@@ -64,7 +64,13 @@
      *  ext_sne(:,:),
      *  ext_she(:,:),
      *  ext_shi(:,:),
-     *  ext_sch(:,:)
+     *  ext_sch(:,:),
+     &  sna0_eir_tot(:,:,:),
+     &  smo0_eir_tot(:,:,:),
+     &  she0_eir_tot(:,:),
+     &  shi0_eir_tot(:,:),
+     &  sne0_eir_tot(:,:),
+     &  sch0_eir_tot(:,:)
       real (kind=R8), allocatable, save ::                             !srv 11.09.09 16.07.10
      *  snasm(:,:,:,:), smosm(:,:,:,:), 
      &  shesm(:,:,:), shism(:,:,:),
@@ -139,6 +145,13 @@
       allocate(ext_she(-1:nxd,-1:nyd))
       allocate(ext_shi(-1:nxd,-1:nyd))
       allocate(ext_sch(-1:nxd,-1:nyd))
+      allocate(sna0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(smo0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(she0_eir_tot(-1:nxd,-1:nyd))
+      allocate(shi0_eir_tot(-1:nxd,-1:nyd))
+      allocate(sne0_eir_tot(-1:nxd,-1:nyd))
+      allocate(sch0_eir_tot(-1:nxd,-1:nyd))
+
       allocate(snedt(-1:nxd,-1:nyd,0:1))
       allocate(schdt(-1:nxd,-1:nyd,0:3))                        !srv 16.07.10 {
       allocate(shedt(-1:nxd,-1:nyd,0:3))
@@ -201,6 +214,12 @@
       ext_she=0.0_R8
       ext_shi=0.0_R8
       ext_sch=0.0_R8
+      sna0_eir_tot=0.0_R8
+      smo0_eir_tot=0.0_R8
+      she0_eir_tot=0.0_R8
+      shi0_eir_tot=0.0_R8
+      sne0_eir_tot=0.0_R8
+      sch0_eir_tot=0.0_R8
 
       return
       end subroutine alloc_b2mod_sources
@@ -269,6 +288,12 @@
       deallocate(ext_she)
       deallocate(ext_shi)
       deallocate(ext_sch)
+      deallocate(sna0_eir_tot)
+      deallocate(smo0_eir_tot)
+      deallocate(she0_eir_tot)
+      deallocate(shi0_eir_tot)
+      deallocate(sne0_eir_tot)
+      deallocate(sch0_eir_tot)
       deallocate(schdt)                        !srv 16.07.10 {
       deallocate(snedt)
       deallocate(shedt)
@@ -286,6 +311,7 @@
       subroutine read_b2mod_sources(nread)
       implicit none
       integer nread
+      external cfrure, cfrure_opt
 
       call cfrure (nread, size(sch), sch, 'sch')
       call cfrure (nread, size(she), she, 'she')
@@ -402,6 +428,7 @@
       implicit none
       integer nwrite
       character*3 source_name
+      external cfwure
 
       if (newversion.ge.'01.001.026') then
         source_name = 'sne'

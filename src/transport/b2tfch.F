@@ -18,6 +18,7 @@
       use b2mod_geo_corner                                      	 !xpb
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0, guard_flows                	 !xpb
@@ -94,7 +95,7 @@
       intrinsic max, abs, sqrt, log, mod                        	!xpb
       real (kind=R8) ::
      *   hybr
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
@@ -125,12 +126,13 @@
        call xertst (fch_anomalous.ne.0.0_R8
      &         .or.(fch_stochastic.ne.0.0_R8.and.sig_stoch.ne.0.0_R8)
      &         .or.(fch_inert.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
-     &         .or.(vis_q.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
-     &         .or.(vis_par.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8)
-     &         .or.(fch_ion_neutral.ne.0.0_R8
-     &                                 .and.maxval(facdrift).ne.0.0_R8)
+     &         .or.(vis_q.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8)
+     &         .or.(vis_par.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8)
+     &         .or.(fch_ion_neutral.ne.0.0_R8.and.
+     &                                (maxval(facdrift).ne.0.0_R8.or.
+     &                                 maxval(fac_ExB).ne.0.0_R8))
      &         .or.(maxval(facdrift).ne.0.0_R8.and.dia_cur.ne.0.0_R8)
-     &         .or.(vis_per.ne.0.0_R8.and.maxval(facdrift).ne.0.0_R8),
+     &         .or.(vis_per.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8),
      &         'No radial current terms activated!')                    !xpb
        call xertst (0.0_R8.le.dia_cur .and. 1.0_R8.ge.dia_cur,          !xpb
      &  'faulty argument dia_cur')                                      !xpb

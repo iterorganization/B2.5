@@ -11,6 +11,7 @@
       use b2mod_transport
       use b2mod_indirect
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny
@@ -76,7 +77,7 @@
       logical strmas
       real (kind=R8) ::
      *   crxc, cryc
-      external subini, subend, xertst, smin, smax, b2ssum, strmas
+      external xertst, smin, smax, b2ssum, strmas
       external b2xvgm
       intrinsic max
       crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+

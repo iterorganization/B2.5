@@ -9,6 +9,7 @@
       use b2mod_version
       use b2mod_b2cmgs
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny
@@ -106,6 +107,23 @@
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
 *
+*     hxb, hyl - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), hxb(ix,iy) and hyl(ix,iy) specify the
+*     x-diameter and the y-diameter, respectively, of the bottom and
+*     left faces of the (ix,iy) cell.
+*     It will hold that 0.lt.hxb(,) and 0.lt.hyl(,).
+*
+*     hz - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), hz(ix,iy) specifies the
+*     length along the toroidal direction of the (ix,iy) cell.
+*     It will hold that 0.lt.hz(,).
+*
+*     hzb, hzl - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), hzb(ix,iy) and hzl(ix,iy) specify the
+*     length along the toroidal direction, respectively, of the bottom and
+*     left faces of the (ix,iy) cell.
+*     It will hold that 0.lt.hzb(,) and 0.lt.hzl(,).
+*
 *     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
 *     specify the average width and height, respectively, of the (ix,iy) cell.
@@ -196,7 +214,7 @@
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
 
@@ -253,7 +271,7 @@ cxpb
        qc(:,:,1) = 1.0_R8
        qs(:,:,1) = 0.0_R8
        if(b2fgmtry_version.ge.'01.001.030') then
-	 call cfrure_opt (nget, n2, qc(-1,-1,1), 'qcb')
+         call cfrure_opt (nget, n2, qc(-1,-1,1), 'qcb')
        end if
        if (maxval(qc(:,:,1)).eq.1.0_R8 .and. 
      &     minval(qc(:,:,1)).eq.1.0_R8) then
@@ -318,8 +336,8 @@ cdpc
 cdpc-end
 cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
-	call cfruin (nget, 1, idum, 'periodic_bc')
-	periodic_bc=idum(0)
+        call cfruin (nget, 1, idum, 'periodic_bc')
+        periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
@@ -398,7 +416,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then
-	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+        call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
       endif
       if(maxval(cflags).eq.0) then
         cflags(1:nx-2,1:ny-2,CELLFLAG_TYPE) = GRID_INTERNAL
@@ -483,10 +501,12 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &     cell_width, cell_height)
 *   ..create B2GridMap data structure
-      call b2CreateMap(nx,ny,crx,cry,cflags,
-     &     leftix,leftiy,rightix,rightiy,
-     &     topix,topiy,bottomix,bottomiy,.true.,gmap)
-      mapInitialized = .true.
+      if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
+        call b2CreateMap(nx, ny, crx, cry, cflags,
+     &     leftix, leftiy, rightix, rightiy,
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .false.)
+        mapInitialized = .true.
+      endif
 
 * ..return
       call subend ()

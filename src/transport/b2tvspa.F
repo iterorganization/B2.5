@@ -10,6 +10,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -22,8 +23,7 @@
      1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                         !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &     fchvispar(-1:nx,-1:ny,0:1,0:1)
-*   ..common blocks
+     &  fchvispar(-1:nx,-1:ny,0:1,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -41,6 +41,7 @@
       
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is
+      integer, save :: no_current = 0
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
@@ -49,12 +50,12 @@
       save ncall, vis_par
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *   ..initialization
-      data ncall/0/, vis_par/1.0e0_R8/
+      data ncall/0/, vis_par/1.0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -75,12 +76,14 @@
        do is = 0, ns-1
         call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')           !srv 16.10.17
        enddo
+        call ipgeti ('b2tfhe_no_current', no_current)
       endif
 
 c Drift terms
       fchvispar =0.0e0_R8                                                !srv 09.07.99
       dvpar=0.0e0_R8                                                     !srv 24.06.99
-      if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8) then        !srv
+      if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
+     &   no_current.eq.0) then
 *       compute gradients of OnedBsq on cell faces
         call grad(nx, ny, hx, hy, vol, qz, qs, OnedBsq, gOnedBsq)
         wght = 1.0_R8
@@ -91,9 +94,9 @@ c Drift terms
         do is = 0, ns-1                                                  !srv 24.06.99
           if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
      &        .not.is_neutral(is)) then                                  !srv 24.06.99
-	    do iy = -1, ny						 !srv 18.02.00
-              do ix = 0, nx
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02 23.07.05 {
+           do iy = -1, ny						 !srv 18.02.00
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02 23.07.05 {
 !             it has been considered that cvsa_cl was multiplied by bx**2
                   dvpar(ix,iy)=dvpar(ix,iy) +                            !srv 24.06.99
      &		     (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+ 
@@ -104,14 +107,14 @@ c Drift terms
      &                             -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &                        sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))   !srv 18.02.00 23.07.05 }
 !              dvpar(ix,iy)=dvpar(ix,iy)                                 !srv 24.06.99
-!     &		   + bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)           !srv
-!     &		   *cvsa_cl(ix,iy,0,0,is)*                               !srv 18.02.00
+!     &            + bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)           !srv
+!     &            *cvsa_cl(ix,iy,0,0,is)*                               !srv 18.02.00
 !     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)                     !srv
 !     &         *sqrt((bb(rightix(ix,iy),rightiy(ix,iy),3)               !srv 18.02.00
 !     &             +bb(ix,iy,3))*0.5e0_R8)                              !srv 18.02.00
 !     &         -ua(ix,iy,is)*sqrt((bb(leftix(ix,iy),leftiy(ix,iy),3)
 !     &             +bb(ix,iy,3))*0.5e0_R8))                             !srv 18.02.00
-	        endif                                                    !srv 26.11.02
+               endif                                                    !srv 26.11.02
               enddo							 !srv
             enddo							 !srv
 	  endif                                                          !srv 24.06.99
@@ -166,16 +169,16 @@ cwdk cancelation of some terms in poloidal and radial current components
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
-	DO IX=NXISO1(IB), NXISO2(IB)
-	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchvispar(ix,iy,0,0:1)=0.0e0_R8
-	  end do
-	end do
-	DO IX=NXISO1(IB), NXISO2(IB)
-	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchvispar(ix,iy,1,0:1)=0.0e0_R8
-	  end do
-	end do
+        DO IX=NXISO1(IB), NXISO2(IB)
+          DO IY=NYISO1(IB), NYISO2(IB)
+            fchvispar(ix,iy,0,0:1)=0.0e0_R8
+          end do
+        end do
+        DO IX=NXISO1(IB), NXISO2(IB)
+          DO IY=NYISO1(IB), NYISO2(IB)
+            fchvispar(ix,iy,1,0:1)=0.0e0_R8
+          end do
+        end do
       end do
 * ..return
       ncall = ncall+1

@@ -12,6 +12,8 @@
       use b2mod_b2cmpa
       use b2mod_balance                                               !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -19,13 +21,13 @@
      & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),                       !srv 01.07.09
-     2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1,0:1), 
+     2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1,0:1),
      & vbecrb(-1:nx,-1:ny,0:1,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),                  !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1,0:1), cvsbhz(-1:nx,-1:ny,0:1,0:1),             !srv 04.10.99 09.01.01
-     & cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)                                     !srv 31.07.02
+     & chci(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),             !srv 23.07.99
+     & cvsb_cl(-1:nx,-1:ny,0:1,0:1), cvsbhz(-1:nx,-1:ny,0:1,0:1),        !srv 04.10.99 09.01.01
+     & cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)                                    !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
@@ -50,12 +52,14 @@
       integer ncall, n2, ix, iy, k
       integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
+      !$OMP THREADPRIVATE(ncall, qstyle, lluciani, iout)
       character chns*3, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft                                                   !srv 16.10.17
       real (kind=R8), save ::
      &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
+      !$OMP THREADPRIVATE(addvis, addvis1, cqip1, cvsa_mltpl)
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
@@ -84,9 +88,16 @@
        call ipgetr ('b2siav_addvis1', addvis1)                      !srv 04.10.99
        call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2SIAV OpenMP warning: no file output in ',
+     &              'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
        call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
-       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
+       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -174,11 +185,11 @@
 
           if (qstyle.eq.1) then
 
-	    wrk0 = 0.0e0_R8
-            do iy=0,ny-1                                                 
-	      do ix=-1,nx                                                 
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02  
-	          wrk0(ix,iy)=-chci(ix,iy,0,0)
+            wrk0 = 0.0e0_R8
+            do iy=0,ny-1
+              do ix=-1,nx
+                if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
+                  wrk0(ix,iy)=-chci(ix,iy,0,0)
      &             *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
                 endif
               enddo

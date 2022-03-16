@@ -12,6 +12,17 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
+ifndef SOLPS_CPP
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
  opsys = hpux
  ifeq ($(HOST_NAME),NERSC)
   locale = nersc.gov
@@ -22,11 +33,11 @@ endif
   FCOPTS = -I4 -R4 +E4 -O
  endif
  ifeq ($(realkind),8)
-  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 \
-   -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal \
+   -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
   FCOPTS = -I4 -R8 +autodblpad +E4 -O
  endif
- EQUIVS += -DHPUX
+ DEFINES += -DHPUX
  FC = fort77
  CPP = /lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)

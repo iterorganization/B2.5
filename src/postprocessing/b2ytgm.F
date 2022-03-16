@@ -6,6 +6,7 @@
       use b2mod_geo2
       use b2mod_version
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -94,6 +95,11 @@
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx1(,) and 0.lt.hy1(,).
 *
+*     hz1 - (-1:nx1,-1:ny1) real*8 array, output.
+*     For (ix,iy) in (-1:nx1,-1:ny1), hz1(ix,iy) specifies the
+*     length along the toroidal direction of the (ix,iy) cell.
+*     It will hold that 0.lt.hz1(,).
+*
 *     qz1 - (-1:nx1,-1:ny1,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx1,-1:ny1), qz1(ix,iy,0) specifies sin(t) and
 *     qz1(ix,iy,1) specifies cos(t), where t is the complementary angle
@@ -179,7 +185,7 @@
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       sinang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 
 *-----------------------------------------------------------------------
@@ -365,7 +371,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..read extended grid cell flags
       cflags1 = 0
       if(b2fgmtry_version.ge.'01.001.028') then
-	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags1, 'cflags')
+        call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags1, 'cflags')
       endif
       if(maxval(cflags1).eq.0) then
         cflags1(1:nx1-2,1:ny1-2,CELLFLAG_TYPE) = GRID_INTERNAL
@@ -457,7 +463,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,
      &     leftix1,leftiy1,rightix1,rightiy1,
-     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1)
+     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1,.false.)
       map1Initialized = .true.
 
 * ..return

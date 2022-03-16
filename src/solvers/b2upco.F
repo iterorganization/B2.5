@@ -5,6 +5,7 @@
      &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub)
       use b2mod_indirect
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv
@@ -31,6 +32,7 @@
       integer ncall, ix, iy, ireg
 !      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       save ncall
+      !$OMP THREADPRIVATE (ncall)
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -39,7 +41,7 @@
      *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2xxgs
+      external xertst, ipgetr, b2xxgs
 *   ..initialisation
       data ncall/0/
 

@@ -21,20 +21,21 @@
       filename='b2.transpbgr.parameters'
       call find_file(filename,file_ok)
       if(file_ok) then
-	open(99,file=filename)
-	write(*,*) 'Reading namelist transpbgr'
+        open(99,file=filename)
+        write(*,*) 'Reading namelist transpbgr'
 #ifdef USE_MPI
-	read(99,transpbgr,err=999)
+        read(99,transpbgr,err=999)
 #else
         read(99,transpbgr)
 #endif
-	write(*,*) 'Read namelist transpbgr'
+        write(*,*) 'Read namelist transpbgr'
       else
-	write(*,*) 'No b2.transpbgr.parameters file found'
+        write(*,*) 'No b2.transpbgr.parameters file found'
       endif
       return
-
- 999  call xerrab ('Error while reading TRANSPBGR namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading TRANSPBGR namelist!')
+#endif
       end subroutine read_b2mod_transpbgr_namelist
 
       subroutine write_b2mod_transpbgr_namelist

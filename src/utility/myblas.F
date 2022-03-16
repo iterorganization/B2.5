@@ -159,7 +159,7 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end subroutine b2sscal 
+      end subroutine b2sscal
       subroutine b2scopy (n, sx, incx, sy, incy)
       use b2mod_types
       implicit none
@@ -198,10 +198,15 @@
       end subroutine b2scopy
       subroutine b2saxpy (n, sa, sx, incx, sy, incy)
       use b2mod_types
+      use b2mod_openmp
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
       integer n, incx, incy
       real (kind=R8) ::
      *   sa, sx(0:*), sy(0:*)
+      logical do_parallel
 *     ------------------------------------------------------------------
 *     B2SAXPY (BLAS routine) performs the vector operation y:=y+sa*x.
 *     x and y are d.p. real vectors, described by (n,sx,incx) and
@@ -215,10 +220,22 @@
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
+      do_parallel =  (.not. in_parallel()) .and. (n > 7000)
+#ifdef WITH_FTIMINGS
+      call timer%start("b2saxpy")
+      if (do_parallel) call timer%start("parallel")
+#endif
       if (incy.eq.0) then
        call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0.0_R8) then
       else if (incx.eq.1.and.incy.eq.1) then
+#ifndef NO_OPENMP_MYBLAS
+!$OMP PARALLEL DO IF (do_parallel)
+!$OMP& SCHEDULE(static)
+!$OMP& DEFAULT(none)
+!$OMP& PRIVATE(i)
+!$OMP& SHARED(sx,sy,sa,n)
+#endif
        do i = 0, n-1
         sy(i) = sy(i)+sa*sx(i)
        enddo
@@ -231,6 +248,10 @@
         iy = iy+incy
        enddo
       endif
+#ifdef WITH_FTIMINGS
+      if(do_parallel) call timer%stop("parallel")
+      call timer%stop("b2saxpy")
+#endif
       return
 *     ------------------------------------------------------------------
       end subroutine b2saxpy

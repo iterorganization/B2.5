@@ -14,6 +14,10 @@
       character usrnm*16
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
       save usrnm
       data usrnm/' '/
@@ -25,22 +29,43 @@
 *     ------------------------------------------------------------------
       if (usrnm.eq.' ') then
 *      (this is the first call to usrnam)
+#ifdef NAGFOR
+        call get_environment_variable('LOGNAME',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0)
+     >    call get_environment_variable('LOGNAME',value=usrnm)
+#else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('LOGNAME', 0, usrnm, lenval, ierror)
 #else
        call getenv ('LOGNAME', usrnm)
 #endif
+#endif
        if (usrnm.eq.' ') then
+#ifdef NAGFOR
+        call get_environment_variable('USER',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0)
+     >    call get_environment_variable('USER',value=usrnm)
+#else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('USER', 0, usrnm, lenval, ierror)
 #else
         call getenv ('USER', usrnm)
 #endif
+#endif
         if (usrnm.eq.' ') then
+#ifdef NAGFOR
+        call get_environment_variable('user',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0)
+     >    call get_environment_variable('user',value=usrnm)
+#else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('user', 0, usrnm, lenval, ierror)
 #else
          call getenv ('user', usrnm)
+#endif
 #endif
          if (usrnm.eq.' ') then
           usrnm = 'anonymous'

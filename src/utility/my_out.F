@@ -14,9 +14,8 @@
 #else
       integer, save :: ndigits = 6
 #endif
-      logical ex                                          !srv 26.09.17
       character(7), save :: folder                        !srv 26.09.17
-
+      !$OMP CRITICAL(synch_my_out)
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
         call ipgeti('my_out_digits', ndigits)
@@ -30,8 +29,8 @@
         close(70)
         go to 20
 *    ..folder does not exist: future output will be done in current folder
- 10     folder=''
- 20     continue
+   10   folder=''
+   20   continue
       end if
       filename = trim(folder)//trim(first_name)//'.dat'   !srv 26.09.17
       if (iappend.eq.0) then
@@ -48,6 +47,6 @@
         write(nwrite,hlp_frm) iy, (fun(ix,iy), ix = -1, nx)
       enddo
       close (nwrite)
-
+      !$OMP END CRITICAL(synch_my_out)
       return
-      end
+      end subroutine my_out

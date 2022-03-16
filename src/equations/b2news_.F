@@ -18,6 +18,12 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_time
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_ilutern
+      use b2mod_ilutern_7
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
@@ -106,7 +112,7 @@
      *  smin, smax, b2sasum
       integer len_of_digits
       external len_of_digits
-      external subini, subend, xertst, ipgetr, smin, smax,
+      external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
@@ -229,7 +235,7 @@
 *----------------------------------------------------
 * An alternative to the 'no_solve' switch for controlling of the 
 * solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI, 
-* SOLVEPO, SOLVEMT, SOLVEET array from b2.numerics.parameters.
+* SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
 * Please consult the code documentation.
 
        solving(1:4)=no_solve.eq.0
@@ -294,6 +300,13 @@ csw 26feb2014 some extra variables
      . 'invalid main neutral species index ismain0')
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
+*   ..test facdrift
+      call xertst (0.0_R8.le.minval(facdrift) .and.
+     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(fac_vis) .and.
+     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of bb
@@ -327,7 +340,7 @@ csw 26feb2014 some extra variables
 
 csw 01oct2012 initialize potential if necessary
       if (pot_eq.eq.0) then                                              !srv 13.07.05 {
-        po   =0.0e0_R8
+        po = 0.0_R8
       else if (pot_eq.eq.2) then
         po(:,:)=3.1_R8*te(:,:)/qe
       endif
@@ -374,6 +387,22 @@ csw 01oct2012 initialize potential if necessary
       else
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!! FR possible loop (1) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, cvmahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna)
+#endif
 !        do is=0,ns-1                                                    !srv 01.10.99
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -398,6 +427,13 @@ csw 01oct2012 initialize potential if necessary
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+!$OMP END PARALLEL DO
+!! FR end of loop (1)
+#ifdef WITH_FTIMINGS
+        call timer%stop("parallel")
+#endif
+#endif
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
      &   bb, te, po, vedia, veecrb)
@@ -508,7 +544,7 @@ c   extra call at this place within internal iteration)
       endif                                                              !srv 05.07.17
       if (ue_style.ne.2) ue=wrk0
 
-csw 11oct2012 added check on coriolis force (taken from b2news())
+csw 11oct2012 added check on Coriolis force (taken from b2news)
       ier0=0
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,          !srv 13.01.17
      &   qz, qs, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                 !srv 23.07.99 09.01.01 01.07.09
@@ -534,6 +570,50 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 !     &             lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!!FR Possible loop (2) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, ix, iy, ireg)
+!$OMP& PRIVATE(new_matrix)
+!$OMP& FIRSTPRIVATE(pb, flob, conb)
+!$OMP& LASTPRIVATE(pb, flob, conb)
+#ifndef GFORTRAN
+#ifndef PGF90
+#ifndef CRAY
+!$OMP& COPYIN(last_solve_5, last_solve_7)
+!$OMP& COPYIN(last_solve_9, last_solve_11)
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
+!$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
+!$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
+!$OMP& SHARED(zn, zamax)
+!$OMP& SHARED(is_neutral, uadia, ncall, resmo, corua)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
+!$OMP& SHARED(cssb, vaecrb, vadia)
+!$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, qs, po)
+!$OMP& SHARED(cvla, cdna, cdpa, cddi, cvlahz, cdnahz, cdpahz, cvmahz)
+!$OMP& SHARED(fchvispar, fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fchvispar_a,fchvisper_a, fchinert_a, fchanml_a, fchvisq_a)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
+!$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
+!$OMP& SHARED(b2stbr_sna, b2stbm_sna, ext_sna)
+#endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..DPC
@@ -648,6 +728,13 @@ cwdk tmp: always use 9-point stencil
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo 
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+!$OMP END PARALLEL DO
+!! FR End of loop (2)
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+#endif
 *      ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs,
      &  bb, te, po, vedia, veecrb)
@@ -698,7 +785,7 @@ cwdk tmp: always use 9-point stencil
             call my_out(70,nx,ny,po,'b2nxdp_po')
           endif                                                          !srv 12.07.05 }
         endif
-*    ..compute current
+*    ..compute currents
         call b2tfch_ (nx, ny, ns, ismain, ismain0, facdrift, fac_ExB,    !srv 29.01.20 {
      &      fac_vis, vol, gs, hx, hy, qs, qz, qc, bb, te, po, ne,                                       
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
@@ -768,6 +855,24 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
       else
         cssb = 0.0_R8
       endif                                                          !iyv 06.02.14
+
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!! FR possible loop (3) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(zamin, zamax)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, cvmahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna)
+#endif
       do is = 0, ns-1
 *    ..compute partial pressure
         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
@@ -795,6 +900,13 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &     .false.)                                                    !djm Jan2017
       enddo                                                          !srv 29.01.20 }
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+!$OMP END PARALLEL DO
+!!FR End of loop (3)
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+#endif
 
 *   ..compute fne, fni
 c      with diamagnetic drift part                                       !srv 13.05.99
@@ -843,11 +955,25 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
            elseif(rightix(ix,iy).eq.nx+1) then
              ue(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
            endif
-	 enddo
+         enddo
        enddo
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+#ifdef WITH_FTIMINGS
+       call timer%start("parallel")
+#endif
+!!FR loop (4) over ns suitable for OpenMP parallelisation
+!$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
+#endif
        do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
        enddo
+#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+!$OMP END PARALLEL DO
+!!FR end of loop (4)
+#ifdef WITH_FTIMINGS
+       call timer%stop("parallel")
+#endif
+#endif
        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
        ue(:,:)=ue(:,:)/ne(:,:)                                           !srv 05.03.11 }
       else
@@ -1040,7 +1166,6 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
 
 * ..return
       ierr = 0
-99999 continue
 
       ncall = ncall+1
       call subend ()

@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -44,7 +45,7 @@
       intrinsic min, max
       real (kind=R8) ::
      *  med
-      external subini, subend, xertst, ipgeti, b2xvsg
+      external xertst, ipgeti, b2xvsg
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
       data ncall/0/, stylec/0/, pot_eq/1/

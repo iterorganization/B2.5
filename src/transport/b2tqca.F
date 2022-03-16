@@ -8,6 +8,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -75,7 +76,7 @@
       intrinsic abs, sqrt, log, max
       real (kind=R8) ::
      *  pitx
-      external subini, subend, xertst, sfill, ipgetr, ipgeti
+      external xertst, sfill, ipgetr, ipgeti
       external b2xvsg
       pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
@@ -141,7 +142,7 @@
 !xpb vary with space and species or be set by user.
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
-      ctaup = t0*sqrt(mp)						 !xpb
+      ctaup = t0*sqrt(mp)                                          !xpb
 
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
@@ -184,8 +185,8 @@ c         according to old model.eq.3 treatment
      &            sqrt((am(is)+am_ext(js))/2.0_R8)
             enddo
 cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precision as per 4.0
-	    ctaui = 2.1e13_R8 / (lnlam(ix,iy)*rz2(ix,iy,is))             !srv 01.07.09
-	    fxi = ci * ctaui / (ev*sqrt(ev*mp))
+            ctaui = 2.1e13_R8 / (lnlam(ix,iy)*rz2(ix,iy,is))             !srv 01.07.09
+            fxi = ci * ctaui / (ev*sqrt(ev*mp))
             hci(ix,iy,0) = hci(ix,iy,0) + fxi*(na(ix,iy,is)/w)*
      &       pitx(ix,iy)**2*(ti(ix,iy)**2*sqrt(ti(ix,iy)))
 cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
@@ -201,7 +202,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
      &                      .or. iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
          call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
-	endif
+        endif
        endif
       enddo
 *   ..compute vsay, hciy

@@ -1,6 +1,7 @@
       subroutine b2txsx (nx, ny, vol, hx, qz, fun, funsx)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -15,7 +16,7 @@
       integer n2, ix, iy
       real (kind=R8) ::
      *  smin, smax
-      external subini, subend, b2xxgs, smin, smax
+      external b2xxgs, smin, smax
 *     ------------------------------------------------------------------
       call subini ('b2txsx')
 *   ..test nx, ny

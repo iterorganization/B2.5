@@ -17,6 +17,7 @@ c*  latmscl(i)    : B2 sequence number with which atoms of kind i scale
 c*  lmolscl(i)    : atomic species with which molecules of kind i scale
 c*  lionscl(i)    : atomic species with which test ions of kind i scale
 c*  mlcmp(i,j)    : number of atoms i in a molecule j
+c*  micmp(i,j)    : number of atoms i in a molecular ion j
 c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
@@ -82,12 +83,17 @@ cank }
      *   species_start(:), species_end(:),
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
-     1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     1   mlcmp(:,:), micmp(:,:),
+     *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:)
       logical, allocatable, save ::
      *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
      *   CRCSTRA(:)
+      character*16, allocatable, save ::
+     *   textan(:),
+     *   textmn(:),
+     *   textin(:)
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
@@ -100,6 +106,10 @@ cank }
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
+      character*16, save ::
+     *   textan(0:DEF_NATM-1),
+     *   textmn(0:DEF_NMOL-1),
+     *   textin(0:DEF_NION-1)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
       real (kind=R8), save ::
@@ -123,7 +133,7 @@ cank }
       integer, save :: eb2spcr(1:natmid)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
-      integer, save :: mlcmp(natmid,nmolid),
+      integer, save :: mlcmp(natmid,nmolid), micmp(natmid,nionid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
      ,  lcns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
@@ -132,6 +142,7 @@ cank }
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
+      integer, allocatable, save :: lbcstra(:)
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
@@ -147,6 +158,9 @@ cank }
 #endif
 #endif
 
+csw 21feb2012
+      integer, save ::
+     . l_neutrad=0, l_neutflux
       real(kind=R8), save ::
      1 chemical_erosion_redep_fac,
      2 chemical_erosion_be_fac_a,
@@ -154,6 +168,7 @@ cank }
      4 chemical_erosion_be_fac_c
       logical, save ::
      1 chemical_erosion_be_fac
+      logical, save :: write_nml_neut = .true.
 
       namelist /neutrals_save/ saved_volrec
 
@@ -184,11 +199,6 @@ cank }
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
-      logical, save :: write_nml_neut = .true.
-
-csw 21feb2012
-      integer, save ::
-     . l_neutrad=0, l_neutflux=-1
 
       contains
 
@@ -202,8 +212,11 @@ csw 21feb2012
      &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
+      integer use_eirene
       character*12 hlp_frm
       intrinsic nint
+      external ipgeti, xertst
+      data use_eirene /0/
 
 #ifdef ALLOCATE_AND_NAMELIST
       NSTRAID=NSTRAID_in
@@ -242,11 +255,15 @@ csw 21feb2012
       allocate(lionscl(nion_in))
       allocate(gpfc(natm_in,nstra_in))
       allocate(mlcmp(natm_in,nmol_in))
+      allocate(micmp(natm_in,nion_in))
       allocate(lcns(nsts_in))
       allocate(ltns(nsts_in))
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
+      allocate(textan(0:natm_in-1))
+      if (nmol_in.gt.0) allocate(textmn(0:nmol_in-1))
+      if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
@@ -258,9 +275,10 @@ csw 21feb2012
       call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
       call xertst (nion_in.le.NIONID, 'faulty parameter nion_in')
       call xertst (nsts_in.le.NSTSID, 'faulty parameter nsts_in')
-      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
 #endif
+      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
       call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
+      allocate(lbcstra(nstra_in))
       CRCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
@@ -327,6 +345,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       neutrals_time_switch=0.0_R8
 
       lstrascl=0
+      lbcstra=0
       b2eatcr=0
       b2espcr=0
       eb2atcr=-1
@@ -335,6 +354,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       lmolscl=0
       lionscl=0
       mlcmp=0
+      micmp=0
       lcns=0
       ltns=0
       ncns=0
@@ -343,9 +363,17 @@ cwdk 0% momentum recycling, for backwards compatibility
       lsns=0
       msns=0
       gpfc=0.0_R8
-      dbg_eir_mc=100                     !srv 08.06.13
+      dbg_eir_mc=0
       debug_flags=0
+      debug_flags(90)=-1
+      debug_flags(92:95)=-1
       neut_scl_lim=2
+      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (use_eirene.eq.0) then
+        l_neutflux=-1
+      else
+        l_neutflux=0
+      endif
 
       chemical_erosion_redep_fac=1.0_R8
       chemical_erosion_be_fac=.false.
@@ -392,6 +420,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine alloc_b2mod_neutrals_save(NSTRAID_in)
       integer nstraid_in
+#ifndef ALLOCATE_AND_NAMELIST
+      external xertst
+#endif
 
 #ifdef ALLOCATE_AND_NAMELIST
       NSTRAID=NSTRAID_in
@@ -440,15 +471,20 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(lionscl)
       deallocate(gpfc)
       deallocate(mlcmp)
+      deallocate(micmp)
       deallocate(lcns)
       deallocate(ltns)
       deallocate(lsns)
       deallocate(ksns)
       deallocate(msns)
+      deallocate(textan)
+      if (allocated(textmn)) deallocate(textmn)
+      if (allocated(textin)) deallocate(textin)
 #ifndef NO_B2_CHEM_SPUT
       deallocate(chemical_sputter_yield)
 #endif
 #endif
+      deallocate(lbcstra)
       return
       end subroutine dealloc_b2mod_neutrals
 
@@ -461,7 +497,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine read_neutrals_namelist(nx, ny, ns, dotest)
       use b2mod_wall
-     & ,only : track_index, ntrack, track_species, track_chem_sput
+     & , only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
      & ,only : is_codes
@@ -472,14 +508,16 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical dotest
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
       logical found, side
-      intrinsic mod
       real (kind=R8) hlp
       logical :: file_ok
       logical, allocatable :: old_style(:)
       character*16 hlp_frm
       character*260 filename
+      external find_file, xertst
 
       filename=neutrals_filename
+      neutrals_time_mod = 0.0_R8
+      neutrals_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -493,7 +531,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         write(*,*) 'Read namelist neutrals from ',trim(filename)
         close(99)
       else
-        call xerrab ('No '//trim(filename))
+        write(*,*) 'No '//trim(filename)
+        call xertst (.not.dotest,
+     .   'Did not find expected b2.neutrals.parameters file!')
       endif
       if (nstrai.gt.0) then
 cxpb  In Eirene facelift the time stratum is handled separately
@@ -842,6 +882,25 @@ c<<<
         print '(3x,50i5)',(msns(2,j),j=1,n)
       end if !}
 c>>>
+      if (debug_flags(90).gt.0) then !{
+        if (debug_flags(91).eq.0) debug_flags(91)=nnstsi-1
+        call xertst(debug_flags(90).le.nsts.and.
+     .              debug_flags(91).le.nsts.and.
+     .              debug_flags(91).ge.debug_flags(90),
+     .   'faulty non-standard surface number in debug_flags')
+        if (debug_flags(92).eq.-1) debug_flags(92)=1
+        if (debug_flags(93).eq.-1) debug_flags(93)=nstrat
+        if (debug_flags(94).eq.-1) debug_flags(94)=0
+        if (debug_flags(95).eq.-1) debug_flags(95)=0
+        call xertst(
+     .    debug_flags(92).ge.0.and.debug_flags(92).le.nstrat.and.
+     .    debug_flags(93).le.nstrat.and.
+     .    debug_flags(93).ge.debug_flags(92).and.
+     .    debug_flags(94).ge.0.and.debug_flags(94).le.nstrat.and.
+     .    debug_flags(95).le.nstrat.and.
+     .    debug_flags(95).ge.debug_flags(94),
+     .   'faulty stratum number in debug_flags')
+      end if !}
 
       do j=1,nstrai !{
         hlp=0.0_R8
@@ -1041,9 +1100,13 @@ c.. Test consistency with physical edges within the computational domain
      .     'Mismatch with left internal edge (North) !')
         endif
       enddo
+      call map_strata_to_boundaries(nx,ny)
+      call map_ion_components
       return
 
- 999  call xerrab ('Error while reading NEUTRALS namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading NEUTRALS namelist!')
+#endif
       end subroutine read_neutrals_namelist
 
       subroutine write_b2mod_neutrals_namelist
@@ -1059,6 +1122,10 @@ c.. Test consistency with physical edges within the computational domain
       character*256 filename
       integer istra
       logical file_ok
+      external find_file, xertst
+#ifdef USE_MPI
+      external xerrab
+#endif
 
       saved_volrec(:)=0.0_R8
 
@@ -1090,13 +1157,17 @@ c.. Test consistency with physical edges within the computational domain
       enddo
 
       return
- 999  call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
+#endif
       end subroutine read_b2mod_neutrals_save
 
       subroutine write_b2mod_neutrals_save(nwrite,edition)
       implicit none
       integer nwrite
+      integer i
       character*4 edition
+      character*24 hlp_frm
       character*256 filename
 
       if (edition.eq.'    ') then
@@ -1106,12 +1177,158 @@ c.. Test consistency with physical edges within the computational domain
       endif
       if (maxval(saved_volrec).gt.0.0_R8) then
         open(nwrite,file=trim(filename))
-        write(nwrite,neutrals_save)
+        write(hlp_frm,'(a,i3,a)') '(a,1p,',nstrat,'(1e15.8,1x,a1))'
+        write(nwrite,'(a)') '&NEUTRALS_SAVE'
+        write(nwrite,hlp_frm) 'SAVED_VOLREC= ',
+     .                        (saved_volrec(i),',',i=1,nstrat)
+        write(nwrite,'(a)') '/'
         close(nwrite)
         write(*,*) 'Saved ',trim(filename)
       endif
       return
 
       end subroutine write_b2mod_neutrals_save
+
+      subroutine map_strata_to_boundaries(nx,ny)
+      use b2mod_boundary_namelist
+      implicit none
+      integer nx, ny
+      integer ib, ix
+      integer, allocatable :: bc(:,:), rc(:,:)
+      logical, allocatable :: coincide(:)
+      external xertst
+
+! Try to create a list which maps strata to boundaries
+! LBCSTRA(ISTRA) will contain the index of the boundary condition corresponding
+! to the recycling stratum ISTRA
+! Can only be determined if both b2.boundary.parameters and
+! b2.neutrals.parameters have been read
+      lbcstra = 0
+      allocate (bc(-1:nx,-1:ny))
+      allocate (rc(-1:nx,-1:ny))
+      allocate (coincide(nstrai))
+      bc = 0
+      rc = 0
+      coincide = .true.
+      do ib = 1, nbc
+        do ix = 1, bc_list_size(ib)
+          bc(bc_list_x(ix,ib),bc_list_y(ix,ib)) = ib
+        end do
+      end do
+      do ib = 1, nstrai
+        if (crcstra(ib).ne.'N' .and. crcstra(ib).ne.'S' .and.
+     &      crcstra(ib).ne.'W' .and. crcstra(ib).ne.'E') cycle
+        do ix = 1, rc_list_size(ib)
+          rc(rc_list_x(ix,ib),rc_list_y(ix,ib)) = ib
+        end do
+        lbcstra(ib) = bc(rc_list_x(1,ib),rc_list_y(1,ib))
+        do ix = 2, rc_list_size(ib)
+          coincide(ib) = coincide(ib) .and.
+     &     bc(rc_list_x(ix,ib),rc_list_y(ix,ib)).eq.lbcstra(ib)
+        end do
+      end do
+      do ib = 1, nstrai
+#ifdef DBG
+        write(*,*) 'istra = ',ib,' crcstra = ', crcstra(ib),
+     &    ' lbcstra = ',lbcstra(ib)
+#endif
+        call xertst (coincide(ib),
+     &   'Mapping between recycling strata and '//
+     &   'boundary conditions is not unique!')
+      end do
+      deallocate(bc,rc)
+      deallocate(coincide)
+
+      return
+      end subroutine map_strata_to_boundaries
+
+      subroutine map_ion_components
+      implicit none
+#ifdef B25_EIRENE
+      integer i, j, is, ij, jj, iatm, p
+      character(len=16) :: ion_label, mol_label
+      character(len=2) :: compname
+      logical match_found, nonumber, streql, isadigit, todo
+      external isadigit, streql
+
+      do is = 1, nnioni
+        todo = lionscl(is).eq.0
+        ion_label = adjustl(textin(is-1))
+        j = 1
+        match_found = .false.
+        do while (.not.match_found.and.j.le.nnmoli)
+          mol_label = textmn(j-1)
+          mol_label = trim(adjustl(mol_label))//'+'
+          if (streql(ion_label, mol_label)) then
+            match_found = .true.
+          end if
+          if (.not.match_found) j = j+1
+        end do
+        if (match_found) then
+          micmp(1:nnatmi,is) = mlcmp(1:nnatmi,j)
+          if (lmolscl(j).ne.0 .and. todo) lionscl(is) = lmolscl(j)
+        else ! No matching molecule, must extract composition from ion name
+             ! Set default value for variables marking the position of '+'
+          p = index(ion_label,'+')
+             ! Loop (backwards) through characters in ion label string
+          i = p - 1
+          ij = p - 1
+          jj = p - 1
+          do while (i.gt.0)
+            nonumber = .true.
+            do while (i.gt.0 .and. isadigit(ion_label(i:i)))
+              i = i - 1
+              nonumber = .false.
+            end do
+            ij = i + 1
+            if (i.eq.1) then
+              compname = ion_label(i:i)//' '
+              iatm = get_atom_number(compname)
+            else
+              if (.not.isadigit(ion_label(i-1:i-1))) then
+                compname = ion_label(i-1:i)
+                iatm = get_atom_number(compname)
+                if (iatm.eq.0) then
+                  compname = ion_label(i:i)//' '
+                  iatm = get_atom_number(compname)
+                else
+                  i = i - 1
+                end if
+              else
+                compname = ion_label(i:i)//' '
+                iatm = get_atom_number(compname)
+              end if
+            end if
+            if (nonumber) then
+              micmp(iatm,is) = 1
+            else
+              read(ion_label(ij:jj),*) micmp(iatm,is)
+            end if
+            if (todo) lionscl(is) = iatm
+            i = i - 1
+            jj = i
+          end do
+        end if
+      end do
+#endif
+      return
+      end subroutine map_ion_components
+
+      integer function get_atom_number(compname)
+      use b2mod_elements
+      implicit none
+      character*2 compname
+      integer is, iatm
+      logical streql
+      external streql
+
+      get_atom_number = 0
+      do iatm = 1, nnatmi
+        if ( get_atom_number > 0 ) cycle
+        is = eb2atcr(iatm)
+        if (streql(is_codes(is),compname)) get_atom_number = iatm
+        end do
+      return
+      end function get_atom_number
 
       end module b2mod_neutrals_namelist

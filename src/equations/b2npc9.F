@@ -10,6 +10,8 @@
       use b2mod_indirect
       use b2mod_balance
      & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+      use b2mod_subsys
+      use b2mod_lwmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
@@ -33,8 +35,8 @@
 *  1. purpose
 *
 *     B2NPC9 performs one iteration of a relaxation process for the
-*     solution of the continuity equation for one atomic species on
-*     nine point stencil.
+*     solution of the continuity equation for one atomic species using
+*     a nine-point stencil.
 *
 *
 *  3. description (see also routine b2cdca)
@@ -56,14 +58,17 @@
       integer ncall, n2, ix, iy, use_eirene
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
       integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(iout, iout_b2wdat)
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
      *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
+      !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, lwget
+      external xertst, ipgetr
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
 *   ..initialization
       data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/,
@@ -101,6 +106,12 @@
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npc9_iout', iout)                              !srv 13.07.05
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2npc9 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
@@ -149,10 +160,10 @@ cdjm Jan2017 update particle source components for balance
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 15.02.10 { this part should be re-written
        do iy=-1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
-	 if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-	  rescb(ix,iy) = 0.0_R8
-	 endif
-	enddo
+         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+          rescb(ix,iy) = 0.0_R8
+         endif
+        enddo
        enddo                                                          !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
 *   ..compute correction
@@ -202,6 +213,11 @@ cdjm Jan2017 update particle source components for balance
         enddo                                                         !srv 27.06.08 }
       endif                                                           !srv 06.07.08 }
       if (iout.ne.0) then                                             !srv 12.07.02 {
+       if (in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2NPC9 will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
@@ -215,7 +231,13 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npc9_fnay'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,1),'b2npc9_fnaxy'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npc9_fnayx'//chns)
+       endif
       elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
+       if (in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2NPC9 will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
@@ -225,6 +247,7 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npc9_fnay'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,1),'b2npc9_fnaxy'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npc9_fnayx'//chns)
+       endif
       endif                                                          
 
 *   ..set error parameter

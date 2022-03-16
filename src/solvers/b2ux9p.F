@@ -5,6 +5,8 @@
       use b2mod_types
       use b2mod_ma28_for_9diag
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -32,7 +34,7 @@
 *     with the five-point discretization of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on the Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *
@@ -72,14 +74,15 @@
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
+      !$OMP THREADPRIVATE(indexes, iasave, jasave, nz)
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
-     &  slv5pt, iluter, xerrab
+      external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
+      !$OMP THREADPRIVATE(ncall, style, acpar, cpu)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -125,6 +128,8 @@
        write(*,*) 'Allocating space for solver b2ux9p'
        if (style.eq.0) then
         call xerrab ('b2ux9p: Style 0 is not implemented')
+! if the error abort is removed, then make sure to define OMP threadprivate
+! attribute for the workspace arguments
 *    ..obtain workspace for iluter
         allocate(aaf(1:n2*5))
         allocate(wrk0(1:n2))
@@ -133,6 +138,8 @@
         allocate(iwrk(1:1))
       else if (style.eq.1) then
         call xerrab ('b2ux9p: Style 1 is not implemented')
+! if the error abort is removed, then make sure to define OMP threadprivate
+! attribute for the workspace arguments
 *    ..obtain workspace for slv5pt
         allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
         allocate(wrk0(1:n2))
@@ -164,15 +171,15 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_9 (nx, ny, aa9, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 indexes, iasave, jasave, name)       
+     *                 indexes, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_9 ',
      &               c_end-c_start
 *    ..use ma28
        call cpu_time(cpu_start)
 !       call ilutern_9(NX+2, NY+2, NX+2,
-!     & aa9(-1,-1,-3,0), aa9(-1,-1,-1,0), aa9(-1,-1,0,0), aa9(-1,-1,1,0), 
-!     & aa9(-1,-1, 3,0), 
+!     & aa9(-1,-1,-3,0), aa9(-1,-1,-1,0), aa9(-1,-1,0,0), aa9(-1,-1,1,0),
+!     & aa9(-1,-1, 3,0),
 !     & aa9(-1,-1,-4,0), aa9(-1,-1,-2,0), aa9(-1,-1,2,0), aa9(-1,-1,4,0),
 !     & aa9(-1,-1,-4,1), aa9(-1,-1,-2,1), aa9(-1,-1,2,1), aa9(-1,-1,4,1),
 !     & resfun, corfun, name)                        !sv 18.05.02
@@ -196,6 +203,7 @@
      *                      indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
       implicit none
 *  ..input
       integer nx, ny, nnz
@@ -232,10 +240,20 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
+      !$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
 
       if(ncall.eq.0) then
         call ipgeti ('storage_9_kwrite_fmt', kwrite_fmt)
         call ipgeti ('storage_9_kwrite_bnr', kwrite_bnr)
+        if (in_parallel() .and.
+     &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+         !$OMP MASTER
+         write(*,*) 'storage_9 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+         !$OMP END MASTER
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif
       endif
 
       n = (nx+2)*(ny+2)
@@ -357,7 +375,7 @@
               ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
-*       Case (ix+1,iy-1) 
+*       Case (ix+1,iy-1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixb = bottomix(ix,iy)
@@ -382,7 +400,7 @@
               ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
               ner = ner+1
             endif
-*       Case (ix+1,iy+1) 
+*       Case (ix+1,iy+1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixt = topix(ix,iy)

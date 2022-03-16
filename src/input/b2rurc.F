@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget
@@ -144,19 +145,17 @@
 
 *   ..local variables
       logical lt0
-      integer k, k1, idum(0:9)
+      integer k, idum(0:9)
       real (kind=R8) ::
      *   cutlo, lnzero, t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
       intrinsic log
-      logical lnext
       real (kind=R8) ::
      *   machsfr, smax
-      external subini, subend, xertst, machsfr, smax, cfrure, cfruin,
+      external xertst, machsfr, smax, cfrure, cfruin,
      1 cfverr
-      lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -272,3 +271,44 @@
 *-----------------------------------------------------------------------
 *.end b2rurc
       end subroutine b2rurc
+
+      subroutine get_AM_flag (label, flag)
+      implicit none
+      character*120 label
+      character*8 flag
+      integer i, lt(4)
+      logical found
+      logical streql
+      external streql
+
+      flag = 'unknown'
+      found = .false.
+      lt(1) = index(label,'ADPAK')
+      lt(2) = index(label,'STRAHL')
+      lt(3) = index(label,'ADAS')
+      lt(4) = index(label,'AMNS')
+      do i = 1, 4
+        if (lt(i).eq.0) cycle
+        if (found) then
+          flag = 'multiple'
+        else
+          select case (i)
+          case (1)
+            flag = 'adpak'
+          case (2)
+            flag = 'strahl'
+          case (3)
+            flag = 'adas'
+          case (4)
+            flag = 'amns'
+          end select
+        end if
+        found = .true.
+      end do
+      call xertst(.not.streql(flag,'unknown'),
+     . 'Could not identify A&M data package !')
+      call xertst(.not.streql(flag,'multiple'),
+     . 'Ambiguous multiple A&M data package setting !')
+
+      return
+      end subroutine get_AM_flag

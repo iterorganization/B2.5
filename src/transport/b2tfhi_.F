@@ -17,6 +17,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
      &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -97,7 +98,7 @@ cpax
 cpax      
       real (kind=R8) ::
      *   hybr, hy1, upwind
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
@@ -565,7 +566,8 @@ c     (ONLY FOR TESTING w/ SOLPS4 discretization)
           if(b2vis .ne. 0) then
            do is=0,ns-1
              fhi(ix,iy,0,0) = fhi(ix,iy,0,0) - 
-     .          0.5_R8*cvsa(ix,iy,0,0,is)*
+     .          0.5_R8*(cvsa(ix,iy,0,0,is)
+     .          +cvsa(leftix(ix,iy),leftiy(ix,iy),0,0,is))/2.0_R8*
      .         (ua(ix,iy,is) + ua(leftix(ix,iy),leftiy(ix,iy),is))*
      .         (ua(ix,iy,is) - ua(leftix(ix,iy),leftiy(ix,iy),is))
            enddo

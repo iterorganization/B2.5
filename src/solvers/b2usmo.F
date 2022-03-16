@@ -4,10 +4,12 @@
       subroutine b2usmo (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
      &  rxg, vol, hx, hz, bb, rob, rzb, pb, pz, ub,                  !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa5, aad0, name) !srv 06.04.07
-      use b2mod_indirect
       use b2mod_types
+      use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -51,12 +53,14 @@
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, flo, dif, csb, csb1
+      !$OMP THREADPRIVATE(ncall, cfc0, iout)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
       save ncall, cfc0
 *   ..procedures
       intrinsic max, abs, sqrt
       real (kind=R8) ::
      *  hybr
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p
       hybr(flo,dif) = max(dif,abs(flo/2.0_R8),
      .                    sqrt(dif**2+flo**2/4.0_R8))
@@ -76,6 +80,12 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2usmo OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -244,7 +254,12 @@ cxpb
        enddo
       enddo
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name
+      if (index(name,'total').gt.0) then
+       write(*,'(1x,a,a)') 'Calling b2ux5p from ',name
+      else
+       write(*,'(1x,a,a,a,i3)')
+     .  'Calling b2ux5p from ',name,' for species ',isb
+      end if
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {

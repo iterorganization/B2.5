@@ -14,6 +14,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -98,7 +99,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   hybr, hy1, upwind
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, mod, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -445,7 +446,7 @@ c Drift terms
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
             ve(ix,iy) = 0.0e0_R8
-          else     ! ve has been myltiplied by vol*bx/hx
+          else     ! ve has been multiplied by vol*bx/hx
             ve(ix,iy)=fne(ix,iy,0,0)/nel(ix,iy)
           endif
         enddo
@@ -455,7 +456,7 @@ c Drift terms
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
           do ix = -1, nx
-            c071(ix,iy) = fce2n(zeff(ix,iy))
+            c071(ix,iy) = zeff(ix,iy)*fce2n(zeff(ix,iy))                 !srv 21.07.21
           enddo
         enddo
       else

@@ -2,36 +2,36 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx,ny,jxi,jxa,jsep
       integer ix,iy
-      real (kind=R8) ::
-     * geom_match_dist
       intrinsic min
-      external subini, xerrab, xertst, ipgeti, subend
-      data geom_match_dist/1.0e-6_R8/
-      real (kind=R8) ::
-     *   dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+
-     2      (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
+      external xerrab, xertst, ipgeti
 
       call subini ('get_jsep')
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
+      LSN = .true.
       if(nnreg(0).eq.1) then
         jxi=nx/4
-        jxa=3*nx/4
+        jxa=nx/2
         jsep=ny/2
-      elseif(nnreg(0).eq.4 .or. nnreg(0).eq.5) then
+      elseif(nnreg(0).eq.4) then
+        if (cry(leftcut(1)+1,topcut(1),0).lt.
+     .      cry(leftcut(1)+1,0,0)) then ! LSN topology
+          jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        else ! USN topology
+          LSN = .false.
+          jxi=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          jxa=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        end if
+        jsep=topcut(1)-1
+      elseif(nnreg(0).eq.5) then
         jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
-        jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        jxa=leftcut(1)+(rightcut(1)-leftcut(1))/2
         jsep=topcut(1)-1
       elseif(nnreg(0).eq.8) then
         jxi=(leftcut(1)+leftcut(2))/2
@@ -49,9 +49,14 @@
             endif
           enddo
         enddo
+        topcut(1)=jsep+1
+        LSN=crx(-1,ny,1).lt.crx(nx,ny,0)
       else
         call xerrab ('Invalid number of regions!')
       endif
+      write(*,'(a,3i5)') 'Default settings for jxi, jxa, jsep : ',
+     1                                         jxi, jxa, jsep
+      if (nnreg(0).eq.1) call ipgeti ('b2mwti_jsep',jsep)
       call xertst (-1.le.jsep.and.jsep.le.ny,
      2  'faulty parameter jsep')
       call ipgeti ('b2mwti_jxi',jxi)
@@ -60,7 +65,10 @@
       call ipgeti ('b2mwti_jxa',jxa)
       call xertst (-1.le.jxa.and.jxa.le.nx,
      2 'faulty internal parameter jxa')
-      write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
+      write(*,'(a,3i5)')
+     .           'User-corrected settings for jxi, jxa, jsep : ',
+     1                                        jxi, jxa, jsep
+      if (.not.LSN) write(*,*) 'Detected USN-like topology'
 
       call subend ()
       return
@@ -68,9 +76,9 @@
 
       subroutine get_nxt(nx, nxtl, nxtr)
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, nxtl, nxtr
-      external subini, subend
 
       call subini ('get_nxt')
 
@@ -88,6 +96,7 @@ cxpb  Compute position of additional targets in DN configuration
      &            nxtr.lt.nx)
           nxtr=nxtr+1
         enddo
+        write(*,*) 'nxtl, nxtr : ', nxtl, nxtr
       endif
 
       call subend ()

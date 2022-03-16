@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny
@@ -339,14 +340,6 @@
 * ..return
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.error conditions
-
-   91 call xerrab ('error trying to read heading *param')
-   92 call xerrab ('error trying to read parg')
-   93 call xerrab
-     1 ('error trying to read non-default internal parameters')
 
 *-----------------------------------------------------------------------
 *.end b2fgmtry_moddr

@@ -3,8 +3,8 @@ c
       use b2mod_types
       use b2mod_b2plot_xy
       use b2mod_constants
+      implicit none
 #include <graphics_vars.h>
-
       character*(*) shotinfo
       integer nx,ny
       real (kind=R8) :: xlod,xhid,ylod,yhid
@@ -17,23 +17,24 @@ c
       integer m,n,ierr,nshot,nedit,lpfx
       integer lnblnk
       external lnblnk
-      real tshot
+      real (kind=R4) :: tshot
       character*4 expnam
       character*3 dianam
-      real ri(0:mdim),zj(0:mdim),pfm(0:mdim,0:mdim),
+      real (kind=R4) :: ri(0:mdim),zj(0:mdim),pfm(0:mdim,0:mdim),
      1 pfxx(0:lpfxdim),rpfx(0:lpfxdim),zpfx(0:lpfxdim),
      2 rin(lin),zin(lin),br(lin),bz(lin),bt(lin),fpf(lin),fjp(lin)
 
       integer i,j
-      logical main
+      logical main, streql
+      external streql
 
       data nshot /0/
 
       save nshot
 
-      if(shotinfo.eq.' ') then
-	nshot=0
-	return
+      if(streql(shotinfo,' ')) then
+        nshot=0
+        return
       endif
 
       call init_page(

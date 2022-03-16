@@ -18,6 +18,14 @@
       use b2mod_external
       use b2mod_geo
      , , only : hz, vol                                                 !srv 05.07.17
+      use b2mod_openmp
+      use b2mod_subsys
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+#ifndef NO_IEEE
+      use ieee_arithmetic    ! IGNORE
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -59,12 +67,13 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, k
+      integer ncall, styl0, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
-      character chns*3, chk*1, chis*3
+#ifdef NO_OPENMP_B2NPMO
+      !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
+#endif
+      character chns*3, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
       real (kind=R8) ::
@@ -74,19 +83,28 @@
      &  ka(-1:nx,-1:ny), kb(-1:nx,-1:ny),
      &  wrk(-1:nx,-1:ny)
 ! Local arrays smb*al have been introduced specially.
-! The usage of smb*a instaed of smb*al should be checked.
+! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
      *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+#ifdef WITH_FTIMINGS
+      logical :: do_parallel
+#endif
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
      *  roxa
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                           !srv 01.07.05
+#ifdef NO_IEEE
+      logical, external :: my_isnan
+#endif
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
+#ifdef NO_OPENMP_B2NPMO
+      !$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
+#endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
 
@@ -109,9 +127,26 @@
      &              0.0_R8.le.phm2.and.0.0_R8.le.phm3,
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
        call ipgeti ('b2sifrtf_iout', iout)
+       if ((iout.ne.0) .and. in_parallel()) then
+          !$OMP MASTER
+          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
+     &               'parallel mode'
+          !$OMP END MASTER
+          iout = 0
+        end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
+       if ((iout_b2wdat==4) .and. in_parallel()) then
+          !$OMP MASTER
+          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
+     &               'parallel mode (b2wdat)'
+          !$OMP END MASTER
+          iout_b2wdat = 0
+        end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
+#ifdef WITH_FTIMINGS
+      do_parallel = .not. in_parallel()
+#endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -123,6 +158,7 @@
 *    ..test sign of na, ni, ti, ne, ne2
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
+       call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
@@ -137,6 +173,22 @@
       call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
 * ..compute friction
 *   ..loop over all other species
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
+!$OMP& DEFAULT(NONE)
+!$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
+!$OMP& SHARED(rz2, am, zetap, na, ua)
+#ifndef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(styl0, phm0)
+#else
+!$OMP& COPYIN(styl0, phm0)
+#endif
+!$OMP& REDUCTION(+: smbfrial)
+#endif
       do is = 0, ns-1
        if(isb.ne.is .and. 
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
@@ -149,6 +201,7 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
            t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+             !$omp critical (ionfriction)
            if (styl0.eq.0) then
              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
              smbfrial(ix,iy,1) = smbfrial(ix,iy,1)-coef*t0
@@ -162,11 +215,19 @@
              smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-coef*t0/
      &                       roxa(ix,iy,isb)
            endif
+             !$omp end critical (ionfriction)
           endif
          enddo
         enddo
        endif
       enddo
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP END PARALLEL DO
+#endif
+      call nancheck(nx, ny, smbfrial(:,:,0), 'smbfrial(,,0)')
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%stop("parallel")
+#endif
 
 !*   ..compute ue, electron parallel velocity
 !      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
@@ -205,6 +266,24 @@
        enddo
       endif
 *   ..contribution from ions thermal force
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL())
+!$OMP& DEFAULT(NONE)
+!$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, is, ix, iy, coef, t0)
+!$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)
+!$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
+!$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
+!$OMP& SHARED(on_closed_surface)
+#ifdef NO_OPENMP_B2NPMO
+!$OMP& PRIVATE(phm3)
+#else
+!$OMP& SHARED(phm3)
+#endif
+!$OMP& REDUCTION(+: smbtfial)
+#endif
       do is = 0, ns-1
        if(isb.ne.is .and. 
      &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
@@ -246,6 +325,13 @@ c   .. apply flux limit
         enddo
        endif
       enddo
+#ifndef NO_OPENMP_B2SIFRTF
+!$OMP END PARALLEL DO
+#endif
+      call nancheck(nx, ny, smbtfial(:,:,0), 'smbtfial(,,0)')
+#ifdef WITH_FTIMINGS
+      if (do_parallel) call timer%stop("parallel")
+#endif
 
       smbtf = smbtfeal + smbtfial
 
@@ -260,28 +346,30 @@ c   .. apply flux limit
        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
      &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
+       call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
 
        wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
+       call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
        wrk = vol*hz*smbtfial(:,:,0)
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
+       call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
        wrk = vol*hz*smbtfeal(:,:,0)
-	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
+       call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
        call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
-	endif
+      endif
 
       if (iout.gt.1) then                                              !srv 05.07.17
-	 do is = 0,ns-1
-	  write (chis,'(i3.3)') is
-	  call my_out(70,nx,ny,fkabvp(isb, is),
-     &              'b2sifrtf_kabvp_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fkabtf(isb, is),
-     &              'b2sifrtf_kabtf_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fkabtf(is, isb),
-     &              'b2sifrtf_kbatf_'//chns//'_'//chis)
-          call my_out(70,nx,ny,fka(isb),'b2sifrtf_ka_'//chns)
-          call my_out(70,nx,ny,fka(is),'b2sifrtf_kb_'//chis)
+        do is = 0,ns-1
+          write (chis,'(i3.3)') is
+          wrk = fkabvp(isb, is)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kabvp_'//chns//'_'//chis)
+          wrk = fkabtf(isb, is)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kabtf_'//chns//'_'//chis)
+          wrk = fkabtf(is, isb)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kbatf_'//chns//'_'//chis)
+          wrk = fka(isb)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_ka_'//chns)
+          wrk = fka(is)
+          call my_out(70,nx,ny,wrk,'b2sifrtf_kb_'//chis)
         enddo
 
         call my_out(70,nx,ny,f_luc_sg,'b2sifrtf_f_luc_sg')

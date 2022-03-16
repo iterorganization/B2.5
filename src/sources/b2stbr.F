@@ -17,6 +17,7 @@
       use b2mod_constants
       use b2mod_indirect
       use b2mod_neutrals_namelist
+      use b2mod_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
@@ -28,8 +29,11 @@
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
      &          balance_netcdf
+      use b2mod_subsys
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use b2mod_eirene
+     ,  , only : eirene_mc
+      use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -86,7 +90,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k
+      integer n2, ix, iy, is, ib, ic, ibnd, itrack, k
       integer, save :: jxi, jxa, jsep
       integer, save :: no_b2stbr_phys_call=0
       integer, save :: out_tfiles = 1                                !xpb 28.09.16
@@ -110,9 +114,12 @@
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),
-     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),  !IYS 27.01.17
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi) !srv 29.04.10 }
+#ifdef B25_EIRENE
+      real (kind=R8) ::
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol),
      &  flxtmp(0:nx+1,0:ny+1)
+#endif
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -134,8 +141,6 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
       logical new_sputter_namelist
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -146,16 +151,13 @@
       real (kind=R8), save :: stim = 0.0_R8
       character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
       logical ex
-      character*256 filename
+      character*256, save :: filename
 #endif
 *   ..procedures
-      logical lnext
-      external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
+      external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-      intrinsic abs, mod
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
+      intrinsic mod
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -337,7 +339,7 @@
      2     neutrals_count
           if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
      1     int(tim/neutrals_time_mod).gt.neutrals_count) then
-            neutrals_count=tim/neutrals_time_mod
+            neutrals_count=int(tim/neutrals_time_mod)
             call read_neutrals_namelist(nx, ny, ns, .true.)
             new_sputter_namelist=.true.
             call xertst (nstrat.le.nstraid,
@@ -348,9 +350,11 @@
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -367,8 +371,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -860,7 +864,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             write(6,'(a)') trim(filename)//' will be created'
             call define_cdf_b2mod_wall(filename,ncid,nbnd,ntargsp)
           else if (ex.and.stim.lt.0.0_R8) then
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             status=nf_inq(ncid,ndims,nvars,natts,unlimid)
             call check_cdf_status(status)
@@ -878,7 +882,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           write(6,'(a,i8)') trim(filename)//' : ntstep_b2wall = ',
      .                                          ntstep_b2wall
           if (ntstep_b2wall.eq.0) then
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
             write(*,*) 'Writing track_species'
             call write_cdf_char_variable(ncid,-1,
@@ -893,7 +897,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         endif
         if(main_call.and.mod(ncall,b2wall_netcdf).eq.0) then
           ntstep_b2wall=ntstep_b2wall+1
-          status=nf_open(filename,NF_WRITE,ncid)
+          status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
           call check_cdf_status(status)
           call write_cdf_variable(ncid,ntstep_b2wall,
      *     'plate_time',plate_time(1:nbnd))
@@ -1013,8 +1017,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
-        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
-     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
+        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*te+
+     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
         wrk0=shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
      &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
@@ -1051,6 +1055,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 *.end b2stbr
 
       subroutine b2stbr_neutr_scl(nx, ny, ns)
+#ifdef B25_EIRENE
+      use b2mod_eirene
+     , , only : neutr_scl
+#endif
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns
       integer ncall, use_eirene, ank_mods
@@ -1058,6 +1067,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       data ncall/0/, use_eirene/0/, ank_mods/0/
       call subini ('b2stbr_neutr_scl')
       if (ncall.eq.0) then
+        call xertst(0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+        call xertst(1.le.ns, 'faulty argument ns')
         call ipgeti('b2mndr_eirene',use_eirene)
         call ipgeti('eirene_ank_mods',ank_mods)
       endif
@@ -1088,6 +1099,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -1116,7 +1128,7 @@ c        write(*,*) 'Called neutr_scl'
       character*256 filename
 *   ..procedures
       intrinsic mod, nint
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr
+      external xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data use_eirene/0/, neutrals_namelist/0/,
      *  sput_src/1/, sput_chem_model/0/, sput_frc/0.0_R8/
@@ -1192,7 +1204,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
-        neutrals_count=tim/neutrals_time_mod
+        neutrals_count=int(tim/neutrals_time_mod)
       else
         neutrals_count=0
       endif

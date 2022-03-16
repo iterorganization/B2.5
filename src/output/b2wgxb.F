@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -63,7 +64,7 @@
       real (kind=R8) ::
      *   xlohi(0:1), ylohi(0:1)
 *   ..procedures
-      external subini, subend, xertst, gpl_d
+      external xertst, gpl_d
 
 *-----------------------------------------------------------------------
 *.computation

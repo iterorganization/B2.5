@@ -5,6 +5,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -37,6 +38,7 @@
       real (kind=R8) ::
      &  facdriftm, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
+      integer, save :: no_current = 0
 #ifdef CLASSICAL_CURRENT
       integer is
       real (kind=R8) :: hy1,
@@ -49,7 +51,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation
@@ -60,6 +62,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                               !srv
        call ipgetr ('b2tfhe_dia_cur', dia_cur)                           !srv
+       call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -81,7 +84,8 @@
       
       fchdia = 0.0e0_R8
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
+      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8
+     &                        .and. no_current.eq.0) then                !srv 16.10.17
 *       compute differences of OnedBsq on cell faces
         call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
         wght = 1.0_R8

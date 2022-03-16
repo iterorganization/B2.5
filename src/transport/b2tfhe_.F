@@ -18,6 +18,7 @@
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -80,6 +81,7 @@ csw 10oct2012
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
       integer, save :: guard_flows = 2   
 
+      integer, save :: style_b2mndt = 1
       character(3) :: charns, charns0
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
@@ -105,7 +107,7 @@ csw 10oct2012
       intrinsic max, abs
       real (kind=R8) ::
      *   harm, hybr, hy1, upwind
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 csw aug2014 fix hy1 as suggested by xpb (multiply qz instead divide)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                 !srv 07.05.08
@@ -131,11 +133,17 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       if (style_b2mndt.ge.1) then
+         call xertst (.not.(alfTeEh.eq.1.0_R8.and.fch_pTe.eq.0.0_R8),
+     &    ' Cannot set alfTeEh to 1.0 and fch_pTe to 0.0 when using'//
+     &    ' the SOLPS5.2 physics model!')
+       end if
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
@@ -230,13 +238,14 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
+* ..compute parallel current
       call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx_)             !srv 13.01.17
       call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy_)             !srv 13.01.17
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
         do iy = -1, ny
           do ix = -1, nx
-            c071(ix,iy) = fce2n(zeff(ix,iy))
+            c071(ix,iy) = zeff(ix,iy)*fce2n(zeff(ix,iy))                 !srv 21.07.21
           end do
         end do
       else
@@ -768,7 +777,11 @@ cwdk (to be checked for new hybrid scheme using mdf...)
       enddo
       do iy = 0, ny
        do ix = -1, nx
-        ehy = ehy_(ix,iy,1)                                              !srv 13.01.17
+        if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 27.02.13
+         ehy = ehy_(ix,iy,1)                                              !srv 13.01.17
+        else
+         ehy = 0.0_R8
+        endif                                                            !srv 27.02.13
         floe0 = 1.5e0_R8*(fne(ix,iy,1,1)-                                !srv 11.05.99
      &	   5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                        !lk 21.02.08 17.12.13
 !* in the next line there is the coeffisient +4 because                  !srv 13.08.02

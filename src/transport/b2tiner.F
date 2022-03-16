@@ -10,6 +10,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -28,8 +29,7 @@
 *
 *  1. purpose
 *
-*     B2TINER computes the X,Y-COMPONENTS OF INERTIAL CURRENT
-*
+*     B2TINER computes the X and Y components of the inertial current.
 *
 *  8. further comments
 *
@@ -48,7 +48,7 @@
       save ncall, fch_inert
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
       data ncall/0/, fch_inert/1.0e0_R8/, guard_flows/2/
@@ -83,14 +83,14 @@ c Drift terms
 !     .    dOnedBsq(-1,-1,0,0))
 !        call diff_r(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
 !     .    dOnedBsq(-1,-1,0,1))
-        if(fch_inert_style.eq.0) then	
+        if(fch_inert_style.eq.0) then
          do is = 0, ns-1                                                 !srv 07.07.99
-	  if (.not.is_neutral(is)) then                                  !srv 07.07.99
+          if (.not.is_neutral(is)) then                                  !srv 07.07.99
 *         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny-1							 !srv 07.07.99
-             do ix=0,nx						         !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0,0)=fchinert(ix,iy,0,0)			 !srv 07.07.99
+           do iy=0,ny-1                                                  !srv 07.07.99
+             do ix=0,nx                                                  !srv 07.07.99
+               if(leftix(ix,iy).ne.-2) then                              !srv 26.11.02
+               fchinert(ix,iy,0,0)=fchinert(ix,iy,0,0)                   !srv 07.07.99
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*     !srv 23.07.05 11.01.13
      &          facdrift(ix,iy)*                                         !srv 22.06.08
      &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2)  !srv 07.07.99 05.02.05 23.07.05
@@ -114,14 +114,14 @@ cwdk cancelation of some terms in poloidal and radial current components
      &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
      &         qs(ix,iy,0)
      &         *dOnedBsq(ix,iy,0,0)
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99 
+              endif                                                      !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99 
 *         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny								       !srv 07.07.99
-             do ix=0,nx-1						             !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
-               fchinert(ix,iy,1,1)=fchinert(ix,iy,1,1)			       !srv 07.07.99
+           do iy=0,ny                                                    !srv 07.07.99
+             do ix=0,nx-1                                                !srv 07.07.99
+               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
+               fchinert(ix,iy,1,1)=fchinert(ix,iy,1,1)                   !srv 07.07.99
      &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf*  !srv 07.07.99 21.04.00 22.06.08 11.01.13
      &          *(                                                       !srv 07.07.99
      &           na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)     !srv 07.07.99
@@ -133,19 +133,19 @@ cwdk cancelation of some terms in poloidal and radial current components
      &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
      &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
      &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
           endif                                                          !srv 07.07.99
          enddo                                                           !srv 07.07.99
         elseif(fch_inert_style.eq.1) then
-	 do is = 0, ns-1                                                 !srv 07.07.99
-	  if (.not.is_neutral(is)) then                                  !srv 07.07.99
+         do is = 0, ns-1                                                 !srv 07.07.99
+          if (.not.is_neutral(is)) then                                  !srv 07.07.99
 *         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny-1							 !srv 07.07.99
-             do ix=0,nx						         !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02
-               fchinert(ix,iy,0,0)=fchinert(ix,iy,0,0)			 !srv 07.07.99
+           do iy=0,ny-1                                                  !srv 07.07.99
+             do ix=0,nx                                                  !srv 07.07.99
+              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
+               fchinert(ix,iy,0,0)=fchinert(ix,iy,0,0)                   !srv 07.07.99
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*     ! signmf*     !srv 23.07.05 11.01.13
      &          facdrift(ix,iy)*                                         !srv 22.06.08
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+                           !IYS 01.02.2013
@@ -171,14 +171,14 @@ cwdk cancelation of some terms in poloidal and radial current components
      &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
      &         qs(ix,iy,0)
      &         *dOnedBsq(ix,iy,0,0)
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99 
+              endif                                                      !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99 
 *         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
-           do iy=0,ny							 !srv 07.07.99
-             do ix=0,nx-1						 !srv 07.07.99
-	        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then!srv 26.11.02
-               fchinert(ix,iy,1,1)=fchinert(ix,iy,1,1)			 !srv 07.07.99
+           do iy=0,ny                                                    !srv 07.07.99
+             do ix=0,nx-1                                                !srv 07.07.99
+               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
+               fchinert(ix,iy,1,1)=fchinert(ix,iy,1,1)                   !srv 07.07.99
      &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf*  !srv 07.07.99 21.04.00 22.06.08 11.01.13
      &          *0.5e0_R8*(na(ix,iy,is)*ua(ix,iy,is)**2 +                !IYS 01.02.2013
      &          na(bottomix(ix,iy),bottomiy(ix,iy),is)*                  !IYS 01.02.2013
@@ -188,9 +188,9 @@ cwdk cancelation of some terms in poloidal and radial current components
      &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
      &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
      &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
-	       endif                                                     !srv 26.11.02
-             enddo							 !srv 07.07.99
-           enddo							 !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
           endif                                                          !srv 07.07.99
          enddo                                                           !srv 07.07.99
         else
@@ -198,7 +198,7 @@ cwdk cancelation of some terms in poloidal and radial current components
         endif
       endif                                                              !srv 07.07.99
 
-      if(guard_flows.eq.0) then                                 	 !xpb
+      if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
@@ -218,16 +218,16 @@ cxpb turn off poloidal flows in core boundary
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
        DO IB=1,NNISO
-	 DO IX=NXISO1(IB), NXISO2(IB)
-	   DO IY=NYISO1(IB), NYISO2(IB)
-	    fchinert(ix,iy,0,0)=0.0e0_R8
-	   end do
-	 end do
-	 DO IX=NXISO1(IB), NXISO2(IB)
-	   DO IY=NYISO1(IB), NYISO2(IB)
-	     fchinert(ix,iy,1,1)=0.0e0_R8
-	   end do
-	 end do
+         DO IX=NXISO1(IB), NXISO2(IB)
+           DO IY=NYISO1(IB), NYISO2(IB)
+             fchinert(ix,iy,0,0)=0.0e0_R8
+           end do
+         end do
+         DO IX=NXISO1(IB), NXISO2(IB)
+           DO IY=NYISO1(IB), NYISO2(IB)
+             fchinert(ix,iy,1,1)=0.0e0_R8
+           end do
+         end do
        end do
 * ..return
       ncall = ncall+1

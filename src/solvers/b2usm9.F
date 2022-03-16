@@ -8,6 +8,7 @@
       use b2mod_types
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -51,13 +52,13 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1
+     *  cfc0, t0, t1, t2, t3, t4, flo, dif, csb, csb1
       save ncall, cfc0
 *   ..procedures
       intrinsic max, abs, sqrt
       real (kind=R8) ::
      *  hybr, upwind
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
       hybr(flo,dif) = max(dif,abs(flo/2.0_R8),
      .                    sqrt(dif**2+flo**2/4.0_R8))

@@ -6,6 +6,7 @@
       use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx
@@ -15,7 +16,7 @@
      &  na(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *	sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1)                   !sv 01.07.99 !xpb
+     *  sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1)                   !sv 01.07.99 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -58,7 +59,7 @@
       intrinsic sqrt, log, exp, max, dim
       real (kind=R8) ::
      *   machsfr, expu
-      external subini, subend, xertst, sfill, ipgetr, machsfr
+      external xertst, sfill, ipgetr, machsfr
       external b2xvsg
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *     (expu is the exponential function with underflow set to 0)

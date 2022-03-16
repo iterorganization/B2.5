@@ -21,6 +21,7 @@
       use b2mod_balance                                                  !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows, ismain                          !xpb !srv 08.09.01 !lk 02.06.11
@@ -129,10 +130,26 @@
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
       integer :: xcount, ycount
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
+!!FR Local save variables that get updated need to be THREADPRIVATE
+!!FR Local save variables that are read only are okay - no change needed.
+!!FR Because alpha, gamma, flux_limit_min_ti, area_fix & others could
+!!FR potentially be written to by multiple threads on their ncall==0
+!!FR iteration we need to make them THREADPRIVATE too.
+!!TF Note that variables that appear in DATA statement have implied SAVE attribute.
+      !$OMP THREADPRIVATE(ncall)
+      !$OMP THREADPRIVATE(alpha, gamma)
+      !$OMP THREADPRIVATE(flux_limit_min_ti, area_fix, no_hybr)
+      !$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
+      !$OMP THREADPRIVATE(iout_b2npmo, mdf_fnb)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(pflux_cor, ion_vlct_restrict)
+      !$OMP THREADPRIVATE(vlct_diagno, drift_style, alpha_, xcur, ycur)
+      !$OMP THREADPRIVATE(vis_per, vis_q, xvecrb, xwdia)
+      !$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
 *   ..procedures
       real (kind=R8) ::
      *   hybr, upwind, kap, cvmgp, hy1
-      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
+      external xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp, diff_r
       intrinsic abs, max, min, mod, sqrt, sign
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -309,11 +326,12 @@ c Drift terms
       fnbPSch = 0.0_R8                                                   !srv 13.10.06
       fnb_mdf = 0.0_R8                                                   !srv 19.11.09
       conb  = 0.0e0_R8                                                   !srv 13.10.06
+      nbti=nb*ti
       if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
      &    .and. minval(zb).gt.0.0_R8) then
        if(drift_style.eq.0) then                                         !srv 21.06.08
         call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
-        call intfacev(nx,ny,bottomix,bottomiy,vol,nb*ti,wpb)
+        call intfacev(nx,ny,bottomix,bottomiy,vol,nbti,wpb)
         do iy = -1, ny
           do ix = -1, nx                                                 !xpb
 cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
@@ -455,7 +473,6 @@ cwdk add computation of 9-point corrections for drifts
 cwdk precomputation of differences on faces
 !lk       call intcor(nx,ny,vol,po,poc)
 !        call intcor(nx,ny,weight,po,poc)                                 !lk 12.12.07
-        nbti=nb*ti
 !lk       call intcor(nx,ny,vol,nbti,nbtic)                              !srv 08.10.04
 !        call intcor(nx,ny,weight,nbti,nbtic)                             !lk 12.12.07
         nbzb = nb*zb                                                     !srv 13.05.16
@@ -2228,9 +2245,7 @@ cwdk need full diamagnetic component for energy
 
       do ix=-1,nx
        do iy=-1,ny
-         kbnrgy(ix,iy) = 0.5_R8*mb*(ub(ix,iy)**2+                ! ua is a value in the cell center
-     .     (xwdia*wbdia_(ix,iy,0)+xvecrb*vbecrb_(ix,iy,0))**2+   ! wbdia_ is a value in the cell center
-     .     (xwdia*wbdia_(ix,iy,1)+xvecrb*vbecrb_(ix,iy,1))**2)   ! vbecrb_ is a value in the cell center
+         kbnrgy(ix,iy) = 0.5_R8*mb*ub(ix,iy)**2
        end do
       end do
 

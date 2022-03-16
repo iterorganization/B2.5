@@ -17,14 +17,12 @@ c=======================================================================
       integer i,j,k,l,is,iy,jj
       real (kind=R8) :: u
       real (kind=R8), allocatable :: hlp_flx(:,:,:)
-      character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80,tab
+      character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80
       data ftrg /
      ,       'fi_tg_i.dat','fi_tg_iu.dat','fi_tg_ou.dat','fi_tg_o.dat'/
       data trg_label /'inner','inner_top','outer_top','outer'/
 c=======================================================================
 c      print *,'Starting b2pgeier...'      !###
-
-      tab=char(9)
 
 c*** Determine topology and calculate some indices
 
@@ -50,13 +48,14 @@ c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
         open(lun,file=ftrg(jj))
-        write(fmt_peak,710) tab,ns,tab
+        write(fmt_peak,'(a,i3,a)') '(a,5x,',ns,'(a2,i2.2,8x))'
 c        print *,trim(fmt_peak)  !###
-        write(lun,740) 'Ion fluxes on the target - ',trg_label(jj),label
-        write(lun,fmt_peak) 'cell',
-     ,    ((trim(adjustl(species_list(is))),i,i=0,nfluids(is)),
-     ,                                          is=1,nspecies)
-        write(fmt_peak,720) ns,tab
+        write(lun,740) 'Ion fluxes on the target - ',
+     ,      trim(trg_label(jj)),trim(label)
+        write(lun,fmt_peak) '# cell',
+     ,    ((trim(species_list(is)),i,i=0,nfluids(is)),
+     ,                                               is=1,nspecies)
+        write(fmt_peak,'(a,i3,a)') '(2x,i4,1p,',ns,'(e12.4))'
 c        print *,trim(fmt_peak)  !###
         if(ntrgts.eq.4) then !{
           k=j
@@ -71,8 +70,6 @@ c        print *,trim(fmt_peak)  !###
       deallocate(hlp_flx)
       return
 c=======================================================================
-  710 format('(2h# ,a,1h',a,',',i3,'(a,i2.2,1h',a,'))')
-  720 format('(1x,i3,1p,',i3,'(e12.4,1h',a1,'))')
   740 format('# ',2a,' : ',a)
 c=======================================================================
       end

@@ -3,7 +3,7 @@
       implicit none
       integer n, incx
       real (kind=R8) ::
-     *   sx(0:*)
+     *   sx(0:(n*incx)-1)
 *     ------------------------------------------------------------------
 *     PRVRT sets all elements of a real*8 array to a value that is
 *     expected to cause an error when used in an arithmetic operation.
@@ -27,7 +27,13 @@
 *     ------------------------------------------------------------------
       nan(0) = -1
       nan(1) = 0
+#ifdef GFORTRAN
+#ifndef DBG
       call sfill (n, rnan, sx, incx)
+#endif
+#else
+      call sfill (n, rnan, sx, incx)
+#endif
 *     (The second argument to sfill is deliberately of wrong type.)
 *     ------------------------------------------------------------------
 *     Note: When porting this routine to another operating system,

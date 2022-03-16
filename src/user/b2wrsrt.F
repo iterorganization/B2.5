@@ -13,7 +13,7 @@
       use b2mod_constants
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra
@@ -73,7 +73,7 @@ c*** Values by regions
 
       real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
       equivalence (equr_tmp(1,1), tesum)
-      character*2 hlp_hr(nrgn_tmp)*8
+      character*8 hlp_hr(nrgn_tmp)
 c
 c*** Values by species
       integer nspc_tmp, nsp_tmp, ns_tmp
@@ -81,7 +81,7 @@ c*** Values by species
       real (kind=R8) :: equs_tmp(DEF_NATM,nspc_tmp)
       real (kind=R8) :: Natm_tmp(DEF_NATM)
       equivalence (equs_tmp(1,1), Natm_tmp)
-      character*2 hlp_hs(nspc_tmp)*8
+      character*8 hlp_hs(nspc_tmp)
 
 c*** Values by species and regions
       integer nsar_tmp, na_tmp
@@ -90,7 +90,7 @@ c*** Values by species and regions
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX) ! IYS 29.09.2017 added total number of neutrals
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum) ! IYS 29.09.2017
-      character*2 hlp_ha(nsar_tmp)*8
+      character*8 hlp_ha(nsar_tmp)
 c
 c*** Values by strata
       integer nfl_tmp
@@ -100,12 +100,13 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_srt)
       real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
-      real (kind=R8) ::
-     *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm, imol ! IYS 29.09.2017
+      integer iatm
+#ifdef B25_EIRENE
+      integer imol ! IYS 29.09.2017
+#endif
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hr / 'totenre_' /
@@ -127,7 +128,6 @@ c
      +  hlp_ha,
      +  nfl_tmp,
      +  lun,
-     +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
      +  i, j, k, is, ix, nv,
      +  ex, warn_tmp,
      +  tab, hlp_c, f, hlp_frm, hlp_frf
@@ -428,6 +428,5 @@ c
       return
 c=======================================================================
   700 format('#   ',7i8/'#  ',a)
-  701 format(a1,3x,7i8)
 c=======================================================================
       end subroutine b2wrsrt

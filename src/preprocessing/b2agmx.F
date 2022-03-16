@@ -13,13 +13,15 @@
      1 leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
      3 leftcut1,rightcut1,bottomcut1,topcut1,
-     $ cflags1)
+     & cflags1)
       use b2mod_types
+      use b2mod_b2cmfs
       use b2mod_interp
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
@@ -28,26 +30,26 @@
      &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1,0:1), 
      &  qs1(-1:nx1,-1:ny1,0:1),
      &  gs1(-1:nx1,-1:ny1,0:2),
-     1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
+     1  crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
+     2  bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
      3  fpsi1(-1:nx1,-1:ny1,0:3), ffbz1(-1:nx1,-1:ny1,0:3),
      4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
      &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
      5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
       integer
      *  leftix1(-1:nx1,-1:ny1), leftiy1(-1:nx1,-1:ny1),
-     1	rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
-     2	topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
-     3	bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
-     4	leftcut1(1:nncutmax), rightcut1(1:nncutmax),
+     1  rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
+     2  topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
+     3  bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
+     4  leftcut1(1:nncutmax), rightcut1(1:nncutmax),
      5  bottomcut1(1:nncutmax), topcut1(1:nncutmax)
       integer, intent(in) :: cflags1(-1:nx1,-1:ny1, CARREOUT_NCELLFLAGS)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
+     1  gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
@@ -154,7 +156,7 @@
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       dist1(ix,iy,i,j) = norm (
      &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation
       save pbs_from_basis_mesh
@@ -665,7 +667,7 @@ cdpc-end
             t1 = 0.0_R8
             do jy1 = 0, ky1-1
               t1 = t1+(hy1(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
-     &	       vol1(ix1+jx1,iy1+jy1)
+     &         vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1.0_R8/t1
           enddo
@@ -852,7 +854,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
         wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
-        geometryType = geometryId(nnreg, periodic_bc, topcut)
+        geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
 

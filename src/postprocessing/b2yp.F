@@ -10,10 +10,8 @@
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -72,12 +70,9 @@
 
 *   ..local variables
       integer ninp(0:5), nout(0:2), nx, ny, ns, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgend, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2ypdr
 *   ..initialise input/output units
@@ -113,16 +108,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yp_mpi_child'
-      endif
-#endif
       call prgini ('b2yp')
 *   ..open gks
       call gopks (0, 0)
@@ -186,10 +171,6 @@
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yp'
 
 *-----------------------------------------------------------------------

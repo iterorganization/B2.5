@@ -72,7 +72,7 @@ c--------------------------------------------------------------------
      *     mmx,i,j,nv,k,l
       logical nlerr
       real (kind=R8) ::
-     *       bgradp, twopi, fc, ft, pi, x, dum, vth,
+     *       bgradp, fc, ft, pi, x, dum, vth,
      +       nud, nue, nut, kb, kps, ommn, ntom, ktot, voorf,
      +       dx, weight, meanmuo
       real (kind=R8) ::
@@ -85,7 +85,6 @@ c     calculate vth
 
 c     the constant pi, 2 pi
       pi = 4.*atan(1.)
-      twopi = 2.*pi
 
 c     the constants to approximate the nut*irm function
       a(1) = 2. / 5.

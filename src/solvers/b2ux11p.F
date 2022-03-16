@@ -7,6 +7,8 @@
       use b2mod_ysmp_sdrv
 !      use b2mod_ma28
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -22,7 +24,7 @@
 *
 *  1. purpose
 *
-*     B2UX11 solves an eleven-point system of equations. This routine is
+*     B2UX11P solves an eleven-point system of equations. This routine is
 *     an interface to an iterative or a direct solver; the choice
 *     depends upon an internal parameter.
 *
@@ -33,7 +35,7 @@
 *     with the five-point discretisation of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *
@@ -74,10 +76,11 @@
       intrinsic min
       real (kind=R8) ::
      *   x05baf
-      external subini, subend, xertst, ipgeti, ipgetr, 
-     &  slv5pt, iluter, x05baf
+      external xertst, ipgeti, ipgetr, slv5pt, iluter, x05baf
 *   ..initialisation
       save ncall, style, acpar, cpu
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
+      !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
       data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -107,6 +110,8 @@
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_11diag                           !sv 11.01.00
          call iniilu_7(nx+2,ny+2)                                  !sv 11.01.00
+         irnh = 0                                                      !srv 15.05.07
+         icnh = 0                                                      !srv 15.05.07
          nltrsol=2
          call ipgeti ('b2ux11p_nltrsol', nltrsol)                   !sv 11.01.00
        endif
@@ -153,20 +158,31 @@
       endif
 
 *   ..solve the correction equation
-      cpu_start=x05baf()
+      call cpu_time(cpu_start)
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
        itpar = itcnt*iters
-       call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
+       call xerrab ('b2ux11p: Style 0 is not implemented')
+       if (in_parallel()) then
+        stop 'STOP: iluter not parallelised, re-run in serial'
+       else
+        call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
      &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+       endif
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
-       call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
+       call xerrab ('b2ux11p: Style 1 is not implemented')
+       if (in_parallel()) then
+        stop 'STOP: slv5pt not parallelised, re-run in serial'
+       else
+        call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+       endif
       else if (style.eq.2) then
 *    ..use ma28
+       call cpu_time(cpu_start)
         call ilutern_7(NX+2, NY+2, NX+2, aa11(-1,-1,-3),              !sv 11.01.00
      1   aa11(-1,-1,-2), aa11(-1,-1,-1), aa11(-1,-1,0),
      2   aa11(-1,-1,1), aa11(-1,-1,2), aa11(-1,-1,3),                 !sv 11.01.00
@@ -185,7 +201,7 @@
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
-      cpu_end=x05baf()
+      call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &                                  cpu_end-cpu_start
 
@@ -202,6 +218,7 @@
       subroutine storage_11 (nx, ny, aa11, nnz, ip, ja, a, k,          !srv 29.05.02
      *                      indexes, ipsave, jasave, name)
       use b2mod_types
+      use b2mod_openmp
       use b2mod_indirect
       implicit none
 *  ..input

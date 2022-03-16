@@ -1,4 +1,4 @@
-      subroutine b2pnwl(*)
+      subroutine b2pnwl(iret)
 c
 c  version : 11.11.97 20:52
 c
@@ -13,10 +13,11 @@ c======================================================================
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       implicit none
 #include <DIMENSIONS.F>
+      integer iret
 c*** Local variables
 c
       integer lun
@@ -47,53 +48,10 @@ c*** Set the default values
       npumplis=0
       nwldprt=0
 c*** Read the data from dg files
-      call b2pinp(*999)
-c
-c*** Convert the input wall coordinates into double precision
-c*** and scale them to meters.
-c*** We have now two sets of the wall segments, one saved by Eirene
-c*** and (another) one read from dg file. Only the segments which are
-c*** identical in both sets are to be used for plotting, the rest
-c*** will be filled with the value representing zero in the list-
-c*** sorting routine b2pwsrt. The reference distance along the wall
-c*** will however be calculated from the geometry read from dg file.
-c*** This should allow one to have the same reference frame for the
-c*** radiation and neutral wall load.
-c
-      do i=1,lppp
-        pp1(1,i)=0.001e0_R8*ppp1(1,i)
-        pp1(2,i)=0.001e0_R8*ppp1(2,i)
-        pp2(1,i)=0.001e0_R8*ppp2(1,i)
-        pp2(2,i)=0.001e0_R8*ppp2(2,i)
-      end do
-cc%%%
-c      print *,'After b2pinp',nwldprt
-c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
-c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-cc%%%
-c*** Then sort the target lists
-c*** The shadowing structure must be closed, therefore it starts from
-c*** an arbitrary point.
-
-      lwldstrt(1)=iabs(lwldlis(1,1))
-      call b2pwsrt(*999)
-cc<<<
-c      print *,'After b2pwsrt',nwldprt
-c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
-c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(5x,15i5))','leirlis :',il,
-c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
-c      end do
-cc>>>
+      iret=0
+      call b2pinp(iret)
+      if (iret.eq.1) goto 999
+      call b2pwlprp
 c*** ... and produce the output file
       do i=1,natmi
         text_an(i)=textan(i-1)(2:8)
@@ -103,24 +61,32 @@ c*** ... and produce the output file
       end do
       open (lun,file='wlld.dat')
       write (hlp_frm,'(a,i2,a)')
-     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),4(5x,a4,3x),',
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
-     .      '(3x,a4,a4,1x),4(5x,a4,3x))'
-      write(lun,hlp_frm)
+     .      '(a4,a8),2(1x,a8,3x))'
+      if (nmoli.gt.0) then
+        write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
-     ,      'net_','ersn','grs_','ersn'
-c<<<
-c      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
-c      do il=1,nwldprt
-c        write (hlp_frm,'(a,i2,a)') '(1x,',nwldlis(il)+1,'i4)'
-c        print '(1x,2i4)',il,nwldlis(il)
-c        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+     ,      'net_ersn','grs_ersn'
+      else
+        write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,      'net_ersn','grs_ersn'
+      end if
+#ifdef DBG
+      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
+      do il=1,nwldprt
+        print '(1x,2i4,1x,a)',il,nwldlis(il),pltzlbl(il)
+        write (6,'(1x,20i4)') (lwldlis(i,il),i=1,nwldlis(il))
+      end do
+#endif
 c
 c*** Check whether carbon atoms are present in the calculation
 c
@@ -159,10 +125,10 @@ c
             else if (isymm.eq.3 .or. isymm.eq.4) then
               a=pi*(pp1(2,ib)+pp2(2,ib))*dist
             end if
+            aa=1.e-6_R8/a
             dist=0.5e0_R8*dist
             x=x+h+dist
             if(is .gt. 0) then
-              aa=1.e-6_R8/a
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa
@@ -309,13 +275,13 @@ c     end if
   710 format(1x,a2,a20,':',1p,2e14.3)
       return
 c----------------------------------------------------------------------
- 999  return 1
+  999 return
 c----------------------------------------------------------------------
       end subroutine b2pnwl
 c
 c
 c======================================================================
-      subroutine b2pwsrt(*)
+      subroutine b2pwsrt(iret)
 c
 c*** sort the lists of target sections to simply connected chains
 c----------------------------------------------------------------------
@@ -329,6 +295,7 @@ c***  leirlis : the lists themselves (Eirene numbering)
 c
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -337,6 +304,7 @@ c
       use b2mod_eirdiag
 #endif
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -351,7 +319,7 @@ c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
       logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
       parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
@@ -359,7 +327,12 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if (nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -371,7 +344,7 @@ c      end do
 cc%%%
       no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
      &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
-
+      iret=0
       do il=1,nwldprt
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
@@ -395,7 +368,7 @@ c*** initialise the chain counter and the chain list
             lwsrtwrk(nwsrtwrk)=is
 c*** both ends of the first element will be checked (goup=.true. here)
             k=2
-            do 100 ii=2,nwldlis(il)
+            do ii=2,nwldlis(il)
 c              print *,'do 100:',ii,is,goup
               do ik=1,k
 c                print *,'do ik:',ik,is,goup
@@ -455,8 +428,9 @@ c*** Look in the opposite direction
               end do
 c*** No connection found
               go to 50
- 100        k=1
- 50         if(nwsrtwrk .ne. nwldlis(il)) then
+  100         k=1
+            end do
+   50       if(nwsrtwrk .ne. nwldlis(il)) then
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
@@ -469,13 +443,15 @@ c*** No connection found
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4)) then
+     .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
+     .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
+     .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
+     .                 nnreg(0).eq.8)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)
                   if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -486,7 +462,6 @@ c*** No connection found
                   else
      .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
@@ -497,7 +472,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -508,7 +482,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/

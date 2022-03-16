@@ -27,12 +27,10 @@ c*** Local variables
       integer lun_w, lfn_hlp
       parameter (lun_w=96, lfn_hlp=mlblprtx+9)
       integer i,l,il
-      character tab, fn_hlp*(lfn_hlp)
+      character fn_hlp*(lfn_hlp)
 c=======================================================================
 
       print *,'Starting b2pwldl...' !###
-
-      tab=char(9)
 
 c*** Calculate the radiation load on the specified wall zones
 c*** (data input and geometry initialisation also done there)
@@ -43,14 +41,14 @@ c*** Produce the output files - one for a zone
 
       print *,'  nwldprt:',nwldprt  !### 
       do 20 il=2,nwldprt !{
-        l=len_trim(lblwldpt(il))
-c        print *,'il,l,lblwldpt(il)=',il,l,' ',lblwldpt(il)    !###
+        l=len_trim(pltzlbl(il))
+c        print *,'il,l,pltzlbl(il)=',il,l,' ',pltzlbl(il)    !###
 c*** create the filename for the output
         if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
           write(fn_hlp,'(a,i2.2,a)') 'wlld_',il-1,'.dat'
         else !}{
-          fn_hlp='wlld_'//lblwldpt(il)(1:l)//'.dat'
+          fn_hlp='wlld_'//pltzlbl(il)(1:l)//'.dat'
         end if !}
 c*** Open the file and write the heading line
         print *,'About to open :',fn_hlp,':'
@@ -62,7 +60,7 @@ c*** Write the next line to the output file
           call b2pwldw(lun_w,.false.,il,i,boundary_namelist,BoRiS)
         end do !}
         close(lun_w)
- 20   continue !}
+   20 continue !}
 
       print *,'Leaving b2pwldl...' !###
 

@@ -5,6 +5,8 @@
      . aa9, name)                                                       !sv 13.10.06
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -51,9 +53,10 @@
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2)
       save ncall
+      !$OMP THREADPRIVATE(ncall, iout)
 *   ..procedures
       intrinsic abs
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux5p
 *   ..initialization
       data ncall/0/
@@ -67,6 +70,12 @@
 *   ..set internal parameters on first call                              !sv 25.08.99
       if (ncall.eq.0) then                                               !sv 06.07.06 {
        call ipgeti ('b2uxm9_iout', iout)                                 !sv 13.10.06
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2uxm9 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif                                                              !sv 06.07.06 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -102,19 +111,19 @@
      &      .not.solvereg(ireg)) then
           
          else
-	    ixr = rightix(ix,iy)
-	    iyr = rightiy(ix,iy)
+            ixr = rightix(ix,iy)
+            iyr = rightiy(ix,iy)
           aaf(ix,iy,1) = - conb(ixr,iyr,0,0,0) +
      &                     conb(topix(ixr,iyr),topiy(ixr,iyr),0,0,1)
-	   endif
+         endif
         enddo
        enddo
 
        if(iout.ne.0) then
-	  call my_out(70,nx,ny,conb(-1,-1,0,0,0),'conbx3'//trim(name))
-	  call my_out(70,nx,ny,conb(-1,-1,0,0,1),'conbx4'//trim(name))
-	  call my_out(70,nx,ny,conb(-1,-1,1,1,0),'conby3'//trim(name))
-	  call my_out(70,nx,ny,conb(-1,-1,1,1,1),'conby4'//trim(name))
+          call my_out(70,nx,ny,conb(-1,-1,0,0,0),'conbx3'//trim(name))
+          call my_out(70,nx,ny,conb(-1,-1,0,0,1),'conbx4'//trim(name))
+          call my_out(70,nx,ny,conb(-1,-1,1,1,0),'conby3'//trim(name))
+          call my_out(70,nx,ny,conb(-1,-1,1,1,1),'conby4'//trim(name))
 
           call my_out(70,nx,ny,aaf(-1,-1,-1),'aafm1'//trim(name))
           call my_out(70,nx,ny,aaf(-1,-1, 1),'aafp1'//trim(name))
@@ -129,11 +138,11 @@
      &      .not.solvereg(ireg)) then
           
          else
-	  ixb = bottomix(ix,iy)
-	  iyb = bottomiy(ix,iy)
+          ixb = bottomix(ix,iy)
+          iyb = bottomiy(ix,iy)
           aaf(ix,iy,-2) = -conb(ixb,iyb,1,1,0) +
      &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,1)
-	   endif
+         endif
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
@@ -143,7 +152,7 @@
           iyt = topiy(ix,iy)
           aaf(ix,iy,2) =  conb(ixt,iyt,1,1,0) -
      &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
-	   endif
+         endif
         enddo
        enddo
 
@@ -266,7 +275,7 @@
           call my_out(70,nx,ny,aa9(-1,-1,-5),'aa9ym1xp1'//trim(name))
           call my_out(70,nx,ny,aa9(-1,-1, 2),'aa9xm1yp1'//trim(name))
           call my_out(70,nx,ny,aa9(-1,-1, 5),'aa9yp1xm1'//trim(name))
-         endif
+      endif
 
 * ..return
       ncall = ncall+1

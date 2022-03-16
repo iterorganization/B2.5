@@ -7,10 +7,8 @@
       use b2mod_version
       use b2mod_indirect
       use b2mod_geo_corner
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -64,13 +62,10 @@
 
 *   ..local variables
       integer ninp(0:1), nout(0:1), idum(0:9), nx, ny, ns, io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       character*120 lblgm
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin, cfruch
+      external prgini, prgend, cfopen, cfruin, cfruch
       external b2ahx0, b2ahdr, b2rugm
 *   ..initialise input/output units
       data ninp/50,51/
@@ -99,16 +94,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2ah_mpi_child'
-      endif
-#endif
       call prgini ('b2ah')
 *   ..open files
       call cfopen (ninp(0),'b2ah.dat','old','formatted')
@@ -117,8 +102,8 @@
       call cfopen (nout(1),'b2fpardf','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -153,10 +138,6 @@
       call dealloc_b2mod_geo
       call dealloc_b2mod_indirect
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2ah'
 
 *-----------------------------------------------------------------------

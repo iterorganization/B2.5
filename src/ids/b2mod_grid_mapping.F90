@@ -65,7 +65,7 @@ module b2mod_grid_mapping
         integer, dimension(:), allocatable :: mapVxIVx
         integer, dimension(:,:), allocatable :: mapCvI
         integer, dimension(:,:,:), allocatable :: mapFcI !< 3D array of faces
-            !< composing the quadliateral in the list.
+            !< composing the quadrilateral in the list.
             !< gmap%mapFcI( ix, iy, POSITION ), where POSITION is LEFT, BOTTOM,
             !< RIGHT OR TOP
         integer, dimension(:,:,:), allocatable ::mapVxI
@@ -192,7 +192,7 @@ contains
     !> Create B2GridMap, containing grid geometry information
     subroutine b2CreateMap( nx, ny, crx, cry, cflag, leftix, leftiy,    &
             &   rightix, rightiy, topix, topiy, bottomix, bottomiy,     &
-            &   includeGhostCells, gd)
+            &   includeGhostCells, gd, newMap)
 
         use b2mod_cellhelper
 
@@ -226,7 +226,8 @@ contains
             !< poloidal (first coordinate) index array
         integer, intent(in) :: bottomiy( -1:nx, -1:ny ) !< Bottom neighbour
             !< radial (second coordinate) index
-        logical, intent(in) :: includeGhostCells    !< Include "fake" cells
+        logical, intent(in) :: includeGhostCells        !< Include "fake" cells
+        logical, intent(in) :: newMap                   !< Create a new vertex file
 
         type(B2GridMap), intent(inout) :: gd    !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
@@ -243,8 +244,6 @@ contains
         integer :: i2   !< Iterator
         integer :: nbix
         integer :: nbiy
-        integer :: nbix2
-        integer :: nbiy2
         integer :: iFace !< Face/edge index
         integer :: iCorner
         integer :: index
@@ -270,7 +269,7 @@ contains
         integer :: vxiReduce((nx + 2) * (ny + 2) * 4)
         integer :: nsector((nx + 2) * (ny + 2) * 4)
 
-        logical :: check, cell_done
+        logical :: cell_done
 
         !! list of identified special vertices
         !! vertex indices (ix, iy)
@@ -289,6 +288,12 @@ contains
         integer :: nfcy !< Number of y-aligned faces/edges (1D objects)
         integer :: nvx  !< Number of all vertices/nodes (0D objects)
 
+        character(*), parameter :: VERTEX_FILE = 'vertex_data.out'
+        character(256) :: VERTEX_FILE_TEMP
+        integer, parameter :: VERTEX_UNIT = 99
+        logical :: vertexfileExists
+        external xertst, find_file
+
         call logmsg( LOGDEBUG, "b2CreateMap: create map for a nx="  &
             &   //int2str(nx)//", ny="//int2str(ny)//" b2 grid" )
 
@@ -298,7 +303,7 @@ contains
         vxi = GRID_UNDEFINED
 
         !! set up initial lexicographic indices
-        ic = 0 !! cvs
+        ic = 0 !! cells
         ifcx = 0 !! x-aligned faces
         ifcy = 0 !! y-aligned faces
         ivx = 0 !! vertices
@@ -719,9 +724,18 @@ contains
         call logmsg( LOGDEBUG, "b2CreateMap: map contains  "    &
             &   //int2str(gd%nvx)//" unique vertices")
 
-    !! Find out how many and which control volumes touch any given vertex
-        nsector = 0
-        do ix = -1, nx
+        !! Find out how many and which control volumes touch any given vertex
+        VERTEX_FILE_TEMP = trim(VERTEX_FILE)
+        call find_file(VERTEX_FILE_TEMP,vertexfileExists)
+        if (vertexfileExists.and..not.newMap) then
+          ! read vertex file
+          open(unit=VERTEX_UNIT, file=VERTEX_FILE_TEMP)
+          read(VERTEX_UNIT,*) gd%mapCvixVx
+          read(VERTEX_UNIT,*) gd%mapCviyVx
+          close(VERTEX_UNIT)
+        else
+          nsector = 0
+          do ix = -1, nx
             do iy = -1, ny
                 do iCorner = VX_LOWERLEFT, VX_UPPERRIGHT
                     if( vxi( ix, iy, iCorner ) == GRID_UNDEFINED ) cycle
@@ -758,8 +772,17 @@ contains
                     end do
                 end do
             end do
-        end do
-
+          end do
+#ifndef BUILDING_CARRE
+          VERTEX_FILE_TEMP = trim("../"//VERTEX_FILE)
+#else
+          VERTEX_FILE_TEMP = trim(VERTEX_FILE)
+#endif
+          open(unit=VERTEX_UNIT, file=trim(VERTEX_FILE_TEMP))
+          write(VERTEX_UNIT,*) gd%mapCvixVx
+          write(VERTEX_UNIT,*) gd%mapCviyVx
+          close(VERTEX_UNIT)
+        endif
         return
 
 contains

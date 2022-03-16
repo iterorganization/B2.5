@@ -1,0 +1,81 @@
+# Test whether necessary variables are set
+MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
+LD_MSCL     ?= -L${SOLPSLIB} -lmscl
+ifdef NCARG_ROOT
+LD_NCARG    ?= `pkg-config ncarg --libs`
+endif
+ifdef USE_MPI
+LD_NETCDF   ?= `pkg-config pnetcdf --libs`
+ifdef USE_OPENMP
+LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
+else
+LD_NAG      ?= `pkg-config sci_mpi --libs`
+endif
+else
+LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
+ifdef USE_OPENMP
+LD_NAG      ?= `pkg-config sci_mp --libs`
+else
+LD_NAG      ?= `pkg-config sci --libs`
+endif
+endif
+
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+
+DEFINES += -DNO_OPT
+ifndef SOLPS_CPP
+DEFINES += -DCRAY -DF2003
+ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
+DEFINES += -DCONSTANTS_PROVIDED
+INCMODS += `pkg-config fundamental-constants --cflags`
+endif
+endif
+
+ifdef USE_MPI
+DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+endif
+
+CPP = /lib/cpp -traditional
+CPPOPTS = -P -I${srcdir} ${EQUIVS}
+
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+
+FC = ftn
+FCOPTS = -e0 -ez
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+FCOPTS += -homp
+endif
+else
+ifndef USE_OPENMP
+FCOPTS += -hnoomp
+endif
+endif
+ifdef SOLPS_DEBUG
+FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
+else
+FCOPTS += -O2 -hfp2
+endif
+OBJDEST = -ef -em -J${OBJDIR}
+INCMOD = -p
+MOD = mod
+
+BLD = ar rucv
+
+GRLIBES = ${LD_NCARG}
+PLLIBES = ${LD_MSCL}
+LDLIBES = ${LD_NETCDF}
+
+LD = ftn
+LDOPTS = -dynamic -hpic
+# JFRS OPENMP
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
+LDOPTS += -homp
+endif
+endif
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

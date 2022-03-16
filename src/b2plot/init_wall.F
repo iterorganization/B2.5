@@ -11,6 +11,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
@@ -22,12 +23,11 @@
       integer ix, iy, is, ixn, iyn, idir, ireg
       integer ibnd, ibndm, i, j, ik, itrack, icoat, ikink, ikink0
       integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:)
-      integer, allocatable, save :: xymap_tmp(:,:)
       integer, save :: debug_init_wall
       real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
      *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
-     *  dist, distp, dint, sum,
+     *  distance, distp, dint, sum,
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
       character*16 hlp_frm
       logical wall_namelist_used, default_cooling, correct_quadrant
@@ -49,14 +49,13 @@
       logical overlap
       intrinsic mod, max, min, sqrt, abs, int
       external mass_density, overlap
-      external xertst, subini, subend, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
 
       real (kind=R8) :: onemeps
       parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
 
       call subini('init_wall')
       allocate(imapx_tmp(nwall), imapy_tmp(nwall))
-      allocate(xymap_tmp(-1:DEF_NXD,-1:DEF_NYD))
       call ipgeti('init_wall_debug', debug_init_wall)
 cxpb Establish numbering of boundary wall cells
 cxpb We must avoid corner cells and dead cells
@@ -69,7 +68,7 @@ cxpb We must avoid corner cells and dead cells
       nsegments = 0
       itrack_0 = 0
 
-cxpb  We start from the HFS lower corner and go clockwise around the plasma
+cxpb  We start from the lower left corner and go clockwise around the plasma
 cxpb  keeping the plasma to our right (but we are moving in the guard cells!)
 cxpb  Northern boundaries (excluding diverted island)
       iy = ny
@@ -350,7 +349,7 @@ cxpb Recopy geometrical arrays into namelist defaults
       call subini('get_wall_data')
 cxpb  Test namelist input
       if (ntargsp.gt.0) then
-        write(hlp_frm,'(a,i2,a)') '(a,',ntargsp,'(a2,1x))'
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',ntargsp,'(a2,1x))'
         write(*,hlp_frm) 'track_species : Bulk ', 
      .   track_species(1:ntargsp)
       else
@@ -426,7 +425,7 @@ cxpb  normalise the layer constituents relative concentrations
         do i = 1, layer_nconstituents(ibnd)
           sum = sum + layer_nrelconstituents(ibnd,i)
         enddo
-        layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))=
+        layer_relconstituents(ibnd,1:layer_nconstituents(ibnd))=
      1   layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))/sum
       end do
 
@@ -533,8 +532,8 @@ c no mixed materials
           xb = r2(ibnd)
           ya = z1(ibnd)
           yb = z2(ibnd)
-          dist = sqrt((xb-xa)**2+(yb-ya)**2)
-          target_width(ibnd,1) = dist
+          distance = sqrt((xb-xa)**2+(yb-ya)**2)
+          target_width(ibnd,1) = distance
           targetcr(ibnd,1,1) = xa
           targetcz(ibnd,1,1) = ya
           targetcr(ibnd,1,2) = xb
@@ -629,7 +628,8 @@ cxpb and far enough away from the OAp line
      .         ((xbp-xo)*(yap-yo)-(ybp-yo)*(xap-xo)).gt.0.0_R8
               distp = ((xbp-xo)*(yap-yo)+(ybp-yo)*(xo-xap))/
      .         sqrt((yap-yo)**2+(xo-xap)**2)
-              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8)) then
+              if(.not.(correct_quadrant.and.distp/distance.ge.0.1_R8))
+     .         then
                 ik = min(ik,i)
                 xbp = xo + (xbm-xo) + (xap-xo)
                 ybp = yo + (ybm-yo) + (yap-yo)
@@ -893,7 +893,7 @@ cxpb Use 1-D equilibrium profile
 
       subroutine check_ok(nx, ny, ix, iy, idir)
       implicit none
-      integer nx, ny, ix, iy, idir
+      integer, intent(in) :: nx, ny, ix, iy, idir
 ! check on position
       if(ix.eq.-2) then
          write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',
@@ -930,7 +930,7 @@ cxpb Use 1-D equilibrium profile
       integer ns, nz, ibnd
       integer i, is, itrack, icoat
       real (kind=R8) :: sum, sput_frac(0:ntrack)
-      logical surface_only, found
+      logical found
       character*24 filename
       integer, save :: ncall, hd_linlog, sput_frac_flag
       real (kind=R8), save :: hd_ratio,
@@ -943,7 +943,7 @@ cxpb Use 1-D equilibrium profile
       real (kind=R8) :: onemeps
       parameter (onemeps = 1.0_R8 - 1.0e-5_R8)
       logical open_file
-      intrinsic max, sqrt
+      intrinsic max
       external ipgeti, ipgetr, xertst, xerrab
       external mass_density, open_file
 
@@ -969,14 +969,12 @@ cxpb Use 1-D equilibrium profile
       endif
 
       if (layer_thickness(ibnd).eq.0.0_R8) then
-        surface_only = .true.     ! no idea what it should be, but otherwise an undefined variable is used later
         continue  ! nothing to do
       else if (layer_thickness(ibnd).gt.0.0_R8) then
 cxpb  The deposited layer is included in the first depth element, raising it.
 cxpb  Recall the depth is measured starting at 0 at the nominal surface and
 cxpb  increases going away from the plasma.
         target_depth(ibnd,1) = -layer_thickness(ibnd)
-        surface_only = .true.
       else if (layer_thickness(ibnd).lt.0.0_R8) then
 cxpb  Shallow erosion case, does not cross eventual coating boundary
 cxpb  The net erosion is layer_thickness but the mixed layer is
@@ -988,7 +986,6 @@ cxpb  target element
      .       coating_thickness(ibnd) .or.
      .       coating_thickness(ibnd).eq.0.0_R8)) then
           target_depth(ibnd,1) = -layer_thickness(ibnd)
-          surface_only = .true.
         else if ((layer_depth(ibnd)-layer_thickness(ibnd)).lt.
      .       coating_thickness(ibnd) .or.
      .       coating_thickness(ibnd).eq.0.0_R8) then
@@ -1047,7 +1044,6 @@ cxpb  The first target element must be at least layer_depth thick
      .         (hd_ratio - 1.0_R8)
             end do
           endif
-          surface_only = .false.
         else
 cxpb  Very deep erosion case, crosses coating boundary
 cxpb  The first target element must be at least layer_depth thick
@@ -1075,7 +1071,6 @@ cxpb  The first target element must be at least layer_depth thick
      .         (hd_ratio - 1.0_R8)
             end do
           endif
-          surface_only = .false.
           write(*,*)
      .     'Fully eroded coating. Read new bulk surface properties'
           filename='Surface_properties/'//trim(bulk_material_name(ibnd))
@@ -1104,7 +1099,7 @@ cxpb Normalise surface constituents
             sum = sum + matsurf_nrelconstituents(ibnd,i)
           end do
           do i = 1, matsurf_nconstituents(ibnd)
-            matsurf_nrelconstituents(ibnd,i) =
+            matsurf_relconstituents(ibnd,i) =
      .       matsurf_nrelconstituents(ibnd,i)/sum
           end do
         endif
@@ -1158,8 +1153,8 @@ c normalised weights is 1
 cxpb  Modify surface layer properties for backscattering
       layer_nconstituents(ibnd)=matsurf_nconstituents(ibnd)+ntargsp
 cxpb  Contributions from the bulk
-      layer_nrelconstituents(ibnd,1:matsurf_nconstituents(ibnd))=
-     1  matsurf_nrelconstituents
+      layer_relconstituents(ibnd,1:matsurf_nconstituents(ibnd))=
+     1  matsurf_relconstituents
      .   (ibnd,1:matsurf_nconstituents(ibnd))*
      2  sput_frac(0)
 cxpb  Contributions from the deposited species
@@ -1167,7 +1162,7 @@ cxpb  Contributions from the deposited species
         layer_nzconstituents
      .     (ibnd,matsurf_nconstituents(ibnd)+itrack)=
      1     nint(zn(target_intcode(itrack)))
-        layer_nrelconstituents
+        layer_relconstituents
      .     (ibnd,matsurf_nconstituents(ibnd)+itrack)=
      .      sput_frac(itrack)
       enddo
@@ -1204,7 +1199,7 @@ cxpb  This will need refinement including alloy formation
       nz = matsurf_nconstituents(ibnd)
 cxpb  Contribution from the bulk
       layer_composition(ibnd,1:nz)=
-     2  matsurf_nrelconstituents(ibnd,1:nz)*sput_frac(0)
+     2  matsurf_relconstituents(ibnd,1:nz)*sput_frac(0)
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb  Inventory of bulk or coating particles
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1267,8 +1262,8 @@ cxpb  Must check if Z of deposited material already exists in bulk
       Tcels = T - 273.15_R8
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1308,7 +1303,7 @@ cxpb The bulk or coating surface parameters
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb Loop over deposited species contributions
       do itrack = 1, ntargsp
-        frac = layer_nrelconstituents(ibnd,nz+itrack)
+        frac = layer_relconstituents(ibnd,nz+itrack)
         a(1) = species_Kappa_A1(itrack)
         a(2) = species_Kappa_A2(itrack)
         a(3) = species_Kappa_A3(itrack)
@@ -1345,8 +1340,8 @@ cxpb Loop over deposited species contributions
       Tcels = T - 273.15_R8
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1388,7 +1383,7 @@ cxpb The bulk or coating surface parameters
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb Loop over deposited species contributions
       do itrack = 1, ntargsp
-        frac = layer_nrelconstituents(ibnd,nz+itrack)
+        frac = layer_relconstituents(ibnd,nz+itrack)
         a(2) = species_Kappa_A2(itrack)
         a(3) = species_Kappa_A3(itrack)
         a(4) = species_Kappa_A4(itrack)
@@ -1427,8 +1422,8 @@ cxpb Loop over deposited species contributions
       Tcels = T - 273.15_R8
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1478,7 +1473,7 @@ cxpb The bulk or coating surface parameters
 cxpb Loop over deposited species contributions
       if (layer_nconstituents(ibnd).gt.nz) then
         do itrack = 1, ntargsp
-          frac = layer_nrelconstituents(ibnd,nz+itrack)
+          frac = layer_relconstituents(ibnd,nz+itrack)
           b(1) = species_Cp_B1(itrack)
           b(2) = species_Cp_B2(itrack)
           b(3) = species_Cp_B3(itrack)
@@ -1517,15 +1512,15 @@ cxpb Loop over deposited species contributions
       real (kind=R8) :: layer_value, frac
 
 cxpb First count the bulk contribution
-      frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+      frac=layer_relconstituents(ibnd,1)/
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       layer_emissivity = matsurf_blackbody_emiss(ibnd)*frac
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb Loop over deposited species contributions
       do itrack = 1, ntargsp
-        frac = layer_nrelconstituents(ibnd,nz+itrack)
+        frac = layer_relconstituents(ibnd,nz+itrack)
         layer_value = species_blackbody_emiss(itrack)
         layer_emissivity = layer_emissivity + layer_value*frac
       end do
@@ -1591,7 +1586,6 @@ cxpb We must now test the intersection of side 41 with 5678
       use b2mod_types
       implicit none
       real (kind=R8) :: x1,y1,x2,y2,x3,y3,x4,y4
-      intrinsic abs, sqrt
 cxpb We aim to find if segment 12 intersects with segment 34
 
 cxpb Check if vector 34 lies between 31 and 32 and vector 12 is between 13 and 14

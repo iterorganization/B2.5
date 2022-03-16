@@ -50,7 +50,7 @@ c*** ig = -12 :
 c***
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (densities, temperatures, fluid velocities)
-c***  in the outer divertor - for H. Wuerz
+c***  in the Eastern divertor - for H. Wuerz
 c***
 c*** ig = -11 :
 c***
@@ -148,6 +148,9 @@ c=======================================================================
       use b2mod_b2plot_ank
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
 c
       integer ig, ih(3)
@@ -164,10 +167,8 @@ c
       integer indsrf(stacklen)
       integer i, j, im, in, is, ix, iy, k, n, nindsrf
       logical found
-      character tab, frm*128, filename*256, extralabel*256
+      character frm*128, filename*256, extralabel*256
 c=======================================================================
-c
-      tab=char(9)
 c
       if(ig.eq.-1) then
         call b2pabrmv(lun)
@@ -191,28 +192,48 @@ c-----------------------------------------------------------------------
         n=nspecies+2*(natmi+nmoli)+1
         open(lun,file='particle.flx')
         write(lun,'(2a)')
-     ,    '#Total fluxes of neutrals and plasma onto, ',
+     ,    '# Total fluxes of neutrals and plasma onto, ',
      ,    'and of neutrals and sputtered material from the targets'
-        write(lun,'(2a)') '#',label
-        write(frm,720) n,tab
-  720   format('(2h# ,',i3,'(1h',a1,',a8))')
-        write(lun, frm) (textsp(i),i=0,nspecies-1),
-     ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
-     ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
-     ,                  'sput.'
-        write(frm,730) n,tab
-  730   format('((1p,1x,a5,',i3,'(1h',a1,',e11.4)))')
+        write(lun,'(2a)') '# ',trim(label)
+        write(frm,720) n
+  720   format('(a2,4x,',i3,'(1x,a16))')
+        if (nmoli.gt.0) then
+          write(lun, frm) '# ',
+     ,     (trim(textsp(i))//'_pls_in ',i=0,nspecies-1),
+     ,     (trim(textan(i))//'_atm_in ',i=0,natmi-1),
+     ,     (trim(textmn(i))//'_mol_in ',i=0,nmoli-1),
+     ,     (trim(textan(i))//'_atm_out',i=0,natmi-1),
+     ,     (trim(textmn(i))//'_mol_out',i=0,nmoli-1),
+     ,      'sput.'
+        else
+          write(lun, frm) '# ',
+     ,     (trim(textsp(i))//'_pls_in ',i=0,nspecies-1),
+     ,     (trim(textan(i))//'_atm_in ',i=0,natmi-1),
+     ,     (trim(textan(i))//'_atm_out',i=0,natmi-1),
+     ,      'sput.'
+        end if
+        write(frm,730) n
+  730   format('(1p,1x,a5,',i3,'(5x,e12.5))')
         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(1),i,0)+wldpa(nlim+ltns(1),i,0)
         end do
         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(1),i,0)+wldpm(nlim+ltns(1),i,0)
         end do
-        write(lun, frm) 'inner',(hlp_pi(i),i=1,nspecies),
-     ,    (wldna(nlim+ltns(1),i,0),i=1,natmi),
-     ,    (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
-     ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,    wldspt(nlim+ltns(1),0)
+        if (nmoli.gt.0) then
+          write(lun, frm) 'inner',
+     ,      (hlp_pi(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
+     ,      (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
+     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
+     ,       wldspt(nlim+ltns(1),0)
+        else
+          write(lun, frm) 'inner',
+     ,      (hlp_pi(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
+     ,      (hlp_at(i),i=1,natmi),
+     ,       wldspt(nlim+ltns(1),0)
+        end if
         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
         end do
@@ -338,12 +359,12 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='pr.dat')
-        write(lun,'(2a)') '#  Plasma pressure:  ',label
-        write(frm,700) nx+2,tab
-  700   format('(2h# ,i3,',i3,'(1h',a1,',i3))')
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
-  710   format('((1p,1x,i3,',i3,'(1h',a1,',e11.4)))')
+        write(lun,'(2a)') '#  Plasma pressure:  ',trim(label)
+        write(frm,700) nx
+  700   format('(a2,4x,',i3,'(3x,i3,7x))')
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
+  710   format('((1p,2x,i3,1x,',i3,'(e11.4,2x)))')
         write(lun,frm) (j,(mach(i,j,1),i=0,nx-1),j=0,ny-1)
 
         do i=-1,nx
@@ -362,16 +383,16 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='prn.dat')
-        write(lun,'(2a)') '#  Neutral pressure:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
+        write(lun,'(2a)') '#  Neutral pressure:  ',trim(label)
+        write(frm,700) nx
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
         write(lun,frm) (j,(mach(i,j,2),i=0,nx-1),j=0,ny-1)
         open(lun,file='prt.dat')
-        write(lun,'(2a)') '#  Total pressure:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
+        write(lun,'(2a)') '#  Total pressure:  ',trim(label)
+        write(frm,700) nx
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
         write(lun,frm) (j,(mach(i,j,1)+mach(i,j,2),i=0,nx-1),j=0,ny-1)
 
         do i=-1,nx
@@ -388,10 +409,10 @@ c-----------------------------------------------------------------------
           end do
         end do
         open(lun,file='sm.dat')
-        write(lun,'(2a)') '#  Neutral momentum source:  ',label
-        write(frm,700) nx+2,tab
-        write(lun,frm) (i,i=-1,nx)
-        write(frm,710) nx,tab
+        write(lun,'(2a)') '#  Neutral momentum source:  ',trim(label)
+        write(frm,700) nx
+        write(lun,frm) '# ',(i,i=0,nx-1)
+        write(frm,710) nx
         write(lun,frm) (j,(mach(i,j,2),i=0,nx-1),j=0,ny-1)
 
         close(lun)
@@ -513,7 +534,8 @@ c-----------------------------------------------------------------------
         open(unit=lun,file=filename)
         write(lun,'(2a)') '# ', trim(extralabel)
         write(lun,'(2a)') '# ', trim(graphlabel(iwrk))
-        write(lun,'(3x,2hix,3x,2hiy,6x,1hx,11x,1hy,11x,3hz01)')
+        write(lun,'(3x,a2,3x,a2,6x,a1,11x,a1,11x,a3)')
+     .   'ix','iy','x','y','z01'
         do iy = 0, ny-1
           do ix = 0, nx-1
             write(lun,'(2i5,1p,3e12.4)')
@@ -546,11 +568,12 @@ c-----------------------------------------------------------------------
         write (lun,'(a)')
      ,  '# n...     : densities of the ion species [m^-3];'
         write (lun,*)
-        write (hlp_frmr,2010) ns
- 2010   format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,',
-     ,    '2hne,10x,2hTe,10x,2hTi,4x,',
-     ,    i3,'(4x,1hn,a2,i2.2,3x))')
-        write (lun,hlp_frmr) (hlp_al(i),mz_hlp(i),i=0,ns-1)
+        write (hlp_frmr,'(a,i3,a)')
+     ,   '(a9,7x,a1,11x,a1,10x,a2,10x,a2,10x,a2,4x,',
+     ,     ns,'(4x,a3,i2.2,3x))'
+        write (lun,hlp_frmr)
+     ,    '#  ix  iy','R','Z','ne','Te','Ti',
+     ,     ('n'//hlp_al(i),mz_hlp(i),i=0,ns-1)
         write (hlp_frmr,'(a,i3,a)') '(1x,1p,2i4,',ns+5,'e12.4)'
         do iy = 0, ny-1
           do ix = 0, nx-1

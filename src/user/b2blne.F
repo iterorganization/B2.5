@@ -13,7 +13,7 @@
       use b2mod_numerics_namelist
       use b2mod_external
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 
 c
@@ -95,7 +95,7 @@ c*** Values by species
       parameter (nspc_tmp=1)
       real (kind=R8), allocatable :: radim_tmp(:)
       character*2, allocatable :: hlp_spc(:)
-      character*2 hlp_hs(nspc_tmp)*8
+      character*8 hlp_hs(nspc_tmp)
       real (kind=R8), save :: stim = 0.0_R8
       real (kind=R8) :: tdummy
 c-----------------------------------------------------------------------
@@ -130,9 +130,13 @@ c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, m, n, ic, is, ix, iy,
-     .        ixr, iyr, ixf, iyf, js, nv
-      real (kind=R8) :: hlp_h, hlp_p, hlp
+      integer i, j, k, l, n, ic, is, ix, iy,
+     .        ixr, iyr, ixf, iyf, nv
+      real (kind=R8) :: hlp_h, hlp_p
+#ifdef B25_EIRENE
+      integer js, m
+      real (kind=R8) :: hlp
+#endif
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
       logical ex, warn_tmp
       character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
@@ -188,8 +192,12 @@ c
      +  indt_hlp, nsrf_hlp,
      +  ltarg_hlp,
      +  lun,
-     +  i, j, k, l, m, ic, is, ix, iy, js, nv,
-     +  hlp_h, hlp_p, hlp,
+     +  i, j, k, l, ic, is, ix, iy, nv,
+     +  hlp_h, hlp_p,
+#ifdef B25_EIRENE
+     +  js, m,
+     +  hlp,
+#endif
      +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp, ex, warn_tmp,
      +  f, hlp_c, hlp_frm, tab, hlp_frf
 c=======================================================================
@@ -828,6 +836,5 @@ c
       return
 c=======================================================================
   700 format('#   ',6i8/'#  ',a)
-  701 format(a1,3x,6i8)
 c=======================================================================
       end subroutine b2blne

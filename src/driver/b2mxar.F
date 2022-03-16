@@ -11,6 +11,7 @@
       use b2mod_constants
       use b2mod_rates
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv
@@ -56,7 +57,7 @@
       intrinsic sqrt, abs
       real (kind=R8) ::
      *  b2sasum
-      external subini, subend, xertst, b2sasum
+      external xertst, b2sasum
 *   ..initialisation
       data ncall/0/
 

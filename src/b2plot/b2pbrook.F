@@ -21,7 +21,7 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,is,j
+      integer ix,iy,is
       integer, allocatable :: mz_hlp(:)
       real (kind=R8) :: vr,vz,vt,u
       character hlp_frmr*600
@@ -46,11 +46,13 @@ c
       write (lun,*) 'n...     : densities of the ion species;'
       write (lun,*) 'vp...    : parallel velocities of the ion species;'
       write (lun,*)
-      write(hlp_frmr,710) ns
-  710 format('(9h   ix  iy,5x,5hR (m),7x,5hZ (m),4x,10hne (m**-3),4x,',
-     ,       '7hTe (eV),5x,7hTi (eV),7x,2hvr,10x,2hvz,10x,2hvt,5x,',
-     ,                      i2,'(4x,1hn,a2,i2.2,6x,2hvp,a2,i2.2,3x)/)')
-      write (lun,hlp_frmr) ((hlp_al(is),mz_hlp(is),j=1,2),is=0,ns-1)
+      write (hlp_frmr,'(a,i3,a)')
+     , '(a9,5x,a5,7x,a5,4x,a10,4x,a7,5x,a7,7x,a2,10x,a2,10x,a2,5x,',
+     ,   ns,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)'
+      write (lun,hlp_frmr) '   ix  iy',
+     , 'R (m)','Z (m)','ne (m**-3)','Te (eV)','Ti (eV)','vr','vz','vt',
+     , ('n'//hlp_al(is),mz_hlp(is),'vp'//hlp_al(is),mz_hlp(is),
+     ,                                                    is=0,ns-1)
 c
       do ix=0,nx-1
         do iy=0,ny-1

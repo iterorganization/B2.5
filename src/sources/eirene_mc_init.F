@@ -2,6 +2,8 @@
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_eirbra
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirbra
@@ -12,15 +14,10 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-cwdk
-c#ifndef B25_EIRENE                                                   !srv (mail 15.01.08)
-c      call eirene_extrab25_eirdiag_alloc(nxdd,nydd,
-c     .                     natm,nmol,nion,nlimps,nstra,npls)          !srv 14.10.13
-c      call eirene_extrab25_eirpbls_alloc(1,natm,nmol,nion,npls,       !srv 14.10.13
-c     &                                       nstra,nfl)               !srv 03.04.13
-c#endif
 
-cwdk  copy-paste from eirene_extrab25_eirdiag_alloc (Eirene_dummy)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+cwdk  copy-paste from eirene_extrab25 allocations (Eirene_dummy)
 c     avoids double module definition in case code is compiled with Eirene 
       if(.not.allocated(dab2)) then
 #ifdef B25_EIRENE
@@ -56,6 +53,8 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldpeb(nlimps,0:nstra+1))
         allocate(wldspt(nlimps,0:nstra+1))
         allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
+        allocate(emolrad(0:nxdd,0:nydd,nmol,0:nstra+1))
+        allocate(eionrad(0:nxdd,0:nydd,nion,0:nstra+1))
         allocate(isrftype(nlimps))
 #else
         call alloc_b2mod_eirdiag(nx,ny,
@@ -83,6 +82,8 @@ c     avoids double module definition in case code is compiled with Eirene
         srcml=0.0_R8
         edissml=0.0_R8
         eneutrad=0.0_R8
+        emolrad=0.0_R8
+        eionrad=0.0_R8
         wldnek=0.0_R8
         wldnep=0.0_R8
         wldna=0.0_R8
@@ -99,23 +100,24 @@ c     avoids double module definition in case code is compiled with Eirene
         isrftype=0
       endif
 
-cwdk  copy-paste from eirene_extrab25_eirpbls_alloc (Eirene_dummy, only case im=1)
+cwdk  copy-paste from eirene_extrab25_eirpbls allocations (Eirene_dummy, only case im=1)
 c     avoids double module definition in case code is compiled with Eirene  
 c     Note: all arrays allocated in eirene_extrab25_eirpbls_init (Eirene) are allocated here,
 c     so the standard cleanup routine can still be used (checks on allocation of lkindp)
       if(.not.allocated(lkindm)) then 
 #ifdef B25_EIRENE
-        allocate(lkindm(nmol))
+        if (.not.allocated(lkindm)) allocate(lkindm(nmol))
         if (.not.allocated(lkindp)) allocate(lkindp(npls))
-        allocate(lkindi(nion))
-        allocate(srccrfc(natm,nstra))
-        allocate(srcstrn(nstra))
+        if (.not.allocated(lkindi)) allocate(lkindi(nion))
+        if (.not.allocated(srccrfc)) allocate(srccrfc(natm,nstra))
+        if (.not.allocated(srcstrn)) allocate(srcstrn(nstra))
 #endif
         lkindm=0
         lkindp=0
         lkindi=0
         srccrfc=0.0_R8
         srcstrn=0.0_R8
+        flxspci=0.0_R8
       endif 
 
       return

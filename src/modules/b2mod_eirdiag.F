@@ -18,16 +18,17 @@
      &  wldpp(:,:,:), wldpa(:,:,:),
      &  wldpm(:,:,:), wldpeb(:,:),
      &  wldspt(:,:), wldspta(:,:,:), wldsptm(:,:,:),
-     &  eneutrad(:,:,:,:),
+     &  eneutrad(:,:,:,:), emolrad(:,:,:,:), eionrad(:,:,:,:),
      &  wlarea(:), wlabsrp(:,:),
      &  wldna_res(:,:),     !incident atom flux
      &  wldnm_res(:,:),     !incident molecule flux
      &  ewlda_res(:,:),     !incident energy flux of atoms
      &  ewldm_res(:,:),     !incident energy flux of molecules
+     &  ewldt_res(:),       !total energy wall load from Eirene particles
      &  ewldea_res(:,:),    !emitted energy flux of atoms
      &  ewldem_res(:,:),    !net incident energy flux due of molecules
      &  ewldrp_res(:),      !kinetic energy of reflected neutrals originated from ions
-     &  ewldmr_res(:,:),    !energy due to recombination of atoms into molecules
+     &  ewldmr_res(:,:),    !energy due to recombination of atoms and atomic ions into molecules
      &  wldspt_res(:),      !flux of sputtered wall material
      &  wldspta_res(:,:),   !sputtered flux for each type of emitted atom
      &  wldsptm_res(:,:),   !sputtered flux for each type of emitted molecule
@@ -70,14 +71,13 @@ C
       integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi
       integer, allocatable :: isrftype(:)
       integer, allocatable :: lkindp(:), lkindm(:), lkindi(:)
-      logical lhalpha,lvib
 c
 c*** Volume data:
 c***	srcml	:   power loss due to molecules, including
 c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
 c***	wldnek	:   heat transferred with neutrals
-c***	wldnep	:   potential energy released by neutrals
+c***	wldnep	:   energy released by recombination into molecules
 c***	wldna	:   flux of atoms impinging onto the surface
 c***	ewlda	:   their average energy
 c***	wldnm	:   flux of molecules impinging onto the surface
@@ -90,7 +90,9 @@ c***	wldpm	:   flux of resulting molecules
 c***	wldpeb	:   power carried away by these atoms and molecules
 c***	wldspt	:   flux of sputtered wall material
 c***	isrftype:   surface type (iliin in Eirene)
-c***    eneutrad:   power radiated due to neutrals (only atoms at the moment)
+c***    eneutrad:   power radiated due to neutral atoms
+c***    emolrad :   power radiated due to molecules
+c***    eionrad :   power radiated due to molecular ions
 c
 
       contains
@@ -101,53 +103,56 @@ c
       integer nxd, nyd, natmd, nmold, niond, nplsd,
      &        nlimps, nstrad, nstsd, nsgmx
 
-      allocate(dab2(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(dmb2(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(dib2(0:nxd+1,0:nyd+1,niond,1))
-      allocate(tab2(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(tmb2(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(tib2(0:nxd+1,0:nyd+1,niond,1))
-      allocate(rfluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(rfluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(refluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(refluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(pfluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(pfluxm(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(pefluxa(0:nxd+1,0:nyd+1,natmd,1))
-      allocate(pefluxm(0:nxd+1,0:nyd+1,nmold,1))
+      allocate(dab2(0:nxd+1,0:nyd+1,max(1,natmd),1))
+      allocate(dmb2(0:nxd+1,0:nyd+1,max(1,nmold),1))
+      allocate(dib2(0:nxd+1,0:nyd+1,max(1,niond),1))
+      allocate(tab2(0:nxd+1,0:nyd+1,max(1,natmd),1))
+      allocate(tmb2(0:nxd+1,0:nyd+1,max(1,nmold),1))
+      allocate(tib2(0:nxd+1,0:nyd+1,max(1,niond),1))
+      allocate(rfluxa(0:nxd+1,0:nyd+1,max(1,natmd),1))
+      allocate(rfluxm(0:nxd+1,0:nyd+1,max(1,nmold),1))
+      allocate(refluxa(0:nxd+1,0:nyd+1,max(1,natmd),1))
+      allocate(refluxm(0:nxd+1,0:nyd+1,max(1,nmold),1))
+      allocate(pfluxa(0:nxd+1,0:nyd+1,max(1,natmd),1))
+      allocate(pfluxm(0:nxd+1,0:nyd+1,max(1,nmold),1))
+      allocate(pefluxa(0:nxd+1,0:nyd+1,max(1,natmd),1))
+      allocate(pefluxm(0:nxd+1,0:nyd+1,max(1,nmold),1))
       allocate(emiss(0:nxd+1,0:nyd+1,1,1))
       allocate(emissmol(0:nxd+1,0:nyd+1,1,1))
-      allocate(srcml(0:nxd+1,0:nyd+1,nmold,1))
-      allocate(edissml(0:nxd+1,0:nyd+1,nmold,0:nstrad))
+      allocate(srcml(0:nxd+1,0:nyd+1,max(1,nmold),1))
+      allocate(edissml(0:nxd+1,0:nyd+1,max(1,nmold),0:nstrad))
       allocate(wldnek(nlimps,0:nstrad))
       allocate(wldnep(nlimps,0:nstrad))
-      allocate(wldna(nlimps,natmd,0:nstrad))
-      allocate(ewlda(nlimps,natmd,0:nstrad))
-      allocate(wldnm(nlimps,nmold,0:nstrad))
-      allocate(ewldm(nlimps,nmold,0:nstrad))
-      allocate(wldra(nlimps,natmd,0:nstrad))
-      allocate(wldrm(nlimps,nmold,0:nstrad))
+      allocate(wldna(nlimps,max(1,natmd),0:nstrad))
+      allocate(ewlda(nlimps,max(1,natmd),0:nstrad))
+      allocate(wldnm(nlimps,max(1,nmold),0:nstrad))
+      allocate(ewldm(nlimps,max(1,nmold),0:nstrad))
+      allocate(wldra(nlimps,max(1,natmd),0:nstrad))
+      allocate(wldrm(nlimps,max(1,nmold),0:nstrad))
       allocate(wldpp(nlimps,nplsd,0:nstrad))
-      allocate(wldpa(nlimps,natmd,0:nstrad))
-      allocate(wldpm(nlimps,nmold,0:nstrad))
+      allocate(wldpa(nlimps,max(1,natmd),0:nstrad))
+      allocate(wldpm(nlimps,max(1,nmold),0:nstrad))
       allocate(wldpeb(nlimps,0:nstrad))
       allocate(wldspt(nlimps,0:nstrad))
-      allocate(wldspta(nlimps,natmd,0:nstrad))
-      allocate(wldsptm(nlimps,nmold,0:nstrad))
-      allocate(eneutrad(0:nxd+1,0:nyd+1,natmd,0:nstrad))
+      allocate(wldspta(nlimps,max(1,natmd),0:nstrad))
+      allocate(wldsptm(nlimps,max(1,nmold),0:nstrad))
+      allocate(eneutrad(0:nxd+1,0:nyd+1,max(1,natmd),0:nstrad))
+      allocate(emolrad(0:nxd+1,0:nyd+1,max(1,nmold),0:nstrad))
+      allocate(eionrad(0:nxd+1,0:nyd+1,max(1,niond),0:nstrad))
       allocate(wlarea(nlimps))
       allocate(wlabsrp(natmd+nmold+niond+nplsd,nlimps))
-      allocate(wldna_res(natmd,nsgmx))
-      allocate(wldnm_res(nmold,nsgmx))
-      allocate(ewlda_res(natmd,nsgmx))
-      allocate(ewldm_res(nmold,nsgmx))
-      allocate(ewldea_res(natmd,nsgmx))
-      allocate(ewldem_res(nmold,nsgmx))
+      allocate(wldna_res(max(1,natmd),nsgmx))
+      allocate(wldnm_res(max(1,nmold),nsgmx))
+      allocate(ewlda_res(max(1,natmd),nsgmx))
+      allocate(ewldm_res(max(1,nmold),nsgmx))
+      allocate(ewldt_res(nsgmx))
+      allocate(ewldea_res(max(1,natmd),nsgmx))
+      allocate(ewldem_res(max(1,nmold),nsgmx))
       allocate(ewldrp_res(nsgmx))
-      allocate(ewldmr_res(nmold,nsgmx))
+      allocate(ewldmr_res(max(1,nmold),nsgmx))
       allocate(wldspt_res(nsgmx))
-      allocate(wldspta_res(natmd,nsgmx))
-      allocate(wldsptm_res(nmold,nsgmx))
+      allocate(wldspta_res(max(1,natmd),nsgmx))
+      allocate(wldsptm_res(max(1,nmold),nsgmx))
       allocate(wlpump(natmd+nmold+niond+nplsd,nsgmx))
       allocate(wlpump_res(natmd+nmold+niond+nplsd,nsgmx))
       allocate(sarea_res(nsgmx))
@@ -158,8 +163,8 @@ c
       allocate(eirdiag_nds_end(nstsd))
       allocate(isrftype(nlimps))
       allocate(lkindp(nplsd))
-      allocate(lkindm(nmold))
-      allocate(lkindi(niond))
+      allocate(lkindm(max(1,nmold)))
+      allocate(lkindi(max(1,niond)))
 
       return
       end subroutine alloc_b2mod_eirdiag
@@ -201,12 +206,15 @@ c
       deallocate(wldspta)
       deallocate(wldsptm)
       deallocate(eneutrad)
+      deallocate(emolrad)
+      deallocate(eionrad)
       deallocate(wlarea)
       deallocate(wlabsrp)
       deallocate(wldna_res)
       deallocate(wldnm_res)
       deallocate(ewlda_res)
       deallocate(ewldm_res)
+      deallocate(ewldt_res)
       deallocate(ewldea_res)
       deallocate(ewldem_res)
       deallocate(ewldrp_res)

@@ -3,6 +3,7 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_elements
       use b2mod_constants
       use b2mod_b2cmpa
       implicit none
@@ -19,6 +20,8 @@ c
      1 drcofd(itdimd,itdimd,itdimd)
       real (kind=R8) ::
      *   zmin,zmax
+      logical streql
+      external streql
       character year*2, TITLF*80
       data    year   /'03'/
 
@@ -31,9 +34,15 @@ c
         enddo
       enddo
 
+      ifail=0
+      dspec=0.0_R8
       do is=0,ns-1
         iz0=nint(zn(is))
         iz1=partition_number(is)+1  ! was nint(za(is))+1
+        if (iz1.eq.iz0+1) cycle     ! avoid fully stripped ions
+        if (ifail.eq.1) then        ! if file absent, skip rest of sequence
+          if (streql(is_codes(is-1),is_codes(is))) cycle
+        end if
         iclass=7
         ievcut=0
 
@@ -45,13 +54,13 @@ c
      &   , DRCOFI )
 
 C
-        if (ifail .gt. 0)   then
-          write (*,3003) ifail,is,iz0,iz1
+        if (ifail .gt. 0) then
+          write (*,3003) ifail,is,iz0,iz1-1
  3003     format (
      >     ' >>> error in dhdata: ifail =',i3,/,
      >     '  ifail = 1: no datafile for dhdata available',/,
      >     '        = 2: dimension itdimd too small',/,
-     >     '  for species, nuclear charge, ionic charge =',3i3,/)
+     >     '  for species, nuclear charge, partition =',3i3,/)
           do iy=-1,ny
             do ix=-1,nx
               dspec(ix,iy,is)=0.0_R8
@@ -71,6 +80,7 @@ C
             enddo
           enddo
           write(*,*) 'is,zmin,zmax ',is,zmin,zmax
+          if (iz1.eq.iz0) write(*,'()')
         endif
 
       enddo
@@ -111,8 +121,12 @@ cc    -------------------------------------------------------------------------
       CHARACTER ex*3,fn*80,MIE*2,MIR*2,MIC*2
       logical open_file
 
-      if(.not.open_file(99,fn,
-     1 'data.local/adas|modules/adas')) return
+      if(err.eq.0) then
+        if(.not.open_file(99,fn,
+     1   'data.local/adas|modules/adas')) return
+      else if (err.eq.1) then
+        if(.not.open_file(99,fn,'modules/adas')) return
+      end if
       read(99,*) UIDIN
       if(uidin(1:8).eq.'SOLPSTOP') then
         if (uidin(9:9).ne.'/') then
@@ -139,7 +153,7 @@ cc    -------------------------------------------------------------------------
          write(*,*) 'InitADAS: Specified data not supported'
          ERR=1
          return
-      endif        
+      endif
       call XXUID(UIDIN)
       call XXSPEC(GRPIN,TYPIN,EXTIN)
       IZIN=IC
@@ -150,7 +164,7 @@ cc    -------------------------------------------------------------------------
       end subroutine InitADAS
 
 cc    -------------------------------------------------------------------------
-cc    SUBROUTINE GetIBSEL(WL,DWL,MIE,MIR,MIC,id,IBSELAE,IBSELAR,IBSELAC)
+cc    SUBROUTINE GetIBSEL(WL,DWL,MIE,MIR,MIC,id,IBSELAE,IBSELAR,IBSELAC,ERR)
 cc    INPUT:     REAL WL:             wavelength in A
 cc               REAL DWL:            half width of wavelength window in A
 cc               CHARACTER MIE*2:     metastable index excitation
@@ -160,6 +174,7 @@ cc               INTEGER id:          dimension for array of indices
 cc    OUTPUT:    INTEGER IBSELAE(id): array of indices, excit
 cc               INTEGER IBSELAR(id): array of indices, recom
 cc               INTEGER IBSELAC(id): array of indices, cexch
+cc               INTEGER ERR          error code
 cc    -------------------------------------------------------------------------
 cc    GetIBSEL selects all data blocks in the wavelength window [WL-DWL,WL+DWL]
 cc    InitADAS MUST be called before any call to this subroutine!
@@ -168,7 +183,7 @@ cc    03/24/97 bhs
 cc    -------------------------------------------------------------------------
 
       subroutine GetIBSEL(WL,DWL,MIE,MIR,MIC,id,
-     &                    IBSELAE,IBSELAR,IBSELAC)
+     &                    IBSELAE,IBSELAR,IBSELAC,ERR)
 
       use b2mod_types
       implicit none
@@ -183,12 +198,17 @@ cc    -------------------------------------------------------------------------
       integer IBSELAE(id)
       integer IBSELAR(id)
       integer IBSELAC(id)
+      integer ERR
       integer count,countEX,countRE,countCE
       integer NBSEL
       character CWAVEL(NSTORE)*10,CTYPE(NSTORE)*8
       character CINDM(NSTORE)*2
+      logical streql
+      external streql
 
+      ERR = 1
       call GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,LOT)
+      if (NBSEL.gt.0) ERR = 0
       do count=1,id
          IBSELAE(count)=0
          IBSELAR(count)=0
@@ -201,44 +221,45 @@ cc    -------------------------------------------------------------------------
          read(CWAVEL(count),'(f8.1)') wla(count)
          write(*,*) count,wla(count),CWAVEL(count)
          if (abs(wl-wla(count)) .le. dwl) then
-            if (CTYPE(count) .eq. 'EXCIT') then
-               if (MIE .eq. CINDM(count)) then
+            if (streql(CTYPE(count),'EXCIT')) then
+               if (streql(MIE,CINDM(count))) then
                   IBSELAE(countEX)=count
                   countEX=countEX+1
-                  write(*,*) 
-     &            'GetIBSEL: selected transition excitation'
+                  write(*,*)
+     &            'GetIBSEL: selected excitation transition'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
             endif
-            if (CTYPE(count) .eq. 'RECOM') then
-               if (MIR .eq. CINDM(count)) then
+            if (streql(CTYPE(count),'RECOM')) then
+               if (streql(MIR,CINDM(count))) then
                   IBSELAR(countRE)=count
                   countRE=countRE+1
                   write(*,*)
-     &            'GetIBSEL: selected transition recombination'
+     &            'GetIBSEL: selected recombination transition'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
             endif
-            if (CTYPE(count) .eq. 'CHEXC') then
-               if (MIC .eq. CINDM(count)) then
+            if (streql(CTYPE(count),'CHEXC')) then
+               if (streql(MIC,CINDM(count))) then
                   IBSELAC(countCE)=count
                   countCE=countCE+1
                   write(*,*)
-     &            'GetIBSEL: selected transition charge exchange'
+     &            'GetIBSEL: selected charge exchange transition'
                   write(*,*) 'wavelength:',CWAVEL(count)
                   write(*,*) 'metastable index: ',CINDM(count)
                endif
-            endif            
+            endif
          endif
       enddo
       if ((countEX .eq. 1) .and. (countRE .eq. 1) .and.
-     1 (countCE .eq. 1)) then
-         write(*,*) 'GetIBSEL: none selected for'
-         write(*,*) 'ion charge: ',IZIN,' nuclear charge: ',IZ0IN
+     1    (countCE .eq. 1)) then
+         write(*,'(a,i2,a,i2)') 'GetIBSEL: none selected for '//
+     1              'ion charge: ',IZIN,' and nuclear charge: ',IZ0IN
+         ERR = 1
       endif
-      return     
+      return
       end subroutine GetIBSEL
 
 cc    -------------------------------------------------------------------------
@@ -283,7 +304,7 @@ cc    -------------------------------------------------------------------------
 
       return
       end subroutine InitIBSEL
-      
+
 
 cc    -------------------------------------------------------------------------
 cc    SUBROUTINE GetEmissivity(id,IBSELAE,IBSELAR,IBSELAC,NE,NI,NI1,NH,TE,dim,
@@ -311,6 +332,7 @@ cc    -------------------------------------------------------------------------
 
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 
 #     include "emissivity.constants"
@@ -321,7 +343,7 @@ cc    -------------------------------------------------------------------------
       real (kind=R8) ::
      *    NE(maxdim),NI(maxdim),NI1(maxdim),
      &       NH(maxdim),TE(maxdim),E(maxdim),
-     &       locTE(maxdim) 
+     &       locTE(maxdim)
       real (kind=R8) ::
      *   cNE(dim),cNI(dim),cNI1(dim),cNH(dim),cTE(dim)
       real (kind=R8) ::
@@ -341,7 +363,6 @@ cc    -------------------------------------------------------------------------
      *   f
       integer index
       integer count,cc
-      external subini, subend
 
       call subini ('GetEmissivity')
       do count=1,dim
@@ -431,7 +452,7 @@ c     OUTPUT: integer NBSEL
 c             character CWAVEL(NSTORE)*10
 c             character CTYPE (NSTORE)*8
 c             character CINDM (NSTORE)*2
-c             real T(NSTORE)        
+c             real T(NSTORE)
 c     -------------------------------------------------------------------------
 c     InitADAS must have been called before any call to this subroutine.
 c     GetInfo provides the following information about the selected input
@@ -442,8 +463,9 @@ c     04/02/97 bhs
 c     -------------------------------------------------------------------------
 
       subroutine GetInfo(NBSEL,CWAVEL,CTYPE,CINDM,T)
-      
+
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
 #     include "emissivity.dimensions"
@@ -465,18 +487,18 @@ c     -------------------------------------------------------------------------
       character CINDM(NSTORE)*2
       character DSNREQ*256
       character ESYM*2
-      external subini, subend
 
 c     initialising
       call subini ('GetInfo')
       IUNIT=4950
-      
+
 c     reading data
       call xxuid(UIDIN)
       call xxspec(GRPIN,TYPIN,EXTIN)
       call e3file(IUNIT,IZ0IN,IZIN,IRCODE,DSNREQ)
       if (IRCODE .ne. 0) then
          write(*,*) 'GetInfo: ERROR'
+         NBSEL=0
          return
       endif
       call e3data(IUNIT,DSNREQ,NSTORE,NTDIM,NDDIM,
@@ -501,6 +523,7 @@ C
      &                 )
 C
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -670,7 +693,7 @@ C-----------------------------------------------------------------------
       LOGICAL    LTRNG(ITVAL)          , LDRNG(ITVAL)
 C-----------------------------------------------------------------------
       EXTERNAL   R8FUN1
-      external   subini, subend, xertst
+      external   xertst
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
@@ -782,6 +805,7 @@ CX
      &                 TITLX  , IRCODE
      &               )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 
 C-----------------------------------------------------------------------
@@ -1038,8 +1062,6 @@ C-----------------------------------------------------------------------
      &            EXTLST /' '/   , IZ0LST /0/   , IZLAST /0/       ,
      &            IUNIT  /15/
 C-----------------------------------------------------------------------
-      external subini, subend
-C-----------------------------------------------------------------------
 C
       call subini ('spec')
       IRCODE = 0
@@ -1066,11 +1088,11 @@ C IF NEW EMITTING ION ENTERED OR SOURCE DATA USERID HAS CHANGED:
 C - OPEN THE REQUESTED DATA SET & READ IN COMPLETE SET OF RATE DATA.
 C-----------------------------------------------------------------------
 C
-               IF ( (IZLAST .NE. IZIN)   .OR. 
-     &              (IZ0LST .NE. IZ0IN)  .OR. 
-     &              (UIDLST .NE. UIDIN)  .OR. 
-     &              (GRPLST .NE. GRPIN)  .OR. 
-     &              (TYPLST .NE. TYPIN)  .OR. 
+               IF ( (IZLAST .NE. IZIN)   .OR.
+     &              (IZ0LST .NE. IZ0IN)  .OR.
+     &              (UIDLST .NE. UIDIN)  .OR.
+     &              (GRPLST .NE. GRPIN)  .OR.
+     &              (TYPLST .NE. TYPIN)  .OR.
      &              (EXTLST .NE. EXTIN)      )  THEN
 C
                   CALL E3FILE( IUNIT , IZ0IN , IZIN , IRCODE , DSNREQ )
@@ -1241,7 +1263,7 @@ C UPDATE:   1/11/94 - L. JALOTA: MODIFIED CODE FOR RUNNING UNDER UNIX
 C                                USING NEW FILE NAMING CONVENTION.
 C                                "ACTION" KEYWORD IN OPEN COMMAND IS IBM
 C                                SO REMOVED HERE.
-C UPDATE:   8/11/94 - L. JALOTA: ADDED DEFADF 
+C UPDATE:   8/11/94 - L. JALOTA: ADDED DEFADF
 C
 C UPDATE:  22/11/94 - L. JALOTA: TIDIED UP CHARACTER STRING LENGTHS
 C
@@ -1257,7 +1279,7 @@ C-----------------------------------------------------------------------
       INTEGER     IUNIT         , IZ0            , IZ         ,
      &            IRCODE        , IDLEN          , IZEND      ,
      &            LENF1         , LENF2          ,
-     &            LENF3         , LENF4          , 
+     &            LENF3         , LENF4          ,
      &            LENF5         , LENF6          ,
      &            LENF7         , LENF8
 C-----------------------------------------------------------------------
@@ -1308,10 +1330,10 @@ C
          HASH = '#'
       ENDIF
 C
-      IF (LENF3 .EQ. 0) THEN 
+      IF (LENF3 .EQ. 0) THEN
          DSNAME = DSNAME(1:IDLEN)//USRGRP(LENF1:LENF2)//'_'
      &      //USREXT(LENF7:LENF8)//HASH
-      ELSE 
+      ELSE
          DSNAME = DSNAME(1:IDLEN)//USRTYP(LENF3:LENF4)//'/'
      &      //USRGRP(LENF1:LENF2)//'_'//USREXT(LENF7:LENF8)//HASH
       ENDIF
@@ -1406,7 +1428,7 @@ C          (I*4)  LEN_NAME = LENGTH OF FILENAME
 C          (I*4)  IFIRST   = POSITION OF FIRST CHARACTER OF DSNAME
 C          (I*4)  ILAST    = POSITION OF LAST CHARACTER OF DSNAME
 C
-C ROUTINES: 
+C ROUTINES:
 C
 C AUTHOR:  PAUL E. BRIDEN (TESSELLA SUPPORT SERVICES PLC)
 C          K1/0/37
@@ -1414,7 +1436,7 @@ C          JET EXT. 2520
 C
 C DATE:    01/05/91
 C
-C UPDATE:  L. JALOTA  13/3/95   MODIFIED FOR USE UNDER UNIX 
+C UPDATE:  L. JALOTA  13/3/95   MODIFIED FOR USE UNDER UNIX
 C
 C VERSION 1.7   TIM HAMMOND     13/10/95
 C               ADDED VARIABLE C3 TO ALLOW 3 DIGIT DATA BLOCKS
@@ -1422,10 +1444,10 @@ C               TO BE READ FROM THE VARIABLE IBSEL
 C
 C VERSION 1.8   TIM HAMMOND     08/11/95
 C                - REMOVED SUPERFLUOUS VARIABLE TEMP_NAME
-C               
+C
 C VERSION 1.9   TIM HAMMOND     08/11/95
 C                - REMOVED SUPERFLUOUS VARIABLE I4UNIT
-C               
+C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       INTEGER    IBSEL           , IZ
@@ -1433,7 +1455,7 @@ C     INTEGER    XXFCHR
       INTEGER    POS_NOW         , LEN_NAME
       INTEGER    IFIRST          , ILAST
 C-----------------------------------------------------------------------
-      CHARACTER  DSNAME*(*)      , ESYM*2         , 
+      CHARACTER  DSNAME*(*)      , ESYM*2         ,
      &           CINDM*2         , CWAVEL*10      , TITLX*296  ,
      &           C2*2            , C3*3
 C-----------------------------------------------------------------------
@@ -1445,7 +1467,7 @@ C-----------------------------------------------------------------------
       TITLX(POS_NOW:POS_NOW+8) =  ' BLK=' // C3 // ';'
       POS_NOW = POS_NOW+9
       WRITE(C2,1000) IZ
-      TITLX(POS_NOW:POS_NOW+6) = ESYM // '+' // C2  
+      TITLX(POS_NOW:POS_NOW+6) = ESYM // '+' // C2
       POS_NOW = POS_NOW + 5
       TITLX(POS_NOW:POS_NOW+29)=' WAVELENGTH= '//CWAVEL//
      &                          ' MET='//CINDM
@@ -1554,7 +1576,7 @@ C
 C
          ELSE
 C
-               IF ( ( IZ0IN .NE. IZ0 )  .OR. 
+               IF ( ( IZ0IN .NE. IZ0 )  .OR.
      &              ( IZIN  .NE. IZ  )      ) THEN
                   IRCODE = 2
                ELSE
@@ -1589,6 +1611,7 @@ CX
      &                   PEC
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -1684,6 +1707,8 @@ C          (C*6)  CKEY1    = 'FILMEM' - INPUT BLOCK HEADER KEY
 C          (C*4)  CKEY2    = 'TYPE  ' - INPUT BLOCK HEADER KEY
 C          (C*4)  CKEY3    = 'INDM  ' - INPUT BLOCK HEADER KEY
 C          (C*4)  CKEY4    = 'ISEL  ' - INPUT BLOCK HEADER KEY
+C          (C*4)  CKEY5    = 'ISPN  ' - INPUT BLOCK HEADER KEY
+C          (C*4)  CKEY6    = 'ISPP  ' - INPUT BLOCK HEADER KEY
 C          (C*80) C80      = GENERAL USE 80 BYTE  CHARACTER  STRING  FOR
 C                            THE INPUT OF DATA-SET RECORDS.
 C
@@ -1712,7 +1737,7 @@ C                                         STATEMENTS FOR SCREEN MESSAGES
 C
 C UPDATE:  24/05/93 - PE BRIDEN - ADAS91: CHANGED I4UNIT(0)-> I4UNIT(-1)
 C
-C UPDATE:  27/2/95  - L. JALOTA - IDL_ADAS : INCREASED SIZE DSNAME FOR 
+C UPDATE:  27/2/95  - L. JALOTA - IDL_ADAS : INCREASED SIZE DSNAME FOR
 C                                            USE UNDER UNIX SYSTEMS
 C
 C UNIX-IDL PORT:
@@ -1735,10 +1760,11 @@ C-----------------------------------------------------------------------
       LOGICAL    LBEND
 C-----------------------------------------------------------------------
 CX    CHARACTER  DSNAME*44             , ESYM*2
-      CHARACTER  DSNAME*256             , ESYM*2              
+      CHARACTER  DSNAME*256            , ESYM*2
       CHARACTER  CSLASH*1              , C2*2                ,
      &           CKEY1*6               , CKEY2*4             ,
      &           CKEY3*4               , CKEY4*4             ,
+     &           CKEY5*4               , CKEY6*4             ,
      &           IONNAM*5              , C80*80
 C-----------------------------------------------------------------------
       INTEGER    ISELA(NSTORE)         ,
@@ -1754,14 +1780,17 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       SAVE       CSLASH                ,
      &           CKEY1                 , CKEY2                ,
-     &           CKEY3                 , CKEY4
-      EXTERNAL   SUBINI, SUBEND, XERRAB
+     &           CKEY3                 , CKEY4                ,
+     &           CKEY5                 , CKEY6
+      LOGICAL    STREQL
+      EXTERNAL   XERRAB, STREQL
 C
 C-----------------------------------------------------------------------
 C
       DATA       CSLASH / '/' /
       DATA       CKEY1  / 'FILMEM' /   , CKEY2  / 'TYPE'   /  ,
-     &           CKEY3  / 'INDM'   /   , CKEY4  / 'ISEL'   /
+     &           CKEY3  / 'INDM'   /   , CKEY4  / 'ISEL'   /  ,
+     &           CKEY5  / 'ISPB'   /   , CKEY6  / 'ISPP'   /
 C
 C **********************************************************************
 C
@@ -1779,11 +1808,11 @@ C
       IPOS2 = IPOS1          + 4
       READ(C80(IPOS1:IPOS2),1001) IONNAM
 C
-         IF ( IONNAM(2:2) .EQ. '+' ) THEN
-            ESYM  = IONNAM(1:1) // ' '
-         ELSE
-            ESYM  = IONNAM(1:2)
-         ENDIF
+      IF ( IONNAM(2:2) .EQ. '+' .OR. IONNAM(2:2) .EQ. ':') THEN
+         ESYM  = IONNAM(1:1) // ' '
+      ELSE
+         ESYM  = IONNAM(1:2)
+      ENDIF
 C
       IZ0   = I4EIZ0( ESYM )
       IZ    = I4FCTN( IONNAM(3:5) , IABT )
@@ -1828,11 +1857,43 @@ C
 C
                      READ(C80(IPOS1:IPOS2),*) IDA(IBLK) , ITA(IBLK)
 C
-                     CALL XXHKEY( C80 , CKEY1 , CSLASH , CFILE(IBLK)  )
-                     CALL XXHKEY( C80 , CKEY2 , CSLASH , CTYPE(IBLK)  )
-                     CALL XXHKEY( C80 , CKEY3 , CSLASH , CINDM(IBLK)  )
-                     CALL XXHKEY( C80 , CKEY4 , CSLASH , C2           )
-                     ISELA(IBLK) = I4FCTN( C2 , IABT )
+               CALL XXHKEY( C80 , CKEY1 , CSLASH , CFILE(IBLK))
+               if(streql(cfile(iblk),' ')) then
+                  call lower_case(CKEY1)
+                  CALL XXHKEY( C80 , CKEY1 , CSLASH , CFILE(IBLK))
+               end if
+               CALL XXHKEY( C80 , CKEY2 , CSLASH , CTYPE(IBLK))
+               if(streql(ctype(iblk),' ')) then
+                  call lower_case(CKEY2)
+                  CALL XXHKEY( C80 , CKEY2 , CSLASH , CTYPE(IBLK))
+               end if
+               CALL XXHKEY( C80 , CKEY3 , CSLASH , CINDM(IBLK))
+               if(streql(cindm(iblk),' ')) then
+                  call lower_case(CKEY3)
+                  CALL XXHKEY( C80 , CKEY3 , CSLASH , CINDM(IBLK))
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  CALL XXHKEY( C80 , CKEY5 , CSLASH , CINDM(IBLK))
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  call lower_case(CKEY5)
+                  CALL XXHKEY( C80 , CKEY5 , CSLASH , CINDM(IBLK))
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  CALL XXHKEY( C80 , CKEY6 , CSLASH , CINDM(IBLK))
+                  if(streql(cindm(iblk),'t')) cindm(iblk)='+T'
+               end if
+               if(streql(cindm(iblk),' ')) then
+                  call lower_case(CKEY6)
+                  CALL XXHKEY( C80 , CKEY6 , CSLASH , CINDM(IBLK))
+                  if(streql(cindm(iblk),'t')) cindm(iblk)='+T'
+               end if
+               CALL XXHKEY( C80 , CKEY4 , CSLASH , C2 )
+               if(streql(c2,' ')) then
+                  call lower_case(CKEY4)
+                  CALL XXHKEY( C80 , CKEY4 , CSLASH , C2 )
+               end if
+               ISELA(IBLK) = I4FCTN( C2 , IABT )
 C
                      NDNUM = IDA(IBLK)
                      NTNUM = ITA(IBLK)
@@ -2000,7 +2061,7 @@ C
 C UPDATE:  L. JALOTA - 1/11/94  (TESSELLA SUPPORT SERVICES PLC)
 C                      CHANGED VALUES OF DEFGRP,DEFTYP, DEFEXT SUITABLE
 C                      FOR DEC ALPHA DIRECTORY STRUCTURE.
-C                                 
+C
 C UPDATE:  L.JALOTA - 23/11/94 : TIDIED UP STRING LENGTH DEFINITIONS.
 C-----------------------------------------------------------------------
        CHARACTER  DEFGRP*8             , DEFTYP*80     , DEFEXT*3
@@ -2079,7 +2140,7 @@ C  ****************** FORTRAN77 SUBROUTINE: XXUID  *********************
 C
 C  PURPOSE: ADAS ROUTINE - SETS UP THE DEFAULT USERID WHICH STORES THE
 C           DATA TO BE READ USING STANDARD ADAS DATA READING ROUTINES.
-CA          UNDER UNIX PORT THIS NOW GETS THE ENVIRONMENT VARIABLE 
+CA          UNDER UNIX PORT THIS NOW GETS THE ENVIRONMENT VARIABLE
 CA          "ADASCENT".
 C
 C           USERID: VALUE ON INPUT  =>  USERID: VALUE ON OUTPUT
@@ -2127,8 +2188,8 @@ C          K1/0/37
 C          JET EXT. 5023
 C
 C DATE:    10/03/93
-C 
-C UPDATE:  L. JALOTA  - 7/11/94 : ADDED CALL TO GETENV TO FETCH UNIX 
+C
+C UPDATE:  L. JALOTA  - 7/11/94 : ADDED CALL TO GETENV TO FETCH UNIX
 C                                 ENVIRONMENT VARIABLE ADASUSER
 C
 C VERSION: 1.2                          DATE: 08-08-96
@@ -2144,6 +2205,10 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -2154,10 +2219,20 @@ CA GET THE VALUE OF ADASCENT WHICH SETS UP TOPLEVEL DATA DIRECTORY.
 #ifdef NO_GETENV
       env=' '
 #else
+#ifdef NAGFOR
+        call get_environment_variable('ADASCENT',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('ADASCENT',value=env)
+        elseif (ierror.eq.1) then
+          env=' '
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('ADASCENT', 0, ENV, lenval, ierror)
 #else
       call getenv ('ADASCENT', ENV)
+#endif
 #endif
 #endif
       DEFUID = ENV
@@ -2190,6 +2265,7 @@ CX
      &                   DY    , LINTRP
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -2415,7 +2491,7 @@ C-----------------------------------------------------------------------
       SAVE NOPT
       SAVE X    , H     , Q     , D1   , D2   , D3
 C-----------------------------------------------------------------------
-      EXTERNAL SUBINI, SUBEND, XERTST
+      EXTERNAL XERTST
 C***********************************************************************
       CALL SUBINI ('xxsple')
       CALL XERTST (NKNOTS .GE. NIN,
@@ -2681,7 +2757,7 @@ C
 C DATE:     12/02/91
 C
 C UPDATES:  25/10/94 L. JALOTA (TESSELLA SUPPORT SERVICES PLC)
-C                    CHANGED CASE OF SYMBOL TO LOWER CASE FOR UNIX 
+C                    CHANGED CASE OF SYMBOL TO LOWER CASE FOR UNIX
 C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
@@ -2848,7 +2924,7 @@ C
          ELSEIF (IPOS1 .NE. 0) THEN
             IPOS1 = IPOS1 - 1
                IF ( (CTEXT(IPOS1:IPOS1) .EQ. ' '   )
-     &                        .OR. 
+     &                        .OR.
      &              (CTEXT(IPOS1:IPOS1) .EQ. CBREAK) ) THEN
                   IPOS1 = IPOS2
                ELSE
@@ -3004,7 +3080,10 @@ C-----------------------------------------------------------------------
       real (kind=R8) ::
      *   ea(-1:nx,-1:ny)
       integer err
+      integer len_of_digits
       character extension*3,filename*256,MIE*2,MIR*2,MIC*2,stmp*256
+      character textwvl*24, hlp_frm*24
+      external len_of_digits
 c      logical open_file
 
 c     initialising
@@ -3014,17 +3093,26 @@ c     initialising
       dwl=idwl*1.0_R8
       nz=size(elements)
       allocate(iae(nz),iar(nz),iac(nz))
-c      if(.not.open_file(99,'source.location','data.local/adas|modules/adas')) return
+c      if(.not.open_file(99,'source.location',
+c    &     'data.local/adas|modules/adas')) return
 c      read(99,*) extension,mie,mir,mic
 c      read(99,*) filename
 c      close(99)
 c     calculating the emissivity
-      write(*,*) 'Calculate the emissivity for species ',is
+      write(*,'(a,i2)') 'Calculate the emissivity for species ',is
       filename='filelist.adas.adf15'
+      err=0
       call InitADAS(ic,nc,
      &              extension,filename,mie,mir,mic,err)
       if (err .eq. 0) then
-         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac)
+         call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+         if (err .eq. 1) then
+c  try again in the case where local files were used and
+c  a standard database file may be present
+           call InitADAS(ic,nc,
+     &                   extension,filename,mie,mir,mic,err)
+           call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
+         end if
          do ix=-1,nx
             do iy=-1,ny
                lNe(1)=NE(ix,iy)/1.0e6_R8
@@ -3039,10 +3127,15 @@ c     calculating the emissivity
          enddo
       endif
       call copy(ea,1.0_R8,1,textbl)
+      write(hlp_frm,'(a,i2,a,i2,a)')
+     & '(a,i',len_of_digits(iwl),',a,i',len_of_digits(idwl),',a)'
+      write(textwvl,hlp_frm) '(',iwl,'\mS\d',idwl,' A)'
       if(is.lt.ns) then
-        stmp='Emissivity in photons/(m^{3} sr s)'//textpl(is)
+        stmp='Emissivity '//trim(textwvl)//
+     &       ' in photons/(m^{3} sr s)'//textpl(is)
       else
-        stmp='Emissivity in photons/(m^{3} sr s)'//'  '
+        stmp='Emissivity '//trim(textwvl)//
+     &       ' in photons/(m^{3} sr s)'
       endif
       call customise_label(stmp,graphlabel(iwrk))
       deallocate(iae,iar,iac)

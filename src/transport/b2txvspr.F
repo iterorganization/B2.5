@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -15,8 +16,8 @@
      1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3) 
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1)
+     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
+     &   cvisper(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -31,7 +32,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   hy1
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------

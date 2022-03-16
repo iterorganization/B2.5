@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -32,7 +33,7 @@
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       save ncall, xfac
 *   ..procedures
-      external subini, subend, xertst, ipgetr
+      external xertst, ipgetr
       external b2xvsg, b2xvff, diff_r, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, xfac/1.0_R8/

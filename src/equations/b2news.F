@@ -20,6 +20,12 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_neoclassical
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_ilutern
+      use b2mod_ilutern_7
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr
@@ -99,7 +105,7 @@
      *  smin, smax, b2sasum
       integer len_of_digits
       external len_of_digits
-      external subini, subend, xertst, ipgetr, smin, smax,
+      external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
@@ -166,6 +172,48 @@
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
+*    ..the table below shows which combination of equations will be solved
+*      depending on the value of switch 'b2news_no_solve'
+*----------------------------------------------------
+*        | value |  co  |  mo  |  he  |  hi  |  po  |
+*----------------------------------------------------
+*        |   0   |  +   |  +   |  +   |  +   |  +   |
+*----------------------------------------------------
+*        |   1   |  -   |  -   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -1   |  -   |  +   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -2   |  +   |  -   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -3   |  +   |  +   |  -   |  -   |  -   |
+*----------------------------------------------------
+*        |  -4   |  -   |  -   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -5   |  -   |  +   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -6   |  +   |  -   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -7   |  +   |  +   |  -   |  -   |  +   |
+*----------------------------------------------------
+*        |  -8   |  -   |  -   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        |  -9   |  -   |  +   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        | -10   |  +   |  -   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        | -11   |  +   |  +   |  +   |  +   |  -   |
+*----------------------------------------------------
+*        | -12   |  -   |  -   |  +   |  +   |  +   |
+*----------------------------------------------------
+*        | -13   |  -   |  +   |  +   |  +   |  +   |
+*----------------------------------------------------
+*        | -14   |  +   |  -   |  +   |  +   |  +   |
+*----------------------------------------------------
+* An alternative to the 'no_solve' switch for controlling of the
+* solving of equations is to use the SOLVEMO, SOLVECO, SOLVEEE, SOLVEEI,
+* SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
+* Please consult the code documentation.
+
        solving(1:4)=no_solve.eq.0
        do i=1,4
          solving(i)=solving(i).or.
@@ -347,6 +395,22 @@
         else
           cssb = 0.0_R8
         endif                                                            !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_LOOP1
+#ifdef WITH_FTIMINGS
+        call timer%start("parallel")
+#endif
+!! FR possible loop (1) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) FIRSTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, cvmahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna)
+#endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -370,6 +434,13 @@
      1    fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.true.)              !djm Jan2017
         enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP1
+!$OMP END PARALLEL DO
+!! FR end of loop (1)
+#ifdef WITH_FTIMINGS
+        call timer%stop("parallel")
+#endif
+#endif
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc, qs, 
      &    bb, te, po, vedia, veecrb)
@@ -465,6 +536,47 @@ cxpb
 !     &               ne2, lnlam, te, ti, ni, chci, fchvisq)
 
 *     ..iterate on particle balance
+#ifndef NO_OPENMP_B2NEWS_LOOP2
+#ifdef WITH_FTIMINGS
+        call timer%start("parallel")
+#endif
+!!FR Possible loop (2) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
+!$OMP& PRIVATE(ireg)
+!$OMP& FIRSTPRIVATE(pb, flob, conb)
+#ifndef GFORTRAN
+#ifndef PGF90
+#ifndef CRAY
+!$OMP& COPYIN(last_solve_5, last_solve_9)
+!$OMP& COPYIN(last_solve_7, last_solve_11)
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5, last_solve_7)
+!$OMP& PRIVATE(last_solve_9, last_solve_11)
+#endif
+!$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
+!$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
+!$OMP& SHARED(topiy, na, rza, zn, zamax, te, ti, am, ua, ne)
+!$OMP& SHARED(is_neutral, uadia, ncall, ncallout, resmo, corua)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
+!$OMP& SHARED(cssb, vaecrb, vadia, wadia)
+!$OMP& SHARED(bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, cvmahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
+!$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
+!$OMP& SHARED(b2stbr_sna, b2stbm_sna, ext_sna, use_b2npc9)
+#endif
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..DPC
@@ -617,6 +729,13 @@ cxpb
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.false.)          !djm Jan2017
           endif
         enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP2
+!$OMP END PARALLEL DO
+!! FR End of loop (2)
+#ifdef WITH_FTIMINGS
+        call timer%stop("parallel")
+#endif
+#endif
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')
@@ -764,7 +883,6 @@ cxpb
                 ixmax = -2                                               !xpb
                 iymax = -2                                               !xpb
                 do iy = -1, ny
-cxpb       t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
 cxpb  Do not count residuals from dead or unsolved cells
                   do ix = -1, nx
                     ireg = region(ix,iy,0)
@@ -805,6 +923,22 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                 else
                   cssb = 0.0_R8
                 endif                                                    !iyv 06.02.14
+#ifndef NO_OPENMP_B2NEWS_LOOP3
+#ifdef WITH_FTIMINGS
+                call timer%start("parallel")
+#endif
+!! FR possible loop (3) for use with OpenMP
+!$OMP PARALLEL DO DEFAULT(none) LASTPRIVATE(flob, conb, pb)
+!$OMP& SHARED(nx, ny, rza, na, te, ti, ns, nsmin, nsmax, ismain)
+!$OMP& SHARED(guard_flows, facdrift, fac_ExB, am, cssb)
+!$OMP& SHARED(vol, pbs, pbshz, ua, uadia, vaecrb, vadia, wadia)
+!$OMP& SHARED(ne, bb, hx, hy, hz, qz, gs, qc, qs, po, cvla, cdna, cdpa)
+!$OMP& SHARED(cddi, cvlahz, cdnahz, cdpahz, cvmahz, fchvispar)
+!$OMP& SHARED(fchvisper, fchinert, fchanml, fchvisq)
+!$OMP& SHARED(fna, fna_nodrift, fna_fcor, fna_he, fnaPSch, fna_mdf)
+!$OMP& SHARED(fna_32, fna_52, fna_32nd, fna_52nd)
+!$OMP& SHARED(kinrgy, fllim0fna)
+#endif
 !                do is = 0, ns-1
                 do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -832,6 +966,13 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      1             fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
      &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.false.)    !djm Jan2017
                 enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP3
+!$OMP END PARALLEL DO
+!!FR End of loop (3)
+#ifdef WITH_FTIMINGS
+                call timer%stop("parallel")
+#endif
+#endif
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
      &                  'In potential loop: fna(ions) at plates')
@@ -843,6 +984,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   write(*,*) 'No potential residuals, respo = ', t0
                 endif
                 call xertst (ier0.eq.0, 'error return from b2nppo')
+                if(.not.solving(3).or..not.any(solvepo(0:nnreg(0))))
+     &           exit                                                    !srv 22.05.18
                 if(t0.gt.potok.and.(i.eq.(potit/3).or.i.eq.(potit*2/3)
      &           .or.mod(i+1,50).eq.0)) then
                   if(vis_per.eq.0.0_R8) then
@@ -860,7 +1003,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                call print_wrong_flows(
      &              'After potential loop: fna(ions) at plates')
             endif
-            if(i.gt.potit) then
+            if(i.gt.potit.and.t0.gt.potok) then
               ierr=10
 cxpb
 cxpb          ierr=0     !testing forcing potit iterations
@@ -936,9 +1079,23 @@ c     with diamagnetic drift part                                        !xpb
              endif
            end do
          end do
+#ifndef NO_OPENMP_B2NEWS_LOOP4
+#ifdef WITH_FTIMINGS
+         call timer%start("parallel")
+#endif
+!!FR loop (4) over ns suitable for OpenMP parallelisation
+!$OMP PARALLEL DO DEFAULT(none) SHARED(rza,ua,na,ns) REDUCTION(+:ue)
+#endif
          do is=0,ns-1
            ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
          enddo
+#ifndef NO_OPENMP_B2NEWS_LOOP4
+!$OMP END PARALLEL DO
+!!FR end of loop (4)
+#ifdef WITH_FTIMINGS
+         call timer%stop("parallel")
+#endif
+#endif
          ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
          ue(:,:)=ue(:,:)/ne(:,:)
         else
@@ -1004,6 +1161,7 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       subroutine print_wrong_flows(label)
       implicit none
       character (len=*) :: label
+      integer iy
       logical inverted_ua
 
       inverted_ua = .true.

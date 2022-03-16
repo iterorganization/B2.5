@@ -5,6 +5,7 @@
      &  rtn, nn, zamin, zamax, zn, 
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, 
@@ -152,7 +153,7 @@
       intrinsic max, exp, log
       real (kind=R8) ::
      *   machsfr, expu1
-      external subini, subend, xertst, machsfr, b2xvsg
+      external xertst, machsfr, b2xvsg
       expu1(t0) = exp(max(t0,cutll))
 *     (expu1 is the exponential function with underflow set to a tiny
 *     positive value.)

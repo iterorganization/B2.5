@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -30,7 +31,8 @@
       real (kind=R8) ::
      *   ft                                                            !srv 16.10.17
       save ncall
-      external subini, subend, xertst, ipgeti, ipgetr, b2scopy
+      !$OMP THREADPRIVATE(ncall)
+      external xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
       data ncall/0/
@@ -63,10 +65,10 @@
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then         !srv 26.10.08
        do iy = -1, ny
         do ix = -1, nx
-	   if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).ne.-2) then
              flubv(ix,iy,0,0) = ft*cvsbhz_cl(ix,iy,0,0)*              !srv 16.10.17
      &        (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
-	   endif
+         endif
         enddo
        enddo
       endif

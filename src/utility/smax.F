@@ -16,6 +16,7 @@
       real (kind=R8) ::
      *   t
       intrinsic max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------

@@ -4,6 +4,7 @@
       subroutine b2aggs (ixlo, ixhi, iylo, iyhi, iloc)
       use b2mod_types
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ixlo, ixhi, iylo, iyhi, iloc
@@ -82,7 +83,7 @@
       integer nlrg0
       save nlrg0
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data nlrg0/0/
 

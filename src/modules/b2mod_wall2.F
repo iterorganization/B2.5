@@ -5,7 +5,7 @@
       use b2mod_layer
      . , only : nwall
       
-      integer, save :: nwall1, nbnd1
+      integer, save :: nwall1, ndepth1, nbnd1
       real (kind=R8), save, allocatable :: contr_area(:,:)
       real (kind=R8), save, allocatable :: acc_area(:), acc_area1(:)
 cxpb  Namelist data
@@ -40,7 +40,7 @@ cxpb Data file material properties
      *  layer_nconstituents1(:),
      *  layer_nzconstituents1(:,:)
       real (kind=R8), allocatable, save ::
-     *  layer_nrelconstituents1(:,:)
+     *  layer_relconstituents1(:,:)
       
       integer, allocatable, save ::
      *  xymap1(:,:), wall_begin1(:), wall_end1(:)
@@ -80,10 +80,11 @@ cxpb element: xymap1(ix,iy)
       return
       end subroutine alloc_b2mod_wall2_init
 
-      subroutine alloc_b2mod_wall2(ns1,natm1,nmol,nion,ndepth1)
+      subroutine alloc_b2mod_wall2(ns1,natm1,nmol1,nion1,ndepth1)
+      use b2mod_subsys
       implicit none
-      integer ns1, natm1, nmol, nion, ndepth1
-      external subini, subend, xertst
+      integer ns1, natm1, nmol1, nion1, ndepth1
+      external xertst
 
       call subini('b2mod_wall2')
       call xertst(1.le.ndepth1 .and. ndepth1.le.ndepth,
@@ -102,13 +103,13 @@ cxpb  Namelist data
      *  erosion1(nwall1,ntrack),
      *  monolayer_erosion1(nwall1,ntrack),
      *  plate_time1(nwall1),
-     *  chemical_sputtering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  physical_sputtering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  physical_sputtering_energy1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  RES_sputtering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  thermal_evaporation1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  backscattering1(nwall1,0:ns1-1+natm1+nmol+nion),
-     *  backscattering_energy1(nwall1,0:ns1-1+natm1+nmol+nion))
+     *  chemical_sputtering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  physical_sputtering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  physical_sputtering_energy1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  RES_sputtering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  thermal_evaporation1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  backscattering1(nwall1,0:ns1-1+natm1+nmol1+nion1),
+     *  backscattering_energy1(nwall1,0:ns1-1+natm1+nmol1+nion1))
 
 cxpb Data file material properties
       allocate(
@@ -119,7 +120,7 @@ cxpb Data file material properties
      *  layer_nconstituents1(nwall1),
      *  layer_nzconstituents1(nwall1,6+ntrack))
       allocate(
-     *  layer_nrelconstituents1(nwall1,6+ntrack))
+     *  layer_relconstituents1(nwall1,6+ntrack))
       
       inertial_cooling1 = .false.
       target_temp1 = 0.0_R8
@@ -190,7 +191,7 @@ cxpb Data file material properties
      *  layer_nconstituents1,
      *  layer_nzconstituents1)
       deallocate(
-     *  layer_nrelconstituents1)
+     *  layer_relconstituents1)
       
       return
       end subroutine dealloc_b2mod_wall2

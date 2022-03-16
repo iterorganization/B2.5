@@ -12,6 +12,8 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:3), nout(0:1), nx, ny, ns                  !srv 22.12.09
@@ -66,9 +68,8 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, js, i, is0, idum(0:9)
+      integer n2, is, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                            !srv 22.12.09
-      real (kind=R8) :: t0, t1                                      !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:,:), fhe1(:,:,:,:),
@@ -89,24 +90,17 @@
      &  veecrb1(:,:,:,:), vedia1(:,:,:,:),
      &  floe_noc1(:,:,:,:), floi_noc1(:,:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
-      character lblps*120, lblgm*120, id*8, id0*8, line*500
+      character lblps*120, lblgm*120, id*8, id0*8, line*500, ligne*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
       real (kind=R8) ::
-     *  amtol, naini(0:ns-1), ttini, na_min
-      parameter (amtol=1.0e-2_R8)
+     *  naini(0:ns-1), ttini, na_min
       logical oldversion, ex
       character*256 filename
 *   ..procedures
       logical streql, is_comment
-      logical ltst                                                  !srv 22.12.09
-      logical lnext
-      external subini, subend, xertst, xerrab, sfill, streql,
-     &  cfwuch, cfwuin, is_comment
+      external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))       !srv 22.12.09
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *  ..initialisation
       save na_min
       data na_min/1.0e4_R8/
@@ -147,8 +141,8 @@
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell,
 *     projected onto the poloidal direction, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-*     uadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     uadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     uadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     uadia is computed at cell faces otherwise (default)
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
@@ -160,8 +154,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vadia is computed at cell faces otherwise (default)
 *
 *     wadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let wadiax(,,)=wadia(,,0,) and wadiay(,)=wadia(,,1,).)
@@ -173,8 +167,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     wadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     wadia is computed at cell faces otherwise (default)
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -186,8 +180,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
 *     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
-*     vedia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vedia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vedia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vedia is computed at cell faces otherwise (default)
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -199,8 +193,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vaecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vaecrb is computed at cell faces otherwise (default)
 *
 *     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
@@ -212,15 +206,12 @@
 *     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
 *     the ExB drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
-*     veecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     veecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     veecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     veecrb is computed at cell faces otherwise (default)
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy).
-*     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities in both the radial
-*     and diamagnetic directions.
 *
 *     te - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
@@ -481,7 +472,7 @@
       read (ninp(1),*,err=92) (naini(is),is=0,ns-1)
       call b2xvsg (ns, naini, 1, 'naini', '.gt.')
 *   ..read and test ttini
-*     (ttini is provided in units of ev)
+*     (ttini is provided in units of eV)
       read (ninp(1),'(a8)',err=91) id
       call xertst (streql(id,'*ttini'),
      &  'faulty input id instead of *ttini, id='//id)
@@ -492,9 +483,13 @@
     1 continue
        read (ninp(1),'(a)',end=2,err=94) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -504,7 +499,7 @@
       call xertst (na_min.gt.0.0_R8,
      & 'faulty internal parameter na_min')
       do is=0,ns-1
-        call xertst (naini(is).gt.na_min,
+        call xertst (naini(is).ge.na_min,
      &   'Initial densities must be larger than na_min!')
       end do
 
@@ -659,6 +654,8 @@
          call sfill (n2*4, 0.0_R8, fna_32(-1,-1,0,0,is), 1)
          call sfill (n2*4, 0.0_R8, fna_52(-1,-1,0,0,is), 1)
        enddo
+       vedia     = vedia1
+       veecrb    = veecrb1
        fne_eir   = fne_eir1
        fne_32    = fne_321
        fne_52    = fne_521
@@ -707,8 +704,8 @@
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne (nx, ny, ns, rza, na, zero, ne)
-       call sfill (n2*4, 0.0_R8, veecrb, 1)
        call sfill (n2*4, 0.0_R8, vedia, 1)
+       call sfill (n2*4, 0.0_R8, veecrb, 1)
 *   ..initialise te, ti, po
        call sfill (n2, ttini*ev, te, 1)
        call sfill (n2, ttini*ev, ti, 1)

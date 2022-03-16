@@ -6,6 +6,10 @@
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
       use b2mod_types
       use b2mod_b2cmpa
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -63,7 +67,7 @@
       intrinsic log, exp, min, max, dim
       real (kind=R8) ::
      *   machsfr, expu
-      external subini, subend, xertst, ipgetr, machsfr
+      external xertst, ipgetr, machsfr
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
@@ -100,15 +104,35 @@
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+#ifndef NO_OPENMP_B2SQEL
+!$OMP PARALLEL DEFAULT(none)
+!$OMP& private(ix, iy, is),
+!$OMP& shared(rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+!$OMP& shared(rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+!$OMP& shared(zamin, zamax, phm0, phm1, phm2, ev, ns, nx, ny)
+!$OMP& shared(cutlo, cutll)
+!$OMP& shared(art_rad, ismain, ncall, TNORM, TE)
+!$OMP DO
+#endif
 *   ..compute wrk0(,)=log(te(,)/ev)
       do iy = -1, ny
        do ix = -1, nx
         wrk0(ix,iy) = log(te(ix,iy)/ev)
        enddo
       enddo
+#ifndef NO_OPENMP_B2SQEL
+!$OMP END DO
+#endif
 
 * ..main computation
 *   ..compute rate coefficients
+
+#ifndef NO_OPENMP_B2SQEL
+!$OMP DO
+#endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -142,6 +166,9 @@
         enddo
        enddo
       enddo
+#ifndef NO_OPENMP_B2SQEL
+!$OMP END DO
+#endif
 
 * ..artificial radiation                DPC 2000.08.25
       if(art_rad.ne.0.0_R8) then
@@ -151,6 +178,9 @@
      1     'Artificial radiation model active, art_rad = ',art_rad
         endif
         is=ismain    ! XPB 2007.11.02 was ns-1
+#ifndef NO_OPENMP_B2SQEL
+!$OMP DO
+#endif
         do iy = -1, ny
           do ix = -1, nx
 *      ..compute artificial radiation rate coefficient
@@ -161,8 +191,17 @@
      1       art_rad*2.0E-31_R8/(TNORM**1.5_R8+1.0_R8/TNORM**3)
           enddo
         enddo
+#ifndef NO_OPENMP_B2SQEL
+!$OMP END DO
+#endif
       endif
-      
+#ifndef NO_OPENMP_B2SQEL
+!$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+
 * ..return
       ncall = ncall+1
       call subend ()

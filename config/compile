@@ -1,4 +1,8 @@
 include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+ifeq ($(shell [ -e ${SRCB2}/config/config.common.${COMPILER} ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.common.${COMPILER}
+  MAKES += ${SRCB2}/config/config.common.${COMPILER}
+endif
 INCMODS += ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}
@@ -7,12 +11,12 @@ endif
 ${OBJDIR}/%.o : %.F
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
 endif
@@ -22,12 +26,12 @@ endif
 ${OBJDIR}/%.o : %.F90
 	@- /bin/rm -f ${OBJDIR}/$*.f90 ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/$*.f90
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f90
 endif
@@ -37,12 +41,12 @@ endif
 ${OBJDIR}/%.${MOD} : %.F        # ../src/modules/
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/$*.f
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
 endif
@@ -56,12 +60,12 @@ endif
 ${OBJDIR}/%.${MOD} : %.F90        #  F90 modules
 	@- /bin/rm -f ${OBJDIR}/$*.f90 ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
 else
 ifeq ($(strip $(SED)),)
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/$*.f90
 else
-	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f90
 endif
@@ -72,9 +76,7 @@ else
 	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/$*.${MOD} .
 endif
 
-ifndef CXX
-CXX = g++
-endif
+CXX ?= g++
 ${OBJDIR}/%.o : %.cxx	#cxx source files
 	@- /bin/rm -f ${OBJDIR}/$*.cxx ${OBJDIR}/$*.o
 	${CXX} -c -o $@ ${CXXFLAGS} $^

@@ -21,6 +21,8 @@
       use b2mod_diag
       use b2mod_work
       use b2mod_external
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -33,7 +35,6 @@
       integer itim, itcnt, n2
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
-      real (kind=R8) :: t0, t1
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
@@ -42,13 +43,12 @@
       save ismain, external_species
       data ismain/1/, external_species/0/
 *   ..procedures
-      logical ltst, is_comment, cfendf
+      logical is_comment, cfendf
       intrinsic sqrt
-      external subini, subend, xertst, xerrab, is_comment
+      external xertst, xerrab, is_comment
       external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *   ..subprogram start-up calls
       call subini ('b2pldr')
@@ -115,7 +115,8 @@
 *   ..read atomic rate data
       call cfverr (ninp(5), b2frates_version)
       call cfruch (ninp(5), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(5), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(5), b2frates_flag)
       call b2rurc (ninp(5), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -185,6 +186,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)

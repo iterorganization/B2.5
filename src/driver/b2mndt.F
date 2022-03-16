@@ -16,7 +16,9 @@
       use b2mod_diag
       use b2mod_work
       use b2mod_time
+      use b2mod_file
       use b2mod_b2cmpa
+      use b2mod_average
       use b2mod_external
       use b2mod_neoclassical
       use b2mod_user_namelist
@@ -24,6 +26,7 @@
       use b2mod_numerics_namelist
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, nxtl, nxtr, ismain, ismain0,
@@ -96,14 +99,13 @@
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, nasum, na0sum, 
+     &  acorte, acorti, acorpo, nasum, na0sum,
      &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
-      external subini, subend, xertst, ipgeti, ipgetr, smin,
-     &  smax, b2sasum, samax
+      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
@@ -327,7 +329,7 @@ ctmp.dpc
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
-          if(style.ne.0) then                                            !srv 18.06.08 {
+          if(style.gt.0) then                                            !srv 18.06.08 {
             call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,
      &                    fchanml)                                       !srv 20.09.06 }
             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,       !srv 20.09.06 {
@@ -352,6 +354,7 @@ ctmp.dpc
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
+          wrong_flow = .false.
           main_call = ntim.ne.0
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
@@ -388,15 +391,18 @@ ctmp.dpc
           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
           if(equation_sources.ne.0) then                                 !srv 26.02.18 {
-	      do iy = -1,ny
-	        do ix = -1,nx
-	          sna(ix,iy,0:1,0:ns-1) = sna(ix,iy,0:1,0:ns-1)+
-     &                              vol(ix,iy)*art_sna(ix,iy,0:1,0:ns-1) 
-	          smo(ix,iy,0:3,0:ns-1) = smo(ix,iy,0:3,0:ns-1)+
-     &                    vol(ix,iy)*hz(ix,iy)*art_smo(ix,iy,0:3,0:ns-1) 
-	          she(ix,iy,0:3)=she(ix,iy,0:3)+vol(ix,iy)*art_she(ix,iy,0:3) 
-	          shi(ix,iy,0:3)=shi(ix,iy,0:3)+vol(ix,iy)*art_shi(ix,iy,0:3) 
-	          sch(ix,iy,0:3)=sch(ix,iy,0:3)+vol(ix,iy)*art_sch(ix,iy,0:3) 
+             do iy = -1,ny
+                do ix = -1,nx
+                  sna(ix,iy,0:1,0:ns-1) = sna(ix,iy,0:1,0:ns-1)+
+     &                              vol(ix,iy)*art_sna(ix,iy,0:1,0:ns-1)
+                  smo(ix,iy,0:3,0:ns-1) = smo(ix,iy,0:3,0:ns-1)+
+     &                    vol(ix,iy)*hz(ix,iy)*art_smo(ix,iy,0:3,0:ns-1)
+                  she(ix,iy,0:3)=she(ix,iy,0:3)+
+     &                              vol(ix,iy)*art_she(ix,iy,0:3)
+                  shi(ix,iy,0:3)=shi(ix,iy,0:3)+
+     &                              vol(ix,iy)*art_shi(ix,iy,0:3)
+                  sch(ix,iy,0:3)=sch(ix,iy,0:3)+
+     &                              vol(ix,iy)*art_sch(ix,iy,0:3)
               enddo
             enddo
           endif                                                          !srv 26.02.18 }
@@ -409,8 +415,8 @@ ctmp.dpc
           istg(2) = 0
     3     if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
+           ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
            if(style.eq.0) then                                           !srv 01.07.08
-            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
             call b2news (nx, ny, ns, nxtl, nxtr,
      &       nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
@@ -482,10 +488,10 @@ ctmp.dpc
            if (ank_tracing.ne.0) then
              if (ncall.eq.0.and.istg(2).eq.0) then
                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-               call b2filei(1,ns,nnreg)
+               call b2filei(ns,nnreg(0))
              end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >        call b2filew(istg(2),ns,nnreg)
+     >        call b2filew(istg(2),nnreg(0))
            endif
 *      ..update iteration counter
            itcnt = itcnt+1
@@ -511,11 +517,11 @@ ctmp.dpc
              call b2tfnb (nx, ny, is, ismain,
      &          guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,    !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
      &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,0,is), 
+     &          pb, ua(-1,-1,is), uadia(-1,-1,0,0,is),
      &          vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is),
      &          wadia(-1,-1,0,0,is), ne, te, ti, bb,
      &          hx, hy, hz, qz, gs, qc, qs, po,                          !srv 19.05.03 08.10.04 04.02.05
-     &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
      &          cdpa(-1,-1,0,0,is),
      &          cddi(-1,-1,0,0,is), cvlahz(-1,-1,0,0,is),
      &          cvmahz(-1,-1,0,0,is), cdnahz(-1,-1,0,0,is),              !srv 09.01.01 15.12.05 13.10.06

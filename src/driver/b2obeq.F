@@ -71,15 +71,17 @@
 
 *   ..local variables
 #ifdef WINDOWS
-      integer(2) ::  iresult
-      logical(4) ::  lresult
+      integer(2) :: iresult
+      logical(4) :: lresult
+#else
+#ifdef NAGFOR
+      integer status, ierror
 #endif
-      logical(4) ::  b2fstate_exist
+#endif
+      logical(4) :: b2fstate_exist
       integer npoint
       real (kind=R8) :: cpu_s, cpu_f, func, fcain, fab, shift
       character*12 hlp_frm
-*   ..procedures
-!      external xerset, xertst
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -135,11 +137,20 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
       endif
 #else
+#ifdef NAGFOR
+      call system('./B2mnOpt.exe', status, ierror)
+#else
       call system('./B2mnOpt.exe')
+#endif
       inquire(file='b2fstate',exist=b2fstate_exist)
       if(b2fstate_exist) then
+#ifdef NAGFOR
+       call system('rm b2fstati', status, ierror)
+       call system('cp b2fstate b2fstati', status, ierror)
+#else
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
+#endif
       endif
 #endif	 
       call cpu_time(cpu_f)
@@ -269,12 +280,12 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      & js_outer_upper_exp, npoint, func, number_exp, dif)
 
       if(l_power) then
-	npoint=npoint+1
-	dif(npoint) = (power_mod-power_exp)/power_exp
-	func = func + dif(npoint)**2
+        npoint=npoint+1
+        dif(npoint) = (power_mod-power_exp)/power_exp
+        func = func + dif(npoint)**2
 
-	write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
-	write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
+        write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')")
+        write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
       endif
 
       nfunc = nfunc + 1

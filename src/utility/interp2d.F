@@ -1,5 +1,6 @@
       subroutine interp2d(nx,ny,nx1,ny1,xx,yy,xx1,yy1,fa,fb)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *..   input arguments
       integer nx, ny, nx1, ny1
@@ -13,7 +14,7 @@
       integer ib, ih, it, jb, jh, jt
       real (kind=R8) :: fx, fy
 *..   procedures
-      external subini, subend, xertst
+      external xertst
 
 cxpb
 c     This routine is intended to do a 2D bi-linear interpolation

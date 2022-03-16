@@ -153,7 +153,7 @@ C
           IF (FLAG.NE.0)  GO TO 100
 C
 C----ALLOCATE STORAGE AND SYMMETRICALLY REORDER MATRIX
-   1    IF ((PATH-2) * (PATH-3) * (PATH-4) * (PATH-5) .NE. 0)  GO TO 2
+    1     IF ((PATH-2) * (PATH-3) * (PATH-4) * (PATH-5) .NE. 0)  GO TO 2
           TMP = (NSP+1) -      N
           Q   = TMP     - (IA(N+1)-1)
           IF (Q.LT.1)  GO TO 110
@@ -162,15 +162,15 @@ C
           CALL SRO
      *       (N, NNZ, IP, IA, JA, A, ISP(TMP), ISP(Q), DFLAG)
 C
-   2    RETURN
+    2   RETURN
 C
 C ** ERROR -- ERROR DETECTED IN MD
- 100    RETURN
+  100   RETURN
 C ** ERROR -- INSUFFICIENT STORAGE
- 110    FLAG = 10*N + 1
+  110   FLAG = 10*N + 1
         RETURN
 C ** ERROR -- ILLEGAL PATH SPECIFIED
- 111    FLAG = 11*N + 1
+  111   FLAG = 11*N + 1
         RETURN
         END
 
@@ -277,15 +277,15 @@ C
         DMIN = 1
 C
 C----WHILE  K < N  DO
-   1    IF (K.GE.N)  GO TO 4
+    1   IF (K.GE.N)  GO TO 4
 C
 C------SEARCH FOR VERTEX OF MINIMUM DEGREE
-   2      IF (HEAD(DMIN).GT.0)  GO TO 3
+    2     IF (HEAD(DMIN).GT.0)  GO TO 3
             DMIN = DMIN + 1
             GO TO 2
 C
 C------REMOVE VERTEX VK OF MINIMUM DEGREE FROM DEGREE LIST
-   3      VK = HEAD(DMIN)
+    3     VK = HEAD(DMIN)
           HEAD(DMIN) = NEXT(VK)
           IF (HEAD(DMIN).GT.0)  LAST(HEAD(DMIN)) = -DMIN
 C
@@ -311,9 +311,10 @@ C
           GO TO 1
 C
 C----GENERATE INVERSE PERMUTATION FROM PERMUTATION
-   4    DO 5 K=1,N
+    4   DO 5 K=1,N
           NEXT(K) = -NEXT(K)
-   5      LAST(NEXT(K)) = K
+          LAST(NEXT(K)) = K
+    5   CONTINUE
 C
         RETURN
         END
@@ -335,7 +336,8 @@ C----INITIALIZE DEGREES, ELEMENT LISTS, AND DEGREE LISTS
         DO 1 VI=1,N
           MARK(VI) = 1
           L(VI) = 0
-   1      HEAD(VI) = 0
+          HEAD(VI) = 0
+    1   CONTINUE
         SFS = N+1
 C
 C----CREATE NONZERO STRUCTURE
@@ -362,8 +364,8 @@ C------ENTER VI IN ELEMENT LIST FOR VJ
               L(SFS) = L(VJ)
               L(VJ) = SFS
               SFS = SFS+1
-   2        CONTINUE
-   3      CONTINUE
+    2       CONTINUE
+    3     CONTINUE
 C
 C----CREATE DEGREE LISTS AND INITIALIZE MARK VECTOR
         DO 4 VI=1,N
@@ -372,12 +374,13 @@ C----CREATE DEGREE LISTS AND INITIALIZE MARK VECTOR
           HEAD(DVI) = VI
           LAST(VI) = -DVI
           IF (NEXT(VI).GT.0)  LAST(NEXT(VI)) = VI
-   4      MARK(VI) = TAG
+          MARK(VI) = TAG
+    4   CONTINUE
 C
         RETURN
 C
 C ** ERROR -- INSUFFICIENT STORAGE
- 101    FLAG = 9*N + VI
+  101   FLAG = 9*N + VI
         RETURN
         END
 C
@@ -399,7 +402,7 @@ C----INITIALIZE TAG AND LIST OF UNELIMINATED NEIGHBORS
 C
 C----FOR EACH VERTEX/ELEMENT VS/ES IN ELEMENT LIST OF VK
         LS = L(VK)
-   1    S = LS
+    1   S = LS
         IF (S.EQ.0)  GO TO 5
           LS = L(S)
           VS = V(S)
@@ -414,7 +417,7 @@ C------UNELIMINATED NEIGHBORS
 C
 C------IF ES IS ACTIVE ELEMENT, THEN ...
 C--------FOR EACH VERTEX VB IN BOUNDARY LIST OF ELEMENT ES
-   2        LB = L(ES)
+    2       LB = L(ES)
             BLPMAX = LAST(ES)
             DO 3 BLP=1,BLPMAX
               B = LB
@@ -427,15 +430,15 @@ C----------UNELIMINATED NEIGHBORS
                 MARK(VB) = TAG
                 L(TAIL) = B
                 TAIL = B
-   3          CONTINUE
+    3         CONTINUE
 C
 C--------MARK ES INACTIVE
             MARK(ES) = TAG
 C
-   4      GO TO 1
+    4     GO TO 1
 C
 C----TERMINATE LIST OF UNELIMINATED NEIGHBORS
-   5    L(TAIL) = 0
+    5   L(TAIL) = 0
 C
         RETURN
         END
@@ -469,12 +472,12 @@ C------REMOVE VI FROM DEGREE LIST
             IF (LAST(VI).GT.0)  GO TO 1
               HEAD(-LAST(VI)) = NEXT(VI)
               GO TO 2
-   1          NEXT(LAST(VI)) = NEXT(VI)
-   2        IF (NEXT(VI).GT.0)  LAST(NEXT(VI)) = LAST(VI)
+    1         NEXT(LAST(VI)) = NEXT(VI)
+    2       IF (NEXT(VI).GT.0)  LAST(NEXT(VI)) = LAST(VI)
 C
 C------REMOVE INACTIVE ITEMS FROM ELEMENT LIST OF VI
-   3      LS = VI
-   4      S = LS
+    3     LS = VI
+    4     S = LS
           LS = L(S)
           IF (LS.EQ.0)  GO TO 6
             ES = V(LS)
@@ -482,10 +485,10 @@ C------REMOVE INACTIVE ITEMS FROM ELEMENT LIST OF VI
               FREE = LS
               L(S) = L(LS)
               LS = S
-   5        GO TO 4
+    5       GO TO 4
 C
 C------IF VI IS INTERIOR VERTEX, THEN REMOVE FROM LIST AND ELIMINATE
-   6      LVI = L(VI)
+    6     LVI = L(VI)
           IF (LVI.NE.0)  GO TO 7
             L(I) = L(LI)
             LI = I
@@ -497,7 +500,7 @@ C
 C
 C------ELSE ...
 C--------CLASSIFY VERTEX VI
-   7        IF (L(LVI).NE.0)  GO TO 9
+    7       IF (L(LVI).NE.0)  GO TO 9
               EVI = V(LVI)
               IF (NEXT(EVI).GE.0)  GO TO 9
                 IF (MARK(EVI).LT.0)  GO TO 8
@@ -515,21 +518,21 @@ C----------OF BOUNDARY LIST
 C
 C----------ELSE IF VI IS DUPLICATE VERTEX, THEN MARK AS SUCH AND ADJUST
 C----------OVERLAP COUNT FOR CORRESPONDING ELEMENT
-   8              LAST(VI) = 0
+    8             LAST(VI) = 0
                   MARK(EVI) = MARK(EVI) - 1
                   GO TO 10
 C
 C----------ELSE MARK VI TO COMPUTE DEGREE
-   9              LAST(VI) = -EK
+    9             LAST(VI) = -EK
 C
 C--------INSERT EK IN ELEMENT LIST OF VI
-  10        V(FREE) = EK
+   10       V(FREE) = EK
             L(FREE) = L(VI)
             L(VI) = FREE
-  11      CONTINUE
+   11     CONTINUE
 C
 C----TERMINATE BOUNDARY LIST
-  12    L(TAIL) = 0
+   12   L(TAIL) = 0
 C
         RETURN
         END
@@ -558,16 +561,17 @@ C----FOR EACH VERTEX VI IN EK
         DO 10 ILP=1,ILPMAX
           I = L(I)
           VI = V(I)
-          IF (LAST(VI))  1, 10, 8
+          IF (LAST(VI).EQ.0) GOTO 10
+          IF (LAST(VI).GT.0) GOTO 8
 C
 C------IF VI NEITHER PROTOTYPE NOR DUPLICATE VERTEX, THEN MERGE ELEMENTS
 C------TO COMPUTE DEGREE
-   1        TAG = TAG + 1
+            TAG = TAG + 1
             DVI = LAST(EK)
 C
 C--------FOR EACH VERTEX/ELEMENT VS/ES IN ELEMENT LIST OF VI
             S = L(VI)
-   2        S = L(S)
+    2       S = L(S)
             IF (S.EQ.0)  GO TO 9
               VS = V(S)
               IF (NEXT(VS).LT.0)  GO TO 3
@@ -579,7 +583,7 @@ C----------IF VS IS UNELIMINATED VERTEX, THEN TAG AND ADJUST DEGREE
 C
 C----------IF ES IS ACTIVE ELEMENT, THEN EXPAND
 C------------CHECK FOR OUTMATCHED VERTEX
-   3            IF (MARK(ES).LT.0)  GO TO 6
+    3           IF (MARK(ES).LT.0)  GO TO 6
 C
 C------------FOR EACH VERTEX VB IN ES
                 B = ES
@@ -592,15 +596,15 @@ C--------------IF VB IS UNTAGGED, THEN TAG AND ADJUST DEGREE
                   IF (MARK(VB).GE.TAG)  GO TO 4
                     MARK(VB) = TAG
                     DVI = DVI + 1
-   4              CONTINUE
+    4             CONTINUE
 C
-   5          GO TO 2
+    5         GO TO 2
 C
 C------ELSE IF VI IS OUTMATCHED VERTEX, THEN ADJUST OVERLAPS BUT DO NOT
 C------COMPUTE DEGREE
-   6        LAST(VI) = 0
+    6       LAST(VI) = 0
             MARK(ES) = MARK(ES) - 1
-   7        S = L(S)
+    7       S = L(S)
             IF (S.EQ.0)  GO TO 10
               ES = V(S)
               IF (MARK(ES).LT.0)  MARK(ES) = MARK(ES) - 1
@@ -608,21 +612,21 @@ C------COMPUTE DEGREE
 C
 C------ELSE IF VI IS PROTOTYPE VERTEX, THEN CALCULATE DEGREE BY
 C------INCLUSION/EXCLUSION AND RESET OVERLAP COUNT
-   8        EVI = LAST(VI)
+    8       EVI = LAST(VI)
             DVI = LAST(EK) + LAST(EVI) + MARK(EVI)
             MARK(EVI) = 0
 C
 C------INSERT VI IN APPROPRIATE DEGREE LIST
-   9      NEXT(VI) = HEAD(DVI)
+    9     NEXT(VI) = HEAD(DVI)
           HEAD(DVI) = VI
           LAST(VI) = -DVI
           IF (NEXT(VI).GT.0)  LAST(NEXT(VI)) = VI
           IF (DVI.LT.DMIN)  DMIN = DVI
 C
-  10      CONTINUE
+   10     CONTINUE
 C
-  11    RETURN
-        END
+   11   RETURN
+        END SUBROUTINE MDU
 C                                                                1/15/81
 C***********************************************************************
 C  SDRV -- DRIVER FOR SPARSE SYMMETRIC POSITIVE DEFINITE MATRIX ROUTINES
@@ -827,7 +831,7 @@ C
           IF (FLAG.NE.0)  GO TO 100
 C
 C----ALLOCATE STORAGE AND FACTOR M NUMERICALLY
-   1    IL   = JU      + ISP(IJU+(N-1))
+    1   IL   = JU      + ISP(IJU+(N-1))
         TMP  = ((IL-1)+(RATIO-1)) / RATIO  +  1
         D    = TMP     + N
         U    = D       + N
@@ -843,22 +847,22 @@ C
           IF (FLAG.NE.0)  GO TO 100
 C
 C----SOLVE SYSTEM OF LINEAR EQUATIONS  MX = B
-   2    IF ((PATH-1) * (PATH-2) * (PATH-3) .NE. 0)  GO TO 3
+    2   IF ((PATH-1) * (PATH-2) * (PATH-3) .NE. 0)  GO TO 3
           IF (UMAX.LE.0)  GO TO 110
           CALL SNS
      *       (N, UMAX, JUMAX, P,
      *        RSP(D), ISP(IJU), ISP(JU), ISP(IU), RSP(U), Z, B,
      *        RSP(TMP))
 C
-   3    RETURN
+    3   RETURN
 C
 C ** ERROR -- ERROR DETECTED IN SSF, SNF, OR SNS
- 100    RETURN
+  100   RETURN
 C ** ERROR -- INSUFFICIENT STORAGE
- 110    FLAG = 10*N + 1
+  110   FLAG = 10*N + 1
         RETURN
 C ** ERROR -- ILLEGAL PATH SPECIFICATION
- 111    FLAG = 11*N + 1
+  111   FLAG = 11*N + 1
         RETURN
         END
 C
@@ -901,9 +905,9 @@ C        REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
          real (kind=R8) ::  A(NNZ),  D(N), U(UMAX), DK, UKIDI            !srv 11.01.07
 #ifdef DBG
          real (kind=R8) :: product
-         real (kind=R8), save :: cutlo
+         real (kind=R8), save :: cutll
 
-         cutlo = log(tiny(1.0_R8))
+         cutll = log(tiny(1.0_R8))
 #endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U
@@ -912,25 +916,26 @@ C
 C----INITIALIZATION
         DO 1 K=1,N
           D(K) = 0.0e0_R8                                                !srv 11.01.07
-   1      JL(K) = 0
+          JL(K) = 0
+    1   CONTINUE
 C
 C----FOR EACH ROW K
         DO 11 K=1,N
 C
 C------INITIALIZE K-TH ROW WITH ELEMENTS NONZERO IN ROW P(K) OF M
-   3      JMIN = IA(P(K))
+          JMIN = IA(P(K))
           JMAX = IA(P(K)+1) - 1
           IF (JMIN.GT.JMAX) GO TO 5
           DO 4 J=JMIN,JMAX
             VJ = IP(JA(J))
             IF (K.LE.VJ)  D(VJ) = A(J)
-   4        CONTINUE
+    4       CONTINUE
 C
 C------MODIFY K-TH ROW BY ADDING IN THOSE ROWS I WITH U(I,K) NE 0
 C------FOR EACH ROW I TO BE ADDED IN
-   5      DK = D(K)
+    5     DK = D(K)
           I = JL(K)
-   6      IF (I.EQ.0)  GO TO 9
+    6     IF (I.EQ.0)  GO TO 9
             NEXTI = JL(I)
 C
 C--------COMPUTE MULTIPLIER AND UPDATE DIAGONAL ELEMENT
@@ -942,7 +947,7 @@ C--------COMPUTE MULTIPLIER AND UPDATE DIAGONAL ELEMENT
      &         (ABS(U(ILI)).ge. tiny(1.0_R8).or.
      &          ABS(U(ILI)).le.-tiny(1.0_R8))) then
               product = log(abs(ukidi)) + log(abs(u(ili)))
-              if (product.ge.cutlo) DK = DK + UKIDI * U(ILI)
+              if (product.ge.cutll) DK = DK + UKIDI * U(ILI)
             END IF
 #else
             DK = DK + UKIDI * U(ILI)
@@ -961,13 +966,13 @@ C--------ADD MULTIPLE OF ROW I TO K-TH ROW ...
      &             (ABS(U(J)) .ge. tiny(1.0_R8).or.
      &              ABS(U(J)) .le.-tiny(1.0_R8))) then
                   product = log(abs(ukidi)) + log(abs(u(j)))
-                  if (product.ge.cutlo)
+                  if (product.ge.cutll)
      >             D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
                 END IF
 #else
                 D(JU(MU+J)) = D(JU(MU+J)) + UKIDI * U(J)
 #endif
-   7          CONTINUE
+    7         CONTINUE
 C
 C--------... AND ADD I TO ROW LIST FOR NEXT NONZERO ENTRY
               IL(I) = JMIN
@@ -975,11 +980,11 @@ C--------... AND ADD I TO ROW LIST FOR NEXT NONZERO ENTRY
               JL(I) = JL(J)
               JL(J) = I
 C
-   8        I = NEXTI
+    8       I = NEXTI
             GO TO 6
 C
 C------CHECK FOR ZERO PIVOT AND SAVE DIAGONAL ELEMENT
-   9      IF (DK.EQ.0.0e0_R8)  GO TO 108                                 !srv 11.01.07
+    9     IF (DK.EQ.0.0e0_R8)  GO TO 108                                 !srv 11.01.07
           D(K) = 1.0e0_R8 / DK                                           !srv 11.01.07
 C
 C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
@@ -990,23 +995,24 @@ C------SAVE NONZERO ENTRIES IN K-TH ROW OF U ...
             DO 10 J=JMIN,JMAX
               JUMUJ = JU(MU+J)
               U(J) = D(JUMUJ)
-  10          D(JUMUJ) = 0.0e0_R8                                        !srv 11.01.07
+              D(JUMUJ) = 0.0e0_R8                                        !srv 11.01.07
+   10       CONTINUE
 C
 C------... AND ADD K TO ROW LIST FOR FIRST NONZERO ENTRY IN K-TH ROW
             IL(K) = JMIN
             I = JU(MU+JMIN)
             JL(K) = JL(I)
             JL(I) = K
-  11      CONTINUE
+   11     CONTINUE
 C
         FLAG = 0
         RETURN
 C
 C ** ERROR -- INSUFFICIENT STORAGE FOR U
- 107    FLAG = 7*N + 1
+  107   FLAG = 7*N + 1
         RETURN
 C ** ERROR -- ZERO PIVOT
- 108    FLAG = 8*N + K
+  108   FLAG = 8*N + K
         RETURN
         END
 C
@@ -1031,18 +1037,21 @@ C-----------------------------------------------------------------------
 C
 C----SET TMP TO PERMUTED B
         DO 1 K=1,N
-   1      TMP(K) = B(P(K))
+          TMP(K) = B(P(K))
+    1   CONTINUE
 C
 C----SOLVE  UT D Y = B  BY FORWARD SUBSTITUTION
-        DO 3 K=1,N
+        DO K=1,N
           TMPK = TMP(K)
           JMIN = IU(K)
           JMAX = IU(K+1) - 1
           IF (JMIN.GT.JMAX)  GO TO 3
           MU = IJU(K) - JMIN
           DO 2 J=JMIN,JMAX
-   2        TMP(JU(MU+J)) = TMP(JU(MU+J)) + U(J) * TMPK
-   3      TMP(K) = TMPK * D(K)
+            TMP(JU(MU+J)) = TMP(JU(MU+J)) + U(J) * TMPK
+    2     CONTINUE
+    3     TMP(K) = TMPK * D(K)
+        ENDDO
 C
 C----SOLVE  U X = Y  BY BACK SUBSTITUTION
         K = N
@@ -1053,10 +1062,12 @@ C----SOLVE  U X = Y  BY BACK SUBSTITUTION
           IF (JMIN.GT.JMAX)  GO TO 5
           MU = IJU(K) - JMIN
           DO 4 J=JMIN,JMAX
-   4        SUM = SUM + U(J) * TMP(JU(MU+J))
-   5      TMP(K) = SUM
+            SUM = SUM + U(J) * TMP(JU(MU+J))
+    4     CONTINUE
+    5     TMP(K) = SUM
           Z(P(K)) = SUM
-   6      K = K-1
+          K = K-1
+    6   CONTINUE
 C
         RETURN
         END
@@ -1105,7 +1116,8 @@ C
 C--PHASE 1 -- FIND ROW IN WHICH TO STORE EACH NONZERO
 C----INITIALIZE COUNT OF NONZEROES TO BE STORED IN EACH ROW
         DO 1 I=1,N
-  1       Q(I) = 0
+          Q(I) = 0
+    1   CONTINUE
 C
 C----FOR EACH NONZERO ELEMENT A(J)
         DO 3 I=1,N
@@ -1121,15 +1133,17 @@ C--------FIND ROW (=R(J)) AND COLUMN (=JA(J)) IN WHICH TO STORE A(J) ...
             R(J) = K
 C
 C--------... AND INCREMENT COUNT OF NONZEROES (=Q(R(J)) IN THAT ROW
-  2         Q(K) = Q(K) + 1
-  3       CONTINUE
+            Q(K) = Q(K) + 1
+    2     CONTINUE
+    3   CONTINUE
 C
 C
 C--PHASE 2 -- FIND NEW IA AND PERMUTATION TO APPLY TO (JA,A)
 C----DETERMINE POINTERS TO DELIMIT ROWS IN PERMUTED (JA,A)
         DO 4 I=1,N
           IA(I+1) = IA(I) + Q(I)
-  4       Q(I) = IA(I+1)
+          Q(I) = IA(I+1)
+    4   CONTINUE
 C
 C----DETERMINE WHERE EACH (JA(J),A(J)) IS STORED IN PERMUTED (JA,A)
 C----FOR EACH NONZERO ELEMENT (IN REVERSE ORDER)
@@ -1137,7 +1151,7 @@ C----FOR EACH NONZERO ELEMENT (IN REVERSE ORDER)
         JMIN = IA(1)
         JMAX = IA(N+1) - 1
         J = JMAX
-        DO 6 JDUMMY=JMIN,JMAX
+        DO JDUMMY=JMIN,JMAX
           I = R(J)
           IF (.NOT.DFLAG .OR. JA(J).NE.I .OR. I.EQ.ILAST)  GO TO 5
 C
@@ -1147,15 +1161,16 @@ C------IF DFLAG, THEN PUT DIAGONAL NONZERO AT BEGINNING OF ROW
             GO TO 6
 C
 C------PUT (OFF-DIAGONAL) NONZERO IN LAST UNUSED LOCATION IN ROW
-  5         Q(I) = Q(I) - 1
+    5       Q(I) = Q(I) - 1
             R(J) = Q(I)
 C
-  6       J = J-1
+    6     J = J-1
+        END DO
 C
 C
 C--PHASE 3 -- PERMUTE (JA,A) TO UPPER TRIANGULAR FORM (WRT NEW ORDERING)
         DO 8 J=JMIN,JMAX
-  7       IF (R(J).EQ.J)  GO TO 8
+    7     IF (R(J).EQ.J)  GO TO 8
             K = R(J)
             R(J) = R(K)
             R(K) = K
@@ -1166,7 +1181,7 @@ C--PHASE 3 -- PERMUTE (JA,A) TO UPPER TRIANGULAR FORM (WRT NEW ORDERING)
             A(K) = A(J)
             A(J) = AK
             GO TO 7
-  8       CONTINUE
+    8     CONTINUE
 C
         RETURN
         END
@@ -1302,10 +1317,11 @@ C----INITIALIZATION
         IU(1) = 1
         DO 1 K=1,N
           MARK(K) = 0
-   1      JL(K) = 0
+          JL(K) = 0
+    1   CONTINUE
 C
 C----FOR EACH ROW K
-        DO 18 K=1,N
+        DO K=1,N
           LUK = 0
           Q(K) = N+1
 C
@@ -1322,7 +1338,7 @@ C------INITIALIZE NONZERO STRUCTURE OF K-TH ROW TO ROW P(K) OF M
             IF (VJ.LE.K)  GO TO 3
 C
               QM = K
-   2          M = QM
+    2         M = QM
               QM = Q(M)
               IF (QM.LT.VJ)  GO TO 2
               IF (QM.EQ.VJ)  GO TO 102
@@ -1331,24 +1347,24 @@ C
                 Q(VJ) = QM
                 IF (MARK(VJ).NE.TAG)  CLIQUE = .FALSE.
 C
-   3        CONTINUE
+    3       CONTINUE
 C
 C------IF EXACTLY ONE ROW IS TO BE MERGED INTO THE K-TH ROW AND THERE IS
 C------A NONZERO ENTRY IN EVERY COLUMN IN THAT ROW IN WHICH THERE IS A
 C------NONZERO ENTRY IN ROW P(K) OF M, THEN DO NOT COMPUTE FILL-IN, JUST
 C------USE THE COLUMN INDICES FOR THE ROW WHICH WAS TO HAVE BEEN MERGED
-   4      IF (.NOT.CLIQUE)  GO TO 5
+    4     IF (.NOT.CLIQUE)  GO TO 5
             IJU(K) = IJU(JL(K)) + 1
             LUK = IU(JL(K)+1) - (IU(JL(K))+1)
             GO TO 17
 C
 C------MODIFY NONZERO STRUCTURE OF K-TH ROW BY COMPUTING FILL-IN
 C------FOR EACH ROW I TO BE MERGED IN
-   5      LMAX = 0
+    5     LMAX = 0
           IJU(K) = JUPTR
 C
           I = K
-   6      I = JL(I)
+    6     I = JL(I)
           IF (I.EQ.0)  GO TO 10
 C
 C--------MERGE ROW I INTO K-TH ROW
@@ -1359,7 +1375,7 @@ C--------MERGE ROW I INTO K-TH ROW
 C
             DO 8 J=JMIN,JMAX
               VJ = JU(J)
-   7          M = QM
+    7         M = QM
               QM = Q(M)
               IF (QM.LT.VJ)  GO TO 7
               IF (QM.EQ.VJ)  GO TO 8
@@ -1367,18 +1383,18 @@ C
                 Q(M) = VJ
                 Q(VJ) = QM
                 QM = VJ
-   8          CONTINUE
+    8         CONTINUE
 C
 C--------REMEMBER LENGTH AND POSITION IN JU OF LONGEST ROW MERGED
             IF (LUI.LE.LMAX)  GO TO 9
               LMAX = LUI
               IJU(K) = JMIN
 C
-   9        GO TO 6
+    9       GO TO 6
 C
 C------IF THE K-TH ROW IS THE SAME LENGTH AS THE LONGEST ROW MERGED,
 C------THEN USE THE COLUMN INDICES FOR THAT ROW
-  10      IF (LUK.EQ.LMAX)  GO TO 17
+   10     IF (LUK.EQ.LMAX)  GO TO 17
 C
 C------IF THE TAIL OF THE LAST ROW SAVED IN JU IS THE SAME AS THE HEAD
 C------OF THE K-TH ROW, THEN OVERLAP THE TWO SETS OF COLUMN INDICES --
@@ -1386,45 +1402,48 @@ C--------SEARCH LAST ROW SAVED FOR FIRST NONZERO ENTRY IN K-TH ROW ...
             I = Q(K)
             IF (JUMIN.GT.JUPTR)  GO TO 12
             DO 11 JMIN=JUMIN,JUPTR
-              IF (JU(JMIN)-I)  11, 13, 12
-  11          CONTINUE
-  12        GO TO 15
+              IF ((JU(JMIN)-I).EQ.0) GOTO 13
+              IF ((JU(JMIN)-I).GT.0) GOTO 12
+   11       CONTINUE
+   12       GO TO 15
 C
 C--------... AND THEN TEST WHETHER TAIL MATCHES HEAD OF K-TH ROW
-  13        IJU(K) = JMIN
+   13       IJU(K) = JMIN
             DO 14 J=JMIN,JUPTR
               IF (JU(J).NE.I)  GO TO 15
               I = Q(I)
               IF (I.GT.N)  GO TO 17
-  14          CONTINUE
+   14       CONTINUE
             JUPTR = JMIN - 1
 C
 C------SAVE NONZERO STRUCTURE OF K-TH ROW IN JU
-  15      I = K
+   15     I = K
           JUMIN = JUPTR +  1
           JUPTR = JUPTR + LUK
           IF (JUPTR.GT.JUMAX)  GO TO 106
           DO 16 J=JUMIN,JUPTR
             I = Q(I)
             JU(J) = I
-  16        MARK(I) = K
+            MARK(I) = K
+   16     CONTINUE
           IJU(K) = JUMIN
 C
 C------ADD K TO ROW LIST FOR FIRST NONZERO ELEMENT IN K-TH ROW
-  17      IF (LUK.LE.1)  GO TO 18
+   17     IF (LUK.LE.1)  GO TO 18
             I = JU(IJU(K))
             JL(K) = JL(I)
             JL(I) = K
 C
-  18      IU(K+1) = IU(K) + LUK
+   18     IU(K+1) = IU(K) + LUK
+        END DO
 C
         FLAG = 0
         RETURN
 C
 C ** ERROR -- DUPLICATE ENTRY IN A
- 102    FLAG = 2*N + P(K)
+  102   FLAG = 2*N + P(K)
         RETURN
 C ** ERROR -- INSUFFICIENT STORAGE FOR JU
- 106    FLAG = 6*N + K
+  106   FLAG = 6*N + K
         RETURN
         END

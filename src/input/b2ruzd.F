@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_b2cmpa
      , ,only : is_neutral, partition_number, nspecies
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, ns
@@ -20,7 +21,7 @@
 *   ..procedures
       intrinsic nint
       logical lnext
-      external subini, subend, xertst, cfrure
+      external xertst, cfrure
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 

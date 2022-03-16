@@ -1,6 +1,7 @@
       subroutine b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, kapy, cony)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, mode
       real (kind=R8) ::
@@ -17,7 +18,7 @@
       intrinsic max, sqrt
       real (kind=R8) ::
      *   hy1, harm
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)

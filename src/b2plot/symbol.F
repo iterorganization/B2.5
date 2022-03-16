@@ -45,7 +45,7 @@ c
         if(textline(ipos:ipos).ne.c .and. ipos.gt.500) then
           call readline(textline,iun,ipos)
           write(*,*)
-     1	   'String not terminated on line --- continuing on next line'
+     1     'String not terminated on line --- continuing on next line'
           goto 2
         endif
       endif

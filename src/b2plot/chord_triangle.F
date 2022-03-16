@@ -1,15 +1,17 @@
 c
-      function chord_tria_value(ntrii,nrknot,nx,ny,tt,
+      function chord_tria_value(ntrii,nrknot,tt,
      1 xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      2 xp,yp,zp,dxp,dyp,dzp,vector)
 
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
+      use b2mod_b2plot
       implicit none
       
       real (kind=R8) ::
      * chord_tria_value
-      integer nx,ny,ntrii,nrknot
+      integer ntrii,nrknot
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
      * tt(1:ntrii),
@@ -33,14 +35,13 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
       integer ix, iy
-      integer ix_e2b
       real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
-      external chord_find, subini, subend, xertst, ix_e2b
+      external chord_find, xertst
 
       pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
-      call subini ('chord_value')
+      call subini ('chord_tria_value')
       x=xp
       y=yp
       z=zp
@@ -118,6 +119,7 @@ c
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
+      use b2mod_subsys
       implicit none
       
       real (kind=R8) ::
@@ -143,7 +145,6 @@ c
      * chord_tria_value
       external chord_tria_value
       intrinsic sqrt
-      external subini, subend
 
       call subini('chord_tria_integral')
       chord_tria_integral=0.0
@@ -164,7 +165,7 @@ c
         y=yp1*(1.0-f)+yp2*f
         z=zp1*(1.0-f)+zp2*f
         chord_tria_integral=chord_tria_integral+dl*
-     1   chord_tria_value(ntrii,nrknot,nx,ny,tt,
+     1   chord_tria_value(ntrii,nrknot,tt,
      2                    xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      2                    x,y,z,dx,dy,dz,vector)
       enddo
@@ -181,6 +182,7 @@ c
      2 indchd,indit,indscl)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
       integer npoints,ntrii,nrknot,nx,ny
@@ -205,9 +207,8 @@ c
       real (kind=R8) ::
      * f,x,y,z,dl,dxp,dyp,dzp
       logical found
-      external subini, subend
 
-      call subini('chord_compile')
+      call subini('chord_tria_compile')
       do it=1,ntrii
         tt(it)=1.0_R8
         score(it)=0.0_R8
@@ -231,7 +232,7 @@ c
      &   x,y,z,found,it)
         if(found) then
           score(it)=score(it)+dl*
-     1     chord_tria_value(ntrii,nrknot,nx,ny,tt,
+     1     chord_tria_value(ntrii,nrknot,tt,
      2      xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      2      x,y,z,dxp,dyp,dzp,vector)
         endif
@@ -256,6 +257,7 @@ c
 
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 
 !DIAG      integer rectangles, triangles, chain      ! diag
@@ -300,7 +302,7 @@ c
      *   rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
-      external subini, subend, xerrab
+      external xerrab
       save covered,rmin,rmax,zmin,zmax,first,tcov,icov,ix,iy
 
       data first/.true./

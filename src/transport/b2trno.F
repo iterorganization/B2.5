@@ -6,7 +6,7 @@
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
      &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                         !srv 09.01.01 15.12.05
      &  chce, chve, chci, chvi, csig, calf,
-     4	fllim0fhi)
+     4  fllim0fhi)
       use b2mod_types
       use b2mod_anomalous_transport
       use b2mod_indirect
@@ -14,6 +14,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_neoclassical
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1)
@@ -98,12 +99,12 @@
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
      2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:1,0:ns-1),          !srv 09.07.03 30.11.15
      3  flchz(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
-     1	pol_anom_scale, hzgs(-1:nx,-1:ny,0:2)
+     1  pol_anom_scale, hzgs(-1:nx,-1:ny,0:2)
       save ncall, pol_anom_scale, mode
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
-      external subini, subend, xertst, sfill, smin, smax, b2scopy
+      external xertst, sfill, smin, smax, b2scopy
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation
@@ -149,8 +150,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 

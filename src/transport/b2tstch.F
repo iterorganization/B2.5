@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -24,8 +25,8 @@
 *
 *  1. purpose
 *
-*     B2Tstch computes the y-component of electron current 
-*       associated with stochastization of magnetic field
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
 *
 *
 *-----------------------------------------------------------------------
@@ -43,7 +44,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   hy1                                                            !srv 07.07.14
-      external subini, subend, ipgetr, ipgeti, xertst, xerrab
+      external ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
@@ -60,10 +61,10 @@
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
         call xertst (0.0_R8.le.sig_stoch,
-     &	 'faulty internal parameter sig_stoch')
+     &   'faulty internal parameter sig_stoch')
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
-     &	 'faulty internal parameter delta_stoch')
+     &   'faulty internal parameter delta_stoch')
         call get_jsep(nx,ny,jxi,jxa,jsep)
         ixref=jxa
         call ipgeti ('b2tqna_ixref', ixref)

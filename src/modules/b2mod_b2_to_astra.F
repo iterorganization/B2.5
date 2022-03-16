@@ -13,6 +13,7 @@ csw 09jan2014 extra module to define some arrays
      , ,only: b2eatcr, mlcmp
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use eirdiag ! IGNORE
@@ -98,12 +99,12 @@ csw 09jan2014 declare fun to be private
         use b2mod_constants
         use b2mod_b2cmpa
 csw 09jan2014 use extra little module
-        use b2mod_b2_to_astra_com ! IGNORE
+        use b2mod_b2_to_astra_com
 
         implicit none
-        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa
+        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite
 #ifdef B25_EIRENE
-        integer ism, intrl
+        integer isa, ism
         character chns*3
         real (kind=R8) :: wrk0(-1:nxd,-1:nyd)
 #endif
@@ -212,7 +213,6 @@ csw 09jan2014 add extra allocates
 !       write(nwrite,"(es25.15, 28x,a,f6.4,a)") tib,
 !     &   'boundary ion temperature in Ratb=',Ratb,'       [keV]'
 
-        isa = -1
         do is = 0, nsd-1
          do iy = 0,mintopcut   ! for closed surfaces and through separatrix
           sfna(iy,is)     = 0.0_R8
@@ -263,6 +263,7 @@ csw 09jan2014 add extra allocates
          enddo
 
 #ifdef B25_EIRENE
+         isa = -1
          if (is_neutral(is)) isa = b2eatcr(is)
          if (is_neutral(is) .and. isa.gt.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
@@ -591,9 +592,6 @@ csw 09jan2014 add extra allocates
 !         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pefluxm'//chns)
         enddo
-        open(70,file='write_b2_to_astra_intrl.dat')
-        write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
-        close(70)
        endif                                                       !srv 14.03.12 }
 #endif         
        ncall = ncall +1
@@ -612,7 +610,7 @@ csw 09jan2014 add dealloc
 
 csw 09jan2014 add 'fun' function
        function fun(arg)
-       use b2mod_b2_to_astra_com  ! IGNORE
+       use b2mod_b2_to_astra_com
        real(kind=R8) :: fun,arg,DSEVAL
        fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun

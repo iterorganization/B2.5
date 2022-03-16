@@ -1,3 +1,11 @@
+!
+! Code added or modified under the EUFORIA project, FP7-INFRASTRUCTURES-2007-1,
+! Grant 211804
+!
+! Code added or modified by Fiona Reid from EPCC, The University of Edinburgh,
+! on 22/11/2010
+!
+! Loop over species, ns, parallelised using OpenMP
 *-----------------------------------------------------------------------
 *.specification
 
@@ -10,6 +18,8 @@
       use b2mod_indirect
       use b2mod_balance
      & ,only : update_balance_sources_particles, balance_netcdf       !djm Jan2017
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb               !srv 05.07.08
@@ -58,13 +68,16 @@
       integer, save :: iout = 0, iout_b2wdat = 0                   !srv 04.07.08
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
       character chns*3                                             !srv 04.07.08
+      !$OMP THREADPRIVATE(iout, iout_b2wdat)
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
+      !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
 *   ..initialisation
       data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/,
@@ -207,7 +220,12 @@ csw 11dec2012, check for solv flags
        endif                                                            !srv 06.07.08 }
       endif
 
-      if (iout.ne.0) then                                            !srv 12.07.02 {
+      if (iout.ne.0) then                                               !srv 12.07.02 {
+       if (in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         call my_out(70,nx,ny,pb,'b2npco_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,ub,'b2npco_ua'//chns)
@@ -218,15 +236,22 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npco_fnay'//chns)
+       endif
       endif                                                          !srv 12.07.02 }
 
       if (iout_b2wdat.eq.4) then
+       if (in_parallel()) then
+         !$OMP MASTER
+         write(*,*) 'B2NPCO will not write to file in parallel mode'
+         !$OMP END MASTER
+       else
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npco_fnay'//chns)
+       endif
       endif
 
 *   ..set error parameter

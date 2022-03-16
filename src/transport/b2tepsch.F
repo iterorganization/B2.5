@@ -3,6 +3,9 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_geo_corner
+     &  , only : bzbl,bzbv
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

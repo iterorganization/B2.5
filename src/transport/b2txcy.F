@@ -2,6 +2,7 @@
      &  kapy,  cony)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
@@ -21,7 +22,7 @@
       intrinsic max, sqrt
       real (kind=R8) ::
      *   hy1, harm
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
@@ -66,7 +67,9 @@ cwdk test updated computation for compatibility with wg-code
      &         kapy(bottomix(ix,iy),bottomiy(ix,iy))/
      &         hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
           t1 = vol(ix,iy)*kapy(ix,iy)/hy1(ix,iy)**2
-          if (t0*t1.gt.0.0_R8) then
+          if (t0*t1.le.0.0_R8) then
+           cony(ix,iy,1) = 0.0_R8
+          else
            cony(ix,iy,1) = harm(t0,t1)
           endif
          endif

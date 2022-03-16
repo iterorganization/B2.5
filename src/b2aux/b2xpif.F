@@ -31,7 +31,7 @@
             fch_pi_f(ix,iy,0,0) = fch_pi_f(ix,iy,0,0)*
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))/
      &       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*prl_cur
-	  endif
+          endif
         enddo
       enddo
 

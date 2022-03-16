@@ -69,6 +69,30 @@
 *     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
 *     It will hold that 0.lt.bb(,,3).
 *
+*     wbbl - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbl(ix,iy,0:3) specifies the
+*     magnetic field at the midpoint of the left face of the (ix,iy) cell.
+*     Meaning of components is similar to that of the bb array.
+*
+*     wbbr - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbr(ix,iy,0:3) specifies the
+*     magnetic field at the midpoint of the right face of the (ix,iy) cell.
+*     Meaning of components is similar to that of the bb array.
+*
+*     wbbv - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbv(ix,iy,0:3) specifies the
+*     magnetic field at the midpoint of the bottom face of the (ix,iy) cell.
+*     Meaning of components is similar to that of the bb array.
+*
+*     wbbc - (-1:nx+1,-1:ny+1,0:3) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), wbbv(ix,iy,0:3) specifies the
+*     magnetic field at the left bottom corner of the (ix,iy) cell.
+*     For ix=nx+1 wbbc is related to the right bottom corner of
+*     the cell with ix=nx, similarly for iy=ny+1 wbbc is related to
+*     the left top corner of the cell iy=ny. wbbc(nx+1,ny+1,:) is related
+*     to the right top corner of the cell (ix=nx,iy=ny)
+*     Meaning of components are similat to the bb array.
+*
 *     vol - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
@@ -76,10 +100,11 @@
 *     symmetry it includes a factor 2*pi*cry.)
 *     It will hold that 0.lt.vol(,).
 *
-*     hx, hy, hz - (-1:nx,-1:ny) real*8 array.                          !srv 09.06.08
-*     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-*     x-diameter, the y-diameter and z-diameter respectively, of the 
-*     (ix,iy) cell.
+*     hx, hy, hz - (-1:nx,-1:ny) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy), hy(ix,iy), and hz(ix,iy)
+*     specify the x-diameter, y-diameter, and z-diameter, respectively,
+*     of the (ix,iy) cell.
+*     If redef_gmtry=1, hz(:,:)*bb(:,:,2)=sum(ffbz(:,:,0:3))/4 is enforced.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,) and 0.lt.hz(,).
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
@@ -109,6 +134,41 @@
 *     gsy(-1:nx,iy) will hold 0.
 *     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
 *     (ix,iy) cell normal to the third (ignorable) coordinate.
+*
+*     hy1 - (-1:nx,-1:ny) real*8 array.
+*     Actual radial distance between neighbouring flux surfaces.
+*     hy1(:,:) = hy(:,:) * qc(:,:) and
+*     vol(:,:) = hx(:,:) * hy1(:,:) * hz(:,:)
+*     It will hold that 0.lt.hy1(,).
+*
+*     hxb, hyl - (-1:nx,-1:ny) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), hxb(ix,iy) and hyl(ix,iy) specify the
+*     x-diameter and the y-diameter, respectively, of the bottom and
+*     left faces of the (ix,iy) cell.
+*     It will hold that 0.lt.hxb(,) and 0.lt.hyl(,).
+*
+*     hzb, hzl - (-1:nx,-1:ny) real*8 array.
+*     hzc - (-1:nx+1,-1:ny+1) real*8 array.
+*     For (ix,iy) in (-1:nx,-1:ny), hzb(ix,iy) and hzl(ix,iy) specify the
+*     length along the toroidal direction, respectively, of the bottom and
+*     left faces of the (ix,iy) cell. It follows that:
+*     hzl(:,:) * hyl(:,:) = gs(:,:,0)
+*     hzb(:,:) * hxb(:,:) = gs(:,:,1)
+*     For (ix,iy) in (-1:nx,-1:ny), hzc(ix,iy) specifies the length along
+*     the toroidal direction of the bottom left vertex of cell (ix,iy).
+*     For (ix,iy) in (nx+1,-1:ny), hzc(ix,iy) specifies the length along
+*     the toroidal direction of the top left vertex of cell (nx,iy).
+*     For (ix,iy) in (-1:nx,ny+1), hzc(ix,iy) specifies the length along
+*     the toroidal direction of the bottom right vertex of cell (ix,ny).
+*     For (ix,iy) in (nx+1,ny+1), hzc(ix,iy) specifies the length along
+*     the toroidal direction of the top right vertex of cell (nx,ny).
+*     If redef_gmtry=1, the following identities are enforced:
+*     hzl(:,:) * wbbl(:,:,2) = (ffbz(:,:,0)+ffbz(:,:,2))/2,
+*     hzb(:,:) * wbbv(:,:,2) = (ffbz(:,:,0)+ffbz(:,:,1))/2,
+*     hzc(:,:) * wbbc(:,:,2) = ffbz(:,:,:),
+*     and conservation of magnetic flux for constant iy (for all ix values):
+*     hyl(:,iy) * qc(:,iy) * hzl(:,iy) * wbbl(:,iy,0) = hy(:,iy) * qz(:,iy,1) * hz(:,iy) * bb(:,iy,0)
+*     It will hold that 0.lt.hzb(,) and 0.lt.hzl(,) and 0.lt.hzc(,).
 *
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
@@ -265,7 +325,7 @@
 *     the modified flux of atoms of species (is) through the face between
 *     the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnay_mdf(-1:nx,iy,0:ns-1) will hold 0.
-*     fna_mdf is equal fna for runs without drifts. 
+*     fna_mdf is equal to fna in runs without drifts.
 *
 *     fna_fcor - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let fna_fcorx(,,)=fna_fcor(,,0,) and fna_fcory(,,)=fna_fcor(,,1,).)
@@ -297,7 +357,7 @@
 *     For (ix,iy) in (-1:nx,0:ny), fhey_mdf(ix,iy) specifies the modified
 *     electron heat flux through the face between the (ix,iy) cell and
 *     its bottom neighbor. For iy.eq.-1, fhey_mdf(-1:nx,iy) will hold 0.
-*     fhe_mdf is equal fhe for runs without drifts. 
+*     fhe_mdf is equal to fhe in runs without drifts.
 *
 *     fhi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
@@ -357,7 +417,7 @@
 *     the selected atomic species through the face between the
 *     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnby(-1:nx,iy) will hold 0.
-*     fnb_mdf is equal fnb for runs without drifts. 
+*     fnb_mdf is equal to fnb in runs without drifts.
 *
 *     fnb_mdf - (-1:nx,-1:ny,0:1) real*8 array.
 *     fnb_mdf specifies the flux of one selected atomic species.
@@ -385,7 +445,7 @@
 *     the selected atomic species through the face between the
 *     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnb_fcory(-1:nx,iy) will hold 0.
-*     fnb_fcor is equal fnb for runs without drifts. 
+*     fnb_fcor is equal to fnb in runs without drifts.
 *
 *     ni - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ni(ix,iy,0) specifies the total atom
@@ -557,8 +617,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadiay(ix,iy,is) specifies
 *     the total effective drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     uadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     uadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     uadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     uadia is computed at cell faces otherwise (default)
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
@@ -570,8 +630,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vadia is computed at cell faces otherwise (default)
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -583,6 +643,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
 *     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
+*     vedia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vedia is computed at cell faces otherwise (default)
 *
 *     wadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let wadiax(,,)=wadia(,,0,) and wadiay(,)=wadia(,,1,).)
@@ -594,8 +656,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     wadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     wadia is computed at cell faces otherwise (default)
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -607,8 +669,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vaecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vaecrb is computed at cell faces otherwise (default)
 *
 *     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
@@ -620,15 +682,12 @@
 *     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
 *     the ExB drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
-*     veecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     veecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     veecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     veecrb is computed at cell faces otherwise (default)
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy).
-*     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities in both the radial
-*     and diamagnetic directions.
 *
 *
 *   ..residuals and corrections

@@ -4,6 +4,7 @@
       subroutine b2wurc (nput, version)
       use b2mod_types
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput
@@ -59,7 +60,7 @@
       logical lnext
       real (kind=R8) ::
      *   machsfr, smax
-      external subini, subend, xertst, machsfr, cfverw, cfwure, cfwuin
+      external xertst, machsfr, cfverw, cfwure, cfwuin
       external smax
       lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 

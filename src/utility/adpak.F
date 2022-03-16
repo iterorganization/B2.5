@@ -151,6 +151,7 @@ C
       END SUBROUTINE ADCE
       SUBROUTINE ADSET(KNUCZ)
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       INTEGER KNUCZ
 C
@@ -165,7 +166,7 @@ C
      &                  FNM(100,5,10), FNN(100), ENN(100)
       INTEGER           LADEN, LADTIP, LTIPOK, LECI, LECIOK, 
      &                  NUCZ, NSPC, NVALNC(100)
-      external subini, subend, xertst
+      external xertst
 C
       COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
      &                  NVALNC, SIGMA, QN,
@@ -1258,7 +1259,7 @@ C
    41 CONTINUE
    45 CONTINUE
 C
-C     DIAGNOSTIC WRITE STATMENTS TO DISPLAY F VALUES
+C     DIAGNOSTIC WRITE STATEMENTS TO DISPLAY F VALUES
 C
 CW    WRITE(5,901)JQ,FNN(JQ),ENN(JQ)
 CW  901 FORMAT(/1X,'SETFNM: JQ =',I3,'  FNN =',1PE9.2_R8,'  ENN =',E9.2_R8)
@@ -1318,39 +1319,44 @@ C
       INTEGER           LADEN, LADTIP, LTIPOK, LECI, LECIOK
       COMMON / ADPARM / LADEN, LADTIP, LTIPOK, LECI, LECIOK
 
-      INTEGER ILMAX, IFLAG
-C
-C     ILMAX = CURRENT MAXIMUM NUMBER OF RATE OPTIONS
-C
-      ILMAX = 3
+      INTEGER IFLAG
 C
 C     CHECK FOR VALID LECI; RETURN LECI = 1 OPTION IF NOT VALID
 C
-      IF(LECI .LT. 1 .OR. LECI .GT. ILMAX) GO TO 10
-C
-      GO TO (10, 20, 30) LECI
+      select case (LECI)
 C
 C     LECI = 1; USE XSNQ DERIVED IONISATION RATE CALCULATION
 C
-   10 CALL ADXECI(PTE, PNE)
-      LECIOK = 1
-      RETURN
+      case (1)
+        CALL ADXECI(PTE, PNE)
+        LECIOK = 1
 C
 C     LECI = 2; USE BELFAST GROUP LIGHT ELEMENT RATE FITS
 C
-   20 CALL ADBFI(NUCZ, PTE, PNE, RCLION, CIZLOS, IFLAG)
-      IF(IFLAG .NE. 0) GO TO 10
-      LECIOK = 2
-      RETURN
+      case (2)
+        CALL ADBFI(NUCZ, PTE, PNE, RCLION, CIZLOS, IFLAG)
+        IF(IFLAG .NE. 0) THEN
+          CALL ADXECI(PTE, PNE)
+          LECIOK = 1
+        ELSE
+          LECIOK = 2
+        END IF
 C
 C     LECI = 3; USE RATES FROM YOUNGER FOR AVAILABLE ELEMENTS AND SHELLS,
 C               XSNQ RATES OTHERWISE ON A CHARGE STATE-BY-CHARGE STATE
 C               BASIS
 C
-   30 CALL ADXECI(PTE, PNE)
-      CALL ADYGR(NUCZ, PTE, PNE, RCLION, CIZLOS, IFLAG)
-      LECIOK = 3
-      IF(IFLAG .NE. 0) LECIOK = 1
+      case (3)
+        CALL ADXECI(PTE, PNE)
+        CALL ADYGR(NUCZ, PTE, PNE, RCLION, CIZLOS, IFLAG)
+        LECIOK = 3
+        IF(IFLAG .NE. 0) LECIOK = 1
+
+      case default
+        CALL ADXECI(PTE, PNE)
+        LECIOK = 1
+      end select
+
       RETURN
 C
 C
@@ -1362,7 +1368,7 @@ C
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (kind=R8) :: PTE, PNE
 C
-C     REV: 3/30/83 ADECI --> ADXECI TO ACCOMODATE ALTERNATIVE RATES
+C     REV: 3/30/83 ADECI --> ADXECI TO ACCOMMODATE ALTERNATIVE RATES
 C     REV: 10/10/82 FOR NEW AD PACKAGE
 C
 C     REV: 6/15/78
@@ -1690,32 +1696,30 @@ C
 C
       KFLAG = 0
 C
-C     ERROR EXIT IF ELEMENT NOT AVAILABLE
-C
-      IF(KNUCZ .GE. 1 .AND. KNUCZ .LE. 8) GO TO 5
-      KFLAG = 1
-      RETURN
-C
 C     BRANCH ON ELEMENT TO CALL FIT EVALUATION ROUTINE WITH PROPER
 C     CONSTANTS
 C
-    5 GO TO (10, 20, 30, 40, 50, 60, 70, 80) KNUCZ
-C
-   10 CALL ADBFIT(KNUCZ, PTE, PNE, EH, AH, AAH, BTH, PBFI, PBFIL)
-      RETURN
-   20 CALL ADBFIT(KNUCZ, PTE, PNE, EHE, AHE, AAHE, BTHE, PBFI, PBFIL)
-      RETURN
-   30 CALL ADBFIT(KNUCZ, PTE, PNE, ELI, ALI, AALI, BTLI, PBFI, PBFIL)
-      RETURN
-   40 CALL ADBFIT(KNUCZ, PTE, PNE, EBE, ABE, AABE, BTBE, PBFI, PBFIL)
-      RETURN
-   50 CALL ADBFIT(KNUCZ, PTE, PNE, EB, AB, AAB, BTB, PBFI, PBFIL)
-      RETURN
-   60 CALL ADBFIT(KNUCZ, PTE, PNE, EC, AC, AAC, BTC, PBFI, PBFIL)
-      RETURN
-   70 CALL ADBFIT(KNUCZ, PTE, PNE, EN, AN, AAN, BTN, PBFI, PBFIL)
-      RETURN
-   80 CALL ADBFIT(KNUCZ, PTE, PNE, EO, AO, AAO, BTO, PBFI, PBFIL)
+      select case (KNUCZ)
+      case (1)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EH , AH , AAH , BTH , PBFI, PBFIL)
+      case (2)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EHE, AHE, AAHE, BTHE, PBFI, PBFIL)
+      case (3)
+        CALL ADBFIT(KNUCZ, PTE, PNE, ELI, ALI, AALI, BTLI, PBFI, PBFIL)
+      case (4)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EBE, ABE, AABE, BTBE, PBFI, PBFIL)
+      case (5)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EB , AB , AAB , BTB , PBFI, PBFIL)
+      case (6)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EC , AC , AAC , BTC , PBFI, PBFIL)
+      case (7)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EN , AN , AAN , BTN , PBFI, PBFIL)
+      case (8)
+        CALL ADBFIT(KNUCZ, PTE, PNE, EO , AO , AAO , BTO , PBFI, PBFIL)
+      case default
+C       ERROR EXIT IF ELEMENT NOT AVAILABLE
+        KFLAG = 1
+      end select
       RETURN
       END SUBROUTINE ADBFI
 C
@@ -2553,11 +2557,11 @@ C
 C     PREVENT UNDERFLOWS IN RATE CALCULATIONS BY RETURNING
 C     0.0_R8 FOR EXP(PX) IF PX < PCHK.
 C
-      IF( PX - PCHK ) 1 , 1 , 2
-    1 EXPUND = 0.0_R8
-      RETURN
-C
-    2 EXPUND = EXP(PX)
+      IF ( PX .LE. PCHK) THEN
+        EXPUND = 0.0_R8
+      ELSE
+        EXPUND = EXP(PX)
+      END IF
       RETURN
 C
       END FUNCTION EXPUND
@@ -2732,63 +2736,62 @@ C     NEUTRAL SPECIES CROSS-SECTION = 0
 C
       PSIGMA(1) = 0.0_R8
 C
-      GO TO (100, 200, 300), KOPT
-      KERR = -2
-      RETURN
+      select case (KOPT)
 C
 C--------------------------------------------------------------------
 C
 C     KOPT = 1 ; OLSON & SALOP LOW - V ABSORBING SPHERE
 C     NOMINALLY VALID ONLY FOR V < 1.08 CM/SEC
 C
-  100 DO 110 JSPC = 3 , KNSPC
+      case (1)
+        DO 110 JSPC = 3 , KNSPC
 C
 CW    WRITE(5,198)JSPC
 CW198 FORMAT(1X,/,'JSPC =',I3)
 C
-      ZCHG = REAL(JSPC - 1)
-      ZL = 2.648_R8 / SQRT(ZCHG)
-      ZC = 2.864e-04_R8 * ZCHG * (ZCHG - 1.0_R8) * ZVAU
-      IF(ZC .LT. .541341133_R8/(ZL**2) ) GO TO 102
-      KERR = 1
-      RETURN
+        ZCHG = REAL(JSPC - 1)
+        ZL = 2.648_R8 / SQRT(ZCHG)
+        ZC = 2.864e-04_R8 * ZCHG * (ZCHG - 1.0_R8) * ZVAU
+        IF(ZC .LT. .541341133_R8/(ZL**2) ) GO TO 102
+        KERR = 1
+        RETURN
 C
 C     ITERATIVE SOLUTION TO EQUATION (10)
 C
 C     (FIRST GUESS, FROM LINEAR FIT TO FIG. 3)
 C
-  102 ZR = 9.0_R8 + 11.0_R8 * ZCHG / 45.0_R8
-      ZR = - LOG( ZC / (ZR**2) ) / ZL
-      ZFR = ZR * ZR * EXP(- ZL * ZR)
-      ICOUNT = 0
+  102   ZR = 9.0_R8 + 11.0_R8 * ZCHG / 45.0_R8
+        ZR = - LOG( ZC / (ZR**2) ) / ZL
+        ZFR = ZR * ZR * EXP(- ZL * ZR)
+        ICOUNT = 0
 C
-  105 IF(ZR .LT. 2.0_R8/ZL) GO TO 180
-      IF(ICOUNT .GT. 100) GO TO 181
-      ICOUNT = ICOUNT + 1
+  105   IF(ZR .LT. 2.0_R8/ZL) GO TO 180
+        IF(ICOUNT .GT. 100) GO TO 181
+        ICOUNT = ICOUNT + 1
 C
 CW    WRITE(5,199)ZR
 CW199 FORMAT(1X,'ZR=',F10.2_R8)
 C
-      ZR = ZR + (ZC/ZFR - 1.0_R8) / (2.0_R8/ZR - ZL)
-      ZFR = ZR * ZR * EXP (- ZL * ZR)
+        ZR = ZR + (ZC/ZFR - 1.0_R8) / (2.0_R8/ZR - ZL)
+        ZFR = ZR * ZR * EXP (- ZL * ZR)
 C
-      IF( ABS(ZFR - ZC)/ZC .GE. .001_R8) GO TO 105
+        IF( ABS(ZFR - ZC)/ZC .GE. .001_R8) GO TO 105
 C
 C     ITERATION COMPLETE TO 0.1_R8% IN VELOCITY; COMPUTE SIGMA
 C
-      Bohr_cm = ((eps0 * const_h**2)/(pi * me * qe**2))/100.0_R8
-      PSIGMA(JSPC) = pi * (Bohr_cm * ZR)**2
-  110 CONTINUE
+        Bohr_cm = ((eps0 * const_h**2)/(pi * me * qe**2))/100.0_R8
+        PSIGMA(JSPC) = pi * (Bohr_cm * ZR)**2
+  110   CONTINUE
 C
 C     FILL IN Z = 1 CROSS-SECTION WITH Z = 2 VALUE
 C
-      PSIGMA(2) = PSIGMA(3)
-      RETURN
+        PSIGMA(2) = PSIGMA(3)
+        RETURN
 C
-  180 KERR = 2
-      RETURN
-  181 KERR = 3
-      RETURN
+  180   KERR = 2
+        RETURN
+  181   KERR = 3
+        RETURN
 C
 C----------------------------------------------------------------
 C
@@ -2796,17 +2799,18 @@ C     KOPT = 2; GROZDANOV & JANEV
 C     RESULTS SHOWN ONLY FOR Z = 10, 20, AND 30, 2.E06 < V < 8.E08
 C     CM/SEC; ALL OTHER POINTS BY INTERPOLATION OR EXTRAPOLATION
 C
-  200 DO 210 JSPC = 2 , KNSPC
-      ZCHG = REAL(JSPC - 1)
+      case (2)
+        DO 210 JSPC = 2 , KNSPC
+        ZCHG = REAL(JSPC - 1)
 C
 C     EMPIRICAL FIT TO FIGURE 3, CENTERED AT V = 2.08 CM/SEC
 C
-      ZSLOPE = - (.25_R8 + .04_R8 * ZCHG) * 1.0e-14_R8
-      Z0 = .11_R8 * ZCHG * 1.0e-14_R8
-      PSIGMA(JSPC) = MAX(0.0_R8, Z0 + ZSLOPE * LOG10(ZVCMS/2.e08_R8))
+        ZSLOPE = - (.25_R8 + .04_R8 * ZCHG) * 1.0e-14_R8
+        Z0 = .11_R8 * ZCHG * 1.0e-14_R8
+        PSIGMA(JSPC) = MAX(0.0_R8, Z0 + ZSLOPE * LOG10(ZVCMS/2.e08_R8))
 C
-  210 CONTINUE
-      RETURN
+  210   CONTINUE
+        RETURN
 C
 C----------------------------------------------------------------------
 C
@@ -2818,38 +2822,43 @@ C     RANGE YIELD DATA FOR THE APPROPRIATE LIMITING VELOCITY.  THE
 C     LAST GIVEN DATA CURVE IS FOR Z=36, HENCE DATA FOR Z>36
 C     REPRESENTS AN EXTRAPOLATION.
 C
-  300 CONTINUE
-      Z3V = MAX(2.78_R8, ZVCMS)
-      Z3V = MIN(5.08_R8, Z3V)
+      case (3)
+        Z3V = MAX(2.78_R8, ZVCMS)
+        Z3V = MIN(5.08_R8, Z3V)
 C
-      IX = INT(Z3V/1.e08_R8) - 1
-      IF(IX .GT. 3) IX = 3
-      IXP1 = IX + 1
+        IX = INT(Z3V/1.e08_R8) - 1
+        IF(IX .GT. 3) IX = 3
+        IXP1 = IX + 1
 C
 C     USE LINEAR FIT TO Z=8 CURVE TO FIND X-SECTION FOR Z=8 AT GIVEN
 C     VELOCITY
 C
-      ZSIG8 = 7.43e-15_R8 - 1.26e-23_R8 * Z3V
+        ZSIG8 = 7.43e-15_R8 - 1.26e-23_R8 * Z3V
 C
 C     INTERPOLATE TO FIND POWER LAW EXPONENTS FOR THIS VELOCITY; ONE
 C     FOR Z<8, THE OTHER FOR Z>8.0_R8
 C
-      ZALT = ZFITLT(IX) + (ZFITLT(IXP1) - ZFITLT(IX)) *
+        ZALT = ZFITLT(IX) + (ZFITLT(IXP1) - ZFITLT(IX)) *
      &                 ( (Z3V-ZFITV(IX)) / (ZFITV(IXP1) - ZFITV(IX)) )
-      ZAGT = ZFITGT(IX) + (ZFITGT(IXP1) - ZFITGT(IX)) *
+        ZAGT = ZFITGT(IX) + (ZFITGT(IXP1) - ZFITGT(IX)) *
      &                 ( (Z3V-ZFITV(IX)) / (ZFITV(IXP1)-ZFITV(IX)) )
 C
 C     FIT PARAMETERS FOUND FOR THIS VELOCITY; COMPUTE X-SECTIONS
 C
-      DO 315 JSPC = 2 , KNSPC
-      ZDIV8 = REAL(JSPC - 1) / 8.0_R8
-      IF(ZDIV8 .GE. 1.0_R8) GO TO 310
-      PSIGMA(JSPC) = ZSIG8 * ZDIV8**ZALT
-      GO TO 315
-  310 PSIGMA(JSPC) = ZSIG8 * ZDIV8**ZAGT
-  315 CONTINUE
+        DO 315 JSPC = 2 , KNSPC
+          ZDIV8 = REAL(JSPC - 1) / 8.0_R8
+          IF(ZDIV8 .GE. 1.0_R8) GO TO 310
+          PSIGMA(JSPC) = ZSIG8 * ZDIV8**ZALT
+          GO TO 315
+  310     PSIGMA(JSPC) = ZSIG8 * ZDIV8**ZAGT
+  315   CONTINUE
 C
-      RETURN
+        RETURN
+C
+      case default
+        KERR = -2
+        RETURN
+      end select
 C
 C---------------------------------------------------------------------
 C

@@ -48,7 +48,7 @@ C 2002.11.01
 
       character*80 adasid
 
-      character*120, save :: labgeo
+      character*132, save :: labgeo
 
 c   ..functions
       integer ixm1, ixp1
@@ -56,6 +56,10 @@ c   ..functions
 
       real (kind=R8) ::
      *  vdot, vlen, thetasepx
+#else
+#ifdef IMAS
+      character*132, save :: labgeo
+#endif
 #endif
 
       contains
@@ -618,7 +622,7 @@ c   ..copy the grid to start extending the grid
          enddo
       enddo
 
-c   ..add a row of extra cells at each target (inner then outer)
+c   ..add a row of extra cells at each target (West then East)
 c     by linear extrapolation
       do it = 1 , 2
 
@@ -657,7 +661,7 @@ c     by linear extrapolation
 
       enddo
 
-c   ..add a further row of extra cells at each target (inner then outer)
+c   ..add a further row of extra cells at each target (West then East)
 c     by extrapolating, parallel to sepx outer boundary, to zmin
       iys = topcut(1)
 
@@ -1257,6 +1261,10 @@ c=======================================================================
       integer nwrite
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -1275,12 +1283,29 @@ c     ------------------------------------------------------------------
       grpsolps=' '
       locsolps=' '
 #else
+#ifdef NAGFOR
+        call get_environment_variable('GRPSOLPS',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('GRPSOLPS',value=grpsolps)
+        elseif (ierror.eq.1) then
+          grpsolps=' '
+        endif
+        call get_environment_variable('LOCSOLPS',
+     .   status=ierror, length=lenval)
+        if (ierror.eq.0) then
+          call get_environment_variable('LOCSOLPS',value=locsolps)
+        elseif (ierror.eq.1) then
+          locsolps=' '
+        endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)
       CALL PXFGETENV ('LOCSOLPS', 0, locsolps, lenval, ierror)
 #else
       call getenv ('GRPSOLPS', grpsolps)
       call getenv ('LOCSOLPS', locsolps)
+#endif
 #endif
 #endif
       version = grpsolps//'_'//locsolps
@@ -2468,22 +2493,23 @@ c conn
 c
 c=======================================================================
 #endif
-      subroutine read_b2mod_ppout(type, ninp, label)
+      subroutine read_b2mod_ppout(type, ninp, flag)
 
       use b2mod_version
       implicit none
 
       integer ninp
       character*(*) type
-      character*(*) label
+      character*8 flag
 
-      external cfruin
+      logical streql
+      external cfruin, streql
 
 c     ------------------------------------------------------------------
 c     READ_B2MOD_PPOUT_DATA reads data for use by ppout.
 c     (in) type  = rates --- read atomic rates data for use by ppout.
 c     (in) ninp  = stream number
-c     (in) label = special label data
+c     (in) flag  = special label data
 c     ------------------------------------------------------------------
 
 c   ..initialise
@@ -2491,7 +2517,7 @@ c   ..initialise
 
 c   ..atomic rates method
       if( type.eq.'rates' ) then
-          if( label(61:64).eq.'ADAS' ) then
+          if( streql(flag,'adas') ) then
 #ifdef JET
               call cfruin(ninp, nspp, isyear, 'ppout')
 #else

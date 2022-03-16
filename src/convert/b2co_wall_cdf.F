@@ -1,22 +1,26 @@
       subroutine b2co_wall_cdf(nx,ny,ns,tim)
       use b2mod_types
       use b2mod_wall
+      use b2mod_subsys
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
       integer :: nx, ny, ns
       real (kind=R8) :: tim
-      integer :: timedim
-      real (kind=R8), save :: dtim = 1.0_R8
+#ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
 #endif
-#ifndef NO_CDF
+#endif
       integer :: status
-      integer :: idim, ivar, iatt, iret, ib, it, ih,
+      integer :: timedim
+      integer :: idim, ivar, iatt, ib, it, ih,
      1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
-     2 dimids(NF_MAX_VAR_DIMS), len, index, dimsize(NF_MAX_VAR_DIMS),
+     2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:)
@@ -28,12 +32,10 @@
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_wall_cdf')
       write(*,*) 'b2co_wall_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2wall.nc file
@@ -121,12 +123,23 @@ c prepare the b2wall.nc.xxxx file
 #ifdef NO_GETENV
       extension='xxxx'
 #else
+#ifdef NAGFOR
+      call get_environment_variable('PLASMASTATE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        extension=plasmastate(lenval-3:lenval)
+      elseif (ierror.eq.1) then
+        extension='xxxx'
+      endif
+#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
 #else
       call getenv ('PLASMASTATE', plasmastate)
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
+#endif
 #endif
       filename='b2wall.nc.'//extension
       call define_cdf_b2mod_wall(filename,ncid2,nbnd,ntargsp)

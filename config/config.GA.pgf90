@@ -1,72 +1,19 @@
 # Test whether necessary variables are set
-ifndef LD_MSCL
-  $(error LD_MSCL not defined)
+LD_NAG    ?= -L${NAGDIR}/lib -lnag
+LD_MSCL   ?= -L${MSCL_ROOT}/lib -lmscl
+ifdef NCARG_ROOT
+LD_NCARG  ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
-endif
-ifndef LD_NAG
-  $(error LD_NAG not defined)
-endif
-ifndef LD_NETCDF
-  $(error LD_NETCDF not defined)
-endif
-
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
+LD_NETCDF ?= -L${NCDIR}/lib -lnetcdff
 
 CPP = /lib/cpp -C -traditional
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
-LINK_MOD = 
 
-ifdef USE_MPI
-FC = mpif90
-else
-FC = pgf90
-endif
+LDOPTS = -tp px # "-tp px" to fix a compiler bug at JET
 
-ifdef SOLPS_DEBUG
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-else
-FCOPTS = -O2 -Mbackslash
-FCOPTS = -fast -Mbackslash
-FCOPTS = -fast -Mvect=nofuse -Mbackslash
-endif
-
-ifdef IMAS_PREFIX
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
-endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
-INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
-IMASLIBS = ${LD_UAL} -lggd-pgi
-endif
-
-DBLFC = ${FC}
-DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 
-INCMOD = -I
-MOD = mod
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF} -lpgsse1 -lpgsse2
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-LD = pgf90
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C
-else
-LDOPTS =
-endif
-
-LCPP = ${LD_SONNET}
+LDLIBES = -lpgsse1 -lpgsse2
 
 #!!!Local Variables:
 #!!! mode: Makefile

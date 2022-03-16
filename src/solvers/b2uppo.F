@@ -3,6 +3,7 @@
 
       subroutine b2uppo (nx, ny, rxf, corpo, po)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -26,7 +27,7 @@
       integer ncall, ix, iy
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 

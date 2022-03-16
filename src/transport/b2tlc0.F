@@ -3,8 +3,9 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
-	use b2mod_b2cmpa
-	use b2mod_rates
+      use b2mod_b2cmpa
+      use b2mod_rates
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -33,7 +34,7 @@
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr
+      external xertst, ipgetr
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlc0')
@@ -63,7 +64,7 @@
          call diff_r (nx, ny, 0, hx, hy, wght, qs, pb, pbc, dpbr)
          do ix = -1, nx
           do iy = -1, ny
-*   ..compute neutral difusion flux limits on x-surfaces
+*   ..compute parallel neutral diffusion flux limit
            if (leftix(ix,iy).ne.-2) then
             t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
@@ -89,9 +90,9 @@
             flc(ix,iy,0,1,is) = t2
             endif
            endif
-	  enddo
-	 enddo
-*   ..compute neutral difusion flux limits on y-surfaces (perpendicular)
+          enddo
+         enddo
+*   ..compute perpendicular neutral diffusion flux limit
          do ix = -1, nx
           do iy = -1, ny
            if (bottomiy(ix,iy).ne.-2) then
@@ -106,9 +107,9 @@
             cdpa(ix,iy,1,1,is) = cdpa(ix,iy,1,1,is)*t2
             flc(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-	   endif
-	  enddo
-	 enddo
+           endif
+          enddo
+         enddo
         endif
        enddo
       endif

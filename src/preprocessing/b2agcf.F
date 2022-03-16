@@ -3,6 +3,8 @@
 
       subroutine b2agcf (nx, ny, crx, cry, fpsi, ffbz)
       use b2mod_types
+      use b2mod_aggs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -85,8 +87,7 @@
       intrinsic min, max
       real (kind=R8) ::
      *   rratio, trunc
-      external subini, subend, xertst, rratio
-      external b2agsp
+      external xertst, rratio
       trunc(t0,edg) = max(-edg,min(1+edg,t0))
 
 *-----------------------------------------------------------------------

@@ -6,6 +6,8 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_ppout
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -97,13 +99,13 @@
       parameter (ndismx=20)
       integer nidis, njdis, idis(0:ndismx-1), jdis(0:ndismx-1)
       integer idum(0:9)
-      logical lt0, lt1, lt2
       integer i, is, is1, nx, ny, ns, ns1
-      character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
+      character id*8, lblrc*120, lblcp*120
+      character cnamip*80, cvalip*80, line*80, ligne*80
 *   ..procedures
-      logical streql, strmas
-      external subini, subend, xertst, xerrab, cfverr, cfruch
-      external cfruin, streql, strmas, ipsetc, ipgeti, gacwk, gdawk
+      logical streql, is_comment
+      external xertst, xerrab, cfverr, cfruch
+      external cfruin, streql, ipgeti, gacwk, gdawk, is_comment
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------
@@ -248,6 +250,7 @@
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
 *   ..read label
       call cfruch (ninp(1), 120, lblrc, 'label')
+      call get_AM_flag (lblrc, b2frates_flag)
 *   ..write label
       write (nout(0),'(/4x,a/4x,a)') lblrc(1:60), lblrc(61:120)
 *   ..read output control
@@ -274,9 +277,16 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),*,end=2,err=97) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-       call ipsetc (cnamip, cvalip)
+       read (ninp(0),*,end=2,err=97) line
+       if (.not.is_comment(line)) then
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
+       endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
@@ -289,7 +299,7 @@
 *   ..read atomic rate data
       write(*,*) 'ns1 =',ns1
       call alloc_b2mod_ppout(nx,ny,ns1)
-      call read_b2mod_ppout('rates', ninp(1), lblrc)
+      call read_b2mod_ppout('rates', ninp(1), b2frates_flag)
       call b2rurc (ninp(1), b2frates_version)
 *   ..check input data
       do i = 0, nidis-1
@@ -303,22 +313,22 @@
 *   ..write credit
 *     (Look for 'adpak', 'strahl' or 'adas' as a substring of the label to
 *     decide what credit to write. This is not a rigorous test!)
-      lt0 = strmas(lblrc,'adpak')
-      lt1 = strmas(lblrc,'strahl')
-      lt2 = strmas(lblrc,'adas')
-      if (lt0.and..not.lt1.and..not.lt2) then
+      select case (b2frates_flag)
+      case ('adpak')
        call b2wfr0 (nout(0))
-      else if (lt1.and..not.lt0.and..not.lt2) then
+      case ('strahl')
        call b2wfr1 (nout(0))
-      else if (lt2.and..not.lt0.and..not.lt1) then
+      case ('adas')
        call b2wfr2 (nout(0))
-      else
+      case ('amns')
+       call b2wfr3 (nout(0))
+      case default
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, or from some'//
-     &   ' other source.'
-      endif
+     &   ' the ADPAK package, the STRAHL package, ADAS, AMNS,'//
+     &   ' or from some other source.'
+      end select
 *   ..write rtns, rtzmin, rtzmax, rtzn
       write (nout(0),'(/2x,a,i3)')
      &  'number of species in this table: ',rtns
@@ -338,11 +348,11 @@
 *   ..initialise species index
       is = 0
 *   ..loop over nuclear species
- 10   if (is.ne.rtns) then
+   10 if (is.ne.rtns) then
 *    ..find range of this nuclear species
        is1 = is+1
- 20    if (is1.ne.rtns) then
-	 if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
+   20  if (is1.ne.rtns) then
+         if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
          is1 = is1+1
          goto 20
         endif

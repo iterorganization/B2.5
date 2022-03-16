@@ -8,6 +8,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns, itim, itcnt
@@ -130,7 +131,7 @@
       intrinsic min, max
       real (kind=R8) ::
      *   smin, b2ssum
-      external subini, subend, xertst, ipgeti, smin, b2ssum, cfwure
+      external xertst, ipgeti, smin, b2ssum, cfwure
 *   ..initialisation
       data ncall/0/, style/1/
 

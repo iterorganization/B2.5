@@ -14,15 +14,16 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     & , only : hz                                                    !srv 05.07.17
       use b2mod_balance !djm Jan2017
-     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
-     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
+     & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
       use b2mod_transport_fun                                         !srv 05.07.17
       use b2mod_external                                              !srv 05.07.17
-      use b2mod_geo
-     , , only : hz                                                    !srv 05.07.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                      !srv 05.07.17
@@ -100,7 +101,7 @@
       intrinsic min, max, sqrt
       real (kind=R8) ::
      *    hy1
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 07.05.08
 *   ..initialization
@@ -114,7 +115,7 @@
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
 *     be non-negative and of order unity; larger values are meant to
 *     provide more stabilization. Some or all may be set to zero and
-*     removed eventually. I've had some experience to indicate that
+*     removed eventually. I have had some experience to indicate that
 *     rf0, rf2, rf4 may have a useful function; however, later changes
 *     in the code may have made all these parameters superfluous.
 
@@ -244,8 +245,8 @@
          endif
         enddo
        enddo
-      endif                                                         !lk 31.01.08 }
-      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)               !srv 17.12.13 24.08.21
+      endif                                                           !lk 31.01.08 }
 *   ..contribution from divergence ue
       do iy = 0, ny-1                                                 !srv 05.03.11 {
         do ix = 0, nx
@@ -426,7 +427,7 @@
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
 cwdk compute radial differences of ua at cell faces
         call diff_r(nx,ny, 0, hx, hy, vol, qs, ua(-1,-1,is), wrk0, duar)
-	wrk0 = 0.0e0_R8
+        wrk0 = 0.0e0_R8
         do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
@@ -659,7 +660,7 @@ cwdk compute radial differences of ua at cell faces
          else
 *      ..contribution from friction involving neutral species
 *        (We ignore such a term, except for charge exchange friction
-*        between H0 and H1.d0 That term is calculated via the atomic
+*        between H0 and H1. That term is calculated via the atomic
 *        physics routines.)
          endif
         enddo

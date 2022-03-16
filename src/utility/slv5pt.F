@@ -4,6 +4,7 @@
       subroutine slv5pt (m, n, aa5, rhs, iters, sol, nrmc, k, aafac,
      &  wrk0, iwrk)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer m, n, iters, k

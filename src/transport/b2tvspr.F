@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -16,20 +17,31 @@
      1   po(-1:nx,-1:ny), ti(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1)
+     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
+     &   cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1)
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSPR computes the X and Y components of the perpendicular viscosity
+*     current.
+*
+*  8. further comments
+*
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
       integer n2, ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
+      integer, save :: no_current = 0
       real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
       real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation
@@ -41,6 +53,7 @@
       if (ncall.eq.0) then                                              !srv
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
        call ipgeti ('b2tvspr_iout', iout)                               !srv 06.12.17
+       call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -55,8 +68,8 @@
       fchvisper =0.0e0_R8                                               !srv 22.11.99
         
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
-
+      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8 .and.
+     &   no_current.eq.0) then
       do is = 0,ns-1                                                    !srv 16.10.17
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
           do iy=-1,ny

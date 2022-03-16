@@ -76,6 +76,8 @@
       call xertst (.not.errdim,
      1 'faulty NXMAX, NYMAX and/or NSDMAX')
 #endif
+      sputter_yield=0.0_R8
+      sputter_yield2=0.0_R8
       ntargsp=0
       target_index=0
       target_intcode=-1
@@ -144,7 +146,9 @@
       found = maxval(sputter_yield).gt.0.0_R8 .or.
      .        maxval(sputter_yield2).gt.0.0_R8
       return
- 999  call xerrab ('Error while reading SPUTTER_SAVE namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading SPUTTER_SAVE namelist!')
+#endif
       end subroutine read_b2mod_sputter_namelist
 
       subroutine write_b2mod_sputter_namelist(nwrite,nx,ny,ns,edition)
@@ -199,6 +203,7 @@ cxpb  Replaced with explicit writing of nonzero elements only
       subroutine read_sputter_data(nsd,column,sput_model,refl_model)
       use b2mod_b2cmpa
       use b2mod_elements
+      use b2mod_subsys
       implicit none
       integer nsd, column, sput_model, refl_model
       integer nfile
@@ -222,7 +227,6 @@ cxpb  Replaced with explicit writing of nonzero elements only
 #else
       character*2 sputter_codes(0:100)
 #endif
-      external subini, subend
 
       if(sputter_initialised) return
       call subini ('read_sputter_data')
@@ -756,7 +760,7 @@ c    2     reflect_energy(it,iss,itargsp)/ev
      1        reflect_coefficient(it,iss,itargsp)
           endif
         endif
-        reflect=reflect+reffrac*layer_nrelconstituents(ibnd,isp)
+        reflect=reflect+reffrac*layer_relconstituents(ibnd,isp)
       enddo
       return
       end function reflect
@@ -830,7 +834,7 @@ c     @     reflect_energy2(it,iss,itargsp)/ev
      1       reflect_coefficient2(it,iss,itargsp)
           endif
         endif
-        reflect2=reflect2+reffrac*layer_nrelconstituents(ibnd,isp)
+        reflect2=reflect2+reffrac*layer_relconstituents(ibnd,isp)
       enddo
       return
       end function reflect2
@@ -1013,7 +1017,7 @@ c  Subroutine to evaluate sputtering yields.
       integer ibnd
       real (kind=R8) :: eo, zb, z1, z2, am1, am2, tp, gamma, 
      @  etf, stoppwr, yieldpar, yldchm
-      real (kind=R8) :: pwr2by3, z123z223sum, am2byam1, tpev, eobyetf,
+      real (kind=R8) :: pwr2by3, z123z223sum, tpev, eobyetf,
      .  stoppwr1, stoppwr2, flxm2, Cmy, etherm, erel, edam, edes,
      .  Csp3num, Csp3denom, Csp3, ytherm, D, Chd,
      .  ydam, ydes, ysurf, yldthmprt
@@ -1029,7 +1033,6 @@ c  Initialising
       pwr2by3 = 2.0e0_R8 / 3.0e0_R8
 
       z123z223sum = z1**pwr2by3 + z2**pwr2by3
-      am2byam1 = am2 / am1
 
 c  The Thomas Fermi energy etf used below is valid only for singly
 c  charged ions. If it is multiply charged just multiply etf by the
@@ -1113,8 +1116,7 @@ c         and have to be modified for angular incidence.
       real (kind=R8) :: eo, zb, z1, z2, am1, am2, tp, gamma_in, 
      @  yldres
 
-      real (kind=R8) :: pwr1by6, pwr5by6, pwr1by3, pwr2by3, 
-     @  z123xz223, z123z223sum, 
+      real (kind=R8) :: pwr2by3, z123z223sum,
      @  tpev, am2byam1, stoppwr, stoppwr1, stoppwr2,
      @  yldparres, eobyetf, ethbyeo, eth, etf, gamma
         integer issput, itargsp
@@ -1147,13 +1149,9 @@ c  es   -> surface binding energy (heat of sublimation) of target (eV).
         return
       endif
 
-      pwr1by6 = 1.0e0_R8 / 6.0e0_R8
-      pwr5by6 = 5.0e0_R8 / 6.0e0_R8
-      pwr1by3 = 1.0e0_R8 / 3.0e0_R8
       pwr2by3 = 2.0e0_R8 / 3.0e0_R8
       gamma = gamma / 1.0e4_R8
 
-      z123xz223 = z1**pwr2by3 * z2**pwr2by3
       z123z223sum = z1**pwr2by3 + z2**pwr2by3
       am2byam1 = am2 / am1
 
@@ -1199,9 +1197,9 @@ c       write(*,*) 'Radiation Enhanced Sublimation < 0, Ei = ', eo
       end subroutine ressput
 
 
-C   Subroutine to evaluate the thermal evaporation of Graphite.
+C   Subroutine to evaluate thermal evaporation.
 
-c   Ref: 1) C. Garc'ia Rosales, Erosion processes in plasma-wall
+c   Ref: 1) C. Garcia Rosales, Erosion processes in plasma-wall
 c           interactions, J. Nucl. Mater. 211 (1994) Pg.202-214.
 c        2) R.A. Langley, Evaporation, Data Compendium for Plasma
 c           Surface Interactions, Special Issue, NUCLEAR FUSION,
@@ -1211,9 +1209,9 @@ c   Written by Manoj Warrier on 17-05-96.
 
 *********************************************************************************
 
-c  This routine takes the temperature of the graphite plate ( tp ), and the
-c  atomic mass ( am2 ) of the target as inputs and outputs the flux of carbon
-c  atoms evaporated from the graphite plate ( flxthev ) per meter**2 per sec.
+c  This routine takes the temperature of the plate ( tp ), and the
+c  atomic mass ( am2 ) of the target as inputs and outputs the flux of
+c  atoms evaporated from the plate ( flxthev ) per meter**2 per sec.
 c
 c  Table of A and B for some first wall materials in Fusion research:
 c  (Ref (2) above).
@@ -1273,8 +1271,8 @@ cxpb Contribution from bulk if species is part of bulk
       if (bulk) then
         vappres = 10.0e0_R8**(A/tp + B)
         flxthev = alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
-     .     (layer_nrelconstituents(ibnd,1)/
-     .    matsurf_nrelconstituents(ibnd,1))
+     .     (layer_relconstituents(ibnd,1)/
+     .    matsurf_relconstituents(ibnd,1))
         if (flxthev.le.0.0_R8) then
 c       write(*,*) 'Thermal evaporation < 0, Surface temp = ',tp
           flxthev = 0.0_R8
@@ -1294,7 +1292,7 @@ cxpb Also need to consider alloy contributions
       am2 = atomic_mass(layer_nzconstituents(ibnd,nz+itrack))
       vappres = 10.0e0_R8**(A/tp + B)
       flxthev = flxthev+alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
-     .  layer_nrelconstituents(ibnd,nz+itrack)
+     .  layer_relconstituents(ibnd,nz+itrack)
       qthev = qthev + flxthev * am(is) * mp * matsurf_heat_sublim(ibnd)
 
       return
@@ -1312,6 +1310,7 @@ c   K(T) = 1/(KA * T + KB)
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
       real (kind=R8), save :: cutll, cutlo
       logical, save  :: lfirst, coating
+      !$OMP THREADPRIVATE(coating)
       real (kind=R8) :: t0
       real (kind=R8) :: machsfr, expu2, layer_Kappa
       external machsfr, layer_Kappa
@@ -1595,19 +1594,19 @@ c  z2 = 91 - 92
 c  energy backscattering coefficient of light ions
 
       n = 0
- 1    if (nz1.eq.1) go to 3
+    1 if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5
- 2    write(6,600)
+    2 write(6,600)
       reion = 0.0_R8
       return
- 3    if (m1.lt.1.or.m1.gt.3) go to 2
+    3 if (m1.lt.1.or.m1.gt.3) go to 2
       a1 = a1t(m1)
       go to 6
- 4    if (m1.lt.3.or.m1.gt.4) go to 2
+    4 if (m1.lt.3.or.m1.gt.4) go to 2
       a1 = a1t( m1+1 )
       go to 6
- 5    a1 = a1t( nz1+3 )
+    5 a1 = a1t( nz1+3 )
 c     write(*,*)'atomic # of projectile > 2'
 c  finding effective a2 :
 cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
@@ -1615,18 +1614,19 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       sum = 0.0_R8
       do i = 1, layer_nconstituents(ibnd)
         a2 = a2t(layer_nzconstituents(ibnd,i))
-        a2eff = a2eff + layer_nrelconstituents(ibnd,i) * a2
-        sum = sum + layer_nrelconstituents(ibnd,i)
+        a2eff = a2eff + layer_relconstituents(ibnd,i) * a2
+        sum = sum + layer_relconstituents(ibnd,i)
       enddo
       a2 = a2eff / sum
       delta = a1 / a2
 c     write(*,*)'delta = ',delta
-      if (delta.gt.4.5_R8 .and. icount.le.100) then 
+      if (delta.gt.4.5_R8 .and. icount.le.100) then
+        !$OMP ATOMIC
         icount = icount + 1
         write(*,'(a,f7.2,a)') 
      .   'delta projectile/target > 4.5', delta, '. Continuing...'
       endif
- 6    z1 = nz1
+    6 z1 = nz1
       z1p = z1 ** (2.0_R8/3.0_R8)
       z2eff = 0.0_R8
       a2eff = 0.0_R8
@@ -1637,7 +1637,7 @@ c     write(*,*)'delta = ',delta
       do 70 i = 1, layer_nconstituents(ibnd)
         z2 = layer_nzconstituents(ibnd,i)
         a2 = a2t(layer_nzconstituents(ibnd,i))
-        wi = layer_nrelconstituents(ibnd,i)
+        wi = layer_relconstituents(ibnd,i)
         z2eff = z2eff + wi * z2
         a2eff = a2eff + wi * a2
         sum = sum + wi
@@ -1652,24 +1652,26 @@ c     write(*,*)'delta = ',delta
         saeff = saeff + wi * sa
         sl = d(layer_nzconstituents(ibnd,i)) * z1p * 
      .   ( aa/zz ) ** 1.5_R8 * sa / sqrt(a1)
-        if ( z2 - 12.9_R8 ) 10 , 10 , 20
- 10     fi0 = 12.0_R8 + 7.0_R8 / z2
-        go to 30
- 20     fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
- 30     tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
+        if ( z2 .le. 12.9_R8) then
+          fi0 = 12.0_R8 + 7.0_R8 / z2
+        else
+          fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
+        end if
+        tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
         beta2 = tau * ( tau + 2.0_R8 ) / ( tau + 1.0_R8 ) ** 2
         epsb = 1.022e6_R8 * beta2 / z2 / fi0
-        if ( z1 - 2.9_R8 ) 40,40,50
- 40     ch = 100.0_R8 * z1 / z2
-        go to 60
- 50     ch = 5.0_R8
- 60     sb = 61.474_R8 / fmu * w * 
-     .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 ) 
+        if ( z1 .le. 2.9_R8) then
+          ch = 100.0_R8 * z1 / z2
+        else
+          ch = 5.0_R8
+        endif
+        sb = 61.474_R8 / fmu * w *
+     .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 )
      .   / fi0 / epsb
         sb = 2.0_R8 * eps / rangen(eps) + sl * sb / (0.25_R8 * sl 
      .   + sb )
         sbeff = sbeff + wi * sb
- 70   continue
+   70 continue
       z2 = z2eff / sum
       a2 = a2eff / sum
       sa = saeff
@@ -1726,9 +1728,9 @@ c     write(*,*) 'did light projectile calculation delta < 0.5 '
       as2 = 0.771_R8 / eps ** 0.014_R8
       reion = rne(th)
       go to 79
- 78   reion = r0
- 79   return
- 80   r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285 ) + 0.530 / 
+   78 reion = r0
+   79 return
+   80 r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285 ) + 0.530 /
      . ( 1.0_R8 + (85.0_R8/eps) ** 1.46_R8 )
       if (delta.gt.0.5_R8) then
 c       write(*,*) 'did heavy projectile calculation for rnion'
@@ -1753,7 +1755,7 @@ c       write(*,*) 'did light projectile calculation for rnion'
         as2 = 0.836_R8/ eps ** 0.087_R8
         rnion = rne(th)
         return
-  88    rnion = r0
+   88   rnion = r0
         return
       endif
 
@@ -1789,30 +1791,32 @@ c  gamma( 0 , x ) = - eibar( - x )      for x < 0
      .  9.5733223454_R8 /
       data conver / 1.0e-7_R8 /
       z = dble(x)
-      if (x-1.0_R8) 10,40,40
- 10   p = 0.57721566490153_R8
-      if (x) 12,30,15
- 12   if ( x + 83.5_R8 ) 13,15,15
- 13   expint = - 1.0e38_R8
-      return
- 15   p = p + log(abs(z))
-      f = 1.0_R8
-      t = - z
- 20   q = t + p
-      if ( abs(p-q) - conver ) 30,30,22
- 22   p = q
-      t = - z * f * t
-      f = f + 1.0_R8
-      t = t / f ** 2
-      go to 20
- 30   expint = - p
-      return
- 40   if ( x - 84.0_R8 ) 43,43,41
- 41   expint = 1.0e-38_R8
-      return
- 43   p = (((( z + a(4) ) * z + a(3)) * z + a(2)) * z + a(1) ) /
-     .  (((( z + b(4) ) * z + b(3)) * z + b(2)) * z + b(1) )
-      expint = exp ( -z ) * p / z
+      if (x .lt. 1.0_R8) then
+        p = 0.57721566490153_R8
+        if (x .lt. -83.5_R8) then
+          expint = - 1.0e38_R8
+        else if (x .eq. 0.0_R8) then
+          expint = - p
+        else
+          p = p + log(abs(z))
+          f = 1.0_R8
+          t = - z
+   20     q = t + p
+          if ( (abs(p-q) - conver).le.0.0_R8 ) goto 30
+          p = q
+          t = - z * f * t
+          f = f + 1.0_R8
+          t = t / f ** 2
+          go to 20
+   30     expint = - p
+        end if
+      elseif (x .gt. 84.0_R8) then
+        expint = 1.0e-38_R8
+      else
+        p = (((( z + a(4) ) * z + a(3)) * z + a(2)) * z + a(1) ) /
+     .      (((( z + b(4) ) * z + b(3)) * z + b(2)) * z + b(1) )
+        expint = exp ( -z ) * p / z
+      end if
       return
       end function expint
 

@@ -1,6 +1,12 @@
+modules/b2mod_math.F
 modules/b2mod_eirbra.F
 modules/b2mod_braeir.F
 modules/b2mod_eirdiag.F
 modules/b2mod_transport_fun.F
 driver/b2mod_driver.F
 driver/b2mod_main.F
+sources/b2mod_eirene.F
+utility/b2mod_ilutern.F
+utility/b2mod_ipmain.F
+utility/b2mod_lwmain.F
+utility/b2mod_xerset.F

@@ -13,16 +13,17 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_geo_corner
-     &                    , only : nmdpl
       use b2mod_transport
      &                    , only :
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
      &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
 #ifdef ASTRA
+      use b2mod_geo_corner
+     &                    , only : nmdpl
       use b2mod_b2_to_astra
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, ismain
@@ -112,7 +113,7 @@ csw 13mar2012
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, hy1                                               !srv 22.04.16
-      external subini, subend, xertst, xerrab, sfill, smin, smax
+      external xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia, intfaceh, intfacev                    !lk 19.09.07
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 22.04.16
@@ -148,7 +149,7 @@ csw 13mar2012
         call ipgeti ('b2trcl_lluciani',lluciani)
         call ipgetr ('b2trcl_cthi', cthiv)
         call xertst (0.0_R8.le.cthiv,
-     &	 'faulty internal parameter cthiv')
+     &   'faulty internal parameter cthiv')
         call ipgetr ('b2trcl_cthe', cthev)
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
@@ -575,7 +576,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        endif
       endif                                                               !srv 16.06.08 }
 *   ..apply flux limit to calf                                            !srv 13.01.17 {
-      if(style.ne.2) then
+      if(style.eq.1) then
        if(cflim(0).ne.0.0e0_R8) then
         do iy = -1, ny
          do ix = -1, nx
@@ -594,7 +595,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
          enddo
         enddo
        endif
-      else
+      else if (style.eq.2) then
        if(cflim(3).ne.0.0e0_R8) then
 *   ..apply flux limit to calf at cell faces
         do iy = -1, ny

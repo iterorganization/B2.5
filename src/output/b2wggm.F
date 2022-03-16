@@ -5,6 +5,7 @@
      &  fpsi, ffbz, bb)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny
@@ -77,7 +78,7 @@
       real (kind=R8) ::
      *   scal10, smin, smax, samax
       logical strmas
-      external subini, subend, xertst, scal10, smax, samax, strmas
+      external xertst, scal10, smax, samax, strmas
       external b2wgx0, b2wgx1, b2wgx2, b2wgx3
 
 *-----------------------------------------------------------------------
@@ -112,11 +113,11 @@
        write (nprt,fmtp) '+mpff', header
 *      (cartesian representation)
        call b2wgx2 (nx, ny, header, crx, cry, fpsi(-1,-1,0),
-     1	3, 1.0_R8,
+     1  3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20)
 *      (physical representation)
        call b2wgx3 (nx, ny, header, crx, cry, fpsi(-1,-1,0),
-     1	 3, 1.0_R8,
+     1   3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20, wrkx, wrky)
       endif
 *   ..contour plots of ffbz
@@ -128,11 +129,11 @@
        write (nprt,fmtp) '+mpff', header
 *      (cartesian representation)
        call b2wgx2 (nx, ny, header, crx, cry, ffbz(-1,-1,0),
-     1	 3, 1.0_R8,
+     1   3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20)
 *      (physical representation)
        call b2wgx3 (nx, ny, header, crx, cry, ffbz(-1,-1,0),
-     1	 3, 1.0_R8,
+     1   3, 1.0_R8,
      &   t0, t1, 4, t0, t1, 20, wrkx, wrky)
       endif
 *   ..contour plots of bx
@@ -142,11 +143,11 @@
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
        call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,0),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
        call b2wgx3 (nx, ny, header, crx, cry, bb(-1,-1,0),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10,
      &   wrkx, wrky)
       endif
@@ -157,11 +158,11 @@
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
        call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,1),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
        call b2wgx3 (nx, ny, header, crx, cry, bb(-1,-1,1),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10,
      &   wrkx, wrky)
       endif
@@ -172,11 +173,11 @@
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
        call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,2),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10)
 *      (physical representation)
        call b2wgx3 (nx, ny, header, crx, cry, bb(-1,-1,2),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20.0_R8, t0/20.0_R8, 10,
      &   wrkx, wrky)
       endif
@@ -187,11 +188,11 @@
        write (nprt,fmtp) '+mpbb', header
 *      (cartesian representation)
        call b2wgx2 (nx, ny, header, crx, cry, bb(-1,-1,3),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   0.0_R8, 1.2_R8*t0, 24, 0.0_R8, t0/20.0_R8, 5)
 *      (physical representation)
        call b2wgx3 (nx, ny, header, crx, cry, bb(-1,-1,3),
-     1	 0, 1.0_R8,
+     1   0, 1.0_R8,
      &   0.0_R8, 1.2_R8*t0, 24, 0.0_R8, t0/20.0_R8, 5, wrkx, wrky)
       endif
 

@@ -6,6 +6,7 @@
      & cell_width, cell_height, leftix, bottomiy)
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
@@ -119,7 +120,7 @@
       intrinsic min, max, sqrt
       real (kind=R8) ::
      *   trim1, norm, dist, sinang, cosang
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
@@ -214,6 +215,10 @@
         endif
        enddo
       enddo
+      call nancheck(nx, ny, qz(-1:nx,-1:ny,0), 'b2agmt: qz(,,0)')
+      call nancheck(nx, ny, qz(-1:nx,-1:ny,1), 'b2agmt: qz(,,1)')
+      call nancheck(nx, ny, qc(-1:nx,-1:ny,0), 'b2agmt: qc(,,0)')
+      call nancheck(nx, ny, qc(-1:nx,-1:ny,1), 'b2agmt: qc(,,1)')
 *   ..test sign of qz(,,1) and qc(,)
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in

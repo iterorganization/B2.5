@@ -7,9 +7,12 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
+      use b2mod_subsys
       use eirmod_ctrig
+#endif
       implicit none
       character*(*) filename
+#ifdef B25_EIRENE
       character*80 dataname
       character*256 extralabel,tmpstring,titlestring
       logical open_file,vector
@@ -26,7 +29,7 @@ c
       real (kind=R8) ::
      * chord_tria_integral
       external chord_tria_integral
-      external lnblnk, open_file, xerrab, subini, subend
+      external lnblnk, open_file, xerrab
 
       call subini ('process_eirene_chords')
       do is=0,nedim(2,iewrk)-1
@@ -210,6 +213,7 @@ c
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
       integer maxchords,maxcompile,ntrii,nrknot,nx,ny,inpts
@@ -229,7 +233,7 @@ c
 
       logical open_file,vector
       integer ind,indold,npoints,lnblnk
-      external lnblnk, subini, subend, xertst
+      external lnblnk, xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
@@ -288,6 +292,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_subsys
       use eirmod_ctrig
       implicit none
 
@@ -308,7 +313,7 @@ c
       integer npoints,lnblnk,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_tria_integral
-      external lnblnk,chord_tria_integral, subini, subend, xerrab
+      external lnblnk,chord_tria_integral,xerrab
 
       call subini ('calculate_tzvalues')
       if(use_compile) then

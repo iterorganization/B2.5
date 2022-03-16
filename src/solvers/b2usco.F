@@ -8,6 +8,8 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -44,11 +46,12 @@
       real (kind=R8) ::
      *  t0, t1
       save ncall
+      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::
      *  rscal
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xxgs, b2ux5p
 ! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
       rscal(t0) = t0                                                  !srv 13.10.06
@@ -67,6 +70,12 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
        call ipgeti ('b2usco_iout', iout)                              !srv 17.06.02
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2usco OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif                                                           !srv 06.07.08 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -229,7 +238,7 @@ cxpb
       enddo
       
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ',name
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ',name
       call b2ux5p (nx, ny, aa5, itcnt, rescb, corpb, name)             !srv 18.03.10
 *   ..redo the scaling
       do iy = -1, ny
@@ -238,15 +247,24 @@ cxpb
        enddo
       enddo
       if (iout.ne.0) then                                              !srv 17.06.02 {
-       write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
-       call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
-       call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
-       call my_out(70,nx,ny,nb,name//'_nb'//chns)
+       if (in_parallel()) then
+        if (ncall==0) then
+        !$OMP MASTER
+         write(*,*)'OpenMP warning from b2usco: not writing files ',
+     &        'in parallel mode'
+        !$OMP END MASTER
+        end if
+       else
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
+        call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
+        call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
+        call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
+        call my_out(70,nx,ny,nb,name//'_nb'//chns)
+       endif
       endif                                                            !srv 17.06.02 }
 
 * ..return

@@ -23,6 +23,58 @@
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
       use b2mod_external
+      use b2mod_openmp
+      use b2mod_subsys
+      use b2mod_ilutern
+#ifdef _OPENMP
+#ifndef NO_OPENMP_B2NPMO
+      use b2mod_balance
+     1 ,only : b2stbr_phys_smo_bal, b2stbr_phys_smo0to3,
+     2         b2stbr_bas_smo_bal, b2stbr_bas_smo0to3,
+     3         b2stbc_smo_bal, b2stbc_smo0to3,
+     4         eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3,
+     5         eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3,
+     6         eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3,
+     7         eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3,
+     8         b2stbm_smo_bal, b2stbm_smo0to3,
+     9         ext_smo_bal, ext_smo0to3,
+     *         tot_smo_bal, tot_smo0to3,
+     *         b2stel_smq_ion_bal, b2stel_smq_ion0to3,
+     1         b2stel_smq_rec_bal, b2stel_smq_rec0to3,
+     2         b2stcx_smq_bal, b2stcx_smq0to3,
+     3         b2srsm_smo_bal, b2srsm_smo0to3,
+     4         b2srdt_smo_bal, b2srdt_smo0to3,
+     5         b2srst_smo_bal, b2srst_smo0to3,
+     6         b2sifr_smoch_bal, b2sifr_smoch0to3,
+     &         b2sifr_smotf_ehxp0to3, b2sifr_smotf_ehxp_bal,
+     &         b2sifr_smotf_cthe0to3, b2sifr_smotf_cthe_bal,
+     &         b2sifr_smotf_cthi0to3, b2sifr_smotf_cthi_bal,
+     &         b2sifr_smofrea_bal, b2sifr_smofrea0to3,
+     &         b2sifr_smofria_bal, b2sifr_smofria0to3,
+     &         b2sifr_smotfea_bal, b2sifr_smotfea0to3,
+     &         b2sifr_smotfia_bal, b2sifr_smotfia0to3,
+     8         b2sigp_smogp_bal, b2sigp_smogp0to3,
+     &         b2sigp_smogpi_bal, b2sigp_smogpi0to3,
+     &         b2sigp_smogpe_bal, b2sigp_smogpe0to3,
+     &         b2sigp_smogpgr_bal, b2sigp_smogpgr0to3,
+     9         b2sigp_pstat_bal, b2sigp_pstat0to3,
+     &         b2sigp_pstati_bal, b2sigp_pstati0to3,
+     &         b2sigp_pstate_bal, b2sigp_pstate0to3,
+     *         b2siav_smovh_bal, b2siav_smovh0to3,
+     1         b2siav_smovv_bal, b2siav_smovv0to3,
+     x         b2siav_smovi_bal, b2siav_smovi0to3,                      !som 13.08.21
+     2         b2sicf_smo_bal, b2sicf_smo0to3,
+     3         b2sian_smo_bal, b2sian_smo0to3,
+     4         b2nxdv_smo_bal, b2nxdv_smo0to3
+      use b2mod_b2cmpt
+      use b2mod_b2cmgs
+      use b2mod_transport
+     & , only : f_luc_sg, alfx_c, sigx_c
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
+#endif
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
@@ -85,14 +137,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
+      integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax
       integer, save :: iout = 0, b2sifr_ver = 1, iout_b2wdat = 0       !srv 04.07.08 26.10.08
       integer, save :: icase = 0                                       !srv 13.01.17
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
-      character chns*3, chk*1                                          !srv 04.07.08
+      character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, t2, czetap, czetae                                !srv 13.01.17
       real (kind=R8) ::
@@ -127,8 +179,7 @@
       intrinsic min, max
       real (kind=R8) ::
      *  med
-      external subini, subend, xertst, ipgetr, sfill, b2scopy,
-     &  b2sscal, b2saxpy
+      external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfm, b2nxfc, b2nxst,
@@ -151,9 +202,19 @@
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
+        if ((iout.ne.0) .and. in_parallel()) then
+          write(*,*) 'b2npmo OpenMP warning: no file output in ',
+     &               'parallel mode'
+          iout = 0
+        end if
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+        if ((iout_b2wdat==4) .and. in_parallel()) then
+          write(*,*) 'b2npmo OpenMP warning: no file output in ',
+     &               'parallel mode (b2wdat)'
+          iout_b2wdat = 0
+        end if
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
@@ -229,8 +290,8 @@
       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
       do iy = -1, ny
         do ix = -1, nx
-	  ce1(ix,iy)=fce1(zeff(ix,iy))
-	  ce2(ix,iy)=fce2(zeff(ix,iy))
+          ce1(ix,iy)=fce1(zeff(ix,iy))
+          ce2(ix,iy)=fce2(zeff(ix,iy))
           cimp1(ix,iy)=fce1(zmff(ix,iy))
           cimp2(ix,iy)=fce2(zmff(ix,iy))
         enddo
@@ -277,6 +338,95 @@
 
 * ..main computation
 *   ..compute individual species corrections
+#ifndef NO_OPENMP_B2NPMO
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!!FR smt, resmt, cvct & flct accumulate by species and thus need
+!!FR to be reduction variables.
+!!FR rob, pb, flub, flcb, cvcb, wrkf, smb are all
+!!FR local to the parallel region and thus are private
+!!FR wrk0 is used outside parallel region but is zeroed before use
+!!FR aa5, wrk1 are used outside parallel region but are output arguments
+!!FR and thus their contents should not matter
+!!FR all other variables are shared
+!$OMP PARALLEL DO DEFAULT(none)
+!$OMP& PRIVATE(rob, pb, wrk0, flub, flcb, cvcb)
+!$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
+!$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
+!$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
+!$OMP& PRIVATE(chns, wrks, new_matrix)
+!$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
+!$OMP& LASTPRIVATE(kt_neo)
+!$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
+!$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
+!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn)
+!$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, resmo)
+!$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
+!$OMP& SHARED(b2npmo_smav, fmo, solving, get_residuals, ro, solvemo)
+!$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, solvemt)
+!$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
+!$OMP& SHARED(facdrift, fac_ExB)
+!$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
+!$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(rz2, ne_ext)
+!$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
+!$OMP& SHARED(bottomix, bottomiy, topix, topiy)
+!$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)
+!$OMP& SHARED(b2stbr_bas_smo_bal, b2stbr_bas_smo0to3)
+!$OMP& SHARED(b2stbc_smo_bal, b2stbc_smo0to3)
+!$OMP& SHARED(eirene_mc_mapl_smo_bal, eirene_mc_mapl_smo0to3)
+!$OMP& SHARED(eirene_mc_mmpl_smo_bal, eirene_mc_mmpl_smo0to3)
+!$OMP& SHARED(eirene_mc_mipl_smo_bal, eirene_mc_mipl_smo0to3)
+!$OMP& SHARED(eirene_mc_cppv_smo_bal, eirene_mc_cppv_smo0to3)
+!$OMP& SHARED(b2stbm_smo_bal, b2stbm_smo0to3)
+!$OMP& SHARED(ext_smo_bal, ext_smo0to3)
+!$OMP& SHARED(tot_smo_bal, tot_smo0to3)
+!$OMP& SHARED(b2stel_smq_ion_bal, b2stel_smq_ion0to3)
+!$OMP& SHARED(b2stel_smq_rec_bal, b2stel_smq_rec0to3)
+!$OMP& SHARED(b2stcx_smq_bal, b2stcx_smq0to3)
+!$OMP& SHARED(b2srsm_smo_bal, b2srsm_smo0to3)
+!$OMP& SHARED(b2srdt_smo_bal, b2srdt_smo0to3)
+!$OMP& SHARED(b2srst_smo_bal, b2srst_smo0to3)
+!$OMP& SHARED(b2sifr_smoch_bal, b2sifr_smoch0to3)
+!$OMP& SHARED(b2sifr_smotf_ehxp0to3, b2sifr_smotf_ehxp_bal)
+!$OMP& SHARED(b2sifr_smotf_cthe0to3, b2sifr_smotf_cthe_bal)
+!$OMP& SHARED(b2sifr_smotf_cthi0to3, b2sifr_smotf_cthi_bal)
+!$OMP& SHARED(b2sifr_smofrea_bal, b2sifr_smofrea0to3)
+!$OMP& SHARED(b2sifr_smofria_bal, b2sifr_smofria0to3)
+!$OMP& SHARED(b2sifr_smotfea_bal, b2sifr_smotfea0to3)
+!$OMP& SHARED(b2sifr_smotfia_bal, b2sifr_smotfia0to3)
+!$OMP& SHARED(b2sigp_smogp_bal, b2sigp_smogp0to3)
+!$OMP& SHARED(b2sigp_smogpi_bal, b2sigp_smogpi0to3)
+!$OMP& SHARED(b2sigp_smogpe_bal, b2sigp_smogpe0to3)
+!$OMP& SHARED(b2sigp_smogpgr_bal, b2sigp_smogpgr0to3)
+!$OMP& SHARED(b2sigp_pstat_bal, b2sigp_pstat0to3)
+!$OMP& SHARED(b2sigp_pstati_bal, b2sigp_pstati0to3)
+!$OMP& SHARED(b2sigp_pstate_bal, b2sigp_pstate0to3)
+!$OMP& SHARED(b2siav_smovh_bal, b2siav_smovh0to3)
+!$OMP& SHARED(b2siav_smovv_bal, b2siav_smovv0to3)
+!$OMP& SHARED(b2sicf_smo_bal, b2sicf_smo0to3)
+!$OMP& SHARED(b2sian_smo_bal, b2sian_smo0to3)
+!$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
+!$OMP& SHARED(fmo_tot)
+!$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi)
+!$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
+#ifndef GFORTRAN
+#ifndef PGF90
+#ifndef CRAY
+!$OMP& COPYIN(last_solve_5)
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
+#else
+!$OMP& PRIVATE(last_solve_5)
+#endif
+#endif
+
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..compute rob, pb
@@ -403,14 +553,14 @@ cdjm Jan2017 update momentum source components for balance
          wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+      !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
-	 call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
 
          wrks = vol*hz*(smbfrea(:,:,0)+smbfrea(:,:,1)*ua(:,:,is))
-	 call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
          wrks = vol*hz*smbtfia(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
          wrks = vol*hz*smbtfea(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
+         call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
          call my_out(70,nx,ny,ue,'b2npmo_ue')                          !srv 05.07.17 }
          wrks=smban(:,:,0)+smban(:,:,1)*ua(:,:,is)+
      &       smban(:,:,2)*na(:,:,is)*mp*am(is)+
@@ -505,7 +655,12 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif
       enddo
-
+#ifndef NO_OPENMP_B2NPMO
+      !$OMP END PARALLEL DO
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
+#endif
 csw 21feb2014, execute simultaneous corrections always
 c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
       if (solving) then

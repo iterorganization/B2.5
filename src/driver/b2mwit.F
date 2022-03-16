@@ -5,6 +5,7 @@
      &  resmt, reshe, reshi, respo, corpa, corua, corut, corte, corti,
      &  corpo)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns, itim, itcnt
@@ -132,7 +133,7 @@
       integer ncall, n2, idum(0:9)
       save ncall
 *   ..procedures
-      external subini, subend, xertst, cfwuin, cfwure
+      external xertst, cfwuin, cfwure
       external b2xvfx
 *   ..initialisation
       data ncall/0/

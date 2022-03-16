@@ -1,5 +1,6 @@
       module b2mod_geo
       use b2mod_types
+      use b2mod_math
       use b2mod_version
       use b2mod_geo_corner
       use b2mod_cellhelper
@@ -16,6 +17,10 @@
      *  hx(:,:),
      *  hy(:,:),
      *  hz(:,:),                                                     !srv 09.01.01
+     *  hyl(:,:),                                                    ! IYS 04.03.2019
+     *  hxb(:,:),                                                    ! IYS 04.03.2019
+     *  hzl(:,:),                                                    ! IYS 04.04.2019
+     *  hzb(:,:),                                                    ! IYS 04.04.2019
      *  qz(:,:,:),
      *  qc(:,:,:),
      *  qs(:,:,:),
@@ -27,13 +32,17 @@
 
       type(B2GridMap), save :: gmap
 
+      real (kind=R8) :: geom_match_dist
+      data geom_match_dist/1.0e-6_R8/
       logical, save :: b2mod_geo_allocated = .false.
+
+      public :: dist, match
 
       contains
 
       subroutine alloc_b2mod_geo(nxd,nyd)
       implicit none
-      integer nxd,nyd
+      integer, intent(in) :: nxd, nyd
 
       allocate(bb(-1:nxd,-1:nyd,0:3))
       allocate(crx(-1:nxd,-1:nyd,0:3))
@@ -42,6 +51,10 @@
       allocate(fpsi(-1:nxd,-1:nyd,0:3))
       allocate(gs(-1:nxd,-1:nyd,0:2))
       allocate(hx(-1:nxd,-1:nyd))
+      allocate(hyl(-1:nxd,-1:nyd))
+      allocate(hxb(-1:nxd,-1:nyd))
+      allocate(hzl(-1:nxd,-1:nyd))
+      allocate(hzb(-1:nxd,-1:nyd))
       allocate(hy(-1:nxd,-1:nyd))
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
       allocate(qz(-1:nxd,-1:nyd,0:1))
@@ -74,6 +87,10 @@
         deallocate(gs)
         deallocate(hx)
         deallocate(hy)
+        deallocate(hyl)
+        deallocate(hxb)
+        deallocate(hzl)
+        deallocate(hzb)
         deallocate(hz)
         deallocate(qz)
         deallocate(qc)
@@ -101,6 +118,7 @@
       implicit none
       integer nread, nx, ny, n2
       integer ix, iy
+      external cfrure, cfrure_opt, xerrab
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
 *   ..procedures
@@ -184,6 +202,8 @@ cwdk   of improved computation of qc
 c conn
       if(b2fplasma_version.ge.'01.001.063') then        !srv 15.02.11
         call cfrure (nread, size(pbs), pbs, 'pbs')
+      else if(b2fplasma_version.ge.'01.001.025') then   !xpb for 5.0 and 5.1 versions
+        call cfrure_opt (nread, size(pbs), pbs, 'pbs')
       endif
       if(b2fplasma_version.ge.'01.001.033') then
         call cfrure_opt
@@ -205,6 +225,7 @@ c conn
       subroutine write_b2mod_geo(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       call cfwure (nwrite, size(bb), bb, 'bb')
       call cfwure (nwrite, size(crx), crx, 'crx')
@@ -229,5 +250,32 @@ c conn
       endif
       return
       end subroutine write_b2mod_geo
+
+      function dist(ix,iy,i,j)
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
+
+      function distc(ix1,iy1,ip1,ix2,iy2,ip2)
+      implicit none
+      integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
+      real(kind=R8) :: distc
+      distc = norm(crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2),
+     .             cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))
+      return
+      end function distc
+
+      logical function match(ix1,iy1,ix2,iy2)
+      implicit none
+      integer, intent(in) :: ix1,iy1,ix2,iy2
+      match =
+     & (distc(ix1,iy1,1,ix2,iy2,0)+distc(ix1,iy1,3,ix2,iy2,2)).lt.
+     & geom_match_dist
+      return
+      end function match
+
 
       end module b2mod_geo

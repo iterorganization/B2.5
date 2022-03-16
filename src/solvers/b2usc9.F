@@ -6,6 +6,8 @@
      &   aa9, name)                                                     !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
@@ -29,8 +31,9 @@
 *  1. purpose
 *
 *     B2USC9 computes a correction towards the solution of the
-*     continuity equation for one atomic species on nine point stencil.
-*     
+*     continuity equation for one atomic species using a
+*     nine-point stencil.
+*
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
 !                 |     |     |                     |     |     |
@@ -53,17 +56,19 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-      integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
+      integer, save :: iadd_9 = 1, iout = 0                             !srv 13.10.06
+      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co, iadd_9, iout)
       real (kind=R8) ::
      *   t0, t1
       character chns*3
       save ncall
+      !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs
       real (kind=R8) ::
      *   rscal
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                  !srv 02.01.07
 !      rscal(t0) = t0
       rscal(t0) = 1.0e0_R8                                             !srv 13.10.06
@@ -80,9 +85,15 @@
       if (ncall.eq.0) then                                               !srv 06.07.06 {
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-       call ipgeti ('b2usc9_add_9', iadd_9)                              !srv 13.10.06
-       call ipgeti ('b2usc9_iout', iout)                                 !srv 13.10.06
-      endif                                                              !srv 06.07.06 }
+       call ipgeti ('b2usc9_add_9', iadd_9)                             !srv 13.10.06
+       call ipgeti ('b2usc9_iout', iout)                                !srv 13.10.06
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2usc9 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
+      endif                                                             !srv 06.07.06 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -94,8 +105,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of nb, pb
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')

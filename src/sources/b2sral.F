@@ -32,6 +32,7 @@
       use b2mod_b2cmfs
       use b2mod_external
       use b2mod_b2_to_astra
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nxtl, nxtr,
@@ -144,8 +145,7 @@
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),
      &  shi0_rec(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),
-     &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3),
-     1  wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), pb(-1:nx,-1:ny,0:ns-1)
+     &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable :: sna0_cx(:,:,:,:), smo0_cx(:,:,:,:),  ! IYS 06.11.2017
      &  shi0_cx(:,:,:)
       logical catch_up
@@ -155,7 +155,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
-      external subini, subend, xertst, sfill, b2saxpy, smin, smax
+      external xertst, sfill, b2saxpy, smin, smax
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
@@ -235,7 +235,7 @@
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
-          elm_count=tim/numerics_time_mod
+          elm_count=int(tim/numerics_time_mod)
         else
           elm_count=0
         endif
@@ -243,7 +243,7 @@
         do while(catch_up)
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
-            write(*,*) 'b2srsm: catching up ...'
+            write(*,*) 'b2sral: catching up ...'
             call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
@@ -258,7 +258,7 @@
      1     numerics_time_switch,int(tim/numerics_time_mod),elm_count
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.elm_count) then
-            elm_count=tim/numerics_time_mod
+            elm_count=int(tim/numerics_time_mod)
             call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
             call write_b2mod_numerics_namelist
           endif
@@ -459,7 +459,7 @@ csw 30sep2013, added cdpa in call, uadia
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
-          write(*,*) 'Allocating arrays for cx'
+          write(*,*) 'Allocating arrays for CX'
           allocate (shi0_cx(-1:nx,-1:ny,0:3))
           allocate (sna0_cx(-1:nx,-1:ny,0:1,0:ns-1))
           allocate (smo0_cx(-1:nx,-1:ny,0:3,0:ns-1))
@@ -489,7 +489,7 @@ csw 30sep2013, added cdpa in call, uadia
         call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi, 1)
 *      (no contribution to she, sne or sch)
         if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-          write(*,*) 'Summing cx sources over hydrogenic neutrals'
+          write(*,*) 'Summing CX sources over hydrogenic neutrals'
           call b2saxpy (n2*2*ns, 1.0_R8, sna0, 1, sna0_cx, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smq0, 1, smo0_cx, 1)
           call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi0_cx, 1)
@@ -497,7 +497,7 @@ csw 30sep2013, added cdpa in call, uadia
       enddo
 
       if (iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-        write(*,*) 'Writing cx sources'
+        write(*,*) 'Writing CX sources'
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           wrk(:,:) = sna0_cx(:,:,0,is)+sna0_cx(:,:,1,is)*na(:,:,is)

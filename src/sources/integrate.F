@@ -5,6 +5,7 @@
       subroutine integrate (vwrk0,gwrk0,w0,acc,nv,mu,ite)
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nv
@@ -55,7 +56,6 @@
      *  vwrk(:),gwrk(:),dwrk(:),dvwrk(:),vwrkf(:)
 *   ..procedures
       intrinsic abs, sqrt, real, exp
-      external subini, subend, xertst
 *-----------------------------------------------------------------------
 *.computation
 

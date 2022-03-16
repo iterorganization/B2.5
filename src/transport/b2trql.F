@@ -8,6 +8,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -50,7 +51,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst, smin, smax
+      external xertst, smin, smax
       external b2tlhe, b2tlhi, b2tlmv, b2xpnr, b2xvsg
 *   ..initialisation
       data ncall/0/
@@ -106,7 +107,7 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
       endif
-*   ..compute nirm (atom density weighted by 1/sqrt(am)
+*   ..compute nirm (atom density weighted by 1/sqrt(am))
       call b2xpnr (nx, ny, ns, am, na, nirm)
 
 * ..compute flux limit velocities

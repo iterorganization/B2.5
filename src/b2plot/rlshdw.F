@@ -1,11 +1,13 @@
       subroutine rlshdw
       use b2mod_types
+      use b2mod_subsys
       implicit none
 c
 c  version : 07.11.97 13:19
 c
 c======================================================================
 c*** Computation of the shadowing of the base segment by the structure.
+c*** This is a 2-D calculation that uses a cylindrical approximation.
 c*** The structure is supposed to be a closed polygon without self-
 c*** intersections. The base belongs to the same polygon.
 c*** Orientation of the polygon is important: the radiation sources are
@@ -42,7 +44,7 @@ c======================================================================
       real (kind=R8) :: flin
       flin(x,y)=(x-xc)*(ys-yc)-(y-yc)*(xs-xc)
       intrinsic min, max, mod, sign
-      external subini, subend, xertst
+      external xertst
 c======================================================================
 c*** Initialise the code. The base segment is at the position jb
 c*** in the structure list, we need its endpoints (xb,yb,uxe,uye).
@@ -80,7 +82,7 @@ c     ,                     jsc,jm,jcb,xsrc,ysrc,xb,yb,ddx,ddy,udx,udy,d
 c>>>
       if(d .le. ueps) then
 c
-c*** The base is turned its back to the source - no irradiation!
+c*** The base has its back turned to the source - no irradiation!
 c
         se=0.0_R8
         sb=1.0_R8
@@ -209,7 +211,7 @@ c***----------------------------------------------------------/
 c
         if(jsc .eq. 1) then
 c
-c*** The segment starts in the sector 1. Where it finishes?
+c*** The segment starts in the sector 1. Where does it finish?
 c
 c<<<
 c      print *
@@ -283,7 +285,7 @@ c***        no shading
           end if
         else if(jsc .eq. 2) then
 c
-c*** The segment starts in the sector 2. Where it finishes?
+c*** The segment starts in the sector 2. Where does it finish?
 c
           if(jj .eq. 1) then
 c*** ... the sector 1. Check the shading
@@ -309,7 +311,7 @@ c***        the structure crosses sight completely: total shading
           end if
         else if(jsc .eq. 3) then
 c
-c*** The segment starts in the sector 3. Where it finishes?
+c*** The segment starts in the sector 3. Where does it finish?
 c
           if(jj .eq. 1) then
 c*** ... the sector 1. Check the shading
@@ -329,7 +331,7 @@ c>>>
           end if
         else if(jsc .eq. 4) then
 c
-c*** The segment starts in the sector 4. Where it finishes?
+c*** The segment starts in the sector 4. Where does it finish?
 c
 c<<<
 c      print *

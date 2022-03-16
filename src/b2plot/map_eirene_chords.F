@@ -8,10 +8,12 @@ c
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
       use eirmod_ctrig
+#endif
       implicit none
 
       character*(*) filename
 
+#ifdef B25_EIRENE
       real (kind=R8) :: wrkarr(ntrii)
       character*80 dataname,ccol
       logical open_file,found
@@ -56,7 +58,7 @@ c
       enddo
       call plottripatch(nx,ny,ntrii,nrknot,0,
      2 xtrian,ytrian,necke,wrkarr,
-     1 0.0_R8,1.0_R8,.true.,linlog)
+     1 0.0_R8,1.0_R8,linlog)
       call data_copy(0)
       call additional_elements(nx,ny,.true.)
       call end_page

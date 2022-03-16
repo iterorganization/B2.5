@@ -18,6 +18,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
@@ -79,7 +80,7 @@
       intrinsic min, max, abs, sqrt, exp, log, dim
       real (kind=R8) ::
      *  machsfr, expu2, hy1
-      external subini, subend, xertst, machsfr, eseec0
+      external xertst, machsfr, eseec0
       external b2xvsg, b2xvff, b2xvps
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -374,7 +375,7 @@
        sch0(ix,-1,0) = sch0(ix,-1,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,-1)
        sch0(ix,-1,1) = sch0(ix,-1,1)-t0
- 101   continue
+  101  continue
       enddo
 
 * ..compute conditions at north boundary
@@ -564,7 +565,7 @@
        sch0(ix,ny,0) = sch0(ix,ny,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,ny)
        sch0(ix,ny,1) = sch0(ix,ny,1)-t0
- 202   continue
+  202  continue
       enddo
 
 * ..compute conditions at west boundary
@@ -794,7 +795,7 @@ c         fchi=0.0_R8
        sch0(-1,iy,0) = sch0(-1,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(-1,iy)
        sch0(-1,iy,1) = sch0(-1,iy,1)-t0
- 303   continue
+  303  continue
       enddo
 
 * ..compute conditions at east boundary
@@ -1014,7 +1015,7 @@ c         fchi=0.0_R8
        sch0(nx,iy,0) = sch0(nx,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(nx,iy)
        sch0(nx,iy,1) = sch0(nx,iy,1)-t0
- 404   continue
+  404  continue
       enddo
 
 * ..return

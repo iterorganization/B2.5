@@ -27,7 +27,6 @@ c-----------------------------------------------------------------------
 
 c-----------------------------------------------------------------------
 c*** lv     version number from the file (the first marker)
-c*** lvn    starting from this version, no corrections
 c*** nntr   number of diagnostic surface groups for neutral data
 c*** number of neutral species found
 c*** larea  positions of the surface area of the groups to be fixed
@@ -38,12 +37,11 @@ c*** lspntr positions of pumping speed for species i at surface group j
 c*** cspntr identifiers of the neutral species
 c*** csrntr identifiers of the surface groups
 
-      integer lv,lvn, nntr,nnsp
+      integer lv,nntr,nnsp
       integer,allocatable :: larea(:),lnarea(:),lntntr(:,:),lnnntr(:,:),
      ,  lprntr(:,:),lspntr(:,:)
       character*8,allocatable :: cspntr(:),csrntr(:)
       data lv /0/
-      parameter (lvn=20060402)
       integer i,j,k,l,m,ii
       logical ex
 c      character*48 frh,frd
@@ -149,13 +147,13 @@ c*** Fill the species names and find the positions of related quantities
           do i=1,nhdr !{
             if(index(chdr(i),'area_').eq.1) then !{
               k=k+1
-              csrntr(k)=chdr(i)(6:)
+              csrntr(k)=trim(chdr(i)(6:))
               larea(k)=i
             end if !}
           end do !}
           do i=1,nhdr !{
             if(index(chdr(i),'Area_').eq.1) then !{
-              cc=chdr(i)(6:)
+              cc=trim(chdr(i)(6:))
               do j=1,nntr !{
                 if(streql(cc,csrntr(j))) then !{
                   lnarea(j)=i
@@ -188,7 +186,7 @@ c*** Fill the species names and find the positions of related quantities
                 if(ex) then !{
                   k=k+1
                   j=k
-                  cspntr(k)=cc
+                  cspntr(k)=trim(cc)
                 end if !}
                 if(chdr(i)(1:1).eq.'n') then !{
                   lnnntr(j,ii)=i

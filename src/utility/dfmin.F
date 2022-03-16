@@ -40,7 +40,7 @@ C     minimization without derivatives, prentice - hall, inc. (1973).
 C
 C
       REAL (KIND=R8) :: A,B,C,D,E,EPS,XM,P,Q,R,TOL1,TOL2,U,V,W
-      REAL (KIND=R8) :: FU,FV,FW,FX,X,ABS,SIGN
+      REAL (KIND=R8) :: FU,FV,FW,FX,X
 C
 C     C is squared value of (1/golden ratio)
 C
@@ -94,7 +94,7 @@ C
 C
 C     check if parabola acceptable
 C
-   30 IF(ABS(P).GE.ABS(0.5_R8*Q*R)) GO TO 40
+      IF(ABS(P).GE.ABS(0.5_R8*Q*R)) GO TO 40
       IF(P.LE.Q*(A-X)) GO TO 40
       IF(P.GE.Q*(B-X)) GO TO 40
 C

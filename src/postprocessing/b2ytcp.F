@@ -8,6 +8,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_version
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nput, ns, ns1
@@ -301,7 +303,7 @@
       logical oldversion
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
       intrinsic max
 
 *-----------------------------------------------------------------------
@@ -802,6 +804,11 @@
        read (nget,*,err=92) id0, (cflim(i),i=0,7)
        read (id0,'(i8)',err=93) is0
        call xertst (is0.eq.-1, 'faulty input under *cflim')
+       if(b2fstate_version.lt.'03.000.006') then
+! Adding new flux limit coefficients
+         cflim(3) = 0.5_R8
+         cflim(4) = 0.5_R8
+       end if
 *    ..write cflim
        write (nput,'(a)')
      &  '*cflim     (0)       (1)       (2)       (3)       (4)'//

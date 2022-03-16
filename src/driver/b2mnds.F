@@ -11,9 +11,11 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_ipmain
       use b2mod_ppout
       use b2mod_diag
      . , only : label
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:5), nx, ny, ns, ns0
@@ -90,14 +92,13 @@
 *   ..local variables
       integer is, idum(0:9)
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
-     &  lblmn*120, cnamip*80, cvalip*80, line*80
+     &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4), t0, t1
 *   ..procedures
       intrinsic abs
       logical ltst, is_comment
-      external subini, subend, xertst, xerrab, ipsetc, cfruch, cfruin,
-     &  cfwuch, cfwuin
+      external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
@@ -157,6 +158,10 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
 #ifdef JET
       labgeo=lblgm
+#else
+#ifdef IMAS
+      labgeo=lblgm
+#endif
 #endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
@@ -187,8 +192,11 @@
 *   ..read atomic rate data
       call cfverr (ninp(4), b2frates_version)
       call cfruch (ninp(4), 120, lblrc, 'label')
-      adpak_used = index(lblrc,'ADPAK').gt.0 
-      call read_b2mod_ppout('rates', ninp(4), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+#ifdef IMAS
+      AM_label = lblrc
+#endif
+      call read_b2mod_ppout('rates', ninp(4), b2frates_flag)
       call b2rurc (ninp(4), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
@@ -228,9 +236,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -244,7 +256,7 @@
       call b2wfcp (nout(0), 0, ns)
 *   ..write header to nout(1)
       idum(0) = ns
-      call cfverw (nout(1), newversion)					 !xpb
+      call cfverw (nout(1), newversion)                                 !xpb
       call cfwuin (nout(1), 1, idum, 'ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
 *   ..save physics parameters to nout(1)
@@ -253,15 +265,15 @@
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
-      call cfverw (nout(2), newversion)					 !xpb
+      call cfverw (nout(2), newversion)                                 !xpb
       call cfwuin (nout(2), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(3), newversion)					 !xpb
+      call cfverw (nout(3), newversion)                                 !xpb
       call cfwuin (nout(3), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(3), 120, lblmn, 'label')
       call b2wuzd (nout(3), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(5), newversion)					 !xpb
+      call cfverw (nout(5), newversion)                                 !xpb
       call cfwuin (nout(5), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)

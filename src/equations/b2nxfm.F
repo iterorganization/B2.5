@@ -4,6 +4,7 @@
       subroutine b2nxfm (nx, ny, mb, fnb, flub)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -45,7 +46,7 @@
       integer ncall, ix, iy
       save ncall
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvff
 *   ..initialisation
       data ncall/0/
@@ -75,7 +76,7 @@
        do ix = -1, nx
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
          flub(ix,iy,0,0) = (mb/2)*
-     1	  (fnb(ix,iy,0,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0,0))
+     1    (fnb(ix,iy,0,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0,0))
         endif
        enddo
       enddo
@@ -84,7 +85,7 @@
        do ix = -1, nx
         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
          flub(ix,iy,1,1) = (mb/2)*
-     1	  (fnb(topix(ix,iy),topiy(ix,iy),1,1)+fnb(ix,iy,1,1))
+     1    (fnb(topix(ix,iy),topiy(ix,iy),1,1)+fnb(ix,iy,1,1))
         endif
        enddo
       enddo

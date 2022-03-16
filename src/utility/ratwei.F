@@ -4,6 +4,7 @@
       subroutine ratwei (nrid, nz, rtt, nt, rtn, nn, rtsa, rtra, rtqa,
      &  rtcx, rtrd, rtbr)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid, nz, nt, nn
@@ -150,7 +151,7 @@
       parameter (cm3=1.0e-6_R8)
 *   ..procedures
       intrinsic exp, log
-      external subini, subend, xertst, b2xvsg
+      external xertst, b2xvsg
       real (kind=R8) ::
      *   dens, temp, wsven
       dens(jw) = 10.0_R8**(16.0_R8+0.5_R8*(jw-1))

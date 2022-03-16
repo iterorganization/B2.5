@@ -12,10 +12,12 @@
       use b2mod_b2cmpa
       use b2mod_balance                                              !djm Jan2017
      & , only : b2sifr_smoch0to3, b2sifr_smotf0to3, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),          !srv 09.01.01
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -24,13 +26,12 @@
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),             !srv 11.09.09
      &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)      !srv 02.07.08
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -66,14 +67,16 @@
       intrinsic sqrt, log, sign, max, abs
       real (kind=R8) ::
      *   roxa
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvfx, b2xvsg, b2xxgs
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
-      save ncall, styl0, styl1, 
+      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase)
+      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+      save ncall, styl0, styl1,
      &  phm0, phm1, phm2, phm3, limthii, limthee
-      data ncall/0/, styl0/0/, styl1/0/, 
-     &  phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/, phm3/1.0_R8/, 
+      data ncall/0/, styl0/0/, styl1/0/,
+     &  phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/, phm3/1.0_R8/,
      &  limthii/0.3_R8/, limthee/0.3_R8/
 
 *-----------------------------------------------------------------------
@@ -100,8 +103,15 @@
        call xertst (0.0_R8.le.limthii.and.0.0_R8.le.limthee,
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+          write(*,*) 'B2SIFR OpenMP warning: no file output in ',
+     &               'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
       endif
 *   ..set n2
@@ -177,7 +187,7 @@
      1          rz2(ix,iy,isb)*rz2(ix,iy,is)
            smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
            smbch(ix,iy,1) = smbch(ix,iy,1)-coef*t0
-           smfrb(ix,iy) = smfrb(ix,iy) + 
+           smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
           enddo
          else if (styl0.eq.1) then
@@ -187,7 +197,7 @@
            smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
            smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &       roxa(ix,iy,isb)
-           smfrb(ix,iy) = smfrb(ix,iy) + 
+           smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
           enddo
          else if (styl0.eq.2) then
@@ -198,7 +208,7 @@
      &       roxa(ix,iy,isb)
            smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &       roxa(ix,iy,isb)
-           smfrb(ix,iy) = smfrb(ix,iy) + 
+           smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
           enddo
          endif
@@ -271,7 +281,7 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
      &  (phm3*cthi(ix,iy,isb)*t0*(ne(ix,iy)-ne_ext(ix,iy))+
      &   phm2*cthe(ix,iy,isb)*t1*ne(ix,iy))*
      &  (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3))   !srv 12.04.10 11.01.13
-            smprb(ix,iy) = smprb(ix,iy) + 
+            smprb(ix,iy) = smprb(ix,iy) +
      &    na(ix,iy,isb)*
      &  (rza(ix,iy,isb)/(ne(ix,iy)-ne_ext(ix,iy))-
      &   rz2(ix,iy,isb)/(ne2(ix,iy)-ne2_ext(ix,iy)))*
@@ -288,28 +298,28 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
         endif
       enddo
       if (iout.ne.0) then                        !srv 17.06.02 {
-	write (chns,'(i3.3)') isb
-	call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
-	call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
-	call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
-	do k=0,3
-	  write (chk,'(i1)') k
-	  call my_out(70,nx,ny,smbtf(-1,-1,k),
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
+        call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
+        call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk)
-	  call my_out(70,nx,ny,smbch(-1,-1,k),
+          call my_out(70,nx,ny,smbch(-1,-1,k),
      *                'b2sifr_smoch'//chk)
-	enddo
+        enddo
         do is=0,ns-1
-	  write (chns,'(i3.3)') is
+          write (chns,'(i3.3)') is
           wrk0=smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
      &         smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	  call my_out(70,nx,ny,wrk0,'b2sifr_smotf'//chns)
+          call my_out(70,nx,ny,wrk0,'b2sifr_smotf'//chns)
           wrk0=smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
      &         smbch(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	  call my_out(70,nx,ny,wrk0,'b2sifr_smoch'//chns)
-	enddo
+          call my_out(70,nx,ny,wrk0,'b2sifr_smoch'//chns)
+        enddo
       endif                                                            !srv 17.06.02 }
 
 cdjm Jan2017 Store the linearised sources for balance

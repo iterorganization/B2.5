@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:0), nx, ns
@@ -62,7 +63,7 @@
       character lblcp*120, id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql, cfruch
+      external xertst, xerrab, streql, cfruch
       external b2rucp, b2xvcp, b2wfcp
 
 *-----------------------------------------------------------------------

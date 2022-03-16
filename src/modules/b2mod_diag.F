@@ -5,10 +5,13 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
+      use b2mod_boundary_namelist
+     &                    , only : nbcd
+      implicit none
 c
 c  version : 27.04.2005
 c
-      real (kind=R8) :: 
+      real (kind=R8) ::
      1 totaddee, totaddei, totaddni, rad_neutr
 #ifndef SOLPS4_3
       real (kind=R8) :: b2brem, b2rad
@@ -19,21 +22,24 @@ c
      2  b2radirreg(:), b2radlrreg(:),
      3  recycereg(:), recycireg(:),
      4  sseereg(:), sseireg(:), ssnireg(:,:),
-     5  ssnastra(:,:)   ! IYS 29.09.2017
-      REAL (kind=R8), allocatable :: 
+     5  ssnastra(:,:),   ! IYS 29.09.2017
+     6  sna_eir(:),      ! IYS 12.01.2018
+     7  sna_stbc_neut(:,:), sna_stbr_neut(:,:),       ! IYS 04.06.2018
+     8  sna_stbr_sput(:,:)
+      REAL (kind=R8), allocatable ::
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
       real (kind=R8), allocatable ::  RADARR(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
      ,     src_ni(:,:,:) , src_mo(:,:,:),
      ,     src_ne(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     cor_ee(:,:)   , cor_ei(:,:),
      ,     cor_ni(:,:,:) , cor_mo(:,:,:),
      ,     cor_ne(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     rescoreg(:,:) , resmoreg(:,:),
      ,     reshereg(:), reshireg(:)
 
@@ -60,7 +66,8 @@ c***  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
 c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
 c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
 c***  ntrc_src  :  tracing/sources.trc    :  integral sources
-c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance
+c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
+c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
 c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
 c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
@@ -71,12 +78,13 @@ c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing
 
       integer len_ntrc, ntrc_used
-      parameter (len_ntrc=10)
-      integer ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
-     ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
-      parameter (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
-     ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
-     ,           ntrc_blm=9, ntrc_sep=10)
+      parameter (len_ntrc=11)
+      integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
+     ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep,
+     ,        ntrc_bls
+      parameter (ntrc_srt=1, ntrc_tst=2,  ntrc_res=3, ntrc_src=4,
+     ,           ntrc_bln=5, ntrc_ble=6,  ntrc_int=7, ntrc_usr=8,
+     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bls=11)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
       integer lenfnm, mhdr
@@ -90,7 +98,7 @@ c***                    tracing
 c
       save
 
-      contains 
+      contains
 
       subroutine alloc_b2mod_diag(nxd,nyd,nsd,nregionv,nstra,natm)
       use b2mod_b2cmpa
@@ -114,13 +122,17 @@ c
       allocate(IZ(-1:NXD,-1:NYD))
       allocate(RESHLP(-1:NXD,-1:NYD))
       allocate(rad_imp(1:nspecies))
-      allocate(rdneureg(nregionv),
+      allocate(rdneureg(0:nregionv),
      2  b2radirreg(nregionv),b2radlrreg(nregionv),
      3  recycereg(nregionv), recycireg(nregionv),
      4  sseereg(nregionv), sseireg(nregionv),
      5  ssnireg(nspecies,nregionv))
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
-      allocate( 
+      allocate(sna_eir(1:nspecies))       ! IYS 12.01.2018
+      allocate(sna_stbr_neut(1:nspecies,1:nbcd),
+     &         sna_stbc_neut(1:nspecies,1:nbcd),       ! IYS 04.06.2018
+     &         sna_stbr_sput(1:nspecies,1:nbcd))       ! IYS 18.09.2018
+      allocate(
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
       allocate(RADARR(0:NXD+1,0:NYD+1))
@@ -207,6 +219,8 @@ c>>>
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
       NTRC(ntrc_bln) = 74
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
+      NTRC(ntrc_bls) = 174                        ! IYS 07.11.2018
+      fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
       NTRC(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'
       NTRC(ntrc_int) = 76
@@ -218,7 +232,7 @@ c>>>
       NTRC(ntrc_sep) = 79
       fn_ntrc(ntrc_sep) = 'tracing/sepdata.trc'
 
-      ntrc_used = 10
+      ntrc_used = 11
 
       if(ntrc_used.gt.len_ntrc) then
         call xerrab('default: insufficient length of ntrc')
@@ -238,6 +252,10 @@ c>>>
       sseireg=0.0_R8
       ssnireg=0.0_R8
       ssnastra=0.0_R8
+      sna_eir=0.0_R8        ! IYS 12.01.2018
+      sna_stbr_sput=0.0_R8  ! IYS 28.09.2018
+      sna_stbr_neut=0.0_R8  ! IYS 04.06.2018
+      sna_stbc_neut=0.0_R8  ! IYS 04.06.2018
       rescoreg=0.0_R8
       resmoreg=0.0_R8
       reshereg=0.0_R8
@@ -257,6 +275,9 @@ c>>>
      3  recycereg, recycireg,
      4  sseereg, sseireg, ssnireg,
      5  ssnastra)
+      deallocate(sna_eir)
+      deallocate(sna_stbr_neut, sna_stbr_sput)
+      deallocate(sna_stbc_neut)  ! IYS 12.01.2018, 04.06.2018
       deallocate(FEEXGT, FEEYGT, FEIXGT, FEIYGT)
       deallocate(RADARR)
       deallocate(species_list)

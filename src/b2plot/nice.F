@@ -7,18 +7,18 @@
       real ceil, floor
       external ceil, floor
       dx=(xmax-xmin)/10
-      iscale=-floor(alog10(dx))
+      iscale=int(-floor(alog10(dx)))
       ir=iscale
       scale=10.0**(iscale)
       dx=ceil(dx*scale)
       if(dx.ge.3.and.dx.le.5) dx=5
       if(dx.ge.6.and.dx.le.9) dx=10
-      nomin=dx
+      nomin=int(dx)
       if(nomin.gt.5) nomin=1
       dx=dx/scale
       xmin=floor(xmin/dx)*dx
       xmax=ceil(xmax/dx)*dx
-      il=ceil(alog10(max(abs(xmin),abs(xmax))))
+      il=int(ceil(alog10(max(abs(xmin),abs(xmax)))))
       if(10.0**il.le.max(abs(xmin),abs(xmax))) il=il+1
       if(abs(il).le.3) then
         nfmt=max(1,il)+2+max(0,ir)
@@ -30,7 +30,7 @@
      1 (nomaj.gt.10.and.nfmt.le.5)) then
         if(mod(nomaj,2).eq.1) then
           xmax=xmin+(xmax-xmin)*float(nomaj+1)/float(nomaj)
-          il=ceil(alog10(max(abs(xmin),abs(xmax))))
+          il=int(ceil(alog10(max(abs(xmin),abs(xmax)))))
           if(10.0**il.le.max(abs(xmin),abs(xmax))) il=il+1
           if(abs(il).le.3) then
             nfmt=max(1,il)+2+max(0,ir)

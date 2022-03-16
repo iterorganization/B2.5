@@ -3,7 +3,7 @@ C     SUBROUTINES FOR B2PLOT COMMAND TRAJ
 C     =======================================================================
 C
 C     This routine is used to plot trajectories of particles using the
-C     velocity fields uutraj and vvtraj from B2SXDR. To call this routine
+C     velocity fields uu and vv. To call this routine
 C     one must specify at least 8 parameters: ixmin, iymin, ixmax, iymax,
 C     # of particles, 1 or 0 for movie or lines, species indices (at least
 C     one), and last but not least the total number of species indices one 
@@ -15,7 +15,7 @@ C     cell (95,35) (northeast corner) as lines for hydrogen (0=H).
 C     Note that the cell and species indices start at zero!
 C     The number of time steps (plots) is given by the "t_#p" command.
 C     The total flight time of the particles is given by the "t_pt" command. 
-C     The velocity fields uutraj and vvtraj can be overwritten using the
+C     The velocity fields uu and vv can be overwritten using the
 C     "uuse" and "vvse" commands. Their defaults values are ua and fna/na/sy
 C     respectively. If the number of particles is positive, then the
 C     particles are born randomly, with the probability of being born in a
@@ -83,7 +83,7 @@ c     the traj common
       real (kind=R8) ::
      *   globaltime                     !plottime
 
-c                                       !number of particles per cell:
+c                                       !number of particles per cell
       integer ialt,jalt                 !position in computational domain
       integer ipx(1:npart),ipy(1:npart),ips(1:npart)
       integer ipx_start(1:npart),ipy_start(1:npart)
@@ -99,7 +99,7 @@ c                                       !number of particles per cell:
      *   deltat                         !timestep between plots
       logical ls_active(0:ns-1)         !species active?
       integer isclvl(0:ns-1)
-      character*16 texttraj(1:ns)
+      character*19 texttraj(1:ns)
 
       integer zaehler,zaehler2,ip,randzaehler
 
@@ -115,7 +115,6 @@ c                                       !number of particles per cell:
      *   cpu_start, cpu_end
 
       integer destmode                     !mode for destroying
-c     parameter (destmode=2)               !hardwired to 2
 
       integer is,np
       real (kind=R8) ::
@@ -275,21 +274,21 @@ C     clr (center line radial) and clz (center line z) respectively.
       do zaehler=-1,nx
         do zaehler2=-1,ny
           clr(zaehler,zaehler2,1)=crx(zaehler,zaehler2,1)+
-     +            (crx(zaehler,zaehler2,3)-crx(zaehler,zaehler2,1))/2
+     +            (crx(zaehler,zaehler2,3)-crx(zaehler,zaehler2,1))/2.
           clz(zaehler,zaehler2,1)=cry(zaehler,zaehler2,1)+
-     +            (cry(zaehler,zaehler2,3)-cry(zaehler,zaehler2,1))/2
+     +            (cry(zaehler,zaehler2,3)-cry(zaehler,zaehler2,1))/2.
           clr(zaehler,zaehler2,2)=crx(zaehler,zaehler2,3)+
-     +            (crx(zaehler,zaehler2,2)-crx(zaehler,zaehler2,3))/2
+     +            (crx(zaehler,zaehler2,2)-crx(zaehler,zaehler2,3))/2.
           clz(zaehler,zaehler2,2)=cry(zaehler,zaehler2,3)+
-     +            (cry(zaehler,zaehler2,2)-cry(zaehler,zaehler2,3))/2
+     +            (cry(zaehler,zaehler2,2)-cry(zaehler,zaehler2,3))/2.
           clr(zaehler,zaehler2,3)=crx(zaehler,zaehler2,2)+
-     +            (crx(zaehler,zaehler2,0)-crx(zaehler,zaehler2,2))/2
+     +            (crx(zaehler,zaehler2,0)-crx(zaehler,zaehler2,2))/2.
           clz(zaehler,zaehler2,3)=cry(zaehler,zaehler2,2)+
-     +            (cry(zaehler,zaehler2,0)-cry(zaehler,zaehler2,2))/2
+     +            (cry(zaehler,zaehler2,0)-cry(zaehler,zaehler2,2))/2.
           clr(zaehler,zaehler2,4)=crx(zaehler,zaehler2,0)+
-     +            (crx(zaehler,zaehler2,1)-crx(zaehler,zaehler2,0))/2
+     +            (crx(zaehler,zaehler2,1)-crx(zaehler,zaehler2,0))/2.
           clz(zaehler,zaehler2,4)=cry(zaehler,zaehler2,0)+
-     +            (cry(zaehler,zaehler2,1)-cry(zaehler,zaehler2,0))/2
+     +            (cry(zaehler,zaehler2,1)-cry(zaehler,zaehler2,0))/2.
         enddo
       enddo
 
@@ -1165,7 +1164,8 @@ c find where particles need to be added
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
-            nadd=warr(ix,iy,is)/swarr*np-iwarr(ix,iy,is)+addval+nadd
+            nadd=int(warr(ix,iy,is)/swarr*np)
+     .             -iwarr(ix,iy,is)+nint(addval)+nadd
             if(nadd .gt. 0 .and. ikilled .gt. 0) then
               ipt=index_arr(ix,iy,is)
               ipto=0
@@ -1203,7 +1203,7 @@ c add particle of species is in cell (ix,iy)
                   zre=g05caf(3.1_R8)*(zmax-zmin)+zmin
 #else
                   rre=g05kaf(IGEN,ISEED)*(rmax-rmin)+rmin
-                  rre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
+                  zre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
 #endif
                   gefunden=inside_rectangle(rre,zre,
      1             crx(ix,iy,1),cry(ix,iy,1),
@@ -1352,18 +1352,20 @@ cdpc split logical and data
       K  = MOD(KL/169, 178) + 1
       L  = MOD(KL, 169)
 *
-      DO 300 II= 1, 97
+      DO II= 1, 97
          S= 0.0_R8
          T= 0.5_R8
-         DO 250 JJ= 1,24
+         DO JJ= 1,24
             M = MOD(MOD(I*J,179)*K, 179)
             I = J
             J = K
             K = M
             L = MOD(53*L+1, 169)
             IF ( MOD(L*M,64)  .GE.  32) S = S + T
-  250       T = 0.5_R8*T
-  300 U(II) = S
+            T = 0.5_R8*T
+         END DO
+         U(II) = S
+      END DO
       C  =   362436.0_R8/16777216.0_R8
       CD =  7654321.0_R8/16777216.0_R8
       CM = 16777213.0_R8/16777216.0_R8

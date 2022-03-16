@@ -60,6 +60,7 @@
       subroutine read_b2mod_residuals(nread)
       implicit none
       integer nread
+      external cfrure
 
       call cfrure (nread, size(resco), resco, 'resco')
       call cfrure (nread, size(reshe), reshe, 'reshe')
@@ -74,6 +75,7 @@
       subroutine write_b2mod_residuals(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       call cfwure (nwrite, size(resco), resco, 'resco')
       call cfwure (nwrite, size(reshe), reshe, 'reshe')

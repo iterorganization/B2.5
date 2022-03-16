@@ -6,10 +6,11 @@
 *     shift and trailing blanks.
 *!!   The text of this routine is case-sensitive.
 *     ------------------------------------------------------------------
-      integer len0, len1, k
+      integer len0, len1, lenl, i, k
       character ch0, ch1
       intrinsic len, ichar
       external b25_mpi_stop
+      logical isnull
       logical upcase, chreql
       upcase(ch0,ch1) =
      &  ichar('a').le.ichar(ch0).and.ichar(ch0).le.ichar('z').and.
@@ -35,13 +36,34 @@
        endif
       endif
 *   ..set return value
+      isnull=.true.
+      lenl = max(len0,len1)-min(len0,len1)
       if (len0.eq.len1) then
        streql = k.eq.len0
       else if (len0.lt.len1) then
-       streql = k.eq.len0.and.str1(len0+1:len1).eq.' '
+       do i = 1, lenl
+         isnull = isnull.and.ichar(str1(len0+i:len0+i)).eq.0
+       enddo
+       streql = k.eq.len0.and.(str1(len0+1:len1).eq.' '.or.isnull)
       else if (len1.lt.len0) then
-       streql = k.eq.len1.and.str0(len1+1:len0).eq.' '
+       do i = 1, lenl
+         isnull = isnull.and.ichar(str0(len1+i:len1+i)).eq.0
+       enddo
+       streql = k.eq.len1.and.(str0(len1+1:len0).eq.' '.or.isnull)
       endif
       return
 *     ------------------------------------------------------------------
+
+      contains
+
+      logical function nlcase(ch0,ch1)
+      implicit none
+      character ch0, ch1
+      intrinsic ichar
+      nlcase =
+     & (ichar(ch0).eq.0.or.ichar(ch0).eq.ichar(' ')).and.
+     & (ichar(ch1).eq.0.or.ichar(ch1).eq.ichar(' '))
+      return
+      end function nlcase
+
       end

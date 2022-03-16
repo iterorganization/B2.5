@@ -4,6 +4,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -14,7 +15,7 @@
      *  chcb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &	fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1)
+     &  fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..common blocks
 *     ------------------------------------------------------------------
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
@@ -25,7 +26,7 @@
       real (kind=R8), allocatable :: w1(:,:)
       character charns*3                                          !srv 13.01.04 }
       real (kind=R8) ::
-     *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),
+     *  alpha, gamma, t0, t1, t2, dti, vthi, maxfluxlimit(0:1),
      *  flux_limit_min_ti, dtir(-1:nx,-1:ny,0:1), wght(-1:nx,-1:ny),
      *  tic(-1:nx,-1:ny)
       save ncall, alpha, gamma, flux_limit_min_ti
@@ -34,7 +35,7 @@
      *     flux_limit_min_ti/0.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')
@@ -80,7 +81,7 @@
             t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
      .                                           **(1.0_R8/gamma)
             chcb(ix,iy,0,0,is) = chcb(ix,iy,0,0,is)*t2
-	    fllim0fhi(ix,iy,0,0,is) = t2
+            fllim0fhi(ix,iy,0,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *   .. perpendicular
             if (chcb(ix,iy,0,1,is).ne.0.0_R8) then
@@ -93,7 +94,7 @@
             fllim0fhi(ix,iy,0,1,is) = t2
             endif
            end if
-*   .. compute neutral heat conductivity flux limit on y-surfaces
+*   .. compute perpendicular neutral heat conductivity flux limit
            if (bottomiy(ix,iy).ne.-2) then
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
@@ -104,7 +105,7 @@
             t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
      .                                          **(1.0_R8/gamma)
             chcb(ix,iy,1,1,is) = chcb(ix,iy,1,1,is)*t2
-	    fllim0fhi(ix,iy,1,1,is) = t2
+            fllim0fhi(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
            end if
           end do
@@ -113,12 +114,10 @@
        end do
       endif                                                       !srv 13.06.08 }
 
- 100  continue
-
-       if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
+      if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
-       if (iout.ne.0) then
+      if (iout.ne.0) then
         allocate(w1(-1:nx,-1:ny))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
@@ -130,7 +129,7 @@
          call my_out(70, nx, ny, chcb(-1,-1,1,1,is), 'chciy'//charns)
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
-       endif
+      endif
 
 *   ..return
       ncall = ncall + 1

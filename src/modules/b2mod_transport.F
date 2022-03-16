@@ -51,7 +51,7 @@
 
       subroutine alloc_b2mod_transport(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd
+      integer, intent(in) :: nxd,nyd,nsd
 
       allocate(calf(-1:nxd,-1:nyd,0:1,0:1))
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
@@ -159,11 +159,11 @@
 
       subroutine read_b2mod_transport(nxd,nyd,nsd,nread)
       implicit none
-      integer        :: nxd,nyd,nsd, nread
+      integer, intent(in) :: nxd,nyd,nsd, nread
       real (kind=R8) :: cloc(-1:nxd,-1:nyd,0:1), 
      &  clocs(-1:nxd,-1:nyd,0:1,0:nsd-1),
      &  clocss(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1)
-      
+      external cfrure
 
       if (b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(calf), calf, 'calf')
@@ -297,7 +297,8 @@
 
       subroutine write_b2mod_transport(nwrite)
       implicit none
-      integer nwrite
+      integer, intent(in) :: nwrite
+      external cfwure
 
       call cfwure (nwrite, size(calf), calf, 'calf')
       call cfwure (nwrite, size(cdna), cdna, 'cdna')

@@ -23,6 +23,7 @@
      &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
      &  vaecrb1, vadia1, wadia1, veecrb1, vedia1, floe_noc1, floi_noc1)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nx1, ny1, ns1, nncutmax, non_commensurate
@@ -150,7 +151,7 @@
       save na_new, na_min, drift_style
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/, drift_style/1/
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill, b2saxpy
+      external xertst, ipgetr, sfill, b2saxpy
       external b2xtvc, b2xtfx, b2xtfy
 
 *-----------------------------------------------------------------------

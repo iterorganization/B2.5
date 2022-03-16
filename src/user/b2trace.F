@@ -6,7 +6,7 @@
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 c
 c  version : 29.08.2000 00:26
@@ -18,11 +18,14 @@ c*** redirected to the log file for the first call and there is no
 c*** further output
 c----------------------------------------------------------------------
       implicit none
-      integer nput, nx, ny, ns, nxtl, nxtr, ismain, lun
-      real (kind=R8) :: dtim, tim, BoRiS
-      integer ix, iy, is, istra, iline
-      integer, save :: use_recyceir
+      integer nput, nx, ny, ns, nxtl, nxtr, ismain
+      real (kind=R8) :: dtim, BoRiS
+      integer iline
+#ifdef B25_EIRENE
+      integer ix, iy, is, istra
       real (kind=R8) :: recyctmp
+#endif
+      integer, save :: use_recyceir
       logical, save :: tracing_initialised
       data tracing_initialised /.false./
       data use_recyceir /1/

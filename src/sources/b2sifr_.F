@@ -12,10 +12,12 @@
       use b2mod_b2cmpa
       use b2mod_balance                                               !djm Jan2017
      & , only : b2sifr_smoch0to3, b2sifr_smotf0to3, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -24,13 +26,12 @@
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),              !srv 11.09.09
      &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -52,8 +53,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
       integer ncall, styl0, styl1, n2, ix, iy, is, k                  !srv 17.06.02
       integer, save :: iout = 0                                       !srv 17.06.02
@@ -68,11 +67,13 @@
       intrinsic sqrt
       real (kind=R8) ::
      *   roxa
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
+      external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialisation
-      save ncall, styl0, styl1, 
+      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest)
+      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+      save ncall, styl0, styl1,
      1     phm0, phm1, phm2, phm3, limthii, limthee, zlitest
       data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/,
@@ -105,8 +106,15 @@ csw 24sep2013
        call xertst (0.0_R8.le.limthii.and.0.0_R8.le.limthee,
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
+       if ((iout.ne.0) .and. in_parallel()) then
+         !$OMP MASTER
+          write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
+     &               'parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       end if
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
       endif
 *   ..set n2
@@ -192,7 +200,7 @@ csw 24sep2013
              smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &                       roxa(ix,iy,isb)
             endif
-            smfrb(ix,iy) = smfrb(ix,iy) + 
+            smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
            endif
           enddo
@@ -223,7 +231,7 @@ csw 24sep2013
 csw 24sep2013 check for zlitest (potentially can be removed)
             if(zlitest .ne. 0) then
              zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/na(ix,iy,1)
-            else 
+            else
              zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/ne2(ix,iy)
             endif
             dtiapr=limthii/zlamii*ti(ix,iy)/abs(bb(ix,iy,0)/bb(ix,iy,3)) !srv 12.04.10 11.01.13
@@ -236,7 +244,7 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
      &     (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
      &     +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
      &     vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3))*hz(ix,iy)            !srv 01.07.05
-          smprb(ix,iy) = smprb(ix,iy) + t0*phm1*ehxp(ix,iy)*hz(ix,iy) 
+          smprb(ix,iy) = smprb(ix,iy) + t0*phm1*ehxp(ix,iy)*hz(ix,iy)
           smptb(ix,iy) = smptb(ix,iy) - t0*hz(ix,iy)*
      &         (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
      &         +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
@@ -248,12 +256,12 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
        endif
       enddo
       if (iout.ne.0) then                                           !srv 17.06.02 {
-         write (chns,'(i3.3)') isb    
+         write (chns,'(i3.3)') isb
          call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
          call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
          call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
          do k=0,3
-          write (chk,'(i1)') k  
+          write (chk,'(i1)') k
           call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk//chns)                    !srv 07.02.12
           call my_out(70,nx,ny,smbch(-1,-1,k),

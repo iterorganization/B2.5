@@ -35,6 +35,7 @@ c  Tp = Target surface temperature (K).
       subroutine heatdiff1D(ibnd,ns0,Q,dt,Tp,output)
       use b2mod_types
       use b2mod_wall
+      use b2mod_subsys
       implicit none
       external lines2c
 
@@ -58,6 +59,8 @@ c  Tp = Target surface temperature (K).
       integer iwk(ndepth_nml)
       external mstep
 #else
+      integer :: itask, itrace, ind, ifail
+      real (kind=R8) :: acc
       external pdedef, bndary, D03PCF
 #endif
       integer ncall
@@ -67,12 +70,10 @@ c  Tp = Target surface temperature (K).
       common /location/ iwall, ns
 
       integer, save :: npde, nw, niw
-      integer :: itask, itrace, ind, ifail
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
-      real (kind=R8) :: acc
-
-      external xertst, subini, subend
+      !$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
+      external xertst
 
       call subini('heatdiff1D')
       if (ncall.eq.0) then
@@ -218,25 +219,25 @@ cxpb  Will need to update this later for a better computation
         KAc = coating_Kappa_KA(ibnd)
         KBc = coating_Kappa_KB(ibnd)
         Tc = max(Tcbc, min( matsurf_vapor_temp(ibnd), (Tcbc + KBb/KAb) *
-     .       dexp(-KAb*Qtot*(coating_thickness(ibnd)-xn)) - KBb/KAb ))
+     .       exp(-KAb*Qtot*(coating_thickness(ibnd)-xn)) - KBb/KAb ))
       endif
       do i = ndepth_nml, 2, -1
         xx(i) = x(i)
         if (target_depth(ibnd,i).ge.coating_thickness(ibnd)) then
           uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd),
-     .     (Tcbc + KBb/KAb) * dexp(-KAb*Qtot*(x(i)-xn)) - KBb/KAb ))
+     .     (Tcbc + KBb/KAb) * exp(-KAb*Qtot*(x(i)-xn)) - KBb/KAb ))
         else
           uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd),
      .     (Tc + KBc/KAc) *
-     .     dexp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
+     .     exp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
         endif
-c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
+c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',xn
       enddo
       xx(1) = x(1)
       Tl = uu(2)
       uu(1) = max(Tl, min( matsurf_vapor_temp(ibnd),
      .     (Tl + Kbl/KAl) *
-     .     dexp(-KAl*Qtot*(x(1)-x(2))) - KBl/KAl ))
+     .     exp(-KAl*Qtot*(x(1)-x(2))) - KBl/KAl ))
 
       return
       end subroutine fic
@@ -810,14 +811,14 @@ c....................................................................
       end function qrad
 
 c....................................................................
-c   Ref: 1) C. Garc'ia Rosales, Erosion processes in plasma-wall
+c   Ref: 1) C. Garcia Rosales, Erosion processes in plasma-wall
 c           interactions, J. Nucl. Mater. 211 (1994) Pg.202-214.
 c        2) R.A. Langley, Evaporation, Data Compendium for Plasma
 c           Surface Interactions, Special Issue, NUCLEAR FUSION,
 c           IAEA, Vienna, (1984) 55-61.
 c  Table of A and B for some first wall materials in Fusion research:
 c  (Ref (2) above).
-c  (note that A and B are provided such that the vappres is in Pascals.
+c  (note that A and B are provided such that the vappres is in Pascals).
 c  element    |  A       |  B      |
 c  Aluminum   | -16165   | 10.91   |
 c  Beryllium  | -16720   | 11.61   |
@@ -836,26 +837,29 @@ c     Steel   | -14321.9 | 9.44    |
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
       implicit none
       integer ibnd, ns, is, itrack
       logical, save :: lfirst
       real (kind=R8) :: Ts, Tv, flxthev, qevap, Vapor_temp, qthev
       real (kind=R8), save :: therm_evap
       data lfirst /.true./, therm_evap /0.0_R8/
-      external subini, subend, ipgetr
+      external ipgetr
       intrinsic min
 
-c  Ts       ->  temperature of the Graphite plate in Kelvin.
+c  Ts       ->  temperature of the plate in Kelvin.
 c  flxthev  ->  Flux of target atoms evaporated ( / m^2 /s )
 c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
+        !$OMP CRITICAL (heatdiff1D)
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
+        !$OMP END CRITICAL (heatdiff1D)
       endif
 
       do is = 0, ns-1

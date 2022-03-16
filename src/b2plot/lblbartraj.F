@@ -4,6 +4,7 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      implicit none
 #include "graphics_vars.h"
       real (kind=R8) :: ZLOD,ZHID,ZVALIN
       integer linlog
@@ -20,15 +21,15 @@ C =====================================================================
 
       save zlo,zhi
 
-      zlo=zlod
-      zhi=zhid
+      zlo=real(zlod,R4)
+      zhi=real(zhid,R4)
       
       if(zlo.eq.zhi) then
-        zlo=min(zlo*0.9,zlo*1.1)
-        zhi=max(zhi*0.9,zhi*1.1)
+        zlo=min(zlo*0.9_R4,zlo*1.1_R4)
+        zhi=max(zhi*0.9_R4,zhi*1.1_R4)
         if(zlo.eq.zhi) then
-          zlo=-1.0
-          zhi=+1.0
+          zlo=-1.0_R4
+          zhi=+1.0_R4
         endif
       endif
 
@@ -54,15 +55,15 @@ C =====================================================================
           ENDDO
         ELSE  ! ==> do log plot <=======================================
           if(b2plot_debug.ge.9) write (*,*) 'STANDARD CONTOURING'
-          if(zhi.le.0.0) then
+          if(zhi.le.0.0_R4) then
             write(*,*) 'zhi <= 0 and logarithmic axes chosen'
-            zhi=1.0
+            zhi=1.0_R4
           endif
-          if(zlo.le.0.0) zlo=10.0**(-ndec)*zhi
-          ZHI=10.0**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
+          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO))
+          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.ncol) then
             ncont=ncont*3
@@ -70,14 +71,14 @@ C =====================================================================
             call cpseti('NCL - NUMBER OF CONTOUR LEVELS',ncont+1)
             do i=1,ncont+1
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
-              zval=10.0**((i-1)/3)*zlo
+              zval=10.0_R4**((i-1)/3)*zlo
               if(mod(i-1,3).eq.1) zval=zval*2
               if(mod(i-1,3).eq.2) zval=zval*5
               clval(i)=zval
             enddo
           else
             do i=1,ncont+1
-              zval=10.0**(i-1)*zlo
+              zval=10.0_R4**(i-1)*zlo
               clval(i)=zval
             enddo
           endif
@@ -100,11 +101,11 @@ C =====================================================================
         if(nofcls.eq.0) then ! standard contouring
           WRITE (LBLS(I), FMTZ) CLV
         else
-          if(abs(clv).ge.1e3.or.abs(clv).lt.1e-2) then
+          if(abs(clv).ge.1.0e3_R4.or.abs(clv).lt.1.0e-2_R4) then
             write(LBLS(I),'(1p,e10.3)') CLV
-          elseif(abs(clv).ge.1e2) then
+          elseif(abs(clv).ge.1.0e2_R4) then
             write(LBLS(I),'(f8.3)') CLV
-          elseif(abs(clv).ge.1e1) then
+          elseif(abs(clv).ge.1.0e1_R4) then
             write(LBLS(I),'(f8.4)') CLV
           else
             write(LBLS(I),'(f8.5)') CLV

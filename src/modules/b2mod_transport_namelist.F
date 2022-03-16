@@ -117,6 +117,8 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       character*260 filename
 
       filename=transport_filename
+      transport_time_mod = 0.0_R8
+      transport_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         cflme=cflim(0)
@@ -147,7 +149,9 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       endif
 
       return
- 999  call xerrab ('Error while reading TRANSPORT namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading TRANSPORT namelist!')
+#endif
       end subroutine read_b2mod_transport_namelist
 
       subroutine write_b2mod_transport_namelist

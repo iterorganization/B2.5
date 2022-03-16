@@ -3,6 +3,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_external
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -21,7 +22,7 @@
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
-      external subini, subend, xertst, b2xvfx, ipgeti
+      external xertst, b2xvfx, ipgeti
       pit(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
       data ncall/0/, area_fix/3/, model/1/

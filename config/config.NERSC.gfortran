@@ -1,0 +1,40 @@
+# Test whether necessary variables are set
+MSCL_ROOT ?= /global/project/projectdirs/atom/atom-install-cori/solps-libs/lib_gfortran
+NCDIR     ?= /usr/lib64
+SOLPSLIB  ?= ${SOLPSTOP}/lib/${HOST_NAME}.${COMPILER}
+LD_NETCDF ?= -L${NCDIR} -lnetcdff 
+LD_MSCL   ?= -L${MSCL_ROOT} -lmscl
+LD_NCARG  ?= ${NCAR}
+LD_NAG    ?= -L${SOLPSLIB} -lblaslapack
+
+CPP = cpp -traditional
+
+ifdef USE_MPI
+FC = ftn
+else
+ifdef USE_IMPGYRO
+FC = ftn
+else
+FC = ftn
+endif
+endif
+
+ifdef SOLPS_DEBUG
+#FCOPTS = -g -fbounds-check -fbacktrace #-finit-local-zero
+FCOPTS = -frange-check -Wcharacter-truncation -fcheck=all \
+-Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Winteger-division -Wreal-q-constant #-Wall
+# -Wimplicit-interface -Wunused-parameter -Wunused -Wtabs
+LDOPTS = -g -C
+else
+# FCOPTS = -finit-local-zero
+LDOPTS =
+endif
+
+GGD_VERSION ?= `pkg-config ggd --modversion`
+
+DBLOPTION =
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

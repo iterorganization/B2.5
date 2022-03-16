@@ -4,8 +4,6 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_rates
-      use b2mod_b2plot
-     , ,only : textan, textmn
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_indirect
@@ -15,7 +13,7 @@
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra
@@ -226,16 +224,20 @@ c-----------------------------------------------------------------------
       integer lun, ltrc
       parameter (ltrc=ntrc_usr)
       real (kind=R8) ::
-     *  hlp, hlp_p, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so, hlp_tot,
-     ,  hlp_he, hlp_hep, hlp_h, hlp_neu_peak, hlpnw,
+     *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
+     ,  hlp_he, hlp_hep, hlp_neu_peak,
      ,  hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
-     *  a, d, e, g, s, t, x, v
+     *  d, e, s, x
+#ifdef B25_EIRENE
+      integer ia, im, ls, iyp
+      real (kind=R8) :: a, g, t, v, hlp_p, hlp_h, hlp_tot, hlpnw
+#endif
       real (kind=R8) :: pz(-1:nx,-1:ny), xdum(1)
       real (kind=R8) :: stim = 0.0_R8
       real (kind=R8) :: tdummy
-      integer i, j, k, l, m, n, ia, i0, im, is, ix, iy, js, ls, nv, irt,
-     ,  iyp, j_he_i, l_pad_str, n_pad_str
+      integer i, j, k, l, m, n, i0, is, ix, iy, js, nv, irt,
+     ,  j_he_i, l_pad_str, n_pad_str
 c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target
       integer isp_tmp(4),itg_tmp(4),imp_tmp(4)
@@ -1125,8 +1127,9 @@ c*** Calculate the neutral flows in PFR
           hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)*hlp
         end do !}
       end do !}
+   30 continue
 #endif
- 30   do k=1,npfrgrp !{
+      do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp_pfrf(0,j,1)=hlp_pfrf(0,j,1)+hlp_pfrf(k,j,1)
         end do !}
@@ -1852,6 +1855,5 @@ c     Finalization step
       return
 c=======================================================================
   700 format('#   ',5i8)
-  701 format(a1,3x,5i8)
 c=======================================================================
       end subroutine b2usrtrc

@@ -48,7 +48,7 @@
 *     of the arrays: (-1:nx,-1:ny) now versus (0:nx+1,0:ny+1) in the
 *     old code; and for quantities defined on cell faces, in the
 *     new code it is the first column or the first row of the array
-*     that must contain zeros whereas in the old code it is the last
+*     that must contain zeroes whereas in the old code it is the last
 *     column or row.
 *
 *
@@ -94,11 +94,11 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       uax(ix,iy,is) = fna(ix,iy,0,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
-     1	 hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
+     1   hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
      &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
       uay(ix,iy,is) = fna(ix,iy,1,1,is)*
      &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1	 hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
+     1   hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
      &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
       uaz(ix,iy,is) = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
       crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+

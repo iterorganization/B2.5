@@ -13,8 +13,9 @@
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -46,6 +47,7 @@
       integer, save :: iout = 0
       integer, save :: use_eirene, area_fix
       integer, save :: fchin_in_core = 0                                  !srv 16.11.17
+      integer, save :: no_current = 0
       integer n2, ix, iy, is, is0, iamain
 #ifdef B25_EIRENE
       integer ia, im
@@ -69,7 +71,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   hy1                                                              !srv 07.07.14
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                  !srv 07.07.14
 *   ..initialisation
       data use_eirene/0/, area_fix/3/
@@ -89,6 +91,7 @@
         call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
         call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
         call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
+        call ipgeti ('b2tfhe_no_current', no_current)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -98,6 +101,7 @@
       facdriftm = maxval(facdrift)                                        !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
+     &               .and. no_current.eq.0
      .               .and. fch_ion_neutral .ne. 0.0e0_R8) then            !srv 26.07.06 01.07.99
         if (use_eirene.ne.0) then
           fchin = 0.0e0_R8                                                !srv 15.02.11 {

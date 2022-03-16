@@ -29,12 +29,16 @@
 #endif
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_file
+      use b2mod_xerset
+      use b2mod_ipmain
 #ifdef B25_EIRENE
+      use eirmod_wneutrals
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
       use eirmod_cinit
-     , , only: eirene_init_cinit
+     , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt
      , , only: iunout
       use eirmod_eirbra
@@ -45,9 +49,6 @@
      & , smo_eir => smo
 #endif
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
@@ -67,14 +68,17 @@
 *   ..local variables
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
       integer iflag
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
 #ifndef NAGF95
+#ifndef NAGFOR
       integer iargc
+#endif
 #endif
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
@@ -84,14 +88,18 @@
       real (kind=R8) :: dtim = 1.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
+      character b2fstate_only*256
+#ifdef B25_EIRENE
       character extension*4
-      character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists
-*   ..procedures
       integer lnblnk
-      logical is_comment
-      external lnblnk, is_comment
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external lnblnk
+#endif
+      character cnamip*80, cvalip*80, line*500
+      logical file_open, file_exists, todo
+*   ..procedures
+      logical is_comment, streql
+      external is_comment, streql
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -102,22 +110,13 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2co_mpi_child'
-      endif
-#endif
       call prgini ('b2co')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
       call cfopen (ninp(2),'b2fpardf','old','un*formatted')
       call cfopen (ninp(3),'b2fstati','old','un*formatted')
+#ifndef NAGFOR
       call xertst (iargc().ge.1,
      &  'program should be supplied with a state number')
 #ifdef USE_PXFGETENV
@@ -125,8 +124,12 @@
 #else
       call getarg(1,arg)
 #endif
+#else
+      call xertst (command_argument_count().ge.1,
+     &  'program should be supplied with a state number')
+      call get_command_argument(1,arg,lenval,ierror)
+#endif
       savefile=arg
-      extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
       call cfopen (ninp(4), trim(savefile), 'old','unformatted')
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(1),'b2co.files','new','formatted')
@@ -258,6 +261,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,file_exists)
       if (file_exists.and.use_eirene.ne.0) then
@@ -309,14 +313,15 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nx,ny,ns)
-      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
@@ -337,11 +342,8 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         nnmoli = 0
       else
 #ifdef B25_EIRENE
-#ifndef HPUX
-        filename='fort.44.'//extension
-#else
-        filename='ftn44.'//extension
-#endif
+        extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
+        filename=fort_lc//'44.'//extension
         call find_file(filename,file_exists)
 #else
         file_exists = .false.
@@ -359,26 +361,59 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       if (ank_tracing.ne.0) then
         call b2trci(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
         call b2trcc(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-        call b2filei(0,ns,nnreg(0))
-        call b2filec(0,ns,nnreg(0))
+        call b2filei(ns,nnreg(0))
+        call b2filec
       end if
 *   ..rewrite NetCDF files
+#ifdef NO_GETENV
+      todo=.true.
+#else
+#ifdef NAGFOR
+      call get_environment_variable('B2FSTATE_ONLY',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('B2FSTATE_ONLY',
+     .                           value=b2fstate_only)
+      elseif (ierror.eq.1) then
+        b2fstate_only='no'
+      endif
+#else
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
+#else
+      call getenv ('B2FSTATE_ONLY', b2fstate_only)
+#endif
+#endif
+      todo=.not.streql(b2fstate_only,'yes')
+#endif
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (b2time.gt.0 .or. ntim_batch.gt.0) then
+      if (todo.and.b2time.gt.0) then
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, tim)
+          call b2co_time_cdf(nx, ny, ns, tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
      .               'no b2time.nc file found'
         end if
       end if
+      if (todo.and.ntim_batch.gt.0) then
+        filename='b2batch.nc'
+        call find_file(filename,file_exists)
+        if(file_exists) then
+          write(*,*) 'Truncating ', trim(filename)
+          call b2co_time_cdf(nx, ny, ns, tim, .true.)
+          write(*,*) 'Returned from b2co_time_cdf'
+        else
+          write(*,*) 'Skipped calling b2co_time_cdf because '//
+     .               'no b2batch.nc file found'
+        end if
+      end if
       call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
-      if (b2wall_netcdf.gt.0) then
+      if (todo.and.b2wall_netcdf.gt.0) then
         filename='b2wall.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -391,7 +426,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       call ipgeti ('b2mndr_tally', tally)
-      if (tally.gt.0) then
+      if (todo.and.tally.gt.0) then
         filename='b2tallies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -404,12 +439,12 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       call ipgeti ('b2mndr_mvnum', mvnum)
-      if (mvnum.gt.0) then
+      if (todo.and.mvnum.gt.0) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nx, ny, nx, nnatmi, nnmoli, tim)
+          call b2co_movies_cdf(nx, ny, ns, nnatmi, nnmoli, tim)
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//
@@ -438,10 +473,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call dealloc_b2mod_wall_init
       call dealloc_anomalous_transport
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2co'
 
 *-----------------------------------------------------------------------

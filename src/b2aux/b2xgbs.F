@@ -1,5 +1,6 @@
       subroutine b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -16,7 +17,7 @@
       real (kind=R8) ::
      *   t1, p0x, p0y, p1x, p1y
       intrinsic abs, sqrt, min, max
-      external subini, subend, xertst, b2xvsg, b2xvff, ipgeti
+      external xertst, b2xvsg, b2xvff, ipgeti
       real (kind=R8) ::
      *   trim1, norm, cosang
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
@@ -78,6 +79,7 @@
       subroutine b2xgbs1 (nx1, ny1, 
      . bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer nx1, ny1
       integer bottomiy1(-1:nx1,-1:ny1)
@@ -97,7 +99,7 @@
       real (kind=R8) ::
      *   t1, p0x, p0y, p1x, p1y
       intrinsic abs, sqrt, min, max
-      external subini, subend, xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
+      external xertst, b2xvsg, b2xvfx, b2xvfy1, ipgeti
       real (kind=R8) ::
      *   trim1, norm, cosang
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)

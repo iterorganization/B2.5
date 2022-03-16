@@ -12,6 +12,7 @@
      &                       lres   , lstan  , lptn
      &                     )
       use b2mod_types
+      use b2mod_subsys
       implicit none
 c-----------------------------------------------------------------------
 c
@@ -292,8 +293,6 @@ c-----------------------------------------------------------------------
       character cptn_stack(ndstack)*80
       character cdonors(ndonors)*12
 c-----------------------------------------------------------------------
-      data      cterm /'------------------------------------------------
-     &--------------------------------'/
       data      cclass/'/ACD','/SCD','/CCD','/PRB','/PRC',
      &                 '/QCD','/XCD','/PLT','/PLS','/ZCD',
      &                 '/YCD','/ECD'/
@@ -306,7 +305,7 @@ c-----------------------------------------------------------------------
       data      cdonors/'HYDROGEN    ','DEUTERIUM   ','TRITIUM     ',
      &                  'HELIUM      '/
 c-----------------------------------------------------------------------
-      external  subini, subend, xerrab
+      external  xerrab
 c
 c-----------------------------------------------------------------------
 c  search for 'prnt' and count number of dash delimiters
@@ -324,17 +323,18 @@ c-----------------------------------------------------------------------
        lptn   = .false.
        nptnl  = 0
 
-   10  read(iunit,'(1a80)') cstrg
-       ic = ic + 1
+      cterm = repeat('-',80)
 
+   10 read(iunit,'(1a80)') cstrg
+      ic = ic + 1
 
-       call xxcase(cstrg,cstrgl,'lc')
+      call xxcase(cstrg,cstrgl,'lc')
 
-       if((index(cstrgl,csrch1).le.0) .and.
-     &    (index(cstrgl,csrch2).le.0) .and.
-     &    (index(cstrgl,csrch4).le.0) .and.
-     &    (index(cstrgl,csrch5).le.0) .and.
-     &    (index(cstrgl,csrch3).le.0)) then
+      if((index(cstrgl,csrch1).le.0) .and.
+     &   (index(cstrgl,csrch2).le.0) .and.
+     &   (index(cstrgl,csrch4).le.0) .and.
+     &   (index(cstrgl,csrch5).le.0) .and.
+     &   (index(cstrgl,csrch3).le.0)) then
 
             if(index(cstrgl,cdash).gt.0) then
                 ndash_line = ndash_line+1
@@ -488,7 +488,7 @@ c-----------------------------------------------------------------------
            enddo
        endif
 
-       write(i4unit(-1),*) 'xxdata_11.for:iz0,is1min,is1max=',
+       write(i4unit(-1),*) 'xxdata_11:iz0,is1min,is1max=',
      &                     iz0,is1min,is1max
 c-----------------------------------------------------------------------
 c  read connection vector if partial file
@@ -903,9 +903,11 @@ C
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
-      CHARACTER  CH0*1   , CH9*1   , BLANK*1   , CPLUS*1   , CMINUS*1
+      CHARACTER  CH0*1  , CH9*1  , BLANK*1  , CPLUS*1  , CMINUS*1  ,
+     &           CCOLON*1
 C-----------------------------------------------------------------------
-      PARAMETER( CH0='0', CH9='9', BLANK=' ', CPLUS='+', CMINUS='-' )
+      PARAMETER( CH0='0', CH9='9', BLANK=' ', CPLUS='+', CMINUS='-',
+     &           CCOLON=':' )
 C-----------------------------------------------------------------------
       CHARACTER  STR*(*)
 C-----------------------------------------------------------------------
@@ -957,6 +959,8 @@ C
             RETURN
          ENDIF
 C
+      IF ( STR(I1:I1).EQ.CCOLON ) I1 = I1 + 1
+
       IF   ( ( STR(I1:I1).EQ.CPLUS  )
      &                  .OR.
      &       ( STR(I1:I1).EQ.CMINUS ) ) IS=1
@@ -1228,7 +1232,7 @@ C----------------------------------------------------------------------
        i=1
 
        if (type.eq.'UC' .or. type.eq.'uc') then
-10        if    ( ichar(input(i:i)) .ge. ichar('a')
+   10     if    ( ichar(input(i:i)) .ge. ichar('a')
      &    .and.   ichar(input(i:i)) .le. ichar('z')
      &          ) output(i:i)=char(ichar(input(i:i))+ichar('A')
      &                                              -ichar('a'))
@@ -1238,7 +1242,7 @@ C----------------------------------------------------------------------
        endif
 
        if (type.eq.'LC' .or. type.eq.'lc') then
-20        if    ( ichar(input(i:i)) .ge. ichar('A')
+   20     if    ( ichar(input(i:i)) .ge. ichar('A')
      &    .and.   ichar(input(i:i)) .le. ichar('Z')
      &          ) output(i:i)=char(ichar(input(i:i))+ichar('a')
      &                                              -ichar('A'))
@@ -1257,6 +1261,7 @@ C----------------------------------------------------------------------
      &                    cstrg  ,
      &                    ncptn_stack     , cptn_stack
      &                  )
+       use b2mod_subsys
        implicit none
 c-----------------------------------------------------------------------
 c
@@ -1364,7 +1369,7 @@ c-----------------------------------------------------------------------
       character cptna(idptnl)*1024
       character cptn_stack(ndstack)*80
 c-----------------------------------------------------------------------
-      external  subini, subend, xerrab
+      external  xerrab
 c
 c-----------------------------------------------------------------------
 c  read partition data if present
@@ -1476,7 +1481,8 @@ c     &                                 i,nwords,nptn(i)
            do j=1,nptn(i)
               strg=' '
               strg=cptna(i)(ifirsta(2*j-1)+5:ilasta(2*j-1)+5)
-c              write(i4unit(-1),*) 'xxrptn-xxslen:strg=',strg
+c              write(i4unit(-1),'(2a)') 'xxrptn-xxslen: strg= ',
+c     &                                            trim(strg)
               call xxslen(strg,ifirst,ilast)
               read(strg(ifirst+1:ilast),'(i2)') iptna(i,j)
               strg = ' '
@@ -1484,8 +1490,9 @@ c              write(i4unit(-1),*) 'xxrptn-xxslen:strg=',strg
 
               iwordsc = idword
               nfirstc = 1
-c              write(i4unit(-1),*) 'xxrptn-xxword:strg=',strg
-c              write(i4unit(-1),*) 'xxrptn-xxword:nfirstc=',nfirstc
+c              write(i4unit(-1),'(2a)') 'xxrptn-xxword: strg= ',
+c     &                                            trim(strg)
+c              write(i4unit(-1),*) 'xxrptn-xxword: nfirstc= ',nfirstc
               call xxword( strg , ' '    , nfirstc ,
      &                     iwordsc  ,
      &                     ifirstac , ilastac , nwordsc

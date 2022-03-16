@@ -6,10 +6,8 @@
       use b2mod_geo
       use b2mod_geo2
       use b2mod_indirect
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -31,7 +29,7 @@
 *
 *     The input units are:
 *     ninp(0): formatted; provides geometric parameters.
-*     ninp(1): un*formatted; old specification of the geomrey
+*     ninp(1): un*formatted; old specification of the geometry
 *
 *     The output units are:
 *     nout(0): formatted; provides summary printed output.
@@ -84,12 +82,9 @@
 
 *   ..local variables
       integer ninp(0:1), nout(0:1), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
 *   ..initialise input/output units
       data ninp/50,51/
       data nout/60,61/
@@ -112,16 +107,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2fgmtry_mod_mpi_child'
-      endif
-#endif
       call prgini ('b2fgmtry_mod')
 *   ..open files
       call cfopen (ninp(0),'b2fgmtry_mod.dat','old','formatted')
@@ -149,10 +134,6 @@ c     call alloc_b2mod_geo2(nx1,ny1,nncutmax)
 
 * ..end of computation
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2fgmtry_mod'
 
 *-----------------------------------------------------------------------

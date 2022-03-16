@@ -3,6 +3,7 @@
       use b2mod_indirect
       use b2mod_balance !djm Jan2017
      & , only : b2nxdv_smo0to3, balance_netcdf
+      use b2mod_subsys
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
@@ -15,8 +16,9 @@
 *     ------------------------------------------------------------------
       integer ncall, ix, iy
       integer, save :: style = 1                                       !srv 26.10.08
+      !$OMP THREADPRIVATE(ncall, style)
       save ncall
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 *     ------------------------------------------------------------------
@@ -42,10 +44,10 @@ cdjm Jan2017 Keep source at the start to calculate total change for balance rout
       else
        do iy = 0, ny-1
         do ix = 0, nx-1
-	 if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !sv 26.11.02  !sv 01.07.05
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !sv 26.11.02  !sv 01.07.05
           smb(ix,iy,0) = smb(ix,iy,0)-smqb(ix,iy,1)*smqdu(ix,iy)-
      &                  smqb(ix,iy,3)*rob(ix,iy)*smqdu(ix,iy)
-	 endif                                                         !sv 26.11.02
+         endif                                                         !sv 26.11.02
         enddo
        enddo
       endif

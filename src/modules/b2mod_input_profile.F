@@ -10,6 +10,7 @@
      &             balance_netcdf
       use b2mod_geo_corner
      &     , only: nmdpl
+      use b2mod_subsys
       implicit none
       integer nrr, nxx, nss
       integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
@@ -137,7 +138,7 @@
    
       if(nc.eq.0) then
         if(sources_time_mod.gt.0.0_R8) then
-          elm_count=tim/sources_time_mod
+          elm_count=int(tim/sources_time_mod)
         else
           elm_count=0
         endif
@@ -158,7 +159,7 @@
      1     sources_time_switch,int(tim/sources_time_mod),elm_count
           if(mod(tim,sources_time_mod).gt.sources_time_switch.or.
      1     int(tim/sources_time_mod).gt.elm_count) then
-            elm_count=tim/sources_time_mod 
+            elm_count=int(tim/sources_time_mod)
             call read_source_profile
             new_files = .true.
           endif
@@ -166,7 +167,7 @@
       endif
  
       if (new_files) then
-        if (maxval(nsdata).gt.0) open (96,file='dx2')
+        if (maxval(nxdata).gt.0) open (96,file='dx2')
         if (maxval(nxdata).gt.0) open (95,file='dx1')
         if (maxval(nsdata).gt.0) open (94,file='da1')
         if (maxval(nsdata).gt.0) open (93,file='da2')
@@ -279,17 +280,17 @@
      &             'AXIAL-SOURCES: sna ',spec,xr(ix),xf(ix)
                   if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: smo ',spec,xr(ix),xf(ix)
-                  if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.3) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: she ',xr(ix),xf(ix)
-                  if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.4) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: shi ',xr(ix),xf(ix)
-                  if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.5) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
-                  if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+                  if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
+                  if (new_files) write (96,*) xr(ix),xf(ix)
                 endif
               endif
-              if (new_files) write (96,*) xr(ix),xf(ix)
             enddo
             if (nc.eq.0.or.debug) then
               if (ndat.gt.0) then
@@ -297,19 +298,19 @@
      &           'PROFILE-SOURCES: sna ',spec,pr(iy),pf(iy)
                 if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: smo ',spec,pr(iy),pf(iy)
-                if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.3) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: she ',pr(iy),pf(iy)
-                if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.4) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: shi ',pr(iy),pf(iy)
-                if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.5) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
-                if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+                if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
+                if (new_files) write (94,*) pr(iy),pf(iy)
               endif
             endif
-            if (new_files) write (94,*) pr(iy),pf(iy)
           enddo
- 1        continue
+    1     continue
         enddo
       enddo
 ! Calculation of the total power input
@@ -348,10 +349,20 @@
       endif
         
       goto 100
- 98   write (*,*) 'Error in computing axial profile'
+   98 write (*,*) 'Error in computing axial profile'
       goto 100
- 99   write (*,*) 'Error in reading the dsp file'
- 100  continue
+   99 write (*,*) 'Error in reading the dsp file'
+  100 continue
+
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 1, sne0)
+      call b2xzdd (nx, ny, 3, she0)
+      call b2xzdd (nx, ny, 3, shi0)
+      call b2xzdd (nx, ny, 3, sch0)
 
       ext_sna(:,:,:)=sna0(:,:,0,:)
       ext_smo(:,:,:)=smo0(:,:,0,:)
@@ -390,6 +401,8 @@ cdjm Jan2017 Keep linearised sources for balance
 
 !  read the profile data
       filename=sources_filename
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(92,file=filename)
@@ -408,8 +421,9 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 !     write(*,profile)
       return
-
- 999  call xerrab ('Error while reading PROFILE namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading PROFILE namelist!')
+#endif
       end subroutine read_source_profile
 
       end subroutine source_input
@@ -441,7 +455,8 @@ cdjm Jan2017 Keep linearised sources for balance
       real(kind=R8), dimension(-1:nx,-1:ny) :: 
      &    hci0,hce0,sig0,alf0,ne,te,ti
        
-      real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
+      real(kind=R8), save :: scaling_width(nscale)
+      real(kind=R8), save :: scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr),
      &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1)
@@ -480,7 +495,7 @@ cdjm Jan2017 Keep linearised sources for balance
         call read_transport_input         
 !  read the profile data
         if(transport_time_mod.gt.0.0_R8) then
-          elm_count=tim/transport_time_mod
+          elm_count=int(tim/transport_time_mod)
         else
           elm_count=0
         endif
@@ -503,7 +518,7 @@ cdjm Jan2017 Keep linearised sources for balance
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
+            elm_count=int(tim/transport_time_mod)
             filename=transport_filename
             new_files = .true.
             call read_transport_input
@@ -520,8 +535,8 @@ cdjm Jan2017 Keep linearised sources for balance
         ixwidth(isc) = scaling_ix_end(isc) - scaling_ix_begin(isc) + 1
         ixmean(isc) = (scaling_ix_end(isc) + scaling_ix_begin(isc)) / 2
         if (scaling_width(isc).eq.0.0_R8 .and. ixwidth(isc).gt.1)
-     $    scaling_width(isc) = 0.5_R8*
-     $      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
+     >   scaling_width(isc) = 0.5_R8*
+     .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
       if (elm_time_period.gt.0.)then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
@@ -757,15 +772,15 @@ cdjm Jan2017 Keep linearised sources for balance
 
 !           deallocate(f,r,pr,pf,felm,pelm)
             iloop=iloop+1
-  1         continue
+    1       continue
           enddo
         enddo
       enddo
        
        
       goto 100
- 99   write (*,*) 'Error in reading the dsp file'
- 100  continue
+   99 write (*,*) 'Error in reading the dsp file'
+  100 continue
        
       if (new_files) then
         close(93)
@@ -800,6 +815,8 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
+      transport_time_mod=0.0_R8
+      transport_time_switch=0.0_R8
       call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
@@ -816,7 +833,9 @@ c*** Clear data to forget previous profiles
         call xerrab (' No '//trim(filename))
       endif
       return
- 999  call xerrab ('Error while reading TRANSPORT inputfile!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading TRANSPORT inputfile!')
+#endif
       end subroutine read_transport_input
 
       end subroutine transport_input
@@ -838,7 +857,7 @@ c*** Clear data to forget previous profiles
       integer ixref, iyref
       character*256 filename
       logical exist
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
@@ -875,13 +894,13 @@ c*** Clear data to forget previous profiles
       end if
       i = 0
       nya = 0
- 91   continue
+   91 continue
       i = i + 1
       read (91,*,END=92,ERR=97) prtmp
       prdsa(i) = prtmp
       nya = i
       if (i.lt.ny+2) goto 91
- 92   continue
+   92 continue
       nfitanf=1
       IFA=0
       do i=1,nya
@@ -909,9 +928,9 @@ c*** Clear data to forget previous profiles
         pr(i)=pra(nfitanf-1+i)
       enddo
       goto 108
- 97   ifa=1
+   97 ifa=1
          
- 108  continue
+  108 continue
       close (91)
       ncall=ncall+1
       call subend ()
@@ -933,7 +952,7 @@ c*** Clear data to forget previous profiles
       integer jxi, jxa, jsep, ncall
       integer ixref, iyref
       integer ireg
-      external ipgetr, subini, subend
+      external ipgetr
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, ncall
       data ncall/0/
@@ -1010,9 +1029,9 @@ c*** Clear data to forget previous profiles
 !     allocate (pr(1:ndim))
         
       goto 108
- 97   ifa=1
+   97 ifa=1
          
- 108  continue
+  108 continue
       ncall=ncall+1
       call subend ()
       return

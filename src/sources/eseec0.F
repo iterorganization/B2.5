@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_geo
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ix, iy, nx, ny, ns, ismain, material, diagno
@@ -22,9 +23,9 @@
 *.documentation
 *
 *  1. purpose
-*     
-*     This subroutine is an interface between the b2 code and 
-*     the -average- subroutine.  It receives data from b2 code and 
+*
+*     This subroutine is an interface between the B2 code and
+*     the -average- subroutine. It receives data from the B2 code and
 *     returns the average value over the emission angle
 *     of the ratio mu = g/g0, where g0 is the secondary electron emission
 *     coefficient for a given surface.
@@ -77,7 +78,7 @@
       save ncall
 *   ..procedures
       intrinsic exp, log, sqrt, abs, asin, sin
-      external subini, subend, xertst, average
+      external xertst, average
 *   ..initialisation
       data ncall/0/
 *     

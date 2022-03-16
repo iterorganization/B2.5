@@ -8,6 +8,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -62,18 +63,20 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
       integer, save :: iadd_9 = 1                                      !srv 02.01.07
-      integer, save :: last_ion
       integer, save :: iout = 0
+      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
+      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
       integer ireg, ileft, ibot
       save ncall
+      !$OMP THREADPRIVATE(ncall)
       real (kind=R8) ::
-     *   t0, t1, t2, t3
+     *   t0, t1
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
       real (kind=R8) ::
      *   scalr
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                 !srv 02.01.07
       scalr(t0) = 1.0e0_R8  ! t0                                      !srv 02.01.07
 *   ..initialization
@@ -92,6 +95,12 @@
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
        call ipgeti ('b2ush9_iout', iout)
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -105,8 +114,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of ne, ni, te, ti
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')

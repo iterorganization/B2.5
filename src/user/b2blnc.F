@@ -11,7 +11,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 #include "DIMENSIONS.F"
 c
@@ -801,6 +801,5 @@ c
       return
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
-  710 format(a1,3x,3i8/3x,a)
 c======================================================================
       end subroutine b2blnc

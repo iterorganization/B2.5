@@ -6,6 +6,7 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
+      use b2mod_subsys
       use eirmod_ctrig
       implicit none
       character*(*) filename
@@ -16,11 +17,11 @@ c
       parameter (lngarr=100 000)
       real (kind=R8) ::
      *   xvalues(lngarr),yvalue(lngarr),yvalues(lngarr),
-     1   xmin,xmax,ymin,ymax,x1,y1,z1,x2,y2,z2,chord_integral
+     1   xmin,xmax,ymin,ymax,x1,y1,z1,x2,y2,z2,chord_tria_integral
       integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_integral,xerrab,subini,subend
+      external lnblnk,chord_tria_integral,xerrab
 
-      call subini('process_chords_boxcar')
+      call subini('process_eirene_chords_boxcar')
       do is=0,nedim(2,iewrk)-1
         if(.not.open_file(99,filename,
      1   'data.local/chords|data/chords')) then
@@ -34,7 +35,7 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalue(inpts)=chord_integral(ntrii,nrknot,nx,ny,
+        yvalue(inpts)=chord_tria_integral(ntrii,nrknot,nx,ny,
      1   eirene_stack(1,is,iewrk),
      2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
      3   npoints,x1,y1,z1,x2,y2,z2,vector)

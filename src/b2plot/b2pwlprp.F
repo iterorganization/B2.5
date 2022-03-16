@@ -31,22 +31,22 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 #include <DIMENSIONS.F>
       real (kind=R8) ::
      *   d,x
-      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,ks,
-     ,        kkb,kke,kks,n_atg,n_targ,
-     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),l_atg(ntrgsx),
+      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,
+     ,        kkb,kke,itmp,
+     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical lim_cnf,checked
+      logical lim_cnf
 c
-      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
+      real (kind=R8) :: width,distance,distmin,xx1,xx2,yy1,yy2,
      ,                  distmin1
       integer, allocatable :: lwldlis_old(:,:), nwldlis_old(:)
       logical, allocatable :: istarget(:)
-      integer, allocatable :: ind(:)
-      real, allocatable :: lis_ind(:)
+      integer, allocatable :: lis_ind(:)
       data width /1.0_R8/
       save width
 c*** wsrttol : a tolerance parameter for defining coinciding segments
@@ -55,12 +55,12 @@ c*** wsrttol : a tolerance parameter for defining coinciding segments
       parameter (wsrttol=2.0e-4_R8)
 c<<<
       integer lun_w, lfn_hlp
-      parameter (lun_w=76, lfn_hlp=mlblprtx+9)
+      parameter (lun_w=96, lfn_hlp=mlblprtx+9)
       character tab, fn_hlp*(lfn_hlp)
 c>>>
       data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
       intrinsic mod
-      external ipgetr, subini, subend, xerrab
+      external ipgetr, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call ipgetr ('b2agmt_1d_width', width)
@@ -68,17 +68,22 @@ c<<<
       tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if(nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      print '(a,8i6)','ltrgedge = ',ltrgedge
 c      print '(a,8i6)','mtrgedge = ',mtrgedge
 c
 cc+++ layout-a.dat: wall as read from DG
 c      open(lun_w,file='layout-a.dat')
-c      write(lun_w,'(6a)') '#Wall layout (dg): ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (dg): ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp !{
-c       write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c       write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c       write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c       write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)
@@ -147,16 +152,16 @@ c      print *,'nwldprt =',nwldprt
 c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 c
 c      open(lun_w,file='layout-d.dat')
-c      write(lun_w,'(6a)') '#Wall layout (DG) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (DG) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp
-c        write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c        write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c        write(lun_w,*)
 c      end do
 c      close(lun_w)
@@ -175,10 +180,15 @@ c*** Check the topology of the grid and the list of target edges
 
       if(ntrgsa.gt.0) then !{
         ntrgs=ntrgsa
-        do i=1,ntrgs !{
-          ltrgedge(1,i)=mtrgedge(1,i)
-          ltrgedge(2,i)=mtrgedge(2,i)
-        end do !}
+        if (ntrgs.eq.1) then
+          if (mtrgedge(2,1).gt.0) ltrgedge(1,1)=mtrgedge(2,1)
+          if (mtrgedge(1,1).gt.0) ltrgedge(2,1)=mtrgedge(1,1)
+        else
+          do i=1,ntrgs !{
+            if (mtrgedge(1,i).gt.0) ltrgedge(1,i)=mtrgedge(1,i)
+            if (mtrgedge(2,i).gt.0) ltrgedge(2,i)=mtrgedge(2,i)
+          end do !}
+        end if
       end if !}
       ntrgts=2
       if(nncut.eq.2) ntrgts=4
@@ -197,8 +207,8 @@ c*** use the obsolete jedg[io][12] parameters
       end if !}
 c*** Check the target edge specifications and make them clear
       do i=1,ntrgts !{
-        if(ltrgedge(1,i).le.0) ltrgedge(2,i)=0
-        if(ltrgedge(2,i).le.0) ltrgedge(1,i)=0
+        if(ltrgedge(1,i).lt.0) ltrgedge(1,i)=0
+        if(ltrgedge(2,i).lt.0) ltrgedge(2,i)=0
       end do !}
 c*** No PFR for limiter configuration
       if(lim_cnf) then !{
@@ -213,10 +223,10 @@ c*** Prepare the list of grid indices for the target flux faces
       lpfrpos(1)=leftcut(1)-1
       k=2
       if(ntrgts.eq.4) then
-        ltrgpos(2)=nxtl
+        ltrgpos(2)=nxtl-1
         lseppos(2)=topcut(2)-1
         lpfrpos(2)=leftcut(2)
-        ltrgpos(3)=nxtr+1
+        ltrgpos(3)=nxtr
         lseppos(3)=topcut(2)-1
         lpfrpos(3)=rightcut(2)-1
         k=4
@@ -224,8 +234,13 @@ c*** Prepare the list of grid indices for the target flux faces
       ltrgpos(k)=nx-1 !csc
       lseppos(k)=topcut(nncut)-1
       lpfrpos(k)=rightcut(1)
-c      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
-c      print *,'%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
+#ifdef DBG
+      print '(a,8i6)','ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
+      print '(a,8i6)','mtrgedge: ',((mtrgedge(i,j),i=1,2),j=1,ntrgts) !###
+      print '(a,4i6)','%% ltrgpos : ',(ltrgpos(i),i=1,ntrgts)         !###
+      print '(a,4i6)','%% lseppos : ',(lseppos(i),i=1,ntrgts)         !###
+      print '(a,4i6)','%% lpfrpos : ',(lpfrpos(i),i=1,ntrgts)         !###
+#endif
 
 c*** Sort the segments in the lists of the "wall zones"
 c*** The shadowing structure must be closed, therefore it starts from
@@ -239,25 +254,30 @@ c*** segment input from DG does not coincide with the corresponding
 c*** segment saved by Eirene, its number becomes negative, and no
 c*** neutral-related data will be plotted for it.
 
-c<<<
+c#ifdef DBG
 c      print *,'After sorting. nwldprt =',nwldprt
 c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c        print '(a,i5/(5x,15i5))','leirlis :',il,
 c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
-c>>>
+c#endif
 c*** Check the shadowing structure - it must be closed
 c
       n=nwldlis(1)
+      if (n.eq.0) then
+        write(*,*) 'The shadowing structure was not defined!'
+        call subend ()
+        return
+      end if
       l=iabs(lwldlis(1,1))
       k=iabs(lwldlis(n,1))
       if(lwlddir(1)) then
-        if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or. 
+        if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or.
      .     abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
           write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
@@ -269,7 +289,7 @@ c
           return
         end if
       else
-        if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or. 
+        if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or.
      .     abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
           write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
@@ -294,14 +314,18 @@ cc>>>
       do i=1,nytg
         j=lytg+i
         k=nytg*(ntrgts-1)
-        pp1(1,i+lppp)=crx(0,ny-i,2)
-        pp1(2,i+lppp)=cry(0,ny-i,2)
-        pp2(1,i+lppp)=crx(0,ny-i,0)
-        pp2(2,i+lppp)=cry(0,ny-i,0)
-        pp1(1,i+lppp+k)=crx(nx,j-1,0)
-        pp1(2,i+lppp+k)=cry(nx,j-1,0)
-        pp2(1,i+lppp+k)=crx(nx,j-1,2)
-        pp2(2,i+lppp+k)=cry(nx,j-1,2)
+        if (ntrgts.gt.1.or.ltrgpos(1).eq.-1) then
+          pp1(1,i+lppp)=crx(0,ny-i,2)
+          pp1(2,i+lppp)=cry(0,ny-i,2)
+          pp2(1,i+lppp)=crx(0,ny-i,0)
+          pp2(2,i+lppp)=cry(0,ny-i,0)
+        end if
+        if (ntrgts.gt.1.or.ltrgpos(1).eq.nx-1) then
+          pp1(1,i+lppp+k)=crx(nx,j-1,0)
+          pp1(2,i+lppp+k)=cry(nx,j-1,0)
+          pp2(1,i+lppp+k)=crx(nx,j-1,2)
+          pp2(2,i+lppp+k)=cry(nx,j-1,2)
+        end if
       end do
       if(ntrgts.eq.4) then !{
         k=nxtl
@@ -314,7 +338,7 @@ cc>>>
           pp1(1,i+lppp+2*nytg)=crx(nxtr,ny-i,3)
           pp1(2,i+lppp+2*nytg)=cry(nxtr,ny-i,3)
           pp2(1,i+lppp+2*nytg)=crx(nxtr,ny-i,1)
-          pp2(2,i+lppp+2*nytg)=crx(nxtr,ny-i,1)
+          pp2(2,i+lppp+2*nytg)=cry(nxtr,ny-i,1)
         end do !}
       end if !}
 c<<<
@@ -323,11 +347,11 @@ c     , (i,(pp1(j,i+1+lppp)   ,pp2(j,i+1+lppp)   ,j=1,2),
 c     ,    (pp1(j,i+1+lppp+ny),pp2(j,i+1+lppp+ny),j=1,2),i=0,ny-1)
 c
 c      open(lun_w,file='layout-g.dat')
-c      write(lun_w,'(6a)') '#Wall layout (g) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (g) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp+2*ny
-c        write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c        write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c        write(lun_w,*)
 c      end do
 c      close(lun_w)
@@ -335,15 +359,28 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-c      print *,'Before modification: ', jedge(1:4)
-c      print '((2(1x,a3,1p,4e12.4)))',
-c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
-c     ,          'o1',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
-c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
-c     ,          'o2',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2)
+c      if (nnreg(0).lt.8) then
+c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
+c        print '((2(1x,a3,1p,4e12.4)))',
+c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
+c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
+c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
+c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2)
+c      else
+c        print '(a,8i6)','Before modification: ', (ltrgedge(1:2,j),j=1,4)
+c        print '((2(1x,a3,1p,4e12.4)))',
+c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
+c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
+c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
+c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2),
+c     ,          'i3',(pp1(j,ltrgedge(1,3)),pp2(j,ltrgedge(1,3)),j=1,2),
+c     ,          'o3',(pp1(j,ltrgedge(2,3)),pp2(j,ltrgedge(2,3)),j=1,2),
+c     ,          'i4',(pp1(j,ltrgedge(1,4)),pp2(j,ltrgedge(1,4)),j=1,2),
+c     ,          'o4',(pp1(j,ltrgedge(2,4)),pp2(j,ltrgedge(2,4)),j=1,2)
+c      end if
 
       do i=1,ntrgts !{
-        if (mod(i,2).eq.1) then
+        if (mod(i,2).eq.1.and.ntrgts.ge.2) then
           m_hlp(i)=ltrgpos(i)+1
         else
           m_hlp(i)=ltrgpos(i)
@@ -359,16 +396,27 @@ c        print *,'i,k,ltrgedges: ',i,k,ltrgedge(1,i),ltrgedge(2,i) !###
           l=ltrgedge(k,i)
 c          print *,'pp1: l,ix,iy ',l,ix,iy !###
           if(l.gt.0) then !{
-            pp1(1,l)=crx(ix,iy,0)
-            pp1(2,l)=cry(ix,iy,0)
+            if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+              iy=ny-1-iy
+              pp1(1,l)=crx(ix,iy,3)
+              pp1(2,l)=cry(ix,iy,3)
+            else
+              pp1(1,l)=crx(ix,iy,0)
+              pp1(2,l)=cry(ix,iy,0)
+            end if
           end if !}
           k=3-k
           iy=ny-1-iy
           l=ltrgedge(k,i)
 c          print *,'pp2: l,ix,iy ',l,ix,iy !###
           if(l.gt.0) then !{
-            pp2(1,l)=crx(ix,iy,3)
-            pp2(2,l)=cry(ix,iy,3)
+            if (ntrgts.eq.1 .and. ltrgpos(1).eq.nx-1) then
+              pp2(1,l)=crx(ix,iy,0)
+              pp2(2,l)=cry(ix,iy,0)
+            else
+              pp2(1,l)=crx(ix,iy,3)
+              pp2(2,l)=cry(ix,iy,3)
+            end if
           end if !}
           k=3-k
           iy=ny-1-iy
@@ -379,24 +427,24 @@ c          print *,'pp2: l,ix,iy ',l,ix,iy !###
 
 c<<<
 c      open(lun_w,file='layout-h.dat')
-c      write(lun_w,'(6a)') '#Wall layout (h) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Wall layout (h) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      do i=1,lppp !{
-c        write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c        write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c        write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c+++ layout-t.dat: the grid edges - must ~ coincide with targets
 c      open(lun_w,file='layout-t.dat')
-c      write(lun_w,'(6a)') '#Target layout (h) : ',label
-c      write(lun_w,'(6a)') '#R',tab,'Z'
+c      write(lun_w,'(2a)') '# Target layout (h) : ',trim(label)
+c      write(lun_w,'(3a)') '# R',tab,'Z'
 c      k=lppp
 c      do j=1,ntrgts !{
 c       if(pp1(1,k+1).gt.0. .or. pp2(1,k+1).gt.0) then !{
 c         do i=k+1,k+nytg !{
-c           write(lun_w,*) pp1(1,i),tab,pp1(2,i)
-c           write(lun_w,*) pp2(1,i),tab,pp2(2,i)
+c           write(lun_w,'(1p,2(1x,e15.8))') pp1(1,i),pp1(2,i)
+c           write(lun_w,'(1p,2(1x,e15.8))') pp2(1,i),pp2(2,i)
 c           write(lun_w,*)
 c         end do !}
 c       end if !}
@@ -513,7 +561,7 @@ c*** Target still open...
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-                write(*,*) 'lwldlis :'
+                write(*,*) 'lwldlis : ',pltzlbl(il)
                 write(*,*) (lwldlis(i1,il),i1=1,n)
                 call xerrab ('Missing CCW edge in b2pwlprp')
               end if !}
@@ -720,14 +768,14 @@ c              print *,'il,kn = ',il,kn                  !###
       end do !}
 c!###{
 c      print *,'After correction. nwldprt =',nwldprt
-c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+c      print '(a,(20i4))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt !{
-c       print '(a,i5/(5x,15i5))','lwldlis :',il,
+c       print '(a,i4,1x,a/(20i4))','lwldlis :',il,pltzlbl(il),
 c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
 c      end do !}
 c!###}
 
-ccc*** Order elements of original plot zone in CCW direction	  
+ccc*** Order elements of original plot zone in CCW direction
       do il=2,nwldprt
         allocate(lis_ind(nwldlis_old(il)))
         do i=1,nwldlis_old(il)
@@ -740,34 +788,34 @@ ccc*** Order elements of original plot zone in CCW direction
             k2=abs(lwldlis(i1,1))
             xx2=pp1(1,k2)
             yy2=pp1(2,k2)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin) then !{
-              distmin=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin) then !{
+              distmin=distance
               flagmin=i1
             end if !}
           end do
           lis_ind(i)=flagmin
-        end do	  
+        end do
         !Sort
         do i1=1,nwldlis_old(il)-1
           cont=minloc(lis_ind(i1:nwldlis_old(il)),1)
-          temp=lis_ind(cont+i1-1)
+          itmp=lis_ind(cont+i1-1)
           lis_ind(cont+i1-1)=lis_ind(i1)
-          lis_ind(i1)=temp
-          temp=lwldlis_old(cont+i1-1,il)
+          lis_ind(i1)=itmp
+          itmp=lwldlis_old(cont+i1-1,il)
           lwldlis_old(cont+i1-1,il)=lwldlis_old(i1,il)
-          lwldlis_old(i1,il)=temp
+          lwldlis_old(i1,il)=itmp
         end do
         deallocate(lis_ind)
       end do
-	  
-ccc*** Check if a plot zone has starting and ending element which is inside a target     
+
+ccc*** Check if a plot zone has starting and ending element which is inside a target
       do il=2,nwldprt
-        if (.not. istarget(il)) then 
+        if (.not. istarget(il)) then
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
           k1=abs(lwldlis_old(1,il));
           k2=abs(lwldlis_old(nwldlis_old(il),il))
-          flagmin=0			
+          flagmin=0
           do i1=1,nwldlis(1)
             ksel=abs(lwldlis(i1,1))
             if ((ksel .eq. k1) .or. (ksel .eq. k2)) then
@@ -779,10 +827,10 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
           end if
         end if
       end do
-	  	    
+
 ccc*** Substitute b2 cells only when overlapping original plot zone target elements
       do il=2,nwldprt !{
-	if (istarget(il)) then !{ inside target
+        if (istarget(il)) then !{ inside target
           k1=lwldlis_old(1,il)
           k2=lwldlis_old(nwldlis_old(il),il)
           distmin=1.0e5
@@ -795,18 +843,18 @@ ccc*** Substitute b2 cells only when overlapping original plot zone target eleme
             ksel=lwldlis(i,1)
             xx2=pp1(1,ksel)
             yy2=pp1(2,ksel)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin) then !{
-              distmin=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin) then !{
+              distmin=distance
               flagmin=i
             end if !}
             xx1=pp2(1,k2)
             yy1=pp2(2,k2)
             xx2=pp2(1,ksel)
             yy2=pp2(2,ksel)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin1) then !{
-              distmin1=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin1) then !{
+              distmin1=distance
               flagmin1=i
             end if !}
           end do !}
@@ -824,7 +872,7 @@ ccc*** Substitute b2 cells only when overlapping original plot zone target eleme
         end if !}
       end do !}
 
-      deallocate(nwldlis_old,lwldlis_old,istarget) 
+      deallocate(nwldlis_old,lwldlis_old,istarget)
 
 
 c*** Calculate the segment areas and related quantities
@@ -839,7 +887,7 @@ c*** Calculate the segment areas and related quantities
           segm_area(i) = pi*(pp1(2,i)+pp2(2,i))*segm_len(i)
         end if
       end do !}
-      do il=2,nwldprt
+      do il=1,nwldprt
         d=0.5_R8*segm_len(iabs(lwldlis(1,il)))
         x=d
         wldrfdst(1,il)=x
@@ -857,29 +905,30 @@ c*** structure and of the plot zones
 c*** The whole wall including the refined targets (shadowing)
 
       open(lun_w,file='shadow.dat')
-      write(lun_w,'(6a)') '#Wall layout : ',label
-      write(lun_w,'(6a)') '#R',tab,'Z'
+      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+      write(lun_w,'(3a)') '# R',tab,'Z'
       do i=1,nwldlis(1) !{
         k=iabs(lwldlis(i,1))
-        write(lun_w,*) pp1(1,k),tab,pp1(2,k)
+        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
       end do !}
-      write(lun_w,*) pp2(1,k),tab,pp2(2,k)
+      write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
+      close(lun_w)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance
 
       do il=2,nwldprt !{
-        l=len_trim(lblwldpt(il))
+        l=len_trim(pltzlbl(il))
 c*** create the filename for the output
         if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
           write(fn_hlp,'(a,i2.2,a)') 'wlly_',il-1,'.dat'
         else !}{
-          fn_hlp='wlly_'//lblwldpt(il)(:l)//'.dat'
+          fn_hlp='wlly_'//pltzlbl(il)(:l)//'.dat'
         end if !}
         open(lun_w,file=fn_hlp)
         write(lun_w,'(4a)') '#Layout of plot zone ',
-     ,                                      lblwldpt(il)(:l),' : ',label
+     ,                                      pltzlbl(il)(:l),' : ',label
         write(lun_w,'(11a)') '#R',tab,'Z',tab,'Rc',tab,'Zc',tab,'x',
      ,    tab,'DG_elm'
         do i=1,nwldlis(il) !{
@@ -891,22 +940,22 @@ c*** use the zone index to label the plot zone
      ,      tab,wldrfdst(i,il),tab,k
         end do !}
         write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
+        close(lun_w)
       end do !}
-      close(lun_w)
-c<<<
-c      print *,'Leaving b2pwlprp. lytg,nytg= ',lytg,nytg
-c      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
-c      print '(16i5)',(nwldlis(i),i=1,nwldprt)
-c      print '(16l5)',(lwlddir(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(1x,8i11))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
-c     ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
-c        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
-c     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+#ifdef DBG
+      print *,'Leaving b2pwlprp. lytg,nytg= ',lytg,nytg
+      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
+      print '(16i5)',(nwldlis(i),i=1,nwldprt)
+      print '(16l5)',(lwlddir(i),i=1,nwldprt)
+      do il=1,nwldprt
+        print '(a,i5,1x,a/(1x,8i11))','lwldlis :',il,pltzlbl(il),
+     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
+     ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
+        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
+     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
+      end do
+#endif
 c======================================================================
       call subend ()
       return

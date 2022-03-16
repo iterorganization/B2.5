@@ -10,6 +10,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -50,7 +51,7 @@
       real (kind=R8) :: 
      *  fne(-1:nx,-1:ny,0:1,0:1)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xpfe, b2wgpj_gnuplot 
 
 *-----------------------------------------------------------------------

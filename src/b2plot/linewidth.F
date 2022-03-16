@@ -4,7 +4,7 @@ c
 #include "graphics_vars.h"
       real (kind=R8) ::
      * width
-      lwidth=width		
+      lwidth=real(width,R4)
       write (*,*) 'Line Width set to',width
       return
       end subroutine linewidth
@@ -14,7 +14,7 @@ c
 #include "graphics_vars.h"
       real (kind=R8) ::
      * width
-      zwidth=width		
+      zwidth=real(width,R4)
       write (*,*) 'Axis Line Width set to',width
       return
       end subroutine axislinewidth
@@ -24,7 +24,7 @@ c
 #include "graphics_vars.h"
       real (kind=R8) ::
      * width
-      wwidth=width		
+      wwidth=real(width,R4)
       write (*,*) 'Wall Line Width set to',width
       return
       end subroutine walllinewidth

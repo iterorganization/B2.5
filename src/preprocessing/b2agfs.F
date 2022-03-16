@@ -11,10 +11,12 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_indirect
      . ,only: GRID_N_CELLFLAGS
       use carre_constants
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -55,17 +57,17 @@
 *
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
-*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
+*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
 *
 *     periodic_bc - integer, read from file.
-*     periodic_bc specifies if this is either an island or limiter geometry. 
+*     periodic_bc specifies if this is either an island or limiter geometry.
 *     If periodic_bc.eq.1 then island/limiter treatment is turned on.
 *     We differentiate between the two case through nncut:
 *      nncut.eq.0 = limiter case
@@ -119,13 +121,12 @@
       integer ireg,zone(-1:nx1),errors
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
-     .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
-     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/, 
+     .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
+     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/,
      .  geom_match_dist/1.0e-6_R8/
 
 *   ..procedures
-      external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
-     * b2xvsg, b2gxdr_dummy
+      external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
       intrinsic abs, sqrt, cos, sin, min, max, sign, acos
       real (kind=R8) ::
      *  dist
@@ -186,16 +187,20 @@
           bb1(ix,iy,1)=0
           bb1(ix,iy,2)=bt(ic)
           bb1(ix,iy,3)=sqrt(bp(ic)*bp(ic)+bt(ic)*bt(ic))
-          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset  	 ! bottom right
+          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset           ! bottom right
           cry1(ix,iy,1)=crys(ic+2*n2)*yrescale+yoffset
-          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset  	 ! top right
+          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset           ! top right
           cry1(ix,iy,3)=crys(ic+4*n2)*yrescale+yoffset
-          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset  	 ! top left
+          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset           ! top left
           cry1(ix,iy,2)=crys(ic+3*n2)*yrescale+yoffset
-          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset  	 ! bottom left
+          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset           ! bottom left
           cry1(ix,iy,0)=crys(ic+1*n2)*yrescale+yoffset
-          if(Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-            bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crxs(ic)/(crxs(ic)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ic)*crys(ic)/(crys(ic)+yoffset)
+            end if
             bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
@@ -210,7 +215,10 @@
         bb1(:,:,2)=bb1(:,:,2)*Bt_rescale
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
-      
+!!! FIXME: For now, until the cflag array is provided by the mesh generator
+!!!        as it will be for extended grids
+      cflag=0
+
  9999 continue
 
       nncut=0
@@ -251,7 +259,7 @@
      &                 ixl+1.eq.leftcut1(i)) then
                       found = .true.
                       exit
-                    endif                
+                    endif
                   end do
                 endif
                 if (.not.found) then
@@ -274,7 +282,7 @@
      &                 ixl+1.eq.leftcut1(i)) then
                       found = .true.
                       exit
-                    endif                
+                    endif
                   end do
                 endif
                 if (.not.found) then
@@ -314,7 +322,7 @@
                     if(ixr.eq.rightcut1(i) .or. ixr.eq.leftcut1(i)) then
                       found = .true.
                       exit
-                    endif                
+                    endif
                   end do
                 endif
                 if (.not.found) then
@@ -335,7 +343,7 @@
                     if(ixr.eq.rightcut1(i) .or. ixr.eq.leftcut1(i)) then
                       found = .true.
                       exit
-                    endif                
+                    endif
                   end do
                 endif
                 if (.not.found) then
@@ -351,7 +359,7 @@
           endif
 
 c Assume rest OK
-   
+
           topix1(ix,iy)=ix
           bottomix1(ix,iy)=ix
           leftiy1(ix,iy)=iy
@@ -416,19 +424,19 @@ cxpb  reconnect the guard cells on both sides of the island.
           write(*,*) 'ix,iy,iyb',i,inselbot,inseltop
           bottomiy1(nx1-1-i,inselbot)=inseltop
           write(*,*) 'ix,iy,iyb',nx1-1-i,inselbot,inseltop
-          if(inselbot.gt.-1) then   	 ! connected region on North side
-            topix1(i,inselbot-1)=nx1-1-i 	 ! connect to the other side
+          if(inselbot.gt.-1) then                 ! connected region on North side
+            topix1(i,inselbot-1)=nx1-1-i          ! connect to the other side
             topiy1(i,inselbot-1)=inselbot-1       ! of the island
             write(*,*) 'ix,iy,ixt,iyt',i,inselbot-1,nx1-1-i,inselbot-1
-            topix1(nx1-1-i,inselbot-1)=i 	 ! connect to the other side
+            topix1(nx1-1-i,inselbot-1)=i          ! connect to the other side
             topiy1(nx1-1-i,inselbot-1)=inselbot-1 ! of the island
             write(*,*) 'ix,iy,ixt,iyt',nx1-1-i,inselbot-1,i,inselbot-1
           end if
-          if(inseltop.lt.ny1) then   	 ! connected region on South side
+          if(inseltop.lt.ny1) then                ! connected region on South side
             bottomix1(i,inseltop+1)=nx1-1-i       ! connect to the other side
             bottomiy1(i,inseltop+1)=inseltop+1    ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',i,inseltop+1,nx1-1-i,inseltop+1
-            bottomix1(nx1-1-i,inseltop+1)=i 	 ! connect to the other side
+            bottomix1(nx1-1-i,inseltop+1)=i       ! connect to the other side
             bottomiy1(nx1-1-i,inseltop+1)=inseltop+1 ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',nx1-1-i,inseltop+1,i,inseltop+1
 cxpb  Remove neighbours for guard cells next to tangency point
@@ -463,7 +471,7 @@ cxpb tranverse physics
           enddo
         endif
       endif
-            
+
 
       write(*,*) 'istyle',istyle,'nncut',nncut
       if(nncut.eq.0) write(*,'(a)') 'No cuts found'
@@ -498,9 +506,9 @@ cxpb Western edge
      .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
               bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
               cosa = nhatr*bphatr+nhatz*bphatz
-              concave = ((r2-r1)*(rf-r1)+(z2-z1)*(z4-z1)).lt.0.0_R8 
+              concave = ((r2-r1)*(rf-r1)+(z2-z1)*(z4-z1)).lt.0.0_R8
      &            .and. ((r2-r1)*(z4-z1)-(z2-z1)*(rf-r1)).lt.0.0_R8
-              if(concave) write(*,'(a,i4,a,i4,a)') 
+              if(concave) write(*,'(a,i4,a,i4,a)')
      >         'Cell ',ix,',',iy,' is concave !'
               if(abs(bdotn).lt.
      >         bb1(ix,iy,3)*cos(pi*(90.0_R8-min_pitch)/180.0_R8)) then
@@ -520,7 +528,7 @@ cxpb  and keep the new coordinates as the intersection of the rotated line
 cxpb  and the parallel to Bp line between point 4 and the original point 1
                   numer = (r1 - r2) * cosb - (z1 - z2) * sinb
                   denom = (r1 - r2) * sinb + (z1 - z2) * cosb
-                  if(denom.ne.0.0_R8) then 
+                  if(denom.ne.0.0_R8) then
                     aaa = numer / denom
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
@@ -535,10 +543,10 @@ cxpb  and the parallel to Bp line between point 4 and the original point 1
                   else
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
-                      r1 = rf - (z4-z2)/bbb  
+                      r1 = rf - (z4-z2)/bbb
                     else
                       r1 = rf
-                    endif   
+                    endif
                     z1 = z2
                   endif
 cxpb  Copy the changes onto crx1, cry1
@@ -553,15 +561,15 @@ cxpb  ALSO MOVE THE BACK OF THE GUARD CELLS!
      .                                   topiy1(ix,iy))) then
                     crx1(topix1(ix,iy),topiy1(ix,iy),1) = r1
                     cry1(topix1(ix,iy),topiy1(ix,iy),1) = z1
-                    crx1(topix1(ix,iy),topiy1(ix,iy),0) = 
+                    crx1(topix1(ix,iy),topiy1(ix,iy),0) =
      .               r1 + (r1-rf)/1000.0_R8
-                    cry1(topix1(ix,iy),topiy1(ix,iy),0) = 
+                    cry1(topix1(ix,iy),topiy1(ix,iy),0) =
      .               z1 + (z1-z4)/1000.0_R8
                     crx1(topix1(rightix1(ix,iy),rightiy1(ix,iy)),
-     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0) 
+     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0)
      .               = r1
                     cry1(topix1(rightix1(ix,iy),rightiy1(ix,iy)),
-     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0) 
+     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0)
      .               = z1
                   endif
 cxpb  if just below the top corner, make the corner cell follow
@@ -570,9 +578,9 @@ cxpb  if just below the top corner, make the corner cell follow
                     cry1(ix,ny1,3) = z1 + (z1-z2)/1000.0_R8
                     crx1(ix,ny1,2) = r1 + (r1-r3)/1000.0_R8
                     cry1(ix,ny1,2) = z1 + (z1-z3)/1000.0_R8
-                    crx1(rightix1(ix,ny1),rightiy1(ix,ny1),2) = 
+                    crx1(rightix1(ix,ny1),rightiy1(ix,ny1),2) =
      .               r1 + (r1-r2)/1000.0_R8
-                    cry1(rightix1(ix,ny1),rightiy1(ix,ny1),2) = 
+                    cry1(rightix1(ix,ny1),rightiy1(ix,ny1),2) =
      .               z1 + (z1-z2)/1000.0_R8
                   end if
                   nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
@@ -580,11 +588,11 @@ cxpb  if just below the top corner, make the corner cell follow
                   bphatr = (r1-rf+r2-r3)/
      .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                   bphatz = (z1-z4+z2-z3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)     
+     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                 else  ! rotation correction impossible
                   bb1(ix,iy,0) = sign(
      .             cos(pi*(90.0_R8-min_pitch)/180.0_R8)/
-     .             (nhatr*bphatr+nhatz*bphatz), 
+     .             (nhatr*bphatr+nhatz*bphatz),
      1             bb1(ix,iy,0))
                   bb1(ix,iy,3) = sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
                 endif
@@ -612,9 +620,9 @@ cxpb Eastern edge
      .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
               bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
               cosa = nhatr*bphatr+nhatz*bphatz
-              concave = ((rf-r1)*(r2-r1)+(z4-z1)*(z2-z1)).lt.0.0_R8 
+              concave = ((rf-r1)*(r2-r1)+(z4-z1)*(z2-z1)).lt.0.0_R8
      &            .and. ((rf-r1)*(z2-z1)-(z4-z1)*(r2-r1)).lt.0.0_R8
-              if(concave) write(*,'(a,i4,a,i4,a)') 
+              if(concave) write(*,'(a,i4,a,i4,a)')
      >         'Cell ',ix,',',iy,' is concave !'
               if(abs(bdotn).lt.
      >         bb1(ix,iy,3)*cos(pi*(90.0_R8-min_pitch)/180.0_R8)) then
@@ -634,7 +642,7 @@ cxpb  and keep the new coordinates as the intersection of the rotated line
 cxpb  and the parallel to Bp line between point 4 and the original point 1
                   numer = (r1 - r2) * cosb - (z1 - z2) * sinb
                   denom = (r1 - r2) * sinb + (z1 - z2) * cosb
-                  if(denom.ne.0.0_R8) then 
+                  if(denom.ne.0.0_R8) then
                     aaa = numer / denom
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
@@ -649,10 +657,10 @@ cxpb  and the parallel to Bp line between point 4 and the original point 1
                   else
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
-                      r1 = rf - (z4-z2)/bbb   
+                      r1 = rf - (z4-z2)/bbb
                     else
                       r1 = rf
-                    endif   
+                    endif
                     z1 = z2
                   endif
 cxpb  Copy the changes onto crx1, cry1
@@ -667,15 +675,15 @@ cxpb ALSO MOVE THE BACK OF THE GUARD CELLS!
      .                                   topiy1(ix,iy))) then
                     crx1(topix1(ix,iy),topiy1(ix,iy),0) = r1
                     cry1(topix1(ix,iy),topiy1(ix,iy),0) = z1
-                    crx1(topix1(ix,iy),topiy1(ix,iy),1) = 
+                    crx1(topix1(ix,iy),topiy1(ix,iy),1) =
      .               r1 + (r1-rf)/1000.0_R8
-                    cry1(topix1(ix,iy),topiy1(ix,iy),1) = 
+                    cry1(topix1(ix,iy),topiy1(ix,iy),1) =
      .               z1 + (z1-z4)/1000.0_R8
                     crx1(topix1(leftix1(ix,iy),leftiy1(ix,iy)),
-     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1) 
+     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1)
      .               = r1
                     cry1(topix1(leftix1(ix,iy),leftiy1(ix,iy)),
-     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1) 
+     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1)
      .               = z1
                   endif
 cxpb  if just below the top corner, make the corner cell follow
@@ -684,9 +692,9 @@ cxpb  if just below the top corner, make the corner cell follow
                     cry1(ix,ny1,2) = z1 + (z1-z2)/1000.0_R8
                     crx1(ix,ny1,3) = r1 + (r1-r3)/1000.0_R8
                     cry1(ix,ny1,3) = z1 + (z1-z3)/1000.0_R8
-                    crx1(leftix1(ix,ny1),leftiy1(ix,ny1),3) = 
+                    crx1(leftix1(ix,ny1),leftiy1(ix,ny1),3) =
      .               r1 + (r1-r2)/1000.0_R8
-                    cry1(leftix1(ix,ny1),leftiy1(ix,ny1),3) = 
+                    cry1(leftix1(ix,ny1),leftiy1(ix,ny1),3) =
      .               z1 + (z1-z2)/1000.0_R8
                   end if
                   nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
@@ -694,11 +702,11 @@ cxpb  if just below the top corner, make the corner cell follow
                   bphatr = (r1-rf+r2-r3)/
      .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                   bphatz = (z1-z4+z2-z3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)     
+     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                 else  ! rotation correction impossible
                   bb1(ix,iy,0) = sign(
      .             cos(pi*(90.0_R8-min_pitch)/180.0_R8)/
-     .             (nhatr*bphatr+nhatz*bphatz), 
+     .             (nhatr*bphatr+nhatz*bphatz),
      1             bb1(ix,iy,0))
                   bb1(ix,iy,3) = sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
                 endif
@@ -715,7 +723,7 @@ cxpb
       write(*,*) 'Checking CRX1'
       errors=0
       do iy=-1,ny1
-c check right neighbours       
+c check right neighbours
         do ix=-1,nx1-1
           ixr=rightix1(ix,iy)
           if(ixr.lt.-1.or.ixr.gt.nx1) then
@@ -739,7 +747,7 @@ c check right neighbours
             endif
           endif
         enddo
-c check left neighbours       
+c check left neighbours
         do ix=0,nx1
           ixl=leftix1(ix,iy)
           if(ixl.lt.-1.or.ixl.gt.nx1) then
@@ -765,7 +773,7 @@ c check left neighbours
         enddo
       enddo
       do ix=-1,nx1
-c check top neighbours       
+c check top neighbours
         do iy=-1,ny1-1
           iyt=topiy1(ix,iy)
           if(iyt.lt.-1.or.iyt.gt.ny1) then
@@ -789,7 +797,7 @@ c check top neighbours
             endif
           endif
         enddo
-c check bottom neighbours       
+c check bottom neighbours
         do iy=0,ny1
           iyb=bottomiy1(ix,iy)
           if(iyb.lt.-1.or.iyb.gt.ny1) then
@@ -816,7 +824,7 @@ c check bottom neighbours
       enddo
       write(*,*) 'Checking CRY1'
       do iy=-1,ny1
-c check right neighbours       
+c check right neighbours
         do ix=-1,nx1-1
           ixr=rightix1(ix,iy)
           if(ixr.lt.-1.or.ixr.gt.nx1) then
@@ -840,7 +848,7 @@ c check right neighbours
            endif
           endif
         enddo
-c check left neighbours       
+c check left neighbours
         do ix=0,nx1
           ixl=leftix1(ix,iy)
           if(ixl.lt.-1.or.ixl.gt.nx1) then
@@ -866,8 +874,8 @@ c check left neighbours
         enddo
       enddo
       do ix=-1,nx1
-c check top neighbours       
-        do iy=-1,ny1-1 
+c check top neighbours
+        do iy=-1,ny1-1
           iyt=topiy1(ix,iy)
           if(iyt.lt.-1.or.iyt.gt.ny1) then
             write(*,*) 'No top neighbour for ',ix,iy
@@ -890,7 +898,7 @@ c check top neighbours
             endif
           endif
         enddo
-c check bottom neighbours       
+c check bottom neighbours
         do iy=0,ny1
           iyb=bottomiy1(ix,iy)
           if(iyb.lt.-1.or.iyb.gt.ny1) then
@@ -910,7 +918,7 @@ c check bottom neighbours
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
-     2       'dist=',distval 
+     2       'dist=',distval
             endif
           endif
         enddo
@@ -923,7 +931,7 @@ c check bottom neighbours
         write(*,*) errors,' errors found in the basis geometry'
       endif
       call xertst (errors.eq.0, 'Errors found in basis geometry')
-cxpb  
+cxpb
 
 *   ..test sign of bb3
       call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')
@@ -948,11 +956,15 @@ cxpb
             ixr=rightix1(ix,iy)
             do while(ixr.ne.ix.and.ixr.ge.-1.and.ixr.le.nx1)
               zone(ixr)=ireg
+              call xertst(rightix1(ixr,iy).ne.ixr,
+     .         'Problem in connectivity to the right!')
               ixr=rightix1(ixr,iy)
             enddo
             ixl=leftix1(ix,iy)
             do while(ixl.ne.ix.and.ixl.ge.-1.and.ixl.le.nx1)
               zone(ixl)=ireg
+              call xertst(leftix1(ixl,iy).ne.ixl,
+     .         'Problem in connectivity to the left!')
               ixl=leftix1(ixl,iy)
             enddo
           endif
@@ -971,6 +983,7 @@ c
       subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
      & crxs, crys, bp, bt)
       use b2mod_types
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -982,11 +995,20 @@ c
      2 bp(0:nx+1,0:ny+1),
      3 bt(0:nx+1,0:ny+1)
       character*(*) local_sonnet
-  
+
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
 #ifdef USE_PXFGETENV
       integer lenval, ierror
+#else
+#ifdef NAGFOR
+      integer lenval, ierror
+#endif
+#endif
+#ifndef NO_GETENV
+      character*12 device_env
+      logical streql
+      external streql
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
@@ -995,9 +1017,11 @@ c
       character*80 format_string(4)
       integer, save :: new_format
       character*12 device
-      logical open_file, uop, first_read
+      character*16 username
+      logical open_file, uop, first_read, ex
       character uline*(line_length)
-      external xertst, subini, subend, open_file
+      character*16 usrnam
+      external xertst, open_file
       intrinsic index, sqrt
 
       data new_format/1/
@@ -1017,25 +1041,37 @@ c
       i=-1
       j=-1
       lun=96
-      meshpath = 'data.local/meshes|data/meshes'
+      meshpath = 'data.local/meshes'
 #ifdef JET
       device = 'jet'
 #else
       device = 'iter'
 #endif
 #ifndef NO_GETENV
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+      device_env = ' '
+#ifdef NAGFOR
+      call get_environment_variable('DEVICE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0)
+     > call get_environment_variable('DEVICE',value=device_env)
 #else
-      call getenv ('DEVICE', device)
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+#else
+      call getenv ('DEVICE', device_env)
 #endif
 #endif
-      if(istyle.eq.-1) then      	 !xpb  DG-CARRE-format geometry input
+      if (.not.streql(device_env,' ')) device = device_env
+#endif
+      username = usrnam()
+      if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
+     .   //'|modules/Carre/meshes/'//trim(device)//'/'//trim(username)
+        call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
-     1     "Reading the geometry file assuming the 'new' format"
+     1     "Reading the geometry file assuming the Carre format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
             write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
@@ -1047,18 +1083,22 @@ c
               read(lun,*,err=10,iostat=iostat) ixd,iyd,
      1         (crxs(ix,iy,i),crys(ix,iy,i),i=0,4),
      2         bp(ix,iy),bt(ix,iy)
+              if (isymm.eq.2.or.isymm.eq.4) then
+                if (abs(bt(ix,iy)).lt.1.0e-5_R8) bt(ix,iy)=0.0_R8
+              end if
             enddo
           enddo
           close(lun)
         else
           call xerrab('Error in reading geometry file')
         endif
-      elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+      elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
+     .   //'|modules/DivGeo/device/'//trim(device)//'/'//trim(username)
         if(open_file(lun,local_sonnet,meshpath)) then
-	  write(*,*)
-     1	   "Reading the geometry file assuming the 'old' format"
+          write(*,*)
+     1     "Reading the geometry file assuming the Sonnet format"
           write(*,'(a,i3,2a)') '==== b2gxdr_dummy: read unit',lun,
      1     '  file  ',trim(local_sonnet)
    20     read (lun,'(a)', end=990) uline
@@ -1067,12 +1107,12 @@ c
      ,       '(e30.0)') ubr
             write(*,*) ' R*Btor = ',ubr
             go to 20
-          elseif(index(uline,'===============================').eq.0) 
+          elseif(index(uline,'===============================').eq.0)
      >     then
             go to 20
           end if
 c----------------------------------------------------------------------
-          if(ubr.eq.0.0_R8) then
+          if(ubr.eq.0.0_R8.and.(isymm.eq.1.or.isymm.eq.3)) then
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'
             write(*,*)
      1       'It must be defined in the header of the grid file '
@@ -1086,10 +1126,10 @@ c
           mx=0
           my=0
    30     uop=.false.
-          if(first_read) 
+          if(first_read)
      &         write(*,*) 'Trying with format_string option ',
      &         new_format
-          read (lun,format_string(new_format),end=40,err=31) 
+          read (lun,format_string(new_format),end=40,err=31)
      ,       i,j,crxs(i,j,3),crys(i,j,3),crxs(i,j,4),crys(i,j,4)
           go to 32
    31     continue
@@ -1106,7 +1146,9 @@ c
           end if
    32     continue
           first_read = .false.
-          uop = i.le.5 .and. j.le.1 .and. .false.
+#ifdef DBG
+          uop = i.le.5 .and. j.le.1
+#endif
           if(uop) then
             print *,'*3* ',i,j,crxs(i,j,3),crys(i,j,3)
             print *,'*4* ',i,j,crxs(i,j,4),crys(i,j,4)
@@ -1126,8 +1168,15 @@ c
             endif
           end if
           read (lun,710,end=990) upsi,crxs(i,j,0),crys(i,j,0)
-          read (lun,720,end=990) crxs(i,j,1),crys(i,j,1),
-     ,     crxs(i,j,2),crys(i,j,2)
+          read (lun,'(a)',end=990) uline
+          if (uline(32:32).eq.'(') then
+            read (uline,720) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          else if (uline(30:30).eq.'(') then
+            read (uline,721) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          end if
+          read (lun,'()')
           if(uop) then
             print *,'*0* ',i,j,crxs(i,j,0),crys(i,j,0)
             print *,'*1* ',i,j,crxs(i,j,1),crys(i,j,1)
@@ -1154,7 +1203,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
      .             (crxs(i,j,1)**2-crxs(i,j,3)**2)
                   bp(i,j)=min(ubr,bp(i,j))
                 endif
-                if(j.gt.0) bp(i,j)=max(bp(i,j),bp(i,j-1))    
+                if(j.gt.0) bp(i,j)=max(bp(i,j),bp(i,j-1))
               enddo
             enddo
           else if (isymm.eq.4) then
@@ -1168,7 +1217,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
      .             (crys(i,j,1)**2-crys(i,j,2)**2)
                   bp(i,j)=min(ubr,bp(i,j))
                 endif
-                if(i.gt.0) bp(i,j)=max(bp(i-1,j),bp(i,j))    
+                if(i.gt.0) bp(i,j)=max(bp(i-1,j),bp(i,j))
               enddo
             enddo
           endif
@@ -1198,11 +1247,9 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
       write(*,*) 'ix=',ix,' iy=',iy,' ixd=',ixd,' iyd=',iyd
       call xerrab ('Error in reading grid file')
 
-  700 format(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  710 format(18x,e17.10,14x,e17.10,1x,e17.10)
+  720 format(32x,e17.10,1x,e17.10,8x,e17.10,1x,e17.10)
+  721 format(30x,e17.10,1x,e17.10,8x,e17.10,1x,e17.10)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j
@@ -1235,7 +1282,7 @@ c    ||              1              ||
 c    ||                             ||
 c    ||                             ||
 c    ++-----------------------------++
-c                                
+c
 c    ++-----------------------------++
 c    ||                             ||
 c    ||                             ||
@@ -1243,7 +1290,7 @@ c    ||1                            ||
 c    ||                             ||
 c    ||                             ||
 c    ++-----------------------------++
-c                                
+c
 c    ++--------------2--------------++
 c    ||                             ||
 c    ||                             ||
@@ -1251,7 +1298,7 @@ c    ||                             ||
 c    ||                             ||
 c    ||                             ||
 c    ++--------------1--------------++
-c                                                                  
+c
 c
 c Cases with no X-point:
 c region 1 === core
@@ -1268,7 +1315,7 @@ c    ||                             ||
 c    ||              1              ||
 c    ||                             ||
 c    ++-----------------------------++
-c                                
+c
 c    +-------------------------------+
 c    |                               |
 c    1                               2
@@ -1278,7 +1325,7 @@ c    ||                             ||
 c    ||3                            ||
 c    ||                             ||
 c    ++-----------------------------++
-c                                
+c
 c    +---------------3---------------+
 c    |                               |
 c    |                               |
@@ -1288,7 +1335,7 @@ c    ||                             ||
 c    ||                             ||
 c    ||                             ||
 c    ++--------------1--------------++
-c                                                                  
+c
 c
 c Cases with no X-point:
 c region 1 === core
@@ -1306,8 +1353,8 @@ c    |       |               |       |  |       |               |       |
 c    |       |       1       |       |  |   3   |       1       |   4   |
 c    |       |               |       |  |       |               |       |
 c    +-------+---------------+-------+  +-------+---------------+-------+
-c         
-c         
+c
+c
 c    +-------+---------------+-------+  ++-----------------------------++
 c    |       :               :       |  ||7                            ||
 c    |       2               3       |  +\-----------------------------/+
@@ -1317,8 +1364,8 @@ c    |       |               |       |  |       |               |       |
 c    |       |5              |6      |  |       |5              |6      |
 c    |       |               |       |  |       |               |       |
 c    +-------+---------------+-------+  +-------+---------------+-------+
-c         
-c         
+c
+c
 c    +---5---+-------6-------+---7---+  ++--------------6--------------++
 c    |       :               :       |  ||                             ||
 c    |       :               :       |  +\--------------8--------------/+
@@ -1332,14 +1379,14 @@ c
 c Cases with one X-point:
 c region 1 === core
 c region 2 === SOL
-c region 3 === inboard divertor
-c region 4 === outboard divertor
+c region 3 === Western divertor (inboard for LSN, outboard for USN)
+c region 4 === Eastern divertor (outboard for LSN, inboard for USN)
 c region 5 === island
 c
 c                           +++++++++++++++++++++++++
 c
 c                      Connected double-null geometry case
-c                                   
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       :       2       :       ||       :       6       :       |
@@ -1349,8 +1396,8 @@ c    |       |               |       ||       |               |       |
 c    |       |       1       |       ||       |       5       |       |
 c    |       |               |       ||       |               |       |
 c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
+c
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       2               3       ||       6               7       |
@@ -1360,8 +1407,8 @@ c    |       |               |       ||       |               |       |
 c    |       |9              |10     ||       |11             |12     |
 c    |       |               |       ||       |               |       |
 c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
+c
+c
 c    +---5---+-------6-------+---7---++--12---+------13-------+--14---+
 c    |       :               :       ||       :               :       |
 c    |       :               :       ||       :               :       |
@@ -1386,7 +1433,7 @@ c                           +++++++++++++++++++++++++
 c
 c                      Disconnected double-null geometry case
 c                           (Bottom X-point is active)
-c                                   
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       :       2       :       ||       :       6       :       |
@@ -1396,8 +1443,8 @@ c    |...3...+---------------+       ||       +---------------+...8...|
 c    |       |       1       |       ||       |       5       |       |
 c    |       |               |       ||       |               |       |
 c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
+c
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       2               3       ||       6               7       |
@@ -1407,8 +1454,8 @@ c    1.......+---------------+10     ||       +---------------+.......8
 c    |       |9              |       ||       |11             |12     |
 c    |       |               |       ||       |               |       |
 c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
+c
+c
 c    +---5---+-------6-------+---7---++--12---+------13-------+--14---+
 c    |       :               :       ||       :               :       |
 c    |       :               :       ||       :               :       |
@@ -1419,11 +1466,11 @@ c    |       |               |       ||       |               |       |
 c    |       |               |       ||       |               |       |
 c    +---1---+-------2-------+---3---++---8---+-------9-------+--10---+
 c
-c                           - - - - - - - - - - - - - 
+c                           - - - - - - - - - - - - -
 c
 c                      Disconnected double-null geometry case
 c                            (Top X-point is active)
-c                                   
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       :       2       :       ||       :       6       :       |
@@ -1433,8 +1480,8 @@ c    |       +---------------+...4...||...7...+---------------+       |
 c    |       |       1       |       ||       |       5       |       |
 c    |       |               |       ||       |               |       |
 c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
+c
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       2               3       ||       6               7       |
@@ -1444,8 +1491,8 @@ c    |       +---------------+.......45.......+---------------+12     |
 c    |       |9              |10     ||       |11             |       |
 c    |       |               |       ||       |               |       |
 c    +-------+---------------+-------++-------+---------------+-------+
-c         
-c         
+c
+c
 c    +---5---+-------6-------+---7---++--12---+------13-------+--14---+
 c    |       :               :       ||       :               :       |
 c    |       :               :       ||       :               :       |
@@ -1569,7 +1616,7 @@ c volume component
      .           region(ix,iy,0)=2
                 if(periodic_bc.eq.1.and.
      .           iy.ge.inseliy.and.ix.ge.inselix)
-     .           region(ix,iy,0)=5    
+     .           region(ix,iy,0)=5
               enddo
             enddo
             do ix=leftcut(1),rightcut(1)-1
@@ -1598,7 +1645,7 @@ c volume component
      .           region(ix,iy,0)=2
                 if(periodic_bc.eq.1.and.
      .           iy.ge.inseliy.and.ix.le.nx-1-inselix)
-     .           region(ix,iy,0)=5    
+     .           region(ix,iy,0)=5
               enddo
             enddo
             if(periodic_bc.eq.1) then
@@ -1622,7 +1669,7 @@ c volume component
               enddo
             enddo
             do iy = -1, ny
-              ix = leftcut(2)            
+              ix = leftcut(2)
               do while (leftix(ix,iy).ne.-2)
                 region(ix,iy,0)=4
                 ix=ix+1
@@ -1684,7 +1731,7 @@ c x-flux component
               region(topix(ix,inseliy),topiy(ix,inseliy),2)=2
            enddo
            region(:,ny,2)=3
-           nnreg(2)=3        
+           nnreg(2)=3
         endif
       elseif(topcut(1).ge.-1) then
         if(periodic_bc.eq.1) then
@@ -1791,7 +1838,7 @@ c y-flux component
             region(ix,min(topcut(1),topcut(2)),2)=4
             region(ix,ny,2)=6
           enddo
-          ix = leftcut(2)            
+          ix = leftcut(2)
           do while (leftix(ix,ny/2).ne.-2)
             region(topix(ix,-1),topiy(ix,-1),2)=3
             region(ix,ny,2)=7
@@ -1831,7 +1878,7 @@ c y-flux component
 c set up region where the residuals should be ignored (none yet)
       do iy=-1,ny
         do ix=-1,nx
-          if(region(ix,iy,0).eq.0 .or. 
+          if(region(ix,iy,0).eq.0 .or.
      &     leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
             resignore(ix,iy,1)=0

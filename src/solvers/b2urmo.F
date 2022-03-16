@@ -7,6 +7,8 @@
       use b2mod_indirect
       use b2mod_balance                                                 !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, balance_netcdf
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -72,6 +74,8 @@
       integer, save :: iout_b2npmo = 0, iout_b2wdat = 0                 !srv 11.09.09
       character chns*3                                                  !srv 02.06.11
       save ncall
+      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1,0:1), flv(-1:nx,-1:ny,0:1,0:1), flo, dif,  !srv 11.09.09
      *   flo9, con9, dubr(-1:nx,-1:ny,0:1), t0, t1,
@@ -80,7 +84,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   hybr, upwind
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, diff_r
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
@@ -181,13 +185,22 @@ cwdk     add computation of 9-point quantities
      &                       -flv(-1:nx,-1:ny,0:1,0:1)
       endif
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
-       write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,flv(-1,-1,0,0),
+       if (in_parallel()) then
+        !$OMP MASTER
+        if (ncall==0) then
+          write(*,*) 'b2urmo OpenMP warning: no file output ',
+     &               'in parallel mode'
+        end if
+        !$OMP END MASTER
+       else
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,flv(-1,-1,0,0),
      &            'b2urmo_etaPat_graduax'//chns)
-       call my_out(70,nx,ny,flv(-1,-1,1,1),
+        call my_out(70,nx,ny,flv(-1,-1,1,1),
      &            'b2urmo_etaPat_graduay'//chns)
 !       call my_out(70,nx,ny,con(-1,-1,0,0),'b2urmo_etaPatx')
  !      call my_out(70,nx,ny,con(-1,-1,1,1),'b2urmo_etaPaty')
+       end if
       endif      
 * ..compute residual
 *   ..contribution from right hand side

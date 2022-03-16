@@ -21,8 +21,9 @@
      1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
      2          b2stbm_shi0to3, balance_netcdf
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -74,7 +75,7 @@
 *   ..procedures
       real (kind=R8) ::
      * smin, smax
-      external subini, subend, xertst, sfill,
+      external xertst, sfill,
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
 *   ..initialisation
@@ -305,7 +306,7 @@ cxpb And then derive: ua_ext
          if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
      .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
 cxpb Computing ua from fa is what we really want to do
-         if (.false.) then
+         if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,ny
             do ix=-1,nx
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
@@ -487,7 +488,7 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 
 * ..return
- 999  if (main_call.or.ncall.eq.0) ncall = ncall+1
+  999 if (main_call.or.ncall.eq.0) ncall = ncall+1
       call subend ()
       return
 

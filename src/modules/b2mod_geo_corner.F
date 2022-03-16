@@ -14,12 +14,16 @@
      * bzb(:,:),                                                     !srv 13.10.06
      * len_surf(:,:),                                                !srv 02.05.09
      * crdy_surf(:,:),
-     * crdy_c_cell(:,:)                                              !srv 02.05.09
+     * crdy_c_cell(:,:),                                          !srv 02.05.09
+     * bzbl(:,:),                                                 !nn
+     * bzbv(:,:)
 
       contains
 
       subroutine alloc_b2mod_geo_corner(nxd,nyd)
-      integer nxd, nyd                                               !srv 04.06.99 
+      implicit none
+      integer, intent(in) :: nxd, nyd                             !srv 04.06.99
+
       allocate (OnedBsq(-1:nxd,-1:nyd))
       allocate (OnedBsqc(-1:nxd+1,-1:nyd+1))
       allocate (wbbl(-1:nxd,-1:nyd,0:3))
@@ -31,14 +35,17 @@
       allocate (lengthy1(-1:nxd,-1:nyd))                             !srv 21.05.08
       allocate (len_surf(-1:nxd,-1:nyd))                             !srv 02.05.09
       allocate (crdy_surf(-1:nxd,-1:nyd))
-      allocate (crdy_c_cell(-1:nxd,-1:nyd))                          !srv 02.05.09
-      allocate (bzb(-1:nxd,-1:nyd))                                  !srv 13.10.06
+      allocate (crdy_c_cell(-1:nxd,-1:nyd))                       !srv 02.05.09
+      allocate (bzb(-1:nxd,-1:nyd))                               !srv 13.10.06
+      allocate (bzbv(-1:nxd,-1:nyd))
+      allocate (bzbl(-1:nxd,-1:nyd))
 
       write (*,*) 'Allocated space for b2mod_geo_corner' 
 
       end subroutine alloc_b2mod_geo_corner
 	 
       subroutine dealloc_b2mod_geo_corner
+      implicit none
 
       deallocate(OnedBsq)
       deallocate(OnedBsqc)
@@ -51,8 +58,10 @@
       deallocate(lengthy1)                                           !srv 21.05.08
       deallocate(len_surf)                                           !srv 02.05.09
       deallocate(crdy_surf)
-      deallocate(crdy_c_cell)                                        !srv 02.05.09
-      deallocate(bzb)                                                !srv 13.10.06
+      deallocate(crdy_c_cell)                                     !srv 02.05.09
+      deallocate(bzb)                                             !srv 13.10.06
+      deallocate(bzbv)                                            !nn
+      deallocate(bzbl)
 
       end subroutine dealloc_b2mod_geo_corner
 

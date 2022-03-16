@@ -16,7 +16,7 @@
       use b2mod_b2cmpa
       use b2mod_external
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra
@@ -221,8 +221,6 @@ c          v=vol(ix,iy)
           end do !}
         end if !}
       end do !}
-
- 10   continue
 
       do i=2,nnreg(0) !{
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
@@ -598,6 +596,5 @@ c     Finalization step
       return
 c======================================================================
   700 format('#   ',6i8)
-  701 format(a1,3x,6i8)
 c======================================================================
       end subroutine b2wrsep

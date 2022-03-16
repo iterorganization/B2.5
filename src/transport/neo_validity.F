@@ -15,6 +15,7 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -31,15 +32,15 @@
      &   deltab(-1:nx,-1:ny,0:ns), deltapar(-1:nx,-1:ny,0:ns),
      &   vtha(-1:nx,-1:ny,0:ns)
 
-      real min_value
+      real (kind=R8) :: min_value
 c     minimum value for real arrays to avoid division by zero
-      parameter (min_value=1.e-8)
+      parameter (min_value=1.e-8_R8)
 c     conversion of constants to CGS units
-      real erg, cm, gauss, gramm
-      parameter (erg=1.e7, cm=1.e2, gauss=1.e4, gramm=1.e3)
-      real kB_cgs, eV_cgs, e_cgs, c_cgs
+      real (kind=R8) :: erg, cm, gauss, gramm
+      parameter (erg=1.e7_R8, cm=1.e2_R8, gauss=1.e4_R8, gramm=1.e3_R8)
+      real (kind=R8) :: kB_cgs, eV_cgs, e_cgs, c_cgs
       parameter (kB_cgs=KBolt*erg, eV_cgs=ev*erg,
-     &           e_cgs=qe*c*10., c_cgs=c*cm)
+     &           e_cgs=qe*c*10._R8, c_cgs=c*cm)
       real (kind=R8) ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
      &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
@@ -100,14 +101,24 @@ c     conversion of constants to CGS units
 
 *   ..subprogram start-up calls
       call subini ('neo_validity')
-      if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
-        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+      if(nnreg(0).eq.4) then
+        if (LSN) then
+          ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        else
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        endif
+        iyref=2*topcut(1)/3
+      elseif(nnreg(0).eq.5) then
+        ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
         iyref=2*topcut(1)/3
       elseif(nnreg(0).eq.8) then
         ixref=(rightcut(1)+rightcut(2))/2
         iyref=2*min(topcut(1),topcut(2))/3
+      elseif(nnreg(0).eq.2) then
+        ixref=nx/2
+        iyref=2*topcut(1)/3
       else
-        ixref=3*nx/4
+        ixref=nx/2
         iyref=ny/2
       endif
       call ipgeti ('set_transport_ixref', ixref)
@@ -455,6 +466,7 @@ c     conversion of constants to CGS units
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
       use b2mod_external
+      use b2mod_subsys
       implicit none
 c#     include "b2cmpa.h"
       integer nx,ny,ns,jsep,jxa
@@ -471,7 +483,7 @@ c#     include "b2cmpa.h"
      2 bave,epsilon,lnlam,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
-      external subini, subend, xertst
+      external xertst
 
       call subini ('chang_hinton')
       transport=0.0_R8

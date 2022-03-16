@@ -36,6 +36,11 @@
       subroutine alloc_b2mod_external(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
+      external xertst
+
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
 
       if (allocated_externals) return
       ns_ext = 0
@@ -141,8 +146,13 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       logical toread
       logical open_file
       integer lnblnk
-      external xertst, xerrab, open_file, lnblnk
+      external xertst, xerrab, open_file, find_file, extend, lnblnk
 
+*   ..test arguments
+      call xertst (0.le.nxd.and.0.le.nyd, 'faulty argument nxd, nyd')
+      call xertst (1.le.nsd, 'faulty argument nsd')
+      call xertst (0.le.ismain.and.ismain.lt.nsd,
+     * 'faulty argument ismain')
 cxpb
 cxpb  First read ns_ext
 cpxb
@@ -233,6 +243,8 @@ cxpb
         na_ext = 0.0_R8
         ua_ext = 0.0_R8
         ta_ext = 0.0_R8
+        fa_ext = 0.0_R8
+        fhi_ext = 0.0_R8
         do is = 0, ns_ext-1
           read(74,*) dext
           na_ext(0:nxd-1,0:nyd-1,is) = dext(:,:) ! tungsten ik-th charge state density
@@ -251,7 +263,6 @@ cxpb
         read(74,*) dext(:,:)     ! electron heat source by radiation = ee_rd
         she_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         deallocate(dext)
-        close(74)
         call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
@@ -272,7 +283,7 @@ cxpb
           if (.not.is_ext_neutral(is)) ni_ext(-1:nxd,-1:nyd,1) =
      .     ni_ext(-1:nxd,-1:nyd,1) + na_ext(-1:nxd,-1:nyd,is)
 cxpb Computing ua from fa is what we really want to do
-        if (.false.) then
+        if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,nyd
             do ix=-1,nxd
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nxd+1) then
@@ -304,12 +315,9 @@ cxpb Computing ua from fa is what we really want to do
                  fhi_ext(ix,iy,0,0) = fhi_ext(ix,iy,0,0) +
      .            1.5_R8*fa_ext(ix,iy,0,0,is)*(ta_ext(ix,iy,is)+
      .            ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-               else
-                 fa_ext(ix,iy,0,0,is)=0.0_R8
                endif
             enddo
           enddo
-          fa_ext(:,:,1,1,:) = 0.0_R8
         endif
 cxpb
           ue_ext(-1:nxd,-1:nyd) = ue_ext(-1:nxd,-1:nyd) +
@@ -330,8 +338,9 @@ cxpb
       endif
 
       initialised_externals=.true.
+      close(74)
       return
- 974  continue
+  974 continue
       if (.not.initialised_externals)
      > call alloc_b2mod_external_dummy(nxd,nyd)
       initialised_externals=.true.

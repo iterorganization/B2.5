@@ -6,6 +6,21 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_b2cmpa
+      use b2mod_ipmain
+      use b2mod_subsys
+#ifdef IMAS
+#ifdef AMNS
+      use amns_types       ! IGNORE
+      use amns_module      ! IGNORE
+#endif
+#else
+#ifdef ITM
+#ifdef GOT_AMNSPROTO
+      use amns_types       ! IGNORE
+      use amns_module      ! IGNORE
+#endif
+#endif
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1)
@@ -111,15 +126,18 @@
       integer iyear(0:nnucm-1), npart(0:nnucm-1)
       integer izpmin(0:nzmax), izpmax(0:nzmax)
       character flag*8
-      integer i, j, k, nx, ny, ns, is, inuc, fix_cx, rtnt_in, rtnn_in,
-     *  no_weisheit, fix_recomb, ns_pardf
-      integer kstart, kstart1, kend, kpart
+      integer i, j, k, nx, ny, ns, is, js, inuc, fix_cx,
+     *  rtnt_in, rtnn_in, no_weisheit, ns_pardf
+      integer kstart, kstart1, kend
+      integer, allocatable :: is1(:)
       integer idum(0:9)
       integer, save :: no_smoothing = 0                        !srv 02.07.12
+      integer, save :: ismain0 = 0
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
-      character line*500
+      character*32 ADAS_git_version
+      character line*500, ligne*500
       real (kind=R8) ::
-     *  lnzero, tailep, tlo, thi, nlo, nhi, cxcoef
+     *  lnzero, tailep, tlo, thi, nlo, nhi, cxcoef, am0, am1
       real (kind=R8), allocatable ::
      &  rtsa(:,:,:), rtra(:,:,:),
      &  rtqa(:,:,:), rtcx(:,:,:),
@@ -127,19 +145,35 @@
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
      &  wrk(:,:,:)
-      save fix_cx, no_weisheit, rtnt_in, rtnn_in, fix_recomb
+#ifdef IMAS
+#ifdef AMNS
+      type (amns_handle_type), save :: amns
+      type (amns_query_type) :: query
+      type (amns_answer_type) :: answer
+#else
+      character*5, save :: git_version_amns = '0.0.0'
+#endif
+#else
+#ifdef ITM
+#ifndef GOT_AMNSPROTO
+      character*5, save :: git_version_amns = '0.0.0'
+#endif
+#else
+      character*5, save :: git_version_amns = '0.0.0'
+#endif
+#endif
+      save fix_cx, no_weisheit, rtnt_in, rtnn_in
       parameter (lnzero=-1.0e30_R8)
-      logical unread
 *   ..procedures
       intrinsic log, exp
       logical streql, is_comment
-      external subini, subend, xertst, xerrab, streql, cfwuch
+      character*32 get_ADAS_hash
+      external xertst, xerrab, streql, cfwuch
       external ratstr, ratadp, ratwei, rattai, ratprt, cfruch
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
-      external cfverr, cfruin, is_comment
+      external cfverr, cfruin, is_comment, get_ADAS_hash
 *   ..initialisation
-      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/16/,
-     & fix_recomb/0/
+      data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -262,7 +296,7 @@
 *     the nuclear species inuc.
 *     (if -1 then ADAS year was not the same for all ADAS files)
 *
-*     rtyr - (0:ntns-1) integer array.
+*     rtyr - (0:rtns-1) integer array.
 *     Specifies the ADAS year of the atomic species.
 *     (if -1 then ADAS year was not the same for all ADAS files)
 *
@@ -337,22 +371,31 @@
 *   ..obtain range and species data
       call b2arin (ninp(0), nnucm, nzmax, tlo, thi, nlo, nhi,
      &  nnuc, nz, izlo, izhi, flag, tailep)
+      b2frates_flag = flag
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
        read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         end if
        endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 *   ..internal parameters
+      fix_recomb = 0
       call ipgeti('b2ardr_fix_cx', fix_cx)
       call ipgeti('b2ardr_fix_recomb', fix_recomb)
       call ipgeti('b2ardr_no_weisheit', no_weisheit)
+      call ipgeti('b2mwti_ismain0', ismain0)
+      call xertst(0.le.ismain0 .and. ismain0.lt.ns_pardf,
+     &            'faulty argument ismain0')
       call ipgeti('b2ardr_rtnt', rtnt_in)
       call xertst(0.lt.rtnt_in, 'faulty argument rtnt_in')
       call ipgeti('b2ardr_rtnn', rtnn_in)
@@ -367,12 +410,25 @@
        lblrc(61:120) = 'STRAHL rate coefficients, courtesy of'//
      &   ' K. Behringer'
       else if (streql(flag,'adas')) then
-       lblrc(61:120) = 'ADAS rate coefficients, courtesy of'//
-     &   ' H. Summers'
+       ADAS_git_version = get_ADAS_hash()
+       lblrc(61:120) = 'ADAS '//trim(ADAS_git_version)//
+     &   ' rate coefficients, from M. O Mullane'
+#ifdef IMAS
+      else if (streql(flag,'amns')) then
+#ifdef AMNS
+       call IMAS_AMNS_SETUP(amns)
+       lblrc(61:120) = 'IMAS AMNS rate coefficients, version = '//
+     &   trim(git_version_amns)
+       call IMAS_AMNS_FINISH(amns)
+#else
+       call xerrab ('No IMAS AMNS data available')
+#endif
+#else
 #ifdef ITM
       else if (streql(flag,'amns')) then
        lblrc(61:120) = 'AMNS rate coefficients, courtesy of'//
      &   ' EFDA-TF-ITM'
+#endif
 #endif
       else
        call xerrab ('faulty data flag; flag='//flag)
@@ -387,6 +443,8 @@
        call b2wfr1 (nout(0))
       else if (streql(flag,'adas')) then
        call b2wfr2 (nout(0))
+      else if (streql(flag,'amns')) then
+       call b2wfr3 (nout(0))
       endif
 *   ..compute and test ns
       ns = 0
@@ -441,18 +499,30 @@
       rtz2=-1.0_R8
       rtpt=-1.0_R8
       rtpi=-1.0_R8
-      unread = .true.
 *   ..initialise species index
       rtns = 0
       is = 0
+      allocate(is1(0:ns_pardf-1))
+      is1 = -1
+*    ..read default physics common to obtain masses and map species data
+      call cfruch (ninp(3), 120, lblcp, 'label')
+      call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
+      call initialise_potentials(ns_pardf)
+      am0 = am(ismain0)
 *   ..loop over nuclear species
       do inuc = 0, nnuc-1
+       am1 = 0.0_R8
+       do k = 0, ns_pardf-1
+         if (am1.ne.0.0_R8) cycle
+         if (nint(zn(k)).eq.nz(inuc)) am1 = am(k)
+       end do
 *    ..compute table
        if (streql(flag,'adpak')) then
+        fix_recomb = 0  ! must be set to zero as ADPAK rates are incompatible
+                        ! with fix_recomb treatment
         call ratadp (nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1
-        kpart=izhi(inuc)-izlo(inuc)+1
         kstart = izlo(inuc)
         kend = izhi(inuc)
         do k = izlo(inuc), izhi(inuc)
@@ -467,7 +537,6 @@
         call ratstr (ninp(1), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
         npart(inuc)=nz(inuc)+1
-        kpart=izhi(inuc)-izlo(inuc)+1
         kstart = izlo(inuc)
         kend = izhi(inuc)
         do k = izlo(inuc), izhi(inuc)
@@ -496,16 +565,19 @@ cxpb  We must account for the case when the user does not want all bundles
           k = k - 1
         end do
         kend = k
-        kpart = kend - kstart + 1
         do k = kstart, kend
          rtzmin(is+k-kstart) = izpmin(k)
          rtzmax(is+k-kstart) = izpmax(k)
          rtzn(is+k-kstart) = real(nz(inuc))
         enddo
         rtns = rtns + kend - kstart + 1
-#ifdef ITM
        else if (streql(flag,'amns')) then
-        call ratamns (nout(0), nz(inuc), rtt, rtnt, rtn, rtnn,
+        if (git_version_amns.lt.'1.3.2') then
+         am0 = 0.0_R8
+         am1 = 0.0_R8
+        endif
+        call ratamns (nout(0), nz(inuc), am0, am1,
+     &    rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
      &    iyear(inuc), fix_recomb,
      &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
@@ -522,15 +594,21 @@ cxpb  We must account for the case when the user does not want all bundles
           k = k - 1
         end do
         kend = k
-        kpart = kend - kstart + 1
         do k = kstart, kend
          rtzmin(is+k-kstart) = izpmin(k)
          rtzmax(is+k-kstart) = izpmax(k)
          rtzn(is+k-kstart) = real(nz(inuc))
         enddo
         rtns = rtns + kend - kstart + 1
-#endif
        endif
+*    ..get corresponding old species index
+       js = 0
+       do while (nint(zn(js)).ne.nint(rtzn(is)) .and. js.le.ns_pardf)
+         js = js + 1
+       end do
+       do k = kstart, kend
+         is1(is+k-kstart) = js+k-kstart
+       end do
 *    ..correct hydrogen data
        if (nz(inuc).eq.1) then
         if (no_weisheit.eq.0) then
@@ -697,15 +775,8 @@ cxpb  We must account for the case when the user does not want all bundles
            rtlpt(i,j,is) = rtpt(i,j,k)
            rtlpi(i,j,is) = rtpi(i,j,k)
           else
-           if (unread) then
-*        ..read default physics common to obtain masses
-             call cfruch (ninp(3), 120, lblcp, 'label')
-             call b2rucp (ninp(3), b2fparam_version, nx, ns_pardf)
-             call initialise_potentials(ns_pardf)
-             unread = .false.
-           endif
-           rtlpt(i,j,is) = (potmin(is)+potmax(is))/2.0_R8
-           rtlpi(i,j,is) = (potimin(is)+potimax(is))/2.0_R8
+           rtlpt(i,j,is) = (potmin(is1(is))+potmax(is1(is)))/2.0_R8
+           rtlpi(i,j,is) = (potimin(is1(is))+potimax(is1(is)))/2.0_R8
           endif
          enddo
         enddo
@@ -744,6 +815,7 @@ cxpb  We must account for the case when the user does not want all bundles
       deallocate(rtpi)
       deallocate(rtpt)
       deallocate(wrk)
+      deallocate(is1)
 * ..return
       call subend ()
       return

@@ -2,7 +2,7 @@
       subroutine ludcmp(a,n,np,indx,d)
       
       use b2mod_types
-
+      use b2mod_subsys
       implicit none
       
       integer ::
@@ -14,7 +14,6 @@
      *     i,imax,j,k
       real (kind=r8) ::
      *      aamax,dum,sum,vv(0:nmax-1)
-      external subini, subend, xertst
 
       call subini('ludcmp')
       d=1.

@@ -5,6 +5,7 @@
      &     wrk0, wrk1)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -55,7 +56,7 @@
       integer, save :: pot_eq = 1, no_current=0                       !srv 16.07.12
       save ncall
 *   ..procedures
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
 *   ..initialisation
       data ncall/0/
 
@@ -100,7 +101,7 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-	   if(rightix(ix,iy).eq.nx+1) then
+           if(rightix(ix,iy).eq.nx+1) then
              ehxp(ix,iy) = 0.0_R8
            else
              ehxp(ix,iy) = 
@@ -109,7 +110,7 @@
      &        (wrk0(rightix(ix,iy),rightiy(ix,iy))-qe*ne(ix,iy)*
      &         wrk1(rightix(ix,iy),rightiy(ix,iy)))/
      &        (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-	   endif
+           endif
          elseif(rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 
      &     (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)*           !srv 11.01.13

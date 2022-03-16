@@ -17,11 +17,15 @@ c***
 c*** Output files:
 c***
 c***  radsrc.b2e   with source data
-c***  targload.dat with loading data
 c=====================================================
       use b2mod_types
+      use b2mod_geo
       use b2mod_b2plot
       use b2mod_sources
+      use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
       parameter (lun=96)
@@ -36,13 +40,22 @@ c*** Write down the radiation data
 c
       open(lun,file='radsrc.b2e')
       write(lun,'(3x,a6,9x,a2,15x,a2,14x,a4)') 'ix  iy','cr','cz','Wrad'
-      do ix=1,nx
-          do iy=1,ny
+      do ix=0,nx-1
+          do iy=0,ny-1
               u = 0.0_R8
               do is=0,ns-1
                   u=u+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
               end do
-              u=1.e-6_R8*u
+              do is=1,natmi
+                  u=u-eneutrad(ix+1,iy+1,is,0)
+              end do
+              do is=1,nmoli
+                  u=u-emolrad(ix+1,iy+1,is,0)
+              end do
+              do is=1,nioni
+                  u=u-eionrad(ix+1,iy+1,is,0)
+              end do
+              u=1.e-6_R8*u/vol(ix,iy)
               write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),u
   700         format(1x,2i4,3e17.7)
           end do

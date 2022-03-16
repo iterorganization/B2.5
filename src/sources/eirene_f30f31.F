@@ -15,8 +15,9 @@
       SUBROUTINE GFSUB3(KARD,NX,NY,NDIMX,NDIMY,NDIMS,DUMMY)
       use b2mod_types
       IMPLICIT NONE
-      INTEGER KARD,NX,NY,NDIMX,NDIMY, NDIMS, ND1, LIM, IS, IY, IX, III
-      REAL (kind=R8) ::
+      INTEGER, INTENT(IN) :: KARD,NX,NY,NDIMX,NDIMY,NDIMS
+      INTEGER ND1, LIM, IS, IY, IX, III
+      REAL (kind=R8), INTENT(IN) ::
      *   DUMMY(0:NDIMX+1,0:NDIMY+1,1:NDIMS)
       ND1 = NX + 2
       LIM = (ND1/5)*5 - 4
@@ -30,7 +31,7 @@
   110   CONTINUE
   120 CONTINUE
       RETURN
-  910 FORMAT(1P,5(E16.8))
+  910 FORMAT(1P,5(1X,1E15.8))
 *=======================================================================
 *//END GFSUB3//
 
@@ -44,6 +45,8 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+      use b2mod_rates
+      use b2mod_subsys
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -52,6 +55,7 @@ c
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
+      use eirmod_cinit, only: fort_lc
 #endif
 #else
       use b2mod_braeir
@@ -60,24 +64,24 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny,ns
-      real (kind=R8) :: BoRiS
+      integer, intent(in) :: nx,ny,ns
+      real (kind=R8), intent(in) :: BoRiS
       character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style = 1, iout = 0                        !srv 21.06.08
-      integer ix,iy,is,ncall,eirene_extrap,in,
+      integer ix,iy,is,ncall,eirene_extrapolate,in,
      1 eirene_uub_style, print_minmax, eirene_background
-      external ipgetr, ipgeti, subini, subend, xerrab
+      external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
      * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
      * na_min_val, na_max_val, ua_min_val, ua_max_val
       save te_min, te_max, ti_min, ti_max,
      1 na_min, na_max, ua_min, ua_max, ncall,
-     2 eirene_extrap, eirene_uub_style, print_minmax
+     2 eirene_extrapolate, eirene_uub_style, print_minmax
       data te_min/0.0_R8/, te_max/1.0e30_R8/,
      1 ti_min/0.0_R8/, ti_max/1.0e30_R8/,
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
-     2 ncall/0/, eirene_extrap/1/,
+     2 ncall/0/, eirene_extrapolate/1/,
      & eirene_uub_style/0/, print_minmax/0/, eirene_background/1/
       real (kind=R8) :: kintmp
       real (kind=R8) :: hy1
@@ -98,7 +102,7 @@ c
         call ipgetr('eirene_na_max',na_max)
         call ipgetr('eirene_ua_min',ua_min)
         call ipgetr('eirene_ua_max',ua_max)
-        call ipgeti('eirene_extrap',eirene_extrap)
+        call ipgeti('eirene_extrap',eirene_extrapolate)
         call ipgeti('eirene_uub_style',eirene_uub_style)
         call ipgeti('eirene_background',eirene_background)
         call ipgeti('eirene_print_minmax',print_minmax)
@@ -130,7 +134,7 @@ c
         vaecrbc(:,:,1,is) = vaecrb(:,:,1,1,is)
         wadiac(:,:,1,is)  = wadia(:,:,1,1,is)
         vadiac(:,:,1,is)  = vadia(:,:,1,1,is)
-        if (drift_style.eq.1) then
+        if (drift_style.gt.0) then
           call mapx(nx,ny,1,vaecrbc(:,:,0,is),wrk)
           call mapy(nx,ny,1,vaecrbc(:,:,1,is),wrk)
           call mapx(nx,ny,1,wadiac(:,:,0,is),wrk)
@@ -259,6 +263,7 @@ c
      1         wadiac(ix,iy,1,is)+vaecrbc(ix,iy,1,is),ua_max),ua_min)
               prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
      1         dnib(ix+1,iy+1,nflai)
+              zib(ix+1,iy+1,nflai)=rza(ix,iy,is)
 c     Velocities uub, vvb, wwb
 c     * cell centered
 c     * internal cell values used for plasma background properties in infcop
@@ -295,7 +300,7 @@ c     internal cell -> full diamagnetic drift
 cwdk  uub computed from face fluxes, and interpolated to cell centers
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
-c     in fna may have been set 0. Should consider using the eirene_uub_style.eq.0 treatment 
+c     in fna may have been set to 0. Should consider using the eirene_uub_style.eq.0 treatment
 c     in these cells!
                if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .           bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
@@ -349,7 +354,7 @@ cwdk  vvb computed from face fluxes, and interpolated to cell centers
 c     Compatible with SOLPS4.3.
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at E/W boundaries questionable, because (certain/all) terms
-c     in fna may have been set 0. 
+c     in fna may have been set to 0.
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only (fna)
@@ -458,9 +463,9 @@ c     internal cell -> full diamagnetic drift
         endif
       enddo
 
-      if(eirene_extrap.eq.0) then
+      if(eirene_extrapolate.eq.0) then
         ! do nothing
-      elseif(eirene_extrap.eq.1) then
+      elseif(eirene_extrapolate.eq.1) then
 c we derive the guard cell value from its neighbouring interior cell
         do in=1,2    ! do twice so we get the corner cells as well
           do iy=-1,ny
@@ -472,6 +477,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(rightix(ix,iy)+1,rightiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(rightix(ix,iy)+1,rightiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(rightix(ix,iy)+1,rightiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(rightix(ix,iy)+1,rightiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(rightix(ix,iy)+1,rightiy(ix,iy)+1,:)
               endif
@@ -479,6 +486,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(leftix(ix,iy)+1,leftiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(leftix(ix,iy)+1,leftiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(leftix(ix,iy)+1,leftiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(leftix(ix,iy)+1,leftiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(leftix(ix,iy)+1,leftiy(ix,iy)+1,:)
               endif
@@ -486,6 +495,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(topix(ix,iy)+1,topiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(topix(ix,iy)+1,topiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(topix(ix,iy)+1,topiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(topix(ix,iy)+1,topiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(topix(ix,iy)+1,topiy(ix,iy)+1,:)
               endif
@@ -493,6 +504,8 @@ c declared -1:nx,-1:ny
                 teb(ix+1,iy+1)=teb(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
                 tib(ix+1,iy+1)=tib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
                 pob(ix+1,iy+1)=pob(bottomix(ix,iy)+1,bottomiy(ix,iy)+1)
+                zib(ix+1,iy+1,:)=
+     1           zib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,:)
                 dnib(ix+1,iy+1,:)=
      1           dnib(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,:)
               endif
@@ -500,8 +513,8 @@ c declared -1:nx,-1:ny
           enddo
         enddo
       else
-        write(*,*) eirene_extrap,
-     1   ' not avaible as an eirene_extrap option'
+        write(*,*) eirene_extrapolate,
+     1   ' not available as an eirene_extrap option'
       endif
 
       if(print_minmax.ne.0) then
@@ -551,46 +564,46 @@ c
 #else
       use ctrig    ! IGNORE
 #endif
+      use eirmod_cinit, only: fort_lc
+#else
+      use b2mod_eirbra, only: fort_lc
 #endif
       implicit none
-      integer nx,ny
-      integer ix,iy,i,nniso,idum
+      integer, intent(in) :: nx,ny
+      integer ix,iy,i,nniso
 
       integer nxcut1(nncutmax),nxcut2(nncutmax),
      &        nycut1(nncutmax),nycut2(nncutmax),
      &        nxiso1(nncutmax),nxiso2(nncutmax),
      &        nyiso1(nncutmax),nyiso2(nncutmax)
 
-      character*54 format_string(2)
+      character*7 filename
+      character*54 format_string(4)
       integer, save :: new_format
       logical ex
 
 #ifdef B25_EIRENE
-      integer, save :: exp_location, dot_location
+      integer idum
+      integer, save :: exp_location, dot_location, spacing
+      character*1 :: ldum(0:3)
       character*80 line
+      character*256 filenamecat
       data new_format/1/
-      logical open_file
-      external open_file
+      logical silent_open, streql
+      external silent_open, streql
 #else
       data new_format/2/
 #endif
-      data format_string/ '(1P,4E15.7)', '(1P,4E16.8)' /
+      data format_string/ '(1P,4E15.7)', '(1P,4E16.8)',
+     .                       '(4E15.7)',    '(4E16.8)'/
 
-#ifndef HPUX
-      inquire(file='fort.30',exist=ex)
+      filename=fort_lc//'30'
+      inquire(file=filename,exist=ex)
       if (ex) then
-        write(*,*)
-     .   'Skipping writing fort.30 because file already present'
+        write(*,*) 'Skipping writing '//trim(filename)//
+     .   ' because file already present'
         return
       endif
-#else
-      inquire(file='ftn30',exist=ex)
-      if (ex) then
-        write(*,*)
-     .   'Skipping writing ftn30 because file already present'
-        return
-      endif
-#endif
       nniso=nncut-1
       if(nncut.eq.1) then
         if (nnreg(0).eq.1) then
@@ -640,11 +653,8 @@ c
 
 #ifdef B25_EIRENE
 cxpb Deduce from fort.33 triangle vertices files which format precision to use
-#ifndef HPUX
-      if (open_file(33,'fort.33','')) then
-#else
-      if (open_file(33,'ftn33','')) then
-#endif
+      filename=fort_lc//'33'
+      if (silent_open(33,trim(filename),'',filenamecat)) then
         rewind(33)
         read(33,*,end=933,err=933) idum
         if (nrknot.eq.0) nrknot = idum
@@ -668,36 +678,38 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
             else if (exp_location-dot_location.eq.9) then
               new_format = 2
             else
-#ifndef HPUX
-              call xerrab ('Unrecognized format (1) in fort.33 file')
-#else
-              call xerrab ('Unrecognized format (1) in ftn33 file')
-#endif
+              call xerrab
+     .         ('Unrecognized format (1) in '//fort_lc//'33 file')
             end if
           else
-#ifndef HPUX
-            call xerrab ('Unrecognized format (2) in fort.33 file')
-#else
-            call xerrab ('Unrecognized format (2) in ftn33 file')
-#endif
+            call xerrab
+     .       ('Unrecognized format (2) in '//fort_lc//'33 file')
           end if
+cxpb Now deal with older files without the 1P in the format string
+cxpb If the 1P was missing in the format, the numbers will start with 0
+          spacing=index(line(dot_location+1:len(line)),'.')
+          do i = 0, 3
+            ldum(i) = line(dot_location-1+i*spacing:
+     .                     dot_location-1+i*spacing)
+            if (.not.streql(ldum(i),'0')) exit
+            if (i.eq.3) new_format = new_format+2
+          end do
         else
           new_format = 2
         end if
         goto 939
- 933    new_format = 2
- 939    continue
+  933   new_format = 2
+  939   continue
         close(33)
       else
         new_format = 2
       end if
 #endif
-#ifndef HPUX
-      write(*,'(a,a)')
-     . 'Writing fort.30 with ', format_string(new_format)
-#else
-      write(*,'(a,a)')
-     . 'Writing ftn30 with ', format_string(new_format)
+      write(*,'(4a)')
+     . 'Writing ',fort_lc,'30 with ', format_string(new_format)
+#ifdef B25_EIRENE
+      if (.not.streql(filenamecat,'')) write(*,'(3a)')
+     . ' to match ',trim(filenamecat),' format'
 #endif
       rewind(30)
       write (30,*) 'Geometry from B2'
@@ -727,7 +739,6 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
       close (30)
 
       return
- 1028 format()
       end subroutine write_f30
 c
       subroutine write_f31(nx, ny)
@@ -750,15 +761,20 @@ c
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      integer nx,ny
+      integer, intent(in) :: nx,ny
       integer nxx,nyy
       real*8, allocatable :: dummy(:,:,:)
 
 csw 2013 corrected
 c      nxx=nxdd
 c      nyy=nydd
+#ifdef B25_EIRENE
       nxx=ndx
       nyy=ndy
+#else
+      nxx=nx
+      nyy=ny
+#endif
 
       write(*,*) 'NX, NY, NFLAI = ',nx,ny,nflai
       rewind(31)
@@ -822,8 +838,8 @@ csw 13apr2011 dummies for vparx,...,deltae_...
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
       call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
-
-
+c average ion charge
+      CALL GFSUB3(31,NX,NY,NXx,NYy,NFLAI,ZIB(0,0,1))
 
       deallocate(dummy)
 

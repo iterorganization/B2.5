@@ -1,6 +1,7 @@
       subroutine b2txsy (nx, ny, vol, hy, qz, fun, funsy)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -15,7 +16,7 @@
       integer ix, iy
       real (kind=R8) ::
      *   hy1
-      external subini, subend, b2xxgs
+      external b2xxgs
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     ------------------------------------------------------------------
       call subini ('b2txsy')

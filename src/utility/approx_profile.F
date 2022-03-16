@@ -53,8 +53,7 @@
       real (kind=R8) :: r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat),
      &                  d(1:ndat)
       integer :: i, iy 
-      real (kind=R8), external :: dseval
-      
+
       open(70,file=trim(fnm))
       do iy = 1, ndat
         read(70,*) r(iy), f(iy)
@@ -95,8 +94,6 @@
       real (kind=R8) :: r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat),
      &                  d(1:ndat)
       integer :: i, iy 
-      real (kind=R8), external :: dseval
-      
 !      call dcscon (ndat, r, f, ibreak, break, cscoef)
 !      write(*,*) ' ibreak = ', ibreak
 !      ideriv = 0

@@ -6,6 +6,7 @@
       use b2mod_geo_corner
       use b2mod_rates
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -17,7 +18,17 @@
      &   qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     $   fchvisq(-1:nx,-1:ny,0:1,0:1)                                   !srv 11.07.99
+     &   fchvisq(-1:nx,-1:ny,0:1,0:1)                                   !srv 11.07.99
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSQ computes the X and Y components of the heat viscosity
+*     current.
+*
+*  8. further comments
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -26,6 +37,7 @@
       integer mintopcut                                                 !lk
       integer, save :: ncall = 0
       integer, save :: qstyle = 0                                       !lk 23.05.06 05.07.07 {
+      integer, save :: no_current = 0
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
       real (kind=R8), save :: cqip1 = 0.5e0_R8                          !lk
       real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                     !iyv 06.12.13
@@ -39,13 +51,13 @@
      *    wrk0(-1:nx,-1:ny), qip0(-1:nx,-1:ny),                         !srv 11.07.99
      *    qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                       !srv 20.12.99
      *    tauia(-1:nx,-1:ny,0:ns-1),                                    !srv 28.03.99 11.07.99
-     *    dtir(-1:nx,-1:ny), wght(-1:nx,-1:ny),
+     *    dtir(-1:nx,-1:ny),
      *    dOnedBsq(-1:nx,-1:ny,0:1,0:1)
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
      *   hy1
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------
@@ -59,6 +71,7 @@
        call ipgetr ('b2tfhe_vis_q', vis_q)                              !srv 11.07.99
        call ipgeti ('b2siav_style_qip', qstyle)                         !lk 23.05.06 05.07.07
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                    !iyv 06.12.13
+       call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -67,7 +80,8 @@
       
       fchvisq   = 0.0e0_R8                                              !srv 11.07.99
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8) then               !srv 16.10.17
+      if(fac_vism.ne.0.0_R8 .and. vis_q.ne.0.0e0_R8 .and.                !srv 16.10.17
+     &   no_current.eq.0) then
 
 *     ..compute radial gradients of ti
          call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)

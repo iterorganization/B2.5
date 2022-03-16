@@ -20,7 +20,7 @@
        if(is.ne.ismain) then
          zmff(-1:nx,-1:ny) = zmff(-1:nx,-1:ny) +
      .       rz2(-1:nx,-1:ny,is)*na(-1:nx,-1:ny,is)
-	 endif
+        endif
       enddo
       zmff=zmff/(rz2(-1:nx,-1:ny,ismain)*na(-1:nx,-1:ny,ismain))
 *$$$  call subend ()

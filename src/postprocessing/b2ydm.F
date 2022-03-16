@@ -13,7 +13,7 @@
 
       IMPLICIT NONE
 
-      INTEGER :: NN, NLINE, NTILES, II, INUNIT=8888
+      INTEGER :: NLINE, NTILES, II, INUNIT=8888
       real :: P_LENGTH, HEIGHT, T_LENGTH, ALPHA, BETA, THETA, T_GAP
       real :: T_COOLANT, M_FLOW, CP_COOLANT, QTOT=0.0d0, T_OUT
       real :: target_length
@@ -26,15 +26,15 @@
 !##########################################################################
 !     Read input file 'b2ydm.dat'
 !##########################################################################
-      NAMELIST /GEOMETRY/	                
+      NAMELIST /GEOMETRY/
      .     HEIGHT, T_LENGTH, P_LENGTH, ALPHA, BETA,
      .     THETA, T_GAP
 
-      NAMELIST /COOLANT/                 
+      NAMELIST /COOLANT/
      .     T_COOLANT, M_FLOW, CP_COOLANT
 
       open(unit=inunit,file=infile0,status='old',action='read')
-      READ(INUNIT,NML=GEOMETRY)	
+      READ(INUNIT,NML=GEOMETRY)
       READ(INUNIT,NML=COOLANT)
       close(INUNIT);
       
@@ -47,13 +47,13 @@
       READ(INUNIT,*) skip       !First two lines are text lines so must be skipped
       READ(INUNIT,*) skip
       NLINE=0
- 5    READ(INUNIT,*,END=15) skip !File is of unknown length, so first count the number of lines
+    5 READ(INUNIT,*,END=15) skip !File is of unknown length, so first count the number of lines
       NLINE = NLINE +1
       GO TO 5
- 15   CLOSE(INUNIT)
-      
-      ALLOCATE(MM(NLINE,2))     ! then allocate variable size and read again storing the values. First column will be x coordinate, 
-                                  ! second the total heat flux. 
+   15 CLOSE(INUNIT)
+
+      ALLOCATE(MM(NLINE,2))     ! then allocate variable size and read again storing the values. First column will be x coordinate,
+                                  ! second the total heat flux.
       MM=0.0d0
       open(unit=inunit,file=infile,status='old',action='read')
       READ(INUNIT,*) skip
@@ -108,10 +108,10 @@
 !##########################################################################
       implicit none
 
+      integer, intent(in) :: nData, nVal
       real, intent(in) :: xData(nData), yData(nData), xVal(nVal)
       real, intent(out) :: yVal(nVal)
       integer :: inputIndex, dataIndex
-      integer, intent(in) :: nData, nVal
       real :: minXdata, maxXData, weight
 
       minXData = xData(1)
@@ -120,8 +120,8 @@
       
       
       do inputIndex = 1, nVal
-          
- 1       if(xData(dataIndex+1).le.xVal(inputIndex)) then
+
+    1    if(xData(dataIndex+1).le.xVal(inputIndex)) then
             dataIndex=dataIndex+1
             goto 1
           endif

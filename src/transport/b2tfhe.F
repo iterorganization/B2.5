@@ -19,6 +19,7 @@
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                    !xpb
@@ -95,7 +96,7 @@
       intrinsic dim, min, max, abs, sqrt, log, mod
       real (kind=R8) ::
      *   harm, hybr, upwind, hy1
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvsg, b2xvff, b2xvfx, intcor
       harm(t0,t1) = 2*t0*t1/(t0+t1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!

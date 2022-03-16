@@ -7,6 +7,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_openmp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -39,11 +41,12 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
       integer, save :: iout = 0
       character chark*1
+      !$OMP THREADPRIVATE(ncall, iout)
       real (kind=R8) :: t0, t1
       save ncall
 *   ..procedures
       intrinsic min
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2ux5p
 *   ..initialisation
       data ncall/0/
@@ -57,7 +60,13 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2uspo_iout', iout)
-      endif  
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
+      endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -238,7 +247,7 @@ cwdk add 9-point contributions
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	     iy.ne.ny .and. aa9(ix,iy,3).eq.0.0_R8) then
+     &       iy.ne.ny .and. aa9(ix,iy,3).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2uspo for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            if (solvereg(ireg))

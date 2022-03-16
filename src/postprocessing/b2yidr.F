@@ -18,6 +18,8 @@
       use b2mod_ppout
       use b2mod_geo_corner
 !      use b2mod_work
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -75,7 +77,7 @@
 *   ..common blocks
 *   ..local variables
       integer is, iftp, idum(0:9), ismain
-      real (kind=R8) :: t0, t1,
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
@@ -86,14 +88,12 @@
       save ismain
       data ismain/1/
 *   ..procedures
-      intrinsic abs
-      logical streql, ltst, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
+      logical streql, is_comment
+      external xertst, xerrab, streql, gacwk,
      &  gdawk, cfruch, lbfilx, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
-      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      external ipgeti, b2rfcp, b2rflb, b2xxid
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -276,7 +276,8 @@
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..read atomic rate data
       call cfruch (ninp(2), 120, lblrc, 'label')
-      call read_b2mod_ppout('rates', ninp(2), lblrc)
+      call get_AM_flag (lblrc, b2frates_flag)
+      call read_b2mod_ppout('rates', ninp(2), b2frates_flag)
       call b2rurc (ninp(2), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')

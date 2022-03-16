@@ -5,13 +5,16 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
+      use b2mod_aggs
       use b2mod_version
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_interp
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1
@@ -94,18 +97,18 @@
       integer idum(0:9), ix, iy, geometryType
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
-      character line*500
+      character line*500, ligne*500
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
-      logical :: includeGhostCells
+      integer iFace, offset
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
+      external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
@@ -310,9 +313,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -336,6 +343,68 @@
      1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
      2 region1,nnreg,resignore1,crx1,cry1,periodic_bc)
       write(*,*) 'b2agdr0: bb1(nx1,ny1,0) ',bb1(nx1,ny1,0)
+*   ..compute cflags array if not provided by mesh file
+      if(maxval(cflags1).eq.0) then
+        cflags1(1:nx1-2,1:ny1-2,CELLFLAG_TYPE) = GRID_INTERNAL
+        cflags1(0,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(nx1-1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(0:nx1-1,0,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(0:nx1-1,ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags1(-1,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags1(nx1,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags1(-1:nx1,-1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags1(-1:nx1,ny1,CELLFLAG_TYPE) = GRID_GUARD
+        if (nncut.ge.2) then
+          iy = ny1/2
+          do ix = 1, nx1-2
+            if (rightix1(ix,iy).eq.nx1+1) then
+              cflags1(ix-1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags1(ix,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+            end if
+            if (leftix1(ix,iy).eq.-2) then
+              cflags1(ix,-1:ny1,CELLFLAG_TYPE) = GRID_GUARD
+              cflags1(ix+1,0:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+            end if
+          end do
+        end if
+        do iy=-1,ny1
+          do ix=-1,nx1
+            if (cflags1(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY) cycle
+            if (cflags1(leftix1(ix,iy),leftiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_LEFTFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(leftix1(ix,iy),leftiy1(ix,iy),
+     .                CELLFLAG_RIGHTFACE) = cflags1(ix, iy, iFace)
+            end if
+            if (cflags1(rightix1(ix,iy),rightiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_RIGHTFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(rightix1(ix,iy),rightiy1(ix,iy),
+     .                CELLFLAG_LEFTFACE) = cflags1(ix, iy, iFace)
+            end if
+            if (cflags1(topix1(ix,iy),topiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_TOPFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(topix1(ix,iy),topiy1(ix,iy),
+     .                CELLFLAG_BOTTOMFACE) = cflags1(ix, iy, iFace)
+            end if
+            if (cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                  CELLFLAG_TYPE) == GRID_GUARD) then
+              iFace = CELLFLAG_BOTTOMFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags1(ix, iy, iFace) = offset - region1(ix, iy, 0)
+              cflags1(bottomix1(ix,iy),bottomiy1(ix,iy),
+     .                CELLFLAG_TOPFACE) = cflags1(ix, iy, iFace)
+            end if
+          end do
+        end do
+      end if
 *   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
@@ -405,7 +474,7 @@ cwdk  curvilinear grids
       wbbr1(:,:,3)=sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
       wbbv1(:,:,3)=sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
 *    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
-      geometryType = geometryId(nnreg, periodic_bc, topcut1)
+      geometryType = geometryId(nnreg, isymm, periodic_bc, topcut1)
       call b2xgbs1 (nx1, ny1, 
      1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
@@ -502,28 +571,28 @@ cwdk  curvilinear grids
       endif
 cdpc-debug
       if(nx1.eq.nx.and.ny1.eq.ny) then
-	write(*,*) 'b2agdr sanity check: vol ',
-     1	 maxval(abs(vol1-vol))
-	write(*,*) 'b2agdr sanity check: hx  ',
-     1	 maxval(abs(hx1-hx))
-	write(*,*) 'b2agdr sanity check: hy  ',
-     1	 maxval(abs(hy1-hy))
-	write(*,*) 'b2agdr sanity check: qz  ',
-     1	 maxval(abs(qz1-qz))
-	write(*,*) 'b2agdr sanity check: qc  ',
-     1	 maxval(abs(qc1-qc))
-	write(*,*) 'b2agdr sanity check: qs ',
-     1	 maxval(abs(qs1-qs))
-	write(*,*) 'b2agdr sanity check: gs  ',
-     1	 maxval(abs(gs1-gs))
-	write(*,*) 'b2agdr sanity check: crx ',
-     1	 maxval(abs(crx1-crx))
-	write(*,*) 'b2agdr sanity check: cry ',
-     1	 maxval(abs(cry1-cry))
-	write(*,*) 'b2agdr sanity check: bb  ',
-     1	 maxval(abs(bb1-bb))
-	write(*,*) 'b2agdr sanity check: pbs ',
-     1	 maxval(abs(pbs1-pbs))
+        write(*,*) 'b2agdr sanity check: vol ',
+     1   maxval(abs(vol1-vol))
+        write(*,*) 'b2agdr sanity check: hx  ',
+     1   maxval(abs(hx1-hx))
+        write(*,*) 'b2agdr sanity check: hy  ',
+     1   maxval(abs(hy1-hy))
+        write(*,*) 'b2agdr sanity check: qz  ',
+     1   maxval(abs(qz1-qz))
+        write(*,*) 'b2agdr sanity check: qc  ',
+     1   maxval(abs(qc1-qc))
+        write(*,*) 'b2agdr sanity check: qs ',
+     1   maxval(abs(qs1-qs))
+        write(*,*) 'b2agdr sanity check: gs  ',
+     1   maxval(abs(gs1-gs))
+        write(*,*) 'b2agdr sanity check: crx ',
+     1   maxval(abs(crx1-crx))
+        write(*,*) 'b2agdr sanity check: cry ',
+     1   maxval(abs(cry1-cry))
+        write(*,*) 'b2agdr sanity check: bb  ',
+     1   maxval(abs(bb1-bb))
+        write(*,*) 'b2agdr sanity check: pbs ',
+     1   maxval(abs(pbs1-pbs))
       endif
       write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
       if(istyle.ge.0) then
@@ -531,7 +600,7 @@ cdpc-debug
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
         call b2agbb (nx, ny, vol, hx, hy, qz, 
-     &	 fpsi, ffbz, bb)
+     &   fpsi, ffbz, bb)
       else
         fpsi=0.0_R8
         ffbz=0.0_R8
@@ -551,7 +620,7 @@ cdpc-debug
      .   'This means that the Bx(grad B) direction points DOWN.'
         write(nout(0),'(2x,a)')
      .   'Bz is out of the page towards you.'
-      else
+      else if (bb(nx,ny,2).lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
@@ -564,13 +633,20 @@ cdpc-debug
      .   'This means that the Bx(grad B) direction points UP.'
         write(nout(0),'(2x,a)')
      .   'Bz is into the page away from you.'
+      else
+        write(*,'(a)')
+     .   'This case has ZERO toroidal magnetic field.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has ZERO toroidal magnetic field.'
       endif
-      write(*,'(a)')
-     . 'If this is not correct, please set :'
-      write(*,'(a)')
-     . '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
-      write(*,'(a)')
-     . 'If already set to "1", set to "0" instead.'
+      if (bb(nx,ny,2).ne.0.0_R8) then
+        write(*,'(a)')
+     .   'If this is not correct, please set :'
+        write(*,'(a)')
+     .   '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
+        write(*,'(a)')
+     .   'If already set to "1", set to "0" instead.'
+      endif
       write(*,'()')
       if (bb(nx,ny,0).gt.0.0_R8) then
         write(*,'(a)')
@@ -630,7 +706,7 @@ cdpc-debug
         write(nout(0),'(2x,a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
-      else
+      else if (bb(nx,ny,0)*bb(nx,ny,2).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has COUNTER-directed plasma current and '//
      .   'toroidal field.'
@@ -664,6 +740,11 @@ cdpc-debug
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
      &  vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
      &  cell_width, cell_height)
+*   ..create B2GridMap data structure
+      call b2CreateMap(nx, ny, crx, cry, cflags,
+     &     leftix, leftiy, rightix, rightiy,
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .true.)
+      mapInitialized = .true.
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)

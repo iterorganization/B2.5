@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -80,7 +81,7 @@
      * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
      &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       logical strmas
-      external subini, subend, xertst, strmas, b2ssum
+      external xertst, strmas, b2ssum
       external b2xvsg, b2xvff, b2xvps, b2xxmm, b2xppb
       rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
       rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)

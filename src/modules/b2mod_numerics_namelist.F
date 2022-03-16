@@ -37,6 +37,8 @@
       logical, save :: last_solve_5(0:NNREGMAX)
       logical, save :: last_solve_9(0:NNREGMAX)
 #endif
+      !$OMP THREADPRIVATE(last_solve_5)
+      !$OMP THREADPRIVATE(last_solve_9)
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)
@@ -50,7 +52,8 @@
       logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
+     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,          !srv 22.05.18
+     & write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch
 
 
@@ -139,11 +142,14 @@
 
       integer nx,ny,nsmin,nsmax
       logical :: file_ok
-      integer ix,iy
+      integer ix, iy, ireg, is
+      integer, save :: ncall = 0
       real (kind=R8) :: ttf
       character*260 filename
 
       filename=numerics_filename
+      numerics_time_mod = 0.0_R8
+      numerics_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -153,12 +159,13 @@
 #else
         read(99,numerics)
 #endif
+        close(99)
         write(*,*) 'Read namelist numerics from ',trim(filename)
-        do ix = 0, nnreg(0)
-          solveet(ix) = solveee(ix).or.solveei(ix)
-          solvemt(ix) = .false.
-          do iy = nsmin, nsmax-1
-            solvemt(ix) = solvemt(ix) .or. solvemo(iy,ix)
+        do ireg = 0, nnreg(0)
+          solveet(ireg) = (solveee(ireg).and.solveei(ireg))
+     &                                  .and.solveet(ireg)
+          do is = nsmin, nsmax-1
+            solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
         end do
       else
@@ -197,8 +204,11 @@ c additional time-modification factor
         enddo
       enddo
 
+      ncall = ncall + 1
       return
- 999  call xerrab ('Error while reading NUMERICS namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading NUMERICS namelist!')
+#endif
       end subroutine read_b2mod_numerics_namelist
 
       subroutine write_b2mod_numerics_namelist

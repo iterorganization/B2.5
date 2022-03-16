@@ -17,6 +17,7 @@
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_kevis, balance_netcdf,
      &          fhi_inert, fhi_vispar, fhi_visper, fhi_visq, fhi_anml
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -89,7 +90,7 @@
       intrinsic min, max, dim, abs, sqrt, sign
       real (kind=R8) ::
      *  hybr, upwind, hy1
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvsg, b2xvff
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1

@@ -14,8 +14,9 @@
      *  fna_ch(:,:,:,:,:),
      *  fna_nanom(:,:,:,:,:),
      *  fna_panom(:,:,:,:,:),
-     *  fna_pschused(:,:,:,:,:),
+     *  fna_pschused(:,:,:,:,:)
 *     Sources
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_sna0to1(:,:,:,:),
      *  b2stbr_phys_sna_bal(:,:,:),
      *  b2stbr_bas_sna0to1(:,:,:,:),
@@ -49,8 +50,9 @@
      *  b2srdt_sna0to1(:,:,:,:),
      *  b2srdt_sna_bal(:,:,:),
      *  b2srst_sna0to1(:,:,:,:),
-     *  b2srst_sna_bal(:,:,:),
+     *  b2srst_sna_bal(:,:,:)
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fna_pinch_av(:,:,:,:,:),
      *  fna_pll_av(:,:,:,:,:),
      *  fna_drift_av(:,:,:,:,:),
@@ -75,13 +77,15 @@
      *  b2srsm_sna_bal_av(:,:,:),
      *  b2srdt_sna_bal_av(:,:,:),
      *  b2srst_sna_bal_av(:,:,:),
-     *  resco_av(:,:,:),
+     *  resco_av(:,:,:)
 *   ..Arrays for momentum balance:
 *     Fluxes
+      real (kind=R8), allocatable, save ::
      *  fmo_flua(:,:,:,:,:),
      *  fmo_cvsa(:,:,:,:,:),
-     *  fmo_b2nxfv(:,:,:,:,:),
+     *  fmo_b2nxfv(:,:,:,:,:)
 *     Sources
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_smo0to3(:,:,:,:),
      *  b2stbr_phys_smo_bal(:,:,:),
      *  b2stbr_bas_smo0to3(:,:,:,:),
@@ -129,8 +133,9 @@
      *  b2sigp_smogp0to3(:,:,:,:),
      *  b2sigp_smogp_bal(:,:,:),
      *  b2sigp_pstat0to3(:,:,:,:),
-     *  b2sigp_pstat_bal(:,:,:),
+     *  b2sigp_pstat_bal(:,:,:)
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fmo_flua_av(:,:,:,:,:),
      *  fmo_cvsa_av(:,:,:,:,:),
      *  fmo_b2nxfv_av(:,:,:,:,:),
@@ -158,9 +163,10 @@
      *  b2nxdv_smo_bal_av(:,:,:),
      *  b2sigp_smogp_bal_av(:,:,:),
      *  b2sigp_pstat_bal_av(:,:,:),
-     *  resmo_av(:,:,:),
+     *  resmo_av(:,:,:)
 *   ..Arrays for electron heat balance:
 *     Fluxes
+      real (kind=R8), allocatable, save ::
      *  fhe_32(:,:,:,:),
      *  fhe_52(:,:,:,:),
      *  fhe_thermj(:,:,:,:),
@@ -168,8 +174,9 @@
      *  fhe_dia(:,:,:,:),
      *  fhe_ecrb(:,:,:,:),
      *  fhe_strange(:,:,:,:),
-     *  fhe_pschused(:,:,:,:),
+     *  fhe_pschused(:,:,:,:)
 *     Sources
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_she0to3(:,:,:),
      *  b2stbr_phys_she_bal(:,:),
      *  b2stbr_bas_she0to3(:,:,:),
@@ -206,8 +213,9 @@
      *  b2sihs_exbe_bal(:,:),
      *  b2sihs_joule0to3(:,:,:),
      *  b2sihs_joule_bal(:,:),
-     *  b2npht_shei_bal(:,:), !djm equipartition is not linearised
+     *  b2npht_shei_bal(:,:) !djm equipartition is not linearised
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fhe_32_av(:,:,:,:),
      *  fhe_52_av(:,:,:,:),
      *  fhe_thermj_av(:,:,:,:),
@@ -235,9 +243,10 @@
      *  b2sihs_exbe_bal_av(:,:),
      *  b2sihs_joule_bal_av(:,:),
      *  b2npht_shei_bal_av(:,:),
-     *  reshe_av(:,:),
+     *  reshe_av(:,:)
 *   ..Arrays for ion heat balance:
 *     Fluxes
+      real (kind=R8), allocatable, save ::
      *  fhi_32(:,:,:,:),
      *  fhi_52(:,:,:,:),
      *  fhi_cond(:,:,:,:),
@@ -250,8 +259,9 @@
      *  fhi_visper(:,:,:,:),
      *  fhi_visq(:,:,:,:),
      *  fhi_anml(:,:,:,:),
-     *  fhi_kevis(:,:,:,:),
+     *  fhi_kevis(:,:,:,:)
 *     Source
+      real (kind=R8), allocatable, save ::
      *  b2stbr_phys_shi0to3(:,:,:),
      *  b2stbr_phys_shi_bal(:,:),
      *  b2stbr_bas_shi0to3(:,:,:),
@@ -293,8 +303,9 @@
      *  b2sihs_visa0to3(:,:,:),
      *  b2sihs_visa_bal(:,:),
      *  b2sihs_fraa0to3(:,:,:),
-     *  b2sihs_fraa_bal(:,:),
+     *  b2sihs_fraa_bal(:,:)
 *     Time-averaged quantities
+      real (kind=R8), allocatable, save ::
      *  fhi_32_av(:,:,:,:),
      *  fhi_52_av(:,:,:,:),
      *  fhi_cond_av(:,:,:,:),
@@ -329,8 +340,9 @@
      *  b2sihs_exba_bal_av(:,:),
      *  b2sihs_visa_bal_av(:,:),
      *  b2sihs_fraa_bal_av(:,:),
-     *  reshi_av(:,:),
+     *  reshi_av(:,:)
 *     Additional averaged quantities
+      real (kind=R8), allocatable, save ::
      *  ne_av(:,:),
      *  na_av(:,:,:),
      *  ua_av(:,:,:),
@@ -1071,16 +1083,23 @@ cdjm Jan2017 Flux arrays:
       return
       end subroutine dealloc_b2mod_balance
 
-      subroutine alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
+      subroutine alloc_b2mod_eirene_sources
+     &          (nxd,nyd,nsd,natmd,nmold,niond,nstrad)
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+#ifndef SOLPS4_3
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
+#else
+      use eirdiag ! IGNORE
+     & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
+     &          pfluxa,pfluxm,pefluxa,pefluxm
+#endif
 #else
       use b2mod_eirdiag
 #endif
       implicit none
-      integer nxd,nyd,nsd,nstrad
+      integer nxd,nyd,nsd,natmd,nmold,niond,nstrad
 *   ..procedures
       intrinsic size
 
@@ -1367,10 +1386,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       end subroutine update_balance_sources_particles
 
       subroutine update_balance_sources_momentum(nx,ny,isb,ub,rob) !djm Jan2017
-      use b2mod_constants
-     & , only : mp
-      use b2mod_b2cmpa
-     & , only : am
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx,ny,isb
@@ -1744,9 +1759,15 @@ cdjm Update ion heat sources
       use b2mod_rates
      & , only : rpt
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+#ifndef SOLPS4_3
+      use eirmod_wneutrals
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
+#else
+      use eirdiag ! IGNORE
+     & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
+     &          pfluxa,pfluxm,pefluxa,pefluxm
+#endif
 #else
       use b2mod_eirdiag
 #endif
@@ -2197,19 +2218,21 @@ cdjm Update ion heat sources
       end subroutine update_average_balance
 
       subroutine write_balance(nxd,nyd,nsd)
+#ifndef NO_CDF
       use b2mod_geo
-     & , only : crx,cry,hx,bb,vol,gs
+     & , only : crx,cry,hx,hz,bb,vol,gs
       use b2mod_indirect
      & , only : leftix,leftiy,rightix,rightiy,
      &          topix,topiy,bottomix,bottomiy
       use b2mod_b2cmpa
      & , only : zamin,zamax
-      use b2mod_residuals
-     & , only : resco, resmo, reshe, reshi
       use b2mod_b2cmpa
      & , only : am
       use b2mod_constants
      & , only : mp,ev
+#else
+#     include "DIMENSIONS.F"
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nxd,nyd,nsd
@@ -2219,16 +2242,18 @@ cdjm Update ion heat sources
       integer nstrad
       integer status
       integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        varid,eirnxid,eirnyid,eirnatmid,eirnmolid
-      integer vdims(5)
+     .        eirnxid,eirnyid,eirnatmid,eirnmolid
+      integer vdims(5),idum(1)
       integer jxi,jxa,jsep
       integer is
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
+      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
-      external ipgeti
+      external ipgeti, get_jsep, ipgetr, species, check_cdf_status
 
       write(*,*) 'Begin writing balance.nc file'
 
@@ -2281,17 +2306,21 @@ cdjm Update ion heat sources
       vdims(3)=n4id
       call write_cdf_double(ncid,'crx',crx,vdims,3)
       call write_cdf_double(ncid,'cry',cry,vdims,3)
-*   ..bb,hx,vol,gs,am:
+*   ..bb,hx,hz,vol,gs,am:
       call write_cdf_double(ncid,'bb',bb,vdims,3)
       call write_cdf_double(ncid,'hx',hx,vdims,2)
+      call write_cdf_double(ncid,'hz',hz,vdims,2)
       call write_cdf_double(ncid,'vol',vol,vdims,2)
       vdims(3)=n3id
       call write_cdf_double(ncid,'gs',gs,vdims,3)
       vdims(1)=nsid
       call write_cdf_double(ncid,'am',am,vdims,1)
 *   ..mp, ev:
-      call write_cdf_double_single(ncid,'mp',mp,n1id)
-      call write_cdf_double_single(ncid,'ev',ev,n1id)
+      vdims(1)=n1id
+      rdum(1)=mp
+      call write_cdf_double_single(ncid,'mp',rdum,vdims(1))
+      rdum(1)=ev
+      call write_cdf_double_single(ncid,'ev',rdum,vdims(1))
 *   ..rightix, rightiy etc:
       vdims(1)=nxid
       call write_cdf_int(ncid,'leftix',leftix,vdims,2)
@@ -2304,9 +2333,13 @@ cdjm Update ion heat sources
       call write_cdf_int(ncid,'bottomiy',bottomiy,vdims,2)
 *   ..jxi, jxa, jsep:
       call get_jsep(nxd,nyd,jxi,jxa,jsep)
-      call write_cdf_int_single(ncid,'jxi',jxi,n1id)
-      call write_cdf_int_single(ncid,'jxa',jxa,n1id)
-      call write_cdf_int_single(ncid,'jsep',jsep,n1id)
+      vdims(1)=n1id
+      idum(1)=jxi
+      call write_cdf_int_single(ncid,'jxi',idum,vdims(1))
+      idum(1)=jxa
+      call write_cdf_int_single(ncid,'jxa',idum,vdims(1))
+      idum(1)=jsep
+      call write_cdf_int_single(ncid,'jsep',idum,vdims(1))
 *   ..species string:
       vdims(1)=specid
       vdims(2)=nsid
@@ -2317,12 +2350,19 @@ cdjm Update ion heat sources
       call write_cdf_text(ncid,'species',species_name(0:nsd-1),vdims,2)
 *   ..b2mndr_eirene:
       use_eirene=0
-      call ipgeti ('b2mndr_eirene',use_eirene)
-      call write_cdf_int_single(ncid,'b2mndr_eirene',use_eirene,n1id)
+      call ipgeti ('b2mndr_eirene', use_eirene)
+      vdims(1)=n1id
+      idum(1)=use_eirene
+      call write_cdf_int_single(ncid,'b2mndr_eirene',idum,vdims(1))
+*   ..fac_hz:
+      call ipgetr ('b2mndr_hz', fac_hz)
+      vdims(1)=n1id
+      rdum(1)=fac_hz
+      call write_cdf_double_single(ncid,'b2mndr_hz',rdum,vdims(1))
 *   ..za:
       vdims(1)=nsid
       allocate(za(0:nsd-1))
-      za(0:nsd-1)=(zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8
+      za(0:nsd-1)=nint((zamin(0:nsd-1)+zamax(0:nsd-1))/2.0_R8)
       call write_cdf_int(ncid,'za',za(0:nsd-1),vdims,1)
 *   ..Arrays for particle balance:
 *     Fluxes
@@ -2458,8 +2498,9 @@ cdjm Update ion heat sources
      &                   b2stbm_she_bal_av,vdims,2)
       call write_cdf_double(ncid,'ext_she_bal',
      &                   ext_she_bal_av,vdims,2)
+      vdims(3)=nsid
       call write_cdf_double(ncid,'b2stel_she_bal',
-     &                   b2stel_she_bal_av,vdims,2)
+     &                   b2stel_she_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2srsm_she_bal',
      &                   b2srsm_she_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2srdt_she_bal',
@@ -2623,11 +2664,120 @@ cdjm Update ion heat sources
 
       write(*,*) 'balance.nc written'
 #else
+*   ..procedures
+      external ipgeti, xertst
+
+      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
+      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
+      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write(*,*) 'Compilation with NO_CDF: balance.nc file not written'
 #endif
 
       return
       end subroutine write_balance
+
+      subroutine read_balance
+      implicit none
+#ifndef NO_CDF
+#     include <netcdf.inc>
+      integer :: ncid, ndims, nvars, natts, unlimid, status, xtype
+      integer :: ivar, idim
+      integer :: len, vdims(NF_MAX_VAR_DIMS), start(NF_MAX_VAR_DIMS)
+      real (kind=R8), allocatable :: data2(:,:), data3(:,:,:),
+     ,                               data4(:,:,:,:)
+      character*(NF_MAX_NAME) :: varname, dimname
+      character*256 filename
+      logical :: exists
+      external find_file, check_cdf_status
+
+      write(*,*) 'Begin reading balance.nc file'
+
+c access the balance.nc file
+      filename='balance.nc'
+      call find_file(filename,exists)
+      status=nf_open(filename,NF_NOWRITE,ncid)
+      call check_cdf_status(status)
+
+      status=nf_inq(ncid,ndims,nvars,natts,unlimid)
+      call check_cdf_status(status)
+
+c loop over all variables in the file
+c only read a subset of the data as needed by the calling routine(s)
+      do ivar=1,nvars
+        status=nf_inq_var(ncid,ivar,varname,xtype,ndims,vdims,natts)
+        call check_cdf_status(status)
+        do idim=1,ndims
+          status=nf_inq_dim(ncid,vdims(idim),dimname,len)
+          call check_cdf_status(status)
+          vdims(idim)=len
+          start(idim)=1
+        enddo
+        select case (varname)
+        case ('b2stel_shi_ion_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2stel_shi_ion_bal = data2
+          deallocate(data2)
+        case ('b2stel_shi_rec_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2stel_shi_rec_bal = data2
+          deallocate(data2)
+        case ('b2npht_shei_bal')
+          allocate(data2(vdims(1),vdims(2)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data2)
+          call check_cdf_status(status)
+          b2npht_shei_bal = data2
+          deallocate(data2)
+        case ('eirene_mc_eapl_shi_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_eapl_shi_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_empl_shi_bal')
+          allocate(data3(vdims(1),vdims(2),vdims(3)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data3)
+          call check_cdf_status(status)
+          eirene_mc_empl_shi_bal = data3
+          deallocate(data3)
+        case ('eirene_mc_papl_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_papl_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_pmpl_sna_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_pmpl_sna_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_mapl_smo_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_mapl_smo_bal = data4
+          deallocate(data4)
+        case ('eirene_mc_mmpl_smo_bal')
+          allocate(data4(vdims(1),vdims(2),vdims(3),vdims(4)))
+          status=nf_get_vara_double(ncid,ivar,start,vdims,data4)
+          call check_cdf_status(status)
+          eirene_mc_mmpl_smo_bal = data4
+          deallocate(data4)
+        case default
+          continue
+        end select
+      enddo
+
+      status=nf_close(ncid)
+      call check_cdf_status(status)
+#endif
+
+      return
+      end subroutine read_balance
 
 #ifndef NO_CDF
       subroutine write_cdf_double(ncid,varname,var,vdims,ndim)
@@ -2639,8 +2789,10 @@ cdjm Update ion heat sources
       real (kind=R8) :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -2660,13 +2812,16 @@ cdjm Update ion heat sources
       implicit none
 #include <netcdf.inc>
 *   ..input arguments
-      integer :: ncid,vdim
+      integer :: ncid
+      integer :: vdim(1)
       character*(*) :: varname
-      real (kind=R8) :: var
+      real (kind=R8) :: var(1)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -2691,8 +2846,10 @@ cdjm Update ion heat sources
       integer :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -2712,12 +2869,15 @@ cdjm Update ion heat sources
       implicit none
 #include <netcdf.inc>
 *   ..input arguments
-      integer :: ncid,var,vdim
+      integer :: ncid
+      integer :: vdim(1),var(1)
       character*(*) :: varname
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable
@@ -2742,8 +2902,10 @@ cdjm Update ion heat sources
       character*(*) :: var(*)
 *   ..local variables
       integer status,varid
+*   ..procedures
+      external check_cdf_status
 
-*   ..put netcdf dataset into define mode
+*   ..put NetCDF dataset into define mode
       status=nf_redef(ncid)
       call check_cdf_status(status)
 *   ..define this variable

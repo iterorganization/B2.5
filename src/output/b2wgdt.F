@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -77,7 +78,7 @@
       real (kind=R8) ::
      *   scal10, samax
       logical strmas
-      external subini, subend, xertst, scal10, samax, strmas
+      external xertst, scal10, samax, strmas
       external b2wgxp
 
 *-----------------------------------------------------------------------
@@ -115,7 +116,7 @@
        write (nprt,fmtp) '+cpne', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delne, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (ni) change
       if (strmas(idout,'cpni')) then
@@ -125,7 +126,7 @@
        write (nprt,fmtp) '+cpni', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delni(-1,-1,0), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
+     1   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (te) change
       if (strmas(idout,'cpte')) then

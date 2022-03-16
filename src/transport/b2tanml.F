@@ -10,6 +10,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -26,7 +27,7 @@
 *
 *  1. purpose
 *
-*     B2TANML computes the x,y-components of anomalous current
+*     B2TANML computes the X and Y components of the anomalous current.
 *
 *
 *  8. further comments
@@ -46,7 +47,7 @@
       save ncall, fch_anomalous
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx, diff_r
 *   ..initialization
       data ncall/0/, fch_anomalous/1.0e0_R8/, pot_eq/1/, guard_flows/2/

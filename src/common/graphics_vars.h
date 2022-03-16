@@ -1,4 +1,4 @@
-      real xlo,xhi,ylo,yhi,lwidth,xsize,ysize,xpos,ypos,
+      real (kind=R4) :: xlo,xhi,ylo,yhi,lwidth,xsize,ysize,xpos,ypos,
      . wwidth,xwidth,zwidth,yheight,lbsz,
      . wallbar_left,wallbar_right,colorbar_left,colorbar_right,
      . wmin,wmax,trgmin,trgmax,targetbar_left,targetbar_right

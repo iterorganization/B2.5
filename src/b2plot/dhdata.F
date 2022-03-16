@@ -9,6 +9,7 @@ C
      &                 )
       use b2mod_types
       use b2mod_elements
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -74,7 +75,7 @@ C          (I*4)  LCK       = MUST BE GREATER THAN 'ITMAXD' & 'IDMAXD'
 C                             & 'ITMAX' - ARRAY SIZE FOR SPLINE CALCS.
 C          (R*8)  A()       = GENERAL ARRAY
 C          (R*8)  DRCOF0(,) = INTERPOLATION OF DRCOFD(,,) W.R.T DTEV()
-C          (L*8)  LEXIST    = TRUE --- FILE TO OPEN EXISTS ELSE NOT
+C          (L*8)  LEXIST    = TRUE --- FILE TO OPEN EXISTS ELSE FALSE
 C
 C PE BRIDEN = ADDED VARIABLES (14/01/91)
 C
@@ -138,7 +139,7 @@ C
 C
       integer IZMAXD, IDMAXD, ITMAXD, IEVCUT, ICLASS, IZ1, IZ0, IFAIL
       integer ITMAX, ITDIMD, IZ1MIN, IZ0SV, ICLSV, IEVSV, LEN
-      integer lnblnk, LEVMIN, IZ1MAX, IZMAX, I, ID, IT, IZ, INDXZ1
+      integer LEVMIN, IZ1MAX, IZMAX, I, ID, IT, IZ, INDXZ1
 c
       real (kind=R8) :: DTEV(ITMAX)   , DDENS(ITMAX)
       real (kind=R8) :: DTEVD(ITDIMD) , DDENSD(ITDIMD) , ZDATA(ITDIMD)
@@ -151,16 +152,14 @@ C
 C
       CHARACTER YEAR*2  , YEARSV*2  , TITLF*80  , EVCUT*6
       CHARACTER SEQUA*2 , DSNAME*256, STRING*80 , BLANKS*40
+      character*256 filenamecat
 C
       LOGICAL   LEXIST  , LSETX
 C
-      character*256 solpstop
       real (kind=R8) :: R8FUN1
-      EXTERNAL  R8FUN1
-      external lnblnk, subini, subend
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#endif
+      EXTERNAL R8FUN1
+      logical open_file, silent_open
+      external open_file, silent_open
 C
       SAVE      IZ1MIN
 C
@@ -199,7 +198,7 @@ C
         WRITE(EVCUT,1050) IEVCUT
         DO 50 I = 1 , 6
           IF( EVCUT(I:I).EQ.' ' ) LEVMIN = I
-  50    CONTINUE
+   50   CONTINUE
         LEVMIN = LEVMIN + 1
       END IF
 C
@@ -213,20 +212,6 @@ C
         LEN=2
       ENDIF
 C
-#ifdef NO_GETENV
-      solpstop=' '
-#else
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
-#else
-      call getenv ('SOLPSTOP', solpstop)
-#endif
-#endif
-      if(solpstop.eq.' ') then
-        solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps4.0'
-        write(*,*) 'DHDATA: no SOLPSTOP set, using: ',
-     1   solpstop(1:lnblnk(solpstop))
-      endif
       IF     (ICLASS.EQ.1) THEN
         DSNAME='/JETSHP.ACD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
       ELSEIF (ICLASS.EQ.2) THEN
@@ -259,14 +244,19 @@ C.....  DSNAME='/JETSHP.PLS'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
         DSNAME='pls'//YEAR//SEQUA(1:LEN)//'.data'
       ENDIF
 C
-      dsname=solpstop(1:lnblnk(solpstop)) // '/data/summers/' // dsname
-
       TITLF=BLANKS//BLANKS
 CCC   WRITE(TITLF,1000) DSNAME
 C
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C
-      call find_file(DSNAME,LEXIST)
+C     call find_file(DSNAME,LEXIST)
+      if (iz1.eq.1) then
+        LEXIST=open_file(IREAD,DSNAME,
+     .   'data.local/Summers|modules/B2.5/Database/Summers')
+      else
+        LEXIST=silent_open(IREAD,DSNAME,
+     .   'data.local/Summers|modules/B2.5/Database/Summers',filenamecat)
+      end if
       IF( .NOT.LEXIST ) THEN
         IFAIL  = 1
         YEARSV = '  '
@@ -278,7 +268,7 @@ C
 C------READ FILE # IREAD------------------------------------------------
 C
 c     OPEN(UNIT=IREAD,FILE=DSNAME,ACTION='READ')
-      OPEN(UNIT=IREAD,FILE=DSNAME)
+c     OPEN(UNIT=IREAD,FILE=DSNAME)
 C
       READ(IREAD,1010) IZMAX , IDMAXD , ITMAXD , IZ1MIN , IZ1MAX
 C
@@ -314,7 +304,7 @@ C
         WRITE(6,1020)
      .      'ITDIMD MUST BE LARGER THAN IZ1MAX-IZ1MIN+1'
         WRITE(6,1120) ITDIMD,IZ1MAX,IZ1MIN
-1120    FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
+ 1120   FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
         IFAIL=2
         GOTO 9999
       ENDIF
@@ -444,6 +434,7 @@ C-----------------------------------------------------------------------
      &                   DY
      &                 )
       use b2mod_types
+      use b2mod_subsys
       IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
@@ -648,7 +639,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       LOGICAL    LUVAL(0:NIOPT)
 C-----------------------------------------------------------------------
-      EXTERNAL   SUBINI, SUBEND, XERTST
+      EXTERNAL   XERTST
 C-----------------------------------------------------------------------
       SAVE QVAL , D2VAL , D3VAL , UVAL , LUVAL
       SAVE NOPT , NIN0

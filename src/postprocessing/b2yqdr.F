@@ -3,6 +3,7 @@
 
       subroutine b2yqdr (ninp, nout, nscr)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nscr(0:0)
@@ -64,7 +65,7 @@
       logical cfendf
       real (kind=R8) ::
      *  scal10, machsfr
-      external subini, subend, xertst, xerrab, cfruin, cfruch,
+      external xertst, xerrab, cfruin, cfruch,
      &  cfrure, cfendf, scal10, machsfr, gacwk, gdawk, pagini, pagend,
      &  gpm_d
 

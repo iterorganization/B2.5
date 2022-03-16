@@ -29,6 +29,8 @@
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
@@ -86,14 +88,13 @@
       character charns*3, chark*1
       character*15 hlp_frm
       real (kind=R8) ::
-     *   amtol, t0, t1, t2, t3, qin, qel, surface_temp,
+     *   t0, t1, t2, t3, qin, qel, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   redep_max, yself_max
-      parameter (amtol=1.0e-2_R8)
       logical lcore
 *   ..procedures
       intrinsic abs, max, exp
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) :: 
      *   smax, smin, hy1
@@ -368,37 +369,37 @@
       
       if (iout.eq.1) then                                          !srv 11.07.05 {
         do is = 0, ns-1
-	  write (charns,'(i3.3)') is
-	  do k=0,3
-	    write (chark,'(i1)') k
-	    call my_out(70,nx,ny,smo0(-1,-1,k,is),
+          write (charns,'(i3.3)') is
+          do k=0,3
+            write (chark,'(i1)') k
+            call my_out(70,nx,ny,smo0(-1,-1,k,is),
      &                       'smo_br_bas'//chark//charns)
-	  enddo
-	  do k=0,1
-	    write (chark,'(i1)') k
-	    call my_out(70,nx,ny,sna0(-1,-1,k,is),
+          enddo
+          do k=0,1
+            write (chark,'(i1)') k
+            call my_out(70,nx,ny,sna0(-1,-1,k,is),
      &                       'sna_br_bas'//chark//charns)
-	  enddo
-	enddo
+          enddo
+        enddo
         do k=0,3
-	  write (chark,'(i1)') k
-	  call my_out(70,nx,ny,she0(-1,-1,k),'she_br_bas'//chark)
-	  call my_out(70,nx,ny,shi0(-1,-1,k),'shi_br_bas'//chark)
-	  call my_out(70,nx,ny,sch0(-1,-1,k),'sch_br_bas'//chark)
-	enddo
-	open(70,file='t_files.dat')
+          write (chark,'(i1)') k
+          call my_out(70,nx,ny,she0(-1,-1,k),'she_br_bas'//chark)
+          call my_out(70,nx,ny,shi0(-1,-1,k),'shi_br_bas'//chark)
+          call my_out(70,nx,ny,sch0(-1,-1,k),'sch_br_bas'//chark)
+        enddo
+        open(70,file='t_files.dat')
         write (hlp_frm,'(a4,i4,a7)') '(a7,',ns,'es13.5)'            !srv 11.03.13 {
-	write(70,hlp_frm) ' tchem=',tchem
-	write(70,hlp_frm) ' tchee=',tchee
-	write(70,hlp_frm) ' tphys=',tphys
-	write(70,hlp_frm) ' tphye=',tphye
-	write(70,hlp_frm) ' thevp=',thevp
-	write(70,hlp_frm) ' thvpe=',thvpe
-	write(70,hlp_frm) ' trese=',trese
-	write(70,hlp_frm) ' tresn=',tresn
-	write(70,hlp_frm) ' trfln=',trfln
-	write(70,hlp_frm) ' trfle=',trfle                           !srv 11.03.13 }
-	close(70)
+        write(70,hlp_frm) ' tchem=',tchem
+        write(70,hlp_frm) ' tchee=',tchee
+        write(70,hlp_frm) ' tphys=',tphys
+        write(70,hlp_frm) ' tphye=',tphye
+        write(70,hlp_frm) ' thevp=',thevp
+        write(70,hlp_frm) ' thvpe=',thvpe
+        write(70,hlp_frm) ' trese=',trese
+        write(70,hlp_frm) ' tresn=',tresn
+        write(70,hlp_frm) ' trfln=',trfln
+        write(70,hlp_frm) ' trfle=',trfle                           !srv 11.03.13 }
+        close(70)
       endif                                                         !srv 11.07.05 }
 
       if (redep_max.gt.0.0_R8 .and. (main_call.or.output.gt.1))
@@ -436,6 +437,9 @@ c lcore           is this a core element
       real (kind=R8) hh, hhn, Phi_app, area, pof,
      *  redep_self_sputter, redep_self_energy,
      *  wrk(ndepth_nml)
+#ifdef DBG
+      real (kind=R8) product
+#endif
       logical lcore, found
 
       integer is0, is1, is2, is, js, k, iwall, itrack
@@ -549,11 +553,11 @@ cdpc
      2           (1.0_R8-cbrec(0,is,ireg))*t0
          endif
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then     ! xpb: no sputtering in core!
@@ -562,13 +566,30 @@ c chemical sputtering
      &         sput_dst.ge.0.and.sput_dst.lt.ns) then
                if(sput_chem_model.eq.1) then
                   if (Ei.gt.0.0_R8) then
-                     t1=t0 * (sput_frc+cbrec(4,is,ireg)) * 
+#ifdef DBG
+                     product =-((sput_chem_cutoff_alpha/Ei)
+     &                         **sput_chem_cutoff_beta)
+                     if(product.gt.cutll) then
+                        t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
-                     chemical_sputtering(iwall,is) = 
-     .                    (sput_frc+cbrec(4,is,ireg)) * 
+                        chemical_sputtering(iwall,is) =
+     .                    (sput_frc+cbrec(4,is,ireg)) *
      &                    exp(-(sput_chem_cutoff_alpha/Ei)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                     else
+                        t1=0.0_R8
+                        chemical_sputtering(iwall,is) = 0.0_R8
+                     end if
+#else
+                     t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
+     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+                     chemical_sputtering(iwall,is) =
+     .                    (sput_frc+cbrec(4,is,ireg)) *
+     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
+#endif
                   else
                      t1=0.0_R8
                      chemical_sputtering(iwall,is) = 0.0_R8
@@ -659,7 +680,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                  deposition(iwall,itrack) = deposition(iwall,itrack) +
      1            dtim*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2            (1.0_R8-f_redep(ixn,iyn,sput_dst))*
-     3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter))                  
+     3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter))
                endif
                if(sputter_energy_on.ne.0) then
                   redep_self_energy =
@@ -668,7 +689,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      1              (sput_phys+cbrec(3,sput_dst+1,ireg))
                   t2=t0 * sputter2(is,sput_dst,Ei*ev) *
      1              (sput_phys+cbrec(3,is,ireg))*Ei*ev *
-     2		    (1.0_R8-f_redep(ixn,iyn,sput_dst))
+     2              (1.0_R8-f_redep(ixn,iyn,sput_dst))
 cxpb  We now must remove the energy lost in ionizing the promptly redeposited material
 cxpb  but from the electrons!
                   t3=-t0*ev*sputter(is,zaf(is),sput_dst,Ei*ev)*
