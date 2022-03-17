@@ -2853,7 +2853,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
              totflux = totflux - (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))*
      &         mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)
             enddo
-            totpar = totpar + conpar(is,ib0,1)
+cnh conpar(is,ib0,3) contains the contribution from the ionized neutrals
+c   (ionising_core option) 
+            totpar = totpar + conpar(is,ib0,1) + conpar(is,ib0,3)
            endif
           enddo
           t1 = t1/t0
