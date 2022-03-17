@@ -3289,8 +3289,8 @@ C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS INTO MOLECULE
       END IF
 
 cxpb  core recycling into ions of the highest ionisation stage
-#ifdef WG_TODO
       if (switch%ionising_core.gt.0) then
+#ifdef WG_TODO
         rf0=RF_NEUT(1)
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
@@ -3353,13 +3353,15 @@ cxpb  core recycling into ions of the highest ionisation stage
             enddo
           enddo
         enddo
+#endif
       else if (switch%ionising_core.lt.0) then
         ib=abs(switch%ionising_core)
         call xertst (ib.le.nbc,
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
         do j = 1, nnatmi
           is=ishigh(j)
-          if(bccon(is,ib).ne.13) then
+cnh also ionising core option for bccon=29
+          if((bccon(is,ib).ne.13).and.(bccon(is,ib).ne.29)) then
             if(output_style.ge.2 .or. ncall.lt.3)
      1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
@@ -3372,7 +3374,6 @@ C           call xerrab ('eirene_mc: bccon <> 13')
           endif
         enddo
       endif
-#endif
 
       cum_volrec=0.0_R8
       do istrai=1, nstrat
