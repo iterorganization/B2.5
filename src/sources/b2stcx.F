@@ -148,23 +148,26 @@ ctmp.dpc
 *       ..compute atom heat source
            du0 = ua(iCv,is)-ua(iCv,is-1)
            du1 = ua(iCv,is0)-ua(iCv,is0+1)
-          if (switch%tn_style.eq.0) then
+           if (switch%tn_style.eq.0) then
             t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
      &        (1.0_R8-BoRiS)
              shi0(iCv,0) = shi0(iCv,0)+t1
            elseif (switch%tn_style.eq.1) then
-             if(zn(is).eq.1) then !only contribution from H0-->H+
+             if(is_neutral(is-1)) then ! CX with singly-charged ion
                tkin = (mp/2.0_R8)*
      &           ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*tkin
-               shi0(iCv,0) = shi0(iCv,0)+t1 
-             else !conribution from CX with non hydrogenic species
-               call xerrab('tn_style=1 not supported for multispecies')
+             else                      ! CX with multiply-charged ion
+               tkin = (mp/2.0_R8)*
+     &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
+     &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
+               t1 = t0*na(iCv,is0)*na(iCv,is)*(tkin + 1.5_R8*tn(iCv))
              endif
+             shi0(iCv,0) = shi0(iCv,0)+t1 
            else !tn_style=2
-             if (zn(is).eq.1) then !only contribution from H0-->H+
+             if (zn(is).eq.1.and.zn(is0).eq.1) then ! CX between hydrogenic species
                tkin = (mp/2.0_R8)*
      &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
                t1 = t0*na(iCv,is0)*na(iCv,is)*
@@ -173,13 +176,32 @@ ctmp.dpc
      &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
                t1n = t0*na(iCv,is0)*na(iCv,is)*
      &            (1.5_R8*(ti(iCv)-tn(iCv)) + tkin)
-             else !conribution from CX with non hydrogenic species
-               call xerrab('tn_style=2 not supported for multispecies')
+             elseif (zn(is0).eq.1) then  ! only is0/is0+1 hydrogenic
+               tkin = (mp/2.0_R8)*
+     &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
+     &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))
+               t1 = t0*na(iCv,is0)*na(iCv,is)*(tkin + 1.5_R8*tn(iCv))
+               tkin = (mp/2.0_R8)*
+     &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
+               t1n = -t0*na(iCv,is0)*na(iCv,is)*1.5_R8*tn(iCv)
+             elseif (zn(is).eq.1) then  ! only is/is-1 hydrogenic
+               tkin = (mp/2.0_R8)*
+     &            ((am(is0)+am(is0+1))/2.0_R8)*(du1**2)
+               t1 = t0*na(iCv,is0)*na(iCv,is)*
+     &            (-1.5_R8*ti(iCv) + tkin)
+               tkin = (mp/2.0_R8)*
+     &            ((am(is)+am(is-1))/2.0_R8)*(du0**2)
+               t1n = t0*na(iCv,is0)*na(iCv,is)*(1.5_R8*ti(iCv) + tkin)
+             else ! no hydrogenic species involved: standard treatment
+               t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
+     &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
+     &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
+     &          (1.0_R8-BoRiS)
+               t1n = 0.0_R8
              endif
-            shi0(iCv,0) = shi0(iCv,0)+t1
-            shn0(iCv,0) = shn0(iCv,0)+t1n
+             shi0(iCv,0) = shi0(iCv,0)+t1
+             shn0(iCv,0) = shn0(iCv,0)+t1n
            endif
-
 !WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
           endif
