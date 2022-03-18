@@ -78,7 +78,7 @@
       endif
 
 * ..choose the correct temperature
-      if (switch%tn_style.eq.2.and.is_neutral(isb).and.zn(is).eq.1) then
+      if (switch%tn_style.eq.2.and.is_neutral(isb).and.zn(isb).eq.1)then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti

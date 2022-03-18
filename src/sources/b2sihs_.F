@@ -251,13 +251,12 @@
            else
             t0 = t0*ni(iCv,0)/nn(iCv)
             shidun(iCv,0) = shidun(iCv,0)+
-     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*nn(iCv,0)*
+     &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*nn(iCv)*
      &         tn(iCv)
             shidun(iCv,3) = shidun(iCv,3)+min(0.0e0_R8,t0)-
      &         switch%b2sihs__rf1*abs(t0)
+           endif
           endif
-
-
 !WG_TODO          b2divua(mpg%cvReg(iCv))=b2divua(mpg%cvReg(iCv))
 !WG_TODO     1         +t0*ni(iCv,0)*ti(iCv)
 !WG_TODO          b2sihs_divua(iCv)=b2sihs_divua(iCv)+
