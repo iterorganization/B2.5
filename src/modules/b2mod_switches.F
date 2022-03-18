@@ -1565,6 +1565,10 @@ c               all ions and non-hydrogenic atoms combined into ti-equation
         call xerrab('tn_tyle should be 0, 1 or 2')
       endif
 
+      if (s%tn_style.ne.0.and.s%BoRiS.ne.0.0_R8) then
+        call xerrab('tn_tyle.ne.0 not compatible with BoRiS.ne.0.0_R8')
+      endif
+
 c get_residuals
       if (.not.(s%get_residuals.eq.0.or.s%get_residuals.eq.1)) then
         call xerrab('get_residuals is expected to be 0 or 1')
