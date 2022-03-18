@@ -2137,7 +2137,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo, 
-     .                         state%pl, state%dv,switch%BoRiS,
+     .                         state%pl, state%dv, switch%BoRiS,
      .                         kin_frac_hyb, fnn_inc) ! FIXME progapage somehow kint_frac_hyb
           call write_f31(mpg)
           close(31)

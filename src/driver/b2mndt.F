@@ -343,10 +343,11 @@ ctmp.dpc
 *     ..include contributions due to timestep
           call b2srdt (nCv, ns, dtim, switch%BoRiS, switch, geo, mpg,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, 
-     &    st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%kinrgy,
+     &    st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn,
+     &    st%psnc%kinrgy,
      &    st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
-     &    st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%kinrgy,
-     &    st%pl%kt, st%pl%zt, st%sr, .false.)
+     &    st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
+     &    st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
 *   ..add to previous contributions
 !WG_TODO This is already done in b2srdt
 !WG_TODO Still need *dt-arrays for output?
@@ -374,7 +375,7 @@ ctmp.dpc
           if(use_b2srst.eq.1)
      &     call b2srst (nCv, ns, switch, mpg, st%pl%na, st%pl%ua,    !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
-     &       st%pl%kt, st%pl%zt, st%sr)
+     &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
 *       (smq is inherently stable.)
 *     ..inner iteration
           istg(2) = 0
