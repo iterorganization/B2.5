@@ -3634,9 +3634,9 @@ c*******************************************************************************
       hcn0 = 0.0_R8
       do is = 0, ns-1
 *     ..compute hci0
-        if (switch%tn_style.eq.0) then
+        if (tn_style.eq.0) then
           hci0 = hci0 + hcib(:,is)
-        elseif (switch%tn_style.eq.1) then
+        elseif (tn_style.eq.1) then
          if (.not.is_neutral(is))then
           hci0 = hci0 + hcib(:,is)
          endif
