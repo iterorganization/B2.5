@@ -345,14 +345,9 @@ cwdk                   (original code: simple averaging)
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      if (.not.is_neutral(isb).or.switch%tn_style.eq.0) then
-        flo_he(:,0) = geo%fcPbs*wrk0 +
-     &    5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
-     &    drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
-      else
-        flo_he(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb)
-c csc To be added contribution of ubdia
-      endif
+      flo_he(:,0) = geo%fcPbs*wrk0 +
+     &  5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
+     &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_53(:,0) = geo%fcPbs*wrk0 +

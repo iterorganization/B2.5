@@ -132,7 +132,7 @@
 
 * ..compute source terms
 *   ..initialise sources to 0
-      call sfill (nCv*2*ns, 0.0_R8, sna0_ion, 1)                      !srv 11.09.09
+      call sfill (nCv*2*ns, 0.0_R8, sna0_ion, 1)                        !srv 11.09.09
       call sfill (nCv*2*ns, 0.0_R8, sna0_rec, 1)
       call sfill (nCv*4*ns, 0.0_R8, smq0_ion, 1)
       call sfill (nCv*4*ns, 0.0_R8, smq0_rec, 1)
@@ -159,9 +159,9 @@
            rf0 = switch%b2stel_rxm0*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
            t0 = switch%b2stel_phm0*
-     &                rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)      !srv 05.06.18
+     &                rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)         !srv 05.06.18
 *       ..compute particle source
-           sna0_ion(iCv,0,is+1) = sna0_ion(iCv,0,is+1)+             !srv 11.09.09 {
+           sna0_ion(iCv,0,is+1) = sna0_ion(iCv,0,is+1)+                 !srv 11.09.09 {
      &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
            sna0_ion(iCv,1,is+1) = sna0_ion(iCv,1,is+1)-
      &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is+1)
@@ -176,27 +176,21 @@
            t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
      &        ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
-           if (switch%tn_style.eq.0) then
+           if (switch%tn_style.eq.0.or.zn(is).ne.1
+     &                             .or..not.is_neutral(is)) then        !! combined ion-neutral, and/or non-hydrogenic (default)
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
-           elseif (switch%tn_style.eq.1) then
-             ! to be generalized for multispecies!
+           elseif (switch%tn_style.eq.1) then !! pure ion energy eq.
+             !! case of hydrogenic atoms
              t1i = t1 + t0*pl%na(iCv,is)*1.5_R8*pl%tn(iCv)
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_ion(iCv,3) = shi0_ion(iCv,3)-
      &                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
-           else
-            if (zn(is).ne.1) then
-             !! usual treatment
-             shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1
-             shi0_ion(iCv,3) = shi0_ion(iCv,3)-
-     &                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
-             rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1
-            else
-             !! hydrogenic atoms
+           else !! separate energy eq. for hydrogenic atoms
+             !! case of hydrogenic atoms
              t1i = t1 + t0*pl%na(iCv,is)*1.5_R8*pl%tn(iCv)
              t1n = t0*pl%na(iCv,is)*(-1.5_R8*pl%tn(iCv))
              shi0_ion(iCv,0) = shi0_ion(iCv,0)+(1.0_R8+rf0)*t1i
@@ -206,11 +200,8 @@
              shn0_ion(iCv,3) = shn0_ion(iCv,3)-
      &                         rf0*t1n/(dv%nn(iCv)*pl%tn(iCv))
              rsahireg(mpg%cvReg(iCv),is)=rsahireg(mpg%cvReg(iCv),is)+t1i
-            endif
            endif
-
 !WG_TODO           rsahi(iCv,is) = t1
-
           endif
         enddo
 
@@ -223,8 +214,8 @@
      &             switch%b2stel_rxm1*max(0.0_R8,rt%rlsa(iCv,1,is))
 *       ..compute rate for is->is+1
              t0 = switch%b2stel_phm0*
-     &                 rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*   !srv 05.06.18
-     &           pl%na(iCv,is)*geo%cvHz(iCv)                        !srv 09.01.01
+     &                 rtw%rsa(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*       !srv 05.06.18
+     &           pl%na(iCv,is)*geo%cvHz(iCv)                            !srv 09.01.01
 *       ..compute parallel momentum source
              t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
              if (switch%b2stel_styl0.eq.0) then
@@ -293,20 +284,21 @@
            rf0 = switch%b2stel_rxm2*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
            t0 = switch%b2stel_phm0*
-     &                    rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)    !srv 05.06.18
+     &                    rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)     !srv 05.06.18
 *       ..compute particle source
-           sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+               !srv 11.09.09 {
+           sna0_rec(iCv,0,is) = sna0_rec(iCv,0,is)+                     !srv 11.09.09 {
      &       rf0*t0*pl%na(iCv,is)
            sna0_rec(iCv,1,is) = sna0_rec(iCv,1,is)-(1.0_R8+rf0)*t0
            sna0_rec(iCv,0,is-1) = sna0_rec(iCv,0,is-1)+
      &      (1.0_R8+rf0)*t0*pl%na(iCv,is)
-           sna0_rec(iCv,1,is-1) = sna0_rec(iCv,1,is-1)-           !srv 11.09.09 {
+           sna0_rec(iCv,1,is-1) = sna0_rec(iCv,1,is-1)-                 !srv 11.09.09 {
      &      rf0*t0*pl%na(iCv,is)/pl%na(iCv,is-1)
 !WG_TODO           rrana(iCv,is) = t0*pl%na(iCv,is)
            rranareg(mpg%cvReg(iCv),is)=rranareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           if (switch%tn_style.eq.0) then !! combined ion-neutral (default)
+           if (switch%tn_style.eq.0.or.zn(is).ne.1
+     &                             .or..not.is_neutral(is-1)) then      !! combined ion-neutral, and/or non-hydrogenic (default)
              t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
      &         ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
      &         ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
@@ -314,12 +306,14 @@
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1/(dv%ni(iCv,0)*pl%ti(iCv))
            elseif (switch%tn_style.eq.1) then !! pure ion
+             !! case of hydrogenic atoms
              t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))*
      *         (1.0_R8-BoRiS)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
-           else !! separate ion-neutral
+           else !! separate energy eq. for hydrogenic atoms
+             !! case of hydrogenic atoms
              tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*
      &              ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
              t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))
