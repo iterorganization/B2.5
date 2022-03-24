@@ -90,7 +90,7 @@ c***    suffix "_t" denotes totals from distributions,
 c***    and "_w" the totals from Eirene.
 c
 c*** Recap of fluxes from Eirene
-c***    wldnek  :   heat transferred with neutrals. Evaluated as
+c***    wldnek  :   net kinergy energy deposited by neutrals. Evaluated as
 c***                    EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
 c***    wldnep  :   energy released by recombination into molecules. Evaluated as
 c***                    diss_pot_H2*(PRFAML+PRFPML)
@@ -789,15 +789,15 @@ c
      ,      tab,'peak_tei',tl,tab,'peak_teo',tl,
      ,      tab,'peak_nei',tl,tab,'peak_neo',tl
           else
-           write(lun,'(a5,a1,24(a1,2a))') '#time',tab,
+           write(lun,'(a6,a1,14(a1,2a))') '# time',tab,
      -      tab,'peak_t_i',tl,tab,'peak_t_x',tl,
-     ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
+     ,      tab, 'loc_t_i',tl,
      ,      tab,'peak_r_i',tl,tab,'peak_r_x',tl,
-     ,      tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
+     ,      tab, 'loc_r_i',tl,
      ,      tab,'peak_p_i',tl,tab,'peak_p_x',tl,
-     ,      tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
+     ,      tab, 'loc_p_i',tl,
      ,      tab,'peak_n_i',tl,tab,'peak_n_x',tl,
-     ,      tab, 'loc_n_i',tl,tab, 'loc_n_o',tl,
+     ,      tab, 'loc_n_i',tl,
      ,      tab,'peak_tei',tl,tab,'peak_nei',tl
           end if
           write(lun,fmt_peak) tim,

@@ -328,7 +328,6 @@ c-----------------------------------------------------------------------
    10 read(iunit,'(1a80)') cstrg
       ic = ic + 1
 
-
       call xxcase(cstrg,cstrgl,'lc')
 
       if((index(cstrgl,csrch1).le.0) .and.
@@ -960,7 +959,7 @@ C
             RETURN
          ENDIF
 C
-      IF ( STR(I1:I1).EQ.CCOLON ) I1 = I1 + 1 
+      IF ( STR(I1:I1).EQ.CCOLON ) I1 = I1 + 1
 
       IF   ( ( STR(I1:I1).EQ.CPLUS  )
      &                  .OR.

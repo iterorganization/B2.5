@@ -894,7 +894,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
       if (main_call.and.mod(ncall,eirene_mod).eq.0
      & .and.ank_tracing.ne.0.and.output_style.ge.2) then
         write(*,*) 'Eirene output in eirene_mc :'
-        sum_wld(1:2,1:2+nnatmi)=0.0_R8
+        sum_wld(1:4,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
           do i=1,ntns
             sum_wld(ktns(i),1)=sum_wld(ktns(i),1)+

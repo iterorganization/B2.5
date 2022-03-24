@@ -296,11 +296,12 @@
      .     form='formatted')
       do ix=-1,nx
         do iy=-1,ny
-          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy) - 1.d0
-          sxdiff(ix,iy) = sxdiff(ix,iy) / (qc(ix,iy)*gs(ix,iy,0))-1.d0
-          vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)-1.d0
-          hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy)-1.d0
-          hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy)-1.d0
+          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy) - 1.0_R8
+          sxdiff(ix,iy) = sxdiff(ix,iy) /
+     .                       (qc(ix,iy)*gs(ix,iy,0))- 1.0_R8
+          vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)- 1.0_R8
+          hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy) - 1.0_R8
+          hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy) - 1.0_R8
           write(4711,'(2i6,5(1x,e13.6))') ix,iy,vldiff(ix,iy), 
      .           qcdiff(ix,iy), sxdiff(ix,iy), hxdiff(ix,iy),
      .           hydiff(ix,iy)

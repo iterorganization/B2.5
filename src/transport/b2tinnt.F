@@ -492,7 +492,7 @@
        call my_out(70,nx,ny,csigia(-1,-1,0),'b2tinnt_csigiax')
        call my_out(70,nx,ny,csigia(-1,-1,1),'b2tinnt_csigiay')
        do is0 = 0, ns-1                                                   !som 04.11.21 {
-        if (is_neutral(is0).and.nint(zn(is0)).eq.1) then 
+        if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
          write (chns0,'(i3.3)') is0
          do is = 0, ns-1
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then

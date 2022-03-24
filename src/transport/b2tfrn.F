@@ -100,7 +100,7 @@
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny),                           !srv 13.01.17
-     *   floi_vhx(-1:nx,-1:ny)                                          !som 09.07.21
+     *   floi_vhx(-1:nx,-1:ny)                                           !som 09.07.21
       real (kind=R8) :: t0,t1,t2,cvmgp
       save ncall
 *   ..procedures

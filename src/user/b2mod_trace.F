@@ -49,8 +49,9 @@ c----------------------------------------------------------------------
 c
 c*** Correct the neutral fluxes according to recyc values
 c
-      write(*,'(a,6i5)') 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi=',
-     1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
+      write(*,'(a,6i5)')
+     , 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi =',
+     1  nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
 csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
       do ix=1,nnstsi+nnlimi
         wldnek(ix,0)=0.0_R8

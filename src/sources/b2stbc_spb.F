@@ -742,7 +742,7 @@ c         fchi=0.0e0_R8                            ! was commented
 *     ..compute csb
            csb = sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))   !sv 26.11.02
 *     .. account for diamagnetic drifts
-           csbm = max(csb,0.1e0_R8*csb+uadia(0,iy,0,is)*    !signmf* !sv 17.02.04 {  11.01.13
+           csbm = max(csb,0.1e0_R8*csb+uadia(0,iy,0,is)*    !signmf*     !sv 17.02.04 {  11.01.13
      &                  bb(ix,iy,2)/bb(ix,iy,0))
            cstm = max(cst,0.1e0_R8*cst+uadia(0,iy,0,is)*    !signmf*                 11.01.13
      &                 bb(ix,iy,2)/bb(ix,iy,0))                          !sv 17.02.04 }
@@ -770,11 +770,11 @@ c         fchi=0.0e0_R8                            ! was commented
      &      cbsna(0,is,ireg)*s0+
      &      cbsna(6,is,ireg)*max(0.0e0_R8,ua(ix,iy,is)                   !sv 26.11.02 01.07.05
      &          *pbs(rightix(ix,iy),rightiy(ix,iy),0))                   !sv 26.11.02
-          if(mdf_fnb .ne. 0) then                                        !sv 13.10.06 {
+           if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
               sna0(ix,iy,0,is) = sna0(ix,iy,0,is)-
      &                     fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,is)
-          endif                                                          !sv 13.10.06 }
-          if(ubig0 .gt. 0.0e0_R8)                                        !iyv 22.04.08 {
+           endif                                                         !sv 13.10.06 }
+           if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08 {
      &       sna0(ix,iy,0,is) = sna0(ix,iy,0,is) - cbsna(7,is,ireg)*
      &       ubig0*s0*na(rightix(ix,iy),rightiy(ix,iy),is)
            sna0(ix,iy,1,is) = sna0(ix,iy,1,is)+                          !sv 26.11.02
@@ -783,18 +783,18 @@ c         fchi=0.0e0_R8                            ! was commented
      &      cbsna(3,is,ireg)*csbm*s1+
      &      cbsna(4,is,ireg)*cstm*s0+
      &      cbsna(5,is,ireg)*cstm*s1
-!     &    cbsna(7,is,ireg)*max(0.0e0_R8,-ua(0,iy,is)*pbs(0,iy,0))
+!    &      cbsna(7,is,ireg)*max(0.0e0_R8,-ua(0,iy,is)*pbs(0,iy,0))
            if( ubig0 .gt. 0.0e0_R8) then                                 !iyv 22.04.08 {
-              sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
+             sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
      &           cbsna(7,is,ireg) * ubig0 * s0
            else
              if(istyle_cs.eq.0) then                                     !sv 25.04.08 {
-              sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
+               sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
      &           cbsna(7,is,ireg)*cst*s1 ! pbs(rightix(ix,iy),rightiy(ix,iy),0)   !sv 02.11.99 26.11.02 14.02.05
-            else
-              sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
+             else
+               sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
      &           cbsna(7,is,ireg)*csb*s1 ! pbs(rightix(ix,iy),rightiy(ix,iy),0)   !sv 02.11.99 26.11.02 14.02.05
-            endif                                                        !sv  25.04.08
+             endif                                                       !sv  25.04.08
            endif                                                         !iyv 22.04.08 }
 !       if(wrong_flow.gt.0) then
 !         write(*,*) 'b2stbc_west density set to zero:iy,fchi',iy,fchi

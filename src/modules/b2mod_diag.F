@@ -5,13 +5,13 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
-      use b2mod_boundary_namelist 
+      use b2mod_boundary_namelist
      &                    , only : nbcd
       implicit none
 c
 c  version : 27.04.2005
 c
-      real (kind=R8) :: 
+      real (kind=R8) ::
      1 totaddee, totaddei, totaddni, rad_neutr
 #ifndef SOLPS4_3
       real (kind=R8) :: b2brem, b2rad
@@ -26,20 +26,20 @@ c
      6  sna_eir(:),      ! IYS 12.01.2018
      7  sna_stbc_neut(:,:), sna_stbr_neut(:,:),       ! IYS 04.06.2018
      8  sna_stbr_sput(:,:)
-      REAL (kind=R8), allocatable :: 
+      REAL (kind=R8), allocatable ::
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
       real (kind=R8), allocatable :: RADARR(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
      ,     src_ni(:,:,:) , src_mo(:,:,:),
      ,     src_ne(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     cor_ee(:,:)   , cor_ei(:,:),
      ,     cor_ni(:,:,:) , cor_mo(:,:,:),
      ,     cor_ne(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     rescoreg(:,:) , resmoreg(:,:),
      ,     reshereg(:), reshireg(:)
 
@@ -67,7 +67,7 @@ c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
 c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
 c***  ntrc_src  :  tracing/sources.trc    :  integral sources
 c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
-c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018) 
+c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
 c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
 c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
@@ -98,7 +98,7 @@ c***                    tracing
 c
       save
 
-      contains 
+      contains
 
       subroutine alloc_b2mod_diag(nxd,nyd,nsd,nregionv,nstra,natm)
       use b2mod_b2cmpa
@@ -129,10 +129,10 @@ c
      5  ssnireg(nspecies,nregionv))
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
       allocate(sna_eir(1:nspecies))       ! IYS 12.01.2018
-      allocate(sna_stbr_neut(1:nspecies,1:nbcd), 
+      allocate(sna_stbr_neut(1:nspecies,1:nbcd),
      &         sna_stbc_neut(1:nspecies,1:nbcd),       ! IYS 04.06.2018
      &         sna_stbr_sput(1:nspecies,1:nbcd))       ! IYS 18.09.2018
-      allocate( 
+      allocate(
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
       allocate(RADARR(0:NXD+1,0:NYD+1))

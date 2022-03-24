@@ -223,12 +223,12 @@
 *    ..normalized average Z**2*n
           nz2n=z2n_xy(ix,iy,0:nspecies-1)/zeffne
 *    ..calculate the correction for each charge state (heat flux/R-moment/friction)
-          call b2trcc(nspecies, mum, mdm, nz2n,
+          call b2trcz(nspecies, mum, mdm, nz2n,
      &     wrkc, wrkcB, c_hwB, c_rwB, c_hTB, c_rTB)
           c_R_TB_nofl(ix,iy,0:nspecies-1) = wrkc
           c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
 *    ..calculate the correction for each charge state (viscous stress tensor)
-          call b2trcs(nspecies, mum, mdm, nz2n,
+          call b2trcw(nspecies, mum, mdm, nz2n,
      &     c_pi_uB(0:nspecies-1), c_pi_hB(0:nspecies-1))
 
           if (zh_imp_analyt.eq.0) then

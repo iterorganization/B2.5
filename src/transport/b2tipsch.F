@@ -25,8 +25,7 @@
      &  nati2c(-1:nx,-1:ny,0:ns-1), nati2(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fhiPSch(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2),            !srv 13.10.06
-     &   weight(-1:nx,-1:ny)
+     &   fhiPSch(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)             !srv 13.10.06
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -49,6 +48,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0
+      real (kind=R8) :: weight(-1:nx,-1:ny)
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       integer, save :: PSch_style
       real (kind=R8) ::

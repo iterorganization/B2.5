@@ -100,7 +100,7 @@
 *   ..local variables
       integer n2, ix, iy, is, ib, ic, ibnd, itrack, k                   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
-      integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
+      integer, save :: no_b2stbr_phys_call = 0, mdf_fnb = 0             !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
       integer, save :: iout = 0,        iout_b2npmo = 0,                !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,

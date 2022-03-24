@@ -6849,7 +6849,8 @@ cdpc still in testing phase
             call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
           end if
         case('vxa')
-          description='Atoms X-directed velocity (m.s^{-1})'
+          description=
+     .     'Atoms Cartesian X-directed velocity (m.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vxa,1.0_R8,nz,textan)
@@ -6858,7 +6859,8 @@ cdpc still in testing phase
             call eirene_copy(vxa,1.0_R8,nz,textbl)
           end if
         case('vxm')
-          description='Molecules X-directed velocity (m.s^{-1})'
+          description=
+     .     'Molecules Cartesian X-directed velocity (m.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vxm,1.0_R8,nz,textmn)
@@ -6867,7 +6869,8 @@ cdpc still in testing phase
             call eirene_copy(vxm,1.0_R8,nz,textbl)
           end if
         case('vxi')
-          description='Test ions X-directed velocity (m.s^{-1})'
+          description=
+     .     'Test ions Cartesian X-directed velocity (m.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vxi,1.0_R8,nz,textin)
@@ -6876,7 +6879,8 @@ cdpc still in testing phase
             call eirene_copy(vxi,1.0_R8,nz,textbl)
           end if
         case('vya')
-          description='Atoms Y-directed velocity (m.s^{-1})'
+          description=
+     .     'Atoms Cartesian Y-directed velocity (m.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vya,1.0_R8,nz,textan)
@@ -6885,7 +6889,8 @@ cdpc still in testing phase
             call eirene_copy(vya,1.0_R8,nz,textbl)
           end if
         case('vym')
-          description='Molecules Y-directed velocity (m.s^{-1})'
+          description=
+     .     'Molecules Cartesian Y-directed velocity (m.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vym,1.0_R8,nz,textmn)
@@ -6894,7 +6899,8 @@ cdpc still in testing phase
             call eirene_copy(vym,1.0_R8,nz,textbl)
           end if
         case('vyi')
-          description='Test ions Y-directed velocity (m.s^{-1})'
+          description=
+     .     'Test ions Cartesian Y-directed velocity (m.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vyi,1.0_R8,nz,textin)
@@ -6903,7 +6909,8 @@ cdpc still in testing phase
             call eirene_copy(vyi,1.0_R8,nz,textbl)
           end if
         case('vza')
-          description='Atoms Z-directed velocity (m.s^{-1})'
+          description=
+     .     'Atoms Cartesian Z-directed velocity (m.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vza,1.0_R8,nz,textan)
@@ -6912,7 +6919,8 @@ cdpc still in testing phase
             call eirene_copy(vza,1.0_R8,nz,textbl)
           end if
         case('vzm')
-          description='Molecules Z-directed velocity (m.s^{-1})'
+          description=
+     .     'Molecules Cartesian Z-directed velocity (m.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vzm,1.0_R8,nz,textmn)
@@ -6921,7 +6929,8 @@ cdpc still in testing phase
             call eirene_copy(vzm,1.0_R8,nz,textbl)
           end if
         case('vzi')
-          description='Test ions Z-directed velocity (m.s^{-1})'
+          description=
+     .     'Test ions Cartesian Z-directed velocity (m.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vzi,1.0_R8,nz,textin)
@@ -6931,7 +6940,7 @@ cdpc still in testing phase
           end if
         case('vxdena')
           description=
-     .     'Atoms X-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Atoms Cartesian X-momentum density (kg.m^{-2}.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vxdena,10.0_R8,nz,textan)
@@ -6941,7 +6950,7 @@ cdpc still in testing phase
           end if
         case('vxdenm')
           description=
-     .     'Molecules X-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Molecules Cartesian X-momentum density (kg.m^{-2}.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vxdenm,10.0_R8,nz,textmn)
@@ -6951,7 +6960,7 @@ cdpc still in testing phase
           end if
         case('vxdeni')
           description=
-     .     'Test ions X-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Test ions Cartesian X-momentum density (kg.m^{-2}.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vxdeni,10.0_R8,nz,textin)
@@ -6961,7 +6970,7 @@ cdpc still in testing phase
           end if
         case('vydena')
           description=
-     .     'Atoms Y-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Atoms Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vydena,10.0_R8,nz,textan)
@@ -6971,7 +6980,7 @@ cdpc still in testing phase
           end if
         case('vydenm')
           description=
-     .     'Molecules Y-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Molecules Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vydenm,10.0_R8,nz,textmn)
@@ -6981,7 +6990,7 @@ cdpc still in testing phase
           end if
         case('vydeni')
           description=
-     .     'Test ions Y-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Test ions Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vydeni,10.0_R8,nz,textin)
@@ -6991,7 +7000,7 @@ cdpc still in testing phase
           end if
         case('vzdena')
           description=
-     .     'Atoms Z-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Atoms Cartesian Z-momentum density (kg.m^{-2}.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vzdena,10.0_R8,nz,textan)
@@ -7001,7 +7010,7 @@ cdpc still in testing phase
           end if
         case('vzdenm')
           description=
-     .     'Molecules Z-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Molecules Cartesian Z-momentum density (kg.m^{-2}.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vzdenm,10.0_R8,nz,textmn)
@@ -7011,7 +7020,7 @@ cdpc still in testing phase
           end if
         case('vzdeni')
           description=
-     .     'Test ions Z-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Test ions Cartesian Z-momentum density (kg.m^{-2}.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vzdeni,10.0_R8,nz,textin)
@@ -7128,8 +7137,8 @@ cdpc still in testing phase
         case('eclvd')    ! customise Eirene contour level delta
           stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call
-     .     eclvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
+          call eclvd(rstack(irstack-2),rstack(irstack-1),
+     1               rstack(irstack))
           do iclv=1,3
             dummy=rpop(rstack,irstack)
           end do
@@ -8694,8 +8703,8 @@ c normalised weights is 1
         case('wclvd')    ! customise wall contour level delta
           stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call
-     .     wclvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
+          call wclvd(rstack(irstack-2),rstack(irstack-1),
+     .               rstack(irstack))
           do iclv=1,3
             dummy=rpop(rstack,irstack)
           end do
@@ -10754,7 +10763,7 @@ c
         case('nion')     ! nion
           stack_name='integer'
           call ipush(istack,iistack,nion)
-        case('nxtl')     ! nxtl 
+        case('nxtl')     ! nxtl
           stack_name='integer'
           if (nnreg(0).eq.8) then
             call ipush(istack,iistack,nxtl)

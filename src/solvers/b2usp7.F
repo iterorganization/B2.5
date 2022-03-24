@@ -14,7 +14,7 @@
       integer nx, ny, ns, ismain, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1),
-     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1), 
+     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)

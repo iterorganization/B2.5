@@ -75,7 +75,7 @@ c first handle x-coordinate of profiles (and areas)
      *     descr2_i1(idtype_double,il,0),ds,
      *     0)
 #else
-	  status=mdsput2(
+          status=mdsput2(
      *     trim(ds_mds(i))//char(0),
      *     'build_with_units($,"m")'//char(0),
      *     descr2(idtype_double,il,0),ds,
@@ -212,7 +212,7 @@ c first deal with the time vector
      *     descr2(idtype_double,dimsize(1),0),data1,
      *     0)
 #endif
-	  write(*,*) 'mdsput2'
+          write(*,*) 'mdsput2'
           call mds_err_msg(status)
           deallocate(data1)
         else

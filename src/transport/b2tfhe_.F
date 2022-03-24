@@ -27,10 +27,10 @@
       integer nx, ny, ns, ismain                                         !srv 19.02.21
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &   vol(-1:nx,-1:ny),
+     &   vol(-1:nx,-1:ny),                                               !srv 11.07.99 18.01.02
      1   hx(-1:nx,-1:ny),
      &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &   na(-1:nx,-1:ny,0:ns-1),
+     &   na(-1:nx,-1:ny,0:ns-1),                                         !srv 16.10.17
      &   vedia(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),

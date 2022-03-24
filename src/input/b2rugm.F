@@ -3,8 +3,8 @@
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv,
+     &  wbbc, cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect

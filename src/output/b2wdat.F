@@ -163,7 +163,7 @@
            do ix=-1,nx
              wrk0(ix,iy)=0.5_R8*pi*
      &        (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-          enddo
+           enddo
          enddo
          call my_out(70,nx,ny,wrk0,'2piR')                         !srv 15.09.14
          wrk1=wrk0-hz

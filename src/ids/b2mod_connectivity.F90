@@ -97,7 +97,7 @@ module b2mod_connectivity
         &    'Annular geometry, curved in the third direction   ', &
         &    'Stellarator island geometry                       '  &
         &   /)
- 
+
     !! Region names
     !! First dimension: geometry type (given in comments)
     !! Second dimension: region type

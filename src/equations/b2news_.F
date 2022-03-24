@@ -373,7 +373,7 @@ csw 01oct2012 initialize potential if necessary
       call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
-     & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
+     &              cvsa_drho, fac_vis, fchvispar_a, fchvispar)          !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 19.02.21
@@ -582,7 +582,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
      &              fchanml_a, fchanml)                                  !srv 08.09.21
       call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
-     & cvsa_drho, fac_vis, fchvispar_a, fchvispar)                       !som 18.08.21
+     &              cvsa_drho, fac_vis, fchvispar_a, fchvispar)          !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 19.02.21

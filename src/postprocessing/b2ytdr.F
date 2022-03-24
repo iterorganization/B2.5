@@ -2438,8 +2438,9 @@ c 2002-09-11: logic revised
      >   'BOUNDARY_TIME_MOD=', boundary_time_mod,','
         if (boundary_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'BOUNDARY_TIME_SWITCH=', boundary_time_switch,','
-        if (boundary_time_mod.ne.0.0_R8) write(99,'(a,a,a)')
-     >   'BOUNDARY_FILENAME=''', trim(boundary_filename),''','
+        if (.not.streql(boundary_filename,'b2.boundary.parameters')
+     &      .or..not.first_pass) write(99,'(a,a,a)')
+     .   'BOUNDARY_FILENAME=''', trim(boundary_filename),''','
         if (maxval(lcbs).gt.0) then
           ncbs = 1
           do while (ncbs.lt.nbc1 .and. lcbs(ncbs+1).gt.0)
@@ -2586,14 +2587,15 @@ c 2002-09-11: logic revised
             write(99,'(1x,a,1p,1g10.3,a)') 'CFLAL=',0.5_R8,','
             write(99,'(1x,a,1p,1g10.3,a)') 'CFLAB=',0.5_R8,','
           endif
-          if(transport_time_mod.gt.0.0_R8) then
-            write(99,'(1x,a,a,a)')
-     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_mod.gt.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_MOD=',transport_time_mod,','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_switch.ne.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
-          endif
+          if(.not.streql(transport_filename,'b2.transport.parameters')
+     &       .or..not.first_pass) write(99,'(1x,a,a,a)')
+     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
           if(abs(maxval(vout_cnv(0:ns-1))).gt.0.0_R8) then
             write(hlp_frm,'(a,i3,a)')
      .       '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
@@ -2832,14 +2834,15 @@ cxpb We must ensure we have not already listed this additional species
      .       (region_flags1(ireg,j),ireg=1,nnreg(0)),','
           enddo
           write(99,'(1x,a,l1,a)') 'NO_PFLUX=',no_pflux,','
-          if(transport_time_mod.gt.0.0_R8) then
-            write(99,'(1x,a,a,a)')
-     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_mod.gt.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_MOD=',transport_time_mod,','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_switch.ne.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
-          endif
+          if(.not.streql(transport_filename,'b2.transport.inputfile')
+     &       .or..not.first_pass) write(99,'(1x,a,a,a)')
+     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nscale,'l1,a)'
           do_scale = .false.
           do ix = 1, nscale
@@ -3490,14 +3493,15 @@ cxpb This will need to be checked !!!
         enddo
         if (divheat.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .   'DIVHEAT=',divheat,','
-        if(sources_time_mod.gt.0.0_R8) then
-          write(99,'(1x,a,1p,1g10.3,a)')
+        if(sources_time_mod.gt.0.0_R8)
+     .   write(99,'(1x,a,1p,1g10.3,a)')
      .     'SOURCES_TIME_MOD=',sources_time_mod,','
-          write(99,'(1x,a,1p,1g10.3,a)')
+        if(sources_time_switch.ne.0.0_R8)
+     .   write(99,'(1x,a,1p,1g10.3,a)')
      .     'SOURCES_TIME_SWITCH=',sources_time_switch,','
-          write(99,'(1x,a,a,a)')
+        if(.not.streql(sources_filename,'b2.sources.profile')
+     ^     .or..not.first_pass) write(99,'(1x,a,a,a)')
      .     'SOURCES_FILENAME=''',trim(sources_filename),''','
-        endif
         write(99,'(a1)') '/'
         close(99)
        end if
@@ -3685,14 +3689,15 @@ cxpb This will need to be checked !!!
           endif
           if (todo) write(99,hlp_frm)
      .     'SOLVEET=',(solvtmp(0,ireg),is=0,nnreg(0)),','
-          if(numerics_time_mod.gt.0.0_R8) then
-            write(99,'(1x,a,a,a)')
-     .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(numerics_time_mod.gt.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(numerics_time_switch.ne.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_SWITCH=',numerics_time_switch,','
-          endif
+          if(.not.streql(numerics_filename,'b2.numerics.parameters')
+     &       .or..not.first_pass) write(99,'(1x,a,a,a)')
+     .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
           if(maxval(corr_core_dn(0:ns-1)).ne.1.0_R8 .or.
      &       minval(corr_core_dn(0:ns-1)).ne.1.0_R8) then
             call convert_bundle_r(ns1,ns,nsm,is_neutral1,bundle_frac,
@@ -10939,7 +10944,8 @@ cxpb as they no longer necessarily point to the same species
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_SWITCH=', neutrals_time_switch,','
-        if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,a,a)')
+        if (.not.streql(neutrals_filename,'b2.neutrals.parameters')
+     &      .or..not.first_pass) write(99,'(1x,a,a,a)')
      >   'NEUTRALS_FILENAME=''', trim(neutrals_filename),''','
         write(hlp_frm,'(a,i2,a)') '(1x,a,i1,a,',nstrat1,'(1x,i3,'',''))'
         if (maxval(lstrascl).gt.0) then

@@ -408,22 +408,22 @@ cdjm compute b2sigp_pstat0to3 on left cell face
       smbgp_b4gr=smbgp !djm Jul2018
 cxpb apply restriction to pressure gradient for minority ions and neutrals
       if (style.ne.0 .and. pressure_restriction.eq.1) then
-       do iy = -1, ny                                                 !lk 23.06.17{  
+       do iy = -1, ny                                                 !lk 23.06.17{
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
-     &     bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
-     &     nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
-          smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
-     &    (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
-     &                       +hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(ix,iy)*ti(ix,iy)/
-     &    ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     nb(rightix(ix,iy),rightiy(ix,iy))
-     &    *ti(rightix(ix,iy),rightiy(ix,iy))+
-     &    (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(leftix(ix,iy),leftiy(ix,iy))
-     &    *ti(leftix(ix,iy),leftiy(ix,iy))))     
-         endif   
+     &      bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
+     &      nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
+           smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8,
+     &     (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
+     &                        +hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &      nb(ix,iy)*ti(ix,iy)/
+     &     ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      nb(rightix(ix,iy),rightiy(ix,iy))
+     &     *ti(rightix(ix,iy),rightiy(ix,iy))+
+     &     (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &      nb(leftix(ix,iy),leftiy(ix,iy))
+     &     *ti(leftix(ix,iy),leftiy(ix,iy))))
+         endif
         enddo
        enddo                                                          !lk 23.06.17}
       endif

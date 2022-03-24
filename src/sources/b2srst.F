@@ -47,7 +47,7 @@
      &                 iout_b2wdat = 0
 !     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       real (kind=R8) ::
-     *  snast(-1:nx,-1:ny,0:1,0:ns-1), smost(-1:nx,-1:ny,0:3,0:ns-1), 
+     *  snast(-1:nx,-1:ny,0:1,0:ns-1), smost(-1:nx,-1:ny,0:3,0:ns-1),
      &  shest(-1:nx,-1:ny,0:3), shist(-1:nx,-1:ny,0:3),
      &  schst(-1:nx,-1:ny,0:3), snest(-1:nx,-1:ny,0:1),
      &  wrk0(-1:nx,-1:ny)
@@ -102,7 +102,7 @@
         call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
         call b2xvsg (n2, ne, 1, 'ne', '.gt.')
         call b2xvsg (n2, te, 1, 'te', '.gt.')
-        call b2xvsg (n2, ti, 1, 'ti', '.gt.') 
+        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
       endif
 
 *  .. save sources

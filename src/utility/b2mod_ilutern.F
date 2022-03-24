@@ -160,13 +160,13 @@ csw 12oct2012 in case of b2swtest=T --> reinit solver
 c             (maybe necessary in case of multi-fluid?)
       if(b2swtest.eq.1) lfirst=.true.
 
-!!FR The b2_matrix file will not write out correctly if code runs in parallel 
+!!FR The b2_matrix file will not write out correctly if code runs in parallel
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
         if (in_parallel()) then !!FR in parallel do not write this file
           !$OMP MASTER
            write(*,*)'OpenMP: warning: running in parallel the ',
-     1      'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ', 
+     1      'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
      2      'will not be written out'
           !$OMP END MASTER
         else

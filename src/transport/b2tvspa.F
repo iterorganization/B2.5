@@ -80,7 +80,7 @@
 *    ..test edge values of cvsa_cl
         call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                        !srv 16.10.17
         call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
+        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
       endif
 
       if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.

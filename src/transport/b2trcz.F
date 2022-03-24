@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trcc(nspecies, mum, mdm, nz2n,
+      subroutine b2trcz(nspecies, mum, mdm, nz2n,
      &  c_R_TB, c_R_wB, c_hwB, c_rwB, c_hTB, c_rTB)
       use b2mod_types
       use b2mod_subsys
@@ -23,7 +23,7 @@
 *
 *  1. purpose
 *
-*     B2TRCC calculates charge state corrections to the thermal and
+*     B2TRCZ calculates charge state corrections to the thermal and
 *     friction force terms.
 *
 *  3. description 
@@ -45,7 +45,7 @@
 *.computation
 
 *   ..subprogram start-up calls
-      call subini ('b2trcc')
+      call subini ('b2trcz')
 *   ..main
 *    ..Z variables
       sqrt2=sqrt(2.0_R8) 
@@ -117,4 +117,4 @@
       call subend ()
       return
 
-      end subroutine b2trcc
+      end subroutine b2trcz

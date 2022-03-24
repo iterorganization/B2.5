@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trcs(nspecies, mum, mdm, nz2n, c_pi_uB, c_pi_hB)
+      subroutine b2trcw(nspecies, mum, mdm, nz2n, c_pi_uB, c_pi_hB)
       use b2mod_types
       use b2mod_subsys
       use b2mod_Zzh
@@ -19,7 +19,7 @@
 *
 *  1. purpose
 *
-*     B2TRCS calculates charge state corrections for the viscous
+*     B2TRCW calculates charge state corrections for the viscous
 *     stress tensor.
 *
 *  3. description
@@ -40,7 +40,7 @@
 *.computation
 
 *   ..subprogram start-up calls
-      call subini ('b2trcs')
+      call subini ('b2trcw')
 *   ..main
 *    ..Z variables
       sqrt2=sqrt(2.0_R8)
@@ -79,4 +79,4 @@
       call subend ()
       return
 
-      end subroutine b2trcs
+      end subroutine b2trcw

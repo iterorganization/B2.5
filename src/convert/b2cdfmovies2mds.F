@@ -137,7 +137,7 @@ c first deal with the time vector
      *     descr2_i1(idtype_double,dimsize(1),0),data1,
      *     0)
 #else
-	  status=mdsput2(
+          status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
      *     descr2(idtype_double,dimsize(1),0),data1,

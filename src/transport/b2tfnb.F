@@ -534,14 +534,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      2          +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
      2           bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*              !srv 05.02.05
      2      (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))              !srv 13.05.16 }
-!           vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)* ! signmf*           !srv 11.01.13 07.06.00 21.04.00 25.08.99 17.05.99
-!     1       (hz(ix,iy)*bb(ix,iy,2)                                      !lk( 12.12.07
+!           vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)* ! signmf*          !srv 11.01.13 07.06.00 21.04.00 25.08.99 17.05.99
+!     1       (hz(ix,iy)*bb(ix,iy,2)                                     !lk( 12.12.07
 !     2          +hz(bottomix(ix,iy),bottomiy(ix,iy))*
 !     3          bb(bottomix(ix,iy),bottomiy(ix,iy),2))/2.0e0_R8*
 !     4       (vol(bottomix(ix,iy),bottomiy(ix,iy))/bb(ix,iy,3)**2
 !     5          +vol(ix,iy)/bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)/
 !     6          (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))*
-!     7        (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))/           !lk 12.12.07)
+!     7        (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))/          !lk 12.12.07)
 !     8          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
 !     9          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {

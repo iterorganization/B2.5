@@ -159,7 +159,7 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end subroutine b2sscal 
+      end subroutine b2sscal
       subroutine b2scopy (n, sx, incx, sy, incy)
       use b2mod_types
       implicit none
@@ -251,7 +251,7 @@
 #ifdef WITH_FTIMINGS
       if(do_parallel) call timer%stop("parallel")
       call timer%stop("b2saxpy")
-#endif     
+#endif
       return
 *     ------------------------------------------------------------------
       end subroutine b2saxpy

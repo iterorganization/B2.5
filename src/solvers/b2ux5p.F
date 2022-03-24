@@ -76,13 +76,13 @@
       external xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
-!!FR The save variables used by ilutern need to be declared threadprivate 
-!!FR to ensure that each thread accesses its own copy of these and not a 
+!!FR The save variables used by ilutern need to be declared threadprivate
+!!FR to ensure that each thread accesses its own copy of these and not a
 !!FR global version. The iluter and slv5pt specific arrays have also been
-!!FR declared threadprivate to ensure any attempts to allocate them on 
-!!FR multiple threads will work. However, the code will be stopped if 
+!!FR declared threadprivate to ensure any attempts to allocate them on
+!!FR multiple threads will work. However, the code will be stopped if
 !!FR the iluter or slv5pt are used as these have not been parallelised.
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
       !$OMP THREADPRIVATE (ncall, style, acpar, cpu)
       data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
@@ -166,7 +166,7 @@
 *    ..use iluter
        iters = min(itmax,4)
        itpar = itcnt*iters
-!!FR iluter and slv5pt are not parallelised thus we need to stop the 
+!!FR iluter and slv5pt are not parallelised thus we need to stop the
 !!FR code if attempting to run them in parallel
        if (in_parallel()) then
         stop 'STOP: iluter not parallelised, re-run in serial'
