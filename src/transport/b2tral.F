@@ -24,7 +24,9 @@
       use b2mod_b2zhco
      & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
      &         zh_imp_analyt, zh_analyt_mdf,
-     &         zhflcorrh, zh_dist_fun, zh_tf_toff
+     &         zhflcorrh, zh_dist_fun, zh_tf_toff, 
+     &         alloc_b2mod_zhco_amfact, amfact,
+     &         amfact_on
       use b2mod_zhfrtf
      & , only: avm_u, w_out, hTdp_out, hwdp_out,
      &         rTdpgamma_out, rwdpgamma_out
@@ -226,6 +228,15 @@
         call ipgetc ('b2tral_zh_tf_toff', zh_tf_toff)             !som 26.06.21
         call ipgeti ('b2tral_zh_vis_type', zh_vis_type)           !som 13.01.22
         call ipgeti ('b2tral_mode', mode)                         !som 15.03.21
+        call ipgeti ('b2tral_amfact_on', amfact_on)             ! !som 28.01.22
+        call alloc_b2mod_zhco_amfact (nspecies)                   !som 21.01.22
+        amfact(0:nspecies-1) = 1.0_R8
+        if (amfact_on.ne.0) then
+         do is=0, nspecies-1
+          write (chns,'(i3.3)') is
+          call ipgetr ('b2tral_amfact_'//chns, amfact(is))
+         enddo
+        endif
         if(transport_namelist.eq.1) then
           call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist

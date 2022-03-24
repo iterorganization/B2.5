@@ -3,7 +3,8 @@
 #include "DIMENSIONS.F"
       implicit none
       integer :: zhd_corr=1, zhd_corrT=1, zhcscorr=1, zhcscorr_vq=1,
-     &  zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0
+     &  zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0,
+     &  amfact_on=0
 #if DEF_NATM > 1
       character*((DEF_NATM*(DEF_NATM+1))/2-DEF_NATM) :: zh_tf_toff =
      & repeat('0',max(1,(DEF_NATM*(DEF_NATM+1))/2-DEF_NATM))
@@ -20,6 +21,7 @@
      &  c_R_wB(:,:,:,:),
      &  c_R_w(:,:,:,:),
      &  tf_ton_mat(:,:)
+      real (kind=R8), allocatable, save :: amfact(:)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -66,6 +68,13 @@
       tf_ton_mat=1.0_R8
 
       end subroutine alloc_b2mod_zhco
+      
+      subroutine alloc_b2mod_zhco_amfact(nnucl)
+      implicit none
+      integer :: nnucl
+      allocate(amfact(0:nnucl-1))
+
+      end subroutine alloc_b2mod_zhco_amfact
 
       subroutine dealloc_b2mod_zhco
       implicit none
@@ -79,6 +88,8 @@
       deallocate(c_R_wB)
       deallocate(c_R_w)
       deallocate(tf_ton_mat)
+      if(.not.allocated(amfact)) return
+      deallocate(amfact)
 
       end subroutine dealloc_b2mod_zhco
 
