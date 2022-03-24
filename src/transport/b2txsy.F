@@ -7,7 +7,7 @@
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  vol(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  fun(-1:nx,-1:ny), funsy(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXSY computes the integrals over cell y-faces of a function

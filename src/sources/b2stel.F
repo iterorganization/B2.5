@@ -218,7 +218,7 @@
       rrahireg=0.0_R8
       rramoreg=0.0_R8
       rqahereg=0.0_R8
-           
+
       call sfill (n2*ns, 0.0_R8, rrana, 1)
       call sfill (n2*ns, 0.0_R8, rrahi, 1)
       call sfill (n2*ns, 0.0_R8, rramo, 1)
@@ -505,7 +505,7 @@ c accounted for)
                 rad_imp(jimp_tmp(b2espcr(is)))=
      &           rad_imp(jimp_tmp(b2espcr(is)))-rqrad(ix,iy,is)
               end if
-            end do 
+            end do
           end if
         end do
       end do

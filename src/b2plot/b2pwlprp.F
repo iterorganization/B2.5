@@ -364,7 +364,7 @@ c
       l=iabs(lwldlis(1,1))
       k=iabs(lwldlis(n,1))
       if(lwlddir(1)) then
-        if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or. 
+        if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or.
      .     abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
           write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
@@ -376,7 +376,7 @@ c
           return
         end if
       else
-        if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or. 
+        if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or.
      .     abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
           write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
@@ -957,7 +957,7 @@ ccc*** Order elements of original plot zone in CCW direction
         deallocate(lis_ind)
 
 ccc*** Check if a plot zone has starting and ending element which is inside a target     
-        if (.not. istarget(il)) then 
+        if (.not. istarget(il)) then
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
           k1=abs(lwldlis_old(1));
           k2=abs(lwldlis_old(nwldlis_old))
@@ -1023,11 +1023,11 @@ c*** Now change also the new plot zone according to the CW or CCW order
             end do
           end if
         end if !}
-      deallocate(lwldlis_old)
-      deallocate(leirlis_old)
+        deallocate(lwldlis_old)
+        deallocate(leirlis_old)
       end do !}
 
-      deallocate(istarget) 
+      deallocate(istarget)
 
 
 c*** Calculate the segment areas and related quantities

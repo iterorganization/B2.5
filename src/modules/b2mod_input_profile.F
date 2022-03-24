@@ -88,7 +88,7 @@
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
-!*     Inputfile: b2.sources.profile                                     *
+!*     Inputfile: b2.sources.profile                                      *
 !**************************************************************************
       integer :: nx,ny,ns,nc
       integer :: ix,iy,i,ireg
@@ -458,7 +458,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !*     subroutine for reading in experimental transport coefficients from *
 !*     the midplane and calculating transport coefficients                *
 !*     for B2.5 (written by Heimo Buerbaumer 1999)                        *
-!*     Inputfile: b2.transport.inputfile                                 *
+!*     Inputfile: b2.transport.inputfile                                  *
 !**************************************************************************
       use b2mod_time
       use b2mod_constants

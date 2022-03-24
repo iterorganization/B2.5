@@ -63,7 +63,7 @@
      &              'parallel mode'
          !$OMP END MASTER
          iout = 0
-       end if      
+       end if
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

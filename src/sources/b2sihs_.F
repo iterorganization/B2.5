@@ -100,7 +100,7 @@
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)         !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
-     4  ce2(-1:nx,-1:ny),  cimp1(-1:nx,-1:ny,0:ns-1),
+     4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny,0:ns-1),
      *  cimp2(-1:nx,-1:ny,0:ns-1),                                    !som 13.11.20
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
@@ -214,7 +214,7 @@
        call b2xvff (nx, ny, fch, 'fch')
 *    ..test edge values of cvsa
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa') !srv 01.07.05
+        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa')             !srv 01.07.05
        enddo
       endif
 *   ..compute ctaup

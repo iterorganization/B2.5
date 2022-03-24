@@ -190,7 +190,7 @@
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
-     &             cpu_end-cpu_start
+     &                                  cpu_end-cpu_start
 
 * ..return
       ncall = ncall+1

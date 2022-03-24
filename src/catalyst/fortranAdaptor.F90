@@ -19,11 +19,11 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
   real(kind=R8) :: time
   integer, dimension(-1:nx,-1:ny) :: rightix, topiy
   real(kind=R8), dimension(-1:nx,-1:ny) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
-  real(kind=R8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
+  real(kind=R8), dimension(-1:nx,-1:ny,0:1) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
       & fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper !,&
      !& velocity
-  real(kind=R8), dimension(-1:nx,-1:ny,3) :: gs
-  real(kind=R8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
+  real(kind=R8), dimension(-1:nx,-1:ny,0:2) :: gs
+  real(kind=R8), dimension(-1:nx,-1:ny,0:3) :: crx,cry,bb
   real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
   real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
       & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi

@@ -75,12 +75,12 @@
       external xertst, ipgeti, ipgetr, sfill
       external b2xvfx, b2xvsg, b2xxgs
 *   ..initialisation
-      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase) 
+      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase)
       !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
-      save ncall, styl0, styl1, 
+      save ncall, styl0, styl1,
      &  phm0, phm1, phm2, phm3, limthii, limthee
-      data ncall/0/, styl0/0/, styl1/0/, 
-     &  phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/, phm3/1.0_R8/, 
+      data ncall/0/, styl0/0/, styl1/0/,
+     &  phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/, phm3/1.0_R8/,
      &  limthii/0.3_R8/, limthee/0.3_R8/
 
 *-----------------------------------------------------------------------
@@ -115,7 +115,7 @@
          iout = 0
        end if
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
       endif
 *   ..set n2
@@ -193,7 +193,7 @@
      1          rz2(ix,iy,isb)*rz2(ix,iy,is)
            smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
            smbch(ix,iy,1) = smbch(ix,iy,1)-coef*t0
-           smfrb(ix,iy) = smfrb(ix,iy) + 
+           smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
           enddo
          else if (styl0.eq.1) then
@@ -203,7 +203,7 @@
            smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
            smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &       roxa(ix,iy,isb)
-           smfrb(ix,iy) = smfrb(ix,iy) + 
+           smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
           enddo
          else if (styl0.eq.2) then
@@ -214,7 +214,7 @@
      &       roxa(ix,iy,isb)
            smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &       roxa(ix,iy,isb)
-           smfrb(ix,iy) = smfrb(ix,iy) + 
+           smfrb(ix,iy) = smfrb(ix,iy) +
      &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
           enddo
          endif
@@ -287,7 +287,7 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
      &  (phm3*cthi(ix,iy,isb)*t0*(ne(ix,iy)-ne_ext(ix,iy))+
      &   phm2*cthe(ix,iy,isb)*t1*ne(ix,iy))*
      &  (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3))   !srv 12.04.10 11.01.13
-            smprb(ix,iy) = smprb(ix,iy) + 
+            smprb(ix,iy) = smprb(ix,iy) +
      &    na(ix,iy,isb)*
      &  (rza(ix,iy,isb)/(ne(ix,iy)-ne_ext(ix,iy))-
      &   rz2(ix,iy,isb)/(ne2(ix,iy)-ne2_ext(ix,iy)))*

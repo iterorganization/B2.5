@@ -1,6 +1,7 @@
 *~
 *.[oa]
 *.mod
+*__genmod.f90
 \#*\#
 TAGS
 LISTOBJ

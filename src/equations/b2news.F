@@ -687,7 +687,7 @@ cxpb
      &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),             !srv 08.09.21
      &     fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
      &     fchvisq_a(-1,-1,0,is),                                        !srv 20.09.06
-     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                     !xpb
+     &     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                     !xpb
      &     fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                     !srv 01.10.99 21.01.00
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
@@ -808,7 +808,7 @@ cxpb
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &       fna_53(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is), .false.)           !djm Jan2017
-!          endif                                                         !srv 22.05.18
+!         endif                                                          !srv 22.05.18
         enddo
 #ifndef NO_OPENMP_B2NEWS_LOOP2
 !$OMP END PARALLEL DO

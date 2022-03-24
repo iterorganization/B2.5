@@ -58,7 +58,8 @@
      *  fna_32(-1:nx,-1:ny,0:1,0:ns-1),
      *  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      *  fhm(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fni_32(-1:nx,-1:ny,0:1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fni_32(-1:nx,-1:ny,0:1),
      &  fni_52(-1:nx,-1:ny,0:1), fne_32(-1:nx,-1:ny,0:1),
      &  fne_52(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
@@ -3222,7 +3223,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               isb = isb + 1
             enddo
 !========== IYS 13.10.2021
-            
+
             write(*,'(a,a,a,i3)')
      &       'given total particle flux for all ionisation states ',
      &       'within the isonuclear sequence with constant density ',
@@ -7525,7 +7526,7 @@ cxpb          endif
           CALL XERRAB ('B2STBC -- BCENI=14, NOT AVAILABLE FOR W,E')
         ENDIF
 
-* -- BCENI=15 -- from b2stbc_spb                              !srv 01.02.09
+* -- BCENI=15 -- from b2stbc_spb                                        !srv 01.02.09
 
       case (15)
         if(ncall.eq.0) then
@@ -8089,7 +8090,7 @@ cxpb Careful here because of BC number clash
           CALL XERRAB ('B2STBC -- BCENI=21, NOT AVAILABLE FOR W,E')
         ENDIF
 
-* -- BCENI=22 -- RADIAL LEAKAGE CONDITION FOR THE ION TEMPERATURE   !srv 23.07.10
+* -- BCENI=22 -- RADIAL LEAKAGE CONDITION FOR THE ION TEMPERATURE    !srv 23.07.10
 *                SPECIFIES A TEMPERATURE GRADIENT SUCH THAT THE DIFFUSIVE
 *                FLUX IS SET TO BE EQUIVALENT TO A LEAKAGE VELOCITY, IN
 *                UNITS OF THE COLLECTIVE ION THERMAL VELOCITY

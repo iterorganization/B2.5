@@ -414,18 +414,18 @@
 *
 *     B2TRCA computes the inversed matrix for heat flux/R-moments.
 *
-*     B2TRCC calculates charge state corrections to the thermal and
-*     friction force terms.
-*
 *     B2TRCL computes the classical transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
 *
 *     B2TRCN computes the N-coefficients and all mass-related variables.
 *
-*     B2TRCS calculates charge state corrections for the viscous
+*     B2TRCV computes the inverted matrix for the viscous stress tensor.
+*
+*     B2TRCW calculates charge state corrections for the viscous
 *     stress tensor.
 *
-*     B2TRCV computes the inverted matrix for the viscous stress tensor.
+*     B2TRCZ calculates charge state corrections to the thermal and
+*     friction force terms.
 *
 *     B2TREQ computes the cell-integrated energy equipartition
 *     multiplier.

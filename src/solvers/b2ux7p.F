@@ -79,7 +79,7 @@
       external xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2) 
+      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
       !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
 
@@ -131,7 +131,7 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
-        write(*,*) 
+        write(*,*)
      .   'Allocating space for solver for 7-point stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
           call xerrab ('Style not applicable to 7-point stencil!')
@@ -154,7 +154,7 @@
         else if (style.eq.3) then
           continue
         endif
-        write(*,*) 
+        write(*,*)
      .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00
       endif
 

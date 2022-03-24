@@ -19,6 +19,10 @@
       integer i, ix
 #ifndef NO_OPENMP_SFILL
       logical do_parallel
+#else
+#ifdef WITH_FTIMINGS
+      logical do_parallel
+#endif
 #endif
       external xerrab
 *     ------------------------------------------------------------------

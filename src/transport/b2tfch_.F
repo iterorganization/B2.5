@@ -59,7 +59,7 @@
      2   fchdia(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),             !srv 07.07.99
      3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 27.01.00
-     $   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)     !srv 24.03.07
+     &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)     !srv 24.03.07
 *   ..local variables
 *   ..common blocks
 *-----------------------------------------------------------------------

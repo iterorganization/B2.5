@@ -150,11 +150,11 @@
       else         ! do not smooth the correction
         nb = nb_
         pb = pb_
-      endif                                                !srv 25.07.17 }
+      endif                                               !srv 25.07.17 }
 *   ..compute new ub
       if (ua_solve) then
        if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8))
-     &    uap(:,:,isb) = ub                                             !srv 07.07.21
+     &    uap(:,:,isb) = ub                               !srv 07.07.21
        do iy = -1, ny
         do ix = -1, nx
 *       (note the further damping on the velocity correction)

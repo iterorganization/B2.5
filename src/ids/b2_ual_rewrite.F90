@@ -226,7 +226,7 @@ program b2_ual_rewrite
     call imas_open_env(treename, shot, run, idx, &
       &                username, database, version, status)
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IMAS data-entry ", trim(database), shot, run
+      write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       call ids_get( idx, "dataset_description", old_description, status)
