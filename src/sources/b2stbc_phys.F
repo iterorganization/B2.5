@@ -1206,8 +1206,6 @@ cwdk      compatibility for E/W boundaries
 * -- BCCON=13 -- Feedback constant density for a given particle flux
 
           case (13)
-          call xerrab ('b2stbc_phys -- BCCON = 13 not adapted for WG')
-#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,a,a,i3,a,1p,2g14.7)')
      .       'particle density to achieve specified total flux on ',
@@ -1215,98 +1213,44 @@ cwdk      compatibility for E/W boundaries
      2       ' for species ',IS, ' with parameters ',
      3       CONPAR(IS,IB,1),CONPAR(IS,IB,2)
             icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
-            if (mpg%cvOnClosedSurface(icv).and.ishigh)
-     .       call xertst (switch%ionising_core.le.0,
-     .       'ionising_core switch usage inconsistent with BCCON = 13')
+            if (switch%ionising_core.gt.0) write(*,*)
+     .       'imposed flux adapted due to ionising_core switch usage'
           endif
-c dpc
-          IF(BCCHAR(IB).EQ.'S') THEN
-            FS=0.0_R8
-            VS=0.0_R8
-            NAS=0.0_R8
-            DO IX = 1, BC_LIST_SIZE(IB)
-               bc_type13_ix=bc_list_x(ix,ib)
-               bc_type13_iy=bc_list_y(ix,ib)
-               do bc_type13_i=1,bc_type13_ref ! how many steps away from the boundary?
-                  bc_type13_ixx=topix(bc_type13_ix,bc_type13_iy)
-                  bc_type13_iy=topiy(bc_type13_ix,bc_type13_iy)
-                  bc_type13_ix=bc_type13_ixx
-                  call xertst (-2.lt.bc_type13_ix.and.
-     &                         bc_type13_ix.lt.nx+1,
-     1                 'stepped off x-grid in type 13 bc')
-                  call xertst (-2.lt.bc_type13_iy.and.
-     &                         bc_type13_iy.lt.ny+1,
-     1                 'stepped off y-grid in type 13 bc')
-               enddo
-               FS=FS+FNA(bc_type13_ix,bc_type13_iy,1,1,is)
-               VS=VS+VOL(bc_list_x(ix,ib),bc_list_y(ix,ib))
-               NAS=NAS+NA(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .          vol(bc_list_x(ix,ib),bc_list_y(ix,ib))
-            ENDDO
-            NAS=NAS/VS
-            DFS=CONPAR(IS,IB,1)+CONPAR(IS,IB,3)
-            FFAC=(1.0_R8+CONPAR(IS,IB,2)*
-     1       (DFS-FS)/
-     2       (abs(DFS)+abs(FS)+
-     3        abs(switch%bc_type13_norm)+abs(NAS*switch%bc_type13_fac)))
-            NAS=NAS*FFAC
-            write(*,'(a,i3,1p,3(1x,e15.6))')
-     1       'b2stbc_conpar=13: is,curr_flux,desired_flux,density ',
-     2       IS,FS,DFS,NAS
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         VBIG*NAS*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     .        -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            ENDDO
-          ELSE IF(BCCHAR(IB).EQ.'W') THEN
-            FS=0.0_R8
-            VS=0.0_R8
-            NAS=0.0_R8
-            DO IY = 1, BC_LIST_SIZE(IB)
-               bc_type13_ix=bc_list_x(iy,ib)
-               bc_type13_iy=bc_list_y(iy,ib)
-               do bc_type13_i=1,bc_type13_ref ! how many steps away from the boundary?
-                  bc_type13_ixx=rightix(bc_type13_ix,bc_type13_iy)
-                  bc_type13_iy=rightiy(bc_type13_ix,bc_type13_iy)
-                  bc_type13_ix=bc_type13_ixx
-                  call xertst (-2.lt.bc_type13_ix.and.
-     &                         bc_type13_ix.lt.nx+1,
-     1                 'stepped off x-grid in type 13 bc')
-                  call xertst (-2.lt.bc_type13_iy.and.
-     &                         bc_type13_iy.lt.ny+1,
-     1                 'stepped off y-grid in type 13 bc')
-               enddo
-               FS=FS+FNA(bc_type13_ix,bc_type13_iy,0,0,is)
-               VS=VS+VOL(bc_list_x(iy,ib),bc_list_y(iy,ib))
-               NAS=NAS+NA(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
-     .          vol(bc_list_x(iy,ib),bc_list_y(iy,ib))
-            ENDDO
-            NAS=NAS/VS
-            DFS=CONPAR(IS,IB,1)+CONPAR(IS,IB,3)
-            FFAC=(1.0_R8+CONPAR(IS,IB,2)*
-     1       (DFS-FS)/
-     2       (abs(DFS)+abs(FS)+
-     3        abs(switch%bc_type13_norm)+abs(NAS*switch%bc_type13_fac)))
-            NAS=NAS*FFAC
-            write(*,'(a,i3,1p,3(1x,e15.6))')
-     1       'b2stbc_conpar=13: is,curr_flux,desired_flux,density ',
-     2       IS,FS,DFS,NAS
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         VBIG*NAS*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     .        -VBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            ENDDO
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCCON=13, ONLY CODED FOR SOUTH AND WEST')
-          ENDIF
-          DO IX = 1, BC_LIST_SIZE(IB)
-            SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)=
-     .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
-          ENDDO                                                       !srv 23.09.08 }
-#endif
+*       ..compute average density on boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          totflux = 0.0e0_R8 
+          !wdk Note on backwards compatibility: feedback now always on 
+          !wdk flux through the boundary itself (no offset)
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            t0 = t0 + geo%fcS(iFc)
+            t1 = t1 + geo%fcS(iFc)*pl%na(iCv1,is)
+            totflux = totflux - (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))*
+     &         mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+cnh conpar(is,ib,3) contains the contribution from the ionized neutrals
+c   (ionising_core option) 
+          totpar = conpar(is,ib,1) + conpar(is,ib,3)
+          t1 = t1/t0
+          if (conpar(is,ib,2).gt.0.0_R8) t3 = conpar(is,ib,2)
+          if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          t2 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),abs(totpar),1.0e10_R8))*t1
+          write(*,'(a,i3,1p,3(1x,e15.6))')
+     &      'b2stbc_conpar=13: is, curr_flux, desired_flux, density, ',
+     &      is,totflux,totpar,t2
+*       ..impose density
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%sna0(iCv1,0,is) =  VBIG*geo%fcS(iFc)*t2
+            srw%sna0(iCv1,1,is) = -VBIG*geo%fcS(iFc)
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+
 * -- BCCON=14 -- Sound speed flux
 
           case (14)
