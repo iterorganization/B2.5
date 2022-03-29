@@ -102,7 +102,6 @@
 *.declarations
 
 *   ..local variables
-      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer is, ier0, i, iCv, ireg
       character charns*3                                                 !srv 30.06.03
       real (kind=R8) :: 
