@@ -1290,6 +1290,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               psnc%kinrgy = dv%kinrgy
 *   ..compute initial ni
               call b2xpni (nCv, ns, pl%na, dv%ni)
+              call b2xpnn (nCv, ns, pl%na, dv%nn)
 *   ..compute ni0
               psnl%ni = dv%ni
               psnc%ni = dv%ni
