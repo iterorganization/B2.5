@@ -498,16 +498,20 @@ c     ..compare 9-pt stencil matrices
           if (.not.is_neutral(is)) then
             do iCv = 1, nCv
               cst=sqrt(pz(iCv)/rz(iCv))                                 !iyv 03.02.14
-              if( abs(pl%ua(iCv,is)).gt.3.0_R8*cst ) then
+              if( abs(pl%ua(iCv,is)).gt.
+     .            switch%ion_vlct_restrict_M*cst ) then
                 vcount(is) = vcount(is) + 1
                 if (switch%vlct_diagno.ge.2) then
                   write(6,'(a,a,i3,a,i4,a,i4,a)')
      .             'Parallel velocity restriction applied ',
      .             'to species ',is,' in cell (',iCv,'):'
-                  write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .             'Mach 3: ',3.0_R8*cst,' Ua:',pl%ua(iCv,is)
+                  write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
+     .             'Mach ',switch%ion_vlct_restrict_M,': ',
+     .                     switch%ion_vlct_restrict_M*cst,
+     .              ' Ua:',pl%ua(iCv,is)
                 end if
-                pl%ua(iCv,is)= sign(3.0_R8*cst,pl%ua(iCv,is))           !iyv 03.02.14
+                pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_M*cst,
+     .                              pl%ua(iCv,is))                      !iyv 03.02.14
               endif
             enddo
           endif
@@ -515,14 +519,16 @@ c     ..compare 9-pt stencil matrices
         if (switch%vlct_diagno.ge.1) then
           do is = 0, ns-1
             if (vcount(is).gt.1) then
-              write(6,'(a,a,i5,a,i3)')
+              write(6,'(a,a,1e12.5,a,i5,a,i3)')
      .         'In b2npmo, parallel velocity restriction ',
-     .         'to Mach 3 was applied ',vcount(is),
+     .         'to Mach ', switch%ion_vlct_restrict_M, 
+     .         ' was applied ',vcount(is),
      .         ' times for species ',is
             else if (vcount(is).eq.1) then
-              write(6,'(a,a,i5,a,i3)')
+              write(6,'(a,a,1e12.5,a,i5,a,i3)')
      .         'In b2npmo, parallel velocity restriction ',
-     .         'to Mach 3 was applied ',vcount(is),
+     .         'to Mach ', switch%ion_vlct_restrict_M,
+     .         ' was applied ',vcount(is),
      .         ' time for species ',is
             end if
           end do

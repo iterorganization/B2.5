@@ -297,6 +297,8 @@ c diagnostics switches
       integer :: vlct_diagno
       integer :: b2tqna_diagno
 
+      real(kind=R8) :: ion_vlct_restrict_M
+
 c MMS
       integer:: set_na_numerical
       integer:: set_ua_numerical
@@ -781,6 +783,7 @@ c Advanced fluid neutral models
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
       s % ion_vlct_restrict = 0
+      s % ion_vlct_restrict_M = 3.0_R8
       s % vlct_diagno = 1
       s % b2tqna_diagno = 0
 
@@ -1289,6 +1292,7 @@ c diagnostic switches
       call ipgeti ('b2stbc_diagno',s % b2stbc_diagno)                              !xpb
       call ipgeti ('b2npmo_diagno',s % b2npmo_diagno)
       call ipgeti ('b2npmo_ion_vlct_restrict',s % ion_vlct_restrict)
+      call ipgetr ('b2npmo_ion_vlct_restrict_M',s % ion_vlct_restrict_M)
       call ipgeti ('b2npmo_vlct_diagno',s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
 
