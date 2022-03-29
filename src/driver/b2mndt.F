@@ -134,7 +134,7 @@
      *  smin, smax, b2sasum, samax
       external subini, subend, xertst, ipgeti, ipgetr, smin,
      &  smax, b2sasum, samax
-      external b2xvsg, b2xvps, b2xpne, b2xpni,
+      external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
@@ -251,6 +251,7 @@ c checks for use of new energy equations
 !WG_TODO      call sfill (n2*2, 0.0_R8, snedt, 1)
 *   ..compute ni0
       call b2xpni (nCv, ns, st%psnc%na, st%psnc%ni)
+      call b2xpnn (nCv, ns, st%psnc%na, st%psnc%nn)
 *   ..compute nasum, na0sum
       nasum = b2sasum(nCv*ns, st%pl%na, 1)
       na0sum = b2sasum(nCv*ns, st%psnc%na, 1)
@@ -264,6 +265,7 @@ c checks for use of new energy equations
       endif
 *   ..compute initial ni
       call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
+      call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
 * ..main loop
 *   ..outer iteration
       istg(0) = 0
@@ -297,6 +299,7 @@ ctmp.dpc
 
 *   ..one-off calculation of transport coefficients
           call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
+          call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
           call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne, 
      .      st%dv%ne)
           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, 
@@ -402,6 +405,7 @@ ctmp.dpc
            call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, 
      .       st%dv%ne2)
            call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
+           call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
 *      ..zero out residuals on special regions
 *        (this in order to avoid their contribution to the norms)
            call b2mxzr (nCv, ns, mpg, st%dv%resco, st%dv%resmo, 

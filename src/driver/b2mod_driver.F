@@ -1724,6 +1724,7 @@ c   --> better way doing this is necessary)
       endif                                                              !srv 04.02.15 }
 *   ..compute initial ni
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
+      call b2xpnn (nCv, ns, state%pl%na, state%dv%nn)
 *   ..initialise previous state and fluxes
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )

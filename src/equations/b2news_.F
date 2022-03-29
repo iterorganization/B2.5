@@ -123,8 +123,8 @@
       external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
-      external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
-     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb,
+      external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn, b2xpfe, b2xpfi, 
+     &  b2xppb, b2xpnm, b2tral, b2trql, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       integer, save :: no_neutr_scl = 0
@@ -519,6 +519,7 @@ csw 16oct2012 init ier0
       call b2xpne (nCv, ns, rt%rza, pl%na, st_ext%ne, dv%ne)
       call nancheck(nCv, dv%ne, 'b2news(ne): after call to b2xpne')
       call b2xpni (nCv, ns, pl%na, dv%ni)
+      call b2xpnn (nCv, ns, pl%na, dv%nn)
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)  !srv 11.07.99
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, dv%pz, st_ext)   !srv 18.01.02
 
