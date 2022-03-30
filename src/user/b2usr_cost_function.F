@@ -40,9 +40,9 @@
 
       if (first_call .and. ncf .gt. 0) then
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
-        call xertst(mpg%isClassicalGrid,' Cost function CVs and FCs'//
-     &  ' ordering  and interpolation in case of unstructured grid'//
-     &  ' needs to be revised')
+        call xertst(mpg%isClassicalGrid.eq.1,' Cost function'//
+     &  ' CVs and FCs ordering  and interpolation in case of'//
+     &  ' unstructured grid needs to be revised')
 #ifdef TEST_MAP
         ij = 1
         do ii=1,5
