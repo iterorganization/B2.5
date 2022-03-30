@@ -94,14 +94,12 @@ ifdef USE_EIRENE
   EIRDIR = ${SOLPSTOP}/modules/Eirene/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
 endif
 ifdef SOLPSTOP
-NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
-NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
-ifdef LD_NETCDF
-  NC2TXT = $(shell echo `which nc2text`)
-endif
+  NCSDIR = ${SOLPSTOP}/scripts/nc2text_simple
+  NCODIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}${EXT_DEBUG}
+  NCXDIR = ${SOLPSTOP}/scripts/${HOST_NAME}.${COMPILER}
 endif
 ifdef USE_MPI
-include ${OBJDIR}/mpiversion.mk # defines MPI_VERSION, which is the MPI version number
+  include ${OBJDIR}/mpiversion.mk # defines MPI_VERSION, which is the MPI version number
 endif
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
@@ -922,12 +920,8 @@ ${TTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 ${NCEXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${MAKES}
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${LD_NETCDF}
-ifndef SOLPS_DEBUG
-	@-ln -sf $@ ${NCODIR}/$*
-ifeq (,$(findstring nc2text,${NC2TXT}))
-	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
-endif
-endif
+	@-ln -sf $@ ${NCXDIR}/$*
+	@-ln -sf ${NCXDIR}/nc2text_simple ${NCXDIR}/nc2text
 else
 	$(warning NETCDF library not present!)
 endif
@@ -936,7 +930,7 @@ ${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chca
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBJDIR}/b2mod_ipmain.o ${OBJDIR}/b2mod_lwimai.o ${OBJDIR}/b2mod_lwmain.o ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_openmp.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_xerset.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chcase.o ${OBJDIR}/ifill.o ${OBJDIR}/isadigit.o ${OBJDIR}/lnblnk.o ${OBJDIR}/machsfr.o ${OBJDIR}/nagsubst.o ${OBJDIR}/open_file.o ${OBJDIR}/prgend.o ${OBJDIR}/prgini.o ${OBJDIR}/prvrt.o ${OBJDIR}/prvrti.o ${OBJDIR}/sfill.o ${OBJDIR}/streql.o ${OBJDIR}/sysend.o ${OBJDIR}/sysini.o ${OBJDIR}/xerrab.o ${OBJDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
-	@-ln -sf $@ ${NCODIR}/$*
+	@-ln -s $@ ${NCXDIR}/$*
 endif
 else
 	$(warning NETCDF library not present!)
@@ -947,10 +941,7 @@ ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cd
 
 test:	${TTEXE}
 
-nc2text: ${NCODIR}/nc2text
-
-${NCODIR}/nc2text: ${NCODIR}/nc2text_simple
-	ln -sf ${NCODIR}/nc2text_simple ${NCODIR}/nc2text
+nc2text: ${NCEXE}
 
 nc2text_simple: ${NCEXE}
 
