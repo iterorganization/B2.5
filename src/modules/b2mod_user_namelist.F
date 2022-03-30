@@ -223,7 +223,7 @@ c***  Standard setup:
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
 ! IDEA: project the cell center onto the segment and order CVs based on distance wrt one of the segment's extremes
 ! SAME FOR IMP
-      call xertst(m%isClassicalGrid, 
+      call xertst(m%isClassicalGrid.eq.1, 
      & ' OMP list need to be revised for fully unstructured grids') 
       do ic=2,nomp
         if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
