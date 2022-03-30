@@ -930,7 +930,7 @@ ${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chca
 ifdef LD_NETCDF
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBJDIR}/b2mod_ipmain.o ${OBJDIR}/b2mod_lwimai.o ${OBJDIR}/b2mod_lwmain.o ${OBJDIR}/b2mod_math.o ${OBJDIR}/b2mod_openmp.o ${OBJDIR}/b2mod_subsys.o ${OBJDIR}/b2mod_xerset.o ${OBJDIR}/cdf_routines.o ${OBJDIR}/chcase.o ${OBJDIR}/ifill.o ${OBJDIR}/isadigit.o ${OBJDIR}/lnblnk.o ${OBJDIR}/machsfr.o ${OBJDIR}/nagsubst.o ${OBJDIR}/open_file.o ${OBJDIR}/prgend.o ${OBJDIR}/prgini.o ${OBJDIR}/prvrt.o ${OBJDIR}/prvrti.o ${OBJDIR}/sfill.o ${OBJDIR}/streql.o ${OBJDIR}/sysend.o ${OBJDIR}/sysini.o ${OBJDIR}/xerrab.o ${OBJDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
-	@-ln -s $@ ${NCXDIR}/$*
+	@-ln -sf $@ ${NCXDIR}/$*
 endif
 else
 	$(warning NETCDF library not present!)
