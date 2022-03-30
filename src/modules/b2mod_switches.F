@@ -484,6 +484,9 @@ c b2trcl
       real (kind=R8) :: cvsa_mltpl
 
 c b2stbc
+      integer :: bcene_16_style
+      integer :: bceni_16_style
+
       real (kind=R8) :: b2stbc_cbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
@@ -975,6 +978,9 @@ c b2siav
       s % cvsa_mltpl = 1.0_R8
 
 c b2stbc_phys
+      s % bcene_16_style = 0
+      s % bceni_16_style = 0
+
       s % b2stbc_cbc = 1.0e0_R8              !srv 14.10.99
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
       s % b2stbc_bc_ref_te = 0.01         !IYS 07.03.2013 11.04.13
@@ -1513,6 +1519,9 @@ c b2trcl
       call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)	                    !iyv 06.12.13
 
 c b2stbc
+        call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
+        call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
+
         call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                              !srv 14.10.99
         call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)                  !srv 11.04.13
         call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)

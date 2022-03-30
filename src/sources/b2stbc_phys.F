@@ -83,7 +83,6 @@
       integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
-      integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
@@ -171,8 +170,6 @@
         call ipgeti ('b2stbc_bcpot_12_style', bcpot_12_style)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tfhe_conduction_only', conduction_only)
-c        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
-c        call ipgeti ('b2stbc_bcene_16_style', bcene_16_style)
 c        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
 c        call ipgeti ('b2stbc_coreregno', coreregno)
 c        call xertst (cbirso.le.coreregno.and.
@@ -1230,17 +1227,19 @@ cwdk      compatibility for E/W boundaries
             totflux = totflux - (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))*
      &         mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           enddo
+          t1 = t1/t0
 cnh conpar(is,ib,3) contains the contribution from the ionized neutrals
 c   (ionising_core option) 
           totpar = conpar(is,ib,1) + conpar(is,ib,3)
-          t1 = t1/t0
           if (conpar(is,ib,2).gt.0.0_R8) t3 = conpar(is,ib,2)
           if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
           t2 = (1.0_R8-t3*(totflux-totpar)/
      &         max(abs(totflux),abs(totpar),1.0e10_R8))*t1
-          write(*,'(a,i3,1p,3(1x,e15.6))')
-     &      'b2stbc_conpar=13: is, curr_flux, desired_flux, density, ',
-     &      is,totflux,totpar,t2
+          if (switch%b2stbc_diagno.ge.2) then
+           write(*,'(a,i3,1p,4(1x,e15.6))')
+     &      'bccon=13: is, curr_flux, desired_flux, old/new density, ',
+     &      is,totflux,totpar,t1,t2
+          endif
 *       ..impose density
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -2796,7 +2795,7 @@ c   (ionising_core option)
           if (conpar(is,ib,2).gt.0.0_R8) t3 = conpar(is,ib,2)
           if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
           t4 = (1.0_R8-t3*(totflux-totpar)/
-     &         max(abs(totflux),totpar,1.0e10_R8))*t1
+     &         max(abs(totflux),abs(totpar),1.0e10_R8))*t1
 *       ..impose density with perturbation
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -4938,9 +4937,8 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENE=16 -- Feedback boundary condition with constant temperature
 
         case (16)
-        call xerrab ('b2stbc_phys -- BCENE = 16 not adapted for WG')
-#ifdef WG_TODO
-        if(bcene_16_style.eq.0) then
+
+        if(switch%bcene_16_style.eq.0) then
 
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
@@ -4948,52 +4946,43 @@ cwdk    Todo: corrections for BCCON.ne.14
      1       ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib)
             call xertst(enepar(ib,1).ne.0, 'faulty parameter enepar1')
-            call xertst(enepar(ib,2).gt.0, 'faulty parameter enepar2')
+            call xertst(enepar(ib,2).ge.0, 'faulty parameter enepar2')
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            totflux = 0.0_R8
-            t0 = 0.0_R8
-            weight = 0.0_R8
-            DO IX = 1, BC_LIST_SIZE(IB)
-              bc_type16_ix=bc_list_x(ix,ib)
-              bc_type16_iy=bc_list_y(ix,ib)
-              do bc_type16_i=1,bc_type16_ref     ! how many steps away from the boundary?
-                bc_type16_ixx=topix(bc_type16_ix,bc_type16_iy)
-                bc_type16_iy=topiy(bc_type16_ix,bc_type16_iy)
-                bc_type16_ix=bc_type16_ixx
-                call xertst (-2.lt.bc_type16_ix.and.
-     &                             bc_type16_ix.lt.nx+1,
-     1           'stepped off x-grid in type 16 bc')
-                call xertst (-2.lt.bc_type16_iy.and.
-     &                             bc_type16_iy.lt.ny+1,
-     1           'stepped off y-grid in type 16 bc')
-              enddo
-              totflux=totflux+
-     .         fhe(bc_type16_ix,bc_type16_iy,1,1)
-              t0 = t0 +
-     .          te(bc_list_x(ix,ib),bc_list_y(ix,ib))*
-     .         vol(bc_list_x(ix,ib),bc_list_y(ix,ib))*
-     .          ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
-              weight = weight + vol(bc_list_x(ix,ib),bc_list_y(ix,ib))*
-     .                          ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
-            END DO
-            t0 = t0 / weight
-            if(diagno.ge.2) write(*,*) 'Totflux :',totflux
-            T1 = (1.0_R8 -
-     .       enepar(ib,2)*(totflux-enepar(ib,1))/enepar(ib,1)) * t0
-            if(diagno.ge.2)
-     1       write(*,*) 'Old/New electron temp :',t0/qe, t1/qe
-            DO IX = 1, BC_LIST_SIZE(IB)
-              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
-     .         VBIG*NE00*T1*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
-     .        -VBIG*NE00*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            END DO
-          ELSE
-            CALL XERRAB ('B2STBC -- BCENE=16, NOT AVAILABLE FOR N,W,E')
-          ENDIF
-
-        elseif(bcene_16_style.eq.1)then
+*       ..compute average temperature on boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          totflux = 0.0e0_R8
+          !wdk Note on backwards compatibility: feedback now always on 
+          !wdk flux through the boundary itself (no offset)
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                     ! number of the guard cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%fcS(iFc)*dv%ne(iCv1)
+           t1 = t1 + geo%fcS(iFc)*dv%ne(iCv1)*pl%te(iCv1)
+           totflux = totflux - (dv%fhe(iFc,0) + dv%fhe(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          t1 = t1/t0
+          totpar = enepar(ib,1)
+          if (enepar(ib,2).gt.0.0_R8) t3 = enepar(ib,2)
+          if (enepar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          t2 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),abs(totpar)))*t1
+          if (switch%b2stbc_diagno.ge.2) then
+           write(*,'(a,1p,4(1x,e15.6))')
+     &      'bcene=16: curr_flux, desired_flux, old/new temperature, ',
+     &      totflux,totpar,t1/qe,t2/qe
+          endif
+*       ..impose temperature
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*t2
+            srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+          enddo
+        elseif(switch%bcene_16_style.eq.1)then
+          call xerrab ('bcene_16_style.eq.1 not adapted for WG')
+#ifdef WG_TODO
 
           if(ncall_b2stbc_phys.eq.0) then
             write(*,*)
@@ -5100,11 +5089,12 @@ cwdk    Todo: corrections for BCCON.ne.14
             CALL XERRAB
      1       ('B2STBC -- BCENE=16, NOT AVAILABLE FOR N,W,E')
           ENDIF
+#endif
         else
           CALL XERRAB
      1       (' Incorrect style of boundary condition')
         endif
-#endif
+
 * -- BCENE=17 -- Feedback boundary condition with constant shared temperature
 
         case (17)
@@ -5659,7 +5649,7 @@ cwdk     * need to correct this BC for hybrid scheme
         if (enepar(ib,2).gt.0.0_R8) t3 = enepar(ib,2)
         if (enepar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t4 = (1.0_R8-t3*(totflux-totpar)/
-     &         max(abs(totflux),totpar))*t1
+     &         max(abs(totflux),abs(totpar)))*t1
 *     ..impose temperature with perturbation
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
@@ -6890,70 +6880,56 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENI=16 -- Feedback boundary condition with constant temperature
 
         case (16)
-        call xerrab ('b2stbc_phys -- BCENI = 16 not adapted for WG')
-#ifdef WG_TODO
-        if(bceni_16_style.eq.0) then
-         if(ncall_b2stbc_phys.eq.0) then
+
+        if(switch%bceni_16_style.eq.0) then
+
+          if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .       'ion temperature feedback by flux ',
      1       ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib)
-           call xertst(enipar(ib,1).ne.0, 'faulty parameter enipar1')
-           call xertst(enipar(ib,2).gt.0, 'faulty parameter enipar2')
-         endif
-         IF(BCCHAR(IB).EQ.'S') THEN
-           totflux = 0.0_R8
-           t0 = 0.0_R8
-           weight = 0.0_R8
-           DO IX = 1, BC_LIST_SIZE(IB)
-             bc_type16_ix=bc_list_x(ix,ib)
-             bc_type16_iy=bc_list_y(ix,ib)
-             do bc_type16_i=1,bc_type16_ref      ! how many steps away from the boundary?
-               bc_type16_ixx=topix(bc_type16_ix,bc_type16_iy)
-               bc_type16_iy=topiy(bc_type16_ix,bc_type16_iy)
-               bc_type16_ix=bc_type16_ixx
-               call xertst (-2.lt.bc_type16_ix.and.bc_type16_ix.lt.nx+1,
-     1          'stepped off x-grid in type 16 bc')
-               call xertst (-2.lt.bc_type16_iy.and.bc_type16_iy.lt.ny+1,
-     1          'stepped off y-grid in type 16 bc')
-             enddo
-             totflux = totflux +
-     .        fhi(bc_type16_ix,bc_type16_iy,1,1)
-             if (bc_type16_kinetic_energy.eq.1) then
-               do is = 0, ns-1
-                 totflux=totflux+(1.0_R8-BoRiS)*
-     .            fna(bc_type16_ix,bc_type16_iy,1,1,is)*0.5_R8*
-     .            (kinrgy(bc_type16_ix,bc_type16_iy,is)+
-     .             kinrgy(bottomix(bc_type16_ix,bc_type16_iy),
-     .                    bottomiy(bc_type16_ix,bc_type16_iy),is))
-               enddo
-             endif
-             t0 = t0 +
-     .         ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     .        vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     .         ni(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
-             weight = weight +
-     .        vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     .         ni(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
-           ENDDO
-           t0 = t0 / weight
-           if(diagno.ge.2) write(*,*) 'Totflux :',totflux
-           T1 = (1.0_R8 -
-     .      enipar(ib,2)*(totflux-enipar(ib,1))/enipar(ib,1)) * t0
-           if(diagno.ge.2)
-     1      write(*,*) 'Old/New ion temp :',t0/qe, t1/qe
-           DO IX = 1, BC_LIST_SIZE(IB)
-             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
-     .        VBIG*NE00*T1*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
-     .       -VBIG*NE00*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-           ENDDO
-         ELSE
-           CALL XERRAB ('B2STBC -- BCENI=16, NOT AVAILABLE FOR N,W,E')
-         ENDIF
+            call xertst(enipar(ib,1).ne.0, 'faulty parameter enipar1')
+            call xertst(enipar(ib,2).ge.0, 'faulty parameter enipar2')
+          endif
+*       ..compute average temperature on boundary
+          t0 = 0.0e0_R8
+          t1 = 0.0e0_R8
+          totflux = 0.0e0_R8
+          !wdk Note on backwards compatibility: feedback now always on 
+          !wdk flux through the boundary itself (no offset)
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                     ! number of the guard cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+           t0 = t0 + geo%fcS(iFc)*dv%ni(iCv1,0)
+           t1 = t1 + geo%fcS(iFc)*dv%ni(iCv1,0)*pl%ti(iCv1)
+           !wdk at the moment, totflux only contains ion/neutral heat flux;
+           !wdk bc_type16_kinetic_energy.eq.1 option not yet included
+           totflux = totflux - (dv%fhi(iFc,0) + dv%fhi(iFc,1))*
+     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+          enddo
+          t1 = t1/t0
+          totpar = enipar(ib,1)
+          if (enipar(ib,2).gt.0.0_R8) t3 = enipar(ib,2)
+          if (enipar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          t2 = (1.0_R8-t3*(totflux-totpar)/
+     &         max(abs(totflux),abs(totpar)))*t1
+          if (switch%b2stbc_diagno.ge.2) then
+           write(*,'(a,1p,4(1x,e15.6))')
+     &      'bceni=16: curr_flux, desired_flux, old/new temperature, ',
+     &      totflux,totpar,t1/qe,t2/qe
+          endif
+*       ..impose temperature
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%shi0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*t2
+            srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+          enddo
 
-        elseif(bceni_16_style.eq.1)then                                 !srv 16.02.12 {
+        elseif(switch%bceni_16_style.eq.1)then                          !srv 16.02.12 {
 
+         call xerrab ('bceni_16_style.eq.1 not adapted for WG')
+#ifdef WG_TODO
          if(ncall_b2stbc_phys.eq.0) then
            write(*,*) 'Given integrated ion heat flux',
      &                 ' with constant Ti '
@@ -7067,11 +7043,11 @@ cwdk    Todo: corrections for BCCON.ne.14
            CALL XERRAB
      1         ('B2STBC -- BCENI=16, NOT AVAILABLE FOR N,W,E')
          ENDIF
+#endif
         else
          CALL XERRAB (' Incorrect style of boundary condition')
         endif
 
-#endif
 * -- BCENI=17 -- Feedback boundary condition with constant temperature
 
         case (17)
@@ -8153,7 +8129,7 @@ cwdk     * need to correct this BC for hybrid scheme
         if (enipar(ib,2).gt.0.0_R8) t3 = enipar(ib,2)
         if (enipar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t4 = (1.0_R8-t3*(totflux-totpar)/
-     &         max(abs(totflux),totpar))*t1
+     &         max(abs(totflux),abs(totpar)))*t1
 *     ..impose temperature with perturbation
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
@@ -9158,7 +9134,7 @@ c end of implementation
         if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
         if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t4 = (1.0_R8-t3*(totflux-totpar)/
-     &         max(abs(totflux),totpar,1.0e-10_R8))*t1
+     &         max(abs(totflux),abs(totpar),1.0e-10_R8))*t1
 *     ..impose potential with perturbation
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
