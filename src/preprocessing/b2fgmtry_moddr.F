@@ -199,8 +199,8 @@
       call xertst (0.le.nx.and.0.le.ny,
      &  'faulty input nx, ny from geometry file')
 *   ..read geometry and metric
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
+      call alloc_b2mod_geo_st(nx,ny)
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm=idum(0)
@@ -338,8 +338,8 @@
       deallocate(vldiff)
       deallocate(qcdiff)
       deallocate(sxdiff)
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_geo_st
+      call dealloc_b2mod_indirect_st
 * ..return
       call subend ()
       return

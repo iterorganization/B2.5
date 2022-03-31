@@ -125,8 +125,8 @@
       ny = idum(1)
       call xertst (0.le.nx.and.0.le.ny, 'faulty input nx, ny')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_geo_st(nx,ny)
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)                 	 !xpb
       call b2ygdr (ninp, nout, nx, ny)
 *   ..close graphics files
       call gclwk (nout(1))
@@ -143,8 +143,8 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_geo_st
+      call dealloc_b2mod_indirect_st
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

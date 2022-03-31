@@ -187,11 +187,11 @@
       write(nout(5),'(a)') 'b2mn.dat.2'
 *   ..call principal driver routine
       call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_geo2(nx1,ny1,DEF_NCUT)
+      call alloc_b2mod_geo_st(nx,ny)
+      call alloc_b2mod_geo2_st(nx1,ny1,DEF_NCUT)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)
       call b2ytdr (ninp, nout, nx1, ny1)
 *   ..close files
       do io=0,size(ninp)-1
@@ -204,12 +204,12 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_geo2
+      call dealloc_b2mod_geo_st
+      call dealloc_b2mod_geo2_st
       call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_indirect_st
       call prgfin ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
