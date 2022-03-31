@@ -207,7 +207,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call xertst (1.le.ns0.and.ns0.le.ns,
      &  'faulty input ns from plasma state file')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_residuals(nx,ny,ns)
@@ -215,7 +215,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call alloc_b2mod_transport(nx,ny,ns)
       call alloc_b2mod_anomalous_transport(nx,ny,ns)
       call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
       call alloc_b2mod_astra_to_b2(nx, ny)                      !srv 28.07.11 {
       call alloc_b2mod_b2_to_astra(nx, ny, ns)
@@ -260,13 +260,13 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
 
 * ..end of computation
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_ppout
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_sources
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_indirect_st
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
       call dealloc_b2mod_astra_to_b2

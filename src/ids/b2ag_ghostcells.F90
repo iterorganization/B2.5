@@ -11,18 +11,40 @@ module b2ag_ghostcells
 
   implicit none
 
+  !integer :: nrid, nCi, nFc, nVx, nCg, nC
+
 contains
 
   ! Given the grid dimensions without ghost cells and the number of cuts,
   ! figures out what the actual grid size nx, ny for the B2 data structures has to be
   ! accounting for ghost cells
-  subroutine computeGridSizeWithGhostCells(nnx, nny, niso, nx, ny)
+  subroutine computeGridSizeWithGhostCells_st(nnx, nny, niso, nx, ny)
     integer, intent(in) :: nnx, nny, niso
     integer, intent(out) :: nx, ny
 
     nx = nnx + 2 * niso
     ny = nny
-  end subroutine computeGridSizeWithGhostCells
+  end subroutine computeGridSizeWithGhostCells_st
+
+  !subroutine computeGridSizeWithGhostCells(nrid,nCi,nFc,nVx,nCg,nC)
+   ! integer, intent(in) :: nrid, nCi, nFc, nVx
+    !integer, intent(out) :: nCg, nC
+    
+    !nCg = 0
+    !nC = nCi + nCg 
+    !!internal
+    !!integer :: i, cflags(0:nCi)
+
+    !!With the assumption that each boundary cell has only one boundary face
+    !!read the cflag van cell information, count the number of 3's
+    !!read(nrid)
+    !!do i = 1, nCi
+	
+
+    !!end do
+
+
+  !end subroutine computeGridSizeWithGhostCells
 
 
   !> Rearrange data to insert empty slots for ghost cells

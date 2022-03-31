@@ -140,11 +140,11 @@
 *   ..obtain nx, ny, ns
       call b2aix0 (ninp, nx, ny, ns)
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)
       call b2aidr (ninp, nout, nx, ny, ns)
 *   ..close graphics files
 *     (none)
@@ -159,11 +159,11 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_indirect_st
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

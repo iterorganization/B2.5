@@ -138,7 +138,7 @@
       call xertst (0.le.nx.and.0.le.ny.and.1.le.ns,
      &  'faulty input nx, ny, ns')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
       call b2ymdr (ninp, nout, nx, ny, ns)
@@ -157,7 +157,7 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_plasma
       call prgend ()

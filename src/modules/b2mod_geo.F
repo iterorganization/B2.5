@@ -35,8 +35,29 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       contains
+      
+      subroutine alloc_b2mod_geo(nC,nFc,nVx)
+      implicit none
+      integer nC, nFc, nVx
 
-      subroutine alloc_b2mod_geo(nxd,nyd)
+      b2mod_geo_allocated = .true.
+
+      return
+      end subroutine alloc_b2mod_geo
+
+      subroutine dealloc_b2mod_geo
+      implicit none
+
+      if(b2mod_geo_allocated) then
+
+        b2mod_geo_allocated = .false.
+
+      endif
+
+      return
+      end subroutine dealloc_b2mod_geo
+
+      subroutine alloc_b2mod_geo_st(nxd,nyd)
       implicit none
       integer nxd,nyd
 
@@ -69,9 +90,9 @@
       call alloc_b2mod_geo_corner(nxd,nyd)
 
       return
-      end subroutine alloc_b2mod_geo
+      end subroutine alloc_b2mod_geo_st
 
-      subroutine dealloc_b2mod_geo
+      subroutine dealloc_b2mod_geo_st
       implicit none
 
       if(b2mod_geo_allocated) then
@@ -109,7 +130,7 @@
       call dealloc_b2mod_geo_corner
 
       return
-      end subroutine dealloc_b2mod_geo
+      end subroutine dealloc_b2mod_geo_st
 
       subroutine read_b2mod_geo(nx,ny,nread)
       use b2mod_indirect

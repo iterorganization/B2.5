@@ -156,11 +156,11 @@
       call xertst (idum(0).eq.nx.and.idum(1).eq.ny.and.1.le.ns,
      &  'faulty input nx, ny, ns from plasma state file')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)                 	 !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
       call b2yidr (ninp, nout, nx, ny, ns)
 *   ..close graphics files
@@ -178,12 +178,12 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_ppout
       call dealloc_b2mod_plasma
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_indirect_st
       call prgfin ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

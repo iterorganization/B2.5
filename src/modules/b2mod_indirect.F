@@ -35,7 +35,31 @@
 
       contains
 
-      subroutine alloc_b2mod_indirect(nxd,nyd,nncutmax)
+      subroutine alloc_b2mod_indirect(nC,nFc,nVx)
+      implicit none
+      integer nC, nFc, nVx
+
+      if (b2mod_indirect_allocated) return
+	
+      b2mod_indirect_allocated = .true.
+
+      return
+      end subroutine alloc_b2mod_indirect
+
+      subroutine dealloc_b2mod_indirect
+      implicit none
+      
+
+      if (b2mod_indirect_allocated) then
+
+	b2mod_indirect_allocated = .false.
+
+      endif
+
+      return
+      end subroutine dealloc_b2mod_indirect
+
+      subroutine alloc_b2mod_indirect_st(nxd,nyd,nncutmax)
       implicit none
       integer nxd,nyd,nncutmax
 
@@ -67,12 +91,13 @@
       b2mod_indirect_allocated = .true.
 
       return
-      end subroutine alloc_b2mod_indirect
+      end subroutine alloc_b2mod_indirect_st
 
-      subroutine dealloc_b2mod_indirect
+
+      subroutine dealloc_b2mod_indirect_st
       implicit none
 
-      if(b2mod_indirect_allocated) then
+      if (b2mod_indirect_allocated) then
         deallocate(leftix)
         deallocate(leftiy)
         deallocate(rightix)
@@ -93,7 +118,7 @@
       endif
 
       return
-      end subroutine dealloc_b2mod_indirect
+      end subroutine dealloc_b2mod_indirect_st
 
 ! For the ghost cell at position (ix,iy), get the face index
 ! on which the neighbour internal cell is connected

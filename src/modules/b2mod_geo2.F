@@ -55,7 +55,7 @@
 
       contains
 
-      subroutine alloc_b2mod_geo2(nxd,nyd,nncutmax)
+      subroutine alloc_b2mod_geo2_st(nxd,nyd,nncutmax)
       implicit none
       integer nxd, nyd, nncutmax
       allocate(bb1(-1:nxd,-1:nyd,0:3))
@@ -98,9 +98,9 @@
       allocate(resignore1(-1:nxd,-1:nyd,1:2))
       allocate(cflags1(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
       b2mod_geo2_allocated = .true.
-      end subroutine alloc_b2mod_geo2
+      end subroutine alloc_b2mod_geo2_st
 
-      subroutine dealloc_b2mod_geo2
+      subroutine dealloc_b2mod_geo2_st
       implicit none
 
       if(b2mod_geo2_allocated) then
@@ -146,7 +146,7 @@
          b2mod_geo2_allocated = .false.
       endif
       if (map1Initialized) call deallocateB2GridMap(gmap1)
-      end subroutine dealloc_b2mod_geo2
+      end subroutine dealloc_b2mod_geo2_st
 
       function b2gavg1 (nx1, ny1, fun)
 cxpb  This performs an average over the whole domain of valid cells on the secondary grid
