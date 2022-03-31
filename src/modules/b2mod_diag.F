@@ -71,6 +71,7 @@ c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style co
 c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
 c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
+c***  ntrc_uss  :  tracing/user_SPb.trc   :  data set which is of interest for SPb group    ! IYS 22.03.2022
 c***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 c***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
 c***
@@ -78,13 +79,13 @@ c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing
 
       integer len_ntrc, ntrc_used
-      parameter (len_ntrc=11)
+      parameter (len_ntrc=12)
       integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
      ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep,
-     ,        ntrc_bls
+     ,        ntrc_bls, ntrc_uss
       parameter (ntrc_srt=1, ntrc_tst=2,  ntrc_res=3, ntrc_src=4,
      ,           ntrc_bln=5, ntrc_ble=6,  ntrc_int=7, ntrc_usr=8,
-     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bls=11)
+     ,           ntrc_blm=9, ntrc_sep=10, ntrc_bls=11,ntrc_uss=12 )
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
       integer lenfnm, mhdr
@@ -229,12 +230,14 @@ c>>>
       fn_ntrc(ntrc_int) = 'tracing/integral.trc'
       NTRC(ntrc_usr) = 77
       fn_ntrc(ntrc_usr) = 'tracing/user.trc'
+      NTRC(ntrc_uss) = 177                        ! IYS 22.03.2022
+      fn_ntrc(ntrc_uss) = 'tracing/user_SPb.trc'  ! IYS 22.03.2022
       NTRC(ntrc_blm) = 78
       fn_ntrc(ntrc_blm) = 'tracing/blnm.trc'
       NTRC(ntrc_sep) = 79
       fn_ntrc(ntrc_sep) = 'tracing/sepdata.trc'
 
-      ntrc_used = 11
+      ntrc_used = 12
 
       if(ntrc_used.gt.len_ntrc) then
         call xerrab('default: insufficient length of ntrc')

@@ -1105,7 +1105,13 @@ c East target
           end do !}
         end if !}
       else !}{VK
+      
+        write(*,*) 'In b2mod_usrtrc: nxtl, nxtr = ', nxtl, nxtr
+      
         call b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
+        
+        write(*,*) 'b2usr_loads finished'
+        
         hlp_ppwi=wtarg_max(1)
 csw 02jan2017 corrected hlp_ppwo
 c       hlp_ppwo=wtarg_max(nncut)
