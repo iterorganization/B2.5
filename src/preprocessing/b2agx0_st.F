@@ -1,32 +1,31 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agx0 (nrid, nC, nFc, nVx)
+      subroutine b2agx0_st (nrid, nx, ny, nx1, ny1)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid
 *   ..output arguments (unspecified on entry)
-      integer nC, nFc, nVx
+      integer nx, ny, nx1, ny1
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2AGX0 reads the mesh dimensions from a formatted file.
+*     B2AGX0_st reads the mesh dimensions from a formatted file.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit nrid the mesh dimensions, nC, nFc and
-*     nVx.
+*     This routine reads from unit nrid the mesh dimensions, nx and ny,
+*     and the auxiliary mesh dimensions, nx1 and ny1.
 *     Unit nrid must be connected to a formatted file. The input file
 *     must be positioned properly: the first record must begin with the
-*     text '*format', followed by 'unstructured'. The next record 
-*     must begin with '*dimens ' or '*DIMENS ', and must contain the 
-*     values of nC, nFc and nVx in free format. Only those three
-*     records are read.
+*     text '*dimens ' or '*DIMENS ', and the next record must contain
+*     the values of nx and ny in free format. Only those two records
+*     are read.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -34,10 +33,19 @@
 *     nrid - integer, input.
 *     nrid specifies a unit number for formatted input.
 *
-*     nC, nFc, nVx - integer, output.
-*     nC, nFc and nVx specify the number of interior cells, the 
-*     number of faces and the number of vertices respectively.   
+*     nx, ny - integer, output.
+*     nx and ny specify the number of interior cells along the first
+*     and the second coordinate, respectively. The total number of
+*     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
+*     It will hold that 0.le.nx and 0.le.ny.
 *
+*     nx1, ny1 - integer.
+*     nx1 and ny1 specify the mesh dimensions for an auxiliary mesh
+*     that will be used to evaluate accurately the metric coefficients.
+*     This auxiliary mesh has no role outside the present program.
+*     nx1 will be a multiple of nx and ny1 will be a multiple of ny.
+*     The multiplicity test is put off till b2agmx, so we know if there
+*     are any internal isolating cuts inside the domain.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -52,17 +60,17 @@
 *.computation
 
 *   ..subprogram start-up calls
-      call subini ('b2agx0')
+      call subini ('b2agx0_st')
 *   ..test nrid
       call xertst (1.le.nrid, 'faulty argument nrid')
 *   ..read header line
       read (nrid,'(a8)',err=91) id
       call xertst (streql(id,'*dimens'),
      &  'faulty input id at *dimens, id='//id)
-*   ..read nC, nFc, nVx
-      read (nrid,*,err=92) nC, nFc, nVx
-      call xertst (1.le.nC.and.1.le.nFc.and.1.le.nVx,
-     &  'faulty input nC, nFc, nVx')
+*   ..read nx, ny, nx1, ny1
+      read (nrid,*,err=92) nx, ny, nx1, ny1
+      call xertst (1.le.nx.and.1.le.ny, 'faulty input nx, ny')
+      call xertst (1.le.nx1.and.1.le.ny1, 'faulty input nx1, ny1')
 
 * ..return
       call subend ()
@@ -75,6 +83,6 @@
    92 call xerrab ('error trying to read after '//id)
 
 *-----------------------------------------------------------------------
-*.end b2agx0
+*.end b2agx0_st
 
       end

@@ -142,8 +142,8 @@
       call xertst (1.le.ns,
      &  'faulty input ns from physics parameters file')
 *   ..read geometry and metric
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
+      call alloc_b2mod_geo_st(nx,ny)
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)
       call cfruch (ninp(2), 120, lblgm, 'label')
       call cfruin (ninp(2), 1, idum, 'isymm')
 #ifdef WG_TODO
@@ -166,8 +166,8 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_geo_st
+      call dealloc_b2mod_indirect_st
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

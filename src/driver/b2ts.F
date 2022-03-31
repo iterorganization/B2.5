@@ -142,7 +142,7 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       call xertst (idum(2).eq.ns,
      &  'faulty input ns from physics parameters file')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_residuals(nx,ny,ns)
@@ -150,7 +150,7 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       call alloc_b2mod_transport(nx,ny,ns)
       call alloc_b2mod_anomalous_transport(nx,ny,ns)
       call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)
 *   ..read plasma state
       call cfverr(ninp(4),b2fplasma_version)
       call read_b2mod_geo(nx,ny,ninp(4))
@@ -175,12 +175,12 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_sources
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_indirect_st
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
       call dealloc_anomalous_transport

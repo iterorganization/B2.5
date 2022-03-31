@@ -126,14 +126,14 @@
       ubr = nx
       allocate (M(lbc:ubc, lbr:ubr))
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_residuals(nx,ny,ns)
       call alloc_b2mod_sources(nx,ny,ns)
       call alloc_b2mod_transport(nx,ny,ns)
       call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                       !srv 25.11.02
+      call alloc_b2mod_indirect_st(nx,ny,nncutmax)                       !srv 25.11.02
 *   ..read geometry and metric
 #ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
@@ -278,13 +278,13 @@
          if (file_open) close(nout(io))
       enddo
 
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_sources
       call dealloc_b2mod_elements
-      call dealloc_b2mod_indirect
+      call dealloc_b2mod_indirect_st
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
       deallocate (M)

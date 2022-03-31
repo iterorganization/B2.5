@@ -152,7 +152,7 @@
      & nx.eq.idum(0) .and. ny.eq.idum(1) .and. ns.eq.idum(2),
      & 'mistmatched inputs nx, ny, ns')
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_geo_st(nx,ny)
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
@@ -173,7 +173,7 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo_st
       call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_ppout
