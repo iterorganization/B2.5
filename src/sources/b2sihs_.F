@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,                       !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,               !srv 07.06.00 02.06.99 07.05.08 05.07.17
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
      *  cvsa_drho, she0, shi0)                                         !som 16.08.21!srv 28.06.03 07.07.09
       use b2mod_types
