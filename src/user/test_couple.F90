@@ -58,8 +58,6 @@
       return
       end subroutine test_couple
 
-
-
 !!!Local Variables:
 !!! mode: f90
 !!! End:

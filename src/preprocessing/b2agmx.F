@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, qs1,
+     & vol1, hxx, hyy, qz1, qc1, qs1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
@@ -10,24 +10,27 @@
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
-     1 leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
+     1 leftix1, leftiy1, rightix1, rightiy1,
+     2 topix1, topiy1, bottomix1, bottomiy1,
+     3 leftcut1, rightcut1, bottomcut1, topcut1,
      & cflags1)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmfs
       use b2mod_interp
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_geo2
+     , , only : dist1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
       real (kind=R8) ::
-     *  vol1(-1:nx1,-1:ny1), hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1),
-     &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1,0:1), 
+     *  vol1(-1:nx1,-1:ny1), hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1),
+     &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1,0:1),
      &  qs1(-1:nx1,-1:ny1,0:1),
      &  gs1(-1:nx1,-1:ny1,0:2),
      1  crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
@@ -67,7 +70,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine takes as input the metric coefficients on a fine
-*     mesh: vol1, hx1, hy1, qz1, qc1 and gs1.  It computes the metric
+*     mesh: vol1, hxx, hyy, qz1, qc1 and gs1.  It computes the metric
 *     coefficients on a corresponding coarsened mesh.
 *
 *
@@ -78,7 +81,7 @@
 *     dimensions of the coarse mesh.
 *     See the calling routine for description.
 *
-*     vol1, hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 array, input.
+*     vol1, hxx, hyy, qz1, qc1, gs1, pbs1 - real*8 array, input.
 *     These arrays hold the metric coefficients on the fine mesh.
 *     See below for detailed description.
 *
@@ -145,17 +148,9 @@
       real (kind=R8) ::
      *   t0, t1, t2, t3, t4, t5
       logical iniso, error
-      integer i, j
-      integer pbs_from_basis_mesh, geometryType
-      real (kind=R8) ::
-     *   p0x, p0y
+      integer pbs_from_basis_mesh
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   norm, dist1
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      dist1(ix,iy,i,j) = norm (
-     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
+      intrinsic sqrt
       external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation
@@ -172,7 +167,7 @@
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.nx1.and.1.le.ny1, 'faulty input nx1, ny1')
 *   ..test input metric
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qs1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qs1, gs1, pbs1,
      . cell_width1, cell_height1, bottomiy1)
 *   ..read input switch
       call ipgeti ('b2agmx_pbs_from_basis_mesh', pbs_from_basis_mesh)
@@ -655,7 +650,7 @@ cdpc-end
           do jy1 = 0, ky1-1
             t1 = 0.0_R8
             do jx1 = 0, kx1-1
-              t1 = t1+hx1(ix1+jx1,iy1+jy1)**2/vol1(ix1+jx1,iy1+jy1)
+              t1 = t1+hxx(ix1+jx1,iy1+jy1)**2/vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1/t1
           enddo
@@ -666,7 +661,7 @@ cdpc-end
           do jx1 = 0, kx1-1
             t1 = 0.0_R8
             do jy1 = 0, ky1-1
-              t1 = t1+(hy1(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
+              t1 = t1+(hyy(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
      &         vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1.0_R8/t1
@@ -854,7 +849,6 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
         wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
-        geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
 

@@ -24,7 +24,7 @@
      &  reshi(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
+     *  cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  flo0(-1:nx,-1:ny,0:1,0:1), con0(-1:nx,-1:ny,0:1,0:1,0:2),             !srv 02.01.07
@@ -45,7 +45,7 @@
 !                 |     |     |                     |     |     |
 !                 |     |     |                     |     |     |
 !                -4____-3____-2                    -6_____|____-5
-
+!
 !                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
 !                     |              |              |
 !                     |              |              |
@@ -60,9 +60,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: iadd_9 = 1                                      !srv 02.01.07
+      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
+      integer, save :: iadd_9 = 1                                     !srv 02.01.07
       integer, save :: iout = 0
       !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
       !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
@@ -74,11 +74,8 @@
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
-      real (kind=R8) ::
-     *   scalr
       external xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                 !srv 02.01.07
-      scalr(t0) = 1.0e0_R8  ! t0                                      !srv 02.01.07
 *   ..initialization
       data ncall/0/
 
@@ -89,10 +86,10 @@
 *   ..subprogram start-up calls
       call subini ('b2ush9')
       if (ncall.eq.0) then
-       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
+       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06 {
        call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
+       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06 }
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
        call ipgeti ('b2ush9_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
@@ -122,23 +119,23 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test sign of cone, coni
-       if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then         !srv 06.07.06 {
+       if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then           !srv 06.07.06 {
          call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')
          call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
-       endif                                                        !srv 06.07.06 }
-       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then                                       !srv 06.07.06 {
+       endif                                                          !srv 06.07.06 }
+       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then           !srv 06.07.06 {
          call b2xvsg (n2, coni(-1,-1,0,0,0), 1, 'coni', '.ge.')
          call b2xvsg (n2, coni(-1,-1,1,1,0), 1, 'coni', '.ge.')
        endif   
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
-       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')                 !srv 02.01.07 {
+       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')               !srv 02.01.07 {
        call b2xvff (nx, ny, cone(-1,-1,0,0,1), 'cone1')
        call b2xvff (nx, ny, cone(-1,-1,0,0,2), 'cone2')
        call b2xvff (nx, ny, coni(-1,-1,0,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,0,1), 'coni1')
-       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')                 !srv 02.01.07 }
+       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')               !srv 02.01.07 }
 *    ..test sign of she, shi, ceqp
        call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
@@ -164,7 +161,7 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0,0:1)   = 0.0e0_R8
-         con0(ix,iy,0,0:1,:) = 0.0e0_R8                                   !srv 02.01.07
+         con0(ix,iy,0,0:1,:) = 0.0e0_R8                               !srv 02.01.07
         else
          if (solveee(ireg) .and. solveei(ireg)) then
           t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*                              !srv 02.01.07 {
@@ -207,7 +204,7 @@ cwdk add linearization for 9-point terms
      &      pccm1(ix,iy)*ne(ix,iy)*te(ix,iy))/2.0_R8                  !srv 02.01.07 }
           flo0(ix,iy,0,0) = floe(ix,iy,0,0)
      &     -t0*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy)))            !srv 02.01.07 }
-          con0(ix,iy,0,0,0) = cone(ix,iy,0,0,0)                           !srv 02.01.07
+          con0(ix,iy,0,0,0) = cone(ix,iy,0,0,0)                       !srv 02.01.07
      &     +(t0/2.0_R8)*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))   !srv 02.01.07 }
 cwdk add linearization for 9-point terms
           flo0(ix,iy,0,1)   = floe(ix,iy,0,1)
@@ -219,7 +216,7 @@ cwdk add linearization for 9-point terms
 *   ..compute flo0y, con0y
       do ix = -1, nx
        flo0(ix,-1,1,0:1) = 0.0e0_R8
-       con0(ix,-1,1,0:1,:) = 0.0e0_R8                                   !srv 02.01.07
+       con0(ix,-1,1,0:1,:) = 0.0e0_R8                                 !srv 02.01.07
       enddo
       do iy = 0, ny
        do ix = -1, nx
@@ -348,15 +345,15 @@ cwdk add 9-point contributions
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                     !srv 02.01.07
-        t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                     !srv 02.01.07
+        t0 =  0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                !srv 02.01.07
+        t1 = -0.5_R8*flo0(ix,iy,1,1)-con0(ix,iy,1,1,0)                !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
         if (solveee(ireg) .or. solveei(ireg)) then
          aa9(ix,iy,0)  = aa9(ix,iy,0)  - t0
          aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
         endif
         if (solveee(ibot) .or. solveei(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
@@ -417,7 +414,7 @@ cwdk add 9-point contributions
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,0,1),
      &  aa9, 'b2ush9_totale')                                         !srv 02.01.07
@@ -642,7 +639,7 @@ cwdk add 9-point contributions
          aa9(ix,iy,-3) = aa9(ix,iy,-3) + t1
         endif
         if (solveee(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
@@ -703,7 +700,7 @@ cwdk add 9-point contributions
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,0,1),
      &  aa9, 'b2ush9_Te')                                             !srv 02.01.07
@@ -924,7 +921,7 @@ cwdk todo: scalr()-functionality; is 1.0 for now
      &     scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
         endif
         if (solveei(ibot)) then
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*scalr(ti(ix,iy))
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1*
@@ -986,7 +983,7 @@ cwdk add 9-point contributions
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,0,1),
      &  aa9, 'b2ush9_Ti')                                             !srv 02.01.07
@@ -1073,4 +1070,13 @@ cwdk add 9-point contributions
 *-----------------------------------------------------------------------
 *.end b2ush9
 
-      end
+      contains
+
+      function scalr(t0)
+      implicit none
+      real(kind=R8) :: scalr, t0
+      scalr = 1.0e0_R8  ! t0                                          !srv 02.01.07
+      return
+      end function scalr
+
+      end subroutine b2ush9

@@ -198,4 +198,4 @@ c
       if (nioni.gt.0) deallocate(hlp_in)
       return
 c=======================================================================
-      end
+      end subroutine b2pblmtr

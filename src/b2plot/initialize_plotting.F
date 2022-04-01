@@ -12,13 +12,8 @@ c     the zoom common
       integer wsnshwin,wsnX11
       common /zoom_com/ winid,wsnshwin,wsnX11
 
-      character*(*) sval
-      character*256 devenv,devnam
-      real (kind=R8) :: time,rval
-      integer iw, iopt, iopt_fill
-      integer lnblnk
-      logical streql
-      external lnblnk, streql
+      character*256 devenv
+      integer iw
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #else
@@ -139,11 +134,18 @@ c      call plinit()
 #endif
       initialised_plotting=.true.
       return
+      end subroutine initialise_plotting
 c
-      entry initialise_plotting_flags(time)
+      subroutine initialise_plotting_flags(time)
+      use b2mod_types
+      implicit none
+      real (kind=R8), intent(in) :: time
+#include <graphics_vars.h>
+c
       extralabel=' '
       globalheader=' '
       runtime=real(time,R4)
+      glsz=1.0_R4
       lbsz=1.0_R4
       ndec=10
       initialised_plotting=.false.
@@ -154,8 +156,17 @@ c
       color_file=' '
       device='psc'
       return
+      end subroutine initialise_plotting_flags
 
-      entry set_color_map(sval)
+      subroutine set_color_map(sval)
+      use b2mod_types
+      implicit none
+      character*(*), intent(in) :: sval
+#include <graphics_vars.h>
+      integer lnblnk
+      logical streql
+      external streql, lnblnk
+c
       color_file=sval
       if (streql(color_file,' ')) then
         write(*,*) 'Setting default color table'
@@ -166,80 +177,181 @@ c
       color_map_loaded=.false.
       if (nwork.gt.0) call new_color_map
       return
+      end subroutine set_color_map
 
-      entry set_fill_option(iopt_fill)
+      subroutine set_fill_option(iopt_fill)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt_fill
+#include <graphics_vars.h>
+c
       fill_option=iopt_fill
       return
+      end subroutine set_fill_option
 
-      entry initialise_plotting_0
+      subroutine initialise_plotting_0
+      use b2mod_types
+      implicit none
+#include <graphics_vars.h>
+c
       dirty_page=.false.
       new_page=.true.
       same_page=0
       noax=1
       write(*,*) 'same_page set to ',same_page
       return
+      end subroutine initialise_plotting_0
 
-      entry set_lbsz(rval)
+      subroutine set_glsz(rval)
+      use b2mod_types
+      implicit none
+      real (kind=R8), intent(in) :: rval
+#include <graphics_vars.h>
+c
+      glsz=real(rval,R4)
+      return
+      end subroutine set_glsz
+
+      subroutine set_lbsz(rval)
+      use b2mod_types
+      implicit none
+      real (kind=R8), intent(in) :: rval
+#include <graphics_vars.h>
+c
       lbsz=real(rval,R4)
       return
+      end subroutine set_lbsz
 
-      entry set_ndec(iopt)
+      subroutine set_ndec(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       ndec=iopt
       return
+      end subroutine set_ndec
 
-      entry get_ndec(iopt)
+      subroutine get_ndec(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(out) :: iopt
+#include <graphics_vars.h>
+c
       iopt=ndec
       return
+      end subroutine get_ndec
 
-      entry set_noax
+      subroutine set_noax
+      use b2mod_types
+      implicit none
+#include <graphics_vars.h>
+c
       noax=-noax
       return
+      end subroutine set_noax
 
-      entry swap_aspect
+      subroutine swap_aspect
+      use b2mod_types
+      implicit none
+#include <graphics_vars.h>
+c
       want_aspect=.not.want_aspect
       write(*,*) 'want_aspect switched to ',want_aspect
       return
+      end subroutine swap_aspect
 
-      entry set_zero
+      subroutine set_zero
+      use b2mod_types
+      implicit none
+#include <graphics_vars.h>
+c
       lzero=.not.lzero
       write(*,*) 'lzero switched to ',lzero
       return
+      end subroutine set_zero
 
-      entry toggle_label_lines
+      subroutine toggle_label_lines
+      use b2mod_types
+      implicit none
+#include <graphics_vars.h>
+c
       label_same_lines=.not.label_same_lines
       return
+      end subroutine toggle_label_lines
 
-      entry set_device(devnam)
+      subroutine set_device(devnam)
+      use b2mod_types
+      implicit none
+      character*256, intent(in) :: devnam
+#include <graphics_vars.h>
+c
       device=devnam
       return
+      end subroutine set_device
 
-      entry set_line_font_size(iopt)
+      subroutine set_line_font_size(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       lfsz=iopt
       return
+      end subroutine set_line_font_size
 
-      entry set_axes_color(iopt)
+      subroutine set_axes_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       zcol=iopt
       return
+      end subroutine set_axes_color
 
-      entry set_header_color(iopt)
+      subroutine set_header_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       hcol=iopt
       return
+      end subroutine set_header_color
 
-      entry set_title_color(iopt)
+      subroutine set_title_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       gcol=iopt
       return
+      end subroutine set_title_color
 
-      entry set_barlabel_color(iopt)
+      subroutine set_barlabel_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       bcol=iopt
       return
+      end subroutine set_barlabel_color
 
-      entry set_extralabel_color(iopt)
+      subroutine set_extralabel_color(iopt)
+      use b2mod_types
+      implicit none
+      integer, intent(in) :: iopt
+#include <graphics_vars.h>
+c
       xcol=iopt
       return
-
-      end subroutine initialise_plotting
+      end subroutine set_extralabel_color
 
       subroutine new_color_map
+      use b2mod_types
       use b2mod_b2plot_debug
       implicit none
 #include <graphics_vars.h>

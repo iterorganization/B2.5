@@ -24,7 +24,7 @@
 *
 *  1. purpose
 *
-*     B2MD (main program) is a postprocessor for b2. It reads and
+*     B2MD (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2mddr for the actual computation.
 *
@@ -37,7 +37,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2md performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2mddr to control the actual computation.
@@ -163,7 +163,7 @@
       call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
       call alloc_b2mod_ppout(nx,ny,ns)
       call b2mddr (ninp, nout, nx, ny, ns)
-*   ..close files			 !
+*   ..close files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
          if (file_open) close(ninp(io))

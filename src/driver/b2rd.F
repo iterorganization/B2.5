@@ -22,9 +22,9 @@
 *
 *  1. purpose
 *
-*     B2RD (main program) is a postprocessor for b2. It imports an
+*     B2RD (main program) is a postprocessor for B2. It imports an
 *     archived plasma state from the MDSPlus tree and outputs the
-*     equivalent b2fstate and b2 geometry files.
+*     equivalent b2fstate and B2 geometry files.
 *
 *
 *  2. specification
@@ -35,7 +35,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2rd performs a fetch of the archived
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2rddr to control the actual computation.
@@ -86,7 +86,7 @@
 *   ..procedures
       external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
       external b2xvgm, b2xvps, b2xvsg
-      external cfverw, cfwuin, cfwuch
+      external cfwuin, cfwuch
       external intfaceh1, intfacer1, intfacev1
 #endif
       external prgini, prgend, cfopen
@@ -1418,9 +1418,7 @@
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
       call cfwuin (nout(2), 1, idum, 'isymm') 
-      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
-     &  cell_width, cell_height)
+      call b2wugm (nout(2), nx, ny)
 
       open(91,file='core_boundary.txt')
       iy=-1

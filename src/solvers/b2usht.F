@@ -16,12 +16,12 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
-      character*(*) name                                             !srv 18.03.10
+      character*(*) name                                                !srv 18.03.10
       real (kind=R8) ::
      *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      &  ni(-1:nx,-1:ny,0:1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),        !srv 02.01.07
+     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),   !srv 02.01.07
      &  pccm1(-1:nx,-1:ny)
       real (kind=R8) ::
      *  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
@@ -32,7 +32,7 @@
      *  cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  flo0(-1:nx,-1:ny,0:1,0:1), con0(-1:nx,-1:ny,0:1,0:1,0:2),            !srv 02.01.07
+     *  flo0(-1:nx,-1:ny,0:1,0:1), con0(-1:nx,-1:ny,0:1,0:1,0:2),       !srv 02.01.07
      &  aa5(-1:nx,-1:ny,-2:2)
 
 *-----------------------------------------------------------------------
@@ -54,11 +54,8 @@
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs, sqrt, dim
-      real (kind=R8) ::
-     *   scalr
       external xertst, sfill
       external b2xvsg, b2xvff, b2ux5p
-      scalr(t0) = t0
 *   ..initialisation
       data ncall/0/
 
@@ -134,7 +131,7 @@
          flo0(ix,iy,0,0) = floe(ix,iy,0,0)+floi(ix,iy,0,0)-
      &    t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy))
      &             -ni(leftix(ix,iy),leftiy(ix,iy),0))
-         con0(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+coni(ix,iy,0,0,0)+          !srv 02.01.07
+         con0(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+coni(ix,iy,0,0,0)+       !srv 02.01.07
      &    (t0/2.0_R8)*(ne(leftix(ix,iy),leftiy(ix,iy))
      &     +ne(ix,iy)+ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))
         endif
@@ -145,10 +142,10 @@
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
          flo0(ix,iy,1,1) = 0.0_R8
-         con0(ix,iy,1,1,:) = 0.0_R8                                    !srv 02.01.07
+         con0(ix,iy,1,1,:) = 0.0_R8                                     !srv 02.01.07
         else
          flo0(ix,iy,1,1) = floe(ix,iy,1,1)+floi(ix,iy,1,1)
-         con0(ix,iy,1,1,0) = cone(ix,iy,1,1,0)+coni(ix,iy,1,1,0)           !srv 02.01.07
+         con0(ix,iy,1,1,0) = cone(ix,iy,1,1,0)+coni(ix,iy,1,1,0)        !srv 02.01.07
         endif
        enddo
       enddo
@@ -179,8 +176,8 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(leftix(ix,iy).eq.-2) then
          aa5(ix,iy,-1) = 0.0_R8
         else
-         t0 =  flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                  !srv 02.01.07
-         t1 = -flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                  !srv 02.01.07
+         t0 =  flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                 !srv 02.01.07
+         t1 = -flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                 !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solveet(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0
@@ -209,8 +206,8 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
          aa5(ix,iy,-2) = 0.0_R8
         else
-         t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                  !srv 02.01.07
-         t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                  !srv 02.01.07
+         t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
+         t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
          if (solveet(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
@@ -229,9 +226,9 @@ cxpb
      >      write(*,*) 'Executing xpb:b2usht(1) for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            t0 =  flo0(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8
-     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                   !srv 02.01.07
+     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                  !srv 02.01.07
            t1 = -flo0(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8
-     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                   !srv 02.01.07
+     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                  !srv 02.01.07
            if (solveet(ireg))
      >      aa5(ix,iy,2) = t0
            if (solveet(itop))
@@ -263,8 +260,8 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name//'tt'
-      call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')    !srv 18.03.10
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'tt'
+      call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')        !srv 18.03.10
 
 * ..electron temperature correction equation
       new_matrix = .false.
@@ -279,7 +276,7 @@ cxpb
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0,0) = 0.0_R8
-         con0(ix,iy,0,0,:) = 0.0_R8                                    !srv 02.01.07
+         con0(ix,iy,0,0,:) = 0.0_R8                                     !srv 02.01.07
         else
          t0 = 2.5_R8*pcm1*pbs(ix,iy,0)*
      &      (pccm1(leftix(ix,iy),leftiy(ix,iy))*
@@ -288,7 +285,7 @@ cxpb
      &       pccm1(ix,iy)*ne(ix,iy)*te(ix,iy))/2.0_R8
          flo0(ix,iy,0,0) = floe(ix,iy,0,0)
      &     -t0*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy)))
-         con0(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+(t0/2.0_R8)*              !srv 02.01.07
+         con0(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+(t0/2.0_R8)*             !srv 02.01.07
      &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))
         endif
        enddo
@@ -298,10 +295,10 @@ cxpb
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
          flo0(ix,iy,1,1) = 0.0_R8
-         con0(ix,iy,1,1,:) = 0.0_R8                                    !srv 02.01.07
+         con0(ix,iy,1,1,:) = 0.0_R8                                     !srv 02.01.07
         else
          flo0(ix,iy,1,1) = floe(ix,iy,1,1)
-         con0(ix,iy,1,1,0) = cone(ix,iy,1,1,0)                           !srv 02.01.07
+         con0(ix,iy,1,1,0) = cone(ix,iy,1,1,0)                          !srv 02.01.07
         endif
        enddo
       enddo
@@ -332,8 +329,8 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(leftix(ix,iy).eq.-2) then
          aa5(ix,iy,-1) = 0.0_R8
         else
-         t0 =  flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                  !srv 02.01.07
-         t1 = -flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                  !srv 02.01.07
+         t0 =  flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                 !srv 02.01.07
+         t1 = -flo0(ix,iy,0,0)/2.0_R8-con0(ix,iy,0,0,0)                 !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solveee(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0
@@ -362,8 +359,8 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
          aa5(ix,iy,-2) = 0.0_R8
         else
-         t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                  !srv 02.01.07
-         t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                  !srv 02.01.07
+         t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
+         t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
          if (solveee(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
@@ -382,9 +379,9 @@ cxpb
      >      write(*,*) 'Executing xpb:b2usht(2) for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            t0 =  flo0(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8
-     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                 !srv 02.01.07
+     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                  !srv 02.01.07
            t1 = -flo0(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8
-     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                 !srv 02.01.07
+     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                  !srv 02.01.07
            if (solveee(ireg))
      >      aa5(ix,iy,2) = t0
            if (solveee(ireg))
@@ -416,8 +413,8 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name//'te'
-      call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')    !srv 18.03.10
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'te'
+      call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')        !srv 18.03.10
 
 * ..atom temperature correction equation
       new_matrix = .false.
@@ -432,7 +429,7 @@ cxpb
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0,0) = 0.0_R8
-         con0(ix,iy,0,0,:) = 0.0_R8                                    !srv 02.01.07
+         con0(ix,iy,0,0,:) = 0.0_R8                                     !srv 02.01.07
         else
          t0 = 2.5_R8*pcm1*pbs(ix,iy,0)*
      &      (pccm1(leftix(ix,iy),leftiy(ix,iy))*
@@ -451,10 +448,10 @@ cxpb
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
          flo0(ix,iy,1,1) = 0.0_R8
-         con0(ix,iy,1,1,:) = 0.0_R8                                    !srv 02.01.07
+         con0(ix,iy,1,1,:) = 0.0_R8                                     !srv 02.01.07
         else
          flo0(ix,iy,1,1) = floi(ix,iy,1,1)
-         con0(ix,iy,1,1,0) = coni(ix,iy,1,1,0)                           !srv 02.01.07
+         con0(ix,iy,1,1,0) = coni(ix,iy,1,1,0)                          !srv 02.01.07
         endif
        enddo
       enddo
@@ -484,8 +481,8 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(leftix(ix,iy).eq.-2) then
          aa5(ix,iy,-1) = 0.0_R8
         else
-         t0 = flo0(ix,iy,0,0)/2-con0(ix,iy,0,0,0)                        !srv 02.01.07
-         t1 = -flo0(ix,iy,0,0)/2-con0(ix,iy,0,0,0)                       !srv 02.01.07
+         t0 = flo0(ix,iy,0,0)/2-con0(ix,iy,0,0,0)                       !srv 02.01.07
+         t1 = -flo0(ix,iy,0,0)/2-con0(ix,iy,0,0,0)                      !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solveei(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0*scalr(ti(ix,iy))
@@ -515,8 +512,8 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
          aa5(ix,iy,-2) = 0.0_R8
         else
-         t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                  !srv 02.01.07
-         t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                  !srv 02.01.07
+         t0 =  flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
+         t1 = -flo0(ix,iy,1,1)/2.0_R8-con0(ix,iy,1,1,0)                 !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
          if (solveei(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*scalr(ti(ix,iy))
@@ -536,9 +533,9 @@ cxpb
      >      write(*,*) 'Executing xpb:b2usht(3) for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            t0 =  flo0(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8
-     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                 !srv 02.01.07
+     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                  !srv 02.01.07
            t1 = -flo0(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8
-     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                 !srv 02.01.07
+     &          -con0(topix(ix,iy),topiy(ix,iy),1,1,0)                  !srv 02.01.07
            if (solveei(ireg))
      >      aa5(ix,iy,2) = t0*scalr(ti(topix(ix,iy),topiy(ix,iy)))
            if (solveei(itop))
@@ -571,13 +568,13 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux5p from ', name//'ti'
-      call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
+      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
+      call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')        !srv 18.03.10
       last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
-       do ix = -1, nx
-        corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
-       enddo
+        do ix = -1, nx
+          corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
+        enddo
       enddo
 
 *   ..return
@@ -588,4 +585,13 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2usht
 
-      end
+      contains
+
+      function scalr(t0)
+      implicit none
+      real(kind=R8) :: scalr, t0
+      scalr = t0
+      return
+      end function scalr
+
+      end subroutine b2usht

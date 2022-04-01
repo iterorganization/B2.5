@@ -12,6 +12,8 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
@@ -26,7 +28,7 @@
      *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                       !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -47,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, js, k
+      integer ncall, styl0, n2, ix, iy, is, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -61,10 +63,9 @@
       save ncall, styl0, rg0
 *   ..procedures
       real (kind=R8) ::
-     *  samax, roxa
+     *  samax
       external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/
 *!!   (rg0 for numerical stabilisation; needs experiments.)
@@ -88,13 +89,15 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
-!       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+!       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
+*   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     * 'faulty argument ismain')
 *   ..test is0
       call xertst (0.le.is0.and.is0.lt.ns-1, 'faulty argument is0')
       call xertst (lnext(is0,is0+1),
@@ -310,7 +313,7 @@ ctmp.dpc
 
       write (chcx,'(i3.3)') is0
 !      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-!     &              .or. iout_b2wdat.eq.4) then
+!     &              .or. iout_b2wdat.eq.4 ) then
 !        do is = 0, ns-1
 !          write (chns,'(i3.3)') is
 !!         do k=0,1
@@ -360,7 +363,6 @@ ctmp.dpc
            enddo
         enddo
       endif
-
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

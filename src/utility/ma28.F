@@ -179,7 +179,7 @@ c data check to see if all indices lie between 1 and n.
 c
 c sort matrix into row order.
       call mc20ad(n, nz, a, icn, iw, irn, 0)
-c part of ikeep is used here as a work-array.  ikeep(i,2) is
+c part of ikeep is used here as a work array.  ikeep(i,2) is
 c     the last row to have a nonzero in column i.  ikeep(i,3)
 c     is the off-set of column i from the start of the row.
       do 60 i=1,n
@@ -934,8 +934,8 @@ c     values in icn. a(1) to a(idisp(1)-1) are neither required nor
 c     altered.
 c licn  is an integer variable which must be set by the user to the
 c     length of arrays icn and a. it must be big enough for a and icn
-c     to hold all the nonzeros of l and u and leave some "elbow
-c     room".  it is possible to calculate a minimum value for licn by
+c     to hold all the nonzeros of l and u and leave some elbow
+c     room.  it is possible to calculate a minimum value for licn by
 c     a preliminary run of ma30a/ad. the adequacy of the elbow room
 c     can be judged by the size of the common block variable icncp. it
 c     is not altered by ma30a/ad.
@@ -971,7 +971,7 @@ c lirn  is an integer variable. it should be greater than the
 c     largest number of nonzeros in a diagonal block of p1*a*q1 but
 c     need not be as large as licn. it is the length of array irn and
 c     should be large enough to hold the active part of any block,
-c     plus some "elbow room", the  a posteriori  adequacy of which can
+c     plus some elbow room, the  a posteriori  adequacy of which can
 c     be estimated by examining the size of common block variable
 c     irncp.
 c lenc,ifirst,lastr,nextr,lastc,nextc are all integer arrays of
@@ -2197,7 +2197,7 @@ c innermost loop.
             jay = icn(jayjay)
 #ifdef DBG
             if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)) .and.
-     &         (a(jayjay).ge.tiny(1.0_R8).or.
+     &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
               if (product.ge.cutll) w(jay) = w(jay) + au*a(jayjay)
@@ -3409,8 +3409,8 @@ c     new decomposition using ma28a/ad.
 c resid is a real*8 variable which on exit from ma28c/cd gives the value
 c     of the maximum residual over all the equations unsatisfied because
 c     of dependency (zero pivots).
-c irncp,icncp are integer variables which monitor the adequacy of "elbow
-c     room" in irn and a/icn respectively. if either is quite large (say
+c irncp,icncp are integer variables which monitor the adequacy of elbow
+c     room in irn and a/icn respectively. if either is quite large (say
 c     greater than n/10), it will probably pay to increase the size of
 c     the corresponding array for subsequent runs. if either is very low
 c     or zero then one can perhaps save storage by reducing the size of
@@ -3483,8 +3483,8 @@ c     increase the time for ma28a/ad marginally and that for ma28b/bd
 c     by about 20%.  the default value for lbig is .false.
 c
       real (kind=R8) ::
-     *   eps, rmin, resid, tol, themax, big, dxmax,
-     * errmax, dres, cgce
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer ndrop, maxit, noiter, nsrch, istart
@@ -3569,7 +3569,7 @@ c     reduced to enable a successful decomposition to the point at
 c     which failure occurred.  notice that, on a successful entry
 c     idisp(2) gives the amount of space in a/icn required for the
 c     decomposition while minicn will usually be slightly greater
-c     because of the need for "elbow room".  if the user is very
+c     because of the need for elbow room.  if the user is very
 c     unsure how large to make licn, the variable minicn can be used
 c     to provide that information. a preliminary run should be
 c     performed with abort3 left set to .false. and licn about 3/2

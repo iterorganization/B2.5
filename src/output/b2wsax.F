@@ -2,10 +2,9 @@
 *.specification
 
       subroutine b2wsax (nsav, nx, ny, ns, lblgm, 
-     &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
+     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -15,18 +14,12 @@
       integer nsav, nx, ny, ns
       character lblgm*120
       real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),  
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
-     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
-      real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), pr(-1:nx,-1:ny),
+     *  ne(-1:nx,-1:ny), pr(-1:nx,-1:ny),
      &  rz2(-1:nx,-1:ny,0:ns-1), uac(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -37,13 +30,13 @@
 *  1. purpose
 *
 *     B2WSAX writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old b2' code.
+*     in the style required for input into the 'old B2' code.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine writes the state of the plasma to an unformatted
-*     file, in the style required for input into the 'old b2' code.
+*     file, in the style required for input into the 'old B2' code.
 *     One difference between the two codes is in the dimensioning
 *     of the arrays: (-1:nx,-1:ny) now versus (0:nx+1,0:ny+1) in the
 *     old code; and for quantities defined on cell faces, in the
@@ -64,9 +57,8 @@
 *     lblgm identifies the instance of the program employed to prepare
 *     the geometry.
 *
-*     crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs - real*8 array, input.
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     ne, ne2, pr, uac - real*8 array, input.
+*     ne, pr, uac - real*8 array, input.
 *     See the calling routine for description.
 *
 *
@@ -87,11 +79,9 @@
      *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, pit, hy1, uax, uay, uaz, crxc, cryc
+     *   b2ssum, uax, uay, uaz, crxc, cryc
       external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
-      pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       uax(ix,iy,is) = fna(ix,iy,0,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
      1   hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
@@ -132,7 +122,7 @@
 
 * ..compute zxx and zyy
 *   ..compute zxx(1:2) and zyy(1:2)
-      call b2xgxy (nx, ny, crx, cry, 0, 0, zxx(-1,1), zxx(-1,2),
+      call b2xgxy (nx, ny, 0, 0, zxx(-1,1), zxx(-1,2),
      &  zyy(-1,1), zyy(-1,2))
 *   ..compute zxx(3:6)
       do ix = -1, nx
@@ -220,9 +210,9 @@
      &  ((gs(ix,iy,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
      &  ((pit(ix,iy),ix=-1,nx),iy=-1,ny),
      &  ((crxc(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
+     & (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
      &  ((cryc(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
+     & (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
 *   ..save mi, zamin, zamax
       write (nsav) (mp*am(is),zamin(is),zamax(is),is=0,ns-1)
 *   ..save plasma state

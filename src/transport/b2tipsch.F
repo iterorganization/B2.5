@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,       !srv 02.04.18 {
-     1  na, ti, cddi, coni, fhiPSch)                                    !srv 13.10.06
+      subroutine b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,           !srv 02.04.18 {
+     1  na, ti, cddi, coni, fhiPSch)                                     !srv 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -176,9 +176,9 @@ cwdk cancellation of some terms in poloidal and radial flux components
 !        print *,'b2tipsch style=2'
           do iy = -1, ny
            do ix = -1, nx
-            if(topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 
+            if(topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2
      &       .and. leftix(ix,iy).ne.-2) then
-               fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) + 
+               fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) +
      &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy))-
      &       nati2c(ix,iy))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
                coni(ix,iy,0,0,1) = coni(ix,iy,0,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
@@ -268,7 +268,7 @@ cwdk cancellation of some terms in poloidal and radial flux components
            do ix = -1, nx
             if(bottomiy(ix,iy).ne.-2 .and. leftix(ix,iy).ne.-2 .and.
      &        rightix(ix,iy).ne.nx+1) then
-             fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) - 
+             fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) -
      &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy))-
      &       nati2c(ix,iy))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
                 coni(ix,iy,1,1,1) = coni(ix,iy,1,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {

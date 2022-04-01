@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)       !srv 13.01.17
+      subroutine b2xehy (nx, ny, te, po, ne, ehy)                        !srv 13.01.17
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_subsys
@@ -10,9 +11,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     &   qs(-1:nx,-1:ny,0:1)
+     &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   ehy(-1:nx,-1:ny,0:1)
@@ -31,13 +30,13 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, n2, ix, iy
       integer, save :: mode_ehy = 0                                      !srv 06.04.15
       integer, save :: pot_eq = 1, no_current= 0                         !srv 29.01.20
       real (kind=R8) ::
-     *   t0, hy1_(-1:nx,-1:ny),
+     *   hy1_(-1:nx,-1:ny),
      *   dpor(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:ny,0:1), 
      *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
      *   dum(-1:nx,-1:ny)
@@ -45,9 +44,6 @@
 *   ..procedures
       external xertst
       external b2xvsg
-      real (kind=R8) ::
-     *   hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                 !srv 07.05.08 04.07.14
 *   ..initialization
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -56,14 +52,14 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2xehy')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       call ipgeti ('b2tfhe_mode_ehy',mode_ehy)                          !srv 06.04.15
+*   ..set internal parameters on first call                              !srv
+      if (ncall.eq.0) then                                               !srv
+       call ipgeti ('b2tfhe_mode_ehy', mode_ehy)                         !srv 06.04.15
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 29.01.20 {
-       call ipgeti ('b2tfhe_no_current',no_current)               
+       call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')       !srv 29.01.20 }
-      endif
+      endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -129,4 +125,4 @@ c     to be considered: volume-weighted interpolation
 *-----------------------------------------------------------------------
 *.end b2xehy
 
-      end
+      end subroutine b2xehy

@@ -20,7 +20,7 @@
 *
 *  1. purpose
 *
-*     B2YRDR is a postprocessor for b2. It reads and displays a table
+*     B2YRDR is a postprocessor for B2. It reads and displays a table
 *     of atomic rate coefficients.
 *
 *
@@ -28,7 +28,7 @@
 *
 *     This routine displays a table of atomic rate coefficients for the
 *     processes of ionisation, recombination, heat loss, and charge
-*     exchange. The table is in the form required for use by the b2
+*     exchange. The table is in the form required for use by the B2
 *     code /1,2/. It is read from unit ninp(1) and is stored in the
 *     common block /b2cmrc/.
 *
@@ -56,21 +56,21 @@
 *
 *  4. references
 *
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
-*     /3/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
+*     /3/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /4/ R. A. Hulse, !! (detailed description?).
-*     /5/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET Report R(87)08, 1987.
+*     /5/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET Report R(87)08, 1987.
 *     /6/ K. Behringer, !! (journal article?).
-*     /7/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /7/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -127,9 +127,9 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
@@ -141,7 +141,7 @@
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
 *     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
-*     zamin, zamax and zn used elsewhere in b2.
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are
@@ -359,12 +359,12 @@
        endif
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is), 
+     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is),
      &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzn(is), rtlsa(0,0,is),
-     &   rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
+     &   rtnt, rtn, rtnn, rtzn(is),
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop
        is = is1

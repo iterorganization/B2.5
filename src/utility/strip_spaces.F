@@ -15,4 +15,4 @@
       enddo
       if(j.lt.n) string(j+1:n)=' '
       return
-      end
+      end subroutine strip_spaces

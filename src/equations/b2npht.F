@@ -5,7 +5,8 @@
      &  solvereg, solvireg, solvpreg, solvmreg,
      1  rxf, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
-     &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
+     &  fne, fch, fchstoch, cvsa,
+     &  fchdia, uadia, wadia, vadia, vaecrb,
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
      &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
@@ -19,25 +20,25 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
+      integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      *  gs(-1:nx,-1:ny,0:2),
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     *  lnlam(-1:nx,-1:ny)    !srv 01.07.09
+     *  lnlam(-1:nx,-1:ny)                                               !srv 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),   !srv 02.01.07
+     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),    !srv 02.01.07
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1,0:1),                                       !srv 09.07.08
+     *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1),             !srv 09.07.08
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)                              !srv 07.07.09
+     2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     3  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)                               !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
@@ -139,7 +140,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test rxf
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      & 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -199,13 +200,14 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, qs,   !xpb !srv 05.07.17
-     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,         !srv 01.07.09
-     &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)                   !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, qs,  !xpb !srv 05.07.17
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !srv 01.07.09
+     &  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)   !xpb !srv 24.08.21
       else
-       call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam,
-     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)       !srv 07.06.00 02.06.99 07.07.09
+       call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                 !srv 07.06.00 02.06.99 28.06.03 05.07.17
+     *  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa,
+     *  she0, shi0)                                                      !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)
       do ix=-1,nx

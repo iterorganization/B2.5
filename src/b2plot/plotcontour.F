@@ -111,7 +111,7 @@ C ====================================================================
       WRITE(*,*) 'zlo =',ZLO,' zhi =',ZHI
       
 C =========== Setting up Contour Levels and Labeling =================
-      IF(mod(LINLOG,2).EQ.1) THEN  ! ==> do linear plot <====================
+      IF(mod(LINLOG,2).EQ.1) THEN   ! ==> do linear plot <====================
         IF(NOFCLS.EQ.0) THEN ! standard contouring
           write (*,*) 'STANDARD CONTOURING'
           CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)

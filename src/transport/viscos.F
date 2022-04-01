@@ -1,7 +1,7 @@
 
       subroutine viscos(nsdecl, nzdecl, nsl, is, ic, nreg, 
      +              bgradp, fc, fm, mmx, nenergy, epsn, ntau, m, 
-     +              t, xi, den, ncl, mu)
+     +              t, xi, den, mu)
 c--------------------------------------------------------------------
 c     this routine calculates the viscosity coefficients using the 
 c     expressions of K.C. Shaing, Phys. Plasmas 3 965 (1996)
@@ -48,8 +48,6 @@ c             xi             : array(nsdecl+1,nzdecl) relative weigth of a
 c                              charge state
 c             den            : array(nsdecl+1,nzdecl) density in 
 c                              unit 10^19 m^-3
-c             ncl            : array(nsdecl+1) that gives the number of 
-c                              charge states per species
 c     output  mu             : array(3,3) the viscosity coefficients
 c
 c     the routine calls the following subroutine
@@ -63,7 +61,7 @@ c--------------------------------------------------------------------
       implicit none
 
       integer ::
-     *     nenergy, nsdecl, nzdecl, ncl(0:nsdecl), is, ic, nsl, nreg
+     *     nenergy, nsdecl, nzdecl, is, ic, nsl, nreg
       real (kind=R8) ::
      *       epsn, mu(3,3), ntau(0:nsdecl,0:nsdecl), t(0:nsdecl), 
      &       m(0:nsdecl), xi(0:nsdecl,0:nzdecl-1), 
@@ -129,8 +127,8 @@ c         frequency.
 
           else
 
-           call viscol(nsdecl, nzdecl, nsl, is, ic, ntau, m, t, xi, 
-     +                 ncl, x, den, nud, nue)
+           call viscol(nsdecl, nzdecl, nsl, is, ic, ntau, m, t,
+     +                 xi, x, den, nud, nue)
            nut = 3*nud + real(nenergy)*nue
 
 
@@ -210,8 +208,8 @@ c         frequency.
                 write(*,*) 'WARNING: refinement for viscosity'//
      +                     ' integral needed'
                 write(*,'(1x,a8,i1,a1,i1,a4,1p,e15.8)')
-     .		 '%err.mu(',k,',',l,') = ',
-     1		 (mu(k,l)-muo(k,l))/mu(k,l)*100.0_R8
+     .            '%err.mu(',k,',',l,') = ',
+     1           (mu(k,l)-muo(k,l))/mu(k,l)*100.0_R8
                 write(*,*) 'voorf =',voorf
                 write(*,*) 'nv=',nv
               endif
@@ -231,9 +229,9 @@ c         frequency.
           nv = nv*2
           if (nv.gt.4e8) then
             open(16,file='viscos.dat',form='formatted')
-	    do i = 0, 25600
-	      write(16,*) xpoints(i), cxi(i)
-	    enddo
+            do i = 0, 25600
+              write(16,*) xpoints(i), cxi(i)
+            enddo
             close(16)
             call perr(4)
           endif
@@ -242,6 +240,6 @@ c         frequency.
          
 
       return 
-      end
+      end subroutine viscos
 
 

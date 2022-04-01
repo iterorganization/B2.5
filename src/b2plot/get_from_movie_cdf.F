@@ -97,4 +97,4 @@
 #endif
       call subend ()
       return
-      end
+      end subroutine get_from_movie_cdf

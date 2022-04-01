@@ -28,7 +28,7 @@ c*** Determine topology and calculate some indices
 
       call b2pwinp
 c      print *,'After b2pwinp: ntrgts,lytg,nytg,lrdlsp = ',  !###
-c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
+c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
       allocate(hlp_flx(0:ny-1,0:ns-1,ntrgsx))
 
       l=1
@@ -72,4 +72,4 @@ c        print *,trim(fmt_peak)  !###
 c=======================================================================
   740 format('# ',2a,' : ',a)
 c=======================================================================
-      end
+      end subroutine b2pgeier

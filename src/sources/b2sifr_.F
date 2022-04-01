@@ -10,8 +10,11 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_plasma
+     &     , only : roxa
       use b2mod_balance                                               !djm Jan2017
-     & , only : b2sifr_smoch0to3, b2sifr_smotf0to3, balance_netcdf
+     &     , only : b2sifr_smoch0to3, b2sifr_smotf0to3,
+     &              balance_netcdf
       use b2mod_openmp
       use b2mod_subsys
       implicit none
@@ -22,7 +25,7 @@
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),      !srv 01.07.09
+     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny),                          !srv 01.07.09
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -31,7 +34,8 @@
      &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)
+     *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
+     &   lnlam(-1:nx,-1:ny)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -65,11 +69,8 @@
       integer :: zlitest
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *   roxa
       external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialisation
       !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest)
       !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
@@ -265,9 +266,9 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk//chns)                    !srv 07.02.12
           call my_out(70,nx,ny,smbch(-1,-1,k),
-     *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
+     *                'b2sifr_smoch'//chk//chns)                    !srv 07.02.12
          enddo
-      endif                                                            !srv 17.06.02 }
+      endif                                                         !srv 17.06.02 }
 
 cdjm Jan2017 Store the linearised sources for balance
       if (balance_netcdf.ne.0) then
@@ -283,4 +284,4 @@ cdjm Jan2017 Store the linearised sources for balance
 *-----------------------------------------------------------------------
 *.end b2sifr_
 
-      end                                                             !srv 01.07.05 }
+      end subroutine b2sifr_                                        !srv 01.07.05 }

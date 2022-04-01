@@ -39,8 +39,8 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *
 *
@@ -251,8 +251,9 @@
       isymm = idum(0)
 *   ..read geometry and metric
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
@@ -300,8 +301,7 @@
 
 *   ..plot state
       call b2wgpi_gnuplot (nout(0), nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch, kinrgy,
-     &  gs, qc, ni)
+     &  ti, po, fna, fhe, fhi, fch, kinrgy, gs, qc, ni)
 
 * ..return
       call dealloc_b2mod_b2cmrc

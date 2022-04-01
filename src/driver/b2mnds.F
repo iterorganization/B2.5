@@ -3,6 +3,7 @@
 
       subroutine b2mnds (ninp, nout, nx, ny, ns, ns0)
       use b2mod_types
+      use b2mod_math
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmfs
@@ -27,12 +28,12 @@
 *
 *  1. purpose
 *
-*     B2MNDS performs initialisation functions for a b2 calculation.
+*     B2MNDS performs initialisation functions for a B2 calculation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine performs initialisation for a b2 calculation.  It
+*     This routine performs initialisation for a B2 calculation. It
 *     reads and checks header records from the input files, writes
 *     header records to the output files, and initialises variables in
 *     common.
@@ -94,15 +95,13 @@
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
      &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80
       real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4), t0, t1
+     *   zpdum(0:nsdecl-1,4)
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
+      logical is_comment
       external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal

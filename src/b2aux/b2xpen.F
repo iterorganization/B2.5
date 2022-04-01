@@ -1,6 +1,6 @@
       subroutine b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po,
+     2 BoRiS, fhm, fhp, fhj, fht)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -18,7 +18,7 @@
      &  fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),fhp(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      1  fhj(-1:nx,-1:ny,0:1,0:1),       fht(-1:nx,-1:ny,0:1,0:1)
 *     ------------------------------------------------------------------
-*     B2XPEN computes contributions to the total energy fluxes, 
+*     B2XPEN computes contributions to the total energy fluxes,
 *     as well as the total energy fluxes
 *     The contributions from external species are not included and must
 *     be added explicitly in the calling routine when needed.
@@ -99,7 +99,7 @@ c calculate additional fluxes (fhj, fhm, fhp)
 c calculate total fluxes (fht)
       fht = fhe + fhi + fhj + fnt*(1.0_R8-BoRiS)
       do is=0,ns-1
-	fht = fht + fhp(:,:,:,:,is) + fhm(:,:,:,:,is)*(1.0_R8-BoRiS)
+        fht = fht + fhp(:,:,:,:,is) + fhm(:,:,:,:,is)*(1.0_R8-BoRiS)
       enddo
 *$$$  call subend ()
       return

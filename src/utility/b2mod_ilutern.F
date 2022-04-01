@@ -25,7 +25,7 @@ C
       character*(*) name                                             !srv 18.03.10
       REAL (KIND=R8) ::
      *   ASO(N1D,N2), AWE(N1D,N2), ACP(N1D,N2),
-     .      AEA(N1D,N2), ANO(N1D,N2), RHS(N1D,N2)
+     .   AEA(N1D,N2), ANO(N1D,N2), RHS(N1D,N2)
 
 *  -- OUTPUT ARGUMENTS --
       REAL (KIND=R8) ::

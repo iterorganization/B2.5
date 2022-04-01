@@ -109,7 +109,7 @@ C Done.
       enddo
 #endif
       RETURN
-      END
+      END SUBROUTINE COLOR
 c
       integer function no_available_colors(ityp)
       use b2mod_types
@@ -155,7 +155,7 @@ c
        endif
       endif
       return
-      end
+      end function choose_color
 c
       subroutine set_partition_colors(val)
       use b2mod_types
@@ -168,5 +168,5 @@ c
        partition_colors=real(val,R4)
       endif
       return
-      end
+      end subroutine set_partition_colors
 

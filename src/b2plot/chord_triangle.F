@@ -1,9 +1,10 @@
 c
       function chord_tria_value(ntrii,nrknot,tt,
-     1 xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     1 xtrian,ytrian,necke,ixtri,iytri,
      2 xp,yp,zp,dxp,dyp,dzp,vector)
 
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2plot
@@ -16,10 +17,7 @@ c
       real (kind=R8) ::
      * tt(1:ntrii),
      1 xtrian(nrknot),
-     2 ytrian(nrknot),
-     3 crx(-1:nx,-1:ny,0:3),
-     4 cry(-1:nx,-1:ny,0:3),
-     5 bb(-1:nx,-1:ny,0:3)
+     2 ytrian(nrknot)
       real (kind=R8) ::
      * xp,yp,zp,dxp,dyp,dzp
       logical vector
@@ -34,12 +32,8 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      integer ix, iy
-      real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
-
-      pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
       call subini ('chord_tria_value')
       x=xp
@@ -114,8 +108,8 @@ c         write(*,*) 'dl.bl = ',dotprod
       return
       end function chord_tria_value
 c
-      function chord_tria_integral(ntrii,nrknot,nx,ny,tt,
-     2 xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+      function chord_tria_integral(ntrii,nrknot,tt,
+     2 xtrian,ytrian,necke,ixtri,iytri,npoints,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
@@ -124,15 +118,12 @@ c
       
       real (kind=R8) ::
      * chord_tria_integral 
-      integer nx,ny,ntrii,nrknot,npoints
+      integer ntrii,nrknot,npoints
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
      * tt(1:ntrii),
      1 xtrian(nrknot),
-     2 ytrian(nrknot),
-     3 crx(-1:nx,-1:ny,0:3),
-     4 cry(-1:nx,-1:ny,0:3),
-     5 bb(-1:nx,-1:ny,0:3)
+     2 ytrian(nrknot)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       logical vector
@@ -166,7 +157,7 @@ c
         z=zp1*(1.0-f)+zp2*f
         chord_tria_integral=chord_tria_integral+dl*
      1   chord_tria_value(ntrii,nrknot,tt,
-     2                    xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     2                    xtrian,ytrian,necke,ixtri,iytri,
      2                    x,y,z,dx,dy,dz,vector)
       enddo
 
@@ -176,8 +167,8 @@ c
       return
       end function chord_tria_integral
 c
-      subroutine chord_tria_compile(npoints,ntrii,nrknot,nx,ny,
-     * xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+      subroutine chord_tria_compile(npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,iytri,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector,
      2 indchd,indit,indscl)
 
@@ -185,15 +176,12 @@ c
       use b2mod_subsys
       implicit none
 
-      integer npoints,ntrii,nrknot,nx,ny
+      integer npoints,ntrii,nrknot
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       real (kind=R8) ::
      * tt(ntrii),score(ntrii),
      * xtrian(nrknot),
-     * ytrian(nrknot),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     * ytrian(nrknot)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       integer indchd,indit(*)
@@ -233,7 +221,7 @@ c
         if(found) then
           score(it)=score(it)+dl*
      1     chord_tria_value(ntrii,nrknot,tt,
-     2      xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     2      xtrian,ytrian,necke,ixtri,iytri,
      2      x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo
@@ -273,14 +261,12 @@ c
       integer itpos
 
       logical inside_triangle
-      integer i,ix,iy,icnt1,icnt2
+      integer i,icnt1,icnt2
       real (kind=R8) ::
      *   x,y,z,r,rmin,rmax,zmin,zmax
 
       logical first
-      integer ir,iz,irpos,izpos
-      real (kind=R8) ::
-     *   rpos,zpos
+      integer ir,iz
       integer lngcov,lngind
       parameter(lngcov=200,lngind=500 000)
       integer covered(lngcov,lngcov),
@@ -303,14 +289,9 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
-      save covered,rmin,rmax,zmin,zmax,first,tcov,icov,ix,iy
+      save covered,rmin,rmax,zmin,zmax,first,tcov,icov
 
       data first/.true./
-
-      irpos(r)=(r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1
-      izpos(z)=(z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1
-      rpos(ir)=rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
-      zpos(iz)=zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
 
       call subini ('chord_find')
       if(first) then
@@ -503,6 +484,39 @@ c next try the chain
       found=.true.
       call subend ()
       return
+
+      contains
+
+      integer function irpos(r)
+      implicit none
+      real(kind=R8), intent(in) :: r
+      irpos = int((r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1)
+      return
+      end function irpos
+
+      integer function izpos(z)
+      implicit none
+      real(kind=R8), intent(in) :: z
+      izpos = int((z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1)
+      return
+      end function izpos
+
+      function rpos(ir)
+      implicit none
+      integer, intent(in) :: ir
+      real(kind=R8) :: rpos
+      rpos = rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
+      return
+      end function rpos
+
+      function zpos(iz)
+      implicit none
+      integer, intent(in) :: iz
+      real(kind=R8) :: zpos
+      zpos = zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
+      return
+      end function zpos
+
       end subroutine chord_tria_find
 c
 !DIAG      subroutine chord_diagnostics      ! diag

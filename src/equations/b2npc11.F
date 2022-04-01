@@ -61,7 +61,7 @@
       integer ncall, n2, ix, iy, use_eirene
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
       integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
-      integer, save :: get_residuals = 0                           !srv 22.05.18
+      integer, save :: get_residuals = 0                             !srv 22.05.18
       character chns*3                                               !srv 04.07.08
       !$OMP THREADPRIVATE(iout, iout_b2wdat)
       !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
@@ -109,7 +109,7 @@
        call xertst (0.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-       call ipgeti ('b2npc11_iout', iout)                              !srv 13.07.05
+       call ipgeti ('b2npc11_iout', iout)                             !srv 13.07.05
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
@@ -131,12 +131,12 @@
         call b2xvsg (n2, conb(-1,-1,1,1,1), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,0,0,2), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,2), 1, 'conb', '.ge.')
-       endif                                                        !srv 06.07.06 }
+       endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')                 !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')                 !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')               !srv 13.10.06 }
 *    ..test sign of snbc, snbv
        call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')
        call b2xvsg (n2, snb(-1,-1,1), 1, 'snbv', '.le.')

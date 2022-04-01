@@ -141,7 +141,7 @@
       deallocate(fllim0fna)
       deallocate(fllim0fhi)
       deallocate(fllimvisc)
-      deallocate(fllim_ki)                                 !srv 13.01.17 {
+      deallocate(fllim_ki)                                       !srv 13.01.17 {
       deallocate(fllim_ke)
       deallocate(fllim_al)
       deallocate(fllim_al_c)
@@ -150,8 +150,8 @@
       deallocate(f_luc_et)
       deallocate(f_luc_sg)
       deallocate(f_luc_al)
-      deallocate(sigx_c)                                   !iys 19.11.13
-      deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17 }
+      deallocate(sigx_c)                                         !iys 19.11.13
+      deallocate(alfx_c)                                         !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
 
       return
@@ -159,7 +159,7 @@
 
       subroutine read_b2mod_transport(nxd,nyd,nsd,nread)
       implicit none
-      integer, intent(in) :: nxd,nyd,nsd, nread
+      integer, intent(in) :: nxd,nyd,nsd,nread
       real (kind=R8) :: cloc(-1:nxd,-1:nyd,0:1), 
      &  clocs(-1:nxd,-1:nyd,0:1,0:nsd-1),
      &  clocss(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1)

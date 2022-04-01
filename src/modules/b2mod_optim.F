@@ -1,8 +1,9 @@
       module b2mod_optim
-       use b2mod_types
+      use b2mod_types
+#include "DIMENSIONS.F"
 
        integer :: nfunc, istyle
-       integer, parameter :: nx = 116, ny =21, ns = 2
+       integer, parameter :: nx = DEF_NXD, ny = DEF_NYD, ns = DEF_NSD
        real (kind=R8) :: power_mod
 *   .. for inner lower
        real (kind=R8) ::

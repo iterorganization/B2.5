@@ -15,7 +15,7 @@
 *
 *  1. purpose
 *
-*     B2AH (main program) prepares default physics parameters for b2.
+*     B2AH (main program) prepares default physics parameters for B2.
 *     This program calls the driver routine b2ahdr for the actual
 *     computation.
 *
@@ -28,7 +28,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ah prepares a file of default physics
-*     parameters for a b2 calculation.
+*     parameters for a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2ahdr to control the actual computation.
@@ -118,8 +118,9 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 *   ..call principal driver routine
       call b2ahdr (ninp, nout, nx, ns)
 *   ..close graphics files

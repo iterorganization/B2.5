@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,        !srv 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                 !srv 27.01.00
-     &    sch, respo, corpo, aa11)                                 !srv 27.01.00
+      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,              !srv 27.01.00
+     &    ne, te, conc, avisper, bvisper, cvisper,                       !srv 27.01.00
+     &    sch, respo, corpo, aa11)                                       !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -16,8 +16,9 @@
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1,0:1),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     4   cvisper(-1:nx,-1:ny,0:1),
+     &   avisper(-1:nx,-1:ny,0:1),
+     &   bvisper(-1:nx,-1:ny,0:1),
+     &   cvisper(-1:nx,-1:ny,0:1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -46,7 +47,6 @@
       real (kind=R8) :: vis_per, aa11p2, aa11m2                    !srv 27.01.00
       save ncall, vis_per                                          !srv 27.01.00
 *   ..procedures
-      intrinsic min, abs
       external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p, b2ux9p                      !srv 11.01.00
 *   ..initialisation
@@ -264,7 +264,7 @@ C      enddo
 
 *   ..solve the correction equation
 CWDK tmp: call 9-point solver
-!      call b2ux11p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7_')       !sv 11.01.00
+!      call b2ux11p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7')      !srv 11.01.00
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7_9pt')    !srv 18.05.02
 
@@ -297,4 +297,4 @@ CWDK tmp: call 9-point solver
 *-----------------------------------------------------------------------
 *.end b2usp7
 
-      end
+      end subroutine b2usp7

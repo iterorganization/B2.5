@@ -17,12 +17,11 @@
 *     Attention! There is no multiplication by vol/hx. 
 *     It will be done later in B2XPIF.
 *     ------------------------------------------------------------------
-      integer n2, is
+      integer is
       integer, save :: ncall = 0
       external sfill
 *     ------------------------------------------------------------------
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
+*   ..computation
       fch_pi_c(-1:nx,-1:ny,0,0) = 0.0_R8
       do is = 0, ns-1
        fch_pi_c(-1:nx,-1:ny,0,0) = fch_pi_c(-1:nx,-1:ny,0,0) +
@@ -41,7 +40,7 @@
       fch_pi_c(-1:nx,-1:ny,0,1) = 0.0_R8
       fch_pi_c(-1:nx,-1:ny,1,0) = 0.0_R8
       fch_pi_c(-1:nx,-1:ny,1,1) = 0.0_R8
-      
+
       ncall = ncall+1
       return
 *     ------------------------------------------------------------------

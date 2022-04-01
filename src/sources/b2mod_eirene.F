@@ -119,11 +119,11 @@
 
       contains
 
-      subroutine eirene_mc(nx, ny, ns, nxtl, nxtr, ismain, dtim, BoRiS,
+      subroutine eirene_mc(nx, ny, ns, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
       use b2mod_subsys
       implicit none
-      integer nx,ny,ns,nxtl,nxtr,ismain
+      integer nx,ny,ns
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -200,7 +200,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
      2 hlp_stra(:), core_flux(:)
       real (kind=R8), save :: core_surface
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      logical, allocatable, save ::  hlp_pff(:,:)
+      logical, allocatable, save :: hlp_pff(:,:)
       integer i,j,k,l,js,ls,kks,n,icount
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
@@ -242,9 +242,6 @@ csw 26feb2014
       logical streql
       external streql
 #endif
-      logical lnext
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
 *   ..initialisation
       data ncall/0/, output_style/1/, saved_volrec_used/.false./,
      .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
@@ -408,12 +405,12 @@ csw 22jul2011
         call eirene_extrab25_braeir_init(chemical_sputter_yield)
 #endif
 csw 26mar2013
-        call ipgeti ('eirene_iscltst',iscltst)
+        call ipgeti ('eirene_iscltst', iscltst)
 
 csw 26feb2013
-        call ipgeti ('eirene_neutr_avg',neutr_avg)
-        call ipgeti ('b2stbr_eir_src_nhist',nhist)
-        call ipgeti ('eirene_underrelax',nrelax)
+        call ipgeti ('eirene_neutr_avg', neutr_avg)
+        call ipgeti ('b2stbr_eir_src_nhist', nhist)
+        call ipgeti ('eirene_underrelax', nrelax)
         call xertst (.not.(
      .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
@@ -424,8 +421,8 @@ csw 26feb2013
         call xertst(ank_mods.eq.0.or.ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
-        call ipgeti ('eirene_no_sseicorr',no_sseicorr)
-        call ipgeti ('eirene_stab_corr',stab_corr)
+        call ipgeti ('eirene_no_sseicorr', no_sseicorr)
+        call ipgeti ('eirene_stab_corr', stab_corr)
       end if !}
 
       if(ncall.eq.0) then
@@ -499,7 +496,7 @@ c   same Eirene stratum
         call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
 
-csw 08feb2011 l_ddt definition moved down after eirene call when it is
+csw 08feb2011 l_ddt definition moved down after Eirene call when it is
 c             defined
 c c*** "time layer"
 c       l_ddt=0
@@ -563,15 +560,15 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
             if(.not.is_neutral(is)) then !{
               do iy=1,rc_list_size(istrai) !{
                 tflux(istrai)=tflux(istrai)-min(0.0_R8,
-     1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     1   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
      2       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,0,is)+
-     3      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     3   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
      4       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      .      min(0.0_R8,
-     1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     1   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
      2       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,0,is)+
-     3      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
+     3   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
      4       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,1,is))
               end do !}
             end if !}
@@ -595,15 +592,15 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
             if(.not.is_neutral(is)) then !{
               do ix=1,rc_list_size(istrai) !{
                 tflux(istrai)=tflux(istrai)-min(0.0_R8,
-     1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
+     1     fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
      2         topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,0,is)+
-     3      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
+     3     fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
      4         topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,1,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      .      min(0.0_R8,
-     1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
+     1     fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
      2         topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,0,is)+
-     3      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
+     3     fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
      4         topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,1,is))
               end do !}
             end if !}
@@ -811,7 +808,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-       call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
         call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
@@ -839,13 +836,13 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
 
-csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after eirene call
+csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after Eirene call
       if(ank_mods.ne.0 .or. ionising_core.eq.1) then
 c*** "time layer"
         l_ddt=0
         if(crcstra(nstrai).eq.'T') then
           l_ddt=nnlimi+nnstsi
-csw 2011 in case of no time layer in eirene
+csw 2011 in case of no time layer in Eirene
           if(.not.my_ltime) then
 csw 2011
 c           l_ddt=l_ddt+1
@@ -862,8 +859,7 @@ c           l_ddt=l_ddt+1
 cxpb  Additional diagnostic for comparison with SOLPS4.0
       if (ncall.eq.0) then
         call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-        if (main_call)
-     &   call b2trci(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        if (main_call) call b2trci(nx,ny,ns,nnreg(0))
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
@@ -937,7 +933,7 @@ cxpb
 
         if(dbg_eir_mc.gt.9 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
-          print *
+          write(*,'()')
           print *,'%%% Eirene data in B2 %%%',nlimps
           print '(a,5(i3,1x))','nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
@@ -980,7 +976,7 @@ cxpb
               end if !}
             end do !}
 
-            print *
+            write(*,'()')
             print *,'wldpp:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=.false.
@@ -1009,7 +1005,7 @@ cxpb
      ,           (wldpm(j,i,k),i=1,nnmoli)
             end do !}
           end do !}
-          print *,'%%%'
+          print '(a)','%%%'
         end if !}
         if(dbg_eir_mc.gt.0 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
@@ -1340,7 +1336,7 @@ c!###}
                   wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
                 end if !}
 c!###{
-c              if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
+c               if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
 c     ,          ' @@@ istrai,j,ls,log,scl,wldpa,wldna,wldra',
 c     ,          istrai,j,ls,hlp_log,hlp_scl(ls),wldpa(j,ls,istrai),
 c     ,                       wldna(j,ls,istrai),wldra(j,ls,istrai)
@@ -2954,7 +2950,7 @@ c*** before correction (r), after correction (c), after iteration (i)
                   endif
                 end if !}
               end do !}  ! ix
-            end do !}  !iy
+            end do !}  ! iy
           end if !}
         end do !}  ! is
         do iy=-1,ny !{
@@ -3614,15 +3610,17 @@ cxpb  core recycling into ions of the highest ionisation stage
           is=ishigh(j)
           if(bccon(is,ib).ne.13) then
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
+     1       write(*,'(a,i3,1x,i3,a,i3)')
+     .       'eirene_mc: bccon for is,ib = ',is,ib,
      2       ' <> 13, current value = ',bccon(is,ib)
 c            call xerrab
 c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,*) 'eirene_mc: conpar(is,ib,3) = ',
-     2       conpar(is,ib,3),' for is,ib= ',is,ib
+     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
+     .       'eirene_mc: conpar(is,ib,3) = ',
+     2       conpar(is,ib,3),' for is,ib = ',is,ib
           endif
         enddo
       endif

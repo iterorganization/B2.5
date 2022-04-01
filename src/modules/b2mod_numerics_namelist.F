@@ -191,7 +191,7 @@
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
 
-c additional time-modification factor
+c additional time modification factor
       ttf=core_dt_suppression
       do iy=-1,ny
         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)

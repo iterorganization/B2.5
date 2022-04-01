@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(ismain,ismain0,BoRiS)
+      subroutine b2ptrgl(BoRiS)
 c
 c  version : 07.04.98 13:12
 c
@@ -30,7 +30,6 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
-      integer ismain, ismain0
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
@@ -48,6 +47,10 @@ c
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
+c*  s:        area of target segments cut by the grid
+c*  wid_par:  ideal parallel power flux at the targets
+c*  wid_trg:  ideal power on the targets
+c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
      *  h,t,u,a,b,d,p,wo,wt,mion,t1(2),
      ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
@@ -105,14 +108,14 @@ c***    ewldmr_res  :   energy due to recombination of atoms and atomic ions int
 c***                     (PRFAML+PRFPML)*H_EDISS
 
       real (kind=R8) ::
-     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM), 
+     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM),
      *  sjt(0:ny-1,ntrgsx,DEF_NATM), spa(0:ny-1,ntrgsx,DEF_NATM),
      *  sje(0:ny-1,ntrgsx), sjs(0:ny-1,ntrgsx),
      *  sjm(0:ny-1,ntrgsx,DEF_NMOL),spm(0:ny-1,ntrgsx,DEF_NMOL)
       real (kind=R8) ::
      *   sja_t(0:ntrgsx,DEF_NATM), sjp_t(0:ntrgsx,DEF_NATM),
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
-     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL), 
+     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
      ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
      ,   sn_t,spt_out(2),mol_out(2*DEF_NMOL)
@@ -142,8 +145,10 @@ c***  srfs_a    : atomic weight of possible target materials
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
       data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo' ,'W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 96. , 184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 10.2, 19.3/
+      data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
+     .              56.0_R8, 96.0_R8,184.0_R8/
+      data srfs_d /  1.8_R8,  2.0_R8,  2.0_R8,  7.8_R8,
+     .               7.8_R8, 10.2_R8, 19.3_R8/
 c
 c*** Text variables:
 c***  ftrg    filenames for the profiles along the targets
@@ -164,7 +169,7 @@ c***  fsumm   filenames for the summaries
       data trg_label /'inner','inner_top','outer_top','outer'/
       data trg_short / 'il'  ,    'iu'   ,    'ou'   , 'ol'  /
       data pkl_label /'     ','- top'/
-      data hdr_2 / 'int_rad','int_tot','fwht_tot','fwxt_tot',
+      data hdr_2 / ' int_rad',' int_tot','fwht_tot','fwxt_tot',
      ,  'hwht_tot','hwhm_tot','hwxt_tot','hwxm_tot' /
 c======================================================================
 c*** If no data on neutral fluxes to the targets is present in the
@@ -486,7 +491,7 @@ c
         if(j.eq.ntrgts) jj=ntrgsx
         open(lun,file=ftrg(jj,1))
         write(fmt_peak,710) nclm_ld
-        write(lun,740) 'Target loading - ',trg_label(jj),label
+        write(lun,740) 'Target loading - ',trg_label(jj),trim(label)
         write(lun,740) 'x',tab,'coordinate along target [m]. <0 in PFR'
         write(lun,740) 'ne',tab,'electron density [1/m^3]'
         write(lun,740) 'Te',tab,'electron temperature [eV]'
@@ -611,23 +616,36 @@ c
       fn_hlp=fsumm(1)
       tl=' '
       do j=1,2 !{
-        if(j.eq.1 .or. ntrgts.eq.4) then !{
+        if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
           open(lun,file=fn_hlp)
-          write(lun,740) 'Peak powers ',pkl_label(j),label
+          write(lun,740) 'Peak powers ',pkl_label(j),trim(label)
           i3=i2-i1
+          if (i3.eq.0 .and. ntrgts.eq.1) i3=1
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
-          write(lun,'(a6,a1,20(a1,2a))') '# time',tab,
-     -     tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
-     ,     tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
-     ,     tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
-     ,     tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
-     ,     tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
-     ,     tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
-     ,     tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
-     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+          if (i1.ne.i2) then
+           write(lun,'(a6,a1,20(a1,2a))') '# time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+          else
+           write(lun,'(a6,a1,12(a1,2a))') '# time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl
+          end if
           write(lun,fmt_peak) tim,
      ,     (tab, wpk_tt(i),i=i1,i2,i3), tab, wpk_tt(0),
      ,     (tab, wlc_tt(i),i=i1,i2,i3),
@@ -723,7 +741,8 @@ c*** Total power outside the strike point position and power half-width
         if(fwht_tt(j).lt.0.0_R8 .or. hwht_tt(j).lt.0.0_R8 .or.
      .                               hwhm_tt(j).lt.0.0_R8) then !{
           print *,'!!!! NEGATIVE POWER WIDTH - target ',j,' time ',tim
-          print *,'fwht,hwht,hwhm = ',fwht_tt(j),hwht_tt(j),hwhm_tt(j)
+          print '(1x,a,3(f10.5,4x))','fwht,hwht,hwhm = ',
+     ,              fwht_tt(j),hwht_tt(j),hwhm_tt(j)
           print *,'xtg_hlp:'
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
      ,                                          (xtg_hlp(i,j),i=0,ny-1)
@@ -738,28 +757,35 @@ c*** Total power outside the strike point position and power half-width
         end if !}
 !###}
       end do !}
-      hlp_trg(ntrgts)=trg_short(ntrgsx)
+      if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(ntrgsx)
+      if(.not.LSN) then
+        hlp_trg(1)=trg_short(ntrgsx)
+        if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(1)
+      end if
       fn_hlp=fsumm(4)
       tl=' '
       open(lun,file=fn_hlp)
-      write(lun,740) 'Power integrals ','and widths',label
+      write(lun,740) 'Power integrals ','and widths',trim(label)
       write(lun,750) 'Divertors are marked "il", "ol" ,"iu", "ou"'
-      write(lun,750) hdr_2(1),' : integrated radiation power to the ',
-     ,  'target'
-      write(lun,750) hdr_2(2),' : integrated total power to the target'
-      write(lun,750) hdr_2(3),' : FWHM of total power at the target'
-      write(lun,750) hdr_2(4),' : double-sided exponential width of ',
-     ,  'total power at the target'
-      write(lun,750) hdr_2(5),' : HWHM of total power at the target'
-      write(lun,750) hdr_2(6),' : the same mapped to the OMP'
-      write(lun,750) hdr_2(7),' : exponential width of the SOL side ',
-     ,  'of total power at the target'
-      write(lun,750) hdr_2(8),' : the same mapped to the OMP'
+      write(lun,750) trim(hdr_2(1)),' : integrated radiation power ',
+     ,  'to the target'
+      write(lun,750) trim(hdr_2(2)),' : integrated total power ',
+     ,  'to the target'
+      write(lun,750) trim(hdr_2(3)),' : FWHM of total power ',
+     ,  'at the target'
+      write(lun,750) trim(hdr_2(4)),' : double-sided exponential ',
+     ,  'width of total power at the target'
+      write(lun,750) trim(hdr_2(5)),' : HWHM of total power ',
+     ,  'at the target'
+      write(lun,750) trim(hdr_2(6)),' : the same mapped to the OMP'
+      write(lun,750) trim(hdr_2(7)),' : exponential width of the SOL ',
+     ,  'side of total power at the target'
+      write(lun,750) trim(hdr_2(8)),' : the same mapped to the OMP'
       write(fmt_peak,'(a,i3,a)') '(a6,',n_intgrs*ntrgs,'(a1,a))'
       write(lun,fmt_peak) '# time',
      -  ((tab,trim(hdr_2(i))//'_'//hlp_trg(j),i=1,n_intgrs),j=1,ntrgs)
       write(fmt_peak,705) n_intgrs*ntrgs,tab
-  705 format('(1p,e12.5,',i3,'(1h',a1,',e12.4))')
+  705 format('(1p,e12.5,',i3,'(a1,e12.5))')
       write(lun,fmt_peak) tim,
      ,        (pwr_rd(j),pwr_tt(j),fwht_tt(j),fwxt_tt(j),
      ,         hwht_tt(j),hwhm_tt(j),hwxt_tt(j),hwxm_tt(j),j=1,ntrgs)
@@ -792,10 +818,10 @@ c            eb2atm will be [1 4 2 3]
      ,                 (species_list(is),is=1,nspecies)
 #ifdef B25_EIRENE
       write(hlp_frm,'(a,i2,a)') '(a,',natmi,'(1x,a8))'
-      write(6,hlp_frm) 'list of atoms according to Eirene: ',
+      write(6,hlp_frm) 'List of atoms according to Eirene: ',
      .                 (TEXTA(is),is=1,natmi)
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
-      write(6,hlp_frm) 'ordering of B2 atoms according to Eirene: ',
+      write(6,hlp_frm) 'Ordering of B2 atoms according to Eirene: ',
      ,                 (atoms_list(eb2atm(i)),i=1,nspecies)
 #endif
 c*** Calculate the particle fluxes
@@ -845,7 +871,6 @@ c        end do
 c        do is=1,ns-nspecies
 c          print *,'is,wldpp(js,is,0)',is,wldpp(js,is,0)
 c        end do
-c        print *,'ismain,ismain0',ismain,ismain0
         u=-1.0_R8
         l=1
         do j=1,ntrgts !{
@@ -1098,6 +1123,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           nx_hlp=ltrgpos(j)+l
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
+          if(.not.LSN) jj=ntrgsx+1-jj
           open(lun,file=ftrg(jj,2))
           if (do_sput(j)) then
             nclm_er=2+3*nclm_na+nspecies+2*ntrgts+2*nclm_nm
@@ -1105,7 +1131,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             nclm_er=2+3*nclm_na+nspecies+2*nclm_nm
           endif
           write(fmt_peak,710) nclm_er
-          write(lun,740) 'Target erosion - ',trg_label(jj),label
+          write(lun,740) 'Target erosion - ',trg_label(jj),trim(label)
           write(lun,740) 'x',tab,
      .     'coordinate along target [m]. <0 in PFR'
           write(lun,740) 'XX_flux_atm',tab,
@@ -1129,12 +1155,12 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           write(lun,740) 'xMP',tab,'radial coordinate in midplane '//
      .     '(IMP for inner target(s), OMP for outer(s)) [m]'
           if (do_sput(j)) then
-            write(lun,fmt_peak) 'x',
+            write(lun,fmt_peak) '#','x',
      ,           (fpt_str(ia),ia=1,3*nclm_na+nspecies),
      ,           (mol_str(:,ia),ia=1,nclm_nm),spt_str(:,j),'xMP'
             write(fmt_peak,720) nclm_er
-          else 
-            write(lun,fmt_peak) 'x',
+          else
+            write(lun,fmt_peak) '#','x',
      ,           (fpt_str(ia),ia=1,3*nclm_na+nspecies),
      ,           (mol_str(:,ia),ia=1,nclm_nm),'xMP'
             write(fmt_peak,720) nclm_er
@@ -1286,6 +1312,7 @@ c
      ,                               'b2.parameters (section NEUTRALS)'
         end if    
       return
+
 c======================================================================
   710 format('(a1,',i3,'(1x,a11,2x))')
   720 format('(1x,1p,',i3,'(e12.5,2x))')

@@ -32,11 +32,10 @@
       integer :: mpi_rank,mpi_size,mpi_local
 #endif
 #endif
-
       logical :: last
       real(kind=R8) , allocatable ::
      &     ep_ir (:,:),     ! electron particle source
-     &                      !    by ionization/recombination
+     &                      !    by ionisation/recombination
      &     im_cc (:,:,:),   ! ion momentum source by Coulomb collision
      &     ie_cc (:,:),     ! ion heat source by Coulomb collision
      &     ee_rd (:,:),     ! electron heat source by radiation
@@ -44,8 +43,8 @@
      &     b2zfw (:,:,:),   ! impurity mean velocity
      &     b2ztw (:,:,:)    ! impurity mean random energy
 
-      public::impgyro_init,impgyro_main,impgyro_last
-      logical, public:: use_impgyro
+      public :: impgyro_init,impgyro_main,impgyro_last
+      logical, public :: use_impgyro
 
       contains
 
@@ -59,8 +58,8 @@
       implicit none
       integer nxd,nyd,nsd,ismain
       integer is,iss,ix,iy
-      integer, save::ikmn,ikmx
-      real(kind=R8), allocatable::pdum (:), pot(:)
+      integer, save :: ikmn,ikmx
+      real(kind=R8), allocatable :: pdum (:), pot(:)
       character*256 filename
       logical open_file
       external xertst, xerrab, open_file
@@ -320,7 +319,7 @@ cxpb
      &  sna_ext,sne_ext,smo_ext,she_ext,shi_ext,sch_ext,
      &  na_ext,ua_ext,ta_ext)
 
-      integer,intent(in)::nx,ny,ns,ns_ext
+      integer,intent(in) :: nx,ny,ns,ns_ext
 
       real(kind=R8),intent(in) ::
      &  bb (-1:nx,-1:ny,0:3),
@@ -393,7 +392,7 @@ cxpb
       write (*,*) 'b2ig: running impgyro ...'
 
 #ifdef USE_MPI
-      if (mpi_rank.eq.0)then
+      if (mpi_rank.eq.0) then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,
@@ -411,7 +410,7 @@ cxpb
       end if
 #else
 #ifdef USE_IMPGYRO
-      if (mpi_rank.eq.0)then
+      if (mpi_rank.eq.0) then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,
@@ -534,11 +533,11 @@ cxpb
 
       subroutine my_open_file (fd ,fname)
 
-      integer , intent(out) ::fd
+      integer , intent(out) :: fd
 
-      character*(*) ,intent(in) ::fname
+      character*(*) ,intent(in) :: fname
 
-      logical ::bopened
+      logical :: bopened
 
       do fd = 10 , 10000
         inquire (fd, opened = bopened )

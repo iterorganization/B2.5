@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,       !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,  !srv 20.09.06 {
      &                    fchanml)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -20,7 +20,7 @@
      1 csig_an(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &    fchanml(-1:nx,-1:ny,0:1,0:1)
+     & fchanml(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -36,9 +36,9 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
-      integer ncall, n2, ix, iy, ib
+      integer ncall, ix, iy, ib
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: pot_eq
       integer, save :: guard_flows
@@ -46,7 +46,6 @@
      *  wght(-1:nx,-1:ny)
       save ncall, fch_anomalous
 *   ..procedures
-      intrinsic max, abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx, diff_r
 *   ..initialization
@@ -60,7 +59,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)
-       if (fch_anomalous.eq.1.0_R8) 
+       if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgeti ('b2tfhe_no_current', no_current)                !srv 27.02.13
        call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
@@ -68,8 +67,6 @@
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2news_guard_flows', guard_flows)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
@@ -90,7 +87,7 @@
 
       endif                                                   !srv 27.02.13
 
-      if(guard_flows.eq.0) then                                 	 !xpb
+      if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
@@ -130,4 +127,4 @@ cxpb turn off poloidal flows in core boundary
 *-----------------------------------------------------------------------
 *.end b2tanml
 
-      end                                                             !srv 20.09.06 }
+      end subroutine b2tanml                                             !srv 20.09.06 }

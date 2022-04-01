@@ -6,11 +6,11 @@ C =====================================================================
       use b2mod_b2plot_debug
       implicit none
 #include "graphics_vars.h"
-      real (kind=R8) :: ZLOD,ZHID,ZVALIN
+      real (kind=R8) :: ZLOD,ZHID
       integer linlog
       real zlo, zhi
       REAL ZINC, ZVAL, CLV
-      INTEGER I, ICOL, NOZ, NOZM, NFMTZ
+      INTEGER I, NOZ, NOZM, NFMTZ
       REAL CEIL, FLOOR
       EXTERNAL CEIL, FLOOR
       INTRINSIC LOG10
@@ -129,8 +129,14 @@ C =====================================================================
      + NCONT+1,1)
 
       return
+      end subroutine lblbartraj
 
-      entry lblbartrajcol(ZVALIN,icol)
+      subroutine lblbartrajcol(ZVALIN,icol)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      real (kind=R8), intent(in) :: zvalin
+      integer, intent(out) :: icol
 
       if(zvalin.gt.clval(ncont+1)) then
         icol=ncont+1
@@ -147,5 +153,4 @@ C =====================================================================
       endif
 
       return
-
-      end subroutine lblbartraj
+      end subroutine lblbartrajcol

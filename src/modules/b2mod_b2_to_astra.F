@@ -120,9 +120,6 @@ c        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
 c     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
         real (kind=R8) :: DSEVAL, DFMIN, arg, y(0:nxd-1)
 
-        real (kind=R8) :: sy
-        sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
-
 csw 09jan2014 add extra allocates
         allocate(p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
      &           cc(0:nxd-1),cd(0:nxd-1))
@@ -171,8 +168,8 @@ csw 09jan2014 add extra allocates
 
          CALL DSPLINE(np+1, p, y, CB, CC, CD)
          Z_midpl(iy)=DSEVAL(np+1,arg,p,y,CB,CC,CD)
-         write (*,"(' arg=',es13.6,' R_midpl=',es13.6,
-     &            ' Z_midpl=',es13.6)") arg, R_midpl(iy), Z_midpl(iy)
+         write (*,'(a5,es13.6,a9,es13.6,a9,es13.6)')
+     &    ' arg=',arg,' R_midpl=',R_midpl(iy),' Z_midpl=',Z_midpl(iy)
         enddo                                                        !srv 21.05.12 }
 
         maxtopcut = nyd                                              !srv 25.02.16 {

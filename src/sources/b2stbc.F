@@ -3,7 +3,6 @@
 
       subroutine b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,           !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -14,6 +13,7 @@
      2  cdna, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)      !xpb
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_indirect
       use b2mod_boundary_namelist
@@ -34,12 +34,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
-     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
-     &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
-     &  qs(-1:nx,-1:ny,0:1)
+     *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), kinrgy(-1:nx,-1:ny,0:ns-1),
@@ -97,8 +92,8 @@
      *   sna0ep, she0ep, shi0ep, t0, testqe, testqi,
      *   b2stbc_neoclassical, b2stbc_fchy_dia,
      &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
-     1   nasum(0:ns-1,2), teave(2), tiave(2),
-     1   naave(0:ns-1,2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
+     1   nasum(0:ns-1,2),
+     1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol, integral_current
@@ -111,13 +106,12 @@
      1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
      *   area_fix, sheath_drift_fix
 *   ..procedures
-      intrinsic mod, nint
+      intrinsic nint
       real (kind=R8) ::
-     *   b2ssum, hy1
+     *   b2ssum
       external xertst, sfill, b2ssum, b2saxpy, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
@@ -204,13 +198,6 @@
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and.
      & 1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
-!      if (ncall.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
-!        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
-!          write (*,*) 'b2stbc_neoclassical =', b2stbc_neoclassical       !xpb
-!        else                                                             !xpb
-!          write (*,*) 'b2stbc_fchy_dia =', b2stbc_fchy_dia               !xpb
-!        endif                                                            !xpb
-!      endif
 *   ..check kinetic secondary electron emission model
       if (ncall.eq.0 .and. secmodel.eq.1) then
         call xertst (nint(zn(ismain)).eq.1,
@@ -309,9 +296,6 @@
       if (gssum(1).gt.0.0_R8) then
         qeaverage(1)=qesum(1)/gssum(1)
         qiaverage(1)=qisum(1)/gssum(1)
-        teave(1)=tesum(1)/gssum(1)
-        tiave(1)=tisum(1)/gssum(1)
-        naave(:,1)=nasum(:,1)/gssum(1)
       end if
 *   ..find the average pressure for island center flux surface           !xpb
       iy = ny                                                            !xpb
@@ -396,9 +380,6 @@
       if (gssum(2).gt.0.0_R8) then
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
-        teave(2)=tesum(2)/gssum(2)
-        tiave(2)=tisum(2)/gssum(2)
-        naave(:,2)=nasum(:,2)/gssum(2)
       endif
       if (ncall.eq.0) lbndusr=.false.                                    !xpb
 
@@ -406,18 +387,19 @@
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1     call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1      vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     1      vol, gs, na, ne, ni, te, ti,
+     &      fna, fhe, fhi, fch, kinrgy,
      &      sna0, smo0, she0, shi0, sch0, sne0,
      &      main_call, diagno)
 
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
-     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, qs, gs, !srv 24.08.08
-     1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
+     1   BoRiS, facdrift, fac_ExB,                                       !srv 24.08.08
+     1   na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      2   te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf,   !srv 28.10.02
      1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06
-     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch, fch,    !srv 16.02.12
-     &   fne, fni,                                                       !srv 13.10.06
+     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,         !srv 16.02.12
+     &   fch, fne, fni,                                                  !srv 13.10.06
      &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &   fchanml,
      &   cdna, chce, chve, chci, chvi, calf,                             !srv 25.09.09
@@ -431,8 +413,7 @@
         if(lbndusr) then
           if(ncall.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
-     1     facdrift, vol, hx, hy, qz, qc, gs,
-     1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1     facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &     sna0, smo0, she0, shi0, sch0, sne0,
      &     wrong_flow, main_call, diagno,
@@ -445,8 +426,7 @@
       else      !boundary_namelist.ge.1
 
         call b2stbc_bas(nx, ny, ns, ismain,
-     1   facdrift, vol, hx, hy, qz, qc, gs,
-     1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1   facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &   sna0, smo0, she0, shi0, sch0, sne0,
      &   wrong_flow, main_call, diagno,
@@ -738,13 +718,8 @@ cdjm Jan2017 Keep linearised sources for balance
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer ix, iy
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
       external xertst, xerrab
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------
 *.computation

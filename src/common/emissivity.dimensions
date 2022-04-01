@@ -7,13 +7,13 @@ c     03/21/97 bhs
 c     -------------------------------------------------------------------------
 
 c     NSTORE:   maximum number of data blocks which can be read from the
-c               adf15 data set
+c               adf15 dataset
 c     NTDIM:    maximum number of electron temperatures that can be read
-c               from an adf15 data set data block
-c               adf15 data set
+c               from an adf15 dataset data block
+c               adf15 dataset
 c     NDDIM:    maximum number of electron densities that can be read
-c               from an adf15 data set data block
-c               adf15 data set
+c               from an adf15 dataset data block
+c               adf15 dataset
 
       integer NSTORE,NTDIM,NDDIM
       parameter (NSTORE=500,NTDIM=35,NDDIM=26)

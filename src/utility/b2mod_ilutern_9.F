@@ -1,8 +1,21 @@
+      module b2mod_ilutern_9
+      implicit none
+
+      logical, save :: lfirst
+      !$OMP THREADPRIVATE(lfirst)
+      data lfirst /.true./
+
+      contains
+
       SUBROUTINE ILUTERN_9(N1, N2, N1D, NZ, RHS, SOL, name)      !srv 13.10.06 (
       use b2mod_types
       use b2mod_ma28_for_9diag
       use b2mod_indirect
+      use b2mod_openmp
       IMPLICIT NONE
+#ifndef GFORTRAN
+      external bd1copy
+#endif
 C
 
 *  -- INPUT ARGUMENTS --
@@ -35,20 +48,19 @@ c ma28 common blocks
       integer ndrop,maxit,noiter,nsrch,istart,ibig
       common /ma28hdc/ rtol,themax,big,dxmax,errmax,dres,cgce,
      1 ndrop,maxit,noiter,nsrch,istart,ibig
+      !$OMP THREADPRIVATE(/ma28fdc/, /ma28hdc/)
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
-      logical lfirst
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.05.02
       integer, save :: kwrite_bnr = -1                                !srv 18.05.02
-      save lfirst, ncall, nwrite
-      data lfirst /.true./, ncall /0/, nwrite /0/
+      save ncall, nwrite
+      !$OMP THREADPRIVATE(ncall, nwrite)
+      !$OMP THREADPRIVATE(kwrite_fmt, kwrite_bnr)
+      data ncall /0/, nwrite /0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -61,6 +73,21 @@ c
         call ipgeti ('ma28_for_9d_nwrite', nwrite)
         call ipgeti ('ma28_for_9d_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
         call ipgeti ('ma28_for_9d_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
+        if (in_parallel() .and. ( nwrite.ne.0 .or.
+     &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+         !$OMP MASTER
+         write(*,*) 'ilutern_9 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+         !$OMP END MASTER
+         nwrite = 0
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif
+#ifdef GFORTRAN
+       call set_data_bd1copy
+       call set_data_bd2copy
+       call set_data_bd3copy
+#endif
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
@@ -151,7 +178,7 @@ cdpc
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
-     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)") 
+     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)")
      *    trim(name), iflag                                          !srv 09.07.02 28.06.16
         if(iflag.lt.0) then
           do i=1,nz
@@ -167,13 +194,13 @@ cdpc
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim      !srv 09.07.02 28.06.16
-   2  format(' ma28ad for ',a13,': iflag =',i9/,
+    2  format(' ma28ad for ',a13,': iflag =',i9/,
      1 ' minirn =',i9,' solvdim1 =',i9,
      2 ' minicn =',i9,' solvdim =',i9)                               !srv 09.07.02
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false. 
+        lfirst=.false.
       endif
 
       call ma28idcopy
@@ -181,7 +208,7 @@ cdpc
      1 r1,s1,res,w,1,1e-10_R8,iflag)
       if(nltrsol.gt.0 .or. iflag.lt.0)                               !srv 09.07.02 28.06.16 {
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3  format(' ma28id for ',a13,
+    3    format(' ma28id for ',a13,
      1       ': iflag =',i9,' errmax =',es9.1,
      2       ' dres =',es9.1,' noiter =',i2)                         !srv 09.07.02 28.06.16 }
 
@@ -225,13 +252,15 @@ cdpc
       call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
+      END SUBROUTINE ILUTERN_9
 
-      entry restart_ma28_for_9
+      subroutine restart_ma28_for_9
       lfirst=.true.
       write(*,*) 'Restarting ma28_for_9'
       return
+      end subroutine restart_ma28_for_9
 
 *=======================================================================
 *//END ILUTERN_9//                                                    !srv 13.10.06
 
-      END
+      END MODULE B2MOD_ILUTERN_9

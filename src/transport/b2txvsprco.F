@@ -9,7 +9,7 @@
       use b2mod_geo_corner
       use b2mod_openmp
       use b2mod_geo
-     , , only : hy, qz 
+     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -35,8 +35,6 @@
       character(3) :: chns
       !$OMP THREADPRIVATE(ncall, iout, vis_per)
 *   ..procedures
-      real (kind=R8) :: hy1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation
@@ -47,7 +45,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                              !srv
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
-       call ipgeti ('b2txvsprco_iout',iout)                             !srv 06.12.17
+       call ipgeti ('b2txvsprco_iout', iout)                            !srv 06.12.17
        if (in_parallel() .and. iout.ne.0) then
          !$OMP MASTER
          write(*,*)

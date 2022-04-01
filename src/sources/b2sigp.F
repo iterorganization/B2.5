@@ -26,7 +26,6 @@
      * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      * wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny),                      !djm Jan2017
      * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny)                       !srv 28.03.17
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -377,14 +376,14 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         endif
       endif                                                           !srv 02.07.08 }
 
-cxpb apply restriction to pressure gradient for minority ions
-      if (pressure_restriction .ne. 0) then
-       do iy = -1, ny                                                  !lk 23.06.17{  
+cxpb apply restriction to pressure gradient for minority ions and neutrals
+      if (pressure_restriction.eq.1) then
+       do iy = -1, ny                                                 !lk 23.06.17{
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
      &      nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
-           smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
+           smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8,
      &     (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
      &                        +hx(rightix(ix,iy),rightiy(ix,iy)))*
      &      nb(ix,iy)*ti(ix,iy)/
@@ -393,11 +392,11 @@ cxpb apply restriction to pressure gradient for minority ions
      &     *ti(rightix(ix,iy),rightiy(ix,iy))+
      &     (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
      &      nb(leftix(ix,iy),leftiy(ix,iy))
-     &     *ti(leftix(ix,iy),leftiy(ix,iy))))     
-         endif   
+     &     *ti(leftix(ix,iy),leftiy(ix,iy))))
+         endif
         enddo
-       enddo                                                           !lk 23.06.17}
-      endif                                                         !lk 23.06.17}
+       enddo                                                          !lk 23.06.17}
+      endif
 
       if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
        if (in_parallel()) then

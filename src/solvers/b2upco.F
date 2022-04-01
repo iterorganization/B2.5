@@ -30,7 +30,6 @@
 
 *   ..local variables
       integer ncall, ix, iy, ireg
-!      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       save ncall
       !$OMP THREADPRIVATE (ncall)
 *     ..workspace arguments (unspecified on entry and on exit)
@@ -96,7 +95,8 @@
         tt2 = 0.0e0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(on_closed_surface(ix,iy).and.bottomiy(ix,iy).ne.-2) then
+            if(on_closed_surface(ix,iy) .and.
+     *         bottomiy(ix,iy).ne.-2) then
               tt0(iy) = tt0(iy) + vol(ix,iy)
               tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
               tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
@@ -116,7 +116,7 @@
             endif
           enddo
         enddo                                             !lk 30.06.2017}
-      endif                                               !srv 25.07.17
+      endif                                               !srv 25.07.17 }
 *   ..compute new ub
       if (ua_solve) then
        do iy = -1, ny
@@ -143,4 +143,4 @@
 *-----------------------------------------------------------------------
 *.end b2upco
 
-      end
+      end subroutine b2upco

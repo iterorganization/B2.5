@@ -5,11 +5,11 @@
      &  vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &  na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
      &  snadt, smodt, shedt, shidt, schdt, snedt, lout)              !srv 11.09.09
-      use b2mod_types 
-      use b2mod_indirect 
-      use b2mod_numerics_namelist 
-      use b2mod_constants 
-      use b2mod_b2cmpa 
+      use b2mod_types
+      use b2mod_indirect
+      use b2mod_numerics_namelist
+      use b2mod_constants
+      use b2mod_b2cmpa
       use b2mod_boundary_namelist
      , , only : iftimbound
       use b2mod_balance !djm Jan2017
@@ -136,7 +136,6 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
       smotmp = smodt
       shetmp = shedt
       shitmp = shidt
-
 * ..include the contributions from dtim
 *   ..modify snadt
 
@@ -149,14 +148,13 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
 csw 24feb2014 check for guard cell (SOLPS4)
            if(iftimbound(ix,iy) .ne. 0) cycle
 !           if((guard_flows.eq.2 .or.
-!     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
+!     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
 !     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-           snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
-     &      (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
-           snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
-     &      (phm0/ttim)*vol(ix,iy)
+           t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
+           snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+t0*na0(ix,iy,is)
+           snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-t0
           enddo
         enddo
       enddo
@@ -176,7 +174,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             if(iftimbound(ix,iy) .ne. 0) cycle
 
             ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
-            t0 = (phm1/ttim)*vol(ix,iy)*hz(ix,iy)                    !srv 09.01.01
+            t0 = (phm1/ttim)*vol(ix,iy)*hz(ix,iy)                        !srv 09.01.01
             smodt(ix,iy,0,is) = smodt(ix,iy,0,is)+
      1       t0*am(is)*mp*ua0(ix,iy,is)*
      &       na0(ix,iy,is)

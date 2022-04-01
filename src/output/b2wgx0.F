@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wgx0 (nx, ny, header, crx, cry)
+      subroutine b2wgx0 (nx, ny, header)
       use b2mod_types
       use b2mod_b2cmwg
       use b2mod_subsys
@@ -9,8 +9,6 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       character header*(*)
-      real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -19,12 +17,12 @@
 *
 *  1. purpose
 *
-*     B2WGX0 displays the b2 mesh in a cartesian representation.
+*     B2WGX0 displays the B2 mesh in a cartesian representation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine displays the b2 mesh in a sequence of cartesian
+*     This routine displays the B2 mesh in a sequence of cartesian
 *     representations.
 *
 *
@@ -35,9 +33,6 @@
 *
 *     header - character*(*), input.
 *     header specifies a label for the plots.
-*
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     See the calling routine for description.
 *
 *     (parameters in common:)
 *
@@ -98,7 +93,7 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..plot the grid
        call pagini (4, xc(-1), xc(nx), yc(-1), yc(ny), 'x', 'y',
      &   header)
@@ -138,4 +133,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx0
 
-      end
+      end subroutine b2wgx0

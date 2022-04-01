@@ -222,22 +222,22 @@ cwdk cancellation of some terms in poloidal and radial flux components
           else
            ixb = bottomix(ix,iy)
            iyb = bottomiy(ix,iy)
-!           fnbPSch(ix,iy,1) = -PSch*                                    !lk {
+!           fnbPSch(ix,iy,1) = -PSch*                                   !lk {
 !     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
 !     &      (bzb(ix,iy)*hz(ix,iy)*vol(ixb,iyb)
 !     &      +bzb(ixb,iyb)*hz(ixb,iyb)*vol(ix,iy))
-!     &      /(vol(ixb,iyb)+vol(ix,iy))/(qe*zb(ix,iy))                   !lk }
-           fnbPSch(ix,iy,1,1) = -PSch*                                   !lk {
+!     &      /(vol(ixb,iyb)+vol(ix,iy))/(qe*zb(ix,iy))                  !lk }
+           fnbPSch(ix,iy,1,1) = -PSch*                                  !lk {
      &      dnbti(ix,iy,1,0)*
      &      (bzb(ix,iy)*(vol(ix,iy)/gs(ix,iy,2))*vol(ixb,iyb)
      &      +bzb(ixb,iyb)*(vol(ixb,iyb)/gs(ixb,iyb,2))*vol(ix,iy))
-     &      /(vol(ixb,iyb)+vol(ix,iy))/(qe*zb(ix,iy))                    !lk }
-     &      *(nb(ix,iy)+nb(ixb,iyb))/(nbcor(ix,iy)+                      !lk 09.06.11
-     &      nbcor(rightix(ix,iy),rightiy(ix,iy)))                        !lk 09.06.11
+     &      /(vol(ixb,iyb)+vol(ix,iy))/(qe*zb(ix,iy))                   !lk }
+     &      *(nb(ix,iy)+nb(ixb,iyb))/(nbcor(ix,iy)+                     !lk 09.06.11
+     &      nbcor(rightix(ix,iy),rightiy(ix,iy)))                       !lk 09.06.11
           endif
          enddo
         enddo
-      else                                                               !nn
+      else                                                              !nn
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
@@ -251,14 +251,14 @@ cwdk cancellation of some terms in poloidal and radial flux components
         enddo
       endif
 
-      do iy = -1, ny                                                     !srv 02.01.07 {
+      do iy = -1, ny                                                    !srv 02.01.07 {
         do ix = -1, nx
           fnbPSch(ix,iy,0:1,0:1) =
      .      fnbPSch(ix,iy,0:1,0:1)*facdrift(ix,iy)
         enddo
-      enddo                                                              !srv 02.01.07 }
+      enddo                                                             !srv 02.01.07 }
 
-      if(guard_flows.eq.0) then                                          !xpb
+      if(guard_flows.eq.0) then                                         !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
          do ix = -1, nx

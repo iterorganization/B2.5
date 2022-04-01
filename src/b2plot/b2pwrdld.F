@@ -255,6 +255,43 @@ c*** Calculate the radiation load split by impurity species from B2
         lrdlsp=.true.
       end if !}
 
+#ifdef DBG
+      print *,'ildparm,nadsrc,add_rad: ',ildparm,nadsrc,add_rad
+#endif
+      if(ildparm.eq.98 .and. nadsrc.gt.0 .and. add_rad.gt.0.0_R8) then !{
+
+c*** Calculate the radiation load from the core sources
+
+        write(*,*) '  Extra radiation from the core       : ',
+     .   1.0e6_R8*add_rad
+        do i=1,nplgs !{
+          radld(i)=0.0_R8
+        end do !}
+        k=0
+        u=1.0e6_R8*add_rad/nadsrc
+        do i=1,nadsrc !{
+          k=k+1
+          ssrcm(k)=u
+          xysrc(1,k)=addsrc_xy(1,i)
+          xysrc(2,k)=addsrc_xy(2,i)
+        end do !}
+        nsrc=k
+        call rlcomp
+#ifdef DBG
+        write(*,*) '  Total additional core radiation     : ',ttsrc
+#endif
+        write(*,*) '  Core radiation reaching the targets : ',tttrg
+        k=0
+        is=1
+        do i=1,nwldrad !{
+          l=lwldrad(i)
+          if(l.gt.0) then !{
+            k=k+1
+            wldrdlsp(l,is)=radld(k)/segm_area(l)
+          end if !}
+        end do !}
+        lrdlcr=.true.
+      end if !}
       return
 c======================================================================
       end subroutine b2pwrdld

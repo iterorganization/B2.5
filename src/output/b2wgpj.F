@@ -20,7 +20,7 @@
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
-     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1), 
+     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1),
      &  fni(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
@@ -38,7 +38,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results from
-*     a b2 calculation. Arrays na, ua, te, ti, and po provide the state
+*     a B2 calculation. Arrays na, ua, te, ti, and po provide the state
 *     of the plasma. Arrays fna, fhe, fhi, and fch provide the particle
 *     flux, electron heat flux, atom heat flux, and the electric
 *     current. This routine does not require any metric information.

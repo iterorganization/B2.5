@@ -2,10 +2,13 @@
 *.specification
 
       subroutine b2tfch_ (nx, ny, ns, ismain, ismain0,                   !srv 29.01.20 {
-     & facdrift, fac_ExB, fac_vis,                                      
+     & facdrift, fac_ExB, fac_vis,
      1 vol, gs, hx, hy, qs, qz, qc, bb, te, po, ne, ne2, lnlam, pz,
-     1 ti, ni, na, fna, uadia, ua, csig, csigin, chci, calf, cvsa_cl, 
-     & conc, avisper, bvisper, cvisper,  fch, fch_p, fchdia, fchin,
+     1 ti, ni, na, fna, uadia, ua,
+     1 csig, csigin,
+     & chci, calf, cvsa_cl,
+     & conc, avisper, bvisper, cvisper,
+     & fch, fch_p, fchdia, fchin,
      & fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -25,24 +28,25 @@
      &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),         !srv 11.07.99 18.01.02
      &   uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),      !srv 17.05.99 25.01.02
-     &   csig(-1:nx,-1:ny,0:1,0:1), 
+     &   csig(-1:nx,-1:ny,0:1,0:1),
      &   csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1),
      &   chci(-1:nx,-1:ny,0:1,0:1), calf(-1:nx,-1:ny,0:1,0:1),           !srv 11.07.99 24.06.08
      &   cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),    !srv 16.10.17
      &   lnlam(-1:nx,-1:ny), qs(-1:nx,-1:ny,0:1),                        !srv 13.10.06 01.07.09
      1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1   qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
+     1   qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2   ni(-1:nx,-1:ny), facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
      2   fac_vis(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1,0:1), fch_p(-1:nx,-1:ny,0:1,0:1),
-     &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1,0:1),      
+     &   fchstoch(-1:nx,-1:ny), fchvispar(-1:nx,-1:ny,0:1,0:1),
      &   fchvisper(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),     !srv 22.11.99 30.09.02
      &   conc(-1:nx,-1:ny,0:1,0:1), fchvisq(-1:nx,-1:ny,0:1,0:1),        !srv 11.07.99
      2   fchdia(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),     !srv 07.07.99
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),             !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1,0:1)          !srv 24.03.07
+     3   avisper(-1:nx,-1:ny,0:1),
+     &   bvisper(-1:nx,-1:ny,0:1),                                       !srv 27.01.00
+     &   cvisper(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1,0:1)          !srv 24.03.07
 *   ..local variables
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -78,7 +82,6 @@
       save ncall, fch_ion_neutral, fch_anomalous, dia_cur, fch_inert,    !srv 07.07.99
      &     vis_par, vis_per, vis_q, sig_stoch                            !srv 17.05.99 11.07.99 22.11.99
 *   ..procedures
-      intrinsic max, abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
@@ -156,22 +159,24 @@
       call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
      &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb, ne2,    !srv 10.10.17
-     &             lnlam, te, ti, ni, chci, fchvisq)
+      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17
+     &             ne2, lnlam, te, ti, ni, chci,
+     &             fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
       call b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,         !srv 22.11.12
      &              facdrift, fchinert)
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml)
+      call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,
+     &              fchanml)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,     !srv 07.07.14
+      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,                 !srv 07.07.14
      &              fchstoch)
 *  .. compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,
      &  ehx_, zeff, fch_p)
 *  .. compute total current without fchstoch, which will be added below
-      fch = fch_p + fchin + fchdia + fchvisper + fchvispar + 
+      fch = fch_p + fchin + fchdia + fchvisper + fchvispar +
      &      fchvisq + fchinert + fchanml
 
 *   ..compute concx
@@ -189,7 +194,7 @@
             if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then          !srv 20.10.17
              do is0 = 0, ns-1
               if (is_neutral(is0).and.nint(zn(is0)).eq.1) then           !srv 20.10.17
-               conc(ix,iy,0,0) = conc(ix,iy,0,0) + 
+               conc(ix,iy,0,0) = conc(ix,iy,0,0) +
      &            csigin(ix,iy,0,0,is,is0) !*facdrift                    !srv 07.02.03
      &          *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                        !srv 15.02.11
               conc(ix,iy,0,1) = conc(ix,iy,0,1)+csigin(ix,iy,0,1,is,is0)
@@ -228,7 +233,7 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
            do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
             conc(ix,iy,1,1) = conc(ix,iy,1,1) + csigin(ix,iy,1,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
-            conc(ix,iy,1,0) = conc(ix,iy,1,0) + 
+            conc(ix,iy,1,0) = conc(ix,iy,1,0) +
      &         csigin(ix,iy,1,1,is,is0)*t0
             endif                                                        !srv 20.10.17
            enddo
@@ -368,4 +373,4 @@ cxpb turn off flows between boundary cells
 *-----------------------------------------------------------------------
 *.end b2tfch_
 
-      end subroutine b2tfch_                                             !srv 29.01.20 }
+      end subroutine b2tfch_                                             !srv 09.01.20 }

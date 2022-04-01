@@ -10,7 +10,7 @@
         call intcor(nx,ny,vol,centre(-1,-1,is),corner(-1,-1,is))
       enddo
       return
-      end
+      end subroutine intcor1
 c
       subroutine intcor(nx,ny,vol,centre,corner)
       use b2mod_types
@@ -21,7 +21,10 @@ c
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny),centre(-1:nx,-1:ny),corner(-1:nx,-1:ny)
       
-      integer ix,iy,ix1,ix2,iy1,iy2
+      integer ix,iy,ix1,ix2
+#ifdef WG_TEST
+      integer iy1,iy2
+#endif
 
       corner=0.0_R8
       do iy=-1,ny
@@ -198,7 +201,7 @@ cxpb Check that this is a standard X-point                               !xpb
               corner(ix2,iy)=corner(ix1,iy)                              !xpb
             endif                                                        !xpb
           endif                                                          !xpb
-	   endif
+         endif
         enddo                                                            !xpb
       enddo                                                              !xpb
 
@@ -257,4 +260,4 @@ c special treatment of limiter tangency X-points                         !xpb
       enddo                                                              !xpb
 #endif
       return
-      end
+      end subroutine intcor

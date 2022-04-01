@@ -26,7 +26,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine computes the residual of a scalar conservation
-*     equation, integrated over cells of the b2 mesh. The equation has
+*     equation, integrated over cells of the B2 mesh. The equation has
 *     the form
 *       div(flux) = rhs ,
 *     and the residual is defined as

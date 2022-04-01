@@ -46,9 +46,9 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_integral(ntrii,nrknot,nx,ny,
+        yvalues(inpts)=chord_tria_integral(ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+     2   xtrian,ytrian,necke,ixtri,iytri,npoints,
      3   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
@@ -172,7 +172,7 @@ c
       if(use_compile) then
         call compile_tria_chords(maxchords,maxcompile,
      &   ntrii,nrknot,nx,ny,
-     &   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     &   xtrian,ytrian,necke,ixtri,iytri,
      1   inpts,indchd,indit,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
@@ -208,7 +208,7 @@ c
 c
       subroutine compile_tria_chords(maxchords,maxcompile,
      & ntrii,nrknot,nx,ny,
-     & xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     & xtrian,ytrian,necke,ixtri,iytri,
      1 inpts,indchd,indit,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
@@ -222,10 +222,7 @@ c
       real (kind=R8) ::
      * indscl(maxcompile),
      * xtrian(nrknot),
-     * ytrian(nrknot),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     * ytrian(nrknot)
       character*(*) filename,dataname
       integer nxcam,nycam
       real (kind=R8) ::
@@ -253,8 +250,8 @@ c
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_tria_compile(npoints,ntrii,nrknot,nx,ny,
-     * xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+      call chord_tria_compile(npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,iytri,
      1 x1,y1,z1,x2,y2,z2,vector,
      1 indchd(inpts),indit(ind),indscl(ind))
       indold=ind
@@ -338,8 +335,8 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
         inpts=inpts+1
-        zvalues(inpts)=chord_tria_integral(ntrii,nrknot,nx,ny,workarr,
-     1   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+        zvalues(inpts)=chord_tria_integral(ntrii,nrknot,workarr,
+     1   xtrian,ytrian,necke,ixtri,iytri,npoints,
      2   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'

@@ -9,9 +9,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npco (nx, ny, guard_flows,                        !srv 05.07.08
-     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
-     &  vol, pbs, flob, conb, snb,
+      subroutine b2npco (nx, ny, guard_flows,                         !srv 05.07.08
+     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb,
+     &  rxf, vol, pbs, flob, conb, snb,
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_b2cmpa
@@ -141,9 +141,9 @@
        endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')                 !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')                 !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')               !srv 13.10.06 }
 *    ..test sign of snbc, snbv
        call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')
        call b2xvsg (n2, snb(-1,-1,1), 1, 'snbv', '.le.')
@@ -180,7 +180,7 @@ csw 11dec2012, check for solv flags
 *   ..compute correction
        call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg,
      &  pcm1, vol, pbs, nb, pb, snb(-1,-1,1), flob,
-     &  conb, pccb(-1,-1,1,1), rescb, corpb, aa5, 'b2usco_'//chns)        !srv 18.05.02 26.09.12
+     &  conb, pccb(-1,-1,1,1), rescb, corpb, aa5, 'b2usco_'//chns)      !srv 18.05.02 26.09.12
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &  vol, corpb, pccb(-1,-1,0,0), pb, nb, ub)
@@ -237,7 +237,7 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npco_fnay'//chns)
        endif
-      endif                                                          !srv 12.07.02 }
+      endif                                                             !srv 12.07.02 }
 
       if (iout_b2wdat.eq.4) then
        if (in_parallel()) then

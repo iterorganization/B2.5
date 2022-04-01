@@ -1,6 +1,6 @@
         SUBROUTINE DSPLINE(N, X, Y, B, C, D)
-	  use b2mod_types
-	  implicit none
+        use b2mod_types
+        implicit none
         INTEGER N
         REAL (kind=R8) :: X(N),Y(N),B(N),C(N),D(N)
 C
@@ -100,4 +100,4 @@ C
         C(2)=0.0e0_R8
         D(2)=0.0e0_R8
         RETURN
-        END
+        END SUBROUTINE DSPLINE

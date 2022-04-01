@@ -4,11 +4,10 @@
       subroutine b2usm9 (nx, ny, isb, nregionv, solvereg, itcnt,     !srv 04.07.08
      &  rxg, vol, hx, hy, hz, qz, qs, bb, rob, rzb, pb, pz, ub,      !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa9, aad0, name) !srv 06.04.07
-      use b2mod_indirect
+      use b2mod_math
       use b2mod_types
-      use b2mod_boundary_namelist
-     , , only : iffboundx, iffboundy
       use b2mod_subsys
+      use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -52,17 +51,11 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, t2, t3, t4, flo, dif, csb, csb1
+     *  cfc0, t0, t1, t2, t3, t4, csb, csb1
       save ncall, cfc0
 *   ..procedures
-      intrinsic max, abs, sqrt
-      real (kind=R8) ::
-     *  hybr, upwind
       external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
-      hybr(flo,dif) = max(dif,abs(flo/2.0_R8),
-     .                    sqrt(dif**2+flo**2/4.0_R8))
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialisation
       data ncall/0/, cfc0/1.0_R8/
 
@@ -379,7 +372,12 @@ cxpb
        enddo
       enddo
 *   ..solve the correction equation
-      write(*,'(a,a)') 'Calling b2ux9p from ', name
+      if (index(name,'total').gt.0) then
+       write(*,'(1x,a,a)') 'Calling b2ux9p from ',name
+      else
+       write(*,'(1x,a,a,a,i3)')
+     .  'Calling b2ux9p from ',name,' for species ',isb
+      end if
       call b2ux9p (nx, ny, aa9, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {

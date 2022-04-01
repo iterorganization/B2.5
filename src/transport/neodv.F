@@ -49,7 +49,7 @@ c--------------------------------------------------------------------
 
       integer :: nsdecl
       integer :: nsl, ncl(0:nsdecl), nreg, nleg, nenergy, ncof, ic,
-     +           i, j, k, l, mt, nzdecl, ispecies, istate
+     +           i, j, k, l, mt, nzdecl
       real (kind=R8) :: m(0:nsdecl), t(0:nsdecl), 
      +       den(0:nsdecl,0:nzdecl-1),
      +       ds(0:nsdecl,0:nzdecl-1,2), dsl(0:nsdecl,0:nzdecl-1,2), 
@@ -146,7 +146,7 @@ c       calculate pinch including the ware pinch
 
 
       return 
-      end
+      end subroutine neodv
 
 
 

@@ -12,8 +12,8 @@ c
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
       real (kind=R8) ::
-     *   lmin,lmax,x1,x2,dsep,xmin,xmax,
-     1   y_transform
+     *   lmin,lmax,x1,x2,dsep,xmin,xmax,psign,
+     1   y_transform,poffset,pnorm
       integer ix,ixl,ixr,iy,is,iiso,lnblnk
       integer ysep,ysepl,ysepr,iystart,iyend
       integer ixx, ixc
@@ -154,6 +154,48 @@ c      if(nidim .ne. 2) call line(2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
+        else if (plot_vs_norm_psi.or.plot_vs_full_psi.or.
+     &           plot_vs_root_psi) then
+          if (iystart.le.jsep) then
+            x1 = psi(ixc,iystart)
+          else
+            x1 = psi(ixx,iystart)
+          end if
+          if (iyend.le.jsep) then
+            x2 = psi(ixc,iyend)
+          else
+            x2 = psi(ixx,iyend)
+          end if
+          if (iystart.le.jsep.and.iyend.gt.jsep) then
+            dsep = 0.5_R8*(fpsi(ixc,ysep,2)+fpsi(ixc,ysep,3))
+          else
+            dsep = 0.0_R8
+          end if
+          if (x1.eq.x2) then
+            write(6,*) 'No psi variation over the range to plot'
+            write(6,*) 'Graph abandoned'
+            call subend ()
+            return
+          else
+            psign = sign(1.0_R8,x2-x1)
+            if (plot_vs_norm_psi.or.plot_vs_root_psi) then
+              poffset = 1.0_R8
+              pnorm = psi_sep
+            else
+              poffset = 0.0_R8
+              pnorm = 1.0_R8
+            end if
+            do iy = iystart, iyend
+              if (iy.le.jsep) then
+                wrk(iy)=(psi(ixc,iy)*psign/pnorm)+poffset
+              else
+                wrk(iy)=(psi(ixx,iy)*psign/pnorm)+poffset
+              end if
+              if (plot_vs_root_psi) wrk(iy)=sqrt(wrk(iy))
+              lmin=min(lmin,work(ix,iy,is,iwrk))
+              lmax=max(lmax,work(ix,iy,is,iwrk))
+            end do
+          endif
         else
           if (iystart.le.jsep) then
             wrk(iystart)=points_dist(cr(ixc,iystart),cz(ixc,iystart),
@@ -233,7 +275,13 @@ c      if(nidim .ne. 2) call line(2)
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
-          if (map_to_midplane) then
+          if (plot_vs_norm_psi) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \Gw\R)'
+          else if (plot_vs_full_psi) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \GW\R)'
+          else if (plot_vs_root_psi) then
+            write(tmpstring2,hlp_frm) ' <ix = ',ix,'> (vs \Gq\R_{pol})'
+          else if (map_to_midplane) then
             write(tmpstring2,hlp_frm) ' <ix = ',ix,'> '//
      &       '(mapped to midplane)'
           else

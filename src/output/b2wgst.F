@@ -24,7 +24,7 @@
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  pr(-1:nx,-1:ny), pz(-1:nx,-1:ny),
-     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1), 
+     &  rz(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1),
      &  fni(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
@@ -41,8 +41,8 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results from
-*     a b2 calculation. The input data are the basic data employed by
-*     the b2 main program. Arrays crx and cry provide the coordinates
+*     a B2 calculation. The input data are the basic data employed by
+*     the B2 main program. Arrays crx and cry provide the coordinates
 *     of four corners of all the cells in the mesh. Arrays na, ua, te,
 *     ti, and po provide the state of the plasma. Arrays fna, fhe, fhi,
 *     and fch provide the particle flux, electron heat flux, atom heat
@@ -156,7 +156,7 @@
       if (strmas(idout,'cpne')) then
        write (header,fmtl) 'ELECTRON DENSITY (/m**3).'
        write (nprt,fmtp) '+cpne', header
-       call b2wgx4 (nx, ny, header, crx, cry, ne, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, ne, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, ne, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -164,7 +164,7 @@
       if (strmas(idout,'cpni')) then
        write (header,fmtl) 'TOTAL ATOM DENSITY (/m**3).'
        write (nprt,fmtp) '+cpni', header
-       call b2wgx4 (nx, ny, header, crx, cry, ni, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, ni, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, ni, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -172,7 +172,7 @@
       if (strmas(idout,'cpte')) then
        write (header,fmtl) 'ELECTRON TEMPERATURE (eV).'
        write (nprt,fmtp) '+cpte', header
-       call b2wgx4 (nx, ny, header, crx, cry, te, 0, ev)
+       call b2wgx4 (nx, ny, header, te, 0, ev)
        call b2wgx5 (nx, ny, header, crx, cry, te, 0, ev,
      &   wrkx, wrky)
       endif
@@ -180,7 +180,7 @@
       if (strmas(idout,'cpti')) then
        write (header,fmtl) 'ALL ATOM TEMPERATURE (eV).'
        write (nprt,fmtp) '+cpti', header
-       call b2wgx4 (nx, ny, header, crx, cry, ti, 0, ev)
+       call b2wgx4 (nx, ny, header, ti, 0, ev)
        call b2wgx5 (nx, ny, header, crx, cry, ti, 0, ev,
      &   wrkx, wrky)
       endif
@@ -188,7 +188,7 @@
       if (strmas(idout,'cppr')) then
        write (header,fmtl) 'TOTAL PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppr', header
-       call b2wgx4 (nx, ny, header, crx, cry, pr, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, pr, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, pr, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -196,7 +196,7 @@
       if (strmas(idout,'cppz')) then
        write (header,fmtl) 'PLASMA PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppz', header
-       call b2wgx4 (nx, ny, header, crx, cry, pz, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, pz, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, pz, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -205,7 +205,7 @@
        t0 = scal10(0.8_R8*samax(n2,po,1))
        write (header,fmth) 'ELECTRIC POTENTIAL (V).', t0/100
        write (nprt,fmtp) '+cppo', header
-       call b2wgx2 (nx, ny, header, crx, cry, po, 0, 1.0_R8,
+       call b2wgx2 (nx, ny, header, po, 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
        call b2wgx3 (nx, ny, header, crx, cry, po, 0, 1.0_R8,
      &   -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
@@ -221,7 +221,7 @@
         enddo
         write (header,fmtl2) 'FRACTIONAL ATOM DENSITY (unit).', is
         write (nprt,fmtp) '+cpfn', header
-        call b2wgx4 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8)
+        call b2wgx4 (nx, ny, header, wrk0, 0, 1.0_R8)
         call b2wgx5 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
      &    wrkx, wrky)
        enddo
@@ -231,7 +231,7 @@
        call b2xppe (nx, ny, ne, te, wrk0)
        write (header,fmtl) 'ELECTRON PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppe', header
-       call b2wgx4 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8)
+       call b2wgx4 (nx, ny, header, wrk0, 0, 1.0_R8)
        call b2wgx5 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
      &   wrkx, wrky)
       endif
@@ -241,11 +241,11 @@
         t0 = scal10(0.8_R8*samax(n2,ua(-1,-1,is),1))
         write (header,fmth2) 'PARALLEL VELOCITY (m/s).', is, t0/100
         write (nprt,fmtp) '+cpua', header
-        call b2wgx2 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
-     1   1.0_R8,
+        call b2wgx2 (nx, ny, header, ua(-1,-1,is), 0,
+     1    1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
         call b2wgx3 (nx, ny, header, crx, cry, ua(-1,-1,is), 0,
-     1   1.0_R8,
+     1    1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
      &    wrkx, wrky)
        enddo
@@ -257,7 +257,7 @@
         t0 = 1
         write (header,fmth2) 'MACH NUMBER.', is, t0/100
         write (nprt,fmtp) '+cpmc', header
-        call b2wgx2 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
+        call b2wgx2 (nx, ny, header, wrk0, 0, 1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10)
         call b2wgx3 (nx, ny, header, crx, cry, wrk0, 0, 1.0_R8,
      &    -1.2_R8*t0, 1.2_R8*t0, 48, -t0/20, t0/20, 10,
@@ -289,7 +289,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fnex',
      &    header)
@@ -322,7 +322,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fhex',
      &    header)
@@ -353,7 +353,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fchx',
      &    header)
@@ -381,7 +381,7 @@
 *      ..obtain the coordinates
          ixr = nint(cwaxr(iplot)*nx)
          iyr = nint(cwayr(iplot)*ny)
-         call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+         call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *      ..make plot
          call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fnax',
      &     header)
@@ -413,7 +413,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fney',
      &    header)
@@ -446,7 +446,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fhey',
      &    header)
@@ -477,7 +477,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fchy',
      &    header)
@@ -505,7 +505,7 @@
 *      ..obtain the coordinates
          ixr = nint(cwaxr(iplot)*nx)
          iyr = nint(cwayr(iplot)*ny)
-         call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+         call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *      ..make plot
          call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fnay',
      &     header)

@@ -31,7 +31,7 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
       INTEGER :: DIMENSIONS(4), REVERSE, nskip, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
-      real, ALLOCATABLE :: MM(:,:),BB(:,:), rr(:),zz(:),rout(:),zout(:),
+      real, ALLOCATABLE :: MM(:,:),BB(:,:),rr(:),zz(:),rout(:),zout(:),
      . dd(:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat',
      . OUTFILE0 = 'mnb_in.dat'
@@ -78,7 +78,7 @@
       READ(INUNIT,NML=MESH)
       READ(INUNIT,NML=COOLANT)
       READ(INUNIT,NML=OUTPUT)
-      
+
       close(INUNIT);
       ! Write output file
       INQUIRE (FILE=outfile0, EXIST=exists)
@@ -99,7 +99,7 @@
 ! 'X_tg[i-o].dat' and 'tg[i-o]_size.dat'. Read also related wlly_*.dat to get
 ! the r-z coordinates.
 ! ##########################################################################
-      
+
       INFILE='wlld_trg'//trg(KK)//'.dat'
       open(unit=inunit,file=infile,status='old',action='read')
       NLINE=0
@@ -124,7 +124,7 @@
          READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
       ENDDO
       CLOSE(INUNIT)
-      
+
       ! read wlly to get coordinates
       NSKIP=0
       INFILE='wlly_trg'//trg(KK)//'.dat'
@@ -141,14 +141,14 @@
          READ(INUNIT,*) ss
       end do
       DO II=1,NLINE+1
-         READ(INUNIT,*) rr(ii), zz(ii) 
+         READ(INUNIT,*) rr(ii), zz(ii)
       ENDDO
       CLOSE(INUNIT)
       dd(1)=0.0
       do ii=2,nline+1
         dd(ii)=dd(ii-1)+sqrt((rr(ii)-rr(ii-1))**2+(zz(ii)-zz(ii-1))**2)
       end do
-      
+
       !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
       target_length=mm(nline,1)-mm(1,1)
       ntiles=nint(target_length/p_length)
@@ -243,7 +243,6 @@
       real :: weight
 
       dataIndex=1
-
 
       do inputIndex = 1, nVal
 

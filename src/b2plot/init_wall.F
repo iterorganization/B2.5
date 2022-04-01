@@ -47,7 +47,7 @@
 
       real (kind=R8) :: mass_density
       logical overlap
-      intrinsic mod, max, min, sqrt, abs, int
+      intrinsic max, min, sqrt, abs, int
       external mass_density, overlap
       external xertst, ipgeti, ipgetr
 

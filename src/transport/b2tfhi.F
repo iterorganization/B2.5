@@ -2,18 +2,21 @@
 *.specification
 
       subroutine b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,
-     1  vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
+     1  vol, hx, ti, ni, na,
      2  fna, fni_32, fni_52, kinrgy,
      3  chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
-     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,            !lk 30.05.11
-     &  fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,             !srv 13.10.06
-     &  balance)                                                     !djm Jan2017
+     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,                !lk 30.05.11
+     &  fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                 !srv 13.10.06
+     &  balance)                                                         !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_balance                                              !djm Jan2017
+      use b2mod_geo
+     & , only : hy1
+      use b2mod_balance                                                  !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_kevis, balance_netcdf,
      &          fhi_inert, fhi_vispar, fhi_visper, fhi_visq, fhi_anml
@@ -23,31 +26,29 @@
       integer nx, ny, ns, guard_flows
       real (kind=R8) ::
      *  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),    !srv 13.10.06
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                !srv 13.10.06
      1  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
-     &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),!lk 30.05.11
-     &  fchinert(-1:nx,-1:ny,0:1,0:1), fchanml(-1:nx,-1:ny,0:1,0:1),  !lk 30.05.11
+     &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),  !lk 30.05.11
+     &  fchinert(-1:nx,-1:ny,0:1,0:1), fchanml(-1:nx,-1:ny,0:1,0:1),     !lk 30.05.11
      &  fchvisq(-1:nx,-1:ny,0:1,0:1),
      &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1), 
      &  chvi(-1:nx,-1:ny,0:1,0:1),
      &  chvimx(-1:nx,-1:ny), cvsa(-1:nx,-1:ny,0:1,0:1,0:nx-1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1), 
-     1  qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
+     &  hx(-1:nx,-1:ny),
      .  na(-1:nx,-1:ny,0:ns-1), 
-     2  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     2  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  facdrift(-1:nx,-1:ny), kinrgy(-1:nx,-1:ny,0:ns-1), BoRiS
-      logical balance                                                !djm Jan2017
+      logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  fhi(-1:nx,-1:ny,0:1,0:1), fhit(-1:nx,-1:ny,0:1,0:1), 
-     &  fhi_mdf(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),          !srv 13.10.06
-     1  floi(-1:nx,-1:ny,0:1,0:1), coni(-1:nx,-1:ny,0:1,0:1,0:2),            !srv 02.01.07
+     &  fhi_mdf(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),      !srv 13.10.06
+     1  floi(-1:nx,-1:ny,0:1,0:1), coni(-1:nx,-1:ny,0:1,0:1,0:2),        !srv 02.01.07
      2  fllimi(-1:nx,-1:ny)
 *   ..local variables
-      real (kind=R8) :: upfac, hybfac, scur !djm Jan2017
+      real (kind=R8) :: upfac, hybfac, scur                              !djm Jan2017
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -68,33 +69,27 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
+      integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr,
      &        ixl, iyl, ixb, iyb
-      integer, save :: iout = 0                                      !srv 16.09.02
-      integer, save :: lim_flux = 0, mdf_fhi = 0                     !srv 04.02.03 13.10.06
+      integer, save :: iout = 0                                          !srv 16.09.02
+      integer, save :: lim_flux = 0, mdf_fhi = 0                         !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1
       integer, save :: conductive_limit = 1
-      real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
-      real (kind=R8), save :: xcur = 0.0_R8                          !xpb 27.09.17
-      real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8       !srv 02.10.17
+      real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
+      real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
+      real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8) ::
-     *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0,
-     1  cum_flo_vadia, cum_flo_vaecrb, prefactor, cutlo,
-     &   floi0_mdf, coni0_mdf, t0_mdf,dti0_mdf, t1_mdf               !srv 13.10.06
+     *  floi0, flomx, coni0, t0, t1, dti, dti0,
+     1  cum_flo_vadia, cum_flo_vaecrb, prefactor,
+     &   floi0_mdf, coni0_mdf, t0_mdf,dti0_mdf, t1_mdf                   !srv 13.10.06
       real (kind=R8) :: w0(-1:nx,-1:ny,0:ns-1),
      1  w1(-1:nx,-1:ny,0:ns-1), w2(-1:nx,-1:ny,0:ns-1)
-      parameter (cutlo=1.0e-60_R8)
       save ncall, conduction_only, no_hybr
 *   ..procedures
-      intrinsic min, max, dim, abs, sqrt, sign
-      real (kind=R8) ::
-     *  hybr, upwind, hy1
+      intrinsic min, max, dim, sign
       external xertst, ipgeti
       external b2xvsg, b2xvff
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
-      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, conduction_only/0/, no_hybr/0/
 
@@ -116,13 +111,13 @@
         call ipgeti ('b2tfhe_conduction_only', conduction_only)
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call ipgeti ('b2tfhi_no_hybr', no_hybr)
-        call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
-        call ipgetr ('b2tfhi_PSch', PSch)                            !srv 17.01.07
-        call ipgetr ('b2tfnb_xcur', xcur)                            !xpb 27.09.17
-        call ipgetr ('b2tfnb_ycur', ycur)                            !srv 17.07.08
-        call ipgetr ('b2tfnb_vis_per', vis_per)                      !srv 02.10.17
-        call ipgetr ('b2tfnb_vis_q', vis_q)                          !srv 02.10.17
-        call ipgeti ('b2tfhi_iout', iout)                            !srv 16.09.02
+        call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
+        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
+        call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
+        call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
+        call ipgeti ('b2tfhi_iout', iout)                                !srv 16.09.02
         call ipgeti ('b2tfhi_lim_flux', lim_flux)
         call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
       endif
@@ -299,7 +294,7 @@ c  ..set null flux in guard cells  ?
 !      fhiPSch( :,ny,0,:)=0.0e0_R8
 	endif
 
-      fhi_mdf = 0.0e0_R8                                              !srv 13.10.06
+      fhi_mdf = 0.0e0_R8                                                 !srv 13.10.06
 
 * ..compute fluxes and linearisation
       do is = 0, ns-1
@@ -312,14 +307,14 @@ c  ..set null flux in guard cells  ?
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
          floi(ix,iy,0,0) = 0.0_R8
-         coni(ix,iy,0,0,0) = 0.0_R8                                    !srv 02.01.07
+         coni(ix,iy,0,0,0) = 0.0_R8                                      !srv 02.01.07
          fhi_mdf(ix,iy,0,0) = 0.0_R8
          fhi(ix,iy,0,0) = 0.0_R8
          fhit(ix,iy,0,0) = 0.0_R8
          fllimi(ix,iy) = 1.0_R8
          w1(ix,iy,:) = 0.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
-           fhi_32(ix,iy,0,0) = 0.0_R8                               !djm Jan2017
+           fhi_32(ix,iy,0,0) = 0.0_R8                                    !djm Jan2017
            fhi_52(ix,iy,0,0) = 0.0_R8
            fhi_cond(ix,iy,0,0) = 0.0_R8
            fhi_dia(ix,iy,0,0) = 0.0_R8
@@ -348,7 +343,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                coni0 = cvsa(ix,iy,0,0,is)
                t1 = dim ( coni0,
      .          abs(floi0) *
-     .          max(0.0_R8, 
+     .          max(0.0_R8,
      .           min(w0(ix,iy,is),w0(leftix(ix,iy),leftiy(ix,iy),is)))/
      .          max(cutlo,
      .              w0(ix,iy,is)+w0(leftix(ix,iy),leftiy(ix,iy),is)) )
@@ -370,8 +365,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1
              prefactor=
-     1        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))     !srv 17.05.99
-     &        /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))      !srv 17.05.99
+     1        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 17.05.99
+     &        /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))               !srv 17.05.99
      &        *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
              if (drift_style.eq.0) then
                cum_flo_vadia=cum_flo_vadia + 0.5_R8*prefactor*
@@ -388,14 +383,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              endif
            enddo
          endif
-         floi0_mdf = floi0+1.5_R8*cum_flo_vaecrb                !srv 18.08.08
+         floi0_mdf = floi0+1.5_R8*cum_flo_vaecrb                         !srv 18.08.08
          floi0 = floi0+2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
          flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
      &                         +ni(ix,iy,0))/2.0_R8
          if (no_hybr.eq.0) then
            coni0 = hybr(floi0,chci(ix,iy,0,0))-abs(floi0/2.0_R8)
            coni0_mdf = hybr(floi0_mdf,chci(ix,iy,0,0))-
-     &                  abs(floi0_mdf/2.0_R8)                   !srv 18.08.08
+     &                  abs(floi0_mdf/2.0_R8)                            !srv 18.08.08
          else
            coni0 = chci(ix,iy,0,0)
            coni0_mdf = chci(ix,iy,0,0)
@@ -404,21 +399,21 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &       lim_flux.eq.1 .and. conductive_limit.eq.0) then
            t0 = coni0*abs(dti)/
      &      (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-           t0_mdf = coni0_mdf*abs(dti)/                             !srv 18.08.08
+           t0_mdf = coni0_mdf*abs(dti)/                                  !srv 18.08.08
      &      (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
          else
            t0 = 0.0_R8
-           t0_mdf = 0.0_R8                                      !srv 18.08.08
+           t0_mdf = 0.0_R8                                               !srv 18.08.08
          endif
          dti0 = dti/(1.0_R8+t0)
          t1 = t0/(1.0_R8+t0)
-         dti0_mdf = dti/(1.0_R8+t0_mdf)             !srv 18.08.08 {
+         dti0_mdf = dti/(1.0_R8+t0_mdf)                                  !srv 18.08.08 {
          t1_mdf = t0_mdf/(1.0_R8+t0_mdf)
-	 if(mdf_fhi.eq.0) then
+         if(mdf_fhi.eq.0) then
           fllimi(ix,iy) = 1.0_R8+t0
-	 else
+         else
           fllimi(ix,iy) = 1.0_R8+t0_mdf
-	 endif                                      !srv 18.08.08 }
+         endif                                                           !srv 18.08.08 }
          if (no_hybr.eq.0) then
            fhi(ix,iy,0,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                          +ti(ix,iy))/2.0_R8-
@@ -427,10 +422,10 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .                    floi0_mdf*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                          +ti(ix,iy))/2.0_R8-
      &                  abs(floi0_mdf/2.0_R8)*dti-coni0_mdf*dti0_mdf
-     &                       - fhiPSch(ix,iy,0,0)                      !srv 13.10.06 }
+     &                       - fhiPSch(ix,iy,0,0)                        !srv 13.10.06 }
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
-     &         (mdf_fhi.eq.0)) then !djm Jan2017
+     &         (mdf_fhi.eq.0)) then                                      !djm Jan2017
              !djm Jan2017 share the hybrid part according to relative contributions
              if (floi0.ge.0.0_R8) then
                hybfac=1.0_R8
@@ -475,7 +470,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            endif
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
-     &         (mdf_fhi.ne.0)) then !djm Jan2017
+     &         (mdf_fhi.ne.0)) then                                      !djm Jan2017
              if (floi0_mdf.ge.0.0_R8) then
                hybfac=1.0_R8
              else
@@ -572,7 +567,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            endif
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
-     &         (mdf_fhi.ne.0)) then !djm Jan2017
+     &         (mdf_fhi.ne.0)) then                                      !djm Jan2017
              if(floi0_mdf.ge.0.0_R8) then
                upfac=1.0_R8
              else
@@ -624,24 +619,24 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          fhit(ix,iy,0,0) = fhi(ix,iy,0,0) +
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,0,0)+cum_flo_vaecrb)*
      &    (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-	 if(mdf_fhi.eq.0) then
+         if(mdf_fhi.eq.0) then
           floi(ix,iy,0,0) = floi0-
      &    sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &    min(0.0_R8,t1)**2
-	 else
+         else
           floi(ix,iy,0,0) = floi0_mdf-
      &    sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &    min(0.0_R8,t1_mdf)**2
-	 endif
+         endif
          if (no_hybr.eq.0) then
-	  if(mdf_fhi.eq.0) then
-           coni(ix,iy,0,0,0) = abs(floi0/2.0_R8)+coni0/(1.0_R8+t0)     !srv 02.01.07
-	  else
+          if(mdf_fhi.eq.0) then
+           coni(ix,iy,0,0,0) = abs(floi0/2.0_R8)+coni0/(1.0_R8+t0)       !srv 02.01.07
+          else
            coni(ix,iy,0,0,0) = abs(floi0_mdf/2.0_R8)+
-     &                       coni0_mdf/(1.0_R8+t0_mdf)     !srv 02.01.07
-	  endif
+     &                       coni0_mdf/(1.0_R8+t0_mdf)                   !srv 02.01.07
+          endif
          else
-           coni(ix,iy,0,0,0) = coni0/(1.0_R8+t0)                       !srv 02.01.07
+           coni(ix,iy,0,0,0) = coni0/(1.0_R8+t0)                         !srv 02.01.07
          endif
         endif
        enddo
@@ -652,13 +647,13 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
          floi(ix,iy,1,1) = 0.0_R8
-         coni(ix,iy,1,1,0) = 0.0_R8                                  !srv 02.01.07
-         fhi_mdf(ix,iy,1,1) = 0.0e0_R8                               !srv 13.10.06
+         coni(ix,iy,1,1,0) = 0.0_R8                                      !srv 02.01.07
+         fhi_mdf(ix,iy,1,1) = 0.0e0_R8                                   !srv 13.10.06
          fhi(ix,iy,1,1) = 0.0_R8
          fhit(ix,iy,1,1) = 0.0_R8
          w2(ix,iy,:) = 0.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
-           fhi_32(ix,iy,1,1) = 0.0_R8                               !djm Jan2017
+           fhi_32(ix,iy,1,1) = 0.0_R8                                    !djm Jan2017
            fhi_52(ix,iy,1,1) = 0.0_R8
            fhi_cond(ix,iy,1,1) = 0.0_R8
            fhi_dia(ix,iy,1,1) = 0.0_R8
@@ -709,10 +704,10 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1
              prefactor=
-     &         (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))   !srv 17.05.99
-     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))   !srv 17.05.99
-     &        *(na(bottomix(ix,iy),bottomiy(ix,iy),is)             !srv 17.05.99
-     &         +na(ix,iy,is))/2.0_R8                               !srv 17.05.99
+     &         (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))          !srv 17.05.99
+     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))          !srv 17.05.99
+     &        *(na(bottomix(ix,iy),bottomiy(ix,iy),is)                    !srv 17.05.99
+     &         +na(ix,iy,is))/2.0_R8                                      !srv 17.05.99
              if (drift_style.eq.0) then
                cum_flo_vadia=cum_flo_vadia+
      1          0.5_R8*prefactor*(vadia(ix,iy,1,1,is) + 
@@ -728,26 +723,26 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              endif
            enddo
          endif
-	 if(mdf_fhi.eq.0) then
+         if(mdf_fhi.eq.0) then
           floi(ix,iy,1,1) = floi0+
      1     2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
-	 else
+         else
           floi(ix,iy,1,1) = floi0+1.5_R8*cum_flo_vaecrb
-	 endif
+         endif
          if (no_hybr.eq.0) then
-           coni(ix,iy,1,1,0) = hybr(floi(ix,iy,1,1),chci(ix,iy,1,1))    !srv 02.01.07
+           coni(ix,iy,1,1,0) = hybr(floi(ix,iy,1,1),chci(ix,iy,1,1))     !srv 02.01.07
            fhi(ix,iy,1,1) = floi(ix,iy,1,1)*
      1      (ti(bottomix(ix,iy),bottomiy(ix,iy))
      &                                +ti(ix,iy))/2.0_R8-
-     &       coni(ix,iy,1,1,0)*                                     !srv 02.01.07
+     &       coni(ix,iy,1,1,0)*                                          !srv 02.01.07
      1      (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
            fhi_mdf(ix,iy,1,1) = floi(ix,iy,1,1)*
      1      (ti(bottomix(ix,iy),bottomiy(ix,iy))
      &                                +ti(ix,iy))/2.0_R8-
-     &       coni(ix,iy,1,1,0)*                                     !srv 02.01.07
+     &       coni(ix,iy,1,1,0)*                                          !srv 02.01.07
      1      (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -fhiPSch(ix,iy,1,1)                                     !srv 13.10.06 }
-           if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+     &      -fhiPSch(ix,iy,1,1)                                          !srv 13.10.06 }
+           if (balance.and.(balance_netcdf.ne.0)) then                   !djm Jan2017
              fhi_32(ix,iy,1,1) = (1.5_R8+BoRiS)*fni_32(ix,iy,1,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_52(ix,iy,1,1) = 2.5_R8*fni_52(ix,iy,1,1)*
@@ -774,17 +769,17 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &        ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_visper(ix,iy,1,1) =
-     &         1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*ycur*       !srv 02.10.17
+     &         1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*ycur*            !srv 02.10.17
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_visq(ix,iy,1,1) =
-     &         1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*ycur*           !srv 02.10.17
+     &         1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*ycur*                !srv 02.10.17
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_anml(ix,iy,1,1) = 1.5e0_R8/qe*fchanml(ix,iy,1,1)*ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            endif
          else
-           coni(ix,iy,1,1,0) = chci(ix,iy,1,1)                    !srv 02.01.07
-           t1 = dim ( coni(ix,iy,1,1,0),                          !srv 02.01.07
+           coni(ix,iy,1,1,0) = chci(ix,iy,1,1)                           !srv 02.01.07
+           t1 = dim ( coni(ix,iy,1,1,0),                                 !srv 02.01.07
      .         abs(floi(ix,iy,1,1)) *
      .         max(0.0_R8,
      .             min(ti(ix,iy),ti(bottomix(ix,iy),bottomiy(ix,iy))))/
@@ -810,13 +805,13 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
        enddo
       enddo
 
-      if(guard_flows.eq.0) then                                    !xpb
+      if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fhi(ix,iy,1,1)=0.0_R8
-              if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+              if (balance.and.(balance_netcdf.ne.0)) then                !djm Jan2017
                 fhi_32(ix,iy,1,1) = 0.0_R8
                 fhi_52(ix,iy,1,1) = 0.0_R8
                 fhi_cond(ix,iy,1,1) = 0.0_R8
@@ -841,7 +836,7 @@ cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(on_closed_surface(ix,-1)) then
             fhi(ix,-1,0,0) = 0.0_R8
-            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then                  !djm Jan2017
               fhi_32(ix,-1,0,0) = 0.0_R8
               fhi_52(ix,-1,0,0) = 0.0_R8
               fhi_cond(ix,-1,0,0) = 0.0_R8
@@ -861,7 +856,7 @@ cxpb turn off poloidal flows in core boundary
             fllimi(ix,-1) = 1.0_R8
           endif
         enddo
-      endif                                                        !xpb
+      endif                                                             !xpb
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
@@ -906,7 +901,7 @@ cxpb turn off poloidal flows in core boundary
         end do
       end do
 
-      if(iout.ne.0) then                                             !srv 18.06.08 {
+      if(iout.ne.0) then                                                !srv 18.06.08 {
         call my_out(70,nx,ny,floi(-1,-1,0,0),'b2tfhi_floix')
         call my_out(70,nx,ny,floi(-1,-1,1,1),'b2tfhi_floiy')
         call my_out(70,nx,ny,coni(-1,-1,0,0,0),'b2tfhi_conix0')
@@ -921,7 +916,7 @@ cxpb turn off poloidal flows in core boundary
         call my_out(70,nx,ny,fhi_mdf(-1,-1,1,1),'b2tfhi_fhi_mdfy')
         call my_out(70,nx,ny,fhiPSch(-1,-1,0,0),'b2tfhi_fhiPSchx')
         call my_out(70,nx,ny,fhiPSch(-1,-1,1,1),'b2tfhi_fhiPSchy')
-      endif                                                          !srv 18.06.08 }
+      endif                                                             !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sifrtf (nx, ny, ns, isb, ismain, hx, bb, na,         !srv 09.01.01 18.10.02 13.01.17 05.07.17
+      subroutine b2sifrtf (nx, ny, ns, isb, ismain, bb, na,             !srv 09.01.01 18.10.02 13.01.17 05.07.17
      &   ua, ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2, !srv 01.07.09 11.09.09 05.07.17
      &   cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,        !srv 05.07.17
      &   smbch, smbtf)
@@ -12,7 +12,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_plasma
-     , , only :  po
+     , , only : roxa
       use b2mod_transport
      , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
@@ -30,7 +30,6 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), ! hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),           !srv 05.07.17
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ue(-1:nx,-1:ny),
@@ -38,7 +37,8 @@
      &  ne2(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),        !srv 13.01.17
      &  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),                             !srv 13.01.17
-     &  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny), zeff(-1:nx,-1:ny)       !srv 13.01.17
+     &  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     &  zeff(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
@@ -69,7 +69,7 @@
 
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is
-      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
+      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
 #ifdef NO_OPENMP_B2NPMO
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
 #endif
@@ -86,17 +86,14 @@
 ! The usage of smb*a instead of smb*al should be checked.
       real (kind=R8) ::
      *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
-     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)            !srv 13.01.17 }
 #ifdef WITH_FTIMINGS
       logical :: do_parallel
 #endif
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *  roxa
       external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                           !srv 01.07.05
 #ifdef NO_IEEE
       logical, external :: my_isnan
 #endif
@@ -106,7 +103,7 @@
       !$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
 #endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/ 
+     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -228,7 +225,6 @@
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
 #endif
-
 !*   ..compute ue, electron parallel velocity
 !      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
 !     &             ne, te, na, ua, ue_ext, ne_ext, ue)
@@ -285,7 +281,7 @@
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
-       if(isb.ne.is .and. 
+       if(isb.ne.is .and.
      &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
         Kabtf = fkabtf(isb,is)
         Kbatf = fkabtf(is,isb)
@@ -296,7 +292,7 @@
         do iy = 0, ny-1
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-c      .. calculations could be simplified 
+c      .. calculations could be simplified
 c      .. but we did not do it in order to have the same formulae as manual
            calfab = zetap(ix,iy)/sqrt(mp)*
      &          qe*(na(ix,iy,isb)+na(ix,iy,is))*
@@ -318,7 +314,7 @@ c   .. apply flux limit
            endif
 
            t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-     &                             ((na(ix,iy,isb)+na(ix,iy,is)))*delti
+     &                              ((na(ix,iy,isb)+na(ix,iy,is)))*delti
            smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
           endif
          enddo
@@ -332,7 +328,6 @@ c   .. apply flux limit
 #ifdef WITH_FTIMINGS
       if (do_parallel) call timer%stop("parallel")
 #endif
-
       smbtf = smbtfeal + smbtfial
 
       smbfria = smbfrial
@@ -340,24 +335,24 @@ c   .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
-      if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
-	write (chns,'(i3.3)') isb
+      if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
+        write (chns,'(i3.3)') isb
 
-       wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
+        wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
      &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
-       call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
 
-       wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
-       call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
-       wrk = vol*hz*smbtfial(:,:,0)
-       call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
-       wrk = vol*hz*smbtfeal(:,:,0)
-       call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
-       call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
+        wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
+        wrk = vol*hz*smbtfial(:,:,0)
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
+        wrk = vol*hz*smbtfeal(:,:,0)
+        call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
+        call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
       endif
 
-      if (iout.gt.1) then                                              !srv 05.07.17
+      if (iout.gt.1) then                                               !srv 05.07.17
         do is = 0,ns-1
           write (chis,'(i3.3)') is
           wrk = fkabvp(isb, is)
@@ -394,18 +389,18 @@ c   .. apply flux limit
 
       function fkabvp(a, b)
       implicit none
-      integer a, b 
+      integer a, b
       real (kind=R8) :: fkabvp(-1:nx,-1:ny)
-      if((a.eq.ismain) .and. (b.ne.a) .and. 
+      if((a.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
-      elseif((b.eq.ismain) .and. (a.ne.b) .and. 
+      elseif((b.eq.ismain) .and. (a.ne.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
-      elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and. 
+      elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=1.0_R8
-      elseif((a.eq.b) .and. 
+      elseif((a.eq.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=0.0_R8
       else
@@ -416,12 +411,12 @@ c   .. apply flux limit
 
       function fkabtf(a, b)
       implicit none
-      integer a, b 
+      integer a, b
       real (kind=R8) :: fkabtf(-1:nx,-1:ny)
-      if((b.eq.ismain) .and. (b.ne.a) .and. 
+      if((b.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=cimp2
-      elseif((a.ne.ismain) .and. (b.ne.ismain) .and. 
+      elseif((a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=0.0_R8
       elseif((a.eq.ismain)) then
@@ -434,7 +429,7 @@ c   .. apply flux limit
 
       function fka(a)
       implicit none
-      integer a 
+      integer a
       real (kind=R8) :: fka(-1:nx,-1:ny)
       integer r
       fka = 0.0_R8
@@ -449,4 +444,4 @@ c   .. apply flux limit
 *-----------------------------------------------------------------------
 *.end b2sifrtf
 
-      end                                                               !srv 01.07.05 }
+      end subroutine b2sifrtf                                           !srv 01.07.05 }

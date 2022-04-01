@@ -1,15 +1,16 @@
-      subroutine b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, kapx, conx)
+      subroutine b2txcx (nx, ny, mode, vol, gs, hx, qz, kapx, conx)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     &   hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &   kapx(-1:nx,-1:ny), conx(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
-*     B2TXCX computes poloidal conductances between neighbouring cells, 
+*     B2TXCX computes poloidal conductances between neighbouring cells,
 *     given the poloidal conductivities in cell centers.
 *     conx(:,:,0) contains poloidal conductivities across x-faces
 *     conx(:,:,1) contains poloidal conductivities across y-faces
@@ -19,10 +20,9 @@
      *   t0, t1
       intrinsic max, sqrt
       real (kind=R8) ::
-     *   harm, smin, smax
+     *   smin, smax
       external xertst, smin, smax
       external b2xvsg, b2xxgs
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcx')
@@ -44,7 +44,7 @@
      &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
      &  'faulty argument range qz(,,1)')
 
-*     conx(:,:,1) = 0 as long as y-faces are aligned with  
+*     conx(:,:,1) = 0 as long as y-faces are aligned with
 *     magnetic surfaces, so no change needed yet
       conx(:,:,1) = 0.0_R8
 *   ..compute conx(:,:,0)
@@ -126,4 +126,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txcx

@@ -15,6 +15,8 @@
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_plasma
+     & , only : roxa
       use b2mod_balance !djm Jan2017
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
@@ -73,13 +75,15 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer ncall, styl0, n2, ix, iy, is, ireg, k
+      integer ncall, styl0, n2, ix, iy, is, ireg
+!     integer k
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
-      character chns*3, chk*1                                           !srv 30.06.08
+      character chns*3
+!     character chk*1                                             !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
@@ -89,10 +93,9 @@
 *   ..procedures
       logical streql
       real (kind=R8) ::
-     *   samax, roxa
+     *   samax
       external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg, streql
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
@@ -353,10 +356,10 @@
            rrahi(ix,iy,is) = t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb.ne.0) then
-c the default treatment is to have the entire ionization potential
+c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
-c this treatment changes this --- the ionization potential difference
+c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
@@ -579,9 +582,9 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_sna_rec0to1 = sna0_rec
         b2stel_smq_ion0to3 = smq0_ion
         b2stel_smq_rec0to3 = smq0_rec
-        b2stel_she0to3=she0
-        b2stel_shi_ion0to3=shi0_ion
-        b2stel_shi_rec0to3=shi0_rec
+        b2stel_shi_ion0to3 = shi0_ion
+        b2stel_shi_rec0to3 = shi0_rec
+        b2stel_she0to3 = she0
       endif
 
 * ..return

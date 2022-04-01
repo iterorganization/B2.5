@@ -23,7 +23,7 @@
 *
 *  1. purpose
 *
-*     B2TS (main program) is a postprocessor for b2.
+*     B2TS (main program) is a postprocessor for B2.
 *
 *
 *  2. specification
@@ -34,7 +34,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ts performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2tsdr to control the actual computation.

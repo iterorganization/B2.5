@@ -13,11 +13,13 @@
       integer nx, ny, isb
       real (kind=R8) ::
      *  pbs(-1:nx,-1:ny,0:1), rob(-1:nx,-1:ny), ub(-1:nx,-1:ny),
-     &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1), 
      &  vol(-1:nx,-1:ny)
+*   ..inout arguments
+      real (kind=R8) ::
+     *  cvsb(-1:nx,-1:ny,0:1,0:1), flub(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   flcb(-1:nx,-1:ny,0:1,0:1), cvcb(-1:nx,-1:ny,0:1,0:1)
+     *  flcb(-1:nx,-1:ny,0:1,0:1), cvcb(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny)                                          !srv 02.07.08
@@ -118,14 +120,14 @@
         enddo
        elseif(style.eq.1) then
         do ix = -1, nx                                                 !srv 26.11.02
-         if(leftix(ix,iy).eq.-2) then                                           !srv 26.11.02 {
+         if(leftix(ix,iy).eq.-2) then                                  !srv 26.11.02 {
           flcb(ix,iy,0,0) = 0.0_R8
           flcb(ix,iy,0,1) = 0.0_R8
           cvcb(ix,iy,0,0) = 0.0_R8
           cvcb(ix,iy,0,1) = 0.0_R8
          else
           flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
-     &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8      !srv 01.07.05 } 
+     &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8     !srv 01.07.05 }
           flcb(ix,iy,0,1) = flub(ix,iy,0,1)
           cvcb(ix,iy,0,0) = cvsb(ix,iy,0,0)
           cvcb(ix,iy,0,1) = cvsb(ix,iy,0,1)
@@ -141,7 +143,7 @@
       call b2scopy (n2, cvsb(-1,-1,1,0), 1, cvcb(-1,-1,1,0), 1)
       call b2scopy (n2, cvsb(-1,-1,1,1), 1, cvcb(-1,-1,1,1), 1)
 
-csw 18feb2014 remove fluxes between guard cells 
+csw 18feb2014 remove fluxes between guard cells
         do ix=-1,nx
          do iy=-1,ny
            if(iffboundx(ix,iy).ne.0) then
@@ -188,11 +190,11 @@ C            flcb(:,iy,0,0:1) = 0.0_R8
 C            cvcb(:,iy,0,0:1) = 0.0_R8
 C            flub(:,iy,0,0:1) = 0.0_R8
 C            cvsb(:,iy,0,0:1) = 0.0_R8
-C         enddo                          
+C         enddo
 
 
       if (iout.ne.0) then                                              !sv 17.06.02 {
-        write (charns,'(i3.3)') isb    
+        write (charns,'(i3.3)') isb
         call my_out(70,nx,ny,flub(-1,-1,0,0),'b2nxfc_flubx'//charns)
         call my_out(70,nx,ny,flub(-1,-1,0,1),'b2nxfc_flubxy'//charns)
         call my_out(70,nx,ny,flub(-1,-1,1,0),'b2nxfc_flubyx'//charns)

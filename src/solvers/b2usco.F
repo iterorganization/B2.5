@@ -49,13 +49,8 @@
       !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *  rscal
       external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xxgs, b2ux5p
-! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
-      rscal(t0) = t0                                                  !srv 13.10.06
-!      rscal(t0) = 1.0e0_R8                                           !srv 13.10.06
 *   ..initialisation
       data ncall/0/
 
@@ -146,9 +141,9 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(leftix(ix,iy).eq.-2) then
           aa5(ix,iy,-1) = 0.0_R8
         else
-          t0 =  flob(ix,iy,0,0)/2.0_R8 - 
+          t0 =  flob(ix,iy,0,0)/2.0_R8 -
      &         (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,0,1) !srv 13.10.06
-          t1 = -flob(ix,iy,0,0)/2.0_R8 - 
+          t1 = -flob(ix,iy,0,0)/2.0_R8 -
      &         (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,0,2) !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft))
@@ -179,10 +174,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
           aa5(ix,iy,-2) = 0.0_R8
         else
-          t0 =  flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0) 
-     &                                 - conb(ix,iy,1,1,1) !srv 13.10.06
-          t1 = -flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0) 
-     &                                 - conb(ix,iy,1,1,2) !srv 13.10.06
+          t0 =  flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0)
+     &                                 - conb(ix,iy,1,1,1)             !srv 13.10.06
+          t1 = -flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0)
+     &                                 - conb(ix,iy,1,1,2)             !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
      >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*rscal(pb(ix,iy))
@@ -202,7 +197,7 @@ cxpb
             t0 = flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
      &           conb(topix(ix,iy),topiy(ix,iy),1,1,0)-                !srv 13.10.06
      &           conb(topix(ix,iy),topiy(ix,iy),1,1,1)                 !srv 13.10.06
-            t1 = -flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
+            t1 =-flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
      &           conb(topix(ix,iy),topiy(ix,iy),1,1,0)-                !srv 13.10.06
      &           conb(topix(ix,iy),topiy(ix,iy),1,1,2)                 !srv 13.10.06
             itop = region(topix(ix,iy),topiy(ix,iy),0)
@@ -246,6 +241,7 @@ cxpb
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
+
       if (iout.ne.0) then                                              !srv 17.06.02 {
        if (in_parallel()) then
         if (ncall==0) then
@@ -275,4 +271,15 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2usco
 
-      end
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
+      rscal = t0                                                  !srv 13.10.06
+!      rscal = 1.0e0_R8                                           !srv 13.10.06
+      return
+      end function rscal
+
+      end subroutine b2usco

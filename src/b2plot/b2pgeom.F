@@ -4,7 +4,7 @@ c  version : 07.09.2000 16:07
 c=======================================================================
 c***  Produces tables with coordinates of grid cell corners along the
 c***  separatrix and along the magnetic surfaces
-c***  for subsequent plotting with stand-alone software
+c***  for subsequent plotting with standalone software
 c***
 c*** Output files:
 c***
@@ -42,9 +42,9 @@ c=======================================================================
         ofile='gm_sep.dat'
         open(lun,file=ofile,err=999)
         rewind(lun)
-        write(lun,'(3a)',err=998) '# Separatrix shape'
-        write(lun,'(3a)',err=998) '#',label
-        write(lun,'(3a)',err=998) '#R',tab,'Z'
+        write(lun,' (a)',err=998) '# Separatrix shape'
+        write(lun,'(2a)',err=998) '# ',trim(label)
+        write(lun,'(3a)',err=998) '# R',tab,'Z'
         do i=0,nx !{
           write(lun,'(1p,e15.7,a,e15.7)',err=998) crx(i,k,2),tab,
      ,                                                        cry(i,k,2)
@@ -104,7 +104,7 @@ c=======================================================================
 
         close (lun)
       else if(nncut.eq.2) then !}{ === double null ===
-        
+
         write(0,*) 'b2pgeom: double null configuration yet to be ',
      ,                                                    'implemented'
         return
@@ -123,4 +123,4 @@ c=======================================================================
   999 write(0,*) 'b2pgeom: unable to open file ',ofile
       return
 c=======================================================================
-      end
+      end subroutine b2pgeom

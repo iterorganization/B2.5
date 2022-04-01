@@ -1,7 +1,7 @@
       subroutine b2ruzd(nget, version, ns, zamin, zamax, zn, am, todo)
       use b2mod_types
       use b2mod_b2cmpa
-     , ,only : is_neutral, partition_number, nspecies
+     , ,only : is_neutral, partition_number, nspecies, amtol
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -13,17 +13,12 @@
      *  zamin(0:ns-1), zamax(0:ns-1), zn(0:ns-1), am(0:ns-1)
 
 *   ..local variables
-      integer is, js
+      integer is
       real (kind=R8) ::
-     *  amtol, za(0:ns-1), za2(0:ns-1)
-      parameter (amtol=1.0e-2_R8)
+     *  za(0:ns-1), za2(0:ns-1)
 
 *   ..procedures
-      intrinsic nint
-      logical lnext
       external xertst, cfrure
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 
 *   ..main computation
       call subini ('b2ruzd')
@@ -66,4 +61,15 @@
 
       call subend ()
       return
+
+      contains
+
+      logical function lnext(is,js)
+      implicit none
+      integer, intent(in) :: is, js
+      lnext = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol
+      return
+      end function lnext
+
       end subroutine b2ruzd

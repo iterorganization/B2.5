@@ -1,3 +1,10 @@
+      module b2mod_illtern_7
+
+      logical, save :: lfirst
+      data lfirst /.true./
+
+      contains
+
       SUBROUTINE ILLTERN_7(N1, N2, N1D, NZ, RHS, SOL)                  !sv 29.05.02 {
       use b2mod_types
       use b2mod_ysmp_sdrv
@@ -18,22 +25,17 @@ C
       INTEGER N, I, J, K
       real (kind=R8) :: cpu_start,cpu_end
       integer iflag
-
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
-      logical lfirst
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
-      integer       ::  path                                          !sv 29.05.02
-      integer, save ::  nltrsol                                       !sv 29.05.02
-!      real (kind=R8) :: time_begin, time_end                          !sv 29.05.02
-      save lfirst, ncall, nwrite_fmt, nwrite_bnr                      !sv 29.05.02
-      data lfirst /.true./, ncall /0/, nwrite_fmt /0/, nwrite_bnr /0/ !sv 29.05.02
+      integer       :: path                                           !sv 29.05.02
+      integer, save :: nltrsol = 2                                    !sv 29.05.02
+!      real (kind=R8) :: time_begin, time_end                         !sv 29.05.02
+      save ncall, nwrite_fmt, nwrite_bnr                              !sv 29.05.02
+      data ncall /0/, nwrite_fmt /0/, nwrite_bnr /0/                  !sv 29.05.02
 
 *=======================================================================
 *//COMPUTATION//
@@ -53,7 +55,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       if(ncall.lt.10) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
        IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
-        CALL XERRAB ('ILUTERN_7 -- FAULTY ARGUMENT N1, N2, N1D')   !sv 06.07.00
+        CALL XERRAB ('ILLTERN_7 -- FAULTY ARGUMENT N1, N2, N1D')   !sv 06.07.00
        END IF
 
       endif
@@ -139,7 +141,7 @@ C
 C
         PATH = 4
 !          call cpu_time(time_begin)
-C                             Perform symbolyc LDL' factorization (SSF)
+C                             Perform symbolyc LDL factorization (SSF)
         CALL SDRV
      *     (N, NZ, P, IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
@@ -170,7 +172,7 @@ C
 C
         PATH = 6
 !          call cpu_time(time_begin)
-C                             Perform numerical LDL' factorization
+C                             Perform numerical LDL factorization
          CALL SDRV
      *     (N, NZ, P, IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
@@ -207,25 +209,27 @@ C
      *       ESP, Iflag, NSP
 C
       endif
-         
-        
+
+
       DO 50,K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1
         SOL(I,J)=S1(K)
-  50  CONTINUE
+   50 CONTINUE
 
 *  ---------------------------------------------------------------------
       call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
+      END SUBROUTINE ILLTERN_7
 
-      entry restart_sdrv_for_7                            
+      subroutine restart_sdrv_for_7
       lfirst=.true.
       write(*,*) ' Restarting sdrv'
       return
+      end subroutine restart_sdrv_for_7
 
 *=======================================================================
 *//END ILLTERN//
 
-      END                                                          !sv 29.05.02 }
+      END module b2mod_illtern_7                                        !sv 29.05.02 }

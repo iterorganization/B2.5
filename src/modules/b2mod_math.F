@@ -89,6 +89,14 @@ c     of cross-flows across surfaces, dif may be negative
       return
       end function hybr
 
+      integer function ibase(n,incx)
+      implicit none
+      integer n, incx
+      intrinsic max
+      ibase = max(0,(1-n)*incx)
+      return
+      end function ibase
+
       function med(t0,t1,t2)
       implicit none
       real(kind=R8) :: med, t0, t1, t2

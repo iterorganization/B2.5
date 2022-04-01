@@ -23,7 +23,7 @@
 *  1. purpose
 *
 *     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
-*     heat flux
+*     heat flux.
 *
 *  8. further comments
 *
@@ -31,7 +31,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, ixl, iyl, ixb, iyb
+      integer ix, iy, is, ixl, iyl, ixb, iyb
       integer, save :: ncall = 0
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -47,8 +47,6 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')   
       
@@ -63,26 +61,8 @@
         call diff(nx, ny, hx, hy, wght, qs, nete2, dnete2)
 
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
-        do is = 0,ns-1                                                   !srv 12.05.11
+        do is = 0, ns-1                                                  !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
-!        is = ismain !  1                                                !srv 12.05.11
-!        iy = -1
-!        do ix = -1, nx
-!         if(leftix(ix,iy).eq.-2) then
-!          fhePSch(ix,iy,0)=0.0e0_R8
-!         else
-!          fhePSch(ix,iy,0)=-0.5e0_R8*(
-!     &     cddi(ix,topiy(ix,iy),1,is)*
-!     &     (ne(ix,topiy(ix,iy))*te(ix,topiy(ix,iy))**2-
-!     &                        ne(ix,iy)*te(ix,iy)**2)+
-!     &     cddi(leftix(ix,iy),topiy(ix,iy),1,is)*
-!     &      (ne(leftix(ix,iy),topiy(ix,iy))*
-!     &      te(leftix(ix,iy),topiy(ix,iy))**2
-!     &                    -ne(leftix(ix,iy),iy)*te(leftix(ix,iy),iy)**2)
-!     &                               )
-!          endif
-!         enddo
-
          do iy = 0, ny-1
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
@@ -134,22 +114,6 @@ cwdk cancelation of some terms in poloidal and radial flux components
           enddo
          enddo
 
-!         iy = ny
-!          do ix = -1, nx
-!           if(leftix(ix,iy).eq.-2) then
-!            fhePSch(ix,iy,0)=0.0e0_R8
-!           else
-!            fhePSch(ix,iy,0)=-0.5e0_R8*(
-!     &       cddi(leftix(ix,iy),iy,1,is)*
-!     &       (ne(leftix(ix,iy),iy)*te(leftix(ix,iy),iy)**2
-!     &                         -ne(leftix(ix,iy),bottomiy(ix,iy))*
-!     &                            te(leftix(ix,iy),bottomiy(ix,iy))**2)+
-!     &       cddi(ix,iy,1,is)*
-!     &       (ne(ix,iy)*te(ix,iy)**2
-!     &                -ne(ix,bottomiy(ix,iy))*te(ix,bottomiy(ix,iy))**2)
-!     &                               )
-!           endif
-!          enddo
 
 *   ..compute P.Sch y-flux
          iy = -1
@@ -203,7 +167,7 @@ cwdk cancelation of some terms in poloidal and radial flux components
 
          do iy = -1, ny
           do ix = -1, nx                                               !srv 26.11.02 {
-           fhePSch(ix,iy,:,:) = 
+           fhePSch(ix,iy,:,:) =
      &       2.5e0_R8*fhePSch(ix,iy,:,:)*facdrift(ix,iy)
            cone(ix,iy,:,:,1:2) = cone(ix,iy,:,:,1:2)*facdrift(ix,iy)   !srv 02.01.07
 !           cone(ix,iy,:,2) = cone(ix,iy,:,2)*facdrift(ix,iy)          !srv 02.01.07
@@ -212,11 +176,6 @@ cwdk cancelation of some terms in poloidal and radial flux components
         endif
        enddo
 
-c  ..set null flux in guard cells  ?
-!      fhePSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case 
-!      fhePSch(nx, :,1)=0.0e0_R8
-!      fhePSch( :,-1,:)=0.0e0_R8
-!      fhePSch( :,ny,0)=0.0e0_R8
       endif
 * ..return
       ncall = ncall+1

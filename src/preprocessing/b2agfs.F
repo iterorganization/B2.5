@@ -2,12 +2,11 @@
 *.specification
 
       subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,
-     & crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,
-     1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
-     4 periodic_bc,nncut,nncutmax)
+     1 cflag,lblgm,periodic_bc,nncut,nncutmax)
 
+      use b2mod_geo
+     . ,only: geom_match_dist
+      use b2mod_geo2
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
@@ -21,19 +20,8 @@
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
-*   .. output arguments
-      real (kind=R8) ::
-     * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3),
-     2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
-      integer
-     *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
-     1  rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1),
-     2  topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1),
-     3  bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1),
-     4  leftcut1(nncutmax),rightcut1(nncutmax),
-     5  bottomcut1(nncutmax),topcut1(nncutmax),
-     6  periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
+*   ..output arguments
+      integer :: periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
       character*(*) lblgm
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -112,32 +100,22 @@
       data local_sonnet /'upgrade.geometry'/
       real (kind=R8) ::
      *  bp((nx1+2)*(ny1+2)),bt((nx1+2)*(ny1+2)),
-     .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5)
+     .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5),
+     .  fpsi((nx1+2)*(ny1+2)*4),ffbz((nx1+2)*(ny1+2)*4)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
-     .  min_pitch, geom_match_dist, distval,
+     .  min_pitch, distval,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
       integer ireg,zone(-1:nx1),errors
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
-     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/,
-     .  geom_match_dist/1.0e-6_R8/
+     .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
-      intrinsic abs, sqrt, cos, sin, min, max, sign, acos
-      real (kind=R8) ::
-     *  dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+
-     2 (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
+      intrinsic abs, cos, sin, min, max, sign, acos
 
 *-----------------------------------------------------------------------
 *.computation
@@ -178,7 +156,7 @@
      &  'faulty argument geom_match_dist')
 
       call b2gxdr_dummy(local_sonnet, nx1, ny1, istyle, isymm,
-     & crxs, crys, bp, bt)
+     & crxs, crys, bp, bt, fpsi, ffbz)
       n2=(nx1+2)*(ny1+2)
       ic=1
       do  iy = -1, ny1
@@ -187,13 +165,13 @@
           bb1(ix,iy,1)=0
           bb1(ix,iy,2)=bt(ic)
           bb1(ix,iy,3)=sqrt(bp(ic)*bp(ic)+bt(ic)*bt(ic))
-          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset           ! bottom right
+          crx1(ix,iy,1)=crxs(ic+2*n2)*xrescale+xoffset   ! bottom right
           cry1(ix,iy,1)=crys(ic+2*n2)*yrescale+yoffset
-          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset           ! top right
+          crx1(ix,iy,3)=crxs(ic+4*n2)*xrescale+xoffset   ! top right
           cry1(ix,iy,3)=crys(ic+4*n2)*yrescale+yoffset
-          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset           ! top left
+          crx1(ix,iy,2)=crxs(ic+3*n2)*xrescale+xoffset   ! top left
           cry1(ix,iy,2)=crys(ic+3*n2)*yrescale+yoffset
-          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset           ! bottom left
+          crx1(ix,iy,0)=crxs(ic+1*n2)*xrescale+xoffset   ! bottom left
           cry1(ix,iy,0)=crys(ic+1*n2)*yrescale+yoffset
           if (Bt_adjust.eq.1) then
             if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
@@ -204,15 +182,59 @@
             bb1(ix,iy,0)=bp(ic)/bt(ic)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
           endif
+          fpsi1(ix,iy,0)=fpsi(ic)
+          fpsi1(ix,iy,1)=fpsi(ic+1*n2)
+          fpsi1(ix,iy,2)=fpsi(ic+2*n2)
+          fpsi1(ix,iy,3)=fpsi(ic+3*n2)
+          ffbz1(ix,iy,0)=ffbz(ic)
+          ffbz1(ix,iy,1)=ffbz(ic+1*n2)
+          ffbz1(ix,iy,2)=ffbz(ic+2*n2)
+          ffbz1(ix,iy,3)=ffbz(ic+3*n2)
+          if (Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              fpsi1(ix,iy,0)=fpsi(ic)/crxs(ic+1*n2)*
+     .                               (crxs(ic+1*n2)+xoffset)
+              fpsi1(ix,iy,1)=fpsi(ic+1*n2)/crxs(ic+2*n2)*
+     .                                    (crxs(ic+2*n2)+xoffset)
+              fpsi1(ix,iy,2)=fpsi(ic+2*n2)/crxs(ic+3*n2)*
+     .                                    (crxs(ic+3*n2)+xoffset)
+              fpsi1(ix,iy,3)=fpsi(ic+3*n2)/crxs(ic+4*n2)*
+     .                                    (crxs(ic+4*n2)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              fpsi1(ix,iy,0)=fpsi(ic)/crys(ic+1*n2)*
+     .                               (crys(ic+1*n2)+yoffset)
+              fpsi1(ix,iy,1)=fpsi(ic+1*n2)/crys(ic+2*n2)*
+     .                                    (crys(ic+2*n2)+yoffset)
+              fpsi1(ix,iy,2)=fpsi(ic+2*n2)/crys(ic+3*n2)*
+     .                                    (crys(ic+3*n2)+yoffset)
+              fpsi1(ix,iy,3)=fpsi(ic+3*n2)/crys(ic+4*n2)*
+     .                                    (crys(ic+4*n2)+yoffset)
+            end if
+          end if
           ic=ic+1
         enddo
       enddo
       bb1(:,:,0)=bb1(:,:,0)*Bt_rescale*pit_rescale
       bb1(:,:,1)=bb1(:,:,1)*Bt_rescale*pit_rescale
+      fpsi1(:,:,:)=fpsi1(:,:,:)*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
         bb1(:,:,2)=-bb1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       else
         bb1(:,:,2)=bb1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
 !!! FIXME: For now, until the cflag array is provided by the mesh generator
@@ -424,19 +446,19 @@ cxpb  reconnect the guard cells on both sides of the island.
           write(*,*) 'ix,iy,iyb',i,inselbot,inseltop
           bottomiy1(nx1-1-i,inselbot)=inseltop
           write(*,*) 'ix,iy,iyb',nx1-1-i,inselbot,inseltop
-          if(inselbot.gt.-1) then                 ! connected region on North side
-            topix1(i,inselbot-1)=nx1-1-i          ! connect to the other side
-            topiy1(i,inselbot-1)=inselbot-1       ! of the island
+          if(inselbot.gt.-1) then                  ! connected region on North side
+            topix1(i,inselbot-1)=nx1-1-i           ! connect to the other side
+            topiy1(i,inselbot-1)=inselbot-1        ! of the island
             write(*,*) 'ix,iy,ixt,iyt',i,inselbot-1,nx1-1-i,inselbot-1
-            topix1(nx1-1-i,inselbot-1)=i          ! connect to the other side
-            topiy1(nx1-1-i,inselbot-1)=inselbot-1 ! of the island
+            topix1(nx1-1-i,inselbot-1)=i           ! connect to the other side
+            topiy1(nx1-1-i,inselbot-1)=inselbot-1  ! of the island
             write(*,*) 'ix,iy,ixt,iyt',nx1-1-i,inselbot-1,i,inselbot-1
           end if
-          if(inseltop.lt.ny1) then                ! connected region on South side
-            bottomix1(i,inseltop+1)=nx1-1-i       ! connect to the other side
-            bottomiy1(i,inseltop+1)=inseltop+1    ! of the limited SOL
+          if(inseltop.lt.ny1) then                 ! connected region on South side
+            bottomix1(i,inseltop+1)=nx1-1-i        ! connect to the other side
+            bottomiy1(i,inseltop+1)=inseltop+1     ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',i,inseltop+1,nx1-1-i,inseltop+1
-            bottomix1(nx1-1-i,inseltop+1)=i       ! connect to the other side
+            bottomix1(nx1-1-i,inseltop+1)=i        ! connect to the other side
             bottomiy1(nx1-1-i,inseltop+1)=inseltop+1 ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',nx1-1-i,inseltop+1,i,inseltop+1
 cxpb  Remove neighbours for guard cells next to tangency point
@@ -471,7 +493,6 @@ cxpb tranverse physics
           enddo
         endif
       endif
-
 
       write(*,*) 'istyle',istyle,'nncut',nncut
       if(nncut.eq.0) write(*,'(a)') 'No cuts found'
@@ -730,7 +751,7 @@ c check right neighbours
             write(*,*) 'No right neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
             distval=
-     1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
+     1       distc1(ix,iy,1,ixr,rightiy1(ix,iy),0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -738,7 +759,7 @@ c check right neighbours
      2         ix,iy,' (lower point), ','dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
+     1       distc1(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -751,10 +772,10 @@ c check left neighbours
         do ix=0,nx1
           ixl=leftix1(ix,iy)
           if(ixl.lt.-1.or.ixl.gt.nx1) then
-            write(*,*) 'No left neighbour for ',ix,iy
+            write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
+     1       distc1(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
             if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -762,7 +783,7 @@ c check left neighbours
      2         'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
+     1       distc1(ix,iy,2,ixl,leftiy1(ix,iy),3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -780,7 +801,7 @@ c check top neighbours
             write(*,*) 'No top neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
             distval=
-     1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
+     1       distc1(ix,iy,2,topix1(ix,iy),iyt,0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -788,7 +809,7 @@ c check top neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
+     1       distc1(ix,iy,3,topix1(ix,iy),iyt,1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -804,7 +825,7 @@ c check bottom neighbours
             write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
+     1       distc1(ix,iy,0,bottomix1(ix,iy),iyb,2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -812,7 +833,7 @@ c check bottom neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
+     1       distc1(ix,iy,1,bottomix1(ix,iy),iyb,3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -831,7 +852,7 @@ c check right neighbours
             write(*,*) 'No right neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixr.eq.ix+1) then
             distval=
-     1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
+     1       distc1(ix,iy,1,ixr,rightiy1(ix,iy),0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -839,7 +860,7 @@ c check right neighbours
      2       'dist=',distval
             endif
             distval=
-     1     dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
+     1       distc1(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -852,10 +873,10 @@ c check left neighbours
         do ix=0,nx1
           ixl=leftix1(ix,iy)
           if(ixl.lt.-1.or.ixl.gt.nx1) then
-            write(*,*) 'No left neighbour for ',ix,iy
+            write(*,*) 'No left neighbour for  ',ix,iy
           elseif(periodic_bc.eq.0 .or. ixl.eq.ix-1) then
             distval=
-     1     dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
+     1       distc1(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -863,7 +884,7 @@ c check left neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
+     1       distc1(ix,iy,2,ixl,leftiy1(ix,iy),3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -881,7 +902,7 @@ c check top neighbours
             write(*,*) 'No top neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyt.eq.iy+1) then
             distval=
-     1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
+     1       distc1(ix,iy,2,topix1(ix,iy),iyt,0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -889,7 +910,7 @@ c check top neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
+     1       distc1(ix,iy,3,topix1(ix,iy),iyt,1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -905,7 +926,7 @@ c check bottom neighbours
             write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(periodic_bc.eq.0 .or. iyb.eq.iy-1) then
             distval=
-     1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
+     1       distc1(ix,iy,0,bottomix1(ix,iy),iyb,2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -913,7 +934,7 @@ c check bottom neighbours
      2       'dist=',distval
             endif
             distval=
-     1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
+     1       distc1(ix,iy,1,bottomix1(ix,iy),iyb,3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
               write(*,'(a,2i4,a,a,1p,1g12.4)')
@@ -978,11 +999,24 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2agfs
 
+      contains
+
+      logical function match(ix1,iy1,ix2,iy2)
+      use b2mod_geo2
+      implicit none
+      integer, intent(in) :: ix1, iy1, ix2, iy2
+      match=
+     1 (distc1(ix1,iy1,1,ix2,iy2,0)+distc1(ix1,iy1,3,ix2,iy2,2)).lt.
+     2 geom_match_dist
+      return
+      end function match
+
       end subroutine b2agfs
 c
       subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
-     & crxs, crys, bp, bt)
+     & crxs, crys, bp, bt, fpsi, ffbz)
       use b2mod_types
+      use b2mod_constants
       use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
@@ -990,11 +1024,13 @@ c
       implicit none
       integer nx, ny, istyle, isymm
       real (kind=R8) ::
-     *   crxs(0:nx+1,0:ny+1,0:4),
+     * crxs(0:nx+1,0:ny+1,0:4),
      1 crys(0:nx+1,0:ny+1,0:4),
-     2 bp(0:nx+1,0:ny+1),
-     3 bt(0:nx+1,0:ny+1)
+     2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
+     3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
+
+      logical no_flux_data            ! IYS 21.02.2020
 
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
@@ -1021,8 +1057,9 @@ c
       logical open_file, uop, first_read, ex
       character uline*(line_length)
       character*16 usrnam
-      external xertst, open_file
+      external xertst, open_file, usrnam
       intrinsic index, sqrt
+      real (kind=R8) :: t0
 
       data new_format/1/
       data format_string/
@@ -1074,8 +1111,8 @@ c
      1     "Reading the geometry file assuming the Carre format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
-            write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
-     1       nx,ny,nnx,nny
+            write(*,'(a,4i5)')
+     1       'b2gxdr_dummy: nx,ny code and data disagree',nx,ny,nnx,nny
             call xerrab ('Mismatch nx/ny and nnx/nny')
           endif
           do iy=0,ny+1
@@ -1088,7 +1125,36 @@ c
               end if
             enddo
           enddo
+          fpsi=0.0_R8
+          ffbz=0.0_R8
+          read(lun,'(a)',end=110,err=110) uline
+          backspace (lun)
+          do iy=0,ny+1
+            do ix=0,nx+1
+              read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1         (fpsi(ix,iy,i),i=0,3),(ffbz(ix,iy,i),i=0,3)
+            end do
+          end do
+  110     continue
           close(lun)
+! If the toroidal flux function is not provided, compute it
+          if (maxval(ffbz).eq.0.0_R8 .and. minval(ffbz).eq.0.0_R8) then
+            if (isymm.eq.1 .or. isymm.eq.3) then
+              write(*,*) 'Toroidal flux function missing!'
+              write(*,*) 'Trying to fix this automatically'
+            end if
+            t0 = 0.0_R8
+            do iy=0,ny+1
+              do ix=0,nx+1
+                if (isymm.eq.1) then
+                  t0 = t0 + bt(ix,iy) * crxs(ix,iy,4)
+                else if (isymm.eq.3) then
+                  t0 = t0 + bt(ix,iy) * crys(ix,iy,4)
+                end if
+              end do
+            end do
+            ffbz = 2.0_R8 * pi * t0 / (nx + 2) / (ny + 2)
+          endif
         else
           call xerrab('Error in reading geometry file')
         endif
@@ -1233,7 +1299,36 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             call xerrab
      .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
+          fpsi=0.0_R8
+          ffbz=0.0_R8
+
+!          write(*,*) "Somebody has filled ffbz with zeroes"
+!          write(*,*) " ... and is going to read it from some file again"
+
+! IYS 21.02.2020
+! I could not find a solution without 'GOTO' here
+! Sorry for that ...
+          read(lun,'(a)',end=210,err=210) uline
+          no_flux_data = .FALSE.
+          GOTO 211    ! Wenn es meine Wille gaebe...
+  210     no_flux_data = .TRUE.
+  211     if (no_flux_data) then
+            if (isymm.eq.1.or.isymm.eq.3) then
+              ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+              write(*,*) "No flux data is found the 'old' format file"
+              write(*,*) "Trying to recover ffbz using Rtor*Btor"
+            endif
+          else
+            backspace (lun)
+            do iy=0,ny+1
+              do ix=0,nx+1
+                read(lun,*,err=10) ixd,iyd,
+     1         (fpsi(ix,iy,i),i=0,3),(ffbz(ix,iy,i),i=0,3)
+              end do
+            end do
+          endif
           close(lun)
+! IYS 21.02.2020
         else
           call xerrab('Error in reading geometry file')
         endif
@@ -1513,22 +1608,9 @@ c region 6 === right SOL
 c region 7 === right inboard divertor
 c region 8 === right outboard divertor
 c
-
       integer ix,iy,inseliy,inselix,iyt
-      real (kind=R8) ::
-     * geom_match_dist
+      real (kind=R8) :: geom_match_dist
       data geom_match_dist/1.0e-6_R8/
-c
-      real (kind=R8) ::
-     *  dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+
-     2 (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
       intrinsic min, max
 c
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -1567,14 +1649,14 @@ c if stellarator island or limiter case, find periodicity domain coordinate
 c
       region=0
 c volume component
-      if(nx.eq.1) then  ! 1d-radial
+      if(nx.eq.1) then  ! 1d radial
         do iy=-1,ny
           do ix=-1,nx
             region(ix,iy,0)=1
           enddo
         enddo
         nnreg(0)=1
-      else if(ny.eq.1) then  ! 1d-parallel
+      else if(ny.eq.1) then  ! 1d parallel
         do iy=-1,ny
           do ix=-1,nx
             region(ix,iy,0)=1
@@ -1891,4 +1973,26 @@ c set up region where the residuals should be ignored (none yet)
       enddo
 
       return
+
+      contains
+
+      function distc(ix1,iy1,ip1,ix2,iy2,ip2)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
+      real(kind=R8) :: distc
+      distc = norm(crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2),
+     .             cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))
+      return
+      end function distc
+
+      logical function match(ix1,iy1,ix2,iy2)
+      implicit none
+      integer, intent(in) :: ix1,iy1,ix2,iy2
+      match=
+     1 (distc(ix1,iy1,1,ix2,iy2,0)+distc(ix1,iy1,3,ix2,iy2,2)).lt.
+     2 geom_match_dist
+      return
+      end function match
+
       end subroutine init_region

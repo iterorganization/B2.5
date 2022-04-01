@@ -1,11 +1,11 @@
 !     ##########################################################################
-!     This program first reads the formatted file 'b2ydm.dat' and 
+!     This program first reads the formatted file 'b2ydm.dat' and
 !     writes the unformatted file 'rps_in.dat' that is needed by the FreeFem++
 !     heat transfer model of the reflector plates.
 !     Then, it reads the files 'wlld_[i-o]rp.dat' produced by
-!     b2plot with the "1000 wlld" command and writes the unformatted files 
-!     'Wtot_[i-o]rp.dat','Wpls_[i-o]rp.dat', 'X_[i-o]rp.dat' and 
-!     '[i-o]rp_size.dat' that are needed  by the FreeFem++ heat transfer model 
+!     b2plot with the "1000 wlld" command and writes the unformatted files
+!     'Wtot_[i-o]rp.dat','Wpls_[i-o]rp.dat', 'X_[i-o]rp.dat' and
+!     '[i-o]rp_size.dat' that are needed  by the FreeFem++ heat transfer model
 !     of the reflector plates.
 !     ##########################################################################
 
@@ -18,7 +18,7 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT, QTOT=0.0d0, T_OUT
       real :: target_length
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(15) :: INFILE0= 'b2ydm.dat', 
+      CHARACTER*(15) :: INFILE0= 'b2ydm.dat',
      .     OUTFILE0 = 'dome_out.dat'
       CHARACTER*(20) :: skip, INFILE='wlld_dome.dat'
       LOGICAL :: exists
@@ -37,7 +37,7 @@
       READ(INUNIT,NML=GEOMETRY)
       READ(INUNIT,NML=COOLANT)
       close(INUNIT);
-      
+
 !     ##########################################################################
 !     Read input files 'wlld_dome.dat' to get heat flux profile on dome and
 !     evaluate outlet coolant temperature.
@@ -73,10 +73,10 @@
       do ii=2,ntiles            ! create the new x vector
          bb(ii,1)=bb(ii-1,1)+p_length
       enddo
-      
+
       call interp( mm(1:nline,1), mm(1:nline,2), bb(2:ntiles-1,1),
-     .     bb(2:ntiles-1,2), nline, ntiles-2)        
-     
+     .     bb(2:ntiles-1,2), nline, ntiles-2)
+
       DO II=1,NTILES
          QTOT=QTOT+T_LENGTH*P_LENGTH*bb(II,2)
       ENDDO
@@ -85,7 +85,7 @@
 
       ! Write output file
       INQUIRE (FILE=outfile0, EXIST=exists)
-      if (exists) then 
+      if (exists) then
          open (unit=inunit,file=outfile0,action='readwrite')
          close (unit=inunit,status='delete')
       endif
@@ -94,7 +94,7 @@
       close(INUNIT);
 
       DEALLOCATE(MM,BB)
-      
+
       stop
       end
 
@@ -112,25 +112,22 @@
       real, intent(in) :: xData(nData), yData(nData), xVal(nVal)
       real, intent(out) :: yVal(nVal)
       integer :: inputIndex, dataIndex
-      real :: minXdata, maxXData, weight
+      real :: weight
 
-      minXData = xData(1)
-      maxXData = xData(nData)
       dataIndex=1
-      
-      
+
       do inputIndex = 1, nVal
 
     1    if(xData(dataIndex+1).le.xVal(inputIndex)) then
             dataIndex=dataIndex+1
             goto 1
           endif
-                   
+
          weight = (xVal(inputIndex) - xData(dataIndex))/
      .    (xData(dataIndex+1)-xData(dataIndex))
-         
+
          yVal(inputIndex) = weight*(yData(dataIndex+1)-yData(dataIndex))
      .    +yData(dataIndex)
       enddo
-      
+
       end subroutine

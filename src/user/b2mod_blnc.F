@@ -1,60 +1,10 @@
-      subroutine b2blnc(nx,ny,ns,dtim,iline)
+      module b2mod_blnc
       use b2mod_types
-      use b2mod_geo
-      use b2mod_time
       use b2mod_diag
+      use b2mod_time
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
-      use b2mod_numerics_namelist
-      use b2mod_neutrals_namelist
-      use b2mod_boundary_namelist
-#ifdef B25_EIRENE
-      use eirmod_wneutrals
-#endif
-#include "DIMENSIONS.F"
-c
-c  version : 19.07.2001 18:46
-c
-c======================================================================
-c*** Computes the global particle flows across the boundaries in
-c*** B2-Eirene and the global particle balance in B2
-c----------------------------------------------------------------------
       implicit none
-c
-      integer nx, ny, ns, iline
-      real (kind=R8) :: dtim
-c
-      integer lun, ltrc
-      parameter (ltrc=ntrc_bln)
-      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
-     ,        nc, nv, kks, np_tmp
-      logical first, ex, hlp_lw, hlp_lt
-c<<<
-      logical hlp_tt
-      real (kind=R8) :: tdummy
-      real (kind=R8) :: hlp_wldpp
-      real (kind=R8) :: hlpit_l,hlpit_r
-      real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
-      real (kind=R8) :: hlp_pls(nbcd,ns)
-      real (kind=R8), allocatable, save :: hlp_neu(:,:)
-      integer kst_hlp
-      integer use_recyceir
-      real (kind=R8) :: recyctmp
-      real (kind=R8), save :: stim = 0.0_R8
-c>>>
-c
-c*** lv    :  version number to appear in the file
-c*** np_tmp:  number of output data for each species
-c
-      parameter (lv=961229, np_tmp=20)
-c
-      real (kind=R8) :: 
-     *     hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
-     ,     hlpdt,hlp,hlpids
-      real (kind=R8), allocatable :: hlpic_s(:),hlpiw_s(:),hlpit_s(:)
-c
+
 c----------------------------------------------------------------------
 c*** debug_flags usage:
 c***  90  >0 : debugging printout on
@@ -92,7 +42,23 @@ c***   bln_blnc  blnne   error in particle balance
 c***   bln_blnr  blnnr   the same divided by the sum of the abs. values
 c***                     of the other terms (relative error)
 c----------------------------------------------------------------------
-      real (kind=R8), allocatable :: 
+
+c
+c*** lv    :  version number to appear in the file
+c*** np_tmp:  number of output data for each species
+c
+      integer lv, np_tmp
+      parameter (lv=961229, np_tmp=20)
+      integer ltrc, lun
+      parameter (ltrc=ntrc_bln)
+      integer, save :: nc
+
+      real (kind=R8), save :: stim = 0.0_R8
+      real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
+      real (kind=R8), allocatable, save :: hlp_neu(:,:)
+      real (kind=R8), allocatable :: hlpic_s(:),hlpiw_s(:),hlpit_s(:)
+c
+      real (kind=R8), allocatable ::
      *     flxic_tmp(:),flxnc_tmp(:),flxit_tmp(:),
      ,     flxnt_tmp(:),flxiw_tmp(:),flxnw_tmp(:),
      ,     flxnp_tmp(:),flxps_tmp(:),blnna_tmp(:),
@@ -103,9 +69,70 @@ c*** from 960727 on
      ,     flxid_tmp(:),flxbl_tmp(:),flxbr_tmp(:),
 c*** from 960808 on
      ,     flxrl_tmp(:)
+
+      character f*(lenfnm), hlp_h(np_tmp)*8, hlp_frm*80
+
+      save f, hlp_frm, hlp_h, lun,
+     , hlpit_lp,hlpit_rp,hlpit_pl,hlpic_s,hlpiw_s,hlpit_s,
+     , flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
+     , flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
+     , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
+     , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
+     , flxid_tmp,flxbl_tmp,flxbr_tmp,
+     , flxrl_tmp
+
+c*** Column headers:
+      data hlp_h /
+     1          'ion_core','ntr_core','ion_targ','ntr_targ','ion_wall',
+     2          'ntr_wall','ntr_puff','flux_tot','ions_tot','bln_d/dt',
+     3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
+     4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
+
+      contains
+
+      subroutine b2blnc(nx,ny,ns,dtim)
+      use b2mod_geo
+      use b2mod_plasma
+      use b2mod_sources
+      use b2mod_indirect
+      use b2mod_numerics_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_boundary_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
+#include "DIMENSIONS.F"
+c
+c  version : 19.07.2001 18:46
+c
+c======================================================================
+c*** Computes the global particle flows across the boundaries in
+c*** B2-Eirene and the global particle balance in B2
+c----------------------------------------------------------------------
+      implicit none
+c
+      integer nx, ny, ns
+      real (kind=R8) :: dtim
+c
+      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls,
+     ,        kks
+      logical first, hlp_lw, hlp_lt
+c<<<
+      logical hlp_tt
+      real (kind=R8) :: hlp_wldpp
+      real (kind=R8) :: hlpit_l,hlpit_r
+      real (kind=R8) :: hlp_pls(nbcd,ns)
+      integer kst_hlp
+      integer use_recyceir, use_eirene
+      real (kind=R8) :: recyctmp
+c>>>
+c
+      real (kind=R8) ::
+     *     hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
+     ,     hlpdt,hlp,hlpids
 c----------------------------------------------------------------------
 c
-      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
+      character hlp_prt*26
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
@@ -124,49 +151,38 @@ c***       gpfc(i,j)=(fraction of atoms of kind i in stratum number j)
 c*** sclstra: scaling factors for species and strata
 c*** lmolscl: pointer to the species with which these molecules scale
 c----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_h /
-     1          'ion_core','ntr_core','ion_targ','ntr_targ','ion_wall',
-     2          'ntr_wall','ntr_puff','flux_tot','ions_tot','bln_d/dt',
-     3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
-     4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
 *   ..initialisation
-      data use_recyceir /1/
+      data use_recyceir /1/, use_eirene /0/
 c
       data first / .true. /
 c----------------------------------------------------------------------
-      save lun, i, j, k, l, m, n, ic, is, ix, iy,
-     1 js, ks, ls, nc, nv, kks, use_recyceir,
-     2 first, ex, hlp_lw, hlp_lt, hlp_tt,
-     3 hlpit_l,hlpit_r,hlpit_lp,hlpit_rp,hlpit_pl,
+      save i, k, l, m, n, ic, is, ix, iy,
+     1 js, ks, ls, kks, use_recyceir,
+     2 first, hlp_lw, hlp_lt, hlp_tt,
+     3 hlpit_l,hlpit_r,
      4 hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
-     5 hlpdt,hlp,hlpids,hlpic_s,hlpiw_s,hlpit_s,
-     8 flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
-     , flxiw_tmp,flxnw_tmp,flxnp_tmp,flxps_tmp,
-     , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
-     , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
-     , flxid_tmp,flxbl_tmp,flxbr_tmp,
-     , flxrl_tmp,
-     1 f, hlp_c, hlp_h, hlp_frm, tab
+     5 hlpdt,hlp,hlpids
 c======================================================================
 
       if(first) then
 c<<<
         call ipgeti ('eirene_use_recyceir', use_recyceir)
+        call ipgeti ('b2mndr_eirene', use_eirene)
         print *,'=== Regions of the grid:'
-        print *
         l=ny+1
         n=mod(l-1,10)+1
+        i=(nx+2)/10+1
+        write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
         do k=0,ny-1
           m=l
           l=max(0,m-n+1)
           n=10
           do j=m-1,l-1,-1
-            print '(1x,i4,1x,i1,40(1x,10i1))',j,
-     ,                                         (region(i,j,0),i=-1,nx)
+            write(*,hlp_prt) j,(region(i,j,0),i=-1,nx)
           end do
           l=l-1
         end do
+        write(*,'()')
 c>>>
 c
 c*** Initialisation
@@ -194,7 +210,7 @@ c
 
 c*** Re-scale the neutral fluxes
 
-csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st eirene call)
+csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st Eirene call)
 c      do i=1,nlimps
       do i=1,nnstsi+nnlimi
         do j=1,nnatmi
@@ -227,17 +243,24 @@ c      do i=1,nlimps
       end do
 
 c<<<
-      if(debug_flags(90).gt.0) then
+      if(debug_flags(90).gt.0.and.use_eirene.ne.0) then
         print *
         print *,'%%% Eirene data in B2 %%%'
         do k=debug_flags(92),debug_flags(93)
           print *
           print *,'wldpp:',k
+          write (hlp_prt,'(a,i3,a)') '(1p,i4,',nnplsi,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
-            print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,nnplsi)
+            write(*,hlp_prt) j,(wldpp(j,i,k),i=1,nnplsi)
           end do
           print *
-          print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          if (nnmoli.gt.0) then
+            print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
+          else
+            print *,'wldpeb, wldpa, hlpit_pl:',k
+          end if
+          write (hlp_prt,'(a,i3,a)')
+     .     '(1p,i4,',1+nnatmi+nnmoli+nspecies,'e9.2)'
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
             ks=0
             do ls=1,nspecies
@@ -247,7 +270,7 @@ c<<<
                 hlpit_pl(ls)=hlpit_pl(ls)+wldpp(j,ks,k)
               end do
             end do
-            print '(1p,i4,20e12.4)',j,wldpeb(j,k),
+            write(*,hlp_prt) j,wldpeb(j,k),
      ,         (wldpa(j,i,k),i=1,nnatmi),(wldpm(j,i,k),i=1,nnmoli),
      ,                                       (hlpit_pl(i),i=1,nspecies)
            end do
@@ -355,10 +378,11 @@ c>>>
       end do
 c<<<
       if(debug_flags(90).gt.0) then
-c        print '(a,1p,10e12.4)','%%% hlpit_lp, hlpit_rp: ',
+c       write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',2*nspecies,'e12.4)'
+c       write (*,hlp_prt) '%%% hlpit_lp, hlpit_rp: ',
 c     ,                           (hlpit_lp(i),hlpit_rp(i),i=1,nspecies)
-        print '(a,1p,10e12.4)','%%# hlpiw_s : ',
-     ,                                        (hlpiw_s(i),i=1,nspecies)
+        write (hlp_prt,'(a,i2,a)') '(1x,a,1p,',nspecies,'e12.4)'
+        write (*,hlp_prt) '%%# hlpiw_s : ',(hlpiw_s(i),i=1,nspecies)
       end if
 c>>>
 
@@ -390,7 +414,7 @@ c*** total number of particles and time derivative
           do iy=0,ny-1
             do ix=0,nx-1
               j=region(ix,iy,0)
-              if(j.ne.0 .and. 
+              if(j.ne.0 .and.
      &           leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                 hlpia=hlpia+na(ix,iy,ions_list(ks))*vol(ix,iy)
                 hlpis=hlpis+
@@ -422,7 +446,7 @@ c>>>
 c*** Correct the source for d/dt terms
         hlpis=hlpis+hlpid
 c<<<
-c        print '(a,1p,4e12.4)',
+c        print '(1x,a,1p,4e12.4)',
 c     ,      '%%% Ion fluxes: hlpit, hlpiw, hlpic, hlpid =',
 c     ,                       hlpit, hlpiw, hlpic, hlpid
 c        print *,'%%% hlpit_l     hlpit_r     hlpit_t'
@@ -513,8 +537,9 @@ c>>>
               m=msns(2,ic)
               hlp=0.0_R8
 c<<<
-              if(hlp_tt) print *,'%%# ls,ic,crcstra,l,m,kks : ',
-     ,                                ls,ic,' ',crcstra(ic),' ',l,m,kks
+              if(hlp_tt) write(*,'(1x,a,2i5,1x,a1,1x,3i5)')
+     ,                           '%%# ls,ic,crcstra,l,m,kks : ',
+     ,                                ls,ic,crcstra(ic),l,m,kks
 c>>>
               do i=l,l+m-1
                 k=lsns(i)
@@ -535,7 +560,8 @@ c>>>
                     if (latmscl(j).eq.ls) then
                       hlp=hlp+wldpa(k,j,ic)*sclstra(j,ic)
 c<<<
-                      if(hlp_tt) print *,
+                      if(hlp_tt)
+     ,                 print '(1x,a,i5,a,i5,a,i5,a,1p,1e12.4)',
      ,                 '%%% wldpa(',k,',',j,',',ic,') =',
      ,                      wldpa(k,j,ic)*sclstra(j,ic)
 c>>>
@@ -549,7 +575,8 @@ c<<<
                         if(hlp_tt) print '(1x,a,2i3,1p,40e12.4)',
      ,                       '%%# j,mlcmp,wldpm,sclstra= ',
      ,                       j,mlcmp(ii,j),wldpm(k,j,ic),sclstra(ii,ic)
-                        if(hlp_tt .and. mlcmp(ii,j).gt.0) print *,
+                        if(hlp_tt .and. mlcmp(ii,j).gt.0)
+     ,                   print '(1x,a,i5,a,i5,a,i5,a,1p,1e12.4)',
      ,                       '%%% wldpm(',k,',',j,',',ic,') =',
      ,                            wldpm(k,j,ic)*sclstra(ii,ic)
 c>>>
@@ -571,23 +598,24 @@ c>>>
         end do
 c<<<
         if(debug_flags(90).gt.0) then
-          print '(a,1p,5e12.4)',
+          print '(1x,a,1p,5e12.4)',
      ,      '%%# Total fluxes: hlpit, hlpiw, hlpic, hlpid, hlpnp =',
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls
           print '(a4,8x,20(5x,i3,4x))',' %%#',(i,i=1,kst_hlp)
+          write(hlp_prt,'(a,i3,a)') '(1x,a,i3,a,1p,',nstrat,'e12.5)'
           do j=1,nnatmi
             if (latmscl(j).eq.ls) then
-              print '(1x,a,i3,a,1p,20e12.5)','%%# sclrtio(',j,':)= ',
+              write(*,hlp_prt) '%%# sclrtio(',j,':)= ',
      ,                                       (sclrtio(j,i),i=1,nstrat)
-              print '(1x,a,i3,a,1p,20e12.5)','%%# sclstra(',j,':)= ',
+              write(*,hlp_prt) '%%# sclstra(',j,':)= ',
      ,                                       (sclstra(j,i),i=1,nstrat)
             end if
           end do
-          print '(1x,a8,1p,20e12.4)','%%# plasma  ',
-     ,                                      (hlp_pls(i,ls),i=1,kst_hlp)
-          print '(1x,a8,1p,20e12.4)','%%# neutrals',
-     ,                                      (hlp_neu(i,ls),i=1,nstrat)
+          write(hlp_prt,'(a,i3,a)') '(1x,a,1p,',kst_hlp,'e12.5)'
+          write(*,hlp_prt) '%%# plasma  ',(hlp_pls(i,ls),i=1,kst_hlp)
+          write(hlp_prt,'(a,i3,a)') '(1x,a,1p,',nstrat,'e12.5)'
+          write(*,hlp_prt) '%%# neutrals',(hlp_neu(i,ls),i=1,nstrat)
         end if
 c>>>
         flxid_tmp(ls)=hlpid
@@ -638,7 +666,7 @@ c
         write(*,*) 'particle_fluxes ',nspecies
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
-          write(*,'(1p,30e12.3)') 
+          write(*,'(1p,30e12.3)')
      ,     flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
      ,     flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
      ,     flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
@@ -650,9 +678,14 @@ c
         end do
       end if
       return
+      end subroutine b2blnc
 c======================================================================
 c
-      entry b2blnci(nx,ny,ns,dtim,iline)
+      subroutine b2blnci
+      implicit none
+      integer :: i, j, nv
+      character :: hlp_c
+      logical :: ex
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
@@ -677,31 +710,35 @@ c*** from 960808 on
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
-      tab=char(9)
       nc=0
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.stim.lt.0.0_R8) then
         read(lun,*,err=40) hlp_c,nv,j,nc
         read(lun,*) hlp_c
         go to 42
- 40     read(lun,*,err=92) hlp_c,i,j
+   40   read(lun,*,err=92) hlp_c,i,j
         lv_trc(ltrc)=lv
         if(i.lt.960727) then
           nc=16
         else
           go to 92
         end if
- 42     if(nv.ne.lv) then
+   42   if(nv.ne.lv) then
           write(*,'(a,i8,3a,i8)')
      ,     '!!! b2blnc: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. 960727) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -712,7 +749,7 @@ c*** It was a major change of the file format - impossible to continue
      ,     '!!! b2blnc: current number of columns ',np_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nc
           if(nc.gt.np_tmp) then
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -723,37 +760,46 @@ c*** It was a major change of the file format - impossible to continue
           write(*,'(a,i2,3a,i2)')
      ,     '!!! b2blnc: current number of species ',nspecies,
      ,      ' differs from that in the file ',trim(f),' : ',j
-          write(*,*) 'No tracing file - remove the existing file first!'
+          write(*,*) 'No ',trim(f),' tracing file - ',
+     ,                              'remove the existing file first!'
           filedata(ltrc)=.false.
           return
         end if
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
         nc=np_tmp
-        write(lun,700) lv,nspecies,np_tmp,label
-        write(hlp_frm,'(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))')
-     ,                                                  np_tmp*nspecies
+        write(lun,700) lv,nspecies,np_tmp,trim(label)
+        write(hlp_frm,'(a,i3,a)')
+     ,   '(a6,12x,',np_tmp*nspecies,'(2x,a11,1x))'
 c       print *,'b2blnc: nspecies= ',nspecies                   !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
-        write(lun,hlp_frm) ((hlp_h(i),species_list(j),i=1,np_tmp),
-     ,                                                    j=1,nspecies)
+        write(lun,hlp_frm) '# time',
+     ,    ((hlp_h(i)//'_'//species_list(j),i=1,np_tmp),j=1,nspecies)
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     ,                                                  np_tmp*nspecies
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',np_tmp*nspecies,'(2x,e12.3))'
       return
 c======================================================================
- 90   write(*,*) 'b2blnc: cannot open file ',trim(f)
+   90 write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blnc: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blnc: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
+  700 format('#   ',3i8/'#  ',a)
+c======================================================================
+      end subroutine b2blnci
 c
-      entry b2blncc(nx,ny,ns,dtim,iline)
+      subroutine b2blncc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character :: hlp_c
+      logical :: ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -765,41 +811,42 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blnc: cannot open file ',trim(f)
+  190 write(*,*) 'b2blnc: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
 c======================================================================
+      end subroutine b2blncc
 c
-      entry b2blncs(nx,ny,ns,dtim,iline)
+      subroutine b2blncs
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blncs
 c======================================================================
 c
-      entry b2blncf(nx,ny,ns,dtim,iline)
+      subroutine b2blncf
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blncf
 c======================================================================
-  700 format('#   ',3i8/'#  ',a)
-c======================================================================
-      end subroutine b2blnc
+      end module b2mod_blnc

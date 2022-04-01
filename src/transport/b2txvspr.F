@@ -82,8 +82,8 @@
           enddo
           
           avisper(:,:,1) = cvisper(:,:,1)
-          
-        endif                                                           !srv 16.10.17
+
+         endif                                                          !srv 16.10.17
        enddo                                                            !srv 16.10.17
       endif                                                             !srv 22.11.99
       
@@ -92,10 +92,10 @@
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2txvspr_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2txvspr_cvispery')
        do iy=-1,ny
-         do ix=-1,nx
-           wrk0(ix,iy) = hy1(ix,iy)
-         enddo
-       enddo      
+        do ix=-1,nx
+         wrk0(ix,iy) = hy1(ix,iy)
+        enddo
+       enddo
        call my_out(70,nx,ny,wrk0,'b2tvspr_hy1')
        call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvspr_bbv')
        call my_out(70,nx,ny,vol,'b2tvspr_vol')

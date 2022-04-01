@@ -157,4 +157,4 @@ C     end of main loop
 C
    90 DFMIN=X
       RETURN
-      END
+      END FUNCTION DFMIN

@@ -201,7 +201,7 @@ c read and rewrite data
               status=nf_put_vara_double(ncid2,ivar,start,count,data3)
             end if
             call check_cdf_status(status)
-            deallocate(data3) 
+            deallocate(data3)
           elseif(ndims.eq.2) then
             allocate(data2(dimsize(1),dimsize(2)))
             status=nf_get_vara_double(ncid,ivar,start,count,data2)

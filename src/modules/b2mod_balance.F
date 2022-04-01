@@ -4,7 +4,8 @@
 
 *   ..Flux and source arrays required for balance postprocessing routines. For the
 *     sources, the linearised components are stored and then the total source is updated
-*     just before each residual calculation. Only this total source is output to balance.nc
+*     just before each residual calculation.
+*     Only this total source is output to balance.nc
 *   ..Arrays for particle balance:
 *     Fluxes
       real (kind=R8), allocatable, save ::
@@ -1294,7 +1295,7 @@ cdjm Jan2017 Eirene arrays for electron heat balance:
       deallocate(eirene_mc_emel_she_bal)
       deallocate(eirene_mc_eiel_she_bal)
       deallocate(eirene_mc_epel_she_bal)
-cdjm Jan2017 Eirene arrays for ion heat balance:      
+cdjm Jan2017 Eirene arrays for ion heat balance:
       deallocate(eirene_mc_eapl_shi0to3)
       deallocate(eirene_mc_empl_shi0to3)
       deallocate(eirene_mc_eipl_shi0to3)

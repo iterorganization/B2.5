@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npp7 (nx, ny, nregionv, solvereg, itcnt, rxf,  !srv 06.07.00 27.01.00
-     &  ne, te, conc, avisper, bvisper, cvisper, sch, po,         !srv 27.01.00
+      subroutine b2npp7 (nx, ny, nregionv, solvereg, itcnt, rxf,         !srv 06.07.00 27.01.00
+     &  ne, te, conc, avisper, bvisper, cvisper, sch, po,                !srv 27.01.00
      &  fch, respo, corpo, ierr)
       use b2mod_types
       use b2mod_indirect
@@ -15,8 +15,8 @@
       real (kind=R8) ::
      *   rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &   conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
-     4   cvisper(-1:nx,-1:ny,0:1)                                 !srv 27.01.00
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),             !srv 27.01.00
+     4   cvisper(-1:nx,-1:ny,0:1)                                        !srv 27.01.00
       logical solvereg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -55,7 +55,7 @@
       integer ncall, n2
       integer, save :: iout = 0, iout_b2wdat = 0               !srv 27.12.17
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)              !srv 11.01.00
+     *   aa11(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)             !srv 11.01.00
       save ncall
 *   ..procedures
       external xertst
@@ -105,13 +105,13 @@
 *   ..compute residual
       call b2ursd (nx, ny, ne, po, sch, fch, respo)
 *   ..compute correction
-      call b2usp7 (nx, ny, nregionv, solvereg, itcnt,             !srv 27.12.17
+      call b2usp7 (nx, ny, nregionv, solvereg, itcnt,               !srv 27.12.17
      &    ne, te, conc, avisper, bvisper, cvisper,
      &    sch, respo, corpo, aa11)
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 
-      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                !srv 11.09.09 {
+      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                  !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2npp7_te')
 !       call my_out(70,nx,ny,ne,'b2npp7_ne')
         call my_out(70,nx,ny,po,'b2npp7_po')
@@ -125,7 +125,7 @@
         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
      &       sch(:,:,3)*ne*po
         call my_out(70,nx,ny,wrk0,'b2npp7_sch')
-      endif                                                       !srv 11.09.09 }
+      endif                                                         !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)
       ierr = 0
@@ -137,4 +137,4 @@
 *-----------------------------------------------------------------------
 *.end b2npp7
 
-      end
+      end subroutine b2npp7

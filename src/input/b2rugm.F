@@ -3,8 +3,9 @@
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &   wbbc, cell_width, cell_height, gmap)
+     &  wbbc, cell_width, cell_height, gmap)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
@@ -20,9 +21,9 @@
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
      &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3), 
-     &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
-     &  wbbc(-1:nx+1,-1:ny+1,0:3), 
+     &  pbs(-1:nx,-1:ny,0:1),
+     &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
+     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       type(B2GridMap) :: gmap
 *   ..common blocks
@@ -37,7 +38,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit (nget) the specification of a b2
+*     This routine reads from unit (nget) the specification of a B2
 *     geometry and magnetic field. Unit nget must be connected to an
 *     un*formatted file.
 *     The data consists of the coordinates of the four corners of all
@@ -202,18 +203,7 @@
 *   ..local variables
       integer n2, ix, iy, idum(0:9)
       integer iFace, offset
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang, sinang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
@@ -367,9 +357,9 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny
         do ix = -1, nx
-          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = 
+          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) =
      &     bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = 
+          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) =
      &     bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
           if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
      &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
@@ -405,7 +395,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
         call cfrure (nget, n2*2, pbs, 'pbs')
       else
-        call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
+        call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
       endif
       if(b2fgmtry_version.ge.'03.000.006') then
         call cfruin (nget, 1, idum, 'redef_pbs')
@@ -413,6 +403,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       else
         redef_pbs=0
       endif
+
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then

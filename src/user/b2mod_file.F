@@ -38,6 +38,7 @@ c
       integer :: nh_tmp, nf_tmp
       parameter (nh_tmp=6, nf_tmp=3)
       integer, save :: nis_tmp
+c
       character, save :: hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
      ,          hlp_emsg(5)*30
       data hlp_emsg /
@@ -56,7 +57,7 @@ c
 c
       integer ns, nregionv
 c
-      integer, save ::  i, j, k, l, m, n, lf_tmp
+      integer, save :: i, j, k, l, m, n, lf_tmp
       integer :: mh_tmp(0:ns-1)
       logical, save :: ex
       character, save :: hlp_c, f*(lenfnm), hlp_s(3)
@@ -123,7 +124,7 @@ c*** Old file to be appended - check it
 c*** New file - write the headers
         l=4
         write(ntrc(ntrc_tst),700,err=900) '#',lvt,nstrai,nnatmi
-        write(ntrc(ntrc_tst),710,err=900) '## ',label
+        write(ntrc(ntrc_tst),710,err=900) '## ',trim(label)
 
         if(nstrai.gt.0) then
           if (nnatmi.gt.0) then
@@ -374,7 +375,7 @@ c----------------------------------------------------------------------
      ,     (sclbase(i,k),i=0,nnatmi),(sclrtio(i,k),i=0,nnatmi),
      ,     (sclsrcn(i,k),i=0,nnatmi),k=1,nstrai)
         go to 65
- 62     write(*,'(2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
+   62   write(*,'(1x,2a,1x,a)') 'b2file: ',trim(hlp_emsg(l)),trim(f)
         filedata(ntrc_tst)=.false.
       end if
 c

@@ -1,26 +1,15 @@
       subroutine b2yt_jsep(nx1,ny1,jxi1,jxa1,jsep1)
       use b2mod_types
+      use b2mod_geo
+     , ,only: geom_match_dist
       use b2mod_geo2
       use b2mod_indirect
       use b2mod_subsys
       implicit none
       integer nx1,ny1,jxi1,jxa1,jsep1
       integer ix,iy
-      real (kind=R8) ::
-     * geom_match_dist
       intrinsic min
       external xerrab, xertst, ipgetr
-      data geom_match_dist/1.0e-6_R8/
-      real (kind=R8) ::
-     *   dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+
-     2      (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
-      logical match
-      match(ix1,iy1,ix2,iy2)=
-     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-     2 geom_match_dist
 
       call subini ('b2yt_jsep')
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -67,6 +56,7 @@
       else
         call xerrab ('Invalid number of regions!')
       endif
+      write(*,*) 'jxi1, jxa1, jsep1 : ', jxi1, jxa1, jsep1
       call xertst (-1.le.jsep1.and.jsep1.le.ny1,
      2  'faulty parameter jsep1')
       call xertst (-1.le.jxi1.and.jxi1.le.nx1,
@@ -77,6 +67,19 @@
 
       call subend ()
       return
+
+      contains
+
+      logical function match(ix1,iy1,ix2,iy2)
+      use b2mod_geo2
+      implicit none
+      integer, intent(in) :: ix1, iy1, ix2, iy2
+      match=
+     1 (distc1(ix1,iy1,1,ix2,iy2,0)+distc1(ix1,iy1,3,ix2,iy2,2)).lt.
+     2 geom_match_dist
+      return
+      end function match
+
       end subroutine b2yt_jsep
 
       subroutine b2yt_nxt(nx1, nxtl, nxtr)

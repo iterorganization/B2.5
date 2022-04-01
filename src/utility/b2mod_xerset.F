@@ -1,6 +1,7 @@
       module b2mod_xerset
       use b2mod_types
       implicit none
+
       integer npdflt, npsave
       parameter (npdflt=0)
       save npsave

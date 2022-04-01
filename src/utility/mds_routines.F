@@ -23,7 +23,6 @@
         write(*,*) 'Skipped writing zero length string to ',
      1   trim(node_name)
       endif
-
 #else
       call xerrab('mds_put_string: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
@@ -105,7 +104,6 @@
      1 descr2(idtype_long,0),int,0)
 #endif
       call mds_err_msg(status)
-
 #else
       call xerrab('mds_put_int: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
@@ -210,7 +208,6 @@
      1 descr2(idtype_double,0),value,0)
 #endif
       call mds_err_msg(status)
-
 #else
       call xerrab('mds_put_double: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
@@ -366,7 +363,7 @@
      5 '\TOP.SNAPSHOT:' // trim(dirindex) //
      6 ',' //
      7 '\TOP.SNAPSHOT:' // trim(nsindex) // ')'
-      
+
       write(*,'(a,a,a,a)')
      * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
@@ -412,5 +409,5 @@
       call xerrab('mds_err_msg: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
-      return 
+      return
       end subroutine mds_err_msg

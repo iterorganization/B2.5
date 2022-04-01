@@ -198,8 +198,9 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 *   ..read initial state
       call cfverr (ninp(4), plasmastate_version)                        !xpb
@@ -359,8 +360,8 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-        call b2trcc(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        call b2trci(nx,ny,ns,nnreg(0))
+        call b2trcc(nout(1),nx,nxtl,nxtr)
         call b2filei(ns,nnreg(0))
         call b2filec
       end if

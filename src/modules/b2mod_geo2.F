@@ -13,8 +13,8 @@
      *  ffbz1(:,:,:),
      *  fpsi1(:,:,:),
      *  gs1(:,:,:),
-     *  hx1(:,:),
-     *  hy1(:,:),
+     *  hxx(:,:),
+     *  hyy(:,:),
      *  qz1(:,:,:),
      *  qc1(:,:,:),
      *  qs1(:,:,:),
@@ -60,8 +60,8 @@
       allocate(ffbz1(-1:nxd,-1:nyd,0:3))
       allocate(fpsi1(-1:nxd,-1:nyd,0:3))
       allocate(gs1(-1:nxd,-1:nyd,0:2))
-      allocate(hx1(-1:nxd,-1:nyd))
-      allocate(hy1(-1:nxd,-1:nyd))
+      allocate(hxx(-1:nxd,-1:nyd))
+      allocate(hyy(-1:nxd,-1:nyd))
       allocate(qz1(-1:nxd,-1:nyd,0:1))
       allocate(qc1(-1:nxd,-1:nyd,0:1))
       allocate(qs1(-1:nxd,-1:nyd,0:1))
@@ -103,8 +103,8 @@
          deallocate(fpsi1)
          deallocate(wbbc1)
          deallocate(gs1)
-         deallocate(hx1)
-         deallocate(hy1)
+         deallocate(hxx)
+         deallocate(hyy)
          deallocate(qz1)
          deallocate(qc1)
          deallocate(qs1)
@@ -235,5 +235,25 @@ cxpb  This performs an average over the whole domain of valid cells on the secon
       return
 
       end function interpolateToVertices1
+
+      function dist1(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist1
+      dist1 = norm (
+     &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
+      return
+      end function dist1
+
+      function distc1(ix1,iy1,ip1,ix2,iy2,ip2)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
+      real(kind=R8) :: distc1
+      distc1 = norm(crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2),
+     .              cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))
+      return
+      end function distc1
 
       end module b2mod_geo2

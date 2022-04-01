@@ -28,7 +28,7 @@ C  proper interval double (binary) search should be used.
 C
       INTEGER I,J,K
       REAL (KIND=R8) :: DX
-	save i
+      save i
       DATA I/1/
       IF(I.GE.N) I=1
       IF(U.LT.X(I)) GO TO 10
@@ -48,4 +48,4 @@ C
    30 DX=U-X(I)
       DSEVAL=Y(I)+DX*(B(I)+DX*(C(I)+DX*D(I)))
       RETURN
-      END
+      END FUNCTION DSEVAL

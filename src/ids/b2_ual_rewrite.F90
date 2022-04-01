@@ -69,7 +69,7 @@ program b2_ual_rewrite
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
-    use b2mod_ual    &
+    use b2mod_ual &
      & , only : new_ids_edge, delete_ids_edge
     use b2mod_ual_io &
      & , only : b25_process_ids
@@ -211,7 +211,7 @@ program b2_ual_rewrite
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
 
-    write(*,'(a,i8,a,i8,4a)') 'Shot: ', shot, ' Run: ', run, &
+    write(*,'(a,i6,a,i5,4a)') 'Shot: ', shot, ' Run: ', run, &
         & ' User: ', trim(username), ' Database: ', trim(database)
     if (.not.same_run_number) then
       write(*,'(a,i5)') ' will be rewritten with run number ',new_run
@@ -255,22 +255,22 @@ program b2_ual_rewrite
         if (new_run.eq.run .and. database.ne.'iter') then
           tmp_run = run + 1000
 #if IMAS_MINOR_VERSION > 31
-        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')   &
+          write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &     'idscp --setDatasetVersion'//                   &
      &        ' -si ',shot,' -ri ',run,                    &
      &        ' -so ',shot,' -ro ',tmp_run,                &
      &        ' -d ',trim(database),' -u ',trim(username)
 #else
-        write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')   &
-          & 'idscp -si ',shot,' -ri ',run,                 &
-          &         ' -so ',shot,' -ro ',tmp_run,          &
-          &         ' -d ',trim(database),' -u ',trim(username)
+          write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
+     &     'idscp -si ',shot,' -ri ',run,                  &
+     &          ' -so ',shot,' -ro ',tmp_run,              &
+     &          ' -d ',trim(database),' -u ',trim(username)
 #endif
           if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR
-        call system(systemarg, status, ierror)
+          call system(systemarg, status, ierror)
 #else
-        call system(systemarg)
+          call system(systemarg)
 #endif
           if (database.eq.'iter') database = 'ITER'
         end if
@@ -282,9 +282,9 @@ program b2_ual_rewrite
      &        ' -d ',trim(database),' -u ',trim(username)
 #else
         write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-          & 'idscp -si ',shot,' -ri ',tmp_run,           &
-          &      ' -so ',shot,' -ro ',new_run,           &
-          &      ' -d ',trim(database),' -u ',trim(username)
+     &   'idscp -si ',shot,' -ri ',tmp_run,              &
+     &        ' -so ',shot,' -ro ',new_run,              &
+     &        ' -d ',trim(database),' -u ',trim(username)
 #endif
         if (database.eq.'iter') systemarg = trim(systemarg)//' -do ITER'
 #ifdef NAGFOR

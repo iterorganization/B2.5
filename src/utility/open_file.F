@@ -109,7 +109,7 @@ c
       open_file=.false.
       return
 c
-      end
+      end function open_file
 
       logical function silent_open(lu,filename,area,filenamecat)
       use b2mod_types
@@ -223,12 +223,12 @@ c
       filenamecat=''
       return
 c
-      end
+      end function silent_open
 
       subroutine find_file(filename,exist)
       implicit none
 
-! this routine checks whether the file exists in the present directory, 
+! this routine checks whether the file exists in the present directory,
 ! one level up, or in baserun (assumed parallel to the directory one
 ! level up) and returns a new filename if found, and exist set to true
 ! if the file is found
@@ -260,7 +260,4 @@ c
       endif
 
       return
-      end
-
-
-      
+      end subroutine find_file

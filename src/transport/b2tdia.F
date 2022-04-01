@@ -14,7 +14,7 @@
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -25,7 +25,7 @@
 *  1. purpose
 *
 *     B2TDIA computes the X and Y components of the divergent part of
-*     the diamagnetic current
+*     the diamagnetic current.
 *
 *  8. further comments
 *
@@ -48,7 +48,6 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 #endif
 *   ..procedures
-      intrinsic max, abs
       real (kind=R8) ::
      *   smin, smax
       external xertst
@@ -190,7 +189,7 @@ crfs inertia terms
      &       .and. leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &       .and. region(ix,iy,0).ne.0) then
 cxpb  Must check for case of the island X-point
-                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then     	 !xpb
+                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then        !xpb
 cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               0.5_R8*(fna(ix,iy,1,1,is)+
@@ -200,11 +199,11 @@ cxpb  Standard case
                   else                                                   !xpb
 cxpb  Island X-point cells
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
-     1               fna(ix,iy,1,1,is)*                                    !xpb
+     1               fna(ix,iy,1,1,is)*                                  !xpb
      2               0.5_R8*(uadia(ix,iy,0,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,0,is))
                   endif
-                endif                                           	 !xpb
+                endif                                                    !xpb
               enddo
             enddo
           endif

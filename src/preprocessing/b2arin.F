@@ -70,7 +70,7 @@
 *
 *     izlo, izhi - (0:nnucm-1) integer array, output.
 *     For inuc in (0:nnuc-1), (izlo(inuc):izhi(inuc)) specifies the
-*     range of atomic charge state represented in b2 for the nuclear
+*     range of atomic charge state represented in B2 for the nuclear
 *     species inuc. It will hold that
 *       0.le.izlo(inuc).le.izhi(inuc)+1 and izhi(inuc).le.nz(inuc).
 *     For inuc in (nnuc:nnucm-1), (izlo(inuc),izhi(inuc)) will hold
@@ -186,4 +186,4 @@
 *-----------------------------------------------------------------------
 *.end b2arin
 
-      end
+      end subroutine b2arin

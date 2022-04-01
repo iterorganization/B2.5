@@ -24,6 +24,7 @@
 #     include <netcdf.inc>
       integer status, ncid, xtypev, ndims, nvars, natts, unlimid, tid
       integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
+      integer, save :: ntstep
       real (kind=R8) :: tim_arr(1)
       real (kind=R8) :: naregtmp(0:nnreg(0),0:ns-1)
       real (kind=R8) :: cdftmp(0:nnreg(0))
@@ -35,11 +36,11 @@
       external streql
 #endif
 *   ..common blocks
-      integer ncall,ntstep
+      integer ncall
       integer ix,iy,is,ir,tallies_netcdf
       character*256 tally_format, species_format
       character*13, allocatable, save :: species_name(:)
-      save ncall,tallies_netcdf,ntstep
+      save ncall,tallies_netcdf
       data ncall/0/,tallies_netcdf/0/
 #ifdef NO_LONG_LINES
       data tally_format, species_format

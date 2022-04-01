@@ -104,8 +104,8 @@ c see block data for further comments on common block variables.
 c see code for comments on private variables.
 c
       real (kind=R8) ::
-     *   tol, themax, big, dxmax, errmax, dres, cgce,
-     * tol1, big1, upriv, rmin, eps, resid, zero
+     *  tol, themax, big, dxmax, errmax, dres, cgce,
+     *  tol1, big1, upriv, rmin, eps, resid, zero
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
@@ -116,13 +116,13 @@ c
       integer mlp, numnz, num, large
       integer lpiv(10),lnpiv(10),mapiv,manpiv,iavpiv,ianpiv,kountl
       logical grow, lblock, abort, abort1, abort2, abort3, aborta,
-     * abortb, lbig, lbig1
+     *  abortb, lbig, lbig1
       common /ma28edc/ lp, mp, lblock, grow
       common /ma28fdc/ eps, rmin, resid, irncp, icncp, minirn, minicn,
-     * irank, abort1, abort2
+     *  irank, abort1, abort2
       common /ma28gdc/ idisp
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
-     * ndrop, maxit, noiter, nsrch, istart, lbig
+     *  ndrop, maxit, noiter, nsrch, istart, lbig
       common /ma30idc/ tol1, big1, ndrop1, nsrch1, lbig1
       common /ma30edc/ nlp, aborta, abortb, abort3
       common /ma30fdc/ mirncp, micncp, mirank, mirn, micn
@@ -133,7 +133,7 @@ c
       !$OMP THREADPRIVATE(/mc23bdc/,/lpivotc/)
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
-     * newpos, knum, length, move
+     *  newpos, knum, length, move
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
@@ -180,7 +180,7 @@ c data check to see if all indices lie between 1 and n.
 c
 c sort matrix into row order.
       call mc20adcopy(n, nz, a, icn, iw, irn, 0)
-c part of ikeep is used here as a work-array.  ikeep(i,2) is
+c part of ikeep is used here as a work array.  ikeep(i,2) is
 c     the last row to have a nonzero in column i.  ikeep(i,3)
 c     is the off-set of column i from the start of the row.
       do 60 i=1,n
@@ -211,7 +211,7 @@ c first time column has ocurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
-c shift necessary because of  previous duplicate element.
+c shift necessary because of previous duplicate element.
           newpos = jj - move
           a(newpos) = a(jj)
           icn(newpos) = icn(jj)
@@ -935,8 +935,8 @@ c     values in icn. a(1) to a(idisp(1)-1) are neither required nor
 c     altered.
 c licn  is an integer variable which must be set by the user to the
 c     length of arrays icn and a. it must be big enough for a and icn
-c     to hold all the nonzeros of l and u and leave some "elbow
-c     room".  it is possible to calculate a minimum value for licn by
+c     to hold all the nonzeros of l and u and leave some elbow
+c     room.  it is possible to calculate a minimum value for licn by
 c     a preliminary run of ma30a/ad. the adequacy of the elbow room
 c     can be judged by the size of the common block variable icncp. it
 c     is not altered by ma30a/ad.
@@ -972,7 +972,7 @@ c lirn  is an integer variable. it should be greater than the
 c     largest number of nonzeros in a diagonal block of p1*a*q1 but
 c     need not be as large as licn. it is the length of array irn and
 c     should be large enough to hold the active part of any block,
-c     plus some "elbow room", the  a posteriori  adequacy of which can
+c     plus some elbow room, the  a posteriori  adequacy of which can
 c     be estimated by examining the size of common block variable
 c     irncp.
 c lenc,ifirst,lastr,nextr,lastc,nextc are all integer arrays of
@@ -1653,9 +1653,9 @@ c innermost loop.
               iop = iop + 1
               pivrow = ijpos - iq(j)
 #ifdef DBG
-              if ((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
-     &            (a(pivrow).ge. tiny(1.0_R8).or.
-     &             a(pivrow).le.-tiny(1.0_R8))) then
+              if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
+     &           (a(pivrow).ge. tiny(1.0_R8).or.
+     &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
                 if (product.ge.cutll) a(jj) = a(jj) + au*a(pivrow)
               end if
@@ -3413,8 +3413,8 @@ c     new decomposition using ma28a/ad.
 c resid is a real*8 variable which on exit from ma28c/cd gives the value
 c     of the maximum residual over all the equations unsatisfied because
 c     of dependency (zero pivots).
-c irncp,icncp are integer variables which monitor the adequacy of "elbow
-c     room" in irn and a/icn respectively. if either is quite large (say
+c irncp,icncp are integer variables which monitor the adequacy of elbow
+c     room in irn and a/icn respectively. if either is quite large (say
 c     greater than n/10), it will probably pay to increase the size of
 c     the corresponding array for subsequent runs. if either is very low
 c     or zero then one can perhaps save storage by reducing the size of
@@ -3576,7 +3576,7 @@ c     reduced to enable a successful decomposition to the point at
 c     which failure occurred.  notice that, on a successful entry
 c     idisp(2) gives the amount of space in a/icn required for the
 c     decomposition while minicn will usually be slightly greater
-c     because of the need for "elbow room".  if the user is very
+c     because of the need for elbow room.  if the user is very
 c     unsure how large to make licn, the variable minicn can be used
 c     to provide that information. a preliminary run should be
 c     performed with abort3 left set to .false. and licn about 3/2

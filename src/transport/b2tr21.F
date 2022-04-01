@@ -55,8 +55,8 @@ c     local variables:
      *          t0, t0i, t0e, cond, fac,
      *          z(-1:nx,-1:ny,ns+1), z2(-1:nx,-1:ny,ns+1)
 
-      integer nz(ns+1)
-      integer i, ix, iy, ifail, nspec, ncharged
+      integer   nz(ns+1)
+      integer   i, ix, iy, ifail, nspec, ncharged
 
       external b2xvff, b2xvsg, ipgeti
 
@@ -105,7 +105,7 @@ c     local variables:
       nz(1) = 1
       nspec=2
       nz(nspec)=0
-      mm(nspec)=am(0)*mp  ! xpb <------- new line
+      mm(nspec)=am(0)*mp         ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
@@ -215,7 +215,7 @@ c       write(*,*) 'ncharged',ncharged
      1     (atan(1.0e8_R8)-atan(-xscal*xpos))
 c       write(*,*) 'b2t21t:ix,iy,cond,fac',ix,iy,cond,fac
 
-          if( ifail .eq. 0 )  then
+          if( ifail .eq. 0 ) then
 c            poloidal heat flux and heat conduction coefficient
 c              --------------------------------------------------
 
@@ -401,7 +401,7 @@ c       ( ix )
       failcount0=failcount
       nspec=1
       nz(nspec)=0
-      mm(nspec)=am(0)*mp  ! xpb <------- new line
+      mm(nspec)=am(0)*mp       ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspec)=nz(nspec)+1
@@ -464,7 +464,7 @@ c         write(*,*) 'wwpp',wwpp
      *       cond)
 c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
 
-            if( ifail .eq. 0 )  then
+            if( ifail .eq. 0 ) then
 
               ncharged=0
               do i=0,ns-1
@@ -678,21 +678,21 @@ c  ---------------------------------------------------------------------
       call f01aaf(a, 2*ns, 2*ns, inva, 2*ns, wk1, ifail)
 #else
       call f07adf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         call f06qff('General', 2*ns, 2*ns, a, 2*ns, inva, 2*ns)
         call f07ajf(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
 #endif
 #else
       call sgetrf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         inva(1:2*ns,1:2*ns) = a(1:2*ns,1:2*ns)
         call sgetri(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
 #endif
       cond=condval(a,2*ns,ifail)
 
-      if( ifail .ne. 0 )  return
+      if( ifail .ne. 0 ) return
 
       do i=1,ns
         x(i) = inva(i,1)*p(1)*ww(1)
@@ -771,7 +771,7 @@ c
 *       nz = ( nzs (s=1,...,ns) )  :    number of charge states
 *                                       of species s
 *       ns                         :    number of species
-*       nfl                         :   number of fluids
+*       nfl                        :    number of fluids
 *
 *       Output:
 *       --------
@@ -789,19 +789,19 @@ c
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine thermf(up, n, z, z2, mm, te, ti, gte, gti, lnlam,    !srv 01.07.09
+      subroutine thermf(up, n, z, z2, mm, te, ti, gte, gti, lnlam,       !srv 01.07.09
      *                  nz, ns, nfl, ce, ci, he, hi, r, ifail, cond)
 
       use b2mod_types
-      use b2mod_constants                                             !xpb
+      use b2mod_constants                                                !xpb
       use b2mod_subsys
       implicit none
 
-        integer     ns, nfl, nz(ns)
-        real (kind=R8) ::
+      integer     ns, nfl, nz(ns)
+      real (kind=R8) ::
      *    up(nfl), n(nfl), z(nfl), z2(nfl), mm(ns), r(nfl)
-        real (kind=R8) :: te, ti, gte, gti, lnlam, he, hi, ce, ci     !srv 01.07.09
-        integer     ifail
+      real (kind=R8) :: te, ti, gte, gti, lnlam, he, hi, ce, ci          !srv 01.07.09
+      integer     ifail
 
 C       internal variables:
 
@@ -810,7 +810,7 @@ C       heat flux h and a higher moment hh
 
 C       d:      sum  of n                       number density
 C       z2n:    sum  of n*Z**2                  d * <Z**2>
-C       upm:    (sum of n*up*Z**2 )/z2n         mean parallel velocity
+C       upm:   (sum of n*up*Z**2 )/z2n          mean parallel velocity
 C       p:      p(i) = d(i)*t(i)                pressure
 C       t:                                      temperature
 C       gt:                                     temperature gradient
@@ -949,14 +949,14 @@ c  ---------------------------------------------------------------------
       call f01aaf(a, 2*ns, 2*ns, inva, 2*ns, wk1, ifail)
 #else
       call f07adf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         call f06qff('General', 2*ns, 2*ns, a, 2*ns, inva, 2*ns)
         call f07ajf(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
 #endif
 #else
       call sgetrf(2*ns, 2*ns, a, 2*ns, IPIV, ifail)
-      if( ifail .eq. 0 )  then
+      if( ifail .eq. 0 ) then
         inva(1:2*ns,1:2*ns) = a(1:2*ns,1:2*ns)
         call sgetri(2*ns, inva, 2*ns, IPIV, wk1, 2*ns, ifail)
       endif
@@ -1065,7 +1065,7 @@ c  ---------------------------------------------------------------------
      *                     ( h1 - h(n1(j)+l)/mm(j) )
      *                   + g(i,j,3)*i1*i2 * (mu(i,j)/tt(i,j))**2 *
      *                     ( hh1 - hh(n1(j)+l)/mm(j) )
-              if( i.eq.1 .or. j.eq.1 )  then
+              if( i.eq.1 .or. j.eq.1 ) then
                 r(n1(i)+k) = r(n1(i)+k) + g(i,j,1)*i1*i2*
      *                                      (up(n1(i)+k)-up(n1(j)+l))
               end if

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, hx, hy, vol, qs, na, te, ti, cdpa, 
+      subroutine b2tfcc (nx, ny, ns, hx, hy, qs, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
@@ -15,7 +15,7 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1), qs(-1:nx,-1:ny,0:1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny)
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny)
 *   ..input/output arguments
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1,0:1), cone(-1:nx,-1:ny,0:1,0:1,0:2),       !srv 02.01.07
@@ -27,7 +27,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       real (kind=R8) ::
-     *   xfac, t0, t1
+     *   xfac, t0
       real (kind=R8) ::
      *   nw(-1:nx,-1:ny,0:ns-1), dnwr(-1:nx,-1:ny,0:1,0:ns-1),
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
@@ -115,7 +115,7 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           floi(ix,iy,0,0) = floi(ix,iy,0,0)-
      &     (xfac*2.5_R8/2.0_R8)*(cdpa(ix,iy,0,0,is)*
-     &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) + 
+     &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) +
      &     cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
           coni(ix,iy,0,0,0) = coni(ix,iy,0,0,0)+                         !srv 02.01.07
@@ -179,4 +179,4 @@ cwdk add linearization coefficients for 9-point fluxes
 *-----------------------------------------------------------------------
 *.end b2tfcc
 
-      end
+      end subroutine b2tfcc

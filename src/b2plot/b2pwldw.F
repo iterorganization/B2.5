@@ -21,10 +21,10 @@ c
 c  version : 12.01.2002 01:19
 c
 c=======================================================================
-c*** Calculate and write down the power loading, particle fluxes, and 
+c*** Calculate and write down the power loading, particle fluxes, and
 c*** so on, onto the segment of a plot zone or a target.
 c*** Power in W/m**2, fluxes in 1/m**2/s, erosion in mm/y
-c*** 
+c***
 c*** Input:
 c***  lun   : output unit number (must be opened in advance)
 c***  trgl  : target (some extra data with respect to a plot zone)
@@ -88,6 +88,7 @@ c=======================================================================
       character*8 TEXTA(DEF_NATM)
 #else
       real (kind=R8) :: pump, pumptot
+      character*13 species_name
 #endif
       integer lun,izn,iln,boundary_namelist
       real (kind=R8) :: BoRiS
@@ -128,7 +129,7 @@ c***  wnmtrg  : power with molecules to the target
 c***  wnatrg  : power with atoms to the target
 c***  wrdtrg  : radiation power to the target
 c***  wtttrg  : total power to the target
-c***  fiitrg  : impinging ion flux 
+c***  fiitrg  : impinging ion flux
 c***  eiitrg  : average energy of ions
 c***  faitrg  : impinging atom flux
 c***  eaitrg  : average energy of atoms
@@ -141,7 +142,7 @@ c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion [mm/y]
 c***  spttrg  : sputtering [g/y]
 
-      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,
+      real (kind=R8) :: h,p,t,u,wo,wwo,eni_hlp(ntrgsx),mion,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NY-1,ntrgsx),xmp_hlp(0:NY-1,ntrgsx),xtrg(0:NY-1,ntrgsx),
      ,  netrg(0:NY-1,ntrgsx),  tetrg(0:NY-1,ntrgsx),
@@ -165,6 +166,7 @@ c***  spttrg  : sputtering [g/y]
      ,  erntrg(0:NY-1,ntrgsx), spttrg(0:NY-1,ntrgsx),
      ,  sjs(0:NY-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx),sptmass,sptflx(DEF_NLIM+DEF_NSTS)
+c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from Eirene
 c***    wldnek  :   heat transferred with neutrals. Evaluated as
@@ -336,7 +338,10 @@ c        if(n_sfpr_s.gt.0) print *,(' ',sfpr_s(i),i=1,n_sfpr_s)      !###
             k=k+1
             iy=(bcstart(i)+bcend(i))/2
             if(l.eq.nx) then !{
-              if(ntrgts.eq.2) then !{
+              if(ntrgts.eq.1) then !{
+                phi_hlp(1)=get_phi_applied(boundary_namelist,l,iy)
+                eni_hlp(1)=enipar(i,1)+2.0_R8-enipar(i,2)
+              else if(ntrgts.eq.2) then !{
                 phi_hlp(2)=get_phi_applied(boundary_namelist,l,iy)
                 eni_hlp(2)=enipar(i,1)+2.0_R8-enipar(i,2)
               else if (ntrgts.eq.4) then !}{
@@ -367,7 +372,7 @@ c        print '(1h:,20(a,1h:))',(mtrtrgsg(i),i=1,ntrgts)            !###
         do j=1,ntrgts !{
           do i=k+1,k+ny !{
 c carlis insert wall material for each target element
-            mtrwldsg(i)=mtrtrgsg(j) 
+            mtrwldsg(i)=mtrtrgsg(j)
           end do !}
           k=k+ny
         end do !}
@@ -404,21 +409,21 @@ c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
         do k=1,n_sfpr_er !{
           l=0
           do i=1,n_srfs_m !{
-c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE materials 
+c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE materials
             if(streql(srfs_m(i),sfpr_m(k))) l=i
           end do !}
           if(l.eq.0) then !{
             if (.not.streql(sfpr_m(k),'dummy'))
      >       write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
             l_ersmtr(k)=0
-            
+
           else !}{
             m=m+1
 c carlis in list of ACTIVE materials we put the 'real' material e.g. CFC becomes C
 c        the list is not erdered as the list of possible materials
             sfpr_m(m)=srfs_x(l)
 c carlis     [s/y*m2*mm]   =[s/y]*[m2/cm2*mm/cm*]*[g/mol]/[1/mol]/[g/cm3]
-            wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l)) 
+            wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
 c carlis list of indices that tells for each ACTIVE material the counterpat in POSSIBLE list
             l_srfmtr(k)=l 
 c carlis list of indices that tells the new ordering of wall materials in active list wrt the ordering of i_ersmtr
@@ -463,20 +468,20 @@ c carlis evaluate number of sputtered atoms and molecules
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
-        do im=1,nmoli
+        do imol=1,nmoli
           match_found=.false.
           j=1
           do j=1,nlimps
-            if (wldsptm(j,im,0).gt.0.0_R8) then
-              sptflx(j)=wldsptm(j,im,0)
-              do_spt_wll(j)=im+natm
-              sptliswll(im+natm)=1
+            if (wldsptm(j,imol,0).gt.0.0_R8) then
+              sptflx(j)=wldsptm(j,imol,0)
+              do_spt_wll(j)=imol+natm
+              sptliswll(imol+natm)=1
               match_found=.true.
             end if
           end do
           if (match_found) then
             i=i+1
-            sfpr_sp(i)=trim(adjustl(textmn(im-1)))
+            sfpr_sp(i)=trim(adjustl(textmn(imol-1)))
           end if
         end do
 #endif
@@ -544,7 +549,8 @@ c carlis calculation of total pumped fluxes
               end if
             end do
             pumptot=pumptot+pump
-            print *,'Pumped ',trim(adjustl(textpl(is))),
+            call species(is,species_name,.false.)
+            print *,'Pumped ',trim(adjustl(species_name)),
      ,              ': ',pump,' (1/s)'
           end if
         end do
@@ -576,7 +582,7 @@ c*** Check whether this target has been prepared
 c*** This is the first request for a target segment.
 c*** Prepare the necessary data for all the targets - just to make
 c*** the modification from the old version easier.
-c*** Here we need to calculate all totals and peaks, and also to 
+c*** Here we need to calculate all totals and peaks, and also to
 c*** evaluate the neutral fluxes which are not directly available
 c*** from Eirene.
 c*** All the extra output for targets is also prepared here.
@@ -801,7 +807,7 @@ c*** Particle fluxes and energies
                 IAS=IND+1
 c!###{
 c                print *,'is,j,i1,i2,k,kk,ib=',is,j,i1,i2,k,kk,ib
-c                zz=0
+c                zz=0.0_R8
 c                print '(3x,12(2x,a8))','phi','fti','tn','wo','wwo',
 c     ,            'fiitrg','eiitrg','faitrg','eaitrg','dab2',
 c     ,            'tab2','s'
@@ -826,7 +832,7 @@ c!###{
 c                  print '(1x,i2,1p,8e10.2)',iy,p/ev,h/ev,t,wo,wwo,
 c     ,              fiitrg(iy,j,is),eiitrg(iy,j,is),s(iy,j)
 c!###}
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
 c                print *,'j,is,zz=',j,is,zz  !###
                 l=1-l
                 u=-u
@@ -839,7 +845,7 @@ c              write(*,'(1p,12e10.2)') (wwi(i),i=1,ntrgts)
             end do !} loop over active species
 
 c*** Atomic fluxes and energies
-            do iatm=1,natmi !{
+            do iatm=1,nclm_na !{
               l=1
               u=-1
               do j=1,ntrgts !{
@@ -861,8 +867,10 @@ c carlis using values directly from Eirene
      .                       sarea_res(iy+IAS) !units in W/m2*m2
                   else
                     naitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))
-                    paitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))*ti(kk,iy)
-                    faitrg(iy,j,iatm)=u*fna(ib,iy,0,0,eb2atcr(iatm))
+                    paitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))*
+     .                                ti(kk,iy)
+                    faitrg(iy,j,iatm)=u*
+     .                                fna(ib,iy,0,0,eb2atcr(iatm))
                     eaitrg(iy,j,iatm)=2.0_R8*ti(kk,iy)
                   end if
 c!###{
@@ -870,7 +878,7 @@ c                  print '(1x,i2,1p,4e10.2)',iy,
 c     ,              faitrg(iy,j,iatm),eaitrg(iy,j,iatm)/ev,
 c     ,              dab2(kk+1,iy+1,iatm,1),tab2(kk+1,iy+1,iatm,1)/ev
 c!###}
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
                 wo=0.0_R8
                 wwo=0.0_R8
                 do iy=0,ny-1 !{
@@ -937,7 +945,7 @@ c*** Molecules fluxes and energies
                     nmitrg(iy,j,imol)=0.0
                     emitrg(iy,j,imol)=0.0
                   endif
-                end do !} loop over b2 cells
+                end do !} loop over B2 cells
                 wo=0.0_R8
                 wwo=0.0_R8
                 do iy=0,ny-1 !{
@@ -1034,7 +1042,8 @@ c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
                         end if
                       end do
                     end if
-                    spttrg(iy,j)=sjs(iy,j)*nsecyr/avogr*sptmass
+                    spttrg(iy,j)=
+     .               sjs(iy,j)*nsecyr/avogr*sptmass
 c carlis The erosion of the wall is evaluated using the wall material and not the emitted atom/molecule
 c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
                     erntrg(iy,j)=sjs(iy,j)*
@@ -1056,7 +1065,7 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
                   do_spt=.false.
                   print *,
      ,             'b2pwldw, zero sputtering flux for target j=',j
-                  sjs_w(j)=0.0
+                  sjs_w(j)=0.0_R8
                 end if
                 shift=shift+ny
               end do !} loop on targets for sputtering
@@ -1066,19 +1075,19 @@ c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
           iznt=izn
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy=0
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
         else if (iznt.ne.izn) then !}{ itg.ne.itrg
           if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
+            iy= ny*itg - (ils-lppp) + (ny-1)*(itg-1)
             im=-1
           else !}{
-            iy=0
+            iy= ny+itg-1-(ils-lppp)
             im=1
           end if !}
           iznt=izn
@@ -1151,7 +1160,7 @@ c*** Print the column headers
           end do !}
         end do !}
 c        print *,'About to write a header:',k-1,' symbols'   !###
-c        print *,hdr_line(1:k-1)  
+c        print *,hdr_line(1:k-1)
                            !###
         write(lun,740) 'x',tab,'coordinate along plot zone [m].'
         write(lun,740) 'Wtot',tab,'total power flux [W/m^2]'
@@ -1327,7 +1336,7 @@ c carlis sputtering not happening on this wall but possibly on other walls of th
           end do
         end if
       else if(do_trg) then !}{
-c        print *,'itrg,iy=',itrg,iy     
+c        print *,'itrg,iy=',itrg,iy
         w_line(10)=wptpl(iy,itrg) !recombination due to plasma
         w_line(9)=whtpl(iy,itrg) !heat due to plasma                           !###
         w_line(8)=wptnu(iy,itrg)+wptpl(iy,itrg)
@@ -1416,7 +1425,8 @@ c      print *,'About to write a line:',k,' values'   !###
       if(k.gt.0) write(lun,frmt_hlp) (w_line(i),tab,i=1,k)
       deallocate(w_line)
 c      print *,'TEXTMN*',adjustl(TEXTMN),'*'
-c      print *,'TEXTin*',adjustl(TEXTin),'*'
+c      print *,'TEXTIN*',adjustl(TEXTIN),'*'
+      return
 
 c=======================================================================
-      end
+      end subroutine b2pwldw

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx,
-     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
+      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+     &  vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
@@ -27,6 +27,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_geo
+     , , only: hy1
       use b2mod_math
       use b2mod_subsys
       implicit none
@@ -82,12 +84,13 @@
 *.declarations
 
 *   ..local variables
-      integer n2, i, ix, iy, is, ib, istra, ncall, k,
-     * iwall, itargsp, zbulk
+      integer n2, i, ix, iy, is, ib, istra, ncall, iwall, itargsp, zbulk
+!     integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
-      character chns*3, chk*1                                        !srv 11.07.05
+      character chns*3
+!     character chk*1
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
       real (kind=R8), allocatable :: area(:)
@@ -101,12 +104,11 @@
       logical l_chem_sput, lcore, match
       integer sput_dst_bulk
 *   ..procedures
-      intrinsic abs, mod, exp
+      intrinsic abs, exp
       external xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) ::
-     *   smax, smin, hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+     *   smax, smin
 *   ..initialisation
       save ncall
       data ncall/0/
@@ -141,7 +143,7 @@
       call subini ('b2stbr_phys')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                          !srv 22.08.08 {
-       write(*,*) ' First call of b2stbr_phys'
+       write(*,*) 'First call of b2stbr_phys'
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
@@ -648,7 +650,7 @@ c lcore           is this a core element?
       real (kind=R8) hh, hhn, Phi_app, area, pof
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack
+      integer is0, is1, is2, is, k, iwall, itrack
       real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
@@ -659,9 +661,6 @@ c lcore           is this a core element?
 #endif
       character*13 hlp_frm
       external mass_density
-      logical lnext
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 
       iwall=xymap(ix,iy)
 cdpc-exp
@@ -887,16 +886,17 @@ cdpc
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) +
      &                          fna(ixf,iyf,idir,1,is))) *
-     1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
+     1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
             vbar = sqrt(8.0_R8 * ti(ix,iy) / (pi * am(is) * mp))
             Pflx = Pflx + na(ix,iy,is)*vbar*alpha *
-     1           neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
+     1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
          sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+recyc(is,istra)*t0
+
          itrack=track_index(is0)
 cxpb Whatever is not recycled is counted as deposition
          if(itrack.gt.0.and.itrack.le.ntrack
@@ -986,8 +986,10 @@ c chemical sputtering
                t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
                sputter_yield(ix,iy,is,1)=t1
                tchem(is)=tchem(is)+t1
-               if (sput_dst_bulk.ne.-1) sna0(ix,iy,0,sput_dst_bulk) =
+               if (sput_dst_bulk.ne.-1) then
+                 sna0(ix,iy,0,sput_dst_bulk) =
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
+               endif
 cxpb  Erosion from the bulk material if chemically sputtered
 cxpb  without mixed materials model
                if(sput_frac_flag.eq.0) then
@@ -1117,6 +1119,7 @@ cxpb We first treat the bulk material
                   tphys(is) = tphys(is) + t1
                   sna0(ix,iy,0,sput_dst_bulk) =
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
+
 cxpb  Erosion from the bulk material if physically sputtered
                   if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call) then
@@ -1212,6 +1215,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                     tphys(is) = tphys(is) + t1
                     sna0(ix,iy,0,target_intcode(itrack)) =
      &                    sna0(ix,iy,0,target_intcode(itrack)) + t1
+
 cxpb  Removal from the deposited material if physically sputtered
 cxpb  with mixed materials model
                     if(iwall.gt.0.and.main_call)
@@ -1384,8 +1388,11 @@ c radiation enhanced sublimation
                   RES_sputtering(iwall,is) =
      &                 RES_sputtering(iwall,is)*sput_frac_chem_sum
                endif
-               if(sput_dst_bulk.ne.-1) sna0(ix,iy,0,sput_dst_bulk) =
+               if(sput_dst_bulk.ne.-1) then
+                  sna0(ix,iy,0,sput_dst_bulk) =
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
+               endif
+
 cxpb  Erosion from the bulk material if RES sputtered
 cxpb  without mixed materials model
                if(sput_frac_flag.eq.0) then
@@ -1470,9 +1477,10 @@ cxpb  as deposition
          endif
 *    ..recycling into next ionized species
          if(is.lt.ns-1) then
-           if(lnext(is,is+1))
-     1        sna0(ix,iy,0,is+1) = sna0(ix,iy,0,is+1)+
+           if(lnext(is,is+1)) then
+              sna0(ix,iy,0,is+1) = sna0(ix,iy,0,is+1)+
      2        rcion(is,istra)*t0/neutral_sources_rescale
+           endif
          endif
       enddo      ! do is = 0, ns-1
 *    ..recycling at core into highest ionized stage
@@ -1504,6 +1512,7 @@ cxpb
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
      &          recyc(is,istra)*t0
+
 cwdk  recycling of true parallel momentum
 c     (at core, cell faces will be aligned with flux surfaces)
                smo0(ix,iy,0,is0) = smo0(ix,iy,0,is0)+
@@ -1523,4 +1532,3 @@ c     (at core, cell faces will be aligned with flux surfaces)
 *.end b2stbr_phys
 
       end subroutine b2stbr_phys
-

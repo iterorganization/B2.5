@@ -10,17 +10,19 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), 
-     & ua(-1:nx,-1:ny,0:ns-1),
-     & cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                              !srv 16.10.17
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1 qs(-1:nx,-1:ny,0:1),
-     1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                         !srv 22.06.08
+     &  vol(-1:nx,-1:ny),
+     &  ua(-1:nx,-1:ny,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 16.10.17
+     1  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1  qs(-1:nx,-1:ny,0:1),
+     1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchvispar(-1:nx,-1:ny,0:1,0:1)
@@ -30,7 +32,7 @@
 *  1. purpose
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
-*     current
+*     current.
 *
 *  8. further comments
 *
@@ -38,9 +40,9 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is
+      integer ncall, ix, iy, ib, is
       integer, save :: no_current = 0
       real (kind=R8) ::
      &  vis_par
@@ -49,11 +51,8 @@
      *   wrk0(-1:nx,-1:ny), gOnedBsq(-1:nx,-1:ny,0:1,0:1)
       save ncall, vis_par
 *   ..procedures
-      intrinsic max, abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *   ..initialization
       data ncall/0/, vis_par/1.0_R8/
 *-----------------------------------------------------------------------
@@ -66,22 +65,20 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tvspa_vis_par', vis_par)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of cvsa_cl
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')           !srv 16.10.17
+        call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')          !srv 16.10.17
        enddo
         call ipgeti ('b2tfhe_no_current', no_current)
       endif
 
 c Drift terms
-      fchvispar =0.0e0_R8                                                !srv 09.07.99
-      dvpar=0.0e0_R8                                                     !srv 24.06.99
+      fchvispar =0.0e0_R8                                               !srv 09.07.99
+      dvpar=0.0e0_R8                                                    !srv 24.06.99
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
      &   no_current.eq.0) then
 *       compute gradients of OnedBsq on cell faces
@@ -96,7 +93,7 @@ c Drift terms
      &        .not.is_neutral(is)) then                                  !srv 24.06.99
            do iy = -1, ny						 !srv 18.02.00
             do ix = 0, nx
-             if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02 23.07.05 {
+             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02 23.07.05 {
 !             it has been considered that cvsa_cl was multiplied by bx**2
                   dvpar(ix,iy)=dvpar(ix,iy) +                            !srv 24.06.99
      &		     (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+ 
@@ -114,7 +111,7 @@ c Drift terms
 !     &             +bb(ix,iy,3))*0.5e0_R8)                              !srv 18.02.00
 !     &         -ua(ix,iy,is)*sqrt((bb(leftix(ix,iy),leftiy(ix,iy),3)
 !     &             +bb(ix,iy,3))*0.5e0_R8))                             !srv 18.02.00
-               endif                                                    !srv 26.11.02
+               endif                                                     !srv 26.11.02
               enddo							 !srv
             enddo							 !srv
 	  endif                                                          !srv 24.06.99
@@ -188,4 +185,4 @@ cwdk cancelation of some terms in poloidal and radial current components
 *-----------------------------------------------------------------------
 *.end b2tvspa
 
-      end                                                              !srv 20.09.06 }
+      end subroutine b2tvspa                                            !srv 20.09.06 }

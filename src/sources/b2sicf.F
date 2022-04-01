@@ -101,25 +101,26 @@
         do iy = 0, ny-1
           do ix = 0, nx-1                                               !srv 26.11.02 {
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
-              smbcf(ix,iy,0) = phm0*vol(ix,iy)*               !srv factor hz/hz=1
+              smbcf(ix,iy,0) = phm0*vol(ix,iy)*                         !srv factor hz/hz=1
      &         (bb(ix,iy,0)/bb(ix,iy,3))*mb*ub(ix,iy)**2                !srv 05.04.07
      &          *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 22.07.05 {
+     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))   !srv 22.07.05 {
               smbcf(ix,iy,1) = 0.0e0_R8
               smbcf(ix,iy,2) = 0.0e0_R8
               smbcf(ix,iy,3) = 0.0e0_R8
-              ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                        !srv 06.04.07 {
+              ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                       !srv 06.04.07 {
      &         (bb(ix,iy,0)/bb(ix,iy,3))*mb*2.0e0_R8*ub(ix,iy)
      &         *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 06.04.07 }
+     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))   !srv 06.04.07 }
 
             else                                                        !srv 26.11.02 }
               smbcf(ix,iy,0) = 0.0e0_R8
               smbcf(ix,iy,1) = 0.0e0_R8
               smbcf(ix,iy,2) = 0.0e0_R8
               smbcf(ix,iy,3) = 0.0e0_R8
-              ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
+              ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
             endif                                                       !srv 26.11.02
+            smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
         enddo
 
@@ -137,26 +138,26 @@
 
 *   .. compute smbcf
         do iy = 0, ny-1
-          do ix = 0, nx-1                                                !srv 26.11.02 {
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then    !srv 22.07.05 {
-              smbcf(ix,iy,0) = phm0*vol(ix,iy)*                          !srv factor hz/hz=1
+          do ix = 0, nx-1                                               !srv 26.11.02 {
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
+              smbcf(ix,iy,0) = phm0*vol(ix,iy)*                         !srv factor hz/hz=1
      &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*ub(ix,iy)**2
      &         *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))    !srv 22.07.05 {
+     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))   !srv 22.07.05 {
               smbcf(ix,iy,1) = 0.0e0_R8
               smbcf(ix,iy,2) = 0.0e0_R8
               smbcf(ix,iy,3) = 0.0e0_R8
-              ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                        !srv 06.04.07 {
+              ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                       !srv 06.04.07 {
      &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*2.0e0_R8*ub(ix,iy)
      &          *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))    !srv 06.04.07 }
+     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))   !srv 06.04.07 }
 
-            else                                                         !srv 26.11.02 }
+            else                                                        !srv 26.11.02 }
               smbcf(ix,iy,0) = 0.0e0_R8
               smbcf(ix,iy,1) = 0.0e0_R8
               smbcf(ix,iy,2) = 0.0e0_R8
               smbcf(ix,iy,3) = 0.0e0_R8
-              ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
+              ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
             endif
             smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
@@ -168,7 +169,7 @@ cdjm Store linearised source for balance
         b2sicf_smo0to3(-1:nx,-1:ny,0:3,isb)=smbcf
       endif
 
-      if (iout.ne.0) then                                                !srv 17.06.02 {
+      if (iout.ne.0) then                                               !srv 17.06.02 {
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k
@@ -179,7 +180,7 @@ cdjm Store linearised source for balance
      &       smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb
         call my_out(70,nx,ny,wrks,'b2sicf_smocf'//chns)
         call my_out(70,nx,ny,ctcf,'b2sicf_ctcf'//chns)
-      endif                                                              !srv 17.06.02 }
+      endif                                                             !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1

@@ -516,13 +516,13 @@ c           write(*,*) 'Do not yet know about ',h123
 c
 C  input
 C    filnam: read a&m data from file filnam, e.g. AMJUEL
-c    ir    : store data on eirene array creac(...,...,ir)
+c    ir    : store data on Eirene array creac(...,...,ir)
 c    H123  : identifier for reaction in filnam, e.g. H2
 c    REAC  : number of reaction in filnam, e.g. 2.2.5
 c    crc   : type of data process e.g. EI, CX, OT, etc
 C  output
-c    iswr  : eirene flag for type of process  (1,2,...7)
-c    creac : eirene storage array for a&m data CREAC(9,0:9,IR)
+c    iswr  : Eirene flag for type of process  (1,2,...7)
+c    creac : Eirene storage array for a&m data CREAC(9,0:9,IR)
 c    modcol: see below
 C    IFTFLG=IFTFLG(IH): flag for type of fitting expression ("fit-flag=...")
 C    IH  internally derived from ISW, for different types of data:
@@ -1164,7 +1164,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
 
       END FUNCTION SLREAC_EXTRAP
 
-      subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,lambda,
+      subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,
      1 safetyfactor,cr,cz,crx,bb,ne,te,ti,na,transport)
       use b2mod_types
       use b2mod_rates
@@ -1174,7 +1174,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       use b2mod_subsys
       implicit none
       integer nx,ny,ns,ismain,jsep,jxa
-      real (kind=R8) :: lambda,
+      real (kind=R8) :: lnlam(-1:nx,-1:ny),
      1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
      2 bb(-1:nx,-1:ny,0:3),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
@@ -1184,11 +1184,12 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       integer ix,iy,is,irmin,irmax
       real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
-     2 bave,epsilon,lnlam,vthi,omegaci,
+     2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi
       external xerrab
 
       call subini('old_chang_hinton')
+      call b2tlnl(nx,ny,1,te,ti,ne,lnlam)
       transport=0
       do iy=-1,jsep
         write(*,*) 'iy: ',iy
@@ -1218,7 +1219,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
             write(*,*) 'We have a problem: core not continuous!'
             call xerrab ('Chang-Hinton: core not continuous!')
           else
-            write(*,*) 
+            write(*,*)
      . 'Chang-Hinton calculation only available for closed field lines!'
             call subend ()
             return
@@ -1231,15 +1232,7 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
      1   ne(ix,iy),te(ix,iy)/qe,ti(ix,iy)/qe,bave,safetyfactor(iy)
         epsilon=(crmax-crmin)/(crmax+crmin)
         write(*,*) 'epsilon: ',epsilon
-cxpb    Coulomb logarithm formula from Wesson for ion-ion collisions
-        if (lambda.lt.0.0_R8) then
-          lnlam=max(-lambda,17.3_R8-
-     1     log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
-     2     1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
-        else
-          lnlam = lambda
-        endif
-        write(*,*) 'lnlam: ',lnlam
+        write(*,*) 'lnlam: ',lnlam(ix,iy)
         cr2max=0.5_R8*(crx(irmax,iy,1)+crx(irmax,iy,3))
         cr2min=0.5_R8*(crx(irmin,iy,1)+crx(irmin,iy,3))
         cr1max=0.5_R8*(crx(irmax,iy,0)+crx(irmax,iy,2))
@@ -1269,7 +1262,7 @@ cxpb    Coulomb logarithm formula from Wesson for ion-ion collisions
             write(*,*) 'alpha: ',alpha
             taui=12.0_R8*pi**1.5_R8*eps0**2*
      1             (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2             (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
+     2             (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam(ix,iy))
             write(*,*) 'taui: ',taui
             nui=1.0_R8/taui
             nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/

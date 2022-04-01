@@ -1,16 +1,16 @@
       module b2mod_work
       use b2mod_types
       real (kind=R8), allocatable, save ::
-     *  conb(:,:,:,:,:),  conc(:,:,:,:),                              !srv 13.10.06
-     *  cone(:,:,:,:,:),  coni(:,:,:,:,:),                            !srv 02.01.07
+     *  conb(:,:,:,:,:),  conc(:,:,:,:),                           !srv 13.10.06
+     *  cone(:,:,:,:,:),  coni(:,:,:,:,:),                         !srv 02.01.07
      *  corpa(:,:,:),  corpo(:,:),
      *  corte(:,:),  corti(:,:),
      *  corua(:,:,:),  corut(:,:),
      *  delne(:,:), delni(:,:,:), delna(:,:,:),  delpo(:,:),  
      *  delte(:,:),  delti(:,:),  delua(:,:,:),
      *  flob(:,:,:,:),  floe(:,:,:,:),  floi(:,:,:,:),
-     *  floe_noc(:,:,:,:),                                          !srv 28.10.02
-     *  floi_noc(:,:,:,:),                                          !srv 28.10.02
+     *  floe_noc(:,:,:,:),                                        !srv 28.10.02
+     *  floi_noc(:,:,:,:),                                        !srv 28.10.02
      *  pcca(:,:,:,:,:),  pccm(:,:,:,:),
      *  avisper(:,:,:),                                           !srv 05.07.00
      *  bvisper(:,:,:),                                           !srv 05.07.00
@@ -25,10 +25,10 @@
       subroutine alloc_b2mod_work(nxd,nyd,nsd)
       integer nxd,nyd,nsd
 
-      allocate(conb(-1:nxd,-1:nyd,0:1,0:1,0:4))                       !srv 13.10.06
+      allocate(conb(-1:nxd,-1:nyd,0:1,0:1,0:4))                   !srv 13.10.06
       allocate(conc(-1:nxd,-1:nyd,0:1,0:1))
-      allocate(cone(-1:nxd,-1:nyd,0:1,0:1,0:2))                       !srv 02.01.07
-      allocate(coni(-1:nxd,-1:nyd,0:1,0:1,0:2))                       !srv 02.01.07
+      allocate(cone(-1:nxd,-1:nyd,0:1,0:1,0:2))                   !srv 02.01.07
+      allocate(coni(-1:nxd,-1:nyd,0:1,0:1,0:2))                   !srv 02.01.07
       allocate(corpa(-1:nxd,-1:nyd,0:nsd-1))
       allocate(corpo(-1:nxd,-1:nyd))
       allocate(corte(-1:nxd,-1:nyd))
@@ -45,8 +45,8 @@
       allocate(flob(-1:nxd,-1:nyd,0:1,0:1))
       allocate(floe(-1:nxd,-1:nyd,0:1,0:1))
       allocate(floi(-1:nxd,-1:nyd,0:1,0:1))
-      allocate(floe_noc(-1:nxd,-1:nyd,0:1,0:1))                       !srv 28.10.02
-      allocate(floi_noc(-1:nxd,-1:nyd,0:1,0:1))                       !srv 28.10.02
+      allocate(floe_noc(-1:nxd,-1:nyd,0:1,0:1))                   !srv 28.10.02
+      allocate(floi_noc(-1:nxd,-1:nyd,0:1,0:1))                   !srv 28.10.02
       allocate(pcca(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(pccm(-1:nxd,-1:nyd,0:1,0:1))
       allocate(avisper(-1:nxd,-1:nyd,0:1))                        !srv 05.07.00

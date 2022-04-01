@@ -4,7 +4,7 @@
       subroutine b2sral (nx, ny, ns, nxtl, nxtr,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,            !srv 09.01.01
+     &  vol, hx, hy, hz, qz, qc, qs, gs, pbs, bb,                        !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -12,7 +12,8 @@
      &  fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  cdna, cdpa, cvsa_cl, cvla, chce, chve, chci, chvi, calf,         !xpb
+     &  cdna, cdpa, cvsa_cl,
+     &  cvla, chce, chve, chci, chvi, calf,                              !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
@@ -42,24 +43,25 @@
      &  fac_vis(-1:nx,-1:ny)
 *     (geometry)
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),        !srv 09.01.01
+     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
+     &  pbs(-1:nx,-1:ny,0:1),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), 
-     &  pbs(-1:nx,-1:ny,0:1),bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
+     &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
 *     (state)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), ve(-1:nx,-1:ny),
-     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      1  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  vedia(-1:nx,-1:ny,0:1,0:1), veecrb(-1:nx,-1:ny,0:1,0:1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  kinrgy(-1:nx,-1:ny,0:ns-1), wedia(-1:nx,-1:ny,0:1,0:1),
-     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *     (fluxes)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
@@ -273,20 +275,22 @@
 *   ..recompute currents
        call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po, fchanml) !srv 20.09.06 }
        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,  !srv 20.09.06 {
-     &                       fac_vis, fchvispar)
+     &               fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,
-     &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
+     &               gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !      call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,          !srv 10.10.17
 !     &              po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!      call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,       !srv 10.10.17
-!     &             ne2, lnlam, te, ti, ni, chci, fchvisq)
+!      call b2tvsq  (nx, ny, ns, fac_vis,                               !srv 10.10.17
+!     &              ne2, lnlam, te, ti, ni, chci,
+!     &              fchvisq)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
-     &  vol, hx, hy, hz, qz, gs, qc, qs, bb, pbs, ua, na, ne, te, ti,
-     &  po, fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia,
+     &  vol, hx, hy, qz, gs, qc, qs, bb, pbs,
+     &  ua, na, ne, te, ti, po, fch_p,
+     &  fchvispar, fchvisper, fchinert, fchanml, fchvisq,
+     &  fne, cvla, cdna, cdpa, chce, chci,
+     &  veecrb, vaecrb, wadia, ve, wedia,                               !srv 05.06.18
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 
@@ -301,7 +305,6 @@ csw 30sep2013, added cdpa in call, uadia
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nx, ny, ns, ismain, ismain0,
      &  BoRiS, facdrift, fac_ExB,                                       !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,           !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -316,8 +319,8 @@ csw 30sep2013, added cdpa in call, uadia
       elseif(style.eq.1) then
 !! FIXME : Need to add sne in argument list here ???
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc_spb called'
-       call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
-     &  pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po, ne,   !srv 14.10.99 12.05.00 09.01.01 28.10.02
+       call b2stbc_spb (nx, ny, ns, facdrift,                           !srv 09.01.01
+     &  na, ua, uadia, vaecrb, vadia, te, ti, po, ne,                   !srv 14.10.99 12.05.00 09.01.01 28.10.02
      1  ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,       !srv 13.10.06
      &  fhePSch, fhiPSch, fne, fni, fch,                                !srv 25.02.00 21.10.02
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
@@ -510,7 +513,7 @@ csw 30sep2013, added cdpa in call, uadia
      &               smo0_cx(:,:,1,is)*ua(:,:,is)+
      &               smo0_cx(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &               smo0_cx(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	  call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
+          call my_out(70,nx,ny,wrk,'b2stcx_smq'//chns)
         enddo
         if (allocated(shi0_cx)) then
           write(*,*) 'Deallocating arrays for cx'

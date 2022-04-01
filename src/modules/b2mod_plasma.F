@@ -20,26 +20,27 @@
      *  po(:,:),  po0(:,:),  pop(:,:),
      *  te(:,:),  te0(:,:),  tep(:,:),
      *  ti(:,:),  ti0(:,:),  tip(:,:),
-     *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:),
+     *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:), ue(:,:),
      *  uadia(:,:,:,:,:),  fchdia(:,:,:,:),
      *  fch_p(:,:,:,:), fch_pi_c(:,:,:,:), fch_pi_f(:,:,:,:),            !srv 10.06.08 { 13.01.17
      *  fhm(:,:,:,:,:), fhp(:,:,:,:,:), fhj(:,:,:,:), fht(:,:,:,:),
      *  fhe_mdf(:,:,:,:), fhePSch(:,:,:,:), 
      *  fhi_mdf(:,:,:,:), fhiPSch(:,:,:,:),                              !srv 13.10.06
-     *  fna_mdf(:,:,:,:,:), fnaPSch(:,:,:,:,:), 
+     *  fna_mdf(:,:,:,:,:), fnaPSch(:,:,:,:,:),
      *  fna_fcor(:,:,:,:,:), fna_he(:,:,:,:,:),                          !srv 01.10.99 21.01.00
      *  fna_eir(:,:,:,:,:), fne_eir(:,:,:,:), fhe_eir(:,:,:,:),          !srv 14.07.10
-     *  fhi_eir(:,:,:,:), 
+     *  fhi_eir(:,:,:,:),
      *  fna_32nd(:,:,:,:,:), fna_52nd(:,:,:,:,:)                         !srv 18.06.08
 
       real (kind=R8), allocatable, save ::
      *  fchvispar(:,:,:,:), fchvisper(:,:,:,:), fchvisq(:,:,:,:),        !srv 11.07.99
      *  fchinert(:,:,:,:), fchin(:,:,:,:), fchanml(:,:,:,:),             !srv 07.07.99 24.03.07 10.06.08 }
+     *  fchstoch(:,:,:),                                                 !srv 24.08.21
      *  vadia(:,:,:,:,:), vedia(:,:,:,:), wadia(:,:,:,:,:),              !xpb
      *  vaecrb(:,:,:,:,:), veecrb(:,:,:,:),
-     *  wedia(:,:,:,:), ve(:,:),                                           !srv 14.07.10
-     *  fna_nodrift(:,:,:,:,:), 
-     *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),             !xpb
+     *  wedia(:,:,:,:), ve(:,:),                                         !srv 14.07.10
+     *  fna_nodrift(:,:,:,:,:),
+     *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),                   !xpb
      *  fmo(:,:,:,:,:)
       real (kind=R8), allocatable, save ::
      *  facdrift(:,:), fac_ExB(:,:), fac_vis(:,:)
@@ -93,8 +94,8 @@
       fna_eir = 0.0_R8
       fne_eir = 0.0_R8
       fhe_eir = 0.0_R8
-      fhi_eir = 0.0_R8  
-      fna_fcor = 0.0_R8                                           !srv 14.07.10 }
+      fhi_eir = 0.0_R8
+      fna_fcor = 0.0_R8                                            !srv 14.07.10 }
       allocate(fna(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fna0(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(fnap(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
@@ -123,6 +124,7 @@
       allocate(ti(-1:nxd,-1:nyd))
       allocate(ti0(-1:nxd,-1:nyd))
       allocate(tip(-1:nxd,-1:nyd))
+      allocate(ue(-1:nxd,-1:nyd))
       allocate(ua(-1:nxd,-1:nyd,0:nsd-1))
       allocate(ua0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(uap(-1:nxd,-1:nyd,0:nsd-1))
@@ -143,6 +145,8 @@
       allocate(fchin(-1:nxd,-1:nyd,0:1,0:1))                         !srv 30.09.02
       fchin=0.0_R8
       allocate(fchanml(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.03.07
+      allocate(fchstoch(-1:nxd,-1:nyd,0:1))                          !srv 24.08.21
+      fchstoch = 0.0_R8                                              !srv 24.08.21
       allocate(vadia(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                 !xpb
       vadia=0.0_R8
       allocate(vedia(-1:nxd,-1:nyd,0:1,0:1))                         !xpb
@@ -220,6 +224,7 @@
       deallocate(ti)
       deallocate(ti0)
       deallocate(tip)
+      deallocate(ue)
       deallocate(ua)
       deallocate(ua0)
       deallocate(uap)
@@ -232,6 +237,7 @@
       deallocate(fchinert)                          !srv 07.07.99
       deallocate(fchin)                             !srv 30.09.02
       deallocate(fchanml)                           !srv 24.03.07
+      deallocate(fchstoch)                          !srv 24.08.21
       deallocate(vadia)
       deallocate(vedia)
       deallocate(wadia)
@@ -274,6 +280,7 @@
 *   ..local arrays for reading fluxes of old dimensions
       real (kind=R8) :: floc(-1:nxd,-1:nyd,0:1),
      &  flocs(-1:nxd,-1:nyd,0:1,0:nsd-1)
+      external b2xpni, cfrure, cfrure_opt
 
       if(b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(fch),  fch,  'fch')
@@ -564,6 +571,7 @@
       subroutine write_b2mod_plasma(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       call cfwure (nwrite, size(fch),  fch,  'fch')
       call cfwure (nwrite, size(fch0), fch0, 'fch0')
@@ -634,5 +642,186 @@
 
       return
       end subroutine write_b2mod_plasma
+
+      function rfchx(nx,ny,ix)
+      implicit none
+      integer, intent(in) :: nx, ny
+      integer, intent(in) :: ix
+      real(kind=R8) :: rfchx
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfchx = b2ssum(ny+2,fch(ix,-1,0,0),nx+2)
+      return
+      end function rfchx
+
+      function rfchy(nx,iy)
+      implicit none
+      integer, intent(in) :: nx
+      integer, intent(in) :: iy
+      real(kind=R8) :: rfchy
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfchy = b2ssum(nx+2,fch(-1,iy,1,1),1)
+      return
+      end function rfchy
+
+      function rfhex(nx,ny,ix)
+      implicit none
+      integer, intent(in) :: nx, ny
+      integer, intent(in) :: ix
+      real(kind=R8) :: rfhex
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfhex = b2ssum(ny+2,fhe(ix,-1,0,0),nx+2)
+      return
+      end function rfhex
+
+      function rfhey(nx,iy)
+      implicit none
+      integer, intent(in) :: nx
+      integer, intent(in) :: iy
+      real(kind=R8) :: rfhey
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfhey = b2ssum(nx+2,fhe(-1,iy,1,1),1)
+      return
+      end function rfhey
+
+      function rfhix(nx,ny,ix)
+      implicit none
+      integer, intent(in) :: nx, ny
+      integer, intent(in) :: ix
+      real(kind=R8) :: rfhix
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfhix = b2ssum(ny+2,fhi(ix,-1,0,0),nx+2)
+      return
+      end function rfhix
+
+      function rfhiy(nx,iy)
+      implicit none
+      integer, intent(in) :: nx
+      integer, intent(in) :: iy
+      real(kind=R8) :: rfhiy
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfhiy = b2ssum(nx+2,fhi(-1,iy,1,1),1)
+      return
+      end function rfhiy
+
+      function rfnax(nx,ny,ix,is)
+      implicit none
+      integer, intent(in) :: nx, ny
+      integer, intent(in) :: ix, is
+      real(kind=R8) :: rfnax
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfnax = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
+      return
+      end function rfnax
+
+      function rfnay(nx,iy,is)
+      implicit none
+      integer, intent(in) :: nx
+      integer, intent(in) :: iy, is
+      real(kind=R8) :: rfnay
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfnay = b2ssum(nx+2,fna(-1,iy,1,1,is),1)
+      return
+      end function rfnay
+
+      function rfnex(nx,ny,ix)
+      implicit none
+      integer, intent(in) :: nx, ny
+      integer, intent(in) :: ix
+      real(kind=R8) :: rfnex
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfnex = b2ssum(ny+2,fne(ix,-1,0,0),nx+2)
+      return
+      end function rfnex
+
+      function rfney(nx,iy)
+      implicit none
+      integer, intent(in) :: nx
+      integer, intent(in) :: iy
+      real(kind=R8) :: rfney
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfney = b2ssum(nx+2,fne(-1,iy,1,1),1)
+      return
+      end function rfney
+
+      function rfnix(nx,ny,ix)
+      implicit none
+      integer, intent(in) :: nx, ny
+      integer, intent(in) :: ix
+      real(kind=R8) :: rfnix
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfnix = b2ssum(ny+2,fni(ix,-1,0,0),nx+2)
+      return
+      end function rfnix
+
+      function rfniy(nx,iy)
+      implicit none
+      integer, intent(in) :: nx
+      integer, intent(in) :: iy
+      real(kind=R8) :: rfniy
+      real(kind=R8) :: b2ssum
+      external b2ssum
+      rfniy = b2ssum(nx+2,fni(-1,iy,1,1),1)
+      return
+      end function rfniy
+
+      function roxa(ix,iy,is)
+      use b2mod_constants
+      use b2mod_b2cmpa
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: roxa
+      roxa = am(is)*mp*na(ix,iy,is)
+      return
+      end function roxa
+
+      function uasx(ix,iy,is)
+      use b2mod_geo
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uasx
+      uasx =
+     . (hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
+     1  hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+     2 (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+      return
+      end function uasx
+
+      function uasy(ix,iy,is)
+      use b2mod_geo
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uasy
+      uasy =
+     . (hy1(ix,iy)*ua(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     1  hy1(bottomix(ix,iy),bottomiy(ix,iy))*ua(ix,iy,is))/
+     2 (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*pbs(ix,iy,1)
+      return
+      end function uasy
+
+      function uesx(ix,iy)
+      use b2mod_geo
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: uesx
+      uesx =
+     . (hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
+     1  hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
+     2 (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+      return
+      end function uesx
 
       end module b2mod_plasma

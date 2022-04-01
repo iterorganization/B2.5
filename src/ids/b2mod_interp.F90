@@ -290,11 +290,11 @@ contains
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
-  integer, intent(in) ::  idir
-  integer, intent(in) ::  nx    !< Specifies the number of interior cells
-                                !< along the first coordinate (poloidal)
-  integer, intent(in) ::  ny    !< Specifies the number of interior cells
-                                !< along the second coordinate (radial)
+  integer, intent(in) :: idir
+  integer, intent(in) :: nx    !< Specifies the number of interior cells
+                               !< along the first coordinate (poloidal)
+  integer, intent(in) :: ny    !< Specifies the number of interior cells
+                               !< along the second coordinate (radial)
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
   real (kind=R8), intent(in) :: qc(-1:nx,-1:ny,0:1) !< Cosine of the angle
@@ -673,6 +673,7 @@ contains
   !! directed towards the top
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
   use b2mod_geo , only: crx, cry, gs, qz, qc, pbs, vol
+  use b2mod_math
   use b2mod_indirect
 
   implicit none
@@ -685,16 +686,8 @@ contains
   integer cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   real (kind=R8) :: face(-1:nx,-1:ny,0:1,0:1), slant
-  real (kind=R8) :: p0x, p0y, p1x, p1y
   logical classical
   real (kind=R8) :: weight(-1:nx,-1:ny,TO_SELF:TO_TOP)
-!!   ..procedures
-  intrinsic min, max, sqrt
-  real (kind=R8) :: trim1, norm, sinang
-  norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-  trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-  sinang(p0x,p0y,p1x,p1y) = trim1( &
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 
   classical = isClassicalGrid(cflags)
 !! If isparallel is .true., then the background flow is in the parallel direction
@@ -1679,7 +1672,6 @@ contains
   real(R8), intent(in) :: weight(-1:nx,-1:ny,0:4)
   real(R8), intent(out) :: side(-1:nx,-1:ny,1:4)
   real (kind=R8) :: vol1(-1:nx,-1:ny,0:4)
-
 
   integer i, ix, iy, cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right

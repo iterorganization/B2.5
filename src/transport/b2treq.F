@@ -48,7 +48,7 @@
 *     lnlam is the log of the plasma parameter.
 *     cfeqp is a numerical coefficient in the energy transfer rate.
 *   ..procedures
-      intrinsic sqrt, log, max
+      intrinsic sqrt
       external xertst, ipgetr
       external b2xvsg
 *   ..initialisation

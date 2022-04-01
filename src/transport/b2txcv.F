@@ -1,12 +1,15 @@
-      subroutine b2txcv (nx, ny, mode, vol, hx, hy, qz, vsb, cvsb)
+      subroutine b2txcv (nx, ny, mode, vol, hx, vsb, cvsb)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
+      use b2mod_geo
+     , , only : hy1
       use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), vsb(-1:nx,-1:ny,0:1),
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &  vsb(-1:nx,-1:ny,0:1),
      &  cvsb(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
 *     B2TXCV is obsolete.
@@ -24,12 +27,8 @@
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      real (kind=R8) ::
-     *   hy1, harm
       external xertst
       external b2xxgs
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcv')

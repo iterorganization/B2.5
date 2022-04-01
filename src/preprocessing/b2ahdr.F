@@ -21,12 +21,12 @@
 *  1. purpose
 *
 *     B2AHDR prepares and writes to an external file a table of default
-*     physics parameters for b2.
+*     physics parameters for B2.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine prepares default physics parameters for b2. The
+*     This routine prepares default physics parameters for B2. The
 *     parameters are written to an un*formatted file.
 *
 *

@@ -193,7 +193,7 @@ cxpb  We now identify the b2ah region numbers
 
 cxpb We map per segment
 cxpb We interpolate according to the area along the segment
-      do is= 1, nsegments
+      do is = 1, nsegments
         acc_area(wall_begin(is)) = plate_area(wall_begin(is))
         do ibnd = wall_begin(is)+1, wall_end(is)
           acc_area(ibnd) = acc_area(ibnd-1) + plate_area(ibnd)
@@ -280,7 +280,6 @@ cxpb lb and ub are lower and upper interval bounds
       integer iz, is, ibnd, ibnd1, imax, i
       integer ibegin, iend, iw, iw1, ifail
       integer nsm, natmm, nmolm, nionm, nwallm
-      integer ix, iy, nx1, ny1, itrack, nwrite
       real (kind=R8) :: sum
       real (kind=R8), allocatable :: wall_data(:,:)
       real (kind=R8), allocatable :: data_tmp(:)
@@ -289,16 +288,12 @@ cxpb lb and ub are lower and upper interval bounds
       real (kind=R8), allocatable :: yy(:), yy1(:)
       real (kind=R8), allocatable :: fa(:,:), fx(:), d(:)
       real (kind=R8) :: fb(3,ndepth), fc(3)
-      logical wall_namelist_used, streql, layer_model
-      save layer_model
-      data layer_model/.false./
+      logical wall_namelist_used
       character*400 line
       character*256 filename
-      character*17 numstr
       logical found
 
-      intrinsic mod, max, min, sqrt
-      external streql
+      intrinsic max
       external xertst
       external convert_bundle_r
       external E01BEF, E01BFF
@@ -704,9 +699,23 @@ cxpb but in computational space
       deallocate(wall_data)
       call subend()
       return
+      end subroutine b2yt_wall
 
 * ..finalise time-dependent wall data
-      entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      subroutine b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      use b2mod_wall
+      use b2mod_wall2
+      use b2mod_layer
+      implicit none
+      integer, intent(in) :: nwrite, nx1, ny1, ns1
+      integer :: i, is, ix, iy, ibnd1, itrack
+      logical :: wall_namelist_used
+      character*400 line
+      character*17 numstr
+
+      logical streql
+      external streql
+
       wall_namelist_used = ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.
@@ -942,8 +951,7 @@ cxpb  Use explicit writing of non-default elements only
       write(99,'(a1)') '/'
       close(99)
       return
-
-      end subroutine b2yt_wall
+      end subroutine b2yt_wall_final
 
       subroutine b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
      .  natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
@@ -1020,11 +1028,11 @@ cxpb Now for each new species, we do the space mapping
       real (kind=R8) wall_source(nwall)
       real (kind=R8) wall_map(nwall1)
       integer iw, iw1
-      real (kind=R8) sum
+      real (kind=R8) :: sum
 
       wall_map = 0.0_R8
-      if (maxval(wall_source(1:nwall)).eq.minval(wall_source(1:nwall)))
-     > then
+      if (maxval(wall_source(1:nwall)).eq.
+     .    minval(wall_source(1:nwall))) then
         wall_map(1:nwall1) = wall_source(1)
       else
         do iw1 = 1, nwall1
@@ -1123,4 +1131,3 @@ cxpb Now for each new species, we do the space mapping
 
       return
       end subroutine b2yt_wall_bundle_sum
-

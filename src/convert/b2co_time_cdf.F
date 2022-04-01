@@ -94,10 +94,8 @@ c access the b2time.nc or b2batch.nc file
       call find_file(filename,exists)
       status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
-
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)
       call check_cdf_status(status)
-
       itim=0
       ibatch=0
       nastep=0

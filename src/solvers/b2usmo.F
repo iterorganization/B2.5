@@ -5,6 +5,7 @@
      &  rxg, vol, hx, hz, bb, rob, rzb, pb, pz, ub,                  !srv 09.01.01
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa5, aad0, name) !srv 06.04.07
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
@@ -52,18 +53,13 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       real (kind=R8) ::
-     *  cfc0, t0, t1, flo, dif, csb, csb1
+     *  cfc0, t0, t1, csb, csb1
       !$OMP THREADPRIVATE(ncall, cfc0, iout)
       !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
       save ncall, cfc0
 *   ..procedures
-      intrinsic max, abs, sqrt
-      real (kind=R8) ::
-     *  hybr
       external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p
-      hybr(flo,dif) = max(dif,abs(flo/2.0_R8),
-     .                    sqrt(dif**2+flo**2/4.0_R8))
 *   ..initialisation
       data ncall/0/, cfc0/1.0_R8/
 
@@ -180,9 +176,9 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-2) = 0.0_R8
         else
          if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {
-          t0 =  flcb(ix,iy,1,1)/2.0_R8 - 
+          t0 =  flcb(ix,iy,1,1)/2.0_R8 -
      &          hybr(flcb(ix,iy,1,1),cvsb(ix,iy,1,1))
-          t1 = -flcb(ix,iy,1,1)/2.0_R8 - 
+          t1 = -flcb(ix,iy,1,1)/2.0_R8 -
      &          hybr(flcb(ix,iy,1,1),cvsb(ix,iy,1,1))
          else
           t0 =  flcb(ix,iy,1,1)/2.0_R8 - cvsb(ix,iy,1,1)
@@ -232,9 +228,9 @@ cxpb
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-         pccb(ix,iy,0,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
+         pccb(ix,iy,0,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*          !srv 09.01.01
      .    bb(ix,iy,0)/bb(ix,iy,3)/aa5(ix,iy,0)                        !srv 11.01.13
-         pccb(ix,iy,1,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
+         pccb(ix,iy,1,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*          !srv 09.01.01
      .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
         else
          resmb(ix,iy) = 0.0_R8   ! take opportunity to correct RHS
@@ -281,4 +277,4 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2usmo
 
-      end
+      end subroutine b2usmo

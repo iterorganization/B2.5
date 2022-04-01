@@ -1,5 +1,5 @@
 c
-C RHW 18.08.92:  UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
+C RHW 18.08.92: UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
 *//B2YT_NTREAD//
 *=======================================================================
@@ -43,7 +43,7 @@ c
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       integer jvft46
-      integer is, i, j, n, jvftnew, nstra1, io, idummy
+      integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
@@ -86,19 +86,19 @@ C
 C
       READ(33,*,IOSTAT=IO,ERR=1983) NRKNOT  !VK IO
       IF(IO.NE.0) NRKNOT=0 !VK
-      WRITE(*,'(a14,i6)') 'NRKNOT      = ',NRKNOT
+      WRITE(*,'(a14,i8)') 'NRKNOT      = ',NRKNOT
 C
 C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ(34,*,IOSTAT=IO,ERR=1984) NTRII   !VK IO
       IF(IO.NE.0) NTRII=0 !VK
-      WRITE(*,'(a14,i6)') 'NTRII       = ',NTRII
+      WRITE(*,'(a14,i8)') 'NTRII       = ',NTRII
 
       READ (35,*,IOSTAT=IO,ERR=1985) IDUMMY
       IF(IO.NE.0) IDUMMY=0 !VK
       IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
         WRITE (*,*) ' IN ELEMENTS AND NEIGHBOR FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'35 files!')
       END IF
@@ -153,15 +153,15 @@ C
 C
       READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
         WRITE (*,*) ' IN GRID AND DATA FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
       WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
-      READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
-      WRITE(47,'(I4,2X,I4,2X,i4)')              natm1,nmol1,nion1
+      READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
+      WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,4i6)')
      . ' Dimensions in ',fort_lc,'46 =   ',ntrii,natmi,nmoli,nioni
       write(*,'(3a,4i6)')
@@ -524,11 +524,10 @@ C
       close(47)
 C
       call subend ()
-      RETURN
+      return
 
 *=======================================================================
 *//END B2YT_NTREAD//
-
 #ifdef B25_EIRENE
  1983 WRITE(*,*)
      w     "ERROR IN B2YT_NTREAD: CANNOT OPEN "//FORT//"33 ",
@@ -542,7 +541,4 @@ C
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
       call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
-      END
-
-
-
+      end subroutine b2yt_ntread

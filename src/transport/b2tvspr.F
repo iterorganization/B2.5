@@ -33,14 +33,13 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is
+      integer ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
       integer, save :: no_current = 0
       real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
       real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
 *   ..procedures
-      intrinsic max, abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
@@ -55,10 +54,9 @@
        call ipgeti ('b2tvspr_iout', iout)                               !srv 06.12.17
        call ipgeti ('b2tfhe_no_current', no_current)
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
       call b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy,                   !srv 10.10.17
      &              qz, bb, avisper, bvisper, cvisper)
@@ -66,12 +64,12 @@
       va=0.0e0_R8
       dva=0.0e0_R8
       fchvisper =0.0e0_R8                                               !srv 22.11.99
-        
+
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8 .and.
      &   no_current.eq.0) then
-      do is = 0,ns-1                                                    !srv 16.10.17
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+      do is = 0,ns-1                                                   !srv 16.10.17
+        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then            !srv 16.10.17
           do iy=-1,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).eq.-2)then
@@ -79,7 +77,7 @@
               elseif(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1) then
                 va(ix,iy,1) = 0.0_R8     ! we do not want to have va in guard cells on West and East
               else
-                va(ix,iy,1) = -cvisper(ix,iy,1)*                      ! va is calculated on bottom cell face
+                va(ix,iy,1) = -cvisper(ix,iy,1)*                        ! va is calculated on bottom cell face
      &            (po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy))+
      &            2.0_R8/qe*(na(ix,iy,is)*ti(ix,iy)-
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is)*
@@ -133,7 +131,7 @@
 *          X-COMPONENT OF VISCOSITY PERPENDICULAR CURRENT               !srv 22.11.99
           fchvisper(:,:,0,0)=fchvisper(:,:,0,0)+0.0e0_R8
         endif                                                           !srv 16.10.17
-      enddo                                                             !srv 16.10.17
+       enddo                                                            !srv 16.10.17
       endif                                                             !srv 22.11.99
 
       if(iout.eq.1) then

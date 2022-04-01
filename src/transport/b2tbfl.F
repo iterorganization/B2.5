@@ -23,7 +23,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: n2, ib, ix, iy
+      integer :: ib, ix, iy
       integer, save :: ncall = 0
       !$OMP THREADPRIVATE(ncall)
 *-----------------------------------------------------------------------
@@ -32,8 +32,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tbfl')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       div = 0.0_R8

@@ -55,9 +55,7 @@
       save ncall
 *   ..procedures
       intrinsic sqrt, abs
-      real (kind=R8) ::
-     *  b2sasum
-      external xertst, b2sasum
+      external xertst
 *   ..initialisation
       data ncall/0/
 
@@ -72,57 +70,55 @@
       call xertst (1.le.ns, 'faulty argument ns')
 
 * ..compute scaled norms
-*   ..compute aresco, aresmo, mtvi
+*   ..compute aresco, aresmo, navi, movi, mtvi
       mtvi = 0.0_R8
       do is = 0, ns-1
+       t0 = 0.0_R8
+       t1 = 0.0_R8
        navi = 0.0_R8
        movi = 0.0_R8
        do iy = -1, ny
         do ix =-1, nx
-         if (resignore(ix,iy,1).ne.0) 
-     >    navi = navi+vol(ix,iy)*na(ix,iy,is)
-         if (resignore(ix,iy,2).ne.0)
-     >    movi = movi+vol(ix,iy)*
-     &     na(ix,iy,is)*sqrt(ti(ix,iy)*am(is)*mp)
+         if (resignore(ix,iy,1).ne.0) then
+           t0 = t0 + abs(resco(ix,iy,is))
+           navi = navi+vol(ix,iy)*na(ix,iy,is)
+         end if
+         if (resignore(ix,iy,2).ne.0) then
+           t1 = t1 + abs(resmo(ix,iy,is))
+           movi = movi+vol(ix,iy)*na(ix,iy,is)*sqrt(ti(ix,iy)*am(is)*mp)
+         end if
         enddo
        enddo
        mtvi = mtvi+movi
-       t0 = 0.0_R8
-       t1 = 0.0_R8
-       do iy = 0, ny-1
-        t0 = t0+b2sasum(nx,resco(0,iy,is),1)
-        t1 = t1+b2sasum(nx,resmo(0,iy,is),1)
-       enddo
        aresco(is) = t0/navi
        aresmo(is) = t1/movi
       enddo
 *   ..compute aresmt
       t0 = 0.0_R8
-      do iy = 0, ny-1
-       t0 = t0+b2sasum(nx,resmt(0,iy),1)
+      do iy = -1, ny
+       do ix =-1, nx
+        if (resignore(ix,iy,2).ne.0)t0 = t0 + abs(resmt(ix,iy))
+       enddo
       enddo
       aresmt = t0/mtvi
-*   ..compute nevi, prvi
+*   ..compute areshe, areshi, arespo, nevi, prvi
+      t0 = 0.0_R8
+      t1 = 0.0_R8
+      t2 = 0.0_R8
       nevi = 0.0_R8
       prvi = 0.0_R8
       do iy = -1, ny
        do ix = -1, nx
         if (resignore(ix,iy,1).eq.0) cycle
+        t0 = t0 + abs(reshe(ix,iy))
+        t1 = t1 + abs(reshi(ix,iy))
+        t2 = t2 + abs(respo(ix,iy))
         nevi = nevi+vol(ix,iy)*ne(ix,iy)
         prvi = prvi+vol(ix,iy)*ne(ix,iy)*te(ix,iy)
         do is = 0, ns-1
          prvi = prvi+vol(ix,iy)*na(ix,iy,is)*ti(ix,iy)
         enddo
        enddo
-      enddo
-*   ..compute areshe, areshi, arespo
-      t0 = 0.0_R8
-      t1 = 0.0_R8
-      t2 = 0.0_R8
-      do iy = 0, ny-1
-       t0 = t0+b2sasum(nx,reshe(0,iy),1)
-       t1 = t1+b2sasum(nx,reshi(0,iy),1)
-       t2 = t2+b2sasum(nx,respo(0,iy),1)
       enddo
       areshe = t0/((1.5_R8+BoRiS)*prvi)
       areshi = t1/((1.5_R8+BoRiS)*prvi)
@@ -137,7 +133,7 @@
        movi = 0.0_R8
        do iy = 0, ny-1
         do ix = 0, nx-1
-         if (resignore(ix,iy,1).ne.0) 
+         if (resignore(ix,iy,1).ne.0)
      >    navi = navi+vol(ix,iy)*na(ix,iy,is)
          if (resignore(ix,iy,2).ne.0)
      >    movi = movi+vol(ix,iy)*
@@ -147,7 +143,7 @@
 *   ..compute rescoreg, resmoreg
        do iy = 0, ny-1
         do ix = 0, nx-1
-         if (resignore(ix,iy,1).ne.0) 
+         if (resignore(ix,iy,1).ne.0)
      >    rescoreg(region(ix,iy,0),is)=
      .     rescoreg(region(ix,iy,0),is)+abs(resco(ix,iy,is))
          if (resignore(ix,iy,2).ne.0)
@@ -165,7 +161,7 @@
         if (resignore(ix,iy,1).eq.0) cycle
         prvi = prvi+vol(ix,iy)*ne(ix,iy)*te(ix,iy)
         do is = 0, ns-1
-         if (.not.is_neutral(is)) 
+         if (.not.is_neutral(is))
      >    prvi = prvi+vol(ix,iy)*na(ix,iy,is)*ti(ix,iy)
         enddo
        enddo
@@ -175,11 +171,11 @@
       reshireg = 0.0_R8
       do iy = 0, ny-1
        do ix = 0, nx-1
-        if (resignore(ix,iy,1).ne.0) 
-     >   reshereg(region(ix,iy,0)) = 
+        if (resignore(ix,iy,1).ne.0)
+     >   reshereg(region(ix,iy,0)) =
      .    reshereg(region(ix,iy,0))+abs(reshe(ix,iy))
-        if (resignore(ix,iy,1).ne.0) 
-     >   reshireg(region(ix,iy,0)) = 
+        if (resignore(ix,iy,1).ne.0)
+     >   reshireg(region(ix,iy,0)) =
      .    reshireg(region(ix,iy,0))+abs(reshi(ix,iy))
        enddo
       enddo

@@ -3,12 +3,11 @@
 
       subroutine b2yt_average (filename,
      &  nx, ny, ns, nx1, ny1, ns1, nncutmax,
-     &  non_commensurate, nnreg, nncut, periodic_bc, jsep, jsep1,
-     &  region, region1,
+     &  non_commensurate,
+     &  nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
-     &  hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
-     &  naver, ntotdt,
+     &  bundle_frac, naver, ntotdt,
      &  na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &  e_na, e_te, e_ti, e_ua, e_po,
      &  sna_mean, sne_mean, smo_mean,
@@ -33,10 +32,6 @@
       integer rightcut(nncutmax), rightcut1(nncutmax)
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
-      real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
-      integer bottomiy1(-1:nx1,-1:ny1)
       real (kind=R8) ::
      *  bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) ::

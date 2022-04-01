@@ -40,10 +40,6 @@ c=====================================================
       data hlp /'tot','rel','scl','d/dt','Sni','div','divx',
      ,  'divy','ni ','ni0','Snn','Sio','jx+','jx-','jy+','jy-'/
 c=====================================================
-c*** Local variables
-c
-      character filename*80
-c=====================================================
 c
       call ipgetr('b2mndr_dtim',dtim)
 c*** Set the indices of the cells in question
@@ -164,4 +160,4 @@ c*** Calculate the balances for each cell in question
       deallocate(s_ni,s_io,s_nt)
 
       return
-      end
+      end subroutine analyse_xpt

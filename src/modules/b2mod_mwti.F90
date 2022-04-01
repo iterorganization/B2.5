@@ -22,10 +22,15 @@ module b2mod_mwti
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
+
 #ifndef NO_CDF
 # include <netcdf.inc>
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
+  character*(maxncnam), save :: timsav, batchsav
+  integer, save :: ntsav, nasav
+  data timsav /'!!!! INVALID NAME !!!!'/
 #endif
+
 contains
 
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
@@ -84,7 +89,7 @@ contains
     !.declarations
 
     !   ..local variables
-    integer ncall, ntstep, nastep
+    integer ncall
     real (kind=R8) :: &
          fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
          fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
@@ -98,8 +103,8 @@ contains
     real (kind=R8) :: &
          nemxip(nncutmax), temxip(nncutmax), timxip(nncutmax), &
          nemxap(nncutmax), temxap(nncutmax), timxap(nncutmax), &
-         pomxip(nncutmax), pomxap(nncutmax), tpmxip(nncutmax), &
-         tpmxap(nncutmax)
+         pomxip(nncutmax), pomxap(nncutmax), &
+         tpmxip(nncutmax), tpmxap(nncutmax)
     real (kind=R8) :: &
          fnisip(nncutmax), feesip(nncutmax), feisip(nncutmax), &
          fnisap(nncutmax), feesap(nncutmax), feisap(nncutmax), &
@@ -117,16 +122,18 @@ contains
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
-         nybl, nybr, nytl, nytr, nya, nyi, nc
+         nya, nyi, nybl, nybr, nytl, nytr, nc
 
     !   ..procedures
     external xertst, ipgeti, batch_average
-    real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp, fac
+    real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
     integer, save :: write_2d = 0
+    integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
     integer imap(maxvdims), iret
     integer nvars, natts, ndims, unlimid
+    real (kind=R8) :: fac
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
          nesepm(nncutmax), tesepm(nncutmax), tisepm(nncutmax), &
@@ -148,10 +155,10 @@ contains
              check_cdf_status, batch_average_sq
 #endif
     !   ..initialisation
-    save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
+    save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nybl, nybr, nytl, nytr, nya, nyi, nc, nastep
+         nc, nya, nyi, nybl, nybr, nytl, nytr
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -1558,13 +1565,13 @@ contains
       call check_cdf_status(iret)
       dvals(1) = 1.0_R8/ev
       if (write_2d .ge. 1) then
-        iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
+        iret = nf_def_var(ncid, 'ne2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne2did, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'te2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
+        iret = nf_def_var(ncid, 'te2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, te2did, 'long_name', 2, 'Te')
         call check_cdf_status(iret)
@@ -1572,7 +1579,7 @@ contains
         call check_cdf_status(iret)
         iret = nf_put_att_double(ncid, te2did, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'ti2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
+        iret = nf_def_var(ncid, 'ti2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ti2did, 'long_name', 2, 'Ti')
         call check_cdf_status(iret)
@@ -1581,61 +1588,61 @@ contains
         iret = nf_put_att_double(ncid, ti2did, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
         if (write_2d .ge. 2) then
-          iret = nf_def_var(ncid, 'po2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
+          iret = nf_def_var(ncid, 'po2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, po2did, 'long_name', 9, 'potential')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, po2did, 'units', 1, 'V')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'kin2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
+          iret = nf_def_var(ncid, 'kin2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, kin2did, 'long_name', 23, 'parallel kinetic energy')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, kin2did, 'units', 1, 'J')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rsahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
+          iret = nf_def_var(ncid, 'rsahi2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsahi2did, 'long_name', 21, 'iz energy source/sink')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rsana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
+          iret = nf_def_var(ncid, 'rsana2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsana2did, 'long_name', 7, 'iz rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsana2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rrahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
+          iret = nf_def_var(ncid, 'rrahi2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrahi2did, 'long_name', 21, 'rc energy source/sink')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrahi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rrana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
+          iret = nf_def_var(ncid, 'rrana2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrana2did, 'long_name', 7, 'rc rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrana2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rcxhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
+          iret = nf_def_var(ncid, 'rcxhi2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxhi2did, 'long_name', 21, 'cx energy source/sink')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxhi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rcxna2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
+          iret = nf_def_var(ncid, 'rcxna2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxna2did, 'long_name', 7, 'cx rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxna2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rqrad2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
+          iret = nf_def_var(ncid, 'rqrad2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqrad2did, 'long_name', 19, 'Line radiation rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqrad2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rqahe2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
+          iret = nf_def_var(ncid, 'rqahe2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqahe2did, 'long_name', 21, 'Electron cooling rate')
           call check_cdf_status(iret)
@@ -1644,25 +1651,25 @@ contains
 
           iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fhe2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
+          iret = nf_def_var(ncid, 'fhe2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhe2did, 'long_name', 18, 'Electron heat flux')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhe2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
+          iret = nf_def_var(ncid, 'fhi2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhi2did, 'long_name', 13, 'Ion heat flux')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fch2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
+          iret = nf_def_var(ncid, 'fch2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fch2did, 'long_name', 7, 'Current')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fna2d'  , NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
+          iret = nf_def_var(ncid, 'fna2d', NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fna2did, 'long_name', 13, 'Particle flux')
           call check_cdf_status(iret)
@@ -1670,9 +1677,7 @@ contains
           call check_cdf_status(iret)
         endif
       endif
-    endif
 
-    if (.not.batch_only) then
       dims(1) = ncdim
       dims(2) = timedim
       iret = nf_def_var(ncid, 'fnixip', NCDOUBLE, 2, dims, fnixipid)
@@ -3037,24 +3042,19 @@ contains
   end subroutine b2crtimecdf
 
   subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
-#     include <netcdf.inc>
+#   include <netcdf.inc>
 
     character*(*) rw,data_name
     integer ncid,imap(*),iret,i,varid,dimlen
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
-    character*(*) timnam,batchnam
-    character*(maxncnam) timsav,batchsav
-    integer ntsav,ntstep,nasav,nastep
     integer :: istride, imax
 #ifdef DBG
     logical, parameter :: debug = .true.
 #else
     logical, parameter :: debug = .false.
 #endif
-    save timsav,ntsav,batchsav,nasav
-    data timsav /'!!!! INVALID NAME !!!!'/
     external check_cdf_status, xerrab
     !
     call subini ('rwcdf')
@@ -3062,7 +3062,7 @@ contains
     call check_cdf_status(iret)
     if(iret.ne.0) then
       write(*,*) 'Error: Could not inquire data_name: ',trim(data_name)
-      call xerrab('Data name not declared')
+      call xerrab('Data name '//trim(data_name)//' not declared')
     endif
     if (debug) write(*,*) "Subroutine rwcdf in mode: ", rw
     if (debug) write(*,*) "Working on variable: ", data_name
@@ -3121,21 +3121,29 @@ contains
 
     call subend ()
     return
+  end subroutine rwcdf
     !
-    entry rwcdf_settime(timnam,ntstep)
+  subroutine rwcdf_settime(timnam,ntstep)
+    implicit none
+    character*(*) timnam
+    integer ntstep
     write(*,*) 'Saving ',trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
     return
+  end subroutine rwcdf_settime
     !
-    entry rwcdf_setbatch(batchnam,nastep)
+  subroutine rwcdf_setbatch(batchnam,nastep)
+    implicit none
+    character*(*) batchnam
+    integer nastep
     write(*,*) 'Saving ',trim(batchnam),' as the batch dimension'
     write(*,*) 'nastep = ',nastep
     batchsav=batchnam
     nasav=nastep
     return
-  end subroutine rwcdf
+  end subroutine rwcdf_setbatch
 #endif
 !
   subroutine output_ds(crx,cry,nx,ny,iref,target_offset, &

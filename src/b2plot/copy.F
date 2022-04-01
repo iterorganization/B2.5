@@ -28,7 +28,7 @@ c     1 src(nx+1,ny+1,0)*scale,work(nx+1,ny+1,0,iwrk)
 
 #ifdef B25_EIRENE
       subroutine eirene_copy(src,scale,nz,texttmp)
-! careful here: eirene arrays are sized src(nz,ntrii) !
+! careful here: Eirene arrays are sized src(nz,ntrii) !
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_values

@@ -46,7 +46,7 @@
 *
 *  1. purpose
 *
-*     B2MNDT performs one implicit timestep for the b2 system of
+*     B2MNDT performs one implicit timestep for the B2 system of
 *     equations.
 *
 *
@@ -55,7 +55,7 @@
 *     For a detailed description of the equations and the method of
 *     solution, see the references cited in the main program unit.
 *
-*     This routine performs one timestep for the b2 equations.
+*     This routine performs one timestep for the B2 equations.
 *     An outline of the procedure follows.
 *     ..test input arguments
 *     ..compute auxiliary quantities
@@ -84,7 +84,7 @@
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
-      integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
+      integer, save :: boundary_sources = 0, equation_sources = 0        !srv 26.02.18
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -100,7 +100,7 @@
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum,
-     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
+     &  lnlam(-1:nx,-1:ny),                                             !srv 11.10.02
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
 *   ..procedures
       real (kind=R8) ::
@@ -125,8 +125,8 @@
       if (ncall.eq.0) then
        nsmin=0
        nsmax=ns
-       call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
-       call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
+       call ipgeti ('b2mndt_style', style)                              !srv 18.06.08
+       call ipgeti ('b2news_guard_flows', guard_flows)                  !srv 18.06.08
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))
          call ipgeti ('b2mndt_nstg1', nstg(1))
@@ -317,8 +317,8 @@ ctmp.dpc
           call b2xpni (nx, ny, ns, na, ni)
           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
           call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-*   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
+* ..compute flux limit coefficients                                      !srv 11.10.02 03.06.03 {
+          call b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs,
      &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
           call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc, qs,
@@ -330,16 +330,17 @@ ctmp.dpc
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
           if(style.gt.0) then                                            !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,
-     &                    fchanml)                                       !srv 20.09.06 }
+            call b2tanml (nx, ny, ns, vol, hx, hy, qs, csig_an, po,      !srv 20.09.06 }
+     &                    fchanml)                                       !srv 08.09.21
             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, qs, bb, ua,       !srv 20.09.06 {
      &                    cvsa_cl, fac_vis, fchvispar)
             call b2tiner (nx, ny, ns, vol,
      &                   gs, hx, hy, qs, bb, na, ua, facdrift, fchinert)
 !            call b2tvspr (nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,     !srv 10.10.17
 !     &             po, ti, na, avisper, bvisper, cvisper, fchvisper)
-!            call b2tvsq (nx, ny, ns, fac_vis, vol, hx, hy, qz, qs, bb,  !srv 10.10.17
-!     &                   ne2, lnlam, te, ti, ni, chci, fchvisq)
+!            call b2tvsq (nx, ny, ns, fac_vis,                           !srv 10.10.17
+!     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci,
+!     &             fchvisq)
           endif                                                          !srv 18.06.08 }
           src_ni=0.0_R8
           src_ne=0.0_R8
@@ -359,7 +360,7 @@ ctmp.dpc
           call b2sral (nx, ny, ns, nxtl, nxtr,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, pbshz, bb,         !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, bb,                !srv 09.01.01
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
@@ -524,8 +525,7 @@ ctmp.dpc
      &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
      &          cdpa(-1,-1,0,0,is),
      &          cddi(-1,-1,0,0,is), cvlahz(-1,-1,0,0,is),
-     &          cvmahz(-1,-1,0,0,is), cdnahz(-1,-1,0,0,is),              !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,0,is),
+     &          cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),              !srv 09.01.01 15.12.05 13.10.06
      &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
      &          fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
      &          fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),
@@ -536,8 +536,8 @@ ctmp.dpc
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, qc,
-     &      qs, bb, te, po, vedia, veecrb)
+           call b2tfed (nx, ny, facdrift, fac_ExB,
+     &      te, po, vedia, veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
      1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
@@ -579,7 +579,8 @@ ctmp.dpc
      &      solveee, solveei, solvepo, solvemo,
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
-     &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
+     &      fne, fch, fchstoch, cvsa,
+     &      fchdia, uadia, wadia, vadia, vaecrb,                       !srv 09.07.08 07.07.09
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
      &      reshe, reshi, wrk0, corte, corti, ier0)
          endif

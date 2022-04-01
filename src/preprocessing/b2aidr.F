@@ -26,13 +26,13 @@
 *  1. purpose
 *
 *     B2AIDR prepares and writes to an external file an initial plasma
-*     state for b2.
+*     state for B2.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine prepares and writes to an external file an initial
-*     plasma state for b2.
+*     plasma state for B2.
 *     The initial plasma state is characterised by constant densities
 *     and temperatures and vanishing flow.
 *
@@ -73,10 +73,12 @@
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:,:), fhe1(:,:,:,:),
-     &  fhi1(:,:,:,:), fch1(:,:,:,:), fch_321(:,:,:,:),fch_521(:,:,:,:),
+     &  fhi1(:,:,:,:), fch1(:,:,:,:),
+     &  fch_321(:,:,:,:), fch_521(:,:,:,:),
      &  fch_p1(:,:,:,:), kinrgy1(:,:,:),
      &  fna_mdf1(:,:,:,:,:), fhe_mdf1(:,:,:,:), fhi_mdf1(:,:,:,:),
-     &  fna_fcor1(:,:,:,:,:),fna_nodrift1(:,:,:,:,:),fna_he1(:,:,:,:,:),
+     &  fna_fcor1(:,:,:,:,:), fna_nodrift1(:,:,:,:,:),
+     &  fna_he1(:,:,:,:,:),
      &  fnaPSch1(:,:,:,:,:), fhePSch1(:,:,:,:), fhiPSch1(:,:,:,:),
      &  fna_eir1(:,:,:,:,:), fne_eir1(:,:,:,:),
      &  fhe_eir1(:,:,:,:), fhi_eir1(:,:,:,:),
@@ -517,8 +519,9 @@
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
-      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz, bb, vol, 
-     &  hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 
       if(read_b2fstate.ne.0) then
@@ -561,7 +564,8 @@
      *  na1(-1:nx,-1:ny,0:idum(2)-1), ua1(-1:nx,-1:ny,0:idum(2)-1),
      &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  te1(-1:nx,-1:ny), ti1(-1:nx,-1:ny), po1(-1:nx,-1:ny),
-     &  fna1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),fhe1(-1:nx,-1:ny,0:1,0:1),
+     &  fna1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fhe1(-1:nx,-1:ny,0:1,0:1),
      &  fhi1(-1:nx,-1:ny,0:1,0:1), fch1(-1:nx,-1:ny,0:1,0:1),
      1  fch_321(-1:nx,-1:ny,0:1,0:1), fch_521(-1:nx,-1:ny,0:1,0:1),
      2  fch_p1(-1:nx,-1:ny,0:1,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1),
@@ -580,7 +584,8 @@
      &  fni_321(-1:nx,-1:ny,0:1,0:1), fni_521(-1:nx,-1:ny,0:1,0:1),
      &  fne_321(-1:nx,-1:ny,0:1,0:1), fne_521(-1:nx,-1:ny,0:1,0:1),
      &  fchdia1(-1:nx,-1:ny,0:1,0:1), fchin1(-1:nx,-1:ny,0:1,0:1),
-     &  fchvispar1(-1:nx,-1:ny,0:1,0:1),fchvisper1(-1:nx,-1:ny,0:1,0:1),
+     &  fchvispar1(-1:nx,-1:ny,0:1,0:1),
+     &  fchvisper1(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq1(-1:nx,-1:ny,0:1,0:1), fchinert1(-1:nx,-1:ny,0:1,0:1),
      &  vaecrb1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
      &  vadia1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
@@ -637,7 +642,7 @@
          fna_mdf(:,:,:,:,is)     = fna_mdf1(:,:,:,:,is)
          fna_fcor(:,:,:,:,is)    = fna_fcor1(:,:,:,:,is)
          fna_nodrift(:,:,:,:,is) = fna_nodrift1(:,:,:,:,is)
-         fna_he(:,:,:,:,is)      = fna_he(:,:,:,:,is)
+         fna_he(:,:,:,:,is)      = fna_he1(:,:,:,:,is)
          fnaPSch(:,:,:,:,is)     = fnaPSch1(:,:,:,:,is)
          fna_eir(:,:,:,:,is)     = fna_eir1(:,:,:,:,is)
          fna_32(:,:,:,:,is)      = fna_321(:,:,:,:,is)

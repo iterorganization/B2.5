@@ -10,8 +10,11 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_plasma
+     &     , only : roxa
       use b2mod_balance                                              !djm Jan2017
-     & , only : b2sifr_smoch0to3, b2sifr_smotf0to3, balance_netcdf
+     &     , only : b2sifr_smoch0to3, b2sifr_smotf0to3,
+     &              balance_netcdf
       use b2mod_openmp
       use b2mod_subsys
       implicit none
@@ -22,7 +25,7 @@
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),     !srv 01.07.09
+     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny),                         !srv 01.07.09
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -31,7 +34,8 @@
      &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)      !srv 02.07.08
+     *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),     !srv 02.07.08
+     *   lnlam(-1:nx,-1:ny)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -64,12 +68,9 @@
      1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
-      intrinsic sqrt, log, sign, max, abs
-      real (kind=R8) ::
-     *   roxa
+      intrinsic sqrt, sign, abs
       external xertst, ipgeti, ipgetr, sfill
       external b2xvfx, b2xvsg, b2xxgs
-      roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
 *   ..initialisation
       !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase)
       !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)

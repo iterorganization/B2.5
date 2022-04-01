@@ -96,14 +96,14 @@ c 2002-09-11: logic revised
 *
 *  1. purpose
 *
-*     B2YTDR is a postprocessor for b2. It transfers the plasma state
+*     B2YTDR is a postprocessor for B2. It transfers the plasma state
 *     to a mesh of a different size.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, transfers the plasma state to a mesh
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, transfers the plasma state to a mesh
 *     of a different size and/or a different species bundling scheme,
 *     and writes that state to an un*formatted file. This routine does
 *     not employ any metric information other than the mesh dimensions
@@ -206,11 +206,11 @@ c 2002-09-11: logic revised
      2 fni_321(-1:nx1,-1:ny1,0:1,0:1), fni_521(-1:nx1,-1:ny1,0:1,0:1),
      3 fne_321(-1:nx1,-1:ny1,0:1,0:1), fne_521(-1:nx1,-1:ny1,0:1,0:1),
      4 fchdia1(-1:nx1,-1:ny1,0:1,0:1), fchin1(-1:nx1,-1:ny1,0:1,0:1),
-     5 fchvispar1(-1:nx1,-1:ny1,0:1,0:1), 
+     5 fchvispar1(-1:nx1,-1:ny1,0:1,0:1),
      5 fchvisper1(-1:nx1,-1:ny1,0:1,0:1),
-     6 fchvisq1(-1:nx1,-1:ny1,0:1,0:1), 
+     6 fchvisq1(-1:nx1,-1:ny1,0:1,0:1),
      6 fchinert1(-1:nx1,-1:ny1,0:1,0:1),
-     7 floe_noc1(-1:nx1,-1:ny1,0:1,0:1), 
+     7 floe_noc1(-1:nx1,-1:ny1,0:1,0:1),
      7 floi_noc1(-1:nx1,-1:ny1,0:1,0:1),
      8 veecrb1(-1:nx1,-1:ny1,0:1,0:1), vedia1(-1:nx1,-1:ny1,0:1,0:1)
       real (kind=R8), allocatable ::
@@ -237,7 +237,7 @@ c 2002-09-11: logic revised
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:,:), fna1(:,:,:,:,:), ua1(:,:,:), na1(:,:,:),
      3 kinrgy1(:,:,:), fna_mdf1(:,:,:,:,:),
-     4 fna_fcor1(:,:,:,:,:), fna_nodrift1(:,:,:,:,:), 
+     4 fna_fcor1(:,:,:,:,:), fna_nodrift1(:,:,:,:,:),
      4 fna_he1(:,:,:,:,:),
      5 fnaPSch1(:,:,:,:,:), fna_eir1(:,:,:,:,:),
      6 fna_321(:,:,:,:,:), fna_521(:,:,:,:,:),
@@ -275,7 +275,8 @@ c 2002-09-11: logic revised
       integer, allocatable :: iatm1(:), imol1(:), iion1(:), ipls1(:)
       integer, allocatable :: istra1(:), ipls2(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
-      integer, allocatable :: mlcmp1(:,:), ifl1(:), ispecies1(:)
+      integer, allocatable :: mlcmp1(:,:)
+      integer, allocatable :: ifl1(:), ispecies1(:)
       integer, allocatable :: b2eatcr1(:), b2espcr1(:)
       integer, allocatable :: latmscl1(:), lmolscl1(:), lionscl1(:)
       integer, allocatable :: eb2atcr1(:), eb2spcr1(:), eb2ibcr(:)
@@ -541,7 +542,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits, trace_convert
+      integer lnblnk, len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
       logical isaletter, silent_open
@@ -557,8 +558,8 @@ c 2002-09-11: logic revised
       logical open_file, streql
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, lnblnk, convert_position,
-     &  len_of_digits, open_file, get_jsep, conformal_convert,
+     &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
+     &  open_file, get_jsep, conformal_convert, end_comment,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
@@ -574,7 +575,8 @@ c 2002-09-11: logic revised
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
-      data iy_nocoreExB/-2/, bc_type16_ref/1/, bc_type20_ref/1/
+      data iy_nocoreExB/-2/
+      data bc_type16_ref/1/, bc_type20_ref/1/
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
@@ -889,16 +891,6 @@ c 2002-09-11: logic revised
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
-*   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1  b2fstate_version)
-      if (invert_bpol .eq. 1) ua = -ua
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -933,17 +925,18 @@ c 2002-09-11: logic revised
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &   wbbc, cell_width, cell_height, gmap)
+     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &   wbbl, wbbr, wbbv, wbbc,
+     &   cell_width, cell_height, gmap)
         if (non_commensurate.eq.1) then
-        call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
-     &   periodic_bc.eq.periodic_bc1,
-     &   'Non-commensurate translation requires the same topology!')
-        if (nncut.eq.2) call xertst(
-     .   (topcut(1).eq.topcut(2) .and. topcut1(1).eq.topcut1(2)) .or.
-     .   (topcut(1).lt.topcut(2) .and. topcut1(1).lt.topcut1(2)) .or.
-     .   (topcut(1).gt.topcut(2) .and. topcut1(1).gt.topcut1(2)),
-     .   'Non-commensurate translation requires the same DN topology!')
+         call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
+     &    periodic_bc.eq.periodic_bc1,
+     &    'Non-commensurate translation requires the same topology!')
+         if (nncut.eq.2) call xertst(
+     .    (topcut(1).eq.topcut(2) .and. topcut1(1).eq.topcut1(2)) .or.
+     .    (topcut(1).lt.topcut(2) .and. topcut1(1).lt.topcut1(2)) .or.
+     .    (topcut(1).gt.topcut(2) .and. topcut1(1).gt.topcut1(2)),
+     .    'Non-commensurate translation requires the same DN topology!')
         end if
         close(70)
         if (b2fgmtry_oldversion.ne.b2fgmtry_newversion) then
@@ -959,8 +952,10 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &   wbbc, cell_width, cell_height, gmap)
+     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &   wbbl, wbbr, wbbv, wbbc,
+     &   cell_width, cell_height, gmap)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
       if (invert_bpol.eq.1) then
         bb(:,:,0) = -bb(:,:,0)
@@ -994,13 +989,21 @@ c 2002-09-11: logic revised
         call cfwuch (nout(6), 120, lblgm, 'label')
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
-        call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
-     &   cell_width, cell_height)
+        call b2wugm (nout(6), nx, ny)
         close(nout(6))
       endif
-      call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx,nxtl,nxtr)
+*   ..read plasma state
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
+     1  b2fstate_version)
+      if (invert_bpol .eq. 1) ua = -ua
+*   ..prepare conversion arrays
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
@@ -1180,7 +1183,7 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1, 
+     &    hx, hy, qc, hxx, hyy, qc1, bundle_frac, bottomiy1,
      &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
@@ -1202,13 +1205,13 @@ c 2002-09-11: logic revised
       filename='b2favere'
       call find_file(filename,averaging)
       if (averaging) then
-        call b2yt_average (filename, 
-     &    nx, ny, ns, nx1, ny1, ns1, nncutmax, non_commensurate,
+        call b2yt_average (filename,
+     &    nx, ny, ns, nx1, ny1, ns1, nncutmax,
+     &    non_commensurate,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
-     &    naver, ntotdt,
+     &    bundle_frac, naver, ntotdt,
      &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &    e_na, e_te, e_ti, e_ua, e_po,
      &    sna_mean, sne_mean, smo_mean,
@@ -1603,16 +1606,16 @@ c 2002-09-11: logic revised
       bc_type20_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type20_ref-2,nx,ny,nx1,ny1,2)
       if (ixref.ge.0) then
-        ixref1=conformal_convert
+        ixref1 = conformal_convert
      .   (non_commensurate,1,ixref,iyref,nx,ny,nx1,ny1,4)
       else
-        ixref1=jxa1
+        ixref1 = jxa1
       endif
       if (iyref.ge.0) then
-        iyref1=conformal_convert
+        iyref1 = conformal_convert
      .   (non_commensurate,2,ixref,iyref,nx,ny,nx1,ny1,4)
       else
-        iyref1=jsep1
+        iyref1 = jsep1
       endif
       iyped1 = conformal_convert
      .   (non_commensurate,2,jxa,iyped,nx,ny,nx1,ny1,4)
@@ -1816,6 +1819,7 @@ c 2002-09-11: logic revised
           todo = .false.
       end select RSWITCHES
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
+*   ..write converted switches
       if (.not.is_comment(line) .and. .not.wait) then
         if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
           write(nout(2),'(a1,a,a,a,a,a)')
@@ -2465,7 +2469,7 @@ c 2002-09-11: logic revised
           close(99)
         end if
         if (.not.streql(transport_filename,'b2.transport.parameters'))
-     >  then
+     >   then
           first_pass = .false.
           new_filename =
      .     transport_filename(1:lnblnk(transport_filename))//'.2'
@@ -3234,7 +3238,7 @@ cxpb This will need to be checked !!!
                           pxa(-1) = 0.0_R8
                           l_conn(-1) = 0.0_R8
                           do i = 0, nx1-1
-                            l_conn(i) = hx1(i,iyref1)/
+                            l_conn(i) = hxx(i,iyref1)/
      1                       (sqrt(bb1(i,iyref1,0)**2+
      2                             bb1(i,iyref1,1)**2)/bb1(i,iyref1,3))
                             pxa(i) =
@@ -3747,7 +3751,8 @@ cxpb  Start reading input.dat file
           call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                         ! NLTRIMESH
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
@@ -3758,7 +3763,8 @@ cxpb  Start reading input.dat file
           call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
+                                         ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
+                                         ! NLTRIMESH
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
@@ -4035,7 +4041,7 @@ C  FIND START OF NEXT INPUT BLOCK: 3A
           IF (ZEILE(1:3) .NE. '***') GOTO 252
           IREAD=1
         ENDIF
-*** 3A. DATA FOR NON DEFAULT STANDARD SURFACES
+*** 3A. DATA FOR NON-DEFAULT STANDARD SURFACES
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
           WRITE(IUNOT,'(A80)') ZEILE
@@ -8438,7 +8444,7 @@ C  VELOCITY SPACE DISTRIBUTION
             GOTO 811
           ENDIF
   811   CONTINUE
-*** 9. DATA FOR STATISTIC AND NONANALOG MODEL
+*** 9. DATA FOR STATISTIC AND NON-ANALOG MODEL
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
           WRITE(IUNOT,'(A80)') ZEILE
@@ -9497,8 +9503,8 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         else if (streql(eirene_format,'juelich') .or.
      .           streql(eirene_format,'facelift') .or.
      .           streql(eirene_format,'old')) THEN
-          READ (ZEILEN(1),6666) NCHORI,NCHENI,lntspec,lntsput,nmcsput,
-     .                    nlstadds,mtreadds,ngwties
+          READ (ZEILEN(1),6666) NCHORI,NCHENI,lntspec,lntsput,
+     .                              nmcsput,nlstadds,mtreadds,ngwties
         end if
         NCHOR1 = 0
         IF (NCHORI.LE.0) GOTO 1228
@@ -10069,7 +10075,7 @@ cxpb  Convert fort.44 file if needed
      &     no_sputtering, savestratum, non_commensurate,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc, hx1, hy1, qc1, gs1)
+     &     hx, hy, qc, hxx, hyy, qc1, gs1)
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
@@ -12030,15 +12036,15 @@ cxpb Do not forget that in Eirene X is Radial and Y is poloidal !
      .     (non_commensurate,2,ixpos,iypos,nx,ny,nx1,ny1,iside)
         end if
       else if (xory.eq.2) then
-        if (iy.eq.0) then
+        if (iy.gt.nx+max(1,nncut*3)) then
+          call xerrab ('Too large IY value in convert_eirene')
+          convert_eirene = 0
+        elseif (iy.eq.0) then
           convert_eirene = 0
         elseif (iy.eq.eirleft(iplg)) then
           convert_eirene = eirleft1(iplg)
         elseif (iy.eq.eirright(iplg)) then
           convert_eirene = eirright1(iplg)
-        elseif (iy.gt.nx+max(1,nncut*3)) then
-          call xerrab ('Too large IY value in convert_eirene')
-          convert_eirene = 0
         else
           ixpos = iy - eirleft(iplg)
           nsize = eirright(iplg) - eirleft(iplg)
@@ -12179,42 +12185,22 @@ c       = 4 : center
          inseliy = -2
          inseliy1 = -2
         endif
-        if (xory.eq.1) then   ! do other easy ix cases
-         if (ix.eq.0) then
-          conformal_convert=0
-         else if (ix.eq.leftcut(1)-1) then
-          conformal_convert=leftcut1(1)-1
-         else if (ix.eq.leftcut(1)) then
-          conformal_convert=leftcut1(1)
-         else if (ix.eq.leftcut(2)-1) then
-          conformal_convert=leftcut1(2)-1
-         else if (ix.eq.leftcut(2)) then
-          conformal_convert=leftcut1(2)
-         else if (ix.eq.rightcut(1)-1) then
-          conformal_convert=rightcut1(1)-1
-         else if (ix.eq.rightcut(1)) then
-          conformal_convert=rightcut1(1)
-         else if (ix.eq.rightcut(2)-1) then
-          conformal_convert=rightcut1(2)-1
-         else if (ix.eq.rightcut(2)) then
-          conformal_convert=rightcut1(2)
-         else if (ix.eq.nx-1) then
-          conformal_convert=nx1-1
-         else if (ix.eq.ixiso-1) then
+        if (xory.eq.1) then   ! do other easy ix cases first
+         if (ix.eq.ixiso-1) then
           conformal_convert=ixiso1-1
          else if (ix.eq.ixiso) then
           conformal_convert=ixiso1
          else if (ix.eq.ixiso+1) then
           conformal_convert=ixiso1+1
-         else if (nncut.eq.0 .and. periodic_bc.le.0) then  ! 2-D slab case
-          nsize = nx
-          nsize1 = nx1
-          conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
-         else if (nncut.eq.0 .and. ireg.eq.1) then    ! limiter core region
-          nsize = nx
-          nsize1 = nx1
-          conformal_convert = convert_position(ix,nsize,nsize1,3,atend)
-         else if (periodic_bc.eq.1 .and. ireg.eq.2) then  ! limiter or island SOL
+         else if (ix.eq.leftcut(2)-1) then
+          conformal_convert=leftcut1(2)-1
+         else if (ix.eq.leftcut(2)) then
+          conformal_convert=leftcut1(2)
+         else if (ix.eq.rightcut(2)-1) then
+          conformal_convert=rightcut1(2)-1
+         else if (ix.eq.rightcut(2)) then
+          conformal_convert=rightcut1(2)
+         else if (nncut.eq.0 .and. periodic_bc.le.0) then ! 2-D slab case
           nsize = nx
           nsize1 = nx1
           conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
@@ -12222,16 +12208,11 @@ c       = 4 : center
           nsize = nx
           nsize1 = nx1
           conformal_convert = convert_position(ix,nsize,nsize1,3,atend)
-         else if (ix.gt.0 .and. ix.lt.leftcut(1)-1) then
-          nsize = leftcut(1)
-          nsize1 = leftcut1(1)
-          conformal_convert = convert_position(ix,nsize,nsize1,1,atend)
-         else if (nncut.eq.1 .and.
-     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
-          nsize = rightcut(1)-leftcut(1)
-          nsize1 = rightcut1(1)-leftcut1(1)
-          conformal_convert = leftcut1(1) +
-     .     convert_position(ix-leftcut(1),nsize,nsize1,3,atend)
+         else if (periodic_bc.eq.1 .and.
+     &            nncut.eq.1 .and. ireg.eq.2) then        ! island SOL
+          nsize = nx
+          nsize1 = nx1
+          conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
          else if (nncut.eq.2 .and.
      .            ix.gt.leftcut(1) .and. ix.lt.leftcut(2)-1) then
           nsize = leftcut(2)-leftcut(1)
@@ -12256,6 +12237,38 @@ c       = 4 : center
           nsize1 = rightcut1(1)-rightcut1(2)
           conformal_convert = rightcut1(2) +
      .     convert_position(ix-rightcut(2),nsize,nsize1,3,atend)
+         else if (ix.eq.0) then
+          conformal_convert=0
+         else if (ix.eq.leftcut(1)-1) then
+          conformal_convert=leftcut1(1)-1
+         else if (ix.eq.leftcut(1)) then
+          conformal_convert=leftcut1(1)
+         else if (ix.eq.rightcut(1)-1) then
+          conformal_convert=rightcut1(1)-1
+         else if (ix.eq.rightcut(1)) then
+          conformal_convert=rightcut1(1)
+         else if (ix.eq.nx-1) then
+          conformal_convert=nx1-1
+         else if (nncut.eq.0 .and.
+     &            periodic_bc.eq.1 .and. ireg.eq.1) then  ! limiter core region
+          nsize = nx
+          nsize1 = nx1
+          conformal_convert = convert_position(ix,nsize,nsize1,3,atend)
+         else if (nncut.eq.0 .and.
+     &            periodic_bc.eq.1 .and. ireg.eq.2) then  ! limiter SOL
+          nsize = nx
+          nsize1 = nx1
+          conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
+         else if (ix.gt.0 .and. ix.lt.leftcut(1)-1) then
+          nsize = leftcut(1)
+          nsize1 = leftcut1(1)
+          conformal_convert = convert_position(ix,nsize,nsize1,1,atend)
+         else if (nncut.eq.1 .and.
+     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
+          nsize = rightcut(1)-leftcut(1)
+          nsize1 = rightcut1(1)-leftcut1(1)
+          conformal_convert = leftcut1(1) +
+     .     convert_position(ix-leftcut(1),nsize,nsize1,3,atend)
          else if (ix.gt.rightcut(1) .and. ix.lt.nx-1) then
           nsize = nx-rightcut(1)-1
           nsize1 = nx1-rightcut1(1)-1
@@ -13022,7 +13035,7 @@ C
      &      itally.eq.75 .or. itally.eq.85 .or. itally.eq.89 .or.
      &      itally.eq.93 .or. itally.eq.101) THEN ! these are NATM volume tallies
           transform_tally = iatm1(ispc)
-        ELSE IF (itally.eq.2  .or. itally.eq.6 .or. itally.eq.11
+        ELSE IF (itally.eq.2  .or. itally.eq.6  .or. itally.eq.11
      &      .or. itally.eq.17 .or. itally.eq.23 .or. itally.eq.29
      &      .or. itally.eq.64 .or. itally.eq.68 .or. itally.eq.72
      &      .or. itally.eq.76 .or. itally.eq.86 .or. itally.eq.90

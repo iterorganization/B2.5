@@ -197,7 +197,7 @@
 *-----------------------------------------------------------------------
 *.end b2ux9p
 
-      end
+      end subroutine b2ux9p
 
       subroutine storage_9 (nx, ny, aa9, nnz, ia, ja, a, k,            !sv 22.11.06
      *                      indexes, iasave, jasave, name)
@@ -505,5 +505,5 @@
 
       ncall = ncall + 1
 
-      end                                                             !sv 22.11.06
+      end subroutine storage_9                                        !sv 22.11.06
 

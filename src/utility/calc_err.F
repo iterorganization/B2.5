@@ -83,10 +83,9 @@
        integer is, ix, iy, ind(2)                                        !srv 09.07.18
        real (kind=R8) ::
      &    exact_na(-1:nx,-1:ny,0:ns-1), exact_ua(-1:nx,-1:ny,0:ns-1),
-     &    exact_ua_st(-1:nx,-1:ny,0:ns-1),
      &    exact_te(-1:nx,-1:ny), exact_ti(-1:nx,-1:ny),
      &    exact_po(-1:nx,-1:ny), err(-1:nx,-1:ny), era(-1:nx,-1:ny),
-     &    uacf(-1:nx,-1:ny), L2norm, Cnorm                               !srv 09.07.18
+     &    L2norm                                                         !srv 09.07.18
        logical l_exist
        character chns*3, chnx*4, chny*4
        character*24 filename
@@ -208,21 +207,6 @@
        implicit none
        integer nx, ny, ns
 
-       integer is, ix, iy
-       real (kind=R8) ::
-     &    exact_cdna(-1:nx,-1:ny,0:1,0:ns-1),
-     &    exact_cdpa(-1:nx,-1:ny,0:1,0:ns-1),
-     &    exact_cddi(-1:nx,-1:ny,0:1,0:ns-1),
-!     &    exact_cdnahz(-1:nx,-1:ny,0:1,0:ns-1),
-!     &    exact_cdpahz(-1:nx,-1:ny,0:1,0:ns-1),
-     &    exact_cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &    exact_chce(-1:nx,-1:ny,0:1),
-     &    exact_chci(-1:nx,-1:ny,0:1),
-     &    exact_csig(-1:nx,-1:ny,0:1),
-     &    exact_calf(-1:nx,-1:ny,0:1),
-!     &    exact_csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),
-     &    err(-1:nx,-1:ny), era(-1:nx,-1:ny)
-
       end subroutine calc_err_transport
 
       subroutine calc_err_cc(nx, ny, nmvar, var, exact_var, scl)
@@ -233,7 +217,7 @@
 
        real (kind=R8) ::
      &    var(-1:nx,-1:ny), exact_var(-1:nx,-1:ny), scl,
-     &    err(-1:nx,-1:ny), era(-1:nx,-1:ny), L2norm, Cnorm             !srv 09.07.18
+     &    err(-1:nx,-1:ny), era(-1:nx,-1:ny), L2norm                   !srv 09.07.18
 
        logical l_exist
        integer ix, iy, ind(2)                                          !srv 09.07.18

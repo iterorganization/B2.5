@@ -87,7 +87,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     are undefined.
 *
 *     /b2cmpb/ - input/output.
@@ -373,7 +373,7 @@
         read (nget,*,err=92) id0, (zpdum(is,i),i=0,3)
         read (id0,'(i8)',err=93) is0
         call xertst (is0.eq.is, 'faulty input under *specs')
-        oldversion = oldversion .and. 
+        oldversion = oldversion .and.
      &   nint(zpdum(is,0)**2).eq.nint(zpdum(is,3)) .and.
      &   zpdum(is,1) .gt. 0.0_R8
        enddo
@@ -398,22 +398,22 @@
          call xertst (0.0_R8.le.zamin(is).and.zamin(is).le.zamax(is),
      .    'faulty input range zamin, zamax')
          call xertst (0.0_R8.lt.zn(is), 'faulty input zn')
-         call xertst (zamin(is).eq.nint(zamin(is)), 
+         call xertst (zamin(is).eq.nint(zamin(is)),
      .    'faulty input zamin; not integer')
-         call xertst (zamax(is).eq.nint(zamax(is)), 
+         call xertst (zamax(is).eq.nint(zamax(is)),
      .    'faulty input zamax; not integer')
-         call xertst (zn(is).eq.nint(zn(is)), 
+         call xertst (zn(is).eq.nint(zn(is)),
      .    'faulty input zn; not integer')
          call xertst (0.0_R8.lt.am(is), 'faulty input am')
          if (is_neutral(is)) then
-           call xertst (0.0_R8.eq.zamax(is), 
+           call xertst (0.0_R8.eq.zamax(is),
      .      'no bundling of neutral species allowed')
          endif
        enddo
 *   ..write species data
        write (nput,'(a)')
      &  '*specs      zamin    zamax    zn      am'
-       write (nput,fmt0) 
+       write (nput,fmt0)
      &  (is,zamin1(is),zamax1(is),zn1(is),am1(is),is=0,ns1-1)
       else if (streql(id,'*cbregs')) then
 *    ..test mode
@@ -458,12 +458,12 @@
        if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
         call xertst (streql(id1(1:5),'south'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
      &    ''''//trim(id1)//''''
        else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
         call xertst (streql(id1(1:5),'north'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
      &    ''''//trim(id1)//''''
        else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
         call xertst (streql(id1(1:4),'west'),

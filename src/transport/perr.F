@@ -1,4 +1,4 @@
-     
+
 
 
 
@@ -10,16 +10,16 @@ c--------------------------------------------------------------------
       implicit none
 
       integer ::
-     *        n,ifile, iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, 
+     *        n,ifile, iwarn1, iwarn2, iwarn3, iwarn4, iwarn5,
      +        iwarn6, iwarn7
       logical nlwarn
 
       data ifile / 0 /
       data iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, iwarn6, iwarn7
      +    /     0,      0,      0,      0,      0,      0,      0/
-      
+
       call subini ('perr')
-      nlwarn = .false. 
+      nlwarn = .false.
       if (n.le.10) then
         goto 1
       else
@@ -82,10 +82,10 @@ c-------------------------------------------------------------------
       case (12)
         if (iwarn2.eq.0) then
           write(11,*)'warning'
-          write(11,*)'you have used nleg.ne.3. the number of leg',
-     +              'endre har-'
-          write(11,*)'monics is not equal 3. this can make the ',
-     +              'results inaccurate'
+          write(11,*)'you have used nleg.ne.3. the number of ',
+     +               'legendre harmonics'
+          write(11,*)'is not equal 3. this can make the ',
+     +            'results inaccurate'
           write(11,*)
           iwarn2 = 1
         endif
@@ -93,10 +93,10 @@ c-------------------------------------------------------------------
       case (13)
         if (iwarn3.eq.0) then
           write(11,*)'warning'
-          write(11,*)'you have used nenergy.ne.1 the energy scat',
-     +               'tering in'
-          write(11,*)'the calculation of the viscosity is not ta',
-     +               'ken into account'
+          write(11,*)'you have used nenergy.ne.1 the energy ',
+     +               'scattering in'
+          write(11,*)'the calculation of the viscosity is not ',
+     +               'taken into account'
           write(11,*)
           iwarn3 = 1
         endif
@@ -104,8 +104,8 @@ c-------------------------------------------------------------------
       case (14)
         if (iwarn4.eq.0) then
           write(11,*)'warning'
-          write(11,*)'you have used ncofc.ne.1. ion-electron col',
-     +               'lisions are'
+          write(11,*)'you have used ncofc.ne.1. ion-electron ',
+     +               'collisions are'
           write(11,*)'not properly accounted for'
           write(11,*)
           iwarn4 = 1
@@ -138,8 +138,8 @@ c-------------------------------------------------------------------
       case (17)
         if (iwarn7.eq.0) then
           write(11,*)'warning'
-          write(11,*)'the routine neoart has been called with dif',
-     +               'ferent rho/isel'
+          write(11,*)'the routine neoart has been called with ',
+     +               'different rho/isel'
           write(11,*)'more than nkeep times. the values of the ',
      +               'geometry dependent'
           write(11,*)'quantities can no longer be kept in core'
@@ -150,5 +150,5 @@ c-------------------------------------------------------------------
       end select
       call subend ()
       return
-  
-      end
+
+      end subroutine perr

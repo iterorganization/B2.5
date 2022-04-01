@@ -19,4 +19,4 @@ c
         nidim=0
       endif
       return
-      end
+      end subroutine line

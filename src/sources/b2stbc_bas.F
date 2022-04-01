@@ -1,15 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_bas (nx, ny, ns, ismain,                         !xpb
-     1  facdrift, vol, hx, hy, qz, qc, gs,                               !xpb
-     1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+      subroutine b2stbc_bas (nx, ny, ns, ismain,                        !xpb
+     1  facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0,
-     &  wrong_flow, main_call, diagno,     !xpb
+     &  wrong_flow, main_call, diagno,                                  !xpb
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
      &  area_fix, sheath_drift_fix)
       use b2mod_types
+      use b2mod_geo
+      use b2mod_math
       use b2mod_rates
       use b2mod_indirect
       use b2mod_anomalous_transport
@@ -23,14 +24,11 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny), 
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),    !xpb
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
+     *  facdrift(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -70,22 +68,16 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ireg
       real (kind=R8) ::
-     *  cutll, cutlo, tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
+     *  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
-     2  naf(0:ns-1), udf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
+     2  naf(0:ns-1), udf(0:ns-1), nef, tef, tif, pof, wdiaf,
      3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
      4  prt(-1:nx,-1:ny)
       save ncall
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log, dim
-      real (kind=R8) ::
-     *  machsfr, expu2, hy1
-      external xertst, machsfr, eseec0
+      intrinsic abs, sqrt
+      external xertst, eseec0
       external b2xvsg, b2xvff, b2xvps
-      expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somewhat arbitrary level.)
 *   ..initialisation
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -130,9 +122,6 @@
        call b2xvsg (n2, chci(-1,-1,0,0), 1, 'chci00', '.ge.')
        call b2xvsg (n2, chci(-1,-1,1,1), 1, 'chci11', '.ge.')
       endif
-*   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
 *   ..initialise resignore array
       if (ncall.eq.0) then
         resignore(-1,-1:ny,1:2)=0
@@ -181,9 +170,6 @@
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        nef = (ne(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        ne(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
-     &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-       nif = (ni(ix,-1,0)*hy1(topix(ix,-1),topiy(ix,-1))+
-     &        ni(topix(ix,-1),topiy(ix,-1),0)*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        pof = (po(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        po(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
@@ -412,9 +398,6 @@
        nef = (ne(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        ne(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-       nif = (ni(ix,ny,0)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     &        ni(bottomix(ix,ny),bottomiy(ix,ny),0)*hy1(ix,ny))/
-     &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
        pof = (po(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        po(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
@@ -615,9 +598,6 @@ cxpb  only include ExB terms and not diamagnetic contributions
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        nef = (ne(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        ne(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
-     &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-       nif = (ni(-1,iy,0)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &        ni(rightix(-1,iy),rightiy(-1,iy),0)*hx(-1,iy))/
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        pof = (po(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        po(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
@@ -846,9 +826,6 @@ cxpb  only include ExB terms and not diamagnetic contributions
        nef = (ne(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        ne(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-       nif = (ni(nx,iy,0)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &        ni(leftix(nx,iy),leftiy(nx,iy),0)*hx(nx,iy))/
-     &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
        pof = (po(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        po(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
@@ -1027,4 +1004,3 @@ c         fchi=0.0_R8
 *.end b2stbc_bas
 
       end subroutine b2stbc_bas
-

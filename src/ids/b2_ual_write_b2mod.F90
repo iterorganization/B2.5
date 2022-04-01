@@ -6,9 +6,9 @@
 !>      @page b2uw_b2mod b2_ual_write_b2mod
 !>      @section b2uw_b2mod_desc   Description
 !!      b2_ual_write_b2mod code is used to generate b2_ual_write_b2mod.exe
-!!      (main program), which is a post-processor for b2.
+!!      (main program), which is a post-processor for B2.
 !!      The code reads the plasma grid
-!!      geometry ( full geometry descriptions of all available grid subsets )
+!!      geometry (full geometry descriptions of all available grid subsets)
 !!      and plasma state (electron density/temperature, ion temperature,
 !!      velocity etc.). The code then writes the obtained data to IDS database
 !!      with the use of b2mod scripts that utilize IMAS GGD Grid Service
@@ -46,7 +46,7 @@
 !!      <b> Grid subset IDs </b>:
 !!
 !!      B2.5 ITM routines use grid subset IDs (B2_SUBGRID_UNSPECIFIED,
-!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS etc.) defined in
+!!      B2_SUBGRID_NODES, B2_SUBGRID_CELLS, etc.) defined in
 !!      @ref b2uw_ualio_grid_desc "b2mod_ual_io_grid.F90", while B2.5 IDS
 !!      uses grid subset IDs defined in IMAS GGD (ids_grid_common.f90).
 !!
@@ -154,22 +154,21 @@
 !!      For more information see also routine \b b2cdca.
 !!
 !!      The complete program performs post-processing of the
-!!      result of a b2 calculation.
+!!      result of a B2 calculation.
 !!      This program unit opens and closes the input/output units, and
 !!      may perform some other system-dependent operations.
-
 !!
 !!      The input units are:
-!!          - ninp(0): formatted; provides output control parameters.
-!!          - ninp(1): un*formatted; provides the geometry.
-!!          - ninp(2): un*formatted; provides the run parameters.
-!!          - ninp(3): un*formatted; provides the plasma state.
-!!          - ninp(4): unformatted; provides the detailed plasma state.
-!!          - ninp(5): formatted; provides the run switches.
-!!          - ninp(6): un*formatted; provides the atomic data.
+!!          - ninp(0): formatted, provides output control parameters.
+!!          - ninp(1): un*formatted, provides the geometry.
+!!          - ninp(2): un*formatted, provides the run parameters.
+!!          - ninp(3): un*formatted, provides the plasma state.
+!!          - ninp(4): unformatted, provides the detailed plasma state.
+!!          - ninp(5): formatted, provides the run switches.
+!!          - ninp(6): un*formatted, provides the atomic data.
 !!
 !!      The output units are:
-!!          - nout(0): formatted; provides printed output.
+!!          - nout(0): formatted, provides printed output.
 !!
 !!      @note   See routine b2cdca for the meaning of "un*formatted".
 !!
@@ -640,7 +639,7 @@ contains
         !! Internal variables
         integer :: gridSubset_index !< >Grid subset base index
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
-            !< data in edge plasma profiles  (includes the scrape-off layer and
+            !< data in edge plasma profiles (includes the scrape-off layer and
             !<  possibly part of the confined plasma)
         integer :: status
 

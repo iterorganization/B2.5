@@ -40,7 +40,7 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end function b2ssum
       function b2sasum (n, sx, incx)
       use b2mod_types
       implicit none

@@ -203,7 +203,7 @@ cxpb  We follow the launched neutrals over their pre-computed trajectories
 cxpb  and distribute the associated sources along the way.
 cxpb  We must account for:
 cxpb   a. CX processes with ions
-cxpb   b. electron-impact ionization
+cxpb   b. electron-impact ionisation
 cxpb   c. electron-impact excitation (we use the S/XB factor to convert 
 cxpb      electron heat loss rate into number of collision events)
 cxpb   d. elastic collisions with neutrals

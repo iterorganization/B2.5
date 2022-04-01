@@ -18,13 +18,13 @@
 *
 *  1. purpose
 *
-*     B2YGDR is a postprocessor for b2. It reads and displays the
+*     B2YGDR is a postprocessor for B2. It reads and displays the
 *     geometry and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This subroutine displays a b2 geometry and magnetic flux
+*     This subroutine displays a B2 geometry and magnetic flux
 *     functions.
 *
 *     B2 employs a two-dimensional, curvilinear, topologically
@@ -77,8 +77,8 @@
       character lblgm*120, idout*80, id*8
 *   ..procedures
       logical streql
-      external xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruin, cfruch, lbfilx
+      external xertst, xerrab, streql, gacwk, gdawk, cfruin, cfruch,
+     & lbfilx
       external b2rugm, b2wfgm, b2wggm
 
 *-----------------------------------------------------------------------
@@ -293,8 +293,9 @@
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 *   ..read geometry
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 
 * ..output
 *   ..write summary of geometry

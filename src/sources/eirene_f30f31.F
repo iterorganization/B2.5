@@ -83,10 +83,7 @@ c
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
      2 ncall/0/, eirene_extrapolate/1/,
      & eirene_uub_style/0/, print_minmax/0/, eirene_background/1/
-      real (kind=R8) :: kintmp
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
-      real (kind=R8) :: 
+      real (kind=R8) :: kintmp,
      &  vaecrbc(-1:nx,-1:ny,0:1,0:ns-1), wadiac(-1:nx,-1:ny,0:1,0:ns-1),
      &  vadiac(-1:nx,-1:ny,0:1,0:ns-1), wrk(-1:nx,-1:ny)
 
@@ -108,7 +105,7 @@ c
         call ipgeti('eirene_print_minmax',print_minmax)
         call ipgeti('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
         call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
-      endif 
+      endif
 
       call xertst (nx.lt.NDXP, 'eirene_mc: increase size of ndxp')
       call xertst (ny.lt.NDYP, 'eirene_mc: increase size of ndyp')
@@ -180,7 +177,7 @@ c
         call my_out(70,nx,ny,te,'copy_te')
         call my_out(70,nx,ny,ti,'copy_ti')
         call my_out(70,nx,ny,po,'copy_po')
-      endif 
+      endif
 
 * cell centred
       do iy=-1,ny
@@ -265,14 +262,14 @@ c
      1         dnib(ix+1,iy+1,nflai)
               zib(ix+1,iy+1,nflai)=rza(ix,iy,is)
 c     Velocities uub, vvb, wwb
-c     * cell centered
+c     * cell-centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
               if(eirene_uub_style.eq.0) then
 cwdk  uub directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but not fully consistent with respect to anomalous transport.
-c     In particular: possible anomalous contributions to parallel and 
+c     In particular: possible anomalous contributions to parallel and
 c     diamagnetic velocities are missing (case b2trno_pol_anom_scale.ne.0.0)
                if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .           bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
@@ -403,7 +400,7 @@ c     internal cell -> full diamagnetic drift (fna_eir)
 cwdk  wwb directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but may not be fully consistent with respect to drifts.
-c     In particular: convective anomalous contribution  (if present) is missing
+c     In particular: convective anomalous contribution (if present) is missing
 c                    (diffusive anomalous contribution zero due to toroidal symm.)
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
@@ -470,7 +467,7 @@ c we derive the guard cell value from its neighbouring interior cell
         do in=1,2    ! do twice so we get the corner cells as well
           do iy=-1,ny
             do ix=-1,nx
-c the ix+1,iy+1 form arises because the eirene quantity arrays are declared
+c the ix+1,iy+1 form arises because the Eirene quantity arrays are declared
 c 0:nx+1,0:ny+1 for compatibility with the old B2, and the B2.5 arrays are
 c declared -1:nx,-1:ny
               if(leftix(ix,iy).eq.-2) then
@@ -530,7 +527,7 @@ c declared -1:nx,-1:ny
      &     te_min_val, te_max_val, ti_min_val, ti_max_val,
      &     na_min_val, na_max_val, ua_min_val, ua_max_val
       endif
-      
+
       if(iout.ne.0) then
        nflai=0
        do is=0,ns-1
@@ -546,7 +543,7 @@ c declared -1:nx,-1:ny
        call my_out(70,nx,ny,teb(0:nx+1,0:ny+1),'copy_teb')
        call my_out(70,nx,ny,tib(0:nx+1,0:ny+1),'copy_tib')
        call my_out(70,nx,ny,pob(0:nx+1,0:ny+1),'copy_pob')
-      endif 
+      endif
 
 
       ncall=ncall+1

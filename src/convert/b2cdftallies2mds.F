@@ -20,7 +20,7 @@
       character(len=strmax+1), allocatable :: str1(:)
 #endif
       integer :: i,ivar,idim,iatt,i1,i2,i3
-      integer :: status, 
+      integer :: status,
      1 ncid, ndims, nvars, natts, unlimid, xtypev, xtypeu,
      2 dimids(NF_MAX_VAR_DIMS), length,
      3 dimsize(NF_MAX_VAR_DIMS), underscore_pos
@@ -54,9 +54,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtypev,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i6,a)')
-     *   'variable: ',trim(varname),' has type ',xtypev,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i6,a)')
+     *     'variable: ',trim(varname),' has type ',xtypev,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
@@ -215,11 +221,11 @@ c first deal with the time vector
           write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           if(xtypev.eq.nf_char) then
-! this is a 1d array of text strings and not time dependent
+! this is a 1d array of text strings and not time-dependent
             allocate(data2c(dimsize(1),dimsize(2)))
             status=nf_get_var_text(ncid,ivar,data2c)
             call check_cdf_status(status)
-#ifdef F2003            
+#ifdef F2003
             allocate(character(len=dimsize(1)+1) :: str1(dimsize(2)))
 #else
             call xertst(dimsize(1).le.strmax,
@@ -314,7 +320,7 @@ c first deal with the time vector
       status=nf_close(ncid)
       call check_cdf_status(status)
 #else
-      write(*,*) 
+      write(*,*)
      . 'b2cdftallies2mds failed because compiled with NO_CDF option'
 #endif
 #else

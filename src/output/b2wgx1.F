@@ -19,12 +19,12 @@
 *
 *  1. purpose
 *
-*     B2WGX1 displays the b2 mesh on the physical plane.
+*     B2WGX1 displays the B2 mesh on the physical plane.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine displays the b2 mesh on a sequence of physical
+*     This routine displays the B2 mesh on a sequence of physical
 *     domains.
 *
 *
@@ -171,4 +171,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx1
 
-      end
+      end subroutine b2wgx1

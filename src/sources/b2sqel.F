@@ -5,6 +5,7 @@
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmpa
 #ifdef WITH_FTIMINGS
       use timings
@@ -58,18 +59,14 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       real (kind=R8) ::
-     *   phm0, phm1, phm2, cutlo, cutll, t0, art_rad, tnorm
+     *   phm0, phm1, phm2, art_rad, tnorm
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm2, art_rad
       integer, save :: use_eirene=0
 *   ..procedures
-      intrinsic log, exp, min, max, dim
-      real (kind=R8) ::
-     *   machsfr, expu
+      intrinsic log, min
       external xertst, ipgetr, machsfr
-      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
-*     (expu is the exponential function with underflow set to 0)
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm2/1.0_R8/,
      1 art_rad/0.0_R8/
@@ -102,8 +99,12 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
       endif
 *   ..set cutll, cutlo
-      cutll = log(machsfr())
-      cutlo = max(machsfr(),exp(cutll))
+      if (.not.b2mod_math_initialised) call b2mod_math_init
+      if ((art_rad.ne.0.0_R8) .and. (ncall.eq.0)) then
+          art_rad=abs(art_rad)
+          write(*,*)
+     1     'Artificial radiation model active, art_rad = ',art_rad
+      endif
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -113,7 +114,6 @@
 !$OMP& shared(rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
 !$OMP& shared(rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 !$OMP& shared(zamin, zamax, phm0, phm1, phm2, ev, ns, nx, ny)
-!$OMP& shared(cutlo, cutll)
 !$OMP& shared(art_rad, ismain, ncall, TNORM, TE)
 !$OMP DO
 #endif

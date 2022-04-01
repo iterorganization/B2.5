@@ -46,7 +46,7 @@
       logical is_comment, cfendf
       intrinsic sqrt
       external xertst, xerrab, is_comment
-      external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
+      external cfruch, cfruin, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
 

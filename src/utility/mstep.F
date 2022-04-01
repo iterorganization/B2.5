@@ -171,7 +171,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
           ENDIF
 
           NST=-4
-          IF(DABS(H/TSTEP).LT.REPS) THEN
+          IF(ABS(H/TSTEP).LT.REPS) THEN
             print*,'came here',h,' ',tstep,' ',reps
             IER=122
             DO 5400 I=1,N
@@ -193,7 +193,7 @@ c  as done by Mrityunjay Kundu in his IPR report.
           WK(I,2)=WK(I,1)
  5700   CONTINUE
         IF((TN.LE.T0).EQV.(H.GT.0.0_R8)) GO TO 6000
-        IF(DABS((TN-T0)/TSTEP).LE.REPS) GO TO 6000
+        IF(ABS((TN-T0)/TSTEP).LE.REPS) GO TO 6000
       ENDIF
 
       IF(NSTP.LT.NMAX) GO TO 3400
@@ -491,7 +491,7 @@ C         IF(ABS(A(K,K)).LT.REPS) RETURN
             DO 2500 L1=K+1,N
               A(L,L1)=A(L,L1)-A(L,K)*A(K,L1)
  2500       CONTINUE
- 2501   CONTINUE
+ 2501     CONTINUE
 
  2600   CONTINUE
         DET=DET*A(N,N)

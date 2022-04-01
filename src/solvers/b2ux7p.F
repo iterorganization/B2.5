@@ -131,9 +131,9 @@
 *   ..obtain work space
       if (ncall.eq.0) then
         write(*,*)
-     .   'Allocating space for solver for 7-point-stencil matrix'  !srv 11.01.00
+     .   'Allocating space for solver for 7-point stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for iluter
           allocate(aaf(1:n2*5))
           allocate(wrk0(1:n2))
@@ -141,7 +141,7 @@
           allocate(wrk2(1:n2))
           allocate(iwrk(1:1))
         else if (style.eq.1) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for slv5pt
           allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
           allocate(wrk0(1:n2))
@@ -154,7 +154,7 @@
           continue
         endif
         write(*,*)
-     .   'Allocated space for solver for 7-point-stencil matrix'   !srv 11.01.00
+     .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -187,7 +187,7 @@
        else if (style.eq.3) then                                   !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
-     *                 indexes, iasave, jasave, name)
+     *                 indexes, iasave, jasave)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_7: nz = ',nz
@@ -213,14 +213,13 @@
       end subroutine b2ux7p
 
       subroutine storage_7 (nx, ny, aa7, nnz, ip, ja, a, k,          !srv 29.05.02
-     *                      indexes, ipsave, jasave, name)
+     *                      indexes, ipsave, jasave)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *  ..input
       integer nx, ny, nnz
       real (kind=R8) :: aa7(-1:nx,-1:ny,-3:3)
-      character*(*) name
 *  ..output
       integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
      *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)
@@ -327,4 +326,4 @@
        enddo
       endif
 
-      end                                                         !srv 29.05.02
+      end subroutine storage_7                                    !srv 29.05.02

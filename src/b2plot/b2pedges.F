@@ -42,7 +42,7 @@ c***  hlp_area: area of the corresponding cell face
       integer, allocatable :: ix(:,:), iy(:,:), jx(:,:), jy(:,:)
       integer i,j,k,l,m,i1,i2,is,ns_hlp
       integer ld_hlp(nx_hlp),nc_hlp(nx_hlp)
-      real (kind=R8) ::  d,re,ze,ra,za,rb,zb,z,zz,hlp_area
+      real (kind=R8) :: d,re,ze,ra,za,rb,zb,z,zz,hlp_area
       real (kind=R8), allocatable :: hlp_flx(:)
       character hlp_frmr*100
       character*2, allocatable :: hlp_al(:)
@@ -280,7 +280,7 @@ c*** Write the header
 
       write (lun,'(2a)') '# Ion fluxes across the outer grid edge.',
      ,                                         '   Version : 05.05.2004'
-      write (lun,'(2a)') '# ',label
+      write (lun,'(2a)') '# ',trim(label)
       write (lun,*)
       write (lun,'(a,3i5)') '# nx,ny,ns = ',nx,ny,ns
       write (hlp_frmr,'(a,i2,a)') '(a,i3,',nspecies,'i3)'
@@ -371,4 +371,4 @@ c      print *,hlp_frmr               !###
       deallocate(ix,iy,jx,jy)
       return
 c=======================================================================
-      end
+      end subroutine b2pedges

@@ -110,7 +110,7 @@ c======================================================================
       subroutine alloc_b2plot_wall_loading(nlim,nsgmx)
       implicit none
       integer nlim, nsgmx
-      
+
       allocate(indwll(nsgmx), luwrk(nsgmx), lwldrad(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
       allocate(leirlis(nsgmx,nwldprtx))
@@ -126,7 +126,7 @@ c======================================================================
 
       subroutine dealloc_b2plot_wall_loading
       implicit none
-      
+
       deallocate(indwll, luwrk, lwldrad)
       deallocate(lwldlis)
       deallocate(leirlis)

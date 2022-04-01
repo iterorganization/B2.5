@@ -1,23 +1,25 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmt (nx, ny, isymm, 
+      subroutine b2agmt (nx, ny, isymm,
      & crx, cry, vol, hx, hy, qz, qc, qs, gs,
      & cell_width, cell_height, leftix, bottomiy)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
-      integer leftix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny) 
+      integer leftix(-1:nx,-1:ny),
+     &  bottomiy(-1:nx,-1:ny)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), qs(-1:nx,-1:ny,0:1), 
+     &  gs(-1:nx,-1:ny,0:2), qs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
@@ -43,13 +45,13 @@
 *
 *     isymm - integer, input.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
-*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
+*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
 *
 *     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
@@ -82,19 +84,19 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,,).le.1.
 *
 *     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy) specifies sin(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy) specifies sin(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that -1.lt.qs(,,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
@@ -112,38 +114,17 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i, j
+      integer n2, ix, iy, i
       integer volhmk
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1)
+     *   width, centroid(0:1)
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
       external xertst, ipgetr, ipgeti
       external b2xvsg
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
       save volhmk, width
 
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     sinang(p0x,p0y,p1x,p1y) is sin(t), and cosang(p0x,p0y,p1x,p1y)
-*     is cos(t), where t is the complementary angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -329,6 +310,7 @@
         enddo
        enddo
       endif
+
 *   ..test sign of vol
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 
@@ -346,12 +328,11 @@ C Corners are numbered in the B2 convention 2-3
 C                                           0-1
       function XquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       use b2mod_types
+      use b2mod_indirect, only: triangleArea
       implicit none
       real (kind=R8) :: XquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
+
       XquadCentroid =
      & ( XtriangleCentroid(x0,y0,x1,y1,x3,y3)
      & * triangleArea(x0,y0,x1,y1,x3,y3)
@@ -364,12 +345,11 @@ C                                           0-1
 
       function YquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
       use b2mod_types
+      use b2mod_indirect, only: triangleArea
       implicit none
       real (kind=R8) :: YquadCentroid
-      real (kind=R8) :: triangleArea
-      external triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
+
       YquadCentroid =
      & ( YtriangleCentroid(x0,y0,x1,y1,x3,y3)
      & * triangleArea(x0,y0,x1,y1,x3,y3)
@@ -401,17 +381,13 @@ C Coordinates of centroid of a triangle given by vertex coordinates
       return
       end function YtriangleCentroid
 
-      end subroutine b2agmt
-
-C Area of triangle given by vertex coordinates
-      function triangleArea( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
+      function dist(ix,iy,i,j)
+      use b2mod_math
       implicit none
-      real (kind=R8) :: triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-      intrinsic abs
-  
-      triangleArea = 0.5_R8 * abs( (x1-x0)*(y2-y0)
-     & - (y1-y0)*(x2-x0) )
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       return
-      end function triangleArea
+      end function dist
+
+      end subroutine b2agmt

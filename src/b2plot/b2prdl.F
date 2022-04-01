@@ -62,4 +62,5 @@ c
       end do
       print*,'Wrote file radsrc.b2e'
 c
-      end
+      return
+      end subroutine b2prdl

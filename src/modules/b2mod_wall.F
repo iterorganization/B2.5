@@ -476,6 +476,7 @@ cxpb Data file material properties
      *  matbulk_Cp_B3,
      *  matbulk_Cp_B4)
 
+      return
       end subroutine dealloc_b2mod_wall
 
       subroutine read_b2mod_wall_namelist(nread,edition,found)
@@ -552,8 +553,7 @@ cxpb For backward compatibility, NRELCONSTITUENTS --> RELCONSTITUENTS
       do itrack=1,nalloys
         if(.not.streql(layer_alloys(itrack),' '))
      .    write(nwrite,'(a13,i1,a4,a6,a2)')
-     .    'LAYER_ALLOYS(',itrack,')= ''',
-     .     layer_alloys(itrack),''','
+     .    'LAYER_ALLOYS(',itrack,')= ''', layer_alloys(itrack),''','
       enddo
       write(nwrite,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
       do itrack=1,ntargsp

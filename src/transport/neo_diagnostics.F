@@ -25,7 +25,7 @@
 *     3 --- both banana and PS
 *     4 --- all contributions
 *     mind that B2 already calculates the classical transport !
-*     avoid double transport, 0+4 for cross checks only !
+*     avoid double transport, 0+4 for cross-checks only !
       integer ic
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -75,8 +75,7 @@
      &   kappa(0:ns,0:nzdecl-1,-1:ny),
      &   vw(0:ns,0:nzdecl-1,-1:ny),
      &   dfhcb, dfhce, hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
-     &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5),
-     &   hy1(-1:nx,-1:ny)
+     &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy
@@ -163,13 +162,6 @@
         do istate=0,nzdecl-1
           den(ispecies,istate)=0.0_R8
           zsp(ispecies,istate)=0.0_R8
-        enddo
-      enddo
-
-*   ..calculate hy-projection
-      do ix=-1,nx
-        do iy=-1,ny
-          hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
         enddo
       enddo
 
@@ -701,8 +693,8 @@
      &  (hy1(topix(ixref,-1),topiy(ixref,-1))+
      &   hy1(topix(topix(ixref,-1),topiy(ixref,-1)),
      &       topiy(topix(ixref,-1),topiy(ixref,-1))))
-       do ispecies=0, nsl-1
-         do istate=0, ncl(ispecies)-1
+       do ispecies=0,nsl-1
+         do istate=0,ncl(ispecies)-1
            if (on_closed_surface(ixref,-1)) then
              dd(ispecies,istate,-1)=dd(ispecies,istate,
      &          topiy(ixref,-1))+prefactor*(dd(ispecies,istate,

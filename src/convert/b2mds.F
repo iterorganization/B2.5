@@ -11,9 +11,9 @@
       use b2mod_constants
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
-     * textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     * cr, cz, natmi, nmoli, nioni, wklng,
-     * solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
+     *          natmi, nmoli, nioni, wklng,
+     *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
       use b2mod_eirene_globals
@@ -53,6 +53,7 @@
       use b2mod_external
       use b2mod_subsys
       implicit none
+
 #     include <DIMENSIONS.F>
 #ifdef MDSPLUS
 #     include "mdslib.inc"
@@ -68,12 +69,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::
-     3   hy1(-1:nxd,-1:nyd), energy_balance(-1:nxd,-1:nyd),
-     3   pr(-1:nxd,-1:nyd), energy_balance2(-1:nxd,-1:nyd),
-     4   energy_balance_old(-1:nxd,-1:nyd),
-     5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
-     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd)
+      real (kind=R8) ::  pr(-1:nxd,-1:nyd)
 
       integer ispecies(0:nsd_local-1)
 
@@ -94,6 +90,9 @@ c
       real (kind=R8) ::
      *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
      5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
+     4   cr(-1:nxd,-1:nyd), cz(-1:nxd,-1:nyd),
+     5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
+     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
      7   flux_x(0:nxd,-1:nyd,0:nsd_local-1),
      7   flux_y(-1:nxd,0:nyd,0:nsd_local-1),
      8   dsrad(-1:nxd,-1:nyd),dspol(-1:nxd,-1:nyd),dspar(-1:nxd,-1:nyd),
@@ -306,8 +305,8 @@ c
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
-     2 fhm, fhp, fhj, fht)
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt,
+     2 te, ti, po, BoRiS, fhm, fhp, fhj, fht)
       if(allocated(fhi_ext)) fht=fht+fhi_ext
       do is=0,ns_ext-1
         do iy=-1,ny
@@ -578,7 +577,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      hy1(-1:nx,-1:ny)=hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
       do ix=-1,nx
         dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
         do iy=jsep+2,ny
@@ -839,7 +837,12 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,hy1,'')
+      do iy=-1,ny
+       do ix=-1,nx
+        temp(ix,iy)=hy1(ix,iy)
+       end do
+      end do
+      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
      1 nx+2,ny+2,fllime,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',

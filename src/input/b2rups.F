@@ -29,26 +29,26 @@
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
      2  fch_p(-1:nx,-1:ny,0:1,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),    !srv 10.06.08
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhe_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fhi_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhePSch(-1:nx,-1:ny,0:1,0:1),
      &  fhiPSch(-1:nx,-1:ny,0:1,0:1), 
      &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1,0:1), fhe_eir(-1:nx,-1:ny,0:1,0:1),
      &  fhi_eir(-1:nx,-1:ny,0:1,0:1),
-     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
      &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
      &  fchdia(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1,0:1), vedia(-1:nx,-1:ny,0:1,0:1),
@@ -93,7 +93,7 @@
 *     the parallel velocity of atomic species (is) on the (ix,iy) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
-*    
+*
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
@@ -464,19 +464,19 @@
         write(6,*) 'Recovering by reading fch_p with array size ', n2
         call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.032' .and.
-     &       b2fstat_version.le.'01.001.068') then                          !xpb srv 10.06.08 {
+     &       b2fstat_version.le.'01.001.068') then               !xpb srv 10.06.08 {
         call cfrure (nget, n2*2, floc, 'fch_p')
         fch_p = 0.0_R8
         fch_p(:,:,0,0) = floc(:,:,0)
         fch_p(:,:,1,1) = floc(:,:,1)
       elseif (b2fstat_version.ge.'01.001.022' .and.
-     &        b2fstat_version.ge.'01.001.024') then                          !srv 10.06.08 }
+     &        b2fstat_version.ge.'01.001.024') then              !srv 10.06.08 }
         fch_p = 0.0_R8
         call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       else
         fch_p = 0.0_R8
         fch_p(:,:,0,0) = fch(:,:,0,0)     ! this ensures the old behaviour is kept
-      endif                                                             !srv 10.06.08 }
+      endif                                                      !srv 10.06.08 }
 *   ..adding various fluxes and velocities needed by advanced SOLPS-ITER features
       if(b2fstat_version.ge.'03.001.000') then
         call cfrure (nget, n2*4*ns, fna_mdf, 'fna_mdf')
@@ -679,6 +679,7 @@
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif
+
 * ..return
       call subend ()
       return

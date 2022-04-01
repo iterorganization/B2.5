@@ -29,6 +29,8 @@
      *  cr(:,:),
      *  cz(:,:),
      *  nh(:,:),
+     *  psi(:,:),
+     *  fbz(:,:),
      *  zeff(:,:),
      *  uutraj(:,:,:),
      *  vvtraj(:,:,:),
@@ -105,7 +107,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       parameter(npart=100000)
 
       real (kind=R8), save ::
-     * arrowl,earrowl,arroww,
+     * arrowl,earrowl,arroww,psi_sep,
      * sepwidth,lwidth,wwidth,owidth,vwidth,ewidth,zwidth
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
@@ -122,6 +124,7 @@ cank
 
       logical, save ::
      *  writing_to_file,color_set,use_compile,
+     *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
      *  xparallel,plotting_sep,expline
 
@@ -176,6 +179,8 @@ cank
       allocate(cr(-1:nxd,-1:nyd))
       allocate(cz(-1:nxd,-1:nyd))
       allocate(nh(-1:nxd,-1:nyd))
+      allocate(psi(-1:nxd,-1:nyd))
+      allocate(fbz(-1:nxd,-1:nyd))
       allocate(zeff(-1:nxd,-1:nyd))
       allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vvtraj(-1:nxd,-1:nyd,0:nsd-1))
@@ -276,6 +281,8 @@ cank
       deallocate(cr)
       deallocate(cz)
       deallocate(nh)
+      deallocate(psi)
+      deallocate(fbz)
       deallocate(zeff)
       deallocate(uutraj)
       deallocate(vvtraj)

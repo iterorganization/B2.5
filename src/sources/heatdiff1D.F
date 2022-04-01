@@ -63,8 +63,7 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: acc
       external pdedef, bndary, D03PCF
 #endif
-      integer ncall
-      data ncall/0/
+      integer, save :: ncall = 0
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
       common /location/ iwall, ns

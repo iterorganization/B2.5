@@ -14,7 +14,7 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine xertst
 
       subroutine b25_mpi_stop
 #ifdef USE_MPI

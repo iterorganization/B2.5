@@ -14,11 +14,11 @@
       integer nx, ny, nregionv, itcnt
       character*(*) name                                             !srv 18.03.10
       real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), te(-1:nx,-1:ny), 
+     *  ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &  conc(-1:nx,-1:ny,0:1,0:1),
      &  sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny)
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  corpo(-1:nx,-1:ny)
@@ -113,7 +113,7 @@
          if (solvereg(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)+conc(ix,iy,0,0)
          if (solvereg(ileft))
-     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
+     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0,0)
          if (solvereg(ireg))
      >    aa9(ix,iy,-1) = -conc(ix,iy,0,0)
@@ -148,30 +148,30 @@ cwdk add 9-point contributions
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
           if (solvereg(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
          endif
         endif                                                        !srv 26.11.02
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg)) 
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa9(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -187,7 +187,7 @@ cwdk add 9-point contributions
           if (solvereg(ireg))
      >     aa9(ix,iy,0) = aa9(ix,iy,0)+conc(ix,iy,1,1)
           if (solvereg(ibot))
-     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 
+     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
           if (solvereg(ireg))
      >     aa9(ix,iy,-3) = -conc(ix,iy,1,1)
@@ -222,24 +222,24 @@ cwdk add 9-point contributions
      &        vol(rightix(ix,iy),rightiy(ix,iy))
            endif
            if (solvereg(ibot)) then
-            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy),-1)       - t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) + (t0 - t1)/
-     &        vol(bottomix(ix,iy),bottomiy(ix,iy)) 
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) = 
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) +  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 2)      - t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) + (t0 - t1)/
      &        vol(ix,iy)
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
            endif
@@ -253,19 +253,19 @@ cxpb
            if (solvereg(ireg))
      >      aa9(ix,iy,3) = -conc(topix(ix,iy),topiy(ix,iy),1,1)
            if (solvereg(itop))
-     >      aa9(topix(ix,iy),topiy(ix,iy),0) = 
+     >      aa9(topix(ix,iy),topiy(ix,iy),0) =
      &      aa9(topix(ix,iy),topiy(ix,iy),0)+
      &      conc(topix(ix,iy),topiy(ix,iy),1,1)
            if (solvereg(ireg))
-     >      aa9(ix,iy,0) = 
+     >      aa9(ix,iy,0) =
      &      aa9(ix,iy,0)+conc(topix(ix,iy),topiy(ix,iy),1,1)
            if (solvereg(itop))
      >      aa9(topix(ix,iy),topiy(ix,iy),3) =
-     &      -conc(topix(ix,iy),topiy(ix,iy),1,1) 
+     &      -conc(topix(ix,iy),topiy(ix,iy),1,1)
           endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg))
      >   aa9(ix,iy,3) = 0.0_R8
        enddo
       enddo
@@ -288,10 +288,10 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      write(*,*) 'Calling b2ux9p from '//trim(name)
+      write(*,'(1x,a,a)') 'Calling b2ux9p from '//trim(name)
       call b2ux9p (nx, ny, aa9, itcnt, respo, corpo, name)           !srv 18.03.10
 
-      if (iout.ne.0) then                                          !srv 08.07.08 {
+      if (iout.ne.0) then                                            !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k
           call my_out(70,nx,ny,sch(-1,-1,k),'b2uspo_sch'//chark)
@@ -321,4 +321,4 @@ cxpb
 *-----------------------------------------------------------------------
 *.end b2uspo
 
-      end
+      end subroutine b2uspo

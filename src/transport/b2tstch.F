@@ -1,24 +1,25 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne,          !srv 07.07.14
+      subroutine b2tstch (nx, ny, vol, po, te, ne,                      !srv 07.07.14
      *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_geo
+     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
+     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1)    !srv 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     & csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
+     & fchstoch(-1:nx,-1:ny,0:1)                                        !srv 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -33,7 +34,7 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
@@ -41,13 +42,9 @@
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hy1                                                            !srv 07.07.14
       external ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
 *   ..initialization
       data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
 *-----------------------------------------------------------------------
@@ -85,18 +82,14 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      csig_stoch = 0.0e0_R8
+!! FIXME: Consider adding XY current and fourth dimension
       fchstoch   = 0.0e0_R8
       if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-
+        call b2trsc (nx, ny, vol, po, te, ne, csig_stoch)               !srv 24.08.21
         do iy = bottomdelta1, jsep+1
           do ix = -1, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-            csig_stoch(ix,iy) = sig_stoch*
-     &      qe*(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8*  !lk 24.03.08 17.12.13
-     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-     &      /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2         !srv 07.07.14
-            fchstoch(ix,iy) = -csig_stoch(ix,iy)*
+            fchstoch(ix,iy,1) = -csig_stoch(ix,iy,1)*                   !srv 24.08.21
      &       ((po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       0.5e0_R8/qe*
      &       (te(ix,iy) - te(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -107,10 +100,9 @@
            endif
           enddo
         enddo
-      endif                                                               !lk 31.01.08 }
+      endif                                                             !lk 31.01.08 }
 
-!      call my_out(70,nx,ny,csig_stoch,'b2tstch_csigy_stoch')
-!      call my_out(70,nx,ny,fchstoch,'b2tstch_fchstochy')
+!      call my_out(70,nx,ny,fchstoch(-1,-1,1),'b2tstch_fchstochy')      !srv 24.08.21
 
 * ..return
       ncall = ncall+1
@@ -120,4 +112,4 @@
 *-----------------------------------------------------------------------
 *.end b2tstch
 
-      end                                                              !lk 31.01.08 }
+      end subroutine b2tstch                                            !lk 31.01.08 }

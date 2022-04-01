@@ -24,7 +24,7 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer i,j,k,l,m,n,is
+      integer i,j,k,m,n,is
       real (kind=R8) ::
      . hlp_tot,hlp_he,hlp,hlp_p,hlp_s,hlp_pi,hlp_si,hlp_po,hlp_so
       integer n_wll_hlp
@@ -139,4 +139,4 @@ c
       close(lun)
 c----------------------------------------------------------------------
       return
-      end
+      end subroutine b2phel

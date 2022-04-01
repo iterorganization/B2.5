@@ -9,4 +9,4 @@
       call gslwsc(w)
 #endif
       return
-      end
+      end subroutine gslwsc_d

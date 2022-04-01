@@ -28,7 +28,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a log-contour plot of some quantity on a
-*     cartesian representation of the b2 mesh.
+*     cartesian representation of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -146,4 +146,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgxq
 
-      end
+      end subroutine b2wgxq

@@ -22,4 +22,4 @@
 *     unidirectional rounding.)
       return
 *     ------------------------------------------------------------------
-      end
+      end function esseq

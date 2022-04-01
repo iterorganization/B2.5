@@ -622,12 +622,12 @@ contains
         logical, intent(in), optional :: useHdf5
         character(*), intent(in), optional :: nmlFile
 
-    !! Internal variables
+        !! Internal variables
 
-    character(*), parameter :: NAMELIST_FILE = "ual.namelist"
-    integer, parameter :: NAMELIST_UNIT = 979
+        character(*), parameter :: NAMELIST_FILE = "ual.namelist"
+        integer, parameter :: NAMELIST_UNIT = 979
 
-    integer :: lRefshot = 0, lRefrun = 0
+        integer :: lRefshot = 0, lRefrun = 0
 #ifdef IMAS
         integer :: lStatus = 0
         character(32) :: lTreename = "ids"
@@ -635,61 +635,63 @@ contains
 # ifdef ITM_ENVIRONMENT_LOADED
         character(32) :: lTreename = "euitm"
 # else
-    character(32) :: lTreename = "none"
+        character(32) :: lTreename = "none"
 # endif
 #endif
 
-    integer :: lShot = 1, lRun = 0
-    real(R8) :: lTime = 0.0_R8
-    character(32) :: luser="unspecified", lTokamak="unspecified",   &
-        &   lDataversion="unspecified"
-    logical :: lDoCreate = .false., lUseHdf5 = .false.
+        integer :: lShot = 1, lRun = 0
+        real(R8) :: lTime = 0.0_R8
+        character(32) :: luser="unspecified", lTokamak="unspecified",   &
+            &   lDataversion="unspecified"
+        logical :: lDoCreate = .false., lUseHdf5 = .false.
 
-    logical :: namelistExists, openEnv = .false.
+        logical :: namelistExists, openEnv = .false.
 
         external xerrab, xertst
 
-    namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
-        &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, lUseHdf5
+        namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
+            &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &
+            &   lUseHdf5
 
-    if( present( shot ) ) lShot = shot
-    if( present( run ) ) lRun = run
-    if( present( user ) ) lUser = user
-    if( present( database ) ) lTokamak = database
-    if( present( dataversion ) ) lDataversion = dataversion
-    if( present( doCreate ) ) lDoCreate = doCreate
-    if( present( useHdf5 ) ) lUseHdf5 = useHdf5
+        if( present( shot ) ) lShot = shot
+        if( present( run ) ) lRun = run
+        if( present( user ) ) lUser = user
+        if( present( database ) ) lTokamak = database
+        if( present( dataversion ) ) lDataversion = dataversion
+        if( present( doCreate ) ) lDoCreate = doCreate
+        if( present( useHdf5 ) ) lUseHdf5 = useHdf5
 
-    if( present( user ) ) openEnv = .true.
+        if( present( user ) ) openEnv = .true.
 
-    !! If file exists, read namelist from configuration file
-    !! If not, write out namelist
-    if( present( nmlFile ) ) then
-        inquire( file=nmlFile, exist=namelistExists )
-    else
-        inquire( file=NAMELIST_FILE, exist=namelistExists )
-    end if
-    if( namelistExists ) then
+        !! If file exists, read namelist from configuration file
+        !! If not, write out namelist
         if( present( nmlFile ) ) then
-            open( unit=NAMELIST_UNIT, file=nmlFile )
+            inquire( file=nmlFile, exist=namelistExists )
         else
-            open( unit=NAMELIST_UNIT, file=NAMELIST_FILE )
+            inquire( file=NAMELIST_FILE, exist=namelistExists )
         end if
-        read( NAMELIST_UNIT, nml=ual_namelist )
-        close( unit=NAMELIST_UNIT )
-    else
-        if( present( nmlFile ) ) then
-            open( unit=NAMELIST_UNIT, file=nmlFile, status="new", action="write")
+        if( namelistExists ) then
+            if( present( nmlFile ) ) then
+                open( unit=NAMELIST_UNIT, file=nmlFile )
+            else
+                open( unit=NAMELIST_UNIT, file=NAMELIST_FILE )
+            end if
+            read( NAMELIST_UNIT, nml=ual_namelist )
+            close( unit=NAMELIST_UNIT )
         else
-            open( unit=NAMELIST_UNIT, file=NAMELIST_FILE, status="new", &
-                &   action="write" )
+            if( present( nmlFile ) ) then
+                open( unit=NAMELIST_UNIT, file=nmlFile, status="new", &
+                    &   action="write" )
+            else
+                open( unit=NAMELIST_UNIT, file=NAMELIST_FILE, status="new", &
+                    &   action="write" )
+            end if
+            write( NAMELIST_UNIT, nml=ual_namelist )
+            close( unit=NAMELIST_UNIT )
         end if
-        write( NAMELIST_UNIT, nml=ual_namelist )
-        close( unit=NAMELIST_UNIT )
-    end if
 
-    !! establish UAL access
-    if( lDoCreate) then
+        !! establish UAL access
+        if( lDoCreate) then
 #ifdef IMAS
             if( lUseHdf5) then
 # if UAL_MAJOR_VERSION < 4
@@ -766,32 +768,31 @@ contains
 #endif
         end if
 
-    !! Return time if requested
-    if( present( time ) ) time = lTime
+        !! Return time if requested
+        if( present( time ) ) time = lTime
 
-  end subroutine open_ual
+    end subroutine open_ual
 
-  !> Close UAL.
-  !! @note  For IMAS edge_profiles IDS "examplePutIDS" IMAS GGD library routine
-  !! can be used instead (that routine also writes the set data to IDS and then
-  !! closes the IDS)
-  subroutine close_ual(idx)
-    integer, intent(in) :: idx  !< The returned identifier to be used in the
-                                !< subsequent data access operation
-
+    !> Close UAL.
+    !! @note  For IMAS edge_profiles IDS "examplePutIDS" IMAS GGD library routine
+    !! can be used instead (that routine also writes the set data to IDS and then
+    !! closes the IDS)
+    subroutine close_ual(idx)
+        integer, intent(in) :: idx  !< The returned identifier to be used in the
+                                    !< subsequent data access operation
 #ifdef IMAS
         integer :: status
         external xertst
 
         !! Close IDS
-    call imas_close( idx, status )
+        call imas_close( idx, status )
         call xertst( status.eq.0, 'Error closing IMAS database !' )
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
-    call euITM_close(idx)
+        call euITM_close( idx )
 # endif
 #endif
-  end subroutine close_ual
+    end subroutine close_ual
 
 end module b2mod_ual
 

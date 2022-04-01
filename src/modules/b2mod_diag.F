@@ -29,7 +29,7 @@ c
       REAL (kind=R8), allocatable ::
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
-      real (kind=R8), allocatable ::  RADARR(:,:)
+      real (kind=R8), allocatable :: RADARR(:,:)
       real (kind=R8), allocatable ::
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
@@ -107,7 +107,7 @@ c
       integer i, is, iss
       character*18 hlp_frm
       logical streql
-      external streql
+      external streql, ipgeti, xertst, xerrab
 
       call xertst(1.le.nxd, 'faulty input nxd')
       call xertst(1.le.nyd, 'faulty input nyd')
@@ -192,11 +192,13 @@ c
       write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
       write(*,hlp_frm) 'b2eatcr : ', b2eatcr(0:nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nsd,'(a2,1x))'
-      write(*,hlp_frm) 'is_codes : ', is_codes
+      write(*,hlp_frm) 'is_codes : ', (trim(is_codes(is)),is=0,nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nspecies,'(a2,1x))'
-      write(*,hlp_frm) 'species_list : ', species_list(1:nspecies)
+      write(*,hlp_frm) 'species_list : ',
+     .                        (trim(species_list(is)),is=1,nspecies)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natm,'(a2,1x))'
-      write(*,hlp_frm) 'atoms_list (B2) : ', atoms_list(1:natm)
+      write(*,hlp_frm) 'atoms_list (B2) : ',
+     .                        (trim(atoms_list(is)),is=1,natm)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',i,'i4)'
       write(*,hlp_frm) 'ions_list : ', ions_list(1:i)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nspecies,'i4)'

@@ -1,11 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upht (nx, ny, ns, nregionv, 
-     &  po_solve, ua_solve, solvereg, solvireg, solvpreg, solvmreg,
+      subroutine b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
+     &  solvereg, solvireg, solvpreg, solvmreg,
      &  rxf, pcm0, cortt, corte, corti,
      &  pccm0, na, ua, te, ti, po, ne, ni, wrk0, vol)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -39,14 +40,10 @@
 *   ..local variables
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
-     *  ctt, dte(-1:nx,-1:ny), dti(-1:nx,-1:ny), t0, t1, t2
+     *  ctt, dte(-1:nx,-1:ny), dti(-1:nx,-1:ny), t0
       save ncall, stylec, pot_eq
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *  med
       external xertst, ipgeti, b2xvsg
-      med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
       data ncall/0/, stylec/0/, pot_eq/1/
 *!!   (stylec is a numerical switch, needs experiments)
@@ -91,7 +88,7 @@
          if (solvereg(ireg).and.solvireg(ireg)) then
           dte(ix,iy) = 
      &      rxf*max(-te(ix,iy),(corte(ix,iy)+cortt(ix,iy))/2.0_R8)
-          dti(ix,iy) = 
+          dti(ix,iy) =
      &      rxf*max(-ti(ix,iy),(corti(ix,iy)+cortt(ix,iy))/2.0_R8)
          else
           dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy))
@@ -120,7 +117,7 @@
          dte(ix,iy) = rxf*max(-te(ix,iy),corte(ix,iy))
          dti(ix,iy) = rxf*max(-ti(ix,iy),corti(ix,iy))
         endif
-        if (solvereg(ireg)) 
+        if (solvereg(ireg))
      &    te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte(ix,iy))	 !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.

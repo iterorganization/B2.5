@@ -177,7 +177,8 @@ c
       else if(ig.eq.-3) then
 c-----------------------------------------------------------------------
         allocate(hlp_pi(nspecies),hlp_po(nspecies))
-        allocate(hlp_at(natmi),hlp_ml(nmoli))
+        allocate(hlp_at(natmi))
+        if (nmoli.gt.0) allocate(hlp_ml(nmoli))
         do k=1,nspecies
           hlp_pi(k)=0.0_R8
           hlp_po(k)=0.0_R8
@@ -240,13 +241,21 @@ c-----------------------------------------------------------------------
         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
         end do
-        write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
-     ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
-     ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
-     ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,    wldspt(nlim+ltns(2),0)
+        if (nmoli.gt.0) then
+          write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
+     ,      (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
+     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
+     ,      wldspt(nlim+ltns(2),0)
+        else
+          write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
+     ,      (hlp_at(i),i=1,natmi),
+     ,      wldspt(nlim+ltns(2),0)
+        end if
         deallocate(hlp_pi,hlp_po)
-        deallocate(hlp_at,hlp_ml)
+        deallocate(hlp_at)
+        if (nmoli.gt.0) deallocate(hlp_ml)
 c-----------------------------------------------------------------------
       else if(ig.eq.-4) then
         call b2pplentd(lun)
@@ -422,7 +431,7 @@ c-----------------------------------------------------------------------
       else if(ig.eq.-9) then
 c-----------------------------------------------------------------------
         open(lun,file='nuclei.tot')
-        write(lun,'(2a)') '# Case: ',label
+        write(lun,'(2a)') '# Case: ',trim(label)
         write(lun,'(2a)') '# Total number of nuclei, including those ',
      ,                          'in plasma ions, atoms, and molecules:'
         do i = 1, nspecies
@@ -556,7 +565,7 @@ c-----------------------------------------------------------------------
           if (hlp_al(is)(2:2).eq.' ') hlp_al(is)(2:2) = '_'
         end do
         open(lun,file='diagno.dat')
-        write (lun,'(a)') label
+        write (lun,'(a)') '# '//trim(label)
         write (lun,'(a)')
      ,  '# ix, iy   : poloidal and radial indices in the grid;'
         write (lun,'(a)')
@@ -595,4 +604,4 @@ c-----------------------------------------------------------------------
       end if
 c=======================================================================
       return
-      end
+      end subroutine b2paux

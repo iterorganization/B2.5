@@ -44,7 +44,7 @@
 *
 *     This routine is available for use as the occasion may require;
 *     it is a suitable location for code to produce output that is of
-*     interest only for a specific application of b2.
+*     interest only for a specific application of B2.
 *     The basic version of b2wsst produces no output.
 *
 *
@@ -77,25 +77,10 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is
+      integer n2
 *   ..procedures
-      real (kind=R8) ::
-     *  b2ssum, rfnax, rfnay, rfhex, rfhey,
-     &  rfhix, rfhiy, rfchx, rfchy, rfnex, rfney, rfnix, rfniy
-      external xertst, b2ssum
+      external xertst
       external b2xvsg, b2xvff, b2xvgm, b2xvps
-      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
-      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)
-      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0,0),nx+2)
-      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1,1),1)
-      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0,0),nx+2)
-      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1,1),1)
-      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0,0),nx+2)
-      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1,1),1)
-      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0,0),nx+2)
-      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1,1),1)
-      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0,0),nx+2)
-      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1,1),1)
 
 *-----------------------------------------------------------------------
 *.computation

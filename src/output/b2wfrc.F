@@ -5,6 +5,7 @@
      &  rtn, nn, zamin, zamax, zn, 
      &  rtlsa, rtlra, rtlqa, rtlcx, rtlza, rtlz2, rtlpt, rtlpi)
       use b2mod_types
+      use b2mod_math
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -26,7 +27,7 @@
 *  1. purpose
 *
 *     B2WFRC writes to a formatted file a table of atomic rate
-*     coefficients that has been prepared for b2.
+*     coefficients that has been prepared for B2.
 *
 *
 *  3. description
@@ -147,16 +148,8 @@
 
 *   ..local variables
       integer i, j, k, ind
-      real (kind=R8) ::
-     *   cutll, t0
 *   ..procedures
-      intrinsic max, exp, log
-      real (kind=R8) ::
-     *   machsfr, expu1
-      external xertst, machsfr, b2xvsg
-      expu1(t0) = exp(max(t0,cutll))
-*     (expu1 is the exponential function with underflow set to a tiny
-*     positive value.)
+      external xertst, b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -171,7 +164,7 @@
       call b2xvsg (nt+1, rtt, 1, 'rtt', '.gt.')
       call b2xvsg (nn+1, rtn, 1, 'rtn', '.gt.')
 *   ..set cutll
-      cutll = log(machsfr())
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..write summary of table
 *   ..write rtsa as function of rtt for several rtn
@@ -317,4 +310,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfrc
 
-      end
+      end subroutine b2wfrc

@@ -21,13 +21,13 @@
 *  1. purpose
 *
 *     B2NXFV calculates the convective term due to new form of ion  
-*     viscosity term in the momentum correction  equation.
+*     viscosity term in the momentum correction equation.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, ix, iy
       real (kind=R8) ::
      *   ft                                                            !srv 16.10.17
       save ncall
@@ -48,8 +48,6 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
@@ -66,8 +64,8 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2) then
-             flubv(ix,iy,0,0) = ft*cvsbhz_cl(ix,iy,0,0)*              !srv 16.10.17
-     &        (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
+          flubv(ix,iy,0,0) = ft*cvsbhz_cl(ix,iy,0,0)*                 !srv 16.10.17
+     &      (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
          endif
         enddo
        enddo
@@ -81,4 +79,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxfv
 
-      end                                                            !srv 19.01.05 01.07.05 11.09.09 }
+      end subroutine b2nxfv                                           !srv 19.01.05 01.07.05 11.09.09 }

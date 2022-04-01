@@ -23,7 +23,7 @@
 *
 *  1. purpose
 *
-*     B2XD (main program) is a postprocessor for b2. It reads and
+*     B2XD (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2xddr for the actual computation.
 *
@@ -36,7 +36,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2xd performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2xddr to control the actual computation.
@@ -116,10 +116,10 @@ c      call cfopen (ninp(0),'b2yp.dat','old','formatted')
       call cfopen (ninp(4),'b2fplasma','old','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstate_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstate_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
       nx = idum(0)

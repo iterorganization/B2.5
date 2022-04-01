@@ -1,6 +1,6 @@
 
-      subroutine b2ye_sterr (meanbatch, nn, ntotdt, ntim_batch,
-     .                      eps_s, tmax, T1, T2, meansample)
+      subroutine b2ye_sterr (meanbatch, nn, eps_s, tmax, T1, T2,
+     .                       meansample)
 
       use b2mod_types
 
@@ -16,8 +16,6 @@
 *
 *     meanbatch(:): input variable, 1-D array with batch means
 *     NN: number of batches
-*     nototdt: total number of iterations for averaging
-*     ntim_batch: number of iterations per batch
 *     eps_s: output variable, statistical error
 *     eps_s1: output variable, statistical error
 *     eps_s2: output variable, statistical error
@@ -26,7 +24,7 @@
 *  3. description
 *
 *     For a detailed description of the equations see K. Ghoos et al.,
-*     Numerical error estimation in Random Noise coupled plasma edge 
+*     Numerical error estimation in Random Noise coupled plasma edge
 *     simulations in nuclear fusion reactors, M&C2017
 *
 *     This routine performs the following steps.
@@ -39,7 +37,7 @@
 
       implicit none
 
-      integer, intent(in) :: nn, ntotdt, ntim_batch
+      integer, intent(in) :: nn
       real (kind=R8), intent(in) :: meanbatch(NN)
       real (kind=R8), intent(out) :: eps_s, meansample, tmax, T1, T2
 

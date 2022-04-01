@@ -11,19 +11,19 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt, isb, nregionv
-      logical solvereg(0:nregionv)      
+      logical solvereg(0:nregionv)
       real (kind=R8) ::
-     *   rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
+     *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
      &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:1,0:4), pccb1(-1:nx,-1:ny),
      &  rescb(-1:nx,-1:ny), vol(-1:nx,-1:ny)
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   corpb(-1:nx,-1:ny)
+     *  corpb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)                    !srv 13.10.06
+     *  aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)                        !srv 13.10.06
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -66,12 +66,8 @@
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   rscal
       external xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                  !srv 02.01.07
-!      rscal(t0) = t0
-      rscal(t0) = 1.0e0_R8                                             !srv 13.10.06
+      external b2xvsg, b2xvff, b2xvfx, b2ux9p, b2uxm9                   !srv 02.01.07
 *   ..initialization
       data ncall/0/
 
@@ -81,8 +77,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usc9')
-*   ..set internal parameters on first call                              !srv 25.08.99
-      if (ncall.eq.0) then                                               !srv 06.07.06 {
+*   ..set internal parameters on first call                             !srv 25.08.99
+      if (ncall.eq.0) then                                              !srv 06.07.06 {
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
        call ipgeti ('b2usc9_add_9', iadd_9)                             !srv 13.10.06
@@ -112,21 +108,21 @@
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
 *    ..test sign of snbv, conb
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
-       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then         !srv 06.07.06 {
+       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then             !srv 06.07.06 {
         call b2xvsg (n2, conb(-1,-1,0,0,0), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,0), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,0,0,1), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,1), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,0,0,2), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,2), 1, 'conb', '.ge.')
-       endif                                                        !srv 06.07.06 }
+       endif                                                            !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb0')               !srv 13.10.06 }
-!*    ..test edge values of pccb1                                   !srv 15.04.05
-!       call b2xvfx (nx, ny, pccb1, 'pccb1')                        !srv 15.04.05
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')                 !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')                 !srv 13.10.06 }
+!*    ..test edge values of pccb1                                       !srv 15.04.05
+!       call b2xvfx (nx, ny, pccb1, 'pccb1')                            !srv 15.04.05
       endif
 
       aa9 = 0.0e0_R8
@@ -152,8 +148,8 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+           !srv 13.10.06 {
-     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))        !srv 13.10.06 }
+          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+             !srv 13.10.06 {
+     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))          !srv 13.10.06 }
         else
           aa9(ix,iy,0) = rscal(pb(ix,iy))
         endif
@@ -161,7 +157,7 @@
       enddo
 
       do iy = -1, ny
-       do ix = -1, nx                                                  !srv 26.11.02 {
+       do ix = -1, nx                                                   !srv 26.11.02 {
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
           aa9(ix,iy,-1) = 0.0e0_R8
@@ -174,15 +170,15 @@
      &        - conb(ix,iy,0,0,2)                                       !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),1) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy),1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),1) + t0*rscal(pb(ix,iy))
            aa9(leftix(ix,iy),leftiy(ix,iy),0) =
-     &       aa9(leftix(ix,iy),leftiy(ix,iy),0) - 
+     &       aa9(leftix(ix,iy),leftiy(ix,iy),0) -
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
           if (solvereg(ireg)) then
            aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-           aa9(ix,iy,-1) = aa9(ix,iy,-1) + 
+           aa9(ix,iy,-1) = aa9(ix,iy,-1) +
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif
 cwdk add 9-point contributions
@@ -241,9 +237,9 @@ cwdk todo: rscal(pb)-logic
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
          endif
-        endif                                                        !srv 26.11.02
+        endif                                                           !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa9(ix,iy,1) = 0.0e0_R8                                       !srv 26.11.02
+     >   aa9(ix,iy,1) = 0.0e0_R8                                        !srv 26.11.02
        enddo
       enddo
 
@@ -254,13 +250,13 @@ cwdk todo: rscal(pb)-logic
          if(bottomiy(ix,iy).eq.-2) then
           aa9(ix,iy,-3) = 0.0_R8
          else
-          t0 = 0.5_R8*flob(ix,iy,1,1) 
-     &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,1)     !srv 13.10.06
+          t0 = 0.5_R8*flob(ix,iy,1,1)
+     &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,1)                    !srv 13.10.06
           t1 =-0.5_R8*flob(ix,iy,1,1)
-     &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)     !srv 13.10.06
+     &       - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)                    !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
-           aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+           aa9(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),3) + t0*rscal(pb(ix,iy))
            aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
@@ -268,7 +264,7 @@ cwdk todo: rscal(pb)-logic
           endif
           if (solvereg(ireg)) then
            aa9(ix,iy,0)  = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-           aa9(ix,iy,-3) = aa9(ix,iy,-3) + 
+           aa9(ix,iy,-3) = aa9(ix,iy,-3) +
      &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
 cwdk add 9-point contributions
@@ -332,10 +328,10 @@ cwdk todo: add rscal-logic
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 
-*   ..add matrix from contribution nine point stencil
+*   ..add matrix from contribution nine-point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg,
-     &   conb(-1,-1,0,0,3), aa9, name)                             !srv 02.01.07
+     &   conb(-1,-1,0,0,3), aa9, name)                                  !srv 02.01.07
       endif
 
       do iy=-1,ny
@@ -388,14 +384,14 @@ cwdk todo: add rscal-logic
       rescb(nx,ny)  = nb(nx-1,ny) - nb(nx,ny)
 
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)             !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)              !srv 18.05.02
 *   ..redo the scaling
       do iy = -1, ny
        do ix = -1, nx
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
-      if (iout.ne.0) then                                              !srv 17.06.02 {
+      if (iout.ne.0) then                                               !srv 17.06.02 {
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,aa9(-1,-1,-6),name//'_aa9m6'//chns)
         call my_out(70,nx,ny,aa9(-1,-1,-5),name//'_aa9m5'//chns)
@@ -413,7 +409,7 @@ cwdk todo: add rscal-logic
         call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
         call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
         call my_out(70,nx,ny,nb,name//'_na'//chns)
-      endif                                                            !srv 17.06.02 }
+      endif                                                             !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1
@@ -423,4 +419,14 @@ cwdk todo: add rscal-logic
 *-----------------------------------------------------------------------
 *.end b2usc9
 
-      end
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+!      rscal = t0
+      rscal = 1.0e0_R8                                                  !srv 13.10.06
+      return
+      end function rscal
+
+      end subroutine b2usc9

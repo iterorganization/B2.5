@@ -52,7 +52,7 @@
 *     coefficients are supplied.
 *
 *     npart - integer, input.
-*     npart specifies the number of partition of the homonuclear sequence.
+*     npart specifies the number of partition of the isonuclear sequence.
 *
 *     nidis - integer, input.
 *     nidis specifies the dimension of the array idis.
@@ -335,6 +335,7 @@
        enddo
       enddo
 
+      write (nprt,'()')
 * ..return
       call subend ()
       return

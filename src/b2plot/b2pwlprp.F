@@ -26,6 +26,7 @@ c======================================================================
       use b2mod_b2cmfs
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_boundary_namelist
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -40,7 +41,7 @@ c======================================================================
      ,        kkb,kke,itmp,
      ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical lim_cnf
+      logical lim_cnf,target_east,target_west
 c
       real (kind=R8) :: width,distance,distmin,xx1,xx2,yy1,yy2,
      ,                  distmin1
@@ -131,7 +132,7 @@ c
       end if
 c
 c*** Convert the input wall coordinates into double precision
-c*** and scale them to meters.
+c*** and scale them to metres.
 c*** We have now two sets of the wall segments, one saved by Eirene
 c*** and (another) one read from DG file. Only the segments which are
 c*** identical in both sets are to be used for neutral loading, the rest
@@ -191,6 +192,30 @@ c*** Check the topology of the grid and the list of target edges
         end if
       end if !}
       ntrgts=2
+      if(nncut.eq.0 .and. .not.lim_cnf) then
+        if (periodic_bc.eq.1) then
+          ntrgts=0
+        else
+          ntrgts=0
+          do i = 1, nbc
+            if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
+              target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                      bcene(i).eq.15
+            end if
+            if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
+               target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
+     &                       bcene(i).eq.15
+            end if
+          end do
+          if (target_west) then
+            ntrgs=1
+          end if
+          if (target_east) then
+            ntrgs=ntrgs+1
+          end if
+        end if
+      end if
+      if(nncut.eq.1 .or. lim_cnf) ntrgts=2
       if(nncut.eq.2) ntrgts=4
       if(ntrgs.gt.ntrgts) then !{
         write(*,*) 'b2pwlprp: inconsistent topology. ',
@@ -552,7 +577,7 @@ c          print '(1x,30i4)',(lwldlis(i,il),i=1,n)       !###
             k=iabs(lwldlis(is,il))
             if(k.eq.ltrgedge(2,1) .or. k.eq.ltrgedge(1,2) .or.
      .          (ntrgts.eq.4 .and.
-     .            (k.eq.ltrgedge(2,3) .or. k.eq.ltrgedge(1,4)))) then !{
+     .        (k.eq.ltrgedge(2,3) .or. k.eq.ltrgedge(1,4)))) then !{
 c*** CW edge
 c              print *,'CW edge: k=',k                   !###
               if(kb.ne.0) then !{
@@ -575,7 +600,7 @@ c*** Target still open...
 c              print *,'kb,ib(kb)=',kb,ib(kb)            !###
             else if(k.eq.ltrgedge(1,1) .or. k.eq.ltrgedge(2,2) .or.
      .        (ntrgts.eq.4 .and.
-     .           (k.eq.ltrgedge(1,3) .or. k.eq.ltrgedge(2,4)))) then !}{
+     .             (k.eq.ltrgedge(1,3) .or. k.eq.ltrgedge(2,4)))) then !}{
 c*** CCW edge. Check to which target this edge belongs
               i1=1
               do i2=1,ntrgts !{
@@ -627,9 +652,9 @@ c*** Now fill in the necessary arrays
             istarget(il)=.true.
 
 c!###{
-c           print *,         'Before merging the targets. ',
+c           print *,         'Before merging the targets ',
 c     ,          ':      ib       :      ie       :      it       :'
-c           print '(a,24i4)','                             ',ib,ie,it
+c           print '(a,24i4)','                            ',ib,ie,it
 c           print *,'lytg,nytg= ',lytg,nytg
 c!###}
 
@@ -661,10 +686,10 @@ c*** CCW target
                 end do !}
 c                print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
                 if(kb.gt.0 .and. ke.gt.0) then !{
-                  write (*,*) 'b2pwlprp: a segment can appear in the ',
-     ,                   'grid edge lists no more than once.'
-                  write (*,*) 'Segment ',lwldlis(j,il),',  list ',il,
-     ,                                      ',  targets ',it(kb),it(ke)
+                  write (*,*) 'b2pwlprp: a segment can appear in ',
+     ,                   'the grid edge lists no more than once.'
+                  write (*,*) 'Segment ',lwldlis(j,il),',  list ',
+     ,                                 il,',  targets ',it(kb),it(ke)
                   write (*,*) 'ltrgedge:'
                   write (*,'(8x,12i5)') (ltrgedge(1,i),i=1,ntrgts)
                   write (*,'(8x,12i5)') (ltrgedge(2,i),i=1,ntrgts)
@@ -828,7 +853,7 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
         end if
       end do
 
-ccc*** Substitute b2 cells only when overlapping original plot zone target elements
+ccc*** Substitute B2 cells only when overlapping original plot zone target elements
       do il=2,nwldprt !{
         if (istarget(il)) then !{ inside target
           k1=lwldlis_old(1,il)

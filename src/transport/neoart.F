@@ -13,15 +13,15 @@ c                          and ds array
 c             nzdecl     : actual (second) dimens. of array
 c             zsp        : array(nsdecl+1,nzdecl) of real that contains
 c                          the charge number of every component
-c             m         : array(nsdecl+1) that contains the mass of
-c                         every species in kg
-c             t         : array(nsdelc+1) that contains the temperature
-c                         of the species in keV
-c             den       : array(nsdecl+1,nzdecl) that contains the density
-c                         of every component in units of 10^19 m^-3
-c             ds        : array(nsdecl+1,nzdecl,2) that contains the first
-c                         and second thermodynamic force (pressure
-c                         gradient and temperature gradient)
+c             m          : array(nsdecl+1) that contains the mass of
+c                          every species in kg
+c             t          : array(nsdelc+1) that contains the temperature
+c                          of the species in keV
+c             den        : array(nsdecl+1,nzdecl) that contains the density
+c                          of every component in units of 10^19 m^-3
+c             ds         : array(nsdecl+1,nzdecl,2) that contains the first
+c                          and second thermodynamic force (pressure
+c                          gradient and temperature gradient)
 c
 c                                          d ln p_ij
 c                              ds(i,j,1) = ---------
@@ -31,79 +31,79 @@ c                                          d ln t_i
 c                              ds(i,j,2) = --------
 c                                           d rho
 c
-c                         where rho is the flux label actually used
-c                         the fluxes are also calculated in this
-c                         coordinate. for this to be possible the
-c                         geometry routine must supply dpsidr =
-c                         d psi / d rho where psi is the poloidal
-c                         flux.
-c             rho       : the flux surface label
-c             eps       : required accuracy
-c             nreg      : parameter that forces a certain regime
-c                         in the calculation of the viscosity
-c                         0     the normal value. the banana and
-c                               Pfirsch-Schlueter contributions
-c                               are weighted
-c                         1     the banana regime is forced.
-c                         other the Pfirsch-Schlueter regime is
-c                               forced.
-c                         note : forcing the banana regime is not
-c                                the same thing as calculating the
-c                                banana plateau contribution. for
-c                                high collision freq. this contri-
-c                                bution usually decreases. when
-c                                nreg = 1 there is no such decr.
-c             sigma(4)    the sigma's determine which of the coupling
-c                         terms in the equation for the pfirsch
-c                         schlueter regime are taken into acount.
-c                         sigma(1)= 0,1  is the cross coupling between
+c                          where rho is the flux label actually used
+c                          the fluxes are also calculated in this
+c                          coordinate. for this to be possible the
+c                          geometry routine must supply dpsidr =
+c                          d psi / d rho where psi is the poloidal
+c                          flux.
+c             rho        : the flux surface label
+c             eps        : required accuracy
+c             nreg       : parameter that forces a certain regime
+c                          in the calculation of the viscosity
+c                          0     the normal value. the banana and
+c                                Pfirsch-Schlueter contributions
+c                                are weighted
+c                          1     the banana regime is forced.
+c                          other the Pfirsch-Schlueter regime is
+c                                forced.
+c                          note : forcing the banana regime is not
+c                                 the same thing as calculating the
+c                                 banana plateau contribution. for
+c                                 high collision freq. this contri-
+c                                 bution usually decreases. when
+c                                 nreg = 1 there is no such decr.
+c             sigma(4)     the sigmas determine which of the coupling
+c                          terms in the equation for the pfirsch
+c                          schlueter regime are taken into acount.
+c                          sigma(1)= 0,1  is the cross-coupling between
 c                                     the heat equation and the equation
 c                                     for the third laguerre harm.
-c                         sigma(2)= 0.,1 is the cross coupling between
+c                          sigma(2)= 0.,1 is the cross-coupling between
 c                                     the equation for the third harmonic
 c                                     and the temperature perturb.
-c                         sigma(3)= 0,1 is the energy exchange between
+c                          sigma(3)= 0,1 is the energy exchange between
 c                                     the different species
-c                         sigma(4)= 0,1 is the coupling to the density
+c                          sigma(4)= 0,1 is the coupling to the density
 c                                     perturbation in the equation for the
 c                                     third laguerre harmonic
-c                         in the approximations of Hirshmann and Sigmar
-c                         sigma(1)=0 sigma(2)=0 sigma(3)=1 sigma(4)=1
-c                         that is the first two terms are neglected.
-c                         the usual values of all these coefficients is 1.
-c             nleg      : number of Legendre polynomials in the
-c                         expansion (maximum and normal value is 3)
-c             nenergy   : parameter that determines whether energy
-c                         scattering is taken into account in the
-c                         calculation of the viscosity
-c                         0 not accounted for
-c                         1 accounted for (normal value)
-c             ncof        parameters that determines whether ion-
-c                         electron collisions are taken into account
-c                         0 not taken into account
-c                         1 taken into account (normal value, 1;
-c                         0 only to obtain some analytic results)
-c             neogeo      logical if true then the geometry dep.
-c                         parameters are recalculated
-c             neofrc      logical if true then the friction and
-c                         viscosity matrix are not newly calculated
-c             ic        : the contribution for which the coefficients
-c                         are calculated.
-c                         0 the classical particle flux
-c                         1 banana plateau contribution
-c                         2 Pfirsch-Schlueter contribution
-c                         3 both banana plateau, classical, and P-S
-c                         4 all contributions
-c             eparr     : the parallel electric field times the
-c                         major radius, i.e. the loop voltage
-c             coeff     : array(nsdecl+1,nzdecl,4) that contains the transp.
-c                         coefficients of species nsm,ncm the last
-c                         index gives
-c                         1 particle flux   \gamma_ij
-c                         2 energy flux     q_ij / t_i
-c                         3 parallel flow   in units of current
-c                                           <j.b><b>/<b**2>
-c                         4 poloidal flow   <u.vt>/<b.vt>
+c                          in the approximations of Hirshmann and Sigmar
+c                          sigma(1)=0 sigma(2)=0 sigma(3)=1 sigma(4)=1
+c                          that is the first two terms are neglected.
+c                          the usual values of all these coefficients is 1.
+c             nleg       : number of Legendre polynomials in the
+c                          expansion (maximum and normal value is 3)
+c             nenergy    : parameter that determines whether energy
+c                          scattering is taken into account in the
+c                          calculation of the viscosity
+c                          0 not accounted for
+c                          1 accounted for (normal value)
+c             ncof         parameters that determines whether ion-
+c                          electron collisions are taken into account
+c                          0 not taken into account
+c                          1 taken into account (normal value, 1;
+c                          0 only to obtain some analytic results)
+c             neogeo       logical if true then the geometry dep.
+c                          parameters are recalculated
+c             neofrc       logical if true then the friction and
+c                          viscosity matrix are not newly calculated
+c             ic         : the contribution for which the coefficients
+c                          are calculated.
+c                          0 the classical particle flux
+c                          1 banana plateau contribution
+c                          2 Pfirsch-Schlueter contribution
+c                          3 both banana plateau, classical, and P-S
+c                          4 all contributions
+c             eparr      : the parallel electric field times the
+c                          major radius, i.e. the loop voltage
+c             coeff      : array(nsdecl+1,nzdecl,4) that contains the transp.
+c                          coefficients of species nsm,ncm the last
+c                          index gives
+c                          1 particle flux   \gamma_ij
+c                          2 energy flux     q_ij / t_i
+c                          3 parallel flow   in units of current
+c                                            <j.b><b>/<b**2>
+c                          4 poloidal flow   <u.vt>/<b.vt>
 c
 c     the routine calls the following routines
 c     perr    :  error handling
@@ -279,7 +279,7 @@ c       coeff and clear coeffc
       enddo
 
       return
-      end
+      end subroutine neoart
 
 
 

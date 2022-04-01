@@ -8,7 +8,7 @@
 *     -----------------------------------------------------------------
 *     B2XVFV verifies the zero entries in the edge locations of some
 *     quantity that is defined in the manner of a viscosity on the
-*     cells and corners of the b2 mesh.
+*     cells and corners of the B2 mesh.
 *     The entries funv(-1,-1:ny,0), funv(nx,-1:ny,0), funv(-1:nx,-1,1)
 *     and funv(-1,-1:ny,1) must vanish or the code will halt via a
 *     call to xertst/xerrab.
@@ -33,4 +33,4 @@
 *$$$  call subend ()
       return
 *     -----------------------------------------------------------------
-      end
+      end subroutine b2xvfv

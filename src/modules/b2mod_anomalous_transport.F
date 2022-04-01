@@ -13,10 +13,10 @@
      *   dna0(:,:,:),
      *   vsa0(:,:,:),
      *   vla0(:,:,:,:),
-     *   csig_an(:,:,:,:),                                                 !xpb 
-     *   calf_an(:,:,:,:),                                                 !xpb 
-     *   cvsa_an(:,:,:,:,:),                                               !srv 04.10.99 11.06.08
-     *   vma0(:,:,:,:)                                                   !srv 15.12.05 11.06.08
+     *   csig_an(:,:,:,:),                                              !xpb
+     *   calf_an(:,:,:,:),                                              !xpb
+     *   cvsa_an(:,:,:,:,:),                                            !srv 04.10.99 11.06.08
+     *   vma0(:,:,:,:)                                                  !srv 15.12.05 11.06.08
 
       contains
 
@@ -35,15 +35,15 @@
       deallocate(vla0)
       deallocate(csig_an)
       deallocate(calf_an)
-      deallocate(cvsa_an)                                                !srv 15.12.05 11.06.08
-      deallocate(vma0)                                                   !srv 15.12.05 11.06.08
+      deallocate(cvsa_an)                                               !srv 15.12.05 11.06.08
+      deallocate(vma0)                                                  !srv 15.12.05 11.06.08
 
       return
       end subroutine dealloc_anomalous_transport
 
       subroutine alloc_b2mod_anomalous_transport(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd                                                !xpb
+      integer nxd,nyd,nsd                                               !xpb
 
       allocate(sig0(-1:nxd,-1:nyd))
       allocate(hce0(-1:nxd,-1:nyd))
@@ -55,17 +55,17 @@
       allocate(dna0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vsa0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vla0(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(csig_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
-      allocate(calf_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
-      allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                       !srv 04.10.99 11.06.08
-      allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                          !srv 15.12.05 11.06.08
+      allocate(csig_an(-1:nxd,-1:nyd,0:1,0:1))                          !xpb
+      allocate(calf_an(-1:nxd,-1:nyd,0:1,0:1))                          !xpb
+      allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                  !srv 04.10.99 11.06.08
+      allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !srv 15.12.05 11.06.08
 
       return
       end subroutine alloc_b2mod_anomalous_transport
 
       subroutine read_b2mod_anomalous_transport(nxd,nyd,nsd,nread)
       implicit none
-      integer        :: nxd,nyd,nsd, nread
+      integer :: nxd,nyd,nsd,nread
       real (kind=R8) :: cloc(-1:nxd,-1:nyd,0:1)
       external cfrure, cfrure_opt
 

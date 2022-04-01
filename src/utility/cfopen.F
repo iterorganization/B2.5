@@ -73,4 +73,4 @@
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfopen

@@ -58,7 +58,7 @@
       call sfill(n2*4*ns, 1.0_R8, fllim0fhi, 1)
       maxfluxlimit=0.0_R8
 
-     
+
       if (alpha.ne.0.0_R8) then
 ! new default treatment applying the flux limit to the transport coefficient directly
 *    ..compute radial differences of temperature
@@ -136,4 +136,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2tlh0

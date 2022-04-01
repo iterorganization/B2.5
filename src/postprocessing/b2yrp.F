@@ -31,7 +31,7 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT
       INTEGER :: DIMENSIONS(4), REVERSE, nskip, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
-      real, ALLOCATABLE :: MM(:,:),BB(:,:), rr(:),zz(:),rout(:),zout(:),
+      real, ALLOCATABLE :: MM(:,:),BB(:,:),rr(:),zz(:),rout(:),zout(:),
      . dd(:)
       CHARACTER*(10) :: INFILE0= 'b2yrp.dat',
      . OUTFILE0 = 'rps_in.dat'
@@ -58,7 +58,7 @@
 
       NAMELIST /OUTPUT/
      . NPOINTS, LPOINTS, NPLOTS
-      
+
       print*,"############## README ############"
       print*,"Starting b2yrp. Update the input file b2yrp.dat "//
      .       "with the desired inlet temperature and then choose "//
@@ -73,7 +73,7 @@
          innout=0
          print *,'outer reflector plate chosen'
       endif
-     
+
       open(unit=inunit,file=infile0,status='old',action='read')
       READ(INUNIT,NML=GEOMETRY)
       READ(INUNIT,NML=MESH)
@@ -125,7 +125,7 @@
           READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
       ENDDO
       CLOSE(INUNIT)
-      
+
       ! read wlly to get coordinates
       NSKIP=0
       INFILE='wlly_'//trg(KK)//'rp.dat'
@@ -142,14 +142,14 @@
          READ(INUNIT,*) ss
       end do
       DO II=1,NLINE+1
-         READ(INUNIT,*) rr(ii), zz(ii) 
+         READ(INUNIT,*) rr(ii), zz(ii)
       ENDDO
       CLOSE(INUNIT)
       dd(1)=0.0
       do ii=2,nline+1
         dd(ii)=dd(ii-1)+sqrt((rr(ii)-rr(ii-1))**2+(zz(ii)-zz(ii-1))**2)
       end do
-      
+
       !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
       target_length=mm(nline,1)-mm(1,1)
       ntiles=nint(target_length/p_length)
@@ -243,7 +243,6 @@
       real :: weight
 
       dataIndex=1
-
 
       do inputIndex = 1, nVal
 

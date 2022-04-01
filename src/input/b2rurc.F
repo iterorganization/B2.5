@@ -25,7 +25,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine reads from unit (nget) a table of atomic rate data,
-*     covering ionisation, recombination, electron heat loss, 
+*     covering ionisation, recombination, electron heat loss,
 *     charge exchange and radiation with neutral hydrogen. Unit nget
 *     must be connected to an un*formatted file.
 *     See the code to discern the required format of the input file.
@@ -52,21 +52,21 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
 *      rtzmin, rtzmax, rtzn - (0:rtns-1) real*8 array.
-*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic 
+*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic
 *     charge range, and rtzn(is) specifies the nuclear charge
-*     of atomic species (is). 
+*     of atomic species (is).
 *     The izhi(inuc)-izlo(inuc)+1 charge states for each nuclear
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
-*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
-*     zamin, zamax and zn used elsewhere in b2.
+*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are
@@ -118,22 +118,22 @@
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlza(i,j,k) specifies
 *     the effective charge state at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlza has dimension e. 
+*     superstage k. rtlza has dimension e.
 *      rtlz2 - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlz2(i,j,k) specifies
 *     the effective squared charge at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlz2 has dimension e**2. 
+*     superstage k. rtlz2 has dimension e**2.
 *      rtlpt - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpt(i,j,k) specifies
 *     the cumulative ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k. rtlpt has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k. rtlpt has dimension eV.
 *      rtlpi - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpi(i,j,k) specifies
 *     the effective ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k from superstage k-1. rtlpi has dimension eV.
 *
 *
 *  8. further comments
@@ -173,9 +173,9 @@
       call cfruin (nget, 3, idum, 'rtnt,rtnn,rtns')
       call alloc_b2mod_b2cmrc(idum(0), idum(1), idum(2))
 *   ..read species data
-      if (version.lt.'01.001.024') then 
-        allocate(rtza(0:idum(2)-1))   
-        allocate(rtza2(0:idum(2)-1))   
+      if (version.lt.'01.001.024') then
+        allocate(rtza(0:idum(2)-1))
+        allocate(rtza2(0:idum(2)-1))
         call cfrure (nget, rtns, rtza, 'rtza')
         call cfrure (nget, rtns, rtzn, 'rtzn')
         call cfrure (nget, rtns, rtza2, 'rtza2')
@@ -196,17 +196,17 @@
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
-      if(version.ge.'01.001.016') then  
+      if(version.ge.'01.001.016') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlrd, 'rtlrd')
       else
         rtlrd=lnzero
       endif
-      if(version.ge.'01.001.019') then  
+      if(version.ge.'01.001.019') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlbr, 'rtlbr')
       else
         rtlbr=lnzero
       endif
-      if(version.ge.'01.001.024') then  
+      if(version.ge.'01.001.024') then
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlza, 'rtlza')
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlz2, 'rtlz2')
         call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlpt, 'rtlpt')
@@ -219,7 +219,7 @@
           rtlpt(0:rtnt,0:rtnn,k)=(potmin(k)+potmax(k))/2.0_R8
           rtlpi(0:rtnt,0:rtnn,k)=(potimin(k)+potimax(k))/2.0_R8
         enddo
-      endif 
+      endif
 
 * ..test rate coefficients
 *   ..test ionisation rate coefficients

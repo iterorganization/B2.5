@@ -2,8 +2,9 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     &  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam,                     !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     1  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, she0, shi0)      !srv 28.06.03 07.07.09
+     *  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,       !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa,
+     *  she0, shi0)                                                    !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -15,7 +16,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_geo
-     & , only : hz                                                    !srv 05.07.17
+     & , only : hy1
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_divua0to3,
@@ -37,7 +38,7 @@
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1,0:1),
+     *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1),          !srv 24.08.21
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
@@ -57,7 +58,7 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb, k
       integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0,    !srv 11.09.09
@@ -76,8 +77,7 @@
      &  dpo(-1:nx,-1:ny,0:1,0:1), dOnedBsq(-1:nx,-1:ny,0:1,0:1),      !srv 03.04.07
      &  wght(-1:nx,-1:ny)
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8               !lk 31.01.08 {
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)!lk 31.01.08 }
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
@@ -96,20 +96,17 @@
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
       real (kind=R8) ::
-     *   t0, t1, ctaup, coef, czetap, czetae                          !srv 05.07.17
+     *  t0, t1, ctaup, coef, czetap, czetae                           !srv 05.07.17
 *   ..procedures
       intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *    hy1
       external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 07.05.08
 *   ..initialization
       data ncall/0/, style/0/
       data rf0/1.0e0_R8/, rf1/1.0e0_R8/, rf2/1.0e0_R8/, rf3/1.0e0_R8/,
      &   rf4/1.0e0_R8/, phm0/1.0e0_R8/, phm1/1.0e0_R8/, phm2/1.0e0_R8/,
-     &  phm3/1.0e0_R8/, phm4/1.0e0_R8/, phm5/1.0e0_R8/, phm6/1.0e0_R8/ !srv 02.06.99
-     &  ,phm7/0.0e0_R8/, phm8/1.0e0_R8/                                !srv 27.12.01 28.08.02
+     &  phm3/1.0e0_R8/, phm4/1.0e0_R8/, phm5/1.0e0_R8/, phm6/1.0e0_R8/,!srv 02.06.99
+     &  phm7/0.0e0_R8/, phm8/1.0e0_R8/                                 !srv 27.12.01 28.08.02
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
@@ -138,28 +135,28 @@
        call ipgetr ('b2sihs_phm2', phm2)
        call ipgetr ('b2sihs_phm3', phm3)
        call ipgetr ('b2sihs_phm4', phm4)
-       call ipgetr ('b2sihs_phm5', phm5)                           !srv 02.06.99
-       call ipgetr ('b2sihs_phm6', phm6)                           !srv 02.06.99
-       call ipgetr ('b2sihs_phm7', phm7)                           !srv 27.12.01
-       call ipgetr ('b2sihs_phm8', phm8)                           !srv 28.08.02
+       call ipgetr ('b2sihs_phm5', phm5)                               !srv 02.06.99
+       call ipgetr ('b2sihs_phm6', phm6)                               !srv 02.06.99
+       call ipgetr ('b2sihs_phm7', phm7)                               !srv 27.12.01
+       call ipgetr ('b2sihs_phm8', phm8)                               !srv 28.08.02
        call xertst (0.le.style, 'faulty internal parameter style')
        call xertst (0.le.min(rf0,rf1,rf2,rf3,rf4),
      &   'faulty internal parameter rf0/1/2/3/4')
-       call xertst (0.le.min(phm0,phm1,phm2,phm3,phm4,phm5,phm6),  !srv 02.06.99
-     &   'faulty internal parameter phm0/1/2/3/4/5/6')             !srv 02.06.99
-       call ipgeti ('b2sihs_iout', iout)                           !srv 10.09.03
-       call ipgeti ('b2nph9_iout', iout_b2nph9)                    !srv 11.09.09
-       call ipgeti ('b2npht_iout', iout_b2npht)                    !srv 11.09.09
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                    !iys 17.04.17
+       call xertst (0.le.min(phm0,phm1,phm2,phm3,phm4,phm5,phm6),      !srv 02.06.99
+     &   'faulty internal parameter phm0/1/2/3/4/5/6')                 !srv 02.06.99
+       call ipgeti ('b2sihs_iout', iout)                               !srv 10.09.03
+       call ipgeti ('b2nph9_iout', iout_b2nph9)                        !srv 11.09.09
+       call ipgeti ('b2npht_iout', iout_b2npht)                        !srv 11.09.09
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                        !iys 17.04.17
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
-       call ipgetr ('b2tfhe_stochastic', fch_stochastic)           !lk 31.01.08
-       call ipgeti ('b2sihs_istyle_Joule_heating', 
-     &                      istyle_Joule_heating)                  !srv 17.01.14
-       call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)               !lk 31.01.08
+       call ipgeti ('b2sihs_istyle_Joule_heating',
+     &                      istyle_Joule_heating)                      !srv 17.01.14
+       call ipgeti ('b2sigp_style', b2sigp_style)                      !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
-       call ipgeti ('b2sihs_style_int_vel', style_int_vel)         !srv 01.04.19
+       call ipgeti ('b2sihs_style_int_vel', style_int_vel)             !srv 01.04.19
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -181,14 +178,14 @@
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
 *    ..test edge values of fna, fne, fch
-!       do is = 0, ns-1                               !srv 28.06.03 {
+!       do is = 0, ns-1                                            !srv 28.06.03 {
 !        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
-!       enddo                                         !srv 28.06.03 }
+!       enddo                                                      !srv 28.06.03 }
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fch, 'fch')
 *    ..test edge values of cvsa
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa') !srv 01.07.05
+        call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa')           !srv 01.07.05
        enddo
       endif
 *   ..compute ctaup
@@ -226,8 +223,6 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
 *   ..contribution from stochastic electron flow
       if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
-       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
-     &      fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
@@ -236,11 +231,11 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy)*(hy(ix,iy)
-     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                             !srv 24.08.21
+     &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
-     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)          !srv 24.08.21
+     &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
          endif
         enddo
@@ -323,7 +318,7 @@
           t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(1.0_R8-BoRiS)*       !srv 21.07.05 {
      &            ( wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))  !srv 21.07.05 }
 !          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(1.0_R8-BoRiS)*(     !srv 31.05.99
-!     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                  !srv 28.06.03 { 
+!     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                  !srv 28.06.03 {
 !     &        ua(rightix(ix,iy),rightiy(ix,iy),is)-
 !     &        pbs(ix,iy,0)*ua(ix,iy,is)
 !     &                                          )                    !srv 28.06.03 }
@@ -335,8 +330,8 @@
           shidu(ix,iy,3) = shidu(ix,iy,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
           b2divua(region(ix,iy,0))=b2divua(region(ix,iy,0))
      1         +t0*ni(ix,iy,0)*ti(ix,iy)
-          b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)+
-     1         t0*ni(ix,iy,0)*ti(ix,iy)
+          b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)
+     1         +t0*ni(ix,iy,0)*ti(ix,iy)
          endif                                                        !srv 26.11.02
         enddo
        enddo
@@ -349,9 +344,9 @@
       wght = 1.0_R8
       call grad(nx, ny, hx, hy, wght, qz, qs, po,   dpo)
       call grad(nx, ny, hx, hy, wght, qz, qs, OnedBsq, dOnedBsq)
-!      call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+!      call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
 !     .  dOnedBsq(-1,-1,0,0))
-!      call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc, 
+!      call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc,
 !     .  dOnedBsq(-1,-1,0,1))
 
       b2exbe=0.0_R8
@@ -359,7 +354,7 @@
       do iy = 0, ny-1
        do ix = 0, nx-1
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-!         wrk0(ix,iy) = bb(ix,iy,3)*vol(ix,iy)/hx(ix,iy)/hy(ix,iy)*(     
+!         wrk0(ix,iy) = bb(ix,iy,3)*vol(ix,iy)/hx(ix,iy)/hy(ix,iy)*(
 !     &      (po(topix(ix,iy),topiy(ix,iy))-
 !     &       po(bottomix(ix,iy),bottomiy(ix,iy)))
 !     &     *(OnedBsq(rightix(ix,iy),rightiy(ix,iy))-
@@ -489,6 +484,7 @@ cwdk compute radial differences of ua at cell faces
            cimp2(ix,iy)=fce2(zmff(ix,iy))
          enddo
        enddo                                                          !srv 13.01.17 }
+
 *   ..compute the Coulomb logarithm
        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae
@@ -501,22 +497,29 @@ cwdk compute radial differences of ua at cell faces
 *   ..compute gti,gte
        do iy = -1, ny
          do ix = -1, nx
-           if(leftix(ix,iy).eq.-2) then
-             gti(ix,iy) = 0.0_R8
-             gte(ix,iy) = 0.0_R8
-           else
-             gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-             gte(ix,iy) = (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-           endif
+          if(leftix(ix,iy).eq.-2) then
+           gti(ix,iy) = 0.0_R8
+          else
+           gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
+     &       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+          endif
          enddo
+       enddo
+       do iy = -1, ny
+        do ix = -1, nx
+         if(leftix(ix,iy).eq.-2) then
+          gte(ix,iy) = 0.0_R8
+         else
+          gte(ix,iy) = (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+     &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+         endif
+        enddo
        enddo
        shifr = 0.0_R8
        shefr = 0.0_R8
        do is = 0,ns-1
          if(.not. is_neutral(is)) then
-           call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,
+           call b2sifrtf (nx, ny, ns, is, ismain, bb, na, ua,
      &      ue, te, ti, ni, ne, ne2,
      &      zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2,           !srv 05.07.17
      &      zeff, smbfrea, smbfria, smbtfea, smbtfia,                 !srv 05.07.17
@@ -579,9 +582,9 @@ cwdk compute radial differences of ua at cell faces
 *     (a.k.a. Joule heating) in case of small impurity amount;
 *     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
-       call b2xehx (nx, ny, hx, hy, qz, qs, te, po, ne, ehx)          !srv 13.01.17
+       call b2xehx (nx, ny, te, po, ne, ehx)
        if (istyle_Joule_heating.eq.0 .or. istyle_Joule_heating.eq.3)
-     &   call b2xehy (nx, ny, hx, hy, qz, qs, te, po, ne, ehy)        !srv 13.01.17
+     &   call b2xehy (nx, ny, te, po, ne, ehy)                        !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
        do iy = 0, ny-1
@@ -734,4 +737,4 @@ cwdk compute radial differences of ua at cell faces
 *-----------------------------------------------------------------------
 *.end b2sihs_
 
-      end
+      end subroutine b2sihs_

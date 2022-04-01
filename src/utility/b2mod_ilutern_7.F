@@ -158,7 +158,7 @@ C    ZUWEISUNG
          IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
          IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                !srv 26.01.00
 c       IF (A1HN.EQ.0.0e0_R8) THEN
-         if(A1HN.EQ.0.0e0_R8.or.                                   !srv 29.01.20
+         if(A1HN.EQ.0.0e0_R8.or.                                   !srv 22.12.19
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.
@@ -278,7 +278,7 @@ cdpc
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,prec,iflag)                                   !srv 16.01.18
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)')
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)')
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                          !srv 28.06.16 {

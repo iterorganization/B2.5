@@ -14,7 +14,7 @@
      1 data2(:,:), data2T(:,:), data3(:,:,:), data3T(:,:,:),
      2 data4(:,:,:,:), data4T(:,:,:,:)
       integer :: i,ivar,idim,iatt,i1,i2,i3,i4
-      integer :: status, 
+      integer :: status,
      1 ncid, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), length,
      3 dimsize(NF_MAX_VAR_DIMS), underscore_pos
@@ -48,9 +48,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtype,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i2,a)')
-     *   'variable: ',trim(varname),' has type ',xtype,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i2,a)')
+     *     'variable: ',trim(varname),' has type ',xtype,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i2,a)')
+     *     'variable: ',trim(varname),' has type ',xtype,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
@@ -349,7 +355,7 @@ c first deal with the time vector
       status=nf_close(ncid)
       call check_cdf_status(status)
 #else
-      write(*,*) 
+      write(*,*)
      . 'b2cdfmovies2mds failed because compiled with NO_CDF option'
 #endif
 #else

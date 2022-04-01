@@ -29,31 +29,56 @@ C
       REAL (KIND=R8) :: WTARG(0:ny-1,NTRGM),wnutrg(0:ny-1,NTRGM),
      r                  wnutpr(0:ny-1,NTRGM)
       INTEGER :: K,J,L,IY,IS
+      INTEGER :: geometryType
       REAL (KIND=R8) :: HLP
       CHARACTER*32 :: FRM
+      LOGICAL :: target_east,target_west
 
       LOGICAL :: IFIRST
       DATA IFIRST /.TRUE./
 
       if(ifirst) then
 C PREPARING GEOMETRY DATA
-        if(nncut.le.1) then
+        geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
+        if(nncut.eq.0) then
+          ntrgs=0
+          if (geometryType.eq.GEOMETRY_LINEAR .or.
+     &        geometryType.eq.GEOMETRY_CYLINDER) then
+            target_east = .false.
+            target_west = .false.
+            do k = 1, nbc
+              if(bcchar(k).eq.'E'.and.bcpos(k).eq.-1) then
+                target_east = bcene(k).eq.3 .or. bcene(k).eq.12 .or.
+     &                        bcene(k).eq.15
+              end if
+              if(bcchar(k).eq.'W'.and.bcpos(k).eq.nx) then
+                target_west = bcene(k).eq.3 .or. bcene(k).eq.12 .or.
+     &                        bcene(k).eq.15
+              end if
+            end do
+            if (target_west) then
+              ntrgs=1
+              ltrgpos(1)=0
+            end if
+            if (target_east) then
+              ntrgs=ntrgs+1
+              ltrgpos(ntrgs)=nx-1
+            end if
+          end if
+        else if(nncut.eq.1) then
           ntrgs=2
+          ltrgpos(1)=0
+          ltrgpos(2)=nx-1
         else
           ntrgs=4
-        end if
-C A PIECE OF CODE FROM B2PLOT
-        ltrgpos(1)=0
-        k=2
-        if(ntrgs.eq.4) then
+          ltrgpos(1)=0
           ltrgpos(2)=nxtl-1
           ltrgpos(3)=nxtr+1
-          k=4
-        end if !}
-        ltrgpos(k)=nx-1
+          ltrgpos(4)=nx-1
+        end if
 C AREAS OF THE SURFACE ELEMENTS
         l=0
-        do j=1,nncut*2
+        do j=1,ntrgs !{
           k=ltrgpos(j)
           wtarg_max(j)=0.0_R8
           do iy=0,ny-1
@@ -68,14 +93,14 @@ C AREAS OF THE SURFACE ELEMENTS
             call b2neut_surfcheck(strg(0,j),j,ny,shift(j))
           end if
           l=1-l
-        end do
+        end do !}
         ifirst=.false.
       end if
 
       write(*,*) "Calculating incident power flux in b2usr_loads"
 
       l=0
-      do j=1,ntrgs
+      do j=1,ntrgs !{
         k=ltrgpos(j)
         call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
         wtarg_max(j)=0.0_R8
@@ -96,7 +121,7 @@ C AREAS OF THE SURFACE ELEMENTS
 csw 02jan2017 corrected flip of l variable (i.e.put it AFTER iy loop)
         end do
         l=1-l
-      end do
+      end do !}
 
       if(debug_flags(81).gt.0) then
         write(frm,700) ntrgs
@@ -125,5 +150,5 @@ C plasma
         end do
         close(3)
       end if
-
+      return
       end subroutine b2usr_loads

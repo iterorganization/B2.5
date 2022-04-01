@@ -8,9 +8,9 @@
      *  shi(:,:,:),
      *  sne(:,:,:),
      *  smo(:,:,:,:),
-     *  shef(:,:,:),                                           !srv 10.11.02                
-     *  shif(:,:,:),                                           !srv 10.11.02 
-     *  smof(:,:,:,:),                                         !srv 10.11.02 
+     *  shef(:,:,:),                                           !srv 10.11.02
+     *  shif(:,:,:),                                           !srv 10.11.02
+     *  smof(:,:,:,:),                                         !srv 10.11.02
      *  smq(:,:,:,:),
      *  sna(:,:,:,:),
      *  rsana(:,:,:),
@@ -72,9 +72,9 @@
      &  sne0_eir_tot(:,:),
      &  sch0_eir_tot(:,:)
       real (kind=R8), allocatable, save ::                             !srv 11.09.09 16.07.10
-     *  snasm(:,:,:,:), smosm(:,:,:,:), 
+     *  snasm(:,:,:,:), smosm(:,:,:,:),
      &  shesm(:,:,:), shism(:,:,:),
-     *  snadt(:,:,:,:), smodt(:,:,:,:), 
+     *  snadt(:,:,:,:), smodt(:,:,:,:),
      &  shedt(:,:,:), shidt(:,:,:),
      &  schdt(:,:,:), snedt(:,:,:)
 
@@ -352,7 +352,7 @@
         call cfrure (nread, size(b2stbr_shi), b2stbr_shi, 'b2stbr_shi')
         call cfrure (nread, size(b2stbr_sch), b2stbr_sch, 'b2stbr_sch')
       endif
-      if(b2fplasma_version.ge.'01.001.026') call cfrure_opt 
+      if(b2fplasma_version.ge.'01.001.026') call cfrure_opt
      >  (nread, size(b2stbr_sne), b2stbr_sne, 'b2stbr_sne')
       if(b2fplasma_version.gt.'01.001.010') then
         call cfrure (nread, size(b2stbc_sna), b2stbc_sna, 'b2stbc_sna')
@@ -361,39 +361,39 @@
         call cfrure (nread, size(b2stbc_shi), b2stbc_shi, 'b2stbc_shi')
         call cfrure (nread, size(b2stbc_sch), b2stbc_sch, 'b2stbc_sch')
       endif
-      if(b2fplasma_version.ge.'01.001.026') call cfrure_opt 
+      if(b2fplasma_version.ge.'01.001.026') call cfrure_opt
      >  (nread, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')
       if(b2fplasma_version.ge.'01.001.027') then
-        call cfrure_opt 
+        call cfrure_opt
      >   (nread, size(b2stbm_sna), b2stbm_sna, 'b2stbm_sna')
-        call cfrure_opt 
+        call cfrure_opt
      >   (nread, size(b2stbm_smo), b2stbm_smo, 'b2stbm_smo')
-        call cfrure_opt 
+        call cfrure_opt
      >   (nread, size(b2stbm_she), b2stbm_she, 'b2stbm_she')
-        call cfrure_opt 
+        call cfrure_opt
      >   (nread, size(b2stbm_shi), b2stbm_shi, 'b2stbm_shi')
-        call cfrure_opt 
+        call cfrure_opt
      >   (nread, size(b2stbm_sch), b2stbm_sch, 'b2stbm_sch')
-        call cfrure_opt 
+        call cfrure_opt
      >   (nread, size(b2stbm_sne), b2stbm_sne, 'b2stbm_sne')
       endif
       if(b2fplasma_version.gt.'01.001.002') then
         call cfrure (nread, size(b2sihs_divue), b2sihs_divue,
-     1   'b2sihs_divue') 
+     1   'b2sihs_divue')
         call cfrure (nread, size(b2sihs_divua), b2sihs_divua,
-     1   'b2sihs_divua') 
+     1   'b2sihs_divua')
         call cfrure (nread, size(b2sihs_exbe),  b2sihs_exbe,
-     1   'b2sihs_exbe')  
+     1   'b2sihs_exbe')
         call cfrure (nread, size(b2sihs_exba),  b2sihs_exba,
-     1   'b2sihs_exba')  
+     1   'b2sihs_exba')
         call cfrure (nread, size(b2sihs_visa),  b2sihs_visa,
-     1   'b2sihs_visa')  
+     1   'b2sihs_visa')
         call cfrure (nread, size(b2sihs_joule), b2sihs_joule,
-     1   'b2sihs_joule') 
+     1   'b2sihs_joule')
         call cfrure (nread, size(b2sihs_fraa),  b2sihs_fraa,
-     1   'b2sihs_fraa')  
+     1   'b2sihs_fraa')
         call cfrure (nread, size(b2sihs_str),   b2sihs_str,
-     1   'b2sihs_str')   
+     1   'b2sihs_str')
       endif
       if(b2fplasma_version.gt.'01.001.005') then
         call cfrure (nread, size(b2npmo_smaf),  b2npmo_smaf,
@@ -502,21 +502,21 @@
        if(newversion.gt.'01.001.002') then
         write(*,*) newversion,'b2sihs_divue --- _str'
         call cfwure (nwrite, size(b2sihs_divue),b2sihs_divue,
-     1   'b2sihs_divue') 
+     1   'b2sihs_divue')
         call cfwure (nwrite, size(b2sihs_divua),b2sihs_divua,
-     1   'b2sihs_divua') 
+     1   'b2sihs_divua')
         call cfwure (nwrite, size(b2sihs_exbe), b2sihs_exbe,
-     1   'b2sihs_exbe')  
+     1   'b2sihs_exbe')
         call cfwure (nwrite, size(b2sihs_exba), b2sihs_exba,
-     1   'b2sihs_exba')  
+     1   'b2sihs_exba')
         call cfwure (nwrite, size(b2sihs_visa), b2sihs_visa,
-     1   'b2sihs_visa')  
+     1   'b2sihs_visa')
         call cfwure (nwrite, size(b2sihs_joule),b2sihs_joule,
-     1   'b2sihs_joule') 
+     1   'b2sihs_joule')
         call cfwure (nwrite, size(b2sihs_fraa), b2sihs_fraa,
-     1   'b2sihs_fraa')  
+     1   'b2sihs_fraa')
         call cfwure (nwrite, size(b2sihs_str),  b2sihs_str,
-     1   'b2sihs_str')   
+     1   'b2sihs_str')
       endif
       if(newversion.gt.'01.001.005') then
         call cfwure (nwrite, size(b2npmo_smaf), b2npmo_smaf,

@@ -16,7 +16,7 @@
 *
 *  1. purpose
 *
-*     B2AI (main program) prepares an initial plasma state for b2.
+*     B2AI (main program) prepares an initial plasma state for B2.
 *     This program calls the driver routine b2aidr for the actual
 *     computation.
 *
@@ -28,7 +28,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The complete program b2ai prepares an initial state for a b2
+*     The complete program b2ai prepares an initial state for a B2
 *     calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -49,10 +49,10 @@
 *  4. references
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
 *
 *
 *  5. parameters (see also routine b2cdcv)

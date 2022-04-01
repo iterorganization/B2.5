@@ -500,7 +500,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      & , only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
-     & ,only : is_codes
+     & , only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
       implicit none
@@ -925,7 +925,7 @@ c>>>
           endif
         endif
       enddo
-      write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(a2,1x))'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,',ntrack,'(a2,1x))'
       write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 c.. Test consistency with region boundaries
       if (.not.dotest) return

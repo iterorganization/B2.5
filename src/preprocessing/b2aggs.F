@@ -20,7 +20,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine enters into the common block /b2cmgs/ parameters
-*     describing one elementary singular region in the b2 geometry.
+*     describing one elementary singular region in the B2 geometry.
 *     Such a singular region may be a cut associated with an x-point,
 *     or it may be a larger domain on which the calculation is
 *     special.
@@ -30,7 +30,7 @@
 *
 *     ixlo, ixhi, iylo, iyhi - integer, input.
 *     ixlo, ixhi, iylo, and iyhi specify the bounds of one singular
-*     region in the b2 geometry. Mesh locations (ix,iy) that satisfy
+*     region in the B2 geometry. Mesh locations (ix,iy) that satisfy
 *     ixlo.le.ix.le.ixhi and iylo.le.iy.le.iyhi make up the region.
 *
 *     iloc - integer, input.

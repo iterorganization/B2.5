@@ -21,7 +21,7 @@
       integer, allocatable, save :: nxdata(:,:,:)
       real(kind=R8), allocatable, save :: sdata(:,:,:,:)
       real(kind=R8), allocatable, save :: xdata(:,:,:,:)
-      integer, allocatable, save  :: ndata(:,:,:)
+      integer, allocatable, save :: ndata(:,:,:)
       real(kind=R8), allocatable, save :: tdata(:,:,:,:)
       integer, allocatable, save :: addspec(:,:,:)
 #else
@@ -88,7 +88,7 @@
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
-!*     Inputfile:  b2.sources.profile                                     *
+!*     Inputfile: b2.sources.profile                                      *
 !**************************************************************************
       integer :: nx,ny,ns,nc
       integer :: ix,iy,i,ireg
@@ -437,7 +437,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !*     subroutine for reading in experimental transport coefficients from *
 !*     the midplane and calculating transport coefficients                *
 !*     for B2.5 (written by Heimo Buerbaumer 1999)                        *
-!*     Inputfile:  b2.transport.inputfile                                 *
+!*     Inputfile: b2.transport.inputfile                                  *
 !**************************************************************************
       use b2mod_time
       use b2mod_constants
@@ -485,7 +485,7 @@ cdjm Jan2017 Keep linearised sources for balance
      5   elm_ix_begin, elm_ix_end, no_div
 
       data transport_filename/'b2.transport.inputfile'/,
-     1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
+     1 transport_time_mod/0.0_R8/, transport_time_switch/0.0_R8/
 
       if(ncall.eq.0) then
         call xertst(NNREGMAX.ge.nnreg(0),
@@ -502,7 +502,7 @@ cdjm Jan2017 Keep linearised sources for balance
         catch_up=transport_time_mod.gt.0.0_R8
         do while(catch_up) 
           if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1     then           
+     1     then
             write(*,*) 'transport_input: catching up ...'
             filename=transport_filename
             call read_transport_input
@@ -538,7 +538,7 @@ cdjm Jan2017 Keep linearised sources for balance
      >   scaling_width(isc) = 0.5_R8*
      .      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
       enddo
-      if (elm_time_period.gt.0.)then
+      if (elm_time_period.gt.0.) then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
      &           mod(tim,elm_time_period).le.elm_time_end
       else  

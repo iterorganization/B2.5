@@ -136,8 +136,8 @@ module b2mod_ual_io_grid
     !! Will have at maximum so many spaces
     integer, parameter :: SPACE_COUNT_MAX = 2
 
-    !! Number of points in toroidal direction (only 1 makes sense here, this is
-    !! for playing around)
+    !! Number of points in toroidal direction
+    !! (only 1 makes sense here, this is for playing around)
     integer, parameter :: NNODES_TOROIDAL = 1   !< Number of points in toroidal
         !< direction (only 1 makes sense here, this is for playing around)
 
@@ -165,8 +165,8 @@ module b2mod_ual_io_grid
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_CELL = (/ 2, 1 /)
         !< Object class tuple (ITM class definition): Cell
 
-    !! Object class tuples (one digit IDS classes, transformed from the above
-    !! ITM classes )
+    !! Object class tuples
+    !! (one digit IDS classes, transformed from the above ITM classes )
     !! Primary IDS classes are:
     !!      Class 1 - nodes/vertices (0D objects)
     !!      Class 2 - edges/faces (1D objects)
@@ -196,8 +196,8 @@ module b2mod_ual_io_grid
     integer, parameter :: IDS_CLASS_TOROIDAL_EDGE = 2 !< Object class tuple
         !< (IMAS class definition): Edge
     ! integer, parameter :: IDS_CLASS_CELL = sum(IDS_CLASS_CELL)
-    integer, parameter :: IDS_CLASS_CELL = 3 !< Object class tuple (IMAS class
-        !< definition): Cell (2D)
+    integer, parameter :: IDS_CLASS_CELL = 3 !< Object class tuple
+        !< (IMAS class definition): Cell (2D)
 
     !! Subgrid/Grid subset name constants
 
@@ -445,8 +445,8 @@ contains
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &
         &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,       &
-        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells, vol, &
-        &   gs, qc )
+        &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells,      &
+        &   vol, gs, qc )
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -459,20 +459,19 @@ contains
 #endif
         !! Input arguments
         integer, intent(in) :: nx   !< Number of interior cells
-            !< along the first coordinate (used to define size of grid arrays:
-            !< (-1:nx, -1:ny)
+            !< along the first coordinate
+            !< Used to define size of grid arrays: (-1:nx, -1:ny)
         integer, intent(in) :: ny   !< Number of interior cells
-            !< along the second coordinate (used to define size of grid arrays:
-            !< (-1:nx, -1:ny)
+            !< along the second coordinate
+            !< Used to define size of grid arrays: (-1:nx, -1:ny)
 
-        !! Output arguments
         real(R8), intent(in) :: crx( -1:nx, -1:ny, 0:3 )    !< Horizontal vertex
             !< coordinates of the four corners of the (ix, iy) cell
         real(R8), intent(in) :: cry( -1:nx, -1:ny, 0:3 )    !< Vertical vertex
             !< coordinates of the four corners of the (ix, iy) cell
 
         !! B2 connectivity array
-        integer, intent(in) :: leftix( -1:nx, -1:ny)    !< Left neighbour
+        integer, intent(in) :: leftix( -1:nx, -1:ny )   !< Left neighbour
             !< poloidal (first coordinate) index array
         integer, intent(in) :: leftiy( -1:nx, -1:ny )   !< Left neighbour radial
             !< (second coordinate) index
@@ -494,7 +493,7 @@ contains
         integer, intent(in) :: topcut(:)
         integer, intent(in) :: region( -1:nx, -1:ny, 0:2 )
         !! Cell flags
-        integer cflag( -1:nx, -1:ny,  CARREOUT_NCELLFLAGS ) !< Cell flag
+        integer cflag( -1:nx, -1:ny, CARREOUT_NCELLFLAGS ) !< Cell flag
         logical, intent(in) :: includeGhostCells    !< Include "fake" cells
         !! Geometrical B2 measure information
         real(R8), intent(in) :: vol( -1:nx, -1:ny) !< Cell volume
@@ -523,19 +522,19 @@ contains
         ncall = ncall + 1
 
 contains
-    !> Fill in the general grid description
+    !> Fill in the General Grid Description
     subroutine fill_In_Grid_Desc()
         !! Internal variables
-        integer :: ivx  !< Vertex/node index
-        integer :: ifc  !< Face/edge index
-        integer :: icv  !< Cell index
+        integer :: iVx  !< Vertex/node index
+        integer :: iFc  !< Face/edge index
+        integer :: iCv  !< Cell index
         integer :: ix   !< x-aligned (poloidal) cell index
         integer :: iy   !< y-aligned (radial) cell index
         integer :: nix
         integer :: niy
         integer :: i    !< Iterator
         integer :: dir
-        integer :: nfc  !< Number of all faces/edges (x + y aligned)
+        integer :: nFc  !< Number of all faces/edges (x + y aligned)
         integer :: geometryType  !< Geometry identifier index
 
         geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
@@ -802,12 +801,12 @@ contains
 
         !! Fill in object definitions (i.e. what objects compose an object)
         !! 1D objects: faces/edges
-        nfc = gmap%nfcx + gmap%nfcy !! Number of all faces/edges
+        nFc = gmap%nFcx + gmap%nFcy !! Number of all faces/edges
         !! Each 1D object has two boundaries and two neighbours, in positive
         !! and negative coordinate direction, one on each side (for x-aligned
         !! edges: along flux surface, for y-aligned edges: orthogonal to flux
         !! surface)
-        do ifc = 1, nfc
+        do iFc = 1, nFc
             !! Allocate and set all boundary & connectivity information to
             !! undefined
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%      &
@@ -844,14 +843,14 @@ contains
         end do
 
         !! x-aligned edges
-        do ifc = 1, gmap%nfcx
-            !! get position of this face in the b2 grid
-            ix = gmap%mapFcix( ifc )
-            iy = gmap%mapFciy( ifc )
+        do iFc = 1, gmap%nFcx
+            !! get position of this face in the B2 grid
+            ix = gmap%mapFcix( iFc )
+            iy = gmap%mapFciy( iFc )
             !! get index of start vertex
             !! objdef dims: index of edge, 1=start node, 1=one-dimensional
             !! object
-            select case ( gmap%mapFcIFace( ifc ) )
+            select case ( gmap%mapFcIFace( iFc ) )
             case( BOTTOM )
                 !! start index: 1=start node
                 grid_ggd%space( SPACE_POLOIDALPLANE )%           &
@@ -969,7 +968,7 @@ contains
 !!$                int2str(ix)//","//int2str(iy)//")")
 !!$            end if
 
-            select case ( gmap % mapFcIFace( ifc ) )
+            select case ( gmap % mapFcIFace( iFc ) )
             case( LEFT )
                 !! start index: 1=start node
                 grid_ggd%space( SPACE_POLOIDALPLANE )%               &
@@ -1058,6 +1057,7 @@ contains
                     &   object( iFc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( iFc ) )
             end if
+
             !! 1d object measure: edge length
             grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
                 &   objects_per_dimension( IDS_CLASS_EDGE )%         &
@@ -1083,7 +1083,7 @@ contains
         !! 2D objects: Cells
         !! Each 2D object has four boundaries
         !! Each boundary has one neighbour
-        do icv = 1, gmap%ncv
+        do iCv = 1, gmap%nCv
             !! Allocate and set all boundary & connectivity information to
             !! undefined
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
@@ -1125,7 +1125,7 @@ contains
             end do
         end do
 
-        do icv = 1, gmap%ncv
+        do iCv = 1, gmap%nCv
             !! Set position in computational space
             ix = gmap%mapCvix( iCv )
             iy = gmap%mapCviy( iCv )
@@ -1283,7 +1283,7 @@ contains
         integer, allocatable :: free_edge(:)
         integer :: edge_idx
         integer :: last_idx
-        integer :: icv  !< Cell index
+        integer :: iCv  !< Cell index
         integer :: ix   !< x-aligned (poloidal) cell index
         integer :: iy   !< y-aligned (radial) cell index
         integer :: m    !< Iterator
@@ -1512,8 +1512,8 @@ contains
             &   IDS_CLASS_CELL, 1, GRID_SUBSET_CELLS, "Cells",  &
             &   "All cells (2D objects) in the domain." )
 
-        !! Grid subset of all x-points (in one poloidal plane at toroidal
-        !! index 1)
+        !! Grid subset of all x-points
+        !! (in one poloidal plane at toroidal index 1)
         !! Assemble object descriptor for x-points
         allocate( xpoints(gmap%nsv, SPACE_COUNT) )
         xpoints = 1
@@ -2121,9 +2121,9 @@ contains
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(grid_ggd, "Outer core boundary")
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc:&
-            & did not find core boundary grid subset for assembling outer&
-            & midplane  grid subset"
+        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc: "// &
+            & "did not find core boundary grid subset for assembling " // &
+            & " outer midplane grid subset"
 
         !! Figure out starting points for inner and outer midplane on core
         !! boundary
@@ -2749,9 +2749,9 @@ contains
                 &   IDS_CLASS_POLOIDALRADIAL_EDGE, &
                 & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             !! ...which is aligned along the x-direction
-            call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==   &
-                &   BOTTOM, "b2mod_ual_io_grid find_Midplane_Cells: assertion&
-                & failure." )
+            call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==  &
+                &   BOTTOM, &
+                & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
             ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
             iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
 
@@ -2845,7 +2845,7 @@ contains
     subroutine fill_In_Grid_Desc()
 
       !! internal
-      integer :: ivx, ifc, icv, ix, iy, nix, niy, i, dir
+      integer :: iVx, iFc, iCv, ix, iy, nix, niy, i, dir
 
       allocate( itmgrid % spaces(SPACE_COUNT) )
 
@@ -2880,12 +2880,12 @@ contains
 
       !! 1d objects: edges
       !! ...have two boundaries
-      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( gmap%nfcx + gmap%nfcy, 2) )
+      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( gmap%nFcx + gmap%nFcy, 2) )
       !! ...have two neighbours, in positive and negative coordinate direction, one on each side
       !! (for x-aligned edges: along flux surface, for y-aligned edges: orthogonal to flux surface)
       allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour(gmap%nFcx + gmap%nFcy, 2, 1) )
       !! 1d object measure: face area
-      if (present(gs)) allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( gmap % nfcx + gmap % nfcy, 1 ) )
+      if (present(gs)) allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( gmap % nFcx + gmap % nFcy, 1 ) )
       !! first set all boundary & connectivity information to undefined
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary = GRID_UNDEFINED
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour = GRID_UNDEFINED
@@ -2899,23 +2899,23 @@ contains
           select case ( gmap % mapFcIFace( iFc ) )
           case( BOTTOM )
              !! start index: 1=start node
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
              if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == GRID_UNDEFINED) then
                 call logmsg(LOGWARNING, "b2ITMFillGD: BOTTOM edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
              end if
              !! end vertex: 2=end node
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 2 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
              if (gmap % mapVxI( ix, iy, VX_LOWERRIGHT ) == GRID_UNDEFINED) then
                 call logmsg(LOGWARNING, "b2ITMFillGD: BOTTOM edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
              end if
           case( TOP )
              !! start index: 1=start node
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
              if (gmap % mapVxI( ix, iy, VX_UPPERLEFT ) == GRID_UNDEFINED) then
                 call logmsg(LOGWARNING, "b2ITMFillGD: TOP edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
              end if
              !! end vertex: 2=end node
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
              if (gmap % mapVxI( ix, iy, VX_UPPERRIGHT ) == GRID_UNDEFINED) then
                 call logmsg(LOGWARNING, "b2ITMFillGD: TOP edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
              end if
@@ -2926,53 +2926,53 @@ contains
           nix = leftix( ix, iy )
           niy = leftiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( iFc, 1, 1 ) = &
+                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
           !! Right neighbour: edge continuing to the right of this edge
           nix = rightix( ix, iy )
           niy = rightiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( iFc, 2, 1 ) = &
+                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
 
           !! measure: area
-          if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( ifc, 1 ) = gs(ix, iy, ALIGNX)
+          if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( iFc, 1 ) = gs(ix, iy, ALIGNX)
       end do
 
       !! y-aligned edges
-      do ifc = gmap % nfcx + 1, gmap % nfcx + gmap % nfcy
-          !! get position of this face in the b2 grid
-          ix = gmap % mapFcix( ifc )
-          iy = gmap % mapFciy( ifc )
+      do iFc = gmap % nFcx + 1, gmap % nFcx + gmap % nFcy
+          !! get position of this face in the B2 grid
+          ix = gmap % mapFcix( iFc )
+          iy = gmap % mapFciy( iFc )
 !!$          if (gmap%mapCvI(ix, iy) == GRID_UNDEFINED) then
 !!$                  call logmsg(LOGWARNING, "b2ITMFillGD: writing out edges for unused cell ("//int2str(ix)//","//int2str(iy)//")")
 !!$          end if
 
-          select case ( gmap % mapFcIFace( ifc ) )
+          select case ( gmap % mapFcIFace( iFc ) )
           case( LEFT )
               !! start index: 1=start node
-              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
+              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
               if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == GRID_UNDEFINED) then
                   call logmsg(LOGWARNING, "b2ITMFillGD: LEFT edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
               end if
           !! end vertex: 2=end node
-              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
+              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
               if (gmap % mapVxI( ix, iy, VX_UPPERLEFT ) == GRID_UNDEFINED) then
                   call logmsg(LOGWARNING, "b2ITMFillGD: LEFT edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
           end if
-              !if (itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 )
+              !if (itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 )
 
 
           case( RIGHT )
               !! start index: 1=start node
-              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
+              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
               if (gmap % mapVxI( ix, iy, VX_LOWERRIGHT ) == GRID_UNDEFINED) then
                   call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT edge at ("//int2str(ix)//","//int2str(iy)//") has no start node")
           end if
               !! end vertex: 2=end node
-              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
+              itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
               if (gmap % mapVxI( ix, iy, VX_UPPERRIGHT ) == GRID_UNDEFINED) then
                   call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
               end if
@@ -2984,35 +2984,35 @@ contains
           nix = bottomix( ix, iy )
           niy = bottomiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( iFc, 1, 1 ) = &
+                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
           !! Top neighbour: edge continuing to the top of this edge
           nix = topix( ix, iy )
           niy = topiy( ix, iy )
           if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
+             itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % neighbour( iFc, 2, 1 ) = &
+                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
           !! measure: area
-          if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( ifc, 1 ) = gs(ix, iy, ALIGNY)*qc(ix, iy)
+          if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( iFc, 1 ) = gs(ix, iy, ALIGNY)*qc(ix, iy)
       end do
 
       !! 2d objects: cells
       !! ...have four boundaries
-      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( gmap%ncv, 4) )
+      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary( gmap%nCv, 4) )
       !! 2d object measure: cell volume
-      if (present(vol)) allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % measure( gmap % ncv, 1 ) )
+      if (present(vol)) allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % measure( gmap % nCv, 1 ) )
       !! Also store additional geometry information: position in computational space
       !! FIXME: this should go into alternate geometry, which is not available yet for grid objects
-      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % geo(gmap%ncv, 2, 1, 1) )
+      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % geo(gmap%nCv, 2, 1, 1) )
 
       !! first set all boundary information to undefined
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % boundary = GRID_UNDEFINED
 
-      do icv = 1, gmap % ncv
-          ix = gmap % mapCvix( icv )
-          iy = gmap % mapCviy( icv )
+      do iCv = 1, gmap % nCv
+          ix = gmap % mapCvix( iCv )
+          iy = gmap % mapCviy( iCv )
 
           !! Set position in computational space
           itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % geo(iCv, 1, 1, 1) = ix
@@ -3029,19 +3029,19 @@ contains
 
       !! Fill in connectivity information
       !! ...have one neighbour per boundary
-      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour( gmap%ncv, 4, 1) )
+      allocate( itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour( gmap%nCv, 4, 1) )
       !! first set all to undefined
       itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour = GRID_UNDEFINED
 
-      do icv = 1, gmap % ncv
-          ix = gmap % mapCvix( icv )
-          iy = gmap % mapCviy( icv )
+      do iCv = 1, gmap % nCv
+          ix = gmap % mapCvix( iCv )
+          iy = gmap % mapCviy( iCv )
 
           do dir = LEFT, TOP
              call get_Neighbour(nx, ny, leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
                   & ix, iy, dir, nix, niy)
              if ( .not. is_Unneeded_Cell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-                itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour(icv, dir+1, 1) = gmap % mapCvI( nix, niy )
+                itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour(iCv, dir+1, 1) = gmap % mapCvI( nix, niy )
              end if
           end do
 
@@ -3146,7 +3146,8 @@ contains
       allocate( xpoints(gmap%nsv, SPACE_COUNT) )
       xpoints = 1
       xpoints(:, SPACE_POLOIDALPLANE) = gmap%svi(1:gmap%nsv)
-      call createSubGridForExplicitList( itmgrid, itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
+      call createSubGridForExplicitList( itmgrid,     &
+          & itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
           & CLASS_NODE(1:SPACE_COUNT), xpoints, 'x-points' )
 
       !! Set up specific subgrids by collecting edges for regions
@@ -3167,8 +3168,8 @@ contains
           do iRegion = 1, regionCount(geoId, iType)
               subgridCount = subgridCount + 1
 
-              call logmsg( LOGDEBUG, "b2ITMFillGridDescription: add subgrid #"//int2str(subgridCount)//&
-                  & " for iType "//int2str(iType)//&
+              call logmsg( LOGDEBUG, "b2ITMFillGridDescription: add subgrid #"//&
+                  & int2str(subgridCount)//" for iType "//int2str(iType)//&
                   &", iRegion "//int2str(iRegion)//": "//regionName(geoId, iType, iRegion) )
 
               call createSubGridForExplicitList( itmgrid, itmgrid % subgrids( subgridCount ), &
@@ -3187,8 +3188,8 @@ contains
       if (iCoreSg == GRID_UNDEFINED) then
           iCoreSg = gridFindSubGridByName(itmgrid, "Outer core boundary")
       end if
-      if (iCoreSg == GRID_UNDEFINED) stop "fillInSubGridDescription: &
-          & did not find core boundary subgrid for assembling outer midplane subgrid"
+      if (iCoreSg == GRID_UNDEFINED) stop "fillInSubGridDescription: "// &
+          & "did not find core boundary subgrid for assembling outer midplane subgrid"
 
       !! Figure out starting points for inner and outer midplane on core boundary
       call find_Midplane_Cells(itmgrid%subgrids(iCoreSg), gmap, crx, xIn, yIn, xOut, yOut)
@@ -3223,7 +3224,6 @@ contains
     !! x/radial vertex coordinates
     real (ITM_R8), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
     integer, intent(out) :: xIn, yIn, xOut, yOut
-
 
     !! internal
     real(ITM_R8) :: rMin, rMax
@@ -3325,7 +3325,7 @@ contains
         end do
 
         allocate( indexList(nVx, SPACE_COUNT) )
-        if (SPACE_COUNT == SPACE_TOROIDALANGLE)&
+        if (SPACE_COUNT == SPACE_TOROIDALANGLE) &
             & indexList(:,SPACE_TOROIDALANGLE) = 1
 
         !! collect indices: repeat above loop with storing indices
@@ -3368,7 +3368,7 @@ contains
 
     !> Collect the grid indices of all vertices on the radial grid line outward
     !! starting at the vertex at position six,siy in computational space.
-    subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy,  &
+    subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy, &
             &   topix, topiy, indexList)
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
             !< b2CreateMap holding an intermediate grid description to be
@@ -3418,7 +3418,7 @@ contains
         end do
 
         allocate( indexList(nVx, SPACE_COUNT) )
-        if (SPACE_COUNT == SPACE_TOROIDALANGLE)&
+        if (SPACE_COUNT == SPACE_TOROIDALANGLE) &
             & indexList(:,SPACE_TOROIDALANGLE) = 1
 
         !! collect indices: repeat above loop with storing indices
@@ -3447,8 +3447,8 @@ contains
                 indexList(iVx, SPACE_POLOIDALPLANE) =   &
                     &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
             else
-                stop "collectRadialVertexIndexListSubroutine: cannot find    &
-                    &   expected vertex index"
+                stop "collectRadialVertexIndexListSubroutine: cannot " // &
+                   & "find expected vertex index"
             end if
 
             ix = nix

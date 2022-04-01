@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npc9 (nx, ny, guard_flows,                        !srv 05.07.08
-     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
-     &  vol, pbs, flob, conb, snb,                                   !srv 22.01.02 13.10.06
+      subroutine b2npc9 (nx, ny, guard_flows,                         !srv 05.07.08
+     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb,
+     &  rxf, vol, pbs, flob, conb, snb,                               !srv 22.01.02 13.10.06
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_b2cmpa
@@ -18,7 +18,7 @@
       real (kind=R8) ::
      *  rxf, vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      &  flob(-1:nx,-1:ny,0:1,0:1),
-     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
+     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),         !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1,0:1), fnb(-1:nx,-1:ny,0:1,0:1)
       logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
 *   ..input/output arguments
@@ -125,19 +125,19 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of conb
-       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !sv 06.07.06 {
+       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
         call b2xvsg (n2, conb(-1,-1,0,0,0), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,0), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,0,0,1), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,1), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,0,0,2), 1, 'conb', '.ge.')
         call b2xvsg (n2, conb(-1,-1,1,1,2), 1, 'conb', '.ge.')
-       endif                                                          !sv 06.07.06 }
+       endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')                 !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
-       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')                 !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')               !srv 13.10.06 }
 *    ..test sign of snbc, snbv
        call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')
        call b2xvsg (n2, snb(-1,-1,1), 1, 'snbv', '.le.')
@@ -156,41 +156,41 @@ cdjm Jan2017 update particle source components for balance
 * ..particle balance
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
-      if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
-     &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 15.02.10 { this part should be re-written
-       do iy=-1, ny, ny+1                                             !srv 27.06.08 {
+      if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 15.02.10 { this part should be re-written
+       do iy=-1, ny, ny+1                                               !srv 27.06.08 {
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
           rescb(ix,iy) = 0.0_R8
          endif
         enddo
-       enddo                                                          !srv 27.06.08 }
-      endif                                                           !srv 15.02.10 }
+       enddo                                                            !srv 27.06.08 }
+      endif                                                             !srv 15.02.10 }
 *   ..compute correction
       write (chns,'(i3.3)') isb
-      call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
+      call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1,   !srv 13.10.06 26.09.12
      &   vol, pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1,1), 
-     &   rescb, corpb, aa9, 'b2usc9_'//chns)                          !srv 18.05.02
+     &   rescb, corpb, aa9, 'b2usc9_'//chns)                            !srv 18.05.02
 *   ..apply correction
-      call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
+      call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      & vol, corpb, pccb(-1,-1,0,0), pb, nb, ub)
-       if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
-     &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 06.07.08 {
-*   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
-        iy=-1                                                         !srv 27.06.08 {
+       if(guard_flows.eq.2 .or.                                         !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 06.07.08 {
+*   ..replace the incorrect corner values by the interpolated values    !srv 30.04.08 {
+        iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
 !     &     nb(ix,iy) = exp(
-!     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-!     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+!     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
+!     .      log(nb(topix(ix,iy),topiy(ix,iy))) -
 !     &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
 !     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
           if(rightix(ix,iy).eq.nx+1 )
      &     nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
 !     &     nb(ix,iy) = exp(
-!     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-!     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+!     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
+!     .      log(nb(topix(ix,iy),topiy(ix,iy))) -
 !     &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
 !     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
         enddo
@@ -199,26 +199,26 @@ cdjm Jan2017 update particle source components for balance
           if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
 !     &     nb(ix,iy) = exp(
-!     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-!     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+!     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
+!     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
 !     &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
 !     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
           if(rightix(ix,iy).eq.nx+1 )
      &     nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
 !     &     nb(ix,iy) = exp(
-!     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-!     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+!     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
+!     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
 !     &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
 !     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
-        enddo                                                         !srv 27.06.08 }
-      endif                                                           !srv 06.07.08 }
-      if (iout.ne.0) then                                             !srv 12.07.02 {
+        enddo                                                           !srv 27.06.08 }
+      endif                                                             !srv 06.07.08 }
+
+      if (iout.ne.0) then                                               !srv 12.07.02 {
        if (in_parallel()) then
          !$OMP MASTER
          write(*,*) 'B2NPC9 will not write to file in parallel mode'
          !$OMP END MASTER
        else
-        write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
         call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
@@ -232,13 +232,12 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,fnb(-1,-1,0,1),'b2npc9_fnaxy'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npc9_fnayx'//chns)
        endif
-      elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
+      elseif (iout_b2wdat.eq.4) then                                    !iys 17.04.17
        if (in_parallel()) then
          !$OMP MASTER
          write(*,*) 'B2NPC9 will not write to file in parallel mode'
          !$OMP END MASTER
        else
-        write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
@@ -248,7 +247,7 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,fnb(-1,-1,0,1),'b2npc9_fnaxy'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npc9_fnayx'//chns)
        endif
-      endif                                                          
+      endif
 
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
@@ -262,4 +261,4 @@ cdjm Jan2017 update particle source components for balance
 *-----------------------------------------------------------------------
 *.end b2npc9
 
-      end
+      end subroutine b2npc9

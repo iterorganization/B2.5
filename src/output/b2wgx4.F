@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wgx4 (nx, ny, header, crx, cry, fun, iloc, scal)
+      subroutine b2wgx4 (nx, ny, header, fun, iloc, scal)
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmwg
@@ -11,7 +11,6 @@
       integer nx, ny, iloc
       character header*(*)
       real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), 
      &  fun(-1:nx,-1:ny)
       real (kind=R8) ::
      *   scal
@@ -30,7 +29,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a log-contour plot of some quantity on a
-*     sequence of cartesian representations of the b2 mesh.
+*     sequence of cartesian representations of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -40,9 +39,6 @@
 *
 *     header - character*(*), input.
 *     header specifies a label for the plots.
-*
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     See the calling routine for description.
 *
 *     fun - (-1:nx,-1:ny) real*8 array, input.
 *     fun specifies the function of which a contour plot is to be made.
@@ -118,11 +114,9 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf,
-     &   yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..make plot
-       call b2wgxq (nx, ny, header, xc, xf, yc, yf,
-     &   fun, iloc, scal)
+       call b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc, scal)
       enddo
 
 * ..return
@@ -132,4 +126,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx4
 
-      end
+      end subroutine b2wgx4

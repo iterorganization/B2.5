@@ -31,7 +31,7 @@ c             integer ncnct     number of partitions
 c             integer izpmin()  array of lowest charge state of partition
 c             integer izpmax()  array of highest charge state of partition
 c     -------------------------------------------------------------------------
-c     The paths to the ADAS files are taken from the file ratadas.filelist 
+c     The paths to the ADAS files are taken from the file ratadas.filelist
 c     -------------------------------------------------------------------------
 c     970826 bhs
 c     -------------------------------------------------------------------------
@@ -39,7 +39,8 @@ c     -------------------------------------------------------------------------
       subroutine ratadas(nput,nc,rtt,rtnt,rtn,rtnn,
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
-     &                   iyear,fix_recomb,ncnct,izpmin,izpmax)
+     &                   iyear,fix_recomb,
+     &                   ncnct,izpmin,izpmax)
       use b2mod_types
       use b2mod_constants
       use b2mod_solpstop
@@ -159,7 +160,7 @@ c     log10 of rate coefficients (in cm3/s)
      *   DREC(isdimd,itdimd,iddimd),DION(isdimd,itdimd,iddimd),
      &   DCEX(isdimd,itdimd,iddimd),DPLT(isdimd,itdimd,iddimd),
      &   DPRB(isdimd,itdimd,iddimd),DTMP1(itdimd,iddimd),
-     1	 DTMP2(itdimd,iddimd),DTMP3(itdimd,iddimd)
+     1   DTMP2(itdimd,iddimd),DTMP3(itdimd,iddimd)
 c     effective coefficients
       real (kind=R8) ::
      *   DZAV(isdimd,itdimd,iddimd),DZA2(isdimd,itdimd,iddimd),
@@ -193,9 +194,9 @@ c     ionisation potentials
       rtz2=-1.0_R8
       rtpt=-1.0_R8
       rtpi=-1.0_R8
-      if(fix_recomb.ne.0) then 
-        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb 
-      endif 
+      if(fix_recomb.ne.0) then
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
+      endif
       do ic = 1, itdimd
         Tdummy(ic) = (-1.0_R8+5.0_R8*(ic-1.0_R8)/(itdimd-1.0_R8))
       enddo
@@ -529,16 +530,16 @@ c     ADAS file names
 
 c     reading in data, recombination
       if(SUBDIRrec.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting recombination to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting recombination to zero'
         IDMAXDrec=iddimd
         ITMAXDrec=itdimd
         DDENSDrec(1:IDMAXDrec)=Ddummy(1:IDMAXDrec)
         DTEVDrec(1:ITMAXDrec)=Tdummy(1:ITMAXDrec)
         DREC=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnrec,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for recombination'
@@ -574,16 +575,16 @@ c     reading in data, recombination
       endif
 c     reading in data, ionisation
       if(SUBDIRion.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting ionisation to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting ionisation to zero'
         IDMAXDion=iddimd
         ITMAXDion=itdimd
         DDENSDion(1:IDMAXDion)=Ddummy(1:IDMAXDion)
         DTEVDion(1:ITMAXDion)=Tdummy(1:ITMAXDion)
         DION=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnion,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation'
@@ -613,22 +614,22 @@ c     reading in data, ionisation
           write(nput,*) 'reading file: ',fnion
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, charge exchange
       if(SUBDIRcex.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting charge exchange to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting charge exchange to zero'
         IDMAXDcex=iddimd
         ITMAXDcex=itdimd
         DDENSDcex(1:IDMAXDcex)=Ddummy(1:IDMAXDcex)
         DTEVDcex(1:ITMAXDcex)=Tdummy(1:ITMAXDcex)
         DCEX=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fncex,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for charge exchange'
@@ -658,22 +659,22 @@ c     reading in data, charge exchange
           write(nput,*) 'reading file: ',fncex
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, bremsstrahlung + radiative recombination contribution
       if(SUBDIRprb.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting continuum radiation to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting continuum radiation to zero'
         IDMAXDprb=iddimd
         ITMAXDprb=itdimd
         DDENSDprb(1:IDMAXDprb)=Ddummy(1:IDMAXDprb)
         DTEVDprb(1:ITMAXDprb)=Tdummy(1:ITMAXDprb)
         DPRB=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnprb,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for bremsstrahlung'
@@ -703,22 +704,22 @@ c     reading in data, bremsstrahlung + radiative recombination contribution
           write(nput,*) 'reading file: ',fnprb
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, line radiation
       if(SUBDIRplt.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting line radiation to zero'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting line radiation to zero'
         IDMAXDplt=iddimd
         ITMAXDplt=itdimd
         DDENSDplt(1:IDMAXDplt)=Ddummy(1:IDMAXDplt)
         DTEVDplt(1:ITMAXDplt)=Tdummy(1:ITMAXDplt)
         DPLT=-74.0_R8
-      else 
+      else
      . if(silent_open(99,fnplt,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for line radiation'
@@ -748,15 +749,15 @@ c     reading in data, line radiation
           write(nput,*) 'reading file: ',fnplt
           return
         endif
-        close(99) 
+        close(99)
       else
         goto 990
       endif
 c     reading in data, effective charge
       if(SUBDIRzav.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting default effective charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting default effective charge'
         IDMAXDzav=iddimd
         ITMAXDzav=itdimd
@@ -768,7 +769,7 @@ c     reading in data, effective charge
           izpmin(ic) = ic
           izpmax(ic) = ic
         enddo
-      else 
+      else
      . if(silent_open(99,fnzav,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective charge'
@@ -802,11 +803,11 @@ c     reading in data, effective charge
         do ic = 1, ncnct
           izpmin(ic-1) = iptnca(1,ic,1)
           izpmax(ic-1) = iptnca(1,ic,nptnc(1,ic))
-        enddo 
+        enddo
       else
-        write(*,*) 
+        write(*,*)
      .   'Using default values for effective charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Using default values for effective charge'
         IDMAXDzav=IDMAXDplt
         ITMAXDzav=ITMAXDplt
@@ -821,16 +822,16 @@ c     reading in data, effective charge
       endif
 c     reading in data, effective square charge
       if(SUBDIRza2.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting default effective square charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting default effective square charge'
         IDMAXDza2=iddimd
         ITMAXDza2=itdimd
         DDENSDza2(1:IDMAXDza2)=Ddummy(1:IDMAXDza2)
         DTEVDza2(1:ITMAXDza2)=Tdummy(1:ITMAXDza2)
         DZA2=-1.0_R8
-      else 
+      else
      . if(silent_open(99,fnza2,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective square charge'
@@ -860,11 +861,11 @@ c     reading in data, effective square charge
           write(nput,*) 'reading file: ',fnza2
           return
         endif
-        close(99) 
+        close(99)
       else
-        write(*,*) 
+        write(*,*)
      .   'Using default values for effective square charge'
-        write(nput,*) 
+        write(nput,*)
      .   'Using default values for effective square charge'
         IDMAXDza2=IDMAXDplt
         ITMAXDza2=ITMAXDplt
@@ -874,16 +875,16 @@ c     reading in data, effective square charge
       endif
 c     reading in data, effective ionisation potential
       if(SUBDIRpot.eq.'none') then
-        write(*,*) 
+        write(*,*)
      .   'Setting default effective ionisation potential'
-        write(nput,*) 
+        write(nput,*)
      .   'Setting default effective ionisation potential'
         IDMAXDpot=iddimd
         ITMAXDpot=itdimd
         DDENSDpot(1:IDMAXDpot)=Ddummy(1:IDMAXDpot)
         DTEVDpot(1:ITMAXDpot)=Tdummy(1:ITMAXDpot)
         DPOT=-1.0_R8
-      else 
+      else
      . if(silent_open(99,fnpot,'data.local|modules',actual_file)) then
         write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective ionisation potential'
@@ -913,11 +914,11 @@ c     reading in data, effective ionisation potential
           write(nput,*) 'reading file: ',fnpot
           return
         endif
-        close(99) 
+        close(99)
       else
-        write(*,*) 
+        write(*,*)
      .   'Using default values for effective ionisation potential'
-        write(nput,*) 
+        write(nput,*)
      .   'Using default values for effective ionisation potential'
         IDMAXDpot=IDMAXDplt
         ITMAXDpot=ITMAXDplt
@@ -941,7 +942,7 @@ c     filling rtsa(ionisation)
       write(*,*) 'rtsa'
       write(nput,*) 'rtsa'
       do ic=0,ncnct-2
-	dtmp1(1:ITMAXDion,1:IDMAXDion)=
+        dtmp1(1:ITMAXDion,1:IDMAXDion)=
      .   DION(ic+1,1:ITMAXDion,1:IDMAXDion)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -958,7 +959,7 @@ c     filling rtra(recombination)
       write(*,*) 'rtra'
       write(nput,*) 'rtra'
       do ic=1,ncnct-1
-	dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
+        dtmp1(1:ITMAXDrec,1:IDMAXDrec)=
      .   DREC(ic,1:ITMAXDrec,1:IDMAXDrec)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -976,42 +977,42 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
       write(nput,*) 'rtqa,rtrd,rtbr'
       do ic=0,ncnct-1
         if(ic.gt.0) then
-	 dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
-     .    DPRB(ic,1:ITMAXDprb,1:IDMAXDprb)
+          dtmp1(1:ITMAXDprb,1:IDMAXDprb)=
+     .     DPRB(ic,1:ITMAXDprb,1:IDMAXDprb)
         endif
-	if(ic.lt.ncnct-1) then
-	  dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
+        if(ic.lt.ncnct-1) then
+          dtmp2(1:ITMAXDplt,1:IDMAXDplt)=
      .     DPLT(ic+1,1:ITMAXDplt,1:IDMAXDplt)
-	  dtmp3(1:ITMAXDpot,1:IDMAXDpot)=
+          dtmp3(1:ITMAXDpot,1:IDMAXDpot)=
      .     DPOT(ic+2,1:ITMAXDpot,1:IDMAXDpot)
-	endif
+        endif
         do cT=0,rtnt
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
             rtrd(cT,cD,ic)=0.0_R8
             rtbr(cT,cD,ic)=1.69e-38_R8/qe*ic**2*sqrt(rtt(cT))
-            if(fix_recomb.eq.0) then 
-              rtqa(cT,cD,ic)=rtbr(cT,cD,ic) 
-            else 
-              if(ic.gt.0) then 
-                call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd, 
-     1           DTEVDprb,ITMAXDprb,DDENSDprb,IDMAXDprb, 
-     2           logT,logD,ans) 
-                rtqa(cT,cD,ic)=10.0_R8**(ans-6.0_R8)/qe 
-                if(rtqa(cT,cD,ic).ge.rtbr(cT,cD,ic)) then 
-                  rtrd(cT,cD,ic)=rtqa(cT,cD,ic)-rtbr(cT,cD,ic) 
-                else 
-                  rtbr(cT,cD,ic)=rtqa(cT,cD,ic) 
+            if(fix_recomb.eq.0) then
+              rtqa(cT,cD,ic)=rtbr(cT,cD,ic)
+            else
+              if(ic.gt.0) then
+                call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+     1           DTEVDprb,ITMAXDprb,DDENSDprb,IDMAXDprb,
+     2           logT,logD,ans)
+                rtqa(cT,cD,ic)=10.0_R8**(ans-6.0_R8)/qe
+                if(rtqa(cT,cD,ic).ge.rtbr(cT,cD,ic)) then
+                  rtrd(cT,cD,ic)=rtqa(cT,cD,ic)-rtbr(cT,cD,ic)
+                else
+                  rtbr(cT,cD,ic)=rtqa(cT,cD,ic)
                   rtrd(cT,cD,ic)=0.0_R8
-                endif 
-c there should also be an electron heating term corresponding to 
-c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and 
+                endif
+c there should also be an electron heating term corresponding to
+c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and
 c so is included explicitly in b2stel if fix_recomb is nonzero
-              else 
-                rtqa(cT,cD,ic)=0.0_R8 
-              endif 
-            endif 
+              else
+                rtqa(cT,cD,ic)=0.0_R8
+              endif
+            endif
             if(ic.lt.ncnct-1) then
               call int2d(DTMP2(1:itdimd,1:iddimd),itdimd,iddimd,
      1         DTEVDplt,ITMAXDplt,DDENSDplt,IDMAXDplt,
@@ -1034,7 +1035,7 @@ c     filling rtcx(charge exchange)
       write(*,*) 'rtcx'
       write(nput,*) 'rtcx'
       do ic=1,ncnct-1
-	dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
+        dtmp1(1:ITMAXDcex,1:IDMAXDcex)=
      .   DCEX(ic,1:ITMAXDcex,1:IDMAXDcex)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -1051,7 +1052,7 @@ c     filling rtzz(effective charge)
       write(*,*) 'rtzz'
       write(nput,*) 'rtzz'
       do ic=0,ncnct-1
-	dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
+        dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZAV(ic+1,1:ITMAXDzav,1:IDMAXDzav)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -1068,7 +1069,7 @@ c     filling rtz2(effective square charge)
       write(*,*) 'rtz2'
       write(nput,*) 'rtz2'
       do ic=0,ncnct-1
-	dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
+        dtmp1(1:ITMAXDzav,1:IDMAXDzav)=
      .   DZA2(ic+1,1:ITMAXDzav,1:IDMAXDzav)
         do cT=0,rtnt
           logT=log10(rtt(cT))
@@ -1086,7 +1087,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       write(nput,*) 'rtpt,rtpi'
       do ic=0,ncnct-1
         do cT=0,rtnt
-	  dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
+          dtmp1(1:ITMAXDpot,1:IDMAXDpot)=
      .     DPOT(ic+1,1:ITMAXDpot,1:IDMAXDpot)
           logT=log10(rtt(cT))
           do cD=0,rtnn
@@ -1104,7 +1105,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
           rtpt(0:rtnt,0:rtnn,ic)=rtpi(0:rtnt,0:rtnn,ic)
         endif
       enddo
-      
+
       call subend ()
       return
 
@@ -1116,7 +1117,8 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       subroutine ratamns(nput,nc,am0,am1,rtt,rtnt,rtn,rtnn,
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
-     &                   iyear,fix_recomb,ncnct,izpmin,izpmax)
+     &                   fix_recomb,
+     &                   ncnct,izpmin,izpmax)
 #ifdef IMAS
       use b2mod_types
 #ifdef AMNS
@@ -1176,7 +1178,7 @@ c     OUTPUT:
      *   rtpt(0:rtnt,0:rtnn,0:nc)
       real (kind=R8) ::
      *   rtpi(0:rtnt,0:rtnn,0:nc)
-      integer iyear, ncnct
+      integer ncnct
       integer izpmin(0:nc), izpmax(0:nc)
 c     LOCAL VARIABLES:
       real (kind=R8) ::

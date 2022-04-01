@@ -538,8 +538,7 @@ c      write(0,*) 'leaving combfile. lnrw,frmd=',lnrw,'  ',trim(frmd) !###
       return
   700 format(a8,i2,a1,i1,a,i4,a2,i2,a1,i1,a)
 c=======================================================================
-      end
-
+      end subroutine combfile
 
 c*** Dummy data transformation routine
 

@@ -240,9 +240,10 @@ c     the line format common
      1     0.0*YHEIGHT,1.0*YHEIGHT,
      2     0.0,1.0,0.0,1.0,1)
           if(noax.gt.0)
-     1     CALL PLCHHQ(0.5,1.0-0.01*lbsz,
+     1     CALL PLCHHQ(0.5,1.0-0.01*glsz,
      1     GLOBALHEADER(1:LNBLNK(GLOBALHEADER)),
-     1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25,0.0,0.0)
+     1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25*glsz,
+     1     0.0,0.0)
           call gsplci(1)
         endif
       endif
@@ -262,23 +263,24 @@ c     the line format common
         call gsplci(1)
         if(bcol.gt.1) call gsplci(bcol)
         if(wall)
-     &   CALL PLCHHQ(wallbar_right,(1.0-txtwdth*2*n_page),
+     &   CALL PLCHHQ(wallbar_right,1.0-txtwdth*2*n_page,
      1   WALLBARLABEL(1:LNBLNK(WALLBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
         if(target.and.physical)
-     &   CALL PLCHHQ(targetbar_right,(1.0-txtwdth*2*n_page),
+     &   CALL PLCHHQ(targetbar_right,1.0-txtwdth*2*n_page,
      1   TARGETBARLABEL(1:LNBLNK(TARGETBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
         call gsplci(1)
       endif
       if(.not.streql(extralabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
-        if(noax.gt.0)
-     1   CALL PLCHHQ(0.5,(1.0-txtwdth*4*n_page),
-     1   EXTRALABEL(1:LNBLNK(EXTRALABEL)),
-     1   1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        if(noax.gt.0) then
+          CALL PLCHHQ(0.5,1.0-txtwdth*4*n_page,
+     1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
+     1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
         call gsplci(1)
-      ENDIF
+      endif
 
       if(b2plot_debug.ge.6) write(*,*) 'SET: ',
      1   reserve_left*XSIZE+XPOS,

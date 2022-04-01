@@ -14,8 +14,8 @@ c======================================================================
       integer lun
       parameter (lun=96)
       integer i
-      logical open_file
-      character*16 ufile
+      logical open_file, file_ok
+      character*24 ufile
       external b2pwinm, open_file, xerrab
 c======================================================================
 c*** This routine works once
@@ -60,7 +60,7 @@ c
       promp(1) = repeat(' ',8)
       promp(2) = repeat(' ',8)
       ufile='param.dg'
-c      open(lun,file=ufile,status='old',err=998)
+      call find_file(ufile,file_ok)
       if(.not.open_file(lun,ufile,'modules/Uinp')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
