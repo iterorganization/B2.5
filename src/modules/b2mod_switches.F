@@ -959,7 +959,7 @@ c Feedback
       s % b2stbc_feedback = 0
 
 c b2mndr
-      s % b2mndr_hz = 0.0_R8
+      s % b2mndr_hz = 1.0_R8
       s % b2mndr_stim = 0.0_R8
       s % neutral_rescale = 1.0_R8
 
