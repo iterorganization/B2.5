@@ -184,6 +184,7 @@ c iout switches
 c style  switches
       integer :: b2sicf_style
       integer :: b2sigp_style
+      integer :: b2sigp_pressure_restriction
       integer :: b2sihs_style
       integer :: b2sral_style
       integer :: style_visc
@@ -685,6 +686,7 @@ c Advanced fluid neutral models
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
+      s % b2sigp_pressure_restriction = 1
       s % b2sihs_style = 0
       s % b2sral_style = 2
       s % style_visc = 0
@@ -1185,7 +1187,9 @@ c iout switches
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)  
-      call ipgeti ('b2sigp_style', s % b2sigp_style)  
+      call ipgeti ('b2sigp_style', s % b2sigp_style)
+      call ipgeti ('b2sigp_pressure_restriction', 
+     &  s % b2sigp_pressure_restriction)
       call ipgeti ('b2sihs_style', s % b2sihs_style)  
       call ipgeti ('b2sral_style', s % b2sral_style)                              !srv 28.07.08
       call ipgeti ('b2sihs_style_visc', s % style_visc)
