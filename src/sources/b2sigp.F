@@ -311,26 +311,18 @@ cdjm compute b2sigp_pstat0to3 on left cell face
       endif                                                           !srv 02.07.08 }
 
 cxpb apply restriction to pressure gradient for minority ions
-#ifdef WG_TODO
-      do iy = -1, ny                                                  !lk 23.06.17{  
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
-     &     bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
-     &     nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
-          smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
-     &    (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
-     &                       +hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(ix,iy)*ti(ix,iy)/
-     &    ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     nb(rightix(ix,iy),rightiy(ix,iy))
-     &    *ti(rightix(ix,iy),rightiy(ix,iy))+
-     &    (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(leftix(ix,iy),leftiy(ix,iy))
-     &    *ti(leftix(ix,iy),leftiy(ix,iy))))     
+      if (switch%b2sigp_pressure_restriction .ne. 0) then
+       wrk0 = nb*tb
+       call intface(nCv,nFc,mpg%fcCv,geo%fcHc,wrk0,wrkf)
+       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk1)
+       do iCv = 1, mpg%nCi
+        if (nb(iCv)/ne(iCv) .lt. 0.1e0_R8) then
+         smbgp(iCv,0) = smbgp(iCv,0)*
+     &    min(1.0e0_R8,wrk0(iCv)/wrk1(iCv))
         endif   
-       enddo
-      enddo                                                           !lk 23.06.17}
-#endif
+       enddo                                                          !lk 23.06.17}
+      endif
+
       else                                                            !srv 26.06.18 {
         smbgp = 0.0_R8
 #ifdef WG_TODO
