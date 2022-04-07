@@ -371,7 +371,7 @@ cwdk                   (original code: simple averaging)
      &     (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
         scur(:,1) = 
      &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
-     &      switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
+     &      switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) + 
      &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
      &     (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
         flo     = flo     + drift_hyb*scur
