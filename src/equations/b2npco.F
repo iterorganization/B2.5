@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npco (nCv, nFc, nVx, nFt, nregionv, solving,               !srv 22.05.18
+      subroutine b2npco (nCv, nFc, nVx, nregionv, solving,               !srv 22.05.18
      &  solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, switch, 
      &  geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
@@ -22,7 +22,7 @@
      &          ncall_b2ursc
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, nFt, nregionv, itcnt, isb                       !srv 05.07.08
+      integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -131,7 +131,7 @@ cdjm Jan2017 update particle source components for balance
      &   sr%sna(:,1,isb), dv%flob, dv%conb,
      &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
-        call b2upco (nCv, nFc, nVx, nFt, geo, mpg, switch, nregionv, 
+        call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
      &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
      &   dv%pcca(:,0,isb), 
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb)
