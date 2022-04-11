@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mndt (nout, nCv, nFc, nVx, nFt, ns, nxtl, nxtr,
+      subroutine b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
      . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch, 
      . geo, mpg, st, st_ext, ierr)
       use b2mod_types
@@ -49,7 +49,7 @@
       use b2mod_ad
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, nFt, ns, nxtl, nxtr, ismain,
+      integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -387,7 +387,7 @@ ctmp.dpc
 #ifdef WG_TODO
            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
 #endif
-           call b2news_(nCv, nFc, nVx, nFt, ns, nxtl, nxtr, nscx, iscx,
+           call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
      &       nscxmax, ismain, ismain0, dtim, switch%b2mndt_rxf, switch, 
      &       geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st%sr, 
      &       st%srw, st_ext, st%psnc, st%psnl, ier0)
