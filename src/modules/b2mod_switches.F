@@ -472,9 +472,6 @@ c b2ag
       real (kind=R8) :: b2agmt_width
       real (kind=R8) :: geom_match_dist
 
-c b2upco
-      real (kind=R8) :: c_corr_core_dn
-
 c b2siav
       integer :: b2siav_qstyle
       real (kind=R8) :: addvis
@@ -968,9 +965,6 @@ c b2mndr
 c b2ag
       s % b2agmt_width = 1.0_R8
       s % geom_match_dist = 1.0e-6_R8
-
-c b2upco
-      s % c_corr_core_dn = 1.0_R8                                        !lk 30.06.17
 
 c b2siav
       s % b2siav_qstyle = 0
@@ -1509,9 +1503,6 @@ c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
       call ipgetr ('b2agfs_geom_match_dist', s%geom_match_dist)
 
-c b2upco
-      call ipgetr ('b2upco_c_corr_core_dn', s%c_corr_core_dn)              !lk 30.06.2017
-
 c b2siav
       call ipgetr ('b2siav_addvis', s%addvis)                        !srv 23.07.99
       call ipgetr ('b2siav_addvis1', s%addvis1)                      !srv 04.10.99
@@ -1963,10 +1954,6 @@ c b2mndt
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
-
-c b2upco
-      call xertst (0.0.lt.s%c_corr_core_dn,
-     & 'faulty parameter c_corr_core_dn')    !sc 16/11/2021 
 
 c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
