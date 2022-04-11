@@ -6253,6 +6253,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>CORR_CORE_DT</name>
+				<default>1.0</default>
+				<type>real*8</type>
+				<description>
+				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
 				<name>NUMERICS_FILENAME</name>
 				<default>b2.numerics.namelist</default>
 				<type>character*256</type>
