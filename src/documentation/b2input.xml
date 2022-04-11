@@ -3105,14 +3105,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2upco_c_corr_core_dn</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Smoothing parameter for the pressure correction on closed field lines.
-				</description>
-			</switch>
-			<switch>
 				<name>b2ux5p_mult_nonzero</name>
 				<default>10</default>
 				<type>integer</type>
@@ -6249,6 +6241,15 @@
 				<type>real*8</type>
 				<description>
 					Multiplier to the timestep in the core. Only active is less than 1. Should be larger than 0. Multiplies each successive core ring of cells (increasing IY) by CORE_DT_FACTOR, until the local time step multiplier is equal to 1.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_CORE_DN</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1)</type>
+				<description>
+				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
 			<switch>
