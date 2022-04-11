@@ -1447,8 +1447,8 @@ cwdk  now need to recompute full diamagnetic component for ud
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
-              s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .             hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))              !srv 26.02.09
+              s0 = gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -1489,8 +1489,7 @@ cwdk  now need to recompute full diamagnetic component for ud
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
-              s0=vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))                !srv 26.02.09
+              s0=gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -1526,8 +1525,10 @@ cwdk  now need to recompute full diamagnetic component for ud
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-              s0 = vol(bc_list_x(iy,ib),bc_list_y(iy,ib))/
-     .              hx(bc_list_x(iy,ib),bc_list_y(iy,ib))
+              s0 = gs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)*
+     .             qc(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -1568,8 +1569,8 @@ cwdk  now need to recompute full diamagnetic component for ud
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-              s0 = vol(bc_list_x(iy,ib),bc_list_y(iy,ib))/
-     .              hx(bc_list_x(iy,ib),bc_list_y(iy,ib))
+              s0 = gs(bc_list_x(iy,ib),bc_list_y(iy,ib),0)*
+     .             qc(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -5398,37 +5399,51 @@ cxpb code segment analog to b2tfhe
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3) =
-     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3)-
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1)-
      1       ENEPAR(IB,1)*max(0.0_R8,
      1        -fne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))/
-     1       ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
+     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0)-
+     1       QE*PO(bc_list_x(ix,ib),bc_list_y(ix,ib))*max(0.0_R8,
+     1        -fne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3) =
-     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3)-
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1)-
      1             ENEPAR(IB,1)*max(0.0_R8,
-     .       fne(bc_list_x(ix,ib),bc_list_y(ix,ib),1))/
-     1       ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
+     .       fne(bc_list_x(ix,ib),bc_list_y(ix,ib),1))
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0)-
+     1       QE*PO(bc_list_x(ix,ib),bc_list_y(ix,ib))*max(0.0_R8,
+     .       fne(bc_list_x(ix,ib),bc_list_y(ix,ib),1))
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3) =
-     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3)-
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-
      1       ENEPAR(IB,1)*max(0.0_R8,
      1        -fne(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
-     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))/
-     1       ne(bc_list_x(iy,ib),bc_list_y(iy,ib))
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)-
+     1       QE*PO(bc_list_x(iy,ib),bc_list_y(iy,ib))*max(0.0_R8,
+     1        -fne(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3) =
-     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3)-
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-
      1             ENEPAR(IB,1)*max(0.0_R8,
-     .       fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))/
-     1       ne(bc_list_x(iy,ib),bc_list_y(iy,ib))
+     .       fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)-
+     1       QE*PO(bc_list_x(iy,ib),bc_list_y(iy,ib))*max(0.0_R8,
+     .       fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
           end do
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=12, INVALID OPTION')
@@ -5488,19 +5503,20 @@ cxpb code segment analog to b2tfhe
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))   !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     1       gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     2          topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
      3       cs*ENEPAR(IB,1)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))   !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs*ENEPAR(IB,1)
+     1       gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*cs*ENEPAR(IB,1)
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=14, NOT AVAILABLE FOR W,E')
@@ -7508,19 +7524,20 @@ cxpb          endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))  !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
-     2       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*
+     1       gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     2          topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
      .       cs*ENIPAR(IB,1)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))  !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
-     .       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*cs*ENIPAR(IB,1)
+     1       gs(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*cs*ENIPAR(IB,1)
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=14, NOT AVAILABLE FOR W,E')
@@ -9615,10 +9632,51 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           call xerrab ('B2STBC -- BCPOT=13, NOT AVAILABLE FOR W,E')
         endif
 
-* -- BCPOT=14 -- Nothing implemented
+* -- BCPOT=14 -- PRESCRIBE THE VALUE OF THE RADIAL SHEATH POTENTIAL
 
       case (14)
-        CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR S,N,W,E')
+        if(ncall.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified radial sheath potential ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+        IF(BCCHAR(IB).EQ.'S') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= PBIG*
+     .       (POTPAR(IB,1)*TE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/QE)*
+     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+     .      -PBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathyb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)+1) =
+     &          POTPAR(IB,1)
+            endif
+#endif
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'N') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= PBIG*
+     .       (POTPAR(IB,1)*TE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/QE)*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-PBIG*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathyb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)) =
+     &          POTPAR(IB,1)
+            endif
+#endif
+          end do
+        ELSE
+          CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR W,E')
+        ENDIF
 
 * -- BCPOT=15 -- Nothing implemented
 

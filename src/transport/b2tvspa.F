@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,      !srv 20.09.06 { 16.10.17 19.02.21
-     &  cvsa_drho, fac_vis, fchvispar_a, fchvispar)                     !srv 22.06.08 som 18.08.21
+      subroutine b2tvspa (nx, ny, ns, ismain, bb,                       !srv 20.09.06 { 16.10.17 19.02.21
+     &  na, ua, cvsa_cl, cvsa_drho, fac_vis, fchvispar_a, fchvispar)    !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -27,7 +27,8 @@
      1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1), fchvispar(-1:nx,-1:ny,0:1)
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvispar(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -209,7 +210,7 @@ c Drift terms
            endif                                                        !srv 26.11.02
           enddo
          enddo
-         fchvispar(:,:,:) = fchvispar(:,:,:) + fchvispar_a(:,:,:,is)
+         fchvispar(:,:,:)=fchvispar(:,:,:)+fchvispar_a(:,:,:,is)
        enddo
 
       endif                                                             !srv

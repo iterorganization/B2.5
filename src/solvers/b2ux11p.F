@@ -380,7 +380,7 @@
               indexes(2,k)=iy
               indexes(3,k)=2
               ia(k) = i
-              ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
+              ja(k) = 2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
             if( aa11(ix,iy,5) .ne. 0.0e0_R8 ) then

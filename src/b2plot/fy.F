@@ -168,7 +168,7 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if (iystart.le.jsep.and.iyend.gt.jsep) then
             dsep = 0.5_R8*(fpsi(ixc,ysep,2)+fpsi(ixc,ysep,3))
-          else            
+          else
             dsep = 0.0_R8
           end if
           if (x1.eq.x2) then

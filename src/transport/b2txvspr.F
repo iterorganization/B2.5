@@ -76,7 +76,7 @@
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then ! we do not want to have fchvisper_a(:,:,1) in guard cells on West and East
                 t0 = 0.25_R8*vsa0(ix,iy,is)*vol(ix,iy)/hy1(ix,iy)**2
-                bvisper_a(ix,iy,1,is) = t0*vis_per*fac_vis(is,iy)
+                bvisper_a(ix,iy,1,is) = t0*vis_per*fac_vis(ix,iy)
               endif
             enddo
           enddo

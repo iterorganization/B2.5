@@ -67,7 +67,7 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usht')
-      if (ncall.eq.0) then                                             !srv 07.07.21
+      if (ncall.eq.0) then                                            !srv 07.07.21
        call ipgetr ('b2usht_cor_diag', cor_diag)
        call ipgeti ('b2mndt_style', style_b2mndt)
       endif                                                           !srv 07.07.21

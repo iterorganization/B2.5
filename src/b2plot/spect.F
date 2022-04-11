@@ -3106,7 +3106,7 @@ c     calculating the emissivity
          call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)
          if (err .eq. 1) then
 c  try again in the case where local files were used and
-c  a standard database file may be present 
+c  a standard database file may be present
            call InitADAS(ic,nc,
      &                   extension,filename,mie,mir,mic,err)
            call GetIBSEL(wl,dwl,mie,mir,mic,nz,iae,iar,iac,err)

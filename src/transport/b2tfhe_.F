@@ -213,8 +213,8 @@ csw 10oct2012
        w6=0.0e0_R8;
       endif                                                              !srv 16.09.02 }
 
-      call b2tepsch(nx, ny, ns, ismain, facdrift, cdde, te, ne, cone,    !srv 19.02.21 !som 03.11.21
-     &  fhePSch)                                                         !srv 16.10.17
+      call b2tepsch(nx, ny, ns, ismain, facdrift, cdde, te, ne,          !srv 19.02.21 !som 03.11.21
+     .  cone, fhePSch)                                                   !srv 16.10.17
 
       fhe_mdf = 0.0e0_R8                                                 !srv 13.10.06
 

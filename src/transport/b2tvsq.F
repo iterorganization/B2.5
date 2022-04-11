@@ -31,7 +31,8 @@
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1)                       !som 21.10.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1), fchvisq(-1:nx,-1:ny,0:1)     !srv 11.07.99
+     &   fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 11.07.99
+     &   fchvisq(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *

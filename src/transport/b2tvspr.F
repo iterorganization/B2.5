@@ -1,4 +1,5 @@
-      subroutine b2tvspr(nx, ny, ns, ismain, fac_vis, vol, po, ti, na,  !srv 10.10.17 19.02.21
+      subroutine b2tvspr(nx, ny, ns, ismain, fac_vis,                   !srv 10.10.17 19.02.21
+     &   vol, po, ti, na,
      &   avisper_a, bvisper_a, cvisper_a, fchvisper_a, fchvisper)
       use b2mod_types
       use b2mod_indirect
@@ -22,7 +23,6 @@
      &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper(-1:nx,-1:ny,0:1)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -154,7 +154,7 @@
         else
           fchvisper_a(:,:,:,is)=0.0_R8
         endif                                                           !srv 16.10.17
-        fchvisper(:,:,:) = fchvisper(:,:,:) + fchvisper_a(:,:,:,is)
+        fchvisper(:,:,:)=fchvisper(:,:,:)+fchvisper_a(:,:,:,is)
        enddo                                                            !srv 16.10.17
       endif                                                             !srv 22.11.99
 

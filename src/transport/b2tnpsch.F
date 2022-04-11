@@ -229,7 +229,7 @@
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fnbPSch(ix,iy,1)= 0.0e0_R8
             else
-              fnbPSch(ix,iy,1) = -PSch*                                    !
+              fnbPSch(ix,iy,1) = -PSch*
      &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
      &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
             endif

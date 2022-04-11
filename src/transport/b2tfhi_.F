@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, bb, ti,        !som 13.07.21
-     1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
-     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
+      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx,                !som 13.07.21
+     1  bb, ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,  !srv 17.05.99 27.12.01
+     &  vadia, fchvispar, fchvisper, fchvisq, fchinert, fchanml,        !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
@@ -26,8 +26,9 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       integer nx, ny, ns
       real (kind=R8) ::
      * ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
-     & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
-     * bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
+     & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
+     & chvi(-1:nx,-1:ny,0:1),
+     & bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      & cddi(-1:nx,-1:ny,0:1,0:ns-1),
      & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny),
@@ -84,7 +85,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8) ::
      *   floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,              !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf,                          !srv 13.10.06 17.06.09
-     *   floi_vhx(-1:nx,-1:ny)                                          !som 13.07.21
+     &   floi_vhx(-1:nx,-1:ny)                                          !som 13.07.21
 cpax
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
@@ -147,7 +148,7 @@ cpax
        call b2xvff (nx, ny, chvi, 'chvi')
       endif
 
-      call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,                 !srv 02.04.18
+      call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,                !srv 02.04.18
      1  na, ti, cddi, coni, fhiPSch)                                    !srv 13.10.06
 
       facdriftm = maxval(facdrift)

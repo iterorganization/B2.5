@@ -1029,7 +1029,7 @@ c
      2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
      3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
- 
+
       logical no_flux_data            ! IYS 21.02.2020
 
       integer nnx, nny,

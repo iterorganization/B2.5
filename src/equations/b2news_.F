@@ -370,13 +370,15 @@ csw 01oct2012 initialize potential if necessary
      * chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,                !som 08.10.21
      * cvsa_hAdp_albe, cvsa_hBdp_al,                                     !som 20.10.21
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl, csig_stoch, chce_stoch)   !srv 09.01.01 15.12.05 24.08.21
-      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21
-      call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
-     &              cvsa_drho, fac_vis, fchvispar_a, fchvispar)          !som 18.08.21
-      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
-     &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 19.02.21
+      call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
+     &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
+      call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21
+     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              fchvispar_a, fchvispar)                              !som 18.08.21
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
+     &              na, ua, facdrift, fchinert_a, fchinert)
+      call b2tvspr (nx, ny, ns, ismain, fac_vis,                         !srv 10.10.17 19.02.21
+     &              vol, po, ti, na,
      &              avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
@@ -579,13 +581,15 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2scopy (n2, ne, 1, nep, 1)
       nip = ni                                                           !srv 07.07.21
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21
-      call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
-     &              cvsa_drho, fac_vis, fchvispar_a, fchvispar)          !som 18.08.21
-      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
-     &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 19.02.21
+      call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
+     &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
+      call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21
+     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              fchvispar_a, fchvispar)                              !som 18.08.21
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
+     &              na, ua, facdrift, fchinert_a, fchinert)
+      call b2tvspr (nx, ny, ns, ismain, fac_vis,                         !srv 10.10.17 19.02.21
+     &              vol, po, ti, na,
      &              avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
@@ -1174,7 +1178,8 @@ c   recompute particle fluxes
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,    !srv 22.01.02 01.07.05 07.07.21
-     &         vol, pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
+     &         vol, pbs, flob, conb, sna(-1,-1,0,is),
+     &         pcca(-1,-1,0,is),
      &         pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')

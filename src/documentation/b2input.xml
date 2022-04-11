@@ -788,7 +788,7 @@
 					*----------------------------------------------------
 					*        | -14   |  +   |  -   |  +   |  +   |  +   |
 					*----------------------------------------------------
-        </description>
+				</description>
 			</switch>
 			<switch>
 				<name>b2mndr_cpu</name>
@@ -2859,7 +2859,7 @@
 					For b2wdat_iout values 1 to 3, the value of append indicates the frequency, in number of main B2.5 timesteps, at which the files are appended. Data from the last timestep is always included.
 				</description>
 			</switch>
-            		<switch>
+			<switch>
 				<name>my_out_digits</name>
 				<default>6 or 15</default>
 				<type>integer</type>
@@ -6113,6 +6113,7 @@
 						11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
 						12 : Imposes the currents due to drifts for the South core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+						14 : Prescribe the value of the radial sheath potential, POTPAR(,1), in V
 						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
 							Still experimental, will not work for drift cases.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.

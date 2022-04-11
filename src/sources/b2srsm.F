@@ -96,8 +96,8 @@
         call ipgeti ('b2srsm_iout', iout)                         !srv 11.09.09 {
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
-        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }

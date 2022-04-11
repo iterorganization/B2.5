@@ -122,10 +122,10 @@
 !    .   'ion-neutral current computation only supported for H/D/T !')
 !         iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
          do is0 = 0, ns-1                                                 !som 04.11.21 {
-          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then 
+          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
            ia = b2eatcr(is0)           ! ia should correspond to atom of hydrogen isotope
            do is = 0, ns-1
-            if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then 
+            if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
 
             mu=am(is)*am(is0)/(am(is)+am(is0))                            !som 05.11.21
             sec = 3.2e-15_R8*sqrt(ti/ev/0.026_R8)*sqrt(1.0_R8/mu)

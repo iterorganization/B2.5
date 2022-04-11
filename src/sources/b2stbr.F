@@ -1284,8 +1284,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         call my_out(70,nx,ny,
      .              fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
         endif
-       enddo 
-      endif                                                           
+       enddo
+      endif
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1

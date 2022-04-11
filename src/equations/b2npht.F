@@ -402,9 +402,9 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,ti,'b2npht_ti')
        call my_out(70,nx,ny,po,'b2npht_po')
       elseif (iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,te,'b2npht_te')
-        call my_out(70,nx,ny,ti,'b2npht_ti')
-        if(style_b2mndt.eq.2) then                                      !srv 07.07.21
+       call my_out(70,nx,ny,te,'b2npht_te')
+       call my_out(70,nx,ny,ti,'b2npht_ti')
+       if(style_b2mndt.eq.2) then                                     !srv 07.07.21
          wrk0=1.5_R8*vol*ne*(te-tep)/dtim
          call my_out(70,nx,ny,wrk0,'b2npht_nedtedt')
          wrk0=1.5_R8*vol*tep*(ne-nep)/dtim
@@ -413,7 +413,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
          call my_out(70,nx,ny,wrk0,'b2npht_nidtidt')
          wrk0=1.5_R8*vol*tip*(ni(:,:,0)-nip(:,:,0))/dtim
          call my_out(70,nx,ny,wrk0,'b2npht_tidnidt')
-        else
+       else
          do iy = -1,ny
           do ix = -1,nx
            ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
@@ -431,7 +431,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
           enddo
          enddo
          call my_out(70,nx,ny,wrk0,'b2npht_dnitidt')
-        endif                                                           !srv 07.07.21 }
+       endif                                                          !srv 07.07.21 }
       end if
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)

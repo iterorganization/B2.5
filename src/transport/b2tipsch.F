@@ -164,7 +164,7 @@
           endif
         enddo
         call intcor1(nx,ny,ns-1,weight,nati2,nati2c)
-!        print *, 'intcore done'
+!        print *, 'intcor done'
         do iy = -1, ny
          do ix = -1, nx
           if(topiy(ix,iy).eq.ny+1 .or. bottomiy(ix,iy).eq.-2

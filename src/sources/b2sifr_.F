@@ -26,7 +26,7 @@
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny),      !srv 01.07.09
+     &  ne2(-1:nx,-1:ny), ehxp(-1:nx,-1:ny),                          !srv 01.07.09
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
