@@ -3282,6 +3282,8 @@ cxpb This will need to be checked !!!
             write(99,hlp_frm)
      .       'CORR_CORE_DN=',(corr_core_dn(is),is=0,ns1-1)
           endif
+          if(corr_core_dt.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CORR_CORE_DT=',corr_core_dt,','
           if(core_dt_factor.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CORE_DT_FACTOR=',core_dt_factor,','
           if(core_dt_suppression.ne.1.0_R8)
