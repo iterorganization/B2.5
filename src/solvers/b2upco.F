@@ -83,15 +83,13 @@
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
         tt2 = 0.0e0_R8
-        do iFt = 1, mpg%nFt
-          do i = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-            iCv = mpg%ftCv(i)
-            if (mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then ! IYS 27.03.2019
-              tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)
-              tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*(nb_(iCv)-nb(iCv))
-              tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*(pb_(iCv)-pb(iCv))
-            endif
-           enddo
+        do iCv = 1, mpg%nCi
+          if (mpg%cvOnClosedSurface(iCv)) then       ! IYS 27.03.2019
+            iFt = mpg%cvFt(iCv)
+            tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)
+            tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*(nb_(iCv)-nb(iCv))
+            tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*(pb_(iCv)-pb(iCv))
+          endif
         enddo
         do iFt = 1, mpg%nFt
           too_low_density = .FALSE.     ! IYS 27.11.2017
