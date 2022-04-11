@@ -1528,7 +1528,7 @@ cwdk  now need to recompute full diamagnetic component for ud
               s0 = gs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)*
      .             qc(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -1570,7 +1570,7 @@ cwdk  now need to recompute full diamagnetic component for ud
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               s0 = gs(bc_list_x(iy,ib),bc_list_y(iy,ib),0)*
-     .             qc(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
+     .             qc(bc_list_x(iy,ib),bc_list_y(iy,ib))
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -9937,7 +9937,7 @@ c end of implementation
      1                                topiy(bc_list_x(ix,ib),
      .                                      bc_list_y(ix,ib))))
      &              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))      !sv
+     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))) !sv
                 else
                   if(ncall.eq.0) write(*,*)
      >             'b2stbc: special treatment for cell ix,iy = ',
@@ -9949,7 +9949,7 @@ c end of implementation
      1              wbbv(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**2
      &             -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))   !xpb
+     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))  !xpb
                 endif
               else
                 if(periodic_bc.ne.1 .or. nncut.eq.0 .or.

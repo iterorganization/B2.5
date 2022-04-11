@@ -175,7 +175,7 @@
      &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
+     &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
