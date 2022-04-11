@@ -9,8 +9,9 @@
      *   dtco(:,:),
      *   dtmo(:,:),
      *   dtee(:),
-     *   dtei(:)
+     *   dtei(:),
      *   dten(:)
+     *   , corr_core_dn(:)                                 ! IYS 19.12.2017
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -31,6 +32,7 @@
       real (kind=R8), save :: dtee(0:CVREGMAX)
       real (kind=R8), save :: dtei(0:CVREGMAX)
       real (kind=R8), save :: dten(0:CVREGMAX)
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)   ! IYS 19.12.2017 
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -58,7 +60,8 @@
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
      3 write_nml_num,numerics_filename,numerics_time_mod,solvekt,
-     $ solvezt,numerics_time_switch
+     $ solvezt,numerics_time_switch,
+     4 corr_core_dn                                                    ! IYS 19.12.2017
 
 
       contains
@@ -80,6 +83,7 @@
       allocate(dtee(0:nnreg(0)))
       allocate(dtei(0:nnreg(0)))
       allocate(dten(0:nnreg(0)))
+      allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
       allocate(solvemt(0:nnreg(0)))
@@ -102,6 +106,7 @@
       dtee=1.0_R8
       dtei=1.0_R8
       dten=1.0_R8
+      corr_core_dn=1.0_R8     ! IYS 19.12.2017
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -141,6 +146,7 @@
       deallocate(dtee)
       deallocate(dtei)
       deallocate(dten)
+      deallocate(corr_core_dn)     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
@@ -157,11 +163,11 @@
       return
       end subroutine dealloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist(nCv,nsmin,nsmax,nnreg,
+      subroutine read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,nnreg,
      .  cvOnClosedSurface)
       implicit none
 
-      integer nCv,nsmin,nsmax,nnreg(0:1)
+      integer nCv,ns,nsmin,nsmax,nnreg(0:1)
       logical :: file_ok, cvOnClosedSurface(nCv)
       integer iCv, is, ireg
       real (kind=R8) :: ttf
@@ -206,6 +212,10 @@
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,
      & 'faulty parameter core_dt_factor')
+      do is = 0, ns-1
+        call xertst (0.0_R8.lt.corr_core_dn(is),
+     &   'faulty parameter corr_core_dn')
+      end do
       call xertst (0.0_R8.le.time_factor_required,
      & 'faulty parameter time_factor_required')
       call xertst (0.0_R8.lt.minval(dtco),
