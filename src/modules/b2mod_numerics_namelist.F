@@ -46,6 +46,7 @@
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
 #endif
+      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:)
@@ -61,7 +62,7 @@
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
      3 write_nml_num,numerics_filename,numerics_time_mod,solvekt,
      $ solvezt,numerics_time_switch,
-     4 corr_core_dn                                                    ! IYS 19.12.2017
+     4 corr_core_dn, corr_core_dt                                              ! IYS 19.12.2017
 
 
       contains
@@ -107,6 +108,7 @@
       dtei=1.0_R8
       dten=1.0_R8
       corr_core_dn=1.0_R8     ! IYS 19.12.2017
+      corr_core_dt=1.0_R8     ! IYS 19.12.2017
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -212,6 +214,8 @@
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,
      & 'faulty parameter core_dt_factor')
+      call xertst (0.0_R8.lt.corr_core_dt,
+     & 'faulty parameter corr_core_dt')
       do is = 0, ns-1
         call xertst (0.0_R8.lt.corr_core_dn(is),
      &   'faulty parameter corr_core_dn')
