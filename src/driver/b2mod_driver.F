@@ -1863,7 +1863,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
-      integer nCv, nFc, nVx, nFt
+      integer nCv, nFc, nVx
       integer i, is, js, icf
       character*256 filename, fort31name
       character*256 systemarg
@@ -1896,7 +1896,6 @@ cwdk  set some integers
       nCv = mpg%nCv
       nFc = mpg%nFc
       nVx = mpg%nVx
-      nFt = mpg%nFt
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
@@ -1994,7 +1993,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nCv, nFc, nVx, nFt, ns, nxtl, nxtr,
+          call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
      .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax, 
      .      state%rt%iscx, itim, dtim, ntim, 
      .      switch, geo, mpg, state, state_ext, ierr)
