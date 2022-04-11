@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upco (nCv, nFc, nVx, nFt, geo, mpg, switch, nregionv, 
+      subroutine b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
      &   ua_solve, solvereg, rxf, pcm0, corpb, pccb0, pb, nb, ub, isb)
       use b2mod_types
       use b2mod_b2cmpa
@@ -16,7 +16,7 @@
      & , only : ncall_b2upco
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, nFt, nregionv, isb
+      integer nCv, nFc, nVx, nregionv, isb
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (switches), intent (in) :: switch
@@ -45,7 +45,7 @@
      *  wrk0(nFc), wrk(nCv), wrkv(nVx)
       real (kind=R8) :: t0,
      *  pb_(nCv), nb_(nCv) ,                                        !lk 30.06.17
-     *  tt0(nFt), tt1(nFt), tt2(nFt)                                !lk 30.06.17
+     *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt)                    !lk 30.06.17
       logical too_low_density                                       ! IYS 27.11.2017
 *   ..procedures
       external subini, subend, xertst, ipgetr, b2xxgs
@@ -83,7 +83,7 @@
         tt0 = 0.0e0_R8
         tt1 = 0.0e0_R8
         tt2 = 0.0e0_R8
-        do iFt = 1, nFt
+        do iFt = 1, mpg%nFt
           do i = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
             iCv = mpg%ftCv(i)
             if (mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then ! IYS 27.03.2019
@@ -93,7 +93,7 @@
             endif
            enddo
         enddo
-        do iFt = 1, nFt
+        do iFt = 1, mpg%nFt
           too_low_density = .FALSE.     ! IYS 27.11.2017
 ! Check whether the density and/or pressure falls below the threshold 'b2mndr_na_min'
 ! If it happens, cancel the smoothing of the correction for the whole
