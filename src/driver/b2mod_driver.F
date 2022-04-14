@@ -1385,7 +1385,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .    'User name not defined !')
          database = 'solps-iter'
          treename = 'ids'
-         version = '3'
+         write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifndef NO_GETENV
          device_env = ' '
 #ifdef NAGFOR

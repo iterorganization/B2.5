@@ -61,6 +61,7 @@ IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 )
 ifdef AMNS_PREFIX
 LD_UAL  ?= `pkg-config imas-gfortran ggd amns --libs`
 INCMODS += `pkg-config imas-gfortran ggd amns --cflags`
@@ -72,16 +73,18 @@ endif
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 )
 LD_UAL  ?= `pkg-config imas-gfortran --libs` -lggd-gfortran
 INCMODS += `pkg-config imas-gfortran --cflags`
 else
-GGD_MINOR_VERSION = 0
+GGD_MINOR_VERSION ?= 0
+GGD_MICRO_VERSION ?= 0
 LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
 INCMODS += `pkg-config imas-lowlevel imas-gfortran --cflags`
 endif
 endif
 ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
 endif
 IMASLIBS = ${LD_UAL}
 endif

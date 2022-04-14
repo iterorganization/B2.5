@@ -108,7 +108,7 @@ program b2_ual_write
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
-    version = '3'
+    write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
     write (*,*) 'Starting b2mn init'
     call b2mn_init

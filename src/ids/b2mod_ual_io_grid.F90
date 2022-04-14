@@ -22,35 +22,35 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 8
+# if IMAS_MINOR_VERSION > 8
     use ids_schemas  & ! IGNORE
      & , only : IDS_real
-#endif
-#if IMAS_MINOR_VERSION > 11
+# endif
+# if IMAS_MINOR_VERSION > 11
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
-#if IMAS_MINOR_VERSION < 15
+#  if IMAS_MINOR_VERSION < 15
    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
-#else
+#  else
    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
-#endif
+#  endif
     use ids_grid_object   & ! IGNORE
      & , only : ids_generic_grid_dynamic_grid_subset, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
-#if GGD_MINOR_VERSION > 9
+#  if GGD_MINOR_VERSION > 9
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES
-#else
+#  else
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
      &          GRID_SUBSET_FACES
-#endif
+#  endif
     use ids_grid_structured & ! IGNORE
      & , only : GridWriteData, GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
@@ -87,7 +87,15 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,                       &
      &          GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,                       &
      &          IDS_GRID_UNDEFINED => GRID_UNDEFINED
-#endif
+#  if GGD_MINOR_VERSION > 9
+    use ids_grid_common     & ! IGNORE
+     & , only : GRID_SUBSET_VOLUMES
+#  endif
+#  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
+    use ids_grid_common     & ! IGNORE
+     & , only : GRID_SUBSET_MAGNETIC_AXIS
+#  endif
+# endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -171,6 +179,7 @@ module b2mod_ual_io_grid
     !!      Class 1 - nodes/vertices (0D objects)
     !!      Class 2 - edges/faces (1D objects)
     !!      Class 3 - 2D cells (2D objects)
+    !!      Class 4 - 3D volumes (3D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
     !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
@@ -198,6 +207,8 @@ module b2mod_ual_io_grid
     ! integer, parameter :: IDS_CLASS_CELL = sum(IDS_CLASS_CELL)
     integer, parameter :: IDS_CLASS_CELL = 3 !< Object class tuple
         !< (IMAS class definition): Cell (2D)
+    integer, parameter :: IDS_CLASS_VOLUME = 4 !< Object class tuple
+        !< (IMAS class definition): Volume (3D)
 
     !! Subgrid/Grid subset name constants
 
@@ -250,6 +261,10 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
     !> y-aligned edges defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
+    !> All volumes
+    integer, parameter :: GRID_SUBSET_VOLUMES = 43
+    !> Point on magnetic axis
+    integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
     !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
     !> Point on active separatrix at inner midplane
@@ -311,12 +326,14 @@ module b2mod_ual_io_grid
        &    'INNER_DIVERTOR_INACTIVE   ' , &
        &    'OUTER_TARGET_INACTIVE     ' , &
        &    'INNER_TARGET_INACTIVE     ' , &
+       &    'VOLUMES                   ' , &
+       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU,         &
+       &     UU, UU, UU, UU, UU, UU, UU,             &
+       &    'MAGNETIC_AXIS             ' , &
        &    'OUTER_MIDPLANE_SEPARATRIX ' , &
        &    'INNER_MIDPLANE_SEPARATRIX ' , &
        &    'OUTER_STRIKEPOINT         ' , &
@@ -373,12 +390,14 @@ module b2mod_ual_io_grid
        &    'Cells defining the inner inactive divertor region                                            ' , &
        &    'y-aligned edges defining the outer inactive target                                           ' , &
        &    'y-aligned edges defining the inner inactive target                                           ' , &
+       &    'All volumes (3D objects)                                                                     ' , &
+       &     US, US, US, US, US, US, US, US, US,                                                              &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
-       &     US, US, US, US, US, US, US, US, US, US,                                                          &
-       &     US, US, US, US, US, US, US, US,                                                                  &
+       &     US, US, US, US, US, US, US,                                                                      &
+       &    'Point on magnetic axis                                                                       ' , &
        &    'Point on active separatrix at outer midplane                                                 ' , &
        &    'Point on active separatrix at inner midplane                                                 ' , &
        &    'Point on active separatrix at outer active target                                            ' , &
@@ -388,11 +407,19 @@ module b2mod_ual_io_grid
        &   /)
 #endif
 #ifdef IMAS
-#if GGD_MINOR_VERSION < 10
+# if GGD_MINOR_VERSION < 10
+    !> All volumes
+    integer, parameter :: GRID_SUBSET_VOLUMES = 43
+# endif
+# if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+    !> Point on magnetic axis
+    integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
+# endif
+# if GGD_MINOR_VERSION < 10
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_Y_ALIGNED_EDGES = GRID_SUBSET_Y_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_EDGES = GRID_SUBSET_FACES
-#endif
+# endif
 #endif
 #ifdef ITM_ENVIRONMENT_LOADED
     !! For ITM duplicates were made (old and new variable) in case of ITM code

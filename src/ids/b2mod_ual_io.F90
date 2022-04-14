@@ -122,7 +122,11 @@ module b2mod_ual_io
 #if GGD_MINOR_VERSION < 10
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-     &          GRID_SUBSET_EDGES
+     &          GRID_SUBSET_EDGES, GRID_SUBSET_VOLUMES
+#endif
+#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+    use b2mod_ual_io_grid &
+     & , only : GRID_SUBSET_MAGNETIC_AXIS
 #endif
 #if IMAS_MINOR_VERSION > 8
     use ids_schemas &     ! IGNORE
@@ -2340,6 +2344,10 @@ contains
               edge_profiles%ggd( time_sind )%ion( js )%state( ks )%label = textin( is-1 )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%label = &
                   &                                                        textin( is-1 )
+              do i = 1, nsources
+                edge_sources%source(i)%ggd( time_sind )%ion( js )%state( ks )%label = &
+                    &                                                      textin( is-1 )
+              end do
               nelems = count ( micmp( 1:natmi, is ) > 0 )
               allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
               do i = 1, nsources
@@ -5490,7 +5498,7 @@ contains
         if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
            allocate( summary%local%separatrix%position%psi( num_time_slices ) )
            summary%local%separatrix%position%psi( time_sind ) = fpsi(jxa,jsep,2)
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
            allocate( summary%local%separatrix_average%position%psi( num_time_slices ) )
            summary%local%separatrix_average%position%psi( time_sind ) = fpsi(jxa,jsep,2)
 #endif
@@ -5501,7 +5509,7 @@ contains
            &  0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev )
         call write_sourced_value( summary%local%separatrix%n_e, &
            &  0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep))) )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
         tmpCv = 1.0_IDS_real
         u = separatrix_average( te, tmpCv )
         call write_sourced_value( summary%local%separatrix_average%t_e, u/ev )
@@ -5541,21 +5549,21 @@ contains
           case ('H')
             call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%hydrogen, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, v )
 #endif
           case ('D')
             call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%deuterium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, v )
 #endif
           case ('T')
             call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%tritium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, v )
 #endif
@@ -5563,14 +5571,14 @@ contains
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
               call write_sourced_value( summary%local%separatrix_average%n_i%helium_3, u )
               call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, v )
 #endif
             else if (nint(am(eb2spcr(is))).eq.4) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%helium_4, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, v )
 #endif
@@ -5578,49 +5586,49 @@ contains
           case ('Li')
             call write_sourced_value( summary%local%separatrix%n_i%lithium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%lithium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, v )
 #endif
           case ('Be')
             call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, v )
 #endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%carbon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, v )
 #endif
           case ('N')
             call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%nitrogen, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, v )
 #endif
           case ('O')
             call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%oxygen, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, v )
 #endif
           case ('Ne')
             call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%neon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%neon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, v )
 #endif
           case ('Ar')
             call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%argon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%argon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, v )
 #endif
@@ -5628,14 +5636,14 @@ contains
           case ('Fe')
             call write_sourced_value( summary%local%separatrix%n_i%iron, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%iron, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%iron, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, v )
 #endif
           case ('Kr')
             call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%krypton, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, v )
 #endif
@@ -5643,14 +5651,14 @@ contains
           case ('Xe')
             call write_sourced_value( summary%local%separatrix%n_i%xenon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%xenon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, v )
 #endif
           case ('W')
             call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%tungsten, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, v )
 #endif
@@ -5659,13 +5667,13 @@ contains
         call write_sourced_value( summary%local%separatrix%n_i_total, &
           & 0.5_R8 * (ni(jxa,jsep,1) + ni(topix(jxa,jsep),topiy(jxa,jsep),1)) )
         u = separatrix_average( ni(:,:,1), tmpCv )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
 #endif
         u = separatrix_average( zeff, tmpCv )
         call write_sourced_value( summary%local%separatrix%zeff, &
           & 0.5_R8 * (zeff(jxa,jsep) + zeff(topix(jxa,jsep),topiy(jxa,jsep))) )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%zeff, u )
 #endif
 
@@ -6235,7 +6243,13 @@ contains
                if (ndim.eq.IDS_INT_INVALID) then
                   select case (iSubsetID)
                   case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+                      & GRID_SUBSET_MAGNETIC_AXIS,               &
+                      & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+                      & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+                      & GRID_SUBSET_INNER_STRIKEPOINT,           &
+                      & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+                      & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+                      & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
                      ndim = 1
                   case( GRID_SUBSET_EDGES, &
                       & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -6244,6 +6258,7 @@ contains
                       & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
                       & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
                       & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
                       & GRID_SUBSET_SECOND_SEPARATRIX, &
                       & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
                       & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -6264,6 +6279,8 @@ contains
                       & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
                       & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
                      ndim = 3
+                  case( GRID_SUBSET_VOLUMES )
+                     ndim = 4
                   end select
                end if
                if (ndim.ne.2) cycle
@@ -6856,7 +6873,7 @@ contains
           if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
             allocate( summary%local%separatrix%position%psi( num_batch_slices ) )
             summary%local%separatrix%position%psi( batch_index ) = fpsi(jxa,jsep,2)
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             allocate( summary%local%separatrix_average%position%psi( num_batch_slices ) )
             summary%local%separatrix_average%position%psi( batch_index ) = fpsi(jxa,jsep,2)
 #endif
@@ -7270,9 +7287,9 @@ contains
     2     continue
           close(99)
           call ipgetr ('b2agfs_pit_rescale', pit_rescale)
-          end if
         end if
       end if
+    end if
 
     !> Careful: Sign convention for magnetic field in IDS
     !>          is OPPOSITE to that in SOLPS toroidal geometries
@@ -7402,7 +7419,7 @@ contains
         else
 #if IMAS_MINOR_VERSION > 21
           if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, -b0 )
+            & call write_sourced_value( summary%global_quantities%b0, b0 )
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
         end if
@@ -7885,7 +7902,9 @@ contains
     call value_on_faces( nx, ny, weight, value, tmpFace)
 
     !! Allocate data fields for grid subsets
-    allocate( val(nSubsets) )
+    if (.not.associated( val ) ) then
+      allocate( val(nSubsets) )
+    end if
 
     do iSubset = 1, nSubsets
 #if IMAS_MINOR_VERSION < 15
@@ -7928,7 +7947,13 @@ contains
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -7937,6 +7962,8 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, &
+            & GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -7957,6 +7984,8 @@ contains
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
           ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
         end select
       end if
       select case (ndim)
@@ -7964,7 +7993,7 @@ contains
 #if IMAS_MINOR_VERSION < 15
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   edgeprof%ggd( slice_index )%grid,         &
-                     &   iGsOuterMidplane, IDSmap, tmpVx )
+                     &   iSubset, IDSmap, tmpVx )
 #else
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   edgeprof%grid_ggd( slice_index ),         &
@@ -8041,7 +8070,9 @@ contains
     nSubsets = size(edgeprof%grid_ggd(slice_index)%grid_subset)
 #endif
     !! Allocate data fields for grid subsets
-    allocate( scalar(nSubsets) )
+    if (.not.associated( scalar ) ) then
+      allocate( scalar(nSubsets) )
+    end if
 
     do iSubset = 1, nSubsets
 #if IMAS_MINOR_VERSION < 15
@@ -8054,7 +8085,13 @@ contains
        if (ndim.eq.IDS_INT_INVALID) then
          select case (iSubsetID)
          case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+             & GRID_SUBSET_MAGNETIC_AXIS,               &
+             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_INNER_STRIKEPOINT,           &
+             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
            ndim = 1
          case( GRID_SUBSET_EDGES, &
              & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8063,6 +8100,8 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_INNER_MIDPLANE, &
+             & GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -8083,11 +8122,12 @@ contains
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
            ndim = 3
+         case( GRID_SUBSET_VOLUMES )
+           ndim = 4
          end select
        end if
        if (ndim.ne.3) cycle
 
-       !! TODO: add checks whether already allocated
 #if IMAS_MINOR_VERSION < 15
        idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edgeprof% &
           &   ggd( slice_index )%grid, iSubset, IDSmap, b2CellData )
@@ -8155,7 +8195,13 @@ contains
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8164,6 +8210,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -8184,6 +8231,8 @@ contains
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
           ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
         end select
       end if
       if (ndim.ne.3) cycle
@@ -8226,7 +8275,9 @@ contains
     nSubsets = size(edgeprof%grid_ggd(slice_index)%grid_subset)
 #endif
     !! Allocate data fields for grid subsets
-    allocate( val(nSubsets) )
+    if (.not.associated( val ) ) then
+      allocate( val(nSubsets) )
+    end if
 
     do iSubset = 1, nSubsets
 #if IMAS_MINOR_VERSION < 15
@@ -8248,7 +8299,13 @@ contains
         if (ndim.eq.IDS_INT_INVALID) then
           select case (iSubsetID)
           case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+              & GRID_SUBSET_MAGNETIC_AXIS,               &
+              & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+              & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+              & GRID_SUBSET_INNER_STRIKEPOINT,           &
+              & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+              & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+              & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
             ndim = 1
           case( GRID_SUBSET_EDGES, &
               & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8257,6 +8314,7 @@ contains
               & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
               & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
               & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
               & GRID_SUBSET_SECOND_SEPARATRIX, &
               & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
               & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -8277,6 +8335,8 @@ contains
               & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
               & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
             ndim = 3
+          case( GRID_SUBSET_VOLUMES )
+            ndim = 4
           end select
         end if
         if (ndim.ne.2) cycle
