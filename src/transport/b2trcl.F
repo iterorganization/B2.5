@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain,
-     &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
+     &  bb, conn, vol, gs, hx, hy,                                       !srv 23.11.10
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2,         !srv 09.01.01 01.07.09
      2  lnlam, chvemx, chvimx, cvsahz,                                   !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
