@@ -103,8 +103,8 @@
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
-     &  b2xgbs1, b2wfgm, b2wugm
+      external b2xxid, b2agsi_st, b2agfs_st, b2agcf_st, b2agmt_st, 
+     &  b2agmx, b2agbb, b2xgbs1, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -299,11 +299,11 @@
       call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
-      call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
-*!!   Be careful about the use of (nx,ny) in b2agsi: the mesh will also
-*!!   be generated with dimensions (nx1,ny1).
+      call b2agsi_st (nx, ny, parg, isymm, lblgm(61:120), istyle)
+*!!   Be careful about the use of (nx,ny) in b2agsi_st: the mesh will also
+*!!   be generated with dimensions (nx1,ny1)
 *   ..obtain grid and mhd equilibrium data from file
-      call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
+      call b2agfs_st (ninp(1),nx,ny,nx1,ny1,istyle,
      1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
      2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
      3 topix1,topiy1,bottomix1,bottomiy1,
@@ -321,9 +321,10 @@
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 *   ..compute geometry and flux/field functions on auxiliary mesh
 *   ..if not provided already by Carre grid
-      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+      if(istyle.ge.0) call b2agcf_st (nx1, ny1, crx1, cry1,
+     & fpsi1, ffbz1)
 *   ..compute metric coefficients on auxiliary mesh
-      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
+      call b2agmt_st (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
      & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
      & cell_width1, cell_height1,
      & leftix1, leftiy1, bottomix1, bottomiy1, 
@@ -459,7 +460,7 @@ cdpc-debug
       write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
       if(istyle.ge.0) then
 *   ..compute geometry and flux/field functions on proper mesh
-        call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
+        call b2agcf_st (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
         call b2agbb (nx, ny, vol, gs, crx, cry, qz, 
      &   fpsi, ffbz, bb)

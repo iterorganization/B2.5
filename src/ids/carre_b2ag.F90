@@ -6,7 +6,7 @@ module carre_b2ag
 
 contains
 
-  subroutine carre_b2agbb (nx,ny,cflag,fpsi,ffbz,wbbc,bb, & 
+  subroutine carre_b2agbb_st (nx,ny,cflag,fpsi,ffbz,wbbc,bb, & 
        &  crx,cry,psidx,psidy,isymm)
 
     !======================================================================
@@ -237,6 +237,232 @@ contains
 
       enddo
     enddo
+
+  end subroutine carre_b2agbb_st
+
+  subroutine carre_b2agbb(nCv,nVx,g,m,wbbc_us,isymm)
+   use b2mod_geo
+   use b2mod_indirect
+  !========================================================================
+  ! .. input arguments
+  integer nCv, nVx, isymm
+  type(mapping_ag) :: m
+
+  ! ..input and output arguments
+  type(geometry_ag) :: g
+  real*8, intent(out) :: wbbc_us(0:nCv-1,0:3)
+  
+  
+  !-----------------------------------------------------------------------
+  !.documentation
+
+  ! 1.purpose
+     
+  !   B2AGBB computes the magnetic field from the flux functions.
+
+  !WIP 
+
+  !-----------------------------------------------------------------------
+  !. declarations
+
+  ! .. local variables
+  integer i, vx4(0:3), vx3(0:2), vx2(0:1), vx0
+  real*8 t0, pi, babs, psdx, psdy
+  real*8 centroid(0:1) ! 0 = x-coord, 1 = y-coord
+
+
+  !   .. procedures
+  intrinsic sqrt, sign
+
+  !-----------------------------------------------------------------------
+  !. computation
+  pi=4.*atan(1.)
+  !  ..loop over cells
+
+  do i = 0, nCv-1
+      if (g%cvCflags(i,0) == GRID_GUARD) cycle
+      !   ..compute magnetic field at cell center
+      if (isymm.ne.0) then
+        if (g%cvCtype(i).eq.0) then !Quad 
+           vx4 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+           centroid(0) = 0.25_R8*(sum(g%vxX(vx4)))
+           centroid(1) = 0.25_R8*(sum(g%vxY(vx4)))
+        elseif (g%cvCtype(i).eq.GRID_GUARD) then !Guard cell
+           vx2 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+           centroid(0) = 0.5_R8*(sum(g%vxX(vx2)))
+           centroid(1) = 0.5_R8*(sum(g%vxY(vx2)))
+        else ! Triangles
+           vx3 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+           centroid(0) = 0.3333333_R8*(sum(g%vxX(vx3)))
+           centroid(1) = 0.3333333_R8*(sum(g%vxY(vx3)))
+        endif
+
+        if (isymm.eq.1 .or. isymm.eq.2) then
+           t0 = 2.0*pi*centroid(0)
+        elseif (isymm.eq.3 .or. isymm.eq.4) then
+           t0 = 2.0*pi*centroid(1)
+        endif
+
+      else
+        t0 = 1.0
+      endif
+
+      if (t0 == 0.0) cycle
+        if (g%cvCtype(i).eq.0) then
+         ! structured code
+         !bb(ix,iy,0) = & 
+         !       &     (fpsi(ix,iy,2)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,1))
+
+          vx4 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+          ! not sure always correct but only the sign of cvBb 
+          ! is important here
+          g%cvBb(i,0) = ( g%vxFpsi(vx4(2)) - g%vxFpsi(vx4(0)) &
+                 &      +  g%vxFpsi(vx4(3)) -  g%vxFpsi(vx4(1)) )
+          
+          babs = 0.25_R8*(  &
+     &      sqrt( g%vxBx(vx4(0))**2 + g%vxBy(vx4(0))**2 ) + &
+     &      sqrt( g%vxBx(vx4(1))**2 + g%vxBy(vx4(1))**2 ) + &     
+     &      sqrt( g%vxBx(vx4(2))**2 + g%vxBy(vx4(2))**2 ) + &
+     &      sqrt( g%vxBx(vx4(3))**2 + g%vxBy(vx4(3))**2 ) )/t0
+        
+          ! sign takes value of first argument with sign of second argument
+          g%cvBb(i,0) = sign(babs,g%cvBb(i,0))
+        
+        elseif (g%cvCtype(i).eq.GRID_GUARD) then !at the end of array, exploit this
+          vx2 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+          ! assum sign of cvBb(0) is everywhere the same
+
+          babs = 0.5_R8*(  &
+     &      sqrt( g%vxBx(vx2(0))**2 + g%vxBy(vx2(0))**2 ) + &
+     &      sqrt( g%vxBx(vx2(1))**2 + g%vxBy(vx2(1))**2 ) )/t0
+          ! cell 3 is high probably a quad (PF region)
+          g%cvBb(i,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
+
+
+        else !Triangle
+          vx3 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+          ! assum sign of cvBb(0) is everywhere the same
+
+          babs = 0.3333333_R8*(  &
+     &      sqrt( g%vxBx(vx3(0))**2 + g%vxBy(vx3(0))**2 ) + &
+     &      sqrt( g%vxBx(vx3(1))**2 + g%vxBx(vx3(1))**2 ) + &
+     &      sqrt( g%vxBx(vx3(2))**2 + g%vxBy(vx3(2))**2 ) )/t0
+
+          g%cvBb(i,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
+
+        endif  
+        
+
+        ! operations with single vertex
+        vx0 = m%cvVx(m%cvVxP(i,1)) !first vertex of the cell
+        ! choose here right vertix (same as corrections for
+        ! right and upper boundary in structured version)
+
+
+        if (isymm.eq.1.or.isymm.eq.2) then
+          babs = sqrt( g%vxBx(vx0)**2 + g%vxBy(vx0)**2 )/ &
+             &   (2.0*pi*g%vxX(vx0))
+        elseif (isymm.eq.3.or.isymm.eq.4) then
+          babs = sqrt( g%vxBx(vx0)**2 + g%vxBy(vx0)**2 )/ &
+             &   (2.0*pi*g%vxY(vx0))
+        else
+          babs=sqrt( g%vxBx(vx0)**2 + g%vxBy(vx0)**2 )
+        endif
+
+        wbbc_us(i,0) = sign(babs,g%cvBb(i,0))
+
+        g%cvBb(i,1) = 0.0e0
+        wbbc_us(i,1) = 0.0e0
+
+        if (g%cvCtype(i).eq.0) then !Quad
+          g%cvBb(i,2) = 0.25_R8*(sum(g%vxFfbz(vx4)))
+        elseif (g%cvCtype(i).eq.GRID_GUARD) then
+          g%cvBb(i,2) = 0.5_R8*(sum(g%vxFfbz(vx2)))
+        else 
+          g%cvBb(i,2) = 0.3333333_R8 * sum(g%vxFfbz(vx3))
+        endif 
+
+        if (isymm.eq.1 .or. isymm.eq.2) then
+          wbbc_us(i,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxX(vx0))
+        elseif (isymm.eq.3 .or. isymm.eq.4) then
+          wbbc_us(i,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxY(vx0))
+        else 
+          wbbc_us(i,2) = g%vxFfbz(vx0)
+        endif
+
+        g%cvBb(i,3) = sqrt( g%cvBb(i,0)**2 + &
+            &   g%cvBb(i,1)**2 + g%cvBb(i,2)**2)
+        wbbc_us(i,3) = sqrt( wbbc_us(i,0)**2 + wbbc_us(i,1)**2 &
+            &    + wbbc_us(i,2)**2 )
+
+        !strange part in structured version for ix = nx+1
+        ! in unstructured version => upper boundary => cflags(:,4)
+        ! give wwbc for the guards cells at right and top boundary
+        ! problem: with the loop we just loop over all the cell
+        ! also the guard cells so this below is overwritten
+        ! WIP HERE UNDER
+        if (g%cvCflags(i,3).eq.1) then !nx, right boundary
+          !vx0 = 0 ! determine the right lower corner
+          if (isymm.eq.1 .or. isymm.eq.2) then
+             !babs = sqrt(g%vxBx(vx0)**2 + g%vxBy(vx0)**2)/ &
+             ! & (2.0*pi*g%vxX(vx0))
+          elseif (isymm.eq.3 .or. isymm.eq.4) then
+             !babs = sqrt(g%vxBx(vx0)**2 + g%vxBy(vx0)**2)/ &
+             ! & (2.0*pi*g%vxY(vx0))
+          else 
+             !babs = sqrt(g%vxBx(vx0)**2 + g%vxBy(vx0)**2)
+          endif
+          ! corresponding guard cell more to the right
+          ! cell = ?
+          !wbbc_us(cell,0) = sign(babs,wbbc_us(i,0))
+          !wbbc_us(cell,0) = 0.0e0
+          if(isymm.eq.1 .or. isymm.eq.2) then
+            !wbbc_us(cell,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxX(vx0))
+          elseif (isymm.eq.3 .or. isymm.eq.4) then
+            !wbbc_us(cell,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxY(vx0))
+          else 
+            !wbbc_us(cell,2) = g%vxFfbz(vx0)
+          endif
+          !wbbc_us(cell,3) = & 
+          !  &  sqrt(wbbc_us(cell,0)**2+wbbc_us(cell,1)**2+ &
+          !  &    wbbc_us(cell,2)**2)
+          
+
+        elseif (g%cvCflags(i,4).eq.-1) then ! ny , upper boundary
+          !vx0 = 0 must be left upper vertex
+          if (isymm.eq.1 .or. isymm.eq.2) then 
+             !babs = sqrt(g%vxBx(vx0)**2 + g%vxBy(vx0)**2)/ &
+             ! & (2.0*pi*g%vxX(vx0))
+          elseif (isymm.eq.3 .or. isymm.eq.4) then
+             !babs = sqrt(g%vxBx(vx0)**2 + g%vxBy(vx0)**2)/ &
+             ! & (2.0*pi*g%vxY(vx0))
+          else 
+             !babs = sqrt(g%vxBx(vx0)**2 + g%vxBy(vx0)**2)
+          endif
+          ! corresponding guard cell more up
+          ! cell = ? 
+          !wbbc_us(cell,0) = sign(babs,wbbc_us(i,0))
+          !wbbc_us(cell,1) = 0.0e0
+          if(isymm.eq.1 .or. isymm.eq.2) then
+            !wbbc_us(cell,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxX(vx0))
+          elseif (isymm.eq.3 .or. isymm.eq.4) then
+            !wbbc_us(cell,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxY(vx0))
+          else 
+            !wbbc_us(cell,2) = g%vxFfbz(vx0)
+          endif
+          !wbbc_us(cell,3) = & 
+          !  &  sqrt(wbbc_us(cell,0)**2+wbbc_us(cell,1)**2+ &
+          !  &    wbbc_us(cell,2)**2)          
+          
+
+        !elseif (g%cvCflags(i,4).eq.-1)  then ! nx,ny ,upper right corner
+        ! this cell is not there I think
+      
+        endif 
+
+
+
+  enddo
 
   end subroutine carre_b2agbb
 
