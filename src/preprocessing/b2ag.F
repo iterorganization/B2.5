@@ -85,7 +85,8 @@
 
 *   ..local variables
       character :: id*8, id2*20
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, io, nC, nFc, nVx
+      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, io, nCv, nFc 
+      integer nVx, nCmxVx, nCmxFc
       logical file_open, streql
 *   ..procedures
       external prgini, prgend, cfopen, streql
@@ -93,6 +94,9 @@
 *   ..initialise input/output units
       data ninp/50,51/
       data nout/60,61/
+
+	  type(geometry_ag), save :: g
+	  type(mapping_ag), save :: m 
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -138,32 +142,32 @@
       read (ninp(0),*) id2
       if ( streql(id,'*format') .AND. streql(id2,'unstructured')) then
 *       run the unstructured version
-	write (*,*) 'Unstructured b2ag used'
-*    ..obtain nC, nVx, nFc
-	call b2ag_read_parameters(ninp,nout,nC,nFc,nVx)
+	  write (*,*) 'Unstructured b2ag used'
+*    ..obtain nCv, nVx, nFc
+	  call b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc)
 *    ..call principal driver routine
-	call alloc_b2mod_indirect(nC,nFc,nVx)
-	call alloc_b2mod_geo(nC,nFc,nVx)
-	call b2agdr (ninp, nout, nC, nFc, nVx)
+	  call alloc_b2mod_indirect(m,nCv,nFc,nVx,nCmxVx,nCmxFc,nx,ny)
+	  call alloc_b2mod_geo(g,nCv,nFc,nVx)
+	  call b2agdr (ninp, nout, nCv, nFc, nVx,g,m)
 *    ..close graphics files
 *      (none)
 *    ..close other files
-	do io=0,size(ninp)-1
+	  do io=0,size(ninp)-1
 		inquire(unit=ninp(io),opened=file_open)
 		if (file_open) close(ninp(io))
-	enddo
-	do io=0,size(nout)-1
+	  enddo
+	  do io=0,size(nout)-1
 		inquire(unit=nout(io),opened=file_open)
 		if (file_open) close(nout(io))
-	enddo
+	  enddo
 *    ..end of computation
-	call dealloc_b2mod_geo
-	call dealloc_b2mod_indirect
+	  call dealloc_b2mod_geo(g)
+	  call dealloc_b2mod_indirect(m)
 
       else
-	write (*,*) 'Structured b2ag used'
+	  write (*,*) 'Structured b2ag used'
 *   ..rewind b2ag.dat file
-	rewind ninp(0)
+	  rewind ninp(0)
 *   ..obtain nx, ny, nx1, ny1
       	call b2ag_read_parameters_st(ninp,nout, nx, ny, nx1, ny1)
 *   ..	call principal driver routine

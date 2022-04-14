@@ -1,27 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agcf (nx,ny,nCv, nFc, nVx, g, m)
+      subroutine b2agcf_st (nx, ny, crx, cry, fpsi, ffbz)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, nx, ny
-      type(mapping_ag) :: m
-      type(geometry_ag) :: g
+      integer nx, ny
 *   ..output arguments (unspecified on entry)
-!      real (kind=R8) ::
-!     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-!     &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3)
-       
+      real (kind=R8) ::
+     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3)
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2AGCF computes the locations of the cell vertices, and computes
+*     B2AGCF_st computes the locations of the cell vertices, and computes
 *     the flux functions at those locations.
 *
 *
@@ -37,7 +32,7 @@
 *
 *     The description of the geometry and the field is obtained by
 *     a sequence of calls to the routine b2agsp. The content of b2agsp
-*     depends upon the application at hand. The routine b2agcf is an
+*     depends upon the application at hand. The routine b2agcf_st is an
 *     interface.
 *
 *
@@ -99,10 +94,9 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2agcf')
-*   ..test nCv, nFc, nVx
-      call xertst (0.le.nCv.and.0.le.nFc.and.0.le.nVx,
-     & 'faulty argument nCv, nFc,nVx')
+      call subini ('b2agcf_st')
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..set edg
 *     (An appropriate value for edg must be small compared to 1.0/nx
 *     and 1.0/ny, and large compared to the machine precision. I prefer
@@ -146,69 +140,69 @@
 *     of the magnetic field potential, fpsi, and of the magnetic field
 *     function, ffbz, at that point.
 *   ..loop over cells
-!      do iy = -1, ny
-!       do ix = -1, nx
+      do iy = -1, ny
+       do ix = -1, nx
 *     ..compute quantities at cell corners
 *       (corner 0)
-!        if (nx.eq.0) then
-!         ax = rratio(ix+1,2)
-!        else
-!         ax = trunc(rratio(ix,nx),edg)
-!        endif
-!        if (ny.eq.0) then
-!         ay = rratio(iy+1,2)
-!        else
-!         ay = trunc(rratio(iy,ny),edg)
-!        endif
-!        call b2agsp (ax, ay, 1, 1, crx(ix,iy,0), cry(ix,iy,0),
-!     &    fpsi(ix,iy,0), ffbz(ix,iy,0))
+        if (nx.eq.0) then
+         ax = rratio(ix+1,2)
+        else
+         ax = trunc(rratio(ix,nx),edg)
+        endif
+        if (ny.eq.0) then
+         ay = rratio(iy+1,2)
+        else
+         ay = trunc(rratio(iy,ny),edg)
+        endif
+        call b2agsp (ax, ay, 1, 1, crx(ix,iy,0), cry(ix,iy,0),
+     &    fpsi(ix,iy,0), ffbz(ix,iy,0))
 *       (corner 1)
-!        if (nx.eq.0) then
-!         ax = rratio(ix+2,2)
-!        else
-!         ax = trunc(rratio(ix+1,nx),edg)
-!        endif
-!        if (ny.eq.0) then
-!         ay = rratio(iy+1,2)
-!        else
-!         ay = trunc(rratio(iy,ny),edg)
-!        endif
-!        call b2agsp (ax, ay, -1, 1, crx(ix,iy,1), cry(ix,iy,1),
-!     &    fpsi(ix,iy,1), ffbz(ix,iy,1))
+        if (nx.eq.0) then
+         ax = rratio(ix+2,2)
+        else
+         ax = trunc(rratio(ix+1,nx),edg)
+        endif
+        if (ny.eq.0) then
+         ay = rratio(iy+1,2)
+        else
+         ay = trunc(rratio(iy,ny),edg)
+        endif
+        call b2agsp (ax, ay, -1, 1, crx(ix,iy,1), cry(ix,iy,1),
+     &    fpsi(ix,iy,1), ffbz(ix,iy,1))
 *       (corner 2)
-!        if (nx.eq.0) then
-!         ax = rratio(ix+1,2)
-!        else
-!         ax = trunc(rratio(ix,nx),edg)
-!        endif
-!        if (ny.eq.0) then
-!         ay = rratio(iy+2,2)
-!        else
-!         ay = trunc(rratio(iy+1,ny),edg)
-!        endif
-!        call b2agsp (ax, ay, 1, -1, crx(ix,iy,2), cry(ix,iy,2),
-!     &    fpsi(ix,iy,2), ffbz(ix,iy,2))
+        if (nx.eq.0) then
+         ax = rratio(ix+1,2)
+        else
+         ax = trunc(rratio(ix,nx),edg)
+        endif
+        if (ny.eq.0) then
+         ay = rratio(iy+2,2)
+        else
+         ay = trunc(rratio(iy+1,ny),edg)
+        endif
+        call b2agsp (ax, ay, 1, -1, crx(ix,iy,2), cry(ix,iy,2),
+     &    fpsi(ix,iy,2), ffbz(ix,iy,2))
 *       (corner 3)
-!        if (nx.eq.0) then
-!         ax = rratio(ix+2,2)
-!        else
-!         ax = trunc(rratio(ix+1,nx),edg)
-!        endif
-!        if (ny.eq.0) then
-!         ay = rratio(iy+2,2)
-!        else
-!         ay = trunc(rratio(iy+1,ny),edg)
-!        endif
-!        call b2agsp (ax, ay, -1, -1, crx(ix,iy,3), cry(ix,iy,3),
-!     &    fpsi(ix,iy,3), ffbz(ix,iy,3))
-!       enddo
-!      enddo
+        if (nx.eq.0) then
+         ax = rratio(ix+2,2)
+        else
+         ax = trunc(rratio(ix+1,nx),edg)
+        endif
+        if (ny.eq.0) then
+         ay = rratio(iy+2,2)
+        else
+         ay = trunc(rratio(iy+1,ny),edg)
+        endif
+        call b2agsp (ax, ay, -1, -1, crx(ix,iy,3), cry(ix,iy,3),
+     &    fpsi(ix,iy,3), ffbz(ix,iy,3))
+       enddo
+      enddo
 
 * ..return
       call subend ()
       return
 
 *-----------------------------------------------------------------------
-*.end b2agcf
+*.end b2agcf_st
 
       end
