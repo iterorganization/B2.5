@@ -107,14 +107,15 @@ contains
   end subroutine b2ag_read_parameters_st
 
   !> Read and initialize parameters for b2ag
-  !> nC, nFc, nVx: dimensions for the B2 data structures  
-  subroutine b2ag_read_parameters(ninp,nout,nC,nFc,nVx)
+  !> nCv, nFc, nVx: dimensions for the B2 data structures  
+  subroutine b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc)
     integer, intent(in) :: ninp(0:1), nout(0:1)
-    integer, intent(out) :: nC, nFc, nVx
+    integer, intent(out) :: nCv, nFc, nVx, nCmxVx, nCmxFc
 
     !internal
     character :: id*8, cnamip*80, cvalip*80
-    integer :: nC0, nFc0, nVx0, lun=96, idum(0:2)
+    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:2), idum2(0:1), &
+        & nCmxFc0, nCmxVx0
     character*256 local_sonnet
     integer :: istyle
     logical :: streql, open_file
@@ -122,20 +123,10 @@ contains
     external xertst, ipsetc, xerrab, streql, b2agx0, ipgetc, cfverr, &
          & open_file, cfruin
 
-     !  ..call b2agx0 (ninp(0), nC, nFc, nVx) , nog issue met deze functie
-     !die verandert is, was voordien b2ag
-     call xertst (1.le.ninp(0), 'faulty argument ninp(0)')
-     !read header line
-     read (ninp(0),'(a8)',err=91) id
-     call xertst (streql(id,'*dimens'),&
-    &  'faulty input id at *dimens, id='//id)
-     !read nC, nFc, nVx
-     read (ninp(0),*,err=92) nC, nFc, nVx
-     call xertst (1.le.nC.and.1.le.nFc.and.1.le.nVx,&
-     &  'faulty input nC, nFc, nVx')
-     !--till hier b2agx0.F----
+     call b2agx0 (ninp(0), nCv, nFc, nVx) ! nog issue met deze functie
 
-     ! NOT SURE THIS IS STILL APPLICABLE, istyle == -1
+
+     ! istyle == -1
      ! means Carre grid input
      !   ..read geometry parameters parg
      read (ninp(0),'(a8)',err=93) id
@@ -161,7 +152,7 @@ contains
      write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 
      ! open geometry file and get nx, ny,... from there
-     nC0 = 0
+     nCv0 = 0
      nFc0 = 0
      nVx0 = 0
      doGhostCells = .false.
@@ -172,37 +163,41 @@ contains
          if(istyle.eq.-1) then 
             ! Carre grid input
             if (grid_version.eq."03.002.000") then
-		! read the nC, nFc and nVx van traduitoutb2us in
-                !read(lun,*) nC0,nFc0, change this, see how to read in 
-                !these fields    niso = 0
-		! obtain nC, ny from geometry file
-      	        call cfruin (lun, 3, idum, 'nC,nFc,nVx')
-                nC0 = idum(0)
+		! obtain nCv, nFc, nVx from geometry file
+      	        call cfruin (lun, 3, idum, 'nCv,nFc,nVx')
+                nCv0 = idum(0)
                 nFc0 = idum(1)
-	        nVx0 = idum(2)
+	            nVx0 = idum(2)
                 doGhostCells = .true.
+        ! obtain nCmxFc and nCmxVx from geometry file
+                call cfruin (lun, 2, idum, 'nCmxVx,nCmxFc')
+                nCmxVx0 = idum(0)
+                nCmxFc0 = idum(1) 
             !else
                 !read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
                 !doGhostCells = .true.
             end if
         end if
-        close(lun)
+        
      end if
      ! always ghostcells need to be computed however
      ! number of necessary extra, cells, faces is non trivial
 
      ! check that b2ag and geometry file sizes are compatible
-     if(nC.ne.nC0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then        
-        write(*,'(a,4i4)') 'b2ag_read_parameters: nC,nFc, nVx code and data disagree',nC,nFc,nVx,nC0,nFc0,nVx0
+     if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then        
+        write(*,'(a,4i4)') 'b2ag_read_parameters: nCv,nFc, nVx code and data disagree',nCv,nFc,nVx,nCv0,nFc0,nVx0
         stop
      endif
  
-     ! fix nC, nFc, nVx in case ghost cells are not provided
+     ! fix nCv, in case ghost cells are not provided
      if (doGhostCells) then
-        !call computeGridSizeWithGhostCells(nnx, nny, niso, nx1, ny1) 
+        rewind lun
+        nCi = nCv
+        call computeGridSizeWithGhostCells(lun,nCv,nCmxVx0,nCmxFc0, &
+              &  nCg,nCv,nCmxVx,nCmxFc) 
 	! subroutine of b2ag_ghostcells
      end if
-
+     close(lun)
 
 
      return
@@ -218,5 +213,9 @@ contains
     
 
   end subroutine b2ag_read_parameters
+
+    !-----------------------------------------------------------------------
+
+
 
 end module b2ag_parameters

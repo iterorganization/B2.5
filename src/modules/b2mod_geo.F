@@ -34,21 +34,255 @@
 
       logical, save :: b2mod_geo_allocated = .false.
 
+            type, public :: geometry_ag
+!  cell quantites
+        real (kind=R8), allocatable  :: cvBb(:,:)      ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
+        real (kind=R8), allocatable  :: cvBp(:)        ! Magnetic field in poloidal direction: (nCv)
+        real (kind=R8), allocatable  :: cvBt(:)        ! Magnetic field in toroidal direction: (nCv)
+        real (kind=R8), allocatable  :: cvX(:)         ! X-co of cell center
+        real (kind=R8), allocatable  :: cvY(:)         ! Y-co of cell center
+        real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
+        real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
+        real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
+        real (kind=R8), allocatable  :: cvQgam(:,:)    ! Temp: complementary angle between poloidal and radial directions; remove?
+        real (kind=R8), allocatable  :: cvVol(:)       ! Cell volume
+        real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
+        real (kind=R8), allocatable  :: cvBzb(:)       ! Factor for P-S/mdf flows
+        real (kind=R8), allocatable  :: cvEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+        integer (kind=R8), allocatable  :: cvCflags(:,:)  ! Cellflags 
+        integer (kind=R8), allocatable  :: cvCtype(:)     ! Celltype
+        real (kind=R8), allocatable  :: cvFpsi(:)      ! (nCv) psi at cell center
+
+!  face based quantities
+        real (kind=R8), allocatable  :: fcBb(:,:)      ! Magnetic field: (nFc,0:3) to be recomputed at cell faces (Bx,By,Bz,|B|)
+        real (kind=R8), allocatable  :: fcS(:)         ! Total cell face area
+        real (kind=R8), allocatable  :: fcHc(:,:)      ! Lengths between cell face center and neighboring cell centers ("connector" direction)
+        real (kind=R8), allocatable  :: fcHt(:)        ! Lengths along cell face ("tangential" direction)
+        real (kind=R8), allocatable  :: fcHz(:)        ! Length in third (z) direction
+        real (kind=R8), allocatable  :: fcVol(:,:)     ! Part of volume of neighboring cell centers associated with the face; for interpolation
+        real (kind=R8), allocatable  :: fcQgam(:,:)    ! Cosine (:,0) and sine (:,1) of gamma
+        real (kind=R8), allocatable  :: fcQalf(:,:)    ! Cosine (:,0) and sine (:,1) of alpha
+        real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
+        real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
+        real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
+        real (kind=R8), allocatable  :: fcBzb(:)       ! Factor for P-S/mdf flows
+        real (kind=R8), allocatable  :: fcEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+
+!  vertex quantities
+        real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
+        real (kind=R8), allocatable  :: vxBx(:)        ! Magnetic field Bx = dpsi/dx
+        real (kind=R8), allocatable  :: vxBy(:)        ! Magnetic field By = dpsi/dy
+        real (kind=R8), allocatable  :: vxX(:)         ! X-co of vertex
+        real (kind=R8), allocatable  :: vxY(:)         ! Y-co of vertex
+        real (kind=R8), allocatable  :: vxHz(:)        ! Length in third (z) direction
+        !real (kind=R8), allocatable  :: vxVol(:)       ! Part of volume of surrounding cell centers associated with the vertex; for interpolation
+        real (kind=R8), allocatable  :: vxFfbz(:)      !
+        real (kind=R8), allocatable  :: vxFpsi(:)      ! 
+        real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
+        real (kind=R8), allocatable  :: vxBzb(:)       ! Factor for P-S/mdf flows
+
+!  flux tube/surface quantities
+        real (kind=R8), allocatable  :: cvConn(:)      ! (nCv) Connection length for each CV
+        !real (kind=R8), allocatable  :: ftConn(:)      ! (nFt) Connection length for each flux tube
+        !real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio
+        !real (kind=R8), allocatable  :: ftBbav2(:)     ! (nFt) Average B**2 on the flux tube
+
+
+      end type geometry_ag
+
       contains
-      
-      subroutine alloc_b2mod_geo(nC,nFc,nVx)
+
+*********************************************************************** 
+
+      subroutine alloc_b2mod_geo(g,nCv,nFc,nVx)
+
       implicit none
-      integer nC, nFc, nVx
+      integer, intent(in) :: nCv, nFc, nVx
+      type(geometry_ag), intent(out) :: g
+
+      !cell quantities
+      allocate (g%cvBb(0:nCv-1,0:3))
+      allocate (g%cvBp(0:nCv-1))
+      allocate (g%cvBt(0:nCv-1))
+      allocate (g%cvX(0:nCv-1))
+      allocate (g%cvY(0:nCv-1))
+      allocate (g%cvSz(0:nCv-1))
+      allocate (g%cvHz(0:nCv-1))
+      allocate (g%cvHx(0:nCv-1))
+      allocate (g%cvQgam(0:nCv-1,0:1))
+      allocate (g%cvVol(0:nCv-1))
+      allocate (g%cvOnedBsq(0:nCv-1))
+      allocate (g%cvBzb(0:nCv-1))
+      allocate (g%cvEb(0:nCv-1,0:2))
+      allocate (g%cvCflags(0:nCv-1,0:4))
+      allocate (g%cvCtype(0:nCv-1))
+      allocate (g%cvFpsi(0:nCv-1))
+
+      !face quantites
+      allocate (g%fcBb(0:nFc-1,0:3)) 
+      allocate (g%fcS(0:nFc-1))
+      allocate (g%fcHc(0:nFc-1,1:2))
+      allocate (g%fcHt(0:nFc-1))
+      allocate (g%fcHz(0:nFc-1))
+      allocate (g%fcVol(0:nFc-1,1:2))      
+      allocate (g%fcQgam(0:nFc-1,0:1))
+      allocate (g%fcQalf(0:nFc-1,0:1))
+      allocate (g%fcQbet(0:nFc-1,0:1))
+      allocate (g%fcPbs(0:nFc-1))
+      allocate (g%fcPbshz(0:nFc-1))
+      allocate (g%fcBzb(0:nFc-1))
+      allocate (g%fcEb(0:nFc-1,0:2))
+
+      !vertex quantites
+      allocate (g%vxBb(0:nVx-1,0:3))
+      allocate (g%vxBx(0:nVx-1))
+      allocate (g%vxBy(0:nVx-1))
+      allocate (g%vxX(0:nVx-1))
+      allocate (g%vxY(0:nVx-1))
+      allocate (g%vxHz(0:nVx-1))
+      !allocate (g%vxVol(nVmxCv)) nVmxCv not known here
+      allocate (g%vxFfbz(0:nVx-1))
+      allocate (g%vxFpsi(0:nVx-1))
+      allocate (g%vxOnedBsq(0:nVx-1))
+      allocate (g%vxBzb(0:nVx-1))
+      
+      !flux tube quantites
+      allocate (g%cvConn(0:nCv-1))
+      !allocate (g%ftConn(0:nFt-1))
+      !allocate (g%ftEps(0:nFt-1))
+      !allocate (g%ftBbav2(0:nFt-1))
+
+      !  flux surface quantities
+      !allocate (g%fsPsi(0:nFs-1))
+
+      call initialize_b2mod_geo (g)
+
 
       b2mod_geo_allocated = .true.
 
       return
       end subroutine alloc_b2mod_geo
 
-      subroutine dealloc_b2mod_geo
+***********************************************************************
+
+      subroutine initialize_b2mod_geo (g)
+
       implicit none
+      type(geometry_ag), intent(in out) :: g
+
+      !  cell quantites
+      g%cvBb = 0._R8
+      g%cvBp = 0._R8
+      g%cvBt = 0._R8
+      g%cvX = 0._R8
+      g%cvY = 0._R8
+      g%cvSz = 0._R8
+      g%cvHz = 0._R8
+      g%cvHx = 0._R8
+      g%cvQgam = 0._R8
+      g%cvVol = 0._R8
+      g%cvOnedBsq = 0._R8
+      g%cvBzb = 0._R8
+      g%cvEb = 0._R8
+      g%cvCflags = 0
+      g%cvCtype = 0
+      g%cvFpsi = 0._R8
+
+      !  face quantites
+      g%fcBb = 0._R8
+      g%fcS = 0._R8
+      g%fcHc = 0._R8
+      g%fcHt = 0._R8
+      g%fcHz = 0._R8
+      g%fcVol = 0._R8    
+      g%fcQgam = 0._R8
+      g%fcQalf = 0._R8
+      g%fcQbet = 0._R8
+      g%fcPbs = 0._R8
+      g%fcPbshz = 0._R8
+      g%fcBzb = 0._R8
+      g%fcEb = 0._R8
+
+      !  vertex quantites
+      g%vxBb = 0._R8
+      g%vxBx = 0._R8
+      g%vxBy = 0._R8
+      g%vxX = 0._R8
+      g%vxY = 0._R8
+      g%vxHz = 0._R8
+      !g%vxVol = 0._R8
+      g%vxFfbz = 0._R8
+      g%vxFpsi = 0._R8
+      g%vxOnedBsq = 0._R8
+      g%vxBzb = 0._R8
+
+      !  flux surface quantites
+      g%cvConn = 0._R8
+      !g%ftConn = 0._R8
+      !g%ftEps = 0._R8
+      !g%ftBbav2 = 0._R8
+
+      !g%fsPsi = 0._R8
+
+      return
+      end subroutine initialize_b2mod_geo
+
+***********************************************************************
+
+      subroutine dealloc_b2mod_geo (g)
+
+      implicit none
+      type(geometry_ag), intent(in out)  :: g
+
 
       if(b2mod_geo_allocated) then
+
+      !  cell quantites
+        deallocate (g%cvBb) 
+        deallocate (g%cvX)
+        deallocate (g%cvY)
+        deallocate (g%cvSz)
+        deallocate (g%cvHz)
+        deallocate (g%cvHx)
+        deallocate (g%cvQgam)
+        deallocate (g%cvVol)
+        deallocate (g%cvOnedBsq)
+        deallocate (g%cvBzb)
+        deallocate (g%cvEb) 
+      
+      !  face quantites
+        deallocate (g%fcBb) 
+        deallocate (g%fcS)
+        deallocate (g%fcHc)
+        deallocate (g%fcHt)
+        deallocate (g%fcHz)
+        deallocate (g%fcVol)      
+        deallocate (g%fcQgam)
+        deallocate (g%fcQalf)
+        deallocate (g%fcQbet)
+        deallocate (g%fcPbs)
+        deallocate (g%fcPbshz)
+        deallocate (g%fcBzb)
+        deallocate (g%fcEb) 
+      
+      !  vertex quantites
+        deallocate (g%vxBb)
+        deallocate (g%vxX)
+        deallocate (g%vxY)
+        deallocate (g%vxHz)
+        !deallocate (g%vxVol)
+        deallocate (g%vxFfbz)
+        deallocate (g%vxFpsi)
+        deallocate (g%vxOnedBsq)
+        deallocate (g%vxBzb)
+
+      !  flux surface quantites
+        deallocate (g%cvConn)
+        !deallocate (g%ftConn)
+        !deallocate (g%ftEps)
+        !deallocate (g%ftBbav2)
+        !deallocate (g%fsPsi)
+
 
         b2mod_geo_allocated = .false.
 
@@ -56,6 +290,8 @@
 
       return
       end subroutine dealloc_b2mod_geo
+
+***********************************************************************
 
       subroutine alloc_b2mod_geo_st(nxd,nyd)
       implicit none
@@ -131,6 +367,8 @@
 
       return
       end subroutine dealloc_b2mod_geo_st
+
+***********************************************************************
 
       subroutine read_b2mod_geo(nx,ny,nread)
       use b2mod_indirect
@@ -242,6 +480,8 @@ c conn
 
       return
       end subroutine read_b2mod_geo
+
+***********************************************************************
 
       subroutine write_b2mod_geo(nwrite)
       implicit none

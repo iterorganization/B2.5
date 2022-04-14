@@ -31,34 +31,291 @@
       logical, allocatable, save ::
      *  on_closed_surface(:,:)
 
+
+      type, public :: mapping_ag
+
+        integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
+     &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
+     &             nCf, mxnCf, nx, ny
+        integer :: nnreg(0:1)
+
+        integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
+        integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers 
+        integer, allocatable :: fcCv(:,:)              ! (nFc,2) listing for every face the two corresponding cells
+        integer, allocatable :: fcVx(:,:)              ! (nFc,2) listing for every face the two corresponding vertices
+        integer, allocatable :: cvVxP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
+        integer, allocatable :: cvVx(:)                !         listing for every cell the corresponding vertex numbers        
+        integer, allocatable :: vxFcP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
+        integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
+        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
+        integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
+!       integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
+!        integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
+!        integer, allocatable :: ftFcP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftFc list and its number of cell faces
+!        integer, allocatable :: ftFc(:)                !         listing for every flux tube the corresponding cell face numbers
+!        integer, allocatable :: cvFt(:)                !         listing for every cell the corresponding flux tube
+!        integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
+!        integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
+!        integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces 
+!        integer, allocatable :: cvReg(:)               ! Region numbers of the cells
+!        integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
+!        logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
+
+!        integer, allocatable :: bcCvP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
+!        integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
+!        integer, allocatable :: bcFcP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
+!        integer, allocatable :: bcFc(:)                !         listing for each boundary condition the boundary faces
+!        real (kind=R8), allocatable :: bcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+
+!        integer, allocatable :: rcCvP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
+!        integer, allocatable :: rcCv(:,:)              !         listing for each stratum the guard cells, and the corresponding domain cells
+!        integer, allocatable :: rcFcP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcFc list, and its number of boundary faces
+!        integer, allocatable :: rcFc(:)                !         listing for each stratum the boundary faces
+!        real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+
+!        integer, allocatable :: cfCvP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfCv list, and its number of cells
+!        integer, allocatable :: cfCv(:)                !         listing for each cost function the corresponding domain cells
+!        integer, allocatable :: cfFcP(:,:)             ! (nCf,2) pointing for each cost function to the first index in the cfFc list, and its number of faces
+!        integer, allocatable :: cfFc(:)                !         listing for each cost function the corresponding faces
+!        real (kind=R8), allocatable :: cfFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+
+!        real (kind=R8), allocatable :: intfaceV(:,:)   ! volume factors for interpolation from centers to faces; currently: geo%fcVol
+!        real (kind=R8), allocatable :: intvertexV(:)   ! volume factors for interpolation from centers to vertices; currently: geo%vxVol
+!        real (kind=R8), allocatable :: intcellP(:)     ! factors for interpolation from faces to centers in poloidal direction
+!        real (kind=R8), allocatable :: intcellR(:)     ! factors for interpolation from faces to centers in radial direction
+
+!        integer, allocatable :: cvNvP(:,:)             !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
+!        integer, allocatable :: cvNv(:)                !         listing for each cell the numbers of the cells in its stencil
+
+
+        integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
+!        integer :: nncut, nctcnt                        ! some parameters related to the original grid
+        integer, allocatable :: imapCv(:,:)            ! back projection of cv indices to structured grid
+        integer, allocatable :: imapFcx(:,:)           ! back projection of fc indices for x-faces to structured grid
+        integer, allocatable :: imapFcy(:,:)           ! back projection of fc indices for y-faces to structured grid
+        integer, allocatable :: imapVx(:,:)            ! back projection of Vx indices to structured grid 
+
+        integer, allocatable :: icornVx(:)             ! corner indices; to be used in converting target information
+        integer, allocatable :: ictcntrl(:)            ! indices of central cuts; to be used in converting triangle information
+
+!        integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
+!        integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
+!        integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
+        end type mapping_ag
+
       logical, save :: b2mod_indirect_allocated = .false.
 
       contains
 
-      subroutine alloc_b2mod_indirect(nC,nFc,nVx)
+*----------------------------------------------------------------------
+      subroutine alloc_b2mod_indirect(m,nCv,nFc,nVx,nCmxVx,nCmxFc,nx,ny)
       implicit none
-      integer nC, nFc, nVx
+      
+      integer, intent(in) :: nCv, nFc, nVx, nCmxVx, nCmxFc,nx,ny
+      type(mapping_ag), intent(inout) :: m
 
       if (b2mod_indirect_allocated) return
-	
+	   allocate (m%cvFcP(0:nCv-1,0:1)) 
+      allocate (m%cvFc(0:nCmxFc-1))
+      allocate (m%fcCv(0:nFc-1,0:1))
+      allocate (m%fcVx(0:nFc-1,0:1))
+      allocate (m%cvVxP(0:nCv-1,0:1))
+      allocate (m%cvVx(0:nCmxVx-1))
+      allocate (m%vxFcP(0:nVx-1,0:1)) 
+!      allocate (m%vxFc(0:nVmxFc-1))
+      allocate (m%vxCvP(0:nVx-1,0:1))  
+!      allocate (m%vxCv(0:nVmxCv-1)) 
+!      allocate (m%ftCv(0:nCv-1))
+!      allocate (m%ftCvP(0:nFt-1,0:1))
+!      allocate (m%ftFc(0:nFc-1))
+!      allocate (m%ftFcP(0:nFt-1,0:1))
+!      allocate (m%cvFt(0:nCv-1))
+!      allocate (m%fsFc(0:nFc-1))
+!      allocate (m%fsFcP(0:nFs-1,0:1))
+!      allocate (m%fcReg(0:nFc-1))
+!      allocate (m%cvReg(0:nCv-1))
+!      allocate (m%ftReg(0:nFt-1))
+!      allocate (m%cvOnClosedSurface(0:nCv-1))
+      
+!      allocate (m%intfaceV(0:nFc-1,0:1))
+!      allocate (m%intvertexV(nCmxVx * nCv))
+!      allocate (m%intcellP(0:nCmxFc-1))
+!      allocate (m%intcellR(0:nCmxFc-1))
+
+!      allocate (m%cvNvP(0:nCv-1,0:1))
+!      allocate (m%cvNv(0:nCmxNv-1))
+
+      if (m%isClassicalGrid.eq.1) then
+        allocate (m%imapCv(-1:nx,-1:ny))
+        allocate (m%imapFcx(-1:nx,-1:ny))
+        allocate (m%imapFcy(-1:nx,-1:ny))
+        allocate (m%imapVx(-1:nx,-1:ny))
+        allocate (m%icornVx(1:nx))
+#ifdef WG_DEBUG
+!        allocate (imapCv(-1:nx,-1:ny))
+!        allocate (imapFcx(-1:nx,-1:ny))
+!        allocate (imapFcy(-1:nx,-1:ny))
+!        allocate (imapVx(-1:nx,-1:ny))
+#endif
+      else
+        allocate (m%imapCv(0,0))
+        allocate (m%imapFcx(0,0))
+        allocate (m%imapFcy(0,0))
+        allocate (m%imapVx(0,0))
+        allocate (m%icornVx(0))
+#ifdef WG_DEBUG
+!        allocate (imapCv(0,0))
+!        allocate (imapFcx(0,0))
+!        allocate (imapFcy(0,0))
+!        allocate (imapVx(0,0))
+#endif
+      endif
+
+!      allocate (m%fcLbl(0:nFc-1))
+!      allocate (m%ftLbl(0:nFt-1))
+!      allocate (m%cvLbl(0:nCv-1))
+
+
+      call initialize_mapping_ag (m)
+
+!      write (*,*) '=================================='
+!      write (*,*) 'Mapping allocated'
+!      write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
+!      write (*,*) 'nFc, nVx, nFt', m%nFc, m%nVx, m%nFt
+!      write (*,*) 'nFs'          , m%nFs
+!      write (*,*) 'nCmxVx, nCmxFc', m%nCmxVx, m%nCmxFc
+!      write (*,*) 'nVmxCv, nVmxFc', m%nVmxCv, m%nVmxFc
+!      write (*,*) '=================================='
+
+
+
       b2mod_indirect_allocated = .true.
 
       return
       end subroutine alloc_b2mod_indirect
 
-      subroutine dealloc_b2mod_indirect
+*----------------------------------------------------------------------
+      subroutine initialize_mapping_ag(m)
+
       implicit none
+      type(mapping_ag), intent(inout) :: m
+
+      m%cvFcP = 0 
+      m%cvFc = 0
+      m%fcCv = 0
+      m%fcVx = 0
+      m%cvVxP = 0
+      m%cvVx = 0
+      m%vxFcP = 0 
+!      m%vxFc = 0
+      m%vxCvP = 0  
+!      m%vxCv = 0 
+!      m%ftCv = 0
+!      m%ftCvP = 0
+!      m%ftFc = 0
+!      m%ftFcP = 0
+!      m%cvFt = 0
+!      m%fcReg = 0
+!      m%cvReg = 0
+!      m%ftReg = 0
+!      m%cvOnClosedSurface = .false.
+      
+!      m%intfaceV = 0._R8
+!      m%intvertexV = 0._R8
+!      m%intcellP = 0._R8
+!      m%intcellR = 0_R8
+
+!      m%cvNvP = 0
+!      m%cvNv = 0
+
+      if (m%isClassicalGrid.eq.1) then
+        m%imapCv = 0
+        m%imapFcx = 0
+        m%imapFcy = 0
+        m%imapVx = 0
+        m%icornVx = 0
+#ifdef WG_DEBUG
+!        imapCv = 0
+!        imapFcx = 0
+!        imapFcy = 0
+!        imapVx = 0
+#endif
+       endif
+
+!      m%fcLbl = 0
+!      m%ftLbl = 0
+!      m%cvLbl = 0
+
+      write (*,*) '=================================='
+      write (*,*) 'Mapping initialized'
+      write (*,*) '=================================='
+
+      return
+
+      end subroutine initialize_mapping_ag
+
+*----------------------------------------------------------------------    
+      subroutine dealloc_b2mod_indirect(m)
+
+      implicit none
+      type(mapping_ag), intent(in out) :: m
       
 
       if (b2mod_indirect_allocated) then
 
-	b2mod_indirect_allocated = .false.
+      deallocate (m%cvFcP) 
+      deallocate (m%cvFc)
+      deallocate (m%fcCv)
+      deallocate (m%fcVx)
+      deallocate (m%cvVxP)
+      deallocate (m%cvVx)
+      deallocate (m%vxFcP) 
+!      deallocate (m%vxFc) 
+      deallocate (m%vxCvP)  
+!      deallocate (m%vxCv) 
+!      deallocate (m%ftCv)
+!      deallocate (m%ftCvP)
+!      deallocate (m%ftFc)
+!      deallocate (m%ftFcP)
+!      deallocate (m%cvFt)
+!      deallocate (m%fcReg)
+!      deallocate (m%cvReg)
+!      deallocate (m%ftReg)
+!      deallocate (m%cvOnClosedSurface)
+
+!      deallocate (m%intfaceV) 
+!      deallocate (m%intvertexV) 
+!      deallocate (m%intcellP) 
+!      deallocate (m%intcellR)   
+
+!      deallocate (m%cvNvP)
+!      deallocate (m%cvNv)  
+    
+      deallocate (m%imapCv)
+      deallocate (m%imapFcx)  
+      deallocate (m%imapFcy)  
+      deallocate (m%imapVx)  
+      deallocate (m%icornVx)
+!      if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
+#ifdef WG_DEBUG
+!     deallocate (imapCv)
+!     deallocate (imapFcx)
+!      deallocate (imapFcy)
+!     deallocate (imapVx)
+#endif
+
+!      deallocate (m%fcLbl)
+!      deallocate (m%ftLbl)
+!      deallocate (m%cvLbl)
+
+	   b2mod_indirect_allocated = .false.
 
       endif
 
       return
       end subroutine dealloc_b2mod_indirect
 
+*----------------------------------------------------------------------
       subroutine alloc_b2mod_indirect_st(nxd,nyd,nncutmax)
       implicit none
       integer nxd,nyd,nncutmax
@@ -120,6 +377,7 @@
       return
       end subroutine dealloc_b2mod_indirect_st
 
+*----------------------------------------------------------------------
 ! For the ghost cell at position (ix,iy), get the face index
 ! on which the neighbour internal cell is connected
       integer function ghostGetBndFace(nx, ny, ix, iy)

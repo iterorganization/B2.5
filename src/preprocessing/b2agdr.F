@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agdr (ninp, nout, nC, nFc, nVx)
+      subroutine b2agdr (ninp, nout, nCv, nFc, nVx,g,m)
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -15,7 +15,9 @@
       use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1), nout(0:1), nC, nFc, nVx
+      integer ninp(0:1), nout(0:1), nCv, nFc, nVx, nx, ny, nx1, ny1
+      type(geometry_ag) g
+      type(mapping_ag) m
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -288,42 +290,53 @@
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
      &             1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
-*   ..test nC, nFc, nVx
-      call xertst (1.le.nC.and.1.le.nFc.and.1.le.nVx,
-     & 'faulty argument nC, nFc, nVx')
+*   ..test nCv, nFc, nVx
+      call xertst (1.le.nCv.and.1.le.nFc.and.1.le.nVx,
+     & 'faulty argument nCv, nFc, nVx')
 *   ..set output control
       idout = '....'
 
 * ..initialise the geometry
       redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
-!WP- b2ag_us
-!      call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
-!*   ..use parg, obtain isymm and lblgm
-!      call b2xxid ('b2ag', lblgm(1:60))
-!      call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
-!*!!   Be careful about the use of (nx,ny) in b2agsi: the mesh will also
-!*!!   be generated with dimensions (nx1,ny1).
-!*   ..obtain grid and mhd equilibrium data from file
-!      call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
+      call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
+*   ..use parg, obtain isymm and lblgm
+       call b2xxid ('b2ag', lblgm(1:60))
+       call b2agsi (parg, isymm, lblgm(61:120), istyle)
+       !STARTING FROM HERE nx1, ny1 ARE USED IN STRUCTURED FORMAT
+*   ..obtain grid and mhd equilibrium data from file
+      call b2agfs(ninp(1),nCv,nFc,nVx,istyle,lblgm,g,m)
+!      call b2agfs (ninp(1),nCv,nFc,nVx,nx,ny,nx1,ny1,istyle,
 !     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
 !     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
 !     3 topix1,topiy1,bottomix1,bottomiy1,
 !     4 leftcut1,rightcut1,bottomcut1,topcut1,
 !     5 periodic_bc,nncut,nncutmax)
+
+      ! Try to define regions in Make_traduitoub2us
 !      call init_region(nx1,ny1,nncut,nncutmax,
 !     1 leftcut1,rightcut1,topcut1,bottomcut1,
 !     2 leftix1,leftiy1,rightix1,rightiy1,
 !     3 topix1,topiy1,bottomix1,bottomiy1,
 !     4 region1,nnreg,resignore1,crx1,cry1,periodic_bc,cflags1)
+
+      ! b2gavg1 from b2mod_geo2
 !      write(*,*) 'b2agdr0: Average bb1(:,:,0) ',
 !     . b2gavg1(nx1,ny1,bb1(-1:nx1,-1:ny1,0))
-!*   ..echo lblgm
-!      write (nout(0),'(/2x,a)') 'label for geometry'
-!      write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
+
+
+*   ..echo lblgm
+      write (nout(0),'(/2x,a)') 'label for geometry'
+      write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
+
+
 !*   ..compute geometry and flux/field functions on auxiliary mesh
 !*   ..if not provided already by Carre grid
 !      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+       !if(istyle.ge.0) call b2agcf ()
+
+
 !*   ..compute metric coefficients on auxiliary mesh
+       ! call b2agmt()
 !      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
 !     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
 !     & cell_width1, cell_height1,

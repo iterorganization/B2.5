@@ -13,12 +13,12 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   crx0, cry0, psi0, fbz0
-      integer ostyle
-*   ..input arguments (unchanged on exit) for entry b2agsi
+      integer ostyle   
+*   ..input arguments (unchanged on exit) for entry b2agsi(_st)
       integer nx, ny
       real (kind=R8) ::
      *   parg(0:*)
-*   ..output arguments (unspecified on entry) for entry b2agsi
+*   ..output arguments (unspecified on entry) for entry b2agsi(_st)
       integer isymm
       character lblgm1*60
 *   ..common block
@@ -44,7 +44,7 @@
 *     on the unit square (boundary cells are handled differently, see
 *     the calling routine). This routine implements that function.
 *     The transformation may depend on certain numerical parameters
-*     that have been passed to the alternate entry b2agsi in the array
+*     that have been passed to the alternate entry b2agsi(_st) in the array
 *     parg.
 *
 *     The principal input argument to b2agsp is the representation
@@ -101,9 +101,9 @@
 *     In the case of cylindrical symmetry,
 *       bz = fbz0/(2*pi*cry0) .
 *
-*     (parameters for alternate entry b2agsi)
+*     (parameters for alternate entry b2agsi(_st))
 *
-*     nx, ny - integer, input.
+*     nx, ny - integer, input. (only for b2agsi_st)
 *     nx and ny specify the number of interior cells along the first
 *     and the second coordinate, respectively. The total number of
 *     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
@@ -223,7 +223,7 @@
 *     Description of some local variables:
 *
 *     init - logical.
-*     init is true iff the initialisation entry b2agsi has been called.
+*     init is true iff the initialisation entry b2agsi_st has been called.
 *
 *     The values of shift2 and sqz are computed in order to get the
 *     correct shape of the separatrix. The parameters shift1 and cpsi
@@ -253,7 +253,7 @@
 *   ..subprogram start-up calls
       call subini ('b2agsp')
 *   ..test init
-      call xertst (init, 'b2agsi has not been called')
+      call xertst (init, 'b2agsi_st has not been called')
 *   ..test ax, ay
       call xertst (-0.5_R8.le.ax.and.ax.le.1.5_R8 .and.
      &  -0.5_R8.le.ay.and.ay.le.1.5_R8, 'faulty argument ax or ay')
@@ -417,15 +417,15 @@
       return
 
 *-----------------------------------------------------------------------
-*.entry b2agsi
+*.entry b2agsi_st
 
-      entry b2agsi (nx, ny, parg, isymm, lblgm1, ostyle)
+      entry b2agsi_st (nx, ny, parg, isymm, lblgm1, ostyle)
 
 *-----------------------------------------------------------------------
 *.computation
 
 *   ..subprogram start-up calls
-      call subini ('b2agsi')
+      call subini ('b2agsi_st')
 *   ..set isymm
       isymm = 1
       call ipgeti('b2agsi_isymm',isymm)
@@ -492,7 +492,63 @@
       return
 
 *-----------------------------------------------------------------------
-*.end b2agsi/b2agsp
+*.end b2agsi_st/b2agsp
+* entry b2agsi
+
+      entry b2agsi (parg, isymm, lblgm1, ostyle)
+
+*-----------------------------------------------------------------------
+*.computation
+
+*   ..subprogram start-up calls
+      call subini ('b2agsi')
+*   ..set isymm
+      isymm = 1
+      call ipgeti('b2agsi_isymm',isymm)
+      call xertst (0.le.isymm .and. isymm.le.4,'faulty argument isymm')
+*   ..set parameters that depend on parg(0)
+      if (nint(parg(0)).eq.parg(0)) then
+       lblgm1 = 'ASDEX-UPGRADE(1.65m,2.0T)SN, 1997 CONFORMAL MAP'
+       istyle = nint(parg(0))
+       ostyle = istyle
+       dxa0 = parg(1)
+       dxa1 = parg(2)
+       dxb = parg(3)
+       dxm = parg(4)
+       dxc = parg(5)
+       dxd1 = parg(6)
+       dxd0 = parg(7)
+       dya = parg(8)
+       dym = parg(9)
+       dyb = parg(10)
+       wid = parg(11)
+       sdiva0 = parg(12)
+       sdiva1 = parg(13)
+       sdivd0 = parg(14)
+       sdivd1 = parg(15)
+      else
+       call xerrab ('faulty argument parg(0)')
+      endif
+*   ..invert w2=-ii to find wm0
+      w1 = (-ii-shift1)/(1.0_R8+conjg(shift1)*ii)
+      wm0 = (2.0_R8/pi)*ii*log(1.0_R8+(w1+ii)*ii/snl)
+*   ..invert w2=ii to find wm1, xm, ym
+      w1 = (ii-shift1)/(1.0_R8-conjg(shift1)*ii)
+      wm1 = (2.0_R8/pi)*ii*log(1.0_R8+(w1+ii)*ii/snl)
+      xm = real(wm1-wm0)
+      ym = aimag(wm1-wm0)
+*   ..live with a Sun f77 (1992, SC1.0) compiler error
+*     (!! using 'f77 -fast' or 'f77 -O' on the Sparc it turns out that,
+*     without the following no-op call to dummyz, the variable wm0 is
+*     mistaken for a scalar temporary and is not stored, even though it
+*     occurs in a save statement. The first call to dummyz ensures that
+*     wm0 will be stored. The second call is for reasons of symmetry.)
+      call dummyz (wm0)
+      call dummyz (wm1)
+*   ..initialise /b2cmgs/
+      nlreg = 0
+
+*end b2agsi/b2agsp
 
       end subroutine b2agsp
 

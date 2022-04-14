@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmt (nx, ny, isymm, crx, cry,
+      subroutine b2agmt_st (nx, ny, isymm, crx, cry,
      & fpsi, bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
      & rightix, rightiy, topix, topiy, cflag)
@@ -37,7 +37,7 @@
 *
 *  1. purpose
 *
-*     B2AGMT computes the metric coefficients given the locations of
+*     B2AGMT_st computes the metric coefficients given the locations of
 *     cell vertices.
 *
 *
@@ -169,14 +169,14 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2agmt')
+      call subini ('b2agmt_st')
 *   ..read input data
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_style', style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..test nx, ny, isymm
-      !call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
 
@@ -206,7 +206,7 @@
         cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
         select case (cgeo)
         case(CGEO_BROKEN)
-          write(*,*) 'Problem in b2agmt: broken cell', ix,iy
+          write(*,*) 'Problem in b2agmt_st: broken cell', ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
           call xerrab('Broken cell geometry')
@@ -400,7 +400,7 @@ cwdk      4) centroid: average between the intersections with faces
         end select
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
-     1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
+     1     'Problem in b2agmt_st: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
@@ -607,7 +607,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
         if(qc(ix,iy,0).le.0.0_R8) then
           write(*,'(a,1f12.6,2i5)') 
-     1     'Problem in b2agmt: qc(ix,iy,0) <= 0',qc(ix,iy,0),ix,iy
+     1     'Problem in b2agmt_st: qc(ix,iy,0) <= 0',qc(ix,iy,0),ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
           write(*,*) "Cell geometry is ", cgeo
@@ -799,7 +799,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
         if(qc(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1f12.6,2i4)')
-     1     'Problem in b2agmt: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
+     1     'Problem in b2agmt_st: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
           write(*,'(a,4f13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,4f13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
@@ -925,6 +925,6 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
       return
 
 *-----------------------------------------------------------------------
-*.end b2agmt
+*.end b2agmt_st
 
-      end subroutine b2agmt
+      end subroutine b2agmt_st
