@@ -579,7 +579,7 @@ contains
 
     integer :: i, cellnumber, cvFcpos, cvVxpos, nGhostCell
     !integer :: facenumbers(0:nGhostCell-1)
-    integer, allocatable :: facenumbers(:)
+    integer :: facenumbers(0:nnCv-1)  ! too big 
 
 
     call logmsg(LOGDEBUG, "create_guard_cells:entering")
@@ -592,9 +592,8 @@ contains
     ! cvVx and cvVxP changes here
     ! in cflags(:,1) guard_cell gets flag == GRID_GUARD
     nGhostCell = nCv - nnCv
-    
     ! change cvFcP and cvVxP
-    do i = nnCv+1, nCv
+    do i = nnCv, nCv-1
        m%cvFcP(i,1) = 1
        m%cvFcP(i,0) = m%cvFcP(i-1,0) + m%cvFcP(i-1,1)
 
@@ -604,29 +603,29 @@ contains
     
     ! change cvFc
     ! create list of boundary faces
-    call get_boundary_faces(facenumbers,g,m,nGhostCell)
+    call get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
 
     do i = 0, nGhostCell-1
        cellnumber = nnCv + i 
-       cvFcpos = m%cvFcP(cellnumber,0)
+       cvFcpos = m%cvFcP(cellnumber,0)-1
        m%cvFc(cvFcpos) = facenumbers(i) 
 
-       cvVxpos = m%cvVxP(cellnumber,1)
+       cvVxpos = m%cvVxP(cellnumber,0)-1
        m%cvVx(cvVxpos) = m%fcVx(facenumbers(i),0)
        m%cvVx(cvVxpos+1) = m%fcVx(facenumbers(i),1)
     enddo
 
     ! change cvCflags(:,0), cvCtype, cvX, cvY
-    do i = nnCv+1, nCv
+    do i = nnCv, nCv-1
        g%cvCflags(i,0) = GRID_GUARD
        g%cvCtype(i) = GRID_GUARD
        !iface = m%cvFc(m%cvFc(i,0)) ! just one face
-       g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,0): &
-           &    m%cvVxP(i,0)+m%cvVxP(i,1)-1)))
-       g%cvY(i) = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,0): &
-           &    m%cvVxP(i,0)+m%cvVxP(i,1)-1)))
-       !g%cvFpsi(i) = 0.5_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(i,0): &
-       !    &    m%cvVxP(i,0)+m%cvVxP(i,1)-1)))      
+       g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,0)-1: &
+           &    m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1))
+       g%cvY(i) = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,0)-1: &
+           &    m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1))
+       !g%cvFpsi(i) = 0.5_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(i,0)-1: &
+       !    &    m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1))      
     enddo
 
     ! calculate cvFpsi , cvBt and cvBp in routine carre_b2agbb in b2agfs.f
@@ -637,35 +636,38 @@ contains
   contains
     
     ! Give a list of the boundary faces
-    subroutine get_boundary_faces(facenumbers,g,m,nGhostCell)
+    subroutine get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
       use b2mod_geo
       use b2mod_indirect
 
-      integer, intent(in) :: nGhostCell
+      integer, intent(in) :: nGhostCell, nnCv
       integer, intent(out) :: facenumbers(0:nGhostCell-1)
       type(mapping_ag) :: m 
       type(geometry_ag) :: G
 
       !internal
       integer :: i, j, counter, facesQuad(0:3), facesTria(0:2)
+      logical :: Bface
       
-      counter = 1
-      do i = 0, m%nCv-1
-          if (g%cvCflags(i,1).eq.GRID_BOUNDARY) then
+      counter = 0
+      do i = 0, nnCv-1
+          if (g%cvCflags(i,0).eq.GRID_BOUNDARY) then
              if (g%cvCtype(i).eq.0) then  !Quad
-               facesQuad = m%cvFc(m%cvFcP(i,1): &
-                 &   m%cvFcP(i,1)+m%cvFcP(i,2)-1)
-               do j = 0, 3 
-                  if (isBoundaryFace(facesQuad(j))) then
+               facesQuad = m%cvFc(m%cvFcP(i,0)-1: &
+                 &   m%cvFcP(i,0)-1+m%cvFcP(i,1)-1)-1
+               do j = 0, 3
+                  Bface = isBoundaryFace(facesQuad(j))
+                  if (Bface) then
                      facenumbers(counter) = facesQuad(j)
                      counter = counter+1
                   endif
                enddo
              else !Triangle
-               facesTria = m%cvFc(m%cvFcP(i,1): &
-                 &   m%cvFcP(i,1)+m%cvFcP(i,2)-1)
+               facesTria = m%cvFc(m%cvFcP(i,0)-1: &
+                 &   m%cvFcP(i,0)-1+m%cvFcP(i,1)-1)-1
                do j = 0,2
-                 if (isBoundaryFace(facesTria(j))) then
+                 Bface = isBoundaryFace(facesTria(j))
+                 if (Bface) then
                     facenumbers(counter) = facesTria(j)
                     counter = counter+1
                  endif
@@ -683,15 +685,17 @@ contains
       integer :: counter
 
       counter = 0
-
-      do i = 0, m%nCmxFc
-         if (m%cvFc(i).eq.iface) then
+      ! count how many times iface is present in cvFc
+      do i = 0, m%nCmxFc-1
+         if ((m%cvFc(i)-1).eq.iface) then
              counter = counter +1
          endif 
       enddo
-
+      ! if the face is present once, it is a boundary face
       if (counter.eq.1) then
          isBoundaryFace = 1
+      else
+         isBoundaryFace = 0
       endif 
 
     end function isBoundaryFace
