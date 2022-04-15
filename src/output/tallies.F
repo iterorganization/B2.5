@@ -178,20 +178,20 @@
      1         (1.5_R8*fna_32(ix,iy,0,0,is)+
      1          2.5_R8*fna_52(ix,iy,0,0,is))*
      2         (rza(leftix(ix,iy),leftiy(ix,iy),is)+
-     2          rza(ix,iy,is))/2.0_R8         
+     2          rza(ix,iy,is))/2.0_R8
             endif
             if (bottomiy(ix,iy).ne.-2) then
               qconviyreg(region(ix,iy,2),is)=
      1         qconviyreg(region(ix,iy,2),is)+
      1         (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,1,1,is)+2.5_R8*fna_52(ix,iy,1,1,is))         
+     1         (1.5_R8*fna_32(ix,iy,1,1,is)+2.5_R8*fna_52(ix,iy,1,1,is))
               qconveyreg(region(ix,iy,2))=
      1         qconveyreg(region(ix,iy,2))+
      1         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8*
      1         (1.5_R8*fna_32(ix,iy,1,1,is)+
      1          2.5_R8*fna_52(ix,iy,1,1,is))*
      2         (rza(bottomix(ix,iy),bottomiy(ix,iy),is)+rza(ix,iy,is))
-     2         /2.0_R8                  
+     2         /2.0_R8
             endif
           enddo
           fhixreg(region(ix,iy,1))=fhixreg(region(ix,iy,1))+

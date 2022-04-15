@@ -481,6 +481,13 @@ cxpb-end
         idum(0)=redef_pbs
         call cfwuin (nput, 1, idum, 'redef_pbs')
       endif
+      if(newversion.ge.'01.001.028') then
+        call cfwuin (nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+      endif
+      if(newversion.ge.'01.001.033') then
+        call cfwure (nput, n2, cell_width, 'cell_width')
+        call cfwure (nput, n2, cell_height, 'cell_height')
+      endif
 * ..return
       call subend ()
       return

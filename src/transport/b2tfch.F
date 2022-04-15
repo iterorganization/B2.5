@@ -4,12 +4,13 @@
       subroutine b2tfch (nx, ny, ns, ismain, ismain0,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
      1  vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,     !xpb
-     1  ti, ni, na, fna, uadia, vedia,
-     2  ua, fne_32, fne_52, csig, csigin,                                !xpb
+     1  ti, ni, na, fna, uadia,
+     2  ua, fne_32, fne_52, csig, csigin, csig_stoch,                    !xpb !srv 24.08.21
      &  chce, chve, chci, calf, chvemx, cvsa_cl,
      &  fch, conc, fchstoch, fchdia,                                     !srv 17.12.13 16.10.17
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
-     1  avisper, bvisper, cvisper, fchvisper, csig_cl)
+     1  avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,
+     &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)      !srv 08.09.21
       use b2mod_types
       use b2mod_math
       use b2mod_rates
@@ -32,10 +33,9 @@
      & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),    !xpb
      & qs(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      & ua(-1:nx,-1:ny,0:ns-1),
-     & vedia(-1:nx,-1:ny,0:1,0:1),
      & fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
      1 csig(-1:nx,-1:ny,0:1,0:1), chci(-1:nx,-1:ny,0:1,0:1),
-     & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1),                   	 !xpb
+     & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1),                        !xpb
      & chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
      & calf(-1:nx,-1:ny,0:1,0:1), chvemx(-1:nx,-1:ny),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),      !srv 16.10.17
@@ -44,17 +44,25 @@
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
      4 csig_cl(-1:nx,-1:ny,0:1,0:1)
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny,0:1,0:1)                  !lk 31.01.08 } 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  fch(-1:nx,-1:ny,0:1,0:1), 
+     &  fchanml_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                           !srv 08.09.21 {
+     &  fchinert_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fchvisper_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fchvisq_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                           !srv 08.09.21 }
+     *  fch(-1:nx,-1:ny,0:1,0:1),
      &  conc(-1:nx,-1:ny,0:1,0:1),
      2  fchdia(-1:nx,-1:ny,0:1,0:1),
      3  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),      !xpb srv 10.06.08
      4  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
-     5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
+     5  avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     6  cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisper(-1:nx,-1:ny,0:1,0:1),
      7  fchvisq(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),        !srv 25.11.08
-     &  fchstoch(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1,0:1)
+     &  fchstoch(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1,0:1)         !srv 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -79,16 +87,16 @@
       real (kind=R8), save :: fch_inert = 1.0e0_R8                      !lk 31.01.08 {
       real (kind=R8), save :: dia_cur = 1.0e0_R8                        !srv 17.05.99
       real (kind=R8), save :: vis_q = 1.0e0_R8                          !srv 11.07.99
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                         !lk 31.01.08 }
+      real (kind=R8), save :: prl_cur = 1.0_R8, phm2 = 1.0_R8           !srv 15.10.18
       real (kind=R8) ::
      *   ehx, ehy, flomx,
      &   tex, ehx_po, ehy_po,
-     1   floe0, flo_vedia, prefactor, floe0_nd,
-     1   cone0, cone0_nd, t0, t0_nd, tex0, tex0_nd
+     1   floe0, floe0_nd, cone0, cone0_nd, t0, t0_nd, tex0, tex0_nd     !srv 15.10.18
       real (kind=R8) :: facdriftm, fac_ExBm                             !srv 23.12.19
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
      * ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1), zeff(-1:nx,-1:ny)  !srv 13.01.17
+      character chns*3                                                  !srv 08.09.21
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
 *   ..procedures
@@ -96,7 +104,7 @@
       external b2xvsg, b2xvff, b2xvfx, intcor
 *   ..initialisation
       data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,    !xpb
-     * vis_par/0.0_R8/, no_current/0/, conduction_only/0/,
+     * vis_par/1.0_R8/, no_current/0/, conduction_only/0/,
      1 vis_per/0.0_R8/, no_hybr/0/, pot_eq/1/, sig_stoch/1.0_R8/
 
 *-----------------------------------------------------------------------
@@ -149,6 +157,8 @@
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
+       call ipgetr ('b2sifr_phm2', phm2)                                !srv 15.10.18
+       call ipgetr ('b2tfhe_prl_cur', prl_cur)                          !srv 15.10.18
       endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -196,19 +206,21 @@ c Drift terms
       call b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, vol, hx, hy, qz, qs, bb, ua, cvsa_cl,
-     &             fac_vis,                                              !srv 20.09.06 16.10.17
-     &             fchvispar)
+      call b2tvspa(nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,          !srv 19.02.21
+     &             na, ua, cvsa_cl, fac_vis,                             !srv 20.09.06 16.10.17 !som 18.08.21
+     &             fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, fac_vis, vol, hx, hy, qz, bb,             !srv 10.10.17
-     & po, ti, na, avisper, bvisper, cvisper, fchvisper)
+      call b2tvspr(nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
+     &             vol, po, ti, na,
+     &             avisper_a, bvisper_a, cvisper_a,
+     &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
-      call b2tvsq (nx, ny, ns, fac_vis,                                  !srv 10.10.17
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
      &             ne2, lnlam, te, ti, ni, chci,
-     &             fchvisq)
+     &             fchvisq_a, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
-      call b2tiner (nx, ny, ns, vol, gs, hx, hy, qs, bb, na, ua,         !srv 22.11.12
-     &              facdrift, fchinert)
+      call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb,         !srv 22.11.12 08.09.21 }
+     &              na, ua, facdrift, fchinert_a, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)       !srv 07.07.14
@@ -236,30 +248,19 @@ c Drift terms
               ehx_po = 0.0_R8
             else
               ehx = ehx_(ix,iy,0)                                        !srv 13.01.17
-              ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
+              ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))      !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             if (conduction_only.eq.1) then
               floe0_nd = 0.0_R8
-              flo_vedia=0
             else
               floe0_nd = (1.5_R8+BoRiS)*fne_32(ix,iy,0,0)+
      1         2.5_R8*fne_52(ix,iy,0,0)+
      &         chve(ix,iy,0,0)*
      1         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
-              prefactor=
-     1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
-     &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
-     &         *(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
-              if (drift_style.eq.0) then
-                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0,0) + 
-     1            vedia(leftix(ix,iy),leftiy(ix,iy),0,0))
-              else
-                flo_vedia=prefactor*vedia(ix,iy,0,0)
-              endif
             endif
-            floe0 = floe0_nd+2.5_R8*flo_vedia
+            floe0 = floe0_nd
             if (no_hybr.eq.0) then
               cone0    = hybr(floe0   ,chce(ix,iy,0,0))-abs(floe0/2)
               cone0_nd = hybr(floe0_nd,chce(ix,iy,0,0))-abs(floe0_nd/2)
@@ -282,16 +283,36 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             endif
             tex0    = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0,0) = fch_p(ix,iy,0,0)                            !srv 13.01.17
+            if (style.eq.0) then                                         !srv 15.10.18 {
+              fch_p(ix,iy,0,0) =
+     &         ((csig(ix,iy,0,0)-csig_an(ix,iy,0,0))*ehx-
+     &         phm2*calf(ix,iy,0,0)*tex0)*prl_cur
+              fch(ix,iy,0,0) = ((csig(ix,iy,0,0)-
+     &         csig_an(ix,iy,0,0))*ehx-
+     &         phm2*calf(ix,iy,0,0)*tex0)*prl_cur
+     &       +fch_anomalous*(csig_an(ix,iy,0,0)*ehx_po-
+     &                  phm2*calf_an(ix,iy,0,0)*tex0)*prl_cur
      &       +fchdia(ix,iy,0,0)+fchin(ix,iy,0,0)+fchvispar(ix,iy,0,0)    !xpb
      &       +fchvisper(ix,iy,0,0)
+            else                                                         !srv 15.10.18 }
+              fch(ix,iy,0,0) = fch_p(ix,iy,0,0)                          !srv 13.01.17
+     &       +fchdia(ix,iy,0,0)+fchin(ix,iy,0,0)+fchvispar(ix,iy,0,0)    !xpb
+     &       +fchvisper(ix,iy,0,0)
+            endif                                                        !srv 15.10.18
             fch_32(ix,iy,0,0) = csig_cl(ix,iy,0,0)*ehx
      1       +fchin(ix,iy,0,0)+fchvispar(ix,iy,0,0)
      &       +fchvisper(ix,iy,0,0)
-            fch_52(ix,iy,0,0) = csig_an(ix,iy,0,0)*ehx_po
-     &                       -calf(ix,iy,0,0)*tex0_nd
+            if (style.eq.0) then
+              fch_52(ix,iy,0,0) =
+     &           fch_anomalous*(csig_an(ix,iy,0,0)*ehx_po
+     &                         -calf_an(ix,iy,0,0)*tex0_nd)
+     &                         -calf(ix,iy,0,0)*tex0_nd
+            else
+              fch_52(ix,iy,0,0) = csig_an(ix,iy,0,0)*ehx_po
+     &                           -calf(ix,iy,0,0)*tex0_nd
+            end if
             conc(ix,iy,0,0) = csig(ix,iy,0,0)
-            if(fch_ion_neutral.ne.0.0_R8 .and.
+            if(fch_ion_neutral.ne.0.0_R8 .and.                           !xpb
      &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
               do is = 0, ns-1
                 if (.not.is_neutral(is) .and. nint(zn(is)).eq.1) then
@@ -336,19 +357,19 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fch_52(ix,iy,1,1)=csig_an(ix,iy,1,1)*ehy_po-calf(ix,iy,1,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
             conc(ix,iy,1,1) = csig(ix,iy,1,1)
-            if(fch_ion_neutral .ne. 0.0_R8 .and.
+            if(fch_ion_neutral.ne.0.0_R8 .and.                           !xpb
      &        (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then        !srv 23.12.19
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
                     if (is_neutral(is0)) conc(ix,iy,1,1) =
-     .               conc(ix,iy,1,1)  + csigin(ix,iy,1,1,is,is0)         !xpb
+     .               conc(ix,iy,1,1) + csigin(ix,iy,1,1,is,is0)          !xpb
                   enddo
                 endif
               enddo
             endif
             if(fch_stochastic.ne.0.0e0_R8 ) then                         !lk 31.01.08 {
-              conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy)
+              conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy,1,1)
             endif                                                        !lk 31.01.08 }
           endif                                                          !xpb
         enddo
@@ -437,28 +458,57 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,fchin(-1,-1,1,1),'b2tfch_fchiny')
        call my_out(70,nx,ny,fchvispar(-1,-1,0,0),'b2tfch_fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1,1),'b2tfch_fchvispary')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,0,0),'b2tfch_fchvisqx')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,1,1),'b2tfch_fchvisqy')
+       call my_out(70,nx,ny,fchvisq(-1,-1,0,0),'b2tfch_fchvisqx')
+       call my_out(70,nx,ny,fchvisq(-1,-1,1,1),'b2tfch_fchvisqy')
        call my_out(70,nx,ny,fchvisper(-1,-1,0,0),'b2tfch_fchvisperx')
        call my_out(70,nx,ny,fchvisper(-1,-1,1,1),'b2tfch_fchvispery')
-!       call my_out(70,nx,ny,fchinert(-1,-1,0,0),'b2tfch_fchinertx')
-!       call my_out(70,nx,ny,fchinert(-1,-1,1,1),'b2tfch_fchinerty')
+       call my_out(70,nx,ny,fchinert(-1,-1,0,0),'b2tfch_fchinertx')
+       call my_out(70,nx,ny,fchinert(-1,-1,1,1),'b2tfch_fchinerty')
        call my_out(70,nx,ny,fchdia(-1,-1,0,0),'b2tfch_fchdiax')
        call my_out(70,nx,ny,fchdia(-1,-1,1,1),'b2tfch_fchdiay')
 !       call my_out(70,nx,ny,fchanml(-1,-1,0,0),'b2tfch_fchanmlx')
 !       call my_out(70,nx,ny,fchanml(-1,-1,1,1),'b2tfch_fchanmly')
+       call my_out(70,nx,ny,fchstoch(-1,-1,1),'fchstochy')           !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0,0),'b2tfch_concx')
        call my_out(70,nx,ny,conc(-1,-1,1,1),'b2tfch_concy')
        call my_out(70,nx,ny,fch_p(-1,-1,0,0),'b2tfch_fch_px')
        call my_out(70,nx,ny,fch_p(-1,-1,1,1),'b2tfch_fch_py')
-       call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch_avisperx')
-       call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch_avispery')
-       call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch_bvisperx')
-       call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
-       call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
-       call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
-       call my_out(70,nx,ny,fchstoch(-1,-1,1),'fchstochy')           !lk 31.01.08 24.08.21
-      endif                                                          !srv 18.06.08 }
+       do is = 0,ns-1                                                    !srv 08.09.21
+        write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,avisper_a(-1,-1,0,is),
+     &  'b2tfch_avisper_ax'//chns)
+        call my_out(70,nx,ny,avisper_a(-1,-1,1,is),
+     &  'b2tfch_avisper_ay'//chns)
+        call my_out(70,nx,ny,bvisper_a(-1,-1,0,is),
+     &  'b2tfch_bvisper_ax'//chns)
+        call my_out(70,nx,ny,bvisper_a(-1,-1,1,is),
+     &  'b2tfch_bvisper_ay'//chns)
+        call my_out(70,nx,ny,cvisper_a(-1,-1,0,is),
+     &  'b2tfch_cvisper_ax'//chns)
+        call my_out(70,nx,ny,cvisper_a(-1,-1,1,is),
+     &  'b2tfch_cvisper_ay'//chns)
+!        call my_out(70,nx,ny,fchanml_a(-1,-1,0,0,is),
+!                             'b2tfch_fchanml_ax'//chns)
+!        call my_out(70,nx,ny,fchanml_a(-1,-1,1,1,is),
+!                             'b2tfch_fchanml_ay'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,0,0,is),
+     &                      'b2tfch_fchinert_ax'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,1,1,is),
+     &                      'b2tfch_fchinert_ay'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,0,0,is),
+     &                      'b2tfch_fchvispar_ax'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,1,1,is),
+     &                      'b2tfch_fchvispar_ay'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,0,0,is),
+     &                      'b2tfch_fchvisper_ax'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,1,1,is),
+     &                      'b2tfch_fchvisper_ay'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,0,0,is),
+     &                      'b2tfch_fchvisq_ax'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,1,1,is),
+     &                      'b2tfch_fchvisq_ay'//chns)
+       enddo                                                             !srv 08.09.21 }
+      endif                                                              !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

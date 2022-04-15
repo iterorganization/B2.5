@@ -20,7 +20,7 @@ c Program to solve the heat diffusion equation in 2 dimensions
 
       integer iwall, is
       integer bndx(isize)
-      real (kind=R8) :: qin, qel
+      real (kind=R8) :: qpl, qex
       real (kind=R8) :: Q(isize), Tp(isize,ndepth_nml)
 
       external xertst
@@ -31,33 +31,25 @@ c Program to solve the heat diffusion equation in 2 dimensions
 
       do iwall = 1, isize
         bndx(iwall) = xymap(list_x(iwall),list_y(iwall))
-        qin =
-     .   max(0.0_R8,isign*(fhi(ixf(iwall),iyf(iwall),idir,idir)+
-     .                     fhi_ext(ixf(iwall),iyf(iwall),idir,idir)))/
+        qpl =
+     .   max(0.0_R8,isign*(fht(ixf(iwall),iyf(iwall),idir,0)+
+     .                     fht(ixf(iwall),iyf(iwall),idir,1)))/
      .   area(iwall)
-        do is=0,ns-1
-         qin=qin+max(0.0_R8,isign
-     &        *fna(ixf(iwall),iyf(iwall),idir,idir,is))
-     &        *((kinrgy(list_x(iwall),list_y(iwall),is)+
-     &           ti(list_x(iwall),list_y(iwall)))*(1.0_R8-BoRiS) +
-     &          rpt(ixf(iwall),iyf(iwall),is)*ev)
-     &        /area(iwall)
-        enddo
+        qex =
+     .   max(0.0_R8,isign*(fhi_ext(ixf(iwall),iyf(iwall),idir,0)+
+     .                     fhi_ext(ixf(iwall),iyf(iwall),idir,1)))/
+     .   area(iwall)
         do is=0,ns_ext-1
-         qin=qin+max(0.0_R8,isign
-     &    *fa_ext(ixf(iwall),iyf(iwall),idir,idir,is))
+         qex = qex +
+     &    max(0.0_R8,isign*(fa_ext(ixf(iwall),iyf(iwall),idir,0,is)+
+     &                      fa_ext(ixf(iwall),iyf(iwall),idir,1,is)))
      &    *((0.5_R8*am_ext(is)*mp*
      &       ua_ext(list_x(iwall),list_y(iwall),is)**2+
      &       ta_ext(list_x(iwall),list_y(iwall),is))*(1.0_R8-BoRiS) +
      &      pt_ext(ixf(iwall),iyf(iwall),is)*ev)
      &    /area(iwall)
         enddo
-        qel =
-     .   max(0.0_R8,isign*(fhe(ixf(iwall),iyf(iwall),idir,idir)+
-     .                     fne(ixf(iwall),iyf(iwall),idir,idir)*
-     .                     te(list_x(iwall),list_y(iwall))*
-     .                    (1.0_R8-BoRiS)))/area(iwall)
-        Q(iwall)=qin+qel
+        Q(iwall)=qpl+qex
         Tp(iwall,1:ndepth_nml) = target_temp(bndx(iwall),1:ndepth_nml)
       enddo
 

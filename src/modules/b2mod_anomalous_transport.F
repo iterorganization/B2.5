@@ -63,9 +63,9 @@
       return
       end subroutine alloc_b2mod_anomalous_transport
 
-      subroutine read_b2mod_anomalous_transport(nxd,nyd,nsd,nread)
+      subroutine read_b2mod_anomalous_transport(nxd,nyd,nread)
       implicit none
-      integer :: nxd,nyd,nsd,nread
+      integer :: nxd,nyd,nread
       real (kind=R8) :: cloc(-1:nxd,-1:nyd,0:1)
       external cfrure, cfrure_opt
 

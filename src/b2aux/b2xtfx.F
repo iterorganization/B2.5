@@ -270,6 +270,7 @@
         fx1(0:nx1,topcut1(1):ny1-1) = fa1(0:nx1,topcut(1):ny1-1)*
      .   (hyy(0:nx1,topcut1(1):ny1-1)*qc1(0:nx1,topcut1(1):ny1-1))
 *     ..region 2 : limiter SOL : top row (including eastern edge)
+        fa(0:nx,ny) = fx(0:nx,ny)
         call E01BEF(nx+1,xx(0:nx),fa(0:nx,ny),d,ifail)
         call E01BFF(nx+1,xx(0:nx),fa(0:nx,ny),d,
      .              nx1+1,xx1(0:nx1),fx1(0:nx1,ny1),ifail)

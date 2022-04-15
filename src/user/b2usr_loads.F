@@ -1,7 +1,7 @@
 C
 CVK CORRECT CALCULATION OF THE HEAT LOADS IN B2
 C
-      subroutine b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
+      subroutine b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
@@ -15,7 +15,7 @@ C
       IMPLICIT NONE
 #     include <DIMENSIONS.F>
 
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, nxtl, nxtr
       real (kind=R8) :: BoRiS
 
       INTEGER,PARAMETER :: NTRGM=DEF_NCUT
@@ -85,7 +85,11 @@ C AREAS OF THE SURFACE ELEMENTS
             strg(iy,j)=gs(k+l,iy,0)
           end do
           call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the Eirene arrays
-          if(shift(j).lt.0) then
+          if(shift(j).eq.-1) then
+            write(*,*) "Error in b2usr_loads: the EIRENE data "//
+     w                 "is apparently missing. ",
+     w                 "No neutral fluxes will be calculated."
+          else if(shift(j).lt.0) then
             write(*,*) "Error in b2usr_loads: the EIRENE data on "//
      w                 "neutral fluxes is incorrect. ",
      w                 "No neutral fluxes will be calculated."
@@ -102,22 +106,22 @@ C AREAS OF THE SURFACE ELEMENTS
       l=0
       do j=1,ntrgs !{
         k=ltrgpos(j)
-        call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
+        call b2neut_eng(wnutrg(0,j),wnutpr(0,j),
+     .                  ny,shift(j))
         wtarg_max(j)=0.0_R8
         do iy=0,ny-1
-          hlp=abs(fhe(k+l,iy,0,0)+fhi(k+l,iy,0,0)+fhi_ext(k+l,iy,0,0))
-          do is=0,ns-1
-            hlp=hlp+abs(fna(k+l,iy,0,0,is)*(rpt(k,iy,is)*ev+
-     .                 (1.0_R8-BoRiS)*kinrgy(k,iy,is)))
-          end do
+          hlp=abs(fht(k+l,iy,0,0)+fhi_ext(k+l,iy,0,0)+
+     .            fht(k+l,iy,0,1)+fhi_ext(k+l,iy,0,1))
           do is=0,ns_ext-1
-            hlp=hlp+abs(fa_ext(k+l,iy,0,0,is)*(pt_ext(k,iy,is)*ev+
-     .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
-     .                  ua_ext(k,iy,is)**2))
+            hlp=hlp+abs((fa_ext(k+l,iy,0,0,is)
+     .                  +fa_ext(k+l,iy,0,1,is))*(pt_ext(k,iy,is)*ev+
+     .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
+     .                  ua_ext(k,iy,is)**2+ta_ext(k,iy,is))))
           end do
           hlp=hlp/strg(iy,j)
           wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
-          if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)
+          if(wtarg(iy,j).gt.wtarg_max(j))
+     .     wtarg_max(j)=wtarg(iy,j)
 csw 02jan2017 corrected flip of l variable (i.e.put it AFTER iy loop)
         end do
         l=1-l

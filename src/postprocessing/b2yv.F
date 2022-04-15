@@ -14,6 +14,7 @@
       use b2mod_ma28
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_b2cmfs
       use b2mod_elements
       use b2mod_xerset
 #ifdef WINDOWS
@@ -38,7 +39,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer :: icase, ix, iy, isymm, is
+      integer :: icase, ix, iy, is
       integer :: lbc, ubc, lbr, ubr
       real(kind=R4), allocatable :: M(:,:)
       character(1) :: key

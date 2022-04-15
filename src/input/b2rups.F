@@ -37,7 +37,7 @@
      &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhePSch(-1:nx,-1:ny,0:1,0:1),
-     &  fhiPSch(-1:nx,-1:ny,0:1,0:1), 
+     &  fhiPSch(-1:nx,-1:ny,0:1,0:1),
      &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1,0:1), fhe_eir(-1:nx,-1:ny,0:1,0:1),
      &  fhi_eir(-1:nx,-1:ny,0:1,0:1),
@@ -451,7 +451,7 @@
         call cfrure (nget, n2*4, fch_p, 'fch_p')
       elseif(b2fstat_version.ge.'01.001.069') then               !srv 09.09.11
         fch_p = 0.0_R8
-	call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
+        call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.025' .and.
      &       b2fstat_version.le.'01.001.031') then  ! clash between 5.0/1 and 5.2
 ! cxpb This code looks strange but the idea is that cfrure_opt will fail and rewind
@@ -653,10 +653,10 @@
         fna_eir = fna
         fhe_eir = fhe
         fhi_eir = fhi
-        fna_32(:,:,:,:,0)=fna(:,:,:,:,0)
-        fna_32(:,:,:,:,1)=0.0_R8
-        fna_52(:,:,:,:,0)=0.0_R8
-        fna_52(:,:,:,:,1)=fna(:,:,:,:,1)
+        fna_32(:,:,:,0,:)=fna(:,:,:,0,:)
+        fna_32(:,:,:,1,:)=0.0_R8
+        fna_52(:,:,:,0,:)=0.0_R8
+        fna_52(:,:,:,1,:)=fna(:,:,:,1,:)
         call b2xpfi (nx, ny, ns, fna_32, fni_32)
         call b2xpfi (nx, ny, ns, fna_52, fni_52)
         call b2xpfe (nx, ny, ns, 0, qe,

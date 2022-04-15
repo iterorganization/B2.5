@@ -21,10 +21,10 @@ c     the line format common
       real (kind=R8) :: xlod,xhid,ylod,yhid
       logical aspect,colorbar, physical
       integer linlog
-      real range,xmid,ymid,ceil,txtwdth,
+      real range,xmid,ymid,ceil,txtwdth,yframe,
      1 reserve_bottom,reserve_top,reserve_left,reserve_right,
      2 test,test1
-      integer ix,iy,n_page,itxtwdth,lnblnk,
+      integer ix,iy,n_page,itxtwdth,lnblnk,offset,
      1 nox,noxm,nfmtx,nnox,
      2 noy,noym,nfmty,nnoy
       real (kind=R8) :: rratio
@@ -94,11 +94,12 @@ c     the line format common
         ylo=ymid-range/2.0/ny_page*yheight
         yhi=ymid+range/2.0/ny_page*yheight
       endif
-      xsize=xwidth/real(nx_page)
-      ysize=yheight/real(ny_page)
-      if(globalheader.ne.' ') then
-        ysize=ysize*(1.00-0.02*lbsz)
+      yframe=yheight
+      if(.not.streql(globalheader,' ')) then
+        yframe=yframe*(1.00-0.02*glsz)
       endif
+      xsize=xwidth/real(nx_page)
+      ysize=yframe/real(ny_page)
       xpos=(ix_page-1)*xsize
       ypos=(ny_page-iy_page)*ysize
 
@@ -162,10 +163,14 @@ c     the line format common
       n_page=max(nx_page,ny_page)
       itxtwdth=max(nint(12*lbsz/N_PAGE),4)
       txtwdth=real(rratio(itxtwdth,1024),R4)
+      offset=0
+      if(nx_page.gt.ny_page) offset=1
+      if(nx_page/ny_page.gt.3) offset=offset+((nx_page/ny_page)-1)/2
+      if(ny_page/nx_page.gt.3) offset=offset+1
 
       if(noax.gt.0) then
         reserve_bottom=txtwdth*5/ysize
-        reserve_top=txtwdth*6/ysize
+        reserve_top=txtwdth*(4+2*offset)/ysize
         reserve_left=txtwdth*(nfmty+3)/xsize
         reserve_right=0.0
         if(target.and.physical) then
@@ -187,7 +192,7 @@ c     the line format common
           reserve_right=reserve_right+0.02
         endif
         if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
-     .    txtwdth*2/ysize
+     .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
       else
         reserve_bottom=0.0
@@ -275,7 +280,8 @@ c     the line format common
       if(.not.streql(extralabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0) then
-          CALL PLCHHQ(0.5,1.0-txtwdth*4*n_page,
+          CALL PLCHHQ(0.5,
+     1     1.0-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
      1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
      1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
         endif

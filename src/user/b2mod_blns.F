@@ -402,25 +402,30 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
 ! Count fluid neutrals if not coupled to Eirene
                 if (is_neutral(is).and.use_eirene.eq.0) then
                   flxnc(ls) = flxnc(ls) +
-     .             bsign*fna(ixf,iyf,idir,idir,is)
+     .             bsign*(fna(ixf,iyf,idir,0,is)+
+     .                    fna(ixf,iyf,idir,1,is))
                 else if (.not.is_neutral(is)) then ! not neutral
-                  if (mdf_fnb .eq. 0 .and. style_b2mndt .eq. 0) then
+                  if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
                     flxic(ls) = flxic(ls) +
-     .               bsign*fna(ixf,iyf,idir,idir,is)
+     .               bsign*(fna(ixf,iyf,idir,0,is)+
+     .                      fna(ixf,iyf,idir,1,is))
                   else
                     flxic(ls) = flxic(ls) +
-     .               bsign*fna_mdf(ixf,iyf,idir,idir,is)
+     .               bsign*(fna_mdf(ixf,iyf,idir,0,is)+
+     .                      fna_mdf(ixf,iyf,idir,1,is))
                   endif
                   if(debug_flags(90).gt.0) then
                     hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .               bsign*fna(ixf,iyf,idir,idir,is)
+     .               bsign*(fna(ixf,iyf,idir,0,is)+
+     .                      fna(ixf,iyf,idir,1,is))
                   endif
                 endif    ! if (is_neutral(is)) ...
               else if (idir.eq.1) then      ! radial wall boundary
 
                 if (is_neutral(is).and.use_eirene.eq.0) then
                   flxnw(ls) = flxnw(ls) +
-     &             bsign*fna(ixf,iyf,idir,idir,is)
+     &             bsign*(fna(ixf,iyf,idir,0,is)+
+     &                    fna(ixf,iyf,idir,1,is))
 
                   if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
      &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
@@ -428,11 +433,13 @@ c***        NFLUIDS(ls) is the number of charges states (== B2 plasma fluids) co
                 else if (.not.is_neutral(is)) then
 
                   flxiw(ls) = flxiw(ls) +
-     &             bsign*fna(ixf,iyf,idir,idir,is)
+     &             bsign*(fna(ixf,iyf,idir,0,is)+
+     &                    fna(ixf,iyf,idir,1,is))
 c<<<
                   if(debug_flags(90).gt.0) then
                     hlp_pls(ic,ls)=hlp_pls(ic,ls) +
-     .               bsign*fna(ixf,iyf,idir,idir,is)
+     .               bsign*(fna(ixf,iyf,idir,0,is)+
+     .                      fna(ixf,iyf,idir,1,is))
                   endif
                 endif
 
@@ -440,22 +447,26 @@ c<<<
 
                 if (is_neutral(is).and.use_eirene.eq.0) then
                   flxnt(ls) = flxnt(ls) +
-     &             bsign*fna(ixf,iyf,idir,idir,is)
+     &             bsign*(fna(ixf,iyf,idir,0,is)+
+     &                    fna(ixf,iyf,idir,1,is))
 
                   if (BCCON(is,ic) .eq. 5) flxnp(ls) = flxnp(ls) +
      &              CONPAR(IS,IC,1) * gs(ixf,iyf,idir)
 
                 else if (.not.is_neutral(is)) then
                   flxit(ls) = flxit(ls) +
-     &             bsign*fna(ixf,iyf,idir,idir,is)
+     &             bsign*(fna(ixf,iyf,idir,0,is)+
+     &                    fna(ixf,iyf,idir,1,is))
 
                   if(debug_flags(90).gt.0) then
 
                     hlpit_lp(ls) = hlpit_lp(ls) +
-     .               bsign*fna(ixf,iyf,idir,idir,is)
+     .               bsign*(fna(ixf,iyf,idir,0,is)+
+     .                      fna(ixf,iyf,idir,1,is))
 
                     hlp_pls(ic,ls) = hlp_pls(ic,ls) +
-     .               bsign*fna(ixf,iyf,idir,idir,is)
+     .               bsign*(fna(ixf,iyf,idir,0,is)+
+     .                      fna(ixf,iyf,idir,1,is))
                   endif
                 endif
 

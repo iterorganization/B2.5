@@ -24,9 +24,9 @@
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1)
+     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
+     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny)
@@ -62,7 +62,7 @@
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
 *     See the calling routine for description.
 *
-*     ne, ni, pr, ro, rz, fne, fni - (-1:nx,-1:ny) real*8 array, input.
+*     ne, ni, pr, ro, rz, fne, fni - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0, wrk1 - (-1:nx,-1:ny) real*8 array, workspace.

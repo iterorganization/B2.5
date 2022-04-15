@@ -18,6 +18,9 @@
       use b2mod_external
       use b2mod_geo
      , , only : hz, vol                                                 !srv 05.07.17
+      use b2mod_balance                                                 !djm Jun2019
+     & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
+     &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
       use b2mod_openmp
       use b2mod_subsys
 #ifdef WITH_FTIMINGS
@@ -187,36 +190,38 @@
 !$OMP& REDUCTION(+: smbfrial)
 #endif
       do is = 0, ns-1
-       if(isb.ne.is .and. 
+        if(isb.ne.is .and.
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
-        KabVp=fkabvp(isb,is)
+         KabVp=fkabvp(isb,is)
 *     ..contribution from friction between ions
-        do iy = 0, ny-1
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-           coef = phm0*rz2(ix,iy,isb)*rz2(ix,iy,is)*
+         do iy = 0, ny-1
+          do ix = 0, nx-1
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
+            coef = phm0*rz2(ix,iy,isb)*rz2(ix,iy,is)*
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
-           t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction)
-           if (styl0.eq.0) then
-             smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)-coef*t0
-           else if (styl0.eq.1) then
-             smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-
-     &                           coef*t0/roxa(ix,iy,isb)
-           else if (styl0.eq.2) then
-             smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+coef*t0*ua(ix,iy,is)/
-     &                       roxa(ix,iy,isb)
-             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-coef*t0/
-     &                       roxa(ix,iy,isb)
+            t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+            !$omp critical (ionfriction)
+            if (styl0.eq.0) then
+              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
+     &         coef*t0*ua(ix,iy,is)
+              smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
+            else if (styl0.eq.1) then
+              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
+     &         coef*t0*ua(ix,iy,is)
+              smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &         roxa(ix,iy,isb))
+            else if (styl0.eq.2) then
+              smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+
+     &         coef*t0*ua(ix,iy,is)/roxa(ix,iy,isb)
+              smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &                       roxa(ix,iy,isb))
+            endif
+            !$omp end critical (ionfriction)
            endif
-             !$omp end critical (ionfriction)
-          endif
+          enddo
          enddo
-        enddo
-       endif
+        endif
       enddo
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP END PARALLEL DO
@@ -281,45 +286,46 @@
 !$OMP& REDUCTION(+: smbtfial)
 #endif
       do is = 0, ns-1
-       if(isb.ne.is .and.
-     &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
-        Kabtf = fkabtf(isb,is)
-        Kbatf = fkabtf(is,isb)
-        ka    = fka(isb)
-        kb    = fka(is)
-        KabVp = fkabvp(isb,is)
+         if(isb.ne.is .and.
+     &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
+          Kabtf = fkabtf(isb,is)
+          Kbatf = fkabtf(is,isb)
+          ka    = fka(isb)
+          kb    = fka(is)
+          KabVp = fkabvp(isb,is)
 
-        do iy = 0, ny-1
-         do ix = 0, nx-1
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-c      .. calculations could be simplified
-c      .. but we did not do it in order to have the same formulae as manual
-           calfab = zetap(ix,iy)/sqrt(mp)*
-     &          qe*(na(ix,iy,isb)+na(ix,iy,is))*
-     &          sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
-     &         (Kabtf(ix,iy)/kb(ix,iy)-Kbatf(ix,iy)/ka(ix,iy))*
-     &          bb(ix,iy,0)/bb(ix,iy,3)
-           coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
-     &          mp/(zetap(ix,iy)*qe)
-           delti=
-     &       (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
-c   .. apply flux limit
-           if(cflim(4).ne.0.0_R8.and..not.on_closed_surface(ix,iy)) then
-             jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
-     &        (na(ix,iy,isb)+na(ix,iy,is))
-             t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-             fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
-           else
-             fllim_al_ab = 1.0_R8
-           endif
+          do iy = 0, ny-1
+           do ix = 0, nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+c        .. calculations could be simplified
+c        .. but we did not do it in order to have the same formulae as manual
+             calfab = zetap(ix,iy)/sqrt(mp)*
+     &            qe*(na(ix,iy,isb)+na(ix,iy,is))*
+     &            sqrt(am(isb)*am(is)/(am(isb)+am(is)))*
+     &           (Kabtf(ix,iy)/kb(ix,iy)-Kbatf(ix,iy)/ka(ix,iy))*
+     &            bb(ix,iy,0)/bb(ix,iy,3)
+             coef = phm3*rz2(ix,iy,isb)*rz2(ix,iy,is)*calfab*
+     &            mp/(zetap(ix,iy)*qe)
+             delti=
+     &         (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+c   .... apply flux limit
+             if(cflim(4).ne.0.0_R8.and.
+     &         .not.on_closed_surface(ix,iy)) then
+               jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
+     &          (na(ix,iy,isb)+na(ix,iy,is))
+               t0 = abs(calfab*delti)/(cflim(4)*jabmax)
+               fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+             else
+               fllim_al_ab = 1.0_R8
+             endif
 
-           t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+             t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
      &                              ((na(ix,iy,isb)+na(ix,iy,is)))*delti
-           smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
-          endif
-         enddo
-        enddo
-       endif
+             smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
+            endif
+           enddo
+          enddo
+         endif
       enddo
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP END PARALLEL DO
@@ -334,6 +340,21 @@ c   .. apply flux limit
       smbfrea = smbfreal
       smbtfia = smbtfial
       smbtfea = smbtfeal
+
+      if (balance_netcdf.ne.0) then !djm Jun2019
+        do iy=-1,ny
+          do ix =-1,nx
+            b2sifr_smofria0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbfria(ix,iy,0:3)
+            b2sifr_smofrea0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbfrea(ix,iy,0:3)
+            b2sifr_smotfia0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbtfia(ix,iy,0:3)
+            b2sifr_smotfea0to3(ix,iy,0:3,isb)=vol(ix,iy)*hz(ix,iy)*
+     &                                        smbtfea(ix,iy,0:3)
+          enddo
+        enddo
+      endif
 
       if (iout.ne.0) then !  .or. iout_b2wdat.eq.4) then                !srv 05.07.17
         write (chns,'(i3.3)') isb

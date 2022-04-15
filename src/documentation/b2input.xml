@@ -776,7 +776,7 @@
 					*----------------------------------------------------
 					*        | -14   |  +   |  -   |  +   |  +   |  +   |
 					*----------------------------------------------------
-        </description>
+				</description>
 			</switch>
 			<switch>
 				<name>b2mndr_cpu</name>
@@ -1063,7 +1063,7 @@
 		<category name="Physics">
 			<switch>
 				<name>b2siav_addvis</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier to heat flux contribution to divergence of viscosity tensor in the momentum equation.
@@ -1152,6 +1152,15 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2tanml_anml_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the subdivision between all ions of the anamalous current is applied. The SOLPS5.2 physics model is used.
+					Otherwise the total anamalous current (summed over all ions) is assigned to main ions.
+				</description>
+			</switch>
 			<switch>
 				<name>b2news_ExB</name>
 				<default>0.0</default>
@@ -1516,6 +1525,14 @@
 					If secmodel.eq.1, then the secondary electron emission coefficient at the plates is computed locally according to a kinetic model, otherwise the default values of cbsch(7,ireg) and/or gammae are used.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_boundary_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. All files must be present.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2stbr_sputtering...</name>
 				<description>
@@ -1539,7 +1556,11 @@
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation.
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used).
 					Therm_evap turns on thermal evaporation when .gt.0.0 and is a multiplier to the thermal evaporation rate.
-					Redep_alpha is the multiplier to the reduction of the sputtering yield due to prompt redeposition. The promptly redeposited species is counted as eroded-then-deposited species.
+					Redep_alpha is the multiplier to the reduction of the sputtering yield due to prompt redeposition. The promptly redeposited species is counted as eroded-then-deposited species. If redep_alpha is positive, the formula used for the prompt redeposition fraction is from R. Dux et al., Nucl. Fusion 51 (2011) 053002:
+					  f_{prompt} = 1/(1 + &alpha;*(l_{ion}/&rho;_W)^2).
+					If redep_alpha is negative, the formula used is from D. Tskhakaya et al., JNM 463 (2015) 624:
+					  f_{prompt} = 1/(1 + abs(&alpha;)*(l_{ion}/&rho;_i)*(T_i/T_e) ).
+					In this case, the recommended value is abs(redep_alpha)=0.01. This formula is meant for tungsten when l_{ion} is less than 5 * &rho;_i.
 				</description>
 				<switch>
 					<name>b2stbr_plate_model</name>
@@ -1739,7 +1760,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-				    vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -1905,6 +1926,24 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tvspr_visper_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the subdivision of the viscosity ion perpendicular current is applied for all ions. The SOLPS5.2 physics model is used.
+					Otherwise the viscosity ion perpendicular current will be non zero only for main ions.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tvspr_dia_lim_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the limitation of the diamagnatic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
+					Otherwise the limitation is not applied.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sifr_phm0</name>
 				<default>1.0</default>
 				<type>real</type>
@@ -2050,6 +2089,15 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2tfnb_dia_lim_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the limitation of the diamagnetic velocity is applied for all ions. The SOLPS5.2 physics model is used.
+					Otherwise the restriction is applied for all ions except of main ions and the limit velocity is by the factor bx smaller.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2tlc0_*</name>
 				<description>
@@ -2232,7 +2280,7 @@
 			</switch>
 			<switch>
 				<name>b2stel_phm0</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier of the sources due to atomic physics.
@@ -2296,6 +2344,14 @@
 				<type>integer</type>
 				<description>
 					If '1', use constant density in core region to calculate anomalous conductivity sig0=dfsig*qe*ne(nmdpl,-1), nmdpl - number of midplane cell. If '0', use sig0=dfsig*qe*ne(x,y)
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_cvsa_style</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1', only the parallel ion classical contribution to the viscosity is multiplied by 4/3. If '0', all components (ions and neutrals, parallel and perpendicular) are multiplied by 4/3.
 				</description>
 			</switch>
 			<switch>
@@ -3123,6 +3179,15 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>b2stbr_sna_corr</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2stbr_eir_src_nhist</name>
 				<default>1</default>
 				<type>integer</type>
@@ -3316,11 +3381,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2upco_c_corr_core_dn</name>
+				<name>b2trcl_csig_mltpl</name>
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Smoothing parameter for the pressure correction on closed field lines.
+					Multiplier to the electrical conductivity between guard cells along the core boundary. A large value helps to damp numerical instabilities in the potential when drifts are turned on and the electron density and temperature are kept constant along the core boundary.
 				</description>
 			</switch>
 			<switchgroup>
@@ -3515,6 +3580,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbr_taumax</name>
+				<default>0.05</default>
+				<type>real</type>
+				<description>
+					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbr_c_pumpavr</name>
+				<default>0.02</default>
+				<type>real</type>
+				<description>
+					Underrelaxation parameter to compute the artificial source in the method of effective sources for code speed-up.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbr_first_flight_no_of_flights</name>
 				<default>9</default>
 				<type>integer</type>
@@ -3662,6 +3743,14 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>nrings_for_no_speedup_averaging</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of poloidal rings in the confined region (counted from the separatrix towards the core boundary) where the speed-up method of the partial flux surface averaging (CORR_CORE_DN and CORR_CORE_DT) should not be used.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbc_istyle_cur_contr_on_S_and_N</name>
 				<default>2</default>
 				<type>integer</type>
@@ -3718,6 +3807,7 @@
 				<description>
 				  If  0, the SOLPS5.0 physics model is used, by calling the b2news routine.
 				  If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
+				  If -1, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
 				</description>
 			</switch>
 			<switch>
@@ -3900,6 +3990,7 @@
 				<type>real</type>
 				<description>
 					Main under-relaxation parameter.
+					Setting this switch to zero prevents updating of the principal code quantities.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4316,6 +4407,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tiner_inert_all_ions</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1 the subdivision between all ions of the inertia current is applied. The SOLPS5.2 physics model is used.
+					Otherwise the total inertia current (summed over all ions) is assigned to main ions.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfnb_poleldr</name>
 				<default>1.0</default>
 				<type>real</type>
@@ -4427,11 +4527,11 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
+					When fix_recomb is changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
 					This term includes the bremsstrahlung.
-					The default option ('0') only contains the bremsstrahlung for the is--&gt;is-1 process.
-					This option should be used with the 'b2stel_fix_recomb_energy' option b2mn.dat set to '1'. See 'Physics' section.
-					*** Use with caution! ***
+					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
+					The correction is only applied for isonuclear sequences with nuclear charge up to zmax_recomb, inclusive.
+					Use of this option is still experimental!
 				</description>
 			</switch>
 			<switchgroup>
@@ -5593,7 +5693,7 @@
 						 4 : prescribe the value of the density, weakly a mixed boundary condition, CONPAR(,,1) specifies the required density in m<sup>-3</sup> and CONPAR(,,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the particle flux per unit area, CONPAR(,,1) specifies the required particle flux density in m<sup>-2</sup>.s<sup>-1</sup>
 						 6 : prescribe the total particle flux for a constant density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>
-						 7 : prescribe the density as a function of other plasma parameters [not yet available]
+						 7 : prescribe the given profile of density from the bv_na.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>
 						 9 : prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in metres (should use type 15 instead when drifts are turned on)
 						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>
@@ -5633,7 +5733,7 @@
 						 4 : prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup> and MOMPAR(,,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the parallel momentum flux per unit area, MOMPAR(,,1) specifies the parallel momentum flux density in N.m<sup>-2</sup>
 						 6 : prescribe the total parallel momentum flux for a constant parallel velocity [not yet available]
-						 7 : prescribe the parallel momentum as a function of other plasma parameters [not yet available]
+						 7 : prescribe the given profile of parallel velocity from the bv_ua.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : special : limited shear, imposes zero gradient for the Mach number. [[[Eventually intended to have MOMPAR(,,1) specify the gradient of the Mach number in m<sup>-1</sup>]]]
 						 9 : prescribe the total parallel momentum flux with constant flux density, MOMPAR(,,1) specifies the parallel momentum flux in N
 						10 : prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m
@@ -5644,6 +5744,7 @@
 						15 : prescribe the value of the parallel velocity, scaled with B_average/B_local
 						16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
 						17 : leakage option for parallel momentum, MOMPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s,a</sub> m<sub>a</sub> n<sub>a</sub> u<sub>a</sub>
+						18 : parallel momentum radial sheath loss
 				</description>
 			</switch>
 			<switch>
@@ -5658,7 +5759,7 @@
 						 4 : prescribe the value of the electron temperature, weakly a mixed boundary condition, ENEPAR(,1) specifies the temperature in eV and ENEPAR(,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the electron energy flux per unit area, ENEPAR(,1) specifies the energy flux density in W.m<sup>-2</sup>
 						 6 : prescribe the total electron energy flux for a constant electron temperature, ENEPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
-						 7 : prescribe the electron temperature as a function of other plasma parameters [not yet available]
+						 7 : prescribe the electron temperature profile from the bv_te.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total electron heat flux with constant flux density, ENEPAR(,1) specifies the energy flux in W
 						 9 : prescribe the decay length for the electron temperature, ENEPAR(,1) specifies the decay length in m (can also use type [19] instead)
 						 10 : feedback option for core, ENEPAR(,1) not used, derived from cbshe(0,coreregno)
@@ -5691,7 +5792,7 @@
 						 4 : prescribe the value of the ion temperature, weakly a mixed boundary condition, ENIPAR(,1) specifies the temperature in eV and ENIPAR(,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the ion energy flux per unit area, ENIPAR(,1) specifies the energy flux density in W.m<sup>-2</sup>
 						 6 : prescribe the total ion energy flux for a constant ion temperature, ENIPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
-						 7 : prescribe the ion temperature as a function of other plasma parameters [not yet available]
+						 7 : prescribe the ion temperature profile from the bv_ti.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total ion heat flux with constant flux density, ENIPAR(,1) specifies the energy flux in W
 						 9 : prescribe the decay length for the ion temperature, ENIPAR(,1) specifies the decay length in m (can also use type [19] instead)
 						10 : feedback option for core, ENIPAR(,1) not used, derived from cbshi(0,ISMAIN,coreregno)
@@ -5728,13 +5829,14 @@
 						 4 : prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the current flux density per unit area, POTPAR(,1) specifies the electric current flux density in A.m<sup>-2</sup>
 						 6 : prescribe the total current flux density for a constant potential [not yet available]
-						 7 : prescribe the potential as a function of other plasma parameters [not yet available]
+						 7 : prescribe the given profile of potential from the bv_po.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total electric current with constant flux density, POTPAR(,1) specifies the electric current in A
 						 9 : prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m
 						10 : feedback option for core [not yet tested!!!!!!!!!] (based on using cbsch(0,coreregno))
 						11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
 						12 : Imposes the currents due to drifts for the South core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+						14 : Prescribe the value of the radial sheath potential, POTPAR(,1), in V
 						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
 							Still experimental, will not work for drift cases.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
@@ -6635,6 +6737,14 @@
 				<type>logical</type>
 				<description>
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
+				</description>
+			</switch>
+			<switch>
+				<name>ADD_TE_CORR_TO_PO</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					If .true. (default), adds dte(ix,iy)/qe to the potential correction after the internal energy balance equations are solved, where dte(ix,iy) is the electron temperature correction on the time step. Individually set for each region index.
 				</description>
 			</switch>
 		</category>

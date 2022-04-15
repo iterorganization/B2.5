@@ -4,6 +4,7 @@
       subroutine b2yidr (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_rates
@@ -310,8 +311,8 @@
      &  'style of contour plots:', iftp,
      &  'idout:', idout
 *   ..write state
-      call b2wfpi (nout(0), idout, nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout, nx, ny, ns, ne, na, te,
+     &  ti, fna, fch)
 *   ..activate graphics on nout(1)
       call gacwk (nout(1))
 *   ..mark contour style

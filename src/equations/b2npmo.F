@@ -17,7 +17,7 @@
      2          smpr, smpt, smfr, smcf
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf
+     2          balance_netcdf, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -222,12 +222,15 @@
           main_lightest = main_lightest .and.
      .     nint(am(is)).ge.nint(am(ismain))
         end do
+        call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
+        call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
+
         if (.not.main_lightest .and. style.eq.2) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
      .    'for plasmas where the main species is not the lightest one!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas where the main species is not the lightest one!'
         endif
-        call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
-        call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -275,6 +278,7 @@
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !srv 13.01.17 {
       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+
       do iy = -1, ny
         do ix = -1, nx
           ce1(ix,iy)=fce1(zeff(ix,iy))
@@ -283,6 +287,7 @@
           cimp2(ix,iy)=fce2(zmff(ix,iy))
         enddo
       enddo                                                            !srv 13.01.17 }
+
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae
@@ -294,13 +299,20 @@
       zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
 *   ..compute gti,gte
       do iy = -1, ny
+        do ix = -1, nx
+         if(leftix(ix,iy).eq.-2) then
+          gti(ix,iy) = 0.0_R8
+         else
+          gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
+     &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+         endif
+        enddo
+      enddo
+      do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         gti(ix,iy) = 0.0_R8
          gte(ix,iy) = 0.0_R8
         else
-         gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
          gte(ix,iy) = (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
      &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
         endif
@@ -430,6 +442,18 @@
            do ix =-1,nx
              smbch(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbch(ix,iy,0:3)
              smbtf(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbtf(ix,iy,0:3)
+             smfr(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*(
+     &        ( smbfrea(ix,iy,0) + smbfria(ix,iy,0) ) +
+     &        ( smbfrea(ix,iy,1) + smbfria(ix,iy,1) ) * ua(ix,iy,is) +
+     &        ( smbfrea(ix,iy,2) + smbfria(ix,iy,2) ) * roxa(ix,iy,is) +
+     &        ( smbfrea(ix,iy,3) + smbfria(ix,iy,3) ) * ua(ix,iy,is) *
+     &                                                  roxa(ix,iy,is) )
+             smpt(ix,iy,is) = vol(ix,iy)*hz(ix,iy)*(
+     &        ( smbtfea(ix,iy,0) + smbtfia(ix,iy,0) ) +
+     &        ( smbtfea(ix,iy,1) + smbtfia(ix,iy,1) ) * ua(ix,iy,is) +
+     &        ( smbtfea(ix,iy,2) + smbtfia(ix,iy,2) ) * roxa(ix,iy,is) +
+     &        ( smbtfea(ix,iy,3) + smbtfia(ix,iy,3) ) * ua(ix,iy,is) *
+     &                                                  roxa(ix,iy,is) )
            enddo
          enddo
        else
@@ -459,9 +483,10 @@
        call b2sscal (n2*4, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, hz, cvsahz_cl(-1,-1,0,0,is), flubv)    !srv 01.07.05 11.09.09 16.10.17
+       call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,0,is),   !19.02.21
+     &                flubv)                                           !srv 01.07.05 11.09.09 16.10.17
        if (balance_netcdf.ne.0) then
-         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
+         fmo_b2nxfv(:,:,:,:,is)=flubv                                  !djm Jan2017
        endif
        call b2saxpy (n2*4, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
@@ -469,10 +494,9 @@
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,0,is), flcb, cvcb, wrk0)   !srv 09.01.01
 
 *    ..compute additional viscosity term
-       call b2siav (nx, ny, ns, is, am(is)*mp,
+       call b2siav (nx, ny, ns, is, ismain, am(is)*mp,                 !srv 19.02.21
      &    ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
-     &    te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,
-     &    cvsa(-1,-1,0,0,is), cvsa_cl(-1,-1,0,0,is),
+     &    te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,         !srv 01.07.09
      &    cvsahz(-1,-1,0,0,is), cvsahz_cl(-1,-1,0,0,is),
      &    smbvh, smbvv, kt_neo, wrk0, wrk1, wrk2)                      !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
 *    ..compute centrifugal force term                                  !srv 09.07.01
@@ -480,8 +504,8 @@
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nx, ny, is, facdrift, fac_ExB,                     !srv 19.02.21
-     &   fchanml, smban)                                               !srv 25.09.17
+       call b2sian (nx, ny, is, ismain, facdrift, fac_ExB,             !srv 19.02.21
+     &   fchanml_a(-1,-1,0,0,is), smban)                               !som 03.11.21
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)
@@ -501,13 +525,20 @@
 
 cdjm Jan2017 update momentum source components for balance
        if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
        endif
 
 *    ..compute residual
-       call b2urmo (nx, ny, hx, hy, vol, qs, is, ua(-1,-1,is), rob, smb,
+       call b2urmo (nx, ny, hx, hy, vol, qs, is,
+     &   ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,0,is), resmo(-1,-1,is), wrkf)            !srv 04.07.08
        fmo(:,:,:,:,is)=wrkf
+
+cdjm Mar2019 output the total momentum flux and source for balance
+       if (balance_netcdf.ne.0) then
+         fmo_tot(:,:,:,:,is)=wrkf
+       endif
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
@@ -750,11 +781,17 @@ c     ..compare 9-pt stencil matrices
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
+        call my_out(70,nx,ny,na(-1,-1,is),'b2npmo_na'//chns)
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then
        call my_out(70,nx,ny,pccm(-1,-1,0,0),'b2npmo_pccmx')            !srv 11.01.13
        call my_out(70,nx,ny,pccm(-1,-1,1,1),'b2npmo_pccmy')            !srv 11.01.13
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,pcca(-1,-1,0,0,is),'b2npmo_pcca0_'//chns)
+        call my_out(70,nx,ny,pcca(-1,-1,1,1,is),'b2npmo_pcca1_'//chns)
+       enddo
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)

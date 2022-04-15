@@ -26,7 +26,7 @@ c
         if(imi .eq. 2) string=' D'
         if(imi .eq. 3) string=' T'
       else
-        string=' ' // elements(izn)
+        string=' ' // trim(elements(izn))
       endif
       len=lnblnk(string)
       if(decorate) string(len+1:len+2)='^{'

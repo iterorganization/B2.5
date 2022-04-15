@@ -20,6 +20,7 @@
      &  e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_version
       use b2mod_constants
       use b2mod_subsys
       implicit none
@@ -117,8 +118,6 @@
      *   swrk2(-1:nx,-1:ny,0:1), swrk2s(-1:nx,-1:ny,0:1,0:ns-1),
      *   swrk4(-1:nx,-1:ny,0:3), swrk4s(-1:nx,-1:ny,0:3,0:ns-1),
      *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
       character*120 :: label
       save na_new, na_min
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/

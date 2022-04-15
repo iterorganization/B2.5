@@ -2,7 +2,8 @@
 *.specification
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv,
      &  wbbc, cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_math
@@ -292,7 +293,7 @@ cwdk   ensure qc(:,:,0)**2 + qs(:,:,0)**2 = 1, in possible event
 cwdk   of improved computation of qc
        qs(:,:,0) = sign(sqrt(1 - qc(:,:,0)**2),qs(:,:,0))
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -332,6 +333,7 @@ cxpb
         periodic_bc=0
       endif
 cxpb-end
+
       do iy = -1, ny
         do ix = -1, nx
           if (nnreg(0).eq.1) then

@@ -101,10 +101,8 @@
      *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
       character check*10
       character lbli*120
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
       external b2ruzd, b2xpne, b2xpni
-      external cfruch, cfruin, cfrure
+      external cfruch, cfruin, cfrure, cfverr
 
       call subini ('run_av_init')
 
@@ -349,7 +347,7 @@
       character(*) :: savefile
       integer n2, iun, idum(0:2)
       character lble*120
-      external cfwuch, cfwuin, cfwure
+      external cfwuch, cfwuin, cfwure, cfverw
       external b2xxid, b2wuzd
 
       call subini ('run_av_save')

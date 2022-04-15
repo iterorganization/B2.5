@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wsax (nsav, nx, ny, ns, lblgm, 
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
+      subroutine b2wsax (nsav, nx, ny, ns, lblgm, rz2, pr, uac)
       use b2mod_types
       use b2mod_geo
+      use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -14,12 +14,7 @@
       integer nsav, nx, ny, ns
       character lblgm*120
       real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
-      real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), pr(-1:nx,-1:ny),
+     *  pr(-1:nx,-1:ny),
      &  rz2(-1:nx,-1:ny,0:ns-1), uac(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -57,8 +52,7 @@
 *     lblgm identifies the instance of the program employed to prepare
 *     the geometry.
 *
-*     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     ne, pr, uac - real*8 array, input.
+*     pr, uac - real*8 array, input.
 *     See the calling routine for description.
 *
 *
@@ -79,18 +73,9 @@
      *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, uax, uay, uaz, crxc, cryc
+     *   b2ssum, crxc, cryc
       external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
-      uax(ix,iy,is) = fna(ix,iy,0,0,is)*
-     &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
-     1   hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
-     &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-      uay(ix,iy,is) = fna(ix,iy,1,1,is)*
-     &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     1   hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
-     &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-      uaz(ix,iy,is) = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
       crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+
      &  crx(ix,iy,3))/4
       cryc(ix,iy) = (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+
@@ -258,5 +243,15 @@
 
 *-----------------------------------------------------------------------
 *.end b2wsax
+
+      contains
+
+      function uaz(ix,iy,is)
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uaz
+      uaz = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
+      return
+      end function uaz
 
       end subroutine b2wsax

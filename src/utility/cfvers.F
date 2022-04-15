@@ -15,7 +15,7 @@
         read(nget,err=10) label,version_in
       endif
       if(label.eq.'VERSION') then
-	newversion=version_in
+        newversion=version_in
         write(*,'(a,a)') 'VERSION set to: ',newversion
         return
       endif

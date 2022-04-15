@@ -155,10 +155,12 @@ c=======================================================================
 c
       integer ig, ih(3)
       real (kind=R8), allocatable ::
-     . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:), mach(:,:,:), pz(:,:)
+     . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:),
+     . mach(:,:,:), pz(:,:)
       real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s(3), hlp_ms(3),
      . mass, vel, vth
       character*2, allocatable :: hlp_al(:)
+      character*5 :: trg_lbl
       character*11, allocatable :: hlp_sg(:)
       character hlp_frmr*600
       integer, allocatable :: mz_hlp(:)
@@ -215,6 +217,7 @@ c-----------------------------------------------------------------------
         end if
         write(frm,730) n
   730   format('(1p,1x,a5,',i3,'(5x,e12.5))')
+        trg_lbl = 'inner'
         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(1),i,0)+wldpa(nlim+ltns(1),i,0)
         end do
@@ -222,19 +225,20 @@ c-----------------------------------------------------------------------
           hlp_ml(i)=wldrm(nlim+ltns(1),i,0)+wldpm(nlim+ltns(1),i,0)
         end do
         if (nmoli.gt.0) then
-          write(lun, frm) 'inner',
+          write(lun, frm) trg_lbl,
      ,      (hlp_pi(i),i=1,nspecies),
      ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
      ,      (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
      ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,       wldspt(nlim+ltns(1),0)
         else
-          write(lun, frm) 'inner',
+          write(lun, frm) trg_lbl,
      ,      (hlp_pi(i),i=1,nspecies),
      ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
      ,      (hlp_at(i),i=1,natmi),
      ,       wldspt(nlim+ltns(1),0)
         end if
+        trg_lbl = 'outer'
         do i=1,natmi
           hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
         end do
@@ -242,13 +246,15 @@ c-----------------------------------------------------------------------
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
         end do
         if (nmoli.gt.0) then
-          write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+          write(lun, frm) trg_lbl,
+     ,      (hlp_po(i),i=1,nspecies),
      ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,      (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
      ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
      ,      wldspt(nlim+ltns(2),0)
         else
-          write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
+          write(lun, frm) trg_lbl,
+     ,      (hlp_po(i),i=1,nspecies),
      ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,      (hlp_at(i),i=1,natmi),
      ,      wldspt(nlim+ltns(2),0)

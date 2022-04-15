@@ -240,8 +240,8 @@
                   fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &              csigin(ix,iy,0,0,is,is0)*(
      &            ( -dpo(ix,iy,0,0)
-     &              -(wrk1(ix,iy,0,0) +
-     &                til(ix,iy)*wrk0(ix,iy,0,0,is))/
+     &              -(wrk1(ix,iy,0,0)
+     &               +til(ix,iy)*wrk0(ix,iy,0,0,is))/
      &                     (qe*rza(ix,iy,is)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
      &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,0,is0)*
@@ -251,8 +251,8 @@
                   fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &              csigin(ix,iy,0,1,is,is0)*(
      &              -dpo(ix,iy,0,1)
-     &              -(wrk1(ix,iy,0,1) +
-     &                til(ix,iy)*wrk0(ix,iy,0,1,is))/
+     &              -(wrk1(ix,iy,0,1)
+     &               +til(ix,iy)*wrk0(ix,iy,0,1,is))/
      &                     (qe*rza(ix,iy,is)) )
      &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,is0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
@@ -558,8 +558,10 @@
      &                                       //chns//'_'//chns0)
           endif
          enddo
-         call my_out(70,nx,ny,fnan(-1,-1,0,0,is0),'b2tinnt_fnanx')
-         call my_out(70,nx,ny,fnan(-1,-1,1,1,is0),'b2tinnt_fnany')
+         call my_out(70,nx,ny,fnan(-1,-1,0,0,is0),'b2tinnt_fnanx'
+     &                                       //chns0)
+         call my_out(70,nx,ny,fnan(-1,-1,1,1,is0),'b2tinnt_fnany'
+     &                                       //chns0)
         endif
        enddo                                                              !som 04.11.21 }
        call my_out(70,nx,ny,fchin(-1,-1,0,0),'b2tinnt_fchinx')

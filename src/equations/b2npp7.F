@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npp7 (nx, ny, nregionv, solvereg, itcnt, rxf,         !srv 06.07.00 27.01.00
-     &  ne, te, conc, avisper, bvisper, cvisper, sch, po,                !srv 27.01.00
-     &  fch, respo, corpo, ierr)
+      subroutine b2npp7 (nx, ny, ns, ismain, nregionv,                   !srv 06.07.00 27.01.00
+     &  solvereg, itcnt, rxf, ne, te, conc, avisper_a, bvisper_a,        !srv 27.01.00
+     &  cvisper_a, sch, po, fch, respo, corpo, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -11,12 +11,13 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv, itcnt
+      integer nx, ny, ns, ismain, nregionv, itcnt
       real (kind=R8) ::
      *   rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &   conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),             !srv 27.01.00
-     4   cvisper(-1:nx,-1:ny,0:1)                                        !srv 27.01.00
+     3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 27.01.00
+     &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     4   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1)                               !srv 27.01.00
       logical solvereg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -86,12 +87,12 @@
 *    ..test sign of ne, te
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-*    ..test sign of conc, avisper, bvisper, cvisper                !srv 27.01.00
+*    ..test sign of conc, avisper_a, bvisper_a, cvisper_a             !srv 27.01.00
        call b2xvsg (n2, conc(-1,-1,0,0), 1, 'conc', '.ge.')
        call b2xvsg (n2, conc(-1,-1,1,1), 1, 'conc', '.ge.')
-       call b2xvsg (n2*2, avisper, 1, 'avisper', '.ge.')           !srv 27.01.00
-       call b2xvsg (n2*2, bvisper, 1, 'bvisper', '.ge.')           !srv 27.01.00
-       call b2xvsg (n2*2, cvisper, 1, 'cvisper', '.ge.')           !srv 27.01.00
+       call b2xvsg (n2*2*ns, avisper_a, 1, 'avisper_a', '.ge.')       !srv 27.01.00
+       call b2xvsg (n2*2*ns, bvisper_a, 1, 'bvisper_a', '.ge.')       !srv 27.01.00
+       call b2xvsg (n2*2*ns, cvisper_a, 1, 'cvisper_a', '.ge.')       !srv 27.01.00
 *    ..test edge values of conc
        call b2xvff (nx, ny, conc, 'conc')
 *    ..test sign of sch
@@ -101,17 +102,21 @@
        call b2xvff (nx, ny, fch, 'fch')
       endif
 
+      if(iout .eq. 1) then                !srv 11.09.09 {
+        call my_out(70,nx,ny,po,'b2npp7_po0')
+      endif                                                           !srv 11.09.09 }
+
 * ..main computation
 *   ..compute residual
       call b2ursd (nx, ny, ne, po, sch, fch, respo)
 *   ..compute correction
-      call b2usp7 (nx, ny, nregionv, solvereg, itcnt,               !srv 27.12.17
-     &    ne, te, conc, avisper, bvisper, cvisper,
+      call b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,     !srv 27.12.17
+     &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,
      &    sch, respo, corpo, aa11)
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 
-      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                  !srv 11.09.09 {
+      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                    !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2npp7_te')
 !       call my_out(70,nx,ny,ne,'b2npp7_ne')
         call my_out(70,nx,ny,po,'b2npp7_po')
@@ -125,7 +130,7 @@
         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
      &       sch(:,:,3)*ne*po
         call my_out(70,nx,ny,wrk0,'b2npp7_sch')
-      endif                                                         !srv 11.09.09 }
+      endif                                                           !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)
       ierr = 0

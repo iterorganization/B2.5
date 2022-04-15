@@ -52,6 +52,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
      &                 iout_b2nppo = 0, iout_b2wdat = 0
@@ -90,6 +91,8 @@
         call ipgeti ('b2srdt_iout', iout)                            !srv 30.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)

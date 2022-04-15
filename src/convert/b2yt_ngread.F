@@ -1813,7 +1813,7 @@ C
 *=======================================================================
 *//END B2YT_NGREAD//
 
-      END
+      END SUBROUTINE B2YT_NGREAD
 
       subroutine b2yt_area_res_map ( NCL, NCL1, nstsi, nx, ny, nx1, ny1,
      .  non_commensurate, sarea_res, sarea1res, area_res_contr,

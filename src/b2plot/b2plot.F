@@ -45,6 +45,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpb
       use b2mod_ranges
       use b2mod_external
+      use b2mod_version  ! ajs 07.04.20
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
@@ -165,8 +166,8 @@ c
       real (kind=R8) ::
      *   mass,vel,vth,press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
-     *   boundary_namelist, neutrals_namelist,
-     *   sput_frac_flag, use_eirene
+     *   boundary_namelist,
+     *   neutrals_namelist, sput_frac_flag, use_eirene
 
 #ifndef NO_CDF
       real (kind=R8) ::
@@ -542,9 +543,12 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nx, ny, ns,
-     1 fna, fne, fch, fhe, fhi, kinrgy, rpt,
-     2 te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+      endif
 c calculate divergences of the various fluxes
       do is=0,ns-1
         do iy=-1,ny
@@ -960,6 +964,8 @@ c
       call mapy(nx,ny,1,fch_32(:,:,1,1),work)
       call mapx(nx,ny,1,fch_52(:,:,0,0),work)
       call mapy(nx,ny,1,fch_52(:,:,1,1),work)
+      call mapx(nx,ny,1,fne(:,:,0,0),work)
+      call mapy(nx,ny,1,fne(:,:,1,1),work)
       call mapx(nx,ny,1,fne_32(:,:,0,0),work)
       call mapy(nx,ny,1,fne_32(:,:,1,1),work)
       call mapx(nx,ny,1,fne_52(:,:,0,0),work)
@@ -2206,13 +2212,8 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fetx(ix,iy)=fhe(ix,iy,0,0)+fhi(ix,iy,0,0)
+              fetx(ix,iy)=fht(ix,iy,0,0)-fhj(ix,iy,0,0)
      &                                  +fhi_ext(ix,iy,0,0)
-              do is=0,ns-1
-                fetx(ix,iy)=fetx(ix,iy)+
-     .           rpt(ix,iy,is)*ev*fna(ix,iy,0,0,is)+
-     1           fhm(ix,iy,0,0,is)*(1.0_R8-BoRiS)
-              end do
               do is=0,ns_ext-1
                 fetx(ix,iy)=fetx(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,0,is)+
@@ -2227,13 +2228,8 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fety(ix,iy)=fhe(ix,iy,1,1)+fhi(ix,iy,1,1)
+              fety(ix,iy)=fht(ix,iy,1,1)-fhj(ix,iy,1,1)
      1                                  +fhi_ext(ix,iy,1,1)
-              do is=0,ns-1
-                fety(ix,iy)=fety(ix,iy)+
-     1           rpt(ix,iy,is)*ev*fna(ix,iy,1,1,is)+
-     1           fhm(ix,iy,1,1,is)*(1.0_R8-BoRiS)
-              end do
               do is=0,ns_ext-1
                 fety(ix,iy)=fety(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,1,is)+
@@ -5611,7 +5607,7 @@ c     assumes that bb is OK for 1d cases
           values(33)=rstack(irstack)
           write(target_label(itwrk),'(1pe15.8)') rpop(rstack,irstack)
           call set_targetbarlabel(target_label(itwrk))
-        case('eirc')     ! add the Eirene atomic densities to the B2 values
+        case('eirc')     ! add the Eirene atomic quantities to the B2 values
           if (eirc_done) return
           stack_req=(/0,0,0,0,0,0,0/)
           if(b2plot_debug.ge.12)
@@ -5647,8 +5643,30 @@ c     assumes that bb is OK for 1d cases
      &           '  (',iss,' & ',is,')'
                 do iy=-1,ny
                   do ix=-1,nx
+                    if (maxval(abs(pfluxa)).gt.0.0_R8) then
+                      fna(ix,iy,0,0,iss)=fna(ix,iy,0,0,iss)+
+     &                 pfluxa(ix+1,iy+1,is,1)*gs(ix,iy,0)*qz(ix,iy,1)
+                      fnax(ix,iy,iss)=fna(ix,iy,0,0,iss)
+                      fna(ix,iy,1,1,iss)=fna(ix,iy,1,1,iss)+
+     &                 rfluxa(ix+1,iy+1,is,1)*gs(ix,iy,1)
+                      fnay(ix,iy,iss)=fna(ix,iy,1,1,iss)
+                      ua(ix,iy,iss)=(ua(ix,iy,iss)*na(ix,iy,iss)+
+     &                  pfluxa(ix+1,iy+1,is,1)*bb(ix,iy,0)/bb(ix,iy,3))/
+     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
+                      uutraj(ix,iy,iss)=ua(ix,iy,iss)
+                      up(ix,iy,iss)=(up(ix,iy,iss)*na(ix,iy,iss)+
+     &                  pfluxa(ix+1,iy+1,is,1))/
+     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
+                      arrowx(ix,iy,iss)=up(ix,iy,iss)
+                      vv(ix,iy,iss)=(vv(ix,iy,iss)*na(ix,iy,iss)+
+     &                      rfluxa(ix+1,iy+1,is,1))/
+     &                     (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
+                      arrowy(ix,iy,iss)=vv(ix,iy,iss)
+                      vvtraj(ix,iy,iss)=vv(ix,iy,iss)
+                    endif
                     na(ix,iy,iss)=na(ix,iy,iss)+
      &                            dab2(ix+1,iy+1,is,1)
+                    ro(ix,iy,iss)=am(iss)*mp*na(ix,iy,iss)
                   enddo
                 enddo
               endif

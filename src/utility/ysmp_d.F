@@ -874,6 +874,9 @@ C***********************************************************************
      *     (N, NNZ, P, IP, IA, JA, A, D, IJU, JU, IU, U, UMAX, JUMAX,
      *      IL, JL, FLAG)
         use b2mod_types
+#ifdef DBG
+        use b2mod_math
+#endif
         IMPLICIT NONE                                                    !srv 11.01.07
 C
 C  ADDITIONAL PARAMETERS
@@ -905,9 +908,6 @@ C       REAL  A(NNZ), D(N), U(UMAX),  DK, UKIDI
         real (kind=R8) :: A(NNZ), D(N), U(UMAX), DK, UKIDI               !srv 11.01.07
 #ifdef DBG
         real (kind=R8) :: product
-        real (kind=R8), save :: cutll
-
-        cutll = log(tiny(1.0_R8))
 #endif
 C
 C----CHECK FOR SUFFICIENT STORAGE FOR U

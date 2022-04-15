@@ -21,8 +21,6 @@ c  version : 06.11.97 22:11
 c
       use b2mod_types
       use b2mod_b2plot
-      use b2mod_b2cmfs
-      use b2mod_constants
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -43,17 +41,8 @@ c
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       INTEGER is, i, j, n, io, idummy, jvft46
-      real (kind=R8) :: width
       character*256 filename
       logical ex
-#endif
-
-*  -- PROCEDURES --
-#ifdef B25_EIRENE
-      external ipgetr, xertst
-*   ..initialisation
-      data width /1.0_R8/
-      save width
 #endif
 
 *=======================================================================
@@ -67,13 +56,6 @@ C
 *  READ EIRENE SPECIES DENSITIES AND TEMPERATURES
 * ----------------------------------------------------------------------
 *
-*   ..read input data
-      call ipgetr ('b2agmt_1d_width', width)
-      call xertst (0.0_R8.lt.width, 'faulty input width')
-*   ..test isymm
-      call xertst (0.le.isymm.and.isymm.le.4,
-     &  'faulty argument isymm')
-
       filename=fort_lc//'46'
       call find_file(filename,ex)
       if (.not.ex) then

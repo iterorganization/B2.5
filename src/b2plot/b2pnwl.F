@@ -7,6 +7,7 @@ c*** b2pnwl: neutral wall load (temporary solution)
 c***
 c======================================================================
       use b2mod_types
+      use b2mod_geo
       use b2mod_b2plot
       use b2mod_b2cmfs
       use b2mod_constants
@@ -30,7 +31,7 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
-      integer il,is,i,ii,ia,ib,k,ic
+      integer il,is,i,ii,ia,ib,k,ic,ias,ix,iy,iss
       character*74 hlp_frm
       real (kind=R8) ::
      *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
@@ -105,10 +106,20 @@ c*** calculate the length of the target segment
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             is=leirlis(i,il)
-            if (is.gt.0) then
+            if (is.gt.0.and.is.le.nlim) then
               distance=sqrt((p1(1,is)-p2(1,is))**2+
      .                      (p1(2,is)-p2(2,is))**2)
               hlpx=hlpx+distance
+            else if (is.gt.nlim) then
+              ias=is-nlim
+              do iss=1,nsts !{
+                if (eirdiag_nds_typ(iss).ne.2) cycle
+                if (ias.lt.eirdiag_nds_ind(iss)) cycle
+                if (ias.gt.eirdiag_nds_ind(iss+1)) cycle
+                ix=eirdiag_nds_srf(iss)
+                iy=ias+(eirdiag_nds_start(iss)-1)-eirdiag_nds_ind(iss)
+                hlpx=hlpx+distc(ix,iy,0,ix,iy,2)
+              end do !}
             end if
           end do
 c
@@ -132,7 +143,7 @@ c
             aa=1.e-6_R8/a
             distance=0.5e0_R8*distance
             x=x+h+distance
-            if(is.gt.0) then
+            if(is.gt.0 .and. is.le.nlim) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa
@@ -164,6 +175,42 @@ c*** Calculate the net and gross erosion
                 wwyn=flxctff
                 wwyg=flxctff
               end if
+            else if (is.gt.nlim) then
+              ias=is-nlim
+              wwk=0.0_R8
+              wwp=0.0_R8
+              k=0
+              do ii=1,natmi
+                k=k+1
+                wwk=wwk+(ewlda_res(ii,ias)-ewldea_res(ii,ias))
+                wwj(k)=max(wldna_res(ii,ias),flxctff)/a
+                wwe(k)=max(ewlda_res(ii,ias),enrctff)
+              end do
+              do ii=1,nmoli
+                k=k+1
+                wwk=wwk+(ewldm_res(ii,ias)-ewldem_res(ii,ias))
+                wwp=wwp+ewldmr_res(ii,ias)
+                wwj(k)=max(wldnm_res(ii,ias),flxctff)/a
+                wwe(k)=max(ewldm_res(ii,ias),enrctff)
+              end do
+              if(ic.gt.0) then
+                wwyg=wldspta_res(ic,ias)/a
+                wwyn=(wldspta_res(ic,ias)-wldna_res(ic,ias)-
+     >                                    wlpump_res(ic,ias))/a
+                do ii=1,nmoli
+                  if (mlcmp(ic,ii).gt.0)
+     >             wwyn=wwyn+mlcmp(ic,ii)*
+     .              (wldsptm_res(ii,ias)-wldnm_res(ii,ias)-
+     .                                   wlpump(ii+natmi,ias))/a
+                end do
+              else
+                wwyn=flxctff
+                wwyg=flxctff
+              end if
+              hlpw=hlpw+wwk+wwp
+              wwk=wwk*aa
+              wwp=wwp*aa
+              wwt=max(wwk+wwp,pwrctff)
             else
               wwyn=flxctff
               wwyg=flxctff

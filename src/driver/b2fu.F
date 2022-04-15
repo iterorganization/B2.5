@@ -90,7 +90,7 @@
       call read_b2mod_residuals(ninp(4))
       call read_b2mod_sources(ninp(4))
       call read_b2mod_transport(nx, ny, ns, ninp(4))
-      call read_b2mod_anomalous_transport(nx,ny,ns,ninp(4))
+      call read_b2mod_anomalous_transport(nx,ny,ninp(4))
       call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
 *   ..write plasma state
       newversion=b2fplasma_version

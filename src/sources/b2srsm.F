@@ -50,6 +50,7 @@
       integer is, ix, iy, n2, ncall, diagno, enable
       integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0
       character chns*3, chk*1                                        !srv 11.09.09 }
@@ -95,6 +96,8 @@
         call ipgeti ('b2srsm_iout', iout)                         !srv 11.09.09 {
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
+        call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
+        call ipgeti ('b2npc11_iout', iout_b2npc11)                !srv 02.04.18
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
@@ -332,7 +335,8 @@ cdjm Store the total change in linearised sources for balance
 !     &        'b2srsm_smosm'//chns)
         enddo
       endif
-      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
+     &    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 ) then             !srv 02.04.18
         do is = 0, ns-1
           write (chns,'(i3.3)') is
 !        call my_out(70,nx,ny,snasm(:,:,0,is)+                       !srv 07.10.09

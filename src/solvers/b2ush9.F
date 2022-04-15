@@ -7,6 +7,7 @@
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa9)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_ilutern_9
       use b2mod_numerics_namelist
       use b2mod_subsys
       implicit none
@@ -16,7 +17,7 @@
      *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      &  ni(-1:nx,-1:ny,0:1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),         !srv 02.01.07
+     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),   !srv 02.01.07
      &  pccm1(-1:nx,-1:ny), vol(-1:nx,-1:ny)
       real (kind=R8) ::
      *  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
@@ -27,7 +28,7 @@
      *  cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  flo0(-1:nx,-1:ny,0:1,0:1), con0(-1:nx,-1:ny,0:1,0:1,0:2),             !srv 02.01.07
+     *  flo0(-1:nx,-1:ny,0:1,0:1), con0(-1:nx,-1:ny,0:1,0:1,0:2),       !srv 02.01.07
      &  aa9(-1:nx,-1:ny,-6:6)
 
 *-----------------------------------------------------------------------
@@ -64,8 +65,10 @@
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
       integer, save :: iout = 0
+      real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
       !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
       !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
+      !$OMP THREADPRIVATE(cor_diag)
       integer ireg, ileft, ibot
       save ncall
       !$OMP THREADPRIVATE(ncall)
@@ -87,10 +90,11 @@
       call subini ('b2ush9')
       if (ncall.eq.0) then
        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06 {
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
-       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
+       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)
+       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06 }
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
+       call ipgetr ('b2ush9_cor_diag', cor_diag)                      !srv 07.07.21
        call ipgeti ('b2ush9_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
          !$OMP MASTER
@@ -120,13 +124,13 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test sign of cone, coni
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then           !srv 06.07.06 {
-         call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')
-         call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
+        call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')
+        call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
        endif                                                          !srv 06.07.06 }
        if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then           !srv 06.07.06 {
-         call b2xvsg (n2, coni(-1,-1,0,0,0), 1, 'coni', '.ge.')
-         call b2xvsg (n2, coni(-1,-1,1,1,0), 1, 'coni', '.ge.')
-       endif   
+        call b2xvsg (n2, coni(-1,-1,0,0,0), 1, 'coni', '.ge.')
+        call b2xvsg (n2, coni(-1,-1,1,1,0), 1, 'coni', '.ge.')
+       endif
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
@@ -315,24 +319,24 @@ cwdk add 9-point contributions
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
           if (solveee(ileft) .or. solveei(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
@@ -389,24 +393,24 @@ cwdk add 9-point contributions
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
           if (solveee(ibot) .or. solveei(ibot)) then
-            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy),-1)       - t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) + (t0 - t1)/
-     &        vol(bottomix(ix,iy),bottomiy(ix,iy)) 
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) = 
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) +  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 2)      - t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) + (t0 - t1)/
      &        vol(ix,iy)
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
@@ -439,40 +443,55 @@ cwdk add 9-point contributions
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
-      aa9(-1,-1,:) = 0.0_R8
-      aa9(-1,-1,0) = 1.00_R8
-!      aa9(-1,-1,3) =-1.00_R8
-!      rescb(-1,-1) = pb(-1,0) - pb(-1,-1)
-      aa9(-1,-1,1) =-1.00_R8
-      resht(-1,-1) = 0.5_R8*(te(0,-1) - te(-1,-1) +
-     &                       ti(0,-1) - ti(-1,-1))
-
-      aa9(-1,ny,:)  = 0.0_R8
-      aa9(-1,ny,0)  = 1.00_R8
-!      aa9(-1,ny, 1) =-0.50_R8
-!      aa9(-1,ny,-3) =-0.50_R8
-!      rescb(-1,ny)  = 0.5_R8*(pb(0,ny) + pb(-1,ny-1)) - pb(-1,ny)
-!      aa9(-1,ny,-3) =-1.00_R8
-!      rescb(-1,ny)  = pb(-1,ny-1) - pb(-1,ny)
-      aa9(-1,ny,1) =-1.00_R8
-      resht(-1,ny) = 0.5_R8*(te(0,ny) - te(-1,ny) + 
-     &                       ti(0,ny) - ti(-1,ny))
-
-      aa9(nx,-1,:)  = 0.0_R8
-      aa9(nx,-1,0)  = 1.00_R8
-!      aa9(nx,-1,3)  =-1.00_R8 
-!      rescb(nx,-1)  = pb(nx,0) - pb(nx,-1)
-      aa9(nx,-1,-1) =-1.00_R8 
-      resht(nx,-1)  = 0.5_R8*(te(nx-1,-1) - te(nx,-1) +
-     &                        ti(nx-1,-1) - ti(nx,-1))
-
-      aa9(nx,ny,:)  = 0.0_R8
-      aa9(nx,ny,0)  = 1.00_R8
-!      aa9(nx,ny,-3) =-1.00_R8 
-!      rescb(nx,ny)  = pb(nx,ny-1) - pb(nx,ny)
-      aa9(nx,ny,-1) =-1.00_R8 
-      resht(nx,ny)  = 0.5_R8*(te(nx-1,ny) - te(nx,ny) +
-     &                        ti(nx-1,ny) - ti(nx,ny))
+      do iy=-1,ny
+       do ix=-1,nx
+        if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
+         aa9(ix,iy,:) = 0.0_R8
+         aa9(ix,iy,0) = 1.00_R8
+!        aa9(ix,iy,3) =-1.00_R8
+!        rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,1) =-1.00_R8
+         resht(ix,iy) = 0.5_R8*
+     &    (te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy) +
+     &     ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy))
+        endif
+        if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+2) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy, 1) =-0.50_R8
+!        aa9(ix,iy,-3) =-0.50_R8
+!        rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
+!                                pb(bottomix(ix,iy),bottomiy(ix,iy))) -
+!                        pb(ix,iy)
+!        aa9(ix,iy,-3) =-1.00_R8
+!        rescb(-1,ny)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,1) =-1.00_R8
+         resht(ix,iy) = 0.5_R8*
+     &    (te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy) +
+     &     ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy))
+        endif
+        if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy,3)  =-1.00_R8
+!        rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,-1) =-1.00_R8
+         resht(ix,iy)  = 0.5_R8*
+     &    (te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy) +
+     &     ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
+        endif
+        if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,-1) =-1.00_R8
+         resht(ix,iy)  = 0.5_R8*
+     &    (te(bottomix(ix,iy),bottomiy(ix,iy)) - te(ix,iy) +
+     &     ti(bottomix(ix,iy),bottomiy(ix,iy)) - ti(ix,iy))
+        endif
+       enddo
+      enddo
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
@@ -545,7 +564,7 @@ cwdk add linearization for 9-point terms
         ireg = region(ix,iy,0)
         if (solveee(ireg))
      >   aa9(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
-     &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*         !srv 02.01.07
+     &    cor_diag*dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*  !srv 02.01.07 07.07.21
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
      &    +abs(reshe(ix,iy))/(rxg*te(ix,iy))                          !srv 02.01.07
        enddo
@@ -566,7 +585,7 @@ cwdk add linearization for 9-point terms
          if (solveee(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0
          if (solveee(ileft))
-     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
+     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          if (solveee(ireg))
      >    aa9(ix,iy,-1) = t1
@@ -601,24 +620,24 @@ cwdk add 9-point contributions
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
           if (solveee(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
@@ -675,24 +694,24 @@ cwdk add 9-point contributions
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
           if (solveee(ibot)) then
-            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy),-1)       - t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) + (t0 - t1)/
-     &        vol(bottomix(ix,iy),bottomiy(ix,iy)) 
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) = 
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) +  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 2)      - t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) + (t0 - t1)/
      &        vol(ix,iy)
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
@@ -721,36 +740,47 @@ cwdk add 9-point contributions
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
-      aa9(-1,-1,:) = 0.0_R8
-      aa9(-1,-1,0) = 1.00_R8
-!      aa9(-1,-1,3) =-1.00_R8
-!      rescb(-1,-1) = pb(-1,0) - pb(-1,-1)
-      aa9(-1,-1,1) =-1.00_R8
-      reshe(-1,-1) = te(0,-1) - te(-1,-1)
-
-      aa9(-1,ny,:)  = 0.0_R8
-      aa9(-1,ny,0)  = 1.00_R8
-!      aa9(-1,ny, 1) =-0.50_R8
-!      aa9(-1,ny,-3) =-0.50_R8
-!      rescb(-1,ny)  = 0.5_R8*(pb(0,ny) + pb(-1,ny-1)) - pb(-1,ny)
-!      aa9(-1,ny,-3) =-1.00_R8
-!      rescb(-1,ny)  = pb(-1,ny-1) - pb(-1,ny)
-      aa9(-1,ny,1) =-1.00_R8
-      reshe(-1,ny) = te(0,ny) - te(-1,ny)
-
-      aa9(nx,-1,:)  = 0.0_R8
-      aa9(nx,-1,0)  = 1.00_R8
-!      aa9(nx,-1,3)  =-1.00_R8 
-!      rescb(nx,-1)  = pb(nx,0) - pb(nx,-1)
-      aa9(nx,-1,-1) =-1.00_R8 
-      reshe(nx,-1)  = te(nx-1,-1) - te(nx,-1)
-
-      aa9(nx,ny,:)  = 0.0_R8
-      aa9(nx,ny,0)  = 1.00_R8
-!      aa9(nx,ny,-3) =-1.00_R8 
-!      rescb(nx,ny)  = pb(nx,ny-1) - pb(nx,ny)
-      aa9(nx,ny,-1) =-1.00_R8 
-      reshe(nx,ny)  = te(nx-1,ny) - te(nx,ny)
+      do iy=-1,ny
+       do ix=-1,nx
+        if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
+         aa9(ix,iy,:) = 0.0_R8
+         aa9(ix,iy,0) = 1.00_R8
+!        aa9(ix,iy,3) =-1.00_R8
+!        rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,1) =-1.00_R8
+         reshe(ix,iy) = te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy)
+        endif
+        if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+1) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy, 1) =-0.50_R8
+!        aa9(ix,iy,-3) =-0.50_R8
+!        rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
+!    .                           pb(bottomix(ix,iy),bottomiy(ix,iy))) -
+!    .                   pb(ix,iy)
+!        aa9(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,1) =-1.00_R8
+         reshe(ix,iy) = te(rightix(ix,iy),rightiy(ix,iy)) - te(ix,iy)
+        endif
+        if (rightix(ix,iy).eq.ny+1.and.bottomiy(ix,iy).eq.-2) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy,3)  =-1.00_R8
+!        rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,-1) =-1.00_R8
+         reshe(ix,iy)  = te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy)
+        endif
+        if (rightix(ix,iy).eq.ny+1.and.topiy(ix,iy).eq.ny+1) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,-1) =-1.00_R8
+         reshe(ix,iy)  = te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy)
+        endif
+       enddo
+      enddo
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
@@ -882,24 +912,24 @@ cwdk todo: scalr()-functionality; is 1.0 for now
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
           if (solveei(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
@@ -958,24 +988,24 @@ cwdk add 9-point contributions
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
           if (solveei(ibot)) then
-            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy),-1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy),-1)       - t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 0) + (t0 - t1)/
-     &        vol(bottomix(ix,iy),bottomiy(ix,iy)) 
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) = 
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 1) +  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 2) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 2)      - t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 3) + (t0 - t1)/
      &        vol(ix,iy)
-            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) = 
+            aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) =
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
@@ -1004,36 +1034,47 @@ cwdk add 9-point contributions
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
-      aa9(-1,-1,:) = 0.0_R8
-      aa9(-1,-1,0) = 1.00_R8
-!      aa9(-1,-1,3) =-1.00_R8
-!      rescb(-1,-1) = pb(-1,0) - pb(-1,-1)
-      aa9(-1,-1,1) =-1.00_R8
-      reshi(-1,-1) = ti(0,-1) - ti(-1,-1)
-
-      aa9(-1,ny,:)  = 0.0_R8
-      aa9(-1,ny,0)  = 1.00_R8
-!      aa9(-1,ny, 1) =-0.50_R8
-!      aa9(-1,ny,-3) =-0.50_R8
-!      rescb(-1,ny)  = 0.5_R8*(pb(0,ny) + pb(-1,ny-1)) - pb(-1,ny)
-!      aa9(-1,ny,-3) =-1.00_R8
-!      rescb(-1,ny)  = pb(-1,ny-1) - pb(-1,ny)
-      aa9(-1,ny,1) =-1.00_R8
-      reshi(-1,ny) = ti(0,ny) - ti(-1,ny)
-
-      aa9(nx,-1,:)  = 0.0_R8
-      aa9(nx,-1,0)  = 1.00_R8
-!      aa9(nx,-1,3)  =-1.00_R8 
-!      rescb(nx,-1)  = pb(nx,0) - pb(nx,-1)
-      aa9(nx,-1,-1) =-1.00_R8 
-      reshi(nx,-1)  = ti(nx-1,-1) - ti(nx,-1)
-
-      aa9(nx,ny,:)  = 0.0_R8
-      aa9(nx,ny,0)  = 1.00_R8
-!      aa9(nx,ny,-3) =-1.00_R8 
-!      rescb(nx,ny)  = pb(nx,ny-1) - pb(nx,ny)
-      aa9(nx,ny,-1) =-1.00_R8 
-      reshi(nx,ny)  = ti(nx-1,ny) - ti(nx,ny)
+      do iy=-1,ny
+       do ix=-1,nx
+        if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
+         aa9(ix,iy,:) = 0.0_R8
+         aa9(ix,iy,0) = 1.00_R8
+!        aa9(ix,iy,3) =-1.00_R8
+!        rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,1) =-1.00_R8
+         reshi(ix,iy) = ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy)
+        endif
+        if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+1) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy, 1) =-0.50_R8
+!        aa9(ix,iy,-3) =-0.50_R8
+!        rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
+!    .                           pb(bottomix(ix,iy),bottomiy(ix,iy))) -
+!    .                   pb(ix,iy)
+!        aa9(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,1) =-1.00_R8
+         reshi(ix,iy) = ti(rightix(ix,iy),rightiy(ix,iy)) - ti(ix,iy)
+        endif
+        if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy,3)  =-1.00_R8
+!        rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,-1) =-1.00_R8
+         reshi(ix,iy)  = ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy)
+        endif
+        if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
+         aa9(ix,iy,:)  = 0.0_R8
+         aa9(ix,iy,0)  = 1.00_R8
+!        aa9(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa9(ix,iy,-1) =-1.00_R8
+         reshi(ix,iy)  = ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy)
+        endif
+       enddo
+      enddo
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')

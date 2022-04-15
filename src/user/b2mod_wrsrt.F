@@ -165,6 +165,11 @@ csw 20sep2013 added
 ! the whole B2.5 domain
               Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
      .                                na(ix,iy,is)*vol(ix,iy)
+            else
+              ang_mom_sum(ir) = ang_mom_sum(ir) +
+     &  hz(ix,iy)*vol(ix,iy)*mp*am(is)*na(ix,iy,is)*ua(ix,iy,is)
+!              amomsum(b2espcr(is),ir) = amomsum(b2espcr(is),ir) +
+!     &  hz(ix,iy)*vol(ix,iy)*mp*am(is)*na(ix,iy,is)*ua(ix,iy,is)
             endif
           end do
 #ifdef B25_EIRENE

@@ -111,7 +111,8 @@ c======================================================================
       implicit none
       integer nlim, nsgmx
 
-      allocate(indwll(nsgmx), luwrk(nsgmx), lwldrad(nsgmx))
+      allocate(indwll(nsgmx), lwldrad(nsgmx))
+      allocate(luwrk(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
       allocate(leirlis(nsgmx,nwldprtx))
       allocate(lpumplis(nlim))

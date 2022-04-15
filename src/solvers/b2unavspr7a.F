@@ -31,8 +31,8 @@
       integer ix, iy, ixt, ixb, iyt, iyb, ireg
       real (kind=R8), save :: vis_per = 1.0_R8
       real (kind=R8) ::
-     &   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     &   cvisper(-1:nx,-1:ny,0:1), dvisper(-1:nx,-1:ny,0:1),
+     &   avisper_b(-1:nx,-1:ny,0:1), bvisper_b(-1:nx,-1:ny,0:1),
+     &   cvisper_b(-1:nx,-1:ny,0:1), dvisper_b(-1:nx,-1:ny,0:1),
      &   kmpr(-1:nx,-1:ny)
       real (kind=R8) ::
      &   aa7p2, aa7m2, coef
@@ -62,7 +62,7 @@
 *     of viscosity perpendicular current
       kmpr = nb/pb
       call b2txvsprco(nx, ny, isb, fac_vis, vol,                   !srv 02.04.18
-     &    zb, ti, kmpr, nb, avisper, bvisper, cvisper, dvisper)
+     &    zb, ti, kmpr, nb, avisper_b, bvisper_b, cvisper_b, dvisper_b)
 
       aa7 = 0.0_R8
 
@@ -82,42 +82,48 @@
          else
            if(bottomiy(ixb,iyb).eq.-2) then
               aa7(ix,iy, 3) = coef*
-     &         (avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-     &          dvisper(topix(ixt,iyt),topiy(ixt,iyt),1))
-             aa7m2 =   coef*(
-     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*dvisper(ix ,iy ,1))
+     &         (avisper_b(ixt,iyt,1)*bvisper_b(ixt,iyt,1)*
+     &          dvisper_b(topix(ixt,iyt),topiy(ixt,iyt),1))
+             aa7m2 =   coef*(avisper_b(ixt,iyt,1)*
+     &         bvisper_b(ix ,iy ,1)*dvisper_b(ix ,iy ,1))
              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m2
-             aa7p2 =     coef*(
-     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*dvisper(ixt,iyt,1)
-     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*dvisper(ixt,iyt,1))
+             aa7p2 =     coef*(avisper_b(ixt,iyt,1)*
+     &        bvisper_b(ixt,iyt,1)*dvisper_b(ixt,iyt,1)+
+     &        avisper_b(ixt,iyt,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ixt,iyt,1))
              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2
              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            elseif(topiy(ixt,iyt).eq.ny+1) then
-              aa7(ix,iy,-3) = coef*
-     &        (avisper(ix,iy,1)*bvisper(ixb,iyb,1)*dvisper(ixb,iyb,1))
-             aa7m2 =   coef*(
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*dvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*dvisper(ix ,iy ,1))
+              aa7(ix,iy,-3) = coef*(avisper_b(ix,iy,1)*
+     &        bvisper_b(ixb,iyb,1)*dvisper_b(ixb,iyb,1))
+             aa7m2 =   coef*(avisper_b(ix ,iy ,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ix ,iy ,1)+
+     &        avisper_b(ix ,iy ,1)*
+     &        bvisper_b(ixb,iyb,1)*dvisper_b(ix ,iy ,1))
              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3)  - aa7m2
-             aa7p2 =     coef*(
-     &        avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*dvisper(ixt,iyt,1))
+             aa7p2 =     coef*(avisper_b(ix ,iy ,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ixt,iyt,1))
              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2
              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            else
-             aa7(ix,iy,-3) = coef*
-     &        (avisper(ix,iy,1)*bvisper(ixb,iyb,1)*dvisper(ixb,iyb,1))
+             aa7(ix,iy,-3) = coef*(avisper_b(ix,iy,1)*
+     &        bvisper_b(ixb,iyb,1)*dvisper_b(ixb,iyb,1))
              aa7(ix,iy, 3) = coef*
-     &         (avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-     &          dvisper(topix(ixt,iyt),topiy(ixt,iyt),1))
-             aa7m2 =   coef*(
-     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*dvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*dvisper(ix ,iy ,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*dvisper(ix ,iy ,1))
+     &         (avisper_b(ixt,iyt,1)*bvisper_b(ixt,iyt,1)*
+     &          dvisper_b(topix(ixt,iyt),topiy(ixt,iyt),1))
+             aa7m2 =   coef*(avisper_b(ixt,iyt,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ix ,iy ,1)+
+     &        avisper_b(ix ,iy ,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ix ,iy ,1)+
+     &        avisper_b(ix ,iy ,1)*
+     &        bvisper_b(ixb,iyb,1)*dvisper_b(ix ,iy ,1))
              aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3)  - aa7m2
-             aa7p2 =     coef*(
-     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*dvisper(ixt,iyt,1)
-     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*dvisper(ixt,iyt,1)
-     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*dvisper(ixt,iyt,1))
+             aa7p2 =     coef*(avisper_b(ixt,iyt,1)*
+     &        bvisper_b(ixt,iyt,1)*dvisper_b(ixt,iyt,1)+
+     &        avisper_b(ixt,iyt,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ixt,iyt,1)+
+     &        avisper_b(ix ,iy ,1)*
+     &        bvisper_b(ix ,iy ,1)*dvisper_b(ixt,iyt,1))
              aa7(ix,iy,2) = aa7(ix,iy,2) - aa7(ix,iy,3) - aa7p2
              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
            endif

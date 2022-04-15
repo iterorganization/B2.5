@@ -133,7 +133,7 @@ c*** Global values
 
 c*** Local variables of general use
       real (kind=R8) ::
-     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny),kintmp
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
       integer i,j,k,l,ia,is,ix,iy
 
       integer :: mdf_fnb = 0, style_b2mndt = 1, use_eirene = 0
@@ -205,11 +205,7 @@ c          v=vol(ix,iy)
           hlp_qesp=hlp_qesp+fhe(ix,iy,1,1)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1,1)
           do is=0,ns-1
-            kintmp =
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
-     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-BoRiS)*fhm(ix,iy,1,1,is)
           enddo
           is=0
           do j=1,nspecies !{
@@ -223,8 +219,14 @@ c          v=vol(ix,iy)
      *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
               zesp_tmp(j)=zesp_tmp(j)+
      *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
-              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,1,ions_list(is))
-              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,1,ions_list(is))
+              if (mdf_fnb .eq. 0 .and. style_b2mndt .le. 0) then
+                gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,1,ions_list(is))
+                gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,1,ions_list(is))
+              else
+                gisi_tmp(is)=gisi_tmp(is)+
+     .                                  fna_mdf(ix,iy,1,1,ions_list(is))
+                gisp_tmp(j)=gisp_tmp(j)+fna_mdf(ix,iy,1,1,ions_list(is))
+              endif
               do i=0,jsep !{
                 gasp_tmp(j)=gasp_tmp(j)+
      1               sna(ix,i,0,ions_list(is))+

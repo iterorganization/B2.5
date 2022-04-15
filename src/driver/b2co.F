@@ -419,7 +419,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_wall_cdf(nx, ny, ns, tim)
+          call b2co_wall_cdf(tim)
           write(*,*) 'Returned from b2co_wall_cdf'
         else
           write(*,*) 'Skipped calling b2co_wall_cdf because '//
@@ -432,7 +432,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(nx, ny, ns, tim)
+          call b2co_tally_cdf(ns, tim)
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//

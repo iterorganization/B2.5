@@ -311,34 +311,40 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      PZ(IX,BCPOS(IB)), (NA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .           GS(IX,BCPOS(IB)+1,1),
-     .          FHE(IX,BCPOS(IB)+1,1,1)/SYhelp,
-     .          FHI(IX,BCPOS(IB)+1,1,1)/SYhelp,
+     .         (FHE(IX,BCPOS(IB)+1,1,0)+FHE(IX,BCPOS(IB)+1,1,1))/SYhelp,
+     .         (FHI(IX,BCPOS(IB)+1,1,0)+FHI(IX,BCPOS(IB)+1,1,1))/SYhelp,
      .      SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
-     .          FNA(IX,BCPOS(IB)+1,1,1,0:NS-1))/syhelp,
+     .         (FNA(IX,BCPOS(IB)+1,1,0,0:NS-1)+
+     .          FNA(IX,BCPOS(IB)+1,1,1,0:NS-1)))/SYhelp,
      .           PO(IX,BCPOS(IB)),
-     .         (FNA(IX,BCPOS(IB)+1,1,1,IS)/SYhelp, IS = 0, NS-1)
+     .        ((FNA(IX,BCPOS(IB)+1,1,0,IS)+
+     .          FNA(IX,BCPOS(IB)+1,1,1,IS))/SYhelp, IS = 0, NS-1)
           WRITE (NPRT, '((1X, T13, 2ES11.3, (T59,6D11.3)))')
-     .            FHE(IX,BCPOS(IB)+1,1,1)/
+     .           (FHE(IX,BCPOS(IB)+1,1,0)+FHE(IX,BCPOS(IB)+1,1,1))/
      .        SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
-     .            FNA(IX,BCPOS(IB)+1,1,1,0:NS-1))
+     .           (FNA(IX,BCPOS(IB)+1,1,0,0:NS-1)+
+     .            FNA(IX,BCPOS(IB)+1,1,1,0:NS-1)))
      .                        /TE(IX,BCPOS(IB)),
-     .            FHI(IX,BCPOS(IB)+1,1,1)/
-     .        SUM(FNA(IX,BCPOS(IB)+1,1,1,0:NS-1))
+     .           (FHI(IX,BCPOS(IB)+1,1,0)+FHI(IX,BCPOS(IB)+1,1,1))/
+     .        SUM(FNA(IX,BCPOS(IB)+1,1,0:1,0:NS-1))
      .                        /TI(IX,BCPOS(IB)),
      .        (UA(IX,BCPOS(IB)+1,IS), IS = 0, NS-1),
      .        (UA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
      .           GS(IX,BCPOS(IB)+1,1),
-     .          FHE(IX,BCPOS(IB)+1,1,1),
-     .          FHI(IX,BCPOS(IB)+1,1,1),
+     .          FHE(IX,BCPOS(IB)+1,1,0)+FHE(IX,BCPOS(IB)+1,1,1),
+     .          FHI(IX,BCPOS(IB)+1,1,0)+FHI(IX,BCPOS(IB)+1,1,1),
      .      SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
-     .          FNA(IX,BCPOS(IB)+1,1,1,0:NS-1)),
-     .         (FNA(IX,BCPOS(IB)+1,1,1,IS), IS = 0, NS-1)
-          SFEE=SFEE+FHE(IX,BCPOS(IB)+1,1,1)
-          SFEI=SFEI+FHI(IX,BCPOS(IB)+1,1,1)
+     .         (FNA(IX,BCPOS(IB)+1,1,0,0:NS-1)+
+     .          FNA(IX,BCPOS(IB)+1,1,1,0:NS-1))),
+     .         (FNA(IX,BCPOS(IB)+1,1,0,IS)+
+     .          FNA(IX,BCPOS(IB)+1,1,1,IS), IS = 0, NS-1)
+          SFEE=SFEE+FHE(IX,BCPOS(IB)+1,1,0)+FHE(IX,BCPOS(IB)+1,1,1)
+          SFEI=SFEI+FHI(IX,BCPOS(IB)+1,1,0)+FHI(IX,BCPOS(IB)+1,1,1)
           DO IS = 0, NS-1
             if (.not.is_neutral(is))
-     .       SFNI(IB,IS)=SFNI(IB,IS)+FNA(IX,BCPOS(IB)+1,1,1,IS)
+     .       SFNI(IB,IS)=SFNI(IB,IS)+FNA(IX,BCPOS(IB)+1,1,0,IS)
+     .                              +FNA(IX,BCPOS(IB)+1,1,1,IS)
           ENDDO
         END DO
 
@@ -356,31 +362,38 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      PZ(IX,BCPOS(IB)), (NA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .           GS(IX,BCPOS(IB),1),
-     .          FHE(IX,BCPOS(IB),1,1)/SYhelp,
-     .          FHI(IX,BCPOS(IB),1,1)/SYhelp,
+     .         (FHE(IX,BCPOS(IB),1,0)+FHE(IX,BCPOS(IB),1,1))/SYhelp,
+     .         (FHI(IX,BCPOS(IB),1,0)+FHI(IX,BCPOS(IB),1,1))/SYhelp,
      .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*
-     .          FNA(IX,BCPOS(IB),1,1,0:NS-1))/SYhelp,
+     .         (FNA(IX,BCPOS(IB),1,0,0:NS-1)+
+     .          FNA(IX,BCPOS(IB),1,1,0:NS-1)))/SYhelp,
      .           PO(IX,BCPOS(IB)),
-     .         (FNA(IX,BCPOS(IB),1,1,IS)/SYhelp, IS = 0, NS-1)
+     .        ((FNA(IX,BCPOS(IB),1,0,IS)+
+     .          FNA(IX,BCPOS(IB),1,1,IS))/SYhelp, IS = 0, NS-1)
           WRITE (NPRT, '((1X, T13, 3ES11.3, (T59,6D11.3)))')
-     .          FHE(IX,BCPOS(IB),1,1)/
-     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*FNA(IX,BCPOS(IB),1,1,0:NS-1))
+     .         (FHE(IX,BCPOS(IB),1,0)+FHE(IX,BCPOS(IB),1,1))/
+     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*(FNA(IX,BCPOS(IB),1,0,0:NS-1)+
+     .                                    FNA(IX,BCPOS(IB),1,1,0:NS-1)))
      .                        /TE(IX,BCPOS(IB)),
-     .          FHI(IX,BCPOS(IB),1,1)/
-     .      SUM(FNA(IX,BCPOS(IB),1,1,0:NS-1))
+     .         (FHI(IX,BCPOS(IB),1,0)+FHI(IX,BCPOS(IB),1,1))/
+     .      SUM(FNA(IX,BCPOS(IB),1,0:1,0:NS-1))
      .                        /TI(IX,BCPOS(IB)),
      .      (UA(IX,BCPOS(IB)-1,IS), IS = 0, NS-1),
      .      (UA(IX,BCPOS(IB),IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
      .           GS(IX,BCPOS(IB),1),
-     .          FHE(IX,BCPOS(IB),1,1), FHI(IX,BCPOS(IB),1,1),
-     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*FNA(IX,BCPOS(IB),1,1,0:NS-1)),
+     .          FHE(IX,BCPOS(IB),1,0)+FHE(IX,BCPOS(IB),1,1),
+     .          FHI(IX,BCPOS(IB),1,0)+FHI(IX,BCPOS(IB),1,1),
+     .      SUM(RZA(IX,BCPOS(IB),0:NS-1)*
+     .         (FNA(IX,BCPOS(IB),1,0,0:NS-1)+
+     .          FNA(IX,BCPOS(IB),1,1,0:NS-1))),
      .         (FNA(IX,BCPOS(IB),1,1,IS), IS = 0, NS-1)
-          SFEE=SFEE-FHE(IX,BCPOS(IB),1,1)
-          SFEI=SFEI-FHI(IX,BCPOS(IB),1,1)
+          SFEE=SFEE-FHE(IX,BCPOS(IB),1,0)-FHE(IX,BCPOS(IB),1,1)
+          SFEI=SFEI-FHI(IX,BCPOS(IB),1,0)-FHI(IX,BCPOS(IB),1,1)
           DO IS = 0, NS-1
             if (.not.is_neutral(is))
-     .        SFNI(IB,IS)=SFNI(IB,IS)-FNA(IX,BCPOS(IB),1,1,IS)
+     .        SFNI(IB,IS)=SFNI(IB,IS)-FNA(IX,BCPOS(IB),1,0,IS)
+     .                               -FNA(IX,BCPOS(IB),1,1,IS)
           ENDDO
         END DO
         WRITE (NPRT,'(1X,3(A,1PD12.4))') ' SFEE = ',SFEE,' SFEI = ',
@@ -396,12 +409,16 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      NE(BCPOS(IB),IY), PZ(BCPOS(IB),IY),
      .      (NA(BCPOS(IB),IY,IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
-     .           GS(BCPOS(IB)+1,IY,0), FHE(BCPOS(IB)+1,IY,0,0)/SXhelp,
-     .          FHI(BCPOS(IB)+1,IY,0,0)/SXhelp,
+     .           GS(BCPOS(IB)+1,IY,0),(FHE(BCPOS(IB)+1,IY,0,0)+
+     .                                 FHE(BCPOS(IB)+1,IY,0,1))/SXhelp,
+     .         (FHI(BCPOS(IB)+1,IY,0,0)+
+     .                                 FHI(BCPOS(IB)+1,IY,0,1))/SXhelp,
      .      SUM(RZA(BCPOS(IB)+1,IY,0:NS-1)*
-     .          FNA(BCPOS(IB)+1,IY,0,0,0:ns-1))/SXhelp,
+     .         (FNA(BCPOS(IB)+1,IY,0,0,0:ns-1)+
+     .          FNA(BCPOS(IB)+1,IY,0,1,0:ns-1)))/SXhelp,
      .           PO(BCPOS(IB),IY),
-     .         (FNA(BCPOS(IB)+1,IY,0,0,IS)/SXhelp, IS = 0, NS-1)
+     .         (FNA(BCPOS(IB)+1,IY,0,0,IS)+
+     .          FNA(BCPOS(IB)+1,IY,0,1,IS)/SXhelp, IS = 0, NS-1)
           RZO = 0.0_R8
           DO IS = 0, NS-1
             IF (IS_NEUTRAL(IS)) CYCLE
@@ -410,25 +427,30 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
           CS = SQRT(PZ(BCPOS(IB),IY) / RZO)
           MACH=-UA(BCPOS(IB),IY,1)/CS
           WRITE (NPRT, '((1X, T13, 4ES11.3, T70,6D11.3))')
-     .          FHE(BCPOS(IB)+1,IY,0,0)/
+     .         (FHE(BCPOS(IB)+1,IY,0,0)+FHE(BCPOS(IB)+1,IY,0,1))/
      .      SUM(RZA(BCPOS(IB)+1,IY,0:NS-1)*
-     .          FNA(BCPOS(IB)+1,IY,0,0,0:NS-1))
+     .         (FNA(BCPOS(IB)+1,IY,0,0,0:NS-1)+
+     .          FNA(BCPOS(IB)+1,IY,0,1,0:NS-1)))
      .                        /TE(BCPOS(IB),IY),
-     .          FHI(BCPOS(IB)+1,IY,0,0)/
-     .      SUM(FNA(BCPOS(IB)+1,IY,0,0,0:NS-1))
+     .         (FHI(BCPOS(IB)+1,IY,0,0)+FHI(BCPOS(IB)+1,IY,0,1))/
+     .      SUM(FNA(BCPOS(IB)+1,IY,0,0:1,0:NS-1))
      .                        /TI(BCPOS(IB),IY),
      .      MACH,(UA(BCPOS(IB),IY,IS),IS=0,NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
      .           GS(BCPOS(IB)+1,IY,0),
-     .          FHE(BCPOS(IB)+1,IY,0,0), FHI(BCPOS(IB)+1,IY,0,0),
+     .          FHE(BCPOS(IB)+1,IY,0,0)+FHE(BCPOS(IB)+1,IY,0,1),
+     .          FHI(BCPOS(IB)+1,IY,0,0)+FHI(BCPOS(IB)+1,IY,0,1),
      .      SUM(RZA(BCPOS(IB)+1,IY,0:NS-1)*
-     .          FNA(BCPOS(IB)+1,IY,0,0,0:NS-1)),
-     .         (FNA(BCPOS(IB)+1,IY,0,0,IS), IS = 0, NS-1)
-          SFEE=SFEE+FHE(BCPOS(IB)+1,IY,0,0)
-          SFEI=SFEI+FHI(BCPOS(IB)+1,IY,0,0)
+     .         (FNA(BCPOS(IB)+1,IY,0,0,0:NS-1)+
+     .          FNA(BCPOS(IB)+1,IY,0,1,0:NS-1))),
+     .         (FNA(BCPOS(IB)+1,IY,0,0,IS)+
+     .          FNA(BCPOS(IB)+1,IY,0,1,IS), IS = 0, NS-1)
+          SFEE=SFEE+FHE(BCPOS(IB)+1,IY,0,0)+FHE(BCPOS(IB)+1,IY,0,1)
+          SFEI=SFEI+FHI(BCPOS(IB)+1,IY,0,0)+FHI(BCPOS(IB)+1,IY,0,1)
           DO IS = 0, NS-1
             if (.not.is_neutral(is))
      .        SFNI(IB,IS)=SFNI(IB,IS)+FNA(BCPOS(IB)+1,IY,0,0,IS)
+     .                               +FNA(BCPOS(IB)+1,IY,0,1,IS)
           ENDDO
         END DO
         WRITE (NPRT,'(1X,3(A,1PD12.4))') ' SFEE = ',SFEE,' SFEI = ',
@@ -445,11 +467,12 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      NE(BCPOS(IB),IY),
      .      PZ(BCPOS(IB),IY), (NA(BCPOS(IB),IY,IS), IS = 0, NS-1)
           WRITE (NPRT, '(1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
-     .      GS(IX,IY,0), FHE(IX,IY,0,0)/SXhelp,
-     .      FHI(IX,IY,0,0)/SXhelp,
-     .      SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0,0:NS-1))/SXhelp,
+     .      GS(IX,IY,0),(FHE(IX,IY,0,0)+FHE(IX,IY,0,1))/SXhelp,
+     .     (FHI(IX,IY,0,0)+FHI(IX,IY,0,1))/SXhelp,
+     .      SUM(RZA(IX,IY,0:NS-1)*(FNA(IX,IY,0,0,0:NS-1)+
+     .                             FNA(IX,IY,0,1,0:NS-1)))/SXhelp,
      .      PO(BCPOS(IB),IY),
-     .      (FNA(IX,IY,0,0,IS)/SXhelp, IS = 0, NS-1)
+     .    ((FNA(IX,IY,0,0,IS)+FNA(IX,IY,0,1,IS))/SXhelp, IS = 0, NS-1)
           RZO = 0.0_R8
           DO IS = 0, NS-1
             IF (IS_NEUTRAL(IS)) CYCLE
@@ -458,21 +481,26 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
           CS = SQRT(PZ(BCPOS(IB),IY) / RZO)
           MACH=UA(IX,IY,1)/CS
           WRITE (NPRT, '((1X, 5ES11.3, T70,6D11.3))')
-     .    FHE(IX,IY,0,0)/SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0,0:NS-1))
+     .   (FHE(IX,IY,0,0)+FHE(IX,IY,0,1))/SUM(RZA(IX,IY,0:NS-1)*
+     .   (FNA(IX,IY,0,0,0:NS-1)+FNA(IX,IY,0,1,0:NS-1)))
      .                /TE(BCPOS(IB),IY),
-     .    FHI(IX,IY,0,0)/SUM(FNA(IX,IY,0,0,0:NS-1))/TI(BCPOS(IB),IY),
+     .   (FHI(IX,IY,0,0)+FHI(IX,IY,0,1))/SUM(FNA(IX,IY,0,0:1,0:NS-1))
+     .                                  /TI(BCPOS(IB),IY),
      .    MACH,
      .    (UA(IX,IY,IS),IS=0,NS-1)
           WRITE (NPRT, '(1PE12.3, 3D11.3, 2X, (T59, 6D11.3))')
      .      GS(IX,IY,0),
-     .      FHE(IX,IY,0,0), FHI(IX,IY,0,0),
-     .      SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0,0:NS-1)),
-     .      (FNA(IX,IY,0,0,IS), IS = 0, NS-1)
-          SFEE=SFEE-FHE(IX,IY,0,0)
-          SFEI=SFEI-FHI(IX,IY,0,0)
+     .     (FHE(IX,IY,0,0)+FHE(IX,IY,0,1)),
+     .     (FHI(IX,IY,0,0)+FHI(IX,IY,0,1)),
+     .      SUM(RZA(IX,IY,0:NS-1)*(FNA(IX,IY,0,0,0:NS-1)+
+     .                             FNA(IX,IY,0,1,0:NS-1))),
+     .    ((FNA(IX,IY,0,0,IS)+FNA(IX,IY,0,1,IS)), IS = 0, NS-1)
+          SFEE=SFEE-FHE(IX,IY,0,0)-FHE(IX,IY,0,1)
+          SFEI=SFEI-FHI(IX,IY,0,0)-FHI(IX,IY,0,1)
           DO IS = 0, NS-1
             if (.not.is_neutral(is))
      .        SFNI(IB,IS)=SFNI(IB,IS)-FNA(IX,IY,0,0,IS)
+     .                               -FNA(IX,IY,0,1,IS)
           ENDDO
         END DO
         WRITE (NPRT,'(1X,3(A,1PD12.4))') ' SFEE = ',SFEE,' SFEI = ',

@@ -76,8 +76,7 @@
      &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
 *   ..write state
-      call b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, ni, pr, ro, rz, fne, fni, wrk0)
+      call b2wfpj (nprt, idout, nx, ny, ns, pr, ro, rz, wrk0)
       call b2wfpk (nprt, idout, nx, ny, ns, gs, qc, 
      &  fna, fhe, fhi, fch, fne, fni)
 

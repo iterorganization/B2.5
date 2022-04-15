@@ -9,7 +9,9 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
+     & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
+     &         tot_sna0to1, fna_tot                                  !djm Mar2019
+      use b2mod_openmp
       use b2mod_subsys
       use b2mod_lwmain
       implicit none
@@ -20,7 +22,8 @@
      &  flob(-1:nx,-1:ny,0:1,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),         !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1,0:1), fnb(-1:nx,-1:ny,0:1,0:1)
-      logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
+      logical solvcreg(0:nregionv), ua_solve,
+     &  solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *   pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny)
@@ -150,7 +153,17 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
+        tot_sna0to1(:,:,:,isb)=snb !djm Mar2019
+        fna_tot(:,:,:,:,isb)=fnb   !djm Mar2019
         call update_balance_sources_particles(nx,ny,isb,nb)
+      endif
+
+      if (iout.ne.0) then                                             !srv 12.07.02 {
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,pb,'b2npc9_pa0_'//chns)
+        call my_out(70,nx,ny,nb,'b2npc9_na0_'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
+        call my_out(70,nx,ny,wrk0,'b2npc9_sna_input'//chns)
       endif
 
 * ..particle balance
@@ -173,7 +186,7 @@ cdjm Jan2017 update particle source components for balance
      &   rescb, corpb, aa9, 'b2usc9_'//chns)                            !srv 18.05.02
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
-     & vol, corpb, pccb(-1,-1,0,0), pb, nb, ub)
+     & vol, corpb, pccb(-1,-1,0,0), pb, nb, ub, isb)                    !IYS 19.12.2017
        if(guard_flows.eq.2 .or.                                         !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values    !srv 30.04.08 {

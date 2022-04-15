@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, 
-     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+     &  hx, gs,
+     &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  coreregno, coreregn2, output,
@@ -40,18 +40,17 @@
      *   sput_chem_model, boundary_namelist, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
       real (kind=R8) :: dtim, BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
+     *  hx(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     *  f_redep(-1:nx,-1:ny,0:ns-1)
+     *  fht(-1:nx,-1:ny,0:1,0:1), f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale,
      &  sput_frc, sput_phys, sput_chem_alpha, sput_phys_alpha,
@@ -90,16 +89,14 @@
       character charns*3, chark*1
       character*15 hlp_frm
       real (kind=R8) ::
-     *   t0, t1, t2, t3, qin, qel, surface_temp,
+     *   t0, t1, t2, t3, qpl, qex, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   redep_max, yself_max
       logical lcore
 *   ..procedures
       intrinsic abs, max, exp
       external xertst
-      external b2xvsg, b2xvff, smin, smax
-      real (kind=R8) :: 
-     *   smax, smin
+      external b2xvsg, b2xvff
 *   ..initialisation
       save ncall
       data ncall/0/
@@ -124,13 +121,6 @@
 *         of charged species (is) to (is+1) (intended mainly for the
 *         core boundary)
 *
-*     Description of some local variables:
-*
-*     amtol - real.
-*     amtol specifies the mass difference (in amu) up to which two
-*     species may be considered the same for the purpose of the
-*     recycling model.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -149,22 +139,8 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+*    ..test sign of hx
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
-     &  'faulty argument range qz(,,0)')
-       call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
-     &  'faulty argument range qz(,,1)')
-*    ..test sign of pbs
-!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
-*    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -444,7 +420,7 @@ c lcore           is this a core element
       logical lcore, found
 
       integer is0, is1, is2, is, k, iwall, itrack
-      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf
 
       iwall=xymap(ix,iy)
       tef = (te(ix,iy)*hhn+te(ixn,iyn)*hh)/(hhn+hh)
@@ -458,27 +434,21 @@ c lcore           is this a core element
       endif
       zaf(0:ns-1) =
      &  (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      rpf(0:ns-1) =
-     &  (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir,idir)+
-     &                        fhi_ext(ixf,iyf,idir,idir)))/area
-      do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is))
-     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS)
-     &        +rpf(is)*ev)/area
-      enddo
+      qpl = max(0.0_R8,isign*(fht(ixf,iyf,idir,0)+
+     &                        fht(ixf,iyf,idir,1)))/area
+      qex = max(0.0_R8,isign*(fhi_ext(ixf,iyf,idir,0)+
+     &                        fhi_ext(ixf,iyf,idir,1)))/area
       do is=0,ns_ext-1
          ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
          taf =
      &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,idir,is))
+         qex = qex + max(0.0_R8,isign*(fa_ext(ixf,iyf,idir,0,is)+
+     &                                 fa_ext(ixf,iyf,idir,1,is)))
      &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
      &           taf)*(1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir,idir)+
-     &       fne(ixf,iyf,idir,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -487,12 +457,12 @@ c lcore           is this a core element
             call xerrab ('Invalid iwall setting!')
          endif
          if (plate_model.eq.0) then
-            call heatdiff0D(iwall,qin,qel,surface_temp)
+            call heatdiff0D(iwall,qpl+qex,surface_temp)
             target_temp(iwall,1) = surface_temp
          else if (plate_model.eq.1) then
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
-              call heatdiff1D(iwall,ns,qin+qel,
+              call heatdiff1D(iwall,ns,qpl+qex,
      .           dtim*plate_time_factor(iwall),wrk,output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             endif
@@ -532,7 +502,8 @@ cdpc
 cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
-         t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is)) *
+         t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is)+
+     &                          fna(ixf,iyf,idir,1,is))) *
      1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
@@ -831,7 +802,8 @@ cxpb
             endif
 cxpb
 *          (species (is) recycles into is0)
-            t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is)) *
+            t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is)+
+     &                             fna(ixf,iyf,idir,1,is))) *
      .           core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+

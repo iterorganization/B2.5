@@ -1,4 +1,5 @@
-      subroutine b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
+      subroutine b2yt_wall_init
+     . (nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
       use b2mod_types
       use b2mod_geo2
       use b2mod_wall

@@ -102,13 +102,13 @@ cwdk add linearization coefficients for 9-point fluxes
      &     cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
      &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
-          cone(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+                         !srv 02.01.07
+          cone(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/8.0_R8)*
      &     (cdpa(ix,iy,0,0,is) + cdpa(ix,iy,0,1,is)*t0)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
-          cone(ix,iy,0,1,0) = cone(ix,iy,0,1,0)+                         !srv 02.01.07
+          cone(ix,iy,0,1,0) = cone(ix,iy,0,1,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,0,1,is)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
@@ -118,12 +118,12 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) +
      &     cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
-          coni(ix,iy,0,0,0) = coni(ix,iy,0,0,0)+                         !srv 02.01.07
+          coni(ix,iy,0,0,0) = coni(ix,iy,0,0,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*
      &     (cdpa(ix,iy,0,0,is) + cdpa(ix,iy,0,1,is)*t0)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
-          coni(ix,iy,0,1,0) = coni(ix,iy,0,1,0)+                         !srv 02.01.07
+          coni(ix,iy,0,1,0) = coni(ix,iy,0,1,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,1,is)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
@@ -145,12 +145,12 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*dnwr(ix,iy,1,is)*
      &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
-          cone(ix,iy,1,1,0) = cone(ix,iy,1,1,0)+                         !srv 02.01.07
+          cone(ix,iy,1,1,0) = cone(ix,iy,1,1,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,1,1,is)*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
-          cone(ix,iy,1,0,0) = cone(ix,iy,1,0,0)+                         !srv 02.01.07
+          cone(ix,iy,1,0,0) = cone(ix,iy,1,0,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,1,1,is)*t0*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
@@ -158,11 +158,11 @@ cwdk add linearization coefficients for 9-point fluxes
           floi(ix,iy,1,1) = floi(ix,iy,1,1)-
      &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,1,1,is)*dnwr(ix,iy,1,is)*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
-          coni(ix,iy,1,1,0) = coni(ix,iy,1,1,0)+                         !srv 02.01.07
+          coni(ix,iy,1,1,0) = coni(ix,iy,1,1,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
-          coni(ix,iy,1,0,0) = coni(ix,iy,1,0,0)+                         !srv 02.01.07
+          coni(ix,iy,1,0,0) = coni(ix,iy,1,0,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*t0*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))

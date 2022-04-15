@@ -8,10 +8,11 @@
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
      &  fne, fch, fchstoch, cvsa,
      &  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
-     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht,  !srv 10.11.02
-     &  corte, corti, ierr)
+     &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
+     &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_tallies                                                 !srv 22.05.18
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
@@ -196,7 +197,7 @@
 *   ..compute final heat sources
       if(style.eq.0) then
        call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,
-     &  qz, qs, vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,    !srv 01.07.09
+     &  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,            !srv 01.07.09
      &  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)  !xpb !srv 24.08.21
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
@@ -209,8 +210,13 @@
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+        call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
+
+      if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21
+        call my_out(70,nx,ny,te,'b2nph9_te_inp')
+        call my_out(70,nx,ny,ti,'b2nph9_ti_inp')
+      endif                                                             !srv 31.01.21
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -237,8 +243,10 @@ cdjm Jan2017 update particle source components for balance
       endif
 
 *   ..compute final resht, reshe, reshi
-      do iy = -1, ny
+      b2qie=0.0_R8
+      do iy = -1, ny                                                    !srv 22.05.18
        do ix = -1, nx
+        b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
         resht(ix,iy) = reshe(ix,iy) + reshi(ix,iy)
         reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
         reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
@@ -281,6 +289,12 @@ cdjm Jan2017 update particle source components for balance
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_shi')
       endif                                                             !srv 17.07.05 01.11.10 }
+
+      if (iout.eq.1) then
+        call my_out(70,nx,ny,te,'b2nph9_te0')
+        call my_out(70,nx,ny,ti,'b2nph9_ti0')
+      endif
+
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2ush9 (nx, ny, ns, nregionv, itcnt,

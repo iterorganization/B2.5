@@ -51,6 +51,7 @@
       save ncall
       real (kind=R8) ::
      *   t0, t1
+      real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs, sqrt, dim
@@ -65,6 +66,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usht')
+      if (ncall.eq.0) then                                            !srv 07.07.21
+       call ipgetr ('b2usht_cor_diag', cor_diag)
+      endif                                                           !srv 07.07.21
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -308,7 +312,7 @@ cxpb
         ireg = region(ix,iy,0)
         if (solveee(ireg)) then
          aa5(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
-     &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*
+     &    cor_diag*dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*   !srv 07.07.21
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))+
      &    abs(reshe(ix,iy))/(rxg*te(ix,iy))
         else

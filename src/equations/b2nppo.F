@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nx, ny, nregionv, solvereg, itcnt, rxf, vol,
-     &  ne, te, conc, sch, po, fch, respo, corpo, ierr)
+      subroutine b2nppo (nx, ny, nregionv, solvereg, itcnt,
+     &  rxf, vol, ne, te, conc, sch, po, fch, respo, corpo, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants

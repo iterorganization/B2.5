@@ -305,9 +305,15 @@ c***     core boundary
                     hlpic=hlpic+
      .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   1,0,ions_list(ks))+
+     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
      .                   1,1,ions_list(ks))
 c<<<
                     hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   1,0,ions_list(ks))+
      .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
      .                   1,1,ions_list(ks))
@@ -321,9 +327,15 @@ c***     wall in PFR
                 hlpiw=hlpiw+
      .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               1,0,ions_list(ks))+
+     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               1,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               1,0,ions_list(ks))+
      .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               1,1,ions_list(ks))
@@ -333,10 +345,12 @@ c>>>
 c***     outer wall
               do i = 1, bc_list_size(ic)
                 hlpiw=hlpiw
+     .           -fna(bc_list_x(i,ic),bc_list_y(i,ic),1,0,ions_list(ks))
      .           -fna(bc_list_x(i,ic),bc_list_y(i,ic),1,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),1,1,ions_list(ks))
+     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),1,0,ions_list(ks))
+     .          -fna(bc_list_x(i,ic),bc_list_y(i,ic),1,1,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'W') then
@@ -345,16 +359,25 @@ c***     left target
                 hlpit=hlpit+
      .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,0,ions_list(ks))
+     .               0,0,ions_list(ks))+
+     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               0,1,ions_list(ks))
                 hlpit_lp(ls)=hlpit_lp(ls)+
      .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,0,ions_list(ks))
+     .               0,0,ions_list(ks))+
+     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               0,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
      .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
      .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
-     .               0,0,ions_list(ks))
+     .               0,0,ions_list(ks))+
+     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               0,1,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'E') then
@@ -362,11 +385,14 @@ c***     right target
               do i = 1, bc_list_size(ic)
                 hlpit=hlpit-
      .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,0,ions_list(ks))
+     .          -fna(bc_list_x(i,ic),bc_list_y(i,ic),0,1,ions_list(ks))
                 hlpit_rp(ls)=hlpit_rp(ls)-
      .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,0,ions_list(ks))
+     .          -fna(bc_list_x(i,ic),bc_list_y(i,ic),0,1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
      .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,0,ions_list(ks))
+     .          -fna(bc_list_x(i,ic),bc_list_y(i,ic),0,1,ions_list(ks))
 c>>>
               end do
             end if

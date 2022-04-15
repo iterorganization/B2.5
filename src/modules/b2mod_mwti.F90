@@ -487,7 +487,7 @@ contains
     ix = -1 ! 1
     ix_off  = ix + target_offset
     do iy = iylstrt,iylend
-      call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+      call calc_fet(ix,iy,'L',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
       fnixip(1) = fnixip(1) + fnitmp
       feexip(1) = feexip(1) + feetmp
       feixip(1) = feixip(1) + feitmp
@@ -508,7 +508,7 @@ contains
     ix = nx ! 2
     ix_off  = ix - target_offset
     do iy = iyrstrt,iyrend
-      call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+      call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
       fnixap(1) = fnixap(1) + fnitmp
       feexap(1) = feexap(1) + feetmp
       feixap(1) = feixap(1) + feitmp
@@ -528,7 +528,7 @@ contains
       ix = ixtr ! 3
       ix_off  = ix + target_offset
       do iy = iytrstrt,iytrend
-        call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+        call calc_fet(ix,iy,'L',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
         fnixap(2) = fnixap(2) + fnitmp
         feexap(2) = feexap(2) + feetmp
         feixap(2) = feixap(2) + feitmp
@@ -547,7 +547,7 @@ contains
       ix = ixtl ! 4
       ix_off  = ix - target_offset
       do iy = iytlstrt,iytlend
-        call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
+        call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp,pwrtmp)
         fnixip(2) = fnixip(2) + fnitmp
         feexip(2) = feexip(2) + feetmp
         feixip(2) = feixip(2) + feitmp
@@ -572,14 +572,14 @@ contains
       do ic = 1, nncut
         do iy = -1,jsep
           ix = leftcut(ic) ! 5
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisipp(ic) = fnisipp(ic) + fnitmp
           feesipp(ic) = feesipp(ic) + feetmp
           feisipp(ic) = feisipp(ic) + feitmp
           fchsipp(ic) = fchsipp(ic) + fchtmp
           fetsipp(ic) = fetsipp(ic) + fettmp
           ix = rightcut(ic) ! 6
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisapp(ic) = fnisapp(ic) + fnitmp
           feesapp(ic) = feesapp(ic) + feetmp
           feisapp(ic) = feisapp(ic) + feitmp
@@ -588,14 +588,14 @@ contains
         enddo
         do iy = jsep+1,ny
           ix = leftcut(ic) ! 7
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisip(ic) = fnisip(ic) + fnitmp
           feesip(ic) = feesip(ic) + feetmp
           feisip(ic) = feisip(ic) + feitmp
           fchsip(ic) = fchsip(ic) + fchtmp
           fetsip(ic) = fetsip(ic) + fettmp
           ix = rightcut(ic) ! 8
-          call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'R',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fnisap(ic) = fnisap(ic) + fnitmp
           feesap(ic) = feesap(ic) + feetmp
           feisap(ic) = feisap(ic) + feitmp
@@ -612,7 +612,7 @@ contains
       do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 9
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -621,7 +621,7 @@ contains
         endif
         if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
           iy = ny ! 10
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -630,7 +630,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 11
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -642,7 +642,7 @@ contains
       do ix = -1,nx
         if(region(ix,ny,0).eq.5) then
           iy = ny ! 12
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -651,7 +651,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
           iy = -1 ! 13
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -663,7 +663,7 @@ contains
       do ix = -1,nx
         if(mod(region(ix,ny,0),4).eq.2) then
           iy = ny ! 14
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(region(ix,ny,0)/4+1) = fniyip(region(ix,ny,0)/4+1) + fnitmp
           feeyip(region(ix,ny,0)/4+1) = feeyip(region(ix,ny,0)/4+1) + feetmp
           feiyip(region(ix,ny,0)/4+1) = feiyip(region(ix,ny,0)/4+1) + feitmp
@@ -672,7 +672,7 @@ contains
         endif
         if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
           iy = ny ! 15
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -681,7 +681,7 @@ contains
         endif
         if(region(ix,-1,0).eq.3 .or. region(ix,-1,0).eq.8) then
           iy = -1 ! 16
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
           feeyap(1) = feeyap(1) + feetmp
           feiyap(1) = feiyap(1) + feitmp
@@ -690,7 +690,7 @@ contains
         endif
         if(region(ix,ny,0).eq.4 .or. region(ix,ny,0).eq.7) then
           iy = ny ! 17
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(2) = fniyap(2) + fnitmp
           feeyap(2) = feeyap(2) + feetmp
           feiyap(2) = feiyap(2) + feitmp
@@ -699,7 +699,7 @@ contains
         endif
         if(region(ix,-1,0).eq.4 .or. region(ix,-1,0).eq.7) then
           iy = -1 ! 18
-          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(2) = fniyap(2) + fnitmp
           feeyap(2) = feeyap(2) + feetmp
           feiyap(2) = feiyap(2) + feitmp
@@ -711,7 +711,7 @@ contains
       do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
           iy = ny ! 19
-          call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+          call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyip(1) = fniyip(1) + fnitmp
           feeyip(1) = feeyip(1) + feetmp
           feiyip(1) = feiyip(1) + feitmp
@@ -722,7 +722,7 @@ contains
     else
       do ix = -1,nx
         iy = ny ! 20
-        call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
+        call calc_fet(ix,iy,'T',1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
         fniyip(1) = fniyip(1) + fnitmp
         feeyip(1) = feeyip(1) + feetmp
         feiyip(1) = feiyip(1) + feitmp
@@ -1191,25 +1191,25 @@ contains
     !
       slice=0.0_R8
       do iy = iylstrt, iylend
-        call calc_fet(-1,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+        call calc_fet(-1,iy,'L',1._R8,nx,ny,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dl',imap,slice(iylstrt),iret)
 
       slice=0.0_R8
       do iy = iyrstrt, iyrend
-        call calc_fet(nx,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+        call calc_fet(nx,iy,'R',1._R8,nx,ny,ismain,BoRiS,slice(iy))
       enddo
       call rwcdf(rw,ncid,'ft3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
         slice=0.0_R8
         do iy = iytlstrt, iytlend
-          call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+          call calc_fet(ixtl,iy,'R',1._R8,nx,ny,ismain,BoRiS,slice(iy))
         enddo
         call rwcdf(rw,ncid,'ft3dtl',imap,slice(iytlstrt),iret)
 
         slice=0.0_R8
         do iy = iytrstrt, iytrend
-          call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,slice(iy))
+          call calc_fet(ixtr,iy,'L',1._R8,nx,ny,ismain,BoRiS,slice(iy))
         enddo
         call rwcdf(rw,ncid,'ft3dtr',imap,slice(iytrstrt),iret)
       endif
@@ -3207,22 +3207,22 @@ contains
   end subroutine output_ds
 
 
-  subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
+  subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
+    use b2mod_plasma   , only : fna, fhe, fhi, fch, fht, fhj
     use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
     use b2mod_external , only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
     use b2mod_constants , only : ev, mp
     use b2mod_geo , only : hx, hy, qz, gs
     implicit none
     integer, intent(in) :: ix, iy
-    integer, intent(in) :: ismain, nx, ny, ns
+    integer, intent(in) :: ismain, nx, ny
     real(kind=R8), intent(in) :: BoRiS, fac_flux
     real(kind=R8), intent(out) :: fet
     real(kind=R8), intent(out), Optional :: fni0, fee0, fei0, fch0, pwr
     character(len=1) :: side
     ! Local vars
     integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
-    real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
+    real(kind=R8) :: kintmp, rpttmp, taf
     real(kind=R8) :: h(-1:nx,-1:ny)
     ! Procedures
     external xerrab
@@ -3260,37 +3260,26 @@ contains
     case default
       call xerrab('Unknown side in calc_fet')
     end select
-    if (present(fni0)) fni0 = fac_flux*(fna(ix_flux,iy_flux,idir,0,ismain)+ &
+    if (present(fni0)) fni0 = fac_flux*(fna(ix_flux,iy_flux,idir,0,ismain)+   &
                                      &  fna(ix_flux,iy_flux,idir,1,ismain))
-    if (present(fee0)) fee0 = fac_flux*(fhe(ix_flux,iy_flux,idir,0)+        &
+    if (present(fee0)) fee0 = fac_flux*(fhe(ix_flux,iy_flux,idir,0)+          &
                                      &  fhe(ix_flux,iy_flux,idir,1))
-    if (present(fei0)) fei0 = fac_flux*(fhi(ix_flux,iy_flux,idir,0)+        &
+    if (present(fei0)) fei0 = fac_flux*(fhi(ix_flux,iy_flux,idir,0)+          &
                                      &  fhi(ix_flux,iy_flux,idir,1))
-    if (present(fch0)) fch0 = fac_flux*(fch(ix_flux,iy_flux,idir,0)+        &
+    if (present(fch0)) fch0 = fac_flux*(fch(ix_flux,iy_flux,idir,0)+          &
                                      &  fch(ix_flux,iy_flux,idir,1))
-    fet = fac_flux*(fhe(ix_flux,iy_flux,idir,0) + fhi(ix_flux,iy_flux,idir,0) &
-            & + fhi_ext(ix_flux,iy_flux,idir,0) + fhe(ix_flux,iy_flux,idir,1) &
-            &     + fhi(ix_flux,iy_flux,idir,1) + fhi_ext(ix_flux,iy_flux,idir,1))
-    tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/ &
-        & (h(ix,iy)+h(ix_adj,iy_adj))
-    tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/ &
-        & (h(ix,iy)+h(ix_adj,iy_adj))
-    fet = fet + fac_flux*(fne(ix_flux,iy_flux,idir,0)+ &
-        &                 fne(ix_flux,iy_flux,idir,1))*tef*(1.0_R8-BoRiS)
-    do is=0,ns-1
-      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,0,is)+ &
-        &                   fhm(ix_flux,iy_flux,idir,1,is)+tif)*(1.0_R8-BoRiS) &
-        &       + fac_flux*(fhp(ix_flux,iy_flux,idir,0,is)+ &
-        &                   fhp(ix_flux,iy_flux,idir,1,is))
-    enddo
+    fet = fac_flux*(fht(ix_flux,iy_flux,idir,0) - fhj(ix_flux,iy_flux,idir,0) &
+            & + fhi_ext(ix_flux,iy_flux,idir,0)                               &
+            &     + fht(ix_flux,iy_flux,idir,1) - fhj(ix_flux,iy_flux,idir,1) &
+            & + fhi_ext(ix_flux,iy_flux,idir,1))
     do is=0,ns_ext-1
-      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
+      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+  &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-      rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+ &
+      rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+                            &
          &      pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-      taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ &
+      taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+                               &
          &   ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))* &
+      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*         &
          & (fa_ext(ix_flux,iy_flux,idir,0,is)+fa_ext(ix_flux,iy_flux,idir,1,is))
     enddo
     if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)

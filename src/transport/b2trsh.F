@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, po, te, ne,                      !srv 07.07.14
-     *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
+      subroutine b2trsh (nx, ny, vol, po, te, ne, csig_stoch,            !srv 24.08.21
+     &                   chce_stoch)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -15,18 +15,18 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1,0:1)!srv 24.08.21
+     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
+     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     & fchstoch(-1:nx,-1:ny,0:1,0:1)                                    !srv 24.08.21
+     &  chce_stoch(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TSTCH computes the Y component of the electron current
+*     B2TRSH computes the X and Y components of electron thermal conductivity 
 *     associated with stochastization of the magnetic field.
 *
 *
@@ -34,11 +34,12 @@
 *.declarations
 
 *   ..global named constants
-
+      
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8,                 !lk 31.01.08 }
+     &                        alpha_stoch = 1.0e0_R8                     !srv 17.12.13
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
@@ -52,7 +53,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2tstch')
+      call subini ('b2trsh')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgetr ('b2tstch_delta', delta_stoch)
@@ -62,6 +63,7 @@
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
      &   'faulty internal parameter delta_stoch')
+        call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)             !lk 31.01.08
         call get_jsep(nx,ny,jxi,jxa,jsep)
         ixref=jxa
         call ipgeti ('b2tqna_ixref', ixref)
@@ -82,26 +84,18 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      fchstoch   = 0.0e0_R8
-      if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-        call b2trsc (nx, ny, vol, po, te, ne, csig_stoch)               !srv 24.08.21
-        do iy = bottomdelta1, jsep+1
-          do ix = -1, nx
-           if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-            fchstoch(ix,iy,1,1) = -csig_stoch(ix,iy,1,1)*                   !srv 24.08.21
-     &       ((po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))-
-     &       0.5e0_R8/qe*
-     &       (te(ix,iy) - te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -(te(ix,iy) + te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8/
-     &        qe
-     &      *(log(ne(ix,iy))-
-     &        log(ne(bottomix(ix,iy),bottomiy(ix,iy)))))
-           endif
-          enddo
+      chce_stoch = 0.0e0_R8
+      do iy = bottomdelta1, jsep+1
+        do ix = -1, nx
+         if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
+          chce_stoch(ix,iy,1,1)=alpha_stoch*1.6e0_R8*
+     &      csig_stoch(ix,iy,1,1)/qe/qe*
+     &     (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
+         endif
         enddo
-      endif                                                             !lk 31.01.08 }
+      enddo
 
-!      call my_out(70,nx,ny,fchstoch(-1,-1,1,1),'b2tstch_fchstochy')    !srv 24.08.21
+!      call my_out(70,nx,ny,chce_stoch(-1,-1,1,1),'b2tstch_chcey_stoch')
 
 * ..return
       ncall = ncall+1
@@ -109,6 +103,6 @@
       return
 
 *-----------------------------------------------------------------------
-*.end b2tstch
+*.end b2trsh
 
-      end subroutine b2tstch                                            !lk 31.01.08 }
+      end subroutine b2trsh                                            !srv 24.08.21 }

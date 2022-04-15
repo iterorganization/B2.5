@@ -536,6 +536,17 @@
 *     between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchvispary(-1:nx,iy) will hold 0.
 *
+*     fchvispar_a - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fchvispar_ax(,,)=fchvispar_a(,,0,) and fchvispar_ay(,,)=fchvispar(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fchvispar_ax(ix,iy,is) specifies the
+*     electric current driven by parallel viscosity of atoms of species (is) through
+*     the face between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchvispar_ax(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fchvispar_ay(ix,iy,is) specifies the
+*     electric current driven by parallel viscosity of atoms of species (is) through
+*     the face between the (ix,iy) cell and its left neighbor.
+*     For iy.eq.-1, fchvispar_ay(-1:nx,iy,0:ns-1) will hold 0.
+*
 *     fchvisq - (-1:nx,-1:ny,0:1) real*8 array.
 *     fchvisq specifies the electric current produced by the components
 *     of the viscosity tensor which is connected with the heat fluxes.
@@ -546,6 +557,20 @@
 *     For (ix,iy) in (-1:nx,0:ny), fchvisqy(ix,iy) specifies the current
 *     through the face between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchvisqy(-1:nx,iy) will hold 0.
+*
+*     fchvisq_a - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     fchvisq_a specifies the electric current of atoms of species (is)
+*     produced by the components of the viscosity tensor which is connected
+*     with the heat fluxes.
+*     (Let fchvisq_ax(,,)=fchvisq_a(,,0,) and fchvisq_ay(,,)=fchvisq(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fchvisq_ax(ix,iy,is) specifies the
+*     current of atoms of species (is) through the face between the (ix,iy) cell
+*     and its left neighbor.
+*     For ix.eq.-1, fchvisq_ax(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fchvisq_ay(ix,iy,is) specifies the
+*     current of atoms of species (is) through the face between the (ix,iy) cell
+*     and its bottom neighbor.
+*     For iy.eq.-1, fchvisq_ay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     fchinert - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchinertx(,)=fchinert(,,0) and fchinerty(,)=fchinert(,,1).)
@@ -558,6 +583,17 @@
 *     the face between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchinerty(-1:nx,iy) will hold 0.
 *
+*     fchinert_a - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fchinert_ax(,,)=fchinert_a(,,0,) and fchinert_ay(,,)=fchinertl(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fchinert_ax(ix,iy,is) specifies the
+*     contributions from inertia and gyroviscosity current of atoms of species
+*     (is) through the face between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchinert_ax(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fchinert_ay(ix,iy,is) specifies the
+*     contributions from inertia and gyroviscosity current of atoms of species (is)
+*     through the face between the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchinert_ay(-1:nx,iy,0:ns-1) will hold 0.
+*
 *     fchanml - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchanmlx(,)=fchanml(,,0) and fchanmly(,)=fchanml(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchanmlx(ix,iy) specifies the
@@ -568,6 +604,17 @@
 *     amomalous current through the face between the (ix,iy) cell
 *     and its bottom neighbor.
 *     For iy.eq.-1, fchanmly(-1:nx,iy) will hold 0.
+*
+*     fchanml_a - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fchanml_ax(,,)=fchanml_a(,,0,) and fchanml_ay(,,)=fchanml(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fchanml_ax(ix,iy,is) specifies the
+*     anomalous current of atoms of species (is) through the face between
+*     the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchanml_ax(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fchanml_ay(ix,iy,is) specifies the
+*     amomalous current of atoms of species (is) through the face between
+*     the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchanml_ay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     fchdia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchdiax(,)=fchdia(,,0) and fchdiay(,)=fchdia(,,1).)
@@ -606,6 +653,15 @@
 *     the perpendicular viscosity through the face between the (ix,iy) cell
 *     and its bottom neighbor.
 *     For iy.eq.-1, fchvispery(-1:nx,iy) will hold 0.
+*
+*     fchvisper_a - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fchvisper_ax(,,)=fchvisper_a(,,0,) and fchvispery(,,)=fchvisper(,,1,).)
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), fchvisper_ax(ix,iy) = 0.
+*     For (ix,iy,is) in (-1:nx, 0:ny,0:ns-1), fchvisper_ay(ix,iy,is) specifies the
+*     electric current of atoms of species (is) connected with contribution from
+*     the perpendicular viscosity through the face between the (ix,iy) cell
+*     and its bottom neighbor.
+*     For iy.eq.-1, fchvisper_ay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let uadiax(,,)=uadia(,,0,) and uadiay(,)=uadia(,,1,).)

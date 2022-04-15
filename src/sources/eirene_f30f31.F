@@ -83,7 +83,7 @@ c
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
      2 ncall/0/, eirene_extrapolate/1/,
      & eirene_uub_style/0/, print_minmax/0/, eirene_background/1/
-      real (kind=R8) :: kintmp,
+      real (kind=R8) :: vdrift,
      &  vaecrbc(-1:nx,-1:ny,0:1,0:ns-1), wadiac(-1:nx,-1:ny,0:1,0:ns-1),
      &  vadiac(-1:nx,-1:ny,0:1,0:ns-1), wrk(-1:nx,-1:ny)
 
@@ -202,15 +202,9 @@ c
             feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)+
      .                     fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0,1)
             do is=0,ns-1
-              kintmp =
-     .         (kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)*
-     .          hx(ix-1,iy)+
-     .          kinrgy(ix-1,iy,is)*
-     .          hx(rightix(ix-1,iy),rightiy(ix-1,iy)))/
-     .         (hx(ix-1,iy)+hx(rightix(ix-1,iy),rightiy(ix-1,iy)))
-              feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .         *(fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is) + 
-     .           fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,1,is))
+              feixb(ix,iy+1)=feixb(ix,iy+1)+(1.0_R8-BoRiS)
+     .         *(fhm(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is) +
+     .           fhm(rightix(ix-1,iy),rightiy(ix-1,iy),0,1,is))
             enddo
             feexb(ix,iy+1)=fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)+
      .                     fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0,1)
@@ -227,16 +221,8 @@ c
         do ix=-1,nx
           feiyb(ix+1,iy)=fhi(ix,iy,1,0)+fhi(ix,iy,1,1)
           do is=0,ns-1
-            if (bottomiy(ix,iy).ne.-2) then
-              kintmp =
-     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .          kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
-     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            else
-              kintmp = kinrgy(ix,iy,is)
-            endif
-            feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
-     .       *(fna(ix,iy,1,0,is)+fna(ix,iy,1,1,is))
+            feiyb(ix+1,iy)=feiyb(ix+1,iy)+(1.0_R8-BoRiS)
+     .       *(fhm(ix,iy,1,0,is)+fhm(ix,iy,1,1,is))
           enddo
           feeyb(ix+1,iy)=fhe(ix,iy,1,0)+fhe(ix,iy,1,1)
         enddo
@@ -405,28 +391,19 @@ c                    (diffusive anomalous contribution zero due to toroidal symm
               if (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      .          bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy)  .eq.ny+1) then
 c     guard cell -> use grad-B drift only
-               wwb(ix+1,iy+1,nflai)=max(min(
-     1           upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2           (vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3           bb(ix,iy,0)/bb(ix,iy,2),
-     4           ua_max),ua_min)
-              else
-                if (eirene_background.eq.0) then
+                vdrift=vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
+              else if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only (fna)
-                 wwb(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2             (vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3             bb(ix,iy,0)/bb(ix,iy,2),
-     4             ua_max),ua_min)
-                else
+                vdrift=vadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
+              else
 c     internal cell -> full diamagnetic drift
-                 wwb(ix+1,iy+1,nflai)=max(min(
-     1             upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-
-     2             (wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is))*
-     3             bb(ix,iy,0)/bb(ix,iy,2),
-     4             ua_max),ua_min)
-                endif
+                vdrift=wadiac(ix,iy,0,is)+vaecrbc(ix,iy,0,is)
               endif
+              if (bb(ix,iy,2).ne.0.0_R8)
+     >         vdrift=vdrift*bb(ix,iy,0)/bb(ix,iy,2)
+              wwb(ix+1,iy+1,nflai)=max(min(
+     1          upb(ix+1,iy+1,nflai)*bb(ix,iy,2)/bb(ix,iy,3)-vdrift,
+     2          ua_max),ua_min)
             enddo
           enddo
 * cell face x

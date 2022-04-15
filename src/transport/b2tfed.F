@@ -77,7 +77,9 @@ c Drift terms
       vedia=0.0_R8                                                       !xpb
       veecrb=0.0_R8                                                      !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
+
         if(drift_style.eq.0) then ! 5.0 treatment
+
           call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
           do iy = -1, ny
             do ix = -1, nx                                               !xpb
@@ -143,7 +145,7 @@ cxpb  Standard case
      .            vedia(bottomix(ix,iy),bottomiy(ix,iy),:,:)             !xpb
               elseif(bottomiy(ix,iy).eq.-2) then
                 veecrb(ix,iy,:,:) =
-     .            veecrb(topix(ix,iy),topiy(ix,iy),:,:)!xpb
+     .            veecrb(topix(ix,iy),topiy(ix,iy),:,:)                  !xpb
                 vedia(ix,iy,:,:) = vedia(topix(ix,iy),topiy(ix,iy),:,:)  !xpb
               endif
             enddo

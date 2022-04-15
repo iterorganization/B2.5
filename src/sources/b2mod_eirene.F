@@ -20,6 +20,7 @@
       use b2mod_b2cmpb
       use b2mod_balance !djm Jan2017
      & ,only : eirene_mc_papl_sna0to1, eirene_mc_pmpl_sna0to1,
+     &         eirene_mc_pael_sne0to1, eirene_mc_pmel_sne0to1,
      &         eirene_mc_pipl_sna0to1, eirene_mc_pppl_sna0to1,
      &         eirene_mc_core_sna0to1, eirene_mc_mapl_smo0to3,
      &         eirene_mc_mmpl_smo0to3, eirene_mc_mipl_smo0to3,
@@ -27,7 +28,11 @@
      &         eirene_mc_emel_she0to3, eirene_mc_eiel_she0to3,
      &         eirene_mc_epel_she0to3, eirene_mc_eapl_shi0to3,
      &         eirene_mc_empl_shi0to3, eirene_mc_eipl_shi0to3,
-     &         eirene_mc_eppl_shi0to3,
+     &         eirene_mc_eppl_shi0to3, eirene_mc_paat_sna_bal,
+     &         eirene_mc_pmat_sna_bal, eirene_mc_piat_sna_bal,
+     &         eirene_mc_paml_sna_bal, eirene_mc_pmml_sna_bal,
+     &         eirene_mc_piml_sna_bal, eirene_mc_paio_sna_bal,
+     &         eirene_mc_pmio_sna_bal, eirene_mc_piio_sna_bal,
      &         alloc_b2mod_eirene_sources,
      &         balance_netcdf
 #ifdef B25_EIRENE
@@ -134,7 +139,8 @@ csw 19oct2012, added save attribute!!!
 
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
-     1 nesepm_istra, b2stbc_feedback, use_recyceir
+     1 nesepm_istra, b2stbc_feedback
+      logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
@@ -197,10 +203,9 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
      1 hlp_pi(:),hlp_po(:),hlp_ni(:),
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
      1 hlp_scl(:),hlp_scp(:,:),
-     2 hlp_stra(:), core_flux(:)
+     2 core_flux(:)
       real (kind=R8), save :: core_surface
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      logical, allocatable, save :: hlp_pff(:,:)
       integer i,j,k,l,js,ls,kks,n,icount
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
@@ -213,23 +218,23 @@ c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical ex, last, saved_volrec_used, na_feedback_on
+      logical ex, last, na_feedback_on
       integer :: igpuff(NSTRAT)
 
-      integer output_style, linearisation, ank_mods, save_f31,
+      integer output_style, linearisation, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
      2 no_sseicorr, save_f30, stab_corr
-      save ncall, output_style, saved_volrec_used,
+      save ncall, output_style,
      * pfrregno1, pfrregno2, solregno, isfeedback, b2stbc_feedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
-     * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
-     1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
+     * neutral_sources_rescale, ncallfeedback, save_f31,
+     1 repeat_first_call, ionising_core, dpc_fix,
      2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30,
      3 stab_corr
 csw 26mar2013
       integer, save :: iscltst=0
 csw 26feb2014
-      integer, save :: ihist=0, neutr_avg=0, nhist=1, nrelax = 0
+      integer, save :: ihist=0, neutr_avg=0
       integer, save :: ih_end
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
@@ -243,14 +248,14 @@ csw 26feb2014
       external streql
 #endif
 *   ..initialisation
-      data ncall/0/, output_style/1/, saved_volrec_used/.false./,
+      data ncall/0/, output_style/1/,
      .  linearisation/1/, solregno/3/, b2stbc_feedback/0/,
      1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
      2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
      3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
-     5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
-     6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
+     5  ndes/0.0_R8/, save_f31/0/, repeat_first_call/1/,
+     6  volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
      7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/, stab_corr/1/
 
 *-----------------------------------------------------------------------
@@ -289,6 +294,7 @@ c not sure this is the right place
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
         allocate(sum_wld(4,2+NATM))
+        allocate(feedback_strata(0:nspecies-1))
         if (balance_netcdf.ne.0) then !djm Jan2017
          call alloc_b2mod_eirene_sources(nx,ny,ns,natm,nmol,nion,nstrat)
         endif
@@ -325,6 +331,7 @@ c not sure this is the right place
         call ipgeti ('b2stbc_isfeedback', isfeedback)
         call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
      1   'faulty internal parameter isfeedback')
+        feedback_strata=0
         call ipgeti ('eirene_nesepm_istra', nesepm_istra)
         if(nesepm_istra.gt.0.and.lfeedback) then
           call xertst (nesepm_istra.le.nstrat,
@@ -352,7 +359,19 @@ c not sure this is the right place
           end do
           call xertst (icount.eq.1 .or. nesepm_istra.gt.0,
      .     'Multiple definitions of puff strata, use nesepm_istra')
+          feedback_strata(b2espcr(isfeedback)-1)=nesepm_istra
         endif
+        do is = 0, nspecies-1
+          if (na_feedback_actuator(is).eq.1) then
+            do istrai = 1, nstrat
+              if (crcstra(istrai).eq.'C' .and.
+     .          species_start(istrai).le.eb2spcr(is+1) .and.
+     .          species_end(istrai).ge.eb2spcr(is+1)) then
+                  feedback_strata(is) = istrai
+              end if
+            end do
+          end if
+        end do
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
         call xertst (0.0_R8.le.private_flux_puff,
      1   'faulty internal parameter private_flux_puff')
@@ -540,13 +559,16 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
       na_feedback_on = .false.
       do is = 0, nspecies-1
         if (na_feedback_on) cycle
+        if (na_feedback_actuator(is).eq.1)
+     >   call xertst(nesepm_istra.gt.0.or.maxval(feedback_strata).gt.0,
+     &    'No gas puff feedback strata set!')
         na_feedback_on = na_feedback_target(is).gt.0.0_R8.and.
      &                   na_feedback_actuator(is).eq.1.and.
-     &                   nesepm_istra.gt.0
+     &                   feedback_strata(is).gt.0
         if (na_feedback_on) then
           na_feedback_on = na_feedback_on .and.
-     &      species_start(nesepm_istra).le.eb2spcr(is+1).and.
-     &      species_end(nesepm_istra).ge.eb2spcr(is+1)
+     &      species_start(feedback_strata(is)).le.eb2spcr(is+1).and.
+     &      species_end(feedback_strata(is)).ge.eb2spcr(is+1)
         end if
       end do
 
@@ -554,6 +576,11 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
       tflux=0.0_R8
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
+        feedback_stratum=.false.
+        do is=0,nspecies-1
+          feedback_stratum=feedback_stratum.or.
+     .                     istrai.eq.feedback_strata(is)
+        end do
         flux_scale(istrai)=1.0_R8
         IF(crcstra(istrai).eq.'W') then !{
           do is = species_start(istrai),species_end(istrai) !{
@@ -694,15 +721,18 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
               endif
             end if
           else if (ncall.ge.ncallfeedback.and.
-     &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
+     &             feedback_stratum.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
-              if (na_feedback_target(is).gt.0.0_R8.and.
-     &            na_feedback_actuator(is).eq.1.and.
-     &            species_start(nesepm_istra).le.
-     &               eb2spcr(is+1)+nfluids(is+1).and.
-     &            species_end(nesepm_istra).ge.eb2spcr(is+1)) then !{
-                tflux(istrai)=tflux(istrai)+
-     .           conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+              if (feedback_strata(is).gt.0) then !{
+                if (na_feedback_target(is).gt.0.0_R8.and.
+     &              na_feedback_actuator(is).eq.1.and.
+     &              species_start(feedback_strata(is)).le.
+     &              eb2spcr(is+1)+nfluids(is+1).and.
+     &            species_end(feedback_strata(is)).ge.eb2spcr(is+1))
+     >           then !{
+                  tflux(istrai)=tflux(istrai)+
+     .             conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+                end if !}
               end if !}
             end do !}
           else !}{
@@ -2562,7 +2592,9 @@ c   and apply linearisation
         endif !}
       enddo !}
       if (balance_netcdf.ne.0) then
-        eirene_mc_papl_sna0to1 = 0.0_R8 !djm Jan2017
+        eirene_mc_pael_sne0to1 = 0.0_R8 !djm Jan2017
+        eirene_mc_papl_sna0to1 = 0.0_R8
+        eirene_mc_pmel_sne0to1 = 0.0_R8
         eirene_mc_pmpl_sna0to1 = 0.0_R8
         eirene_mc_pipl_sna0to1 = 0.0_R8
         eirene_mc_pppl_sna0to1 = 0.0_R8
@@ -2953,11 +2985,150 @@ c*** before correction (r), after correction (c), after iteration (i)
             end do !}  ! iy
           end if !}
         end do !}  ! is
+        if (balance_netcdf.ne.0) then !{
+          rf0=RF_NEUT(1)
+          do is=1,nnatmi !{
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
+     &             region(ix,iy,0).ne.0) then !{
+                  t0_a = sna_av_paat(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_m = sna_av_pmat(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_i = sna_av_piat(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  eirene_mc_paat_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_paat_sna_bal(ix,iy,is,istrai)+t0_a
+                  eirene_mc_pmat_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_pmat_sna_bal(ix,iy,is,istrai)+t0_m
+                  eirene_mc_piat_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_piat_sna_bal(ix,iy,is,istrai)+t0_i
+                end if !}
+              end do !}  ! ix
+            end do !}  ! iy
+          end do !}  ! natmi
+          do is=1,nnmoli !{
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
+     &             region(ix,iy,0).ne.0) then !{
+                  t0_a = sna_av_paml(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_m = sna_av_pmml(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_i = sna_av_piml(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  eirene_mc_paml_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_paml_sna_bal(ix,iy,is,istrai)+t0_a
+                  eirene_mc_pmml_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_pmml_sna_bal(ix,iy,is,istrai)+t0_m
+                  eirene_mc_piml_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_piml_sna_bal(ix,iy,is,istrai)+t0_i
+                end if !}
+              end do !}  ! ix
+            end do !}  ! iy
+          end do !}  ! nmoli
+          do is=1,nnioni !{
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1.and.
+     &             region(ix,iy,0).ne.0) then !{
+                  t0_a = sna_av_paio(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_m = sna_av_pmio(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  t0_i = sna_av_piio(ix+1,iy+1,is,istrai)*
+     *                   tflux(istrai)*
+     *                   recyc_hlp*flux_scale(istrai)/
+     *                   dble(ih_end)
+                  eirene_mc_paio_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_paio_sna_bal(ix,iy,is,istrai)+t0_a
+                  eirene_mc_pmio_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_pmio_sna_bal(ix,iy,is,istrai)+t0_m
+                  eirene_mc_piio_sna_bal(ix,iy,is,istrai)=
+     *                   eirene_mc_piio_sna_bal(ix,iy,is,istrai)+t0_i
+                end if !}
+              end do !}  ! ix
+            end do !}  ! iy
+          end do !}  ! nioni
+        end if !}
         do iy=-1,ny !{
           do ix=-1,nx !{
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then !{
+* electron particle source
+              rf0=RF_NEUT(1)
+              if (balance_netcdf.ne.0) then
+                t0_a = sne_av_pael(ix+1,iy+1,istrai)*tflux(istrai)* !djm Jan2017
+     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
+     *           dble(ih_end)
+                t0_m = sne_av_pmel(ix+1,iy+1,istrai)*tflux(istrai)*
+     *           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
+     *           dble(ih_end)
+              endif
+              if (linearisation.eq.1) then !{
+                if (balance_netcdf.ne.0) then
+cdjm Jan2017 Calculate linearised components of source
+                  if (t0_a.ge.0.0_R8) then
+                    eirene_mc_pael_sne0to1(ix,iy,0,istrai)=
+     &               eirene_mc_pael_sne0to1(ix,iy,0,istrai)+
+     &               (1.0_R8+rf0)*t0_a
+                    eirene_mc_pael_sne0to1(ix,iy,1,istrai)=
+     &               eirene_mc_pael_sne0to1(ix,iy,1,istrai)-
+     &               rf0*t0_a/ne(ix,iy)
+                  else
+                    eirene_mc_pael_sne0to1(ix,iy,0,istrai)=
+     &               eirene_mc_pael_sne0to1(ix,iy,0,istrai)-
+     &               rf0*t0_a
+                    eirene_mc_pael_sne0to1(ix,iy,1,istrai)=
+     &               eirene_mc_pael_sne0to1(ix,iy,1,istrai)+
+     &               (1.0_R8+rf0)*t0_a/ne(ix,iy)
+                  endif
+                  if (t0_m.ge.0.0_R8) then
+                    eirene_mc_pmel_sne0to1(ix,iy,0,istrai)=
+     &               eirene_mc_pmel_sne0to1(ix,iy,0,istrai)+
+     &               (1.0_R8+rf0)*t0_m
+                    eirene_mc_pmel_sne0to1(ix,iy,1,istrai)=
+     &               eirene_mc_pmel_sne0to1(ix,iy,1,istrai)-
+     &               rf0*t0_m/ne(ix,iy)
+                  else
+                    eirene_mc_pmel_sne0to1(ix,iy,0,istrai)=
+     &               eirene_mc_pmel_sne0to1(ix,iy,0,istrai)-
+     &               rf0*t0_m
+                    eirene_mc_pmel_sne0to1(ix,iy,1,istrai)=
+     &               eirene_mc_pmel_sne0to1(ix,iy,1,istrai)+
+     &               (1.0_R8+rf0)*t0_m/ne(ix,iy)
+                  endif
+                endif
+              elseif (linearisation.eq.0) then !}{
+                if (balance_netcdf.ne.0) then
+                  eirene_mc_pael_sne0to1(ix,iy,0,istrai)= !djm Jan2017
+     &             eirene_mc_pael_sne0to1(ix,iy,0,istrai)+t0_a
+                  eirene_mc_pmel_sne0to1(ix,iy,0,istrai)=
+     &             eirene_mc_pmel_sne0to1(ix,iy,0,istrai)+t0_m
+                endif
+              end if !}
 * electron energy
               rf0=RF_NEUT(3)
 csw 26feb2014 averaging
@@ -3554,9 +3725,9 @@ cxpb  core recycling into ions of the highest ionisation stage
         if (balance_netcdf.ne.0) then
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
-        do iy = -1, ny
-          do ix = -1, nx
-            do j = 1, nnatmi
+        do j = 1, nnatmi
+          do iy = -1, ny
+            do ix = -1, nx
               if (bottomiy(ix,iy).eq.-2 .and.
      &            on_closed_surface(ix,iy)) then
                 t0=core_flux(j)*
@@ -3598,10 +3769,10 @@ cxpb  core recycling into ions of the highest ionisation stage
      &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
                   endif
                 end if !}
-              endif
-            enddo
-          enddo
-        enddo
+              endif  !core}
+            enddo  !ix}
+          enddo  !iy}
+        enddo  !j}
       else if (ionising_core.lt.0) then
         ib=abs(ionising_core)
         call xertst (ib.le.nbc,
@@ -3630,6 +3801,31 @@ c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
         cum_volrec=cum_volrec+VOLSUMN(istrai)
       enddo
       cum_volrec=-cum_volrec/qe
+
+! { IYS 12.01.2018
+      sna_eir = 0.0_R8
+      if (ank_tracing .gt. 0) then
+!        do is = 1, nspecies
+!          do iy = -1, ny
+!            do ix = -1, nx
+!              sna_eir(is) = sna_eir(is) +
+!     &           sna0(ix,iy,0,eb2spcr(is)+1) +
+!     &           sna0(ix,iy,1,eb2spcr(is)+1) * na(ix,iy,eb2spcr(is)+1)
+!            enddo
+!          enddo
+!        enddo
+        do ix=-1, nx
+          do iy=-1,ny
+            do is = 0, ns-1
+              if( is_neutral(is) ) cycle
+              k = b2espcr(is)
+              sna_eir(k) = sna_eir(k) +
+     &           sna0(ix,iy,0,is) +
+     &           sna0(ix,iy,1,is)*na(ix,iy,is)
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 12.01.2018 }
 
       if((main_call.and.output_style.eq.1).or.output_style.gt.1) then !{
         do istrai=1, nstrat !{
@@ -3721,6 +3917,8 @@ csw 26feb2014
       endif
       if(nhist.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
+      deallocate(feedback_strata)
+      deallocate(hlp_pff,hlp_stra)
 
       return
       end subroutine eirene_mc_final

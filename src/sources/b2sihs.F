@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, !xpb !srv 05.07.17
-     1  qs, vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,         !xpb !srv 01.07.09
+      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,     !xpb !srv 05.07.17
+     1  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !xpb !srv 01.07.09
      2  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)   !srv 24.08.21
       use b2mod_types
       use b2mod_rates
@@ -32,8 +32,7 @@
      &  vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     1  ue(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),        !srv 01.07.09
-     &  qs(-1:nx,-1:ny,0:1)
+     1  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)                              !srv 01.07.09
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),

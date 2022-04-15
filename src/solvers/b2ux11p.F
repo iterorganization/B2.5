@@ -3,6 +3,7 @@
 
       subroutine b2ux11p (nx, ny, aa11, itcnt, resfun, corfun, name)    !srv 02.04.18 {
       use b2mod_types
+      use b2mod_ilutern_11
       use b2mod_ma28_for_11diag
       use b2mod_ysmp_sdrv
       use b2mod_indirect
@@ -180,11 +181,12 @@
       else if (style.eq.2) then
 *    ..use ma28
        call cpu_time(cpu_start)
-        call ilutern_7(NX+2, NY+2, NX+2,
-     &   aa11(-1,-1,-3),
-     &   aa11(-1,-1,-2), aa11(-1,-1,-1), aa11(-1,-1,0),
-     &   aa11(-1,-1,1), aa11(-1,-1,2), aa11(-1,-1,3),
-     .   resfun, corfun, name)
+       call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)   !srv 02.04.18
+!       call ilutern_7(NX+2, NY+2, NX+2,
+!    &   aa11(-1,-1,-3),
+!    &   aa11(-1,-1,-2), aa11(-1,-1,-1), aa11(-1,-1,0),
+!    &   aa11(-1,-1,1), aa11(-1,-1,2), aa11(-1,-1,3),
+!    .   resfun, corfun, name)
        else if (style.eq.3) then                                     !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
@@ -213,8 +215,8 @@
 
       end subroutine b2ux11p                                           !srv 02.04.18 }
 
-      subroutine storage_11 (nx, ny, aa11, nnz, ip, ja, a, k,          !srv 02.04.18 {
-     *                      indexes, ipsave, jasave, name)
+      subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,          !srv 02.04.18 {
+     *                      indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_openmp
       use b2mod_indirect
@@ -224,20 +226,20 @@
       real (kind=R8) :: aa11(-1:nx,-1:ny,-3:3)
       character*(*) name
 *  ..output
-      integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
-     *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)
+      integer ia(nnz), ja(nnz), k,
+     *        indexes(1:3,nnz), iasave(nnz), jasave(nnz)
       real (kind=R8) :: a(nnz)
 *  ..locals
-      logical lord
+      logical :: lord
       logical, save :: lfirst=.true.
-      integer i, j, ix, iy, ner, iw, jw, jak, jtemp, ipt, nxp2
+      integer :: i, j, ix, iy, ner, iw, jw, jak, jtemp, iat, nxp2
       real (kind=R8) :: temp
 
       if (lfirst) then
         indexes=0
         nxp2=nx+2
         k=0
-        ip(1)=1
+        ia(1)=1
         i=0
         do iy=-1,ny
           do ix=-1,nx
@@ -251,6 +253,7 @@
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=-1
+              ia(k) = i
               ja(k) = jak
               ner = ner+1
             endif
@@ -261,6 +264,7 @@
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=0
+              ia(k) = i
               ja(k) = i
               ner = ner+1
             endif
@@ -272,16 +276,19 @@
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=1
+              ia(k) = i
               ja(k) = jak
               ner = ner+1
             endif
+*   ..Case of top neighbor
             if( aa11(ix,iy,2) .ne. 0.0e0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,2)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=2
-              ja(k) =2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
+              ia(k) = i
+              ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
               ner = ner+1
             endif
             if( aa11(ix,iy,3) .ne. 0.0e0_R8 ) then
@@ -295,22 +302,22 @@
               ja(k) =2+topix(iw,jw)+(2+topiy(iw,jw)-1)*nxp2
               ner = ner+1
             endif
-            ip(i+1)=ip(i) + ner
+            ia(i+1)=ia(i) + ner
 
             do
               lord=.true.
-              do ipt=ip(i),ip(i+1)-2
-                if(ja(ipt).gt.ja(ipt+1)) then
-                  jtemp  = ja(ipt)
-                  ja(ipt)  = ja(ipt+1)
-                  ja(ipt+1)= jtemp
-                  temp   = a(ipt)
-                  a(ipt)   = a(ipt+1)
-                  a(ipt+1) = temp
+              do iat=ia(i),ia(i+1)-2
+                if(ja(iat).gt.ja(iat+1)) then
+                  jtemp  = ja(iat)
+                  ja(iat)  = ja(iat+1)
+                  ja(iat+1)= jtemp
+                  temp   = a(iat)
+                  a(iat)   = a(iat+1)
+                  a(iat+1) = temp
                   do j=1,3
-                    jtemp=indexes(j,ipt)
-                    indexes(j,ipt)=indexes(j,ipt+1)
-                    indexes(j,ipt+1)=jtemp
+                    jtemp=indexes(j,iat)
+                    indexes(j,iat)=indexes(j,iat+1)
+                    indexes(j,iat+1)=jtemp
                   enddo
                   lord=.false.
                 endif
@@ -321,14 +328,20 @@
           enddo
         enddo
 
-        ipsave=ip
-        jasave=ja
+!       iasave=ia                                          !srv 15.05.07 {
+!       jasave=ja
+        do  i=1,k
+          iasave(i)=ia(i)
+          jasave(i)=ja(i)
+        enddo                                              !srv 15.05.07 }
         lfirst=.false.
 
       else
-        ip=ipsave
-        ja=jasave
+!       ia=iasave                                           !srv 15.05.07 {
+!       ja=jasave
         do i=1,k
+          ia(i)=iasave(i)                                   !srv 15.05.07 }
+          ja(i)=jasave(i)
           a(i)=aa11(indexes(1,i), indexes(2,i), indexes(3,i))
         enddo
       endif

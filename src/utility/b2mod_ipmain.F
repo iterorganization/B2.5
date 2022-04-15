@@ -164,6 +164,9 @@
         case ('b2news_vis_per')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tfhe_vis_per instead'
+        case ('b2tvspa_vis_par')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tfhe_vis_par instead'
         case ('b2npmo_modvis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'

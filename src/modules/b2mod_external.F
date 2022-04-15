@@ -312,9 +312,9 @@ cxpb Computing ua from fa is what we really want to do
      .           ((na_ext(ix,iy,is)+
      .           na_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           pbs(ix,iy,0)
-                 fhi_ext(ix,iy,0,0) = fhi_ext(ix,iy,0,0) +
-     .            1.5_R8*fa_ext(ix,iy,0,0,is)*(ta_ext(ix,iy,is)+
-     .            ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+                fhi_ext(ix,iy,0,0) = fhi_ext(ix,iy,0,0) +
+     .           1.5_R8*fa_ext(ix,iy,0,0,is)*(ta_ext(ix,iy,is)+
+     .           ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
                endif
             enddo
           enddo

@@ -13,7 +13,8 @@
       use b2mod_plasma
      &     , only : roxa
       use b2mod_balance                                               !djm Jan2017
-     &     , only : b2sifr_smoch0to3, b2sifr_smotf0to3,
+     &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
+     &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
      &              balance_netcdf
       use b2mod_openmp
       use b2mod_subsys
@@ -35,7 +36,9 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
-     &   lnlam(-1:nx,-1:ny)
+     &   lnlam(-1:nx,-1:ny),
+     *   smbtf_cthe(-1:nx,-1:ny), !djm Jul2018
+     *   smbtf_cthi(-1:nx,-1:ny)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -174,6 +177,8 @@ csw 24sep2013
 *   ..initialise to 0
       call sfill (n2*4, 0.0_R8, smbch, 1)
       call sfill (n2*4, 0.0_R8, smbtf, 1)
+      smbtf_cthe = 0.0_R8 !djm Mar2019
+      smbtf_cthi = 0.0_R8
       smprb = 0.0_R8
       smptb = 0.0_R8
       smfrb = 0.0_R8
@@ -249,7 +254,16 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           smptb(ix,iy) = smptb(ix,iy) - t0*hz(ix,iy)*
      &         (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
      &         +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
-     1         (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)
+     1          vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
+          if (balance_netcdf.ne.0) then
+            smbtf_cthe(ix,iy) = smbtf_cthe(ix,iy)-t0* !djm Jul2018
+     &                  phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)*
+     &                  vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*hz(ix,iy)
+            smbtf_cthi(ix,iy) = smbtf_cthi(ix,iy)-t0*
+     &                  phm3*cthi(ix,iy,isb)*delti*
+     &                  (ne(ix,iy)-ne_ext(ix,iy))*
+     &                  vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*hz(ix,iy)
+          endif
          else if (styl1.eq.1) then
            call xerrab ('b2sifr_: option styl1.eq.1 removed')
          endif                                                      !srv 26.11.02
@@ -272,8 +286,10 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
 
 cdjm Jan2017 Store the linearised sources for balance
       if (balance_netcdf.ne.0) then
+        b2sifr_smotf_ehxp0to3(-1:nx,-1:ny,0,isb)=smprb !djm Jul2018
+        b2sifr_smotf_cthe0to3(-1:nx,-1:ny,0,isb)=smbtf_cthe
+        b2sifr_smotf_cthi0to3(-1:nx,-1:ny,0,isb)=smbtf_cthi
         b2sifr_smoch0to3(-1:nx,-1:ny,0:3,isb)=smbch
-        b2sifr_smotf0to3(-1:nx,-1:ny,0:3,isb)=smbtf
       endif
 
 * ..return

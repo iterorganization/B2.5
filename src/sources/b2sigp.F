@@ -7,7 +7,9 @@
       use b2mod_indirect
       use b2mod_constants                                         !srv 23.03.10
       use b2mod_balance                                           !djm Jan2017
-     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
+     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
+     &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
+     &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
       use b2mod_openmp
       use b2mod_subsys
       implicit none
@@ -25,7 +27,8 @@
       real (kind=R8) ::
      * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      * wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny),                      !djm Jan2017
-     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny)                       !srv 28.03.17
+     * wrk5(-1:nx,-1:ny), wrk6(-1:nx,-1:ny),                      !srv 28.03.17
+     * smbgp_b4gr(-1:nx,-1:ny,0:3)                                !djm Jul2018
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -40,7 +43,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy !,k
       integer, save :: style = 2                                     !srv 13.01.17
-      integer, save :: pressure_restriction = 1
+      integer, save :: pressure_restriction = 1                      !srv 29.03.19
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3 !, chk*1                                       !srv 17.06.02
@@ -122,12 +125,12 @@
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
               wrk5(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
      &         (wrk0(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
               wrk6(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
      &          wrk2(rightix(ix,iy),rightiy(ix,iy))/
@@ -154,12 +157,12 @@
               endif
             elseif(rightix(ix,iy).eq.nx+1) then
               wrk5(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
      &         wrk0(ix,iy)/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
               wrk6(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
      &         wrk1(ix,iy)*wrk2(ix,iy)/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
@@ -280,6 +283,14 @@ cdjm compute b2sigp_pstat0to3 on left cell face
               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,0,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,0) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,1) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,2) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,3) = 0.0_R8
             else
               t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
               b2sigp_pstat0to3(ix,iy,0,isb) =
@@ -294,6 +305,24 @@ cdjm compute b2sigp_pstat0to3 on left cell face
               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,0,isb) =
+     &         t0*(wrk2(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     &             wrk2(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &             (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
+              b2sigp_pstati0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstati0to3(ix,iy,3,isb) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,0) =
+     &         t0*(rzb(leftix(ix,iy),leftiy(ix,iy))*
+     &             nb(leftix(ix,iy),leftiy(ix,iy))/
+     &             ne(leftix(ix,iy),leftiy(ix,iy))*
+     &             wrk3(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     &             rzb(ix,iy)*nb(ix,iy)/ne(ix,iy)*
+     &             wrk3(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
+              b2sigp_pstate0to3(ix,iy,1) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,2) = 0.0_R8
+              b2sigp_pstate0to3(ix,iy,3) = 0.0_R8
             endif
            enddo
           enddo
@@ -376,8 +405,9 @@ cdjm compute b2sigp_pstat0to3 on left cell face
         endif
       endif                                                           !srv 02.07.08 }
 
+      smbgp_b4gr=smbgp !djm Jul2018
 cxpb apply restriction to pressure gradient for minority ions and neutrals
-      if (pressure_restriction.eq.1) then
+      if (style.ne.0 .and. pressure_restriction.eq.1) then
        do iy = -1, ny                                                 !lk 23.06.17{
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
@@ -426,6 +456,9 @@ cxpb apply restriction to pressure gradient for minority ions and neutrals
 cdjm Jan2017 Store linearised source for balance
       if (balance_netcdf.ne.0) then
         b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
+        b2sigp_smogpi0to3(-1:nx,-1:ny,0,isb)=wrk5 !djm Jul2018
+        b2sigp_smogpe0to3(-1:nx,-1:ny,0,isb)=wrk6
+        b2sigp_smogpgr0to3(-1:nx,-1:ny,0:3,isb)=smbgp-smbgp_b4gr
       endif
 
 * ..return

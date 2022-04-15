@@ -513,7 +513,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical, allocatable :: old_style(:)
       character*16 hlp_frm
       character*260 filename
-      external find_file, xertst
+      external cfverr, find_file, xertst
 
       filename=neutrals_filename
       neutrals_time_mod = 0.0_R8

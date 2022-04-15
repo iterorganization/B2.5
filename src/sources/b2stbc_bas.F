@@ -206,13 +206,15 @@
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
-        t0 = t0-zaf(is)*fna(topix(ix,-1),topiy(ix,-1),1,1,is)
+        t0 = t0-zaf(is)*(fna(topix(ix,-1),topiy(ix,-1),1,0,is)+
+     &                   fna(topix(ix,-1),topiy(ix,-1),1,1,is))
        enddo
        do is = 0, ns_ext-1
         zxf = (za_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
      &         za_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      &        (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-        t0 = t0-zxf*fa_ext(topix(ix,-1),topiy(ix,-1),1,1,is)
+        t0 = t0-zxf*(fa_ext(topix(ix,-1),topiy(ix,-1),1,0,is)+
+     &               fa_ext(topix(ix,-1),topiy(ix,-1),1,1,is))
        enddo
        fchi = qe*t0
 !       if(po(ix,-1).ge.0.0_R8) then                                     !xpb
@@ -305,18 +307,21 @@
      &   cbsmo(1,is,ireg)*(-csb)*pbs(topix(ix,-1),topiy(ix,-1),1)+
      &   cbsmo(2,is,ireg)*(-cst)*pbs(topix(ix,-1),topiy(ix,-1),1)+
      &   cbsmo(5,is,ireg)*
-     &   max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,1,is))/na(ix,-1,is)
+     &   max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,0,is)+
+     &              fna(topix(ix,-1),topiy(ix,-1),1,1,is))/na(ix,-1,is)
         smo0(ix,-1,3,is) = smo0(ix,-1,3,is)+
      &   cbsmo(3,is,ireg)*s0+
      &   cbsmo(4,is,ireg)*s1+
      &   cbsmo(6,is,ireg)*
-     &   max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,1,is))/na(ix,-1,is)
+     &   max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,0,is)
+     &              -fna(topix(ix,-1),topiy(ix,-1),1,1,is))/na(ix,-1,is)
 *     ..compute atom heat source
         t0 = na(ix,-1,is)/ni(ix,-1,0)
         shi0(ix,-1,0) = shi0(ix,-1,0)+
      &    cbshi(0,is,ireg)*t0*s0+
      &    cbshi(6,is,ireg)*
-     &    max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,1,is))
+     &    max(0.0_R8,fna(topix(ix,-1),topiy(ix,-1),1,0,is)+
+     &               fna(topix(ix,-1),topiy(ix,-1),1,1,is))
         shi0(ix,-1,1) = shi0(ix,-1,1)+
      &    cbshi(1,is,ireg)*t0*s0
         shi0(ix,-1,3) = shi0(ix,-1,3)+
@@ -325,12 +330,14 @@
      &    cbshi(4,is,ireg)*t0*cst*s0+
      &    cbshi(5,is,ireg)*t0*cst*s1+
      &    cbshi(7,is,ireg)*
-     &    max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,1,is))/ni(ix,-1,0)
+     &    max(0.0_R8,-fna(topix(ix,-1),topiy(ix,-1),1,0,is)
+     &               -fna(topix(ix,-1),topiy(ix,-1),1,1,is))/ni(ix,-1,0)
        enddo
 *    ..compute electron heat source
        she0(ix,-1,0) = she0(ix,-1,0)+
      &   cbshe(0,ireg)*s0+
-     &   cbshe(6,ireg)*max(0.0_R8,fne(topix(ix,-1),topiy(ix,-1),1,1))
+     &   cbshe(6,ireg)*max(0.0_R8,fne(topix(ix,-1),topiy(ix,-1),1,0)+
+     &                            fne(topix(ix,-1),topiy(ix,-1),1,1))
        she0(ix,-1,1) = she0(ix,-1,1)+
      &   cbshe(1,ireg)*s0
        she0(ix,-1,3) = she0(ix,-1,3)+
@@ -339,7 +346,8 @@
      &   cbshe(4,ireg)*cst*s0+
      &   cbshe(5,ireg)*cst*s1+
      &   cbshe(7,ireg)*
-     &    max(0.0_R8,-fne(topix(ix,-1),topiy(ix,-1),1,1))/ne(ix,-1)
+     &    max(0.0_R8,-fne(topix(ix,-1),topiy(ix,-1),1,0)
+     &               -fne(topix(ix,-1),topiy(ix,-1),1,1))/ne(ix,-1)
 *    ..compute charge source
        sch0(ix,-1,2) = sch0(ix,-1,2)+
      &   cbsch(0,ireg)*qe*vte*s0+
@@ -433,13 +441,13 @@
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
-        t0 = t0+zaf(is)*fna(ix,ny,1,1,is)
+        t0 = t0+zaf(is)*(fna(ix,ny,1,0,is)+fna(ix,ny,1,1,is))
        enddo
        do is = 0, ns_ext-1
         zxf = (za_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
      &         za_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
      &        (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
-        t0 = t0+zxf*fa_ext(ix,ny,1,1,is)
+        t0 = t0+zxf*(fa_ext(ix,ny,1,0,is)+fa_ext(ix,ny,1,1,is))
        enddo
        fchi = qe*t0
 !       if(po(ix,ny).ge.0.0_R8) then                                     !xpb
@@ -496,16 +504,19 @@
         smo0(ix,ny,2,is) = smo0(ix,ny,2,is)+
      &    cbsmo(1,is,ireg)*csb*pbs(ix,ny,1)+
      &    cbsmo(2,is,ireg)*cst*pbs(ix,ny,1)+
-     &    cbsmo(5,is,ireg)*max(0.0_R8,-fna(ix,ny,1,1,is))/na(ix,ny,is)
+     &    cbsmo(5,is,ireg)*max(0.0_R8,-fna(ix,ny,1,0,is)
+     &                                -fna(ix,ny,1,1,is))/na(ix,ny,is)
         smo0(ix,ny,3,is) = smo0(ix,ny,3,is)+
      &    cbsmo(3,is,ireg)*s0+
      &    cbsmo(4,is,ireg)*s1+
-     &    cbsmo(6,is,ireg)*max(0.0_R8,fna(ix,ny,1,1,is))/na(ix,ny,is)
+     &    cbsmo(6,is,ireg)*max(0.0_R8,fna(ix,ny,1,0,is)+
+     &                                fna(ix,ny,1,1,is))/na(ix,ny,is)
 *     ..compute atom heat source
         t0 = na(ix,ny,is)/ni(ix,ny,0)
         shi0(ix,ny,0) = shi0(ix,ny,0)+
      &    cbshi(0,is,ireg)*t0*s0+
-     &    cbshi(6,is,ireg)*max(0.0_R8,-fna(ix,ny,1,1,is))
+     &    cbshi(6,is,ireg)*max(0.0_R8,-fna(ix,ny,1,0,is)
+     &                                -fna(ix,ny,1,1,is))
         shi0(ix,ny,1) = shi0(ix,ny,1)+
      &    cbshi(1,is,ireg)*t0*s0
         shi0(ix,ny,3) = shi0(ix,ny,3)+
@@ -513,12 +524,13 @@
      &    cbshi(3,is,ireg)*t0*csb*s1+
      &    cbshi(4,is,ireg)*t0*cst*s0+
      &    cbshi(5,is,ireg)*t0*cst*s1+
-     &    cbshi(7,is,ireg)*max(0.0_R8,fna(ix,ny,1,1,is))/ni(ix,ny,0)
+     &    cbshi(7,is,ireg)*max(0.0_R8,fna(ix,ny,1,0,is)+
+     &                                fna(ix,ny,1,1,is))/ni(ix,ny,0)
        enddo
 *    ..compute electron heat source
        she0(ix,ny,0) = she0(ix,ny,0)+
      &   cbshe(0,ireg)*s0+
-     &   cbshe(6,ireg)*max(0.0_R8,-fne(ix,ny,1,1))
+     &   cbshe(6,ireg)*max(0.0_R8,-fne(ix,ny,1,0)-fne(ix,ny,1,1))
        she0(ix,ny,1) = she0(ix,ny,1)+
      &   cbshe(1,ireg)*s0
        she0(ix,ny,3) = she0(ix,ny,3)+
@@ -526,7 +538,8 @@
      &   cbshe(3,ireg)*vte*s1+
      &   cbshe(4,ireg)*cst*s0+
      &   cbshe(5,ireg)*cst*s1+
-     &   cbshe(7,ireg)*max(0.0_R8,fne(ix,ny,1,1))/ne(ix,ny)
+     &   cbshe(7,ireg)*max(0.0_R8,fne(ix,ny,1,0)
+     &                           +fne(ix,ny,1,1))/ne(ix,ny)
 *    ..compute charge source
        sch0(ix,ny,2) = sch0(ix,ny,2)+
      &   cbsch(0,ireg)*qe*vte*s0+
@@ -629,13 +642,15 @@ cxpb  only include ExB terms and not diamagnetic contributions
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
-        t0 = t0-zaf(is)*fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+        t0 = t0-zaf(is)*(fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)+
+     &                   fna(rightix(-1,iy),rightiy(-1,iy),0,1,is))
        enddo
        do is = 0, ns_ext-1
         zxf = (za_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &         za_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      &        (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-        t0 = t0-zxf*fa_ext(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+        t0 = t0-zxf*(fa_ext(rightix(-1,iy),rightiy(-1,iy),0,0,is)+
+     &               fa_ext(rightix(-1,iy),rightiy(-1,iy),0,1,is))
        enddo
        fchi = qe*t0
        if(t0.lt.0.0_R8 .and. region(-1,iy,0).ne.0 .and. 
@@ -644,29 +659,30 @@ cxpb  only include ExB terms and not diamagnetic contributions
          if(diagno.ge.0) then
            write(*,*) 'b2stbc_west:iy,fchi',iy,fchi
            write(*,*) zaf(ismain),
-     &      fna(rightix(-1,iy),rightiy(-1,iy),0,0,ismain)
+     &      fna(rightix(-1,iy),rightiy(-1,iy),0,0,ismain)+
+     &      fna(rightix(-1,iy),rightiy(-1,iy),0,1,ismain)
            write(*,'(a,4g14.7)') 'Bx,Bz,Ud,-Ua =',
      &      wbbr(-1,iy,0),wbbr(-1,iy,2),udf(ismain),-ua(-1,iy,ismain)
          endif
 c         fchi=0.0_R8
        endif
-!       if (po(-1,iy).ge.0.0_R8) then                                     !sv
+!       if (po(-1,iy).ge.0.0_R8) then                                    !sv
          fche = 
-     .    sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1*expu2(-qe*pof/tef)       !sv
-!       else                                                              !sv
-!         fche = sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1                   !sv
+     .    sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1*expu2(-qe*pof/tef)      !sv
+!       else                                                             !sv
+!         fche = sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1                  !sv
 !       endif
 *    ..loop over species
        do is = 0, ns-1
 *     ..compute csb
         csb = sqrt((zaf(is)*tef+tif)/(am(is)*mp))
 *     .. account for diamagnetic drifts
-        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
-        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
-        if(.not.is_neutral(is)) then                                      !xpb
-          csbm = max(0.0_R8,csbm)                                         !xpb
-          cstm = max(0.0_R8,cstm)                                         !xpb
-        endif                                                             !xpb
+        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))              !xpb
+        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))              !xpb
+        if(.not.is_neutral(is)) then                                     !xpb
+          csbm = max(0.0_R8,csbm)                                        !xpb
+          cstm = max(0.0_R8,cstm)                                        !xpb
+        endif                                                            !xpb
         if(csbm.gt.csb .and. diagno.ge.2)
      >   write(*,*) 'west:iy,is,csb,csbm',iy,is,csb,csbm
         if(cstm.gt.cst .and. diagno.ge.2)
@@ -686,25 +702,28 @@ c         fchi=0.0_R8
      &    max(0.0_R8,-ua(-1,iy,is)*pbs(rightix(-1,iy),rightiy(-1,iy),0))
 *     ..compute parallel momentum source
         smo0(-1,iy,0,is) = smo0(-1,iy,0,is)+cbsmo(0,is,ireg)*s0
-        smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0           !rfs
+        smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(-1,iy,2,is) = smo0(-1,iy,2,is)+
      &    cbsmo(1,is,ireg)*(-csbm)*
-     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                           !xpb
+     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                          !xpb
      &    cbsmo(2,is,ireg)*(-cstm)*
-     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                           !xpb
+     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                          !xpb
      &    cbsmo(5,is,ireg)*max(0.0_R8,
-     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is))/na(-1,iy,is)         !sv
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,1,is))/na(-1,iy,is)      !sv
         smo0(-1,iy,3,is) = smo0(-1,iy,3,is)+
      &    cbsmo(3,is,ireg)*s0+
      &    cbsmo(4,is,ireg)*s1+
      &    cbsmo(6,is,ireg)*max(0.0_R8,
-     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is))/na(-1,iy,is)
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,1,is))/na(-1,iy,is)
 *     ..compute atom heat source
         t0 = na(-1,iy,is)/ni(-1,iy,0)
         shi0(-1,iy,0) = shi0(-1,iy,0)+
      &    cbshi(0,is,ireg)*t0*s0+
      &    cbshi(6,is,ireg)*
-     &     max(0.0_R8,fna(rightix(-1,iy),rightiy(-1,iy),0,0,is))
+     &     max(0.0_R8,fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)+
+     &                fna(rightix(-1,iy),rightiy(-1,iy),0,1,is))
         shi0(-1,iy,1) = shi0(-1,iy,1)+
      &    cbshi(1,is,ireg)*t0*s0
         shi0(-1,iy,3) = shi0(-1,iy,3)+
@@ -713,7 +732,8 @@ c         fchi=0.0_R8
      &    cbshi(4,is,ireg)*t0*cstm*s0+
      &    cbshi(5,is,ireg)*t0*cstm*s1+
      &    cbshi(7,is,ireg)*max(0.0_R8,
-     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is))/ni(-1,iy,0)
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,1,is))/ni(-1,iy,0)
        enddo
        shi_test=
      1  shi0(-1,iy,0)+
@@ -728,7 +748,8 @@ c         fchi=0.0_R8
 *    ..compute electron heat source
        she0(-1,iy,0) = she0(-1,iy,0)+
      &  cbshe(0,ireg)*s0+
-     &  cbshe(6,ireg)*max(0.0_R8,fne(rightix(-1,iy),rightiy(-1,iy),0,0))
+     &  cbshe(6,ireg)*max(0.0_R8,fne(rightix(-1,iy),rightiy(-1,iy),0,0)+
+     &                           fne(rightix(-1,iy),rightiy(-1,iy),0,1))
        she0(-1,iy,1) = she0(-1,iy,1)+
      &   cbshe(1,ireg)*s0
        she0(-1,iy,3) = she0(-1,iy,3)+
@@ -737,7 +758,8 @@ c         fchi=0.0_R8
      &   cbshe(4,ireg)*cstm*s0+
      &   cbshe(5,ireg)*cstm*s1+
      &   cbshe(7,ireg)*
-     &    max(0.0_R8,-fne(rightix(-1,iy),rightiy(-1,iy),0,0))/ne(-1,iy)
+     &    max(0.0_R8,-fne(rightix(-1,iy),rightiy(-1,iy),0,0)
+     &               -fne(rightix(-1,iy),rightiy(-1,iy),0,1))/ne(-1,iy)
        she_test=she0(-1,iy,0)+
      2  she0(-1,iy,1)*te(-1,iy)+
      3  she0(-1,iy,2)*ne(-1,iy)+
@@ -856,13 +878,13 @@ cxpb  only include ExB terms and not diamagnetic contributions
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
-        t0 = t0+zaf(is)*fna(nx,iy,0,0,is)
+        t0 = t0+zaf(is)*(fna(nx,iy,0,0,is)+fna(nx,iy,0,1,is))
        enddo
        do is = 0, ns_ext-1
         zxf = (za_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &         za_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &        (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-        t0 = t0-zxf*fa_ext(nx,iy,0,0,is)
+        t0 = t0-zxf*(fa_ext(nx,iy,0,0,is)+fa_ext(nx,iy,0,1,is))
        enddo
        fchi = qe*t0
        if(t0.lt.0.0_R8 .and. region(nx,iy,0).ne.0 .and.
@@ -870,7 +892,8 @@ cxpb  only include ExB terms and not diamagnetic contributions
          wrong_flow = .true.                                             !xpb
          if(diagno.ge.0) then
            write(*,*) 'b2stbc_east:iy,fchi',iy,fchi
-           write(*,*) zaf(ismain),fna(nx,iy,0,0,ismain)
+           write(*,*) zaf(ismain),fna(nx,iy,0,0,ismain)+
+     &                            fna(nx,iy,0,1,ismain)
            write(*,'(a,4g14.7)') 'Bx,Bz,Ud,Ua =',
      &      wbbl(nx,iy,0),wbbl(nx,iy,2),-udf(ismain),ua(nx,iy,ismain)
          endif
@@ -914,16 +937,19 @@ c         fchi=0.0_R8
         smo0(nx,iy,2,is) = smo0(nx,iy,2,is)+
      &    cbsmo(1,is,ireg)*csbm*pbs(nx,iy,0)+                            !xpb
      &    cbsmo(2,is,ireg)*cstm*pbs(nx,iy,0)+                            !xpb
-     &    cbsmo(5,is,ireg)*max(0.0_R8,+fna(nx,iy,0,0,is))/na(nx,iy,is)     !sv
+     &    cbsmo(5,is,ireg)*max(0.0_R8,+fna(nx,iy,0,0,is)
+     &                                +fna(nx,iy,0,1,is))/na(nx,iy,is)   !sv
         smo0(nx,iy,3,is) = smo0(nx,iy,3,is)+
      &    cbsmo(3,is,ireg)*s0+
      &    cbsmo(4,is,ireg)*s1+
-     &    cbsmo(6,is,ireg)*max(0.0_R8,fna(nx,iy,0,0,is))/na(nx,iy,is)
+     &    cbsmo(6,is,ireg)*max(0.0_R8,fna(nx,iy,0,0,is)+
+     &                                fna(nx,iy,0,1,is))/na(nx,iy,is)
 *     ..compute atom heat source
         t0 = na(nx,iy,is)/ni(nx,iy,0)
         shi0(nx,iy,0) = shi0(nx,iy,0)+
      &    cbshi(0,is,ireg)*t0*s0+
-     &    cbshi(6,is,ireg)*max(0.0_R8,-fna(nx,iy,0,0,is))
+     &    cbshi(6,is,ireg)*max(0.0_R8,-fna(nx,iy,0,0,is)
+     &                                -fna(nx,iy,0,1,is))
         shi0(nx,iy,1) = shi0(nx,iy,1)+
      &    cbshi(1,is,ireg)*t0*s0
         shi0(nx,iy,3) = shi0(nx,iy,3)+
@@ -931,7 +957,8 @@ c         fchi=0.0_R8
      &    cbshi(3,is,ireg)*t0*csbm*s1+
      &    cbshi(4,is,ireg)*t0*cstm*s0+
      &    cbshi(5,is,ireg)*t0*cstm*s1+
-     &    cbshi(7,is,ireg)*max(0.0_R8,fna(nx,iy,0,0,is))/ni(nx,iy,0)
+     &    cbshi(7,is,ireg)*max(0.0_R8,fna(nx,iy,0,0,is)+
+     &                                fna(nx,iy,0,1,is))/ni(nx,iy,0)
        enddo
        shi_test=
      1  shi0(nx,iy,0)+
@@ -946,7 +973,7 @@ c         fchi=0.0_R8
 *    ..compute electron heat source
        she0(nx,iy,0) = she0(nx,iy,0)+
      &   cbshe(0,ireg)*s0+
-     &   cbshe(6,ireg)*max(0.0_R8,-fne(nx,iy,0,0))
+     &   cbshe(6,ireg)*max(0.0_R8,-fne(nx,iy,0,0)-fne(nx,iy,0,1))
        she0(nx,iy,1) = she0(nx,iy,1)+
      &   cbshe(1,ireg)*s0
        she0(nx,iy,3) = she0(nx,iy,3)+
@@ -954,7 +981,8 @@ c         fchi=0.0_R8
      &   cbshe(3,ireg)*vte*s1+
      &   cbshe(4,ireg)*cstm*s0+
      &   cbshe(5,ireg)*cstm*s1+
-     &   cbshe(7,ireg)*max(0.0_R8,fne(nx,iy,0,0))/ne(nx,iy)
+     &   cbshe(7,ireg)*max(0.0_R8,fne(nx,iy,0,0)
+     &                           +fne(nx,iy,0,1))/ne(nx,iy)
        she_test=she0(nx,iy,0)+
      2  she0(nx,iy,1)*te(nx,iy)+
      3  she0(nx,iy,2)*ne(nx,iy)+

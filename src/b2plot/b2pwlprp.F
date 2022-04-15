@@ -224,11 +224,12 @@ c*** Check the topology of the grid and the list of target edges
       end if !}
       if(ntrgs.eq.0) then !{
 c*** use the obsolete jedg[io][12] parameters
-        ltrgedge(1,1)=jedge(3) ! jedgo1
-        ltrgedge(2,1)=jedge(1) ! jedgi1
-        ltrgedge(1,ntrgts)=jedge(2) ! jedgi2
-        ltrgedge(2,ntrgts)=jedge(4) ! jedgo2
-        ntrgts=2
+        k=0
+        do i=1,2*max(1,nncut) !{
+          ltrgedge(2-k,i)=jedge(i+(1-k)*ntrgsx) ! jedgo
+          ltrgedge(1+k,i)=jedge(i+k*ntrgsx)     ! jedgi
+          k=1-k
+        end do !}
       end if !}
 c*** Check the target edge specifications and make them clear
       do i=1,ntrgts !{
@@ -256,8 +257,8 @@ c*** Prepare the list of grid indices for the target flux faces
         lpfrpos(3)=rightcut(2)-1
         k=4
       end if !}
-      ltrgpos(k)=nx-1 !csc
-      lseppos(k)=topcut(nncut)-1
+      ltrgpos(k)=nx-1
+      lseppos(k)=topcut(1)-1
       lpfrpos(k)=rightcut(1)
 #ifdef DBG
       print '(a,8i6)','ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
@@ -668,128 +669,133 @@ c***   kke     if nonzero, the first segment was CCW edge abs(kke)
 c***           if negative, the corresponding target has been added
 c***
 c*** It is assumed here that CW and CCW edges differ
+c*** Build only the shadowing structure with the additional wall segments
+c*** from target cells
+c*** Other plot zones will be defined using starting/ending segments and
+c*** selecting the chain from shadowing structure itself
+            if (il.eq.1) then
+              kke=0
+              kn=0
+              k=0
 
-            kke=0
-            kn=0
-            k=0
-
-            if(lwlddir(il)) then !{
+              if(lwlddir(il)) then !{
 c*** CCW target
-              do j=1,n !{
-                ke=0
-                do i=1,ntrgts !{
-                  if(j.eq.ie(i)) ke=i
-                end do !}
-                kb=0
-                do i=1,ntrgts !{
-                  if(j.eq.ib(i)) kb=i
-                end do !}
-c                print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
-                if(kb.gt.0 .and. ke.gt.0) then !{
-                  write (*,*) 'b2pwlprp: a segment can appear in ',
+                do j=1,n !{
+                  ke=0
+                  do i=1,ntrgts !{
+                    if(j.eq.ie(i)) ke=i
+                  end do !}
+                  kb=0
+                  do i=1,ntrgts !{
+                    if(j.eq.ib(i)) kb=i
+                  end do !}
+c                  print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
+                  if(kb.gt.0 .and. ke.gt.0) then !{
+                    write (*,*) 'b2pwlprp: a segment can appear in ',
      ,                   'the grid edge lists no more than once.'
-                  write (*,*) 'Segment ',lwldlis(j,il),',  list ',
+                    write (*,*) 'Segment ',lwldlis(j,il),',  list ',
      ,                                 il,',  targets ',it(kb),it(ke)
-                  write (*,*) 'ltrgedge:'
-                  write (*,'(8x,12i5)') (ltrgedge(1,i),i=1,ntrgts)
-                  write (*,'(8x,12i5)') (ltrgedge(2,i),i=1,ntrgts)
-                  write (*,*) '==> Check the target edge ',
+                    write (*,*) 'ltrgedge:'
+                    write (*,'(8x,12i5)') (ltrgedge(1,i),i=1,ntrgts)
+                    write (*,'(8x,12i5)') (ltrgedge(2,i),i=1,ntrgts)
+                    write (*,*) '==> Check the target edge ',
      ,                                 'specification in the DG model.'
-                  call xerrab ('Duplicate segment!')
-                end if !}
-                if(k.eq.0) then !{
-                  if(ke.ne.0) then !{
-                    kke=it(ke)
-                    if(j.ne.1) then !{
+                    call xerrab ('Duplicate segment!')
+                  end if !}
+                  if(k.eq.0) then !{
+                    if(ke.ne.0) then !{
+                      kke=it(ke)
+                      if(j.ne.1) then !{
 c*** The zone starts from a target: reset counters and insert the target
-                      kn=0
-                      if(lim_cnf) then !{
+                        kn=0
+                        if(lim_cnf) then !{
 c*** Limiter configuration. Add first the CW target face
-                        do i=1,nytg !{
-                          luwrk(i)=lppp+i
-                        end do !}
-                        kn=kn+nytg
-                      end if !}
-                      k=it(ke)
-                      do i=1,nytg !{
-                        luwrk(kn+i)=lppp+nytg*(k-1)+i
-                      end do !}
-                      kn=kn+nytg
-                      kke=-kke
-                      k=0
-                    end if !}
-                    kn=kn+1
-                    luwrk(kn)=lwldlis(j,il)
-                  else if(kb.ne.0) then !}{
-                    kn=kn+1
-                    luwrk(kn)=lwldlis(j,il)
-                    k=it(kb)
-                    if(k.ne.-kke) then !{
-                      if(j.ne.n .or. k.eq.kke) then !{
+                          do i=1,nytg !{
+                            luwrk(i)=lppp+i
+                          end do !}
+                          kn=kn+nytg
+                        end if !}
+                        k=it(ke)
                         do i=1,nytg !{
                           luwrk(kn+i)=lppp+nytg*(k-1)+i
                         end do !}
                         kn=kn+nytg
-                        if(lim_cnf) then !{
-c*** Limiter configuration. Add the CCW target face
+                        kke=-kke
+                        k=0
+                      end if !}
+                      kn=kn+1
+                      luwrk(kn)=lwldlis(j,il)
+                    else if(kb.ne.0) then !}{
+                      kn=kn+1
+                      luwrk(kn)=lwldlis(j,il)
+                      k=it(kb)
+                      if(k.ne.-kke) then !{
+                        if(j.ne.n .or. k.eq.kke) then !{
                           do i=1,nytg !{
-                            luwrk(kn+i)=lppp+nytg+i
+                            luwrk(kn+i)=lppp+nytg*(k-1)+i
                           end do !}
                           kn=kn+nytg
+                          if(lim_cnf) then !{
+c*** Limiter configuration. Add the CCW target face
+                            do i=1,nytg !{
+                              luwrk(kn+i)=lppp+nytg+i
+                            end do !}
+                            kn=kn+nytg
+                          end if !}
                         end if !}
                       end if !}
+                    else !}{
+                      kn=kn+1
+                      luwrk(kn)=lwldlis(j,il)
                     end if !}
                   else !}{
-                    kn=kn+1
-                    luwrk(kn)=lwldlis(j,il)
-                  end if !}
-               else !}{
-                  if(ke.ne.0) then !{
-                    if(it(ke).ne.k .and. .not.lim_cnf) then !{
+                    if(ke.ne.0) then !{
+                      if(it(ke).ne.k .and. .not.lim_cnf) then !{
+                        write(*,*) 'b2pwlprp: unexpected error. ',
+     ,                        'Trying to close a target different ',
+     ,                        'from the opened one.'
+                        write(*,*) 'Segment ',lwldlis(j,il),
+     ,                                      ',  targets: ',k,it(ke)
+                        write(*,*) 'List ',il
+                        write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
+                        write(*,*) 'it : ',(it(i),i=1,kk)
+                        write(*,*) 'ib : ',(ib(i),i=1,kk)
+                        write(*,*) 'ie : ',(ie(i),i=1,kk)
+                        call xerrab ('Not closing the open target!')
+                      end if !}
+                      kn=kn+1
+                      luwrk(kn)=lwldlis(j,il)
+                      k=0
+                    else if(kb.ne.0) then !}{
                       write(*,*) 'b2pwlprp: unexpected error. ',
-     ,                      'Trying to close a target different from ',
-     ,                      'the opened one.'
+     ,                         'Trying to open a target having one ',
+     ,                         'already opened.'
                       write(*,*) 'Segment ',lwldlis(j,il),
-     ,                                          ',  targets: ',k,it(ke)
+     ,                                    ',  targets: ',k,it(kb)
                       write(*,*) 'List ',il
                       write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
                       write(*,*) 'it : ',(it(i),i=1,kk)
                       write(*,*) 'ib : ',(ib(i),i=1,kk)
                       write(*,*) 'ie : ',(ie(i),i=1,kk)
-                      call xerrab ('Not closing the open target!')
+                      call xerrab ('Target already opened!')
                     end if !}
-                    kn=kn+1
-                    luwrk(kn)=lwldlis(j,il)
-                    k=0
-                 else if(kb.ne.0) then !}{
-                    write(*,*) 'b2pwlprp: unexpected error. ',
-     ,                       'Trying to open a target having one ',
-     ,                       'already opened.'
-                    write(*,*) 'Segment ',lwldlis(j,il),',  targets: ',
-     ,                                                         k,it(kb)
-                    write(*,*) 'List ',il
-                    write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
-                    write(*,*) 'it : ',(it(i),i=1,kk)
-                    write(*,*) 'ib : ',(ib(i),i=1,kk)
-                    write(*,*) 'ie : ',(ie(i),i=1,kk)
-                    call xerrab ('Target already opened!')
                   end if !}
-                end if !}
-              end do !}
-              do i=1,kn !{
-                lwldlis(i,il)=luwrk(i)
-              end do !}
-              nwldlis(il)=kn
-c              print *,'il,kn = ',il,kn                  !###
-            else !}{
-              print *,'b2pwlprp: not yet provided for the CW target ',
+                end do !}
+                do i=1,kn !{
+                  lwldlis(i,il)=luwrk(i)
+                end do !}
+                nwldlis(il)=kn
+c                print *,'il,kn = ',il,kn                  !###
+              else !}{
+                print *,'b2pwlprp: not yet provided for the CW target ',
      ,                                                   'orientation.'
-              print *,'==> Check specification of the "Plot zones"',
+                print *,'==> Check specification of the "Plot zones"',
      ,                            ' in the DG model.'
-              call xerrab ('CW target in plot zones not allowed!')
-            end if !}
-          end if !}
-        end if !}
+                call xerrab ('CW target in plot zones not allowed!')
+              end if !}
+            end if !} il.eq.1
+          end if !} kk.gt.0
+        end if !} n.gt.0
       end do !}
 c!###{
 c      print *,'After correction. nwldprt =',nwldprt
@@ -800,9 +806,12 @@ c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
 c      end do !}
 c!###}
 
-ccc*** Order elements of original plot zone in CCW direction
       do il=2,nwldprt
+c*** Store original plot zones to be used for substituting proper elements inside targets
+        nwldlis_old(il) = nwldlis(il)
+        lwldlis_old(:,il)=lwldlis(:,il)
         allocate(lis_ind(nwldlis_old(il)))
+ccc*** Order elements of original plot zone in CCW direction
         do i=1,nwldlis_old(il)
           k1=abs(lwldlis_old(i,il))
           xx1=pp1(1,k1)
@@ -832,13 +841,11 @@ ccc*** Order elements of original plot zone in CCW direction
           lwldlis_old(i1,il)=itmp
         end do
         deallocate(lis_ind)
-      end do
 
 ccc*** Check if a plot zone has starting and ending element which is inside a target
-      do il=2,nwldprt
         if (.not. istarget(il)) then
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
-          k1=abs(lwldlis_old(1,il));
+          k1=abs(lwldlis_old(1,il))
           k2=abs(lwldlis_old(nwldlis_old(il),il))
           flagmin=0
           do i1=1,nwldlis(1)
@@ -851,10 +858,8 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
             istarget(il)=.true.
           end if
         end if
-      end do
 
 ccc*** Substitute B2 cells only when overlapping original plot zone target elements
-      do il=2,nwldprt !{
         if (istarget(il)) then !{ inside target
           k1=lwldlis_old(1,il)
           k2=lwldlis_old(nwldlis_old(il),il)
@@ -890,14 +895,21 @@ ccc*** Substitute B2 cells only when overlapping original plot zone target eleme
           end do
           nwldlis_old(il)=cont-1
           nwldlis(il)=cont-1
-          ! now change also the new plot zone
-          do i=1,nwldlis(il)
-            lwldlis(i,il)=lwldlis_old(i,il)
-          end do
+c*** Now change also the new plot zone according to the CW or CCW order
+          if (lwlddir(il)) then !CCW order
+            do i=1,nwldlis(il)
+              lwldlis(i,il)=lwldlis_old(i,il)
+            end do
+          else !CW order
+            do i=1,nwldlis(il)
+              lwldlis(i,il)=lwldlis_old(nwldlis(il)-i+1,il)
+            end do
+          end if
         end if !}
       end do !}
 
-      deallocate(nwldlis_old,lwldlis_old,istarget)
+      deallocate(lwldlis_old)
+      deallocate(istarget)
 
 
 c*** Calculate the segment areas and related quantities
@@ -981,6 +993,26 @@ c*** use the zone index to label the plot zone
      ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
       end do
 #endif
+c*** Fill in the input arrays for b2pwrdld
+c
+      nwldrad=0
+      do j=1,ntrgts !{
+        do i=1,nytg !{
+          lwldrad(nwldrad+i)=lppp+nwldrad+i
+        end do !}
+        nwldrad=nwldrad+nytg
+      end do !}
+#ifdef DBG
+      print *,'%% b2pwltrg: nwldrad,nytg / lwldrad',nwldrad,nytg
+      k=0
+      do j=1,ntrgts !{
+        print '(20i4)',(lwldrad(k+i),i=1,nytg)
+        k=k+nytg
+      end do !}
+      print '(1x,a,i5/(20i4))','nwldlis / lwldlis',nwldlis(1),
+     ,                           (lwldlis(i,1),i=1,nwldlis(1))
+#endif
+
 c======================================================================
       call subend ()
       return

@@ -7,6 +7,7 @@
      *  cdna(:,:,:,:,:),
      *  cdpa(:,:,:,:,:),
      *  cddi(:,:,:,:,:),                                                !srv 13.10.06
+     *  cdde(:,:,:,:),                                                  !som 03.11.21
      *  cdnahz(:,:,:,:,:),                                              !srv 09.01.01
      *  cdpahz(:,:,:,:,:),                                              !srv 09.01.01
      *  ceqp(:,:),
@@ -29,6 +30,8 @@
      *  cvsahz_cl(:,:,:,:,:),                                           !srv 09.01.01
      *  csig_cl(:,:,:,:),
      *  calf_cl(:,:,:,:),
+     *  csig_stoch(:,:,:,:),                                            !srv 24.08.21
+     *  chce_stoch(:,:,:,:),                                            !srv 24.08.21
      *  fllime(:,:),
      *  fllimi(:,:),
      *  fllim0fna(:,:,:,:,:),
@@ -57,6 +60,7 @@
       allocate(cdna(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(cdpa(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(cddi(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                     !srv 13.10.06
+      allocate(cdde(-1:nxd,-1:nyd,0:1,0:1))                             !som 03.11.21
       allocate(cdnahz(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                   !srv 09.01.01
       allocate(cdpahz(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                   !srv 09.01.01
       allocate(ceqp(-1:nxd,-1:nyd))
@@ -79,16 +83,18 @@
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                !srv 09.01.01
       allocate(csig_cl(-1:nxd,-1:nyd,0:1,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(csig_stoch(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.08.21
+      allocate(chce_stoch(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.08.21
       allocate(fllime(-1:nxd,-1:nyd))
-      fllime=0.0_R8
+      fllime=1.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))
-      fllimi=0.0_R8
+      fllimi=1.0_R8
       allocate(fllim0fna(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
-      fllim0fna=0.0_R8
+      fllim0fna=1.0_R8
       allocate(fllim0fhi(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
-      fllim0fhi=0.0_R8
+      fllim0fhi=1.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
-      fllimvisc=0.0_R8
+      fllimvisc=1.0_R8
       allocate(fllim_ki(-1:nxd,-1:nyd))                                 !srv 13.01.17 {
       allocate(fllim_ke(-1:nxd,-1:nyd))
       allocate(fllim_al(-1:nxd,-1:nyd))
@@ -114,6 +120,7 @@
       deallocate(cdna)
       deallocate(cdpa)
       deallocate(cddi)
+      deallocate(cdde)
       deallocate(cdnahz)
       deallocate(cdpahz)
       deallocate(ceqp)
@@ -136,6 +143,8 @@
       deallocate(cvsahz_cl)
       deallocate(csig_cl)
       deallocate(calf_cl)
+      deallocate(csig_stoch)                                     !srv 24.08.21
+      deallocate(chce_stoch)                                     !srv 24.08.21
       deallocate(fllime)
       deallocate(fllimi)
       deallocate(fllim0fna)
@@ -246,8 +255,8 @@
         call cfrure (nread, size(fllime), fllime, 'fllime')
         call cfrure (nread, size(fllimi), fllimi, 'fllimi')
       else
-        fllime=0.0_R8
-        fllimi=0.0_R8
+        fllime=1.0_R8
+        fllimi=1.0_R8
       endif
       if(b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(fllim0fna), fllim0fna, 'fllim0fna')
@@ -262,13 +271,13 @@
         fllim0fhi(:,:,0,0,:) = clocs(:,:,0,:)
         fllim0fhi(:,:,1,1,:) = clocs(:,:,1,:)
       else
-        fllim0fna=0.0_R8
-        fllim0fhi=0.0_R8
+        fllim0fna=1.0_R8
+        fllim0fhi=1.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.020') then
         call cfrure (nread, size(fllimvisc), fllimvisc, 'fllimvisc')
       else
-        fllimvisc=0.0_R8
+        fllimvisc=1.0_R8
       endif
       if(b2fplasma_version.ge.'03.000.006') then
         call cfrure (nread, size(f_luc_ke), f_luc_ke, 'f_luc_ke')
@@ -281,15 +290,15 @@
         call cfrure (nread, size(fllim_al), fllim_al, 'fllim_al')
         call cfrure (nread, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
       else
-        f_luc_ke=0.0_R8
-        f_luc_ki=0.0_R8
-        f_luc_et=0.0_R8
-        f_luc_sg=0.0_R8
-        f_luc_al=0.0_R8
-        fllim_ke=0.0_R8
-        fllim_ki=0.0_R8
-        fllim_al=0.0_R8
-        fllim_al_c=0.0_R8
+        f_luc_ke=1.0_R8
+        f_luc_ki=1.0_R8
+        f_luc_et=1.0_R8
+        f_luc_sg=1.0_R8
+        f_luc_al=1.0_R8
+        fllim_ke=1.0_R8
+        fllim_ki=1.0_R8
+        fllim_al=1.0_R8
+        fllim_al_c=1.0_R8
       endif
 
       return

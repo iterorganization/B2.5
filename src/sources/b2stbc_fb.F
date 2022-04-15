@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_post (nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+      subroutine b2stbc_fb_post (nx, ny, ns, ismain,
+     1  gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
@@ -17,16 +17,14 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
-      real (kind=R8) :: BoRiS,
-     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2)
+      real (kind=R8) ::
+     *  gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
-      real (kind=R8) ::
-     *  kinrgy(-1:nx,-1:ny,0:ns-1)
+     *  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -82,8 +80,6 @@
      . 'invalid main plasma species ismain; must not be neutral')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 *    ..test sign of ni, ne, te, ti
        call b2xvsg (n2, ni(-1,-1,0), 1, 'ni0', '.gt.')
        call b2xvsg (n2, ni(-1,-1,1), 1, 'ni1', '.gt.')
@@ -199,8 +195,10 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_fb_pre (nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti,
-     &  fna, fhe, fhi, fch, kinrgy,
+     1  vol, gs, na, ne, ni, te, ti, kinrgy,
+     &  fna, fna_mdf, fna_fcor, fna_nodrift,
+     &  fna_he, fnaPSch, fna_eir, fna_32, fna_52,
+     &  fhe, fhi, fhm, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
@@ -228,7 +226,17 @@
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny), kinrgy(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
@@ -723,7 +731,8 @@
 
                case (0) ! no action
 
-               case (1) ! local density
+               case (1) ! local density of isonuclear sequence
+                        ! (including contributions from Eirene species)
 
                   if(ncall.eq.0) then
                      write(*,'(a,a,i3)')
@@ -761,6 +770,38 @@
                         is_end=is
                      endif
                   enddo
+#ifdef B25_EIRENE
+                  do j=1,nnatmi !{
+                    if (latmscl(j).eq.ispecies+1) then !{
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies) !{
+                        do ix = na_feedback_ix1(ispecies),
+     &                          na_feedback_ix2(ispecies) !{
+                          if(region(ix,iy,0).ne.0 .and.
+     &                       leftix(ix,iy).ne.-2 .and.
+     &                       rightix(ix,iy).ne.nx+1 .and.
+     &                       bottomiy(ix,iy).ne.-2 .and.
+     &                       topiy(ix,iy).ne.ny+1) then !{
+                            na_feedback_current = na_feedback_current +
+     &                       dab2(ix+1,iy+1,j,1) * vol(ix,iy)
+                            do k=1,nnmoli !{
+                              if (mlcmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + mlcmp(j,k) *
+     &                          dmb2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                            do k=1,nnioni !{
+                              if (micmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + micmp(j,k) *
+     &                          dib2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                          end if !}
+                        end do !}
+                      end do !}
+                    end if !}
+                  end do !}
+#endif
                   na_feedback_current = na_feedback_current /
      &                 vol_feedback
 
@@ -822,7 +863,8 @@
                      endif
                   enddo
 
-               case (4) ! total particle content for that sequence
+               case (4) ! total particle content for that isonuclear sequence
+                        ! (including contributions from Eirene species)
 
                   if(ncall.eq.0) then
                      write(*,'(a,a,i3)')
@@ -854,6 +896,38 @@
                         is_end=is
                      endif
                   enddo
+#ifdef B25_EIRENE
+                  do j=1,nnatmi !{
+                    if (latmscl(j).eq.ispecies+1) then !{
+                      do iy = na_feedback_iy1(ispecies),
+     &                        na_feedback_iy2(ispecies) !{
+                        do ix = na_feedback_ix1(ispecies),
+     &                          na_feedback_ix2(ispecies) !{
+                          if(region(ix,iy,0).ne.0 .and.
+     &                          leftix(ix,iy).ne.-2 .and.
+     &                          rightix(ix,iy).ne.nx+1 .and.
+     &                          bottomiy(ix,iy).ne.-2 .and.
+     &                          topiy(ix,iy).ne.ny+1) then !{
+                            na_feedback_current = na_feedback_current +
+     &                       dab2(ix+1,iy+1,j,1) * vol(ix,iy)
+                            do k=1,nnmoli !{
+                              if (mlcmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + mlcmp(j,k) *
+     &                          dmb2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                            do k=1,nnioni !{
+                              if (micmp(j,k).eq.0) cycle
+                              na_feedback_current =
+     &                         na_feedback_current + micmp(j,k) *
+     &                          dib2(ix+1,iy+1,k,1) * vol(ix,iy)
+                            end do !}
+                          end if !}
+                        end do !}
+                      end do !}
+                    end if !}
+                  end do !}
+#endif
 
                case (5) ! total ion content for that isonuclear sequence
                         ! (not including neutrals)
@@ -1260,8 +1334,33 @@
      &                    ispecies+1
                   endif
 
-                  na(:,:,is_start:is_end) = na(:,:,is_start:is_end) *
-     &                 na_feedback_rescale
+                  do is = is_start, is_end
+                    na(:,:,is) = na(:,:,is) * na_feedback_rescale
+                    kinrgy(:,:,is) =
+     &               kinrgy(:,:,is) * na_feedback_rescale
+                    ne(:,:)=ne(:,:)+(na_feedback_rescale-1.0_R8)*
+     &               na(:,:,is)*rza(:,:,is)
+                    fna(:,:,0:1,0:1,is) =
+     &               fna(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_mdf(:,:,0:1,0:1,is) =
+     &               fna_mdf(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_fcor(:,:,0:1,0:1,is) =
+     &               fna_fcor(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_nodrift(:,:,0:1,0:1,is) =
+     &               fna_nodrift(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_he(:,:,0:1,0:1,is) =
+     &               fna_he(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fnaPSch(:,:,0:1,0:1,is) =
+     &               fnaPSch(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_eir(:,:,0:1,0:1,is) =
+     &               fna_eir(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_32(:,:,0:1,0:1,is) =
+     &               fna_32(:,:,0:1,0:1,is)*na_feedback_rescale
+                    fna_52(:,:,0:1,0:1,is) =
+     &               fna_52(:,:,0:1,0:1,is)*na_feedback_rescale
+                  end do
+*   ..compute initial ni
+                  call b2xpni (nx, ny, ns, na, ni)
 
                case (3) ! core boundary flux condition
 

@@ -62,7 +62,7 @@
       external xertst, sfill, ipgetr, machsfr
       external b2xvsg
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/
+      data ncall/0/, phm0/1.0_R8/, style/1/
 
 *-----------------------------------------------------------------------
 *.documentation-internal 

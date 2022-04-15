@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nx, ny, ns, isb, mb,
-     & ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,       !srv 01.07.09
-     & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
+      subroutine b2siav (nx, ny, ns, isb, ismain, mb,                 !srv 19.02.21
+     & ub, wbdia, vbecrb, te, ti, nb, ni, ne2, lnlam, chci,           !srv 01.07.09
+     & cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_geo
@@ -19,15 +19,14 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, isb
+      integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
      & mb, lnlam(-1:nx,-1:ny),                                        !srv 01.07.09
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1,0:1),
      & vbecrb(-1:nx,-1:ny,0:1,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
-     & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),          !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1,0:1), cvsbhz(-1:nx,-1:ny,0:1,0:1),     !srv 04.10.99 09.01.01
+     & ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     & chci(-1:nx,-1:ny,0:1,0:1), cvsbhz(-1:nx,-1:ny,0:1,0:1),        !srv 04.10.99 09.01.01
      & cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)                                 !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -58,7 +57,7 @@
       real (kind=R8) ::
      *     t0, ft                                                   !srv 16.10.17
       real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
+     &     addvis=1.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       !$OMP THREADPRIVATE(addvis, addvis1, cqip1, cvsa_mltpl)
       real (kind=R8) ::
@@ -69,7 +68,7 @@
      &   dtir(-1:nx,-1:ny)
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
+     &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny)         !lk !iyv 02.12.13
       integer mintopcut                                             !lk 23.05.06 05.07.07 }
       save ncall
       data ncall/0/
@@ -100,12 +99,12 @@
       endif
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
-      s2 = sqrt(2.0_R8)                                             !iyv 02.12.13
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
-      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
-        if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
+!      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then      !srv 26.10.08
+      if(isb.eq.ismain) then                                        !srv 19.02.21
+        if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 *   ..compute radial gradients of ti
           call gradc_r(nx, ny, hx, hy, vol, qz, ti, dtir)
@@ -237,10 +236,10 @@
      &           0.7e0_R8*sqrt(nu1(ix,iy))+
      &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
                 kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy)*s2)         !iyv 02.12.13
-     &           +2.7e0_R8*(nu1(ix,iy)*s2)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy)*s2)+
-     &           (nu1(ix,iy)*s2)**2*eps1(iy)**3))
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))            !som 07.12.21 !iyv 02.12.13
+     &           +2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu1(ix,iy))+
+     &           (nu1(ix,iy))**2*eps1(iy)**3))
               endif
             enddo
           enddo

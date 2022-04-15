@@ -233,24 +233,24 @@ cwdk todo: rscal(pb)-logic
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
           if (solvereg(ileft)) then
-           aa11(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
            aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa11(leftix(ix,iy),leftiy(ix,iy), 0) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa11(leftix(ix,iy),leftiy(ix,iy), 1) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa11(leftix(ix,iy),leftiy(ix,iy), 3) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa11(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa11(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
           endif
@@ -319,24 +319,24 @@ cwdk todo: add rscal-logic
      &        vol(rightix(ix,iy),rightiy(ix,iy))
            endif
            if (solvereg(ibot)) then
-            aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) = 
+            aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy),-1)       - t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 0) = 
+            aa11(bottomix(ix,iy),bottomiy(ix,iy), 0) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 0) + (t0 - t1)/
-     &        vol(bottomix(ix,iy),bottomiy(ix,iy)) 
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) = 
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+            aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) +  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) = 
+            aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 2)      - t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 3) = 
+            aa11(bottomix(ix,iy),bottomiy(ix,iy), 3) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 3) + (t0 - t1)/
      &        vol(ix,iy)
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) = 
+            aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
            endif
@@ -369,39 +369,54 @@ cwdk todo: add rscal-logic
         if (.not.solvereg(ireg)) rescb(ix,iy) = 0.0_R8
        enddo
       enddo
-!! CHECK: NOT DN-SUITABLE
+
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
-      aa11(-1,-1,:) = 0.0_R8
-      aa11(-1,-1,0) = 1.00_R8*nb(-1,-1)/pb(-1,-1)
-!      aa11(-1,-1,3) =-1.00_R8
-!      rescb(-1,-1) = pb(-1,0) - pb(-1,-1)
-      aa11(-1,-1,1) =-1.00_R8*nb(0,-1)/pb(0,-1)
-      rescb(-1,-1) = nb(0,-1) - nb(-1,-1)
-
-      aa11(-1,ny,:)  = 0.0_R8
-      aa11(-1,ny,0)  = 1.00_R8*nb(-1,ny)/pb(-1,ny)
-!      aa11(-1,ny, 1) =-0.50_R8
-!      aa11(-1,ny,-3) =-0.50_R8
-!      rescb(-1,ny)  = 0.5_R8*(pb(0,ny) + pb(-1,ny-1)) - pb(-1,ny)
-!      aa11(-1,ny,-3) =-1.00_R8
-!      rescb(-1,ny)  = pb(-1,ny-1) - pb(-1,ny)
-      aa11(-1,ny,1) =-1.00_R8*nb(0,ny)/pb(0,ny)
-      rescb(-1,ny) = nb(0,ny) - nb(-1,ny)
-
-      aa11(nx,-1,:)  = 0.0_R8
-      aa11(nx,-1,0)  = 1.00_R8*nb(nx,-1)/pb(nx,-1)
-!      aa11(nx,-1,3)  =-1.00_R8 
-!      rescb(nx,-1)  = pb(nx,0) - pb(nx,-1)
-      aa11(nx,-1,-1) =-1.00_R8*nb(nx-1,-1)/pb(nx-1,-1) 
-      rescb(nx,-1)  = nb(nx-1,-1) - nb(nx,-1)
-
-      aa11(nx,ny,:)  = 0.0_R8
-      aa11(nx,ny,0)  = 1.00_R8*nb(nx,ny)/pb(nx,ny)
-!      aa11(nx,ny,-3) =-1.00_R8 
-!      rescb(nx,ny)  = pb(nx,ny-1) - pb(nx,ny)
-      aa11(nx,ny,-1) =-1.00_R8*nb(nx-1,ny)/pb(nx-1,ny) 
-      rescb(nx,ny)  = nb(nx-1,ny) - nb(nx,ny)
+      do iy=-1,ny
+       do ix=-1,nx
+        if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
+         aa11(ix,iy,:) = 0.0_R8
+         aa11(ix,iy,0) = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!        aa11(ix,iy,3) =-1.00_R8
+!        rescb(ix,iy) = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa11(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
+     .                           pb(rightix(ix,iy),rightiy(ix,iy))
+         rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
+        endif
+        if (leftix(ix,iy).eq.-2.and.topiy(ix,iy).eq.ny+1) then
+         aa11(ix,iy,:)  = 0.0_R8
+         aa11(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!        aa11(ix,iy, 1) =-0.50_R8
+!        aa11(ix,iy,-3) =-0.50_R8
+!        rescb(ix,iy)  = 0.5_R8*(pb(rightix(ix,iy),rightiy(ix,iy)) +
+!    .                           pb(bottomix(ix,iy),bottomiy(ix,iy))) -
+!    .                   pb(ix,iy)
+!        aa11(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa11(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
+     .                           pb(rightix(ix,iy),rightix(ix,iy))
+         rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
+        endif
+        if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then
+         aa11(ix,iy,:)  = 0.0_R8
+         aa11(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!        aa11(ix,iy,3)  =-1.00_R8
+!        rescb(ix,iy)  = pb(topix(ix,iy),topiy(ix,iy)) - pb(ix,iy)
+         aa11(ix,iy,-1) =-1.00_R8*nb(leftix(ix,iy),leftiy(ix,iy))/
+     .                            pb(leftix(ix,iy),leftiy(ix,iy))
+         rescb(ix,iy)  = nb(leftix(ix,iy),leftiy(ix,iy)) - nb(ix,iy)
+        endif
+        if (rightix(ix,iy).eq.nx+1.and.topiy(ix,iy).eq.ny+1) then
+         aa11(ix,iy,:)  = 0.0_R8
+         aa11(ix,iy,0)  = 1.00_R8*nb(ix,iy)/pb(ix,iy)
+!        aa11(ix,iy,-3) =-1.00_R8
+!        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
+         aa11(ix,iy,-1) =-1.00_R8*nb(leftix(ix,iy),leftiy(ix,iy))/
+     .                            pb(leftix(ix,iy),leftiy(ix,iy))
+         rescb(ix,iy)  = nb(leftix(ix,iy),leftiy(ix,iy)) - nb(ix,iy)
+        endif
+       enddo
+      enddo
 
 *   ..solve the correction equation
       call b2ux11p (nx, ny, aa11, itcnt, rescb, corpb, name)           !srv 02.04.18

@@ -148,8 +148,6 @@
 #ifdef IMAS
 #ifdef AMNS
       type (amns_handle_type), save :: amns
-      type (amns_query_type) :: query
-      type (amns_answer_type) :: answer
 #else
       character*5, save :: git_version_amns = '0.0.0'
 #endif

@@ -1,24 +1,22 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,              !srv 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                       !srv 27.01.00
+      subroutine b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,  !srv 27.01.00
+     &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,                 !srv 27.01.00
      &    sch, respo, corpo, aa11)                                       !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_plasma
-     * , only : fac_vis
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, nregionv, itcnt
+      integer nx, ny, ns, ismain, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1,0:1),
-     &   avisper(-1:nx,-1:ny,0:1),
-     &   bvisper(-1:nx,-1:ny,0:1),
-     &   cvisper(-1:nx,-1:ny,0:1),
+     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -40,17 +38,18 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
+      integer ncall, n2, ix, iy, is, ixb, iyb, ixt, iyt, k         !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
+      integer, save :: visper_all_ions = 1
       character chark*1                                            !srv 08.07.08
       integer ireg, ileft, ibot
-      real (kind=R8) :: vis_per, aa11p2, aa11m2                    !srv 27.01.00
-      save ncall, vis_per                                          !srv 27.01.00
+      real (kind=R8) :: aa11p2, aa11m2, aa11p3, aa11m3             !srv 27.01.00
+      save ncall                                                   !srv 27.01.00
 *   ..procedures
       external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p, b2ux9p                      !srv 11.01.00
 *   ..initialisation
-      data ncall/0/, vis_per/0.0e0_R8/                             !srv 27.01.00
+      data ncall/0/                                                !srv 27.01.00
 
 *-----------------------------------------------------------------------
 *.computation
@@ -60,8 +59,8 @@
       call subini ('b2usp7')                                       !srv 06.07.00
 *   ..set internal parameters on first call                        !srv
       if (ncall.eq.0) then                                         !srv
-       call ipgetr ('b2tfhe_vis_per', vis_per)                     !srv 27.01.00 08.07.08
        call ipgeti ('b2usp7_iout', iout)                           !srv 08.07.08
+       call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
       endif                                                        !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -120,13 +119,13 @@ cwdk add 9-point contributions
            aa11(ix,iy, 3) = aa11(ix,iy, 3)+0.25_R8*conc(ix,iy,0,1)
           endif
           if (solvereg(ileft)) then
-           aa11(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy),-3)+0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy),-2) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy),-2)+0.25_R8*conc(ix,iy,0,1)
            aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy), 3)-0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy), 4)-0.25_R8*conc(ix,iy,0,1)
           endif
          endif
@@ -143,7 +142,7 @@ cwdk add 9-point contributions
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
-           aa11(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+           aa11(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &       aa11(bottomix(ix,iy),bottomiy(ix,iy),3)-conc(ix,iy,1,1)
            aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa11(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
@@ -161,17 +160,17 @@ cwdk add 9-point contributions
            aa11(ix,iy, 1) = aa11(ix,iy, 1) + 0.25_R8*conc(ix,iy,1,0)
           endif
           if (solvereg(ibot)) then
-           aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) = 
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) + 
+           aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) =
+     &       aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) +
      &       0.25_R8*conc(ix,iy,1,0)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) = 
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) - 
+           aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) =
+     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) -
      &       0.25_R8*conc(ix,iy,1,0)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) = 
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) + 
+           aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) =
+     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) +
      &       0.25_R8*conc(ix,iy,1,0)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) = 
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) - 
+           aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) =
+     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) -
      &       0.25_R8*conc(ix,iy,1,0)
           endif
          endif
@@ -182,66 +181,80 @@ cwdk add 9-point contributions
        enddo
       enddo
 
-CWDK tmp: ignore this      
+CWDK tmp: ignore this
 CWDK will require complex stencil!
 C*   ..compute the seven-point matrix                               !srv 26.01.00
 C      aa11(:,:,-3) = 0.0e0_R8
 C      aa11(:,:, 3) = 0.0e0_R8
 C
-C      do iy = -1, ny
-C       do ix = -1, nx                                              !srv 26.11.02
-C         ireg = region(ix,iy,0)
-C         ixt = topix(ix,iy)
-C         iyt = topiy(ix,iy)
-C         ixb = bottomix(ix,iy)
-C         iyb = bottomiy(ix,iy)
-C         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+C      do is = 0,ns-1
+C       if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+C     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+C        do iy = -1, ny
+C         do ix = -1, nx                                              !srv 26.11.02
+C          ireg = region(ix,iy,0)
+C          ixt = topix(ix,iy)
+C          iyt = topiy(ix,iy)
+C          ixb = bottomix(ix,iy)
+C          iyb = bottomiy(ix,iy)
+C          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 C     &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then   !srv 26.11.02 12.12.17 {
 C*   .. do nothing
-C         else
+C          else
 C           if(bottomiy(ixb,iyb).eq.-2) then
-C              aa11(ix,iy, 3) = vis_per*fac_vis(ix,iy)*
-C     &         (avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-C     &          cvisper(topix(ixt,iyt),topiy(ixt,iyt),1))
-C             aa11m2 =   vis_per*fac_vis(ix,iy)*(
-C     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1))
+C              aa11p3 =
+C     &           avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
+C     &           cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
+C             aa11(ix,iy, 3) = aa11(ix,iy, 3) + aa11p3
+C             aa11m2 =avisper_a(ixt,iyt,1,is)*
+C     &               bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
 C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11m2
-C             aa11p2 =     vis_per*fac_vis(ix,iy)*(
-C     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
-C     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
-C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11(ix,iy,3) - aa11p2
-C             aa11(ix,iy,0) = aa11(ix,iy,0)+ aa11p2 + aa11m2
+C             aa11p2 =avisper_a(ixt,iyt,1,is)*
+C     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
+C     &         +avisper_a(ixt,iyt,1,is)*
+C     &          bvisper_a(ix ,iy ,1,is)*cvisper_a(ixt,iyt,1,is)
+C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11p3 - aa11p2
+C             aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p2 + aa11m2
 C           elseif(topiy(ixt,iyt).eq.ny+1) then
-C              aa11(ix,iy,-3) = vis_per*fac_vis(ix,iy)*
-C     &        (avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1))
-C             aa11m2 =   vis_per*fac_vis(ix,iy)*(
-C     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-C     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1))
-C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11(ix,iy,-3)  - aa11m2
-C             aa11p2 =     vis_per*fac_vis(ix,iy)*(
-C     &        avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
+C             aa11m3 = avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
+C             aa11(ix,iy,-3) = aa11(ix,iy,-3) + aa11m3
+C             aa11m2 = avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+C     &         +avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
+C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11m3 - aa11m2
+C             aa11p2 = avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
 C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11p2
-C             aa11(ix,iy,0) = aa11(ix,iy,0)+ aa11p2 + aa11m2
+C             aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p2 + aa11m2
 C           else
-C             aa11(ix,iy,-3) = vis_per*fac_vis(ix,iy)*
-C     &        (avisper(ix,iy,1)*bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1))
-C             aa11(ix,iy, 3) = vis_per*fac_vis(ix,iy)*
-C     &         (avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
-C     &          cvisper(topix(ixt,iyt),topiy(ixt,iyt),1))
-C             aa11m2 =   vis_per*fac_vis(ix,iy)*(
-C     &         avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-C     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
-C     &        +avisper(ix ,iy ,1)*bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1))
-C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11(ix,iy,-3)  - aa11m2
-C             aa11p2 =     vis_per*fac_vis(ix,iy)*(
-C     &         avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
-C     &        +avisper(ixt,iyt,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-C     &        +avisper(ix ,iy ,1)*bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
-C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11(ix,iy,3) - aa11p2
-C             aa11(ix,iy,0) = aa11(ix,iy,0)+ aa11p2 + aa11m2
+C             aa11m3 = avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
+C             aa11(ix,iy,-3) = aa11(ix,iy,-3) + aa11m3
+C             aa11p3 = avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
+C     &          cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
+C             aa11(ix,iy, 3) = aa11(ix,iy, 3) + aa11p3
+C             aa11m2 = avisper_a(ixt,iyt,1,is)*
+C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+C     &         +avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+C     &         +avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
+C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11m3  - aa11m2
+C             aa11p2 = avisper_a(ixt,iyt,1,is)*
+C     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
+C     &         +avisper_a(ixt,iyt,1,is)*
+C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+C     &         +avisper_a(ix,iy,1,is)*
+C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11p3 - aa11p2
+C             aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p2 + aa11m2
 C           endif
-C         endif                                                     !srv 26.11.02 12.12.17 }
-C       enddo
+C          endif                                                     !srv 26.11.02 12.12.17 }
+C         enddo
+C        enddo
+C       endif
 C      enddo
 
 *   ..correct RHS if not solving

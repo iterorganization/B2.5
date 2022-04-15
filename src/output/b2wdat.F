@@ -1,4 +1,4 @@
-      subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
+      subroutine b2wdat (nx, ny, ns, ismain, ismain0)                    !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
@@ -29,7 +29,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
-      real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -46,7 +45,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
+      integer ncall, iout, is, ix, iy, ib, ic, iw, iout_iout_ASTRA !srv 05.10.01 03.04.13 19.04.13
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
@@ -193,7 +192,60 @@
 
        end if
 
+       if(iout.eq.2) then
+
+        call b2wdat_open(70,'separatrix_location_on_plate')        !srv 26.09.17
+        ix = -1
+        if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix location on Inner Lower plate =',
+     &      cry(ix+ishift,mintopcut,0)
+        else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix location on Outer Upper plate =',
+     &      cry(ix+ishift,mintopcut,0)
+        endif
+        ix = nx
+        if (LSN) then
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix location on Outer Lower plate =',
+     &      crx(ix-ishift,mintopcut,0)
+        else
+         write(70,"(1x,a,12es14.6)")
+     &    ' Separatrix location on Inner Upper plate =',
+     &      crx(ix-ishift,mintopcut,0)
+        endif
+        do ix = -1,nx
+         if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
+           write(70,"(1x,a,12es14.6)")
+     &      ' Separatrix location on Outer Upper plate =',
+     &        crx(ix+ishift,mintopcut,0)
+         endif
+         if(rightix(ix,mintopcut).eq.nx+1 .and. ix.lt.nx) then
+           write(70,"(1x,a,12es14.6)")
+     &      ' Separatrix location on Inner Upper plate =',
+     &        cry(ix-ishift,mintopcut,0)
+         endif
+        enddo
+        ix = nmdpl
+        write(70,"(1x,a,12es14.6)")
+     &   ' Separatrix location on Outer Midplane =',
+     &     crx(ix-ishift,mintopcut,0)
+        close(70)
+
+       end if
+
        if(iout.eq.4 .or. iout.eq.3 .or. iout.eq.1) then           !iys 17.04.17
+#ifdef B25_EIRENE
+        if(iout.ne.4) then
+         call b2wdat_open(70,'eirdiag')                           !srv 26.09.17
+         write(70,"(a/6i5)") 'nlimps natm nmol npls nstra nstsid',
+     &                        nlimps, natm, nmol, npls, nstra, nstsid
+         write(70,"(a/6i5)") 'natmid nmolid ', natmid, nmolid
+         write(70,"(a/6i5)") 'nnatmi nnmoli ', nnatmi, nnmoli
+         close(70)
+        end if
+#endif
         call my_outi(70,nx,ny,bottomix,'bottomix')
         call my_outi(70,nx,ny,bottomiy,'bottomiy')
         call my_outi(70,nx,ny,topix,'topix')
@@ -283,20 +335,20 @@
         call my_out(70,nx,ny,qz(-1,-1,1),'qz1cost')
 
 c     calculate coordinates of cell centre
-        wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))  !srv 18.12.14 {
+        wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))    !srv 18.12.14 {
         call my_out(70,nx,ny,wrk0,'crc_')
         call b2wdat_open(70,'crc')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
-        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'          !srv 07.08.15
+        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'              !srv 07.08.15
         do iy = -1, ny
-         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)              !srv 07.08.15
+         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                  !srv 07.08.15
         enddo
         close(70)
         wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
         call my_out(70,nx,ny,wrk1,'czc_')
         call b2wdat_open(70,'czc')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
-        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'          !srv 07.08.15
+        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'              !srv 07.08.15
         do iy = -1, ny
-         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)              !srv 07.08.15
+         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                  !srv 07.08.15
         enddo
         close(70)
 
@@ -304,41 +356,41 @@ c     calculate coordinates of cell centre
 
       end if
 
-      if (iout.eq.1) then                                         !srv begin if for iout
+      if (iout.eq.1) then                                             !srv begin if for iout
 
        Total_current=0.0_R8
        Total_abscurrent=0.0_R8
        Total_flux=0.0_R8
        Total_absflux=0.0_R8
        wrk2=0.0_R8
-       call b2xpro (nx, ny, ns, mp, am, na, ro)                   !srv 30.01.15 {
+       call b2xpro (nx, ny, ns, mp, am, na, ro)                       !srv 30.01.15 {
        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
        call my_out(70,nx,ny,cst,'usound_cst')
        call my_out(70,nx,ny,ro,'ro')
        call my_out(70,nx,ny,rz,'rz')
-       call my_out(70,nx,ny,pr,'pr')                              !srv 30.01.15 }
-       call my_out(70,nx,ny,pz,'pz')                              !srv 30.01.15 }
-       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                    !srv
-       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                    !srv
+       call my_out(70,nx,ny,pr,'pr')                                  !srv 30.01.15 }
+       call my_out(70,nx,ny,pz,'pz')                                  !srv 30.01.15 }
+       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                        !srv
+       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                        !srv
 
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
         call my_out(70,nx,ny,wrk0,'pb'//chns)
-        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)             !srv
+        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)                 !srv
         call my_out(70,nx,ny,cst_a,'usound'//chns)
         wrk1 = ua(:,:,is)/wrk0
-        call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                  !srv 24.03.10 }
-        call my_out(70,nx,ny,uadia(-1,-1,0,0,is),'uadiax'//chns)  !srv
-        call my_out(70,nx,ny,uadia(-1,-1,1,1,is),'uadiay'//chns)  !srv
-        call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'vaecrbx'//chns)!srv
-        call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'vaecrby'//chns)!srv
-        call my_out(70,nx,ny,vadia(-1,-1,0,0,is),'vadiax'//chns)  !srv
-        call my_out(70,nx,ny,vadia(-1,-1,1,1,is),'vadiay'//chns)  !srv
-        call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'wadiax'//chns)  !srv
-        call my_out(70,nx,ny,wadia(-1,-1,1,1,is),'wadiay'//chns)  !srv
-        call my_out(70,nx,ny,fna(-1,-1,0,0,is),'fnax'//chns)      !srv
-        call my_out(70,nx,ny,fna(-1,-1,1,1,is),'fnay'//chns)      !srv
+        call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                      !srv 24.03.10 }
+        call my_out(70,nx,ny,uadia(-1,-1,0,0,is),'uadiax'//chns)      !srv
+        call my_out(70,nx,ny,uadia(-1,-1,1,1,is),'uadiay'//chns)      !srv
+        call my_out(70,nx,ny,vaecrb(-1,-1,0,0,is),'vaecrbx'//chns)    !srv
+        call my_out(70,nx,ny,vaecrb(-1,-1,1,1,is),'vaecrby'//chns)    !srv
+        call my_out(70,nx,ny,vadia(-1,-1,0,0,is),'vadiax'//chns)      !srv
+        call my_out(70,nx,ny,vadia(-1,-1,1,1,is),'vadiay'//chns)      !srv
+        call my_out(70,nx,ny,wadia(-1,-1,0,0,is),'wadiax'//chns)      !srv
+        call my_out(70,nx,ny,wadia(-1,-1,1,1,is),'wadiay'//chns)      !srv
+        call my_out(70,nx,ny,fna(-1,-1,0,0,is),'fnax'//chns)          !srv
+        call my_out(70,nx,ny,fna(-1,-1,1,1,is),'fnay'//chns)          !srv
         call my_out(70,nx,ny,fna_mdf(-1,-1,0,0,is),'fnax_mdf'//chns)  !srv 13.10.06
         call my_out(70,nx,ny,fna_mdf(-1,-1,1,1,is),'fnay_mdf'//chns)  !srv 13.10.06
         call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'fna_eirx'//chns)  !srv 14.07.10
@@ -353,8 +405,8 @@ c     calculate coordinates of cell centre
      *                      'fna_nodriftx'//chns)
         call my_out(70,nx,ny,fna_nodrift(-1,-1,1,1,is),
      *                      'fna_nodrifty'//chns)
-        call my_out(70,nx,ny,sna(-1,-1,0,is),'sna0'//chns)        !srv 25.02.16
-        call my_out(70,nx,ny,sna(-1,-1,1,is),'sna1'//chns)        !srv 25.02.16
+        call my_out(70,nx,ny,sna(-1,-1,0,is),'sna0'//chns)          !srv 25.02.16
+        call my_out(70,nx,ny,sna(-1,-1,1,is),'sna1'//chns)          !srv 25.02.16
 
         call my_out(70,nx,ny,cdna(-1,-1,0,0,is),'cdnax'//chns)      !srv
         call my_out(70,nx,ny,cdna(-1,-1,1,1,is),'cdnay'//chns)      !srv
@@ -366,8 +418,8 @@ c     calculate coordinates of cell centre
         call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,is),'cvsax_cl'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,0,0,is),'cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,1,is),'cvsay'//chns)
-        call my_out(70,nx,ny,kinrgy(-1,-1,is),'kinrgy'//chns)     !srv 08.10.04
-        call my_out(70,nx,ny,vsa0(-1,-1,is),'vsaAN'//chns)        !srv 25.02.16
+        call my_out(70,nx,ny,kinrgy(-1,-1,is),'kinrgy'//chns)       !srv 08.10.04
+        call my_out(70,nx,ny,vsa0(-1,-1,is),'vsaAN'//chns)          !srv 25.02.16
 
         wrk0=0.0d0
         do iy = -1,ny
@@ -375,12 +427,12 @@ c     calculate coordinates of cell centre
             if (leftix(ix,iy).ne.-2) wrk0(ix,iy)=
      1        wbbl(ix,iy,2)/wbbl(ix,iy,3)
      4       *vaecrb(ix,iy,0,0,is)*
-     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/       !srv 01.03.00
-     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))          !srv 01.03.00
+     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/         !srv 01.03.00
+     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 01.03.00
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
           enddo
         enddo
-        call my_out(70,nx,ny,wrk0,'fvaecrbx'//chns)               !srv
+        call my_out(70,nx,ny,wrk0,'fvaecrbx'//chns)                 !srv
 
         wrk1=0.0d0
         do iy = -1,ny
@@ -388,15 +440,15 @@ c     calculate coordinates of cell centre
             if (leftix(ix,iy).ne.-2) wrk1(ix,iy)=
      1        wbbl(ix,iy,2)/wbbl(ix,iy,3)
      4       *vadia(ix,iy,0,0,is)*
-     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/       !srv 01.03.00
-     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))          !srv 01.03.00
+     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/         !srv 01.03.00
+     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 01.03.00
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
           enddo
         enddo
-        call my_out(70,nx,ny,wrk1,'fvadiax'//chns)                !srv
+        call my_out(70,nx,ny,wrk1,'fvadiax'//chns)                  !srv
 
         wrk0=fna(:,:,0,0,is)-wrk0-wrk1
-        call my_out(70,nx,ny,wrk0,'fdifx'//chns)                  !srv
+        call my_out(70,nx,ny,wrk0,'fdifx'//chns)                    !srv
 
         wrk0=0.0d0
         do iy = -1, ny
@@ -404,35 +456,35 @@ c     calculate coordinates of cell centre
             if (bottomiy(ix,iy).ne.-2)
      >        wrk0(ix,iy)=vaecrb(ix,iy,1,1,is)*(na(ix,iy,is)
      &          +na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8*
-     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/   !srv 01.03.00
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
+     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     !srv 01.03.00
+     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 01.03.00
           enddo
         enddo
-        call my_out(70,nx,ny,wrk0,'fvaecrby'//chns)               !srv
+        call my_out(70,nx,ny,wrk0,'fvaecrby'//chns)                 !srv
         wrk1=0.0d0
         do iy = -1, ny
           do ix = -1, nx
             if (bottomiy(ix,iy).ne.-2)
      >        wrk1(ix,iy)=vadia(ix,iy,1,1,is)*(na(ix,iy,is)
      &          +na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8*
-     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/   !srv 01.03.00
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
+     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     !srv 01.03.00
+     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 01.03.00
           enddo
         enddo
-        call my_out(70,nx,ny,wrk1,'fvadiay'//chns)                !srv
+        call my_out(70,nx,ny,wrk1,'fvadiay'//chns)                  !srv
         wrk0=fna(:,:,1,1,is)-wrk0-wrk1
-        call my_out(70,nx,ny,wrk0,'fdify'//chns)                  !srv
+        call my_out(70,nx,ny,wrk0,'fdify'//chns)                    !srv
 
-        call my_out(70,nx,ny,fmo(-1,-1,0,0,is),'fmox'//chns)      !srv 24.02.10
+        call my_out(70,nx,ny,fmo(-1,-1,0,0,is),'fmox'//chns)        !srv 24.02.10
         call my_out(70,nx,ny,fmo(-1,-1,1,1,is),'fmoy'//chns)
 
-        call b2wdat_open(70,'Total_flux_pm'//chns)                !srv 19.02.02 { 26.09.17
+        call b2wdat_open(70,'Total_flux_pm'//chns)                  !srv 19.02.02 { 26.09.17
         write (70,*) '  N      Total_flux    Total_|flux| '
         do iy = mintopcut,0,-1
           Total_flux(iy) = 0.0d0
           Total_absflux(iy) = 0.0d0
           do ix=-1,nx
-            if(on_closed_surface(ix,iy)) then                  ! for CORE
+            if(on_closed_surface(ix,iy)) then                    ! for CORE
               Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,1,is)
               Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,1,is))
             endif
@@ -448,6 +500,26 @@ c     calculate coordinates of cell centre
         call my_out(70,nx,ny,pcca(-1,-1,0,0,is),'pccax'//chns)    !srv 11.01.13
         call my_out(70,nx,ny,pcca(-1,-1,1,1,is),'pccay'//chns)    !srv 11.01.13
 
+        call my_out(70,nx,ny,fchanml_a(-1,-1,0,0,is),             !srv 08.09.21 {
+     &                      'fchanml_ax'//chns)
+        call my_out(70,nx,ny,fchanml_a(-1,-1,1,1,is),
+     &                      'fchanml_ay'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,0,0,is),
+     &                      'fchinert_ax'//chns)
+        call my_out(70,nx,ny,fchinert_a(-1,-1,1,1,is),
+     &                      'fchinert_ay'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,0,0,is),
+     &                      'fchvispar_ax'//chns)
+        call my_out(70,nx,ny,fchvispar_a(-1,-1,1,1,is),
+     &                      'fchvispar_ay'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,0,0,is),
+     &                      'fchvisper_ax'//chns)
+        call my_out(70,nx,ny,fchvisper_a(-1,-1,1,1,is),
+     &                      'fchvisper_ay'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,0,0,is),
+     &                      'fchvisq_ax'//chns)
+        call my_out(70,nx,ny,fchvisq_a(-1,-1,1,1,is),
+     &                      'fchvisq_ay'//chns)                   !srv 08.09.21 }
        enddo
 
        call my_out(70,nx,ny,pccm(-1,-1,0,0),'pccmx')              !srv 11.01.13
@@ -822,47 +894,43 @@ c     calculate coordinates of cell centre
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
         s=gs(0,iy,0)
-        hlp=0.0_R8
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(0,iy,0,0,is)*(
-     .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .     (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))))
-        end do !}
-        hlp=hlp/s
-        wrk0(5,iy) = hlp + wrk0(-1,iy)+wrk0(3,iy)
+        hlp=fht(0,iy,0,0)+fht(0,iy,0,1)
+        hlp=abs(hlp)/s
+        wrk0(5,iy) = hlp
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(1)
-      ind=eirdiag_nds_ind(js)
-      ias=ind+1-(eirdiag_nds_start(js)-1)
       do iy=0,ny-1 !{
-        wrk0(5,iy)=wrk0(5,iy)+ewldt_res(iy+ias)
+        do js=1,nsts !{
+          if (eirdiag_nds_typ(js).ne.2) cycle
+          if (eirdiag_nds_srf(js).ne.0) cycle
+          if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+          if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+          ind=eirdiag_nds_ind(js)
+          ias=ind+1-(eirdiag_nds_start(js)-1)
+          wrk0(5,iy)=wrk0(5,iy)+ewldt_res(iy+ias)
+        enddo !}
       enddo !}
 #endif
       hlp_s=0.0_R8
       do iy=0,ny-1 !{
-        hlp=0.0_R8
         s=gs(nx,iy,0)
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(nx,iy,0,0,is)*(
-     .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .     (kinrgy(nx,iy,is)*hx(nx-1,iy)+kinrgy(nx-1,iy,is)*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))))
-        end do !}
-        hlp=hlp/s
-        wrk0(6,iy) = hlp + wrk0(0,iy)+wrk0(4,iy)
+        hlp=fht(nx,iy,0,0)+fht(nx,iy,0,1)
+        hlp=abs(hlp)/s
+        wrk0(6,iy) = hlp
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
-      js=ltns(nncut)+nlim
-      ind=eirdiag_nds_ind(js)
-      ias=ind+1-(eirdiag_nds_start(js)-1)
       do iy=0,ny-1 !{
-        wrk0(6,iy)=wrk0(6,iy)+ewldt_res(iy+ias)
+        do js=1,nsts !{
+          if (eirdiag_nds_typ(js).ne.2) cycle
+          if (eirdiag_nds_srf(js).ne.nx) cycle
+          if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+          if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+          ind=eirdiag_nds_ind(js)
+          ias=ind+1-(eirdiag_nds_start(js)-1)
+          wrk0(6,iy)=wrk0(6,iy)+ewldt_res(iy+ias)
+        enddo !}
       enddo !}
 #endif
 
@@ -873,54 +941,46 @@ c     calculate coordinates of cell centre
 
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          s=gs(ix2,iy,0)
-          hlp=0.0_R8
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix2,iy,0,0,is)*(
-     .       (rpt(ix2,iy,is)*hx(ix2-1,iy)+
-     .        rpt(ix2-1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(ix2,iy,is)*hx(ix2-1,iy)+
-     .        kinrgy(ix2-1,iy,is)*hx(ix2,iy))/
-     .       (hx(ix2-1,iy)+hx(ix2,iy))))
-          end do !}
-          hlp=hlp/s
-          wrk0(14,iy) = hlp + wrk0(8,iy)+wrk0(12,iy)
+          s=gs(ix2+1,iy,0)
+          hlp=fht(ix2+1,iy,0,0)+fht(ix2+1,iy,0,1)
+          hlp=abs(hlp)/s
+          wrk0(14,iy) = hlp
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
-        js=ltns(3)+nlim
-        ind=eirdiag_nds_ind(js)
-        ias=ind+1-(eirdiag_nds_start(js)-1)
         do iy=0,ny-1 !{
-          wrk0(14,iy)=wrk0(14,iy)+ewldt_res(iy+ias)
+          do js=1,nsts !{
+            if (eirdiag_nds_typ(js).ne.2) cycle
+            if (eirdiag_nds_srf(js).ne.ix2+1) cycle
+            if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+            if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+            ind=eirdiag_nds_ind(js)
+            ias=ind+1-(eirdiag_nds_start(js)-1)
+            wrk0(14,iy)=wrk0(14,iy)+ewldt_res(iy+ias)
+          enddo !}
         enddo !}
 #endif
 ! inner upper target
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          hlp=0.0_R8
           s=gs(ix1,iy,0)
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix1,iy,0,0,is)*(
-     .       (rpt(ix1,iy,is)*hx(ix1-1,iy)+
-     .        rpt(ix1-1,iy,is)*hx(ix1,iy))/
-     .       (hx(ix1-1,iy)+hx(ix1,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(ix1,iy,is)*hx(ix1-1,iy)+
-     .        kinrgy(ix1-1,iy,is)*hx(ix1,iy))/
-     .       (hx(ix1-1,iy)+hx(ix1,iy))))
-          end do !}
-          hlp=hlp/s
-          wrk0(13,iy) = hlp + wrk0(7,iy)+wrk0(11,iy)
+          hlp=fht(ix1,iy,0,0)+fht(ix1,iy,0,1)
+          hlp=abs(hlp)/s
+          wrk0(13,iy) = hlp
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
-        js=ltns(2)+nlim
-        ind=eirdiag_nds_ind(js)
-        ias=ind+1-(eirdiag_nds_start(js)-1)
         do iy=0,ny-1 !{
-          wrk0(13,iy)=wrk0(13,iy)+ewldt_res(iy+ias)
-        enddo !}
+          do js=1,ntns !{
+            if (eirdiag_nds_typ(js).ne.2) cycle
+            if (eirdiag_nds_srf(js).ne.ix1) cycle
+            if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+            if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+            ind=eirdiag_nds_ind(js)
+            ias=ind+1-(eirdiag_nds_start(js)-1)
+            wrk0(13,iy)=wrk0(13,iy)+ewldt_res(iy+ias)
+          enddo !}
+        end do !}
 #endif
       end if !}
 
@@ -1187,6 +1247,20 @@ c     calculate coordinates of cell centre
        enddo
        close(70)
 
+       call b2wdat_open(70,'OMP_parallel_electron_flux')
+       do iy=-1,ny
+         write(70,"(1x,2es14.6)") crdy_c_cell(jxa,iy),
+     *     fne(jxa,iy,0,0)/pitx(jxa,iy)
+       enddo
+       close(70)
+
+       call b2wdat_open(70,'IMP_parallel_electron_flux')
+       do iy=-1,ny
+         write(70,"(1x,2es14.6)") crdy_c_cell(jxi,iy),
+     *     fne(jxi,iy,0,0)/pitx(jxi,iy)
+       enddo
+       close(70)
+
 *   ..calculate total core energy flux
        iy = 0
        power = 0.0_R8
@@ -1199,30 +1273,12 @@ c     calculate coordinates of cell centre
        write(70,"('Power =',es14.6)") power
        close(70)
 
-       call b2wdat_open(70,'separatrix_location_on_plate')              !srv 26.09.17
-       ix = -1
-       write(70,"(1x,' Separatrix Location on Inner Lower =',
-     &             12es14.6)") cry(ix+ishift,mintopcut,0)
-       ix = nx
-       write(70,"(1x,' Separatrix Location on Outer Lower =',
-     &             12es14.6)") crx(ix-ishift,mintopcut,0)
-       do ix = -1,nx
-         if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
-           write(70,"(1x,' Separatrix Location on Outer Upper =',
-     &             12es14.6)") crx(ix+ishift,mintopcut,0)
-         endif
-         if(rightix(ix,mintopcut).eq.nx+1 .and. ix.lt.nx) then
-           write(70,"(1x,' Separatrix Location on Inner Upper =',
-     &             12es14.6)") cry(ix-ishift,mintopcut,0)
-         endif
-       enddo
-       ix = nmdpl
-       write(70,"(1x,' Separatrix Location on Outer Mdpln =',
-     &             12es14.6)") crx(ix-ishift,mintopcut,0)
-       close(70)
-
-*   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at inner
-       call b2wdat_open(70,'inner_na_ua_cst')                     !srv 03.04.13 { 26.09.17
+*   ..write crdy_c_cell, na, ua, cst at Western edges
+       if (LSN) then
+         call b2wdat_open(70,'inner_na_ua_cst')                   !srv 03.04.13 { 26.09.17
+       else
+         call b2wdat_open(70,'outer_na_ua_cst')                   !srv 03.04.13 { 26.09.17
+       endif
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
        do iy = -1,ny
          iw = 0
@@ -1276,9 +1332,295 @@ c     calculate coordinates of cell centre
        enddo
        close(70)                                               !srv 03.04.13 }
 
+*   ..write crdy_c_cell, na, ua, cst at Inner Midplane
+       call b2wdat_open(70,'IMP_na_ua_cst')
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxi,iy)
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= na(jxi,iy,is)
+        enddo
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= ua(jxi,iy,is)
+        enddo
+        iw = iw + 1
+        wdim(iw) = cst(jxi,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Inner Midplane
+       call b2wdat_open(70,'IMP_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxi,iy)
+        iw = 2
+        wdim(iw) = fhe(jxi,iy,0,0)/gs(jxi,iy,0)/qc(jxi,iy,0)
+     .           /pitx(jxi,iy)
+        iw = 3
+        wdim(iw) = fhi(jxi,iy,0,0)/gs(jxi,iy,0)/qc(jxi,iy,0)
+     .           /pitx(jxi,iy)
+        iw = 4
+        wdim(iw) = fhj(jxi,iy,0,0)/gs(jxi,iy,0)/qc(jxi,iy,0)
+     .           /pitx(jxi,iy)
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhm(jxi,iy,0,0,is)/gs(jxi,iy,0)/qc(jxi,iy,0)
+     .           /pitx(jxi,iy)
+        enddo
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhp(jxi,iy,0,0,is)/gs(jxi,iy,0)/qc(jxi,iy,0)
+     .           /pitx(jxi,iy)
+        enddo
+        iw = iw + 1
+        wdim(iw) = fht(jxi,iy,0,0)/gs(jxi,iy,0)/qc(jxi,iy,0)
+     .           /pitx(jxi,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, na, ua, cst at Outer Midplane
+       call b2wdat_open(70,'OMP_na_ua_cst')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxa,iy)
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= na(jxa,iy,is)
+        enddo
+        do is=0,ns-1
+          iw = iw + 1
+          wdim(iw)= ua(jxa,iy,is)
+        enddo
+        iw = iw + 1
+        wdim(iw) = cst(jxa,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Outer Midplane
+       call b2wdat_open(70,'OMP_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do iy = -1,ny
+        iw = 1
+        wdim(iw)= crdy_c_cell(jxa,iy)
+        iw = 2
+        wdim(iw) = fhe(jxa,iy,0,0)/gs(jxa,iy,0)/qc(jxa,iy,0)
+     .           /pitx(jxa,iy)
+        iw = 3
+        wdim(iw) = fhi(jxa,iy,0,0)/gs(jxa,iy,0)/qc(jxa,iy,0)
+     .           /pitx(jxa,iy)
+        iw = 4
+        wdim(iw) = fhj(jxa,iy,0,0)/gs(jxa,iy,0)/qc(jxa,iy,0)
+     .           /pitx(jxa,iy)
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhm(jxa,iy,0,0,is)/gs(jxa,iy,0)/qc(jxa,iy,0)
+     .           /pitx(jxa,iy)
+        enddo
+        do is=0,ns-1
+         iw = iw + 1
+         wdim(iw)= fhp(jxa,iy,0,0,is)/gs(jxa,iy,0)/qc(jxa,iy,0)
+     .           /pitx(jxa,iy)
+        enddo
+        iw = iw + 1
+        wdim(iw) = fht(jxa,iy,0,0)/gs(jxa,iy,0)/qc(jxa,iy,0)
+     .           /pitx(jxa,iy)
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, na, ua, cst at Eastern divertor entrances
+       call b2wdat_open(70,'Eastern_div_entry_na_ua_cst')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = rightcut(1)
+         else if (ic.eq.2) then
+           ixx = leftcut(2)
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= na(ixx,iy,is)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= ua(ixx,iy,is)
+           enddo
+           iw = iw + 1
+           wdim(iw) = cst(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Eastern divertor entrances
+       call b2wdat_open(70,'Eastern_div_entry_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = rightcut(1)
+         else if (ic.eq.2) then
+           ixx = leftcut(2)
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           iw = 2
+           wdim(iw) = fhe(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                          pitx(ixx,iy)
+           iw = 3
+           wdim(iw) = fhi(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                          pitx(ixx,iy)
+           iw = 4
+           wdim(iw) = fhj(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                          pitx(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhm(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                              pitx(ixx,iy)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhp(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                              pitx(ixx,iy)
+           enddo
+           iw = iw + 1
+           wdim(iw) = fht(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                          pitx(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, na, ua, cst at Western divertor entrances
+       call b2wdat_open(70,'Western_div_entry_na_ua_cst')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+2,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = leftcut(1)-1
+         else if (ic.eq.2) then
+           ixx = rightcut(2)-1
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= na(ixx,iy,is)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= ua(ixx,iy,is)
+           enddo
+           iw = iw + 1
+           wdim(iw) = cst(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, parallel power flux densities at Western divertor entrances
+       call b2wdat_open(70,'Western_div_entry_parallel_power')
+       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+5,'es14.6))'
+       do ic = 1, nncut
+         if (ic.eq.1) then
+           ixx = leftcut(1)-1
+         else if (ic.eq.2) then
+           ixx = rightcut(2)-1
+         end if
+         do iy = topcut(ic)+1,ny
+           iw = 1
+           wdim(iw)= crdy_c_cell(ixx,iy)
+           iw = 2
+           wdim(iw) = fhe(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                             pitx(ixx,iy)
+           iw = 3
+           wdim(iw) = fhi(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                             pitx(ixx,iy)
+           iw = 4
+           wdim(iw) = fhj(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                             pitx(ixx,iy)
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhm(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                             pitx(ixx,iy)
+           enddo
+           do is=0,ns-1
+             iw = iw + 1
+             wdim(iw)= fhp(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                             pitx(ixx,iy)
+           enddo
+           iw = iw + 1
+           wdim(iw) = fht(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
+     .                                             pitx(ixx,iy)
+           write(70,hlp_frm) (wdim(ix),ix=1,iw)
+         enddo
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, j_sat at Western edges
+       if (LSN) then
+         call b2wdat_open(70,'inner_jsat')                   !srv 03.04.13 { 26.09.17
+       else
+         call b2wdat_open(70,'outer_jsat')                   !srv 03.04.13 { 26.09.17
+       endif
+       write(hlp_frm,'(a)') '(2(1x,2es14.6))'
+       do iy = -1,ny
+         wdim = 0.0_R8
+         iw = 0
+         do ix = -1,nx
+           if(leftix(ix,iy).eq.-2) then
+             ixx=max(-1,ix-1)
+             iw = iw +1
+             wdim(iw)= crdy_c_cell(ixx+ishift,iy)
+             iw = iw +1
+             do is = 0, ns-1
+               wdim(iw)= wdim(iw)+qe*rza(ixx+ishift,iy,is)*
+     .                   na(ixx+ishift,iy,is)*cst_a(ixx+ishift,iy,is)
+             enddo
+           endif
+         enddo
+         write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
+*   ..write crdy_c_cell, j_sat at Eastern edges
+       if (LSN) then
+         call b2wdat_open(70,'outer_jsat')                   !srv 03.04.13 { 26.09.17
+       else
+         call b2wdat_open(70,'inner_jsat')                   !srv 03.04.13 { 26.09.17
+       endif
+       do iy = -1,ny
+         wdim = 0.0_R8
+         iw = 0
+         do ix = -1,nx
+           if(rightix(ix,iy).eq.nx+1) then
+             ixx=min(nx,ix+1)
+             iw = iw +1
+             wdim(iw)= crdy_c_cell(ixx-ishift,iy)
+             iw = iw +1
+             do is = 0, ns-1
+               wdim(iw)= wdim(iw)+qe*rza(ixx-ishift,iy,is)*
+     .                   na(ixx-ishift,iy,is)*cst_a(ixx-ishift,iy,is)
+             enddo
+           endif
+         enddo
+         write(70,hlp_frm) (wdim(ix),ix=1,iw)
+       enddo
+       close(70)
+
 *   ..write poloidal coordinates, Up upper separatrix
        iy = mintopcut+4                                        !srv 13.02.17 {
-       write (chns,'(i2.2)') iy
+       write (chns,'(i3.3)') iy
        call b2wdat_open(70,'poloidal_ua_at_'//chns)            !srv 26.09.17
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
        do ix = -1,nx
@@ -1462,9 +1804,11 @@ c     calculate coordinates of cell centre
         do ix = -1, nx
           if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_energy_flux_i(iy) =
-     &       Total_energy_flux_i(iy) + fhi(ix,iy,1,1)
+     &       Total_energy_flux_i(iy) + fhi(ix,iy,1,0)
+     &                               + fhi(ix,iy,1,1)
             Total_energy_flux_i_mdf(iy) =
-     &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1,1)
+     &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1,0)
+     &                                   + fhi_mdf(ix,iy,1,1)
           endif
         enddo
         write (70,'(1x,i4,2es18.7)')
@@ -1481,9 +1825,11 @@ c     calculate coordinates of cell centre
         do ix = -1, nx
           if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_energy_flux_e(iy) =
-     &       Total_energy_flux_e(iy) + fhe(ix,iy,1,1)
+     &       Total_energy_flux_e(iy) + fhe(ix,iy,1,0)
+     &                               + fhe(ix,iy,1,1)
             Total_energy_flux_e_mdf(iy) =
-     &       Total_energy_flux_e_mdf(iy) + fhe_mdf(ix,iy,1,1)
+     &       Total_energy_flux_e_mdf(iy) + fhe_mdf(ix,iy,1,0)
+     &                                   + fhe_mdf(ix,iy,1,1)
           endif
         enddo
         write (70,'(1x,i4,2es18.7)')
@@ -1524,12 +1870,15 @@ c     calculate coordinates of cell centre
            DO IX = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,0,is) +
+     &        fna(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
            end do
            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'N') THEN
            DO IX = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &        fna(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,0,is) +
      &        fna(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
@@ -1537,13 +1886,16 @@ c     calculate coordinates of cell centre
            DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)
+     &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is) +
+     &        fna(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,1,is)
            end do
            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
+     &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is) +
+     &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,1,is)
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
@@ -1610,12 +1962,15 @@ c     calculate coordinates of cell centre
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +
      &         fna_mdf(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,0,is)
+     &        +fna_mdf(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
             end do
             sdiv(is) = sdiv(is) - boundary_flux(ib,is)
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &        fna_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,0,is) +
      &        fna_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
             end do
             sdiv(is) = sdiv(is) + boundary_flux(ib,is)
@@ -1624,12 +1979,15 @@ c     calculate coordinates of cell centre
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna_mdf(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)
+     &       +fna_mdf(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,1,is)
            end do
            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
+     &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is) +
+     &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,1,is)
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN

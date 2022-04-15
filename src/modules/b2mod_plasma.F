@@ -24,7 +24,7 @@
      *  uadia(:,:,:,:,:),  fchdia(:,:,:,:),
      *  fch_p(:,:,:,:), fch_pi_c(:,:,:,:), fch_pi_f(:,:,:,:),            !srv 10.06.08 { 13.01.17
      *  fhm(:,:,:,:,:), fhp(:,:,:,:,:), fhj(:,:,:,:), fht(:,:,:,:),
-     *  fhe_mdf(:,:,:,:), fhePSch(:,:,:,:), 
+     *  fhe_mdf(:,:,:,:), fhePSch(:,:,:,:),
      *  fhi_mdf(:,:,:,:), fhiPSch(:,:,:,:),                              !srv 13.10.06
      *  fna_mdf(:,:,:,:,:), fnaPSch(:,:,:,:,:),
      *  fna_fcor(:,:,:,:,:), fna_he(:,:,:,:,:),                          !srv 01.10.99 21.01.00
@@ -42,6 +42,12 @@
      *  fna_nodrift(:,:,:,:,:),
      *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),                   !xpb
      *  fmo(:,:,:,:,:)
+      real (kind=R8), allocatable, save ::                               !srv 08.09.21 {
+     &  fchanml_a(:,:,:,:,:),
+     &  fchinert_a(:,:,:,:,:),
+     &  fchvispar_a(:,:,:,:,:),
+     &  fchvisper_a(:,:,:,:,:),
+     &  fchvisq_a(:,:,:,:,:)                                             !srv 08.09.21 }
       real (kind=R8), allocatable, save ::
      *  facdrift(:,:), fac_ExB(:,:), fac_vis(:,:)
 
@@ -147,6 +153,11 @@
       allocate(fchanml(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.03.07
       allocate(fchstoch(-1:nxd,-1:nyd,0:1))                          !srv 24.08.21
       fchstoch = 0.0_R8                                              !srv 24.08.21
+      allocate(fchanml_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 08.09.21 {
+      allocate(fchinert_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fchvispar_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fchvisper_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fchvisq_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 08.09.21 }
       allocate(vadia(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                 !xpb
       vadia=0.0_R8
       allocate(vedia(-1:nxd,-1:nyd,0:1,0:1))                         !xpb
@@ -238,6 +249,11 @@
       deallocate(fchin)                             !srv 30.09.02
       deallocate(fchanml)                           !srv 24.03.07
       deallocate(fchstoch)                          !srv 24.08.21
+      deallocate(fchanml_a)                         !srv 08.09.21 {
+      deallocate(fchinert_a)
+      deallocate(fchvispar_a)
+      deallocate(fchvisper_a)
+      deallocate(fchvisq_a)                         !srv 08.09.21 }
       deallocate(vadia)
       deallocate(vedia)
       deallocate(wadia)
@@ -564,6 +580,29 @@
         fchinert(:,:,0,0) = floc(:,:,0)
         fchinert(:,:,1,1) = floc(:,:,1)
       endif
+      if(b2fplasma_version.ge.'03.001.000') then
+        call cfrure_opt (nread, size(floc), floc, 'fht')
+        fht = 0.0_R8
+        fht(:,:,0,0) = floc(:,:,0)
+        fht(:,:,1,1) = floc(:,:,1)
+        call cfrure_opt (nread, size(floc), floc, 'fhj')
+        fhj = 0.0_R8
+        fhj(:,:,0,0) = floc(:,:,0)
+        fhj(:,:,1,1) = floc(:,:,1)
+        call cfrure_opt (nread, size(flocs), flocs, 'fhm')
+        fhm = 0.0_R8
+        fhm(:,:,0,0,:) = flocs(:,:,0,:)
+        fhm(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure_opt (nread, size(flocs), flocs, 'fhp')
+        fhp = 0.0_R8
+        fhp(:,:,0,0,:) = flocs(:,:,0,:)
+        fhp(:,:,1,1,:) = flocs(:,:,1,:)
+      elseif(b2fplasma_version.ge.'03.000.007') then
+        call cfrure_opt (nread, size(fht), fht, 'fht')
+        call cfrure_opt (nread, size(fhj), fhj, 'fhj')
+        call cfrure_opt (nread, size(fhm), fhm, 'fhm')
+        call cfrure_opt (nread, size(fhp), fhp, 'fhp')
+      endif
 
       return
       end subroutine read_b2mod_plasma
@@ -639,6 +678,10 @@
       call cfwure (nwrite, size(fna_he), fna_he, 'fna_he')
       call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
       call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
+      call cfwure (nwrite, size(fht), fht, 'fht')
+      call cfwure (nwrite, size(fhj), fhj, 'fhj')
+      call cfwure (nwrite, size(fhm), fhm, 'fhm')
+      call cfwure (nwrite, size(fhp), fhp, 'fhp')
 
       return
       end subroutine write_b2mod_plasma
@@ -810,6 +853,32 @@
      2 (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*pbs(ix,iy,1)
       return
       end function uasy
+
+      function uax(ix,iy,is)
+      use b2mod_geo
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uax
+      uax = fna(ix,iy,0,0,is)*
+     &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
+     1   hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
+     &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+      return
+      end function uax
+
+      function uay(ix,iy,is)
+      use b2mod_geo
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uay
+      uay = fna(ix,iy,1,1,is)*
+     &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     1   hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
+     &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
+      return
+      end function uay
 
       function uesx(ix,iy)
       use b2mod_geo

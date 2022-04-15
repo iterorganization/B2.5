@@ -144,9 +144,9 @@
         endif
         catch_up=sources_time_mod.gt.0.0_R8
         do while(catch_up)
+          write(*,*) 'sources: catching up...'
+          call read_source_profile
           if(mod(tim,sources_time_mod).gt.sources_time_switch) then
-            write(*,*) 'sources: catching up...'
-            call read_source_profile
             catch_up=sources_time_mod.gt.0.0_R8
           else
             catch_up=.false.
@@ -501,11 +501,11 @@ cdjm Jan2017 Keep linearised sources for balance
         endif
         catch_up=transport_time_mod.gt.0.0_R8
         do while(catch_up) 
+          write(*,*) 'transport_input: catching up ...'
+          filename=transport_filename
+          call read_transport_input
           if(mod(tim,transport_time_mod).gt.transport_time_switch)
      1     then
-            write(*,*) 'transport_input: catching up ...'
-            filename=transport_filename
-            call read_transport_input
             catch_up=transport_time_mod.gt.0.0_R8
           else
             catch_up=.false.

@@ -6,8 +6,8 @@
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                 !srv 28.10.02
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
+     &  fhe, fhi, fhe_mdf, fhi_mdf, fhm, fch, fne, fni, fna_fcor,       !srv 16.02.12
+     &  fna_nodrift, fna_he, fna_eir, fnaPSch, fhePSch, fhiPSch,        !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
@@ -29,6 +29,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_time
+      use b2mod_diag
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -51,17 +52,20 @@
      &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
      &  fhe(-1:nx,-1:ny,0:1,0:1), fhe_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fhi_mdf(-1:nx,-1:ny,0:1,0:1),
-     &  fch(-1:nx,-1:ny,0:1,0:1),
+     &  fch(-1:nx,-1:ny,0:1,0:1), fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),          !srv 11.10.02 21.10.02 {
+     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),      !srv 11.10.02 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchdia(-1:nx,-1:ny,0:1,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1,0:1),                                       !srv 21.10.02 }
-     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                !srv 25.02.00
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                 !srv 13.10.06
+     &  fchinert(-1:nx,-1:ny,0:1,0:1),                                   !srv 21.10.02 }
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 25.02.00
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),                             !srv 13.10.06
      &  fchanml(-1:nx,-1:ny,0:1,0:1),
-     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),          !srv 13.10.06
-     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)             !srv 28.10.02
+     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),      !srv 13.10.06
+     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)     !srv 28.10.02
       real (kind=R8) ::
      1  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
      2  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
@@ -387,8 +391,10 @@
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1     call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
-     1      vol, gs, na, ne, ni, te, ti,
-     &      fna, fhe, fhi, fch, kinrgy,
+     1      vol, gs, na, ne, ni, te, ti, kinrgy,
+     &      fna, fna_mdf, fna_fcor, fna_nodrift,
+     &      fna_he, fnaPSch, fna_eir, fna_32, fna_52,
+     &      fhe, fhi, fhm, fch,
      &      sna0, smo0, she0, shi0, sch0, sne0,
      &      main_call, diagno)
 
@@ -396,9 +402,9 @@
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
      1   BoRiS, facdrift, fac_ExB,                                       !srv 24.08.08
      1   na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     2   te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf,   !srv 28.10.02
+     2   te, ti, po, ne, ni, floe_noc, floi_noc, fna, fna_mdf,           !srv 28.10.02
      1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06
-     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,         !srv 16.02.12
+     &   fhe, fhi, fhm, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,    !srv 16.02.12
      &   fch, fne, fni,                                                  !srv 13.10.06
      &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &   fchanml,
@@ -437,8 +443,8 @@
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
-     1 call b2stbc_fb_post(nx, ny, ns, ismain, BoRiS,
-     1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     1 call b2stbc_fb_post(nx, ny, ns, ismain,
+     1  gs, na, ne, ni, te, ti, fna, fhe, fhi, fch,
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
 
@@ -671,6 +677,31 @@ c      write(*,*) 'Copying sne0 to b2stbc_sne'
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
+
+! { IYS 04.06.2018
+      sna_stbc_neut = 0.0_R8
+      if (ank_tracing .gt. 0) then
+        do is = 1,nspecies  ! is stands here for the ls - the index of isonuclear sequences.  Do not mix with the fluid index!!!
+          do iy = 1, nbc  ! iy stands here for the boundary index
+            do ix = 1, BC_LIST_SIZE(iy) ! ix stands here for the index which conuts cells along the boundary
+!           avoid corner cells
+              if ( .not. (
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and.
+     &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
+     & ( leftix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2 .and.
+     &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) .or.
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and.
+     &       bottomiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.-2) .or.
+     & ( rightix(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.nx+1 .and.
+     &       topiy(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy)).eq.ny+1) ) )
+     &        sna_stbc_neut(is,iy) = sna_stbc_neut(is,iy) +
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),0,EB2SPCR(is)) +
+     &           sna0(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),1,EB2SPCR(is)) *
+     &           na(BC_LIST_X(ix,iy),BC_LIST_Y(ix,iy),EB2SPCR(is))
+            enddo
+          enddo
+        enddo
+      endif     ! IYS 04.06.2018 }
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then

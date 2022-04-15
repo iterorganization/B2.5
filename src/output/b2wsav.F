@@ -1,11 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wsav (nsav, nx, ny, ns, lblgm,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch)
+      subroutine b2wsav (nsav, nx, ny, ns, lblgm)
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
+      use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
       use b2mod_external
@@ -13,11 +13,6 @@
 *   ..input arguments (unchanged on exit)
       integer nsav, nx, ny, ns
       character lblgm*120
-      real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -46,8 +41,7 @@
 *   ..local variables
       integer is
       real (kind=R8) ::
-     *  pr(-1:nx,-1:ny), uac(-1:nx,-1:ny,0:ns-1),
-     1  ne(-1:nx,-1:ny)
+     *  pr(-1:nx,-1:ny), uac(-1:nx,-1:ny,0:ns-1)
 *   ..procedures
       external subini, subend
       external b2xpne, b2xppr, b2xpxc, b2wsax
@@ -67,8 +61,7 @@
        call b2xpxc (nx, ny, ua(-1,-1,is), uac(-1,-1,is))
       enddo
 *   ..produce output
-      call b2wsax (nsav, nx, ny, ns, lblgm,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, rz2, pr, uac)
+      call b2wsax (nsav, nx, ny, ns, lblgm, rz2, pr, uac)
 
 * ..return
       call subend ()

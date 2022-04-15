@@ -171,7 +171,7 @@ c
 
       if(use_compile) then
         call compile_tria_chords(maxchords,maxcompile,
-     &   ntrii,nrknot,nx,ny,
+     &   ntrii,nrknot,
      &   xtrian,ytrian,necke,ixtri,iytri,
      1   inpts,indchd,indit,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
@@ -207,7 +207,7 @@ c
       end subroutine process_eirene_camera
 c
       subroutine compile_tria_chords(maxchords,maxcompile,
-     & ntrii,nrknot,nx,ny,
+     & ntrii,nrknot,
      & xtrian,ytrian,necke,ixtri,iytri,
      1 inpts,indchd,indit,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
@@ -216,7 +216,7 @@ c
       use b2mod_subsys
       implicit none
 
-      integer maxchords,maxcompile,ntrii,nrknot,nx,ny,inpts
+      integer maxchords,maxcompile,ntrii,nrknot,inpts
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       integer indchd(maxchords+1),indit(maxcompile)
       real (kind=R8) ::

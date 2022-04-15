@@ -52,6 +52,7 @@
       integer ncall, styl0, n2, ix, iy, is, k
       integer, save :: iout = 0, !iout_b2wdat = 0,                      !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
@@ -86,6 +87,8 @@
        call ipgeti ('b2stcx_iout', iout)                              !srv 11.09.09 {
        call ipgeti ('b2npc9_iout', iout_b2npc9)
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                       !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                     !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                       !srv 11.09.09 }
@@ -297,6 +300,12 @@ ctmp.dpc
       call timer%stop("parallel")
 #endif
 #endif
+*   ..zero out contributions in dead cells and core boundary
+      do is = 0, ns-1
+        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
+        call b2xzdd (nx, ny, 3, smq0(-1,-1,0,is))
+      enddo
+      call b2xzdd (nx, ny, 3, shi0)
 
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
@@ -312,7 +321,8 @@ ctmp.dpc
 #endif
 
       write (chcx,'(i3.3)') is0
-!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+!     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )    !srv 02.04.18
 !     &              .or. iout_b2wdat.eq.4 ) then
 !        do is = 0, ns-1
 !          write (chns,'(i3.3)') is

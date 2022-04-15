@@ -1,4 +1,4 @@
-      subroutine b2co_tally_cdf(nx, ny, ns, tim)
+      subroutine b2co_tally_cdf(ns, tim)
       use b2mod_types
       use b2mod_geo
       use b2mod_tallies
@@ -8,7 +8,7 @@
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nx, ny, ns
+      integer ns
       real (kind=R8) :: tim
 #ifndef NO_CDF
 #ifdef USE_PXFGETENV

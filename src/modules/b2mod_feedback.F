@@ -12,6 +12,7 @@
      * cum_volrec
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
+      integer, allocatable, save :: feedback_strata(:)
 
 *   ..namelists
       integer, save :: vacuum_communication,

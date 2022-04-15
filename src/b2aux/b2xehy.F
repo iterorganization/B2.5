@@ -101,7 +101,7 @@ c     to be considered: volume-weighted interpolation
 *       ..interpolate ne to faces
           call intfaceh(nx,ny,leftix,leftiy,hx,ne,wrk1(-1,-1,0))
           call intfacev(nx,ny,bottomix,bottomiy,hy1_,ne,wrk1(-1,-1,1))
-*       ..compute ehy      
+*       ..compute ehy
           ehy = -dpor + wrk0/(qe*wrk1)
         else
 *       ..compute radial differences of po, te and log(ne) on faces

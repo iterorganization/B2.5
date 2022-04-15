@@ -173,26 +173,6 @@ csw 18feb2014 remove fluxes between guard cells
         end do
       end do
 
-C*     turn off flows between boundary cells in west and east
-C        do iy = -1, ny
-C         do ix = -1, nx
-C          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-C            flcb(ix,iy,1,0:1) = 0.0_R8
-C            cvcb(ix,iy,1,0:1) = 0.0_R8
-C            flub(ix,iy,1,0:1) = 0.0_R8
-C            cvsb(ix,iy,1,0:1) = 0.0_R8
-C          endif
-C         enddo
-C        enddo
-C*     turn off flows between boundary cells in south and in north
-C         do iy = -1, ny, ny+1
-C            flcb(:,iy,0,0:1) = 0.0_R8
-C            cvcb(:,iy,0,0:1) = 0.0_R8
-C            flub(:,iy,0,0:1) = 0.0_R8
-C            cvsb(:,iy,0,0:1) = 0.0_R8
-C         enddo
-
-
       if (iout.ne.0) then                                              !sv 17.06.02 {
         write (charns,'(i3.3)') isb
         call my_out(70,nx,ny,flub(-1,-1,0,0),'b2nxfc_flubx'//charns)

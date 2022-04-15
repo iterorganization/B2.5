@@ -5,6 +5,10 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+#ifdef CLASSICAL_CURRENT
+      use b2mod_geo
+     &   , only : hy1
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -41,11 +45,10 @@
       integer, save :: no_current = 0
 #ifdef CLASSICAL_CURRENT
       integer is
-      real (kind=R8) :: hy1,
+      real (kind=R8) ::
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
      *   gampvdc(-1:nx,-1:ny)
       external intcor
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 #endif
 *   ..procedures
       real (kind=R8) ::
@@ -96,8 +99,8 @@
 *       X-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
 !         do iy=-1,ny
-        do iy=0,ny-1
-          do ix=0,nx
+         do iy=0,ny-1
+           do ix=0,nx
             if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
              fchdia(ix,iy,0,0)=fchdia(ix,iy,0,0)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
@@ -129,13 +132,13 @@ cwdk cancelation of some terms in poloidal and radial current components
 !     &      /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))            !srv
 !     &      *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))      !srv
             endif                                                        !srv 26.11.02
-          enddo
-        enddo
+           enddo
+         enddo
 
 *       Y-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
-        do iy=0,ny
-          do ix=0,nx-1
+         do iy=0,ny
+           do ix=0,nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
 !           do ix=-1,nx                                                  !srv
 !             fchdia(ix,iy,1)=fchdia(ix,iy,1) - dia_cur*signmf*          !srv 25.04.00 21.04.00 21.03.02
@@ -163,8 +166,8 @@ cwdk cancelation of some terms in poloidal and radial current components
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))        !srv
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))  !srv
             endif                                                        !srv 26.11.02
-          enddo                                                          !srv
-        enddo                                                            !srv
+           enddo                                                         !srv
+         enddo                                                           !srv
 
 #ifdef CLASSICAL_CURRENT
 crfs inertia terms

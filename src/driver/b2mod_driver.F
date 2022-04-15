@@ -154,7 +154,8 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
+      integer n2, itim, ierr, edition, b2time, coronal,
+     *  use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx, status
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -1279,14 +1280,10 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
-       call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
-     .  'Currents assignment to ions only supported for single '//
-     .  'hydrogenic species!')
 *
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
        call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
-csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -1569,8 +1566,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       hzconst = 1.0_R8                                                   !srv 30.01.10
       hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
-c      wrk0 = hz*vol
-c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       do iy=-1,ny                                                        !srv 11.03.08 {
         do ix=-1,nx
           if(leftix(ix,iy).ne.-2) then
@@ -1725,7 +1720,7 @@ cwdk    to be checked: qz(:,:,0) never used !?!
 *   initialize and/or read running averages
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer)
+        call run_av_init (iav_cont, nx, ny, ns, .true., lrer)
       end if
 
 *   get averaged plasma profiles
@@ -1929,6 +1924,13 @@ c   --> better way doing this is necessary)
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+c calculate additional fluxes (fhj, fhm, fhp, fht)
+!ajs 07.04.20 only recalculate in older version, now in b2mod_plasma
+      if (b2fplasma_version.lt.'03.000.007') then
+        call b2xpen (nx, ny, ns,
+     1    fna, fna, fne, fch, fhe, fhi, kinrgy, ua, cvsa, rpt,
+     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
+      endif
 *   ..rewrite input file with inverted velocity
       if(inverse_ua.ne.0) then                                           !srv 04.02.15 {
         call cfopen (70,'b2fstati_with-ua','new','un*formatted')
@@ -1984,8 +1986,8 @@ c   --> better way doing this is necessary)
 *   ..write geometric information
       call b2wfgm (nout(0), idout0, nx, ny)
 *   ..write summary of initial state
-      call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
-     &  te, ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na,
+     &  te, ti, fna, fch)
 
 * ..main loop
 *   ..initialise counters
@@ -2181,8 +2183,8 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nx, ny, ns, nxtl, nxtr,
-     &     ismain, ismain0, nscx, iscx, itim, dtim, ntim, ierr)
+          call b2mndt (nout, nx, ny, ns, ismain, ismain0,
+     &     nscx, iscx, itim, dtim, ntim, ierr)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
@@ -2245,7 +2247,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           tim = tim+dtim
         endif
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
-     &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
+     &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dtim
         write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
         write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
         write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
@@ -2367,7 +2369,7 @@ c new CDF movie option
         endif
         if (iappend.gt.0) then
           if (mod(itim,iappend).eq.0)
-     >     call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)
+     >     call b2wdat (nx, ny, ns, ismain, ismain0)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
@@ -2857,8 +2859,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
 * ..display and save the result of the calculation
 *   ..write summary of final state
-      call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
-     &  te, ti, po, fna, fhe, fhi, fch)
+      call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na,
+     &  te, ti, fna, fch)
       if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
@@ -2873,9 +2875,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
       if (iappend.eq.0) then
-        call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                 !srv 05.10.01
+        call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
       else if (mod(itim,iappend).ne.0) then
-        call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                 !srv 05.10.01
+        call b2wdat (nx, ny, ns, ismain, ismain0)                        !srv 05.10.01
       end if
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')

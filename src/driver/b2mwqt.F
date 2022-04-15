@@ -310,6 +310,7 @@
           iy = iy0(iiy)
           il = iy0(iiy+1)-iy0(iiy)
           z(k) = b2ssum(il,fna(ix,iy,0,0,is),nx+2)
+          z(k) = z(k) + b2ssum(il,fna(ix,iy,0,1,is),nx+2)
           k = k+1
          enddo
         enddo
@@ -318,7 +319,8 @@
           ix = ix0(iix)
           iy = iy0(iiy)
           il = ix0(iix+1)-ix0(iix)
-          z(k) = b2ssum(il,fna(ix,iy,1,1,is),1)
+          z(k) = b2ssum(il,fna(ix,iy,1,0,is),1)
+          z(k) = z(k) + b2ssum(il,fna(ix,iy,1,1,is),1)
           k = k+1
          enddo
         enddo
@@ -329,6 +331,7 @@
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
          z(k) = b2ssum(il,fhe(ix,iy,0,0),nx+2)
+         z(k) = z(k) + b2ssum(il,fhe(ix,iy,0,1),nx+2)
          k = k+1
         enddo
        enddo
@@ -337,7 +340,8 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = b2ssum(il,fhe(ix,iy,1,1),1)
+         z(k) = b2ssum(il,fhe(ix,iy,1,0),1)
+         z(k) = z(k) + b2ssum(il,fhe(ix,iy,1,1),1)
          k = k+1
         enddo
        enddo
@@ -347,6 +351,7 @@
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
          z(k) = b2ssum(il,fhi(ix,iy,0,0),nx+2)
+         z(k) = z(k) + b2ssum(il,fhi(ix,iy,0,1),nx+2)
          k = k+1
         enddo
        enddo
@@ -355,7 +360,8 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = b2ssum(il,fhi(ix,iy,1,1),1)
+         z(k) = b2ssum(il,fhi(ix,iy,1,0),1)
+         z(k) = z(k) + b2ssum(il,fhi(ix,iy,1,1),1)
          k = k+1
         enddo
        enddo
@@ -365,6 +371,7 @@
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
          z(k) = b2ssum(il,fch(ix,iy,0,0),nx+2)
+         z(k) = z(k) + b2ssum(il,fch(ix,iy,0,1),nx+2)
          k = k+1
         enddo
        enddo
@@ -373,7 +380,8 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = b2ssum(il,fch(ix,iy,1,1),1)
+         z(k) = b2ssum(il,fch(ix,iy,1,0),1)
+         z(k) = z(k) + b2ssum(il,fch(ix,iy,1,1),1)
          k = k+1
         enddo
        enddo

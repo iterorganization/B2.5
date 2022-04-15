@@ -1165,8 +1165,9 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       END FUNCTION SLREAC_EXTRAP
 
       subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,
-     1 safetyfactor,cr,cz,crx,bb,ne,te,ti,na,transport)
+     1 safetyfactor,ne,te,ti,na,transport)
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
@@ -1175,18 +1176,21 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
       implicit none
       integer nx,ny,ns,ismain,jsep,jxa
       real (kind=R8) :: lnlam(-1:nx,-1:ny),
-     1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     2 bb(-1:nx,-1:ny,0:3),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
      2 transport(-1:nx,-1:ny,0:ns-1)
 
       integer ix,iy,is,irmin,irmax
-      real (kind=R8) :: crmin,crmax,czmin,czmax,
+      real (kind=R8) :: cr, cz, crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
      2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi
       external xerrab
+
+      cr(ix,iy)= 0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+
+     &                    crx(ix,iy,2)+crx(ix,iy,3))
+      cz(ix,iy)= 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+
+     &                    cry(ix,iy,2)+cry(ix,iy,3))
 
       call subini('old_chang_hinton')
       call b2tlnl(nx,ny,1,te,ti,ne,lnlam)

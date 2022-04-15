@@ -162,14 +162,15 @@ c 2002-09-11: logic revised
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
       integer boundary_namelist, neutrals_namelist, use_eirene
-      integer numerics_namelist, sources_inputfile, b2stbc_feedback
+      integer numerics_namelist
+      integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
       integer ismain, ismain0, isfeedback, isfb
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
-      integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
-      integer ixref1, iyref1
+      integer iy_nocoreExB, nrings, bc_type16_ref, bc_type20_ref
+      integer ixref1, iyref1, nrings1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
@@ -455,12 +456,12 @@ c 2002-09-11: logic revised
       integer jatm, jmol
 #endif
       real (kind=R8) ::
-     *  neutral_rescale, BoRiS, divheat, rswitch,
+     *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
      .  scaling_width(nscale), scaling_strength(nscale),
-     .  ixfb, iyfb, ixfb1, iyfb1,
+     .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
      .  elm_time_begin, elm_time_end, elm_time_period,
-     .  sources_time_mod, sources_time_switch,
+     .  sources_time_mod, sources_time_switch, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
@@ -534,7 +535,7 @@ c 2002-09-11: logic revised
       logical todo, wait
       logical same_bundling, same_atoms, same_grid, non_default
       logical averaging, hydrogen
-      logical ismain_done, ismain0_done
+      logical ismain_done, ismain0_done, ycur_done
       logical first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
@@ -575,14 +576,16 @@ c 2002-09-11: logic revised
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
-      data iy_nocoreExB/-2/
+      data iy_nocoreExB/-2/, nrings/0/
       data bc_type16_ref/1/, bc_type20_ref/1/
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
-      data xfrhie_no_drift/1.0_R8/
+      data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+      data fch_ion_neutral/0.0_R8/
+      data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -928,6 +931,7 @@ c 2002-09-11: logic revised
      &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
      &   wbbl, wbbr, wbbv, wbbc,
      &   cell_width, cell_height, gmap)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (non_commensurate.eq.1) then
          call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
      &    periodic_bc.eq.periodic_bc1,
@@ -1361,6 +1365,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
+      call ipgeti ('nrings_for_no_speedup_averaging', nrings)
       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)
       call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
       call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
@@ -1390,8 +1395,14 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
+      call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
+      call ipgetr ('b2tfnb_ycur', ycur)
+      if (.not.hydrogen) ycur = 0.0_R8
+      call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
+      if (.not.hydrogen) fch_ion_neutral = 0.0_R8
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1599,6 +1610,12 @@ c 2002-09-11: logic revised
       if (nnreg(0).eq.1 .and. jsep.ne.ny/2 .and. jsep1.eq.ny1/2)
      .  jsep1 = conformal_convert(non_commensurate,2,
      .                            jxa,jsep,nx,ny,nx1,ny1,2)
+      if (nrings.ne.0) then
+        nrings1 = jsep1 - conformal_convert
+     .   (non_commensurate,2,jxa,jsep-nrings,nx,ny,nx1,ny1,0)
+      else
+        nrings1 = 0
+      endif
       if (iy_nocoreExB.gt.-2) iy_nocoreExB = conformal_convert
      .  (non_commensurate,2,jxa,iy_nocoreExB,nx,ny,nx1,ny1,2)
       bc_type16_ref = 2 + conformal_convert
@@ -1709,6 +1726,8 @@ c 2002-09-11: logic revised
           iswitch = sput_dst3
         case('b2stbc_isfeedback')
           iswitch = isfeedback
+        case('nrings_for_no_speedup_averaging')
+          iswitch = nrings1
         case('b2news_iy_nocoreExB')
           iswitch = iy_nocoreExB
         case('b2stbc_type16_ref')
@@ -1779,6 +1798,7 @@ c 2002-09-11: logic revised
       end if
 *   ..real switches
       todo = .true.
+      ycur_done = .false.
       RSWITCHES: select case (cnamip)
         case('b2mndr_ixfb')
           rswitch = ixfb1
@@ -1815,6 +1835,28 @@ c 2002-09-11: logic revised
         case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
           rswitch = b2tfhe_inert
           cnamip = 'b2tiner_inert'
+        case ('b2tvspa_vis_par') ! obsolete, superseded by b2tfhe_vis_par
+          todo = b2tvspa_vis_par.ne.1.0_R8 .and.
+     &           b2tfhe_vis_par .eq.1.0_R8
+          if (todo) then
+            rswitch = b2tvspa_vis_par
+            cnamip = 'b2tfhe_vis_par'
+          else
+            wait = .true.
+          endif
+        case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
+          wait = b2tvspa_vis_par.ne.1.0_R8 .and.
+     &           b2tfhe_vis_par .eq.1.0_R8
+          if (wait) then
+            rswitch = b2tvspa_vis_par
+          else
+            rswitch = b2tfhe_vis_par
+          end if
+        case ('b2tfnb_ycur')
+          rswitch = ycur
+          ycur_done = .true.
+        case ('b2tfhe_neutral')
+          rswitch = fch_ion_neutral
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -1860,6 +1902,8 @@ c 2002-09-11: logic revised
         write(nout(2),hlp_frm)
      >   '''b2mndr_ismain0'''//tab//'''',ismain0,''''
       end if
+      if (ycur.ne.1.0_R8 .and. .not.ycur_done)
+     >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
 
 *  ..rewrite boundary namelist
       first_pass = .true.
@@ -3367,7 +3411,7 @@ cxpb This will need to be checked !!!
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
-        call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
+        call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
         if (same_bundling) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
@@ -3467,6 +3511,17 @@ cxpb This will need to be checked !!!
             write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_SWITCH=',numerics_time_switch,','
           endif
+          if(maxval(corr_core_dn(0:ns-1)).ne.1.0_R8 .or.
+     &       minval(corr_core_dn(0:ns-1)).ne.1.0_R8) then
+            call convert_bundle_r(ns1,ns,nsm,is_neutral1,bundle_frac,
+     .       corr_core_dn)
+            write(hlp_frm,'(a,i3,a)')
+     .       '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
+            write(99,hlp_frm)
+     .       'CORR_CORE_DN=',(corr_core_dn(is),is=0,ns1-1)
+          endif
+          if(corr_core_dt.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CORR_CORE_DT=',corr_core_dt,','
           if(core_dt_factor.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CORE_DT_FACTOR=',core_dt_factor,','
           if(core_dt_suppression.ne.1.0_R8)

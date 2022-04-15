@@ -3,9 +3,9 @@
       subroutine b2stbc_phys (nx, ny, ns, ismain, ismain0,
      1  BoRiS, facdrift, fac_ExB,
      1  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf, !srv 28.10.02
+     &  te, ti, po, ne, ni, floe_noc, floi_noc, fna, fna_mdf,         !srv 28.10.02
      1  fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,      !srv 13.10.06
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,
+     &  fhe, fhi, fhm, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,
      &  fch, fne, fni,                                                !srv 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,!srv 21.10.02
      &  fchanml,
@@ -53,12 +53,12 @@
      &  vedia(-1:nx,-1:ny,0:1,0:1), vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  veecrb(-1:nx,-1:ny,0:1,0:1), vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      *  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      *  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     *  fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1,0:1),
      &  fni_52(-1:nx,-1:ny,0:1,0:1), fne_32(-1:nx,-1:ny,0:1,0:1),
@@ -117,6 +117,7 @@
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 iout_b2npmo = 0, iout_b2wdat = 0
@@ -267,6 +268,8 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
        call ipgeti ('b2npc9_iout', iout_b2npc9)                      !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                      !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                    !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
@@ -493,10 +496,10 @@ cwdk  now need to recompute full diamagnetic component for ud
 
       if(ncall.eq.0) write(*,*) 'Doing B2-style bc'
 
-      once_bccon = .false.                                            !srv 16.02.12 {
+      once_bccon = .false.
       once_bcene = .false.
-      once_bceni = .false.                                            !srv 16.02.12 }
-      once_bcpot = .false.                                            !Solovyev 13.05.14 !srv 29.09.15
+      once_bceni = .false.
+      once_bcpot = .false.
 
 * -- LOOP OVER ALL BOUNDARIES
       DO IB = 1, NBC
@@ -616,7 +619,8 @@ cwdk  now need to recompute full diamagnetic component for ud
         call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1
+     &              .or.  iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1 )  !srv 02.04.18
      &        .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
@@ -1848,7 +1852,8 @@ c dpc
      &                         bc_type13_iy.lt.ny+1,
      1                 'stepped off y-grid in type 13 bc')
                enddo
-               FS=FS+FNA(bc_type13_ix,bc_type13_iy,1,1,is)
+               FS=FS+FNA(bc_type13_ix,bc_type13_iy,1,0,is)
+     &              +FNA(bc_type13_ix,bc_type13_iy,1,1,is)
                VS=VS+VOL(bc_list_x(ix,ib),bc_list_y(ix,ib))
                NAS=NAS+NA(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      .          vol(bc_list_x(ix,ib),bc_list_y(ix,ib))
@@ -1888,6 +1893,7 @@ c dpc
      1                 'stepped off y-grid in type 13 bc')
                enddo
                FS=FS+FNA(bc_type13_ix,bc_type13_iy,0,0,is)
+     &              +FNA(bc_type13_ix,bc_type13_iy,0,1,is)
                VS=VS+VOL(bc_list_x(iy,ib),bc_list_y(iy,ib))
                NAS=NAS+NA(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
      .          vol(bc_list_x(iy,ib),bc_list_y(iy,ib))
@@ -2527,7 +2533,7 @@ cxpb Careful here because of BC number clash
               t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
               t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
               DO IBW=IB,NBC
-                IF (BCCHAR(IBW).EQ.'S' .and.
+                IF (BCCHAR(IBW).EQ.'S'.and.
      &              BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     t0=t0 +
@@ -2543,7 +2549,7 @@ cxpb Careful here because of BC number clash
               ENDDO
               if (t0.gt.0.0_R8) t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               DO IBW=IB,NBC
-                IF (BCCHAR(IBW).EQ.'S' .and.
+                IF (BCCHAR(IBW).EQ.'S'.and.
      &              BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                   do IX = 1, BC_LIST_SIZE(IBW)
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
@@ -3041,8 +3047,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               if(is.eq.ismain.and.use_astra.ne.0) then
 #ifdef ASTRA
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >             THEN
+                  if(BCCHAR(IBW).EQ.'S'.and.
+     &               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     CONPAR(IS,IBW,1) = neb_astra                       !srv 28.07.11
                   endif
                 ENDDO
@@ -3181,12 +3187,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                     if(mdf_fnb.ne.0) then
                       totflux = totflux +
-     &         fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &        fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1,is)
                     else
                       totflux = totflux +
-     &         fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1,is)
+     &        fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &            topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,1,is)
                     endif
                   ENDDO
                 ENDIF
@@ -3370,7 +3376,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                         endif
                       endif
                     enddo
-! totfluxi here means the flux of the ion in the highest ionization stage.
+! totfluxi here means the flux of the ion in the highest ionisation stage.
                     if(mdf_fnb.ne.0) then
                       totfluxi = totfluxi +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -3855,7 +3861,7 @@ cxpb  and max(,,) statement for stability
         case (6)
           CALL XERRAB ('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
 
-* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
+* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF PARALLEL VELOCITY
 
         case (7)
           if(ncall.eq.0) then                                           !srv 26.02.18 {
@@ -4443,7 +4449,8 @@ cxpb  and max(,,) statement for stability
             CALL XERRAB ('B2STBC -- BCMOM=17, NOT AVAILABLE')
           ENDIF
 
-* -- BCMOM=18 -- leakage option for parallel momentum
+* -- BCMOM=18 -- parallel momentum radial sheath loss
+!!FIXME: What does MOMPAR(,1) stand for here?
 
         case (18)
           if(ncall.eq.0) then
@@ -5558,8 +5565,8 @@ cxpb code segment analog to b2tfhe
           endif                                                      !srv 21.03.09 }
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENEPAR(IB,1)*
-     &       max(0.0e0_R8,floe_noc(
-     &       BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))                  !srv 28.10.02
+     &       max(0.0e0_R8,
+     &       floe_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))        !srv 28.10.02
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)+ENEPAR(IB,2)*
      &       vte*s0
@@ -6110,10 +6117,7 @@ cxpb code segment analog to b2tfhe
             if (bc_type16_kinetic_energy.eq.1) then
               do is = 0, ns-1
                 totflux=totflux+(1.0_R8-BoRiS)*
-     .           fna(bc_type16_ix,bc_type16_iy,1,1,is)*0.5_R8*
-     .           (kinrgy(bc_type16_ix,bc_type16_iy,is)+
-     .            kinrgy(bottomix(bc_type16_ix,bc_type16_iy),
-     .                   bottomiy(bc_type16_ix,bc_type16_iy),is))
+     .           fhm(bc_type16_ix,bc_type16_iy,1,1,is)
               enddo
               do is = 0, ns_ext-1
                 totflux=totflux+(1.0_R8-BoRiS)*
@@ -7017,8 +7021,7 @@ cxpb code segment analog to b2tfhi
             if (BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 t2 = dim ( coni0,
-     .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .                  fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is))*
+     .           abs(fhm(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is))*
      .           max(0.0_R8,
      .            min(ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -7027,8 +7030,7 @@ cxpb code segment analog to b2tfhi
      .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
                 w1 = w1 +
-     .            upwind(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .                   fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is),
+     .            upwind(fhm(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is),
      .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))
@@ -7167,8 +7169,7 @@ cxpb code segment analog to b2tfhi
             if (BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 t2 = dim ( coni0,
-     .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .            fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .        abs(fhm(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1,is))
      .           *max(0.0_R8,
      .            min(ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -7178,10 +7179,9 @@ cxpb code segment analog to b2tfhi
      .                ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
                 w1 = w1 +
-     .            upwind(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
-     .                fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                    topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                    1,1,is),
+     .            upwind(fhm(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                       1,1,is),
      .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
@@ -7378,7 +7378,7 @@ cxpb code segment analog to b2tfhi
      &          fchanml(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)+
      &          vis_per*fchvisper(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1) !srv 02.10.17
      &         +vis_q*fchvisq(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1))*
-     &          ycur!srv 02.10.17
+     &          ycur                                                      !srv 02.10.17
               do is=0,ns-1
                 shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      .           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
@@ -7475,9 +7475,9 @@ cxpb          endif
      &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
      &           1.5_R8*vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &                  hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &          vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)*
-     &                     na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
+     &                    na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
             endif                                                       !srv 12.09.08 }
           ENDDO
@@ -7684,7 +7684,7 @@ cxpb          endif
               shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),3) =
      .        shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),3)-
      1         ENIPAR(IB,1)*max(0.0_R8,
-     1          -fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     1         -fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
      .              rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0,is))/
      2         ni(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
             end do
@@ -7885,10 +7885,7 @@ cxpb          endif
              if (bc_type16_kinetic_energy.eq.1) then
                do is = 0, ns-1
                  totflux=totflux+(1.0_R8-BoRiS)*
-     .            fna(bc_type16_ix,bc_type16_iy,1,1,is)*0.5_R8*
-     .            (kinrgy(bc_type16_ix,bc_type16_iy,is)+
-     .             kinrgy(bottomix(bc_type16_ix,bc_type16_iy),
-     .                    bottomiy(bc_type16_ix,bc_type16_iy),is))
+     .            fhm(bc_type16_ix,bc_type16_iy,1,1,is)
                enddo
              endif
              t0 = t0 +
@@ -8471,7 +8468,7 @@ cxpb Careful here because of BC number clash
           ENDIF
 
           IF(BCCHAR(IB).EQ.'S' .and.
-     $     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+     &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
 !          DO IX = 1, BC_LIST_SIZE(IB)
 !            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*ENIPAR(IB,1)
 !     .       *EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
@@ -8512,15 +8509,15 @@ cxpb Careful here because of BC number clash
                 do IX = 1, BC_LIST_SIZE(IBW)
                   if(on_closed_surface(BC_LIST_X(IX,IBW),
      .                                 BC_LIST_Y(IX,IBW))) then
-                    shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
-     &               shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
-     &                +VBIG*NE00*(ENIPAR(IBW,1)*EV
-     &                +(ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                     topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-     &                  -t1)*t1*t2/t3/ENIPAR(IBW,1)/EV)
-     &                *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                    shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
-     &               -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
+     &             shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
+     &              +VBIG*NE00*(ENIPAR(IBW,1)*EV
+     &              +(ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+     &                -t1)*t1*t2/t3/ENIPAR(IBW,1)/EV)
+     &              *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
+     &             -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   endif
                 enddo
               ENDIF                                                 !lk 12.12.12 }
@@ -8601,7 +8598,7 @@ cxpb Careful here because of BC number clash
           write(*,*) 'BCENI=24: Summed value is ', SENIPAR
 
           IF(BCCHAR(IB).EQ.'S' .and.
-     $     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+     &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
             TIS = 0.0_R8  ! Poloidally density-averaged ion temperature in the boundary cell     !IYS 21.01.2016
             NIVS = 0.0_R8
             totflux = 0.0_R8
@@ -8625,8 +8622,9 @@ cxpb Careful here because of BC number clash
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   NIVS=NIVS +
-     &               NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .              VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+     &                     ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   t2=t2 +
      &                ne(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
@@ -8813,7 +8811,7 @@ cxpb Careful here because of BC number clash
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -8838,7 +8836,7 @@ cxpb Careful here because of BC number clash
           if (use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 ENIPAR(IBW,1) = tib_astra*1.0e3_R8                     !srv 14.06.12
               endif
             ENDDO
@@ -8848,11 +8846,11 @@ cxpb Careful here because of BC number clash
 #endif
           ENDIF
           IF(BCCHAR(IB).EQ.'S' .and.
-     $     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+     &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
             t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
             t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX= 1, BC_LIST_SIZE(IBW)
                   t0 = t0 +
      .              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -8869,18 +8867,18 @@ cxpb Careful here because of BC number clash
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 do IX = 1, BC_LIST_SIZE(IBW)
-                  if(on_closed_surface(BC_LIST_X(IX,IBW),
-     .                                 BC_LIST_Y(IX,IBW))) then
-                    shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
-     &               shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
-     &                +VBIG*NE00*(ENIPAR(IBW,1)*EV
-     &                +(ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                     topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-     &                 -t1))
-     &                *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                    shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
-     &               -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                  endif
+                 if(on_closed_surface(BC_LIST_X(IX,IBW),
+     .                                BC_LIST_Y(IX,IBW))) then
+                  shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
+     &             shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
+     &              +VBIG*NE00*(ENIPAR(IBW,1)*EV
+     &              +(ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+     &               -t1))
+     &              *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
+     &             -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                 endif
                 enddo
               ENDIF                                                 !lk 12.12.12 }
             ENDDO
@@ -8904,7 +8902,7 @@ cxpb Careful here because of BC number clash
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
@@ -8922,7 +8920,7 @@ cxpb Careful here because of BC number clash
         endif
 
         IF(BCCHAR(IB).EQ.'S' .and.
-     $    on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+     &    on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
           if(.not.once_bceni) then
             if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -8948,12 +8946,14 @@ cxpb Careful here because of BC number clash
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
-                  TIS=TIS + TI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
-     .                      NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .                      VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  TIS=TIS + ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   NIVS=NIVS +
-     .                   NI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
-     .                  VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+     .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   t0=t0 +
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
@@ -9820,7 +9820,7 @@ c              fchi=0.0_R8
           CALL XERRAB ('B2STBC -- BCPOT=11, NO SHEATH IN RADIAL DIR.')
         END IF
 
-* -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15 {
+* -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
       case (12)
@@ -9936,12 +9936,12 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           call xerrab ('B2STBC -- BCPOT=13, NOT AVAILABLE FOR W,E')
         endif
 
-* -- BCPOT=14 -- Nothing implemented
+* -- BCPOT=14 -- PRESCRIBE THE VALUE OF THE RADIAL SHEATH POTENTIAL
 
       case (14)
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'specified sheath potential ',POTPAR(IB,1),' on ',
+     .     'specified radial sheath potential ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -10327,7 +10327,7 @@ c end of implementation
             endif
             if(.not.on_closed_surface(bc_list_x(ix,ib),
      .                                bc_list_y(ix,ib)) .and.
-     1       b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
+     &         b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
             sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
      .      sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) + fchy_dia
           END DO
@@ -10371,7 +10371,7 @@ c end of implementation
             endif
             if(.not.on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
      .                      .and.
-     1       b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
+     &         b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
             sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
      .      sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) - fchy_dia
           END DO

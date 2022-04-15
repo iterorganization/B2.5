@@ -827,7 +827,8 @@ c         sna0(-1,iy,1,1) = -1.0d60
      &      (-csbm)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+              !sv 09.01.01 26.11.02
      &      cbsmo(2,is,ireg)*vminus+                                     !sv 02.11.99 28.01.05
      &      cbsmo(5,is,ireg)* max(0.0e0_R8,
-     &      fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,0,is))/na(ix,iy,is) !sv 25.02.00 26.11.02 01.07.05
+     &       fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,0,is))/
+     &       na(ix,iy,is)                                                !sv 25.02.00 26.11.02 01.07.05
            smo0(ix,iy,3,is) = smo0(ix,iy,3,is)+                          !sv 26.11.02
      &      cbsmo(3,is,ireg)*s0hz+                                       !sv 09.01.01
      &      cbsmo(4,is,ireg)*s1hz+                                       !sv 09.01.01

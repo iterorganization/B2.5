@@ -42,8 +42,7 @@
       
 *   ..local variables
       integer ncall, n2, ix, iy, is
-      real (kind=R8) ::
-     *  ctaup, t0, t1
+      real (kind=R8) :: ctaup, t0, t1
       save ncall
 *   ..procedures
       intrinsic sqrt

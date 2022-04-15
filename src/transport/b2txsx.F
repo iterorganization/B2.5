@@ -1,11 +1,11 @@
-      subroutine b2txsx (nx, ny, vol, hx, qz, fun, funsx)
+      subroutine b2txsx (nx, ny, vol, hx, fun, funsx)
       use b2mod_types
       use b2mod_indirect
       use b2mod_subsys
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  fun(-1:nx,-1:ny), funsx(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TXSX computes the integrals over cell x-faces of a function
@@ -14,9 +14,7 @@
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer n2, ix, iy
-      real (kind=R8) ::
-     *  smin, smax
-      external b2xxgs, smin, smax
+      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsx')
 *   ..test nx, ny
@@ -26,11 +24,6 @@
 *   ..test sign of vol, hx
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-*   ..test range of qz
-      call xertst (-1.lt.smin(n2,qz(-1,-1,0),1).and.
-     &  smax(n2,qz(-1,-1,0),1).lt.1, 'faulty argument range qz(,,0)')
-      call xertst (0.lt.smin(n2,qz(-1,-1,1),1).and.
-     &  smax(n2,qz(-1,-1,1),1).le.1, 'faulty argument range qz(,,1)')
 *   ..compute funsx
       do iy = -1, ny
        do ix = -1, nx

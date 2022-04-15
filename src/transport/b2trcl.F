@@ -104,7 +104,7 @@
      &  k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)             !lk 19.09.07
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
      &  k1(-1:nx,-1:ny), t1, t2                                          !lk 12.05.11
-      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                        !iyv 06.12.13
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -121,7 +121,7 @@ csw 13mar2012
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
-     1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/0.0_R8/,
+     1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/1.0_R8/,
      1  lluciani/3/
 
 *-----------------------------------------------------------------------
@@ -155,6 +155,7 @@ csw 13mar2012
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
         call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                    !iyv 06.12.13
+        call ipgetr ('b2trcl_csig_mltpl', csig_mltpl)                    !iyv 06.12.13
         call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08
         call ipgeti ('b2trcl_iout', iout)                                !srv 17.06.08
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
@@ -216,7 +217,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       call intfacev(nx,ny,bottomix,bottomiy,vol,hz,wrk)
       wrk1(:,:,1) = gs(:,:,1)*wrk
       wrk1(:,:,2) = gs(:,:,2)
-      wrk  = hz*vol
+      wrk = hz*vol
       do is = 0, ns-1
        call b2txcx (nx, ny, mode, wrk, wrk1, hx, qz,                     !srv 01.07.05 {
      &   vsa(-1,-1,0,is), cvsahz(-1,-1,0,0,is))
@@ -262,10 +263,10 @@ cwdk  tmp: needed as long as not all contributions are filled later on
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (.not. is_neutral(is)) then
-          call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'b2trcl_cvsahzx'//
-     &      chns)
-          call my_out(70,nx,ny,cvsahz(-1,-1,1,0,is),'b2trcl_cvsahzyx'//
-     &      chns)
+          call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),
+     &               'b2trcl_cvsahzx'//chns)
+          call my_out(70,nx,ny,cvsahz(-1,-1,1,0,is),
+     &               'b2trcl_cvsahzyx'//chns)
         endif
        enddo
       endif
@@ -442,13 +443,17 @@ cwdk  tmp: needed as long as not all contributions are filled later on
              cvsahz(ix,iy,0,0,is)=cvsahz(ix,iy,0,0,is)*f_luc_et(ix,iy)
             endif                                                        !srv 10.07.02
            enddo
-! May need to use flux limiting factors calculated on cell faces
+! May need to use flux-limiting factors calculated on cell faces
            chce(ix,iy,0,0)=chce(ix,iy,0,0)*f_luc_ke(ix,iy)
            csig(ix,iy,0,0)=csig(ix,iy,0,0)*f_luc_sg(ix,iy)
            calf(ix,iy,0,0)=calf(ix,iy,0,0)*f_luc_al(ix,iy)
-           chci(ix,iy,0,0)=chci(ix,iy,0,0)*f_luc_ki(ix,iy)                   !lk 20.11.07
+           chci(ix,iy,0,0)=chci(ix,iy,0,0)*f_luc_ki(ix,iy)               !lk 20.11.07
            sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
            alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
+           if( bottomiy(ix,iy).eq.-2 ) then
+            csig(ix,iy,0,0) = csig_mltpl*csig(ix,iy,0,0)                 !iyv
+            sigx_c(ix,iy) = csig_mltpl*sigx_c(ix,iy)
+           endif
           endif                                                          !lk 12.05.11}
          enddo
         enddo

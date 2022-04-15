@@ -10,6 +10,7 @@ c=======================================================================
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
       implicit none
       integer lun
@@ -47,6 +48,7 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
       do j=1,ntrgts !{
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
+        if(.not.LSN) jj=ntrgsx+1-j
         open(lun,file=ftrg(jj))
         write(fmt_peak,'(a,i3,a)') '(a,5x,',ns,'(a2,i2.2,8x))'
 c        print *,trim(fmt_peak)  !###
@@ -57,11 +59,6 @@ c        print *,trim(fmt_peak)  !###
      ,                                               is=1,nspecies)
         write(fmt_peak,'(a,i3,a)') '(2x,i4,1p,',ns,'(e12.4))'
 c        print *,trim(fmt_peak)  !###
-        if(ntrgts.eq.4) then !{
-          k=j
-        else !}{
-          k=ntrgts
-        end if !}
         do iy=lytg,ny-1 !{
           write(lun,fmt_peak) iy,(hlp_flx(iy,is,j),is=0,ns-1)
         end do !}

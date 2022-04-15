@@ -21,6 +21,7 @@
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
      &          b2stel_she0to3,
+     &          b2stel_she_ion0to3, b2stel_she_rec0to3,
      &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
      &          balance_netcdf
 #ifdef ASTRA
@@ -80,6 +81,7 @@
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,         !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
       character chns*3
@@ -88,8 +90,10 @@
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       real (kind=R8) ::
-     *  rf0, t0, t1
+     *  rf0, t0, t1, t2
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: she0_ion(-1:nx,-1:ny,0:3),
+     &                  she0_rec(-1:nx,-1:ny,0:3)
 *   ..procedures
       logical streql
       real (kind=R8) ::
@@ -100,7 +104,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/0.0_R8/
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -143,6 +147,8 @@
        call ipgeti ('b2stel_iout', iout)                         !srv 30.06.08
        call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                  !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
@@ -192,6 +198,8 @@
       call sfill (n2*4*ns, 0.0_R8, smq0_ion, 1)
       call sfill (n2*4*ns, 0.0_R8, smq0_rec, 1)
       call sfill (n2*4, 0.0_R8, she0, 1)
+      call sfill (n2*4, 0.0_R8, she0_ion, 1)
+      call sfill (n2*4, 0.0_R8, she0_rec, 1)
       call sfill (n2*4, 0.0_R8, shi0_ion, 1)
       call sfill (n2*4, 0.0_R8, shi0_rec, 1)
 *   ..compute sources due to ionisation
@@ -224,13 +232,14 @@
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
-!$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1)
+!$OMP PARALLEL DO default(none), private(ix, iy, is, rf0, t0, t1, t2)
 !$OMP& shared(ns, nx, ny, nspecies)
 !$OMP& shared(rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
 !$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
 !$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
+!$OMP& shared(she0_ion, she0_rec)
 !$OMP& shared(sna0_rec, shi0_rec, smq0_rec, b2stel_she0to3)
 !$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
 !$OMP& shared(rqrad, rqbrm, zamax, zamin)
@@ -259,6 +268,11 @@
      &       rf0*t0*na(ix,iy,is)
             sna0_ion(ix,iy,1,is) = sna0_ion(ix,iy,1,is)-(1.0_R8+rf0)*t0  !srv 11.09.09 }
             rsana(ix,iy,is) = t0*na(ix,iy,is)
+*       ..compute electron energy sink
+            t2 = t0*rpi(ix,iy,is)*ev
+            she0_ion(ix,iy,0) = she0_ion(ix,iy,0)+(1.0_R8+rf0)*t2
+            she0_ion(ix,iy,3) = shi0_ion(ix,iy,3)-
+     &                          rf0*t2/(ne(ix,iy)*te(ix,iy))
 *       ..compute atom heat source
             t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
@@ -346,6 +360,11 @@
            sna0_rec(ix,iy,1,is-1) = sna0_rec(ix,iy,1,is-1)-           !srv 11.09.09 {
      &      rf0*t0*na(ix,iy,is)/na(ix,iy,is-1)
            rrana(ix,iy,is) = t0*na(ix,iy,is)
+*       ..compute electron heat source
+           t2 = t0*na(ix,iy,is)*rpi(ix,iy,is)*ev
+           she0_rec(ix,iy,0) = she0_rec(ix,iy,0)+(1.0_R8+rf0)*t2
+           she0_rec(ix,iy,0) = she0_rec(ix,iy,3)-
+     &                         rf0*t2/(ne(ix,iy)*te(ix,iy))
 *       ..compute atom heat source
            t1 = t0*na(ix,iy,is)*(1.0_R8-BoRiS)*
      &       ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
@@ -412,6 +431,11 @@ c accounted for)
           she0(ix,iy,0) = she0(ix,iy,0)+rf0*t0
           she0(ix,iy,3) = she0(ix,iy,3)-
      &     (1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
+          if (balance_netcdf.ne.0) then
+            b2stel_she0to3(ix,iy,0,is) = rf0*t0
+            b2stel_she0to3(ix,iy,3,is) =
+     &           -(1.0_R8+rf0)*t0/(ne(ix,iy)*te(ix,iy))
+          endif
           rqahe(ix,iy,is) = rqahe(ix,iy,is) + t0
 *      ..compute line radiation rate for is->any
           t0 = phm0*rrd(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)      !srv 05.06.18
@@ -533,7 +557,8 @@ c accounted for)
           call my_out(70,nx,ny,wrk0,'b2stel_smq_rec'//chns)
         enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
+     &                    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1)       !srv 02.04.18
      &                 .or. iout_b2wdat .eq. 4) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
@@ -584,7 +609,8 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_smq_rec0to3 = smq0_rec
         b2stel_shi_ion0to3 = shi0_ion
         b2stel_shi_rec0to3 = shi0_rec
-        b2stel_she0to3 = she0
+        b2stel_she_ion0to3 = she0_ion
+        b2stel_she_rec0to3 = she0_rec
       endif
 
 * ..return

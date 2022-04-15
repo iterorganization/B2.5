@@ -972,16 +972,9 @@ c West target
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
           s=gs(0,iy,0)
-          hlp=abs(fhe(0,iy,0,0)+fhi(0,iy,0,0))
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(0,iy,0,0,is)*(
-     .       (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
-     .       (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
-     .       (hx(-1,iy)+hx(0,iy))))
-          end do !}
+          hlp=abs(fht(0,iy,0,0)+fht(0,iy,0,1))
           do is=0,ns_ext-1 !{
-            hlp=hlp+abs(fa_ext(0,iy,0,0,is)*(
+            hlp=hlp+abs((fa_ext(0,iy,0,0,is)+fa_ext(0,iy,0,1,is))*(
      .       (pt_ext(0,iy,is)*hx(-1,iy)+pt_ext(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))*ev+
      .       (1.0_R8-BoRiS)*
@@ -1012,18 +1005,10 @@ c East target
         hlp_ppwo=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          hlp=abs(fhe(nx,iy,0,0)+fhi(nx,iy,0,0))
+          hlp=abs(fht(nx,iy,0,0)+fht(nx,iy,0,1))
           s=gs(nx,iy,0)
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(nx,iy,0,0,is)*(
-     .       (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
-     .       (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(nx,iy,is)*hx(nx-1,iy)+
-     .        kinrgy(nx-1,iy,is)*hx(nx,iy))/
-     .       (hx(nx-1,iy)+hx(nx,iy))))
-          end do !}
           do is=0,ns_ext-1 !{
-            hlp=hlp+abs(fa_ext(nx,iy,0,0,is)*(
+            hlp=hlp+abs((fa_ext(nx,iy,0,0,is)+fa_ext(nx,iy,0,1,is))*(
      .       (pt_ext(nx,iy,is)*hx(nx-1,iy)+
      .        pt_ext(nx-1,iy,is)*hx(nx,iy))/
      .       (hx(nx-1,iy)+hx(nx,iy))*ev+
@@ -1056,18 +1041,9 @@ c East target
           hlp_s=0.0_R8
           do iy=0,ny-1 !{
             s=gs(ix,iy,0)
-            hlp=abs(fhe(ix,iy,0,0)+fhi(ix,iy,0,0))
-            do is=0,ns-1 !{
-              hlp=hlp+abs(fna(ix,iy,0,0,is)*(
-     .         (rpt(ix,iy,is)*hx(ix-1,iy)+
-     .          rpt(ix-1,iy,is)*hx(ix,iy))/
-     .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
-     .         (kinrgy(ix,iy,is)*hx(ix-1,iy)+
-     .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
-     .         (hx(ix-1,iy)+hx(ix,iy))))
-            end do !}
+            hlp=abs(fht(ix,iy,0,0)+fht(ix,iy,0,1))
             do is=0,ns_ext-1 !{
-              hlp=hlp+abs(fa_ext(ix,iy,0,0,is)*(
+              hlp=hlp+abs((fa_ext(ix,iy,0,0,is)+fa_ext(ix,iy,0,1,is))*(
      .         (pt_ext(ix,iy,is)*hx(ix-1,iy)+
      .          pt_ext(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
@@ -1098,19 +1074,10 @@ c East target
           ix=nxtl
           hlp_s=0.0_R8
           do iy=1,ny !{
-            hlp=abs(fhe(ix,iy,0,0)+fhi(ix,iy,0,0))
+            hlp=abs(fht(ix,iy,0,0)+fht(ix,iy,0,1))
             s=gs(ix,iy,0)
-            do is=0,ns-1 !{
-              hlp=hlp+abs(fna(ix,iy,0,0,is)*(
-     .         (rpt(ix,iy,is)*hx(ix-1,iy)+
-     .          rpt(ix-1,iy,is)*hx(ix,iy))/
-     .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
-     .         (kinrgy(ix,iy,is)*hx(ix-1,iy)+
-     .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
-     .         (hx(ix-1,iy)+hx(ix,iy))))
-            end do !}
             do is=0,ns_ext-1 !{
-              hlp=hlp+abs(fa_ext(ix,iy,0,0,is)*(
+              hlp=hlp+abs((fa_ext(ix,iy,0,0,is)+fa_ext(ix,iy,0,1,is))*(
      .         (pt_ext(ix,iy,is)*hx(ix-1,iy)+
      .          pt_ext(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
@@ -1138,7 +1105,7 @@ c East target
           end do !}
         end if !}
       else !}{VK
-        call b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
+        call b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
         hlp_ppwi=wtarg_max(1)
 csw 02jan2017 corrected hlp_ppwo
 c       hlp_ppwo=wtarg_max(nncut)
@@ -1321,7 +1288,8 @@ csw           exclude neutrals from isat calculation
               if(.not.is_neutral(is)) then !{
                 do iy=0,ny-1 !{
                   hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)+
-     +                      fna(itg_tmp(k)+kgl3_tmp(k)+1,iy,0,0,is)*
+     +                     (fna(itg_tmp(k)+kgl3_tmp(k)+1,iy,0,0,is)+
+     +                      fna(itg_tmp(k)+kgl3_tmp(k)+1,iy,0,1,is))*
      *                      rza(itg_tmp(k),iy,is)
                 end do !}
               end if !}

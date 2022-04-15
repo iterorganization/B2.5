@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
-     &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
+     &  vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &  te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  neutral_sources_rescale, core_sources_rescale,
@@ -27,6 +27,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_external
+      use b2mod_diag
       use b2mod_geo
      , , only: hy1
       use b2mod_math
@@ -51,8 +52,7 @@
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1),
-     &  f_redep(-1:nx,-1:ny,0:ns-1)
+     &  fht(-1:nx,-1:ny,0:1,0:1), f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale,
      &  sput_chem_alpha, sput_phys_alpha, alpha,
@@ -87,6 +87,7 @@
       integer n2, i, ix, iy, is, ib, istra, ncall, iwall, itargsp, zbulk
 !     integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+     &                 iout_b2npc7 = 0, iout_b2npc11 = 0,            !srv 02.04.18
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       character chns*3
@@ -97,7 +98,7 @@
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       real (kind=R8) ::
      *   t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1),
-     *   qin, qel, surface_temp,
+     *   qpl, qex, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   lnorm, deposition_error(ntrack), reflection_max,
      *   redep_max, yself_max
@@ -147,6 +148,8 @@
        call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npc7_iout', iout_b2npc7)                     !srv 02.04.18
+       call ipgeti ('b2npc11_iout', iout_b2npc11)                   !srv 02.04.18
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
@@ -567,7 +570,8 @@
         call my_out(70,nx,ny,wrk0,'b2stbr_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or.
+     &                    iout_b2npc7.eq.1 .or. iout_b2npc11.eq.1)) then !srv 02.04.18
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !         do k=0,1
@@ -651,7 +655,7 @@ c lcore           is this a core element?
       logical lcore, found
 
       integer is0, is1, is2, is, k, iwall, itrack
-      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf,
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), ptf,
      &     sput_frac(0:ntrack), sput_frac_chem(0:ntrack), yself, eself,
      &     sput_frac_chem_sum, be_frac, be_suppression_factor,
      &     ytmp, ztmp, wrk(ndepth_nml)
@@ -805,32 +809,21 @@ cdpc-end
       endif
       zaf(0:ns-1) =
      & (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      rpf(0:ns-1) =
-     & (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir,0)+
-     &                        fhi(ixf,iyf,idir,1)+
-     &                        fhi_ext(ixf,iyf,idir,0)+
+      qpl = max(0.0_R8,isign*(fht(ixf,iyf,idir,0)+
+     &                        fht(ixf,iyf,idir,1)))/area
+      qex = max(0.0_R8,isign*(fhi_ext(ixf,iyf,idir,0)+
      &                        fhi_ext(ixf,iyf,idir,1)))/area
-      do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) +
-     &                             fna(ixf,iyf,idir,1,is)))
-     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
-      enddo
       do is=0,ns_ext-1
          ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
          taf =
      &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*(fa_ext(ixf,iyf,idir,0,is) +
-     &                             fa_ext(ixf,iyf,idir,1,is)))
+         qex = qex + max(0.0_R8,isign*(fa_ext(ixf,iyf,idir,0,is) +
+     &                                 fa_ext(ixf,iyf,idir,1,is)))
      &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+taf)*
      &          (1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir,0)+
-     &  fhe(ixf,iyf,idir,1)+
-     &  (fne(ixf,iyf,idir,0)+fne(ixf,iyf,idir,1))
-     &  *tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -839,12 +832,12 @@ cdpc-end
             call xerrab ('Invalid iwall setting!')
          endif
          if (plate_model.eq.0) then
-            call heatdiff0D(iwall,qin,qel,surface_temp)
+            call heatdiff0D(iwall,qpl+qex,surface_temp)
             target_temp(iwall,1) = surface_temp
          else if (plate_model.eq.1) then
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
-              call heatdiff1D(iwall,ns,qin+qel,
+              call heatdiff1D(iwall,ns,qpl+qex,
      .           dtim*plate_time_factor(iwall),wrk,output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             end if
@@ -896,6 +889,14 @@ cdpc
      1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
          sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+recyc(is,istra)*t0
+         if (is_neutral(is0)) then                 ! IYS 18.09.2018
+           sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
+     &      sna_stbr_neut(b2espcr(is0),lbcstra(istra)) +
+     &      recyc(is,istra)*t0
+           if (output.gt.2) write(*,*) 'Recycling: ',
+     &      'Contribution to sna_stbr_neut. is0 = ',
+     &       is0,' istra = ',istra,' ix = ',ix,' iy = ',iy
+         end if
 
          itrack=track_index(is0)
 cxpb Whatever is not recycled is counted as deposition
@@ -989,6 +990,13 @@ c chemical sputtering
                if (sput_dst_bulk.ne.-1) then
                  sna0(ix,iy,0,sput_dst_bulk) =
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
+                 sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =
+     &            sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra))
+     &            + t1
+                 if (output.gt.2) write(*,*)
+     &            'Chemical sputtering from bulk: ',
+     &            'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
+     &            ' istra = ',istra,' ix = ',ix,' iy = ',iy
                endif
 cxpb  Erosion from the bulk material if chemically sputtered
 cxpb  without mixed materials model
@@ -1119,6 +1127,13 @@ cxpb We first treat the bulk material
                   tphys(is) = tphys(is) + t1
                   sna0(ix,iy,0,sput_dst_bulk) =
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
+                  sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =
+     &             sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra))
+     &             + t1
+                  if (output.gt.2) write(*,*)
+     &             'Physical sputtering from bulk: ',
+     &             'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
+     &             ' istra = ',istra,' ix = ',ix,' iy = ',iy
 
 cxpb  Erosion from the bulk material if physically sputtered
                   if(itrack.gt.0.and.itrack.le.ntrack.and.
@@ -1215,6 +1230,14 @@ cxpb  We add this promptly redeposited fraction in the deposited material
                     tphys(is) = tphys(is) + t1
                     sna0(ix,iy,0,target_intcode(itrack)) =
      &                    sna0(ix,iy,0,target_intcode(itrack)) + t1
+                    sna_stbr_sput(b2espcr(target_intcode(itrack)),
+     &                   lbcstra(istra)) = t1 +
+     &               sna_stbr_sput(b2espcr(target_intcode(itrack)),
+     &                   lbcstra(istra))
+!                 write(*,*)
+!     &     'Erosion. Contribution to sna_stbr_sput. is = ',
+!     $    target_intcode(itrack),' istra = ',istra,' ix = ',
+!     &      ix,' iy = ',iy
 
 cxpb  Removal from the deposited material if physically sputtered
 cxpb  with mixed materials model
@@ -1351,6 +1374,12 @@ c thermal evaporation     ! no fix for mixed materials yet
                t1=GammaEvap*area*therm_evap
                t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
                sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
+               sna_stbr_sput(b2espcr(is),lbcstra(istra)) =   ! IYS 18.09.2018
+     &          sna_stbr_sput(b2espcr(is),lbcstra(istra)) + t1
+               if (output.gt.2) write(*,*)
+     &          'Thermal evaporation : ',
+     &          'Contribution to sna_stbr_sput. is = ',is,
+     &          ' istra = ',istra,' ix = ',ix,' iy = ',iy
 cxpb  Erosion from the bulk material if thermally evaporated
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
@@ -1391,6 +1420,13 @@ c radiation enhanced sublimation
                if(sput_dst_bulk.ne.-1) then
                   sna0(ix,iy,0,sput_dst_bulk) =
      &              sna0(ix,iy,0,sput_dst_bulk) + t1
+                  sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =   ! IYS 18.09.2018
+     &              sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra))
+     &              + t1
+                  if (output.gt.2) write(*,*)
+     &             'RES sputtering: ',
+     &             'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
+     &             ' istra = ',istra,' ix = ',ix,' iy = ',iy
                endif
 
 cxpb  Erosion from the bulk material if RES sputtered
@@ -1462,8 +1498,23 @@ cxpb  as deposition
      &              reflect2(is,Ei*ev,iwall)
                if(reflection_on.eq.1) then
                  sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
+                 if (is_neutral(is)) then                           ! IYS 18.09.2018
+                   sna_stbr_neut(b2espcr(is),lbcstra(istra)) =
+     &              sna_stbr_neut(b2espcr(is),lbcstra(istra)) + t1
+                   if (output.gt.2) write(*,*) 'Reflection:',
+     >              ' Contribution to sna_stbr_neut. is = ',is,
+     &              ' istra = ',istra,' ix = ',ix,' iy = ',iy
+                 end if
                else
                  sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0) + t1    ! reflection to the neutral
+                 if (is_neutral(is0)) then                          ! IYS 18.09.2018
+                   sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
+     &              sna_stbr_neut(b2espcr(is0),lbcstra(istra)) + t1
+                   if (output.gt.2)
+     >              write(*,*) 'Reflection into neutral:',
+     &               'Contribution to sna_stbr_neut. is0 = ',is0,
+     &               ' istra = ',istra,' ix = ',ix,' iy = ',iy
+                 endif
                endif
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
@@ -1480,6 +1531,14 @@ cxpb  as deposition
            if(lnext(is,is+1)) then
               sna0(ix,iy,0,is+1) = sna0(ix,iy,0,is+1)+
      2        rcion(is,istra)*t0/neutral_sources_rescale
+              if (is_neutral(is+1)) then           ! IYS 18.09.2018
+                sna_stbr_neut(b2espcr(is+1),lbcstra(istra)) =
+     &              sna_stbr_neut(b2espcr(is+1),lbcstra(istra)) +
+     2              rcion(is,istra)*t0/neutral_sources_rescale
+                if (output.gt.2) write(*,*) 'Recycling into ions: ',
+     &           'Contribution to sna_stbr_neut. is+1 = ',is+1,
+     &           ' istra = ',istra,' ix = ',ix,' iy = ',iy
+              endif
            endif
          endif
       enddo      ! do is = 0, ns-1
@@ -1512,6 +1571,14 @@ cxpb
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
      &          recyc(is,istra)*t0
+               if (is_neutral(is0)) then          ! IYS 18.09.2018
+                 sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
+     &            sna_stbr_neut(b2espcr(is0),lbcstra(istra)) +
+     &            recyc(is,istra)*t0
+                 if (output.gt.2) write(*,*) 'Core recycling: ',
+     &            'Contribution to sna_stbr_neut. is0 = ',is0,
+     &            ' istra = ',istra,' ix = ',ix,' iy = ',iy
+               end if
 
 cwdk  recycling of true parallel momentum
 c     (at core, cell faces will be aligned with flux surfaces)

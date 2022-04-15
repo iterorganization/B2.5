@@ -620,7 +620,7 @@
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
       data fns(201:209) /
      1 'trigmesh', 'earox', 'earoy', 'earow',
-     2 'glsz'    , 'mpsi' , 'fpsi' , 'rpsi' , 'etal' /
+     2 'glsz' , 'mpsi' , 'fpsi' , 'rpsi'   , 'etal'  /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',

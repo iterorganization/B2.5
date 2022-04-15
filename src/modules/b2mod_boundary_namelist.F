@@ -119,15 +119,15 @@ csw 18feb2014 added for correct implementation of boundary conditions
       endif
       catch_up=boundary_time_mod.gt.0.0_R8
       do while(catch_up)
+        write(*,*) 'b2stbc: catching up ...'
+        call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+        call xertst (nbc.le.nbcd,
+     1           'increase DEF_NBC in DIMENSIONS.F')
+        call xertst (nniso.le.nnisod,
+     1           'increase DEF_NISO in DIMENSIONS.F')
+        call write_b2mod_boundary_namelist
         if(mod(tim,boundary_time_mod).gt.boundary_time_switch)
      1        then
-          write(*,*) 'b2stbc: catching up ...'
-          call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-          call xertst (nbc.le.nbcd,
-     1           'increase DEF_NBC in DIMENSIONS.F')
-          call xertst (nniso.le.nnisod,
-     1           'increase DEF_NISO in DIMENSIONS.F')
-          call write_b2mod_boundary_namelist
           catch_up=boundary_time_mod.gt.0.0_R8
         else
           catch_up=.false.
@@ -229,16 +229,16 @@ cxpb overwrite the defaults with the namelist data
      1        boundary_time_switch,
      2        int(tim/boundary_time_mod),
      3        bc_elm_count
-         if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
+        if(mod(tim,boundary_time_mod).gt.boundary_time_switch.or.
      1        int(tim/boundary_time_mod).gt.bc_elm_count) then
-            bc_elm_count=int(tim/boundary_time_mod)
-            call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-            call xertst (nbc.le.nbcd,
+          bc_elm_count=int(tim/boundary_time_mod)
+          call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+          call xertst (nbc.le.nbcd,
      1           'increase DEF_NBC in DIMENSIONS.F')
-            call xertst (nniso.le.nnisod,
+          call xertst (nniso.le.nnisod,
      1           'increase DEF_NISO in DIMENSIONS.F')
-            call write_b2mod_boundary_namelist
-         endif
+          call write_b2mod_boundary_namelist
+        endif
       endif
       return
 
@@ -409,7 +409,7 @@ cxpb Have to do this here already in case the namelist is not used
       logical file_ok, todo, assigned, is_closed
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
-      external find_file, xerrab, xertst
+      external cfverr, find_file, xerrab, xertst
 
       filename=boundary_filename
       boundary_time_mod = 0.0_R8
