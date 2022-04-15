@@ -24,7 +24,8 @@
      *   solvekt(:),
      *   solvezt(:),
      *   last_solve_5(:),
-     *   last_solve_9(:)
+     *   last_solve_9(:),
+     *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
 #else
 #     include "DIMENSIONS.F"
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
@@ -45,6 +46,7 @@
       logical, save :: solvezt(0:CVREGMAX)
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
+      logical, save :: add_te_corr_to_po(0:CVREGMAX)     ! IYS 21.09.2018
 #endif
       real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
@@ -62,7 +64,7 @@
      2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
      3 write_nml_num,numerics_filename,numerics_time_mod,solvekt,
      $ solvezt,numerics_time_switch,
-     4 corr_core_dn, corr_core_dt                                              ! IYS 19.12.2017
+     4 corr_core_dn, corr_core_dt, add_te_corr_to_po                           ! IYS 19.12.2017
 
 
       contains
@@ -97,6 +99,7 @@
       allocate(solvezt(0:nnreg(0)))
       allocate(last_solve_5(0:nnreg(0)))
       allocate(last_solve_9(0:nnreg(0)))
+      allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in DIMENSIONS.F')
@@ -120,6 +123,7 @@
         solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
       endif
       solvepo=.true.
+      add_te_corr_to_po=.true.           ! IYS 21.09.2018
       solveee=.true.
       solveei=.true.
       solveen=.true.
@@ -153,6 +157,7 @@
       deallocate(solvemo)
       deallocate(solvemt)
       deallocate(solvepo)
+      deallocate(add_te_corr_to_po)            ! IYS 21.09.2018
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveen)
