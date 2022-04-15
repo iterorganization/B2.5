@@ -10,7 +10,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
-     , , only : corr_core_dt                                             ! IYS 19.12.2017
+     , , only : corr_core_dt, add_te_corr_to_po              ! IYS 19.12.2017, 21.09.2018
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -164,7 +164,7 @@
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
         if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))  !xpb
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
-     &      iCv.le.mpg%nCi) then
+     &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
         else if (switch%pot_eq.eq.2) then
           po(iCv) = 3.1_R8*te(iCv)/qe
