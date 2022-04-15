@@ -6293,6 +6293,14 @@
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
 				</description>
 			</switch>
+			<switch>
+				<name>ADD_TE_CORR_TO_PO</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					If .true. (default), adds dte(ix,iy)/qe to the potential correction after the internal energy balance equations are solved, where dte(ix,iy) is the electron temperature correction on the time step. Individually set for each region index.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.transport_models_save.parameters">
 			<introduction>
