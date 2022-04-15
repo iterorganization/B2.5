@@ -207,9 +207,14 @@
         g%cvBb(i,0) = g%cvBp(i)
         g%cvBb(i,1) = 0.0_R8
         g%cvBb(i,2) = g%cvBt(i)
-        g%cvBb(i,3) = sqrt( g%cvBp(i)**2 + g%cvBt(i)**2 ) 
-        g%vxX(i) = g%vxX(i)*xrescale+xoffset
-        g%vxY(i) = g%vxY(i)*yrescale+xoffset
+        g%cvBb(i,3) = sqrt( g%cvBp(i)**2 + g%cvBt(i)**2 )
+! WIP B2AG_US
+        !verts = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
+        ! array with length 2, 3 and 4 need to be made
+        ! to distinguish between ghost, tria en quad
+          !g%vxX(i) = g%vxX(i)*xrescale+xoffset
+          !g%vxY(i) = g%vxY(i)*yrescale+xoffset
+
         !g%vxFpsi(i) = g%vxFpsi(i)
         !g%vxFfbz(i) = g%vxFfbz(i)
         !wbbc1_us(i) = wbbc_us(i)
@@ -496,7 +501,9 @@ cxpb  if just below the top corner, make the corner cell follow
 !
 *   ..test sign of bb3
 !      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
-       call b2xvs1(m%nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
+!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards
+       !call b2xvs1(nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
+       
 
 !      write(*,*) 'X regions (from rightix<>ix+1)'
 !      do iy=ny1,-1,-1
@@ -704,7 +711,6 @@ cxpb  if just below the top corner, make the corner cell follow
       use b2mod_types
       use b2mod_version
       use b2mod_indirect
-     . ,only: GRID_N_CELLFLAGS
       use b2ag_parameters
       use carre_constants
       use b2ag_ghostcells
@@ -769,6 +775,7 @@ cxpb  if just below the top corner, make the corner cell follow
      &     g%cvCflags(i,3), g%cvCflags(i,4), g%cvCtype(i)
            enddo
         endif
+        ! put cvFcP equal to cvVxP
         m%cvFcP = m%cvVxP
 
        ! look whether these are correct variable allocations
