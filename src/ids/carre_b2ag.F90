@@ -284,15 +284,15 @@ contains
       !   ..compute magnetic field at cell center
       if (isymm.ne.0) then
         if (g%cvCtype(i).eq.0) then !Quad 
-           vx4 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+           vx4 = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
            centroid(0) = 0.25_R8*(sum(g%vxX(vx4)))
            centroid(1) = 0.25_R8*(sum(g%vxY(vx4)))
         elseif (g%cvCtype(i).eq.GRID_GUARD) then !Guard cell
-           vx2 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+           vx2 = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
            centroid(0) = 0.5_R8*(sum(g%vxX(vx2)))
            centroid(1) = 0.5_R8*(sum(g%vxY(vx2)))
         else ! Triangles
-           vx3 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+           vx3 = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
            centroid(0) = 0.3333333_R8*(sum(g%vxX(vx3)))
            centroid(1) = 0.3333333_R8*(sum(g%vxY(vx3)))
         endif
@@ -313,7 +313,7 @@ contains
          !bb(ix,iy,0) = & 
          !       &     (fpsi(ix,iy,2)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,1))
 
-          vx4 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+          vx4 = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
           ! not sure always correct but only the sign of cvBb 
           ! is important here
           g%cvBb(i,0) = ( g%vxFpsi(vx4(2)) - g%vxFpsi(vx4(0)) &
@@ -329,7 +329,7 @@ contains
           g%cvBb(i,0) = sign(babs,g%cvBb(i,0))
         
         elseif (g%cvCtype(i).eq.GRID_GUARD) then !at the end of array, exploit this
-          vx2 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+          vx2 = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
           ! assum sign of cvBb(0) is everywhere the same
 
           babs = 0.5_R8*(  &
@@ -340,7 +340,7 @@ contains
 
 
         else !Triangle
-          vx3 = m%cvVx(m%cvVxP(i,0):m%cvVxP(i,0)+m%cvVxP(i,1)-1)
+          vx3 = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
           ! assum sign of cvBb(0) is everywhere the same
 
           babs = 0.3333333_R8*(  &
@@ -354,7 +354,7 @@ contains
         
 
         ! operations with single vertex
-        vx0 = m%cvVx(m%cvVxP(i,1)) !first vertex of the cell
+        vx0 = m%cvVx(m%cvVxP(i,0)-1)-1 !first vertex of the cell
         ! choose here right vertix (same as corrections for
         ! right and upper boundary in structured version)
 
@@ -369,31 +369,30 @@ contains
           babs=sqrt( g%vxBx(vx0)**2 + g%vxBy(vx0)**2 )
         endif
 
-        wbbc_us(i,0) = sign(babs,g%cvBb(i,0))
+!        wbbc_us(i,0) = sign(babs,g%cvBb(i,0))
 
         g%cvBb(i,1) = 0.0e0
-        wbbc_us(i,1) = 0.0e0
-
+!        wbbc_us(i,1) = 0.0e0
         if (g%cvCtype(i).eq.0) then !Quad
-          g%cvBb(i,2) = 0.25_R8*(sum(g%vxFfbz(vx4)))
+          g%cvBb(i,2) = 0.25_R8*(sum(g%vxFfbz(vx4)))/t0
         elseif (g%cvCtype(i).eq.GRID_GUARD) then
-          g%cvBb(i,2) = 0.5_R8*(sum(g%vxFfbz(vx2)))
+          g%cvBb(i,2) = 0.5_R8*(sum(g%vxFfbz(vx2)))/t0
         else 
-          g%cvBb(i,2) = 0.3333333_R8 * sum(g%vxFfbz(vx3))
+          g%cvBb(i,2) = 0.3333333_R8 * sum(g%vxFfbz(vx3))/t0
         endif 
-
-        if (isymm.eq.1 .or. isymm.eq.2) then
-          wbbc_us(i,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxX(vx0))
-        elseif (isymm.eq.3 .or. isymm.eq.4) then
-          wbbc_us(i,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxY(vx0))
-        else 
-          wbbc_us(i,2) = g%vxFfbz(vx0)
-        endif
+        
+!        if (isymm.eq.1 .or. isymm.eq.2) then
+!          wbbc_us(i,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxX(vx0))
+!        elseif (isymm.eq.3 .or. isymm.eq.4) then
+!          wbbc_us(i,2) = g%vxFfbz(vx0)/(2.0*pi*g%vxY(vx0))
+!        else 
+!          wbbc_us(i,2) = g%vxFfbz(vx0)
+!        endif
 
         g%cvBb(i,3) = sqrt( g%cvBb(i,0)**2 + &
             &   g%cvBb(i,1)**2 + g%cvBb(i,2)**2)
-        wbbc_us(i,3) = sqrt( wbbc_us(i,0)**2 + wbbc_us(i,1)**2 &
-            &    + wbbc_us(i,2)**2 )
+!        wbbc_us(i,3) = sqrt( wbbc_us(i,0)**2 + wbbc_us(i,1)**2 &
+!            &    + wbbc_us(i,2)**2 )
 
         !strange part in structured version for ix = nx+1
         ! in unstructured version => upper boundary => cflags(:,4)
