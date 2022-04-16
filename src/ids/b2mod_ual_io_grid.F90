@@ -93,7 +93,7 @@ module b2mod_ual_io_grid
 #  endif
 #  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
-     & , only : GRID_SUBSET_MAGNETIC_AXIS
+     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_ALL_WALLS
 #  endif
 # endif
 #else
@@ -261,10 +261,6 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
     !> y-aligned edges defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
-    !> All volumes
-    integer, parameter :: GRID_SUBSET_VOLUMES = 43
-    !> Point on magnetic axis
-    integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
     !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
     !> Point on active separatrix at inner midplane
@@ -327,12 +323,13 @@ module b2mod_ual_io_grid
        &    'OUTER_TARGET_INACTIVE     ' , &
        &    'INNER_TARGET_INACTIVE     ' , &
        &    'VOLUMES                   ' , &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, &
+       &    'ALL_WALLS                 ' , &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU,             &
+       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
+       &     UU, UU, UU, UU, UU,                     &
        &    'MAGNETIC_AXIS             ' , &
        &    'OUTER_MIDPLANE_SEPARATRIX ' , &
        &    'INNER_MIDPLANE_SEPARATRIX ' , &
@@ -391,12 +388,13 @@ module b2mod_ual_io_grid
        &    'y-aligned edges defining the outer inactive target                                           ' , &
        &    'y-aligned edges defining the inner inactive target                                           ' , &
        &    'All volumes (3D objects)                                                                     ' , &
-       &     US, US, US, US, US, US, US, US, US,                                                              &
+       &    'All faces defining walls, baffles, and targets                                               ' , &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
-       &     US, US, US, US, US, US, US,                                                                      &
+       &     US, US, US, US, US, US, US, US, US, US,                                                          &
+       &     US, US, US, US, US,                                                                              &
        &    'Point on magnetic axis                                                                       ' , &
        &    'Point on active separatrix at outer midplane                                                 ' , &
        &    'Point on active separatrix at inner midplane                                                 ' , &
@@ -412,6 +410,8 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
 # endif
 # if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+    !> All faces defining walls, baffles, and targets
+    integer, parameter :: GRID_SUBSET_ALL_WALLS = 44
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
 # endif
@@ -1410,7 +1410,7 @@ contains
 #endif
         integer :: GSubsetCount
         integer :: iType
-        integer :: RegionsInSubset(6)
+        integer :: RegionsInSubset(14)
         integer :: nGSubset !< Total number of grid subsets
         integer :: nInd     !< Size of grid subset element list
         integer :: xIn
@@ -1432,6 +1432,7 @@ contains
         integer :: isize
         integer :: ix1, ix2, ix3, ix4
         integer, save :: jsep, nxtl, nxtr
+        character*26 SubsetName
         character*128 RegionDescription
 
         !! Procedures
@@ -1456,20 +1457,20 @@ contains
         !! Add pre-defined grid subsets (regions + points)
         select case ( geoId )
         case ( GEOMETRY_LINEAR )
-            nGSubset = nGSubset + 5 + 2
+            nGSubset = nGSubset + 6 + 2
             if ( jsep .ne. B2_GRID_UNDEFINED ) nGSubset = nGSubset + 2
         case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
             nGSubset = nGSubset + 3
         case ( GEOMETRY_LIMITER )
-            nGSubset = nGSubset + 10 + 2
+            nGSubset = nGSubset + 11 + 2
         case ( GEOMETRY_SN )
-            nGSubset = nGSubset + 20 + 2
+            nGSubset = nGSubset + 21 + 2
         case ( GEOMETRY_STELLARATORISLAND )
-            nGSubset = nGSubset + 14 + 2
+            nGSubset = nGSubset + 15 + 2
         case ( GEOMETRY_CDN)
-            nGSubset = nGSubset + 32 + 4
-        case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
             nGSubset = nGSubset + 33 + 4
+        case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
+            nGSubset = nGSubset + 34 + 4
         end select
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
@@ -1731,7 +1732,7 @@ contains
 #endif
 
 !! Do the grid subsets that map directly to B2 regions
-        do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_TARGET_INACTIVE
+        do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE
             if (iSubset == GRID_SUBSET_OUTER_MIDPLANE ) cycle ! Already handled below
             if (iSubset == GRID_SUBSET_INNER_MIDPLANE ) cycle ! Already handled below
             if (iSubset == GRID_SUBSET_BETWEEN_SEPARATRICES ) cycle ! Handled below
@@ -1757,12 +1758,17 @@ contains
                 & GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
                 & GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE )
                 iType = REGIONTYPE_XEDGE
+            case ( GRID_SUBSET_ALL_WALLS )
+                iType = REGIONTYPE_EDGE
+            case default
+                iType = NODIRECTION
             end select
+            if ( iType == NODIRECTION ) cycle
 
             select case(iType)
             case( REGIONTYPE_CELL )
                 cls = CLASS_CELL
-            case( REGIONTYPE_YEDGE, REGIONTYPE_XEDGE )
+            case( REGIONTYPE_EDGE, REGIONTYPE_YEDGE, REGIONTYPE_XEDGE )
                 cls = CLASS_POLOIDALRADIAL_EDGE
             end select
 
@@ -1778,6 +1784,10 @@ contains
                     RegionsinSubset(1) = 2
                 case ( GRID_SUBSET_INNER_TARGET )
                     RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_ALL_WALLS )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 2
+                    RegionsinSubset(3) = -2
                 end select
             case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
                 select case( iSubset )
@@ -1814,6 +1824,10 @@ contains
                     end if
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_ALL_WALLS )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 3
+                    RegionsinSubset(3) = -2
                 end select
             case ( GEOMETRY_SN )
                 select case( iSubset )
@@ -1870,6 +1884,14 @@ contains
                 case ( GRID_SUBSET_PFR_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = 3
+                case ( GRID_SUBSET_ALL_WALLS )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 3
+                    RegionsinSubset(7) = 1
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_PFR_CUT )
@@ -1920,6 +1942,11 @@ contains
                 case ( GRID_SUBSET_PFR_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = 3
+                case ( GRID_SUBSET_ALL_WALLS )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = -1
+                    RegionsinSubset(3) = -4
+                    RegionsinSubset(4) = 3
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_PFR_CUT )
@@ -2010,6 +2037,21 @@ contains
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
                     RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_ALL_WALLS )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 3
+                    RegionsinSubset(7) = 8
+                    RegionsinSubset(8) = -5
+                    RegionsinSubset(9) = 12
+                    RegionsinSubset(10)= 13
+                    RegionsinSubset(11)= 14
+                    RegionsinSubset(12)= -8
+                    RegionsinSubset(13)= 10
+                    RegionsinSubset(14)= 1
                 end select
             case ( GEOMETRY_DDN_TOP )
                 select case( iSubset )
@@ -2088,6 +2130,21 @@ contains
                     RegionsinSubset(1) = 1
                 case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
                     RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_ALL_WALLS )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 3
+                    RegionsinSubset(7) = 8
+                    RegionsinSubset(8) = -5
+                    RegionsinSubset(9) = 12
+                    RegionsinSubset(10)= 13
+                    RegionsinSubset(11)= 14
+                    RegionsinSubset(12)= -8
+                    RegionsinSubset(13)= 10
+                    RegionsinSubset(14)= 1
                 end select
             case ( GEOMETRY_UNSPECIFIED )
                 continue
@@ -2095,17 +2152,24 @@ contains
             if (RegionsinSubset(1) == 0) cycle
             GSubsetCount = GSubsetCount + 1
 
+            SubsetName = gridSubsetName( iSubset )
+            RegionDescription = gridSubsetDescription( iSubset )
+#if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+            if ( iSubset == GRID_SUBSET_ALL_WALLS ) then
+              SubsetName = 'ALL_WALLS'
+              RegionDescription = &
+               &  'All faces defining walls, baffles, and targets'
+            end if
+#endif
             call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                &   int2str(GSubsetCount)//": "//                       &
-               &   trim(gridSubsetName ( iSubset ))//                  &
-               &   ", iType "//int2str(iType) )
+               &   trim(SubsetName)//", iType "//int2str(iType) )
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                &   grid_ggd%grid_subset( GSubsetCount ),    &
-               &   iSubset, gridSubsetName ( iSubset ),     &
-               &   gridSubsetDescription( iSubset )  )
+               &   iSubset, SubsetName, RegionDescription )
 
             !! Get explicit object list of the grid subset using
             !! subroutine collectIndexListForRegionSubroutine
@@ -2118,13 +2182,25 @@ contains
                 allocate( indextmp2d ( gmap%nFcx , SPACE_COUNT ) )
             case ( REGIONTYPE_YEDGE )
                 allocate( indextmp2d ( gmap%nFcy , SPACE_COUNT ) )
+            case ( REGIONTYPE_EDGE )
+                allocate( indextmp2d ( gmap%nFcx + gmap%nFcy , SPACE_COUNT ) )
             end select
             indextmp2d = 1
             isize = 0
             do ireg = 1, size(RegionsinSubset)
                 if (RegionsinSubset(ireg) == 0) cycle
-                call collectIndexListForRegionSubroutine( gmap, cflag, region,   &
-                   &   iType, RegionsinSubset( ireg ), indexPart2d )
+                if (iType .eq. REGIONTYPE_EDGE) then
+                  if (RegionsinSubset(ireg) .gt. 0) then
+                    call collectIndexListForRegionSubroutine( gmap, cflag, region, &
+                      &   REGIONTYPE_YEDGE, RegionsinSubset( ireg ), indexPart2d )
+                  else
+                    call collectIndexListForRegionSubroutine( gmap, cflag, region, &
+                      &   REGIONTYPE_XEDGE, abs(RegionsinSubset( ireg )), indexPart2d )
+                  end if
+                else
+                  call collectIndexListForRegionSubroutine( gmap, cflag, region, &
+                      &   iType, RegionsinSubset( ireg ), indexPart2d )
+                end if
                 indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
                 isize = isize + size(indexPart2d,1)
             end do

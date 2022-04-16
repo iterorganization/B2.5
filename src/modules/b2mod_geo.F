@@ -2566,6 +2566,107 @@ c conn
       return
       end subroutine divide_by_poloidal_areas
 
+      subroutine compute_er( nx, ny, er_Vx, er_Fc, er_Cv )
+      implicit none
+      integer, intent(in) :: nx, ny
+      real(kind=R8), intent(out) :: er_Vx(-1:nx, -1:ny)
+      real(kind=R8), intent(out) :: er_Fc(-1:nx, -1:ny, 0:1)
+      real(kind=R8), intent(out) :: er_Cv(-1:nx, -1:ny)
+      integer :: ix, iy
+      real(kind=R8) :: ex, ey
+
+      do iy = -1, ny
+        do ix = -1, nx
+          ! For (bottom left) vertices
+          if (leftix(ix,iy).ne.-2) then
+            ex = (crx(ix,iy,1)+crx(ix,iy,0))/2.0_R8 -
+     .           (crx(leftix(ix,iy),leftiy(ix,iy),1)+
+     .            crx(leftix(ix,iy),leftiy(ix,iy),0))/2.0_R8
+            ey = (cry(ix,iy,1)+cry(ix,iy,0))/2.0_R8 -
+     .           (cry(leftix(ix,iy),leftiy(ix,iy),1)+
+     .            cry(leftix(ix,iy),leftiy(ix,iy),0))/2.0_R8
+          else
+            ex = crx(ix,iy,1)-crx(ix,iy,0)
+            ey = cry(ix,iy,1)-cry(ix,iy,0)
+          end if
+          er_Vx(ix,iy) = ex / sqrt(ex**2 + ey**2)
+          ! For left faces
+          if (leftix(ix,iy).ne.-2) then
+            ex = cr(ix,iy) - cr(leftix(ix,iy),leftiy(ix,iy))
+            ey = cz(ix,iy) - cz(leftix(ix,iy),leftiy(ix,iy))
+          else
+            ex = ((crx(ix,iy,2)+crx(ix,iy,3))-
+     .            (crx(ix,iy,0)+crx(ix,iy,1)))/2.0_R8
+            ey = ((cry(ix,iy,2)+cry(ix,iy,3))-
+     .            (cry(ix,iy,0)+cry(ix,iy,1)))/2.0_R8
+          end if
+          er_Fc(ix,iy,0) = ex / sqrt(ex**2 + ey**2)
+          ! For bottom faces
+          ex = crx(ix,iy,1)-crx(ix,iy,0)
+          ey = cry(ix,iy,1)-cry(ix,iy,0)
+          er_Fc(ix,iy,1) = ex / sqrt(ex**2 + ey**2)
+          ! For cell centers
+          ex = ((crx(ix,iy,2)+crx(ix,iy,3))-
+     .          (crx(ix,iy,0)+crx(ix,iy,1)))/2.0_R8
+          ey = ((cry(ix,iy,2)+cry(ix,iy,3))-
+     .          (cry(ix,iy,0)+cry(ix,iy,1)))/2.0_R8
+          er_Cv(ix,iy) = ex / sqrt(ex**2 + ey**2)
+        end do
+      end do
+
+      return
+      end subroutine compute_er
+
+      subroutine compute_ez( nx, ny, ez_Vx, ez_Fc, ez_Cv )
+      implicit none
+      integer, intent(in) :: nx, ny
+      real(kind=R8), intent(out) :: ez_Vx(-1:nx, -1:ny)
+      real(kind=R8), intent(out) :: ez_Fc(-1:nx, -1:ny, 0:1)
+      real(kind=R8), intent(out) :: ez_Cv(-1:nx, -1:ny)
+      integer :: ix, iy
+      real(kind=R8) :: ex, ey
+
+      do iy = -1, ny
+        do ix = -1, nx
+          ! For (bottom left) vertices
+          if (leftix(ix,iy).ne.-2) then
+            ex = (crx(ix,iy,1)+crx(ix,iy,0))/2.0_R8 -
+     .           (crx(leftix(ix,iy),leftiy(ix,iy),1)+
+     .            crx(leftix(ix,iy),leftiy(ix,iy),0))/2.0_R8
+            ey = (cry(ix,iy,1)+cry(ix,iy,0))/2.0_R8 -
+     .           (cry(leftix(ix,iy),leftiy(ix,iy),1)+
+     .            cry(leftix(ix,iy),leftiy(ix,iy),0))/2.0_R8
+          else
+            ex = crx(ix,iy,1)-crx(ix,iy,0)
+            ey = cry(ix,iy,1)-cry(ix,iy,0)
+          end if
+          ez_Vx(ix,iy) = ey / sqrt(ex**2 + ey**2)
+          ! For left faces
+          if (leftix(ix,iy).ne.-2) then
+            ex = cr(ix,iy) - cr(leftix(ix,iy),leftiy(ix,iy))
+            ey = cz(ix,iy) - cz(leftix(ix,iy),leftiy(ix,iy))
+          else
+            ex = ((crx(ix,iy,2)+crx(ix,iy,3))-
+     .            (crx(ix,iy,0)+crx(ix,iy,1)))/2.0_R8
+            ey = ((cry(ix,iy,2)+cry(ix,iy,3))-
+     .            (cry(ix,iy,0)+cry(ix,iy,1)))/2.0_R8
+          end if
+          ez_Fc(ix,iy,0) = ey / sqrt(ex**2 + ey**2)
+          ! For bottom faces
+          ex = crx(ix,iy,1)-crx(ix,iy,0)
+          ey = cry(ix,iy,1)-cry(ix,iy,0)
+          ez_Fc(ix,iy,1) = ey / sqrt(ex**2 + ey**2)
+          ! For cell centers
+          ex = ((crx(ix,iy,2)+crx(ix,iy,3))-
+     .          (crx(ix,iy,0)+crx(ix,iy,1)))/2.0_R8
+          ey = ((cry(ix,iy,2)+cry(ix,iy,3))-
+     .          (cry(ix,iy,0)+cry(ix,iy,1)))/2.0_R8
+          ez_Cv(ix,iy) = ey / sqrt(ex**2 + ey**2)
+        end do
+      end do
+      return
+      end subroutine compute_ez
+
       function abs_diff(p1,p2)
       implicit none
       real(kind=R8) :: abs_diff, p1, p2
