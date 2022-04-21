@@ -231,6 +231,8 @@ program b2_ual_write_b2mod
     use ids_grid_examples       ! IGNORE
     use ids_grid_unstructured   ! IGNORE
     use ids_grid_structured     ! IGNORE
+    use b2mod_ad &
+        & , only : nncf
 
     implicit none
 
@@ -266,6 +268,7 @@ program b2_ual_write_b2mod
     character(len=24) :: run_string
     character(len=24) :: num_step_string
     character(len=24) :: argName
+    real(kind=r8) :: J(nncf)
 
     !! Check if supposed new file already exists and delete it
     call checkFileAndDelete( "b2fparam" )
@@ -337,7 +340,7 @@ program b2_ual_write_b2mod
     if( num_step .ge. -1 ) then
         write(0,*) "Running b2mn_step(", num_step, ")"
         write(0,*) "num_step: ", num_step
-        call b2mn_step( num_step )
+        call b2mn_step(J)
     end if
     write(0,*) "b2mn_step() completed"
 
