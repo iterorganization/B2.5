@@ -314,7 +314,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .          FHE(IX,BCPOS(IB)+1,1)/SYhelp,
      .          FHI(IX,BCPOS(IB)+1,1)/SYhelp,
      .      SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
-     .          FNA(IX,BCPOS(IB)+1,1,0:NS-1))/syhelp,
+     .          FNA(IX,BCPOS(IB)+1,1,0:NS-1))/SYhelp,
      .           PO(IX,BCPOS(IB)),
      .         (FNA(IX,BCPOS(IB)+1,1,IS)/SYhelp, IS = 0, NS-1)
           WRITE (NPRT, '((1X, T13, 2ES11.3, (T59,6D11.3)))')

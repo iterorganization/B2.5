@@ -120,7 +120,7 @@
       call subini ('b2npco')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21 {
        if(style_b2mndt.eq.2) then
         rxg = huge(1.0_R8)
         pcm0 = 0.0_R8
@@ -144,7 +144,7 @@
         call ipgetr ('b2npco_rxg', rxg)
         call ipgetr ('b2npco_pcm0', pcm0)
         call ipgetr ('b2npco_pcm1', pcm1)
-       endif                                                           !srv 07.07.21 }
+       endif                                                          !srv 07.07.21 }
        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')

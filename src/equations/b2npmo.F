@@ -92,7 +92,7 @@
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),   !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
-     2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
+     &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
       logical solving

@@ -181,9 +181,9 @@ csw 10oct2012
      &        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
      &       *vedia(ix,iy,0)*vdia_par                                    !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
-!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                 !srv 13.09.02 {
 !     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                !srv 13.09.02 }
            endif                                                         !srv 26.11.02
           enddo
          enddo
@@ -858,13 +858,13 @@ csw 13mar2013 added check upwind (SOLPS4 style)
         else
          fhe(ix,iy,1) = floe0*
      &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-     &         -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &        -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &        +alfTeEh*calf(ix,iy,1)*                                    !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1) = floe0_mdf*                                   !srv 13.10.06 {
      &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-     &      -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -fhePSch(ix,iy,1)                                            !srv 13.10.06 }
+     &        -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &        -fhePSch(ix,iy,1)                                          !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1)*                                    !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !iyv 12.05.08 !srv 03.10.08
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017

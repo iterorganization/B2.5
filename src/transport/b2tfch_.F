@@ -79,7 +79,7 @@
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
       integer, save :: pot_eq = 1
-      integer, save :: no_current= 0
+      integer, save :: no_current = 0
 
       character(3) :: chns, chns0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
@@ -199,7 +199,7 @@
       do iy = -1, ny
        do ix = -1, nx                                                    !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2)then                                      !srv 26.11.02
-         conc(ix,iy,0)    = 0.0e0_R8
+         conc(ix,iy,0)    = 0.0_R8
         else                                                             !srv 26.11.02 }
          conc(ix,iy,0) = csig(ix,iy,0)
          if(fch_ion_neutral.ne.0.0e0_R8 .and.
@@ -226,7 +226,7 @@
 
 *   ..compute concy
       do ix = -1, nx
-       conc(ix,-1,1) = 0
+       conc(ix,-1,1) = 0.0_R8
       enddo
       do iy = 0, ny
        do ix = -1, nx
@@ -255,14 +255,14 @@
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,0)  = 0.0e0_R8
-            conc(ix,iy,0) = 0.0e0_R8
+            fch(ix,iy,0)  = 0.0_R8
+            conc(ix,iy,0) = 0.0_R8
           enddo
         enddo
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,1)  = 0.0e0_R8
-            conc(ix,iy,1) = 0.0e0_R8
+            fch(ix,iy,1)  = 0.0_R8
+            conc(ix,iy,1) = 0.0_R8
           end do
         enddo
       enddo

@@ -644,23 +644,23 @@ cxpb  only include ExB terms and not diamagnetic contributions
          endif
 c         fchi=0.0_R8
        endif
-!       if (po(-1,iy).ge.0.0_R8) then                                     !sv
+!       if (po(-1,iy).ge.0.0_R8) then                                    !sv
          fche = 
-     .    sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1*expu2(-qe*pof/tef)       !sv
-!       else                                                              !sv
-!         fche = sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1                   !sv
+     .    sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1*expu2(-qe*pof/tef)      !sv
+!       else                                                             !sv
+!         fche = sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1                  !sv
 !       endif
 *    ..loop over species
        do is = 0, ns-1
 *     ..compute csb
         csb = sqrt((zaf(is)*tef+tif)/(am(is)*mp))
 *     .. account for diamagnetic drifts
-        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
-        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
-        if(.not.is_neutral(is)) then                                      !xpb
-          csbm = max(0.0_R8,csbm)                                         !xpb
-          cstm = max(0.0_R8,cstm)                                         !xpb
-        endif                                                             !xpb
+        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))              !xpb
+        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))              !xpb
+        if(.not.is_neutral(is)) then                                     !xpb
+          csbm = max(0.0_R8,csbm)                                        !xpb
+          cstm = max(0.0_R8,cstm)                                        !xpb
+        endif                                                            !xpb
         if(csbm.gt.csb .and. diagno.ge.2)
      >   write(*,*) 'west:iy,is,csb,csbm',iy,is,csb,csbm
         if(cstm.gt.cst .and. diagno.ge.2)
@@ -680,14 +680,14 @@ c         fchi=0.0_R8
      &    max(0.0_R8,-ua(-1,iy,is)*pbs(rightix(-1,iy),rightiy(-1,iy),0))
 *     ..compute parallel momentum source
         smo0(-1,iy,0,is) = smo0(-1,iy,0,is)+cbsmo(0,is,ireg)*s0
-        smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0           !rfs
+        smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(-1,iy,2,is) = smo0(-1,iy,2,is)+
      &    cbsmo(1,is,ireg)*(-csbm)*
-     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                           !xpb
+     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                          !xpb
      &    cbsmo(2,is,ireg)*(-cstm)*
-     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                           !xpb
+     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                          !xpb
      &    cbsmo(5,is,ireg)*max(0.0_R8,
-     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,is))/na(-1,iy,is)         !sv
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,is))/na(-1,iy,is)        !sv
         smo0(-1,iy,3,is) = smo0(-1,iy,3,is)+
      &    cbsmo(3,is,ireg)*s0+
      &    cbsmo(4,is,ireg)*s1+

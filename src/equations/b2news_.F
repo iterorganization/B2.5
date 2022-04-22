@@ -919,7 +919,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call my_out(70,nx,ny,po,'b2news__po'//charns)
       endif                                                              !srv 12.07.05 }
 
-      if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
+      if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
         call b2xprz (nx, ny, ns, mp, am, na, rz)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
         wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
@@ -927,7 +927,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
       else
         cssb = 0.0_R8
-      endif                                                          !iyv 06.02.14
+      endif                                                              !iyv 06.02.14
 
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #ifdef WITH_FTIMINGS
@@ -955,27 +955,27 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
         call b2tfnb (nx, ny, is, ismain,
-     &     guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,       !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
-     1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),  !srv 09.01.01 20.09.06
+     &     guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,         !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
+     1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),    !srv 09.01.01 20.09.06
      1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     1     vadia(-1,-1,0,is),                                          !srv 17.05.99
-     1     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
+     1     vadia(-1,-1,0,is),                                            !srv 17.05.99
+     1     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,        !srv 19.05.03 08.10.04 04.02.05
      &     po, cvla(-1,-1,0,is), cdna(-1,-1,0,is),
-     &     cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                         !srv 13.10.06
-     &     cvlahz(-1,-1,0,is),                                         !srv 09.01.01 15.12.05
+     &     cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                           !srv 13.10.06
+     &     cvlahz(-1,-1,0,is),                                           !srv 09.01.01 15.12.05
      &     cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),           !srv 08.09.21
+     &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),             !srv 08.09.21
      &     fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &     fchvisq_a(-1,-1,0,is),                                      !srv 20.09.06
+     &     fchvisq_a(-1,-1,0,is),                                        !srv 20.09.06
      &     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &     fna_fcor(-1,-1,0,is),
      &     fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &     fna_mdf(-1,-1,0,is),                                        !srv 13.10.06
+     &     fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
      &     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &     fna_53(-1,-1,0,is),
      &     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &     .false.)                                                    !djm Jan2017
+     &     .false.)                                                      !djm Jan2017
       enddo
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 !$OMP END PARALLEL DO

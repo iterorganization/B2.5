@@ -92,13 +92,14 @@
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),                    !xpb
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),                    !xpb
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
-     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
+     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
+     5  cvla(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                               !som 18.08.21
      &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 20.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
-     5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
+     6  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
      *  rlsa(-1:nx,-1:ny,0:1,0:ns-1), rlra(-1:nx,-1:ny,0:1,0:ns-1),

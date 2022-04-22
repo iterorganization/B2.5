@@ -100,15 +100,15 @@
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
        call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                   !srv 02.01.07 }
 *    ..test sign of she, shi, ceqp
-       if(style_b2mndt.ne.2) then                             !srv 07.07.21
+       if(style_b2mndt.ne.2) then                                       !srv 07.07.21
          call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
-       endif                                                  !srv 07.07.21
+       endif                                                            !srv 07.07.21
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
        call b2xvsg (n2, she(-1,-1,2), 1, 'she2', '.ge.')
        call b2xvsg (n2, she(-1,-1,3), 1, 'she3', '.le.')
-       if(style_b2mndt.ne.2) then                             !srv 07.07.21
+       if(style_b2mndt.ne.2) then                                       !srv 07.07.21
          call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
-       endif                                                  !srv 07.07.21
+       endif                                                            !srv 07.07.21
        call b2xvsg (n2, shi(-1,-1,1), 1, 'shi1', '.le.')
        call b2xvsg (n2, shi(-1,-1,2), 1, 'shi2', '.ge.')
        call b2xvsg (n2, shi(-1,-1,3), 1, 'shi3', '.le.')

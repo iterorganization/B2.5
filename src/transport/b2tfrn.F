@@ -75,9 +75,9 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: no_hybr = 0
       integer, save :: drift_style
-      integer, save :: Zhdanov_closure = 0                              !som 09.07.21
-      integer, save :: Zhdanov_test = 0                                 !som 09.07.21
-      integer, save :: Zhdanov_vel_heat = 1                             !som 09.07.21
+      integer, save :: Zhdanov_closure = 0                               !som 09.07.21
+      integer, save :: Zhdanov_test = 0                                  !som 09.07.21
+      integer, save :: Zhdanov_vel_heat = 1                              !som 09.07.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
@@ -143,9 +143,9 @@
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
-        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 09.07.21
-        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 09.07.21
-        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 09.07.21
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 09.07.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 09.07.21
+        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 09.07.21
         if (redef_gmtry.eq.0) then
           drift_style = 1
         else
@@ -341,8 +341,8 @@ csw 30sep2013, added check for no_hybr
      &         ycur/(rza(ix,iy,is)*qe*
      &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &         na(ix,iy,is))/2.0_R8)
-            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
-     &              ycur                                                 !srv 02.04.18 08.09.21
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
+     &              (rza(ix,iy,is)*qe)*ycur                              !srv 02.04.18 08.09.21
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -390,8 +390,8 @@ csw 30sep2013, added check for no_hybr
      &        ycur/(rza(ix,iy,is)*qe*
      &       (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/
      &        2.0_R8)
-            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
-     &              ycur                                                 !srv 02.04.18 08.09.21
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
+     &       (rza(ix,iy,is)*qe)*ycur                                     !srv 02.04.18 08.09.21
            else
              scur = 0.0_R8
              vsprcur = 0.0_R8                                            !srv 02.04.18
