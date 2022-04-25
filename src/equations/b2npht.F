@@ -154,12 +154,12 @@
 *    ..test edge values of transport coefficients
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
-       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')                 !srv 02.01.07 {
+       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')               !srv 02.01.07 {
        call b2xvff (nx, ny, cone(-1,-1,0,0,1), 'cone1')
        call b2xvff (nx, ny, cone(-1,-1,0,0,2), 'cone2')
        call b2xvff (nx, ny, coni(-1,-1,0,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,0,1), 'coni1')
-       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')                 !srv 02.01.07 }
+       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')               !srv 02.01.07 }
 *    ..test sign of she, shi
        call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
@@ -259,7 +259,7 @@ cdjm Jan2017 update particle source components for balance
       shif = shi0                                                       !srv 10.11.02 }
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
       call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-*   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
+*   ..compute heat source due to electron-ions collisions               !srv 18.09.09 30.01.10 {
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.

@@ -17,6 +17,7 @@
       use b2mod_first_flight
       use b2mod_constants
       use b2mod_indirect
+      use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_average
       use b2mod_sources
@@ -98,7 +99,7 @@
 *   ..local variables
       integer n2, ix, iy, is, ib, ic, ibnd, itrack, k                   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
-      integer, save :: no_b2stbr_phys_call = 0, mdf_fnb = 0
+      integer, save :: no_b2stbr_phys_call = 0, mdf_fnb = 0             !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
       integer, save :: iout = 0,        iout_b2npmo = 0,                !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -132,8 +133,7 @@
       integer ncall, sput_src, first_flight,
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
-     2  sput_chem_model, boundary_namelist,
-     3  reflection_on, sputter_energy_on,
+     2  sput_chem_model, reflection_on, sputter_energy_on,
      4  b2wall_netcdf, potential_at_guard_cell,
      5  sput_frac_flag
       real (kind=R8) ::
@@ -151,7 +151,7 @@
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8         !iyv 07.03.18
-      logical new_sputter_namelist
+      logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
@@ -175,8 +175,7 @@
      1     use_eirene, neutral_rescale, neutral_sources_rescale, output,
      2     coreregno, coreregn2, core_sources_rescale, alpha,
      3     neutrals_namelist, therm_evap, sput_res,
-     5     sput_chem_model, boundary_namelist,
-     7     reflection_on, sputter_energy_on,
+     5     sput_chem_model, reflection_on, sputter_energy_on,
      8     b2wall_netcdf, sput_frac_flag,
      9     potential_at_guard_cell,
      1     sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
@@ -190,7 +189,7 @@
      *     neutral_sources_rescale/1.0_R8/, output/0/,
      1     coreregn2/4/, core_sources_rescale/1.0_R8/,
      2     neutrals_namelist/0/, therm_evap/0.0_R8/, sput_res/0.0_R8/,
-     7     sput_chem_model/0/, boundary_namelist/0/,
+     7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/, b2wall_netcdf/0/,
      2     sput_frac_flag/0/, sput_chem_cutoff_alpha/1.0_R8/,
      3     sput_chem_cutoff_beta/3.0_R8/,
@@ -229,8 +228,8 @@
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
-        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
+        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
         if( sna_corr .gt. 0.0_R8 ) then
            allocate(t1(1:nspecies))
@@ -240,7 +239,7 @@
      &                       recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr,
      &      'faulty internal parameter recycled_neutrals_contr')
-        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+        call get_boundary_namelist
         call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
         call ipgeti ('b2stbr_first_flight', first_flight)
         if(first_flight.ne.0) then
@@ -362,15 +361,26 @@
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
      2     neutrals_count
-          if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
-     1     int(tim/neutrals_time_mod).gt.neutrals_count) then
-            neutrals_count=int(tim/neutrals_time_mod)
-            call read_neutrals_namelist(nx, ny, ns, .true.)
-            new_sputter_namelist=.true.
-            call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
-            call write_b2mod_neutrals_namelist
-          endif
+          catch_up=
+     1    (mod(tim,neutrals_time_mod).ge.neutrals_time_switch.and.
+     1     neutrals_time_switch.gt.0.0_R8).or.
+     2     int(tim/neutrals_time_mod).gt.neutrals_count
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.neutrals_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next neutrals namelist file ',
+     .      trim(neutrals_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(neutrals_time_mod.gt.0.0_R8)
+     >     neutrals_count=int(tim/neutrals_time_mod)
+          call read_neutrals_namelist(nx, ny, ns, .true.)
+          new_sputter_namelist=.true.
+          call xertst (nstrat.le.nstraid,
+     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+          call write_b2mod_neutrals_namelist
         endif
       endif
 *   ..set n2
@@ -499,7 +509,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &   sput_chem_model, therm_evap, sput_res,
@@ -528,7 +538,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &   hx, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
      &   neutral_sources_rescale, core_sources_rescale,
      &   sput_src, sput_frc, sput_phys,
@@ -1442,7 +1452,14 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       else
         neutrals_count=0
       endif
-      catch_up=neutrals_time_mod.gt.0.0_R8
+      if(neutrals_time_mod.gt.0.0_R8) then
+        catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &    .and.neutrals_time_switch.gt.0.0_R8
+      else if (neutrals_time_switch.gt.0.0_R8) then
+        catch_up=tim.ge.neutrals_time_switch
+      else
+        catch_up=.false.
+      end if
       do while(catch_up)
         write(*,*) 'b2stbr_init: catching up ...'
         call read_neutrals_namelist(nx, ny, ns, .true.)
@@ -1450,8 +1467,11 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
         call write_b2mod_neutrals_namelist
-        if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch) then
-          catch_up=neutrals_time_mod.gt.0.0_R8
+        if(neutrals_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch
+     &      .and.neutrals_time_switch.gt.0.0_R8
+        else if (neutrals_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.neutrals_time_switch
         else
           catch_up=.false.
         endif

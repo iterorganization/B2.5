@@ -189,40 +189,40 @@
 #endif
 !$OMP& REDUCTION(+: smbfrial)
 #endif
-      do is = 0, ns-1
-        if(isb.ne.is .and.
-     &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
-         KabVp=fkabvp(isb,is)
 *     ..contribution from friction between ions
-         do iy = 0, ny-1
-          do ix = 0, nx-1
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-            coef = phm0*rz2(ix,iy,isb)*rz2(ix,iy,is)*
+        do is = 0, ns-1
+         if(isb.ne.is .and.
+     &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
+          KabVp=fkabvp(isb,is)
+          do iy = 0, ny-1
+           do ix = 0, nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+             coef = phm0*rz2(ix,iy,isb)*rz2(ix,iy,is)*
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
-            t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-            !$omp critical (ionfriction)
-            if (styl0.eq.0) then
-              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
-     &         coef*t0*ua(ix,iy,is)
-              smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
-            else if (styl0.eq.1) then
-              smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
-     &         coef*t0*ua(ix,iy,is)
-              smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
-     &         roxa(ix,iy,isb))
-            else if (styl0.eq.2) then
-              smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+
-     &         coef*t0*ua(ix,iy,is)/roxa(ix,iy,isb)
-              smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+             t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+             !$omp critical (ionfriction)
+             if (styl0.eq.0) then
+               smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
+     &          coef*t0*ua(ix,iy,is)
+               smbfrial(ix,iy,1) = smbfrial(ix,iy,1)+(-coef*t0)
+             else if (styl0.eq.1) then
+               smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
+     &          coef*t0*ua(ix,iy,is)
+               smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
+             else if (styl0.eq.2) then
+               smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+
+     &          coef*t0*ua(ix,iy,is)/roxa(ix,iy,isb)
+               smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
+     &                       roxa(ix,iy,isb))
+             endif
+             !$omp end critical (ionfriction)
             endif
-            !$omp end critical (ionfriction)
-           endif
+           enddo
           enddo
-         enddo
-        endif
-      enddo
+         endif
+        enddo
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP END PARALLEL DO
 #endif
@@ -285,7 +285,8 @@
 #endif
 !$OMP& REDUCTION(+: smbtfial)
 #endif
-      do is = 0, ns-1
+*     ..standard friction force calculation
+        do is = 0, ns-1
          if(isb.ne.is .and.
      &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
           Kabtf = fkabtf(isb,is)
@@ -326,7 +327,7 @@ c   .... apply flux limit
            enddo
           enddo
          endif
-      enddo
+        enddo
 #ifndef NO_OPENMP_B2SIFRTF
 !$OMP END PARALLEL DO
 #endif

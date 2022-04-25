@@ -74,6 +74,7 @@ c 2002-09-11: logic revised
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_interp
       use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
@@ -166,7 +167,6 @@ c
       real (kind=R8) ::
      *   mass,vel,vth,press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
-     *   boundary_namelist,
      *   neutrals_namelist, sput_frac_flag, use_eirene
 
 #ifndef NO_CDF
@@ -231,7 +231,6 @@ c
      6     vappr_a/-40181.0_R8/, vappr_b/14.80_R8/, stick_coef/0.4_R8/,
      7     sput_phys_col/3/, sput_chem_model/0/, refl_model/1/,
      8     sput_phys_model/1/, sput_phys/0.0_R8/,
-     9     boundary_namelist/0/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
      2     use_eirene/0/, ismain0/0/, drift_style/1/
@@ -239,7 +238,7 @@ c
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
      3     sput_phys_model, sput_phys_col, sput_phys, BoRiS,
-     4     boundary_namelist, neutrals_namelist,
+     4     neutrals_namelist,
      5     sput_frac_flag, use_eirene, ismain0, drift_style
 
 c
@@ -523,7 +522,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      .   'invalid main neutral species index ismain0')
        call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      .   'invalid main neutral species index ismain0')
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2mndr_eirene', use_eirene)
 
@@ -861,7 +860,8 @@ cxpb  Western boundary
           hhn = hx(ixn,iyn)
         endif
         wall_heatflux(ibnd)=max(0.0_R8,
-     .    isign*(fht(ixf,iyf,idir,idir)+fhi_ext(ixf,iyf,idir,idir)))/
+     .    isign*(fht(ixf,iyf,idir,0)+fhi_ext(ixf,iyf,idir,0)+
+     .           fht(ixf,iyf,idir,1)+fhi_ext(ixf,iyf,idir,1)))/
      .                                 gs(ixf,iyf,idir)
 *    ..compute cell-faced quantities
         do is = 0, ns-1
@@ -871,13 +871,15 @@ cxpb  Western boundary
         do is = 0, ns-1
           incident_energy(ibnd,is)=
      .     max(0.0_R8,tif/ev+(po(ix,iy)-Phi_app)*zaf(is)) ! xpb: Incident energy (eV)
-          wall_flux(ibnd,is)=max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is))
+          wall_flux(ibnd,is)=max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is)+
+     .                                         fna(ixf,iyf,idir,1,is)))
         enddo
         do is = 0, ns_ext-1
           pxf = (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
-     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,idir,is))/
+     &     max(0.0_R8,isign*(fa_ext(ixf,iyf,idir,0,is)+
+     &                       fa_ext(ixf,iyf,idir,1,is)))/
      &         gs(ixf,iyf,idir)*
      &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
      &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
@@ -2559,41 +2561,8 @@ c
           nz=1
           do ix=-1,nx
             do iy=-1,ny
-              ixl=leftix(ix,iy)
-              if (ixl.ne.-2) then
-                t1=hx(ix,iy)/2.0_R8/
-     1           (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              else
-                t1=0.0_R8
-              endif
-              ix1=ixl
-              if (ixl.ne.-2) ixl=leftix(ix1,iy)
-              do while(ix1.ne.ix.and.ixl.ne.-2)
-                t1=t1+hx(ix1,iy)/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-                ix1=ixl
-                ixl=leftix(ix1,iy)
-              end do
-              if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-              ixr=rightix(ix,iy)
-              if (ixr.ne.nx+1) then
-                t2=hx(ix,iy)/2.0_R8/
-     1           (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              else
-                t2=0.0_R8
-              endif
-              ix1=ixr
-              if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
-              do while(ix1.ne.ix.and.ixr.ne.nx+1)
-                t2=t2+hx(ix1,iy)/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-                ix1=ixr
-                ixr=rightix(ix1,iy)
-              end do
-              if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/
-     1           (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-              mach(ix,iy,0)=min(t1,t2)
+              mach(ix,iy,0) =
+     &         get_connection_length( 3, 2, nx, ny, ix, iy)
             end do
           end do
           call copy(mach,1.0_R8,nz,textbl)
@@ -3948,11 +3917,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(leftix(ix,iy).ge.-1.and.leftix(ix,iy).le.nx.and.
-     1         rightix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     1         bottomiy(ix,iy).ge.-1.and.bottomiy(ix,iy).le.ny.and.
-     1         topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny.and.
-     2         region(ix,iy,0).ne.0) then
+              if(isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) then
                 mach(ix,iy,0)=1.0_R8
               else
                 mach(ix,iy,0)=0.0_R8
@@ -3965,10 +3930,7 @@ c     assumes that bb is OK for 1d cases
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(leftix(ix,iy).lt.-1.or.leftix(ix,iy).gt.nx.or.
-     1         rightix(ix,iy).lt.-1.or.rightix(ix,iy).gt.nx.or.
-     1         bottomiy(ix,iy).lt.-1.or.bottomiy(ix,iy).gt.ny.or.
-     1         topiy(ix,iy).lt.-1.or.topiy(ix,iy).gt.ny) then
+              if(cflags(ix,iy,CELLFLAG_TYPE) == GRID_GUARD) then
                 mach(ix,iy,0)=1.0_R8
               else
                 mach(ix,iy,0)=0.0_R8
@@ -9524,7 +9486,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),boundary_namelist,BoRiS)
+          call b2pwld(istack(iistack),BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff

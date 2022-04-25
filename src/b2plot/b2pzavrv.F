@@ -10,6 +10,7 @@ c***
 c***  zaveraev.dat with the data for V. Zaveryaev
 c----------------------------------------------------------------------
       use b2mod_diag
+      use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma

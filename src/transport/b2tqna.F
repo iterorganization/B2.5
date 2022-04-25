@@ -119,12 +119,10 @@
      *  min_df0, max_df0,
      *  min_df0_tmp, max_df0_tmp
       real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
-      integer elm_count
       save ncall, new_df0, ixref, transport_namelist, user_transport,
-     1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
+     1  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
      2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno,
      3  neutral_sources_rescale
-      logical catch_up
 *   ..procedures
       intrinsic sqrt
       external sfill, ipgeti, ipgetr
@@ -159,28 +157,6 @@
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument b2tqna_ixref')
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
-        if(transport_namelist.eq.1) then
-          call alloc_transport_namelist(ns)
-          call read_b2mod_transport_namelist
-          call write_b2mod_transport_namelist
-          if(transport_time_mod.gt.0.0_R8) then
-            elm_count=int(tim/transport_time_mod)
-          else
-            elm_count=0
-          endif
-          catch_up=transport_time_mod.gt.0.0_R8
-          do while(catch_up)
-            if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1       then
-              write(*,*) 'b2tqna: catching up ...'
-              call read_b2mod_transport_namelist
-              call write_b2mod_transport_namelist
-              catch_up=transport_time_mod.gt.0.0_R8
-            else
-              catch_up=.false.
-            endif
-          enddo
-        endif
         call ipgetr ('b2tqna_ballooning', ballooning)
         call ipgetr ('b2tqna_bb_ref', bb_ref)
         call ipgetr ('b2tqna_ballooning_rescale', ballooning_rescale)
@@ -197,18 +173,6 @@
         call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
         call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
-      else
-        if(transport_namelist.eq.1.and.
-     1   transport_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
-     1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=int(tim/transport_time_mod)
-            call read_b2mod_transport_namelist
-            call write_b2mod_transport_namelist
-          endif
-        endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

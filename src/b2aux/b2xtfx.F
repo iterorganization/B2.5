@@ -1,6 +1,6 @@
       subroutine b2xtfx (nx, ny, nx1, ny1, fx, fx1,
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
@@ -13,14 +13,17 @@
      &   hy(-1:nx,-1:ny), hyy(-1:nx1,-1:ny1),
      &   qc(-1:nx,-1:ny), qc1(-1:nx1,-1:ny1)
       integer non_commensurate
-      integer nnreg(0:2), nncut, periodic_bc, jsep, jsep1
+      integer nncut, periodic_bc, jsep, jsep1
       integer region(-1:nx,-1:ny,0:2), region1(-1:nx1,-1:ny1,0:2)
       integer leftcut(nncutmax), leftcut1(nncutmax)
       integer rightcut(nncutmax), rightcut1(nncutmax)
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
+      logical flip
 *     ------------------------------------------------------------------
 *     B2XTFX transfers an x-face flux to a new mesh.
+*     In the case of a USN/LSN mapping, we must also flip the sign and
+*     the order of poloidal indices.
 *     ------------------------------------------------------------------
       integer ix, iy, ix1, iy1, ixa, ixb, iya, iyb
       integer ixc, ixd, iyc, iyd, ixm, ixp, nd, ifail
@@ -211,31 +214,58 @@
           yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
 *     ..region 1 : core : bottom row
-        fa(ixa,-1) = fx(ixm,-1)
-        fa(ixa+1:ixb+1,-1) = fx(ixa:ixb,-1)
-        fa(ixb+2,-1) = fx(ixp,-1)  ! periodicity condition
+        if (.not.flip) then
+          fa(ixa,-1) = fx(ixm,-1)
+          fa(ixa+1:ixb+1,-1) = fx(ixa:ixb,-1)
+          fa(ixb+2,-1) = fx(ixp,-1)  ! periodicity condition
+        else
+          fa(ixa,-1) = -fx(ixp,-1)
+          fa(ixa+1:ixb+1,-1) = -fx(ixb+1:ixa+1:-1,-1)
+          fa(ixb+2,-1) = -fx(ixm,-1)  ! periodicity condition
+        endif
         call E01BEF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,-1),d,ifail)
         call E01BFF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,-1),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,-1),ifail)
 *     ..region 1 : core : central part
-        fa(ixa,iya-1) = fx(ixm,iya)/
-     .   (hy(ixm,iya)*qc(ixm,iya))  ! periodicity condition
-        fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya)/
-     .   (hy(ixa:ixb,iya)*qc(ixa:ixb,iya))
-        fa(ixb+2,iya-1) = fx(ixp,iya)/
-     .   (hy(ixp,iya)*qc(ixp,iya))  ! periodicity condition
-        fa(ixa,iya:iyb) = fx(ixm,iya:iyb)/
-     .   (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))  ! periodicity condition
-        fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
-     .   (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
-        fa(ixb+2,iya:iyb) = fx(ixp,iya:iyb)/
-     .   (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! periodicity condition
-        fa(ixa,iyb+1) = fx(ixm,iyb)/
-     .   (hy(ixm,iyb)*qc(ixm,iyb))  ! periodicity condition
-        fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
-     .   (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
-        fa(ixb+2,iyb+1) = fx(ixp,iyb)/
-     .   (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+        if (.not.flip) then
+         fa(ixa,iya-1) = fx(ixm,iya)/
+     .    (hy(ixm,iya)*qc(ixm,iya))  ! periodicity condition
+         fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya)/
+     .    (hy(ixa:ixb,iya)*qc(ixa:ixb,iya))
+         fa(ixb+2,iya-1) = fx(ixp,iya)/
+     .    (hy(ixp,iya)*qc(ixp,iya))  ! periodicity condition
+         fa(ixa,iya:iyb) = fx(ixm,iya:iyb)/
+     .    (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))  ! periodicity condition
+         fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
+     .    (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
+         fa(ixb+2,iya:iyb) = fx(ixp,iya:iyb)/
+     .    (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! periodicity condition
+         fa(ixa,iyb+1) = fx(ixm,iyb)/
+     .    (hy(ixm,iyb)*qc(ixm,iyb))  ! periodicity condition
+         fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
+     .    (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+         fa(ixb+2,iyb+1) = fx(ixp,iyb)/
+     .    (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+        else
+         fa(ixa,iya-1) = -fx(ixp,iya)/
+     .    (hy(ixp,iya)*qc(ixp,iya))  ! periodicity condition
+         fa(ixa+1:ixb+1,iya-1) = -fx(ixb:ixa:-1,iya)/
+     .    (hy(ixb:ixa:-1,iya)*qc(ixb:ixa:-1,iya))
+         fa(ixb+2,iya-1) = -fx(ixm,iya-1)/
+     .    (hy(ixm,iya-1)*qc(ixm,iya-1))  ! periodicity condition
+         fa(ixa,iya:iyb) = -fx(ixp,iya:iyb)/
+     .    (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! periodicity condition
+         fa(ixa+1:ixb+1,iya:iyb) = -fx(ixb:ixa:-1,iya:iyb)/
+     .    (hy(ixb:ixa:-1,iya:iyb)*qc(ixb:ixa:-1,iya:iyb))
+         fa(ixb+2,iya:iyb) = -fx(ixm,iya:iyb)/
+     .    (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))  ! periodicity condition
+         fa(ixa,iyb+1) = -fx(ixp,iyb)/
+     .    (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+         fa(ixa+1:ixb+1,iyb+1) = -fx(ixb:ixa:-1,iyb)/
+     .    (hy(ixb:ixa:-1,iyb)*qc(ixb:ixa:-1,iyb))
+         fa(ixb+2,iyb+1) = -fx(ixm,iyb)/
+     .    (hy(ixm,iyb)*qc(ixm,iyb))  ! periodicity condition
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa:ixb+2),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa:ixb+2,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
@@ -259,18 +289,31 @@
           yy1(iy1) = (iy1+0.5_R8-topcut1(1))/real(ny1-topcut1(1))
         enddo
 *     ..region 2 : limiter SOL : central part (including eastern edge)
-        fa(0:nx,topcut(1)-1) = fx(0:nx,topcut(1))/
-     .   (hy(0:nx,topcut(1))*qc(0:nx,topcut(1)))
-        fa(0:nx,topcut(1):ny-1) = fx(0:nx,topcut(1):ny-1)/
-     .   (hy(0:nx,topcut(1):ny-1)*qc(0:nx,topcut(1):ny-1))
-        fa(0:nx,ny) = fx(0:nx,ny-1)/(hy(0:nx,ny-1)*qc(0:nx,ny-1))
+        if (.not.flip) then
+         fa(0:nx,topcut(1)-1) = fx(0:nx,topcut(1))/
+     .    (hy(0:nx,topcut(1))*qc(0:nx,topcut(1)))
+         fa(0:nx,topcut(1):ny-1) = fx(0:nx,topcut(1):ny-1)/
+     .    (hy(0:nx,topcut(1):ny-1)*qc(0:nx,topcut(1):ny-1))
+         fa(0:nx,ny) = fx(0:nx,ny-1)/(hy(0:nx,ny-1)*qc(0:nx,ny-1))
+        else
+         fa(0:nx,topcut(1)-1) = -fx(nx:0:-1,topcut(1))/
+     .    (hy(nx:0:-1,topcut(1))*qc(nx:0:-1,topcut(1)))
+         fa(0:nx,topcut(1):ny-1) = -fx(nx:0:-1,topcut(1):ny-1)/
+     .    (hy(nx:0:-1,topcut(1):ny-1)*qc(nx:0:-1,topcut(1):ny-1))
+         fa(0:nx,ny) = -fx(nx:0:-1,ny-1)/
+     .    (hy(nx:0:-1,ny-1)*qc(nx:0:-1,ny-1))
+        endif
         call interp2d(nx+1,ny-topcut(1)+2,nx1+1,ny1-topcut1(1),
      .   xx(0:nx),yy(topcut(1)-1:ny),xx1(0:nx1),yy1(topcut1(1):ny1-1),
      .   fa(0:nx,topcut(1)-1:ny),fa1(0:nx1,topcut1(1):ny1-1))
         fx1(0:nx1,topcut1(1):ny1-1) = fa1(0:nx1,topcut(1):ny1-1)*
      .   (hyy(0:nx1,topcut1(1):ny1-1)*qc1(0:nx1,topcut1(1):ny1-1))
 *     ..region 2 : limiter SOL : top row (including eastern edge)
-        fa(0:nx,ny) = fx(0:nx,ny)
+        if (.not.flip) then
+         fa(0:nx,ny) = fx(0:nx,ny)
+        else
+         fa(0:nx,ny) = -fx(nx:0:-1,ny)
+        endif
         call E01BEF(nx+1,xx(0:nx),fa(0:nx,ny),d,ifail)
         call E01BFF(nx+1,xx(0:nx),fa(0:nx,ny),d,
      .              nx1+1,xx1(0:nx1),fx1(0:nx1,ny1),ifail)
@@ -349,33 +392,60 @@
           yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
 *     ..region 2 : SN or CDN HFS SOL : central part
-        fa(ixa,iya-1) = fx(ixm,iya-1)/
-     .   (hy(ixm,iya-1)*qc(ixm,iya-1))  ! periodicity condition
-        fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya-1)/
-     .   (hy(ixa:ixb,iya-1)*qc(ixa:ixb,iya-1))
-        fa(ixb+2,iya-1) = fx(ixp,iya-1)/
-     .   (hy(ixp,iya-1)*qc(ixp,iya-1))  ! periodicity condition
-        fa(ixa,iya:iyb) = fx(ixp,iya:iyb)/
-     .   (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
-        fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
-     .   (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
-        fa(ixb+2,iya:iyb) = fx(ixp,iya:iyb)/
-     .   (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
-        fa(ixa,iyb+1) = fx(ixp,iyb)/
-     .   (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
-        fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
-     .   (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
-        fa(ixb+2,iyb+1) = fx(ixp,iyb)/
-     .   (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+        if (.not.flip) then
+          fa(ixa,iya-1) = fx(ixm,iya-1)/
+     .     (hy(ixm,iya-1)*qc(ixm,iya-1))  ! periodicity condition
+          fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya-1)/
+     .     (hy(ixa:ixb,iya-1)*qc(ixa:ixb,iya-1))
+          fa(ixb+2,iya-1) = fx(ixp,iya-1)/
+     .     (hy(ixp,iya-1)*qc(ixp,iya-1))  ! periodicity condition
+          fa(ixa,iya:iyb) = fx(ixp,iya:iyb)/
+     .     (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+          fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
+     .     (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
+          fa(ixb+2,iya:iyb) = fx(ixp,iya:iyb)/
+     .     (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+          fa(ixa,iyb+1) = fx(ixp,iyb)/
+     .     (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+          fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
+     .     (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+          fa(ixb+2,iyb+1) = fx(ixp,iyb)/
+     .     (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+        else
+          fa(ixa,iya-1) = -fx(ixp,iya-1)/
+     .     (hy(ixp,iya-1)*qc(ixp,iya-1))  ! periodicity condition
+          fa(ixa+1:ixb+1,iya-1) = -fx(ixb:ixa:-1,iya-1)/
+     .     (hy(ixb:ixa:-1,iya-1)*qc(ixb:ixa:-1,iya-1))
+          fa(ixb+2,iya-1) = -fx(ixm,iya-1)/
+     .     (hy(ixm,iya-1)*qc(ixm,iya-1))  ! periodicity condition
+          fa(ixa,iya:iyb) = -fx(ixp,iya:iyb)/
+     .     (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+          fa(ixa+1:ixb+1,iya:iyb) = -fx(ixb:ixa:-1,iya:iyb)/
+     .     (hy(ixb:ixa:-1,iya:iyb)*qc(ixb:ixa:-1,iya:iyb))
+          fa(ixb+2,iya:iyb) = -fx(ixm,iya:iyb)/
+     .     (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))  ! continuity condition
+          fa(ixa,iyb+1) = -fx(ixp,iyb)/
+     .     (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+          fa(ixa+1:ixb+1,iyb+1) = -fx(ixb:ixa:-1,iyb)/
+     .     (hy(ixb:ixa:-1,iyb)*qc(ixb:ixa:-1,iyb))
+          fa(ixb+2,iyb+1) = -fx(ixm,iyb)/
+     .     (hy(ixm,iyb)*qc(ixm,iyb))  ! periodicity condition
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa:ixb+2),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa:ixb+2,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
         fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .   (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
 *     ..region 2 : SN or CDN HFS SOL : top row
-        fa(ixa,ny) = fx(ixm,ny)
-        fa(ixa+1:ixb+1,ny) = fx(ixa:ixb,ny)
-        fa(ixb+2,ny) = fx(ixp,ny)  ! continuity condition
+        if (.not.flip) then
+          fa(ixa,ny) = fx(ixm,ny)
+          fa(ixa+1:ixb+1,ny) = fx(ixa:ixb,ny)
+          fa(ixb+2,ny) = fx(ixp,ny)  ! continuity condition
+        else
+          fa(ixa,ny) = -fx(ixp,ny)
+          fa(ixa+1:ixb+1,ny) = -fx(ixb:ixa:-1,ny)
+          fa(ixb+2,ny) = -fx(ixm,ny)  ! continuity condition
+        endif
         call E01BEF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,ny),d,ifail)
         call E01BFF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,ny),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,ny1),ifail)
@@ -464,18 +534,35 @@
         ixa = 0
         ixb = leftcut(1)-1
         ixp = rightcut(1)                 ! position on opposite side of X-point
-        do ix = ixa, ixb
-         xx(ix) = rratio(ix-ixa,ixb-ixa+1)
-        enddo
-        xx(ixb+1) = 1.0_R8   ! for continuity
-        ixc = 0
-        ixd = leftcut1(1)-1
-        do ix1 = ixc, ixd
-         xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
-        enddo
+        if (.not.flip) then
+         do ix = ixa, ixb
+          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
+         enddo
+         xx(ixb+1) = 1.0_R8   ! for continuity
+         ixc = 0
+         ixd = leftcut1(1)-1
+         do ix1 = ixc, ixd
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
+         enddo
+        else
+         xx(ixa) = 0.0_R8     ! for continuity
+         do ix = ixa+1, ixb+1
+          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
+         enddo
+         ixc = rightcut1(1)
+         ixd = nx1
+         do ix1 = ixc, ixd
+          xx1(ix1) = rratio(ix1-ixc+1,ixd-ixc+1)
+         enddo
+        endif
 *     ..region 3 : western PFR : bottom row
-        fa(ixa:ixb,-1) = fx(ixa:ixb,-1)
-        fa(ixb+1,-1) = fx(ixp,-1)  ! continuity condition
+        if (.not.flip) then
+          fa(ixa:ixb,-1) = fx(ixa:ixb,-1)
+          fa(ixb+1,-1) = fx(ixp,-1)  ! continuity condition
+        else
+          fa(ixa,-1) = -fx(ixp,-1)   ! continuity condition
+          fa(ixa+1:ixb+1,-1) = -fx(ixb:ixa:-1,-1)
+        endif
         call E01BEF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,-1),d,ifail)
         call E01BFF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,-1),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,-1),ifail)
@@ -497,18 +584,33 @@
         do iy1 = iyc, iyd
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
-        fa(ixa:ixb,iya-1) = fx(ixa:ixb,iya)/
-     .   (hy(ixa:ixb,iya)*qc(ixa:ixb,iya))
-        fa(ixb+1,iya-1) = fx(ixp,iya)/
-     .   (hy(ixp,iya)*qc(ixp,iya))  ! periodicity condition
-        fa(ixa:ixb,iya:iyb) = fx(ixa:ixb,iya:iyb)/
-     .    (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
-        fa(ixb+1,iya:iyb) = fx(ixp,iya:iyb)/
-     .    (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
-        fa(ixa:ixb,iyb+1) = fx(ixa:ixb,iyb+1)/
-     .   (hy(ixa:ixb,iyb+1)*qc(ixa:ixb,iyb+1))
-        fa(ixb+1,iyb+1) = fx(ixp,iyb+1)/
-     .   (hy(ixp,iyb+1)*qc(ixp,iyb+1))  ! periodicity condition
+        if (.not.flip) then
+          fa(ixa:ixb,iya-1) = fx(ixa:ixb,iya)/
+     .     (hy(ixa:ixb,iya)*qc(ixa:ixb,iya))
+          fa(ixb+1,iya-1) = fx(ixp,iya)/
+     .     (hy(ixp,iya)*qc(ixp,iya))  ! periodicity condition
+          fa(ixa:ixb,iya:iyb) = fx(ixa:ixb,iya:iyb)/
+     .     (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
+          fa(ixb+1,iya:iyb) = fx(ixp,iya:iyb)/
+     .     (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+          fa(ixa:ixb,iyb+1) = fx(ixa:ixb,iyb+1)/
+     .     (hy(ixa:ixb,iyb+1)*qc(ixa:ixb,iyb+1))
+          fa(ixb+1,iyb+1) = fx(ixp,iyb+1)/
+     .     (hy(ixp,iyb+1)*qc(ixp,iyb+1))  ! periodicity condition
+        else
+          fa(ixa,iya-1) = -fx(ixp,iya)/
+     .     (hy(ixp,iya)*qc(ixp,iya))  ! periodicity condition
+          fa(ixa+1:ixb+1,iya-1) = -fx(ixb:ixa:-1,iya)/
+     .     (hy(ixb:ixa:-1,iya)*qc(ixb:ixa:-1,iya))
+          fa(ixa,iya:iyb) = -fx(ixp,iya:iyb)/
+     .     (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+          fa(ixa+1:ixb+1,iya:iyb) = -fx(ixb:ixa:-1,iya:iyb)/
+     .     (hy(ixb:ixa:-1,iya:iyb)*qc(ixb:ixa:-1,iya:iyb))
+          fa(ixa,iyb+1) = -fx(ixp,iyb+1)/
+     .     (hy(ixp,iyb+1)*qc(ixp,iyb+1))  ! periodicity condition
+          fa(ixa+1:ixb+1,iyb+1) = -fx(ixb:ixa:-1,iyb+1)/
+     .     (hy(ixb:ixa:-1,iyb+1)*qc(ixb:ixa:-1,iyb+1))
+        endif
         call interp2d(ixb-ixa+2,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa:ixb+1,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
@@ -569,26 +671,46 @@
          do iy1 = iyc, iyd
            yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
          enddo
-         fa(ixa:ixb,iya-1) = fx(ixa:ixb,iya-1)/
-     .    (hy(ixa:ixb,iya-1)*qc(ixa:ixb,iya-1))
-         fa(ixb+1,iya-1) = fx(ixp,iya-1)/
-     .    (hy(ixp,iya-1)*qc(ixp,iya-1))  ! periodicity condition
-         fa(ixa:ixb,iya:iyb) = fx(ixa:ixb,iya:iyb)/
-     .    (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
-         fa(ixb+1,iya:iyb) = fx(ixp,iya:iyb)/
-     .    (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
-         fa(ixa:ixb,iyb+1) = fx(ixa:ixb,iyb)/
-     .    (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
-         fa(ixb+1,iyb+1) = fx(ixp,iyb)/
-     .    (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+         if (.not.flip) then
+           fa(ixa:ixb,iya-1) = fx(ixa:ixb,iya-1)/
+     .      (hy(ixa:ixb,iya-1)*qc(ixa:ixb,iya-1))
+           fa(ixb+1,iya-1) = fx(ixp,iya-1)/
+     .      (hy(ixp,iya-1)*qc(ixp,iya-1))  ! periodicity condition
+           fa(ixa:ixb,iya:iyb) = fx(ixa:ixb,iya:iyb)/
+     .      (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
+           fa(ixb+1,iya:iyb) = fx(ixp,iya:iyb)/
+     .      (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+           fa(ixa:ixb,iyb+1) = fx(ixa:ixb,iyb)/
+     .      (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+           fa(ixb+1,iyb+1) = fx(ixp,iyb)/
+     .      (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+         else
+           fa(ixa,iya-1) = -fx(ixp,iya-1)/
+     .      (hy(ixp,iya-1)*qc(ixp,iya-1))  ! periodicity condition
+           fa(ixa+1:ixb+1,iya-1) = -fx(ixb:ixa:-1,iya-1)/
+     .      (hy(ixb:ixa:-1,iya-1)*qc(ixb:ixa:-1,iya-1))
+           fa(ixa,iya:iyb) = -fx(ixp,iya:iyb)/
+     .      (hy(ixp,iya:iyb)*qc(ixp,iya:iyb))  ! continuity condition
+           fa(ixa+1:ixb+1,iya:iyb) = -fx(ixb:ixa:-1,iya:iyb)/
+     .      (hy(ixb:ixa:-1,iya:iyb)*qc(ixb:ixa:-1,iya:iyb))
+           fa(ixa,iyb+1) = -fx(ixp,iyb)/
+     .      (hy(ixp,iyb)*qc(ixp,iyb))  ! periodicity condition
+           fa(ixa+1:ixb+1,iyb+1) = -fx(ixb:ixa:-1,iyb)/
+     .      (hy(ixb:ixa:-1,iyb)*qc(ixb:ixa:-1,iyb))
+         endif
          call interp2d(ixb-ixa+2,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa:ixb+1,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
          fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .    (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
 *    ..region 3 : western divertor SOL : top row
-         fa(ixa:ixb,ny) = fx(ixa:ixb,ny)
-         fa(ixb+1,ny) = fx(ixp,ny)  ! continuity condition
+         if (.not.flip) then
+           fa(ixa:ixb,ny) = fx(ixa:ixb,ny)
+           fa(ixb+1,ny) = fx(ixp,ny)  ! continuity condition
+         else
+           fa(ixa,ny) = -fx(ixp,ny)   ! continuity condition
+           fa(ixa+1:ixb+1,ny) = -fx(ixb:ixa:-1,ny)
+         endif
          call E01BEF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,ny),d,ifail)
          call E01BFF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,ny),d,
      .               ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,ny1),ifail)
@@ -600,8 +722,13 @@
          ixa = rightcut(1)
          ixb = nx
          ixm = leftcut(1)-1     ! position on opposite side of X-point
-         ixc = rightcut1(1)
-         ixd = nx1
+         if (.not.flip) then
+           ixc = rightcut1(1)
+           ixd = nx1
+         else
+           ixc = 0
+           ixd = leftcut1(1)-1
+         endif
         else if (nncut.eq.2) then
          ixa = rightcut(2)
          ixb = ixa
@@ -623,8 +750,13 @@
           xx1(ix1) = rratio(ix1-ixc+1,ixd-ixc+1)
         enddo
 *     ..region 4 : eastern SN PFR or HFS top DN PFR : bottom row (including eastern edge)
-        fa(ixa,-1) = fx(ixm,-1)    ! continuity condition
-        fa(ixa+1:ixb+1,-1) = fx(ixa:ixb,-1)
+        if (.not.flip) then
+          fa(ixa,-1) = fx(ixm,-1)    ! continuity condition
+          fa(ixa+1:ixb+1,-1) = fx(ixa:ixb,-1)
+        else
+          fa(ixa:ixb,-1) = -fx(ixb:ixa:-1,-1)
+          fa(ixb+1,-1) = -fx(ixm,-1) ! continuity condition
+        endif
         call E01BEF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,-1),d,ifail)
         call E01BFF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,-1),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,-1),ifail)
@@ -646,18 +778,33 @@
         do iy1 = iyc, iyd
           yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
-        fa(ixa,iya-1) = fx(ixm,iya-1)/
-     .   (hy(ixm,iya-1)*qc(ixm,iya-1))
-        fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya)/
-     .   (hy(ixa:ixb,iya)*qc(ixa:ixb,iya))
-        fa(ixa,iya:iyb) = fx(ixm,iya:iyb)/
-     .   (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))
-        fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
-     .   (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
-        fa(ixa,iyb+1) = fx(ixm,iyb)/
-     .   (hy(ixm,iyb)*qc(ixm,iyb))
-        fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
-     .   (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+        if (.not.flip) then
+          fa(ixa,iya-1) = fx(ixm,iya-1)/
+     .     (hy(ixm,iya-1)*qc(ixm,iya-1))
+          fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya)/
+     .     (hy(ixa:ixb,iya)*qc(ixa:ixb,iya))
+          fa(ixa,iya:iyb) = fx(ixm,iya:iyb)/
+     .     (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))
+          fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
+     .     (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
+          fa(ixa,iyb+1) = fx(ixm,iyb)/
+     .     (hy(ixm,iyb)*qc(ixm,iyb))
+          fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
+     .     (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+        else
+          fa(ixa:ixb,iya-1) = -fx(ixb:ixa:-1,iya)/
+     .     (hy(ixb:ixa:-1,iya)*qc(ixb:ixa:-1,iya))
+          fa(ixb+1,iya-1) = -fx(ixm,iya-1)/
+     .     (hy(ixm,iya-1)*qc(ixm,iya-1))
+          fa(ixa:ixb,iya:iyb) = -fx(ixb:ixa:-1,iya:iyb)/
+     .     (hy(ixb:ixa:-1,iya:iyb)*qc(ixb:ixa:-1,iya:iyb))
+          fa(ixb+1,iya:iyb) = -fx(ixm,iya:iyb)/
+     .     (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))
+          fa(ixa:ixb,iyb+1) = -fx(ixb:ixa:-1,iyb)/
+     .     (hy(ixb:ixa:-1,iyb)*qc(ixb:ixa:-1,iyb))
+          fa(ixb+1,iyb+1) = -fx(ixm,iyb)/
+     .     (hy(ixm,iyb)*qc(ixm,iyb))
+        endif
         call interp2d(ixb-ixa+2,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa:ixb+1,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
@@ -716,26 +863,46 @@
          do iy1 = iyc, iyd
           yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
          enddo
-         fa(ixa,iya-1) = fx(ixm,iya-1)/
-     .    (hy(ixm,iya-1)*qc(ixm,iya-1))
-         fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya-1)/
-     .    (hy(ixa:ixb,iya-1)*qc(ixa:ixb,iya-1))
-         fa(ixa,iya:iyb) = fx(ixm,iya:iyb)/
-     .    (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))
-         fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
-     .    (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
-         fa(ixa,iyb+1) = fx(ixm,iyb)/
-     .    (hy(ixm,iyb)*qc(ixm,iyb))
-         fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
-     .    (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+         if (.not.flip) then
+           fa(ixa,iya-1) = fx(ixm,iya-1)/
+     .      (hy(ixm,iya-1)*qc(ixm,iya-1))
+           fa(ixa+1:ixb+1,iya-1) = fx(ixa:ixb,iya-1)/
+     .      (hy(ixa:ixb,iya-1)*qc(ixa:ixb,iya-1))
+           fa(ixa,iya:iyb) = fx(ixm,iya:iyb)/
+     .      (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))
+           fa(ixa+1:ixb+1,iya:iyb) = fx(ixa:ixb,iya:iyb)/
+     .      (hy(ixa:ixb,iya:iyb)*qc(ixa:ixb,iya:iyb))
+           fa(ixa,iyb+1) = fx(ixm,iyb)/
+     .      (hy(ixm,iyb)*qc(ixm,iyb))
+           fa(ixa+1:ixb+1,iyb+1) = fx(ixa:ixb,iyb)/
+     .      (hy(ixa:ixb,iyb)*qc(ixa:ixb,iyb))
+         else
+           fa(ixa:ixb,iya-1) = -fx(ixb:ixa:-1,iya-1)/
+     .      (hy(ixb:ixa:-1,iya-1)*qc(ixb:ixa:-1,iya-1))
+           fa(ixb+1,iya-1) = -fx(ixm,iya-1)/
+     .      (hy(ixm,iya-1)*qc(ixm,iya-1))
+           fa(ixa:ixb,iya:iyb) = -fx(ixb:ixa:-1,iya:iyb)/
+     .      (hy(ixb:ixa:-1,iya:iyb)*qc(ixb:ixa:-1,iya:iyb))
+           fa(ixb+1,iya:iyb) = -fx(ixm,iya:iyb)/
+     .      (hy(ixm,iya:iyb)*qc(ixm,iya:iyb))
+           fa(ixa:ixb,iyb+1) = -fx(ixb:ixa:-1,iyb)/
+     .      (hy(ixb:ixa:-1,iyb)*qc(ixb:ixa:-1,iyb))
+           fa(ixb+1,iyb+1) = -fx(ixm,iyb)/
+     .      (hy(ixm,iyb)*qc(ixm,iyb))
+         endif
          call interp2d(ixb-ixa+2,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa:ixb+1,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
          fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .    (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
 *     ..region 4 : western divertor SN SOL or HFS DDN top divertor SOL : top row (including eastern edge)
-         fa(ixa,ny) = fx(ixm,ny)
-         fa(ixa+1:ixb+1,ny) = fx(ixa:ixb,ny)
+         if (.not.flip) then
+           fa(ixa,ny) = fx(ixm,ny)
+           fa(ixa+1:ixb+1,ny) = fx(ixa:ixb,ny)
+         else
+          fa(ixa:ixb,ny) = -fx(ixb:ixa:-1,ny)
+          fa(ixb+1,ny) = -fx(ixm,ny) ! continuity condition
+         endif
          call E01BEF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,ny),d,ifail)
          call E01BFF(ixb-ixa+2,xx(ixa:ixb+1),fa(ixa:ixb+1,ny),d,
      .               ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,ny1),ifail)

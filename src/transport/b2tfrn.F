@@ -43,7 +43,7 @@
      &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1,0:1),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     2  hy(-1:nx,-1:ny),  qz(-1:nx,-1:ny,0:1),
+     2  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      2  gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), ve(-1:nx,-1:ny),
      2  facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),
@@ -340,8 +340,8 @@ csw 30sep2013, added check for no_hybr
      &         ycur/(rza(ix,iy,is)*qe*
      &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &         na(ix,iy,is))/2.0_R8)
-            vsprcur=
-     &       vis_per*fchvisper_a(ix,iy,1,1,is)/(rza(ix,iy,is)*qe)*ycur   !srv 02.04.18 08.09.21
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,1,is)/
+     &              (rza(ix,iy,is)*qe)*ycur                                                 !srv 02.04.18 08.09.21
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -385,8 +385,8 @@ csw 30sep2013, added check for no_hybr
      &        ycur/(rza(ix,iy,is)*qe*
      &       (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/
      &        2.0_R8)
-            vsprcur=
-     &       vis_per*fchvisper_a(ix,iy,1,1,is)/(rza(ix,iy,is)*qe)*ycur   !srv 02.04.18 08.09.21
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,1,is)/
+     &       (rza(ix,iy,is)*qe)*ycur                                     !srv 02.04.18 08.09.21
            else
              scur = 0.0_R8
              vsprcur = 0.0_R8                                            !srv 02.04.18
@@ -407,9 +407,9 @@ csw 30sep2013, added check for no_hybr
        enddo
       enddo !is
 c Drift terms
+
       wedia =0.0_R8
       wedia_=0.0_R8
-
       if((maxval(facdrift).ne.0.0_R8 .or.
      &    maxval(fac_ExB).ne.0.0_R8)) then
         wrk0=1.0_R8  ! compute ... on the cell faces
@@ -641,7 +641,7 @@ c Drift terms
             endif
             fhe_eir(ix,iy,1,1) = upwind(floe_eir,                        !srv 14.07.10
      &       te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
-     &           -(chce_eir - 0.5_R8*abs(floe_eir))*dte(ix,iy,1,1)
+     &       -(chce_eir - 0.5_R8*abs(floe_eir))*dte(ix,iy,1,1)
             floi_eir = 0.0_R8
             do isb = 0, ns-1
               if(.not.is_neutral(isb)) then
@@ -655,8 +655,8 @@ c Drift terms
               chci_eir = chci(ix,iy,1,1)
             endif
             fhi_eir(ix,iy,1,1) = upwind(floi_eir,                        !srv 14.07.10
-     &           ti(bottomix(ix,iy),bottomiy(ix,iy)),ti(ix,iy))
-     &           -(chci_eir - 0.5_R8*abs(floi_eir))*dti(ix,iy,1,1)
+     &       ti(bottomix(ix,iy),bottomiy(ix,iy)),ti(ix,iy))
+     &       -(chci_eir - 0.5_R8*abs(floi_eir))*dti(ix,iy,1,1)
           endif
         enddo
       enddo
@@ -680,15 +680,31 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fna_eir(ix,-1,0,0,:) = 0.0_R8
-            fne_eir(ix,-1,0,0) = 0.0_R8
-            fhe_eir(ix,-1,0,0) = 0.0_R8
-            fhi_eir(ix,-1,0,0) = 0.0_R8
-            wedia(ix,-1,0,0)   = 0.0_R8
-          endif
-        enddo
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fna_eir(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0,:) =
+     .                                                         0.0_R8
+                fne_eir(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                fhe_eir(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                fhi_eir(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                wedia(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0)   = 0.0_R8
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if(on_closed_surface(ix,-1)) then
+              fna_eir(ix,-1,0,0,:) = 0.0_R8
+              fne_eir(ix,-1,0,0) = 0.0_R8
+              fhe_eir(ix,-1,0,0) = 0.0_R8
+              fhi_eir(ix,-1,0,0) = 0.0_R8
+              wedia(ix,-1,0,0)   = 0.0_R8
+            endif
+          enddo
+        endif
+
       elseif(guard_flows.eq.1) then                                      !srv 20.06.08 {
 *   .. do nothing
       elseif(guard_flows.eq.2) then

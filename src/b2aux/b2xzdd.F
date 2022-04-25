@@ -1,6 +1,7 @@
       subroutine b2xzdd (nx, ny, nd, src)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_boundary_namelist
       implicit none
       integer nx, ny, nd
       real (kind=R8) ::
@@ -9,7 +10,7 @@
 *      B2XZDD zeroes out the array elements corresponding to dead cells
 *      and core boundary cells.
 *     ------------------------------------------------------------------
-      integer id, ix, iy
+      integer ib, id, ix, iy
       integer ncall, zero_dead_and_core
       save ncall, zero_dead_and_core
 *   ..procedures
@@ -33,13 +34,25 @@
         enddo
       endif
       if (zero_dead_and_core.ge.2) then
-        do ix = -1, nx
-          if (on_closed_surface(ix,-1)) then
-            do id = 0, nd
-              src(ix,-1,id) = 0.0_R8
-            enddo
-          end if
-        end do
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if (core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                do id = 0, nd
+                  src(bc_list_x(ix,ib),bc_list_y(ix,ib),id) = 0.0_R8
+                enddo
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              do id = 0, nd
+                src(ix,-1,id) = 0.0_R8
+              enddo
+            end if
+          end do
+        endif
       endif
       ncall=ncall+1
       return

@@ -13,8 +13,7 @@
       integer nprt, nx, ny, ns
       character idout*(*)
       real (kind=R8) ::
-     *  pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
@@ -91,9 +90,6 @@
       call b2xvsg (n2, pr, 1, 'pr', '.gt.')
       call b2xvsg (n2, ro, 1, 'ro', '.gt.')
       call b2xvsg (n2, rz, 1, 'rz', '.gt.')
-*   ..test edge values of fne, fni
-      call b2xvff (nx, ny, fne, 'fne')
-      call b2xvff (nx, ny, fni, 'fni')
 
 * ..write the state
 *   ..write pzmm segment?

@@ -169,7 +169,7 @@
       external xertst, xerrab, streql, cfwuch
       external ratstr, ratadp, ratwei, rattai, ratprt, cfruch
       external b2xxid, b2arin, b2wfr0, b2wfr1, b2wurc, b2rucp
-      external cfverr, cfruin, is_comment, get_ADAS_hash
+      external cfruin, is_comment, get_ADAS_hash
 *   ..initialisation
       data fix_cx/1/, no_weisheit/0/, rtnt_in/40/, rtnn_in/32/
 *-----------------------------------------------------------------------

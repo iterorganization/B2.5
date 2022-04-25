@@ -104,7 +104,7 @@
       character cnamip*80, cvalip*80, line*80, ligne*80
 *   ..procedures
       logical streql, is_comment
-      external xertst, xerrab, cfverr, cfruch
+      external xertst, xerrab, cfruch
       external cfruin, streql, ipgeti, gacwk, gdawk, is_comment
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 

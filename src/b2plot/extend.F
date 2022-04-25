@@ -2,6 +2,7 @@
       subroutine extend(field,nxd,nyd,nsd,nx,ny,ns)
       use b2mod_types
       use b2mod_indirect
+      implicit none
       integer nxd,nyd,nsd,nx,ny,ns
       real (kind=R8) ::
      *   field(-1:nxd,-1:nyd,0:nsd-1)

@@ -42,6 +42,8 @@
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
+      use b2mod_batch
+      use b2mod_trace
       use b2mod_ipmain
       use b2mod_openmp
       use b2mod_average
@@ -113,7 +115,7 @@
      , ,only: put_ids_edge, new_ids_edge, close_ual,
      ,        dealloc_ids_edge, dealloc_batch_edge
       use b2mod_ual_io
-     , ,only: b25_process_ids,
+     , ,only: b25_process_ids, b25_av_ids,
      ,        num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
@@ -155,7 +157,7 @@
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
       integer n2, itim, ierr, edition, b2time, coronal,
-     *  use_eirene,
+     *  use_eirene, neutrals_namelist,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx, status
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -224,8 +226,9 @@
       real (kind=R8) ::
      *  te_hot, ne_hot_frac
       logical quitexist, quit, quitexist_
-      logical write_save, write_ids
-      logical process_ids
+      logical write_save, write_ids, write_av
+      logical process_ids, process_av
+      logical, save :: summary_av = .false.
       real (kind=R8) ::
      *  stack_dtim(20)
       integer stack_ntim(20)
@@ -240,7 +243,7 @@
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
-     4  use_astra, BoRiS, density_rescale,
+     4  use_astra, BoRiS, density_rescale, neutrals_namelist,
      .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
@@ -265,6 +268,7 @@
      *     neutral_sources_rescale/1.0_R8/, tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
      *     no_solve/0/, no_current/0/,
+     &     neutrals_namelist/0/,
      2     na_eps/1.0e19_R8/,
      3     te_eps/1.0e+1_R8/,
      4     ti_eps/1.0e+1_R8/,
@@ -1223,6 +1227,7 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
        call ipgeti ('b2mndr_astra',use_astra)
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
+       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
        call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
@@ -1337,6 +1342,10 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        endif
 #endif
        call ipgeti('b2mndr_ids_save', ids_save )
+       call ipgeti('b2mndr_ids_av', ids_av )
+       call xertst( 0.le.ids_av, 'Invalid ids_av value')
+       summary_av =
+     &  ids_av.gt.0 .and. ids_save.eq.0 .and. delta_ids_time.eq.0.0_R8
 #ifdef IMAS
        if (ids_save.eq.1) then
          write(*,*) 'Writing IDS every iteration'
@@ -1345,7 +1354,16 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        else if (ids_save.lt.0) then
          write(*,*) 'Writing IDS at the end of the run'
        end if
-       if (ids_save.ne.0 .or. delta_ids_time.gt.0.0_R8)
+       if (ids_av.eq.1 .and. ntim_batch.gt.0) then
+         write(*,*) 'Writing IDS for every averaged solution'
+       else if (ids_av.gt.1 .and. ntim_batch.gt.0) then
+         write(*,*) 'Writing IDS every ',ids_av,' averaged solutions'
+       else if (ids_av.gt.0 .and. ntim_batch.eq.0) then
+         ids_av = 0
+         write(*,*) 'No batch averaging frequency provided'
+         write(*,*) 'Cannot write averaged solution IDS'
+       end if
+       if (ids_save.ne.0 .or. ids_av.gt.0 .or. delta_ids_time.gt.0.0_R8)
      .  then
          call ipgeti('b2mndr_shot_number', shot )
          call xertst( 0.le.shot.and.shot.le.214748,
@@ -1388,7 +1406,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .    'Database not defined !')
        end if
 #else
-       if (ids_save.ne.0 .or. delta_ids_time.gt.0.0_R8)
+       if (ids_save.ne.0 .or. ids_av.gt.0 .or. delta_ids_time.gt.0.0_R8)
      >  write(*,*)
      1   'Not compiled with IMAS option, IDS will not be written.'
 #endif
@@ -1986,8 +2004,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
 *   ..write geometric information
       call b2wfgm (nout(0), idout0, nx, ny)
 *   ..write summary of initial state
-      call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na,
-     &  te, ti, fna, fch)
+      call b2wfpi (nout(0), idout0, nx, ny, ns)
 
 * ..main loop
 *   ..initialise counters
@@ -2031,7 +2048,14 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
-      call b2stbr_init (nx, ny, ns, BoRiS)
+      call get_boundary_namelist
+      if (boundary_namelist.ge.1) then
+        call initialize_b2mod_boundary(nx,ny,ns,tim)
+      else
+        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+      endif
+      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
+     > call read_neutrals_namelist(nx, ny, ns, .true.)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
@@ -2039,7 +2063,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_WNEUTRALS_INIT
-      if (ex.or.ids_save.ne.0.or.
+      if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
      &    delta_ids_time.gt.0.0_R8) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
@@ -2049,7 +2073,7 @@ cxpb for neutral fluxes used in b2stbc_phys
         endif
       endif
 #else
-      if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
+      if (ids_save.ne.0.or.ids_av.gt.0.or.delta_ids_time.gt.0.0_R8)
      > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                         natm,nmol,nion,nlimps)
 #endif
@@ -2082,6 +2106,10 @@ c new CDF movie option (1st frame at t=0)
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, nx, ny, ns, add_ntim)
+#ifdef IMAS
+      use b2mod_ual
+     , , only : new_batch_edge, put_batch_edge
+#endif
       implicit none
 #ifdef JET
       integer nout(0:9), nx, ny, ns, add_ntim
@@ -2540,7 +2568,10 @@ c new CDF movie option
         write_ids = write_ids .or.
      .   (tim.ge.save_ids_time.and.delta_ids_time.gt.0.0_R8)
         process_ids = write_ids
-        if (write_ids) then
+        write_av = ids_av.gt.0 .and. ntim.gt.0 .and. ntim_batch.gt.0
+        if (write_av) write_av = mod(itim,ids_av*ntim_batch).eq.0
+        process_av = write_av
+        if (write_ids .or. write_av) then
           status = 0
 #ifdef IMAS
           if (idx.eq.0.and.continued) then
@@ -2585,6 +2616,14 @@ c new CDF movie option
                   ids_end_time = IDS_REAL_INVALID
                 end if
                 call ids_deallocate( old_edge_profiles )
+                call ids_get( idx, "edge_profiles/1",
+     .            old_batch_profiles, status)
+                if (status.ne.0) then
+                  num_batch_slices = 0
+                else
+                  num_batch_slices = size(old_batch_profiles%time)
+                  call ids_deallocate( old_batch_profiles )
+                end if
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
                 old_imas_version = 'x.xx.x'
@@ -2673,6 +2712,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      .                 "Appending a new time slice at t = ", tim, " s."
                       num_time_slices = num_time_slices + 1
                     end if
+                    if (process_av) then
+                      write(*,*)
+     .                 "Appending a new averaged time slice at t = ",
+     .                  tim, " s."
+                      num_batch_slices = num_batch_slices + 1
+                    end if
                   end if
                   if (process_ids) then
                     time_slice_index = num_time_slices
@@ -2692,6 +2737,18 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               time_slice_index, num_time_slices )
                     process_ids = .false.
                   end if
+                  if (process_av) then
+                    batch_index = num_batch_slices
+                    call B25_av_ids( summary_av,
+     &               batch_profiles, batch_sources,
+     &               description, equilibrium,
+#if IMAS_MINOR_VERSION > 21
+     &               summary,
+#endif
+     &               tim, shot, run, database, version,
+     &               batch_index, num_batch_slices )
+                    process_av = .false.
+                  end if
                 else
                   write(*,*)
      .             'Not a time continuation, edge IDS components '//
@@ -2707,7 +2764,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               if (database.eq.'iter') database = 'ITER'
             end if
           end if
-          if (process_ids .and.
+          if ((process_ids .or. process_av) .and.
      &        (status.ne.0 .or. idx.eq.0)) then
             if (status.ne.0) idx = 0
             if (process_ids) then
@@ -2726,7 +2783,17 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               old_start_time = run_start_time
               process_ids = .false.
             end if
-          else if (process_ids) then
+            if (process_av) then
+              call B25_av_ids( summary_av,
+     &         batch_profiles, batch_sources,
+     &         description, equilibrium,
+#if IMAS_MINOR_VERSION > 21
+     &         summary,
+#endif
+     &         tim, shot, run, database, version )
+              process_av = .false.
+            end if
+          else if (process_ids .or. process_av) then
             if (process_ids) then
               write(*,*)
      .         "Appending a new time slice at t = ", tim, " s."
@@ -2747,6 +2814,22 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &          time_slice_index, num_time_slices )
               process_ids = .false.
             end if
+            if (process_av) then
+              write(*,*)
+     .         "Appending a new averaged time slice at t = ",
+     .          tim, " s."
+              num_batch_slices = num_batch_slices + 1
+              batch_index = num_batch_slices
+              call B25_av_ids( summary_av,
+     &          batch_profiles, batch_sources,
+     &          description, equilibrium,
+#if IMAS_MINOR_VERSION > 21
+     &          summary,
+#endif
+     &          tim, shot, run, database, version,
+     &          batch_index, num_batch_slices )
+              process_av = .false.
+            end if
           end if
           if (ids_replace) then
             if (write_ids)
@@ -2762,6 +2845,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &        divertors,
 #endif
      &        idx )
+            if (write_av)
+     &       call new_batch_edge( idx,
+     &        batch_profiles, batch_sources,
+#if IMAS_MINOR_VERSION > 21
+     &        summary,
+#endif
+     &        description, summary_av )
           else
             if (database.eq.'iter') database = 'ITER'
             if (write_ids)
@@ -2777,6 +2867,14 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &        divertors,
 #endif
      &        treename, shot, run, idx, username, database, version )
+            if (write_av)
+     &       call put_batch_edge(
+     &        treename, shot, run, idx, username, database, version,
+     &        batch_profiles, batch_sources,
+#if IMAS_MINOR_VERSION > 21
+     &        summary,
+#endif
+     &        description, summary_av )
           end if
 #endif
           if (.not.continued) continued = .true.
@@ -2859,8 +2957,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
 * ..display and save the result of the calculation
 *   ..write summary of final state
-      call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na,
-     &  te, ti, fna, fch)
+      call b2wfpi (nout(0), idout1, nx, ny, ns)
       if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,

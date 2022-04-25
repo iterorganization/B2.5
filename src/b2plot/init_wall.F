@@ -2,57 +2,31 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sputter
       use b2mod_wall
       use b2mod_layer
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_indirect
-      use b2mod_external
       use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
       implicit none
 
-      integer nx, ny, ns
-      real (kind=R8) :: BoRiS
+      integer nx, ny
 
       integer ix, iy, is, ixn, iyn, idir, ireg
-      integer ibnd, ibndm, i, j, ik, itrack, icoat, ikink, ikink0
+      integer ibnd
       integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:)
       integer, save :: debug_init_wall
-      real (kind=R8) :: qpl, qex, normal_r, normal_z, torl,
-     *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
-     *  xap, yap, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
-     *  distance, distp, dint, sum,
-     *  sput_frac(0:ntrack), wrk(ndepth_nml)
-      character*16 hlp_frm
-      logical wall_namelist_used, default_cooling, correct_quadrant
-      logical error
-
-      integer, save :: hd_linlog, output, sput_frac_flag,
-     *  sput_phys_col, sput_phys_model, refl_model
-      real (kind=R8), save :: hd_ratio, width
-      data hd_linlog/1/, hd_ratio/100.0_R8/, output/0/
-      data sput_frac_flag/0/, sput_phys_col/3/,
-     *  sput_phys_model/1/, refl_model/1/, width/1.0_R8/
 #ifdef DBG
       data debug_init_wall/1/
 #else
       data debug_init_wall/0/
 #endif
 
-      real (kind=R8) :: mass_density
-      logical overlap
-      intrinsic max, min, sqrt, abs, int
-      external mass_density, overlap
       external xertst, ipgeti, ipgetr
-
-      real (kind=R8) :: onemeps
-      parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
 
       call subini('init_wall')
       allocate(imapx_tmp(nwall), imapy_tmp(nwall))
@@ -344,8 +318,47 @@ cxpb Recopy geometrical arrays into namelist defaults
       xymap(-1:nx,-1:ny) = xymap_tmp(-1:nx,-1:ny)
       call subend()
       return
+      end subroutine init_wall
 
-      entry get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
+      subroutine get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_wall
+      use b2mod_plasma
+      use b2mod_sputter
+      use b2mod_indirect
+      use b2mod_external
+      use b2mod_neutrals_namelist
+      use b2mod_subsys
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      real(kind=R8), intent(in) :: BoRiS
+      logical, intent(in) :: wall_namelist_used
+
+      integer i, j, is, ix, iy
+      integer ibnd, ibndm, icoat, itrack, ik, ikink, ikink0
+      real(kind=R8) :: xa, xb, ya, yb, xa2, ya2, xo, yo,
+     *  distance, distp, normal_r, normal_z, qex, qpl, torl,
+     *  nhalf_r, nhalf_z, nhalf, xint, yint, dint,
+     *  xap, yap, xbm, ybm, xbp, ybp, xbq, ybq, sum
+      real(kind=R8) :: sput_frac(0:ntrack), wrk(ndepth_nml)
+      character*16 hlp_frm
+      logical error, correct_quadrant
+
+      integer, save :: output, hd_linlog, refl_model,
+     *  sput_frac_flag, sput_phys_col, sput_phys_model
+      real(kind=R8), save :: hd_ratio, width
+      data hd_ratio/100.0_R8/, hd_linlog/1/, refl_model/1/, output/0/
+      data sput_frac_flag/0/, sput_phys_col/3/, sput_phys_model/1/
+      data width/1.0_R8/
+
+      real (kind=R8) :: onemeps
+      parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
+
+      real (kind=R8) :: mass_density
+      logical overlap
+      external mass_density, overlap
+
       call subini('get_wall_data')
 cxpb  Test namelist input
       if (ntargsp.gt.0) then
@@ -820,9 +833,18 @@ cxpb Use 1-D equilibrium profile
       endif   !  ndepth_nml
       call subend()
       return
+      end subroutine get_wall_data
 
 * ..finalise time-dependent wall data
-      entry wall_final(nx,ny,ns,wall_namelist_used)
+      subroutine wall_final(nx,ny,ns,wall_namelist_used)
+      use b2mod_types
+      use b2mod_wall
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(inout) :: wall_namelist_used
+
+      integer ibnd
+      logical default_cooling
 
       wall_namelist_used = wall_namelist_used .or. ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or.
@@ -840,8 +862,7 @@ cxpb Use 1-D equilibrium profile
       if (.not.wall_namelist_used) return
       call write_b2mod_wall_namelist(99,nx,ny,ns,'    ')
       return
-
-      contains
+      end subroutine wall_final
 
       subroutine check_ok(nx, ny, ix, iy, idir)
       implicit none
@@ -868,8 +889,6 @@ cxpb Use 1-D equilibrium profile
          call xerrab('Invalid iy')
       endif
       end subroutine check_ok
-
-      end subroutine init_wall
 
       subroutine add_layer_thickness(ns,ibnd)
       use b2mod_types

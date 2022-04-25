@@ -126,17 +126,17 @@
         do ix=-1,nx
           do is=0,ns-1
             fnaxreg(region(ix,iy,1),is)=fnaxreg(region(ix,iy,1),is)+
-     1       fna(ix,iy,0,0,is)
+     1       fna(ix,iy,0,0,is)+fna(ix,iy,0,1,is)
             fnayreg(region(ix,iy,2),is)=fnayreg(region(ix,iy,2),is)+
-     1       fna(ix,iy,1,1,is)
+     1       fna(ix,iy,1,0,is)+fna(ix,iy,1,1,is)
             fhmxreg(region(ix,iy,1),is)=fhmxreg(region(ix,iy,1),is)+
-     1       fhm(ix,iy,0,0,is)
+     1       fhm(ix,iy,0,0,is)+fhm(ix,iy,0,1,is)
             fhmyreg(region(ix,iy,2),is)=fhmyreg(region(ix,iy,2),is)+
-     1       fhm(ix,iy,1,1,is)
+     1       fhm(ix,iy,1,0,is)+fhm(ix,iy,1,1,is)
             fhpxreg(region(ix,iy,1),is)=fhpxreg(region(ix,iy,1),is)+
-     1       fhp(ix,iy,0,0,is)
+     1       fhp(ix,iy,0,0,is)+fhp(ix,iy,0,1,is)
             fhpyreg(region(ix,iy,2),is)=fhpyreg(region(ix,iy,2),is)+
-     1       fhp(ix,iy,1,1,is)
+     1       fhp(ix,iy,1,0,is)+fhp(ix,iy,1,1,is)
             nareg(region(ix,iy,0),is)=nareg(region(ix,iy,0),is)+
      1       na(ix,iy,is)*vol(ix,iy)
             b2stbr_sna_reg(region(ix,iy,0),is)=
@@ -195,25 +195,27 @@
             endif
           enddo
           fhixreg(region(ix,iy,1))=fhixreg(region(ix,iy,1))+
-     1     fhi(ix,iy,0,0)
+     1     fhi(ix,iy,0,0)+fhi(ix,iy,0,1)
           fhiyreg(region(ix,iy,2))=fhiyreg(region(ix,iy,2))+
-     1     fhi(ix,iy,1,1)
+     1     fhi(ix,iy,1,0)+fhi(ix,iy,1,1)
           fhexreg(region(ix,iy,1))=fhexreg(region(ix,iy,1))+
-     1     fhe(ix,iy,0,0)
+     1     fhe(ix,iy,0,0)+fhi(ix,iy,0,1)
           fheyreg(region(ix,iy,2))=fheyreg(region(ix,iy,2))+
-     1     fhe(ix,iy,1,1)
+     1     fhe(ix,iy,1,0)+fhi(ix,iy,1,1)
           fchxreg(region(ix,iy,1))=fchxreg(region(ix,iy,1))+
-     1     fch(ix,iy,0,0)
+     1     fch(ix,iy,0,0)+fch(ix,iy,0,1)
           fchyreg(region(ix,iy,2))=fchyreg(region(ix,iy,2))+
-     1     fch(ix,iy,1,1)
+     1     fch(ix,iy,1,0)+fch(ix,iy,1,1)
           fhjxreg(region(ix,iy,1))=fhjxreg(region(ix,iy,1))+
-     1     fhj(ix,iy,0,0)
+     1     fhj(ix,iy,0,0)+fhj(ix,iy,0,1)
           fhjyreg(region(ix,iy,2))=fhjyreg(region(ix,iy,2))+
-     1     fhj(ix,iy,1,1)
+     1     fhj(ix,iy,1,0)+fhj(ix,iy,1,1)
           fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+
-     1     fht(ix,iy,0,0)+fhi_ext(ix,iy,0,0)
+     1     fht(ix,iy,0,0)+fhi_ext(ix,iy,0,0)+
+     2     fht(ix,iy,0,1)+fhi_ext(ix,iy,0,1)
           fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+
-     1     fht(ix,iy,1,1)+fhi_ext(ix,iy,1,1)
+     1     fht(ix,iy,1,0)+fhi_ext(ix,iy,1,0)+
+     2     fht(ix,iy,1,1)+fhi_ext(ix,iy,1,1)
           do is=0,ns_ext-1
             if (leftix(ix,iy).ne.-2) then
               fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+        !cjk
@@ -221,9 +223,11 @@
      .         0.5_R8*(ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
      2                 ua_ext(ix,iy,is)**2)+
      3         0.5_R8*(ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,0,0,is)+
+     4                 ta_ext(ix,iy,is)))*(fa_ext(ix,iy,0,0,is)+
+     4                                     fa_ext(ix,iy,0,1,is))+
      1         0.5_R8*(pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
-     2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,0,0,is)*ev
+     2                 pt_ext(ix,iy,is))*(fa_ext(ix,iy,0,0,is)+
+     2                                    fa_ext(ix,iy,0,1,is))*ev
             endif
             if (bottomiy(ix,iy).ne.-2) then
               fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+        !cjk
@@ -231,9 +235,11 @@
      .         0.5_R8*(ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
      2                 ua_ext(ix,iy,is)**2)+
      3         0.5_R8*(ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,1,1,is)+
+     4                 ta_ext(ix,iy,is)))*(fa_ext(ix,iy,1,0,is)+
+     4                                     fa_ext(ix,iy,1,1,is))+
      1         0.5_R8*(pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,1,1,is)*ev
+     2                 pt_ext(ix,iy,is))*(fa_ext(ix,iy,1,0,is)+
+     2                                    fa_ext(ix,iy,1,1,is))*ev
             endif
           enddo
           tereg(region(ix,iy,0))=tereg(region(ix,iy,0))+

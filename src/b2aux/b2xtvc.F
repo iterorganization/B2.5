@@ -1,5 +1,5 @@
       subroutine b2xtvc (nx, ny, nx1, ny1, fun, fun1,
-     &        nncutmax, non_commensurate,
+     &        nncutmax, non_commensurate, flip,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk1)
@@ -17,8 +17,11 @@
       integer rightcut(nncutmax), rightcut1(nncutmax)
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
+      logical flip
 *     ------------------------------------------------------------------
 *     B2XTVC transfers a cell center variable to a new mesh.
+*     When mapping between USN and LSN topologies, we flip the order
+*     poloidal indices.
 *     ------------------------------------------------------------------
       integer ix1, iy1, ix, iy, nd, ifail
       integer ixa, ixb, iya, iyb, ixc, ixd, iyc, iyd
@@ -94,10 +97,17 @@
        ifail=0
 *   ..we proceed per region
 *    .. all topologies : corners
-       fun1( -1, -1) = fun(-1,-1)
-       fun1( -1,ny1) = fun(-1,ny)
-       fun1(nx1, -1) = fun(nx,-1)
-       fun1(nx1,ny1) = fun(nx,ny)
+       if (.not.flip) then
+         fun1( -1, -1) = fun(-1,-1)
+         fun1( -1,ny1) = fun(-1,ny)
+         fun1(nx1, -1) = fun(nx,-1)
+         fun1(nx1,ny1) = fun(nx,ny)
+       else
+         fun1( -1, -1) = fun(nx,-1)
+         fun1( -1,ny1) = fun(nx,ny)
+         fun1(nx1, -1) = fun(-1,-1)
+         fun1(nx1,ny1) = fun(-1,ny)
+       endif
 *    .. region 1 :
        if (nncut.eq.0 .and. periodic_bc.le.0) then ! slab cases
         ixa = 0
@@ -198,23 +208,41 @@
         enddo
        endif
 *    .. region 1 : bottom row
-       wrk1(ixa-1,-1) = fun(ixm,-1)
-       wrk1(ixa:ixb,-1) = fun(ixa:ixb,-1)
-       wrk1(ixb+1,-1) = fun(ixp,-1)
+       if (.not.flip) then
+         wrk1(ixa-1,-1) = fun(ixm,-1)
+         wrk1(ixa:ixb,-1) = fun(ixa:ixb,-1)
+         wrk1(ixb+1,-1) = fun(ixp,-1)
+       else
+         wrk1(ixa-1,-1) = fun(ixp,-1)
+         wrk1(ixa:ixb,-1) = fun(ixb:ixa:-1,-1)
+         wrk1(ixb+1,-1) = fun(ixm,-1)
+       endif
        call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,-1),d,
      .             ifail)
        call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,-1),d,
      .             ixd-ixc+1,xx1(ixc:ixd),fun1(ixc:ixd,-1),ifail)
 *    .. region 1 : central part
-       wrk1(ixa-1,iya-1) = fun(ixm,iym)
-       wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
-       wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-       wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
-       wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
-       wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-       wrk1(ixb+1,iya-1) = fun(ixp,iym)
-       wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-       wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+       if (.not.flip) then
+         wrk1(ixa-1,iya-1) = fun(ixm,iym)
+         wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+         wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+         wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+         wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+         wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+         wrk1(ixb+1,iya-1) = fun(ixp,iym)
+         wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+         wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+       else
+         wrk1(ixa-1,iya-1) = fun(ixp,iym)
+         wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+         wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+         wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+         wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+         wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+         wrk1(ixb+1,iya-1) = fun(ixm,iym)
+         wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+         wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+       endif
        call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .  xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .  wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
@@ -261,17 +289,29 @@
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
 *    .. region 2 : periodic_bc.eq.1 : western edge
-        wrk1(-1,iya-1) = fun(-1,iym)
-        wrk1(-1,iya:iyb) = fun(-1,iya:iyb)
-        wrk1(-1,iyb+1) = fun(-1,iyp)
+        if (.not.flip) then
+          wrk1(-1,iya-1) = fun(-1,iym)
+          wrk1(-1,iya:iyb) = fun(-1,iya:iyb)
+          wrk1(-1,iyb+1) = fun(-1,iyp)
+        else
+          wrk1(-1,iya-1) = fun(nx,iym)
+          wrk1(-1,iya:iyb) = fun(nx,iya:iyb)
+          wrk1(-1,iyb+1) = fun(nx,iyp)
+        endif
         call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
      .              ifail)
         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
      .              iyd-iyc+1,yy1(iyc:iyd),fun1(-1,iyc:iyd),ifail)
 *    .. region 2 : periodic_bc.eq.1 : eastern edge
-        wrk1(nx,iya-1) = fun(nx,iym)
-        wrk1(nx,iya:iyb) = fun(nx,iya:iyb)
-        wrk1(nx,iyb+1) = fun(nx,iyp)
+        if (.not.flip) then
+          wrk1(nx,iya-1) = fun(nx,iym)
+          wrk1(nx,iya:iyb) = fun(nx,iya:iyb)
+          wrk1(nx,iyb+1) = fun(nx,iyp)
+        else
+          wrk1(nx,iya-1) = fun(-1,iym)
+          wrk1(nx,iya:iyb) = fun(-1,iya:iyb)
+          wrk1(nx,iyb+1) = fun(-1,iyp)
+        endif
         call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(nx,iya-1:iyb+1),d,
      .              ifail)
         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(nx,iya-1:iyb+1),d,
@@ -353,23 +393,41 @@
         do iy1 = iyc, iyd
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
-        wrk1(ixa-1,iya-1) = fun(ixm,iym)
-        wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
-        wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-        wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
-        wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
-        wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-        wrk1(ixb+1,iya-1) = fun(ixp,iym)
-        wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-        wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+        if (.not.flip) then
+          wrk1(ixa-1,iya-1) = fun(ixm,iym)
+          wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+          wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+          wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+          wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+          wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+          wrk1(ixb+1,iya-1) = fun(ixp,iym)
+          wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+          wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+        else
+          wrk1(ixa-1,iya-1) = fun(ixp,iym)
+          wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+          wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+          wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+          wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+          wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+          wrk1(ixb+1,iya-1) = fun(ixm,iym)
+          wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+          wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
         if (nnreg(0).ne.5) then
 *    .. region 2 : SOL : top row
-         wrk1(ixa-1,ny) = fun(ixm,ny)
-         wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
-         wrk1(ixb+1,ny) = fun(ixp,ny)
+         if (.not.flip) then
+           wrk1(ixa-1,ny) = fun(ixm,ny)
+           wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
+           wrk1(ixb+1,ny) = fun(ixp,ny)
+         else
+           wrk1(ixa-1,ny) = fun(ixp,ny)
+           wrk1(ixa:ixb,ny) = fun(ixb:ixa:-1,ny)
+           wrk1(ixb+1,ny) = fun(ixm,ny)
+         endif
          call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
      .               ifail)
          call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
@@ -382,8 +440,13 @@
         ixm = 0
         ixb = leftcut(1)-1
         ixp = rightcut(1)
-        ixc = 0
-        ixd = leftcut1(1)-1
+        if (.not.flip) then
+          ixc = 0
+          ixd = leftcut1(1)-1
+        else
+          ixc = rightcut1(1)
+          ixd = nx1-1
+        endif
         iya = 0
         iyb = jsep
         iym = 0
@@ -405,9 +468,15 @@
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
 *    .. region 3 : western PFR : bottom row
-        wrk1(ixa-1,-1) = fun(ixm,-1)
-        wrk1(ixa:ixb,-1) = fun(ixa:ixb,-1)
-        wrk1(ixb+1,-1) = fun(ixp,-1)
+        if (.not.flip) then
+          wrk1(ixa-1,-1) = fun(ixm,-1)
+          wrk1(ixa:ixb,-1) = fun(ixa:ixb,-1)
+          wrk1(ixb+1,-1) = fun(ixp,-1)
+        else
+          wrk1(ixa-1,-1) = fun(ixp,-1)
+          wrk1(ixa:ixb,-1) = fun(ixb:ixa:-1,-1)
+          wrk1(ixb+1,-1) = fun(ixm,-1)
+        endif
         call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,-1),d,
      .              ifail)
         call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,-1),d,
@@ -416,20 +485,39 @@
         wrk1(-1,iya-1) = fun(-1,iym)
         wrk1(-1,iya:iyb) = fun(-1,iya:iyb)
         wrk1(-1,iyb+1) = fun(-1,iyp)
-        call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
-     .              ifail)
-        call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
-     .              iyd-iyc+1,yy1(iyc:iyd),fun1(-1,iyc:iyd),ifail)
+        if (.not.flip) then
+          call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                ifail)
+          call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                iyd-iyc+1,yy1(iyc:iyd),fun1(-1,iyc:iyd),ifail)
+        else
+          call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                ifail)
+          call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                iyd-iyc+1,yy1(iyc:iyd),fun1(nx1,iyc:iyd),ifail)
+        endif
 *    .. region 3 : western PFR : central part
-        wrk1(ixa-1,iya-1) = fun(ixm,iym)
-        wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
-        wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-        wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-        wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
-        wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-        wrk1(ixb+1,iya-1) = fun(ixp,iym)
-        wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
-        wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+        if (.not.flip) then
+          wrk1(ixa-1,iya-1) = fun(ixm,iym)
+          wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+          wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+          wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+          wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+          wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+          wrk1(ixb+1,iya-1) = fun(ixp,iym)
+          wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+          wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+        else
+          wrk1(ixa-1,iya-1) = fun(ixp,iym)
+          wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+          wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+          wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+          wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+          wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+          wrk1(ixb+1,iya-1) = fun(ixm,iym)
+          wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+          wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
@@ -494,27 +582,52 @@
          wrk1(-1,iya-1) = fun(-1,iym)
          wrk1(-1,iya:iyb) = fun(-1,iya:iyb)
          wrk1(-1,iyb+1) = fun(-1,iyp)
-         call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
-     .               ifail)
-         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
-     .               iyd-iyc+1,yy1(iyc:iyd),fun1(-1,iyc:iyd),ifail)
+         if (.not.flip) then
+           call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                 ifail)
+           call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fun1(-1,iyc:iyd),ifail)
+         else
+           call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                 ifail)
+           call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(-1,iya-1:iyb+1),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fun1(nx1,iyc:iyd),ifail)
+         endif
 *    .. region 3 : western divertor : above the separatrices : central part
-         wrk1(ixa-1,iya-1) = fun(ixm,iym)
-         wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
-         wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-         wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-         wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
-         wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-         wrk1(ixb+1,iya-1) = fun(ixp,iym)
-         wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
-         wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+         if (.not.flip) then
+           wrk1(ixa-1,iya-1) = fun(ixm,iym)
+           wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+           wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+           wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+           wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+           wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+           wrk1(ixb+1,iya-1) = fun(ixp,iym)
+           wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+           wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+         else
+           wrk1(ixa-1,iya-1) = fun(ixp,iym)
+           wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+           wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+           wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+           wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+           wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+           wrk1(ixb+1,iya-1) = fun(ixm,iym)
+           wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+           wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+         endif
          call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .    wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
 *    .. region 3 : western divertor : above the separatrices : top row
-         wrk1(ixa-1,ny) = fun(ixm,ny)
-         wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
-         wrk1(ixb+1,ny) = fun(ixp,ny)
+         if (.not.flip) then
+           wrk1(ixa-1,ny) = fun(ixm,ny)
+           wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
+           wrk1(ixb+1,ny) = fun(ixp,ny)
+         else
+           wrk1(ixa-1,ny) = fun(ixp,ny)
+           wrk1(ixa:ixb,ny) = fun(ixb:ixa:-1,ny)
+           wrk1(ixb+1,ny) = fun(ixm,ny)
+         endif
          call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
      .               ifail)
          call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
@@ -534,8 +647,13 @@
          ixm = leftcut(1)-1
          ixb = nx-1
          ixp = nx-1
-         ixc = rightcut1(1)
-         ixd = nx1-1
+         if (.not.flip) then
+           ixc = rightcut1(1)
+           ixd = nx1-1
+         else
+           ixc = 0
+           ixd = leftcut1(1)-1
+         endif
         else if (nncut.eq.2) then
          ixa = leftcut(2)
          ixm = rightcut(2)-1
@@ -567,9 +685,15 @@
          yy1(iy1) = (iy1+0.5_R8-iyc)/real(iyd-iyc+1)
         enddo
 *    .. region 4 : eastern SN PFR or DN HFS top PFR : bottom row
-        wrk1(ixa-1,-1) = fun(ixm,-1)
-        wrk1(ixa:ixb,-1) = fun(ixa:ixb,-1)
-        wrk1(ixb+1,-1) = fun(ixp,-1)
+        if (.not.flip) then
+          wrk1(ixa-1,-1) = fun(ixm,-1)
+          wrk1(ixa:ixb,-1) = fun(ixa:ixb,-1)
+          wrk1(ixb+1,-1) = fun(ixp,-1)
+        else
+          wrk1(ixa-1,-1) = fun(ixp,-1)
+          wrk1(ixa:ixb,-1) = fun(ixb:ixa:-1,-1)
+          wrk1(ixb+1,-1) = fun(ixm,-1)
+        endif
         call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,-1),d,
      .              ifail)
         call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,-1),d,
@@ -578,21 +702,41 @@
         wrk1(ixb+1,iya-1) = fun(ixb+1,iym)
         wrk1(ixb+1,iya:iyb) = fun(ixb+1,iya:iyb)
         wrk1(ixb+1,iyb+1) = fun(ixb+1,iyp)
-        call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
-     .              wrk1(ixb+1,iya-1:iyb+1),d,ifail)
-        call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
-     .              wrk1(ixb+1,iya-1:iyb+1),d,
-     .              iyd-iyc+1,yy1(iyc:iyd),fun1(ixd+1,iyc:iyd),ifail)
+        if (.not.flip) then
+          call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                wrk1(ixb+1,iya-1:iyb+1),d,ifail)
+          call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                wrk1(ixb+1,iya-1:iyb+1),d,
+     .                iyd-iyc+1,yy1(iyc:iyd),fun1(ixd+1,iyc:iyd),ifail)
+        else
+          call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                wrk1(ixb+1,iya-1:iyb+1),d,ifail)
+          call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                wrk1(ixb+1,iya-1:iyb+1),d,
+     .                iyd-iyc+1,yy1(iyc:iyd),fun1(ixc-1,iyc:iyd),ifail)
+        endif
 *    .. region 4 : eastern SN PFR or DN HFS top PFR : central part
-        wrk1(ixa-1,iya-1) = fun(ixm,iym)
-        wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
-        wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-        wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-        wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
-        wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-        wrk1(ixb+1,iya-1) = fun(ixp,iym)
-        wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
-        wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+        if (.not.flip) then
+          wrk1(ixa-1,iya-1) = fun(ixm,iym)
+          wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+          wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+          wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+          wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+          wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+          wrk1(ixb+1,iya-1) = fun(ixp,iym)
+          wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+          wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+        else
+          wrk1(ixa-1,iya-1) = fun(ixp,iym)
+          wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+          wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+          wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+          wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+          wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+          wrk1(ixb+1,iya-1) = fun(ixm,iym)
+          wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+          wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
@@ -657,29 +801,56 @@
          wrk1(ixb+1,iya-1) = fun(ixb+1,iym)
          wrk1(ixb+1,iya:iyb) = fun(ixb+1,iya:iyb)
          wrk1(ixb+1,iyb+1) = fun(ixb+1,iyp)
-         call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
-     .               wrk1(ixb+1,iya-1:iyb+1),d,ifail)
-         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
-     .               wrk1(ixb+1,iya-1:iyb+1),
-     .               d,iyd-iyc+1,yy1(iyc:iyd),
-     .               fun1(ixd+1,iyc:iyd),ifail)
+         if (.not.flip) then
+           call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                 wrk1(ixb+1,iya-1:iyb+1),d,ifail)
+           call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                 wrk1(ixb+1,iya-1:iyb+1),
+     .                 d,iyd-iyc+1,yy1(iyc:iyd),
+     .                 fun1(ixd+1,iyc:iyd),ifail)
+         else
+           call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                 wrk1(ixb+1,iya-1:iyb+1),d,ifail)
+           call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
+     .                 wrk1(ixb+1,iya-1:iyb+1),
+     .                 d,iyd-iyc+1,yy1(iyc:iyd),
+     .                 fun1(ixc-1,iyc:iyd),ifail)
+         endif
 *    .. region 4 : eastern SN or DN HFS top divertor : above the separatrices : central part
-         wrk1(ixa-1,iya-1) = fun(ixm,iym)
-         wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
-         wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-         wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-         wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
-         wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-         wrk1(ixb+1,iya-1) = fun(ixp,iym)
-         wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
-         wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+         if (.not.flip) then
+           wrk1(ixa-1,iya-1) = fun(ixm,iym)
+           wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
+           wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
+           wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+           wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
+           wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+           wrk1(ixb+1,iya-1) = fun(ixp,iym)
+           wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
+           wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+         else
+           wrk1(ixa-1,iya-1) = fun(ixp,iym)
+           wrk1(ixa-1,iya:iyb) = fun(ixp,iya:iyb)
+           wrk1(ixa-1,iyb+1) = fun(ixp,iyp)
+           wrk1(ixa:ixb,iyb+1) = fun(ixb:ixa:-1,iyp)
+           wrk1(ixb+1,iyb+1) = fun(ixm,iyp)
+           wrk1(ixb+1,iya:iyb) = fun(ixm,iya:iyb)
+           wrk1(ixb+1,iya-1) = fun(ixm,iym)
+           wrk1(ixa:ixb,iya-1) = fun(ixb:ixa:-1,iym)
+           wrk1(ixa:ixb,iya:iyb) = fun(ixb:ixa:-1,iya:iyb)
+         endif
          call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .    wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
 *    .. region 4 : eastern SN or DN HFS top divertor : above the separatrices : top row
-         wrk1(ixa-1,ny) = fun(ixm,ny)
-         wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
-         wrk1(ixb+1,ny) = fun(ixp,ny)
+         if (.not.flip) then
+           wrk1(ixa-1,ny) = fun(ixm,ny)
+           wrk1(ixa:ixb,ny) = fun(ixa:ixb,ny)
+           wrk1(ixb+1,ny) = fun(ixp,ny)
+         else
+           wrk1(ixa-1,ny) = fun(ixp,ny)
+           wrk1(ixa:ixb,ny) = fun(ixb:ixa:-1,ny)
+           wrk1(ixb+1,ny) = fun(ixm,ny)
+         endif
          call E01BEF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
      .               ifail)
          call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,

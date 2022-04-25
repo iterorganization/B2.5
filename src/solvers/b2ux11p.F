@@ -67,7 +67,7 @@
       integer, save :: nz
       parameter (itmax=100)
       real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end
+     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -149,7 +149,6 @@
           allocate(wrk1(1:1))
           allocate(wrk2(1:1))
           allocate(iwrk(1:n2))
-        else if (style.eq.2) then
         endif
         write(*,*)
      .   'Allocated space for solver for 11-point-stencil matrix'   !sv 11.01.00
@@ -179,6 +178,12 @@
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
        endif
       else if (style.eq.2) then
+       call cpu_time(c_start)
+       call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
+     *                 indexes, iasave, jasave, name)
+       call cpu_time(c_end)
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
+     &               c_end-c_start
 *    ..use ma28
        call cpu_time(cpu_start)
        call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)   !srv 02.04.18
@@ -223,7 +228,7 @@
       implicit none
 *  ..input
       integer nx, ny, nnz
-      real (kind=R8) :: aa11(-1:nx,-1:ny,-3:3)
+      real (kind=R8) :: aa11(-1:nx,-1:ny,-5:5)
       character*(*) name
 *  ..output
       integer ia(nnz), ja(nnz), k,
@@ -232,14 +237,36 @@
 *  ..locals
       logical :: lord
       logical, save :: lfirst=.true.
-      integer :: i, j, ix, iy, ner, iw, jw, jak, jtemp, iat, nxp2
+      integer :: i, j, ix, iy, ner, jak, jtemp, ipt, nxp2, n
+      integer :: ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
+      integer :: ip(1:(nx+2)*(ny+2)+1)
       real (kind=R8) :: temp
+      integer, save :: ncall = 0
+      integer, save :: kwrite_fmt = -1
+      integer, save :: kwrite_bnr = -1
+      !$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
+
+      if(ncall.eq.0) then
+        call ipgeti ('storage_11_kwrite_fmt', kwrite_fmt)
+        call ipgeti ('storage_11_kwrite_bnr', kwrite_bnr)
+        if (in_parallel() .and.
+     &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
+         !$OMP MASTER
+         write(*,*) 'storage_11 OpenMP warning: no file IO ' ,
+     &       'in parallel mode'
+         !$OMP END MASTER
+         kwrite_fmt = -1
+         kwrite_bnr = -1
+       endif
+      endif
+
+      n = (nx+2)*(ny+2)
 
       if (lfirst) then
         indexes=0
         nxp2=nx+2
         k=0
-        ia(1)=1
+        ip(1)=1
         i=0
         do iy=-1,ny
           do ix=-1,nx
@@ -247,7 +274,7 @@
             i=i+1
 *   ..Case of left neighbor
             jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-            if( jak.gt.i .and. aa11(ix,iy,-1) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-1) .ne. 0.0e0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-1)
               indexes(1,k)=ix
@@ -270,7 +297,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-            if( jak.gt.i .and. aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,1)
               indexes(1,k)=ix
@@ -281,6 +308,47 @@
               ner = ner+1
             endif
 *   ..Case of top neighbor
+            if( aa11(ix,iy,3) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,3)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=3
+              ia(k) = i
+              ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
+              ner = ner+1
+            endif
+*   ..Case of bottom neighbor
+            if( aa11(ix,iy,-3) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,-3)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-3
+              ia(k) = i
+              ja(k) = 2+bottomix(ix,iy)+(2+bottomiy(ix,iy)-1)*nxp2
+              ner = ner+1
+            endif
+*   ..Case (ix-1,iy-1)
+            ixl = leftix(ix,iy)
+            iyl = leftiy(ix,iy)
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
+            if( aa11(ix,iy,-4) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,-4)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-4
+              ia(k) = i
+              ja(k) = 2+bottomix(ixl,iyl)+(2+bottomiy(ixl,iyl)-1)*nxp2
+              ner = ner+1
+            endif
+*   ..Case (ix-1,iy+1)
+            ixl = leftix(ix,iy)
+            iyl = leftiy(ix,iy)
+            ixt = topix(ix,iy)
+            iyt = topiy(ix,iy)
             if( aa11(ix,iy,2) .ne. 0.0e0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,2)
@@ -288,36 +356,81 @@
               indexes(2,k)=iy
               indexes(3,k)=2
               ia(k) = i
-              ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
+              ja(k) = 2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,3) .ne. 0.0e0_R8 ) then
+*       Case (ix+1,iy-1)
+            ixr = rightix(ix,iy)
+            iyr = rightiy(ix,iy)
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
+            if( aa11(ix,iy,-2) .ne. 0.0e0_R8 ) then
               k = k+1
-              a(k) = aa11(ix,iy,3)
+              a(k) = aa11(ix,iy,-2)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)=3
-              iw = topix(ix,iy)
-              jw = topiy(ix,iy)
-              ja(k) =2+topix(iw,jw)+(2+topiy(iw,jw)-1)*nxp2
+              indexes(3,k)=-2
+              ia(k) = i
+              ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
-            ia(i+1)=ia(i) + ner
+*       Case (ix+1,iy+1)
+            ixr = rightix(ix,iy)
+            iyr = rightiy(ix,iy)
+            ixt = topix(ix,iy)
+            iyt = topiy(ix,iy)
+            if( aa11(ix,iy,4) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,4)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=4
+              ia(k) = i
+              ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
+              ner = ner+1
+            endif
+*   ..Case of top top neighbor
+             ixt = topix(ix,iy)
+             iyt = topiy(ix,iy)
+            if( aa11(ix,iy,5) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,5)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=5
+              ia(k) = i
+              ja(k) =2+topix(ixt,iyt)+(2+topiy(ixt,iyt)-1)*nxp2
+              ner = ner+1
+            endif
+*   ..Case of bottom bottom neighbor
+             ixb = bottomix(ix,iy)
+             iyb = bottomiy(ix,iy)
+            if( aa11(ix,iy,-5) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,-5)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-5
+              ia(k) = i
+              ja(k) = 2+bottomix(ixb,iyb)+(2+bottomiy(ixb,iyb)-1)*nxp2
+              ner = ner+1
+            endif
+            ip(i+1)=ip(i) + ner
 
             do
               lord=.true.
-              do iat=ia(i),ia(i+1)-2
-                if(ja(iat).gt.ja(iat+1)) then
-                  jtemp  = ja(iat)
-                  ja(iat)  = ja(iat+1)
-                  ja(iat+1)= jtemp
-                  temp   = a(iat)
-                  a(iat)   = a(iat+1)
-                  a(iat+1) = temp
+              do ipt=ip(i),ip(i+1)-2
+                if(ja(ipt).gt.ja(ipt+1)) then
+                  jtemp  = ja(ipt)
+                  ja(ipt)  = ja(ipt+1)
+                  ja(ipt+1)= jtemp
+                  temp   = a(ipt)
+                  a(ipt)   = a(ipt+1)
+                  a(ipt+1) = temp
                   do j=1,3
-                    jtemp=indexes(j,iat)
-                    indexes(j,iat)=indexes(j,iat+1)
-                    indexes(j,iat+1)=jtemp
+                    jtemp=indexes(j,ipt)
+                    indexes(j,ipt)=indexes(j,ipt+1)
+                    indexes(j,ipt+1)=jtemp
                   enddo
                   lord=.false.
                 endif
@@ -346,4 +459,41 @@
         enddo
       endif
 
+      if(kwrite_bnr.eq.ncall) then
+!        write(*,*) 'Opening 76'
+!        open(76,file=
+!     &   'st_11_rhs_binary_'//trim(name)//'.dat',form='unformatted')
+!         write(76) n
+!         do i=1,n
+!          write(76) r1(i)
+!         enddo
+!        close(76)
+        write(*,*) 'Opening 77'
+        open(77,file=
+     &   'st_11_matrix_binary_'//trim(name)//'.dat',form='unformatted') !srv 11.03.13
+        write(77) n, k
+        do i=1,k
+          write(77) ia(i), ja(i), a(i)
+        enddo
+        close(77)
+      endif
+      if(kwrite_fmt.eq.ncall) then
+!        write(*,*) 'Opening 76'
+!        open(76,file='st_11_rhs_'//trim(name)//'.dat')
+!         write(76,*) n
+!         do i=1,n
+!          write(76,*) r1(i)
+!         enddo
+!        close(76)
+        open(77,file='st_11_matrix_'//trim(name)//'.dat')
+        write(77,*) n, k
+        do i=1,k
+          write(77,*) ia(i), ja(i), a(i)
+        enddo
+        close(77)
+      endif
+
+      ncall = ncall + 1
+
       end subroutine storage_11                                       !srv 02.04.18 }
+

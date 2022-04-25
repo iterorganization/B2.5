@@ -415,7 +415,7 @@ csw 01oct2012 initialize potential if necessary
      &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is),           !srv 08.09.21
      &   fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &   fchvisq_a(-1,-1,0,0,is),                                        !srv 19.07.02 01.10.99 20.09.06
+     &   fchvisq_a(-1,-1,0,0,is),                                        !srv 20.09.06
      &   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
      &   fna_fcor(-1,-1,0,0,is),
      &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is),
@@ -639,7 +639,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar_a(-1,-1,0,0,is), fchvisper_a(-1,-1,0,0,is),           !srv 08.09.21
      &   fchinert_a(-1,-1,0,0,is), fchanml_a(-1,-1,0,0,is),
-     &   fchvisq_a(-1,-1,0,0,is),                                        !srv 19.07.02 01.10.99 20.09.06
+     &   fchvisq_a(-1,-1,0,0,is),                                        !srv 20.09.06
      &   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
      &   fna_fcor(-1,-1,0,0,is),
      &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is),
@@ -689,7 +689,7 @@ csw 16oct2012 init ier0
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
-            endif
+            endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
 cwdk tmp: always use 9-point stencil
             if(.not.is_neutral(is).or. .true.) then

@@ -24,6 +24,7 @@ C
 
       REAL (KIND=R8),SAVE :: STRG(0:DEF_NYD-1,NTRGM) !AREAS OF SURFACE ELEMENTS
       INTEGER,SAVE :: LTRGPOS(NTRGM) !POLOIDAL INDEX FOR EACH TARGET
+      INTEGER,SAVE :: ITRG(NTRGM)    !TARGET INDEX ARRAY
       INTEGER,SAVE :: NTRGS,         !NUMBER OF TARGETS
      i                SHIFT(NTRGM)
       REAL (KIND=R8) :: WTARG(0:ny-1,NTRGM),wnutrg(0:ny-1,NTRGM),
@@ -39,6 +40,7 @@ C
 
       if(ifirst) then
 C PREPARING GEOMETRY DATA
+        itrg=0
         geometryType = geometryId(nnreg, isymm, periodic_bc, topcut)
         if(nncut.eq.0) then
           ntrgs=0
@@ -58,19 +60,27 @@ C PREPARING GEOMETRY DATA
             end do
             if (target_west) then
               ntrgs=1
+              itrg(1)=1
               ltrgpos(1)=0
             end if
             if (target_east) then
               ntrgs=ntrgs+1
+              itrg(ntrgs)=2
               ltrgpos(ntrgs)=nx-1
             end if
           end if
         else if(nncut.eq.1) then
           ntrgs=2
+          itrg(1)=1
+          itrg(2)=2
           ltrgpos(1)=0
           ltrgpos(2)=nx-1
         else
           ntrgs=4
+          itrg(1)=1
+          itrg(2)=2
+          itrg(3)=3
+          itrg(4)=4
           ltrgpos(1)=0
           ltrgpos(2)=nxtl-1
           ltrgpos(3)=nxtr+1
@@ -78,24 +88,26 @@ C PREPARING GEOMETRY DATA
         end if
 C AREAS OF THE SURFACE ELEMENTS
         l=0
-        do j=1,ntrgs !{
-          k=ltrgpos(j)
-          wtarg_max(j)=0.0_R8
-          do iy=0,ny-1
-            strg(iy,j)=gs(k+l,iy,0)
-          end do
-          call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the Eirene arrays
-          if(shift(j).eq.-1) then
-            write(*,*) "Error in b2usr_loads: the EIRENE data "//
-     w                 "is apparently missing. ",
-     w                 "No neutral fluxes will be calculated."
-          else if(shift(j).lt.0) then
-            write(*,*) "Error in b2usr_loads: the EIRENE data on "//
-     w                 "neutral fluxes is incorrect. ",
-     w                 "No neutral fluxes will be calculated."
-          else
-            call b2neut_surfcheck(strg(0,j),j,ny,shift(j))
-          end if
+        do j=1,max(1,nncut)*2 !{ Do not use ntrgs here to allow for sign flips
+          if (itrg(j).ne.0) then !{
+            k=ltrgpos(itrg(j))
+            wtarg_max(itrg(j))=0.0_R8
+            do iy=0,ny-1
+              strg(iy,itrg(j))=gs(k+l,iy,0)
+            end do
+            call b2neut_ind(2,k+l,1,ny,shift(itrg(j))) !index range in the Eirene arrays
+            if(shift(itrg(j)).eq.-1) then
+              write(*,*) "Error in b2usr_loads: the EIRENE data "//
+     w                   "is apparently missing. ",
+     w                   "No neutral fluxes will be calculated."
+            else if(shift(itrg(j)).lt.0) then
+              write(*,*) "Error in b2usr_loads: the EIRENE data on "//
+     w                   "neutral fluxes is incorrect. ",
+     w                   "No neutral fluxes will be calculated."
+            else
+              call b2neut_surfcheck(strg(0,itrg(j)),j,ny,shift(itrg(j)))
+            end if
+          end if !}
           l=1-l
         end do !}
         ifirst=.false.
@@ -104,26 +116,28 @@ C AREAS OF THE SURFACE ELEMENTS
       write(*,*) "Calculating incident power flux in b2usr_loads"
 
       l=0
-      do j=1,ntrgs !{
-        k=ltrgpos(j)
-        call b2neut_eng(wnutrg(0,j),wnutpr(0,j),
-     .                  ny,shift(j))
-        wtarg_max(j)=0.0_R8
-        do iy=0,ny-1
-          hlp=abs(fht(k+l,iy,0,0)+fhi_ext(k+l,iy,0,0)+
-     .            fht(k+l,iy,0,1)+fhi_ext(k+l,iy,0,1))
-          do is=0,ns_ext-1
-            hlp=hlp+abs((fa_ext(k+l,iy,0,0,is)
-     .                  +fa_ext(k+l,iy,0,1,is))*(pt_ext(k,iy,is)*ev+
-     .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                  ua_ext(k,iy,is)**2+ta_ext(k,iy,is))))
+      do j=1,2*max(1,nncut) !{ Do not use ntrgs here to allow for sign flips
+        if (itrg(j).gt.0) then !{
+          k=ltrgpos(itrg(j))
+          call b2neut_eng(wnutrg(0,itrg(j)),wnutpr(0,itrg(j)),
+     .                    ny,shift(itrg(j)))
+          wtarg_max(itrg(j))=0.0_R8
+          do iy=0,ny-1
+            hlp=abs(fht(k+l,iy,0,0)+fhi_ext(k+l,iy,0,0)+
+     .              fht(k+l,iy,0,1)+fhi_ext(k+l,iy,0,1))
+            do is=0,ns_ext-1
+              hlp=hlp+abs((fa_ext(k+l,iy,0,0,is)
+     .                    +fa_ext(k+l,iy,0,1,is))*(pt_ext(k,iy,is)*ev+
+     .                   (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
+     .                    ua_ext(k,iy,is)**2+ta_ext(k,iy,is))))
+            end do
+            hlp=hlp/strg(iy,itrg(j))
+            wtarg(iy,itrg(j))=hlp+wnutrg(iy,itrg(j))-wnutpr(iy,itrg(j))
+            if(wtarg(iy,itrg(j)).gt.wtarg_max(itrg(j)))
+     .       wtarg_max(itrg(j))=wtarg(iy,itrg(j))
+csw 02jan2017 corrected flip of l variable (i.e. put it AFTER iy loop)
           end do
-          hlp=hlp/strg(iy,j)
-          wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
-          if(wtarg(iy,j).gt.wtarg_max(j))
-     .     wtarg_max(j)=wtarg(iy,j)
-csw 02jan2017 corrected flip of l variable (i.e.put it AFTER iy loop)
-        end do
+        end if !}
         l=1-l
       end do !}
 
@@ -133,24 +147,24 @@ csw 02jan2017 corrected flip of l variable (i.e.put it AFTER iy loop)
 C total power
         open(3,file='targb2.datv')
         do iy=0,ny-1
-          write(3,frm) (wtarg(iy,j),j=1,ntrgs)
+          write(3,frm) (wtarg(iy,itrg(j)),j=1,ntrgs)
         end do
         close(3)
 C neutrals
         open(3,file='targb2n.datv')
         do iy=0,ny-1
-          write(3,frm) (wnutrg(iy,j),j=1,ntrgs)
+          write(3,frm) (wnutrg(iy,itrg(j)),j=1,ntrgs)
         end do
         close(3)
 C plasma
         do j=1,ntrgs
           do iy=0,ny-1
-            wtarg(iy,j)=wtarg(iy,j)-wnutrg(iy,j)
+            wtarg(iy,itrg(j))=wtarg(iy,itrg(j))-wnutrg(iy,itrg(j))
           end do
         end do
         open(3,file='targb2pl.datv')
         do iy=0,ny-1
-          write(3,frm) (wtarg(iy,j),j=1,ntrgs)
+          write(3,frm) (wtarg(iy,itrg(j)),j=1,ntrgs)
         end do
         close(3)
       end if

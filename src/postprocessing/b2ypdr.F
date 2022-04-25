@@ -701,9 +701,7 @@
 *   ..write physics parameters
       call b2wfcp (nout(0), 1, ns)
 *   ..write state
-      call b2wfps (nout(0), idout, nx, ny, ns,
-     &  gs, qc, ne, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch)
+      call b2wfps (nout(0), idout, nx, ny, ns)
 *   ..activate graphics on nout(1)
       call gacwk (nout(1))
 *   ..mark contour style
@@ -722,8 +720,7 @@
 *   ..produce special output
       call b2wscp (nout(2), nx, ny, ns)
       call b2wsps (nout(2), nx, ny, ns, crx, cry, bb,
-     &  vol, hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+     &  vol, hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height)
 
 * ..return
       call dealloc_b2mod_b2cmrc

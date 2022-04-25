@@ -885,7 +885,7 @@ cxpb
                 call b2sral (nx, ny, ns,
      &           nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &           dtim, BoRiS, facdrift, fac_ExB, fac_vis,                !xpb
-     &           vol, hx, hy, hz, qz, qc, qs, gs, pbs, pb,
+     &           vol, hx, hy, hz, qz, qc, qs, gs, pbs, bb,
      &           na, ua,                                                 !srv 09.01.01
      &           uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &           te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,         !srv 28.10.02
@@ -1182,7 +1182,7 @@ c     with diamagnetic drift part                                        !xpb
      &    rxf3, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
      &    fne, fch, fchstoch, cvsa,
-     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &    na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                      !srv 09.07.08
      &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
@@ -1192,7 +1192,7 @@ c     with diamagnetic drift part                                        !xpb
      &    rxf3, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,         !srv 07.06.00 02.06.99
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa,                                      !srv 24.08.21
-     &    fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
+     &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &    na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,  !srv 31.05.99
      &    reshe, reshi, wrk0, corte, corti, ier0)                        !srv 31.05.99 10.11.02
         endif                                                            !srv 13.10.06 }

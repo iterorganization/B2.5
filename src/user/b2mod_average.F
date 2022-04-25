@@ -102,7 +102,7 @@
       character check*10
       character lbli*120
       external b2ruzd, b2xpne, b2xpni
-      external cfruch, cfruin, cfrure, cfverr
+      external cfruch, cfruin, cfrure
 
       call subini ('run_av_init')
 
@@ -347,7 +347,7 @@
       character(*) :: savefile
       integer n2, iun, idum(0:2)
       character lble*120
-      external cfwuch, cfwuin, cfwure, cfverw
+      external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
 
       call subini ('run_av_save')

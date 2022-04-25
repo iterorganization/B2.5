@@ -426,7 +426,7 @@
         else                                                             !dpc
           fch_32 = 0.0_R8
           fch_32(:,:,0,0)=fch(:,:,0,0)
-          fch_52=0.0_R8
+          fch_52 = 0.0_R8
           fch_52(:,:,1,1)=fch(:,:,1,1)
         endif
       endif

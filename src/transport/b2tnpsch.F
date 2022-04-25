@@ -269,11 +269,22 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if (on_closed_surface(ix,-1)) then
-            fnbPSch(ix,-1,0,0:1) = 0.0_R8
-          endif
-        enddo
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fnbPSch(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0:1) =
+     .                                                         0.0_R8
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fnbPSch(ix,-1,0,0:1) = 0.0_R8
+            endif
+          enddo
+        endif
 
       elseif(guard_flows.eq.1) then                                      !srv 20.06.08 {
 *   .. do nothing

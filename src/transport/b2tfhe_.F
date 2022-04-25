@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol, hx, hy,    !srv 23.11.10 19.02.21
-     1 qc, qs, te, po, ne, na, vedia, fne, chce, chve, calf,             !srv 17.05.99
+      subroutine b2tfhe_ (nx, ny, ns, facdrift, fac_ExB, vol,            !srv 23.11.10 19.02.21
+     1 hx, hy, qc, qs, te, po, ne, na, vedia, fne, chce, chve, calf,     !srv 17.05.99
      & chvemx, cdde, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99 !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
       use b2mod_types
@@ -188,16 +188,16 @@ csw 10oct2012
      &        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
      &       *vedia(ix,iy,0,0)*vdia_par                                  !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
-!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                 !srv 13.09.02 {
 !     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                !srv 13.09.02 }
             fledia(ix,iy,0,1) =
      &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
      &       *vedia(ix,iy,0,1)*vdia_par*qs(ix,iy,0)/qc(ix,iy,0)
-!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                 !srv 13.09.02 {
 !     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                !srv 13.09.02 }
            endif                                                         !srv 26.11.02
           enddo
          enddo
@@ -945,16 +945,16 @@ csw 13mar2013 added check upwind (SOLPS4 style)
          endif
         else
          fhe(ix,iy,1,1) = upwind(floe0,
-     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy)) -
-     &         (cone0-0.5_R8*abs(floe0))*dter(ix,iy,1) + 
-     &         alfTeEh*calf(ix,iy,1,1)*                                  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
+     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
+     &        -(cone0-0.5_R8*abs(floe0))*dter(ix,iy,1)
+     &        +alfTeEh*calf(ix,iy,1,1)*                                  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehr9  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe(ix,iy,1,0) = 0.0_R8                                         !srv 29.01.20
          fhe_mdf(ix,iy,1,1) = upwind(floe0_mdf,                          !srv 13.10.06 {
-     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy)) -
-     &         (cone0_mdf-0.5_R8*abs(floe0_mdf))*dter(ix,iy,1) -
-     &         fhePSch(ix,iy,1,1) +                                      !srv 13.10.06 }
-     &         alfTeEh*calf(ix,iy,1,1)*                                  !iyv 12.05.08 !srv 03.10.08
+     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
+     &        -(cone0_mdf-0.5_R8*abs(floe0_mdf))*dter(ix,iy,1)
+     &        -fhePSch(ix,iy,1,1)                                        !srv 13.10.06 }
+     &        +alfTeEh*calf(ix,iy,1,1)*                                  !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehr9  !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1,0) = 0.0_R8                                     !srv 29.01.20
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017

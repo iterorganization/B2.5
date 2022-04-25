@@ -155,10 +155,10 @@ c=======================================================================
 c
       integer ig, ih(3)
       real (kind=R8), allocatable ::
-     . hlp_pi(:), hlp_po(:), hlp_at(:), hlp_ml(:),
-     . mach(:,:,:), pz(:,:)
+     . hlp_pi(:), hlp_po(:), hlp_at(:,:), hlp_ml(:,:),
+     . hlp_na(:,:), hlp_nm(:,:), mach(:,:,:), pz(:,:)
       real (kind=R8) :: hlp_a, hlp_m, hlp_n, hlp_p, hlp_s(3), hlp_ms(3),
-     . mass, vel, vth
+     . mass, vel, vth, hlp_sp(2), hlp_mh(3)
       character*2, allocatable :: hlp_al(:)
       character*5 :: trg_lbl
       character*11, allocatable :: hlp_sg(:)
@@ -179,11 +179,20 @@ c
       else if(ig.eq.-3) then
 c-----------------------------------------------------------------------
         allocate(hlp_pi(nspecies),hlp_po(nspecies))
-        allocate(hlp_at(natmi))
-        if (nmoli.gt.0) allocate(hlp_ml(nmoli))
+        allocate(hlp_at(natmi,2),hlp_na(natmi,2))
+        if (nmoli.gt.0) allocate(hlp_ml(nmoli,2),hlp_nm(nmoli,2))
+        hlp_sp(1:2)=0.0_R8
         do k=1,nspecies
           hlp_pi(k)=0.0_R8
           hlp_po(k)=0.0_R8
+        end do
+        do k=1,natmi
+          hlp_at(k,1:2)=0.0_R8
+          hlp_na(k,1:2)=0.0_R8
+        end do
+        do k=1,nmoli
+          hlp_ml(k,1:2)=0.0_R8
+          hlp_nm(k,1:2)=0.0_R8
         end do
         do is=0,ns-1
           k=b2espcr(is)
@@ -218,50 +227,70 @@ c-----------------------------------------------------------------------
         write(frm,730) n
   730   format('(1p,1x,a5,',i3,'(5x,e12.5))')
         trg_lbl = 'inner'
-        do i=1,natmi
-          hlp_at(i)=wldra(nlim+ltns(1),i,0)+wldpa(nlim+ltns(1),i,0)
-        end do
-        do i=1,nmoli
-          hlp_ml(i)=wldrm(nlim+ltns(1),i,0)+wldpm(nlim+ltns(1),i,0)
+        if (.not.LSN) trg_lbl = 'outer'
+        do k=1,ntns
+          if (ktns(k).ne.1) cycle
+          do i=1,natmi
+            hlp_na(i,1)=hlp_na(i,1)+wldna(nlim+ltns(k),i,0)
+            hlp_at(i,1)=hlp_at(i,1)+wldra(nlim+ltns(k),i,0)+
+     .                              wldpa(nlim+ltns(k),i,0)
+          end do
+          do i=1,nmoli
+            hlp_nm(i,1)=hlp_nm(i,1)+wldnm(nlim+ltns(k),i,0)
+            hlp_ml(i,1)=hlp_ml(i,1)+wldrm(nlim+ltns(k),i,0)+
+     .                              wldpm(nlim+ltns(k),i,0)
+          end do
+          hlp_sp(1)=hlp_sp(1)+wldspt(nlim+ltns(k),0)
         end do
         if (nmoli.gt.0) then
           write(lun, frm) trg_lbl,
      ,      (hlp_pi(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
-     ,      (wldnm(nlim+ltns(1),i,0),i=1,nmoli),
-     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,       wldspt(nlim+ltns(1),0)
+     ,      (hlp_na(i,1),i=1,natmi),
+     ,      (hlp_nm(i,1),i=1,nmoli),
+     ,      (hlp_at(i,1),i=1,natmi),
+     ,      (hlp_ml(i,1),i=1,nmoli),
+     ,       hlp_sp(1)
         else
           write(lun, frm) trg_lbl,
      ,      (hlp_pi(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(1),i,0),i=1,natmi),
-     ,      (hlp_at(i),i=1,natmi),
-     ,       wldspt(nlim+ltns(1),0)
+     ,      (hlp_na(i,1),i=1,natmi),
+     ,      (hlp_at(i,1),i=1,natmi),
+     ,       hlp_sp(1)
         end if
         trg_lbl = 'outer'
-        do i=1,natmi
-          hlp_at(i)=wldra(nlim+ltns(2),i,0)+wldpa(nlim+ltns(2),i,0)
-        end do
-        do i=1,nmoli
-          hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
+        if (.not.LSN) trg_lbl = 'inner'
+        do k=1,ntns
+          if (ktns(k).ne.2*max(1,nncut)) cycle
+          do i=1,natmi
+            hlp_na(i,2)=hlp_na(i,2)+wldna(nlim+ltns(k),i,0)
+            hlp_at(i,2)=hlp_at(i,2)+wldra(nlim+ltns(k),i,0)+
+     .                              wldpa(nlim+ltns(k),i,0)
+          end do
+          do i=1,nmoli
+            hlp_nm(i,2)=hlp_nm(i,2)+wldnm(nlim+ltns(k),i,0)
+            hlp_ml(i,2)=hlp_ml(i,2)+wldrm(nlim+ltns(k),i,0)+
+     .                              wldpm(nlim+ltns(k),i,0)
+          end do
+          hlp_sp(2)=hlp_sp(2)+wldspt(nlim+ltns(k),0)
         end do
         if (nmoli.gt.0) then
           write(lun, frm) trg_lbl,
      ,      (hlp_po(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
-     ,      (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
-     ,      (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
-     ,      wldspt(nlim+ltns(2),0)
+     ,      (hlp_na(i,2),i=1,natmi),
+     ,      (hlp_nm(i,2),i=1,nmoli),
+     ,      (hlp_at(i,2),i=1,natmi),
+     ,      (hlp_ml(i,2),i=1,nmoli),
+     ,       hlp_sp(2)
         else
           write(lun, frm) trg_lbl,
      ,      (hlp_po(i),i=1,nspecies),
-     ,      (wldna(nlim+ltns(2),i,0),i=1,natmi),
-     ,      (hlp_at(i),i=1,natmi),
-     ,      wldspt(nlim+ltns(2),0)
+     ,      (hlp_na(i,2),i=1,natmi),
+     ,      (hlp_at(i,2),i=1,natmi),
+     ,       hlp_sp(2)
         end if
         deallocate(hlp_pi,hlp_po)
-        deallocate(hlp_at)
-        if (nmoli.gt.0) deallocate(hlp_ml)
+        deallocate(hlp_at,hlp_na)
+        if (nmoli.gt.0) deallocate(hlp_ml,hlp_nm)
 c-----------------------------------------------------------------------
       else if(ig.eq.-4) then
         call b2pplentd(lun)
@@ -308,9 +337,8 @@ c*** print hydrogen isotopes fluxes across the surfaces
             ih(in) = is
           end if
         end do
-        allocate(hlp_ml(3))
         allocate(hlp_sg(5*in))
-        hlp_ml=0.0_R8
+        hlp_mh=0.0_R8
         hlp_ms=0.0_R8
         i = 0
         do is = 1, 3
@@ -339,7 +367,7 @@ c*** print hydrogen isotopes fluxes across the surfaces
               if (l_h_mol(im,is).gt.0) then !{
                 hlp_s(is)=hlp_s(is)+l_h_mol(im,is)*
      ,           (wldnm(j,im,0)-wldrm(j,im,0)-wldpm(j,im,0))
-                hlp_ml(is)=l_h_mol(im,is)*wldnm(j,im,0)
+                hlp_mh(is)=l_h_mol(im,is)*wldnm(j,im,0)
                 hlp_ms(is)=l_h_mol(im,is)*(wldrm(j,im,0)+wldpm(j,im,0))
               end if !}
             end do !}
@@ -348,11 +376,10 @@ c*** print hydrogen isotopes fluxes across the surfaces
           write(6,hlp_frmr)
      ,     j,(wldna(j,j_h_at(ih(is)),0),
      ,        wldra(j,j_h_at(ih(is)),0)+wldpa(j,j_h_at(ih(is)),0),
-     ,        hlp_ml(ih(is)),hlp_ms(ih(is)),hlp_s(ih(is)),is=1,in)
+     ,        hlp_mh(ih(is)),hlp_ms(ih(is)),hlp_s(ih(is)),is=1,in)
         end do !}
         print *
         deallocate(hlp_sg)
-        deallocate(hlp_ml)
 c-----------------------------------------------------------------------
       else if(ig.eq.-8) then
 c-----------------------------------------------------------------------

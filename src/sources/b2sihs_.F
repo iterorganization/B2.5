@@ -421,18 +421,18 @@
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
 cwdk compute radial differences of ua at cell faces
-        call diff_r(nx,ny, 0, hx, hy, vol, qs, ua(-1,-1,is), wrk0, duar)
-        wrk0 = 0.0e0_R8
-        do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-            wrk0(ix,iy)=0.0e0_R8
-          else
-            wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*                         !srv 16.10.17
-     &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
-          endif
+         call diff_r(nx,ny,0,hx,hy,vol,qs,ua(-1,-1,is),wrk0,duar)
+         wrk0 = 0.0e0_R8
+         do iy = -1, ny                                               !srv 28.08.02 21.07.05 16.10.17 {
+          do ix = -1, nx
+           if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+           else
+             wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*                        !srv 16.10.17
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
+           endif
+          enddo
          enddo
-        enddo
         do iy = -1, ny
          do ix = -1, nx
           if(bottomiy(ix,iy).eq.-2) then

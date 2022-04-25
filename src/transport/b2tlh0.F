@@ -21,7 +21,7 @@
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer ix, iy, is, n2, ncall, c3
+      integer ix, iy, is, n2, ncall
       integer, save :: iout = 0                                   !srv 13.01.04 {
       real (kind=R8), allocatable :: w1(:,:)
       character charns*3                                          !srv 13.01.04 }

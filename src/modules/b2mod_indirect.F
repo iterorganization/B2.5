@@ -59,12 +59,12 @@
       allocate(topcut(1:nncutmax))
       allocate(bottomcut(1:nncutmax))
       allocate(cflags(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
-      bottomcut = nyd+1
-      topcut    = -2
-      rightcut  = -2
-      leftcut   = nxd+1
-      redef_pbs = 0
-      cflags    = 0
+      bottomcut   = nyd+1
+      topcut      = -2
+      rightcut    = -2
+      leftcut     = nxd+1
+      redef_pbs   = 0
+      cflags      = 0
       LSN = .true.
       b2mod_indirect_allocated = .true.
 

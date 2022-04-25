@@ -5,7 +5,7 @@
      &  hx, gs,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  coreregno, coreregn2, output,
      &  neutral_sources_rescale, core_sources_rescale,
      &  sput_src, sput_frc, sput_phys,
@@ -37,7 +37,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
       integer coreregno, coreregn2, sput_src,
-     *   sput_chem_model, boundary_namelist, reflection_on,
+     *   sput_chem_model, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
       real (kind=R8) :: dtim, BoRiS,
      *  hx(-1:nx,-1:ny),

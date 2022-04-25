@@ -125,7 +125,7 @@
           flcb(ix,iy,0,1) = 0.0_R8
           cvcb(ix,iy,0,0) = 0.0_R8
           cvcb(ix,iy,0,1) = 0.0_R8
-         else
+         else                                                          !srv 26.11.02 {
           flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
      &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8     !srv 01.07.05 }
           flcb(ix,iy,0,1) = flub(ix,iy,0,1)

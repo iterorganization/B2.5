@@ -3,9 +3,9 @@
 
       subroutine b2wsst (nspc, nx, ny, ns, crx, cry, bb, vol, hx, hy,
      &  qz, qc, qs, gs, pbs, cell_width, cell_height,
-     &  na, ua, te, ti, po, fna, fhe, fhi, fch,
-     &  ne, ni, pr, ro, rz, fne, fni, wrk0, wrk1)
+     &  pr, ro, rz, wrk0, wrk1)
       use b2mod_types
+      use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_subsys
@@ -19,14 +19,7 @@
      &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
-      real (kind=R8) ::
-     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
+     *  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny)
@@ -59,10 +52,7 @@
 *     crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs - real*8 array, input.
 *     See the calling routine for description.
 *
-*     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
-*     See the calling routine for description.
-*
-*     ne, ni, pr, ro, rz, fne, fni - real*8 array, input.
+*     pr, ro, rz - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0, wrk1 - (-1:nx,-1:ny) real*8 array, workspace.

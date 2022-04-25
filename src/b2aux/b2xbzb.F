@@ -1,4 +1,4 @@
-      subroutine b2xbzb (nx, ny, bb,wbbv,wbbl,vol,bzb,bzbv,bzbl)         !srv 13.10.06 23.07.10 {
+      subroutine b2xbzb (nx,ny,bb,wbbv,wbbl,vol,bzb,bzbv,bzbl)           !srv 13.10.06 23.07.10 {
       use b2mod_types
       use b2mod_indirect
       implicit none

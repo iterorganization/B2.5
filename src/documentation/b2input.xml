@@ -896,10 +896,11 @@
 				<name>b2srdt_*_namelist</name>
 				<description>
 					Namelist file indicators. If xxx_namelist.eq.1, then the code looks for the file b2.xxx.parameters, in which it expects to find the xxx namelist.
+					In the case of boundary_namelist, defaults to 1 for double-null geometries, 0 otherwise.
 				</description>
 				<switch>
 					<name>b2stbc_boundary_namelist</name>
-					<default>0</default>
+					<default>See description</default>
 					<type>integer</type>
 				</switch>
 				<switch>
@@ -1240,7 +1241,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhe_vis_par</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the current driven by parallel viscosity.
@@ -2609,6 +2610,17 @@
 				<description>
 					Another option for plasma state file output. Give the real-time interval between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals.
 				</description>
+			</switch>
+			<switch>
+			  <name>b2mndr_ids_save</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time and b2mndr_ids_av.
+				If used, an IDS time slice will be written at the end of run.
+				If negative, a single IDS will be written at the end of the run.
+				Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+			  </description>
 			</switch>
 			<switch>
 			  <name>b2mndr_ids_time</name>
@@ -4148,6 +4160,15 @@
 				</switch>
 			</switchgroup>
 			<switch>
+			    <name>b2tfhe_mode_ehx</name>
+			    <default>0</default>
+				<type>integer</type>
+				<description>
+				  Switch to choose between various discretization schemes when computing the poloidal electric field.
+				  See code for details.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sigp_style</name>
 				<default>2</default>
 				<type>integer</type>
@@ -4156,6 +4177,14 @@
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
 					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
+			</switch>
+			<switch>
+			  <name>b2sigp_pressure_restriction</name>
+			  <default>1</default>
+			  <type>integer</type>
+			  <description>
+				When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
+			  </description>
 			</switch>
 			<switch>
 				<name>b2xzdd_zero_dead_and_core</name>
@@ -4407,6 +4436,25 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfnb_PSch_style</name>
+				<default>See description</default>
+				<type>integer</type>
+				<description>
+					Controls the numerical approximation for the so-called Pfirsch-Schlueter fluxes of particles and internal energy (divergent part of diamagnetic drift in the SOLPS5.2 physics model).
+					Default value is '2', unless the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '0' (old style), in which case, the value is '1'.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tiner_fch_inert_style</name>
+				<default>See description</default>
+				<type>integer</type>
+				<description>
+					Controls the numerical approximation for the inertia current.
+					Default value is '2' unless the b2fgmtry file was generated with 'b2agdr_redef_gmtry' set to '0' (old style), in which case, the value is '1'.
+					A value of '0' recovers the older behaviour (versions 3.0.6 or less).
+				</description>
+			</switch>
+			<switch>
 				<name>b2tiner_inert_all_ions</name>
 				<default>1</default>
 				<type>integer</type>
@@ -4478,6 +4526,22 @@
 				<type>real</type>
 				<description>
 					Linearisation constant.
+				</description>
+			</switch>
+			<switch>
+				<name>b2usht_cor_diag</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Linearisation constant for the temperature equilibration term.
+				</description>
+			</switch>
+			<switch>
+				<name>b2ush9_cor_diag</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Linearisation constant for the temperature equilibration term.
 				</description>
 			</switch>
 			<switch>
@@ -4832,7 +4896,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new NEUTRALS namelist is read.
+					If NEUTRALS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new NEUTRALS namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next NEUTRALS namelist file from NEUTRALS_FILENAME.
+					Only active if NEUTRALS_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -5962,8 +6028,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes.
-					Only active if BOUNDARY_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(BOUNDARY_TIME_MOD), reaches or exceeds BOUNDARY_TIME_SWITCH, reads the new namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the ELM count (here time/BOUNDARY_TIME_MOD) changes. Only active if BOUNDARY_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -5971,7 +6036,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /BOUNDARY/ namelist is read.
+					If BOUNDARY_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new BOUNDARY namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next BOUNDARY namelist file from BOUNDARY_FILENAME.
+					Only active if BOUNDARY_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6385,7 +6452,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /PROFILE/ namelist is read.
+					If SOURCES_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new PROFILE namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next PROFILE namelist file from SOURCES_FILENAME.
+					Only active if SOURCES_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 		</category>
@@ -6458,7 +6527,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /TRANSPORT/ namelist is read.
+					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
+					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6708,6 +6779,24 @@
 				</description>
 			</switch>
 			<switch>
+				<name>CORR_CORE_DN</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1)</type>
+				<description>
+				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_CORE_DT</name>
+				<default>1.0</default>
+				<type>real*8</type>
+				<description>
+				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
 				<name>NUMERICS_FILENAME</name>
 				<default>b2.numerics.namelist</default>
 				<type>character*256</type>
@@ -6728,7 +6817,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /NUMERICS/ namelist is read.
+					If NUMERICS_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new NUMERICS namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next NUMERICS namelist file from NUMERICS_FILENAME.
+					Only active if NUMERICS_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6910,8 +7001,7 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes.
-					Only active if TRANSPORT_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), reaches or exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6919,7 +7009,9 @@
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					Time (in seconds) within an ELM cycle after which a new /TRANSPORT/ namelist is read.
+					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
+					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switchgroup>

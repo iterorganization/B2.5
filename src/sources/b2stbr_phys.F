@@ -5,7 +5,7 @@
      &  vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
+     &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  neutral_sources_rescale, core_sources_rescale,
      &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &  sput_chem_model, therm_evap, sput_res,
@@ -35,7 +35,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
-      integer sput_src, sput_chem_model, boundary_namelist,
+      integer sput_src, sput_chem_model,
      *     reflection_on, sputter_energy_on, output,
      *     sput_frac_flag, potential_at_guard_cell
       logical main_call, new_sputter_namelist

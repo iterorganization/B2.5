@@ -135,8 +135,8 @@
       call cfrure (nread, size(hy), hy, 'hy')
       call cfrure (nread, size(qz), qz, 'qz')
       if (b2fplasma_version.ge.'03.001.000') then
-        call cfrure (nread, size(qc), qc, 'qc')
-        call cfrure (nread, size(qs), qs, 'qs')
+       call cfrure (nread, size(qc), qc, 'qc')
+       call cfrure (nread, size(qs), qs, 'qs')
       elseif (b2fplasma_version.gt.'01.001.021') then
        call cfrure (nread, n2, qc(-1,-1,0), 'qc')
       else

@@ -192,7 +192,7 @@
       do iy = -1, ny
        do ix = -1, nx                                                    !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2)then                                      !srv 26.11.02
-         conc(ix,iy,0,0:1)    = 0.0e0_R8
+         conc(ix,iy,0,0:1)    = 0.0_R8
         else                                                             !srv 26.11.02 }
          conc(ix,iy,0,0) = csig(ix,iy,0,0)
          conc(ix,iy,0,1) = csig(ix,iy,0,1)
@@ -221,7 +221,7 @@
 
 *   ..compute concy
       do ix = -1, nx
-       conc(ix,-1,1,0:1) = 0.0e0_R8
+       conc(ix,-1,1,0:1) = 0.0_R8
       enddo
       do iy = 0, ny
        do ix = -1, nx
@@ -261,14 +261,14 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,0,0:1)  = 0.0e0_R8
-            conc(ix,iy,0,0:1) = 0.0e0_R8
+            fch(ix,iy,0,0:1)  = 0.0_R8
+            conc(ix,iy,0,0:1) = 0.0_R8
           enddo
         enddo
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,1,0:1)  = 0.0e0_R8
-            conc(ix,iy,1,0:1) = 0.0e0_R8
+            fch(ix,iy,1,0:1)  = 0.0_R8
+            conc(ix,iy,1,0:1) = 0.0_R8
           end do
         enddo
       enddo

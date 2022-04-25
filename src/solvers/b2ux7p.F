@@ -3,6 +3,7 @@
 
       subroutine b2ux7p (nx, ny, aa7, itcnt, resfun, corfun, name) !srv 11.01.00
       use b2mod_types
+      use b2mod_illtern_7
       use b2mod_ilutern_7
       use b2mod_ma28_for_7diag
       use b2mod_ysmp_sdrv

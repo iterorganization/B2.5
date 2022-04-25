@@ -37,7 +37,7 @@
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures

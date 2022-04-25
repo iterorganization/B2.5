@@ -593,27 +593,60 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fhe(ix,-1,0,0) = 0.0_R8
-            fhe_mdf(ix,-1,0,0) = 0.0_R8
-            if (balance.and.(balance_netcdf.ne.0)) then              !djm Jan2017
-              fhe_32(ix,-1,0,0) = 0.0_R8
-              fhe_52(ix,-1,0,0) = 0.0_R8
-              fhe_thermj(ix,-1,0,0) = 0.0_R8
-              fhe_cond(ix,-1,0,0) = 0.0_R8
-              fhe_dia(ix,-1,0,0) = 0.0_R8
-              fhe_ecrb(ix,-1,0,0) = 0.0_R8
-              fhe_strange(ix,-1,0,0) = 0.0_R8
-              fhe_pschused(ix,-1,0,0) = 0.0_R8
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fhe(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                fhe_mdf(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                if (balance.and.(balance_netcdf.ne.0)) then              !djm Jan2017
+                  fhe_32(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_52(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_thermj(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_cond(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_dia(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_ecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_strange(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                  fhe_pschused(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) =
+     .                                                          0.0_R8
+                endif
+                fhet(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                floe(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0) = 0.0_R8
+                cone(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0,0) = 0.0_R8
+                fllime(bc_list_x(ix,ib),bc_list_y(ix,ib)) = 1.0_R8
+              enddo
             endif
-            fhet(ix,-1,0,0)=0.0_R8
-            floe(ix,-1,0,0) = 0.0_R8
-            cone(ix,-1,0,0,0) = 0.0_R8
-            fllime(ix,iy) = 1.0_R8
-          endif
-        enddo
-      endif                                                          !xpb
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fhe(ix,-1,0,0) = 0.0_R8
+              fhe_mdf(ix,-1,0,0) = 0.0_R8
+              if (balance.and.(balance_netcdf.ne.0)) then                !djm Jan2017
+                fhe_32(ix,-1,0,0) = 0.0_R8
+                fhe_52(ix,-1,0,0) = 0.0_R8
+                fhe_thermj(ix,-1,0,0) = 0.0_R8
+                fhe_cond(ix,-1,0,0) = 0.0_R8
+                fhe_dia(ix,-1,0,0) = 0.0_R8
+                fhe_ecrb(ix,-1,0,0) = 0.0_R8
+                fhe_strange(ix,-1,0,0) = 0.0_R8
+                fhe_pschused(ix,-1,0,0) = 0.0_R8
+              endif
+              fhet(ix,-1,0,0)=0.0_R8
+              floe(ix,-1,0,0) = 0.0_R8
+              cone(ix,-1,0,0,0) = 0.0_R8
+              fllime(ix,-1) = 1.0_R8
+            endif
+          enddo
+        endif
+      endif                                                              !xpb
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO

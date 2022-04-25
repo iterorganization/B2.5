@@ -101,10 +101,6 @@
      &       1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test state
        call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

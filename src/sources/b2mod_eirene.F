@@ -16,6 +16,7 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_rates
+      use b2mod_trace
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_balance !djm Jan2017
@@ -526,13 +527,23 @@ c       if(crcstra(nstrat).eq.'T') l_ddt=nnlimi+nnstsi
       if (ncall.eq.0 .and. ionising_core.ne.0) then
 cxpb compute core boundary surface area
         core_surface = 0.0_R8
-        do iy = -1, ny
-          do ix = -1, nx
-            if (bottomiy(ix,iy).eq.-2 .and. on_closed_surface(ix,iy))
-     >       core_surface = core_surface +
-     .        gs(topix(ix,iy),topiy(ix,iy),1)
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if (core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                core_surface = core_surface +
+     .            gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+              enddo
+            endif
           enddo
-        enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,0)) then
+              core_surface = core_surface + gs(ix,0,1)
+            endif
+          enddo
+        endif
 cxpb compute ishigh and ion_name arrays
         ishigh = -1
         ion_name = ' '
@@ -897,15 +908,15 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'Eirene output in eirene_mc :'
         sum_wld(1:4,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
-          sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
-          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
-          sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
-          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
-          do is = 1, nnatmi
-            sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
-     .       is,istrai)
-            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
-     .       is,istrai)
+          do i=1,ntns
+            sum_wld(ktns(i),1)=sum_wld(ktns(i),1)+
+     .                         wldnek(nnlimi+ltns(i),istrai)
+            sum_wld(ktns(i),2)=sum_wld(ktns(i),2)+
+     .                         wldnep(nnlimi+ltns(i),istrai)
+            do is = 1, nnatmi
+              sum_wld(ktns(i),2+is)=sum_wld(ktns(i),2+is)+
+     .                                  wldna(nnlimi+ltns(i),is,istrai)
+            end do
           end do
         end do
         write(*,*) 'Summed target data : '
@@ -3726,52 +3737,160 @@ cxpb  core recycling into ions of the highest ionisation stage
           eirene_mc_core_sna0to1=0.0_R8 !djm Jan2017
         endif
         do j = 1, nnatmi
-          do iy = -1, ny
+          ! compute the average density on the core boundary (t1)
+          t1 = 0.0_R8
+          if (boundary_namelist.eq.1) then
+            do ib = 1, nbc
+              if (core_boundary(ib)) then
+                do ix = 1, bc_list_size(ib)
+                  t1 = t1 +
+     &             na(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     ,                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     ,                ishigh(j))*
+     &             gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     ,                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
+                end do
+              end if
+            end do
+          else
             do ix = -1, nx
-              if (bottomiy(ix,iy).eq.-2 .and.
-     &            on_closed_surface(ix,iy)) then
-                t0=core_flux(j)*
-     *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
-                if(linearisation.eq.1) then !{
-                  if(t0.gt.0.0_R8) then !{
-                    sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
+              if (on_closed_surface(ix,0)) then
+                t1 = t1 + na(ix,0,ishigh(j))*gs(ix,0,1)
+              end if
+            end do
+          end if
+          t1 = t1/core_surface
+          if (boundary_namelist.eq.1) then
+            do ib = 1, nbc
+              if (core_boundary(ib)) then
+                do ix = 1, bc_list_size(ib)
+! the recycling flux is modulated as per the poloidal density distribution
+                  t0=core_flux(j)*
+     *             (na(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     ,                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     ,                 ishigh(j))
+     /              /t1)*
+     *             (gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     ,                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)/
+     /              core_surface)
+                  if(linearisation.eq.1) then !{
+                    if(t0.gt.0.0_R8) then !{
+                      sna0(bc_list_x(ix,ib),
+     ,                     bc_list_y(ix,ib),0,ishigh(j))=
+     &                 sna0(bc_list_x(ix,ib),
+     ,                      bc_list_y(ix,ib),0,ishigh(j))+t0
+                      if (balance_netcdf.ne.0) then
+                        eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                         bc_list_y(ix,ib),0,
+     ,                                         ishigh(j))
+     .                  = eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                           bc_list_y(ix,ib),0,
+     ,                                           ishigh(j))+t0
+                      endif
+                    else !}{
+                      sna0(bc_list_x(ix,ib),
+     ,                     bc_list_y(ix,ib),1,ishigh(j))=
+     .                 sna0(bc_list_x(ix,ib),
+     ,                      bc_list_y(ix,ib),1,ishigh(j))
+     1                +t0/na(bc_list_x(ix,ib),
+     ,                       bc_list_y(ix,ib),ishigh(j))
+                      if (balance_netcdf.ne.0) then
+                        eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                         bc_list_y(ix,ib),1,
+     ,                                         ishigh(j))
+     .                   = eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                            bc_list_y(ix,ib),1,
+     ,                                            ishigh(j))
+     &                   + t0
+     .                   / na(bc_list_x(ix,ib),
+     ,                        bc_list_y(ix,ib),ishigh(j))
+                      endif
+                    end if !}
+                    sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))=
+     .               sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))
+     1               +rf0*abs(t0)
                     if (balance_netcdf.ne.0) then
-                      eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
-     &                 eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
+                      eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     .                                       bc_list_y(ix,ib),0,
+     .                                       ishigh(j))= !djm Jan2017
+     &                eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                       bc_list_y(ix,ib),0,
+     ,                                       ishigh(j))+rf0*abs(t0)
                     endif
-                  else !}{
-                    sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))+
-     1               t0/na(ix,iy,ishigh(j))
+                    sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),1,ishigh(j))=
+     .               sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),1,ishigh(j))
+     1               -rf0*abs(t0)/
+     .                na(bc_list_x(ix,ib),bc_list_y(ix,ib),ishigh(j))
                     if (balance_netcdf.ne.0) then
-                      eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))= !djm Jan2017
-     &                 eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))+
-     &                 t0/na(ix,iy,ishigh(j))
+                      eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                       bc_list_y(ix,ib),1,
+     ,                                       ishigh(j))= !djm Jan2017
+     &                eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     ,                                       bc_list_y(ix,ib),0,
+     ,                                       ishigh(j))-rf0*abs(t0)/
+     .                  na(bc_list_x(ix,ib),bc_list_y(ix,ib),ishigh(j))
+                    endif
+                  elseif(linearisation.eq.0) then !}{
+                    sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))=
+     .               sna0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,ishigh(j))
+     .               +t0
+                    if (balance_netcdf.ne.0) then
+                      eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     .                                       bc_list_y(ix,ib),0,
+     .                                       ishigh(j))= !djm Jan2017
+     &                eirene_mc_core_sna0to1(bc_list_x(ix,ib),
+     .                                       bc_list_y(ix,ib),0,
+     .                                       ishigh(j))+t0
                     endif
                   end if !}
-                  sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+
-     1             rf0*abs(t0)
+                enddo  !ix}
+              endif  !core}
+            enddo  !ic}
+          else
+            do ix = -1, nx
+              if (on_closed_surface(ix,0)) then
+                t0=core_flux(j)*(na(ix,0,ishigh(j))/t1)
+     .                         *(gs(ix,0,1)/core_surface)
+                if(linearisation.eq.1) then !{
+                  if(t0.gt.0.0_R8) then !{
+                    sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+t0
+                    if (balance_netcdf.ne.0) then
+                      eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
+     .                 eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+t0
+                    endif
+                  else !}{
+                    sna0(ix,-1,1,ishigh(j))=sna0(ix,-1,1,ishigh(j))+
+     .               t0/na(ix,-1,ishigh(j))
+                    if (balance_netcdf.ne.0) then
+                      eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))=
+     .                 eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))+
+     .                 t0/na(ix,-1,ishigh(j))
+                    endif
+                  end if !}
+                  sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+
+     .             rf0*abs(t0)
                   if (balance_netcdf.ne.0) then
-                    eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
-     &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+
-     &               rf0*abs(t0)
+                    eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+
+     .               rf0*abs(t0)
                   endif
-                  sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))-
-     1             rf0*abs(t0)/na(ix,iy,ishigh(j))
+                  sna0(ix,-1,1,ishigh(j))=sna0(ix,-1,1,ishigh(j))-
+     1             rf0*abs(t0)/na(ix,-1,ishigh(j))
                   if (balance_netcdf.ne.0) then
-                    eirene_mc_core_sna0to1(ix,iy,1,ishigh(j))= !djm Jan2017
-     &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))-
-     &               rf0*abs(t0)/na(ix,iy,ishigh(j))
+                    eirene_mc_core_sna0to1(ix,-1,1,ishigh(j))=
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))-
+     .               rf0*abs(t0)/na(ix,-1,ishigh(j))
                   endif
                 elseif(linearisation.eq.0) then !}{
-                  sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
+                  sna0(ix,-1,0,ishigh(j))=sna0(ix,-1,0,ishigh(j))+t0
                   if (balance_netcdf.ne.0) then
-                    eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))= !djm Jan2017
-     &               eirene_mc_core_sna0to1(ix,iy,0,ishigh(j))+t0
+                    eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))=
+     .               eirene_mc_core_sna0to1(ix,-1,0,ishigh(j))+t0
                   endif
                 end if !}
               endif  !core}
             enddo  !ix}
-          enddo  !iy}
+          endif  !boundary_namelist}
         enddo  !j}
       else if (ionising_core.lt.0) then
         ib=abs(ionising_core)

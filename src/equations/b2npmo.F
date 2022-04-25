@@ -78,8 +78,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
       real (kind=R8) ::
-     *  rxf, 
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
+     *  rxf, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),        !srv 09.01.01 07.07.21
      &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      &  pbshz(-1:nx,-1:ny,0:1),
@@ -609,7 +608,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
 cwdk add 9-point stencil 'master' switch here....
         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
         if (.true.) then
-c     ..compare 9-pt stencil matrices
+c    ..compare 9-pt stencil matrices
          new_matrix = .false.
          do ireg = 0, nnreg(0)
           new_matrix = new_matrix.or.
@@ -623,7 +622,7 @@ c     ..compare 9-pt stencil matrices
      &    pcca(-1,-1,0,0,is), aa9, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:nnreg(0)) = solvemo(is,0:nnreg(0))
         else
-c     ..compare 5-pt stencil matrices
+c    ..compare 5-pt stencil matrices
          new_matrix = .false.
          do ireg = 0, nnreg(0)
           new_matrix = new_matrix.or.
@@ -688,8 +687,8 @@ cwdk add 9-point stencil 'master' switch here....
 c     ..compare 9-pt stencil matrices
          new_matrix = .false.
          do ireg = 0, nnreg(0)
-          new_matrix = new_matrix.or.
-     &     solvemt(ireg).neqv.last_solve_9(ireg)
+           new_matrix = new_matrix.or.
+     &      solvemt(ireg).neqv.last_solve_9(ireg)
          end do
          if (new_matrix.or..true.) call restart_ma28_for_9
 *     ..compute correction

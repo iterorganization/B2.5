@@ -17,6 +17,7 @@
       use b2mod_work
       use b2mod_time
       use b2mod_file
+      use b2mod_batch
       use b2mod_b2cmpa
       use b2mod_average
       use b2mod_external
@@ -78,8 +79,7 @@
 
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
-     *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist,
-     *  nsmin, nsmax
+     *  ramp_slow, ier0, no_solve, ix, iy, nsmin, nsmax
       integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
@@ -91,7 +91,7 @@
      *  nstg_areshe, nstg_areshi, nstg_aresco
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
-     *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
+     *  nstg_areshe, nstg_areshi, nstg_aresco
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical test_residual, quit_residual, main_call
       logical solving(4)
@@ -114,7 +114,7 @@
 *   ..initialisation
       data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/, rxf/0.5_R8/
       data itcnt/0/, density_control/0/, ramp_slow/0/, BoRiS/0.0_R8/
-      data no_solve/0/, boundary_namelist/0/
+      data no_solve/0/
       data nstg_areshe/0.0_R8/, nstg_areshi/0.0_R8/, nstg_aresco/0.0_R8/
 *
 *-----------------------------------------------------------------------

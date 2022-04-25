@@ -49,7 +49,6 @@
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
-      integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       integer, save :: iappend = 0
       integer, save :: use_mms = 0                                 !srv 26.02.18
@@ -96,8 +95,7 @@
       intrinsic abs                                                !srv
 *   ..initialisation
       save ncall, iout, use_astra, jxi, jxa, jsep, nxtl, nxtr
-     , , boundary_namelist
-      data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
+      data ncall/0/, iout/0/, use_astra/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -114,7 +112,7 @@
        call ipgeti('b2wdat_append', iappend)
        call ipgeti ('b2mndr_use_mms',use_mms)                     !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
-       call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
+       call get_boundary_namelist
        call get_jsep(nx,ny,jxi,jxa,jsep)
        call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
 *    ..try to create a file in optional output folder
@@ -327,7 +325,12 @@
         call my_out(70,nx,ny,wbbv(-1,-1,0),'bbxv')
         call my_out(70,nx,ny,wbbv(-1,-1,2),'bbzv')
         call my_out(70,nx,ny,wbbv(-1,-1,3),'bbv')
-
+        wrk0(-1:nx,-1:ny)=wbbc(-1:nx,-1:ny,0)
+        call my_out(70,nx,ny,wrk0,'bbxc')
+        wrk0(-1:nx,-1:ny)=wbbc(-1:nx,-1:ny,2)
+        call my_out(70,nx,ny,wrk0,'bbzc')
+        wrk0(-1:nx,-1:ny)=wbbc(-1:nx,-1:ny,3)
+        call my_out(70,nx,ny,wrk0,'bbc')
         call my_out(70,nx,ny,gs(-1,-1,0),'gsx')
         call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
         call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
@@ -335,20 +338,20 @@
         call my_out(70,nx,ny,qz(-1,-1,1),'qz1cost')
 
 c     calculate coordinates of cell centre
-        wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))    !srv 18.12.14 {
+        wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))  !srv 18.12.14 {
         call my_out(70,nx,ny,wrk0,'crc_')
         call b2wdat_open(70,'crc')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
-        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'              !srv 07.08.15
+        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'            !srv 07.08.15
         do iy = -1, ny
-         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                  !srv 07.08.15
+         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                !srv 07.08.15
         enddo
         close(70)
         wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
         call my_out(70,nx,ny,wrk1,'czc_')
         call b2wdat_open(70,'czc')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
-        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'              !srv 07.08.15
+        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'            !srv 07.08.15
         do iy = -1, ny
-         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                  !srv 07.08.15
+         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                !srv 07.08.15
         enddo
         close(70)
 
@@ -356,28 +359,28 @@ c     calculate coordinates of cell centre
 
       end if
 
-      if (iout.eq.1) then                                             !srv begin if for iout
+      if (iout.eq.1) then                                           !srv begin if for iout
 
        Total_current=0.0_R8
        Total_abscurrent=0.0_R8
        Total_flux=0.0_R8
        Total_absflux=0.0_R8
        wrk2=0.0_R8
-       call b2xpro (nx, ny, ns, mp, am, na, ro)                       !srv 30.01.15 {
+       call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 30.01.15 {
        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
        call my_out(70,nx,ny,cst,'usound_cst')
        call my_out(70,nx,ny,ro,'ro')
        call my_out(70,nx,ny,rz,'rz')
-       call my_out(70,nx,ny,pr,'pr')                                  !srv 30.01.15 }
-       call my_out(70,nx,ny,pz,'pz')                                  !srv 30.01.15 }
-       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                        !srv
-       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                        !srv
+       call my_out(70,nx,ny,pr,'pr')                                !srv 30.01.15 }
+       call my_out(70,nx,ny,pz,'pz')                                !srv 30.01.15 }
+       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                      !srv
+       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                      !srv
 
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
         call my_out(70,nx,ny,wrk0,'pb'//chns)
-        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)                 !srv
+        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)               !srv
         call my_out(70,nx,ny,cst_a,'usound'//chns)
         wrk1 = ua(:,:,is)/wrk0
         call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                      !srv 24.03.10 }
@@ -574,9 +577,9 @@ c     calculate coordinates of cell centre
        call my_out(70,nx,ny,csig_an(-1,-1,1,1),'csig_any')        !srv
        if (ismain0.ne.ismain) then
         call my_out(70,nx,ny,csigin(-1,-1,0,0,ismain,ismain0),
-     &                      'csig_inx') !srv
+     &                      'csig_inx')                           !srv
         call my_out(70,nx,ny,csigin(-1,-1,1,1,ismain,ismain0),
-     &                      'csig_iny') !srv
+     &                      'csig_iny')                           !srv
        endif
        call my_out(70,nx,ny,vsa0(-1,-1,0),'vsa0')                 !srv
        call my_out(70,nx,ny,vsa0(-1,-1,1),'vsa1')                 !srv
@@ -592,7 +595,6 @@ c     calculate coordinates of cell centre
        call my_out(70,nx,ny,chce(-1,-1,1,1),'chcey')              !srv
        call my_out(70,nx,ny,chci(-1,-1,0,0),'chcix')              !srv
        call my_out(70,nx,ny,chci(-1,-1,1,1),'chciy')              !srv
-
 
        do is = 0,ns-1                                             !srv 16.11.14 {
         write (chns,'(i3.3)') is
@@ -695,13 +697,26 @@ c     calculate coordinates of cell centre
        close(70)
 
 *   ..calculate total core energy flux
-       iy = 0
        power = 0.0_R8
-       do ix = -1, nx
-         if(on_closed_surface(ix,iy)) then                     ! for CORE
-           power = power + (fhe(ix,iy,1,1)+fhi(ix,iy,1,1))
-         endif
-       enddo
+       if (boundary_namelist.eq.1) then
+         do ib = 1, nbc
+           if(core_boundary(ib)) then
+             do ix = 1, bc_list_size(ib)
+               power = power +
+     .         (fhe(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)+
+     .          fhi(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1))
+             enddo
+           endif
+         enddo
+       else
+         do ix = -1, nx
+           if (on_closed_surface(ix,0)) then
+             power = power + (fhe(ix,0,1,1)+fhi(ix,0,1,1))
+           endif
+         enddo
+       endif
        call b2wdat_open(70,'exppw')                                !srv 26.09.17
        write(70,"(es14.6)") power
        close(70)
@@ -1262,14 +1277,27 @@ c     calculate coordinates of cell centre
        close(70)
 
 *   ..calculate total core energy flux
-       iy = 0
        power = 0.0_R8
-       do ix = -1, nx
-         if(on_closed_surface(ix,iy)) then                ! for CORE
-           power = power + (fhe(ix,iy,1,1)+fhi(ix,iy,1,1))
-         endif
-       enddo
-       call b2wdat_open(70,'power')                                     !srv 26.09.17
+       if (boundary_namelist.eq.1) then
+         do ib = 1, nbc
+           if(core_boundary(ib)) then
+             do ix = 1, bc_list_size(ib)
+               power = power +
+     .          (fhe(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)+
+     .           fhi(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1))
+             enddo
+           endif
+         enddo
+       else
+         do ix = -1, nx
+           if (on_closed_surface(ix,0)) then
+             power = power + (fhe(ix,0,1,1)+fhi(ix,0,1,1))
+           endif
+         enddo
+       endif
+       call b2wdat_open(70,'power')                                !srv 26.09.17
        write(70,"('Power =',es14.6)") power
        close(70)
 

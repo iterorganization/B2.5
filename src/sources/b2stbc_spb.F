@@ -72,7 +72,6 @@
      6  s0hz, s1hz, vwest, veast, vminus, vplus  !, v0                !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
      *  pz(-1:nx,-1:ny)                                               !sv 18.01.02
-      integer, save :: boundary_namelist = 0
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0         !sv 08.08.02 14.02.05
       integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
       integer, save :: ivminus = 1, ivplus = 1                        !sv 24.03.05
@@ -146,7 +145,7 @@
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                                !sv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi)                                !sv 13.10.06 }
-       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       call get_boundary_namelist
        call ipgetr ('b2stbc_sna0ep', sna0ep)
        call xertst (0.le.sna0ep, 'faulty internal parameter sna0ep')
        call ipgetr ('b2stbc_she0ep', she0ep)
@@ -178,13 +177,6 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test state
        call b2xvps (nx, ny, ns, ne, na, ua, te, ti, po,
      &              fna, fhe, fhi, fch)

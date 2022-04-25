@@ -24,10 +24,12 @@ module b2mod_ual_io
     use b2mod_geo
     use b2mod_work
     use b2mod_diag
+    use b2mod_mwti
     use b2mod_rates
     use b2mod_plasma
     use b2mod_constants
     use b2mod_sources
+    use b2mod_average
     use b2mod_feedback
     use b2mod_transport
     use b2mod_anomalous_transport
@@ -162,7 +164,7 @@ module b2mod_ual_io
 #endif
 #endif
 
-  public b25_process_ids
+  public b25_process_ids, b25_av_ids
   integer, public :: num_time_slices  !< Total number of time slices.
   integer, public :: num_batch_slices !< Total number of batch slices.
 
@@ -210,13 +212,12 @@ module b2mod_ual_io
             !< subset base index, later found by findGridSubsetByName() routine
   logical, parameter :: B2_WRITE_DATA = .true.
   integer, save :: ixpos(4), ifpos(4), iypos(4) !< Target positions
-  integer, save :: idir(4), iysep(4), ixmid(4), itrg(4)
+  integer, save :: idir(4), iysep(4), ixmid(4), ixmax(4)
   integer, save :: target_offset = 1
   integer, save :: nesepm_istra = -1
   integer, save :: pfrregno1 = 0
   integer, save :: pfrregno2 = 2
   integer, save :: use_eirene = 0
-  integer, save :: boundary_namelist = 0
   real(IDS_real), save :: ndes = 0.0_IDS_real
   real(IDS_real), save :: ndes_sol = 0.0_IDS_real
   real(IDS_real), save :: nesepm_pfr = 0.0_IDS_real
@@ -226,7 +227,8 @@ module b2mod_ual_io
   real(IDS_real), save :: private_flux_puff = 0.0_IDS_real
   real(IDS_real) :: time  !< Generic time
   real(IDS_real), save :: b0, r0, b0r0
-  real(IDS_real), save :: flux_expansion(4), extension_r(4), extension_z(4)
+  real(IDS_real), save :: flux_expansion(4), extension_r(4), extension_z(4), &
+      &                   wetted_area(4)
   character(len=ids_string_length), save :: username  !< IDS user name
   character(len=ids_string_length), save :: source    !< Code source
   character(len=ids_string_length), save :: comment   !< IDS properties label
@@ -257,7 +259,6 @@ contains
     implicit none
     integer tvalues(8)
     integer i, istrai, p
-    integer itrg(4)
     real(IDS_real) :: r_min, r_max, z_min, z_max
     logical, save :: IDS_initialized = .false.
     character*16 usrnam
@@ -324,7 +325,6 @@ contains
     call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
     call ipgetr ('b2stbc_volrec_sol', volrec_sol)
     call ipgeti ('b2mwti_target_offset', target_offset)
-    call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
     call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
     call ipgeti ('eirene_nesepm_istra', nesepm_istra)
     if(nesepm_istra.gt.0) then
@@ -647,8 +647,11 @@ contains
            !< ispion(i,j) contains the B2.5 species index for (ion i,state j) or
            !<                      the Eirene molecular ion index
 #ifdef B25_EIRENE
+        integer :: ind    !< Non-standard surface index in resolved list
+        integer :: ias    !< Starting index for non-standard surface in resolved list
         integer :: iss    !< State index
         integer :: iatm   !< Atom iterator
+        integer :: imol   !< Molecule iterator
         integer :: nelems !< Number of elements present in a molecule or molecular ion
         integer :: p      !< Dummy integer
         integer, allocatable :: isstat(:) !< Mapping array
@@ -675,8 +678,14 @@ contains
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: nibnd, frac, u, v,                                 &
-            &             qetot, qitot, qemax, qimax, lambda,                &
+            &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
             &             vtor, nisep, nasum
+        real(IDS_real) :: power_convected(4),                                &
+            &             power_conducted(4), power_neutrals(4),             &
+            &             power_incident(4), power_flux_peak(4),             &
+            &             power_recomb_neutrals(4), power_radiated(4),       &
+            &             recycled_flux(4)
+        real(IDS_real), allocatable :: wrdtrg(:,:,:)
 #ifdef B25_EIRENE
         real(IDS_real), allocatable :: un0(:,:,:,:), um0(:,:,:,:)
 #endif
@@ -701,8 +710,8 @@ contains
         character(len=132) :: ion_label !< Ion species label (e.g. D+1)
         logical, allocatable :: in_species(:)
 #endif
-        external b2xpne, b2xpni, b2xppe, b2xppb, b2xppz, b2xpve, b2xzef
-        external b2spcx, b2sral, b2tral, b2tanml
+        external b2xpne, b2xpni, b2xppb, b2xppe, b2xppz, b2xpve, b2xzef
+        external b2sral, b2spcx, b2tral, b2tanml, b2ptrdl
         external ipgetr, ipgeti, species, streql, xerrab, xertst
         external find_file
 
@@ -1245,6 +1254,710 @@ contains
           end if
 #endif
         end select
+
+        totFace(-1:nx,-1:ny,0)=abs(fht(-1:nx,-1:ny,0,0))
+        totFace(-1:nx,-1:ny,1)=abs(fht(-1:nx,-1:ny,1,1))
+        call divide_by_poloidal_areas(nx,ny,totFace,tmpFace)
+        call divide_by_contact_areas(nx,ny,totFace,flxFace)
+        call alloc_b2plot_wall_loading(nlim,nsgmx)
+        allocate(wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM))
+        wrdtrg = 0.0_IDS_real
+        call b2ptrdl(wrdtrg)
+        do i = 1, 2*max(1,nncut)
+          if (itrg(i).eq.0) cycle
+          qmax = 1.0_IDS_real
+          ixmax(itrg(i)) = ixmid(itrg(i))
+          do ix = ixmid(itrg(i)), ixpos(itrg(i)), idir(itrg(i))
+            qtot = 0.0_IDS_real
+            do iy = iysep(itrg(i))+1, ny
+              qtot = qtot + idir(itrg(i))*(fht(ix,iy,0,0)+fht(ix,iy,0,1))
+            end do
+            if (abs(qtot).gt.abs(qmax).and.qtot*qmax.gt.0.0_IDS_real) then
+              qmax = qtot
+              ixmax(itrg(i)) = ix
+            end if
+          end do
+          wetted_area(itrg(i)) = 0.0_IDS_real
+          u = maxval(tmpFace(ixmax(itrg(i)),iysep(itrg(i))+1:ny,0)) &
+            &  *exp(-1.0_IDS_real)
+          j = maxloc(tmpFace(ixmax(itrg(i)),iysep(itrg(i))+1:ny,0),dim=1)
+          k = iysep(itrg(i))+j
+          do iy = iysep(itrg(i))+1, ny
+            if (k.gt.iysep(itrg(i))+j) cycle
+            if (tmpFace(ixmax(itrg(i)),iy,0).lt.u) then
+              k = max(k,iy)
+              frac = (tmpFace(ixmax(itrg(i)),iy-1,0)-u)/ &
+                   & (tmpFace(ixmax(itrg(i)),iy-1,0)-    &
+                   &  tmpFace(ixmax(itrg(i)),iy,0))
+              wetted_area(itrg(i)) = wetted_area(itrg(i)) + &
+                   &  frac*gs(ifpos(itrg(i)),iy,0)
+            else
+              wetted_area(itrg(i)) = wetted_area(itrg(i)) + &
+                   &  gs(ifpos(itrg(i)),iy,0)
+            end if
+          end do
+          recycled_flux(itrg(i)) = 0.0_IDS_real
+          power_neutrals(itrg(i)) = 0.0_IDS_real
+          power_incident(itrg(i)) = 0.0_IDS_real
+          power_radiated(itrg(i)) = 0.0_IDS_real
+          power_conducted(itrg(i)) = 0.0_IDS_real
+          power_convected(itrg(i)) = 0.0_IDS_real
+          power_recomb_neutrals(itrg(i)) = 0.0_IDS_real
+          do iy = 0, ny-1
+            u = 0.0_R8
+            do is = 0, ns-1
+              u = u + idir(itrg(i))* &
+                 & (ti(ixpos(itrg(i)),iy) + &
+                 &  te(ixpos(itrg(i)),iy)*rza(ixpos(itrg(i)),iy,is))* &
+                 & (1.5_R8*(fna_32(ifpos(itrg(i)),iy,0,0,is)+ &
+                 &          fna_32(ifpos(itrg(i)),iy,0,1,is)) + &
+                 &  2.5_R8*(fna_52(ifpos(itrg(i)),iy,0,0,is)+ &
+                 &          fna_52(ifpos(itrg(i)),iy,0,1,is)))
+              if (is_neutral(is)) &
+                &  power_neutrals(itrg(i)) = power_neutrals(itrg(i)) + &
+                &    idir(itrg(i))*(ti(ixpos(itrg(i)),iy)* &
+                &   (1.5_R8*(fna_32(ifpos(itrg(i)),iy,0,0,is)+ &
+                &            fna_32(ifpos(itrg(i)),iy,0,1,is)) + &
+                &    2.5_R8*(fna_52(ifpos(itrg(i)),iy,0,0,is)+ &
+                &            fna_52(ifpos(itrg(i)),iy,0,1,is))) + &
+                &              (fhm(ifpos(itrg(i)),iy,0,0,is) + &
+                &               fhm(ifpos(itrg(i)),iy,0,1,is)))
+              match_found = .true.
+              do j = 1, nstrai
+                if (streql(crcstra(j),'E').or.streql(crcstra(j),'W')) then
+                  if (rcpos(j).eq. &
+                     &  (ixpos(itrg(i))+target_offset*idir(itrg(i))).and. &
+                     &  (rcstart(j).le.iy .and. rcend(j).ge.iy)) then
+                    recycled_flux(itrg(i)) = recycled_flux(itrg(i)) + &
+                      &  neutral_sources_rescale*recyc(is,j)* &
+                      &  max(0.0_R8,idir(itrg(i))* &
+                      &  (fna(ifpos(itrg(i)),iy,0,0,is)+ &
+                      &   fna(ifpos(itrg(i)),iy,0,1,is)))*zn(is)
+                  end if
+                end if
+              end do
+            end do
+            power_radiated(itrg(i)) = power_radiated(itrg(i)) + &
+                 &  wrdtrg(iy,itrg(i),0)
+            power_convected(itrg(i)) = power_convected(itrg(i)) + u
+            power_conducted(itrg(i)) = power_conducted(itrg(i))   &
+                 & - u + idir(itrg(i))* &
+                 & (fht(ifpos(itrg(i)),iy,0,0)-fhj(ifpos(itrg(i)),iy,0,0)+ &
+                 &  fht(ifpos(itrg(i)),iy,0,1)-fhj(ifpos(itrg(i)),iy,0,1))
+            power_incident(itrg(i)) = power_incident(itrg(i)) + &
+                 &  wrdtrg(iy,itrg(i),0) + &
+                 &  idir(itrg(i))*(fht(ifpos(itrg(i)),iy,0,0) + &
+                 &                 fht(ifpos(itrg(i)),iy,0,1))
+          end do
+#ifdef B25_EIRENE
+          do js = 1, nsts
+            if (eirdiag_nds_typ(js).ne.2) cycle
+            if (eirdiag_nds_srf(js).ne.ifpos(itrg(i))) cycle
+            do iy = 0, ny-1
+              if (eirdiag_nds_start(js).gt.(iy+1)) cycle
+              if (eirdiag_nds_end(js).lt.(iy+1)) cycle
+              ind = eirdiag_nds_ind(js)
+              ias = ind+1-(eirdiag_nds_start(js)-1)
+              power_neutrals(itrg(i)) = power_neutrals(itrg(i)) + &
+                   &  ewldt_res(iy+ias)
+              power_incident(itrg(i)) = power_incident(itrg(i)) + &
+                   &  ewldt_res(iy+ias)
+              do imol = 1, nmoli
+                power_recomb_neutrals(itrg(i)) = &
+                   &  power_recomb_neutrals(itrg(i)) + ewldmr_res(imol,iy+ias)
+              end do
+              flxFace(ifpos(itrg(i)),iy,0) = flxFace(ifpos(itrg(i)),iy,0) + &
+                &  ewldt_res(iy+ias)/gs(ifpos(itrg(i)),iy,0)
+            end do
+            do iatm = 1, natmi
+              recycled_flux(itrg(i)) = recycled_flux(itrg(i)) + &
+                &  wldpa(nlim+js,iatm,0)*zn(eb2atcr(iatm))
+            end do
+            do imol = 1, nmoli
+              do iatm = 1, natmi
+                recycled_flux(itrg(i)) = recycled_flux(itrg(i)) + &
+                  &  wldpm(nlim+js,imol,0)*mlcmp(iatm,imol)*zn(eb2atcr(iatm))
+              end do
+            end do
+          end do
+#endif
+          power_flux_peak(itrg(i)) = maxval(flxFace(ifpos(itrg(i)),0:ny-1,0))
+        end do
+#if IMAS_MINOR_VERSION > 30
+        select case ( GeometryType )
+        case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+          if (ntrgts.gt.0) then
+            allocate( divertors%divertor(ntrgts) )
+            do i = 1, ntrgts
+              allocate( divertors%divertor(i)%name(1) )
+              allocate( divertors%divertor(i)%identifier(1) )
+              allocate( divertors%divertor(i)%target(1) )
+              allocate( divertors%divertor(i)%target(1)%name(1) )
+              allocate( divertors%divertor(i)%target(1)%identifier(1) )
+              if (streql(plate_name(i),'W')) then
+                divertors%divertor(i)%name = 'Western divertor'
+                divertors%divertor(i)%target(1)%name = 'Western target'
+              else if (streql(plate_name(i),'E')) then
+                divertors%divertor(i)%name = 'Eastern divertor'
+                divertors%divertor(i)%target(1)%name = 'Eastern target'
+              else
+                divertors%divertor(i)%name = 'Divertor '//int2str(i)
+                divertors%divertor(i)%target(1)%name = 'Target '//int2str(i)
+              end if
+              divertors%divertor(i)%identifier = plate_name(i)
+              divertors%divertor(i)%target(1)%identifier = plate_name(i)
+!! FIXME: Should represent the full extent of the physical divertor
+              divertors%divertor(i)%target(1)%extension_r = extension_r(i)
+              divertors%divertor(i)%target(1)%extension_z = extension_z(i)
+            end do
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_flux_peak, &
+              &  power_flux_peak(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%flux_expansion, &
+              &  flux_expansion(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%wetted_area, &
+              &  wetted_area(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%wetted_area, &
+              &  wetted_area(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_incident_fraction, &
+              &  1.0_IDS_real )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_incident, &
+              &  power_incident(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_incident, &
+              &  power_incident(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_conducted, &
+              &  power_conducted(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_conducted, &
+              &  power_conducted(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_convected, &
+              &  power_convected(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_convected, &
+              &  power_convected(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_radiated, &
+              &  power_radiated(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_radiated, &
+              &  power_radiated(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_neutrals, &
+              &  power_neutrals(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_neutrals, &
+              &  power_neutrals(1) )
+            u = idir(1)*sum(fhp(ifpos(1),:,0,:,:))
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_recombination_plasma, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_recombination_plasma, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_recombination_neutrals, &
+              &  power_recomb_neutrals(1) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_recombination_neutrals, &
+              &  power_recomb_neutrals(1) )
+            u = idir(1)*sum(fhj(ifpos(1),:,0,:))
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%power_currents, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%power_currents, u )
+#if IMAS_MINOR_VERSION > 32
+            u = idir(1)*sum(fch(ifpos(1),:,0,:))
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(1)%current_incident, u )
+            call write_timed_value( &
+              &  divertors%divertor(1)%current_incident, u )
+#endif
+            call write_timed_value( &
+              &  divertors%divertor(1)%particle_flux_recycled_total, &
+              &  recycled_flux(1) )
+            if (ntrgts.eq.2) then
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_flux_peak, &
+                & power_flux_peak(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%flux_expansion, &
+                & flux_expansion(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%wetted_area, &
+                & wetted_area(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%wetted_area, &
+                & wetted_area(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_incident_fraction, &
+                & 1.0_IDS_real )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_incident, &
+                & power_incident(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_incident, &
+                & power_incident(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_conducted, &
+                & power_conducted(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_conducted, &
+                & power_conducted(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_convected, &
+                & power_convected(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_convected, &
+                & power_convected(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_radiated, &
+                & power_radiated(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_radiated, &
+                & power_radiated(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_neutrals, &
+                & power_neutrals(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_neutrals, &
+                & power_neutrals(2) )
+              u = idir(2)*sum(fhp(ifpos(2),:,0,:,:))
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_recombination_plasma, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_recombination_plasma, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_recombination_neutrals, &
+                & power_recomb_neutrals(2) )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_recombination_neutrals, &
+                & power_recomb_neutrals(2) )
+              u = idir(2)*sum(fhj(ifpos(2),:,0,:))
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%power_currents, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%power_currents, u )
+#if IMAS_MINOR_VERSION > 32
+              u = idir(2)*sum(fch(ifpos(2),:,0,:))
+              call write_timed_value( &
+                & divertors%divertor(2)%target(1)%current_incident, u )
+              call write_timed_value( &
+                & divertors%divertor(2)%current_incident, u )
+#endif
+              call write_timed_value( &
+                & divertors%divertor(2)%particle_flux_recycled_total, &
+                & recycled_flux(2) )
+            end if
+          end if
+        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+          allocate( divertors%divertor(1) )
+          allocate( divertors%divertor(1)%name(1) )
+          allocate( divertors%divertor(1)%identifier(1) )
+          if (LSN) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LSN'
+          else
+            divertors%divertor(1)%name = 'Upper divertor'
+            divertors%divertor(1)%identifier = 'USN'
+          end if
+          allocate( divertors%divertor(1)%target(2) )
+          allocate( divertors%divertor(1)%target(1)%name(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%name(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+!! FIXME: Should represent the full extent of the physical divertor
+          divertors%divertor(1)%target(1)%extension_r = extension_r(1)
+          divertors%divertor(1)%target(1)%extension_z = extension_z(1)
+          divertors%divertor(1)%target(2)%extension_r = extension_r(2)
+          divertors%divertor(1)%target(2)%extension_z = extension_z(2)
+          if (LSN) then
+            divertors%divertor(1)%target(1)%name = "Inner target"
+            divertors%divertor(1)%target(1)%identifier = "ID"
+            divertors%divertor(1)%target(2)%name = "Outer target"
+            divertors%divertor(1)%target(2)%identifier = "OD"
+          else
+            divertors%divertor(1)%target(1)%name = "Outer target"
+            divertors%divertor(1)%target(1)%identifier = "OD"
+            divertors%divertor(1)%target(2)%name = "Inner target"
+            divertors%divertor(1)%target(2)%identifier = "ID"
+          end if
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_flux_peak, &
+            &  power_flux_peak(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_flux_peak, &
+            &  power_flux_peak(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%flux_expansion, &
+            &  flux_expansion(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%flux_expansion, &
+            &  flux_expansion(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%wetted_area, &
+            &  wetted_area(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%wetted_area, &
+            &  wetted_area(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(2) )
+          u = power_incident(1) / (power_incident(1) + power_incident(2))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident_fraction, u )
+          u = power_incident(2) / (power_incident(1) + power_incident(2))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident_fraction, u )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident, &
+            &  power_incident(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident, &
+            &  power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_incident, &
+            &  power_incident(1)+power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_conducted, &
+            &  power_conducted(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_conducted, &
+            &  power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_convected, &
+            &  power_convected(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_convected, &
+            &  power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_radiated, &
+            &  power_radiated(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_radiated, &
+            &  power_radiated(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_radiated, &
+            &  power_radiated(1)+power_radiated(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_neutrals, &
+            &  power_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_neutrals, &
+            &  power_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_neutrals, &
+            &  power_neutrals(1)+power_neutrals(2) )
+          u = idir(1)*sum(fhp(ifpos(1),:,0,:,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_plasma, u )
+          v = idir(2)*sum(fhp(ifpos(2),:,0,:,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_plasma, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1)+power_recomb_neutrals(2) )
+          u = idir(1)*sum(fhj(ifpos(1),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_currents, u )
+          v = idir(2)*sum(fhj(ifpos(2),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_currents, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, u+v )
+#if IMAS_MINOR_VERSION > 32
+          u = idir(1)*sum(fch(ifpos(1),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%current_incident, u )
+          v = idir(2)*sum(fch(ifpos(2),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%current_incident, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, u+v )
+#endif
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, &
+            &  recycled_flux(1) )
+        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          allocate( divertors%divertor(2) )
+          allocate( divertors%divertor(1)%name(1) )
+          allocate( divertors%divertor(1)%identifier(1) )
+          allocate( divertors%divertor(2)%name(1) )
+          allocate( divertors%divertor(2)%identifier(1) )
+          divertors%divertor(1)%name = 'Lower divertor'
+          divertors%divertor(1)%identifier = 'LD'
+          divertors%divertor(2)%name = 'Upper divertor'
+          divertors%divertor(2)%identifier = 'UD'
+          allocate( divertors%divertor(1)%target(2) )
+          allocate( divertors%divertor(2)%target(2) )
+          allocate( divertors%divertor(1)%target(1)%name(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%name(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          allocate( divertors%divertor(2)%target(1)%name(1) )
+          allocate( divertors%divertor(2)%target(1)%identifier(1) )
+          allocate( divertors%divertor(2)%target(2)%name(1) )
+          allocate( divertors%divertor(2)%target(2)%identifier(1) )
+!! FIXME: Should represent the full extent of the physical divertor
+          divertors%divertor(1)%target(1)%extension_r = extension_r(1)
+          divertors%divertor(1)%target(1)%extension_z = extension_z(1)
+          divertors%divertor(1)%target(2)%extension_r = extension_r(4)
+          divertors%divertor(1)%target(2)%extension_z = extension_z(4)
+          divertors%divertor(2)%target(1)%extension_r = extension_r(2)
+          divertors%divertor(2)%target(1)%extension_z = extension_z(2)
+          divertors%divertor(2)%target(2)%extension_r = extension_r(3)
+          divertors%divertor(2)%target(2)%extension_z = extension_z(3)
+          divertors%divertor(1)%target(1)%name = "Lower inner target"
+          divertors%divertor(1)%target(1)%identifier = "LID"
+          divertors%divertor(1)%target(2)%name = "Lower outer target"
+          divertors%divertor(1)%target(2)%identifier = "LOD"
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_flux_peak, &
+            &  power_flux_peak(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_flux_peak, &
+            &  power_flux_peak(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%flux_expansion, &
+            &  flux_expansion(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%flux_expansion, &
+            &  flux_expansion(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%wetted_area, &
+            &  wetted_area(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%wetted_area, &
+            &  wetted_area(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(4) )
+          u = power_incident(1) / (power_incident(1) + power_incident(4))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident_fraction, u )
+          u = power_incident(4) / (power_incident(1) + power_incident(4))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident_fraction, u )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_incident, &
+            &  power_incident(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_incident, &
+            &  power_incident(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_incident, &
+            &  power_incident(1)+power_incident(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_conducted, &
+            &  power_conducted(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_conducted, &
+            &  power_conducted(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_convected, &
+            &  power_convected(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_convected, &
+            &  power_convected(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_radiated, &
+            &  power_radiated(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_radiated, &
+            &  power_radiated(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_radiated, &
+            &  power_radiated(1)+power_radiated(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_neutrals, &
+            &  power_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_neutrals, &
+            &  power_neutrals(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_neutrals, &
+            &  power_neutrals(1)+power_neutrals(4) )
+          u = idir(1)*sum(fhp(ifpos(1),:,0,:,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_plasma, u )
+          v = idir(4)*sum(fhp(ifpos(4),:,0,:,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_plasma, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(1)+power_recomb_neutrals(4) )
+          u = idir(1)*sum(fhj(ifpos(1),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%power_currents, u )
+          v = idir(4)*sum(fhj(ifpos(4),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%power_currents, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, u+v )
+#if IMAS_MINOR_VERSION > 32
+          u = idir(1)*sum(fch(ifpos(1),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(1)%current_incident, u )
+          v = idir(4)*sum(fch(ifpos(4),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(1)%target(2)%current_incident, v )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, u+v )
+#endif
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, &
+            &  recycled_flux(1)+recycled_flux(4) )
+          divertors%divertor(2)%target(1)%name = "Upper inner target"
+          divertors%divertor(2)%target(1)%identifier = "UID"
+          divertors%divertor(2)%target(2)%name = "Upper outer target"
+          divertors%divertor(2)%target(2)%identifier = "UOD"
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_flux_peak, &
+            &  power_flux_peak(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_flux_peak, &
+            &  power_flux_peak(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%flux_expansion, &
+            &  flux_expansion(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%flux_expansion, &
+            &  flux_expansion(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%wetted_area, &
+            &  wetted_area(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%wetted_area, &
+            &  wetted_area(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%wetted_area, &
+            &  wetted_area(2)+wetted_area(3) )
+          u = power_incident(2) / (power_incident(2) + power_incident(3))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_incident_fraction, u )
+          u = power_incident(3) / (power_incident(2) + power_incident(3))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_incident_fraction, u )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_incident, &
+            &  power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_incident, &
+            &  power_incident(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_incident, &
+            &  power_incident(2)+power_incident(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_conducted, &
+            &  power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_conducted, &
+            &  power_conducted(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_conducted, &
+            &  power_conducted(2)+power_conducted(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_convected, &
+            &  power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_convected, &
+            &  power_convected(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_convected, &
+            &  power_convected(2)+power_convected(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_radiated, &
+            &  power_radiated(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_radiated, &
+            &  power_radiated(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_radiated, &
+            &  power_radiated(2)+power_radiated(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_neutrals, &
+            &  power_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_neutrals, &
+            &  power_neutrals(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_neutrals, &
+            &  power_neutrals(2)+power_neutrals(3) )
+          u = idir(2)*sum(fhp(ifpos(2),:,0,:,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_recombination_plasma, u )
+          v = idir(3)*sum(fhp(ifpos(3),:,0,:,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_recombination_plasma, v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_plasma, u+v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(2) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_neutrals, &
+            &  power_recomb_neutrals(2)+power_recomb_neutrals(3) )
+          u = idir(2)*sum(fhj(ifpos(2),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%power_currents, u )
+          v = idir(3)*sum(fhj(ifpos(3),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%power_currents, v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_currents, u+v )
+#if IMAS_MINOR_VERSION > 32
+          u = idir(2)*sum(fch(ifpos(2),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(1)%current_incident, u )
+          v = idir(3)*sum(fch(ifpos(3),:,0,:))
+          call write_timed_value( &
+            &  divertors%divertor(2)%target(2)%current_incident, v )
+          call write_timed_value( &
+            &  divertors%divertor(2)%current_incident, u+v )
+#endif
+          call write_timed_value( &
+            &  divertors%divertor(2)%particle_flux_recycled_total, &
+            &  recycled_flux(2)+recycled_flux(3) )
+        end select
+#endif
+        deallocate(wrdtrg)
+        call dealloc_b2plot_wall_loading
 #endif
 
         !! Write grid & grid subsets/subgrids
@@ -5047,6 +5760,10 @@ contains
            & 0.25_R8 * ( zeff(0,jsep) + zeff(0,jsep+1) + &
            &             zeff(nx-1,jsep) + zeff(nx-1,jsep+1) ) )
           call write_sourced_value( summary%local%limiter%flux_expansion, flux_expansion(itrg(1)) )
+#if IMAS_MINOR_VERSION > 31
+          u = max( power_flux_peak(itrg(1)), power_flux_peak(itrg(2)) )
+          call write_sourced_value( summary%local%limiter%power_flux_peak, u )
+#endif
         end if
 
 ! Summary divertor plate data
@@ -5211,6 +5928,8 @@ contains
               &                topiy(ixpos(itrg(i)),iypos(itrg(i))))) )
             call write_sourced_value( summary%local%divertor_target(i)%flux_expansion, &
               & flux_expansion(itrg(i)) )
+            call write_sourced_value( summary%local%divertor_target(i)%power_flux_peak, &
+              & power_flux_peak(itrg(i)) )
 #else
             call write_sourced_value( summary%local%divertor_plate(i)%n_i_total, &
               & 0.5_R8 * (ni(ixpos(itrg(i)),iypos(itrg(i)),1) + &
@@ -5222,6 +5941,10 @@ contains
               &                topiy(ixpos(itrg(i)),iypos(itrg(i))))) )
             call write_sourced_value( summary%local%divertor_plate(i)%flux_expansion, &
               & flux_expansion(itrg(i)) )
+#if IMAS_MINOR_VERSION > 31
+            call write_sourced_value( summary%local%divertor_plate(i)%power_flux_peak, &
+              & power_flux_peak(itrg(i)) )
+#endif
 #endif
           end do
         end if
@@ -5454,6 +6177,23 @@ contains
         end subroutine write_timed_integer
 #endif
 
+#if IMAS_MINOR_VERSION > 30
+        subroutine write_timed_value( val, value )
+            type(ids_signal_flt_1d), intent(inout) :: val
+                !< Type of IDS data structure, designed for scalar data handling
+            real(IDS_real), intent(in) :: value
+
+            allocate( val%data( num_slices ) )
+            val%data( slice_index ) = value
+            allocate( val%time( num_slices ) )
+            val%time( slice_index ) = time_slice_value
+
+            return
+
+        end subroutine write_timed_value
+#endif
+
+
 #if IMAS_MINOR_VERSION > 11
 
         !> Write a vector component B2 face quantity to ids_generic_grid_vector
@@ -5621,6 +6361,599 @@ contains
 
 #endif
     end subroutine B25_process_ids
+
+    !> Process averaged B2.5 data and set it to IMAS IDS.
+    !! @note    The \b B25_av_ids routine enables to store data for
+    !!          specific batch average. By default it stores single default
+    !!          time slice of time slice value 0.0.
+    !!          \b num_batch_slices_IN is required to beforehand allocate
+    !!          required ggd(:) array of nodes structure and for additional
+    !!          checks for correct use of the routine.
+    !! @note    Time slice value is set as:
+    !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
+    subroutine B25_av_ids( do_description, &
+            &   batch_profiles, batch_sources, &
+            &   description, equilibrium, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+            &   time_IN, shot, run, database, version, &
+            &   batch_ind_IN, num_batch_slices_IN )
+#ifdef NO_OPT
+!DIR$ NOOPTIMIZE
+#endif
+        implicit none
+        logical, intent(in) :: do_description
+        type (ids_equilibrium) :: equilibrium !< IDS designed to
+            !< store equilibrium data
+        type (ids_edge_profiles) :: batch_profiles !< IDS designed to
+            !< store data on edge plasma profiles (includes the scrape-off
+            !< layer and possibly part of the confined plasma)
+        type (ids_edge_sources) :: batch_sources !< IDS designed to store
+            !< data on edge plasma sources. Energy terms correspond to the full
+            !< kinetic energy equation (i.e. the energy flux takes into account
+            !< the energy transported by the particle flux)
+        type (ids_dataset_description) :: description !< IDS designed to store
+            !< a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary) :: summary !< IDS designed to store
+            !< run summary data
+#endif
+        integer, intent(in) :: shot, run
+        character(len=24), intent(in) :: database, version
+        real(IDS_real), intent(in), optional :: time_IN !< Time
+        integer, intent(in), optional :: batch_ind_IN
+            !< Batch index for the current time slice
+        integer, intent(in), optional :: num_batch_slices_IN
+            !< Total number of batches. It is required to beforehand allocate
+            !< required ggd(:) array of nodes structure and for additional
+            !< checks for correct use of the routine.
+
+        !! Internal variables
+        integer :: i, is, js, ks, ion_charge_int, nc
+        integer :: batch_index
+        real(IDS_real) :: batch_slice_value   !< Time slice value
+        real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+        character(len=13) :: spclabel         !< Species label
+
+        !! Procedures
+        external species, xertst
+
+        !! ===  SET UP IDS ===
+        write(0,*) "Setting data for batch_profiles IDS"
+        source = "SOLPS-ITER (batch averaged)"
+
+        !! Preparing database for writing
+        call IDS_init
+        homogeneous_time = 1
+        if ( present( time_IN ) ) then
+            time = time_IN
+        else
+            time = 0.0_IDS_real
+        end if
+
+        !! Set default time step values
+        !! This routine only fills in one time slice at a time
+        batch_index = 1
+        slice_index = batch_index
+        batch_slice_value = time
+        num_batch_slices = 1
+        num_slices = num_batch_slices
+        call xertst( num_batch_slices .ge. batch_index, &
+            & "B25_av_ids: Batch index cannot be greater " // &
+            & "than total number of batches!" )
+        if( present( batch_ind_IN ) ) &
+            & call xertst( batch_ind_IN .ge. 1, &
+            & "faulty argument batch_ind_IN" )
+        if( present( num_batch_slices_IN ) ) &
+            & call xertst( num_batch_slices_IN .ge. 1, &
+            & "faulty argument num_batch_slices_IN" )
+
+        !! Preparing IDSs for writing
+        comment = trim(label)//' (batch averaged)'
+        !! 1. Set homogeneous_time to 0 or 1 and other properties
+        call write_ids_properties( batch_profiles%ids_properties, &
+          &  homogeneous_time )
+        call write_ids_properties( batch_sources%ids_properties, &
+          &  homogeneous_time )
+        if ( do_description ) then
+          call write_ids_properties( description%ids_properties, &
+            &  homogeneous_time )
+#if IMAS_MINOR_VERSION > 21
+          call write_ids_properties( summary%ids_properties, &
+            &  homogeneous_time )
+#endif
+        end if
+
+        !! 2. Set code and library data
+        call write_ids_code( batch_profiles%code, code_commit )
+        call write_ids_code( batch_sources%code, code_commit )
+#if IMAS_MINOR_VERSION > 21
+        if (do_description) &
+          &  call write_ids_code( summary%code, code_commit )
+#endif
+
+        !! 3. Allocate IDS.time and set it to desired values
+        allocate( batch_profiles%time(num_batch_slices) )
+        batch_profiles%time(batch_index) = time
+        allocate( batch_sources%time(num_batch_slices) )
+        batch_sources%time(batch_index) = time
+        if (do_description) then
+          allocate( description%time(num_batch_slices) )
+          description%time(batch_index) = time
+#if IMAS_MINOR_VERSION > 21
+          allocate( summary%time(num_batch_slices) )
+          summary%time(batch_index) = time
+#endif
+        end if
+
+        !! Allocate ggd for number of different time steps
+        allocate( batch_profiles%ggd( num_batch_slices ) )
+#if IMAS_MINOR_VERSION > 14
+        allocate( batch_profiles%grid_ggd( num_batch_slices ) )
+        allocate( batch_sources%grid_ggd( num_batch_slices ) )
+#endif
+        allocate (batch_sources%source(1) )
+        allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+        !! Total sources due to Eirene species
+        batch_sources%source(1)%identifier%index = 0
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        batch_sources%source(1)%identifier%name = "Eirene"
+        allocate( batch_sources%source(1)%identifier%description(1) )
+        batch_sources%source(1)%identifier%description = &
+             &  "Total source due to Eirene species "//trim(source)
+
+        call put_equilibrium_data ( equilibrium, &
+#if IMAS_MINOR_VERSION > 21
+            &  summary, &
+#endif
+            &  batch_profiles, database, do_description )
+#if IMAS_MINOR_VERSION > 21
+        if (do_description) then
+          allocate( description%data_entry%user(1) )
+          description%data_entry%user = username
+          allocate( description%data_entry%machine(1) )
+          description%data_entry%machine = database
+          allocate( description%data_entry%pulse_type(1) )
+          description%data_entry%pulse_type = "simulation"
+          description%data_entry%pulse = shot
+          description%data_entry%run = run
+          allocate( description%imas_version(1) )
+          description%imas_version = version
+          allocate( description%dd_version(1) )
+          description%dd_version = imas_version
+          if ( present( time_IN ) ) &
+            &  description%simulation%time_current = time_IN
+          allocate( description%simulation%workflow(1) )
+          description%simulation%workflow = source
+
+          i=index(B25_git_version,'-')
+          allocate( summary%tag%name(1) )
+          summary%tag%name = B25_git_version(1:i-1)
+        end if
+#endif
+
+#if IMAS_MINOR_VERSION > 32
+        call write_ids_midplane( batch_profiles%midplane, midplane_id )
+        call write_ids_midplane( batch_sources%midplane, midplane_id )
+        if (do_description) &
+          & call write_ids_midplane( summary%midplane, midplane_id )
+#endif
+
+        !! Write grid & grid subsets/subgrids
+#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION < 15
+        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
+            &   batch_profiles%ggd( batch_index )%grid,                     &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
+            &   batch_sources%source(1)%ggd( batch_index )%grid,            &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#else
+        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
+            &   batch_profiles%grid_ggd( batch_index ),                     &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
+            &   batch_sources%grid_ggd( batch_index ),                      &
+            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+            &   bottomiy, nnreg, topcut, region, cflags,                    &
+            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#endif
+#endif
+#if IMAS_MINOR_VERSION > 21
+        if (do_description) &
+          & call write_sourced_string( summary%configuration, configuration )
+#endif
+
+        !! Allocate and set time slice value
+#if IMAS_MINOR_VERSION > 14
+        batch_profiles%grid_ggd( batch_index )%time = batch_slice_value
+        batch_sources%grid_ggd( batch_index )%time = batch_slice_value
+#endif
+        batch_profiles%ggd( batch_index )%time = batch_slice_value
+        batch_sources%source(1)%ggd( batch_index )%time = batch_slice_value
+
+        !! List of species
+        !! Careful here: ion in DD means isonuclear sequence !!
+        allocate( batch_profiles%ggd( batch_index )%ion( nspecies ) )
+        allocate( batch_profiles%ggd( batch_index )%neutral( nspecies ) )
+        allocate( batch_sources%source(1)%ggd( batch_index )%ion( nspecies ) )
+        allocate( batch_sources%source(1)%ggd( batch_index )%neutral( nspecies ) )
+        ks = 0
+        do js = 1, nspecies
+          if (is_neutral(ks)) ks = ks + 1  ! Skip the neutral species
+          allocate( batch_profiles%ggd( batch_index )%ion( js )%label(1) )
+          allocate( batch_profiles%ggd( batch_index )%ion( js )%state( nfluids(js) ) )
+          do is = 1, nfluids(js)
+            allocate( batch_profiles%ggd( batch_index )%ion( js )%state( is )%label(1) )
+          end do
+          allocate( batch_profiles%ggd( batch_index )%ion( js )%element(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%label(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%state( nfluids(js) ) )
+          do is = 1, nfluids(js)
+            allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%label(1) )
+          end do
+          allocate( batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1) )
+          do is = 1, nfluids(js)
+            call species( ks, spclabel, .false.)
+            batch_profiles%ggd( batch_index )%ion( js )%state( is )%label = spclabel
+            batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%label = spclabel
+            ! Put minimum Z of the charge state bundle
+            ! (z_min = z_max = 0 for a neutral)
+            batch_profiles%ggd( batch_index )%ion( js )%state( is )%z_min = zamin( ks )
+            batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%z_min = &
+                  &  zamin( ks )
+            ! Put maximum Z of the charge state bundle
+            batch_profiles%ggd( batch_index )%ion( js )%state( is )%z_max = zamax( ks )
+            batch_sources%source(1)%ggd( batch_index )%ion( js )%state( is )%z_max = &
+                  &  zamax( ks )
+            if (is.lt.nfluids(js)) ks = ks + 1
+          end do
+
+          ! Put ion label identifying the species
+          batch_profiles%ggd( batch_index )%ion( js )%label = species_list( js )
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%label = species_list( js )
+          ! Put ion charge if single ion in species
+          if (nfluids(js).eq.1) then
+            ion_charge_int = nint((zamin(ks)+zamax(ks))/2.0_R8)
+            batch_profiles%ggd( batch_index )%ion( js )%z_ion = ion_charge_int
+            batch_sources%source(1)%ggd( batch_index )%ion( js )%z_ion = ion_charge_int
+          end if
+          ! Put mass of species
+          batch_profiles%ggd( batch_index )%ion( js )%element(1)%a = am( ks )
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%a = am( ks )
+          ! Put nuclear charge
+          batch_profiles%ggd( batch_index )%ion( js )%element(1)%z_n = zn( ks )
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%z_n = zn( ks )
+          ! Put number of atoms
+#if IMAS_MINOR_VERSION < 15
+          batch_profiles%ggd( batch_index )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%multiplicity = 1.0_IDS_real
+#else
+          batch_profiles%ggd( batch_index )%ion( js )%element(1)%atoms_n = 1
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%element(1)%atoms_n = 1
+#endif
+          ! Put neutral index
+          batch_profiles%ggd( batch_index )%ion( js )%neutral_index = js
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%neutral_index = js
+          ! Put multiple states flag
+          batch_profiles%ggd( batch_index )%ion( js )%multiple_states_flag = 1
+          batch_sources%source(1)%ggd( batch_index )%ion( js )%multiple_states_flag = 1
+
+          !! List of neutrals
+          allocate( batch_profiles%ggd( batch_index )%neutral( js )%element(1) )
+          allocate( batch_profiles%ggd( batch_index )%neutral( js )%label(1) )
+          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
+          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
+#if IMAS_MINOR_VERSION < 15
+          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
+#else
+          batch_profiles%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
+#endif
+          batch_profiles%ggd( batch_index )%neutral( js )%label = species_list( js )
+          batch_profiles%ggd( batch_index )%neutral( js )%ion_index = js
+          batch_profiles%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1) )
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%label(1) )
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%a = am( ks )
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%z_n = zn( ks )
+#if IMAS_MINOR_VERSION < 15
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%multiplicity = 1.0_IDS_real
+#else
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%element(1)%atoms_n = 1
+#endif
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%label = species_list( js )
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%ion_index = js
+          batch_sources%source(1)%ggd( batch_index )%neutral( js )%multiple_states_flag = 0
+
+          ks = ks + 1
+        end do
+
+        !! Write plasma state
+        if ( B2_WRITE_DATA ) then
+#if IMAS_MINOR_VERSION > 11
+          call logmsg( LOGDEBUG, &
+            &   "b2mod_ual_io.B25_av_ids: writing averaged plasma state" )
+            !! Find grid subset base indices out of the available grid subset
+            !! data stored in the IDS. That is done using IMAS GGD routine
+            !! findGridSubsetByName().
+#if IMAS_MINOR_VERSION < 15
+          iGsCoreBoundary = findGridSubsetByName( batch_profiles%  &
+             &   ggd( batch_index )%grid, "Core boundary" )
+          iGsInnerMidplane = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Inner Midplane" )
+          iGsOuterMidplane = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Outer Midplane" )
+          iGsCore = findGridSubsetByName( batch_profiles%      &
+             &   ggd( batch_index )%grid, "Core" )
+          iGsSOL = findGridSubsetByName( batch_profiles%       &
+             &   ggd( batch_index )%grid, "SOL" )
+          iGsIDivertor = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Inner divertor" )
+          iGsODivertor = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Outer divertor" )
+#else
+          iGsCoreBoundary = findGridSubsetByName(   &
+             &   batch_profiles%grid_ggd( batch_index ), "Core boundary" )
+          iGsInnerMidplane = findGridSubsetByName(  &
+             &   batch_profiles%grid_ggd( batch_index ), "Inner Midplane" )
+          iGsOuterMidplane = findGridSubsetByName(  &
+             &   batch_profiles%grid_ggd( batch_index ), "Outer Midplane" )
+          iGsCore = findGridSubsetByName(           &
+             &   batch_profiles%grid_ggd( batch_index ), "Core" )
+          iGsSOL = findGridSubsetByName(            &
+             &   batch_profiles%grid_ggd( batch_index ), "SOL" )
+          iGsIDivertor = findGridSubsetByName(      &
+             &   batch_profiles%grid_ggd( batch_index ), "Inner divertor" )
+          iGsODivertor = findGridSubsetByName(      &
+             &   batch_profiles%grid_ggd( batch_index ), "Outer divertor" )
+#endif
+
+          !! sne: Electron particle sources
+          tmpCv(:,:) = sne_mean(:,:) / vol(:,:)
+          call write_cell_scalar( batch_profiles,                         &
+              &   scalar = batch_sources%source(1)%ggd( batch_index )%    &
+              &            electrons%particles,                           &
+              &   b2CellData = tmpCv )
+
+          !! na: Ion density
+          ks = 0
+          do is = 1, nspecies
+            if (is_neutral(ks)) ks = ks + 1
+            tmpCv(:,:) = 0.0_IDS_real
+            do js = 1, nfluids(is)
+              call write_quantity( batch_profiles,                      &
+                  &   val = batch_profiles%ggd( batch_index )%          &
+                  &         ion( is )%state( js )%density,              &
+                  &   value = na_mean(:,:,ks) )
+              tmpCv(:,:) = tmpCv(:,:) + na_mean(:,:,ks)
+              ks = ks + 1
+            end do
+            call write_quantity( batch_profiles,                        &
+                &   val = batch_profiles%ggd( batch_index )%            &
+                &         ion(is)%density,                              &
+                &   value = tmpCv )
+          end do
+          !! sna: Ion particle sources
+          ks = 0
+          do is = 1, nspecies
+            if (is_neutral(ks)) ks = ks + 1
+            totCv(:,:) = 0.0_IDS_real
+            do js = 1, nfluids(is)
+              tmpCv(:,:) = sna_mean(:,:,ks) / vol(:,:)
+              totCv(:,:) = totCv(:,:) + tmpCv(:,:)
+              call write_cell_scalar( batch_profiles,                     &
+                  &   scalar = batch_sources%source(1)%                   &
+                  &   ggd( batch_index )%ion( is )%state( js )%particles, &
+                  &   b2CellData = tmpCv )
+              ks = ks + 1
+            end do
+            call write_cell_scalar( batch_profiles,                       &
+                &   scalar = batch_sources%source(1)%                     &
+                &   ggd( batch_index )%ion( is )%particles,               &
+                &   b2CellData = totCv )
+          end do
+          !! ua: Parallel ion velocity
+          ks = 0
+          do is = 1, nspecies
+            if (is_neutral(ks)) ks = ks + 1
+            do js = 1, nfluids(is)
+              call write_cell_vector_component( batch_profiles,           &
+                  &   vectorComponent = batch_profiles%                   &
+                  &   ggd( batch_index )%ion( is )%state( js )%velocity,  &
+                  &   b2CellData = ua(:,:,ks),                            &
+                  &   vectorID = VEC_ALIGN_PARALLEL_ID )
+              ks = ks + 1
+            end do
+          end do
+          !! smo: Ion parallel momentum sources
+          ks = 0
+          do is = 1, nspecies
+            if (is_neutral(ks)) ks = ks + 1
+            totCv(:,:) = 0.0_IDS_real
+            do js = 1, nfluids(is)
+              tmpCv(:,:) = smo_mean(:,:,ks) / vol(:,:)
+              totCv(:,:) = totCv(:,:) + tmpCv(:,:)
+              call write_cell_vector_component( batch_profiles,           &
+                  &   vectorComponent = batch_sources%source(1)%          &
+                  &                     ggd( batch_index )%ion( is )%     &
+                  &                     state( js )%momentum,             &
+                  &   b2CellData = tmpCv,                                 &
+                  &   vectorID = VEC_ALIGN_PARALLEL_ID )
+              ks = ks + 1
+            end do
+            call write_cell_vector_component( batch_profiles,             &
+                &   vectorComponent = batch_sources%source(1)%            &
+                &                     ggd( batch_index )%ion( is )%       &
+                &                     momentum,                           &
+                &   b2CellData = totCv,                                   &
+                &   vectorID = VEC_ALIGN_PARALLEL_ID )
+          end do
+          !! te: Electron Temperature
+          tmpCv(:,:) = te_mean(:,:)/qe
+          call write_quantity( batch_profiles,                           &
+              &   val = batch_profiles%ggd( batch_index )%electrons%     &
+              &         temperature,                                     &
+              &   value = tmpCv )
+          tmpCv(:,:) = she_mean(:,:) / vol(:,:)
+          call write_cell_scalar( batch_profiles,                        &
+              &   scalar = batch_sources%source(1)%ggd( batch_index )%   &
+              &            electrons%energy,                             &
+              &   b2CellData = tmpCv )
+          !! ti: (Common) Ion Temperature
+          tmpCv(:,:) = ti_mean(:,:)/qe
+          call write_quantity( batch_profiles,                           &
+              &   val = batch_profiles%ggd( batch_index )%t_i_average,   &
+              &   value = tmpCv )
+          !! Ion energy sources
+          tmpCv(:,:) = shi_mean(:,:) / vol(:,:)
+          call write_cell_scalar( batch_profiles,                        &
+              &   scalar = batch_sources%source(1)%ggd( batch_index )%   &
+              &            total_ion_energy,                             &
+              &   b2CellData = tmpCv )
+
+          js = 0
+          do is = 1, nspecies
+            !! sna: Neutral particle sources
+            tmpCv(:,:) = sna_mean(:,:,js) / vol(:,:)
+            call write_cell_scalar( batch_profiles,                      &
+                &   scalar = batch_sources%source(1)%                    &
+                &   ggd( batch_index )%neutral( is )%particles,          &
+                &   b2CellData = tmpCv )
+            !! smo: Neutral parallel momentum sources
+            tmpCv(:,:) = smo_mean(:,:,js) / vol(:,:)
+            call write_cell_vector_component( batch_profiles,            &
+                &   vectorComponent = batch_sources%source(1)%           &
+                &                     ggd( batch_index )%                &
+                &                     neutral( is )%momentum,            &
+                &   b2CellData = tmpCv,                                  &
+                &   vectorID = VEC_ALIGN_PARALLEL_ID )
+            js = js + nfluids(is) + 1
+          end do
+
+          !! po: Electric potential
+          call write_quantity( batch_profiles,                           &
+              &   val = batch_profiles%ggd( batch_index )%phi_potential, &
+              &   value = po_mean )
+          !! sch: Current sources
+          tmpCv(:,:) = sch_mean(:,:) / vol(:,:)
+          call write_cell_scalar( batch_profiles,                        &
+              &   scalar = batch_sources%source(1)%ggd( batch_index)%    &
+              &            current,                                      &
+              &   b2CellData = tmpCv )
+#else
+          call logmsg( LOGINFO, &
+              &   "b2mod_ual_io.B25_av_ids: GGD not available, no averaged plasma state writing" )
+#endif
+        end if
+
+        nc = max(nncut,1)
+#if IMAS_MINOR_VERSION > 21
+        if (do_description) then
+! Summary separatrix data
+          if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
+            allocate( summary%local%separatrix%position%psi( num_batch_slices ) )
+            summary%local%separatrix%position%psi( batch_index ) = fpsi(jxa,jsep,2)
+#if IMAS_MINOR_VERSION > 35
+            allocate( summary%local%separatrix_average%position%psi( num_batch_slices ) )
+            summary%local%separatrix_average%position%psi( batch_index ) = fpsi(jxa,jsep,2)
+#endif
+          end if
+          call write_errored_value( summary%local%separatrix%t_e,         &
+              &  tesepm_av(nc), tesepm_std(nc) )
+          call write_errored_value( summary%local%separatrix%t_i_average, &
+              &  tisepm_av(nc), tisepm_std(nc) )
+          call write_errored_value( summary%local%separatrix%n_e,         &
+              &  nesepm_av(nc), nesepm_std(nc) )
+! Summary divertor plate data
+          if (ntrgts.gt.0) then
+#if IMAS_MINOR_VERSION > 34
+            allocate ( summary%local%divertor_target( ntrgts ) )
+#else
+            allocate ( summary%local%divertor_plate( ntrgts ) )
+#endif
+            do i = 1, ntrgts
+#if IMAS_MINOR_VERSION > 34
+              call write_sourced_string( summary%local%divertor_target(i)%name, plate_name(i) )
+#else
+              call write_sourced_string( summary%local%divertor_plate(i)%name, plate_name(i) )
+#endif
+            end do
+#if IMAS_MINOR_VERSION > 34
+            call write_errored_value( summary%local%divertor_target(1)%t_e, &
+              &  tesepi_av(1), tesepi_std(1) )
+            call write_errored_value( summary%local%divertor_target(1)%t_i_average, &
+              &  tisepi_av(1), tisepi_std(1) )
+            call write_errored_value( summary%local%divertor_target(1)%n_e, &
+              &  nesepi_av(1), nesepi_std(1) )
+            if (nncut.eq.2) then
+              call write_errored_value( summary%local%divertor_target(2)%t_e, &
+                &  tesepi_av(2), tesepi_std(2) )
+              call write_errored_value( summary%local%divertor_target(2)%t_i_average, &
+                &  tisepi_av(2), tisepi_std(2) )
+              call write_errored_value( summary%local%divertor_target(2)%n_e, &
+                &  nesepi_av(2), nesepi_std(2) )
+              call write_errored_value( summary%local%divertor_target(3)%t_e, &
+                &  tesepa_av(1), tesepa_std(1) )
+              call write_errored_value( summary%local%divertor_target(3)%t_i_average, &
+                &  tisepa_av(1), tisepa_std(1) )
+              call write_errored_value( summary%local%divertor_target(3)%n_e, &
+                &  nesepa_av(1), nesepa_std(1) )
+            end if
+            call write_errored_value( summary%local%divertor_target(ntrgts)%t_e, &
+              &  tesepa_av(nc), tesepa_std(nc) )
+            call write_errored_value( summary%local%divertor_target(ntrgts)%t_i_average, &
+              &  tisepa_av(nc), tisepa_std(nc) )
+            call write_errored_value( summary%local%divertor_target(ntrgts)%n_e, &
+              &  nesepa_av(nc), nesepi_std(nc) )
+#else
+            call write_errored_value( summary%local%divertor_plate(1)%t_e, &
+              &  tesepi_av(1), tesepi_std(1) )
+            call write_errored_value( summary%local%divertor_plate(1)%t_i_average, &
+              &  tisepi_av(1), tisepi_std(1) )
+            call write_errored_value( summary%local%divertor_plate(1)%n_e, &
+              &  nesepi_av(1), nesepi_std(1) )
+            if (nncut.eq.2) then
+              call write_errored_value( summary%local%divertor_plate(2)%t_e, &
+                &  tesepi_av(2), tesepi_std(2) )
+              call write_errored_value( summary%local%divertor_plate(2)%t_i_average, &
+                &  tisepi_av(2), tisepi_std(2) )
+              call write_errored_value( summary%local%divertor_plate(2)%n_e, &
+                &  nesepi_av(2), nesepi_std(2) )
+              call write_errored_value( summary%local%divertor_plate(3)%t_e, &
+                &  tesepa_av(1), tesepa_std(1) )
+              call write_errored_value( summary%local%divertor_plate(3)%t_i_average, &
+                &  tisepa_av(1), tisepa_std(1) )
+              call write_errored_value( summary%local%divertor_plate(3)%n_e, &
+                &  nesepa_av(1), nesepa_std(1) )
+            end if
+            call write_errored_value( summary%local%divertor_plate(ntrgts)%t_e, &
+              &  tesepa_av(nc), tesepa_std(nc) )
+            call write_errored_value( summary%local%divertor_plate(ntrgts)%t_i_average, &
+              &  tisepa_av(nc), tisepa_std(nc) )
+            call write_errored_value( summary%local%divertor_plate(ntrgts)%n_e, &
+              &  nesepa_av(nc), nesepi_std(nc) )
+#endif
+          end if
+        end if
+
+        call fill_summary_data( summary )
+#endif
+        call logmsg( LOGDEBUG, "b2mod_ual_io.B25_av_ids: done" )
+
+        return
+    end subroutine B25_av_ids
 
     subroutine write_ids_properties( properties, homo )
     implicit none
@@ -5946,9 +7279,9 @@ contains
     2     continue
           close(99)
           call ipgetr ('b2agfs_pit_rescale', pit_rescale)
-          end if
         end if
       end if
+    end if
 
     !> Careful: Sign convention for magnetic field in IDS
     !>          is OPPOSITE to that in SOLPS toroidal geometries

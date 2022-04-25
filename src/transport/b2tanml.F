@@ -142,26 +142,38 @@ cxpb turn off flows between boundary cells
         enddo
 
 cxpb turn off poloidal flows in core boundary
-        do ix = -1, nx
-          if(on_closed_surface(ix,-1)) then
-            fchanml_a(ix,-1,0,:,:) = 0.0_R8
-            fchanml(ix,-1,0,0:1) = 0.0_R8
-          endif
-        enddo
+        if (boundary_namelist.eq.1) then
+          do ib = 1, nbc
+            if(core_boundary(ib)) then
+              do ix = 1, bc_list_size(ib)
+                fchanml_a(bc_list_x(ix,ib),
+     .                    bc_list_y(ix,ib),0,:,:)=0.0_R8
+                fchanml(bc_list_x(ix,ib),bc_list_y(ix,ib),0,0:1)=0.0_R8
+              enddo
+            endif
+          enddo
+        else
+          do ix = -1, nx
+            if (on_closed_surface(ix,-1)) then
+              fchanml_a(ix,-1,0,:,:) = 0.0_R8
+              fchanml(ix,-1,0,0:1) = 0.0_R8
+            endif
+          enddo
+        endif
       endif
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchanml_a(ix,iy,0,:,:)=0.0e0_R8
-            fchanml(ix,iy,0,0:1)=0.0e0_R8
+            fchanml_a(ix,iy,0,:,:)=0.0_R8
+            fchanml(ix,iy,0,0:1)=0.0_R8
           end do
         end do
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchanml_a(ix,iy,1,:,:)=0.0e0_R8
-            fchanml(ix,iy,1,0:1)=0.0e0_R8
+            fchanml_a(ix,iy,1,:,:)=0.0_R8
+            fchanml(ix,iy,1,0:1)=0.0_R8
           end do
         end do
       end do

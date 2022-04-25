@@ -7,7 +7,7 @@
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
-     *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), 
+     *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1),
      &  nb(-1:nx,-1:ny), tb(-1:nx,-1:ny),
      &  ub(-1:nx,-1:ny), cvsbx(-1:nx,-1:ny), cvsbxhz(-1:nx,-1:ny),   !srv 09.01.01
      &  fl(-1:nx,-1:ny)

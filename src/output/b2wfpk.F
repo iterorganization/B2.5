@@ -1,9 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wfpk (nprt, idout, nx, ny, ns, gs, qc, 
-     &  fna, fhe, fhi, fch, fne, fni)
+      subroutine b2wfpk (nprt, idout, nx, ny, ns)
       use b2mod_types
+      use b2mod_geo
+      use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_subsys
@@ -11,12 +12,6 @@
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
       character idout*(*)
-      real (kind=R8) ::
-     *  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
-     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -85,15 +80,6 @@
 *   ..test nprt, nx, ny
       call xertst (1.le.nprt, 'faulty argument nprt')
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..test edge values of fluxes
-      do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
-      enddo
-      call b2xvff (nx, ny, fhe, 'fhe')
-      call b2xvff (nx, ny, fhi, 'fhi')
-      call b2xvff (nx, ny, fch, 'fch')
-      call b2xvff (nx, ny, fne, 'fne')
-      call b2xvff (nx, ny, fni, 'fni')
 
 * ..write the flux densities
 *   ..write pzso segment?
@@ -130,11 +116,11 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(0,iy,0,0)/gs(0,iy,0)/qc(0,iy), 
-     &    fhi(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
-     &    fne(0,iy,0,0)/gs(0,iy,0)/qc(0,iy), 
-     &    fch(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
-     &   (fna(0,iy,0,0,is)/gs(0,iy,0)/qc(0,iy),is=0,ns-1)
+     &    fhe(0,iy,0,0)/gs(0,iy,0)/qc(0,iy,0),
+     &    fhi(0,iy,0,0)/gs(0,iy,0)/qc(0,iy,0),
+     &    fne(0,iy,0,0)/gs(0,iy,0)/qc(0,iy,0),
+     &    fch(0,iy,0,0)/gs(0,iy,0)/qc(0,iy,0),
+     &   (fna(0,iy,0,0,is)/gs(0,iy,0)/qc(0,iy,0),is=0,ns-1)
        enddo
       endif
 *   ..write pzea segment?
@@ -145,11 +131,11 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy), 
-     &    fhi(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
-     &    fne(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy), 
-     &    fch(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
-     &   (fna(nx,iy,0,0,is)/gs(nx,iy,0)/qc(nx,iy),is=0,ns-1)
+     &    fhe(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy,0),
+     &    fhi(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy,0),
+     &    fne(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy,0),
+     &    fch(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy,0),
+     &   (fna(nx,iy,0,0,is)/gs(nx,iy,0)/qc(nx,iy,0),is=0,ns-1)
        enddo
       endif
 *   ..write blank line

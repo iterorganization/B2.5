@@ -9,7 +9,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npco (nx, ny, guard_flows,                        !srv 05.07.08
+      subroutine b2npco (nx, ny, guard_flows,                         !srv 05.07.08
      &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb,
      &  rxf, vol, pbs, flob, conb, snb,
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
@@ -17,16 +17,16 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
-     &         tot_sna0to1, fna_tot                                  !djm Mar2019
+     & ,only : update_balance_sources_particles, balance_netcdf,      !djm Jan2017
+     &         tot_sna0to1, fna_tot                                   !djm Mar2019
       use b2mod_openmp
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
+      integer nx, ny, guard_flows, nregionv, itcnt, isb               !srv 05.07.08
       real (kind=R8) ::
      *  rxf, pbs(-1:nx,-1:ny,0:1), flob(-1:nx,-1:ny,0:1,0:1),
-     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),         !srv 13.10.06
+     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),          !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1,0:1),vol(-1:nx,-1:ny)
       logical solvcreg(0:nregionv), ua_solve,
      &  solvmreg(0:nregionv)

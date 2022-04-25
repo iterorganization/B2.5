@@ -315,10 +315,6 @@
      &       1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
-       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *    ..test state
        call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -718,7 +714,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 
         case (1)
           if(ncall.eq.0) then
-            IF(BCCHAR(IB).EQ.'S') THEN
+            IF(core_boundary(ib)) THEN
              if(is.eq.ismain.and.use_astra.ne.0) then
               CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
              endif
@@ -803,6 +799,9 @@ cwdk  now need to recompute full diamagnetic component for ud
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            if (core_boundary(ib).and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 2')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -919,6 +918,9 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       'BCCON = 4, CONPAR(,,1) !> 0')
             call xertst(CONPAR(IS,IB,2).gt.0.0_R8,
      1       'BCCON = 4, CONPAR(,,2) !> 0')
+            if (core_boundary(ib).and.ishigh)
+     .       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 4')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1023,6 +1025,9 @@ cwdk  now need to recompute full diamagnetic component for ud
      .      'total particle flux ',CONPAR(IS,IB,1),
      1      ' with const density on ',BCCHAR(IB),
      2      boundary_location(ib),' for species ',IS
+           if (core_boundary(ib).and.ishigh)
+     >      call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 6')
           endif
           IF(BCCHAR(IB).EQ.'N') THEN
             s1=0.0_R8
@@ -1387,6 +1392,9 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).ne.0.0_R8,
      1       'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
+            if (core_boundary(ib).and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 9')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1486,6 +1494,9 @@ cwdk  now need to recompute full diamagnetic component for ud
      .       'leakage ',CONPAR(IS,IB,1),' on ',BCCHAR(IB),
      1       boundary_location(ib),
      2       ' for species ',IS
+            if (core_boundary(ib).and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 10')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1759,6 +1770,9 @@ cwdk  now need to recompute full diamagnetic component for ud
            call xertst ((0.0_R8.eq.nesepm.and.0.0_R8.eq.ndes_sol).or.
      1      0.0_R8.eq.nesepm_overshoot,
      1      'BCCON=12 coding incompatible with nesepm_overshoot!')
+           if (core_boundary(ib).and.ishigh)
+     >      call xertst (ionising_core.eq.0,
+     .      'ionising_core switch usage inconsistent with BCCON = 12')
           endif
           IF (BCCHAR(IB).EQ.'S') THEN
 *   ..initialise ireg
@@ -1832,6 +1846,9 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       BCCHAR(IB),boundary_location(ib),
      2       ' for species ',IS, ' with parameters ',
      3       CONPAR(IS,IB,1),CONPAR(IS,IB,2)
+            if (core_boundary(ib).and.ishigh)
+     .       call xertst (ionising_core.le.0,
+     .       'ionising_core switch usage inconsistent with BCCON = 13')
           endif
 c dpc
           IF(BCCHAR(IB).EQ.'S') THEN
@@ -2002,6 +2019,9 @@ c dpc
      .       'prescribe the decay length for the density',
      &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            if (core_boundary(ib).and.ishigh)
+     .       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 15')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN                                !srv 23.07.10 {
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -2063,8 +2083,7 @@ c dpc
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      1           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
+                call xertst(core_boundary(ibw),
      .           'BCCON = 16 only applicable to core boundaries !')
               endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.19.or.
@@ -2075,6 +2094,9 @@ c dpc
      .('BCCON types 16, 19, 21, 22, 23, 25, 26 and 27 cannot be mixed!')
               endif
             ENDDO
+            if (core_boundary(ib).and.ishigh)
+     .       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 16')
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
@@ -2246,8 +2268,7 @@ c dpc
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      1           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
+                call xertst(core_boundary(ibw),
      .            'BCCON = 19 only applicable to core boundaries !')
               endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
@@ -2391,6 +2412,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 1, CONPAR(,,1) !> 0')
+            if (core_boundary(ib).and.ishigh)
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 20')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
@@ -2480,13 +2504,10 @@ cxpb Careful here because of BC number clash
               write(6,*) 'Use BCCON=25 instead!'
             endif
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCCON = 21 only applicable to core boundaries !')
                 call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1           'BCCON = 21, CONPAR(,,1) !> 0')
                 call xertst(CONPAR(IS,IB,1).eq.CONPAR(IS,IBW,1),  ! IYS 22.01.2015
@@ -2503,7 +2524,7 @@ cxpb Careful here because of BC number clash
      &             'ion energy boundary condition'  !srv 21.09.12
                 endif
               endif
-              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+              if(core_boundary(ibw).and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.22.or.
      1            BCCON(IS,IBW).EQ.23.or.BCCON(IS,IBW).EQ.25.or.
      1            BCCON(IS,IBW).EQ.26.or.BCCON(IS,IBW).EQ.27)) then  ! IYS 22.01.2016 added BCCON = 25,26 and 27
@@ -2514,13 +2535,12 @@ cxpb Careful here because of BC number clash
             if (ishigh) call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 21')
           endif
-          IF(BCCHAR(IB).EQ.'S' .and.
-     &       on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+          IF(core_boundary(ib)) THEN
             if (.not.once_bccon(is)) then
               if(is.eq.ismain.and.use_astra.ne.0) then
 #ifdef ASTRA
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.
+                  if(core_boundary(ibw).and.
      &               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     CONPAR(IS,IBW,1) = neb_astra                       !srv 28.07.11
                   endif
@@ -2533,7 +2553,7 @@ cxpb Careful here because of BC number clash
               t0=0.0e0_R8   ! Volume between two surfaces               !lk 12.12.12 {
               t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
               DO IBW=IB,NBC
-                IF (BCCHAR(IBW).EQ.'S'.and.
+                IF (core_boundary(ibw).and.
      &              BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     t0=t0 +
@@ -2549,7 +2569,7 @@ cxpb Careful here because of BC number clash
               ENDDO
               if (t0.gt.0.0_R8) t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               DO IBW=IB,NBC
-                IF (BCCHAR(IBW).EQ.'S'.and.
+                IF (core_boundary(ibw).and.
      &              BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                   do IX = 1, BC_LIST_SIZE(IBW)
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
@@ -2599,13 +2619,10 @@ cxpb Careful here because of BC number clash
               write(6,*) 'Use BCCON=26 instead!'
             endif
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCCON = 22 only applicable to core boundaries !')
                 if (bceni(ibw).ne.23.and.bceni(ibw).ne.24) then
                   write(0,*)
      &    'Should use BCCON(IS,IB).EQ.22 together with BCENI=23 or 24'
@@ -2617,7 +2634,7 @@ cxpb Careful here because of BC number clash
      &             'ion energy boundary condition'  !srv 21.09.12
                 endif
               endif
-              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+              if(core_boundary(ibw).and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
      1            BCCON(IS,IBW).EQ.23.or.BCCON(IS,IBW).EQ.25.or.
      1            BCCON(IS,IBW).EQ.26.or.BCCON(IS,IBW).EQ.27)) then  ! IYS 22.01.2016 added BCCON = 25,26 and 27
@@ -2640,7 +2657,7 @@ cxpb Careful here because of BC number clash
               else
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.
+                  if(core_boundary(ibw).and.
      >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
@@ -2652,7 +2669,7 @@ cxpb Careful here because of BC number clash
               t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
               NAS=0.0e0_R8
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     t0=t0 +
@@ -2692,7 +2709,7 @@ cxpb Careful here because of BC number clash
      .         'NAS=',NAS,' totflux=',totflux,
      &         ' SCONPAR=',SCONPAR(IS),' IS=',IS
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
@@ -2743,13 +2760,10 @@ cxpb Careful here because of BC number clash
               write(0,*) 'Use BCCON=27 instead!'
             endif
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCCON = 23 only applicable to core boundaries !')
                 call xertst(CONPAR(IS,IBW,1).ge.0.0_R8,
      1           'BCCON = 23, CONPAR(,,1) < 0')
                 if (bceni(ibw).ne.23.and.bceni(ibw).ne.24) then
@@ -2763,7 +2777,7 @@ cxpb Careful here because of BC number clash
      &             'ion energy boundary condition'                   !srv 21.09.12
                 endif
               endif
-              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+              if(core_boundary(ibw).and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
      1            BCCON(IS,IBW).EQ.22.or.BCCON(IS,IBW).EQ.25.or.
      1            BCCON(IS,IBW).EQ.26.or.BCCON(IS,IBW).EQ.27)) then  ! IYS 22.01.2016 added BCCON = 25,26 and 27
@@ -2775,7 +2789,7 @@ cxpb Careful here because of BC number clash
      .        'ionising_core switch usage inconsistent with BCCON = 23')
           endif
 
-          IF(BCCHAR(IB).EQ.'S') THEN
+          IF(core_boundary(ib)) THEN
             if(.not.once_bccon(is)) then
               if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -2787,7 +2801,7 @@ cxpb Careful here because of BC number clash
               else
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.
+                  if(core_boundary(ibw).and.
      &               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
@@ -2819,7 +2833,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               end do
 #endif
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     isb = ismain0
@@ -2861,7 +2875,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &          ' totfluxi=',totfluxi,' SCONPAR=', SCONPAR(IS),
      &          ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
@@ -2898,6 +2912,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       'BCCON = 24, CONPAR(,,1) !> 0')
             call xertst(CONPAR(is,ib,2).gt.0.0_R8,
      &           'faulty parameter conpar2')
+            if (ishigh.and.core_boundary(ib))
+     >       call xertst (ionising_core.eq.0,
+     .        'ionising_core switch usage inconsistent with BCCON = 24')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
@@ -3007,13 +3024,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
             write(*,'(a,1p,g14.7)')
      .       'constant average density',CONPAR(IS,IB,1)
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCCON = 25 only applicable to core boundaries !')
                 call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
      1           'BCCON = 25, CONPAR(,,1) !> 0')
                 call xertst(CONPAR(IS,IB,1).eq.CONPAR(IS,IBW,1),  ! IYS 22.01.2015
@@ -3030,7 +3044,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &             'ion energy boundary condition'  !srv 21.09.12
                 endif
               endif
-              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+              if(core_boundary(ibw).and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
      1            BCCON(IS,IBW).EQ.22.or.BCCON(IS,IBW).EQ.23.or.
      1            BCCON(IS,IBW).EQ.26.or.BCCON(IS,IBW).EQ.27)) then  ! IYS 22.01.2016 added BCCON = 25,26 and 27
@@ -3042,12 +3056,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .        'ionising_core switch usage inconsistent with BCCON = 25')
           endif
 
-          IF(BCCHAR(IB).EQ.'S') THEN
+          IF(core_boundary(ib)) THEN
             if (.not.once_bccon(is)) then
               if(is.eq.ismain.and.use_astra.ne.0) then
 #ifdef ASTRA
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.
+                  if(core_boundary(ibw).and.
      &               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     CONPAR(IS,IBW,1) = neb_astra                       !srv 28.07.11
                   endif
@@ -3060,7 +3074,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
               t1=0.0e0_R8   ! Sum of volume-averaged density
               DO IBW=IB,NBC
-                if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   do IX = 1, BC_LIST_SIZE(IBW)
                     t0=t0 +
@@ -3076,9 +3090,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               enddo
               t1=t1/t0
               DO IBW=IB,NBC
-                do IX = 1, BC_LIST_SIZE(IBW)
-                  if(on_closed_surface(BC_LIST_X(IX,IBW),
-     &                                 BC_LIST_Y(IX,IBW))) then
+                if(core_boundary(ibw)) then
+                  do IX = 1, BC_LIST_SIZE(IBW)
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
      &               VBIG*(CONPAR(IS,IBW,1) +
      &                 na(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -3087,8 +3100,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &               SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
      &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                  endif
-                enddo                                                  !lk 12.12.12 }
+                  enddo
+                endif                                                  !lk 12.12.12 }
                 DO IX = 1, BC_LIST_SIZE(IBW)                           !srv 23.09.08
                   SNA0_NO_MDF(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)=
      &             SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
@@ -3118,13 +3131,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &       ' average density for ion is =', is                    !IYS 21.01.2016
 !           write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCCON = 26 only applicable to core boundaries !')
                 if (bceni(ibw).ne.26.and.bceni(ibw).ne.27) then
                   write(0,*)
      &    'Should use BCCON(IS,IB).EQ.26 together with BCENI=26 or 27'
@@ -3136,7 +3146,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &           'ion energy boundary condition'  !srv 21.09.12
                 endif
               endif
-              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+              if(core_boundary(ibw).and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
      1            BCCON(IS,IBW).EQ.22.or.BCCON(IS,IBW).EQ.23.or.
      1            BCCON(IS,IBW).EQ.25.or.BCCON(IS,IBW).EQ.27)) then  ! IYS 22.01.2016 added BCCON = 25,26 and 27
@@ -3147,7 +3157,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             if (ishigh) call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 26')
           endif  ! ncall == 0
-          IF(BCCHAR(IB).EQ.'S') THEN
+          IF(core_boundary(ib)) THEN
             if(.not.once_bccon(is)) then
               if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -3159,7 +3169,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               else
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.
+                  if(core_boundary(ibw).and.
      >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
@@ -3171,7 +3181,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               t1=0.0e0_R8   ! Volume-averaged density on previous surface
               NAS=0.0e0_R8
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     t0=t0 +
@@ -3278,13 +3288,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &       'within the isonuclear sequence with constant density ',
      &       'for ionisation stage ion is =', is
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(core_boundary(ibw).and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCCON = 27 only applicable to core boundaries !')
                 call xertst(CONPAR(IS,IBW,1).ge.0.0_R8,
      1           'BCCON = 27, CONPAR(,,1) < 0')
                 if (bceni(ibw).ne.26.and.bceni(ibw).ne.27) then
@@ -3298,7 +3305,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &             'ion energy boundary condition'                    !srv 21.09.12
                 endif
               endif
-              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+              if(core_boundary(ibw).and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
      1            BCCON(IS,IBW).EQ.22.or.BCCON(IS,IBW).EQ.23.or.
      1            BCCON(IS,IBW).EQ.25.or.BCCON(IS,IBW).EQ.26)) then  ! IYS 22.01.2016 added BCCON = 25,26 and 27
@@ -3309,7 +3316,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 27')
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
+          IF(core_boundary(ib)) THEN
             if(.not.once_bccon(is)) then
               if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -3321,7 +3328,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               else
                 SCONPAR(IS) = 0.0_R8
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.
+                  if(core_boundary(ibw).and.
      >               BCCON(IS,IBW).EQ.BCCON(IS,IB)) THEN
                     SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
                   endif
@@ -3354,7 +3361,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               end do
 #endif
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
 ! totfluxn here means the sum of fluxes over all ions (including fluid
@@ -3412,7 +3419,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
      &         ' totfluxn+totfluxi=',totfluxn+totfluxi
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+                IF(core_boundary(ibw).AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
@@ -4274,6 +4281,8 @@ cxpb  and max(,,) statement for stability
      .       'from b2stbc_spb momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
      2       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(core_boundary(ib),
+     &       'BCMOM = 14 intended for core boundaries only!')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -4337,6 +4346,8 @@ cxpb  and max(,,) statement for stability
      .       'specified parallel velocity as a function of',
      &       ' poloidal coordinate ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(core_boundary(ib),
+     &       'BCMOM = 15 intended for core boundaries only!')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -4371,24 +4382,30 @@ cxpb  and max(,,) statement for stability
             END DO
             t0=0.0e0_R8
             t1=0.0e0_R8
-            do ix = -1,nx
-              if (on_closed_surface(ix,0)) then
-                t0=t0+vol(ix,0)
-                t1=t1+UA(IX,0,IS)*vol(ix,0)
+            do ibw = 1, nbc
+              if (core_boundary(ibw)) then
+                do ix = 1, bc_list_size(ibw)
+                  t0=t0+vol(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
+     .                      topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)))
+                  t1=t1+
+     .              ua(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
+     .                 topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),is)*
+     .             vol(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
+     .                 topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)))
+                end do
               endif
             enddo
             if (t0.gt.0.0_R8) t1=t1/t0
-            do ix = 1, BC_LIST_SIZE(IB)
-              if(on_closed_surface(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-     >         then
+            if (core_boundary(ib)) then
+              do ix = 1, BC_LIST_SIZE(IB)
                 SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
      .           SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+
      .             VBIG*NE00*AM(IS)*
      .         (UA(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .             TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS)-t1)*
      .              SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              endif
-            END DO                        !lk 12.12.12 }
+              end do                        !lk 12.12.12 }
+            endif
           ELSE
             CALL XERRAB ('B2STBC -- BCMOM=16, IS VALID FOR CORE ONLY')
           ENDIF
@@ -5974,18 +5991,15 @@ cxpb code segment analog to b2tfhe
      &       'Given integrated electron heat flux with constant Te '
 !          write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+              if(core_boundary(ibw).and.BCENE(IBW).EQ.BCENE(IB)) THEN
                 write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                    boundary_location(ibw)
-                call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                        BC_LIST_Y(1,IBW)),
-     .           'BCENE = 16 only applicable to core boundaries !')
                 call xertst(enepar(ibw,1).ne.0.0_R8,
      .           'faulty parameter enepar1')
               endif
             END DO
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
+          IF(core_boundary(ib)) THEN
             if(.not.once_bcene) then
               if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -5997,7 +6011,7 @@ cxpb code segment analog to b2tfhe
               else
                 SENEPAR = 0.0_R8
                 DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+                  if(core_boundary(ibw).and.BCENE(IBW).EQ.BCENE(IB))THEN
                     SENEPAR = SENEPAR + ENEPAR(IBW,1)
                   endif
                 END DO
@@ -6006,7 +6020,7 @@ cxpb code segment analog to b2tfhe
               TES = 0.0_R8
               volsum = 0.0_R8
               DO IBW=IB,NBC
-                if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+                if(core_boundary(ibw).and.BCENE(IBW).EQ.BCENE(IB))THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     TES = TES +
      &                  TE(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
@@ -6019,7 +6033,7 @@ cxpb code segment analog to b2tfhe
               TES=TES/VOLSUM
               totflux = 0.0_R8
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+                IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     if(mdf_fhe.ne.0) then
                       totflux = totflux +
@@ -6058,7 +6072,7 @@ cxpb code segment analog to b2tfhe
      &         'TES=',TES/ev,' totflux=',totflux,
      &         ' SENEPAR=',SENEPAR
               DO IBW=IB,NBC
-                IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+                IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     she0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .               VBIG*NE00*TES*
@@ -7919,16 +7933,13 @@ cxpb          endif
      &                 ' with constant Ti '
 !          write all boundaries with this type of boundary condition
            DO IBW=IB,NBC
-             if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+             if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB))THEN
                write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                   boundary_location(ibw)
-               call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                       BC_LIST_Y(1,IBW)),
-     .           'BCENI = 16 only applicable to core boundaries !')
                call xertst(enipar(ibw,1).ne.0,
      &           'faulty parameter enipar1')
              endif
-             if(BCCHAR(IBW).EQ.'S'.and.
+             if(core_boundary(ibw).and.
      &         (BCENI(IBW).EQ.23.or.BCENI(IBW).EQ.24.or.
      &          BCENI(IBW).EQ.26.or.BCENI(IBW).EQ.27)) then  ! IYS added BCENI= 26 and 27
                call xerrab
@@ -7936,7 +7947,7 @@ cxpb          endif
              endif
            ENDDO
          endif
-         IF(BCCHAR(IB).EQ.'S') THEN
+         IF(core_boundary(ib)) THEN
            if(.not.once_bceni) then
              if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -7948,7 +7959,7 @@ cxpb          endif
              else
                SENIPAR = 0.0_R8
                DO IBW=IB,NBC
-                 if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+                 if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB))THEN
                    SENIPAR = SENIPAR + ENIPAR(IBW,1)
                  endif
                ENDDO
@@ -7957,7 +7968,7 @@ cxpb          endif
              TIS = 0.0_R8
              NIVS = 0.0_R8
              DO IBW=IB,NBC
-               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+               if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB))THEN
                  DO IX = 1, BC_LIST_SIZE(IBW)
                    TIS = TIS +
      .                   TI(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
@@ -7972,7 +7983,7 @@ cxpb          endif
              TIS = TIS/NIVS
              totflux = 0.0_R8
              DO IBW=IB,NBC
-               IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
+               IF(core_boundary(ibw).AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                  DO IX = 1, BC_LIST_SIZE(IBW)
                    if(mdf_fhi.ne.0) then
                       totflux = totflux +
@@ -8011,7 +8022,7 @@ cxpb          endif
      &         'TIS=',TIS/ev,' totflux=',totflux,
      &         ' SENIPAR=',SENIPAR
              DO IBW=IB,NBC
-               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+               IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                  DO IX = 1, BC_LIST_SIZE(IBW)
                    shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .               VBIG*NE00*TIS*
@@ -8412,12 +8423,9 @@ cxpb Careful here because of BC number clash
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            IF (core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
-              call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                      BC_LIST_Y(1,IBW)),
-     .         'BCENI = 23 only applicable to core boundaries !')
               call xertst(use_astra.ne.0.or.
      .         ENIPAR(IB,1).eq.ENIPAR(IBW,1),
      1         'BCENI = 23, inconsistent ENIPAR(,1) values!')
@@ -8442,7 +8450,7 @@ cxpb Careful here because of BC number clash
                 write(6,*) 'Use BCENI=26 instead!'
               endif
             endif
-            if(BCCHAR(IBW).EQ.'S'.and.
+            if(core_boundary(ibw).and.
      &         (BCENI(IBW).EQ.16.or.BCENI(IBW).EQ.24.or.
      &          BCENI(IBW).EQ.26.or.BCENI(IBW).EQ.27)) then  ! IYS added BCENI= 26 and 27
                 call xerrab
@@ -8457,7 +8465,7 @@ cxpb Careful here because of BC number clash
           if (use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 ENIPAR(IBW,1) = tib_astra*1.0e3_R8                     !srv 14.06.12
               endif
             ENDDO
@@ -8467,8 +8475,7 @@ cxpb Careful here because of BC number clash
 #endif
           ENDIF
 
-          IF(BCCHAR(IB).EQ.'S' .and.
-     &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+          IF(core_boundary(ib)) THEN
 !          DO IX = 1, BC_LIST_SIZE(IB)
 !            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*ENIPAR(IB,1)
 !     .       *EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
@@ -8480,7 +8487,7 @@ cxpb Careful here because of BC number clash
             t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
             t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              IF(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   t0=t0 +
      &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -8505,10 +8512,8 @@ cxpb Careful here because of BC number clash
             t2=t2/t0
             t3=t3/t0
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 do IX = 1, BC_LIST_SIZE(IBW)
-                  if(on_closed_surface(BC_LIST_X(IX,IBW),
-     .                                 BC_LIST_Y(IX,IBW))) then
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      &             shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
      &              +VBIG*NE00*(ENIPAR(IBW,1)*EV
@@ -8518,7 +8523,6 @@ cxpb Careful here because of BC number clash
      &              *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
      &             -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                  endif
                 enddo
               ENDIF                                                 !lk 12.12.12 }
             ENDDO
@@ -8542,12 +8546,9 @@ cxpb Careful here because of BC number clash
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+            if (core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
-              call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                      BC_LIST_Y(1,IBW)),
-     .         'BCENI = 24 only applicable to core boundaries !')
               call xertst(enipar(ibw,1).ne.0,'faulty parameter enipar1')
               if (.not.(bccon(ismain,ib).eq.21 .or.
      .                  bccon(ismain,ib).eq.22 .or.
@@ -8570,7 +8571,7 @@ cxpb Careful here because of BC number clash
                write(6,*) 'Use BCENI=27 instead!'
               endif
             endif
-            if(BCCHAR(IBW).EQ.'S'.and.
+            if(core_boundary(ibw).and.
      &         (BCENI(IBW).EQ.16.or.BCENI(IBW).EQ.23.or.
      &          BCENI(IBW).EQ.26.or.BCENI(IBW).EQ.27)) then  ! IYS added BCENI= 26 and 27
                 call xerrab
@@ -8590,15 +8591,14 @@ cxpb Careful here because of BC number clash
           else
             SENIPAR = 0.0_R8
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 SENIPAR = SENIPAR + ENIPAR(IBW,1)
               endif
             ENDDO
           endif
           write(*,*) 'BCENI=24: Summed value is ', SENIPAR
 
-          IF(BCCHAR(IB).EQ.'S' .and.
-     &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+          IF(core_boundary(ib)) THEN
             TIS = 0.0_R8  ! Poloidally density-averaged ion temperature in the boundary cell     !IYS 21.01.2016
             NIVS = 0.0_R8
             totflux = 0.0_R8
@@ -8607,7 +8607,7 @@ cxpb Careful here because of BC number clash
             t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
             t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   t0=t0 +
      &               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -8674,7 +8674,7 @@ cxpb Careful here because of BC number clash
      &        'TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .             VBIG * NE00 * (TIS +
@@ -8811,19 +8811,16 @@ cxpb Careful here because of BC number clash
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            IF (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
+            IF (core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
-              call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                      BC_LIST_Y(1,IBW)),
-     .         'BCENI = 26 only applicable to core boundaries !')
               call xertst(use_astra.ne.0.or.ENIPAR(IBW,1).gt.0.0_R8,
      1         'BCENI = 26, ENIPAR(,1) !> 0')
               call xertst(use_astra.ne.0.or.
      .         ENIPAR(IB,1).eq.ENIPAR(IBW,1),
      1         'BCENI = 26, inconsistent ENIPAR(,1) values!')
             endif
-            if(BCCHAR(IBW).EQ.'S'.and.
+            if(core_boundary(ibw).and.
      &         (BCENI(IBW).EQ.16.or.BCENI(IBW).EQ.23.or.
      &          BCENI(IBW).EQ.24.or.BCENI(IBW).EQ.27)) then  ! IYS added BCENI= 26 and 27
                 call xerrab
@@ -8836,7 +8833,7 @@ cxpb Careful here because of BC number clash
           if (use_astra.ne.0) THEN
 #ifdef ASTRA
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
+              if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 ENIPAR(IBW,1) = tib_astra*1.0e3_R8                     !srv 14.06.12
               endif
             ENDDO
@@ -8845,12 +8842,11 @@ cxpb Careful here because of BC number clash
      .       ('Compile with -DASTRA option to couple with ASTRA!')
 #endif
           ENDIF
-          IF(BCCHAR(IB).EQ.'S' .and.
-     &     on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+          IF(core_boundary(ib)) THEN
             t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
             t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
+              IF(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX= 1, BC_LIST_SIZE(IBW)
                   t0 = t0 +
      .              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -8865,10 +8861,8 @@ cxpb Careful here because of BC number clash
             END DO
             t1=t1/t0
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 do IX = 1, BC_LIST_SIZE(IBW)
-                 if(on_closed_surface(BC_LIST_X(IX,IBW),
-     .                                BC_LIST_Y(IX,IBW))) then
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      &             shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
      &              +VBIG*NE00*(ENIPAR(IBW,1)*EV
@@ -8878,7 +8872,6 @@ cxpb Careful here because of BC number clash
      &              *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
      &             -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                 endif
                 enddo
               ENDIF                                                 !lk 12.12.12 }
             ENDDO
@@ -8902,15 +8895,12 @@ cxpb Careful here because of BC number clash
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
-            if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
+            if (core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
               write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
      .                                  boundary_location(ibw)
-              call xertst(on_closed_surface(BC_LIST_X(1,IBW),
-     .                                      BC_LIST_Y(1,IBW)),
-     .         'BCENI = 27 only applicable to core boundaries !')
               call xertst(enipar(ibw,1).ne.0,'faulty parameter enipar1')
             endif
-            if(BCCHAR(IBW).EQ.'S'.and.
+            if(core_boundary(ibw).and.
      &         (BCENI(IBW).EQ.16.or.BCENI(IBW).EQ.23.or.
      &          BCENI(IBW).EQ.24.or.BCENI(IBW).EQ.26)) then  ! IYS added BCENI= 26 and 27
                 call xerrab
@@ -8919,8 +8909,7 @@ cxpb Careful here because of BC number clash
           ENDDO
         endif
 
-        IF(BCCHAR(IB).EQ.'S' .and.
-     &    on_closed_surface(BC_LIST_X(1,IB),BC_LIST_Y(1,IB))) THEN
+        IF(core_boundary(ib)) THEN
           if(.not.once_bceni) then
             if (use_astra.ne.0) then
 #ifdef ASTRA
@@ -8932,7 +8921,7 @@ cxpb Careful here because of BC number clash
             else
               SENIPAR = 0.0_R8
               DO IBW=IB,NBC
-                if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+                if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                   SENIPAR = SENIPAR + ENIPAR(IBW,1)
                 endif
               ENDDO
@@ -8944,7 +8933,7 @@ cxpb Careful here because of BC number clash
             t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+              if(core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   TIS=TIS + ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
      .                      ni(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)*
@@ -9001,7 +8990,7 @@ cxpb Careful here because of BC number clash
      &        'TIS=',TIS/ev,' totflux=',totflux,
      &        ' SENIPAR=',SENIPAR
             DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
+              IF(core_boundary(ibw).AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      .             VBIG*NE00*
@@ -9835,8 +9824,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
-            call xertst(on_closed_surface(bc_list_x(1,ib),
-     .                                    bc_list_y(1,ib)),
+            call xertst(core_boundary(ib),
      .       'BCPOT=12 intended for core boundaries only!')
           endif
         endif
@@ -9898,8 +9886,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
-            call xertst(.not.on_closed_surface(bc_list_x(1,ib),
-     .                                         bc_list_y(1,ib)),
+            call xertst(.not.core_boundary(ib),
      .       'BCPOT=13 not intended for core boundaries!')
           endif
         endif
@@ -10225,8 +10212,7 @@ c end of implementation
         ELSE IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             if(maxval(facdrift) .ne. 0.0_R8) then
-              if(on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib)))
-     .         then
+              if(core_boundary(ib)) then
                 if(periodic_bc.ne.1 .or.
      .             rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)).eq.
      .             bc_list_x(ix,ib)+1 .or. nncut.eq.0) then
@@ -10242,7 +10228,7 @@ c end of implementation
      1                                topiy(bc_list_x(ix,ib),
      .                                      bc_list_y(ix,ib))))
      &              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))      !sv
+     .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))) !sv
                 else
                   if(ncall.eq.0) write(*,*)
      >             'b2stbc: special treatment for cell ix,iy = ',
@@ -10254,7 +10240,7 @@ c end of implementation
      1              wbbv(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**2
      &             -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))   !xpb
+     .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))  !xpb
                 endif
               else
                 if(periodic_bc.ne.1 .or. nncut.eq.0 .or.
@@ -10298,8 +10284,7 @@ c end of implementation
               endif
             else
               if(b2stbc_neoclassical .ne. 0.0_R8 .and.
-     &           on_closed_surface(bc_list_x(ix,ib),
-     .                             bc_list_y(ix,ib))) then
+     &           core_boundary(ib)) then
                 if(periodic_bc.ne.1 .or. nncut.eq.0 .or.
      &     rightix(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))).eq.
@@ -10325,8 +10310,7 @@ c end of implementation
                 fchy_dia = 0.0_R8
               endif
             endif
-            if(.not.on_closed_surface(bc_list_x(ix,ib),
-     .                                bc_list_y(ix,ib)) .and.
+            if(.not.core_boundary(ib) .and.
      &         b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
             sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
      .      sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) + fchy_dia
@@ -10334,8 +10318,7 @@ c end of implementation
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             if(maxval(facdrift) .ne. 0.0_R8) then
-              if(on_closed_surface(bc_list_x(ix,ib),
-     .                             bc_list_y(ix,ib))) then
+              if(core_boundary(ib)) then
                 fchy_dia = -praverage(2)
      .           *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
      &           *b2stbc_fchy_dia     !sv 01.07.99
@@ -10358,8 +10341,7 @@ c end of implementation
               endif
             else
               if(b2stbc_neoclassical .ne. 0.0_R8 .and.
-     &           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib)))
-     >         then
+     &           core_boundary(ib)) then
                 fchy_dia = -praverage(2)
      .           *(OnedBsqc(rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                      rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
@@ -10369,8 +10351,7 @@ c end of implementation
                 fchy_dia = 0.0_R8
               endif
             endif
-            if(.not.on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
-     .                      .and.
+            if(.not.core_boundary(ib).and.
      &         b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
             sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
      .      sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) - fchy_dia
@@ -10386,8 +10367,7 @@ c end of implementation
      &          BCPOT(IB)
         ELSE IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-            if(on_closed_surface(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-     >        then
+            if(core_boundary(ib)) then
 *        for inner surfaces
               if(maxval(facdrift) .ne. 0.0_R8) then
                 fchy_dia =                                             !srv 01.07.99
@@ -10458,8 +10438,7 @@ c end of implementation
      &        (BCPOT(IB).eq.0.or.BCPOT(IB).eq.5.or.BCPOT(IB).eq.8)) then !srv 27.03.14
         if(ncall.eq.0) then
           IF (BCCHAR(IB).EQ.'S') THEN
-            IF (on_closed_surface(bc_list_x(1,ib),
-     &                            bc_list_y(1,ib))) THEN
+            IF (core_boundary(ib)) THEN
               write(0,'(a/a)')
      &        'Core boundary potential B.C. does not '//
      &        'ensure drift current continuity',

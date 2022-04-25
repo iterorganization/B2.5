@@ -1,6 +1,6 @@
       subroutine b2xtfy (nx, ny, nx1, ny1, fy, fy1,
-     &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncutmax, non_commensurate, flip,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
@@ -12,15 +12,18 @@
      *   fy(-1:nx,-1:ny), fy1(-1:nx1,-1:ny1),
      *   hx(-1:nx,-1:ny), hxx(-1:nx1,-1:ny1)
       integer non_commensurate
-      integer nnreg(0:2), nncut, periodic_bc, jsep, jsep1
+      integer nncut, periodic_bc, jsep, jsep1
       integer region(-1:nx,-1:ny,0:2), region1(-1:nx1,-1:ny1,0:2)
       integer leftcut(nncutmax), leftcut1(nncutmax)
       integer rightcut(nncutmax), rightcut1(nncutmax)
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
       integer bottomiy1(-1:nx1,-1:ny1)
+      logical flip
 *     ------------------------------------------------------------------
 *     B2XTFY transfers a y-face flux to a new mesh.
+*     When mapping between USN and LSN topologies, we flip the order
+*     poloidal indices.
 *     ------------------------------------------------------------------
       integer ix, iy, ix1, iy1, ixa, ixb, iya, iyb, nd, ifail
       integer ixm, ixp, ixc, ixd, iyc, iyd, inseliy, inseliy1
@@ -202,9 +205,16 @@
           xx1(ix1) = (ix1+0.5_R8-ixc)/real(ixd-ixc+1)
         enddo
 *     ..region 1 : core : all
-        fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
-        fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
-        fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+        if (.not.flip) then
+          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
+          fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+        else
+          fa(ixa-1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+          fa(ixa:ixb,iya:iyb) = fy(ixb:ixa:-1,iya:iyb)/
+     .                          hx(ixb:ixa:-1,iya:iyb)
+          fa(ixb+1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+1,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
@@ -284,19 +294,37 @@
           xx1(ix1) = (ix1+0.5_R8-ixc)/real(ixd-ixc+1)
         enddo
         if (periodic_bc.eq.1) then !
+         if (.not.flip) then
 *     ..region 2 : SOL : western edge
-         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(-1,iya:iyb),d,ifail)
-         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(-1,iya:iyb),d,
-     .               iyd-iyc+1,yy1(iyc:iyd),fy1(-1,iyc:iyd),ifail)
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(-1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(-1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(-1,iyc:iyd),ifail)
 *     ..region 2 : SOL : eastern edge
-         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(nx,iya:iyb),d,ifail)
-         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(nx,iya:iyb),d,
-     .               iyd-iyc+1,yy1(iyc:iyd),fy1(nx1,iyc:iyd),ifail)
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(nx,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(nx,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(nx1,iyc:iyd),ifail)
+         else
+*     ..region 2 : SOL : western edge
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(nx,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(nx,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(-1,iyc:iyd),ifail)
+*     ..region 2 : SOL : eastern edge
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(-1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(-1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(nx1,iyc:iyd),ifail)
+         endif
         endif
 *     ..region 2 : SOL : central part : until second separatrix
-        fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
-        fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
-        fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+        if (.not.flip) then
+          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
+          fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+        else
+          fa(ixa-1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+          fa(ixa:ixb,iya:iyb) = fy(ixb:ixa:-1,iya:iyb)/
+     .                          hx(ixb:ixa:-1,iya:iyb)
+          fa(ixb+1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+1,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
@@ -330,8 +358,13 @@
          ixb = leftcut(1)-1
          ixm = 0
          ixp = rightcut(1)
-         ixc = 0
-         ixd = leftcut1(1)-1
+         if (.not.flip) then
+           ixc = 0
+           ixd = leftcut1(1)-1
+         else
+           ixc = rightcut1(1)
+           ixd = nx1-1
+         endif
          iya = 0
          iyb = jsep+1
          iyc = 0
@@ -350,13 +383,26 @@
           yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
 *     ..region 3 : western PFR : below the first separatrix (western edge)
-         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
-         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,
-     .               iyd-iyc+1,yy1(iyc:iyd),fy1(ixc-1,iyc:iyd),ifail)         
+         if (.not.flip) then
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(ixc-1,iyc:iyd),ifail)
+         else
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(ixd+1,iyc:iyd),ifail)
+         endif
 *     ..region 3 : western PFR : below the first separatrix
-         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
-         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
-         fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+         if (.not.flip) then
+           fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+           fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
+           fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+         else
+           fa(ixa-1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+           fa(ixa:ixb,iya:iyb) = fy(ixb:ixa:-1,iya:iyb)/
+     .                           hx(ixb:ixa:-1,iya:iyb)
+           fa(ixb+1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+         endif
          call interp2d(ixb-ixa+3,iyb-iya+1,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
@@ -410,13 +456,26 @@
           yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
 *     ..region 3 : western divertor SOL : above the separatrices (western edge)
-         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
-         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,
-     .               iyd-iyc+1,yy1(iyc:iyd),fy1(ixc-1,iyc:iyd),ifail)         
+         if (.not.flip) then
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(ixc-1,iyc:iyd),ifail)
+         else
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(ixd+1,iyc:iyd),ifail)
+         endif
 *     ..region 3 : western divertor SOL : above the separatrices
-         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
-         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
-         fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+         if (.not.flip) then
+           fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+           fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
+           fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+         else
+           fa(ixa-1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+           fa(ixa:ixb,iya:iyb) = fy(ixb:ixa:-1,iya:iyb)/
+     .                           hx(ixb:ixa:-1,iya:iyb)
+           fa(ixb+1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+         endif
          call interp2d(ixb-ixa+3,iyb-iya+1,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
@@ -431,8 +490,13 @@
          ixb = nx-1
          ixm = leftcut(1)-1
          ixp = nx-1
-         ixc = rightcut1(1)
-         ixd = nx1-1
+         if (.not.flip) then
+           ixc = rightcut1(1)
+           ixd = nx1-1
+         else
+           ixc = 0
+           ixd = leftcut1(1)-1
+         endif
         else if (nncut.eq.2) then
          ixa = rightcut(2)
          ixm = leftcut(2)-1
@@ -472,18 +536,31 @@
         do iy1 = iyc, iyd
          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
-        fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
-        fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
-        fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+        if (.not.flip) then
+          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
+          fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+        else
+          fa(ixa-1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+          fa(ixa:ixb,iya:iyb) = fy(ixb:ixa:-1,iya:iyb)/
+     .                          hx(ixb:ixa:-1,iya:iyb)
+          fa(ixb+1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+        endif
         call interp2d(ixb-ixa+3,iyb-iya+1,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .   fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
         fy1(ixc:ixd,iyc:iyd) =
      .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 4 : eastern SN PFR or HFS top DN PFR : below the separatrix (eastern edge)
-        call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
-        call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
-     .              iyd-iyc+1,yy1(iyc:iyd),fy1(ixd+1,iyc:iyd),ifail)
+        if (.not.flip) then
+          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
+          call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
+     .                iyd-iyc+1,yy1(iyc:iyd),fy1(ixd+1,iyc:iyd),ifail)
+        else
+          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
+          call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
+     .                iyd-iyc+1,yy1(iyc:iyd),fy1(ixc-1,iyc:iyd),ifail)
+        endif
 *     ..region 4 : HFS DDN top divertor : between the separatrices
         if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
          iya = min(topcut(1),topcut(2))
@@ -526,19 +603,32 @@
          do iy1 = iyc, iyd
           yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
-         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
-         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
-         fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+         if (.not.flip) then
+           fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+           fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
+           fa(ixb+1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+         else
+           fa(ixa-1,iya:iyb) = fy(ixp,iya:iyb)/hx(ixp,iya:iyb)
+           fa(ixa:ixb,iya:iyb) = fy(ixb:ixa:-1,iya:iyb)/
+     .                           hx(ixb:ixa:-1,iya:iyb)
+           fa(ixb+1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
+         endif
          call interp2d(ixb-ixa+3,iyb-iya+1,ixd-ixc+1,iyd-iyc+1,
      .    xx(ixa-1:ixb+1),yy(iya:iyb),xx1(ixc:ixd),yy1(iyc:iyd),
      .    fa(ixa-1:ixb+1,iya:iyb),fa1(ixc:ixd,iyc:iyd))
          fy1(ixc:ixd,iyc:iyd) =
      .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 4 : western divertor SN SOL or HFS DDN top divertor SOL : above the separatrices (eastern edge)
-         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
-         call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
-     .               iyd-iyc+1,yy1(iyc:iyd),fy1(ixd+1,iyc:iyd),ifail)
-        endif        
+         if (.not.flip) then
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(ixd+1,iyc:iyd),ifail)
+         else
+           call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,ifail)
+           call E01BFF(iyb-iya+1,yy(iya:iyb),fy(ixb+1,iya:iyb),d,
+     .                 iyd-iyc+1,yy1(iyc:iyd),fy1(ixc-1,iyc:iyd),ifail)
+         endif
+        endif
        endif
 *    ..region 5 :
        if (nncut.eq.1 .and. periodic_bc.eq.1) then  ! stellarator island

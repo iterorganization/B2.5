@@ -29,6 +29,7 @@
 #endif
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_trace
       use b2mod_file
       use b2mod_xerset
       use b2mod_ipmain
@@ -83,7 +84,7 @@
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
-      integer :: boundary_namelist, neutrals_namelist = 0
+      integer :: neutrals_namelist = 0
       real (kind=R8) :: BoRiS = 0.0_R8
       real (kind=R8) :: dtim = 1.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
@@ -259,7 +260,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call ipgetr ('b2news_BoRiS', BoRiS)
       call ipgeti ('b2mndr_eirene', use_eirene)
       call ipgeti ('b2stbr_sput_dst', sput_dst)
-      call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+      call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
