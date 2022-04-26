@@ -173,7 +173,7 @@
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
       integer, save :: use_eirene, no_current, ionising_core
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
-     1 bc_type13_norm, bc_type13_fac, na_min, na_new, na0eps
+     1 bc_type13_norm, bc_type13_fac, na_min, na_new
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       character*260 filename											! RC 27.03.18								 
@@ -194,7 +194,7 @@
       external ipgetr, b2xvsg, b2xvff, b2xvps
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/, na0eps/1.0e-30_R8/, 
+     1 bc_type16_ref/1/, bc_type20_ref/1/, 
      2 ionising_core/0/, na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
@@ -694,6 +694,7 @@ cwdk  now need to recompute full diamagnetic component for ud
       integer k, ism
 #endif
       integer bc_type13_i, bc_type20_i, bc_type21_i
+      logical ex
 
       if (bcpos(ib).eq.-2) then
         write(boundary_location(ib),'(a23,i2)')
@@ -3408,9 +3409,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
           if (ncall.eq.0) then
             if (CONPAR(IS,IB,2).gt.0.0_R8) then
               if (CONPAR(IS,IB,1).eq.0.0_R8) then
-                CONPAR(IS,IB,1) = na0eps
+                CONPAR(IS,IB,1) = na_min
                 write(*,*) 'Zero density B.C. no longer allowed!'
-                write(*,*) 'Changed to na0eps.'
+                write(*,*) 'Changed to na_min.'
               endif
            
               write(*,*) ' Density profile from file with maximum of ',
@@ -3425,7 +3426,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
             endif
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename='../' // con_fn(ib)
+            filename = con_fn(ib)
+            call find_file(filename, ex)
      
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),0)
@@ -3467,9 +3469,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
         case (29)
           if(ncall.eq.0) then
             if (CONPAR(IS,IB,1).eq.0.0_R8) then
-              CONPAR(IS,IB,1) = na0eps/maxval(TI)
+              CONPAR(IS,IB,1) = na_min/maxval(TI)
               write(*,*) 'Zero density B.C. no longer allowed!'
-              write(*,*) 'Changed pressure to na0eps/max(Ti).'
+              write(*,*) 'Changed pressure to na_min/max(Ti).'
             endif
             write(*,*) 'constant pressure',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3541,7 +3543,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
           endif
 
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename='../' // con_fn(ib)
+            filename = con_fn(ib)
+            call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),0)
 
@@ -4555,7 +4558,8 @@ cxpb  and max(,,) statement for stability
             endif
   	  endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename='../' // mom_fn(ib)
+            filename = mom_fn(ib)
+            call find_file(filename, ex)
 
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),0)
@@ -4613,10 +4617,15 @@ cxpb  and max(,,) statement for stability
      1         .or.BCCON(IS,IB).eq.30,
      2         'BCMOM = 21, BCCON should be 1, 28 or 30!')
 
-          filename='../' // con_fn(ib)
+          !Read density profile
+          filename = con_fn(ib)
+          call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),2)
-          filename='../' // mom_fn(ib)
+
+          !Read velocity profile
+          filename = mom_fn(ib)
+          call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),3)
 
@@ -4729,7 +4738,9 @@ cxpb  and max(,,) statement for stability
             endif
   	  endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename='../' // mom_fn(ib)
+            !Read velocity gradient from file
+            filename = mom_fn(ib)
+            call find_file(filename, ex)
 
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),0)
@@ -4788,6 +4799,7 @@ cxpb  and max(,,) statement for stability
       integer ib
       integer ix, iy, is, ibw, ism
       integer bc_type16_i, bc_type20_i, bc_type21_i
+      logical ex
 
 * -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
       select case (BCENE(IB))
@@ -6768,12 +6780,13 @@ cxpb code segment analog to b2tfhe
             call xertst(ENEPAR(IB,1).gt.0.0_R8,
      1           'BCENE = 15, ENEPAR(,1) !> 0')
           else
-            write(*,*) ' Te profile from file on ',
-     1           BCCHAR(IB),boundary_location(ib), ' for species ',IS
+*           write(*,*) ' Te profile from file on ',
+*    1           BCCHAR(IB),boundary_location(ib), ' for species ',IS
           endif
         endif
         IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-          filename='../' // ene_fn(ib)
+          filename = ene_fn(ib)
+          call find_file(filename, ex)
 
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,enepar(ib,1),enepar(ib,2),0)
@@ -6815,6 +6828,7 @@ cxpb code segment analog to b2tfhe
       integer ib
       integer ix, iy, is, ibw
       integer bc_type16_i, bc_type20_i, bc_type21_i
+      logical ex
 
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
       select case (BCENI(IB))
@@ -9246,12 +9260,13 @@ cxpb Careful here because of BC number clash
             call xertst(ENEPAR(IB,1).gt.0.0_R8,
      1           'BCENI = 15, ENIPAR(,1) !> 0')
           else
-            write(*,*) ' Ti profile from file on ',
-     1           BCCHAR(IB),boundary_location(ib), ' for species ',IS
+*           write(*,*) ' Ti profile from file on ',
+*    1           BCCHAR(IB),boundary_location(ib), ' for species ',IS
           endif
         endif
         IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-          filename='../' // eni_fn(ib)
+          filename = eni_fn(ib)
+          call find_file(filename, ex)
 
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,enipar(ib,1),enipar(ib,2),0)
@@ -9292,6 +9307,7 @@ cxpb Careful here because of BC number clash
       integer ib
       integer ix, iy, is, ibw
       integer bc_type21_i
+      logical ex
 
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
       select case (BCPOT(IB))
@@ -10194,8 +10210,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             ! current is converged for given potential, determine new potential
             currentCounter(ib) = 0
             potpar(ib, 2) = potpar(ib, 2) + potpar(ib, 1) * t0
-            WRITE (*, *) 'RCW: potential, current:', 
-     *           potpar(ib,2), currentNew(ib)
+            WRITE (*, '(A,I3,A,2E10.5)') 'bc: ', ib,  '
+     *           potential, current:', potpar(ib,2), currentNew(ib)
           END IF
         ENDIF
 
@@ -10352,12 +10368,13 @@ c              fchi=0.0_R8
      1            POTPAR(IB,1),' on ',
      2            BCCHAR(IB),boundary_location(ib),' for species ',IS
           else
-            write(*,*) ' Potential profile from file on ',
-     2            BCCHAR(IB),boundary_location(ib),' for species ',IS
+*           write(*,*) ' Potential profile from file on ',
+*    2            BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
         endif
         IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-          filename='../' // pot_fn(ib)
+          filename = pot_fn(ib)
+          call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,potpar(ib,1),potpar(ib,2),0)
           IF (BCCHAR(IB).EQ.'W') THEN

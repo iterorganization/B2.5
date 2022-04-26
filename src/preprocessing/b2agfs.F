@@ -98,6 +98,8 @@
       integer Bt_adjust, Bt_reversal
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
+      character*256 local_linearDevice
+      data local_linearDevice /'linear.geometry'/
       real (kind=R8) ::
      *  bp((nx1+2)*(ny1+2)),bt((nx1+2)*(ny1+2)),
      .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5),
@@ -130,6 +132,7 @@
 
       call ipgetc ('b2agfs_geometry', local_sonnet)
       lblgm=local_sonnet
+      call ipgetc ('b2agfs_linearDevice', local_linearDevice)
       periodic_bc=0
       call ipgeti ('b2agfs_periodic_bc',periodic_bc)
       call xertst (abs(periodic_bc).le.1, 'faulty argument periodic_bc')
@@ -155,8 +158,9 @@
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
 
-      call b2gxdr_dummy(local_sonnet, nx1, ny1, istyle, isymm,
-     & crxs, crys, bp, bt, fpsi, ffbz)
+      call b2gxdr_dummy(local_sonnet, local_linearDevice, 
+     &                  nx1, ny1, istyle, isymm,
+     &                  crxs, crys, bp, bt, fpsi, ffbz)
       n2=(nx1+2)*(ny1+2)
       ic=1
       do  iy = -1, ny1
@@ -1013,8 +1017,9 @@ cxpb
 
       end subroutine b2agfs
 c
-      subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
-     & crxs, crys, bp, bt, fpsi, ffbz)
+      subroutine b2gxdr_dummy(local_sonnet, local_linearDevice, 
+     &                        nx, ny, istyle, isymm,
+     &                        crxs, crys, bp, bt, fpsi, ffbz)
       use b2mod_types
       use b2mod_constants
       use b2mod_subsys
@@ -1029,6 +1034,7 @@ c
      2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
      3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
+      character*(*) local_linearDevice
  
       logical no_flux_data            ! IYS 21.02.2020
 
@@ -1072,7 +1078,7 @@ c
       call subini('b2gxdr_dummy')
 *   ..test nx, ny, istyle
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (istyle.eq.-1 .or. istyle.eq.-2,
+      call xertst (istyle.eq.-1 .or. istyle.eq.-2 .or. istyle.eq.-3,
      & 'faulty input parameter istyle')
 
       i=-1
@@ -1100,6 +1106,11 @@ c
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
+!reads parameter for linear device geometry
+      if (istyle.eq.-3) then
+        call b2ld(local_linearDevice, local_sonnet, nx, ny, istyle)
+
+      end if
       username = usrnam()
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
