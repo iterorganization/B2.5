@@ -31,10 +31,9 @@ module b2mod_ual_io_grid
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
-#  if IMAS_MINOR_VERSION < 15
    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
-#  else
+#  if IMAS_MINOR_VERSION > 14
    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #  endif
@@ -1287,6 +1286,30 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
+#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+          allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content%name(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%name = "node_coordinates"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%index = 1
+          allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content%description(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%description =   &
+             &    "Node coordinates (automatically generated 1D space)"
+          allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content%name(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%name = "unspecified"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%index = 0
+          allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content%description(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%description = &
+             &  "Automatically generated 1D space (unused)"
+#endif
         end if
 
     end subroutine fill_In_Grid_Desc
@@ -2885,6 +2908,217 @@ contains
         end if
 
     end subroutine find_Midplane_Cells
+
+#if IMAS_MINOR_VERSION > 14
+    subroutine GGD_copy_AoS3Root_to_Dynamic( AoS3_grid, dynamic_grid )
+    implicit none
+    type(ids_generic_grid_aos3_root), intent(in) :: AoS3_grid
+    type(ids_generic_grid_dynamic), intent(out) :: dynamic_grid
+    integer :: i, j, k, i1, i2, i3, i4
+    integer :: nspaces, ndims, nobjects, nboundary, nsubsets, nelems, nbase
+
+    allocate( dynamic_grid%identifier%name(1) )
+    dynamic_grid%identifier%name = AoS3_grid%identifier%name
+    dynamic_grid%identifier%index = AoS3_grid%identifier%index
+    allocate( dynamic_grid%identifier%description(1) )
+    dynamic_grid%identifier%description = AoS3_grid%identifier%description
+
+    nspaces = size( AoS3_grid%space )
+    allocate( dynamic_grid%space( nspaces ) )
+    do i1 = 1, nspaces
+      allocate( dynamic_grid%space(i1)%identifier%name(1) )
+      dynamic_grid%space(i1)%identifier%name = &
+       & AoS3_grid%space(i1)%identifier%name
+      dynamic_grid%space(i1)%identifier%index = &
+       & AoS3_grid%space(i1)%identifier%index
+      allocate( dynamic_grid%space(i1)%identifier%description(1) )
+      dynamic_grid%space(i1)%identifier%description = &
+       & AoS3_grid%space(i1)%identifier%description
+      allocate( dynamic_grid%space(i1)%geometry_type%name(1) )
+      dynamic_grid%space(i1)%geometry_type%name = &
+       & AoS3_grid%space(i1)%geometry_type%name
+      dynamic_grid%space(i1)%geometry_type%index = &
+       & AoS3_grid%space(i1)%geometry_type%index
+      allocate( dynamic_grid%space(i1)%geometry_type%description(1) )
+      dynamic_grid%space(i1)%geometry_type%description = &
+       & AoS3_grid%space(i1)%geometry_type%description
+      i = size( AoS3_grid%space(i1)%coordinates_type )
+      allocate( dynamic_grid%space(i1)%coordinates_type( i ) )
+      dynamic_grid%space(i1)%coordinates_type( : ) = &
+       & AoS3_grid%space(i1)%coordinates_type( : )
+      ndims = size( AoS3_grid%space(i1)%objects_per_dimension )
+      allocate( dynamic_grid%space(i1)%objects_per_dimension( ndims ) )
+      do i2 = 1, ndims
+        nobjects = size( AoS3_grid%space(i1)%objects_per_dimension(i2)%object )
+        allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object( nobjects ) )
+        do i3 = 1, nobjects
+          nboundary = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary )
+          if (nboundary.gt.0) then
+            allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary( nboundary ) )
+            do i4 = 1, nboundary
+              dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%index = &
+           &     AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%index
+              i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours )
+              allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours( i ) )
+              dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours( : ) = &
+           &    AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours( : )
+            end do
+          end if
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry ) ) then
+            i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry )
+            allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry( i ) )
+            dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry( : ) = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry( : )
+          end if
+          i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes )
+          allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes( i ) )
+          dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes( : ) = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes( : )
+          dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%measure = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%measure
+#if IMAS_MINOR_VERSION > 34
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d ) ) then
+            i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d, 1 )
+            j = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d, 2 )
+            allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d( i , j ) )
+            dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d( : , : ) = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d( : , : )
+          end if
+#endif
+        end do
+        allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%name(1) )
+        dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%name = &
+         & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%name
+        dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%index = &
+         & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%index
+        allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%description(1) )
+        dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%description = &
+         & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%description
+      end do
+    end do
+
+    nsubsets = size( AoS3_grid%grid_subset )
+    allocate( dynamic_grid%grid_subset( nsubsets ) )
+    do i1 = 1, nsubsets
+      allocate( dynamic_grid%grid_subset(i1)%identifier%name(1) )
+      dynamic_grid%grid_subset(i1)%identifier%name = &
+       & AoS3_grid%grid_subset(i1)%identifier%name
+      dynamic_grid%grid_subset(i1)%identifier%index = &
+       & AoS3_grid%grid_subset(i1)%identifier%index
+      allocate( dynamic_grid%grid_subset(i1)%identifier%description(1) )
+      dynamic_grid%grid_subset(i1)%identifier%description = &
+       & AoS3_grid%grid_subset(i1)%identifier%description
+      dynamic_grid%grid_subset(i1)%dimension = &
+       & AoS3_grid%grid_subset(i1)%dimension
+      nelems = size( AoS3_grid%grid_subset(i1)%element )
+      allocate( dynamic_grid%grid_subset(i1)%element( nelems ) )
+      do i2 = 1, nelems
+        nobjects = size( AoS3_grid%grid_subset(i1)%element(i2)%object )
+        allocate( dynamic_grid%grid_subset(i1)%element(i2)%object( nobjects ) )
+        do i3 = 1, nobjects
+          dynamic_grid%grid_subset(i1)%element(i2)%object(i3)%space = &
+           & AoS3_grid%grid_subset(i1)%element(i2)%object(i3)%space
+          dynamic_grid%grid_subset(i1)%element(i2)%object(i3)%dimension = &
+           & AoS3_grid%grid_subset(i1)%element(i2)%object(i3)%dimension
+          dynamic_grid%grid_subset(i1)%element(i2)%object(i3)%index = &
+           & AoS3_grid%grid_subset(i1)%element(i2)%object(i3)%index
+        end do
+      end do
+      if ( associated( dynamic_grid%grid_subset(i1)%base ) ) then
+        nbase = size( AoS3_grid%grid_subset(i1)%base )
+        allocate( dynamic_grid%grid_subset(i1)%base( nbase ) )
+        do i2 = 1, nbase
+          i = size( AoS3_grid%grid_subset(i1)%base(i2)%jacobian )
+          allocate( dynamic_grid%grid_subset(i1)%base(i2)%jacobian( i ) )
+          dynamic_grid%grid_subset(i1)%base(i2)%jacobian( : ) = &
+           & AoS3_grid%grid_subset(i1)%base(i2)%jacobian( : )
+          i = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_covariant, 1 )
+          j = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_covariant, 2 )
+          k = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_covariant, 3 )
+          allocate( dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_covariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_covariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_covariant( : , : , : )
+          i = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_contravariant, 1 )
+          j = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_contravariant, 2 )
+          k = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_contravariant, 3 )
+          allocate( dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_contravariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_contravariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_contravariant( : , : , : )
+        end do
+      end if
+      if ( associated( dynamic_grid%grid_subset(i1)%metric%jacobian ) ) then
+        i = size( AoS3_grid%grid_subset(i1)%metric%jacobian )
+        allocate( dynamic_grid%grid_subset(i1)%metric%jacobian( i ) )
+        dynamic_grid%grid_subset(i1)%metric%jacobian( : ) = &
+         & AoS3_grid%grid_subset(i1)%metric%jacobian( : )
+      end if
+      if ( associated( dynamic_grid%grid_subset(i1)%metric% &
+        &              tensor_covariant ) ) then
+        i = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 1 )
+        j = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 2 )
+        k = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 3 )
+        allocate( dynamic_grid%grid_subset(i1)%metric% &
+           &      tensor_covariant( i, j, k ) )
+        dynamic_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : ) = &
+         & AoS3_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : )
+      end if
+      if ( associated( dynamic_grid%grid_subset(i1)%metric% &
+        &              tensor_contravariant ) ) then
+        i = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 1 )
+        j = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 2 )
+        k = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 3 )
+        allocate( dynamic_grid%grid_subset(i1)%metric% &
+           &      tensor_contravariant( i, j, k ) )
+        dynamic_grid%grid_subset(i1)%metric% &
+           &      tensor_contravariant( : , : , : ) = &
+         & AoS3_grid%grid_subset(i1)%metric% &
+           &      tensor_contravariant( : , : , : )
+      end if
+    end do
+
+    return
+    end subroutine GGD_copy_AoS3Root_to_Dynamic
+#endif
 
 #endif
 #else
