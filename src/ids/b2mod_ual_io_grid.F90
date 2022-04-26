@@ -1286,7 +1286,7 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if IMAS_MINOR_VERSION > 33 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
@@ -3012,6 +3012,7 @@ contains
           end if
 #endif
         end do
+#if IMAS_MINOR_VERSION > 33
         allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      geometry_content%name(1) )
         dynamic_grid%space(i1)%objects_per_dimension(i2)% &
@@ -3028,6 +3029,7 @@ contains
            &      geometry_content%description = &
          & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      geometry_content%description
+#endif
       end do
     end do
 
