@@ -7252,6 +7252,10 @@ contains
 #endif
        &  edgeprof, database, time_slice_value, &
        &  do_summary_data, new_eq_ggd )
+#if IMAS_MINOR_VERSION > 14
+    use b2mod_ual_io_grid &
+       & , only: GGD_copy_AoS3Root_to_Dynamic
+#endif
     implicit none
     type (ids_equilibrium) :: equilibrium !< IDS designed to store
             !< equilibrium data
@@ -7515,10 +7519,11 @@ contains
               &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
               &   bottomiy, nnreg, topcut, region, cflags,                    &
               &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-#if 0
-!! FIXME: Waiting for resolution of IMAS-4179
-            equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
-!! FIXME
+#if IMAS_MINOR_VERSION > 14
+            call GGD_copy_AoS3Root_to_Dynamic( eq_grid, &
+              &   equilibrium%grids_ggd( slice_index)%grid(1) )
+#else
+            equilibrium%grids_ggd( slice_index)%grid(1) = eq_grid
 #endif
             equilibrium%grids_ggd( slice_index )%time = time_slice_value
 #if IMAS_MINOR_VERSION > 33
