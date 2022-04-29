@@ -209,21 +209,77 @@ c     2 switch%geom_match_dist
           else if (ix.eq.nx1 .and. iy.eq.ny1) then
             wbbc1(nx1+1,ny1+1,0:3) = wbbc(nx1+1,ny1+1,0:3)
           end if
-          if(Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-            bb1(ix,iy,2)=bt(ix,iy)*crxs(ix,iy,0)/(crxs(ix,iy,0)+xoffset)
+          if(Bt_adjust.eq.1) then
+            if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ix,iy)*
+     &          crxs(ix,iy,0)/(crxs(ix,iy,0)+xoffset)
+              wbbc1(ix,iy,2)=wbbc(ix,iy,2)*
+     &          crxs(ix,iy,1)/(crxs(ix,iy,1)+xoffset)
+              if (ix.eq.nx1 .and. iy.lt.ny1) then
+                wbbc1(nx1+1,iy,2) = wbbc(nx1+1,iy,2)*
+     &            crxs(nx1,iy,2)/(crxs(nx1,iy,2)+xoffset)
+              else if (ix.lt.nx1 .and. iy.eq.ny1) then
+                wbbc1(ix,ny1+1,2) = wbbc(ix,ny1+1,2)*
+     &            crxs(ix,ny1,3)/(crxs(ix,ny1,3)+xoffset)
+              else if (ix.eq.nx1 .and. iy.eq.ny1) then
+                wbbc1(nx1+1,ny1+1,2) = wbbc(nx1+1,ny1+1,2)*
+     &            crxs(nx1,ny1,3)/(crxs(nx1,ny1,4)+xoffset)
+              end if
+              fpsi1(ix,iy,0:3,0)=psi(ix,iy,1:4,0)/crxs(ix,iy,1:4)*
+     .                               (crxs(ix,iy,1:4)+xoffset)
+            else if (isymm.eq.3 .and. yoffset.ne.0.0_R8) then
+              bb1(ix,iy,2)=bt(ix,iy)*
+     &          crys(ix,iy,0)/(crys(ix,iy,0)+yoffset)
+              wbbc1(ix,iy,2)=wbbc(ix,iy,2)*
+     &          crys(ix,iy,1)/(crys(ix,iy,1)+yoffset)
+              if (ix.eq.nx1 .and. iy.lt.ny1) then
+                wbbc1(nx1+1,iy,2) = wbbc(nx1+1,iy,2)*
+     &            crys(nx1,iy,2)/(crys(nx1,iy,2)+yoffset)
+              else if (ix.lt.nx1 .and. iy.eq.ny1) then
+                wbbc1(ix,ny1+1,2) = wbbc(ix,ny1+1,2)*
+     &            crys(ix,ny1,3)/(crys(ix,ny1,3)+yoffset)
+              else if (ix.eq.nx1 .and. iy.eq.ny1) then
+                wbbc1(nx1+1,ny1+1,2) = wbbc(nx1+1,ny1+1,2)*
+     &            crys(nx1,ny1,3)/(crys(nx1,ny1,4)+yoffset)
+              end if
+              fpsi1(ix,iy,0:3,0)=psi(ix,iy,1:4,0)/crys(ix,iy,1:4)*
+     .                               (crys(ix,iy,1:4)+yoffset)
+            end if
             bb1(ix,iy,0)=bp(ix,iy)/bt(ix,iy)*bb1(ix,iy,2)
             bb1(ix,iy,3)=sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
+            wbbc1(ix,iy,0)=wbbc(ix,iy,0)/wbbc(ix,iy,2)*wbbc1(ix,iy,2)
+            wbbc1(ix,iy,3)=sqrt(wbbc1(ix,iy,0)**2+wbbc1(ix,iy,2)**2)
           endif
         enddo
       enddo
       bb1(:,:,0)=bb1(:,:,0)*Bt_rescale*pit_rescale
       bb1(:,:,1)=bb1(:,:,1)*Bt_rescale*pit_rescale
+      wbbc1(:,:,0)=wbbc1(:,:,0)*Bt_rescale*pit_rescale
+      wbbc1(:,:,1)=wbbc1(:,:,1)*Bt_rescale*pit_rescale
+      fpsi1(:,:,:,:)=fpsi1(:,:,:,:)*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
         bb1(:,:,2)=-bb1(:,:,2)*Bt_rescale
+        wbbc1(:,:,2)=-wbbc1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=-ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       else
         bb1(:,:,2)=bb1(:,:,2)*Bt_rescale
+        wbbc1(:,:,2)=wbbc1(:,:,2)*Bt_rescale
+        if (isymm.eq.0) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale
+        else if (isymm.eq.1.or.isymm.eq.2) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*xrescale
+        else if (isymm.eq.3.or.isymm.eq.4) then
+          ffbz1(:,:,:)=ffbz1(:,:,:)*Bt_rescale*yrescale
+        end if
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
+      wbbc1(:,:,3)=sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
       
  9999 continue
 
