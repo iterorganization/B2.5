@@ -639,7 +639,7 @@ cxpb turn off poloidal flows in core boundary
                 fhe_strange(ix,-1,0,0) = 0.0_R8
                 fhe_pschused(ix,-1,0,0) = 0.0_R8
               endif
-              fhet(ix,-1,0,0)=0.0_R8
+              fhet(ix,-1,0,0) = 0.0_R8
               floe(ix,-1,0,0) = 0.0_R8
               cone(ix,-1,0,0,0) = 0.0_R8
               fllime(ix,-1) = 1.0_R8

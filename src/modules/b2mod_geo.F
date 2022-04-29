@@ -39,7 +39,7 @@
 
       public :: abs_diff, dist, disx, disy, distc, match
       public :: divide_by_poloidal_areas, divide_by_contact_areas
-      public :: hy1, pit, pitx, sy
+      public :: cr, cz, hy1, pit, pitx, sy
 
       contains
 
@@ -2595,6 +2595,22 @@ c conn
       abs_diff = abs(p1-p2)
       return
       end function abs_diff
+
+      function cr(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr
+      cr = 0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
+      return
+      end function cr
+
+      function cz(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz
+      cz = 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+      return
+      end function cz
 
       function dist(ix,iy,i,j)
       implicit none

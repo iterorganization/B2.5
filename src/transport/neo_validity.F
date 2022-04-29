@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,  !cjk
+      subroutine neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,  !cjk
      &  nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &  deltawn, deltawt, omega, deltab, deltapar, vtha)
       use b2mod_types
@@ -20,7 +20,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
       real (kind=R8) ::
-     *   cr(-1:nx,-1:ny),safetyfactor(-1:ny)
+     *   safetyfactor(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   nuab(-1:nx,-1:ny,0:ns,0:ns), nua(-1:nx,-1:ny,0:ns),
@@ -445,8 +445,9 @@ c     conversion of constants to CGS units
       end subroutine neo_validity
 
       subroutine chang_hinton(nx,ny,ns,jsep,jxa,safetyfactor,
-     1 cr,cz,crx,bb,ne,te,ti,na,transport)
+     1 ne,te,ti,na,transport)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_rates
@@ -457,8 +458,6 @@ c     conversion of constants to CGS units
       implicit none
       integer nx,ny,ns,jsep,jxa
       real (kind=R8) ::
-     1 cr(-1:nx,-1:ny), cz(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
-     2 bb(-1:nx,-1:ny,0:3),
      2 ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      3 na(-1:nx,-1:ny,0:ns-1), safetyfactor(-1:ny),
      2 transport(-1:nx,-1:ny,0:ns-1)

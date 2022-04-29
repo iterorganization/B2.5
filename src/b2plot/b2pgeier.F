@@ -43,7 +43,8 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
           k=ltrgpos(itrg(j))
           do iy=lytg,ny-1 !{
             do is=0,ns-1 !{
-              hlp_flx(iy,is,itrg(j))=fna(k+1-l,iy,0,0,is)*u
+              hlp_flx(iy,is,itrg(j))=(fna(k+1-l,iy,0,0,is)+
+     .                                fna(k+1-l,iy,0,1,is))*u
               if (is_neutral(is)) then !{
                 iatm=b2eatcr(is)
                 do iss=1,nsts !{

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2news_(nx, ny, ns, nscx, iscx,
-     &  ismain, ismain0, dtim, rxf, ierr) !srv 23.11.10
+     &  ismain, ismain0, dtim, rxf, ierr, ramp_call) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -35,7 +35,7 @@
      *   dtim, rxf
 *   ..output arguments                                                    !xpb
       integer ierr
-      logical wrong_flow
+      logical wrong_flow, ramp_call
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -111,7 +111,7 @@
       external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
-     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb,
+     &  b2xpnm, b2tral, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
@@ -122,6 +122,7 @@
       integer, save :: re_eval_prtls_fluxes = 0                         !srv 28.06.13
       integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
       integer, save :: use_eirene = 0
+      integer, save :: ramp_slow = 0
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -155,6 +156,7 @@
      &  'faulty internal parameter na_new')
        call xertst (na_new.gt.na_min,
      &  'na_new must be larger than na_min!')
+       call ipgeti ('b2news_ramp_slow', ramp_slow)
        call ipgeti ('b2news_potit', potit)
        call xertst (0.lt.potit,
      &   'faulty internal parameter potit')
@@ -242,6 +244,7 @@
      >   write(*,*) 'Not solving potential equation!'
        if(.not.solving(4))
      >   write(*,*) 'Not solving heat equations!'
+       call set_facdrift_fac_ExB_init(nx, ny, ramp_slow)
        call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
        call ipgeti ('b2news_no_b2sral_call', no_b2sral_call)
        call ipgeti ('b2news_do_2nd_b2npco_call', do_2nd_b2npco_call)
@@ -337,6 +340,14 @@ csw 01oct2012 initialize potential if necessary
         po(:,:)=3.1_R8*te(:,:)/qe
       endif
 
+      if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
+*   ..test facdrift, fac_ExB, fac_vis
+      call xertst (0.0_R8.le.minval(facdrift) .and.
+     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(fac_ExB) .and.
+     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(fac_vis) .and.
+     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 * ..main computation
 *   ..compute ni, ne, ne2
       call b2xpni (nx, ny, ns, na, ni)
@@ -345,9 +356,6 @@ csw 01oct2012 initialize potential if necessary
 !*   ..compute ceqp                                                      !srv 03.07.03 {
 !      call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
 !      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)      !srv 03.07.03 }
-*   ..compute flux limit coefficients
-      call b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs, na, ua,     !srv 03.06.03
-     &  te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute transport coefficients
       call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,              !srv 09.07.04 23.11.10
      1 bb, conn, vol, gs, hx, hy, hz, qz, qc, qs, pbs, crx, cry, bzb,    !srv 09.01.01 13.10.06 01.07.09
@@ -501,7 +509,6 @@ c   extra call at this place within internal iteration)
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
      &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
-
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
@@ -569,7 +576,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &              avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci,
+     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci,
      &             fchvisq_a, fchvisq)
 
 *     ..iterate on particle balance
@@ -692,7 +699,7 @@ csw 16oct2012 init ier0
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
 cwdk tmp: always use 9-point stencil
-            if(.not.is_neutral(is).or. .true.) then
+            if(.not.is_neutral(is) .or. .true.) then
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
@@ -893,7 +900,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call my_out(70,nx,ny,po,'b2news__po'//charns)
       endif                                                              !srv 12.07.05 }
 
-      if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
+      if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
         call b2xprz (nx, ny, ns, mp, am, na, rz)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
         wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
@@ -901,7 +908,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
       else
         cssb = 0.0_R8
-      endif                                                          !iyv 06.02.14
+      endif                                                              !iyv 06.02.14
 
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #ifdef WITH_FTIMINGS

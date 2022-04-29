@@ -20,6 +20,7 @@
       use b2mod_ppout
       use b2mod_diag
       use b2mod_work
+      use b2mod_math
       use b2mod_external
       use b2mod_ipmain
       use b2mod_subsys
@@ -44,7 +45,6 @@
       data ismain/1/, external_species/0/
 *   ..procedures
       logical is_comment, cfendf
-      intrinsic sqrt
       external xertst, xerrab, is_comment
       external cfruch, cfruin, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc

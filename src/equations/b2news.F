@@ -110,7 +110,7 @@
       external len_of_digits
       external xertst, ipgetr, smin, smax, b2scopy, b2saxpy, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
-     &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
+     &  b2xpnm, b2tral, b2treq, b2tfnb, b2tfhe, b2tfhi,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,
      &  b2tfch, b2xpen, b2xppz
 *   ..initialisation
@@ -231,7 +231,7 @@
      >   write(*,*) 'Not solving heat equations!'
        call ipgeti ('b2news_recalculate_contributions',                  !dpc
      1  recalculate_contributions)                                       !dpc
-       call b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
+       call set_facdrift_fac_ExB_init(nx, ny, ramp_slow)
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                               !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi)                               !srv 13.10.06 }
@@ -308,9 +308,7 @@
       rxf2 =(rxf*xfm2)**0.2_R8
       rxf3 = rxf*xfm3
 
-      if (ramp_call .or. ncall.eq.0) then
-        call b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
-      endif
+      if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
@@ -329,9 +327,6 @@
 *   ..compute ceqp
         call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
         call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)     !xpb !srv 01.07.09 20.09.11
-*   ..compute flux limit coefficients
-        call b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs,
-     &   na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)                !srv 16.06.08
 *   ..compute transport coefficients
         call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,            !srv 23.11.10
      1   bb, conn, vol, gs, hx, hy, hz, qz, qc, qs, pbs, crx, cry,
@@ -484,10 +479,10 @@
      &    vol, na, ua, te, ti, ne, ni,
      &    sna, smo, she, shi, sne, .false.)
 *     ..include contributions due to timestep                            !xpb
-        call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !srv 09.01.01 01.07.08
+        call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !srv 25.06.21
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
-     &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
+     &    na, ua, te, ti, ne, ni, kinrgy,
+     &    sna, smo, she, shi, sch, sne, .false.)
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
@@ -1080,7 +1075,7 @@ cxpb
 cxpb          ierr=0     !testing forcing potit iterations
 cxpb
               write(*,*) 'Potential equation not converging'
-              call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
+              call set_facdrift_fac_ExB_dec
               goto 99999
             endif
           endif                         !xpb - wrong_flow .or. solving(3)
@@ -1213,7 +1208,7 @@ c     with diamagnetic drift part                                        !xpb
         if(ipass.gt.min(20,potit)) then                                  !xpb
           ierr=10                                                        !xpb
           write(*,*) 'Wrong flow correction inoperative'                 !xpb
-          call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
+          call set_facdrift_fac_ExB_dec
           goto 99999                                                     !xpb
         endif                                                            !xpb
 *  ..end of wrong_flow loop                                              !xpb
@@ -1269,281 +1264,3 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       end subroutine print_wrong_flows
 
       end subroutine b2news
-c
-      subroutine b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
-      use b2mod_types
-      use b2mod_plasma
-      use b2mod_indirect
-      use b2mod_geo
-      use b2mod_work
-      implicit none
-      integer nx, ny, ramp_slow
-      real (kind=R8) ::
-     1 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec,
-     3 facExB_target, facExB_start, facExB_inc, facExB_dec,
-     3 facvis_target, facvis_start, facvis_inc, facvis_dec,
-     & facdrift_scalar, fac_ExB_scalar, fac_vis_scalar,
-     & facdrift_tanh_a, facdrift_tanh_b, facExB_tanh_a, facExB_tanh_b,
-     1 facvis_tanh_a, facvis_tanh_b
-      integer ncall, iy_nocoreExB, fac_ref
-      integer ix, iy, jxi, jxa, jsep
-      real (kind=R8) cr, cz, dssep
-      save
-     1 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec,
-     1 facExB_target, facExB_start, facExB_inc, facExB_dec,
-     1 facvis_target, facvis_start, facvis_inc, facvis_dec,
-     3 facdrift_scalar, fac_ExB_scalar, ncall, iy_nocoreExB,
-     & facdrift_tanh_a, facdrift_tanh_b, facExB_tanh_a, facExB_tanh_b,
-     & fac_ref, fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
-      data
-     2 facdrift_target/0.0_R8/, facdrift_start/0.0_R8/,
-     3 facdrift_inc/1.0_R8/, facdrift_dec/0.0_R8/,
-     2 facExB_target/0.0_R8/, facExB_start/0.0_R8/,
-     3 facExB_inc/1.0_R8/, facExB_dec/0.0_R8/,
-     2 facvis_target/0.0_R8/, facvis_start/0.0_R8/,
-     3 facvis_inc/1.0_R8/, facvis_dec/0.0_R8/,
-     & facdrift_scalar/0.0_R8/, fac_ExB_scalar/0.0_R8/,
-     1 fac_vis_scalar/0.0_R8/,
-     & ncall/0/, iy_nocoreExB/-2/,
-     & facdrift_tanh_a/0.0_R8/, facdrift_tanh_b/0.0_R8/,
-     & facExB_tanh_a/0.0_R8/, facExB_tanh_b/0.0_R8/,
-     & facvis_tanh_a/0.0_R8/, facvis_tanh_b/0.0_R8/
-
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-
-      if(ncall.eq.0) then
-       call get_jsep(nx,ny,jxi,jxa,jsep)
-       fac_ref=jxa
-       call ipgeti ('b2news_fac_ref',fac_ref)
-       call xertst (-1.le.fac_ref.and.fac_ref.le.nx,
-     2      'faulty internal parameter fac_ref')
-       call ipgetr ('b2news_facdrift_start', facdrift_start)
-       call ipgetr ('b2news_facdrift_target', facdrift_target)
-       call ipgetr ('b2news_facdrift_inc', facdrift_inc)
-       call ipgetr ('b2news_facdrift_dec', facdrift_dec)
-       call xertst (0.0_R8.le.facdrift_start .and.                       !xpb
-     &              1.0_R8.ge.facdrift_start,                            !xpb
-     &   'faulty argument facdrift_start')                               !xpb
-       call xertst (0.0_R8.le.facdrift_target .and.                      !xpb
-     &              1.0_R8.ge.facdrift_target,                           !xpb
-     &   'faulty argument facdrift_target')                              !xpb
-       call xertst (1.0_R8.le.facdrift_inc,                              !xpb
-     &   'faulty argument facdrift_inc')                                 !xpb
-       call xertst (0.0_R8.le.facdrift_dec .and. 1.0_R8.ge.facdrift_dec,
-     &   'faulty argument facdrift_dec')                                 !xpb
-       facdrift_scalar=facdrift_start
-       if(facdrift_start.eq.facdrift_target .and.
-     &  facdrift_start.ne.0.0_R8) then
-         write(*,*) 'facdrift set to a fixed value :', facdrift_start
-       elseif(facdrift_start.ne.facdrift_target.and.ramp_slow.eq.0) then
-         write(*,'(a,1p,1g9.2,a,1g9.2)')
-     &    'facdrift ramped normally from ',facdrift_start,
-     &    ' towards ',facdrift_target
-       elseif(facdrift_start.ne.facdrift_target.and.ramp_slow.ne.0) then
-         write(*,'(a,1p,1g9.2,a,1g9.2)')
-     &    'facdrift ramped slowly from ',facdrift_start,
-     &    ' towards ',facdrift_target
-       else
-         write(*,*) 'No diamagnetic drifts'
-       endif
-       call ipgetr ('b2news_facExB_start', facExB_start)
-       call ipgetr ('b2news_facExB_target', facExB_target)
-       call ipgetr ('b2news_facExB_inc', facExB_inc)
-       call ipgetr ('b2news_facExB_dec', facExB_dec)
-       call xertst (0.0_R8.le.facExB_start .and.
-     &              1.0_R8.ge.facExB_start,
-     &   'faulty argument facExB_start')
-       call xertst (0.0_R8.le.facExB_target .and.
-     &              1.0_R8.ge.facExB_target,
-     &   'faulty argument facExB_target')
-       call xertst (1.0_R8.le.facExB_inc,
-     &   'faulty argument facExB_inc')
-       call xertst (0.0_R8.le.facExB_dec .and. 1.0_R8.ge.facExB_dec,
-     &   'faulty argument facExB_dec')
-       call ipgetr ('b2news_ExB', fac_ExB_scalar)                        !xpb
-       call xertst (0.0_R8.le.fac_ExB_scalar .and.
-     &              1.0_R8.ge.fac_ExB_scalar,
-     &  'faulty parameter b2news_ExB')                                   !xpb
-       if(fac_ExB_scalar.ne.0.0_R8) then
-c old style
-         facExB_start=fac_ExB_scalar
-         facExB_target=fac_ExB_scalar
-         facExB_inc=1.0_R8
-         facExB_dec=1.0_R8
-         write(*,*) 'fac_ExB set to a fixed value: ', fac_ExB_scalar
-       elseif(facExB_start.ne.0.0_R8.and.facExB_start.eq.facExB_target)
-     >  then
-         fac_ExB_scalar=facExB_start
-         facExB_inc=1.0_R8
-         facExB_dec=1.0_R8
-         write(*,*) 'fac_ExB set to a fixed value: ', fac_ExB_scalar
-       elseif(facExB_start.ne.0.0_R8.and.facExB_start.ne.facExB_target)
-     >  then
-         fac_ExB_scalar=facExB_start
-         if (ramp_slow.eq.0) then
-           write(*,'(a,1p,1g9.2,a,1g9.2)')
-     &      'fac_ExB ramped normally from ',facExB_start,
-     &      ' towards ',facExB_target
-         else
-           write(*,'(a,1p,1g9.2,a,1g9.2)')
-     &      'fac_ExB ramped slowly from ',facExB_start,
-     &      ' towards ',facExB_target
-         endif
-       else
-         write(*,*) 'No ExB'
-       endif
-       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)                 !xpb
-       call xertst (-2.le.iy_nocoreExB .and. ny.ge.iy_nocoreExB,         !xpb
-     &   'faulty parameter iy_nocoreExB')                                !xpb
-       do iy=-1, iy_nocoreExB
-         do ix=-1,nx
-           if(on_closed_surface(ix,iy)) then
-             fac_ExB_profile(ix,iy)=0.0_R8
-           endif
-         enddo
-       enddo
-       call ipgetr ('b2news_facvis_start', facvis_start)
-       call ipgetr ('b2news_facvis_target', facvis_target)
-       call ipgetr ('b2news_facvis_inc', facvis_inc)
-       call ipgetr ('b2news_facvis_dec', facvis_dec)
-       call xertst (0.0_R8.le.facvis_start .and.
-     &              1.0_R8.ge.facvis_start,
-     &   'faulty argument facvis_start')
-       call xertst (0.0_R8.le.facvis_target .and.
-     &              1.0_R8.ge.facvis_target,
-     &   'faulty argument facvis_target')
-       call xertst (1.0_R8.le.facvis_inc,
-     &   'faulty argument facvis_inc')
-       call xertst (0.0_R8.le.facvis_dec .and. 1.0_R8.ge.facvis_dec,
-     &   'faulty argument facvis_dec')
-       call ipgetr ('b2news_vis', fac_vis_scalar)                        !xpb
-       call xertst (0.0_R8.le.fac_vis_scalar .and.
-     &              1.0_R8.ge.fac_vis_scalar,
-     &  'faulty parameter b2news_vis')                                   !xpb
-       if(fac_vis_scalar.ne.0.0_R8) then
-c old style
-         facvis_start=fac_vis_scalar
-         facvis_target=fac_vis_scalar
-         facvis_inc=1.0_R8
-         facvis_dec=1.0_R8
-         write(*,*) 'fac_vis set to a fixed value: ', fac_vis_scalar
-       elseif(facvis_start.ne.0.0_R8.and.facvis_start.eq.facvis_target)
-     >  then
-         fac_vis_scalar=facvis_start
-         facvis_inc=1.0_R8
-         facvis_dec=1.0_R8
-         write(*,*) 'fac_vis set to a fixed value: ', fac_vis_scalar
-       elseif(facvis_start.ne.0.0_R8.and.facvis_start.ne.facvis_target)
-     >  then
-         fac_vis_scalar=facvis_start
-         if (ramp_slow.eq.0) then
-           write(*,'(a,1p,1g9.2,a,1g9.2)')
-     &      'fac_vis ramped normally from ',facvis_start,
-     &      ' towards ',facvis_target
-         else
-           write(*,'(a,1p,1g9.2,a,1g9.2)')
-     &      'fac_vis ramped slowly from ',facvis_start,
-     &      ' towards ',facvis_target
-         endif
-       else
-         write(*,*) 'No vis'
-       endif
-       ds(-1)=
-     1   sqrt((cr(fac_ref,-1)-
-     1      0.5_R8*(crx(fac_ref,-1,0)+crx(fac_ref,-1,1)))**2+
-     2      (cz(fac_ref,-1)-
-     3      0.5_R8*(cry(fac_ref,-1,0)+cry(fac_ref,-1,1)))**2)
-       do iy=0,ny
-          ds(iy)=ds(iy-1)+
-     1        sqrt((cr(fac_ref,iy)-cr(fac_ref,iy-1))**2+
-     2        (cz(fac_ref,iy)-cz(fac_ref,iy-1))**2)
-       enddo
-       dssep=(ds(jsep)+ds(jsep+1))/2.0_R8
-       do iy=-1,ny
-         ds(iy)=ds(iy)-dssep
-       enddo
-
-       call ipgetr ('b2news_facdrift_tanh_a', facdrift_tanh_a)
-       call ipgetr ('b2news_facdrift_tanh_b', facdrift_tanh_b)
-       if(facdrift_tanh_b.ne.0.0_R8) then
-          do iy=-1, ny
-             do ix=-1, nx
-                if(on_closed_surface(ix,iy)) then
-                   facdrift_profile(ix,iy)=facdrift_profile(ix,iy)*
-     &                  0.5_R8*(1.0_R8+
-     &                    tanh((ds(iy)-facdrift_tanh_a)/
-     &                   facdrift_tanh_b))
-                endif
-             enddo
-          enddo
-       endif
-       call ipgetr ('b2news_fac_ExB_tanh_a', facExB_tanh_a)
-       if (facExB_tanh_a.eq.0.0_R8)
-     >  call ipgetr ('b2news_facExB_tanh_a', facExB_tanh_a)
-       call ipgetr ('b2news_fac_ExB_tanh_b', facExB_tanh_b)
-       if (facExB_tanh_b.eq.0.0_R8)
-     >  call ipgetr ('b2news_facExB_tanh_b', facExB_tanh_b)
-       if(facExB_tanh_b.ne.0.0_R8) then
-          do iy=-1, ny
-             do ix=-1, nx
-                if(on_closed_surface(ix,iy)) then
-                   fac_ExB_profile(ix,iy)=fac_ExB_profile(ix,iy)*
-     &                  0.5_R8*(1.0_R8+
-     &                    tanh((ds(iy)-facExB_tanh_a)/
-     &                   facExB_tanh_b))
-                endif
-             enddo
-          enddo
-       endif
-       call ipgetr ('b2news_fac_vis_tanh_a', facvis_tanh_a)
-       if (facvis_tanh_a.eq.0.0_R8)
-     >  call ipgetr ('b2news_facvis_tanh_a', facvis_tanh_a)
-       call ipgetr ('b2news_fac_vis_tanh_b', facvis_tanh_b)
-       if (facvis_tanh_b.eq.0.0_R8)
-     >  call ipgetr ('b2news_facvis_tanh_b', facvis_tanh_b)
-       if(facvis_tanh_b.ne.0.0_R8) then
-          do iy=-1, ny
-             do ix=-1, nx
-                if(on_closed_surface(ix,iy)) then
-                   fac_vis_profile(ix,iy)=fac_vis_profile(ix,iy)*
-     &                  0.5_R8*(1.0_R8+
-     &                    tanh((ds(iy)-facvis_tanh_a)/
-     &                   facvis_tanh_b))
-                endif
-             enddo
-          enddo
-       endif
-      endif
-      goto 1000
-
-      entry b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
-      call xertst (0.lt.ncall,
-     &     'b2news_facdrift_fac_ExB_inc called before initialisation')
-      facdrift_scalar=min(facdrift_scalar*facdrift_inc,facdrift_target)
-      fac_ExB_scalar=min(fac_ExB_scalar*facExB_inc,facExB_target)
-      fac_vis_scalar=min(fac_vis_scalar*facvis_inc,facvis_target)
-      goto 1000
-
-      entry b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
-      call xertst (0.lt.ncall,
-     &     'b2news_facdrift_fac_ExB_dec called before initialisation')
-      facdrift_scalar=max(facdrift_scalar*facdrift_dec,facdrift_start)
-      fac_ExB_scalar=max(fac_ExB_scalar*facExB_dec,facExB_start)
-      fac_vis_scalar=max(fac_vis_scalar*facvis_dec,facvis_start)
-      goto 1000
-
- 1000 continue
-      facdrift=facdrift_scalar*facdrift_profile
-      fac_ExB=fac_ExB_scalar*fac_ExB_profile
-      fac_vis=fac_vis_scalar*fac_vis_profile
-      write(*,'(1x,a,1p,6g12.5)') 'facdrift, fac_ExB, fac_vis',
-     &   minval(facdrift),maxval(facdrift),
-     &   minval(fac_ExB),maxval(fac_ExB),
-     &   minval(fac_vis),maxval(fac_vis)
-      ncall=ncall+1
-      return
-
-      end subroutine b2news_facdrift_fac_ExB_init

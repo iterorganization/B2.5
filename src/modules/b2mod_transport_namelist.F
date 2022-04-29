@@ -37,6 +37,12 @@
       real (kind=R8), save :: transport_time_mod
       real (kind=R8), save :: transport_time_switch
       real (kind=R8), save :: cflme, cflmi, cflmv, cflal, cflab
+      real (kind=R8), save :: cflme_core, cflme_sol,
+     .                        cflme_tanh_a, cflme_tanh_b
+      real (kind=R8), save :: cflmi_core, cflmi_sol,
+     .                        cflmi_tanh_a, cflmi_tanh_b
+      real (kind=R8), save :: cflmv_core, cflmv_sol,
+     .                        cflmv_tanh_a, cflmv_tanh_b
       real (kind=R8), save :: vout_cnv(0:NSDMAX-1), 
      .  pw0_cnv(0:NSDMAX-1), pw1_cnv(0:NSDMAX-1), pw2_cnv(0:NSDMAX-1)
 
@@ -55,6 +61,9 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      4   parm_hce,parm_sig,parm_alf,
      5   transport_filename,transport_time_mod,transport_time_switch,
      6   cflme,cflmi,cflmv,cflal,cflab,
+     6   cflme_core,cflme_sol,cflme_tanh_a,cflme_tanh_b,
+     6   cflmi_core,cflmi_sol,cflmi_tanh_a,cflmi_tanh_b,
+     6   cflmv_core,cflmv_sol,cflmv_tanh_a,cflmv_tanh_b,
      7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv,write_nml_transp
 
       contains
@@ -84,6 +93,18 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       transport_filename='b2.transport.parameters'
       transport_time_mod=0.0_R8
       transport_time_switch=0.0_R8
+      cflme_core=0.0_R8
+      cflme_sol=0.0_R8
+      cflme_tanh_a=0.0_R8
+      cflme_tanh_b=0.0_R8
+      cflmi_core=0.0_R8
+      cflmi_sol=0.0_R8
+      cflmi_tanh_a=0.0_R8
+      cflmi_tanh_b=0.0_R8
+      cflmv_core=0.0_R8
+      cflmv_sol=0.0_R8
+      cflmv_tanh_a=0.0_R8
+      cflmv_tanh_b=0.0_R8
       vout_cnv=0.0_R8 
       pw0_cnv=1.0_R8 
       pw1_cnv=5.0_R8 
@@ -140,12 +161,88 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
         cflim(4)=cflab
       else
         write(*,*) 'No ',trim(filename)
-        cflme=-1.0_R8
-        cflmi=-1.0_R8
-        cflmv=-1.0_R8
-        cflal=-1.0_R8
-        cflab=-1.0_R8
+        cflme=0.0_R8
+        cflmi=0.0_R8
+        cflmv=0.0_R8
+        cflal=0.0_R8
+        cflab=0.0_R8
       endif
+      if (cflme.eq.0.0_R8.and.
+     &   (cflme_core.ne.0.0_R8.or.cflme_sol.ne.0.0_R8)) then
+        if (cflme_core.eq.cflme_sol) then
+          cflme=cflme_core
+          cflim(0)=cflme
+        end if
+      end if
+      if (cflmi.eq.0.0_R8.and.
+     &   (cflmi_core.ne.0.0_R8.or.cflmi_sol.ne.0.0_R8)) then
+        if (cflmi_core.eq.cflmi_sol) then
+          cflmi=cflmi_core
+          cflim(1)=cflmi
+        end if
+      end if
+      if (cflmv.eq.0.0_R8.and.
+     &   (cflmv_core.ne.0.0_R8.or.cflmv_sol.ne.0.0_R8)) then
+        if (cflmv_core.eq.cflmv_sol) then
+          cflmv=cflmv_core
+          cflim(2)=cflmv
+        end if
+      end if
+      call xertst(0.le.flag_dna.and.flag_dna.le.4,
+     . 'Invalid value for flag_dna')
+      call xertst(0.le.flag_dpa.and.flag_dpa.le.4,
+     . 'Invalid value for flag_dpa')
+      call xertst(0.le.flag_vla.and.flag_vla.le.4,
+     . 'Invalid value for flag_vla')
+      call xertst(0.le.flag_vsa.and.flag_vsa.le.4,
+     . 'Invalid value for flag_vsa')
+      call xertst(0.le.flag_hci.and.flag_hci.le.4,
+     . 'Invalid value for flag_hci')
+      call xertst(0.le.flag_hce.and.flag_hce.le.4,
+     . 'Invalid value for flag_hce')
+      call xertst(0.le.flag_sig.and.flag_sig.le.4,
+     . 'Invalid value for flag_sig')
+      call xertst(0.le.flag_alf.and.flag_alf.le.4,
+     . 'Invalid value for flag_alf')
+      call xertst(0.0_R8.le.parm_hce, 'faulty parameter parm_hce')
+      call xertst(0.0_R8.le.parm_sig, 'faulty parameter parm_sig')
+      call xertst(0.0_R8.le.parm_alf, 'faulty parameter parm_alf')
+      call xertst(0.0_R8.le.minval(parm_dna),
+     .                                'faulty parameter parm_dna')
+      call xertst(0.0_R8.le.minval(parm_dpa),
+     .                                'faulty parameter parm_dpa')
+      call xertst(0.0_R8.le.minval(parm_vsa),
+     .                                'faulty parameter parm_vsa')
+      call xertst(0.0_R8.le.minval(parm_hci),
+     .                                'faulty parameter parm_hci')
+      call xertst(0.0_R8.le.transport_time_mod,
+     .                      'faulty parameter transport_time_mod')
+      call xertst(0.0_R8.le.cflme, 'faulty parameter cflme')
+      call xertst(0.0_R8.le.cflmi, 'faulty parameter cflmi')
+      call xertst(0.0_R8.le.cflmv, 'faulty parameter cflmv')
+      call xertst(0.0_R8.le.cflal, 'faulty parameter cflal')
+      call xertst(0.0_R8.le.cflab, 'faulty parameter cflab')
+      call xertst(0.0_R8.le.cflme_core, 'faulty parameter cflme_core')
+      call xertst(0.0_R8.le.cflme_sol , 'faulty parameter cflme_sol')
+      if (cflme_core.gt.0.0_R8.or.cflme_sol.gt.0.0_R8)
+     . call xertst(cflme_core.gt.0.0_R8.and.cflme_sol.gt.0.0_R8,
+     .  'cflme_core and _sol must both be positive')
+      call xertst(0.0_R8.le.cflme_tanh_b,
+     .                                 'faulty parameter cflme_tanh_b')
+      call xertst(0.0_R8.le.cflmi_core, 'faulty parameter cflmi_core')
+      call xertst(0.0_R8.le.cflmi_sol , 'faulty parameter cflmi_sol')
+      if (cflmi_core.gt.0.0_R8.or.cflmi_sol.gt.0.0_R8)
+     . call xertst(cflmi_core.gt.0.0_R8.and.cflmi_sol.gt.0.0_R8,
+     .  'cflmi_core and _sol must both be positive')
+      call xertst(0.0_R8.le.cflmi_tanh_b,
+     .                                 'faulty parameter cflmi_tanh_b')
+      call xertst(0.0_R8.le.cflmv_core, 'faulty parameter cflmv_core')
+      call xertst(0.0_R8.le.cflmv_sol , 'faulty parameter cflmv_sol')
+      if (cflmv_core.gt.0.0_R8.or.cflmv_sol.gt.0.0_R8)
+     . call xertst(cflmv_core.gt.0.0_R8.and.cflmv_sol.gt.0.0_R8,
+     .  'cflmv_core and _sol must both be positive')
+      call xertst(0.0_R8.le.cflmv_tanh_b,
+     .                                 'faulty parameter cflmv_tanh_b')
 
       return
 #ifdef USE_MPI
@@ -195,5 +292,66 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
       return
       end subroutine transform_transport
+
+      subroutine cfl_tanh_profile(nx, ny, cflm, core, sol, a, b, cfl)
+      use b2mod_work
+      integer, intent(in) :: nx, ny
+      real (kind=R8), intent(in) :: cflm, core, sol, a, b
+      real (kind=R8), intent(inout) :: cfl(-1:nx,-1:ny)
+cxpb  This routine applies a tanh profile, centered at 'a' and of width 'b'
+cxpb  along the OMP, to the flux limit multipliers, if the limit values in
+cxpb  the deep core ('core') and far-SOL ('sol') are provided
+cxpb  The tanh profile applies to the core and CFR.
+cpxb  In the PFR, we apply the value at the relevant separatrix.
+      integer :: ix, iy
+
+      cfl(-1:nx,-1:ny) = cflm
+      if (core.gt.0.0_R8.and.sol.gt.0.0_R8) then
+        if (core.eq.sol) then
+          cfl(-1:nx,-1:ny) = core
+        else
+          do iy=-1,ny
+            do ix=-1,nx
+              if (on_closed_surface(ix,iy).or.
+     &            mod(region(ix,iy,0),4).eq.2) then
+                cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &           (1.0_R8+tanh((ds(iy)-a)/b))
+              else if (nncut.eq.1) then
+                if (iy.gt.topcut(1)) then
+                  cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &             (1.0_R8+tanh((ds(iy)-a)/b))
+                else
+                  cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &             (1.0_R8+tanh((-a)/b))
+                end if
+              else if (nncut.eq.2) then
+                if (region(ix,iy,0).eq.3.or.region(ix,iy,0).eq.8) then
+                  if (iy.gt.topcut(1)) then
+                    cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &               (1.0_R8+tanh((ds(iy)-a)/b))
+                  else
+                    cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &               (1.0_R8+tanh((0.5_R8*(ds(topcut(1))+
+     &                                     ds(topcut(1)+1))-a)/b))
+                  end if
+                else if (region(ix,iy,0).eq.4.or.
+     &                   region(ix,iy,0).eq.7) then
+                  if (iy.gt.topcut(2)) then
+                    cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &               (1.0_R8+tanh((ds(iy)-a)/b))
+                  else
+                    cfl(ix,iy)=core+(sol-core)*0.5_R8*
+     &               (1.0_R8+tanh((0.5_R8*(ds(topcut(2))+
+     &                                     ds(topcut(2)+1))-a)/b))
+                  end if
+                end if
+              end if
+            end do
+          end do
+        end if
+      end if
+
+      return
+      end subroutine cfl_tanh_profile
 
       end module b2mod_transport_namelist

@@ -24,9 +24,9 @@
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
      *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),             !srv 07.06.00 02.06.99
-     *  gs(-1:nx,-1:ny,0:2),
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
+     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
@@ -251,7 +251,7 @@ cdjm Jan2017 update particle source components for balance
         reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
         reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
-      enddo                                                             !srv 18.09.09 30.01.09 }
+      enddo                                                             !srv 22.05.18
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out(70,nx,ny,shei,'b2nph9_shei')

@@ -476,6 +476,7 @@ cwdk compute radial differences of ua at cell faces
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                    !srv 13.01.17 {
        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+
        do iy = -1, ny
          do ix = -1, nx
            ce1(ix,iy)=fce1(zeff(ix,iy))
@@ -593,7 +594,7 @@ cwdk compute radial differences of ua at cell faces
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
           if (istyle_Joule_heating.le.1) then
-            t0 = fch(ix,iy,0,0)*ehx(ix,iy,0)/
+           t0 = fch(ix,iy,0,0)*ehx(ix,iy,0)/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &        fch(rightix(ix,iy),rightiy(ix,iy),0,0)*
      &        ehx(rightix(ix,iy),rightiy(ix,iy),0)/

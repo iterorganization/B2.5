@@ -75,7 +75,7 @@
        do is = 0, ns-1
         call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')          !srv 16.10.17
        enddo
-        call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2tfhe_no_current', no_current)
       endif
 
 c Drift terms

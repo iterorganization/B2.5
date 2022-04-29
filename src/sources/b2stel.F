@@ -243,7 +243,7 @@
 !$OMP& shared(sna0_rec, shi0_rec, smq0_rec, b2stel_she0to3)
 !$OMP& shared(rsana, rsahi, rsamo, rrana, rrahi, rqahe, rramo, rbr)
 !$OMP& shared(rqrad, rqbrm, zamax, zamin)
-!$OMP& shared(fix_recomb, styl0, BoRiS, is_neutral)
+!$OMP& shared(fix_recomb, zmax_recomb, styl0, BoRiS, is_neutral)
 !$OMP& shared(balance_netcdf)
 !$OMP& reduction(+:b2rad, b2brem)
 #endif
@@ -374,7 +374,7 @@
      *                         rf0*t1/(ni(ix,iy,0)*ti(ix,iy))
            rrahi(ix,iy,is) = t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(fix_recomb.ne.0) then
+           if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
 c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung

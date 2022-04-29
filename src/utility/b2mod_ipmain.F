@@ -177,6 +177,10 @@
         case ('eirene_lvib')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now deprecated'
+        case ('b2stel_fix_recomb_energy')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Deprecated, '//
+     &     're-run b2ar using "b2ardr_fix_recomb"'
         case default
           prohib = .false.
         end select

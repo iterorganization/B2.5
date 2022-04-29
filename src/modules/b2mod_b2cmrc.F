@@ -19,7 +19,7 @@
      &  rtlpi(:,:,:)
       integer, allocatable, save ::
      &  rtyr(:)
-      integer, save :: fix_recomb
+      integer, save :: fix_recomb, zmax_recomb
       character*8, save :: b2frates_flag
 #ifdef IMAS
       character*132, save :: AM_label

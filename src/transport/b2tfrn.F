@@ -412,27 +412,88 @@ c Drift terms
       wedia_=0.0_R8
       if((maxval(facdrift).ne.0.0_R8 .or.
      &    maxval(fac_ExB).ne.0.0_R8)) then
-        wrk0=1.0_R8  ! compute ... on the cell faces
-        call grad(nx, ny, hx, hy, wrk0, qz, qs, ne*te, dnete)
-        do iy=-1,ny  ! compute ... on the cell centers
-          do ix=-1,nx
-            if(bottomiy(ix,iy).eq.-2) then
-              wedia_(ix,iy,0) = dnete(ix,topiy(ix,iy),1,1)
-            elseif(topiy(ix,iy).eq.ny+1) then
-              wedia_(ix,iy,0) = dnete(ix,iy,1,1)
-            else
-              wedia_(ix,iy,0) = 0.5_R8*
-     &         (dnete(topix(ix,iy),topiy(ix,iy),1,1)+dnete(ix,iy,1,1))
-            endif
-            wedia_(ix,iy,0) = wedia_(ix,iy,0)/
-     &       (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)                 !srv 15.02.12
+        if (drift_style.eq.0) then
+
+          wedia_=0.0_R8
+          wrk0=0.0_R8  ! compute ... on the cell faces
+          do iy=0,ny
+            do ix=-1,nx
+              wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
+     &       ne(bottomix(ix,iy),bottomiy(ix,iy))*
+     &       te(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
+            enddo
           enddo
-        enddo
-        call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
+          do iy=-1,ny  ! compute ... on the cell centers
+            do ix=-1,nx
+              if(bottomiy(ix,iy).eq.-2) then
+                wedia_(ix,iy,0) = wrk0(ix,topiy(ix,iy))
+              elseif(topiy(ix,iy).eq.ny+1) then
+                wedia_(ix,iy,0) = wrk0(ix,iy)
+              else
+                wedia_(ix,iy,0) = 0.5_R8*
+     &         (wrk0(topix(ix,iy),topiy(ix,iy))+wrk0(ix,iy))
+              endif
+              wedia_(ix,iy,0) = wedia_(ix,iy,0)/
+     &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
+            enddo
+          enddo
+          call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
      &                                         wedia(-1,-1,0,0))
 
-        do iy=-1,ny  ! compute .... on the cell centers
-          do ix=-1,nx
+          wrk0=0.0_R8  ! compute ... on the cell faces
+          do iy=-1,ny
+            do ix=-1,nx
+              if(leftix(ix,iy).ne.-2) then
+                wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
+     &         ne(leftix(ix,iy),leftiy(ix,iy))*
+     &         te(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
+              endif
+            enddo
+          enddo
+          do iy=-1,ny  ! compute .... on the cell centers
+            do ix=-1,nx
+              if(leftix(ix,iy).eq.-2) then
+                wedia_(ix,iy,1) = wrk0(rightix(ix,iy),iy)
+              elseif(rightix(ix,iy).eq.nx+1) then
+                wedia_(ix,iy,1) = wrk0(ix,iy)
+              else
+                wedia_(ix,iy,1) = 0.5_R8*
+     &           (wrk0(rightix(ix,iy),rightiy(ix,iy))+wrk0(ix,iy))
+              endif
+                wedia_(ix,iy,1) = - wedia_(ix,iy,1)/
+     &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
+            enddo
+          enddo
+          call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
+     &                                         wedia(-1,-1,0,1))
+          call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
+     &                                            wedia(-1,-1,1,1))      !srv 14.07.10 }
+
+        elseif (drift_style.eq.1) then
+
+          wrk0=1.0_R8  ! compute ... on the cell faces
+          call grad(nx, ny, hx, hy, wrk0, qz, qs, ne*te, dnete)
+          do iy=-1,ny  ! compute ... on the cell centers
+           do ix=-1,nx
+             if(bottomiy(ix,iy).eq.-2) then
+               wedia_(ix,iy,0) = dnete(ix,topiy(ix,iy),1,1)
+             elseif(topiy(ix,iy).eq.ny+1) then
+               wedia_(ix,iy,0) = dnete(ix,iy,1,1)
+             else
+               wedia_(ix,iy,0) = 0.5_R8*
+     &          (dnete(topix(ix,iy),topiy(ix,iy),1,1)+dnete(ix,iy,1,1))
+             endif
+             wedia_(ix,iy,0) = wedia_(ix,iy,0)/
+     &        (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)                !srv 15.02.12
+           enddo
+          enddo
+          call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
+     &                                         wedia(-1,-1,0,0))
+
+          do iy=-1,ny  ! compute .... on the cell centers
+           do ix=-1,nx
             if(leftix(ix,iy).eq.-2) then
               wedia_(ix,iy,1) = dnete(rightix(ix,iy),iy,0,0)
             elseif(rightix(ix,iy).eq.nx+1) then
@@ -441,14 +502,16 @@ c Drift terms
               wedia_(ix,iy,1) = 0.5_R8*
      &       (dnete(rightix(ix,iy),rightiy(ix,iy),0,0)+dnete(ix,iy,0,0))
             endif
-              wedia_(ix,iy,1) = - wedia_(ix,iy,1)/
+            wedia_(ix,iy,1) = - wedia_(ix,iy,1)/
      &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
+           enddo
           enddo
-        enddo
-        call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
+          call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
      &                                         wedia(-1,-1,0,1))
-        call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
+          call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
      &                                            wedia(-1,-1,1,1))        !srv 14.07.10 }
+
+        endif
       endif
 
 * ..compute differences of ne, te, ti for 9-point terms
@@ -634,7 +697,7 @@ c Drift terms
               endif
             enddo
             floe_eir = 2.5_R8*fne_eir(ix,iy,1,1)
-            if(no_Ptncr_y_he.eq.0) then                                   !sv 13.10.06 {
+            if(no_Ptncr_y_he.eq.0) then                                  !srv 13.10.06 {
               chce_eir = hybr(floe_eir,chce(ix,iy,1,1))
             else
               chce_eir = chce(ix,iy,1,1)

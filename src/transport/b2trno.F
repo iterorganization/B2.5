@@ -83,8 +83,8 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, is
-      integer mode
+      integer ncall, n2, ix, iy, is
+      integer hcimx_flag, mode
       integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,             !srv 02.04.18
@@ -92,14 +92,15 @@
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
+      integer, save :: flux_limit_style = 2                           !srv 07.12.15
       real (kind=R8), save :: fch_stochastic = 0.0_R8
       real (kind=R8) ::
-     *  wrk(-1:nx,-1:ny),
+     *  wrk(-1:nx,-1:ny), hcimx(-1:nx,-1:ny,0:1,0:ns-1),
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
      2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:1,0:ns-1),          !srv 09.07.03 30.11.15
      3  flchz(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 09.07.03 30.11.15
      1  pol_anom_scale, hzgs(-1:nx,-1:ny,0:2)
-      save ncall, pol_anom_scale, mode
+      save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -107,7 +108,7 @@
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation
-      data ncall/0/, pol_anom_scale/1.0_R8/, mode/1/
+      data ncall/0/, pol_anom_scale/1.0_R8/, hcimx_flag/1/, mode/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -123,9 +124,11 @@
 *   ..read data on first call
       if (ncall.eq.0) then
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
+        call ipgeti ('b2trno_hcimx_flag', hcimx_flag)
         call ipgeti ('b2tral_mode', mode)
         call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
         call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
+        call ipgeti ('b2tlh0_flux_limit_style', flux_limit_style)    !srv 07.12.15
         call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
         call ipgeti ('b2npco_iout', iout_b2npco)
@@ -190,6 +193,22 @@ cwdk  tmp: needed as long as not all contributions are filled later on
      & na, te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,         !srv 15.12.05
      & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      & hvi0, hve0, wrk)
+      if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then      !srv 07.12.15
+*   ..apply flux limit to neutrals contribution to hci
+        call b2tlh0 (nx, ny, ns, hx, hy, gs, qc, qs, na, ti,
+     &    hcib, chcb, hcimx, fllim0fhi)
+        if(hcimx_flag.eq.1) then
+          hcib(:,:,:)=hcimx(:,:,1,:)
+          do ix=-1,nx
+            do iy=-1,ny
+              hci0(ix,iy)=0.0_R8
+              do is=0,ns-1
+                hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
+              enddo
+            enddo
+          enddo
+        endif
+      endif
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nx, ny, mode, vol, gs, hx, qz,
@@ -208,10 +227,12 @@ cwdk  tmp: needed as long as not all contributions are filled later on
      &   vsa0(-1,-1,is), cvsa(-1,-1,0,0,is))
         call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qc, qs,
      &   vsa0(-1,-1,is), cvsa(-1,-1,0,1,is))
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz,
-     &   hcib(-1,-1,is), chcb(-1,-1,0,0,is))
-        call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qc, qs,
-     &   hcib(-1,-1,is), chcb(-1,-1,0,1,is))
+        if(flux_limit_style.eq.2) then                                !srv 07.12.15 {
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz,
+     &     hcib(-1,-1,is), chcb(-1,-1,0,0,is))
+          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qc, qs,
+     &     hcib(-1,-1,is), chcb(-1,-1,0,1,is))
+        endif                                                         !srv 07.12.15 }
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
@@ -263,6 +284,21 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       call b2txcy (nx, ny, -1, vol, gs, hx, hy, qz, qc, qs, alf0,
      &  calf(-1,-1,0,1))
 
+      if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then       !srv 07.12.15
+csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
+        if(hcimx_flag .eq. 0) then
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz, hci0,
+     &     chci(-1,-1,0,0))
+          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, qc, qs, hci0,
+     &     chci(-1,-1,0,1))
+        else
+          call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx,
+     &     chci(-1,-1,0,0))
+          call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx,
+     &     chci(-1,-1,0,1))
+        endif
+      endif
+
 *   .. set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
         call sfill (n2*2, 0.0e0_R8, csig(-1,-1,0,0), 1)
@@ -289,10 +325,15 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
             cdpahz(:,:,:,0,is) = cdpahz(:,:,:,0,is) * pol_anom_scale
             cvlahz(:,:,:,0,is) = cvlahz(:,:,:,0,is) * pol_anom_scale
             cvsahz(:,:,:,0,is) = cvsahz(:,:,:,0,is) * pol_anom_scale
-            chcb(:,:,:,0,is) = chcb(:,:,:,0,is) * pol_anom_scale
+            if (flux_limit_style.eq.2) then                               !srv 07.12.15 {
+              chcb(:,:,:,0,is) = chcb(:,:,:,0,is) * pol_anom_scale
+            end if                                                        !srv 07.12.15 }
           end if
         end do
         chce(:,:,:,0) = chce(:,:,:,0) * pol_anom_scale
+        if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then        !srv 07.12.15
+          chci(:,:,:,0) = chci(:,:,:,0) * pol_anom_scale
+        endif                                                             !srv 07.12.15
         calf(:,:,:,0) = calf(:,:,:,0) * pol_anom_scale
         csig(:,:,:,0) = csig(:,:,:,0) * pol_anom_scale
       end if
@@ -308,13 +349,15 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
      &    cdpahz, flchz)
       endif                                                               !srv 15.06.08 }
 
+      if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
-      call b2tlh0 (nx, ny, ns, hx, hy, gs, qc, qs, na, ti,                !srv 07.12.15 {
-     &  chcb, fllim0fhi)
-      chci = 0.0_R8
-      do is = 0, ns-1
-        chci(:,:,:,:) = chci(:,:,:,:) + chcb(:,:,:,:,is)
-      enddo
+        call b2tlh0 (nx, ny, ns, hx, hy, gs, qc, qs, na, ti,                !srv 07.12.15 {
+     &              hcib, chcb, hcimx, fllim0fhi)
+        chci = 0.0_R8
+        do is = 0, ns-1
+          chci(:,:,:,:) = chci(:,:,:,:) + chcb(:,:,:,:,is)
+        enddo
+      endif                                                               !srv 07.12.15 }
 
 *    ..test sign of chce, chci
       call b2xvsg (n2, chce(-1,-1,0,0), 1, 'chce', '.ge.')
@@ -390,12 +433,14 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
        call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),'b2trno_cvsahzy'//chns)
        call my_out(70,nx,ny,cvmahz(-1,-1,0,0,is),'b2trno_cvmahzx'//chns)
        call my_out(70,nx,ny,cvmahz(-1,-1,1,1,is),'b2trno_cvmahzy'//chns)
-        call my_out(70,nx,ny,chcb(-1,-1,0,0,is),'b2trno_chcixa'//chns)
-        call my_out(70,nx,ny,chcb(-1,-1,1,1,is),'b2trno_chciya'//chns)
-        call my_out(70,nx,ny,fllim0fhi(-1,-1,0,0,is),
+        if (flux_limit_style.eq.2) then                                 !srv 07.12.15 {
+         call my_out(70,nx,ny,chcb(-1,-1,0,0,is),'b2trno_chcixa'//chns)
+         call my_out(70,nx,ny,chcb(-1,-1,1,1,is),'b2trno_chciya'//chns)
+         call my_out(70,nx,ny,fllim0fhi(-1,-1,0,0,is),
      &                'b2trno_fllim0fhix'//chns)
-        call my_out(70,nx,ny,fllim0fhi(-1,-1,1,1,is),
+         call my_out(70,nx,ny,fllim0fhi(-1,-1,1,1,is),
      &                'b2trno_fllim0fhiy'//chns)
+        endif                                                          !srv 07,12.15 }
         call my_out(70,nx,ny,flc(-1,-1,0,0,is),'b2trno_flcx'//chns)
         call my_out(70,nx,ny,flc(-1,-1,1,1,is),'b2trno_flcy'//chns)
         call my_out(70,nx,ny,flchz(-1,-1,0,0,is),'b2trno_flchzx'//chns)

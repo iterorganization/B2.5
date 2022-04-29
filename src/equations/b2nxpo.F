@@ -72,18 +72,24 @@
               t0 = 0.0_R8
               do is = 0, ns-1
                 t0 = t0-bcint(rza(-1,-1,is),nx,ny,iy,ib)*
+     .          (fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0,is)+
      .           fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
-     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0,is)
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,1,is))
               enddo
               do is = 0, ns_ext-1
                 t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     .       (fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0,is)+
      .        fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
-     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0,is)
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,1,is))
               enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*(fchi+
      &          fch(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
-     &              rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0))/
+     &              rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,0)+
+     &          fch(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     &              rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,1))/
      &          (qe*bcint(ne,nx,ny,iy,ib)*vte)
               if(zarg.gt.1.0e-5_R8)
      >         po(bc_list_x(iy,ib),bc_list_y(iy,ib)) = potpar(ib,2) - 
@@ -108,15 +114,18 @@
               t0 = 0.0_R8
               do is = 0, ns-1
                 t0 = t0+bcint(rza(-1,-1,is),nx,ny,iy,ib)*
-     &           fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0,is)
+     &          (fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0,is)+
+     &           fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,1,is))
               enddo
               do is = 0, ns_ext-1
                 t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
-     .           fa_ext(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0,is)
+     .          (fa_ext(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0,is)+
+     .           fa_ext(bc_list_x(iy,ib),bc_list_y(iy,ib),0,1,is))
               enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*
-     &          (fchi-fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0))/
+     &          (fchi-fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0)
+     &               -fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0,1))/
      &          (qe*bcint(ne,nx,ny,iy,ib)*vte)
               if(zarg.gt.1.0e-5_R8)
      >         po(bc_list_x(iy,ib),bc_list_y(iy,ib)) = potpar(ib,2) -
@@ -165,18 +174,21 @@
      &             rza(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      &            (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
             t0 = t0-zaf*
-     &              fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+     &             (fna(rightix(-1,iy),rightiy(-1,iy),0,0,is)+
+     &              fna(rightix(-1,iy),rightiy(-1,iy),0,1,is))
           enddo
           do is = 0, ns_ext-1
             zaf = (za_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &             za_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      &            (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
             t0 = t0-zaf*
-     &              fa_ext(rightix(-1,iy),rightiy(-1,iy),0,0,is)
+     &             (fa_ext(rightix(-1,iy),rightiy(-1,iy),0,0,is)+
+     &              fa_ext(rightix(-1,iy),rightiy(-1,iy),0,1,is))
           enddo
           fchi = qe*t0
           zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*
-     &     (fchi+fch(rightix(-1,iy),rightiy(-1,iy),0,0))/(qe*nef*vte)
+     &     (fchi+fch(rightix(-1,iy),rightiy(-1,iy),0,0)
+     &          +fch(rightix(-1,iy),rightiy(-1,iy),0,1))/(qe*nef*vte)
           if(zarg.gt.1.0e-5_R8) po(-1,iy) = -(tef/qe)*log(zarg)
           write(*,*) ' New potential : ', po(-1,iy)
         endif
@@ -216,17 +228,17 @@
             zaf = (rza(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &             rza(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &            (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-            t0 = t0+zaf*fna(nx,iy,0,0,is)
+            t0 = t0+zaf*(fna(nx,iy,0,0,is)+fna(nx,iy,0,1,is))
           enddo
           do is = 0, ns_ext-1
             zaf = (za_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &             za_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &            (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-            t0 = t0+zaf*fa_ext(nx,iy,0,0,is)
+            t0 = t0+zaf*(fa_ext(nx,iy,0,0,is)+fa_ext(nx,iy,0,1,is))
           enddo
           fchi = qe*t0
           zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*
-     &     (fchi-fch(nx,iy,0,0))/(qe*nef*vte)
+     &     (fchi-fch(nx,iy,0,0)-fch(nx,iy,0,1))/(qe*nef*vte)
           if(zarg.gt.1.0e-5_R8) po(nx,iy) = -(tef/qe)*log(zarg)
           write(*,*) ' New potential : ', po(nx,iy)
         endif

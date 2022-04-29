@@ -252,7 +252,7 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-        call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
+        call set_facdrift_fac_ExB_init(nx,ny,ramp_slow)
       endif
 *   ..initialise error parameter
       ierr = 0
@@ -321,9 +321,7 @@ ctmp.dpc
           call b2xpni (nx, ny, ns, na, ni)
           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
           call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-* ..compute flux limit coefficients                                      !srv 11.10.02 03.06.03 {
-          call b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs,
-     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
+* ..compute transport coefficients
           call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc, qs,
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
@@ -435,7 +433,7 @@ ctmp.dpc
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
            else if (style.eq.1) then                                     !srv 01.07.08 {
             call b2news_(nx, ny, ns,
-     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0)               !srv 16.07.10 23.11.10
+     &       nscx, iscx, ismain, ismain0, dtim, rxf, ier0, ramp_call)    !srv 16.07.10 23.11.10
            else if (style.eq.-1) then ! SOLPS4.x conversion run option
              ier0 = 0
            endif                                                         !srv 01.07.08 )

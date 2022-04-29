@@ -90,7 +90,6 @@ c
       real (kind=R8) ::
      *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
      5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
-     4   cr(-1:nxd,-1:nyd), cz(-1:nxd,-1:nyd),
      5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
      6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
      7   flux_x(0:nxd,-1:nyd,0:nsd_local-1),
@@ -209,8 +208,6 @@ c
 #endif
 #endif
 #ifdef MDSPLUS
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
       cr_x=0.0_R8
       cz_x=0.0_R8
       cr_y=0.0_R8
@@ -241,13 +238,28 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .eq. 1) then
             imi=nint(am(is))
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(nint(am(is)).ne.nuclear_mass(il)) then
+              if(nint(am(is)).lt.10) then
+                write(textsp(iss),'(a1,i1,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else if (nint(am(is)).lt.100) then
+                write(textsp(iss),'(a1,i2,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              else
+                write(textsp(iss),'(a1,i3,a)')
+     .           ' ',nint(am(is)),trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -453,31 +465,41 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       tdi='build_with_units($,"m")'
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cr(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),cr,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cr,0)
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cz(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),cz,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cz,0)
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)

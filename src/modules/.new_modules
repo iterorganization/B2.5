@@ -11,6 +11,7 @@ preprocessing/b2mod_aggs.F
 sources/b2mod_eirene.F
 user/b2mod_batch.F
 user/b2mod_trace.F
+utility/b2mod_gnmap3.F
 utility/b2mod_ilutern.F
 utility/b2mod_ipmain.F
 utility/b2mod_lwmain.F

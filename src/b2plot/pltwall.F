@@ -52,7 +52,7 @@ C =====================================================================
 
       IF(NOFWCLS.EQ.0) THEN                ! standard wall contouring
         IF(wlinlog.EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm

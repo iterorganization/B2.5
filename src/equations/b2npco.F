@@ -170,13 +170,13 @@ cdjm Jan2017 update particle source components for balance
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
       if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then
-       do iy = -1, ny, ny+1                                             !srv 27.06.08 {
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-          rescb(ix,iy) = 0.0_R8
-         endif
-        enddo
-       enddo                                                            !srv 27.06.08 }
+         do iy = -1, ny, ny+1                                           !srv 27.06.08 {
+          do ix = -1, nx
+           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            rescb(ix,iy) = 0.0_R8
+           endif
+          enddo
+         enddo                                                          !srv 27.06.08 }
       endif
 csw 11dec2012, check for solv flags
       write (chns,'(i3.3)') isb

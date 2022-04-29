@@ -1181,16 +1181,11 @@ C  QUADRATIC EXTRAPOLATION OF LN(FF) IN PARM=LN(PP)
      2 transport(-1:nx,-1:ny,0:ns-1)
 
       integer ix,iy,is,irmin,irmax
-      real (kind=R8) :: cr, cz, crmin,crmax,czmin,czmax,
+      real (kind=R8) :: crmin,crmax,czmin,czmax,
      1 cr2max,cr2min,cr1max,cr1min,
      2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi
       external xerrab
-
-      cr(ix,iy)= 0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+
-     &                    crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)= 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+
-     &                    cry(ix,iy,2)+cry(ix,iy,3))
 
       call subini('old_chang_hinton')
       call b2tlnl(nx,ny,1,te,ti,ne,lnlam)

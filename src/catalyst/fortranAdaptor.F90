@@ -20,7 +20,7 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
   integer, dimension(-1:nx,-1:ny) :: rightix, topiy
   real(kind=R8), dimension(-1:nx,-1:ny) :: vol,hx,hy,te,ti,po,bzb,OnedBsq,ne
   real(kind=R8), dimension(-1:nx,-1:ny,0:1) :: qc,qz,pbs,pbshz
-  real(kind=R8), dimension(-1:nx,-1:ny0:1,0:1) :: fhe,fhi,fch,fhe_mdf,&
+  real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:1) :: fhe,fhi,fch,fhe_mdf,&
       & fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper !,&
      !& velocity
   real(kind=R8), dimension(-1:nx,-1:ny,0:2) :: gs

@@ -90,7 +90,6 @@
       integer, save :: mdf_fnb = 0                                      !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
       integer, save :: pflux_cor = 1                                    !srv 05.03.16
-      integer, save :: PSch_style = 1                                   !srv 12.11.08
       integer, save :: ion_vlct_restrict = 0                            !iyv 06.02.14
       integer, save :: vlct_diagno = 1
       character chns*3                                                  !srv 16.09.02
@@ -103,8 +102,7 @@
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8           !srv 27.01.12
       real (kind=R8), save ::
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
-     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                            !srv 25.04.00
-     &   PSch = 1.0_R8                                                  !srv 17.01.07
+     &   poldidr = 1.0_R8, raddidr = 1.0_R8                             !srv 25.04.00
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), flo, con_nodrift, flo_nodrift, xfrhie,
      *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
@@ -200,9 +198,7 @@
      &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
      &   'from zero ')                                                   !srv 09.07.03 }
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
-        call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
         call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
-        call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
@@ -1387,10 +1383,20 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           wrk2(ix,iy) = term(ix,iy)*
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-          wrk3(ix,iy) = vbecrb(ix,iy,0,0)*
-     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          if (drift_style.eq.0) then
+            wrk3(ix,iy) =
+     1         (vbecrb(ix,iy,0,0)+
+     2         vbecrb(leftix(ix,iy),leftiy(ix,iy),0,0))/
+     5         2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
+     6         +vol(leftix(ix,iy),leftiy(ix,iy))/
+     7         hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          else
+            wrk3(ix,iy) = vbecrb(ix,iy,0,0) *
+     &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *
+     &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+          endif
           wrk4(ix,iy) = -con_2dia(ix,iy)*(nb(ix,iy)-
      &     nb(leftix(ix,iy),leftiy(ix,iy)))
           wrk5(ix,iy) = -cdpb(ix,iy,0,0)*(pb(ix,iy)-
@@ -1427,34 +1433,43 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
           wrk6(ix,iy) = 0.0_R8
+          wrk8(ix,iy) = 0.0_R8
          else
-          wrk6(ix,iy) = vbdia(ix,iy,0,0)*
-     5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     6     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-         endif
-        enddo
-       enddo
-       if(.not. is_neutral(isb))
-     &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianax'//chns)
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-           wrk6(ix,iy) = 0.0_R8
+          if (drift_style.eq.0) then
+           wrk6(ix,iy) =
+     &      (vbdia(ix,iy,0,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0,0))/
+     5      2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
+     6      +vol(leftix(ix,iy),leftiy(ix,iy))/
+     7      hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk8(ix,iy) =
+     &      (vbdia(ix,iy,0,0)+vbdia(leftix(ix,iy),leftiy(ix,iy),0,0))/
+     5      2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
+     6      +hz(leftix(ix,iy),leftiy(ix,iy))*
+     7      vol(leftix(ix,iy),leftiy(ix,iy))/
+     8      hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           else
            wrk6(ix,iy) = vbdia(ix,iy,0,0)*
+     5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+           wrk8(ix,iy) = vbdia(ix,iy,0,0)*
      5      (hz(ix,iy)*vol(ix,iy)+hz(leftix(ix,iy),leftiy(ix,iy))
      5      *vol(leftix(ix,iy),leftiy(ix,iy)))/
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
      &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
-         enddo
+         endif
         enddo
-        if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
-     &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
-        call my_out(70,nx,ny,fnb_fcor(-1,-1,0,0),
+       enddo
+       if(.not. is_neutral(isb)) then
+        call my_out(70,nx,ny,wrk6,'b2tfnb_vadianax'//chns)
+        call my_out(70,nx,ny,wrk8,'b2tfnb_vadianahzx'//chns)
+       endif
+       call my_out(70,nx,ny,fnb_fcor(-1,-1,0,0),
      &              'b2tfnb_fnb_fcorx'//chns)
-        call my_out(70,nx,ny,fnb_fcor(-1,-1,0,1),
+       call my_out(70,nx,ny,fnb_fcor(-1,-1,0,1),
      &              'b2tfnb_fnb_fcorxy'//chns)
       endif                                                             !srv 11.09.09 }
 
@@ -1892,6 +1907,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,wrk6,'b2tfnb_vadianay'//chns)
+        call my_out(70,nx,ny,wrk8,'b2tfnb_vadianahzy'//chns)
        endif
 !       do iy = -1, ny
 !        do ix = -1, nx

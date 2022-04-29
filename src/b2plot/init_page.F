@@ -109,7 +109,7 @@ c     the line format common
       if(noax.gt.0) then
         if(linlog.eq.1.or.linlog.eq.2) then
           logx=.false.
-          call nice(xlo,xhi,nox,noxm,fmtx,nfmtx)
+          call nice(xlo,xhi,nox,noxm,fmtx,nfmtx,nice_axes)
         else
           logx=.true.
           if(xhi.le.0.0) then
@@ -134,7 +134,7 @@ c     the line format common
 
         if(linlog.eq.1.or.linlog.eq.3) then
           logy=.false.
-          call nice(ylo,yhi,noy,noym,fmty,nfmty)
+          call nice(ylo,yhi,noy,noym,fmty,nfmty,nice_axes)
         else
           logy=.true.
           if(yhi.le.0.0) then
@@ -194,6 +194,10 @@ c     the line format common
         if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
      .    txtwdth*2*(1+offset+nx_page/5)/ysize
         if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
+        if(.not.streql(xlabel,' ')) reserve_bottom =
+     .   reserve_bottom+txtwdth*2*n_page
+        if(.not.streql(ylabel,' ')) reserve_left =
+     .   reserve_left+txtwdth*2*n_page
       else
         reserve_bottom=0.0
         reserve_top=0.0
@@ -253,6 +257,20 @@ c     the line format common
         endif
       endif
       dirty_page=.true.
+      if (fcol.gt.1) then
+        call gaseti('CAX',fcol)
+        call gaseti('CLB',fcol)
+        call gaseti('CMJ',fcol)
+        call gaseti('CMN',fcol)
+      end if
+      if (bold) then
+        call gasetr('WAX',3.)
+        call gasetr('WLB',3.)
+        call gasetr('WMJ',3.)
+        call gasetr('WMN',3.)
+        call gstxfp(-30,0)
+        call pcseti('FN',30)
+      end if
 
       CALL SET(0.0*XSIZE+XPOS,1.0*XSIZE+XPOS,
      1 0.0*YSIZE+YPOS,1.0*YSIZE+YPOS,
@@ -284,6 +302,26 @@ c     the line format common
      1     1.0-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
      1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
      1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
+        call gsplci(1)
+      endif
+      if(.not.streql(xlabel,' ')) then
+        if(xcol.gt.1) call gsplci(xcol)
+        if(noax.gt.0) then
+         CALL PLCHHQ(reserve_left+(1.0-reserve_right-reserve_left)/2.0,
+     1        txtwdth*1*n_page,
+     1        XLABEL(1:LNBLNK(YLABEL)),
+     1        1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        endif
+        call gsplci(1)
+      endif
+      if(.not.streql(ylabel,' ')) then
+        if(xcol.gt.1) call gsplci(xcol)
+        if(noax.gt.0) then
+         CALL PLCHHQ(txtwdth*1*n_page,
+     1        reserve_bottom+(1.0-reserve_top-reserve_bottom)/2.0,
+     1        YLABEL(1:LNBLNK(YLABEL)),
+     1        1.0/100.0/N_PAGE*lbsz,90.0,0.0)
         endif
         call gsplci(1)
       endif
@@ -334,6 +372,16 @@ c     the line format common
         if (zwidth.ne.1.0) call gslwsc(1.0)
       endif
       CALL CPSETI('MAP - MAPPING FLAG',3)
+      call gaseti('CAX',1)
+      call gaseti('CLB',1)
+      call gaseti('CMJ',1)
+      call gaseti('CMN',1)
+      call gasetr('WAX',1.)
+      call gasetr('WLB',1.)
+      call gasetr('WMJ',1.)
+      call gasetr('WMN',1.)
+      call gstxfp(1,0)
+!      call pcseti('FN',0)
 #endif
       return
       end subroutine init_page

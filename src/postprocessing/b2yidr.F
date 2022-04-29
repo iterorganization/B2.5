@@ -20,6 +20,7 @@
       use b2mod_geo_corner
 !      use b2mod_work
       use b2mod_ipmain
+      use b2mod_lbfill
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -91,7 +92,7 @@
 *   ..procedures
       logical streql, is_comment
       external xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, lbfilx, cfruin, is_comment
+     &  gdawk, cfruch, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
       external ipgeti, b2rfcp, b2rflb, b2xxid

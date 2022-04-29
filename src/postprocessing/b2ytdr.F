@@ -565,7 +565,7 @@ c 2002-09-11: logic revised
       intrinsic iabs, min0
 #endif
       integer conformal_convert
-      real (kind=R8) :: cr, cz, cr1, cz1, rratio
+      real (kind=R8) :: rratio
       logical open_file, streql
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin,
@@ -579,7 +579,7 @@ c 2002-09-11: logic revised
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
-      data neutrals_namelist/0/, use_eirene/0/
+      data use_eirene/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -609,15 +609,6 @@ c 2002-09-11: logic revised
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-      cr1(ix,iy)=0.25_R8*
-     1 (crx1(ix,iy,0)+crx1(ix,iy,1)+crx1(ix,iy,2)+crx1(ix,iy,3))
-      cz1(ix,iy)=0.25_R8*
-     1 (cry1(ix,iy,0)+cry1(ix,iy,1)+cry1(ix,iy,2)+cry1(ix,iy,3))
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -1823,7 +1814,8 @@ c 2002-09-11: logic revised
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
-     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib')
+     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
+     &       'b2stel_fix_recomb_energy')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -2392,8 +2384,9 @@ c 2002-09-11: logic revised
      >   'BOUNDARY_TIME_MOD=', boundary_time_mod,','
         if (boundary_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'BOUNDARY_TIME_SWITCH=', boundary_time_switch,','
-        if (boundary_time_mod.ne.0.0_R8) write(99,'(a,a,a)')
-     >   'BOUNDARY_FILENAME=''', trim(boundary_filename),''','
+        if (.not.streql(boundary_filename,'b2.boundary.parameters')
+     &      .or..not.first_pass) write(99,'(a,a,a)')
+     .   'BOUNDARY_FILENAME=''', trim(boundary_filename),''','
         if (maxval(lcbs).gt.0) then
           ncbs = 1
           do while (ncbs.lt.nbc1 .and. lcbs(ncbs+1).gt.0)
@@ -2507,6 +2500,30 @@ c 2002-09-11: logic revised
      .     'CFLMI=',cflmi,','
           if(cflmv.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLMV=',cflmv,','
+          if(cflme_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_CORE=',cflme_core,','
+          if(cflme_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_SOL=',cflme_sol,','
+          if(cflme_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_TANH_A=',cflme_tanh_a,','
+          if(cflme_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME_TANH_B=',cflme_tanh_b,','
+          if(cflmi_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_CORE=',cflmi_core,','
+          if(cflmi_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_SOL=',cflmi_sol,','
+          if(cflmi_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_TANH_A=',cflmi_tanh_a,','
+          if(cflmi_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI_TANH_B=',cflmi_tanh_b,','
+          if(cflmv_core.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_CORE=',cflmv_core,','
+          if(cflmv_sol.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_SOL=',cflmv_sol,','
+          if(cflmv_tanh_a.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_TANH_A=',cflmv_tanh_a,','
+          if(cflmv_tanh_b.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV_TANH_B=',cflmv_tanh_b,','
           if(b2fstate_version.ge.'03.000.006') then
             if(cflal.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .       'CFLAL=',cflal,','
@@ -2516,14 +2533,15 @@ c 2002-09-11: logic revised
             write(99,'(1x,a,1p,1g10.3,a)') 'CFLAL=',0.5_R8,','
             write(99,'(1x,a,1p,1g10.3,a)') 'CFLAB=',0.5_R8,','
           endif
-          if(transport_time_mod.gt.0.0_R8) then
-            write(99,'(1x,a,a,a)')
-     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_mod.gt.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_MOD=',transport_time_mod,','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_switch.ne.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
-          endif
+          if(.not.streql(transport_filename,'b2.transport.parameters')
+     &       .or..not.first_pass) write(99,'(1x,a,a,a)')
+     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
           if(abs(maxval(vout_cnv(0:ns-1))).gt.0.0_R8) then
             write(hlp_frm,'(a,i3,a)')
      .       '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
@@ -2762,14 +2780,15 @@ cxpb We must ensure we have not already listed this additional species
      .       (region_flags1(ireg,j),ireg=1,nnreg(0)),','
           enddo
           write(99,'(1x,a,l1,a)') 'NO_PFLUX=',no_pflux,','
-          if(transport_time_mod.gt.0.0_R8) then
-            write(99,'(1x,a,a,a)')
-     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_mod.gt.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_MOD=',transport_time_mod,','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(transport_time_switch.ne.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
-          endif
+          if(.not.streql(transport_filename,'b2.transport.inputfile')
+     &       .or..not.first_pass) write(99,'(1x,a,a,a)')
+     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nscale,'l1,a)'
           do_scale = .false.
           do ix = 1, nscale
@@ -3420,14 +3439,15 @@ cxpb This will need to be checked !!!
         enddo
         if (divheat.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .   'DIVHEAT=',divheat,','
-        if(sources_time_mod.gt.0.0_R8) then
-          write(99,'(1x,a,1p,1g10.3,a)')
+        if(sources_time_mod.gt.0.0_R8)
+     .   write(99,'(1x,a,1p,1g10.3,a)')
      .     'SOURCES_TIME_MOD=',sources_time_mod,','
-          write(99,'(1x,a,1p,1g10.3,a)')
+        if(sources_time_switch.ne.0.0_R8)
+     .   write(99,'(1x,a,1p,1g10.3,a)')
      .     'SOURCES_TIME_SWITCH=',sources_time_switch,','
-          write(99,'(1x,a,a,a)')
+        if(.not.streql(sources_filename,'b2.sources.profile')
+     ^     .or..not.first_pass) write(99,'(1x,a,a,a)')
      .     'SOURCES_FILENAME=''',trim(sources_filename),''','
-        endif
         write(99,'(a1)') '/'
         close(99)
        end if
@@ -3616,14 +3636,15 @@ cxpb This will need to be checked !!!
           endif
           if (todo) write(99,hlp_frm)
      .     'SOLVEET=',(solvtmp(0,ireg),is=0,nnreg(0)),','
-          if(numerics_time_mod.gt.0.0_R8) then
-            write(99,'(1x,a,a,a)')
-     .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(numerics_time_mod.gt.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
-            write(99,'(1x,a,1p,1g10.3,a)')
+          if(numerics_time_switch.ne.0.0_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_SWITCH=',numerics_time_switch,','
-          endif
+          if(.not.streql(numerics_filename,'b2.numerics.parameters')
+     &       .or..not.first_pass) write(99,'(1x,a,a,a)')
+     .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
           if(maxval(corr_core_dn(0:ns-1)).ne.1.0_R8 .or.
      &       minval(corr_core_dn(0:ns-1)).ne.1.0_R8) then
             call convert_bundle_r(ns1,ns,nsm,is_neutral1,bundle_frac,
@@ -10861,7 +10882,8 @@ cxpb as they no longer necessarily point to the same species
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_SWITCH=', neutrals_time_switch,','
-        if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,a,a)')
+        if (.not.streql(neutrals_filename,'b2.neutrals.parameters')
+     &      .or..not.first_pass) write(99,'(1x,a,a,a)')
      >   'NEUTRALS_FILENAME=''', trim(neutrals_filename),''','
         write(hlp_frm,'(a,i2,a)') '(1x,a,i1,a,',nstrat1,'(1x,i3,'',''))'
         if (maxval(lstrascl).gt.0) then

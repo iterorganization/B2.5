@@ -71,7 +71,7 @@
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny), cst_a(-1:nx,-1:ny,0:ns-1),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
-     &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
+     &     crd(4*(ny+1)+1), dseval, wdim(8*ns)                     !srv 03.04.13
       real (kind=R8) ::
      *     hlp, hlp_s, s
       real (kind=R8)  ::                                           !iyv 15.10.09
@@ -644,11 +644,11 @@ c     calculate coordinates of cell centre
        close(70)                                                  !srv 19.12.07 }
 *   ..write "experimental" data
        ndat = 1
-       cr(ndat) = crdy_c_cell(nmdpl,-1)
+       crd(ndat) = crdy_c_cell(nmdpl,-1)
        do iy = -1, ny-1
          dy = (crdy_c_cell(nmdpl,iy+1)-crdy_c_cell(nmdpl,iy))/4.0_R8
          do k=1,4
-           cr(ndat+1)=cr(ndat)+dy
+           crd(ndat+1)=crd(ndat)+dy
            ndat = ndat+1
          enddo
        enddo
@@ -656,8 +656,8 @@ c     calculate coordinates of cell centre
        call dspline(ny+2,crdy_c_cell(nmdpl,:),ne(nmdpl,:),bsp,csp,dsp)
        call b2wdat_open(70,'splne')                               !srv 26.09.17
        do iy=1,ndat
-         write(70,"(1x,2(es14.6))") cr(iy),
-     &    dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),
+         write(70,"(1x,2(es14.6))") crd(iy),
+     &    dseval(ny+2,crd(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),
      &           bsp,csp,dsp)
        enddo
        close(70)
@@ -665,8 +665,8 @@ c     calculate coordinates of cell centre
        call dspline(ny+2,crdy_c_cell(nmdpl,:),te(nmdpl,:),bsp,csp,dsp)
        call b2wdat_open(70,'splte')                               !srv 26.09.17
        do iy=1,ndat
-         write(70,"(1x,2(es14.6))") cr(iy),
-     &    dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),
+         write(70,"(1x,2(es14.6))") crd(iy),
+     &    dseval(ny+2,crd(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),
      &           bsp,csp,dsp)
        enddo
        close(70)
@@ -674,8 +674,8 @@ c     calculate coordinates of cell centre
        call dspline(ny+2,crdy_c_cell(nmdpl,:),ti(nmdpl,:),bsp,csp,dsp)
        call b2wdat_open(70,'splti')                               !srv 26.09.17
        do iy=1,ndat
-         write(70,"(1x,2(es14.6))") cr(iy),
-     &    dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),
+         write(70,"(1x,2(es14.6))") crd(iy),
+     &    dseval(ny+2,crd(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),
      &           bsp,csp,dsp)
        enddo
        close(70)
@@ -1504,26 +1504,26 @@ c     calculate coordinates of cell centre
            wdim(iw)= crdy_c_cell(ixx,iy)
            iw = 2
            wdim(iw) = fhe(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
-     .                                          pitx(ixx,iy)
+     .                                             pitx(ixx,iy)
            iw = 3
            wdim(iw) = fhi(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
-     .                                          pitx(ixx,iy)
+     .                                             pitx(ixx,iy)
            iw = 4
            wdim(iw) = fhj(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
-     .                                          pitx(ixx,iy)
+     .                                             pitx(ixx,iy)
            do is=0,ns-1
              iw = iw + 1
              wdim(iw)= fhm(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
-     .                                              pitx(ixx,iy)
+     .                                             pitx(ixx,iy)
            enddo
            do is=0,ns-1
              iw = iw + 1
              wdim(iw)= fhp(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
-     .                                              pitx(ixx,iy)
+     .                                             pitx(ixx,iy)
            enddo
            iw = iw + 1
            wdim(iw) = fht(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
-     .                                          pitx(ixx,iy)
+     .                                             pitx(ixx,iy)
            write(70,hlp_frm) (wdim(ix),ix=1,iw)
          enddo
        enddo

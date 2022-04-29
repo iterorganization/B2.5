@@ -388,8 +388,11 @@
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 *   ..internal parameters
       fix_recomb = 0
+      zmax_recomb = 1
+! FIXME: Still experimental:      if (streql(flag,'adas')) fix_recomb = 1
       call ipgeti('b2ardr_fix_cx', fix_cx)
       call ipgeti('b2ardr_fix_recomb', fix_recomb)
+      call ipgeti('b2ardr_zmax_recomb', zmax_recomb)
       call ipgeti('b2ardr_no_weisheit', no_weisheit)
       call ipgeti('b2mwti_ismain0', ismain0)
       call xertst(0.le.ismain0 .and. ismain0.lt.ns_pardf,
@@ -548,7 +551,7 @@
        else if (streql(flag,'adas')) then
         call ratadas (nout(0), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
-     &    iyear(inuc), fix_recomb,
+     &    iyear(inuc), fix_recomb, zmax_recomb,
      &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
 cxpb  We must account for the case when the user does not want all bundles
         kstart = 0
@@ -577,7 +580,7 @@ cxpb  We must account for the case when the user does not want all bundles
         call ratamns (nout(0), nz(inuc), am0, am1,
      &    rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
-     &    fix_recomb,
+     &    fix_recomb, zmax_recomb,
      &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
 cxpb  We must account for the case when the user does not want all bundles
         kstart = 0

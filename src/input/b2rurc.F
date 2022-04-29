@@ -219,6 +219,14 @@
           rtlpi(0:rtnt,0:rtnn,k)=(potimin(k)+potimax(k))/2.0_R8
         enddo
       endif
+      if (version.ge.'03.000.007') then
+        call cfruin (nget, 2, idum, 'fix_recomb,zmax_recomb')
+        fix_recomb = idum(0)
+        zmax_recomb = idum(1)
+      else
+        fix_recomb = 0 ! corresponding to the default pre-3.0.7 version
+        zmax_recomb = 1
+      endif
 
 * ..test rate coefficients
 *   ..test ionisation rate coefficients

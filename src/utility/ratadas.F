@@ -1,7 +1,7 @@
 c     -------------------------------------------------------------------------
 c     subroutine ratadas(nput,nc,rtt,rtnt,rtn,rtnn,
 c                        rtsa,rtra,rtqa,rtcx,rtrd,rtbr,rtzz,rtz2,rtpt,rtpi,
-c                        iyear,fix_recomb,ncnct,izpmin,izpmax)
+c                        iyear,fix_recomb,zmax_recomb,ncnct,izpmin,izpmax)
 c     -------------------------------------------------------------------------
 c     INPUT: integer nput:     unit number for b2ar.prt output
 c            integer nc:       nuclear charge
@@ -10,6 +10,7 @@ c            integer rtnt:     number of temperatures
 c            real (kind=R8) :: rtn(0:rtnn): densities in m**-3
 c            integer rtnn:     number of densities
 c            integer fix_recomb apply fix to include PRB
+c            integer zmax_recomb apply fix only to zn up to zmax_recomb
 c     OUTPUT: real*8 rtsa(0:rtnt,0:rtnn,0:nc): ionisation r.c. in m**3/s
 c             real (kind=R8) :: rtra(0:rtnt,0:rtnn,0:nc): recombination r.c. in m**3/s
 c             real (kind=R8) :: rtqa(0:rtnt,0:rtnn,0:nc): electron heat loss r.c.
@@ -39,7 +40,7 @@ c     -------------------------------------------------------------------------
       subroutine ratadas(nput,nc,rtt,rtnt,rtn,rtnn,
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
-     &                   iyear,fix_recomb,
+     &                   iyear,fix_recomb,zmax_recomb,
      &                   ncnct,izpmin,izpmax)
       use b2mod_types
       use b2mod_constants
@@ -53,7 +54,7 @@ c     INPUT
       integer nc
       integer rtnt
       integer rtnn
-      integer fix_recomb
+      integer fix_recomb, zmax_recomb
       real (kind=R8) ::
      *   rtt(0:rtnt)
       real (kind=R8) ::
@@ -194,8 +195,15 @@ c     ionisation potentials
       rtz2=-1.0_R8
       rtpt=-1.0_R8
       rtpi=-1.0_R8
-      if(fix_recomb.ne.0) then
-        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
+      if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb,
+     .            ' UP TO ZN = ', zmax_recomb
+        write(nput,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb,
+     .            ' UP TO ZN = ', zmax_recomb
+      else if(fix_recomb.ne.0.and.zmax_recomb.eq.0) then
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 set but ZMAX_RECOMB = 0 !'
+        write(nput,*)
+     .             'RATADAS: FIX_RECOMB <> 0 set but ZMAX_RECOMB = 0 !'
       endif
       do ic = 1, itdimd
         Tdummy(ic) = (-1.0_R8+5.0_R8*(ic-1.0_R8)/(itdimd-1.0_R8))
@@ -992,7 +1000,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
             logD=log10(rtn(cD)/1.0e6_R8)
             rtrd(cT,cD,ic)=0.0_R8
             rtbr(cT,cD,ic)=1.69e-38_R8/qe*ic**2*sqrt(rtt(cT))
-            if(fix_recomb.eq.0) then
+            if(fix_recomb.eq.0.or.nc.gt.zmax_recomb) then
               rtqa(cT,cD,ic)=rtbr(cT,cD,ic)
             else
               if(ic.gt.0) then
@@ -1117,7 +1125,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       subroutine ratamns(nput,nc,am0,am1,rtt,rtnt,rtn,rtnn,
      &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
      &                   rtzz,rtz2,rtpt,rtpi,
-     &                   fix_recomb,
+     &                   fix_recomb,zmax_recomb,
      &                   ncnct,izpmin,izpmax)
 #ifdef IMAS
       use b2mod_types
@@ -1151,7 +1159,7 @@ c     INPUT
       integer nc
       integer rtnt
       integer rtnn
-      integer fix_recomb
+      integer fix_recomb, zmax_recomb
       real (kind=R8) :: am0, am1
       real (kind=R8) ::
      *   rtt(0:rtnt)
@@ -1419,8 +1427,9 @@ cxpb Zero masses are required for older AMNS versions
       rtz2=-1.0_R8
       rtpt=-1.0_R8
       rtpi=-1.0_R8
-      if(fix_recomb.ne.0) then
-        write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb
+      if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
+        write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb,
+     .            ' UP TO ZN = ',zmax_recomb
       endif
 
 #ifdef IMAS
@@ -1482,7 +1491,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
          call IMAS_AMNS_FINISH_TABLE(amns_lr(ic))
       enddo
       rtrd=rtrd/qe
-      if(fix_recomb.eq.0) then
+      if(fix_recomb.eq.0.or.nc.gt.zmax_recomb) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
          call xerrab ('RATAMNS: fix_recomb <> 0 : Not yet coded!')
@@ -1560,7 +1569,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
          call ITM_AMNS_FINISH_TABLE(amns_lr(ic))
       enddo
       rtrd=rtrd/qe
-      if(fix_recomb.eq.0) then
+      if(fix_recomb.eq.0.or.nc.gt.zmax_recomb) then
          rtqa(:,:,:)=rtbr(:,:,:)
       else
          call xerrab ('RATAMNS: fix_recomb <> 0 : Not yet coded!')

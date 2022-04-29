@@ -27,6 +27,7 @@ module b2mod_ual_io
     use b2mod_mwti
     use b2mod_rates
     use b2mod_plasma
+    use b2mod_elements
     use b2mod_constants
     use b2mod_sources
     use b2mod_average
@@ -40,6 +41,7 @@ module b2mod_ual_io
     use b2mod_external
     use b2mod_interp
     use b2mod_ipmain
+    use b2mod_b2cmrc
     use b2mod_b2cmfs
     use b2mod_b2cmpb
     use b2mod_version
@@ -673,7 +675,9 @@ contains
         real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: lnlam( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pz( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: pb( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pe( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: ue( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: zeff( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
@@ -2335,6 +2339,10 @@ contains
               edge_profiles%ggd( time_sind )%ion( js )%state( ks )%label = textin( is-1 )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%label = &
                   &                                                        textin( is-1 )
+              do i = 1, nsources
+                edge_sources%source(i)%ggd( time_sind )%ion( js )%state( ks )%label = &
+                    &                                                      textin( is-1 )
+              end do
               nelems = count ( micmp( 1:natmi, is ) > 0 )
               allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
               do i = 1, nsources
@@ -3119,10 +3127,17 @@ contains
                 &   ggd( time_sind )%grid, "Core" )
             iGsSOL = findGridSubsetByName( edge_profiles%       &
                 &   ggd( time_sind )%grid, "SOL" )
-            iGsIDivertor = findGridSubsetByName( edge_profiles% &
-                &   ggd( time_sind )%grid, "Inner divertor" )
-            iGsODivertor = findGridSubsetByName( edge_profiles% &
-                &   ggd( time_sind )%grid, "Outer divertor" )
+            if (LSN) then
+              iGsIDivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( time_sind )%grid, "Western divertor" )
+              iGsODivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( time_sind )%grid, "Eastern divertor" )
+            else
+              iGsIDivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( time_sind )%grid, "Eastern divertor" )
+              iGsODivertor = findGridSubsetByName( edge_profiles% &
+                &   ggd( time_sind )%grid, "Western divertor" )
+            end if
 #else
             iGsCoreBoundary = findGridSubsetByName(   &
                 &   edge_profiles%grid_ggd( time_sind ), "Core boundary" )
@@ -3134,10 +3149,17 @@ contains
                 &   edge_profiles%grid_ggd( time_sind ), "Core" )
             iGsSOL = findGridSubsetByName(            &
                 &   edge_profiles%grid_ggd( time_sind ), "SOL" )
-            iGsIDivertor = findGridSubsetByName(      &
-                &   edge_profiles%grid_ggd( time_sind ), "Inner divertor" )
-            iGsODivertor = findGridSubsetByName(      &
-                &   edge_profiles%grid_ggd( time_sind ), "Outer divertor" )
+            if (LSN) then
+              iGsIDivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Western divertor" )
+              iGsODivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Eastern divertor" )
+            else
+              iGsIDivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Eastern divertor" )
+              iGsODivertor = findGridSubsetByName(      &
+                &   edge_profiles%grid_ggd( time_sind ), "Western divertor" )
+            end if
 #endif
 
             !! ne: Electron density
@@ -3227,8 +3249,9 @@ contains
                       &   value = na(:,:,ispion(is,js)) )
                   tmpCv(:,:) = tmpCv(:,:) + na(:,:,ispion(is,js))
                 end do
-                call write_quantity( edge_profiles,                           &
-                    &   val = edge_profiles%ggd( time_sind )%ion(is)%density, &
+                call write_quantity( edge_profiles,                         &
+                    &   val = edge_profiles%ggd( time_sind )%               &
+                    &         ion(is)%density,                              &
                     &   value = tmpCv )
             !! fna: Ion particle flux
                 totFace(:,:,0:1) = 0.0_IDS_real
@@ -4599,7 +4622,8 @@ contains
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
                    end if
-                   tmpCv(-1:nx,-1:ny) = eneutrad(0:nx+1,0:ny+1,is,0)/vol(-1:nx,-1:ny)
+                   tmpCv(-1:nx,-1:ny) = eneutrad(0:nx+1,0:ny+1,is,0)/        &
+                       &                vol(-1:nx,-1:ny)
                    call write_cell_scalar( edge_profiles,                    &
                        &   scalar = edge_sources%source(12)%                 &
                        &            ggd( time_sind )%neutral( js )%          &
@@ -5514,7 +5538,7 @@ contains
         if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
            allocate( summary%local%separatrix%position%psi( num_time_slices ) )
            summary%local%separatrix%position%psi( time_sind ) = fpsi(jxa,jsep,2)
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
            allocate( summary%local%separatrix_average%position%psi( num_time_slices ) )
            summary%local%separatrix_average%position%psi( time_sind ) = fpsi(jxa,jsep,2)
 #endif
@@ -5525,7 +5549,7 @@ contains
            &  0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev )
         call write_sourced_value( summary%local%separatrix%n_e, &
            &  0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep))) )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
         tmpCv = 1.0_IDS_real
         u = separatrix_average( te, tmpCv )
         call write_sourced_value( summary%local%separatrix_average%t_e, u/ev )
@@ -5565,21 +5589,21 @@ contains
           case ('H')
             call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%hydrogen, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, v )
 #endif
           case ('D')
             call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%deuterium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, v )
 #endif
           case ('T')
             call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%tritium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, v )
 #endif
@@ -5587,14 +5611,14 @@ contains
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
               call write_sourced_value( summary%local%separatrix_average%n_i%helium_3, u )
               call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, v )
 #endif
             else if (nint(am(eb2spcr(is))).eq.4) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
               call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%helium_4, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, v )
 #endif
@@ -5602,49 +5626,49 @@ contains
           case ('Li')
             call write_sourced_value( summary%local%separatrix%n_i%lithium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%lithium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, v )
 #endif
           case ('Be')
             call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, v )
 #endif
           case ('C')
             call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%carbon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, v )
 #endif
           case ('N')
             call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%nitrogen, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, v )
 #endif
           case ('O')
             call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%oxygen, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, v )
 #endif
           case ('Ne')
             call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%neon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%neon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, v )
 #endif
           case ('Ar')
             call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%argon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%argon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, v )
 #endif
@@ -5652,14 +5676,14 @@ contains
           case ('Fe')
             call write_sourced_value( summary%local%separatrix%n_i%iron, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%iron, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%iron, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, v )
 #endif
           case ('Kr')
             call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%krypton, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, v )
 #endif
@@ -5667,14 +5691,14 @@ contains
           case ('Xe')
             call write_sourced_value( summary%local%separatrix%n_i%xenon, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%xenon, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, v )
 #endif
           case ('W')
             call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
             call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, vtor )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             call write_sourced_value( summary%local%separatrix_average%n_i%tungsten, u )
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, v )
 #endif
@@ -5683,13 +5707,13 @@ contains
         call write_sourced_value( summary%local%separatrix%n_i_total, &
           & 0.5_R8 * (ni(jxa,jsep,1) + ni(topix(jxa,jsep),topiy(jxa,jsep),1)) )
         u = separatrix_average( ni(:,:,1), tmpCv )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
 #endif
         u = separatrix_average( zeff, tmpCv )
         call write_sourced_value( summary%local%separatrix%zeff, &
           & 0.5_R8 * (zeff(jxa,jsep) + zeff(topix(jxa,jsep),topiy(jxa,jsep))) )
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%zeff, u )
 #endif
 
@@ -6134,6 +6158,23 @@ contains
 
         contains
 
+        integer function get_atom_number( compname )
+            implicit none
+            character*2 compname
+            integer is, iatm
+            logical streql
+            external streql
+
+            get_atom_number = 0
+            do iatm = 1, natmi
+               if ( get_atom_number > 0 ) cycle
+               is = eb2atcr(iatm)
+               if (streql( is_codes( is ), compname ) ) get_atom_number = iatm
+            end do
+            return
+
+        end function get_atom_number
+
         function separatrix_average( field, weight )
         ! This function is devoted to obtain the weighted average along the active separatrix
         ! of a plasma field quantity
@@ -6243,8 +6284,7 @@ contains
 #endif
                if (ndim.eq.IDS_INT_INVALID) then
                   select case (iSubsetID)
-                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
                      ndim = 1
                   case( GRID_SUBSET_EDGES, &
                       & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -6253,6 +6293,7 @@ contains
                       & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
                       & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
                       & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
                       & GRID_SUBSET_SECOND_SEPARATRIX, &
                       & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
                       & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -6699,10 +6740,17 @@ contains
              &   ggd( batch_index )%grid, "Core" )
           iGsSOL = findGridSubsetByName( batch_profiles%       &
              &   ggd( batch_index )%grid, "SOL" )
-          iGsIDivertor = findGridSubsetByName( batch_profiles% &
-             &   ggd( batch_index )%grid, "Inner divertor" )
-          iGsODivertor = findGridSubsetByName( batch_profiles% &
-             &   ggd( batch_index )%grid, "Outer divertor" )
+          if (LSN) then
+            iGsIDivertor = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Western divertor" )
+            iGsODivertor = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Eastern divertor" )
+          else
+            iGsIDivertor = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Eastern divertor" )
+            iGsODivertor = findGridSubsetByName( batch_profiles% &
+             &   ggd( batch_index )%grid, "Western divertor" )
+          end if
 #else
           iGsCoreBoundary = findGridSubsetByName(   &
              &   batch_profiles%grid_ggd( batch_index ), "Core boundary" )
@@ -6714,10 +6762,17 @@ contains
              &   batch_profiles%grid_ggd( batch_index ), "Core" )
           iGsSOL = findGridSubsetByName(            &
              &   batch_profiles%grid_ggd( batch_index ), "SOL" )
-          iGsIDivertor = findGridSubsetByName(      &
-             &   batch_profiles%grid_ggd( batch_index ), "Inner divertor" )
-          iGsODivertor = findGridSubsetByName(      &
-             &   batch_profiles%grid_ggd( batch_index ), "Outer divertor" )
+          if (LSN) then
+            iGsIDivertor = findGridSubsetByName(      &
+             &   batch_profiles%grid_ggd( batch_index ), "Western divertor" )
+            iGsODivertor = findGridSubsetByName(      &
+             &   batch_profiles%grid_ggd( batch_index ), "Eastern divertor" )
+          else
+            iGsIDivertor = findGridSubsetByName(      &
+             &   batch_profiles%grid_ggd( batch_index ), "Eastern divertor" )
+            iGsODivertor = findGridSubsetByName(      &
+             &   batch_profiles%grid_ggd( batch_index ), "Western divertor" )
+          end if
 #endif
 
           !! sne: Electron particle sources
@@ -6865,7 +6920,7 @@ contains
           if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
             allocate( summary%local%separatrix%position%psi( num_batch_slices ) )
             summary%local%separatrix%position%psi( batch_index ) = fpsi(jxa,jsep,2)
-#if IMAS_MINOR_VERSION > 35
+#if IMAS_MINOR_VERSION > 36
             allocate( summary%local%separatrix_average%position%psi( num_batch_slices ) )
             summary%local%separatrix_average%position%psi( batch_index ) = fpsi(jxa,jsep,2)
 #endif
@@ -6964,7 +7019,7 @@ contains
     properties%homogeneous_time = homo
     allocate( properties%comment(1) )
     properties%comment = comment
-#if ( IMAS_MINOR_VERSION > 33 && 0 )
+#if IMAS_MINOR_VERSION > 33
     allocate( properties%provenance%node(1) )
     allocate( properties%provenance%node(1)%sources(1) )
     properties%provenance%node(1)%sources(1) = source
@@ -7411,7 +7466,7 @@ contains
         else
 #if IMAS_MINOR_VERSION > 21
           if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, -b0 )
+            & call write_sourced_value( summary%global_quantities%b0, b0 )
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
         end if
@@ -7894,7 +7949,9 @@ contains
     call value_on_faces( nx, ny, weight, value, tmpFace)
 
     !! Allocate data fields for grid subsets
-    allocate( val(nSubsets) )
+    if (.not.associated( val ) ) then
+      allocate( val(nSubsets) )
+    end if
 
     do iSubset = 1, nSubsets
 #if IMAS_MINOR_VERSION < 15
@@ -7936,8 +7993,7 @@ contains
 #endif
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
-        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -7946,6 +8002,8 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, &
+            & GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -8062,8 +8120,7 @@ contains
 #endif
        if (ndim.eq.IDS_INT_INVALID) then
          select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
            ndim = 1
          case( GRID_SUBSET_EDGES, &
              & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8072,6 +8129,8 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_INNER_MIDPLANE, &
+             & GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -8163,8 +8222,7 @@ contains
 #endif
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
-        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8173,6 +8231,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -8254,47 +8313,47 @@ contains
        ndim = edgeprof%grid_ggd(slice_index)%grid_subset(iSubset)%dimension
        iSubsetID = edgeprof%grid_ggd(slice_index)%grid_subset(iSubset)%identifier%index
 #endif
-        if (ndim.eq.IDS_INT_INVALID) then
-          select case (iSubsetID)
-          case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE )
-            ndim = 1
-          case( GRID_SUBSET_EDGES, &
-              & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-              & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-              & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-              & GRID_SUBSET_SECOND_SEPARATRIX, &
-              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-              & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-              & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-              & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-              & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-              & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-              & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-              & GRID_SUBSET_INNER_TARGET_INACTIVE )
-            ndim = 2
-          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-            ndim = 3
-          end select
-        end if
-        if (ndim.ne.2) cycle
-        call write_face_vector( edgeprof, val( iSubset ), value, &
-            &    ggdID, iSubsetID, iSubset )
-      end do
+       if (ndim.eq.IDS_INT_INVALID) then
+         select case (iSubsetID)
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+           ndim = 1
+         case( GRID_SUBSET_EDGES, &
+             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+             & GRID_SUBSET_SECOND_SEPARATRIX, &
+             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+           ndim = 2
+         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+           ndim = 3
+         end select
+       end if
+       if (ndim.ne.2) cycle
+       call write_face_vector( edgeprof, val( iSubset ), value, &
+           &    ggdID, iSubsetID, iSubset )
+    end do
 
-      return
-      end subroutine write_face_scalar
+    return
+    end subroutine write_face_scalar
 
     !> Write a vector B2 face quantity to a ids_generic_grid_vector
     !! @note    ITM CPO versus IMAS IDS regarding the ITMs vector%comp,

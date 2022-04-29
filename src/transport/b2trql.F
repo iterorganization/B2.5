@@ -8,6 +8,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_transport_namelist
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -45,7 +46,7 @@
       integer ncall, n2
       save ncall
       real (kind=R8) ::
-     *   cflme, cflmi
+     *   cfl(-1:nx,-1:ny)
       real (kind=R8) ::
      *   nirm(-1:nx,-1:ny)
 *   ..procedures
@@ -110,12 +111,14 @@
 
 * ..compute flux limit velocities
 *   ..compute electron heat flux limit velocity
-      cflme = cflim(0)
-      call b2tlhe (nx, ny, me, cflme, gs, pbs(-1,-1,0), qc, ne, te,
+      call cfl_tanh_profile(nx, ny, cflim(0),
+     .  cflme_core, cflme_sol, cflme_tanh_a, cflme_tanh_b, cfl)
+      call b2tlhe (nx, ny, me, cfl, gs, pbs(-1,-1,0), qc, ne, te,
      &  chvemx)
 *   ..compute all atom heat flux limit velocity
-      cflmi = cflim(1)
-      call b2tlhi (nx, ny, mp, cflmi, gs, pbs(-1,-1,0), qc, ni,
+      call cfl_tanh_profile(nx, ny, cflim(1),
+     .  cflmi_core, cflmi_sol, cflmi_tanh_a, cflmi_tanh_b, cfl)
+      call b2tlhi (nx, ny, mp, cfl, gs, pbs(-1,-1,0), qc, ni,
      &  nirm, ti, chvimx)
 
 * ..return

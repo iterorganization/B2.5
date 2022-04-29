@@ -10,6 +10,8 @@
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
+      use b2mod_b2cmfs
+      use b2mod_constants
       use b2mod_grid_mapping
       use b2mod_subsys
       implicit none
@@ -238,10 +240,10 @@
       call cfrure (nget, n2*2, qz, 'qz')
 cxpb
       if(b2fgmtry_version.ge.'03.001.000') then
-        call cfrure (nget, n2*2, qc, 'qc')
-        call cfrure (nget, n2*2, qs, 'qs')
+       call cfrure (nget, n2*2, qc, 'qc')
+       call cfrure (nget, n2*2, qs, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
-        call cfrure (nget, n2, qc(-1,-1,0), 'qc')
+       call cfrure (nget, n2, qc(-1,-1,0), 'qc')
       else
        do iy = -1, ny
         do ix = -1, nx

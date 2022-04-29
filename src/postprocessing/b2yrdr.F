@@ -360,10 +360,11 @@
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
      &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is),
+     &   fix_recomb, zmax_recomb,
      &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzn(is),
+     &   rtnt, rtn, rtnn, rtzn(is), fix_recomb, zmax_recomb,
      &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop

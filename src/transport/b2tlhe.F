@@ -1,4 +1,4 @@
-      subroutine b2tlhe (nx, ny, me, cflme, gs, pbsx, qc, ne, te,
+      subroutine b2tlhe (nx, ny, me, cfl, gs, pbsx, qc, ne, te,
      &  chvemx)
       use b2mod_types
       use b2mod_geo
@@ -8,7 +8,7 @@
       implicit none
       integer nx, ny
       real (kind=R8) ::
-     *  me, cflme,
+     *  me, cfl(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2),
      &  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), chvemx(-1:nx,-1:ny)
@@ -34,7 +34,7 @@
       call xertst (0.le.nx .and. 0.le.ny, 'faulty argument nx, ny')
 *   ..test me, cflme
       call xertst (0.0_R8.lt.me, 'faulty argument me')
-      call xertst (0.0_R8.le.cflme, 'faulty argument cflme')
+      call b2xvsg (n2, cfl, 1, 'cflme', '.ge.')
 *   ..read switches
       if (ncall.eq.0) then
         call ipgeti ('b2news_area_fix', area_fix)
@@ -57,7 +57,7 @@ cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_m
 c    because now both options are interchangeable
           if (model.eq.1.or.model.eq.3) then  ! SOLPS5.0 treatments
             t0 = max(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
-            chvemx(ix,iy) = cflme*sqrt(t0/me)*abs(pbsx(ix,iy))        !srv 11.01.13
+            chvemx(ix,iy) = cfl(ix,iy)*sqrt(t0/me)*abs(pbsx(ix,iy))   !srv 11.01.13
             if (area_fix.eq.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy,0)
           else if (model.eq.2) then  ! SOLPS4.0 treatment
             t0 = te(ix,iy)
@@ -66,7 +66,7 @@ cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same informa
 c           as case b2tqce_model.eq.1
 c           Removes need for different treatment later on in the code (b2tfhe), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-            chvemx(ix,iy) = cflme * gs(ix,iy,0) *
+            chvemx(ix,iy) = cfl(ix,iy) * gs(ix,iy,0) *
      .       (ne(ix,iy)*pitx(ix,iy)*sqrt(t0/me)*t0 +
      .        ne(leftix(ix,iy),leftiy(ix,iy))*
      .        pitx(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/me)*t1)/

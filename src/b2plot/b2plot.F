@@ -384,13 +384,25 @@ c
       do is=0,ns-1
         if(nint(zn(is)) .ne. il) then
           il=nint(zn(is))
-          if(il .le. 1) then
-            imi=nint(am(is))
+          imi=nint(am(is))
+          if(il .eq. 0) then
+            textsp(iss)=' '//'n'
+          else if(il .le. 1) then
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
           else
-            textsp(iss)=' '//elements(il)
+            if(imi.ne.nuclear_mass(il)) then
+              if(imi.lt.10) then
+                write(textsp(iss),'(a,i1,a)') ' ',imi,trim(elements(il))
+              else if(imi.lt.100) then
+                write(textsp(iss),'(a,i2,a)') ' ',imi,trim(elements(il))
+              else
+                write(textsp(iss),'(a,i3,a)') ' ',imi,trim(elements(il))
+              end if
+            else
+              textsp(iss)=' '//elements(il)
+            end if
           end if
           iss=iss+1
         end if
@@ -1182,8 +1194,6 @@ c
       psi_sep=0.5_R8*(fpsi(jxa,jsep,2)+fpsi(jxa,jsep,3))
       psi=0.25_R8*sum(fpsi,3)-psi_sep
       fbz=0.25_R8*sum(ffbz,3)
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
       icell=0
@@ -1263,6 +1273,8 @@ c
       call trigon(.false.)         ! overlayed triangular grid off by default
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
+      call adjust_axes(.false.)    ! nice axes by default
+      call adjust_bold(.false.)    ! do not bold axes by default
       call set_full_psi_plotting(.false.) ! do not plot against full psi
       call set_norm_psi_plotting(.false.) ! do not plot against normalised psi
       call set_root_psi_plotting(.false.) ! do not plot against root(psi)
@@ -1305,6 +1317,7 @@ c
       bcol=1
       dcol=1
       ecol=1
+      fcol=1
       gcol=1
       hcol=1
       mcol=1
@@ -2634,11 +2647,21 @@ c
         case ('cr')
           description='CR (m)'
           nz=1
-          call copy(cr,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cr(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('cz')
           description='CZ (m)'
           nz=1
-          call copy(cz,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cz(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('na0')
           description='na at previous time step (m^{-3})'
           nz=ns
@@ -4419,7 +4442,7 @@ c     assumes that bb is OK for 1d cases
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
           call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,
-     1     safetyfactor,cr,cz,crx,bb,ne,te,ti,na,mach)
+     1     safetyfactor,ne,te,ti,na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
@@ -5988,6 +6011,14 @@ c
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),stmp)
           call clear_extralabel(stmp)
+        case('xlab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_xlabel(stmp)
+        case('ylab')     ! extra label
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),stmp)
+          call clear_ylabel(stmp)
         case('cltb')     ! colour table
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
@@ -6108,7 +6139,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6145,7 +6176,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6182,7 +6213,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -10114,11 +10145,6 @@ c
             enddo
           enddo
           close(99)
-        case('trgl')     ! ANK target loading
-          stack_req=(/2,0,0,0,0,0,1/)
-          if(bad_args(stack_req)) return
-          call b2ptrg(istack,iistack)
-          call pop_stack(stack_req)
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
@@ -10931,6 +10957,10 @@ c
           call set_root_psi_plotting(.true.)
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
+        case('nice')     ! toggle whether axes will have nice values
+          call adjust_axes(.true.)
+        case('bold')     ! toggle whether to bold the axis labels
+          call adjust_bold(.true.)
         case('sepw')     ! change separatrix line width
           stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11295,6 +11325,12 @@ c
           if(bad_args(stack_req)) return
           ecol=istack(iistack)
           call pop_stack(stack_req)
+        case('fcol')     ! colour index for graph frame
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call set_frame_color(istack(iistack))
+          fcol=istack(iistack)
+          call pop_stack(stack_req)
         case('nspe','nspec')    ! new spectrometer
           stack_req=(/3,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -11391,7 +11427,7 @@ c calculate neoclassical diagnostics
       if(rerun_neoclassical) then
         call neo_diagnostics(nx, ny, ns, neo_ic, dn_neo, chi_neo,
      &   vn_neo, vw_neo)
-        call neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,
+        call neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,
      &   nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.

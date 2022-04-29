@@ -976,6 +976,15 @@
 				<type>real</type>
 				<description>
 					Multiplier of all densities on the first timestep.
+					If set to a negative value, the rescaling (by |density_rescale|) will only be applied to species with zn.eq.zn_rescale.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_zn_rescale</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Nuclear charge number of the species to be rescaled if density_rescale is set to a negative value.
 				</description>
 			</switch>
 			<switch>
@@ -2108,12 +2117,12 @@
 				</description>
 				<switch>
 					<name>b2tlc0_alpha</name>
-					<default>0.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2tlc0_gamma</name>
-					<default>2.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 			</switchgroup>
@@ -2129,12 +2138,12 @@
 				</description>
 				<switch>
 					<name>b2tlh0_alpha</name>
-					<default>0.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2tlh0_gamma</name>
-					<default>2.0</default>
+					<default>1.0</default>
 					<type>real</type>
 				</switch>
 				<switch>
@@ -2297,7 +2306,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhi_lim_flux</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If '0', flux limit is not applied directly to the ion heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
@@ -2442,19 +2451,7 @@
 				<type>integer</type>
 				<description>
 					If eirene_sheath_pot.eq.1, the sheath potential drop as computed by B2.5 (i.e. including effects of parallel currents, secondary electron emission, etc.) is passed to EIRENE to compute ion acceleration in the sheath.
-					If eirene_sheath_pot.eq.0, the sheath potential drop is
-					recomputed by EIRENE, usually assuming zero current and secondary
-					electron emission.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stel_fix_recomb_energy</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If changed to 1, then the recombination energy (rpi) is added to the electron energy for each recombination. This should only be used if the is--&gt;is-1 energy terms have been included in the electron cooling rates (as done by setting the switch 'b2ardr_fix_recomb' in b2ar.dat to a non-zero value and recalculating b2frates).
-					See 'Atomic Physics' section.
-					*** Use with caution! ***
+					If eirene_sheath_pot.eq.0, the sheath potential drop is	recomputed by EIRENE, usually assuming zero current and secondary electron emission.
 				</description>
 			</switch>
 			<switch>
@@ -4586,10 +4583,8 @@
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
 			</switch>
-			<switch>
-				<name>b2ardr_fix_recomb</name>
-				<default>0</default>
-				<type>integer</type>
+			<switchgroup>
+				<name>b2ardr_*_recomb</name>
 				<description>
 					When fix_recomb is changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
 					This term includes the bremsstrahlung.
@@ -4597,7 +4592,17 @@
 					The correction is only applied for isonuclear sequences with nuclear charge up to zmax_recomb, inclusive.
 					Use of this option is still experimental!
 				</description>
-			</switch>
+				<switch>
+				  <name>b2ardr_fix_recomb</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2ardr_zmax_recomb</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
 			<switchgroup>
 				<name>b2ardr_rtn.</name>
 				<description>
@@ -7017,14 +7022,15 @@
 			<switchgroup>
 				<name>CFL*</name>
 				<description>
-					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter.
+					For the electron, ion, and viscous heat flux limit coefficients, if the main multiplier is not specified but CFLM*_CORE and CFLM*_SOL are set to equal non-zero values, their value will be used. If CFLM*_CORE and CFLM*_SOL are different and non-zero, then a radial tanh profile, centered at radial OMP position CFLM*_TANH_A (in metres) and of width CFLM*_TANH_B is applied. The flux limit coefficients in the PFR are set to a constant value equal to that at the separatrix. The OMP is located at the poloidal index provided by 'b2news_fac_ref', or, if not specified, 'b2mwti_jxa'.
+					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter. Otherwise, the multipliers must be positive.
 				</description>
 				<switch>
 					<name>CFLME</name>
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
-						Multiplier to the electron heat flux limit.
+						Main multiplier to the electron heat flux limit.
 					</description>
 				</switch>
 				<switch>
@@ -7032,7 +7038,7 @@
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
-						Multiplier to the ion heat flux limit.
+						Main multiplier to the ion heat flux limit.
 					</description>
 				</switch>
 				<switch>
@@ -7040,7 +7046,7 @@
 					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
-						Multiplier to the viscous heat flux limit.
+						Main multiplier to the viscous heat flux limit.
 					</description>
 				</switch>
 				<switch>
@@ -7059,7 +7065,103 @@
 						Multiplier to the friction force flux limit.
 					</description>
 				</switch>
-				</switchgroup>
+				<switch>
+				  <name>CFLME_CORE</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the electron heat flux limit in the deep core.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLME_SOL</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the electron heat flux limit in the far SOL.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLME_TANH_A</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the electron heat flux limit.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLME_TANH_B</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the electron heat flux limit. Must be positive.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_CORE</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the ion heat flux limit in the deep core.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_SOL</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the ion heat flux limit in the far SOL.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_TANH_A</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the ion heat flux limit.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMI_TANH_B</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the ion heat flux limit. Must be positive.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_CORE</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the viscous heat flux limit in the deep core.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_SOL</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Limit to multiplier to the viscous heat flux limit in the far SOL.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_TANH_A</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial location, measured (in metres) as a radial distance along the OMP away from the separatrix, for the center of the tanh profile multiplying the viscous heat flux limit.
+				  </description>
+				</switch>
+				<switch>
+				  <name>CFLMV_TANH_B</name>
+				  <default>0.0</default>
+				  <type>real*8</type>
+				  <description>
+					Radial width, measured (in metres) as a radial distance along the OMP, for the tanh profile multiplying the viscous heat flux limit. Must be positive.
+				  </description>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>WRITE_NML_TRANSP</name>
 				<default>.true.</default>

@@ -85,7 +85,6 @@
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: neutrals_namelist = 0
-      real (kind=R8) :: BoRiS = 0.0_R8
       real (kind=R8) :: dtim = 1.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
@@ -257,7 +256,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
       call ipgetr ('b2mndr_dtim', dtim)
-      call ipgetr ('b2news_BoRiS', BoRiS)
       call ipgeti ('b2mndr_eirene', use_eirene)
       call ipgeti ('b2stbr_sput_dst', sput_dst)
       call get_boundary_namelist

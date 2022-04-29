@@ -34,8 +34,7 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
      &  fch_p(-1:nx,-1:ny,0:1,0:1), conn(-1:ny), qc(-1:nx,-1:ny,0:1),   !srv 10.06.08
-     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                        !srv 03.06.03
+     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -59,7 +58,8 @@
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      1  fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
-     3  csig_cl(-1:nx,-1:ny,0:1,0:1), calf_cl(-1:nx,-1:ny,0:1,0:1)
+     3  csig_cl(-1:nx,-1:ny,0:1,0:1), calf_cl(-1:nx,-1:ny,0:1,0:1),
+     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
       real (kind=R8) ::
      &  csig_stoch(-1:nx,-1:ny,0:1,0:1), chce_stoch(-1:nx,-1:ny,0:1,0:1)!lk 31.01.08 24.08.21
 *-----------------------------------------------------------------------
@@ -120,7 +120,7 @@
      .  fch_anomalous, no_current, style, elm_count
 *   ..procedures
       external xertst, ipgeti, ipgetr, b2saxpy
-      external b2trcl, b2trno
+      external b2trcl, b2trql, b2trno
 *   ..initialisation
       data ncall/0/, pol_anom_scale/1.0_R8/, pot_eq/1/, no_solve/0/,
      1  fch_anomalous/1.0_R8/, no_current/0/, style/1/
@@ -226,6 +226,9 @@
       end if
 
 * ..compute transport coefficients
+*   ..compute flux limit coefficients
+      call b2trql (nx, ny, ns, gs, vol, hx, hy, qz, qc, pbs,
+     &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx,
      &  bb, vol, gs, hx, hy, hz, qz, qc, qs, pbs, crx, cry, conn,     !srv 09.01.01
