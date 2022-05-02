@@ -294,7 +294,7 @@ contains
            centroid(0) = 0.25_R8*(sum(g%vxX(vx4)))
            centroid(1) = 0.25_R8*(sum(g%vxY(vx4)))
         elseif (g%cvCtype(iCv).eq.GRID_GUARD) then !Guard cell
-           vx2 = m%cvVx(m%cvVxP(iCv,1)-1:m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
+           vx2 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
            centroid(0) = 0.5_R8*(sum(g%vxX(vx2)))
            centroid(1) = 0.5_R8*(sum(g%vxY(vx2)))
         else ! Triangles
