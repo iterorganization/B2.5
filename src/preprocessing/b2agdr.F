@@ -332,11 +332,12 @@
 !*   ..compute geometry and flux/field functions on auxiliary mesh
 !*   ..if not provided already by Carre grid
 !      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+!WIP - B2AG_US
        !if(istyle.ge.0) call b2agcf ()
 
 
 !*   ..compute metric coefficients on auxiliary mesh
-       ! call b2agmt()
+       ! call subroutine b2agmt (nCv,nFc, nVx, g, m)
 !      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
 !     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
 !     & cell_width1, cell_height1,

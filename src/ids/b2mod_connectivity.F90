@@ -289,6 +289,110 @@ module b2mod_connectivity
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
 
 contains
+   
+!  !> Computes additional connectivity data based
+!  !! on the connectivity data of the traduitoutb2us file
+!  subroutine init_connectivity(nCv,nFc,nVx,g,m)
+!  use b2mod_types
+!  use b2mod_indirect   ! causes issue
+!  use b2mod_geo        ! causes issue
+!  implicit none
+!
+!  !!.. arguments
+!  type(geometry_ag) :: g
+!  type(mapping_ag) :: m
+!  integer :: nCv, nFc, nVx
+
+!  !!.. local variables
+!  integer :: i, ic, ivx, ifc, n, vxFc_end, vxCv_end
+!  integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), fch(:), &
+!                        & indcvfc(:)
+!  intrinsic pack, count
+
+!  !!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
+!  !!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
+  
+!  !Construct vxFcP
+!  allocate (indFc(2*nFc))
+!  indFc(1:nFc)          = (/ (i, i=1,nFc) /)
+!  indFc(nFc+1:2*nFc)    = (/ (i, i=1,nFc) /)
+
+!  allocate (fh(2*nFc))
+!  fh(1:nFc)             = m%fcVx(1:nFc,1)
+!  fh(nFc+1:2*nFc)       = m%fcVx(1:nFc,2)
+
+!  allocate (indCv(m%nCmxVx))
+!  do ic = 1,nCv
+!     indCv(m%cvVxP(ic,1):m%cvVxP(ic,1)+m%cvVxP(ic,2)-1) = ic
+!  enddo
+
+!  allocate (ch(m%nCmxVx))
+!  ch(1:m%nCmxVx) = m%cvVx(1:m%nCmxVx)
+
+!  m%vxFcP(1,1) = 1
+!  m%vxCvP(1,1) = 1
+!  do ivx = 1, nVx-1
+!     m%vxFcP(ivx,2) = count (fh == ivx)
+!     m%vxFcP(ivx+1,1) = m%vxFcP(ivx,1) + m%vxFcP(ivx,2)
+!     if (m%vxFcP(ivx,2) > 0) then
+!         m%vxFc(m%vxFcP(ivx,1):m%vxFcP(ivx+1,1)-1) = &
+!       &  pack(indFc,fh == ivx)
+!     endif
+
+!     m%vxCvP(ivx,2) = count(ch == ivx)
+!     m%vxCvP(ivx+1,1) = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
+!     if (m%vxCvP(ivx,2) > 0 ) then
+!        m%vxCv(m%vxCvP(ivx,1):m%vxCvP(ivx+1,1)-1) = &
+!       &   pack( indCv, ch == ivx ) 
+!     endif
+!  enddo
+
+!  ivx = m%nVx
+!  m%vxFcP(ivx,2) = count(fh == ivx)
+!  vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2) -1
+!  if (m%vxFcP(ivx,2) > 0) then
+!      m%vxFc(m%vxFcP(ivx,1):vxFc_end) = &
+!     &  pack( indFc, fh == ivx )
+!  end if
+!  m%vxCvP(ivx,2) = count(ch == ivx)
+!  vxCv_end = m%vxCvP(ivx,1) + m%vxCvP(ivx,2) - 1
+!  if (m%vxCvP(ivx,2) > 0) then
+!     m%vxCv(m%vxCvP(ivx,1):vxCv_end) = &
+!    &  pack( indCv, ch == ivx )
+!  end if
+
+!  !Try analog for fcCv(nFc,2), similar to vxCv - check this in debugger
+
+!  allocate (indcvfc(m%nCmxFc))
+!  do ic = 1,nCv
+!     indcvfc(m%cvFcP(ic,1):m%cvFcP(ic,1)+m%cvFcP(ic,2)-1) = ic
+!  enddo
+
+!  allocate (fch(m%nCmxFc))
+!  fch(1:m%nCmxFc) = m%cvFc(1:m%nCmxFc)
+
+!  !hier loop over de faces
+
+!  do ifc = 1,nFc
+!       n = count(fch == ifc)
+!       if (n .eq. 2) then
+!         m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
+!       else
+!         call xerrab &
+!         & ('init_connectivity: Wrong number of cell per face')
+!       endif
+!  enddo
+
+
+!  deallocate (indFc)
+!  deallocate (indCv)
+!  deallocate (indcvfc)
+!  deallocate (fh)
+!  deallocate (ch)
+!  deallocate (fch)
+
+
+!  end subroutine init_connectivity
 
   !> Computes the standard b2 connectivity information
   !! Code taken from b2agfs.F.
@@ -297,7 +401,7 @@ contains
   !!        rightcut(i) holds the right boundary index + 1 of a region which is cut
   !!        This means the region range in the x direction is
   !!        (leftcut(i):rightcut(i))
-  subroutine init_connectivity( nx1, ny1, crx1, cry1, cflag,    &
+  subroutine init_connectivity_st( nx1, ny1, crx1, cry1, cflag,    &
       &     leftix1, leftiy1, rightix1, rightiy1,               &
       &     topix1, topiy1, bottomix1, bottomiy1,               &
       &     leftcut1, rightcut1, bottomcut1, topcut1,           &
@@ -711,7 +815,7 @@ contains
         & 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ', &
         & leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
 
-  end subroutine init_connectivity
+  end subroutine init_connectivity_st
 
 
   !> Check the connectivity for errors.

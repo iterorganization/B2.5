@@ -227,7 +227,7 @@
       
  9999 continue
 
-      call init_connectivity(nx1,ny1,crx1,cry1,cflag,
+      call init_connectivity_st(nx1,ny1,crx1,cry1,cflag,
      & leftix1,leftiy1,rightix1,rightiy1, 
      & topix1,topiy1,bottomix1,bottomiy1, 
      & leftcut1,rightcut1,bottomcut1,topcut1, 

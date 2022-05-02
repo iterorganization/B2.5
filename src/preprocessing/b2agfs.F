@@ -115,7 +115,6 @@
       integer Bt_adjust, Bt_reversal
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
-      real (kind=R8) :: wbbc_us(0,nCv-1,0:3)
 !     *     crxs(-1:nx1,-1:ny1,0:4),
 !     1     crys(-1:nx1,-1:ny1,0:4),
 !     2     bp(-1:nx1,-1:ny1),
@@ -193,23 +192,24 @@
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet,nCv,nFc,nVx,istyle,
-     &     wbbc_us,isymm,g,m)
+     &     isymm,g,m)
 
 
 !       ! all on the nx1, ny1 grid, just do all on regular grid
 
 
       ! Set up magnetic field and shift coordinates
-      do i = 0,nCv-1
-        if ( g%cvCflags(i,0) .eq. GRID_UNDEFINED .or. 
-     &     g%cvCflags(i,0) .eq. GRID_EXTERNAL .or. 
-     &     g%cvCflags(i,0) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
-        g%cvBb(i,0) = g%cvBp(i)
-        g%cvBb(i,1) = 0.0_R8
-        g%cvBb(i,2) = g%cvBt(i)
-        g%cvBb(i,3) = sqrt( g%cvBp(i)**2 + g%cvBt(i)**2 )
+      do i = 1,nCv
+        if ( g%cvCflags(i,1) .eq. GRID_UNDEFINED .or. 
+     &     g%cvCflags(i,1) .eq. GRID_EXTERNAL .or. 
+     &     g%cvCflags(i,1) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
+        g%cvBb(i,1) = g%cvBp(i)
+        g%cvBb(i,2) = 0.0_R8
+        g%cvBb(i,3) = g%cvBt(i)
+        g%cvBb(i,4) = sqrt( g%cvBp(i)**2 + g%cvBt(i)**2 )
 ! WIP B2AG_US
         !verts = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
+        !verts = m%cvVx(m%cvVxP(i,1):m%cvVxP(i,1)+m%cvVxP(i,2))
         ! array with length 2, 3 and 4 need to be made
         ! to distinguish between ghost, tria en quad
           !g%vxX(i) = g%vxX(i)*xrescale+xoffset
@@ -217,28 +217,20 @@
 
         !g%vxFpsi(i) = g%vxFpsi(i)
         !g%vxFfbz(i) = g%vxFfbz(i)
-        !wbbc1_us(i) = wbbc_us(i)
-!          if (ix.eq.nx1 .and. iy.lt.ny1) then
-!           wbbc1_us(nx1+1,iy,0:3) = wbbc_us(nx1+1,iy,0:3)
-!          else if (ix.lt.nx1 .and. iy.eq.ny1) then
-!            wbbc1_us(ix,ny1+1,0:3) = wbbc1_us(ix,ny1+1,0:3)
-!          else if (ix.eq.nx1 .and. iy.eq.ny1) then
-!            wbbc1_us(nx1+1,ny1+1,0:3) = wbbc_us(nx1+1,ny1+1,0:3)
-!          end if
         if (Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-          g%cvBb(i,2) = g%cvBt(i)*g%cvX(i)/(g%cvX(i)+xoffset)
-          g%cvBb(i,0) = g%cvBp(i)/g%cvBt(i)*g%cvBb(i,2)
-          g%cvBb(i,3) = sqrt(g%cvBb(i,0)**2 + g%cvBb(i,2)**2)
+          g%cvBb(i,3) = g%cvBt(i)*g%cvX(i)/(g%cvX(i)+xoffset)
+          g%cvBb(i,1) = g%cvBp(i)/g%cvBt(i)*g%cvBb(i,3)
+          g%cvBb(i,4) = sqrt(g%cvBb(i,1)**2 + g%cvBb(i,3)**2)
         endif
       enddo
-      g%cvBb(:,0)=g%cvBb(:,0)*Bt_rescale*pit_rescale
       g%cvBb(:,1)=g%cvBb(:,1)*Bt_rescale*pit_rescale
+      g%cvBb(:,2)=g%cvBb(:,2)*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
-         g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
+         g%cvBb(:,3) = -g%cvBb(:,3)*Bt_rescale
       else
-         g%cvBb(:,2) = g%cvBb(:,2)*Bt_rescale
+         g%cvBb(:,3) = g%cvBb(:,3)*Bt_rescale
       endif
-      g%cvBb(:,3) = sqrt(g%cvBb(:,0)**2+g%cvBb(:,1)**2+g%cvBb(:,2)**2)
+      g%cvBb(:,4) = sqrt(g%cvBb(:,1)**2+g%cvBb(:,2)**2+g%cvBb(:,3)**2)
           
  9999 continue
       ! main connectivity already established in Make_traduit_b2us
@@ -501,8 +493,8 @@ cxpb  if just below the top corner, make the corner cell follow
 !
 *   ..test sign of bb3
 !      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
-!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards
-       !call b2xvs1(nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
+!WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wbbc)
+       !call b2xvs1(nCv,g%cvBb(:,4), 1, 'cvBb4', '.gt.')
        
 
 !      write(*,*) 'X regions (from rightix<>ix+1)'
@@ -567,7 +559,7 @@ cxpb  if just below the top corner, make the corner cell follow
       end subroutine b2agfs
 
       subroutine b2gxdr_dummy(local_sonnet,nCv,nFc,nVx,istyle,
-     &  wbbc_us,isymm,g,m)
+     &  isymm,g,m)
       use b2mod_types
       use b2mod_version
       use b2mod_indirect
@@ -598,8 +590,7 @@ cxpb  if just below the top corner, make the corner cell follow
 #endif
       real (kind=R8) ::
      * ubr, ubt, ubp, upsi
-      real(kind=R8) :: bb_tmp_Vx(0:nVx-1) ! lengte onder voorbehoud
-      real(kind=R8) :: wbbc_us(0:nCv-1,0:3)
+      real(kind=R8) :: bb_tmp_Vx(nVx) ! lengte onder voorbehoud
       parameter (line_length=256)
       character*256 meshpath
       character*80 format_string(4)
@@ -667,18 +658,25 @@ cxpb  if just below the top corner, make the corner cell follow
            call create_guard_cells
      1         (nnCv,nnFc,nnVx,nCv,nFc,nVx,g,m)
 
+!     .. Construct additional connectivity data 
+           call calc_add_connectivity(nCv,nFc,nVx,g,m)
+
+!     .. Order the vertices and faces as rightturning 
+           call order_vertices(g,m)         
+          
+
 !     Compute magnetic field with the same recipe as carre...
-           call carre_b2agbb(nCv,nVx,g,m,wbbc_us,isymm)
+           call carre_b2agbb(nCv,nFc,nVx,g,m,isymm)
 
 !     ..and transfer it to the ghost cells with sanity checks
-             do i = 0, nCv-1
-                select case (g%cvCflags(i,0))
+             do i = 1, nCv
+                select case (g%cvCflags(i,1))
                 case(GRID_GUARD)  ! 
-                   g%cvBp(i) = g%cvBb(i,0)
-                   g%cvBt(i) = g%cvBb(i,2)
+                   g%cvBp(i) = g%cvBb(i,1)
+                   g%cvBt(i) = g%cvBb(i,3)
                 case(GRID_INTERNAL,GRID_BOUNDARY)   
-                   if (abs(g%cvBp(i) - g%cvBb(i,0))  > 1e-7 .or.
-     $                 abs(g%cvBt(i) - g%cvBb(i,2))  > 1e-7) then
+                   if (abs(g%cvBp(i) - g%cvBb(i,1))  > 1e-7 .or.
+     $                 abs(g%cvBt(i) - g%cvBb(i,3))  > 1e-7) then
                       write(*,*) "b2agfs: not maching carre bb 
      $                at", i    
                    endif
@@ -726,7 +724,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
       !internal
       character idcod*8, id*32
-      integer i, ivx(0:nnVx-1), icv(0:nnCv-1), idum(0:2)
+      integer i, ivx(nnVx), icv(nnCv), idum(0:4)
       logical streql
       external subini, subend, xertst, xerrab, streql, cfverr, cfruin
 
@@ -745,9 +743,13 @@ cxpb  if just below the top corner, make the corner cell follow
         nnFc = idum(1)
 	  nnVx = idum(2)
         !read nCmVx, nCmxFc
-        call cfruin (nrid, 2, idum, 'nCmxVx,nCmxFc')
+        call cfruin (nrid, 5, idum, 
+     &    'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
         m%nCmxVx = idum(0)
         m%nCmxFc = idum(1)
+        m%nFmxCv = idum(2)
+        m%nVmxCv = idum(3)
+        m%nVmxFc = idum(4)
         !read nx, ny
         call cfruin (nrid, 2, idum, 'nx,ny')
         m%nx = idum(0)
@@ -757,7 +759,7 @@ cxpb  if just below the top corner, make the corner cell follow
         !read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
-           do i = 0, nnVx-1
+           do i = 1, nnVx
            ! vx vxX vxY vxPsi vxBx vxBy vxFfbz
              read(nrid,*,err=91) ivx(i), g%vxX(i), g%vxY(i),
      &      g%vxFpsi(i), g%vxBx(i), g%vxBy(i), g%vxFfbz(i)
@@ -767,12 +769,12 @@ cxpb  if just below the top corner, make the corner cell follow
         !read cell information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('cv',id)) then
-           do i = 0, nnCv-1
-           ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(0:4) ctype
-              read(nrid,*,err=91) icv(i), m%cvVxP(i,0), m%cvVxP(i,1),
+           do i = 1, nnCv
+           ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(1:5) ctype
+              read(nrid,*,err=91) icv(i), m%cvVxP(i,1), m%cvVxP(i,2),
      &     g%cvX(i), g%cvY(i), g%cvFpsi(i), g%cvBp(i), g%cvBt(i),
-     &     g%cvCflags(i,0), g%cvCflags(i,1), g%cvCflags(i,2),
-     &     g%cvCflags(i,3), g%cvCflags(i,4), g%cvCtype(i)
+     &     g%cvCflags(i,1), g%cvCflags(i,2), g%cvCflags(i,3),
+     &     g%cvCflags(i,4), g%cvCflags(i,5), g%cvCtype(i)
            enddo
         endif
         ! put cvFcP equal to cvVxP
@@ -785,9 +787,9 @@ cxpb  if just below the top corner, make the corner cell follow
        !read cvFc
        call cfruin(nrid,m%nCmxFc,m%cvFc,'cvFc')
        !read fcVx(:,1)
-       call cfruin(nrid,nnFc,m%fcVx(:,0),'fcVx(:,1)')
+       call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,1)')
        !read fcVx(:,2)
-       call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,2)')
+       call cfruin(nrid,nnFc,m%fcVx(:,2),'fcVx(:,2)')
 
 
       else
@@ -803,3 +805,65 @@ cxpb  if just below the top corner, make the corner cell follow
 
 
       end subroutine read_traduitoutb2us
+
+*-----------------------------------------------------------------------
+      
+      subroutine order_vertices(g,m)
+      use b2mod_types
+      use b2mod_indirect
+      use b2mod_geo
+      implicit none 
+      !output argument
+      type(geometry_ag) :: g 
+      type(mapping_ag)  :: m 
+
+      ! internal
+
+      logical :: determine_direction
+      integer :: iCv
+      real (kind=R8) :: fcX, fcY, vec_start(1:2), vec_face1(1:2),
+     &     vec_face2(1:2), sin1, sin2
+      integer, allocatable :: verts(:), faces(:),  new_verts(:),
+     &     new_faces(:) , verts_of_faces(:,:)
+
+      !computation
+
+      determine_direction = 1
+
+      do iCv = 1,m%nCv
+         allocate(verts(m%cvVxP(iCv,2)))
+         allocate(faces(m%cvFcP(iCv,2)))
+         allocate(new_verts(m%cvVxP(iCv,2)))
+         allocate(new_faces(m%cvFcP(iCv,2)))
+         allocate(verts_of_faces(m%cvFcP(iCv,2),2))
+
+
+         verts = 
+     &    m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + m%cvVxP(iCv,2)-1 )
+         faces = 
+     &    m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1) + m%cvFcP(iCv,2)-1 )
+         
+         !Starting point
+         new_verts(1) = verts(1)
+         verts_of_faces = m%fcVx(faces,:)
+
+         !find the two faces connected to that vertex and the other vertex connected to that face
+         ! something with pack function
+
+         !if determine_direction then
+             
+         !else
+            
+         !endif
+         
+         deallocate(verts)
+         deallocate(faces)
+         deallocate(new_verts)
+         deallocate(new_faces)
+         deallocate(verts_of_faces)
+      enddo
+
+
+
+
+      end subroutine order_vertices

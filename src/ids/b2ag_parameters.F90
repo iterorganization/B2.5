@@ -108,14 +108,15 @@ contains
 
   !> Read and initialize parameters for b2ag
   !> nCv, nFc, nVx: dimensions for the B2 data structures  
-  subroutine b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc)
+  subroutine b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc, &
+        &   nFmxCv, nVmxCv, nVmxFc)
     integer, intent(in) :: ninp(0:1), nout(0:1)
-    integer, intent(out) :: nCv, nFc, nVx, nCmxVx, nCmxFc
-
+    integer, intent(out) :: nCv, nFc, nVx, nCmxVx, nCmxFc, &
+        &   nFmxCv, nVmxCv, nVmxFc
     !internal
     character :: id*8, cnamip*80, cvalip*80
-    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:2), idum2(0:1), &
-        & nCmxFc0, nCmxVx0
+    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:2), idum2(0:4), &
+        & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0
     character*256 local_sonnet
     integer :: istyle
     logical :: streql, open_file
@@ -170,9 +171,12 @@ contains
 	            nVx0 = idum(2)
                 doGhostCells = .true.
         ! obtain nCmxFc and nCmxVx from geometry file
-                call cfruin (lun, 2, idum, 'nCmxVx,nCmxFc')
-                nCmxVx0 = idum(0)
-                nCmxFc0 = idum(1) 
+                call cfruin (lun, 5, idum, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
+                nCmxVx0 = idum2(0)
+                nCmxFc0 = idum2(1)
+                nFmxCv0 = idum2(2)
+                nVmxCv0 = idum2(3)
+                nVmxFc0 = idum2(4) 
             !else
                 !read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
                 !doGhostCells = .true.
@@ -194,7 +198,8 @@ contains
         rewind lun
         nCi = nCv
         call computeGridSizeWithGhostCells(lun,nCv,nCmxVx0,nCmxFc0, &
-              &  nCg,nCv,nCmxVx,nCmxFc) 
+              &  nFmxCv0, nVmxCv0, nVmxFc0, nCg,nCv,nCmxVx,nCmxFc, &
+              &  nFmxCv, nVmxCv, nVmxFc) 
 	! subroutine of b2ag_ghostcells
      end if
      close(lun)
