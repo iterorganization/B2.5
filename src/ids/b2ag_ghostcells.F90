@@ -27,9 +27,12 @@ contains
   end subroutine computeGridSizeWithGhostCells_st
 
   subroutine computeGridSizeWithGhostCells(nrid,nCi,nCmxVx0,nCmxFc0, &
-           & nCg,nCv,nCmxVx,nCmxFc)
-    integer, intent(in) :: nrid, nCi, nCmxVx0, nCmxFc0
-    integer, intent(out) :: nCg, nCv, nCmxVx, nCmxFc
+              &  nFmxCv0, nVmxCv0, nVmxFc0, nCg,nCv, nCmxVx, nCmxFc, &
+              &  nFmxCv, nVmxCv, nVmxFc ) 
+    integer, intent(in) :: nrid, nCi, nCmxVx0, nCmxFc0, nFmxCv0, &
+              &  nVmxCv0, nVmxFc0
+    integer, intent(out) :: nCg, nCv, nCmxVx, nCmxFc, nFmxCv, &
+              &   nVmxCv, nVmxFc
     
     
      
@@ -53,9 +56,13 @@ contains
     nCg = nBc + 4
     nCv = nCi + nCg
 
-    !.. calculate nCmxVx and nCmxFc
-    nCmxVx = nCmxVx0 + 2*nCg ! every ghost cell has two vertices
+    !.. calculate nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc
+    nCmxVx = nCmxVx0 + 2*nCg  ! every ghost cell has two vertices
     nCmxFc = nCmxFc0 + nCg    ! every ghost cell has one face
+    nFmxCv = nFmxCv0 + nCg    ! every boundary faces is now also used in a ghost cell
+    nVmxCv = nVmxCv0 + 2*nCg  ! every vertex at the boundary get two more cells
+    nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
+
 
 
     return
@@ -578,8 +585,8 @@ contains
     !internal
 
     integer :: i, cellnumber, cvFcpos, cvVxpos, nGhostCell
-    !integer :: facenumbers(0:nGhostCell-1)
-    integer :: facenumbers(0:nnCv-1)  ! too big 
+    !integer :: facenumbers(nGhostCell)
+    integer :: facenumbers(nnCv)  ! too big 
 
 
     call logmsg(LOGDEBUG, "create_guard_cells:entering")
@@ -593,39 +600,39 @@ contains
     ! in cflags(:,1) guard_cell gets flag == GRID_GUARD
     nGhostCell = nCv - nnCv
     ! change cvFcP and cvVxP
-    do i = nnCv, nCv-1
-       m%cvFcP(i,1) = 1
-       m%cvFcP(i,0) = m%cvFcP(i-1,0) + m%cvFcP(i-1,1)
+    do i = nnCv+1, nCv
+       m%cvFcP(i,2) = 1
+       m%cvFcP(i,1) = m%cvFcP(i-1,1) + m%cvFcP(i-1,2)
 
-       m%cvVxP(i,1) = 2
-       m%cvVxP(i,0) = m%cvVxP(i-1,0) + m%cvFcP(i-1,1)
+       m%cvVxP(i,2) = 2
+       m%cvVxP(i,1) = m%cvVxP(i-1,1) + m%cvFcP(i-1,2)
     enddo
     
     ! change cvFc
     ! create list of boundary faces
     call get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
 
-    do i = 0, nGhostCell-1
+    do i = 1, nGhostCell
        cellnumber = nnCv + i 
-       cvFcpos = m%cvFcP(cellnumber,0)-1
+       cvFcpos = m%cvFcP(cellnumber,1)-1
        m%cvFc(cvFcpos) = facenumbers(i) 
 
-       cvVxpos = m%cvVxP(cellnumber,0)-1
-       m%cvVx(cvVxpos) = m%fcVx(facenumbers(i),0)
-       m%cvVx(cvVxpos+1) = m%fcVx(facenumbers(i),1)
+       cvVxpos = m%cvVxP(cellnumber,1)-1
+       m%cvVx(cvVxpos) = m%fcVx(facenumbers(i),1)
+       m%cvVx(cvVxpos+1) = m%fcVx(facenumbers(i),2)
     enddo
 
-    ! change cvCflags(:,0), cvCtype, cvX, cvY
-    do i = nnCv, nCv-1
-       g%cvCflags(i,0) = GRID_GUARD
+    ! change cvCflags(:,1), cvCtype, cvX, cvY
+    do i = nnCv+1, nCv
+       g%cvCflags(i,1) = GRID_GUARD
        g%cvCtype(i) = GRID_GUARD
-       !iface = m%cvFc(m%cvFc(i,0)) ! just one face
-       g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,0)-1: &
-           &    m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1))
-       g%cvY(i) = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,0)-1: &
-           &    m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1))
-       !g%cvFpsi(i) = 0.5_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(i,0)-1: &
-       !    &    m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1))      
+       !iface = m%cvFc(m%cvFc(i,1)) ! just one face
+       g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
+           &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
+       g%cvY(i) = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,1): &
+           &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
+       !g%cvFpsi(i) = 0.5_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(i,1): &
+       !    &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))      
     enddo
 
     ! calculate cvFpsi , cvBt and cvBp in routine carre_b2agbb in b2agfs.f
@@ -641,20 +648,21 @@ contains
       use b2mod_indirect
 
       integer, intent(in) :: nGhostCell, nnCv
-      integer, intent(out) :: facenumbers(0:nGhostCell-1)
+      integer, intent(out) :: facenumbers(nGhostCell)
       type(mapping_ag) :: m 
-      type(geometry_ag) :: G
+      type(geometry_ag) :: g
 
       !internal
       integer :: i, j, counter, facesQuad(0:3), facesTria(0:2)
       logical :: Bface
+      intrinsic count
       
       counter = 0
-      do i = 0, nnCv-1
-          if (g%cvCflags(i,0).eq.GRID_BOUNDARY) then
+      do i = 1, nnCv
+          if (g%cvCflags(i,1).eq.GRID_BOUNDARY) then
              if (g%cvCtype(i).eq.0) then  !Quad
-               facesQuad = m%cvFc(m%cvFcP(i,0)-1: &
-                 &   m%cvFcP(i,0)-1+m%cvFcP(i,1)-1)-1
+               facesQuad = m%cvFc(m%cvFcP(i,1): &
+                 &   m%cvFcP(i,1)+m%cvFcP(i,2)-1)
                do j = 0, 3
                   Bface = isBoundaryFace(facesQuad(j))
                   if (Bface) then
@@ -663,8 +671,8 @@ contains
                   endif
                enddo
              else !Triangle
-               facesTria = m%cvFc(m%cvFcP(i,0)-1: &
-                 &   m%cvFcP(i,0)-1+m%cvFcP(i,1)-1)-1
+               facesTria = m%cvFc(m%cvFcP(i,1): &
+                 &   m%cvFcP(i,1)+m%cvFcP(i,2)-1)
                do j = 0,2
                  Bface = isBoundaryFace(facesTria(j))
                  if (Bface) then
@@ -686,11 +694,14 @@ contains
 
       counter = 0
       ! count how many times iface is present in cvFc
-      do i = 0, m%nCmxFc-1
-         if ((m%cvFc(i)-1).eq.iface) then
-             counter = counter +1
-         endif 
-      enddo
+      !do i = 1, m%nCmxFc
+      !   if ((m%cvFc(i)-1).eq.iface) then
+      !       counter = counter +1
+      !   endif 
+      !enddo
+     counter = count (m%cvFc == iface)
+
+
       ! if the face is present once, it is a boundary face
       if (counter.eq.1) then
          isBoundaryFace = 1
@@ -699,9 +710,6 @@ contains
       endif 
 
     end function isBoundaryFace
-
-
-
 
 
   end subroutine create_guard_cells
@@ -713,13 +721,13 @@ contains
       use b2mod_types
       implicit none
       integer, intent(in) :: nrid, nCv
-      integer :: cflags1(0:nCv-1), cflags2(0:nCv-1), &
-       & cflags3(0:nCv-1), cflags4(0:nCv-1), cflags5(0:nCv-1), &
-       & cv(0:nCv-1), cvVxP1(0:nCv-1), & 
-       & cvVxP2(0:nCv-1), ctype(0:nCv-1)
+      integer :: cflags1(nCv), cflags2(nCv), &
+       & cflags3(nCv), cflags4(nCv), cflags5(nCv), &
+       & cv(nCv), cvVxP1(nCv), & 
+       & cvVxP2(nCv), ctype(nCv)
       real (kind=R8) :: &
-       & cvX(0:nCv-1), cvY(0:nCv-1), &
-       & psi(0:nCv-1), bp(0:nCv-1), bt(0:nCv-1)
+       & cvX(nCv), cvY(nCv), &
+       & psi(nCv), bp(nCv), bt(nCv)
       
       integer i, j
       character idcod*5, id0*32, id1*32
@@ -736,7 +744,7 @@ contains
 99    if  (j.eq.0) then
         if ((streql('*cf:',idcod)).and. &
        &   (streql('cv' ,id1))) then
-           do i = 0, nCv-1
+           do i = 1, nCv
              read(nrid,*,err=97) cv(i), cvVxP1(i), cvVxP2(i), cvX(i), &
        &     cvY(i), psi(i), bp(i), bt(i), cflags1(i), cflags2(i), &
        &     cflags3(i), cflags4(i), cflags5(i), ctype(i)

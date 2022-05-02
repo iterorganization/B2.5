@@ -86,7 +86,7 @@
 *   ..local variables
       character :: id*8, id2*20
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, io, nCv, nFc 
-      integer nVx, nCmxVx, nCmxFc
+      integer nVx, nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc
       logical file_open, streql
 *   ..procedures
       external prgini, prgend, cfopen, streql
@@ -144,9 +144,11 @@
 *       run the unstructured version
 	  write (*,*) 'Unstructured b2ag used'
 *    ..obtain nCv, nVx, nFc
-	  call b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc)
+	  call b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc, 
+     & nFmxCv, nVmxCv, nVmxFc)
 *    ..call principal driver routine
-	  call alloc_b2mod_indirect(m,nCv,nFc,nVx,nCmxVx,nCmxFc,nx,ny)
+	  call alloc_b2mod_indirect(m,nCv,nFc,nVx,nCmxVx,nCmxFc,nFmxCv,
+     &  nVmxCv, nVmxFc,nx,ny)
 	  call alloc_b2mod_geo(g,nCv,nFc,nVx)
 	  call b2agdr (ninp, nout, nCv, nFc, nVx,g,m)
 *    ..close graphics files
