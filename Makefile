@@ -141,7 +141,8 @@ endif
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
 PARAVIEW_MAJOR_VERSION ?= `paraview --version | cut -d '.' -f 1 | cut -d ' ' -f 3`
-ifeq ($(shell test ${PARAVIEW_MAJOR_VERSION} -gt 4; echo $$?),0)
+CMAKE_MAJOR_VERSION ?= `cmake --version | head -1 | cut -d ' ' -f 3 | cut -d '.' -f 1`
+ifeq ($(shell test ${CMAKE_MAJOR_VERSION} -gt 2; echo $$?),0)
 PARAVIEW_INCLUDE ?= $(shell paraview-config --cppflags)
 else
 PARAVIEW_INCLUDE ?= $(shell paraview-config --include)

@@ -61,12 +61,12 @@ IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifeq (${FC},mpif90)
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
 LD_UAL  := `pkg-config imas-gfortran ggd --libs`
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
 LD_UAL  := `pkg-config imas-gfortran --libs` -lggd-gfortran
 else
 GGD_MINOR_VERSION ?= 0
@@ -78,12 +78,12 @@ INCMODS += -I${IMAS_PREFIX}/include/gfortran
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
 LD_UAL  ?= `pkg-config imas-ifort ggd --libs`
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
 LD_UAL  ?= `pkg-config imas-ifort --libs` -lggd-ifort
 else
 GGD_MINOR_VERSION ?= 0

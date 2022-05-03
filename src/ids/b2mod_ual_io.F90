@@ -133,11 +133,16 @@ module b2mod_ual_io
      & , only : ids_real, ids_real_invalid
 #endif
     use ids_schemas &     ! IGNORE
-     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,    &
-     &          ids_radiation, ids_dataset_description, ids_equilibrium,    &
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,     &
+     &          ids_radiation, ids_dataset_description, ids_equilibrium,     &
      &          ids_ids_properties, &
-     &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,             &
-     &          ids_generic_grid_scalar, ids_generic_grid_vector_components
+     &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
+     &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
+     &          ids_generic_grid_dynamic
+#if IMAS_MINOR_VERSION > 14
+    use ids_schemas &     ! IGNORE
+     & , only : ids_generic_grid_AoS3_root
+#endif
 #if IMAS_MINOR_VERSION > 21
     use ids_schemas &     ! IGNORE
      & , only : ids_summary,                                                        &
@@ -8526,10 +8531,10 @@ contains
     subroutine write_face_scalar( basegrid, val, value )
     implicit none
 #if IMAS_MINOR_VERSION < 15
-    type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
+    type (ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #else
-    type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
+    type (ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
     type (ids_generic_grid_scalar), pointer, intent(inout) :: val(:)

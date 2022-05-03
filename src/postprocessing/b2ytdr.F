@@ -1833,10 +1833,7 @@ c 2002-09-11: logic revised
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
      &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
-     &       'b2mndr_redef_pbs')
-          todo = .false.
-          wait = .true.
-        case('b2stel_fix_recomb_energy')
+     &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
