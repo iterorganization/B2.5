@@ -546,6 +546,7 @@ c
 
       character*7 filename
       character*54 format_string(4)
+      character*256 message
       integer, save :: new_format
       logical ex
 
@@ -672,12 +673,14 @@ cxpb If the 1P was missing in the format, the numbers will start with 0
         new_format = 2
       end if
 #endif
-      write(*,'(4a)')
-     . 'Writing ',fort_lc,'30 with ', format_string(new_format)
+      write(message,'(4a)')
+     . 'Writing ',fort_lc,'30 with ',trim(format_string(new_format))
 #ifdef B25_EIRENE
-      if (.not.streql(filenamecat,'')) write(*,'(3a)')
-     . ' to match ',trim(filenamecat),' format'
+      if (.not.streql(filenamecat,'')) write(message,'(4a)')
+     . trim(message),' to match ',trim(filenamecat),' format'
 #endif
+      write(*,'(a)') trim(message)
+      write(*,'()')
       rewind(30)
       write (30,*) 'Geometry from B2'
       write (30,*) ' '

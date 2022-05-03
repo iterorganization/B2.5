@@ -115,7 +115,7 @@
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
      *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),       !srv 11.09.09 !iys 17.04.12
-     &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
+     *   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       real (kind=R8) ::
      *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1),                     !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                         !srv 08.10.04
@@ -1284,14 +1284,15 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1         (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5         2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6         +vol(leftix(ix,iy),leftiy(ix,iy))/
-     7         hx(leftix(ix,iy),leftiy(ix,iy)))
+     7         hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
             wrk3(ix,iy) = vbecrb(ix,iy,0) *
      &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *               !IYS 04.03.2019
+     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *            !IYS 04.03.2019
      &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
-            wrk3(ix,iy) = vbecrb(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) *     !IYS 04.03.2019
+            wrk3(ix,iy) = vbecrb(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) *   !IYS 04.03.2019
      &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
           wrk4(ix,iy) = -con_2dia(ix,iy)*(nb(ix,iy)-
@@ -1370,22 +1371,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
         call my_out(70,nx,ny,wrk6,'b2tfnb_vadianax'//chns)
         call my_out(70,nx,ny,wrk8,'b2tfnb_vadianahzx'//chns)
        endif
-!        do iy = -1, ny
-!         do ix = -1, nx
-!          if(leftix(ix,iy).eq.-2) then
-!           wrk6(ix,iy) = 0.0_R8
-!          else
-!           wrk6(ix,iy) = vbdia(ix,iy,0)*
-!     5      (hz(ix,iy)*vol(ix,iy)+hz(leftix(ix,iy),leftiy(ix,iy))
-!     5      *vol(leftix(ix,iy),leftiy(ix,iy)))/
-!     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-!     &      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
-!          endif
-!         enddo
-!        enddo
-!        if(.not. is_neutral(isb) .and. (iout_b2wdat.eq.4 .and. balance))
-!     &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
-        call my_out(70,nx,ny,fnb_fcor(-1,-1,0),
+       call my_out(70,nx,ny,fnb_fcor(-1,-1,0),
      &              'b2tfnb_fnb_fcorx'//chns)
       endif                                                             !srv 11.09.09 }
 

@@ -31,10 +31,10 @@ module b2mod_ual_io_grid
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
-   use ids_grid_object    & ! IGNORE
+    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
 #  if IMAS_MINOR_VERSION > 14
-   use ids_grid_object    & ! IGNORE
+    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #  endif
     use ids_grid_object   & ! IGNORE

@@ -344,7 +344,7 @@
        call my_out(70,nx,ny,cortt,'b2ush9_cortt')
       endif
 
-      endif                                                     !srv 22.05.18
+      endif                                                           !srv 22.05.18
 
 * ..electron temperature correction equation
       if (any(solveee(0:nnreg(0)))) then                              !srv 22.05.18

@@ -1,4 +1,4 @@
-      subroutine b2wdat (nx, ny, ns, ismain, ismain0)     !srv 05.10.01
+      subroutine b2wdat (nx, ny, ns, ismain, ismain0)                    !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
