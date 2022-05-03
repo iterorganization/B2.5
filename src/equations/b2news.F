@@ -372,8 +372,15 @@
 *     ..include contributions due to timestep                            !xpb
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 25.06.21 }
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     sna, smo, she, shi, sch, sne, .false.)                        !xpb
+     &     na, ua, te, ti, ne, ni, kinrgy,
+     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)
+*   ..add to previous contributions
+          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)
+          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)                  !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
@@ -479,10 +486,17 @@
      &    vol, na, ua, te, ti, ne, ni,
      &    sna, smo, she, shi, sne, .false.)
 *     ..include contributions due to timestep                            !xpb
-        call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !srv 25.06.21
+        call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !srv 25.06.21 {
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &    na, ua, te, ti, ne, ni, kinrgy,
-     &    sna, smo, she, shi, sch, sne, .false.)
+     &    snadt, smodt, shedt, shidt, schdt, snedt, .false.)
+*     ..add to previous contributions
+        call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+        call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+        call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+        call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+        call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)
+        call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)                    !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
@@ -526,7 +540,7 @@
 
 cxpb
 *   ..iterate on parallel momentum balance
-        call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,        !srv 13.01.17
+        call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1, dtim,  !srv 13.01.17 24.05.21
      &    qz, qs, vol, hx, hy, hz, bb, pbshz, lnlam,                     !srv 01.07.09
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, smof,
@@ -678,7 +692,8 @@ cxpb
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
      &       na,'na',ua,'ua',na,'na',ua,'ua')
           endif
-          if (solving(2)) then
+!        if (solving(2)) then                                            !srv 22.05.18
+!        if (all(solveco(is,0:nnreg(0)))) then
 *    ..perform iteration
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
@@ -705,9 +720,9 @@ cxpb
      &             solveco(is,ireg).neqv.last_solve_5(ireg)
                 end do
                 if(new_matrix) call restart_ma28
-                call b2npco (nx, ny, guard_flows,                          !srv 05.07.08
-     &           nnreg(0), solvedum, solving(1), solvedm2,
-     &           ncall, is, rxf0, vol, pbs, flob, conb,
+                call b2npco (nx, ny, guard_flows,                        !srv 05.07.08
+     &           nnreg(0), solving(2), solvedum, solving(1), solvedm2,   !srv 22.05.18
+     &           ncall, is, rxf0, dtim, vol, pbs, flob, conb,            !srv 07.07.21
      &           sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
      &           ua(-1,-1,is), fna(-1,-1,0,0,is), resco(-1,-1,is),
      &           corpa(-1,-1,is), ier0)
@@ -738,8 +753,8 @@ cxpb
                   end do
                   if(new_matrix) call restart_ma28_for_9
                   call b2npc9 (nx, ny, guard_flows, nnreg(0),
-     &             solvedum, solving(1), solvedm2, ncall,
-     &             is, rxf0, vol, pbs,
+     &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
+     &             is, rxf0, dtim, vol, pbs,                             !srv 07.07.21
      &             flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,0,is),
      &             pb, na(-1,-1,is), ua(-1,-1,is),
      &             fna_mdf(-1,-1,0,0,is),
@@ -753,8 +768,8 @@ cxpb
      &             solveco(is,ireg).neqv.last_solve_5(ireg)
                 end do
                 if(new_matrix) call restart_ma28
-                call b2npco (nx, ny, guard_flows, nnreg(0),
-     &           solvedum, solving(1), solvedm2, ncall, is, rxf0,
+                call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
+     &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
      &           vol, pbs, flob, conb, sna(-1,-1,0,is),
      &           pcca(-1,-1,0,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
@@ -787,7 +802,7 @@ cxpb
      1       fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
      &       fna_53(-1,-1,0,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is), .false.)         !djm Jan2017
-          endif                                                          !srv 22.05.18
+!         endif                                                          !srv 22.05.18
         enddo
 #ifndef NO_OPENMP_B2NEWS_LOOP2
 !$OMP END PARALLEL DO
@@ -818,7 +833,7 @@ cxpb
      .       qe, te, nep, ne, wrk0)
             call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
           endif
-          if(.not.wrong_flow.and.solving(3)) then                        !xpb
+          if(.not.wrong_flow) then                                       !xpb !srv 22.05.18
 *   ..iterate several times on the potential equation                    !xpb
             i=0                                                          !xpb
             t0=1.0e40_R8                                                 !xpb
@@ -908,7 +923,14 @@ cxpb
                 call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !srv 25.06.21 {
      &           vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &           na, ua, te, ti, ne, ni, kinrgy,
-     &           sna0, smo0, she0, shi0, sch0, sne0, .false.)            !srv 25.06.21 }
+     &           snadt, smodt, shedt, shidt, schdt, snedt, .false.)
+*   ..add to previous contributions
+                call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna0, 1)
+                call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo0, 1)
+                call b2saxpy (n2*4, 1.0_R8, shedt, 1, she0, 1)
+                call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi0, 1)
+                call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch0, 1)
+                call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne0, 1)           !srv 25.06.21 }
 *     ..stabilise the source coefficients                                !xpb
                 call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti,    !xpb !srv 01.07.08
      &           po, ne, ni, sna0, smo0, she0, shi0, sch0, sne0)         !xpb
@@ -931,12 +953,12 @@ cxpb
      &               solvepo(ireg).neqv.last_solve_5(ireg)
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
-                  call b2nppo (nx, ny, nnreg(0), solvepo,
+                  call b2nppo (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
      &             ncall, rxf2, vol, ne, te, conc, sch, po, fch,
      &             wrk0, wrk1, ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else
-                  call b2npp7 (nx, ny, ns, ismain, nnreg(0),
+                  call b2npp7 (nx, ny, ns, ismain, nnreg(0), solving(3), !srv 22.05.18
      &             solvepo, ncall, rxf2, ne, te, conc,
      1             avisper_a, bvisper_a, cvisper_a,
      &             sch, po, fch, wrk0, wrk1, ier0)
@@ -1173,18 +1195,18 @@ c     with diamagnetic drift part                                        !xpb
 *   ..iterate on heat balance
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
-     &    solveee, solveei, solvepo, solvemo,
-     &    rxf3, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,
+     &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,   !srv 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
-     &    fne, fch, fchstoch, cvsa,
+     &    fne, fch, fchstoch, cvsa,                                      !srv 24.08.21
      &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
      &    na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                      !srv 09.07.08
      &    shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
          call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
-     &    solveee, solveei, solvepo, solvemo,
-     &    rxf3, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,         !srv 07.06.00 02.06.99
+     &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,   !srv 07.06.00 02.06.99
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa,                                      !srv 24.08.21
      &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17
@@ -1193,8 +1215,8 @@ c     with diamagnetic drift part                                        !xpb
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
-     &    solveee, solveei, solvepo, solvemo,
-     &    rxf3, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,         !srv 07.06.00 02.06.99
+     &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,   !srv 07.06.00 02.06.99
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa,
      &    fchdia, uadia, wadia, vadia, vaecrb,                           !srv 27.12.01 28.06.03 30.06.03 07.07.09 03.11.17

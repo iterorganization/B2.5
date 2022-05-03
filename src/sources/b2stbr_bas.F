@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &  hx, gs,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -24,6 +24,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_boundary_namelist
+      use b2mod_numerics_namelist
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -39,7 +40,7 @@
       integer coreregno, coreregn2, sput_src,
      *   sput_chem_model, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
-      real (kind=R8) :: dtim, BoRiS,
+      real (kind=R8) :: BoRiS,
      *  hx(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
@@ -194,7 +195,7 @@
      .         gs(topix(ibegin+iy-1,-1),topiy(ibegin+iy-1,-1),1)
             end do
             list_y(1:isize) = -1
-            call prehd2D(ns,isize,list_x,list_y,dtim,-1,
+            call prehd2D(ns,isize,list_x,list_y,dteff,-1,
      &       topix(ibegin:iend,-1),topiy(ibegin:iend,-1),1,area,BoRiS)
             deallocate(list_x,list_y,area)
           endif
@@ -236,7 +237,7 @@
               list_x(iy) = ibegin + iy - 1
             end do
             list_y(1:isize) = ny
-            call prehd2D(ns,isize,list_x,list_y,dtim,+1,
+            call prehd2D(ns,isize,list_x,list_y,dteff,+1,
      &        list_x,list_y,1,
      &        gs(ibegin:iend,ny,1),BoRiS)
             deallocate(list_x,list_y)
@@ -285,7 +286,7 @@
                 riy(i) = rightiy(ix,ibegin + i - 1)
                 area(i) = gs(rix(i),riy(i),0)
               end do
-              call prehd2D(ns,isize,list_x,list_y,dtim,-1,
+              call prehd2D(ns,isize,list_x,list_y,dteff,-1,
      &          rix,riy,0,area,BoRiS)
               deallocate(list_x,list_y,rix,riy,area)
             endif
@@ -331,7 +332,7 @@
                 list_y(i) = ibegin + i - 1
                 area(i) = gs(ix,ibegin + i - 1,0)
               end do
-              call prehd2D(ns,isize,list_x,list_y,dtim,+1,
+              call prehd2D(ns,isize,list_x,list_y,dteff,+1,
      &          list_x,list_y,0,area,BoRiS)
               deallocate(list_x,list_y,area)
             endif
@@ -463,7 +464,7 @@ c lcore           is this a core element
             if (main_call) then
               wrk(1:ndepth_nml) = target_temp(iwall,1:ndepth_nml)
               call heatdiff1D(iwall,ns,qpl+qex,
-     .           dtim*plate_time_factor(iwall),wrk,output)
+     .           dteff*plate_time_factor(iwall),wrk,output)
               target_temp(iwall,1:ndepth_nml) = wrk(1:ndepth_nml)
             endif
             surface_temp = target_temp(iwall,1)
@@ -518,7 +519,7 @@ cdpc
          if(itrack.gt.0.and.itrack.le.ntrack
      1        .and.iwall.gt.0.and.main_call) then
             deposition(iwall,itrack)=deposition(iwall,itrack)+
-     1           dtim*plate_time_factor(iwall)*
+     1           dteff*plate_time_factor(iwall)*
      2           (1.0_R8-cbrec(0,is,ireg))*t0
          endif
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
@@ -584,7 +585,7 @@ c chemical sputtering
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                if(sputter_energy_on.ne.0) then
                   if(ncall .ne. 0 .or. sputter_namelist_used) then
                      t2=(sputter_yield2(ix,iy,is,1)+sput_chem_alpha*t2)/
@@ -643,11 +644,11 @@ c physical sputtering
 cxpb  We count here as eroded all the sputtered material, including the promptly redeposited fraction
 cxpb  We add this promptly redeposited fraction in the deposited material
                  erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1            dtim*plate_time_factor(iwall)*t1/
+     1            dteff*plate_time_factor(iwall)*t1/
      2            (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
                  deposition(iwall,itrack) = deposition(iwall,itrack) +
-     1            dtim*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
+     1            dteff*plate_time_factor(iwall)*t1*(1.0_R8-1.0_R8/
      2            (1.0_R8-f_redep(ixn,iyn,sput_dst))*
      3            (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter))
                endif
@@ -710,7 +711,7 @@ c thermal evaporation of species is if bulk or tracked
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
@@ -734,7 +735,7 @@ c radiation enhanced sublimation  ! the plate is assumed to be carbon !!!
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
      1              erosion(iwall,itrack) = erosion(iwall,itrack) +
-     1              dtim*plate_time_factor(iwall)*t1
+     1              dteff*plate_time_factor(iwall)*t1
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
@@ -753,7 +754,7 @@ c back scattering
                if(itrack.gt.0.and.itrack.le.ntrack
      1              .and.iwall.gt.0.and.main_call) then
                   deposition(iwall,itrack)=deposition(iwall,itrack)-
-     1                 dtim*plate_time_factor(iwall)*t1
+     1                 dteff*plate_time_factor(iwall)*t1
                endif
                backscattering(iwall,is) = reflect(is,Ei*ev,iwall)
                backscattering_energy(iwall,is) =

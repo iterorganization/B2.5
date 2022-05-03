@@ -110,7 +110,7 @@
      1  chvi0(-1:nx,-1:ny,0:1,0:1), csig0(-1:nx,-1:ny,0:1,0:1),
      2  calf0(-1:nx,-1:ny,0:1,0:1), chci0(-1:nx,-1:ny,0:1,0:1),
      3  cvsa0(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     3  cvsahz0(-1:nx,-1:ny,0:1,0:1,0:ns-1), !srv 09.01.01
+     3  cvsahz0(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 09.01.01
      4  chce0(-1:nx,-1:ny,0:1,0:1), chve0(-1:nx,-1:ny,0:1,0:1),
      1  pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous

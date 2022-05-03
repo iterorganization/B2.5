@@ -329,7 +329,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 30
       &  divertors, &
 #endif
-      &  tim, dtim, shot, new_run, database, version )
+      &  tim, dteff, shot, new_run, database, version )
 
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &

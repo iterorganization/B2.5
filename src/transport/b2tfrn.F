@@ -280,7 +280,7 @@ csw 30sep2013, added check for no_hybr
      5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
             flo9_eir = flo9_eir +
-     &       (vaecrb(ix,iy,0,1,is)*xvecrb+wadia(ix,iy,0,1,is)*xwdia)*
+     4       (vaecrb(ix,iy,0,1,is)*xvecrb+wadia(ix,iy,0,1,is)*xwdia)*
      &        qs(ix,iy,0)/qc(ix,iy,0)*
      &       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
@@ -341,7 +341,7 @@ csw 30sep2013, added check for no_hybr
      &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &         na(ix,iy,is))/2.0_R8)
             vsprcur=vis_per*fchvisper_a(ix,iy,1,1,is)/
-     &              (rza(ix,iy,is)*qe)*ycur                                                 !srv 02.04.18 08.09.21
+     &              (rza(ix,iy,is)*qe)*ycur                              !srv 02.04.18 08.09.21
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -509,7 +509,7 @@ c Drift terms
           call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
      &                                         wedia(-1,-1,0,1))
           call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
-     &                                            wedia(-1,-1,1,1))        !srv 14.07.10 }
+     &                                            wedia(-1,-1,1,1))      !srv 14.07.10 }
 
         endif
       endif

@@ -534,7 +534,11 @@ c<<<
      &                   .and. rightix(ix,iy).ne.nx+1) then
 
                 if (solveco(is,j)) then
-                  hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
+                  if (style_b2mndt.eq.2) then
+                    hlpdt = dtim * time_factor(ix,iy)
+                  else
+                    hlpdt = dtim * dtco(is,j) * time_factor(ix,iy)     ! hlpdt is temporary variable - BE CAREFUL!!!!
+                  end if
                 else
                   hlpdt = 0.0_R8
                 endif

@@ -162,7 +162,7 @@ c 2002-09-11: logic revised
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
       integer neutrals_namelist, use_eirene
-      integer numerics_namelist
+      integer numerics_namelist, style_b2mndt
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
@@ -579,7 +579,7 @@ c 2002-09-11: logic revised
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
-      data use_eirene/0/
+      data use_eirene/0/, style_b2mndt/1/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -1420,6 +1420,7 @@ c 2002-09-11: logic revised
       if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
+      call ipgeti ('b2mndt_style', style_b2mndt)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1434,7 +1435,11 @@ c 2002-09-11: logic revised
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
-      if (numerics_namelist.ge.1) call alloc_b2mod_numerics(nx, ny, ns)
+      call alloc_b2mod_numerics(nx, ny, ns)
+      if(style_b2mndt.eq.2) then
+        solvemt=.false.
+        solveet=.false.
+      endif
       filename='b2.neutrals.parameters'
       call find_file(filename,todo)
       filename='b2.feedback_save.parameters'
@@ -3480,7 +3485,6 @@ cxpb This will need to be checked !!!
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
-        if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
         call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
         if (same_bundling) then
           if (first_pass) then
@@ -4740,6 +4744,15 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 IF (streql(REAC,'0.8')) REAC='0.8T'
                 IF (streql(REAC,'7.0c') .and. streql(H123,'H.11'))
      .           REAC='7.0a'
+                ! Correct a common mass scaling error
+                IF (streql(REAC,'2.1.5')) idum(1)=1
+                IF (streql(REAC,'2.1.8')) idum(1)=1
+                IF (streql(REAC,'2.2.9')) idum(1)=2
+                IF (streql(REAC,'2.2.5g')) idum(1)=2
+                IF (streql(REAC,'2.2.10')) idum(1)=2
+              END IF
+              IF (streql(FILNAM,'HYDHEL')) THEN
+                IF (streql(REAC,'3.1.8')) idum(1)=1
               END IF
               WRITE(REAC_LINE(ILINE)(1:16),'(I3,A1,A6,A1,A4,A1)')
      .         IREAC1(I),' ',FILNAM,' ',H123,' '

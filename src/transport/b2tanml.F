@@ -103,6 +103,14 @@
      &         rza(leftix(ix,iy),leftiy(ix,iy),is))/
      &         ne(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8                   !som 02.11.21
             endif
+          enddo
+         enddo
+
+         do ix = -1, nx
+          fchanml_a(ix,-1,1,:,is) = 0.0_R8
+         enddo
+         do iy = 0, ny
+          do ix = -1, nx
             if(bottomiy(ix,iy).eq.-2)then
               fchanml_a(ix,iy,1,:,is) = 0.0_R8
             else

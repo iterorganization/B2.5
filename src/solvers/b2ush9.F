@@ -64,10 +64,11 @@
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
+      integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0
       real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
       !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
-      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
+      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
       !$OMP THREADPRIVATE(cor_diag)
       integer ireg, ileft, ibot
       save ncall
@@ -95,6 +96,7 @@
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06 }
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
        call ipgetr ('b2ush9_cor_diag', cor_diag)                      !srv 07.07.21
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2ush9_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
          !$OMP MASTER
@@ -141,17 +143,23 @@
        call b2xvff (nx, ny, coni(-1,-1,0,0,1), 'coni1')
        call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')               !srv 02.01.07 }
 *    ..test sign of she, shi, ceqp
-       call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
+       if(style_b2mndt.ne.2) then                                     !srv 07.07.21
+         call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
+       endif                                                          !srv 07.07.21
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
        call b2xvsg (n2, she(-1,-1,2), 1, 'she2', '.ge.')
        call b2xvsg (n2, she(-1,-1,3), 1, 'she3', '.le.')
-       call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
+       if(style_b2mndt.ne.2) then                                     !srv 07.07.21
+         call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
+       endif                                                          !srv 07.07.21
        call b2xvsg (n2, shi(-1,-1,1), 1, 'shi1', '.le.')
        call b2xvsg (n2, shi(-1,-1,2), 1, 'shi2', '.ge.')
        call b2xvsg (n2, shi(-1,-1,3), 1, 'shi3', '.le.')
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
       endif
 
+      if (any(solveee(0:nnreg(0))).and.any(solveei(0:nnreg(0))).and.
+     &    any(solveet(0:nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -514,7 +522,10 @@ cwdk add 9-point contributions
        call my_out(70,nx,ny,cortt,'b2ush9_cortt')
       endif
 
+      endif                                                           !srv 22.05.18
+
 * ..electron temperature correction equation
+      if (any(solveee(0:nnreg(0)))) then                              !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -803,7 +814,10 @@ cwdk add 9-point contributions
        call my_out(70,nx,ny,corte,'b2ush9_corte')
       endif
 
+      endif                                                           !srv 22.05.18
+
 * ..atom temperature correction equation
+      if (any(solveei(0:nnreg(0)))) then                              !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -1102,6 +1116,8 @@ cwdk add 9-point contributions
        call my_out(70,nx,ny,reshi,'b2ush9_reshi')
        call my_out(70,nx,ny,corti,'b2ush9_corti')
       endif
+
+      endif                                                           !srv 22.05.18
 
 *   ..return
       ncall = ncall+1

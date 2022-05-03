@@ -131,7 +131,7 @@
            conb(ix,iy,1,0:1,3) = 0.0e0_R8                               !srv 26.05.08
            conb(ix,iy,1,0:1,4) = 0.0e0_R8
           else
-!           conb(ix,iy,1,1,3) = 0.25e0_R8*PSch*cddb(ix,iy,0,0)*ti(ix,iy)    !srv 21.10.10 {
+!           conb(ix,iy,1,1,3) = 0.25e0_R8*PSch*cddb(ix,iy,0,0)*ti(ix,iy)!srv 21.10.10 {
 !           conb(ix,iy,1,1,4) = 0.25e0_R8*PSch*cddb(ix,iy,0,0)*
 !     &                        ti(leftix(ix,iy),leftiy(ix,iy))
            conb(ix,iy,1,1,3) = 0.25_R8*PSch*cddb(ix,iy,0,0)*

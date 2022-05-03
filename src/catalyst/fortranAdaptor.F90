@@ -26,8 +26,10 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
   real(kind=R8), dimension(-1:nx,-1:ny,0:2) :: gs
   real(kind=R8), dimension(-1:nx,-1:ny,0:3) :: crx,cry,bb
   real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
+  real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: rlsa,rlra,rlqa,&
+      & rlza,rlpt,rlpi
   real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
-      & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
+      & uadia,vadia,vaecrb
   real :: start, finish
 
   call cpu_time(start)

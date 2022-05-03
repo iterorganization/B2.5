@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nx, ny, nregionv, solvereg, itcnt,
+      subroutine b2nppo (nx, ny, nregionv, solving, solvereg, itcnt,     !srv 22.05.18
      &  rxf, vol, ne, te, conc, sch, po, fch, respo, corpo, ierr)
       use b2mod_types
       use b2mod_indirect
@@ -15,7 +15,7 @@
      *  rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &  conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3),
      &  vol(-1:nx,-1:ny)
-      logical solvereg(0:nregionv)
+      logical solving, solvereg(0:nregionv)                              !srv 22.05.18
 *   ..input/output arguments
       real (kind=R8) ::
      *  po(-1:nx,-1:ny), fch(-1:nx,-1:ny,0:1,0:1)
@@ -52,6 +52,7 @@
 *   ..local variables
       integer ncall, n2
       integer, save :: iout = 0, iout_b2wdat = 0
+      integer, save :: get_residuals = 0                              !srv 22.05.18
       real (kind=R8) ::
      *  aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
       save ncall
@@ -71,6 +72,7 @@
       if (ncall.eq.0) then
        call ipgeti ('b2nppo_iout', iout)                            !srv 08.07.08
        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+       call ipgeti ('get_residuals', get_residuals)                 !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -98,7 +100,10 @@
 
 * ..main computation
 *   ..compute residual
-      call b2ursd (nx, ny, ne, po, sch, fch, respo)
+      if((solving.and.any(solvereg(0:nregionv))).or.
+     &                get_residuals.eq.1) then                      !srv 22.05.18
+       call b2ursd (nx, ny, ne, po, sch, fch, respo)
+      endif                                                         !srv 22.05.18
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
 c-rfs      write(6,*) 'ix=20, iy=-1, sch ',
 c-rfs     .  sch(20,-1,0), sch(20,-1,1),
@@ -110,10 +115,12 @@ c-rfs      write(6,*) 'ix=21, iy=-1, fch, respo',
 c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
-      call b2uspo (nx, ny, nregionv, solvereg, itcnt, vol,
-     &  ne, te, conc, sch, respo, corpo, aa9, 'b2nppo')             !srv 18.03.10
+      if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
+        call b2uspo (nx, ny, nregionv, solvereg, itcnt, vol,
+     &    ne, te, conc, sch, respo, corpo, aa9, 'b2nppo')           !srv 18.03.10
 *   ..apply correction
-      call b2uppo (nx, ny, rxf, corpo, po)
+        call b2uppo (nx, ny, rxf, corpo, po)
+      endif                                                         !srv 22.05.18
 
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                    !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2nppo_te')

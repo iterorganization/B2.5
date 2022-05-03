@@ -170,7 +170,7 @@ cxpb  Standard case
          weight = 1.0e0_R8                                               !lk   
 cwdk add computation of 9-point corrections for drifts
 cwdk precomputation of differences on faces
-        call diff(nx, ny, hx, hy, weight, qs, po,   dpo)
+        call diff(nx, ny, hx, hy, weight, qs, po, dpo)
         call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
 !        call diff_p(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc,
 !     .    dOnedBsq(-1,-1,0,0))

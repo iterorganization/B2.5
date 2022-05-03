@@ -19,6 +19,7 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
@@ -506,7 +507,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+        call b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -535,7 +536,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+        call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
      &   hx, gs,
      &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -1027,7 +1028,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           enddo
           if (.not.over_erosion) then
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)
+     1       dteff*plate_time_factor(ibnd)
             do itrack = 1, ntargsp
               if (.not.equilibrium(itrack)) then
                 if (sput_frac_flag.ne.0)
@@ -1051,7 +1052,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             enddo
           else
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)*t_frac
+     1       dteff*plate_time_factor(ibnd)*t_frac
             do itrack = 1, ntargsp
               particle_inventory(ibnd,itrack)= max( 0.0_R8,
      .         particle_inventory(ibnd,itrack)+t_frac*

@@ -255,7 +255,7 @@
             else
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
      &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0,0)
-              aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08 
+              aa9(ix,iy,6) = aa9(ix,iy,6) +                           !sv 28.05.08
      &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
             endif
          endif

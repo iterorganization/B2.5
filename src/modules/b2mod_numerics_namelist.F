@@ -48,6 +48,7 @@
       !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
       !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
       real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
+      real (kind=R8), save :: dteff
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:,:)
@@ -165,13 +166,20 @@
       integer nx,ny,ns,nsmin,nsmax
       logical :: file_ok
       integer ix, iy, ireg, is
+      integer, save :: style_b2mndt = 1
       integer, save :: ncall = 0
+      real(kind=R8), save :: dtim = 1.0_R8
       real (kind=R8) :: ttf
       character*260 filename
 
       filename=numerics_filename
       numerics_time_mod = 0.0_R8
       numerics_time_switch = 0.0_R8
+      if (ncall.eq.0) then
+        call ipgeti('b2mndt_style', style_b2mndt)
+        call ipgetr('b2mndr_dtim', dtim)
+        dteff = dtim
+      end if
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -186,9 +194,13 @@
         do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
+          call xertst(style_b2mndt.le.1.or..not.solveet(ireg),
+     &     'Time-dependent mode requires SOLVEET = .false.!')
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
+          call xertst(style_b2mndt.le.1.or..not.solvemt(ireg),
+     &     'Time-dependent mode requires SOLVEMT = .false.!')
         end do
       else
         call xerrab ('No '//trim(filename))
@@ -218,6 +230,19 @@
      & 'faulty parameter dtee')
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
+
+      ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
+      if (ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
+     &    ttf.eq.minval(dtee(1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtee(1:nnreg(0))).and.
+     &    ttf.eq.minval(dtei(1:nnreg(0))).and.
+     &    ttf.eq.maxval(dtei(1:nnreg(0)))) then
+        dteff = dtim*ttf
+        if (ttf.ne.1.0_R8) write(0,*)
+     &   'Effective plasma timestep rescaled to ', dteff,' seconds'
+      end if
 
 c additional time modification factor
       ttf=core_dt_suppression

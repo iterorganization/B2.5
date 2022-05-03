@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
-     &  solvereg, solvireg, solvpreg, solvmreg,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
      &  rxf, pcm0, cortt, corte, corti,
      &  pccm0, na, ua, te, ti, po, ne, ni, wrk0, vol)
       use b2mod_types
@@ -21,6 +21,7 @@
      &  corti(-1:nx,-1:ny), pccm0(-1:nx,-1:ny), vol(-1:nx,-1:ny)
       logical po_solve, ua_solve,
      &  solvereg(0:nregionv), solvireg(0:nregionv),
+     &  solvtreg(0:nregionv),                                            !srv 22.05.18
      &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -97,7 +98,7 @@
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (stylec.eq.0) then
-         if (solvereg(ireg).and.solvireg(ireg)) then
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
           dte = rxf*max(-te(ix,iy),(corte(ix,iy)+cortt(ix,iy))/2.0_R8)
           dti = rxf*max(-ti(ix,iy),(corti(ix,iy)+cortt(ix,iy))/2.0_R8)
          else
@@ -105,8 +106,8 @@
           dti = rxf*max(-ti(ix,iy),corti(ix,iy))
          endif
         else if (stylec.eq.1) then
-         ctt = cortt(ix,iy)-med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
-         if (solvereg(ireg).and.solvireg(ireg)) then
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
+          ctt = cortt(ix,iy)-med(corte(ix,iy),cortt(ix,iy),corti(ix,iy))
           dte = rxf*max(-te(ix,iy),corte(ix,iy)+ctt)
           dti = rxf*max(-ti(ix,iy),corti(ix,iy)+ctt)
          else

@@ -2652,6 +2652,15 @@
 				</description>
 			</switch>
 			<switch>
+			  <name>get_residuals</name>
+			  <default>0</default>
+			  <type>integer</type>
+			  <description>
+				If get_residuals.eq.1, then the residuals of unsolved equations will be outputted into b2ftrace. Equations are unsolved if 'b2news_no_solve' is nonzero or any elements of the solveco, solvemo, solveee, solveei, or solvepo are set to .false. .
+				By default, get_residuals.eq.0 and the residuals for unsolved equations are set to zero.
+			  </description>
+			</switch>
+			<switch>
 				<name>b2wdat_append</name>
 				<default>0</default>
 				<type>integer</type>
@@ -3816,6 +3825,7 @@
 				<description>
 				  If  0, the SOLPS5.0 physics model is used, by calling the b2news routine.
 				  If  1, the SOLPS5.2 physics model is used, and b2news_ is called instead.
+				  If  2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations.
 				  If -1, corresponds to a special conversion run for SOLPS4.x data where new fluxes are not computed and equations are not solved.
 				</description>
 			</switch>
@@ -3995,10 +4005,12 @@
 			</switch>
 			<switch>
 				<name>b2mndt_rxf</name>
-				<default>0.5</default>
+				<default>See description</default>
 				<type>real</type>
 				<description>
 					Main under-relaxation parameter.
+					Should be set to 1.0 (default) if running in time-dependent mode (b2mndt_style.eq.2).
+					Otherwise, default value is 0.5.
 					Setting this switch to zero prevents updating of the principal code quantities.
 				</description>
 			</switch>
@@ -4033,6 +4045,7 @@
 				<name>b2npco_pcm.</name>
 				<description>
 					pcm0 specifies an additional under-relaxation factor that is applied to the velocity correction. It is required that 0.le.pcm0.and.0.le.pcm1.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 				<switch>
 					<name>b2npco_pcm0</name>
@@ -4051,6 +4064,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -4058,6 +4072,7 @@
 				<description>
 					pcm0 specifies an additional under-relaxation factor that is applied to the temperature correction.
 					It is required that 0.le.pcm0.and.0.le.pcm1.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 				<switch>
 					<name>b2npht_pcm0</name>
@@ -4076,6 +4091,7 @@
 				<type>real</type>
 				<description>
 					rxg specifies a special under-relaxation parameter. A term of the form "abs(residual)/rxg" is added to the diagonal of the matrix of the correction equation, with the effect of limiting the computed correction. rxg is dimensionless and of order unity; smaller values of rxg imply stronger damping.
+					Not used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switchgroup>
@@ -4100,6 +4116,7 @@
 				<type>real</type>
 				<description>
 					Normalisation factor for the parallel momentum equation.
+					Not used when running in time_dependent mode (b2mndt_style.eq.2).
 				</description>
 			</switch>
 			<switch>
@@ -6667,6 +6684,7 @@
 					Used to specifiy time multipliers per equation and per region for the B2.5 solver.
 					Active if 'b2srdt_numerics_namelist' is set to 1 or greater.
 					It is recommended to use the same multiplier for all equations within one region.
+					The time multipliers should not be used if running in time-dependent mode (b2mndt_style.eq.2).
 				</description>
 			</introduction>
 			<switch>

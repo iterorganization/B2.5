@@ -2,10 +2,10 @@
 *.specification
 
       subroutine b2npht (nx, ny, ns, nregionv, itcnt, ismain, solving,   !srv 05.07.17
-     &  solvereg, solvireg, solvpreg, solvmreg,
-     &  rxf, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
+     &  rxf, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,      !srv 07.07.21
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
-     &  fne, fch, fchstoch, cvsa,
+     &  fne, fch, fchstoch, cvsa,                                        !srv 24.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb,
      &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
      &  shef, shif, reshe, reshi, resht, corte, corti, ierr)
@@ -18,11 +18,17 @@
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
       use b2mod_subsys
+      use b2mod_sources
+     & , only : shedt, shidt                                             !srv 31.01.21
+      use b2mod_numerics_namelist
+     & , only : dtee, dtei, time_factor
+      use b2mod_plasma
+     , , only : tep, tip, nep, nip, nap, kinrgyp
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17
       real (kind=R8) ::
-     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),        !srv 07.07.21
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
      *  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
@@ -41,6 +47,7 @@
      4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)                               !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
+     *  solvtreg(0:nregionv),                                            !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -84,9 +91,12 @@
       integer ncall, n2, ix, iy, is
       integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: style = 1                                       !srv 09.07.08
+      integer, save :: get_residuals = 0                               !srv 22.05.18
+      integer, save :: style_b2mndt = 1                                !srv 07.07.21
       character chns*3                                                 !srv 17.07.05
+      logical warning_e, warning_i
       real (kind=R8) ::
-     *  rxg, pcm0, pcm1
+     *  rxg, pcm0, pcm1, t0, ttim                                      !srv 07.07.21
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
@@ -98,7 +108,7 @@
       external xertst, ipgetr, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2usht, b2upht
 *   ..initialisation
-      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -111,6 +121,7 @@
 *     of the correction equation, with the effect of limiting the
 *     computed correction. rxg is dimensionless and of order unity;
 *     smaller values of rxg imply stronger damping.
+*     Not used when running in time-dependent mode.
 *
 *     pcm0 - real.
 *     ...
@@ -126,15 +137,40 @@
       call subini ('b2npht')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2npht_rxg', rxg)
-       call ipgetr ('b2npht_pcm0', pcm0)
-       call ipgetr ('b2npht_pcm1', pcm1)
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21 {
+       if(style_b2mndt.eq.2) then
+        rxg = huge(1.0_R8)
+        pcm0 = 0.0_R8
+        pcm1 = 0.0_R8
+        warning_e = .false.
+        warning_i = .false.
+        do iy = -1, ny
+         do ix = -1, nx
+           warning_e = warning_e .or.
+     .      rxf*dtee(region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
+           warning_i = warning_i .or.
+     .      rxf*dtei(region(ix,iy,0))*time_factor(ix,iy).ne.1.0_R8
+         enddo
+        enddo
+        if (warning_e) write(6,*) 'rxf*dtee*time_factor should be 1 !'
+        if (warning_i) write(6,*) 'rxf*dtei*time_factor should be 1 !'
+        if (warning_e .or. warning_i)
+     >   write(6,*) 'Time derivative terms may be inacurrate !'
+       else
+        rxg = 1.0_R8
+        pcm0 = 1.0_R8
+        pcm1 = 1.0_R8
+        call ipgetr ('b2npht_rxg', rxg)
+        call ipgetr ('b2npht_pcm0', pcm0)
+        call ipgetr ('b2npht_pcm1', pcm1)
+       endif                                                          !srv 07.07.21 }
        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npht_iout', iout)                              !srv 02.01.07
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2npht_style', style)                            !srv 09.07.08
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -199,6 +235,18 @@
         enddo
       enddo
 * ..main computation
+      tep = te                                                           !srv 07.07.21 {
+      tip = ti
+      if(style_b2mndt.eq.2) then
+*  .. calculate time-dependent source
+        call b2shdt (nx, ny, ns, dtim, BoRiS,
+     &    vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
+*  .. add contribution from time-dependent source
+        she = she+shedt
+        she(:,:,0)=she(:,:,0)-1.5_R8*(ne-nep)*tep/dtim*vol
+        shi = shi+shidt
+        shi(:,:,0)=shi(:,:,0)-1.5_R8*(ni(:,:,0)-nip(:,:,0))*tip/dtim*vol
+      endif                                                              !srv 207.07.21 }
 *   ..compute final heat sources
       if(style.eq.0) then
        call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,          !xpb !srv 05.07.17
@@ -257,8 +305,14 @@ cdjm Jan2017 update particle source components for balance
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-      call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      if ((solving(4).and.any(solvereg(0:nregionv))).or.
+     &                    get_residuals.eq.1) then                      !srv 22.05.18
+        call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+      endif                                                             !srv 22.05.18
+      if ((solving(4).and.any(solvireg(0:nregionv))).or.
+     &                   get_residuals.eq.1) then                       !srv 22.05.18
+        call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+      endif                                                             !srv 22.05.18
 *   ..compute heat source due to electron-ions collisions               !srv 18.09.09 30.01.10 {
       do iy = -1, ny
        do ix = -1, nx
@@ -289,12 +343,17 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
       b2qie=0.0_R8
       do iy = -1, ny
        do ix = -1, nx
-        resht(ix,iy) = reshe(ix,iy)+reshi(ix,iy)
         b2qie(region(ix,iy,0))=b2qie(region(ix,iy,0))+shei(ix,iy)
-        reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
-        reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
       enddo
+
+      if ((solving(4).and.any(solvereg(0:nregionv)))                  !srv 22.05.18 {
+     &    .or.get_residuals.eq.1) reshe = reshe - shei
+      if ((solving(4).and.any(solvireg(0:nregionv)))
+     &    .or.get_residuals.eq.1) reshi = reshi + shei
+      if (solving(4).and.any(solvereg(0:nregionv)).and.               ! if total equation is not solved then resht = 0
+     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)))
+     &   resht = reshe + reshi                                        !srv 22.05.18 }
 
       if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
@@ -330,7 +389,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
      &   wrkf, wrkc, aa5, 'b2npht_')                                  !srv 18.03.10
 *   ..apply correction
         call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
-     &   solvereg, solvireg, solvpreg, solvmreg,
+     &   solvereg, solvireg, solvtreg, solvpreg, solvmreg,            !srv 22.05.18
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
       endif
@@ -346,7 +405,35 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
       elseif (iout_b2wdat.eq.4) then
        call my_out(70,nx,ny,te,'b2npht_te')
        call my_out(70,nx,ny,ti,'b2npht_ti')
-      endif                                                           !srv 17.07.05 }
+       if(style_b2mndt.eq.2) then                                     !srv 07.07.21
+         wrk0=1.5_R8*vol*ne*(te-tep)/dtim
+         call my_out(70,nx,ny,wrk0,'b2npht_nedtedt')
+         wrk0=1.5_R8*vol*tep*(ne-nep)/dtim
+         call my_out(70,nx,ny,wrk0,'b2npht_tednedt')
+         wrk0=1.5_R8*vol*ni(:,:,0)*(ti-tip)/dtim
+         call my_out(70,nx,ny,wrk0,'b2npht_nidtidt')
+         wrk0=1.5_R8*vol*tip*(ni(:,:,0)-nip(:,:,0))/dtim
+         call my_out(70,nx,ny,wrk0,'b2npht_tidnidt')
+       else
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
+           t0 = 1.5_R8*vol(ix,iy)/ttim
+           wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-nep(ix,iy)*tep(ix,iy))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'b2npht_dnetedt')
+         do iy = -1,ny
+          do ix = -1,nx
+           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
+           t0 = 1.5_R8*vol(ix,iy)/ttim
+           wrk0(ix,iy)=(ni(ix,iy,0)*ti(ix,iy)-
+     &                  nip(ix,iy,0)*tip(ix,iy))*t0
+          enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'b2npht_dnitidt')
+       endif                                                          !srv 07.07.21 }
+      end if
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
       ierr = 0

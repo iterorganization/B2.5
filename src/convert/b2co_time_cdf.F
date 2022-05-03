@@ -16,7 +16,6 @@
       integer :: iylstrt, iyistrt, iyastrt, iyrstrt,
      1           iylend,  iyiend,  iyaend,  iyrend
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
-      real(kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
 #ifdef USE_PXFGETENV
       integer lenval, ierror
@@ -50,7 +49,6 @@
       write(*,*) 'b2co_time_cdf ...'
 
       call get_jsep(nx,ny,jxi,jxa,jsep)
-      call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
       call ipgeti ('b2mwti_target_offset', target_offset)
@@ -85,7 +83,7 @@
       nya  = iyaend  - iyastrt  + 1
       nyi  = iyiend  - iyistrt  + 1
       nc = max(nncut,1)
-      nbatch = int((tim/dtim)/ntim_batch) + 1
+      nbatch = int((tim/dteff)/ntim_batch) + 1
 c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
       if (batch_only) filename='b2batch.nc'

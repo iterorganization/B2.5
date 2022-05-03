@@ -123,7 +123,7 @@
      *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),       !srv 11.09.09 !iys 17.04.12
      *   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1,0:1),
+     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1,0:1),                 !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                         !srv 08.10.04
      *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny),                         !srv 13.05.16
      *   dnbr(-1:nx,-1:ny,0:1), dpbr(-1:nx,-1:ny,0:1),

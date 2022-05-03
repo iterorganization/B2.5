@@ -267,6 +267,12 @@
 *     B2RUSR reads a table of source term data from an un*formatted
 *     file.
 *
+*     B2SCDT modifies the source coefficients to account for the
+*     implicit time discretisation for the isb-th density equation.
+*
+*     B2SHDT modifies the source coefficients to account for the
+*     implicit time discretisation for Te and Ti equations.
+*
 *     B2SIAN computes contribution to the parallel momentum source due
 *     to the anomalous current.
 *
@@ -286,6 +292,9 @@
 *     heat equations. These terms specify the contributions of the
 *     divergence of the flow field, of viscous heating, and of the
 *     electron-atom and atom-atom friction.
+*
+*     B2SMDT modifies the source coefficients to account for the
+*     implicit time discretisation for parallel momentum equations.
 *
 *     B2SPCX computes on all cells of the mesh a log-log representation
 *     of the rate coefficients for charge exchange.
@@ -402,6 +411,9 @@
 *
 *     B2TRNO computes the anomalous transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
+*
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
 *     current for each species and calculates the X and Y components of

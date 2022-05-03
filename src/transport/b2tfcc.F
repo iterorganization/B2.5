@@ -98,7 +98,7 @@ cwdk add linearization coefficients for 9-point fluxes
      &          qs(ix,iy,0) 
           floe(ix,iy,0,0) = floe(ix,iy,0,0)-
      &     (xfac*2.5_R8/4.0_R8)*(cdpa(ix,iy,0,0,is)*
-     &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) + 
+     &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) +
      &     cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
      &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
@@ -138,7 +138,7 @@ cwdk add linearization coefficients for 9-point fluxes
         do ix = -1, nx
          if(bottomiy(ix,iy).ne.-2) then
 cwdk add linearization coefficients for 9-point fluxes
-         t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
+          t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
      &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
      &         qs(ix,iy,1)
           floe(ix,iy,1,1) = floe(ix,iy,1,1)-

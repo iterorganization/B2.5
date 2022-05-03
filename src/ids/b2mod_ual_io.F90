@@ -6268,6 +6268,7 @@ contains
 #else
             ggdId = edge_profiles%grid_ggd(slice_index)%identifier%index
             nSubsets = size(edge_profiles%grid_ggd(slice_index)%grid_subset)
+            if (nSubsets.eq.0) return
 #endif
             !! If required, allocate storage
             if ( .not. associated( vectorComponent ) ) then
@@ -7936,6 +7937,7 @@ contains
 #else
     ggdId = edgeprof%grid_ggd(slice_index)%identifier%index
     nSubsets = size(edgeprof%grid_ggd(slice_index)%grid_subset)
+    if (nSubsets.eq.0) return
 #endif
     !! Interpolate data to vertices
     tmpVx = interpolateToVertices(  &
@@ -8087,7 +8089,7 @@ contains
     !> Write a scalar B2 cell quantity to ids_generic_grid_scalar
     subroutine write_cell_scalar( edgeprof, scalar, b2CellData )
     implicit none
-    type (ids_edge_profiles), intent(in) :: edgeprof !< IDS designed to store
+    type(ids_edge_profiles), intent(in) :: edgeprof !< IDS designed to store
         !< edge profiles data
     type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
         !< Type of IDS data structure, designed for scalar data handling
@@ -8106,9 +8108,12 @@ contains
 #else
     ggdId = edgeprof%grid_ggd(slice_index)%identifier%index
     nSubsets = size(edgeprof%grid_ggd(slice_index)%grid_subset)
+    if (nSubsets.eq.0) return
 #endif
     !! Allocate data fields for grid subsets
-    allocate( scalar(nSubsets) )
+    if (.not.associated( scalar ) ) then
+      allocate( scalar(nSubsets) )
+    end if
 
     do iSubset = 1, nSubsets
 #if IMAS_MINOR_VERSION < 15
@@ -8206,6 +8211,7 @@ contains
 #else
     ggdId = edgeprof%grid_ggd(slice_index)%identifier%index
     nSubsets = size(edgeprof%grid_ggd(slice_index)%grid_subset)
+    if (nSubsets.eq.0) return
 #endif
     !! If required, allocate storage
     if ( .not. associated( vectorComponent ) ) then
@@ -8292,9 +8298,12 @@ contains
 #else
     ggdId = edgeprof%grid_ggd(slice_index)%identifier%index
     nSubsets = size(edgeprof%grid_ggd(slice_index)%grid_subset)
+    if (nSubsets.eq.0) return
 #endif
     !! Allocate data fields for grid subsets
-    allocate( val(nSubsets) )
+    if (.not.associated( val ) ) then
+      allocate( val(nSubsets) )
+    end if
 
     do iSubset = 1, nSubsets
 #if IMAS_MINOR_VERSION < 15

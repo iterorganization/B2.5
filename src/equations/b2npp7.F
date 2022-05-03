@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npp7 (nx, ny, ns, ismain, nregionv,                   !srv 06.07.00 27.01.00
+      subroutine b2npp7 (nx, ny, ns, ismain, nregionv, solving,          !srv 06.07.00 27.01.00 22.05.18
      &  solvereg, itcnt, rxf, ne, te, conc, avisper_a, bvisper_a,        !srv 27.01.00
      &  cvisper_a, sch, po, fch, respo, corpo, ierr)
       use b2mod_types
@@ -18,7 +18,7 @@
      3   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 27.01.00
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      4   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1)                               !srv 27.01.00
-      logical solvereg(0:nregionv)
+      logical solving, solvereg(0:nregionv)                              !srv 22.05.18
 *   ..input/output arguments
       real (kind=R8) ::
      *   po(-1:nx,-1:ny), fch(-1:nx,-1:ny,0:1,0:1)
@@ -55,6 +55,7 @@
 *   ..local variables
       integer ncall, n2
       integer, save :: iout = 0, iout_b2wdat = 0               !srv 27.12.17
+      integer, save :: get_residuals = 0                       !srv 22.05.18
       real (kind=R8) ::
      *   aa11(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)             !srv 11.01.00
       save ncall
@@ -74,6 +75,7 @@
       if (ncall.eq.0) then
        call ipgeti ('b2npp7_iout', iout)                              !srv 08.07.08
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+       call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -108,13 +110,18 @@
 
 * ..main computation
 *   ..compute residual
-      call b2ursd (nx, ny, ne, po, sch, fch, respo)
+      if((solving.and.any(solvereg(0:nregionv))).or.
+     &                get_residuals.eq.1) then                        !srv 22.05.18
+       call b2ursd (nx, ny, ne, po, sch, fch, respo)
+      endif                                                           !srv 22.05.18
 *   ..compute correction
-      call b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,     !srv 27.12.17
+      if(solving.and.any(solvereg(0:nregionv))) then                  !srv 22.05.18
+        call b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,   !srv 27.12.17
      &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,
      &    sch, respo, corpo, aa11)
 *   ..apply correction
-      call b2uppo (nx, ny, rxf, corpo, po)
+        call b2uppo (nx, ny, rxf, corpo, po)
+      endif                                                           !srv 22.05.18
 
       if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                    !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2npp7_te')

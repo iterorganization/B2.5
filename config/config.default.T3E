@@ -48,7 +48,7 @@ PLLIBES = $(LD_MSCL)
 LDLIBES = $(LD_NAG)
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+CXXFLAGS = -std=c++11
 endif
 
 LD = f90 -lapp

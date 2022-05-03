@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nx, ny, hx, hy, vol, qs,  isb, ub, rob,
+      subroutine b2urmo (nx, ny, hx, hy, vol, qs, isb, ub, rob,
      .  smb, flub, cvsb, resmb, fmb)                                    !srv 02.06.11
       use b2mod_types
       use b2mod_math

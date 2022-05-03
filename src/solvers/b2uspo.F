@@ -87,7 +87,7 @@
       endif
 
 * ..compute the correction
-      aa9 = 0.0_R8
+      call sfill (n2*13, 0.0_R8, aa9, 1)
 *   ..compute the nine-point matrix
       do iy = -1, ny
        do ix = -1, nx

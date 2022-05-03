@@ -9,6 +9,8 @@
       use b2mod_numerics_namelist
      , , only : corr_core_dn
       use b2mod_subsys
+      use b2mod_plasma                                                  !srv 07.07.21
+     & , only : uap
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, isb
@@ -151,6 +153,8 @@
       endif                                               !srv 25.07.17 }
 *   ..compute new ub
       if (ua_solve) then
+       if(pcm0*rxf.ne.0.0_R8 .and. all(pccb0.ne.0.0_R8))
+     &    uap(:,:,isb) = ub                               !srv 07.07.21
        do iy = -1, ny
         do ix = -1, nx
 *       (note the further damping on the velocity correction)

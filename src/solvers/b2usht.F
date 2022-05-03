@@ -47,11 +47,12 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      integer, save :: style_b2mndt = 1                                 !srv 07.07.21
       logical new_matrix
       save ncall
       real (kind=R8) ::
      *   t0, t1
-      real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
+      real (kind=R8), save :: cor_diag = 1.0_R8                         !srv 07.07.21
       !$OMP THREADPRIVATE(ncall)
 *   ..procedures
       intrinsic abs, sqrt, dim
@@ -66,9 +67,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usht')
-      if (ncall.eq.0) then                                            !srv 07.07.21
+      if (ncall.eq.0) then                                              !srv 07.07.21
        call ipgetr ('b2usht_cor_diag', cor_diag)
-      endif                                                           !srv 07.07.21
+       call ipgeti ('b2mndt_style', style_b2mndt)
+      endif                                                             !srv 07.07.21
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -91,24 +93,30 @@
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
-       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')                !srv 02.01.07 {
+       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')                 !srv 02.01.07 {
        call b2xvff (nx, ny, cone(-1,-1,0,0,1), 'cone1')
        call b2xvff (nx, ny, cone(-1,-1,0,0,2), 'cone2')
        call b2xvff (nx, ny, coni(-1,-1,0,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,0,1), 'coni1')
-       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')                !srv 02.01.07 }
+       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')                 !srv 02.01.07 }
 *    ..test sign of she, shi, ceqp
-       call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
+       if(style_b2mndt.ne.2) then                                       !srv 07.07.21
+         call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
+       endif                                                            !srv 07.07.21
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
        call b2xvsg (n2, she(-1,-1,2), 1, 'she2', '.ge.')
        call b2xvsg (n2, she(-1,-1,3), 1, 'she3', '.le.')
-       call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
+       if(style_b2mndt.ne.2) then                                       !srv 07.07.21
+         call b2xvsg (n2, shi(-1,-1,0), 1, 'shi0', '.ge.')
+       endif                                                            !srv 07.07.21
        call b2xvsg (n2, shi(-1,-1,1), 1, 'shi1', '.le.')
        call b2xvsg (n2, shi(-1,-1,2), 1, 'shi2', '.ge.')
        call b2xvsg (n2, shi(-1,-1,3), 1, 'shi3', '.le.')
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
       endif
 
+      if (any(solveee(0:nnreg(0))).and.any(solveei(0:nnreg(0))).and.
+     &    any(solveet(0:nnreg(0)))) then                                !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -252,22 +260,22 @@ cxpb
 *   ..correct RHS if not solving
       do iy = -1, ny
        do ix = -1, nx
-        ireg = region(ix,iy,0)
         if (aa5(ix,iy,0).eq.0.0_R8 .and.
      &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
      &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
           aa5(ix,iy,0) = 1.0_R8
           resht(ix,iy) = 0.0_R8
         end if
-        if (.not.solveet(ireg)) resht(ix,iy) = 0.0_R8
        enddo
       enddo
 
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'tt'
-      call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')        !srv 18.03.10
+        write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'tt'
+        call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')      !srv 18.03.10
+      endif                                                             !srv 22.05.18
 
 * ..electron temperature correction equation
+      if (any(solveee(0:nnreg(0)))) then                                !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -405,22 +413,22 @@ cxpb
 *   ..correct RHS if not solving
       do iy = -1, ny
        do ix = -1, nx
-        ireg = region(ix,iy,0)
         if (aa5(ix,iy,0).eq.0.0_R8 .and.
      &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
      &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
           aa5(ix,iy,0) = 1.0_R8
           reshe(ix,iy) = 0.0_R8
         end if
-        if (.not.solveee(ireg)) reshe(ix,iy) = 0.0_R8
        enddo
       enddo
 
 *   ..solve the correction equation
-      write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'te'
-      call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')        !srv 18.03.10
+        write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'te'
+        call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')      !srv 18.03.10
+      endif                                                             !srv 22.05.18
 
 * ..atom temperature correction equation
+      if (any(solveei(0:nnreg(0)))) then                                !srv 22.05.18
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
@@ -560,14 +568,12 @@ cxpb
 *   ..correct RHS if not solving
       do iy = -1, ny
        do ix = -1, nx
-        ireg = region(ix,iy,0)
         if (aa5(ix,iy,0).eq.0.0_R8 .and.
      &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
      &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
           aa5(ix,iy,0) = 1.0_R8
           reshi(ix,iy) = 0.0_R8
         end if
-        if (.not.solveei(ireg)) reshi(ix,iy) = 0.0_R8
        enddo
       enddo
 
@@ -580,6 +586,7 @@ cxpb
           corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
         enddo
       enddo
+      endif                                                             !srv 22.05.18
 
 *   ..return
       ncall = ncall+1
