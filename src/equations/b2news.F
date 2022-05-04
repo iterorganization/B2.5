@@ -872,7 +872,7 @@ cxpb
      1         maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
               call b2tfed (nx, ny, facdrift, fac_ExB,
      &         te, po, vedia, veecrb)
-              call b2tfch (nx, ny, ns, ismain,
+              call b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
      1         vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam,      !xpb
      1         pz, ti, ni(-1,-1,1), na, fna, uadia, ua, fne_32, fne_52,  !xpb
@@ -1130,7 +1130,7 @@ c     with diamagnetic drift part                                        !xpb
      1   maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
 *   ..compute heat fluxes
         call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
-        call b2tfch (nx, ny, ns, ismain,
+        call b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
      1   vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
      1   ti, ni(-1,-1,1), na, fna, uadia,                                !xpb
