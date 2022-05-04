@@ -850,7 +850,7 @@ csw 16oct2012 init ier0
           endif                                                          !srv 12.07.05 }
         endif
 *   ..compute currents
-        call b2tfch_ (nx, ny, ns, ismain, facdrift, fac_ExB,             !srv 09.01.20
+        call b2tfch_ (nx, ny, ns, nscx, ismain, iscx, facdrift, fac_ExB, !srv 09.01.20
      &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
@@ -885,8 +885,9 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
           write(*,*) 'respo before solving',t0
           call xertst (ier0.eq.0, 'error return from b2nppo')
 *   ..recompute currents
-          call b2tfch_ (nx, ny, ns, ismain, facdrift, fac_ExB,           !srv 09.01.20
-     &      fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+          call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
+     &      facdrift, fac_ExB, fac_vis,                                  !srv 09.01.20
+     &      vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1      ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1      csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,    !som 18.08.21 !srv 24.08.21
      &      chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21

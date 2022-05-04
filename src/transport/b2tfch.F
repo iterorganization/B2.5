@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfch (nx, ny, ns, ismain,
+      subroutine b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
      1  ti, ni, na, fna, uadia,
@@ -25,7 +25,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, guard_flows                            !xpb
+      integer nx, ny, ns, nscx, ismain, iscx(0:nscxmax-1), guard_flows   !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
@@ -203,7 +203,7 @@ c Drift terms
       facdriftm = maxval(facdrift)                                       !srv 23.12.19
       fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, facdrift, fac_ExB,
+      call b2tinnt (nx, ny, ns, nscx, iscx, facdrift, fac_ExB,
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
