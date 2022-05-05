@@ -94,66 +94,66 @@
 
 *********************************************************************** 
 
-      subroutine alloc_b2mod_geo(g,nCv,nFc,nVx)
-
+      subroutine alloc_b2mod_geo(g,m)
+      use b2mod_indirect
       implicit none
-      integer, intent(in) :: nCv, nFc, nVx
       type(geometry_ag), intent(out) :: g
+      type(mapping_ag) :: m
 
       !cell quantities
-      allocate (g%cvBb(nCv,1:4))
-      allocate (g%cvBp(nCv))
-      allocate (g%cvBt(nCv))
-      allocate (g%cvX(nCv))
-      allocate (g%cvY(nCv))
-      allocate (g%cvSz(nCv))
-      allocate (g%cvHz(nCv))
-      allocate (g%cvHx(nCv))
-      allocate (g%cvQgam(nCv,1:2))
-      allocate (g%cvVol(nCv))
-      allocate (g%cvOnedBsq(nCv))
-      allocate (g%cvBzb(nCv))
-      allocate (g%cvEb(nCv,1:3))
-      allocate (g%cvCflags(nCv,1:5))
-      allocate (g%cvCtype(nCv))
-      allocate (g%cvFpsi(nCv))
+      allocate (g%cvBb(m%nCv,1:4))
+      allocate (g%cvBp(m%nCv))
+      allocate (g%cvBt(m%nCv))
+      allocate (g%cvX(m%nCv))
+      allocate (g%cvY(m%nCv))
+      allocate (g%cvSz(m%nCv))
+      allocate (g%cvHz(m%nCv))
+      allocate (g%cvHx(m%nCv))
+      allocate (g%cvQgam(m%nCv,1:2))
+      allocate (g%cvVol(m%nCv))
+      allocate (g%cvOnedBsq(m%nCv))
+      allocate (g%cvBzb(m%nCv))
+      allocate (g%cvEb(m%nCv,1:3))
+      allocate (g%cvCflags(m%nCv,1:5))
+      allocate (g%cvCtype(m%nCv))
+      allocate (g%cvFpsi(m%nCv))
 
       !face quantites
-      allocate (g%fcBb(nFc,1:4)) 
-      allocate (g%fcS(nFc))
-      allocate (g%fcHc(nFc,1:2))
-      allocate (g%fcHt(nFc))
-      allocate (g%fcHz(nFc))
-      allocate (g%fcVol(nFc,1:2))      
-      allocate (g%fcQgam(nFc,1:2))
-      allocate (g%fcQalf(nFc,1:2))
-      allocate (g%fcQbet(nFc,1:2))
-      allocate (g%fcPbs(nFc))
-      allocate (g%fcPbshz(nFc))
-      allocate (g%fcBzb(nFc))
-      allocate (g%fcEb(nFc,1:3))
+      allocate (g%fcBb(m%nFc,1:4)) 
+      allocate (g%fcS(m%nFc))
+      allocate (g%fcHc(m%nFc,1:2))
+      allocate (g%fcHt(m%nFc))
+      allocate (g%fcHz(m%nFc))
+      allocate (g%fcVol(m%nFc,1:2))      
+      allocate (g%fcQgam(m%nFc,1:2))
+      allocate (g%fcQalf(m%nFc,1:2))
+      allocate (g%fcQbet(m%nFc,1:2))
+      allocate (g%fcPbs(m%nFc))
+      allocate (g%fcPbshz(m%nFc))
+      allocate (g%fcBzb(m%nFc))
+      allocate (g%fcEb(m%nFc,1:3))
 
       !vertex quantites
-      allocate (g%vxBb(nVx,1:4))
-      allocate (g%vxBx(nVx))
-      allocate (g%vxBy(nVx))
-      allocate (g%vxX(nVx))
-      allocate (g%vxY(nVx))
-      allocate (g%vxHz(nVx))
-      !allocate (g%vxVol(nVmxCv)) nVmxCv not known here
-      allocate (g%vxFfbz(nVx))
-      allocate (g%vxFpsi(nVx))
-      allocate (g%vxOnedBsq(nVx))
-      allocate (g%vxBzb(nVx))
+      allocate (g%vxBb(m%nVx,1:4))
+      allocate (g%vxBx(m%nVx))
+      allocate (g%vxBy(m%nVx))
+      allocate (g%vxX(m%nVx))
+      allocate (g%vxY(m%nVx))
+      allocate (g%vxHz(m%nVx))
+      !allocate (g%vxVol(m%nVmxCv)) nVmxCv not known here
+      allocate (g%vxFfbz(m%nVx))
+      allocate (g%vxFpsi(m%nVx))
+      allocate (g%vxOnedBsq(m%nVx))
+      allocate (g%vxBzb(m%nVx))
       
       !flux tube quantites
-      allocate (g%cvConn(nCv))
-      !allocate (g%ftConn(nFt))
-      !allocate (g%ftEps(nFt))
-      !allocate (g%ftBbav2(nFt))
+      allocate (g%cvConn(m%nCv))
+      !allocate (g%ftConn(m%nFt))
+      !allocate (g%ftEps(m%nFt))
+      !allocate (g%ftBbav2(m%nFt))
 
       !  flux surface quantities
-      !allocate (g%fsPsi(nFs))
+      !allocate (g%fsPsi(m%nFs))
 
       call initialize_b2mod_geo (g)
 

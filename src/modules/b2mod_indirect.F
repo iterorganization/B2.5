@@ -108,56 +108,55 @@
       contains
 
 *----------------------------------------------------------------------
-      subroutine alloc_b2mod_indirect(m,nCv,nFc,nVx,nCmxVx,nCmxFc,
-     &        nFmxCv, nVmxCv, nVmxFc, nx, ny)
+      subroutine alloc_b2mod_indirect(m)
       implicit none
       
-      integer, intent(in) :: nCv, nFc, nVx, nCmxVx, nCmxFc, nFmxCv,
-     &          nVmxCv, nVmxFc ,nx,ny
+      !integer, intent(in) :: nCv, nFc, nVx, nCmxVx, nCmxFc, nFmxCv,
+      !&          nVmxCv, nVmxFc ,nx,ny
       type(mapping_ag), intent(inout) :: m
 
       if (b2mod_indirect_allocated) return
-	   allocate (m%cvFcP(nCv,1:2)) 
-      allocate (m%cvFc(nCmxFc))
-      allocate (m%fcCv(nFc,1:2))
-      allocate (m%fcVx(nFc,1:2))
-      allocate (m%cvVxP(nCv,1:2))
-      allocate (m%cvVx(nCmxVx))
-      allocate (m%vxFcP(nVx,1:2)) 
-      allocate (m%vxFc(nVmxFc))
-      allocate (m%vxCvP(nVx,1:2))  
-      allocate (m%vxCv(nVmxCv)) 
-!      allocate (m%ftCv(nCv))
-!      allocate (m%ftCvP(nFt,1:2))
-!      allocate (m%ftFc(nFc))
-!      allocate (m%ftFcP(nFt,1:2))
-!      allocate (m%cvFt(nCv))
-!      allocate (m%fsFc(nFc))
-!      allocate (m%fsFcP(nFs,1:2))
-!      allocate (m%fcReg(nFc))
-!      allocate (m%cvReg(nCv))
-!      allocate (m%ftReg(nFt))
-!      allocate (m%cvOnClosedSurface(nCv))
+	   allocate (m%cvFcP(m%nCv,1:2)) 
+      allocate (m%cvFc(m%nCmxFc))
+      allocate (m%fcCv(m%nFc,1:2))
+      allocate (m%fcVx(m%nFc,1:2))
+      allocate (m%cvVxP(m%nCv,1:2))
+      allocate (m%cvVx(m%nCmxVx))
+      allocate (m%vxFcP(m%nVx,1:2)) 
+      allocate (m%vxFc(m%nVmxFc))
+      allocate (m%vxCvP(m%nVx,1:2))  
+      allocate (m%vxCv(m%nVmxCv)) 
+!      allocate (m%ftCv(m%nCv))
+!      allocate (m%ftCvP(m%nFt,1:2))
+!      allocate (m%ftFc(m%nFc))
+!      allocate (m%ftFcP(m%nFt,1:2))
+!      allocate (m%cvFt(m%nCv))
+!      allocate (m%fsFc(m%nFc))
+!      allocate (m%fsFcP(m%nFs,1:2))
+!      allocate (m%fcReg(m%nFc))
+!      allocate (m%cvReg(m%nCv))
+!      allocate (m%ftReg(m%nFt))
+!      allocate (m%cvOnClosedSurface(m%nCv))
       
-!      allocate (m%intfaceV(nFc,1:2))
-!      allocate (m%intvertexV(nCmxVx * nCv))
-!      allocate (m%intcellP(nCmxFc))
-!      allocate (m%intcellR(nCmxFc))
+!      allocate (m%intfaceV(m%nFc,1:2))
+!      allocate (m%intvertexV(m%nCmxVx * m%nCv))
+!      allocate (m%intcellP(m%nCmxFc))
+!      allocate (m%intcellR(m%nCmxFc))
 
-!      allocate (m%cvNvP(nCv,1:2))
-!      allocate (m%cvNv(nCmxNv))
+!      allocate (m%cvNvP(m%nCv,1:2))
+!      allocate (m%cvNv(m%nCmxNv))
 
       if (m%isClassicalGrid.eq.1) then
-        allocate (m%imapCv(-1:nx,-1:ny))
-        allocate (m%imapFcx(-1:nx,-1:ny))
-        allocate (m%imapFcy(-1:nx,-1:ny))
-        allocate (m%imapVx(-1:nx,-1:ny))
-        allocate (m%icornVx(1:nx))
+        allocate (m%imapCv(-1:m%nx,-1:m%ny))
+        allocate (m%imapFcx(-1:m%nx,-1:m%ny))
+        allocate (m%imapFcy(-1:m%nx,-1:m%ny))
+        allocate (m%imapVx(-1:m%nx,-1:m%ny))
+        allocate (m%icornVx(1:m%nx))
 #ifdef WG_DEBUG
-!        allocate (imapCv(-1:nx,-1:ny))
-!        allocate (imapFcx(-1:nx,-1:ny))
-!        allocate (imapFcy(-1:nx,-1:ny))
-!        allocate (imapVx(-1:nx,-1:ny))
+!        allocate (imapCv(-1:m%nx,-1:m%ny))
+!        allocate (imapFcx(-1:m%nx,-1:m%ny))
+!        allocate (imapFcy(-1:m%nx,-1:m%ny))
+!        allocate (imapVx(-1:m%nx,-1:m%ny))
 #endif
       else
         allocate (m%imapCv(0,0))
@@ -173,8 +172,8 @@
 #endif
       endif
 
-!      allocate (m%fcLbl(nFc))
-!      allocate (m%ftLbl(nFt))
+!      allocate (m%fcLbl(m%nFc))
+!      allocate (m%ftLbl(m%nFt))
 !      allocate (m%cvLbl(nCv))
 
 

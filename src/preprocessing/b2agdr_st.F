@@ -104,7 +104,7 @@
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
       external b2xxid, b2agsi_st, b2agfs_st, b2agcf_st, b2agmt_st, 
-     &  b2agmx, b2agbb, b2xgbs1, b2wfgm, b2wugm
+     &  b2agmx, b2agbb_st, b2xgbs1, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -462,7 +462,7 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf_st (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, gs, crx, cry, qz, 
+        call b2agbb_st (nx, ny, vol, gs, crx, cry, qz, 
      &   fpsi, ffbz, bb)
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)

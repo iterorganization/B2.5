@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agdr (ninp, nout, nCv, nFc, nVx,g,m)
+      subroutine b2agdr (ninp, nout,g,m)
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -15,7 +15,7 @@
       use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1), nout(0:1), nCv, nFc, nVx, nx, ny, nx1, ny1
+      integer ninp(0:1), nout(0:1) 
       type(geometry_ag) g
       type(mapping_ag) m
 *   ..output arguments (unspecified on entry)
@@ -291,7 +291,7 @@
      &             1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..test nCv, nFc, nVx
-      call xertst (1.le.nCv.and.1.le.nFc.and.1.le.nVx,
+      call xertst (1.le.m%nCv.and.1.le.m%nFc.and.1.le.m%nVx,
      & 'faulty argument nCv, nFc, nVx')
 *   ..set output control
       idout = '....'
@@ -304,7 +304,7 @@
        call b2agsi (parg, isymm, lblgm(61:120), istyle)
        !STARTING FROM HERE nx1, ny1 ARE USED IN STRUCTURED FORMAT
 *   ..obtain grid and mhd equilibrium data from file
-      call b2agfs(ninp(1),nCv,nFc,nVx,istyle,lblgm,g,m)
+      call b2agfs(ninp(1),istyle,lblgm,g,m)
 !      call b2agfs (ninp(1),nCv,nFc,nVx,nx,ny,nx1,ny1,istyle,
 !     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
 !     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,

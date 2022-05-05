@@ -26,18 +26,18 @@ contains
     ny = nny
   end subroutine computeGridSizeWithGhostCells_st
 
-  subroutine computeGridSizeWithGhostCells(nrid,nCi,nCmxVx0,nCmxFc0, &
-              &  nFmxCv0, nVmxCv0, nVmxFc0, nCg,nCv, nCmxVx, nCmxFc, &
+  subroutine computeGridSizeWithGhostCells(nrid,nCi,nCg,nCmxVx0,nCmxFc0, &
+              &  nFmxCv0, nVmxCv0, nVmxFc0, nCv, nCmxVx, nCmxFc, &
               &  nFmxCv, nVmxCv, nVmxFc ) 
-    integer, intent(in) :: nrid, nCi, nCmxVx0, nCmxFc0, nFmxCv0, &
+    integer, intent(in) :: nrid, nCi, nCg, nCmxVx0, nCmxFc0, nFmxCv0, &
               &  nVmxCv0, nVmxFc0
-    integer, intent(out) :: nCg, nCv, nCmxVx, nCmxFc, nFmxCv, &
+    integer, intent(out) :: nCv, nCmxVx, nCmxFc, nFmxCv, &
               &   nVmxCv, nVmxFc
     
     
      
     !internal
-    integer :: i, cflags(0:nCi), nBc
+    integer :: i, cflags(1:nCi), nBc
     character id*32
 
     !With the assumption that each boundary cell has only one boundary face
@@ -45,15 +45,16 @@ contains
     !read(nrid)
    
     call read_cflags(nrid, nCv, cflags)
-    !.. count number of boundary cells
-    nBc = 0
-    do i = 0, nCi
-      if (cflags(i).eq.GRID_BOUNDARY) then
-        nBc = nBc + 1
-      endif
-    enddo
-    !.. four more ghost cells at corners
-    nCg = nBc + 4
+    !.. count number of boundary cells, better count boundaryfaces but information not available
+    !nBc = 0
+    !do i = 1, nCi
+    !  if (cflags(i).eq.GRID_BOUNDARY) then
+    !    nBc = nBc + 1
+    !  endif
+    !enddo
+    !.. four or two more ghost cells at corners, depends on grid type
+
+    !nCg = nBc + 2
     nCv = nCi + nCg
 
     !.. calculate nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc
@@ -574,11 +575,11 @@ contains
     
   end subroutine create_guard_cells_st
 
-  subroutine create_guard_cells(nnCv,nnFc,nnVx,nCv,nFc,nVx,g,m)
+  subroutine create_guard_cells(nnCv,nnFc,nnVx,g,m)
     use b2mod_geo
     use b2mod_indirect
 
-    integer, intent(in) :: nnCv, nnFc, nnVx, nCv, nFc, nVx
+    integer, intent(in) :: nnCv, nnFc, nnVx
     type(geometry_ag), intent(inout) :: g
     type(mapping_ag), intent(inout) :: m
 
@@ -598,14 +599,14 @@ contains
     ! cvFc and cvFcP changes here, as ghost cells are only one face cells
     ! cvVx and cvVxP changes here
     ! in cflags(:,1) guard_cell gets flag == GRID_GUARD
-    nGhostCell = nCv - nnCv
+    nGhostCell = m%nCv - nnCv
     ! change cvFcP and cvVxP
-    do i = nnCv+1, nCv
+    do i = nnCv+1, m%nCv
        m%cvFcP(i,2) = 1
        m%cvFcP(i,1) = m%cvFcP(i-1,1) + m%cvFcP(i-1,2)
 
        m%cvVxP(i,2) = 2
-       m%cvVxP(i,1) = m%cvVxP(i-1,1) + m%cvFcP(i-1,2)
+       m%cvVxP(i,1) = m%cvVxP(i-1,1) + m%cvVxP(i-1,2)
     enddo
     
     ! change cvFc
@@ -614,18 +615,17 @@ contains
 
     do i = 1, nGhostCell
        cellnumber = nnCv + i 
-       cvFcpos = m%cvFcP(cellnumber,1)-1
+       cvFcpos = m%cvFcP(cellnumber,1)
        m%cvFc(cvFcpos) = facenumbers(i) 
 
-       cvVxpos = m%cvVxP(cellnumber,1)-1
+       cvVxpos = m%cvVxP(cellnumber,1)
        m%cvVx(cvVxpos) = m%fcVx(facenumbers(i),1)
        m%cvVx(cvVxpos+1) = m%fcVx(facenumbers(i),2)
     enddo
 
-    ! change cvCflags(:,1), cvCtype, cvX, cvY
-    do i = nnCv+1, nCv
+    ! change cvCflags(:,1), cvX, cvY
+    do i = nnCv+1, m%nCv
        g%cvCflags(i,1) = GRID_GUARD
-       g%cvCtype(i) = GRID_GUARD
        !iface = m%cvFc(m%cvFc(i,1)) ! just one face
        g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
            &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
@@ -653,16 +653,16 @@ contains
       type(geometry_ag) :: g
 
       !internal
-      integer :: i, j, counter, facesQuad(0:3), facesTria(0:2)
+      integer :: iCv, j, counter, facesQuad(0:3), facesTria(0:2)
       logical :: Bface
       intrinsic count
       
-      counter = 0
-      do i = 1, nnCv
-          if (g%cvCflags(i,1).eq.GRID_BOUNDARY) then
-             if (g%cvCtype(i).eq.0) then  !Quad
-               facesQuad = m%cvFc(m%cvFcP(i,1): &
-                 &   m%cvFcP(i,1)+m%cvFcP(i,2)-1)
+      counter = 1
+      do iCv = 1, nnCv
+          if (g%cvCflags(iCv,1).eq.GRID_BOUNDARY) then
+             if (m%cvFcP(iCv,2).eq.4) then  !Quad
+               facesQuad = m%cvFc(m%cvFcP(iCv,1): &
+                 &   m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
                do j = 0, 3
                   Bface = isBoundaryFace(facesQuad(j))
                   if (Bface) then
@@ -671,8 +671,8 @@ contains
                   endif
                enddo
              else !Triangle
-               facesTria = m%cvFc(m%cvFcP(i,1): &
-                 &   m%cvFcP(i,1)+m%cvFcP(i,2)-1)
+               facesTria = m%cvFc(m%cvFcP(iCv,1): &
+                 &   m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
                do j = 0,2
                  Bface = isBoundaryFace(facesTria(j))
                  if (Bface) then
