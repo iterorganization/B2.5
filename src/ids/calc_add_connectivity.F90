@@ -2,7 +2,7 @@
 
 !> Computes additional connectivity data based
 !! on the connectivity data of the traduitoutb2us file
-      subroutine calc_add_connectivity(nCv,nFc,nVx,g,m)
+      subroutine calc_add_connectivity(g,m)
       use b2mod_types
       use b2mod_indirect   ! causes issue
       use b2mod_geo        ! causes issue
@@ -11,7 +11,6 @@
       !!.. arguments
       type(geometry_ag) :: g
       type(mapping_ag) :: m
-      integer :: nCv, nFc, nVx
 
       !!.. local variables
       integer :: i, ic, ivx, ifc, n, vxFc_end, vxCv_end
@@ -24,16 +23,16 @@
   
 
       !Construct vxFcP
-      allocate (indFc(2*nFc))
-      indFc(1:nFc)          = (/ (i, i=1,nFc) /)
-      indFc(nFc+1:2*nFc)    = (/ (i, i=1,nFc) /)
+      allocate (indFc(2*m%nFc))
+      indFc(1:m%nFc)          = (/ (i, i=1,m%nFc) /)
+      indFc(m%nFc+1:2*m%nFc)    = (/ (i, i=1,m%nFc) /)
 
-      allocate (fh(2*nFc))
-      fh(1:nFc)             = m%fcVx(1:nFc,1)
-      fh(nFc+1:2*nFc)       = m%fcVx(1:nFc,2)
+      allocate (fh(2*m%nFc))
+      fh(1:m%nFc)             = m%fcVx(1:m%nFc,1)
+      fh(m%nFc+1:2*m%nFc)       = m%fcVx(1:m%nFc,2)
 
       allocate (indCv(m%nCmxVx))
-      do ic = 1,nCv
+      do ic = 1,m%nCv
          indCv(m%cvVxP(ic,1):m%cvVxP(ic,1)+m%cvVxP(ic,2)-1) = ic
       enddo
 
@@ -42,7 +41,7 @@
 
       m%vxFcP(1,1) = 1
       m%vxCvP(1,1) = 1
-      do ivx = 1, nVx-1
+      do ivx = 1, m%nVx-1
          m%vxFcP(ivx,2) = count (fh == ivx)
          m%vxFcP(ivx+1,1) = m%vxFcP(ivx,1) + m%vxFcP(ivx,2)
          if (m%vxFcP(ivx,2) > 0) then
@@ -75,7 +74,7 @@
       !Try analog for fcCv(nFc,2), similar to vxCv - check this in debugger
 
       allocate (indcvfc(m%nCmxFc))
-      do ic = 1,nCv
+      do ic = 1,m%nCv
          indcvfc(m%cvFcP(ic,1):m%cvFcP(ic,1)+m%cvFcP(ic,2)-1) = ic
       enddo
 
@@ -84,13 +83,13 @@
 
       !hier loop over de faces
 
-      do ifc = 1,nFc
+      do ifc = 1,m%nFc
            n = count(fch == ifc)
            if (n .eq. 2) then
              m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
            else
              call xerrab &
-             & ('init_connectivity: Wrong number of cell per face')
+             & ('calc_add_connectivity: Wrong # of cell per face')
            endif
       enddo
 

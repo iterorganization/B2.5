@@ -8,7 +8,7 @@
 *     3 leftcut1,rightcut1,bottomcut1,topcut1,
 *     4 periodic_bc,nncut,nncutmax)
 
-      subroutine b2agfs (nrid,nCv,nFc,nVx,istyle,lblgm,g,m)
+      subroutine b2agfs (nrid,istyle,lblgm,g,m)
 
       use b2mod_types
       use b2mod_constants
@@ -22,7 +22,7 @@
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
-      integer nrid, nCv, nFc, nVx, istyle
+      integer nrid, istyle
       type(geometry_ag), intent(inout) :: g
       type(mapping_ag), intent(inout) :: m
 *   .. output arguments
@@ -156,7 +156,7 @@
 *   ..subprogram start-up calls
       call subini ('b2agfs')
 *   ..test nCv, nFc, nVx, nrid
-      call xertst (0.le.nCv.and.0.le.nFc.and.0.le.nVx,
+      call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
      &   'faulty argument nCv, nFc, nVx')
       call xertst (0.lt.nrid, 'faulty argument nrid')
 
@@ -191,7 +191,7 @@
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
-      call b2gxdr_dummy(local_sonnet,nCv,nFc,nVx,istyle,
+      call b2gxdr_dummy(local_sonnet,istyle,
      &     isymm,g,m)
 
 
@@ -199,7 +199,7 @@
 
 
       ! Set up magnetic field and shift coordinates
-      do i = 1,nCv
+      do i = 1,m%nCv
         if ( g%cvCflags(i,1) .eq. GRID_UNDEFINED .or. 
      &     g%cvCflags(i,1) .eq. GRID_EXTERNAL .or. 
      &     g%cvCflags(i,1) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
@@ -558,7 +558,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
       end subroutine b2agfs
 
-      subroutine b2gxdr_dummy(local_sonnet,nCv,nFc,nVx,istyle,
+      subroutine b2gxdr_dummy(local_sonnet,istyle,
      &  isymm,g,m)
       use b2mod_types
       use b2mod_version
@@ -573,7 +573,7 @@ cxpb  if just below the top corner, make the corner cell follow
       use f90_unix           ! IGNORE
 #endif
       implicit none
-      integer nCv, nFc, nVx, istyle, isymm
+      integer  istyle, isymm
    
       character*(*) local_sonnet
       type(geometry_ag) :: g
@@ -581,8 +581,8 @@ cxpb  if just below the top corner, make the corner cell follow
 
       !nnCv, nnFc, nnVx: dimension of the grid read from file
       !nCv, nFc, nVx: dimension of the grid as used by B2
-      integer nnCv, nnFc, nnVx, nGhostCell,
-     1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:2)
+      integer nnCv, nnFc, nnVx, 
+     1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:3)
 #ifdef USE_PXFGETENV
       integer lenval, ierror     
 #else
@@ -590,7 +590,7 @@ cxpb  if just below the top corner, make the corner cell follow
 #endif
       real (kind=R8) ::
      * ubr, ubt, ubp, upsi
-      real(kind=R8) :: bb_tmp_Vx(nVx) ! lengte onder voorbehoud
+      real(kind=R8) :: bb_tmp_Vx(m%nVx) ! lengte onder voorbehoud
       parameter (line_length=256)
       character*256 meshpath
       character*80 format_string(4)
@@ -611,7 +611,7 @@ cxpb  if just below the top corner, make the corner cell follow
 *   ..subprogram start-up calls
       call subini('b2gxdr_dummy')
 *   ..test nCv, nFc, nVx, istyle
-      call xertst (0.le.nCv.or.0.le.nFc.or.0.le.nVx, 
+      call xertst (0.le.m%nCv.or.0.le.m%nFc.or.0.le.m%nVx, 
      & 'faulty arggument nCv, nFc, nVx')
       call xertst (istyle.eq.-1 .or. istyle.eq.-2,
      & 'faulty input parameter istyle')
@@ -640,7 +640,7 @@ cxpb  if just below the top corner, make the corner cell follow
      1     "Reading the geometry file assuming the 'new' format"
           rewind lun
           call cfverr(lun,grid_version)
-          call cfruin (lun, 3, idum, 'nCv,nFc,nVx')
+          call cfruin (lun, 4, idum, 'nCv,nFc,nVx,nCg')
           nnCv = idum(0)
           nnFc = idum(1)
 	    nnVx = idum(2)
@@ -652,31 +652,31 @@ cxpb  if just below the top corner, make the corner cell follow
            rewind lun
            call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,g,m)
 
-           !calculate number of ghostcells
-           nGhostCell = nCv - nnCv
 
            call create_guard_cells
-     1         (nnCv,nnFc,nnVx,nCv,nFc,nVx,g,m)
+     1         (nnCv,nnFc,nnVx,g,m)
 
 !     .. Construct additional connectivity data 
-           call calc_add_connectivity(nCv,nFc,nVx,g,m)
+           call calc_add_connectivity(g,m)
 
 !     .. Order the vertices and faces as rightturning 
            call order_vertices(g,m)         
           
 
 !     Compute magnetic field with the same recipe as carre...
-           call carre_b2agbb(nCv,nFc,nVx,g,m,isymm)
+           call b2agbb(g,m,isymm)
 
 !     ..and transfer it to the ghost cells with sanity checks
-             do i = 1, nCv
+             do i = 1, m%nCv
                 select case (g%cvCflags(i,1))
                 case(GRID_GUARD)  ! 
                    g%cvBp(i) = g%cvBb(i,1)
                    g%cvBt(i) = g%cvBb(i,3)
                 case(GRID_INTERNAL,GRID_BOUNDARY)   
-                   if (abs(g%cvBp(i) - g%cvBb(i,1))  > 1e-7 .or.
-     $                 abs(g%cvBt(i) - g%cvBb(i,3))  > 1e-7) then
+                   if (abs(abs(g%cvBp(i)) - abs(g%cvBb(i,1))) 
+     $                   > 1e-7 .or.
+     $                 abs(abs(g%cvBt(i)) - abs(g%cvBb(i,3))) 
+     $                   > 1e-7) then
                       write(*,*) "b2agfs: not maching carre bb 
      $                at", i    
                    endif
@@ -712,11 +712,12 @@ cxpb  if just below the top corner, make the corner cell follow
       use b2ag_parameters
       use carre_constants
       use b2ag_ghostcells
-      use carre_b2ag
+      !use carre_b2ag
       use b2mod_geo
       implicit none
       !input arguments 
-      integer nrid, nnCv, nnFc, nnVx
+      integer nrid, nnCv, nnFc, nnVx, 
+     &     nnCmxVx,nnCmxFc,nnFmxCv,nnVmxCv,nnVmxFc
       !output argument
       type(geometry_ag) :: g 
       type(mapping_ag)  :: m  
@@ -738,18 +739,18 @@ cxpb  if just below the top corner, make the corner cell follow
       
       if (grid_version.eq."03.002.000") then
         !read nCv, nFc, nVx (without ghostcells)
-        call cfruin (nrid, 3, idum, 'nCv,nFc,nVx')
+        call cfruin (nrid, 4, idum, 'nCv,nFc,nVx,nCg')
         nnCv = idum(0)
         nnFc = idum(1)
 	  nnVx = idum(2)
         !read nCmVx, nCmxFc
         call cfruin (nrid, 5, idum, 
      &    'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
-        m%nCmxVx = idum(0)
-        m%nCmxFc = idum(1)
-        m%nFmxCv = idum(2)
-        m%nVmxCv = idum(3)
-        m%nVmxFc = idum(4)
+        nnCmxVx = idum(0)
+        nnCmxFc = idum(1)
+        nnFmxCv = idum(2)
+        nnVmxCv = idum(3)
+        nnVmxFc = idum(4)
         !read nx, ny
         call cfruin (nrid, 2, idum, 'nx,ny')
         m%nx = idum(0)
@@ -783,9 +784,9 @@ cxpb  if just below the top corner, make the corner cell follow
        ! look whether these are correct variable allocations
 
        !read cvVx
-       call cfruin(nrid,m%nCmxVx,m%cvVx,'cvVx')
+       call cfruin(nrid,nnCmxVx,m%cvVx,'cvVx')
        !read cvFc
-       call cfruin(nrid,m%nCmxFc,m%cvFc,'cvFc')
+       call cfruin(nrid,nnCmxFc,m%cvFc,'cvFc')
        !read fcVx(:,1)
        call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,1)')
        !read fcVx(:,2)

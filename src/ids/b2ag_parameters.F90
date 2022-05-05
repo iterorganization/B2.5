@@ -108,15 +108,15 @@ contains
 
   !> Read and initialize parameters for b2ag
   !> nCv, nFc, nVx: dimensions for the B2 data structures  
-  subroutine b2ag_read_parameters(ninp,nout,nCv,nFc,nVx,nCmxVx,nCmxFc, &
-        &   nFmxCv, nVmxCv, nVmxFc)
+  subroutine b2ag_read_parameters(ninp,nout,m)
+    use b2mod_indirect
     integer, intent(in) :: ninp(0:1), nout(0:1)
-    integer, intent(out) :: nCv, nFc, nVx, nCmxVx, nCmxFc, &
-        &   nFmxCv, nVmxCv, nVmxFc
+    type(mapping_ag) :: m 
     !internal
     character :: id*8, cnamip*80, cvalip*80
-    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:2), idum2(0:4), &
-        & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0
+    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:3), idum2(0:4), &
+        & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0, &
+        & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx
     character*256 local_sonnet
     integer :: istyle
     logical :: streql, open_file
@@ -165,18 +165,22 @@ contains
             ! Carre grid input
             if (grid_version.eq."03.002.000") then
 		! obtain nCv, nFc, nVx from geometry file
-      	        call cfruin (lun, 3, idum, 'nCv,nFc,nVx')
+      	        call cfruin (lun, 4, idum, 'nCv,nFc,nVx,nCg')
                 nCv0 = idum(0)
                 nFc0 = idum(1)
 	            nVx0 = idum(2)
+                m%nCg = idum(3)
                 doGhostCells = .true.
         ! obtain nCmxFc and nCmxVx from geometry file
-                call cfruin (lun, 5, idum, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
+                call cfruin (lun, 5, idum2, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
                 nCmxVx0 = idum2(0)
                 nCmxFc0 = idum2(1)
                 nFmxCv0 = idum2(2)
                 nVmxCv0 = idum2(3)
-                nVmxFc0 = idum2(4) 
+                nVmxFc0 = idum2(4)
+                call cfruin (lun, 2, idum, 'nx,ny')
+                m%nx = idum(0)
+                m%ny = idum(1)
             !else
                 !read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
                 !doGhostCells = .true.
@@ -197,9 +201,17 @@ contains
      if (doGhostCells) then
         rewind lun
         nCi = nCv
-        call computeGridSizeWithGhostCells(lun,nCv,nCmxVx0,nCmxFc0, &
-              &  nFmxCv0, nVmxCv0, nVmxFc0, nCg,nCv,nCmxVx,nCmxFc, &
-              &  nFmxCv, nVmxCv, nVmxFc) 
+        call computeGridSizeWithGhostCells(lun,nCv,m%nCg,nCmxVx0,nCmxFc0, &
+              &  nFmxCv0, nVmxCv0, nVmxFc0,nCv,nCmxVx,nCmxFc, &
+              &  nFmxCv, nVmxCv, nVmxFc)
+        m%nCv = nCv 
+        m%nFc = nFc0
+        m%nVx = nVx0
+        m%nCmxVx = nCmxVx
+        m%nCmxFc = nCmxFc
+        m%nFmxCv = nFmxCv
+        m%nVmxCv = nVmxCv
+        m%nVmxFc = nVmxFc
 	! subroutine of b2ag_ghostcells
      end if
      close(lun)
