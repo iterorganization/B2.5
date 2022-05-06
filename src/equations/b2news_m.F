@@ -377,11 +377,11 @@ csw 01oct2012 initialize potential if necessary
       nip = ni
       uap = ua                                                           !srv 24.05.21
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21
-      call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 02.11.21
-     &              cvsa_drho, fac_vis,                                  !som 18.08.21
-     &              fchvispar_a, fchvispar)
+      call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }
+     &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 !som 02.11.21
+      call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 02.11.21
+     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
      &              facdrift, fchinert_a, fchinert)
       call b2tvspr (nx, ny, ns, ismain, fac_vis, vol,                    !srv 10.10.17 02.11.21
@@ -635,17 +635,18 @@ csw 16oct2012 init ier0
         call my_out(70,nx,ny,ceqp,'b2news_m_ceqp')
       endif                                                              !srv 12.07.05 }
 
-      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !srv 20.09.06 }!som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21
-      call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21 !srv 02.11.21
-     &              cvsa_drho, fac_vis,                                  !som 18.08.21
-     &              fchvispar_a, fchvispar)
-      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 08.09.21
-     &              facdrift, fchinert_a, fchinert)
-      call b2tvspr (nx, ny, ns, ismain, fac_vis, vol, po, ti, na,        !srv 10.10.17 02.11.21
+      call b2tanml (nx, ny, ns, ismain,                                  !srv 20.09.06 }!som 02.11.21
+     &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21
+      call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21 !srv 02.11.21
+     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
+     &              fchvispar_a, fchvispar)                              !som 18.08.21
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 08.09.21
+     &              na, ua, facdrift, fchinert_a, fchinert)
+      call b2tvspr (nx, ny, ns, ismain, fac_vis,                         !srv 10.10.17 02.11.21
+     &              vol, po, ti, na,
      &              avisper_a, bvisper_a, cvisper_a,
      &              fchvisper_a, fchvisper)
-      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17   08.09.21 } 02.11.21
+      call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 08.09.21 } 02.11.21
      &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
@@ -840,8 +841,9 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           endif                                                          !srv 12.07.05 }
         endif
 *   ..compute currents
-        call b2tfch_ (nx, ny, ns, nscx, ismain, iscx, facdrift, fac_ExB, !srv 09.01.20
-     &    fac_vis, vol, gs, hx, hy, qz, qc, bb, te, po, ne,
+        call b2tfch_ (nx, ny, ns, nscx, ismain, iscx,
+     &    facdrift, fac_ExB, fac_vis,                                    !srv 09.01.20
+     &    vol, gs, hx, hy, qz, qc, bb, te, po, ne,
      1    ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia, ua,
      1    csig, csigin, csig_stoch, chci, calf, cvsa_cl, cvsa_drho,      !som 18.08.21 !srv 24.08.21
      &    chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                 !som 20.10.21
@@ -906,7 +908,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call my_out(70,nx,ny,po,'b2news_m_po'//charns)
       endif                                                              !srv 12.07.05 }
 
-      if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
+      if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
         call b2xprz (nx, ny, ns, mp, am, na, rz)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
         wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
@@ -914,7 +916,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
       else
         cssb = 0.0_R8
-      endif                                                          !iyv 06.02.14
+      endif                                                              !iyv 06.02.14
 
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #ifdef WITH_FTIMINGS
@@ -942,27 +944,27 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
         call b2tfnb (nx, ny, is, ismain,
-     &     guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,       !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
-     1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),  !srv 09.01.01 20.09.06
+     &     guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,         !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
+     1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),    !srv 09.01.01 20.09.06
      1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     1     vadia(-1,-1,0,is),                                          !srv 17.05.99
-     1     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
+     1     vadia(-1,-1,0,is),                                            !srv 17.05.99
+     1     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, gs, qc,        !srv 19.05.03 08.10.04 04.02.05
      &     po, cvla(-1,-1,0,is), cdna(-1,-1,0,is),
-     &     cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                         !srv 13.10.06
-     &     cvlahz(-1,-1,0,is),                                         !srv 09.01.01 15.12.05
+     &     cdpa(-1,-1,0,is), cddi(-1,-1,0,is),                           !srv 13.10.06
+     &     cvlahz(-1,-1,0,is),                                           !srv 09.01.01 15.12.05
      &     cdnahz(-1,-1,0,is), cdpahz(-1,-1,0,is),
-     &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),           !srv 08.09.21
+     &     fchvispar_a(-1,-1,0,is), fchvisper_a(-1,-1,0,is),             !srv 08.09.21
      &     fchinert_a(-1,-1,0,is), fchanml_a(-1,-1,0,is),
-     &     fchvisq_a(-1,-1,0,is),                                      !srv 20.09.06
+     &     fchvisq_a(-1,-1,0,is),                                        !srv 20.09.06
      &     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &     fna_fcor(-1,-1,0,is),
      &     fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &     fna_mdf(-1,-1,0,is),                                        !srv 13.10.06
+     &     fna_mdf(-1,-1,0,is),                                          !srv 13.10.06
      &     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &     fna_53(-1,-1,0,is),
      &     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &     .false.)                                                    !djm Jan2017
+     &     .false.)                                                      !djm Jan2017
       enddo
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 !$OMP END PARALLEL DO
@@ -1165,7 +1167,8 @@ c   recompute particle fluxes
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,    !srv 22.01.02 01.07.05
-     &         vol, pbs, flob, conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),  !srv 24.05.21
+     &         vol, pbs, flob, conb, sna(-1,-1,0,is),
+     &         pcca(-1,-1,0,is),                                         !srv 24.05.21
      &         pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')

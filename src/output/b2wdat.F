@@ -1386,21 +1386,27 @@ c     calculate coordinates of cell centre
         iw = 1
         wdim(iw)= crdy_c_cell(jxi,iy)
         iw = 2
-        wdim(iw) = fhe(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        wdim(iw) = fhe(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)
+     .           /pitx(jxi,iy)
         iw = 3
-        wdim(iw) = fhi(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        wdim(iw) = fhi(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)
+     .           /pitx(jxi,iy)
         iw = 4
-        wdim(iw) = fhj(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        wdim(iw) = fhj(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)
+     .           /pitx(jxi,iy)
         do is=0,ns-1
          iw = iw + 1
-         wdim(iw)= fhm(jxi,iy,0,is)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+         wdim(iw)= fhm(jxi,iy,0,is)/gs(jxi,iy,0)/qc(jxi,iy)
+     .           /pitx(jxi,iy)
         enddo
         do is=0,ns-1
          iw = iw + 1
-         wdim(iw)= fhp(jxi,iy,0,is)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+         wdim(iw)= fhp(jxi,iy,0,is)/gs(jxi,iy,0)/qc(jxi,iy)
+     .           /pitx(jxi,iy)
         enddo
         iw = iw + 1
-        wdim(iw) = fht(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)/pitx(jxi,iy)
+        wdim(iw) = fht(jxi,iy,0)/gs(jxi,iy,0)/qc(jxi,iy)
+     .           /pitx(jxi,iy)
         write(70,hlp_frm) (wdim(ix),ix=1,iw)
        enddo
        close(70)
@@ -1432,21 +1438,27 @@ c     calculate coordinates of cell centre
         iw = 1
         wdim(iw)= crdy_c_cell(jxa,iy)
         iw = 2
-        wdim(iw) = fhe(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        wdim(iw) = fhe(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)
+     .           /pitx(jxa,iy)
         iw = 3
-        wdim(iw) = fhi(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        wdim(iw) = fhi(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)
+     .           /pitx(jxa,iy)
         iw = 4
-        wdim(iw) = fhj(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        wdim(iw) = fhj(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)
+     .           /pitx(jxa,iy)
         do is=0,ns-1
          iw = iw + 1
-         wdim(iw)= fhm(jxa,iy,0,is)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+         wdim(iw)= fhm(jxa,iy,0,is)/gs(jxa,iy,0)/qc(jxa,iy)
+     .           /pitx(jxa,iy)
         enddo
         do is=0,ns-1
          iw = iw + 1
-         wdim(iw)= fhp(jxa,iy,0,is)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+         wdim(iw)= fhp(jxa,iy,0,is)/gs(jxa,iy,0)/qc(jxa,iy)
+     .           /pitx(jxa,iy)
         enddo
         iw = iw + 1
-        wdim(iw) = fht(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)/pitx(jxa,iy)
+        wdim(iw) = fht(jxa,iy,0)/gs(jxa,iy,0)/qc(jxa,iy)
+     .           /pitx(jxa,iy)
         write(70,hlp_frm) (wdim(ix),ix=1,iw)
        enddo
        close(70)
@@ -1491,11 +1503,14 @@ c     calculate coordinates of cell centre
            iw = 1
            wdim(iw)= crdy_c_cell(ixx,iy)
            iw = 2
-           wdim(iw) = fhe(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fhe(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            iw = 3
-           wdim(iw) = fhi(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fhi(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            iw = 4
-           wdim(iw) = fhj(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fhj(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            do is=0,ns-1
              iw = iw + 1
              wdim(iw)= fhm(ixx,iy,0,is)/gs(ixx,iy,0)/qc(ixx,iy)/
@@ -1507,7 +1522,8 @@ c     calculate coordinates of cell centre
      .                                             pitx(ixx,iy)
            enddo
            iw = iw + 1
-           wdim(iw) = fht(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fht(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            write(70,hlp_frm) (wdim(ix),ix=1,iw)
          enddo
        enddo
@@ -1553,11 +1569,14 @@ c     calculate coordinates of cell centre
            iw = 1
            wdim(iw)= crdy_c_cell(ixx,iy)
            iw = 2
-           wdim(iw) = fhe(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fhe(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            iw = 3
-           wdim(iw) = fhi(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fhi(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            iw = 4
-           wdim(iw) = fhj(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fhj(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            do is=0,ns-1
              iw = iw + 1
              wdim(iw)= fhm(ixx,iy,0,is)/gs(ixx,iy,0)/qc(ixx,iy)/
@@ -1569,7 +1588,8 @@ c     calculate coordinates of cell centre
      .                                             pitx(ixx,iy)
            enddo
            iw = iw + 1
-           wdim(iw) = fht(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/pitx(ixx,iy)
+           wdim(iw) = fht(ixx,iy,0)/gs(ixx,iy,0)/qc(ixx,iy)/
+     .                                             pitx(ixx,iy)
            write(70,hlp_frm) (wdim(ix),ix=1,iw)
          enddo
        enddo

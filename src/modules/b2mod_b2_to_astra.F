@@ -129,7 +129,7 @@ csw 09jan2014 add extra allocates
          call ipgeti('b2mndr_eirene', use_eirene)
         endif
 
-        do iy = nyd,-1,-1                                            !srv 21.05.12 {
+        do iy = nyd,-1,-1                                                   !srv 21.05.12 {
          if(nncut.eq.2) then
           np=-1
           do ix = rightcut(nncut), rightcut(nncut-1)-1
@@ -331,7 +331,7 @@ csw 09jan2014 add extra allocates
             enddo
            enddo
           enddo
-         endif                                                   !srv 20.12.12 }
+         endif                                                           !srv 20.12.12 }
 #endif
         enddo
 
@@ -427,7 +427,7 @@ csw 09jan2014 add extra allocates
      &       (po(rightix(ix,iy),iy)-po(ix,iy))/
      &       (hx(rightix(ix,iy),iy)+hx(ix,iy)))*
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
-     &        bb(ix,iy,2)/bb(ix,iy,3)**2                                 !srv 11.04.13 }
+     &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
               sfne(iy) = sfne(iy) + fne(ix,iy,1)
              endif

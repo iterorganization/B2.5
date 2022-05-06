@@ -83,7 +83,7 @@
         call b2xvff (nx, ny, cvsa_cl(-1,-1,0,is), 'cvsa_cl')            !srv 16.10.17
        enddo
        call ipgeti ('b2tfhe_no_current', no_current)
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                  !som 13.01.22
       endif
 
       if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.
@@ -133,7 +133,7 @@ c Drift terms
          endif
         else
          if (.not.is_neutral(is)) then                                  !som 09.11.21
-          if (zh_vis_type.eq.0) then                          !som 13.01.22
+          if (zh_vis_type.eq.0) then                                    !som 13.01.22
            do iy = -1, ny
             do ix = 0, nx
              if(leftix(ix,iy).ne.-2) then

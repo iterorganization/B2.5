@@ -3275,9 +3275,10 @@ contains
     if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
     if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
     if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
-    fet = fac_flux*(fht(ix_flux,iy_flux,idir) - fhj(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
+    fet = fac_flux*(fht(ix_flux,iy_flux,idir) - fhj(ix_flux,iy_flux,idir)     &
+            & + fhi_ext(ix_flux,iy_flux,idir))
     do is=0,ns_ext-1
-      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
+      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+  &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))

@@ -1,15 +1,14 @@
 *.specification
 
-      subroutine b2trfl_vis (ix, iy, ns, eta, pa, gamma, cF_limv)
+      subroutine b2trfl_vis (ix, iy, ns, eta, pa, gamma, cfl, cF_limv)
       use b2mod_types
-      use b2mod_b2cmpt
       use b2mod_indirect
       use b2mod_zhfrtf , only: gavm_uc
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ix,iy,ns
-      real (kind=R8) :: gamma                                           !som 20.03.21
+      real (kind=R8) :: gamma, cfl                                      !som 20.03.21
       real (kind=R8) :: eta(0:ns-1), pa(0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -39,10 +38,10 @@
 *   ..subprogram start-up calls
       call subini ('b2trfl_vis')
 *   ..main
-      if (cflim(2).ne.0.0_R8.and..not.on_closed_surface(ix,iy)) then
+      if (cfl.ne.0.0_R8.and..not.on_closed_surface(ix,iy)) then
         do is=0, ns-1
           t0=abs(gavm_uc(ix,iy))
-          t1=cflim(2)*pa(is)
+          t1=cfl*pa(is)
 
           cF_limv(is)=
      &     1.0_R8/(1.0_R8+(eta(is)*t0/t1)**gamma)**(1.0_R8/gamma)

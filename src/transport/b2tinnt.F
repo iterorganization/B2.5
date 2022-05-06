@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nx, ny, ns, nscx, iscx, facdrift, fac_ExB,
+      subroutine b2tinnt (nx, ny, ns, nscx, iscx,
+     &       facdrift, fac_ExB,
      &       vol, gs, hx, hy, qz, qc, bb,                               !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin)                        !srv 08.03.99 16.06.09
       use b2mod_types
@@ -63,13 +64,14 @@
      *   vntrl(-1:nx,-1:ny), vntrb(-1:nx,-1:ny),
      *   til(-1:nx,-1:ny), tib(-1:nx,-1:ny),
      *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
-     *   fnal(-1:nx,-1:ny,0:1,0:ns-1), fnav(-1:nx,-1:ny,0:1,0:ns-1),
+     *   fnal(-1:nx,-1:ny,0:1,0:ns-1),
+     *   fnav(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny),
      &   csigia(-1:nx,-1:ny,0:1),                                       !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                         !srv 20.10.17
-      real (kind=R8) ::  mu, t0                                         !som 05.11.21
+      real (kind=R8) :: mu, t0                                          !som 05.11.21
       character chns*3, chns0*3                                         !som 04.11.21
       logical found
 *   ..procedures
@@ -106,13 +108,21 @@
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
      &               .and. no_current.eq.0
      .               .and. fch_ion_neutral .ne. 0.0e0_R8) then          !srv 26.07.06 01.07.99
+       if(style.eq.0) then
+*   ..interpolate ti in the left and bottom cell face
+         call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
+         call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
+       else
+         do is = 0, ns-1
+*   ..interpolate na in the left and bottom cell face
+           call intfaceh(nx, ny, leftix, leftiy, vol,
+     *                 na(-1,-1,is), nal(-1,-1,is))                     !som 04.11.21
+           call intfacev(nx, ny, bottomix, bottomiy, vol,
+     &                 na(-1,-1,is), nab(-1,-1,is))                     !som 04.11.21
+         enddo
+       endif
        if (use_eirene.ne.0) then
         fchin = 0.0e0_R8                                                !srv 15.02.11 {
-        if(style.eq.0) then
-*   ..interpolate ti in the left and bottom cell face
-          call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
-          call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
-        endif
 *   ..calculate section
         do is0 = 0, ns-1                                                !som 04.11.21 {
          if (is_neutral(is0).and.nint(zn(is0)).eq.1) then
@@ -186,13 +196,6 @@
                call my_out(70,nx,ny,csigia(-1,-1,1),'b2tinnt_csigiay'
      &                                       //chns//'_'//chns0)
              end if
-             if(style.ne.0) then
-*   ..interpolate na in the left and bottom cell face
-               call intfaceh(nx, ny, leftix, leftiy, vol,
-     *                 na(-1,-1,is), nal(-1,-1,is))                     !som 04.11.21
-               call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                 na(-1,-1,is), nab(-1,-1,is))                     !som 04.11.21
-             endif
 
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
 
@@ -293,23 +296,12 @@
 *    ..test edge values and sign of csigin
          do is = 0, ns-1
           do is0 = 0, ns-1
-           call b2xvsg (n2, csigin(-1,-1,0,is,is0), 1, 'csigin', '.ge.')
-           call b2xvsg (n2, csigin(-1,-1,1,is,is0), 1, 'csigin', '.ge.')
+           call b2xvsg (n2, csigin(-1,-1,0,is,is0), 1, 'csigin',
+     .            '.ge.')
+           call b2xvsg (n2, csigin(-1,-1,1,is,is0), 1, 'csigin',
+     .            '.ge.')
            call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
           enddo
-         enddo
-        endif
-        if(style.eq.0) then
-*   ..interpolate ti in the left and bottom cell face
-         call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
-         call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
-        else
-*   ..interpolate na in the left and bottom cell face
-         do is = 0, ns-1
-          call intfaceh(nx, ny, leftix, leftiy, vol,
-     *                    na(-1,-1,is), nal(-1,-1,is))
-          call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                    na(-1,-1,is), nab(-1,-1,is))
          enddo
         endif
 *   ..calculate the contribution of ion-neutral current

@@ -713,7 +713,7 @@ contains
         type(ids_generic_grid_aos3_root) :: edge_grid, transport_grid, &
             &  sources_grid
 #if IMAS_MINOR_VERSION > 21
-        type(ids_generic_grid_aos3_root), allocatable :: radiation_grid
+        type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
 #endif
 
@@ -3557,14 +3557,14 @@ contains
                 !! wadia: Diamagnetic ion velocity
                     tmpFace(:,:,0) = wadia(:,:,0,ispion(is,js))
                     tmpFace(:,:,1) = IDS_REAL_INVALID
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( edge_grid,              &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_diamagnetic,   &
                       &   b2FaceData = tmpFace,                               &
                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                     tmpFace(:,:,0) = IDS_REAL_INVALID
                     tmpFace(:,:,1) = wadia(:,:,1,ispion(is,js))
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( edge_grid,              &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_diamagnetic,   &
                       &   b2FaceData = tmpFace,                               &
@@ -3572,21 +3572,21 @@ contains
                 !! vaecrb: ExB ion velocity
                     tmpFace(:,:,0) = vaecrb(:,:,0,ispion(is,js))
                     tmpFace(:,:,1) = IDS_REAL_INVALID
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( edge_grid,              &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_exb,           &
                       &   b2FaceData = tmpFace,                               &
                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                     tmpFace(:,:,0) = IDS_REAL_INVALID
                     tmpFace(:,:,1) = vaecrb(:,:,1,ispion(is,js))
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( edge_grid,              &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_exb,           &
                       &   b2FaceData = tmpFace,                               &
                       &   vectorID = VEC_ALIGN_RADIAL_ID )
                   end if
                 !! cvsa: Ion diffusivity
-                  call write_face_vector_component(                           &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &         ggd( time_sind )%ion( is )%state( js )%       &
                       &         momentum%d,                                   &
@@ -3598,7 +3598,7 @@ contains
                 do js = 1, istion(is)
                   call divide_by_contact_areas                                &
                       &  (nx,ny,fmo(-1,-1,0,ispion(is,js)),tmpFace)
-                  call write_face_vector_component(                           &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
                       &                     state( js )%momentum%flux,        &
@@ -3607,7 +3607,7 @@ contains
                   totFace(:,:,0) = totFace(:,:,0) + tmpFace(:,:,0)
                   totFace(:,:,1) = totFace(:,:,1) + tmpFace(:,:,1)
                 end do
-                call write_face_vector_component(                             &
+                call write_face_vector_component( transport_grid,             &
                     &   vectorComponent = edge_transport%model(1)%            &
                     &                     ggd( time_sind )%ion( is )%         &
                     &                     momentum%flux,                      &
@@ -3617,7 +3617,7 @@ contains
                 do js = 1, istion(is)
                   tmpFace(:,:,0) = fllimvisc(:,:,ispion(is,js))
                   tmpFace(:,:,1) = 1.0_IDS_real
-                  call write_face_vector_component(                           &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
                       &                     state( js )%momentum%flux_limiter,&
@@ -4194,14 +4194,14 @@ contains
             call divide_by_contact_areas(nx,ny,fch,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_total,                               &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_total,                               &
                 &   b2FaceData = totFace,                                    &
@@ -4220,14 +4220,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchanml,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
                 &   b2FaceData = totFace,                                    &
@@ -4237,14 +4237,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchinert,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
                 &   b2FaceData = totFace,                                    &
@@ -4254,14 +4254,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchin,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
                 &   b2FaceData = totFace,                                    &
@@ -4271,14 +4271,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchvispar,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
                 &   b2FaceData = totFace,                                    &
@@ -4288,14 +4288,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchvisper,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
                 &   b2FaceData = totFace,                                    &
@@ -4305,14 +4305,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchvisq,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
                 &   b2FaceData = totFace,                                    &
@@ -4322,14 +4322,14 @@ contains
             call divide_by_contact_areas(nx,ny,fchdia,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
                 &   b2FaceData = totFace,                                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             totFace(:,:,0) = IDS_REAL_INVALID
             totFace(:,:,1) = tmpFace(:,:,1)
-            call write_face_vector_component(                                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
                 &   b2FaceData = totFace,                                    &
@@ -4577,25 +4577,25 @@ contains
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                    else
                      tmpFace = 0.0_IDS_real
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
@@ -4889,25 +4889,25 @@ contains
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
                    else
                      tmpFace = 0.0_IDS_real
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                     call write_face_vector_component(                       &
+                     call write_face_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
@@ -5014,14 +5014,14 @@ contains
                 !! wadia: Diamagnetic fluid neutral velocity
                       tmpFace(:,:,0) = wadia(:,:,0,js)
                       tmpFace(:,:,1) = IDS_REAL_INVALID
-                      call write_face_vector_component(                       &
+                      call write_face_vector_component( edge_grid,            &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_diamagnetic, &
                         &   b2FaceData = tmpFace,                             &
                         &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                       tmpFace(:,:,0) = IDS_REAL_INVALID
                       tmpFace(:,:,1) = wadia(:,:,1,js)
-                      call write_face_vector_component(                       &
+                      call write_face_vector_component( edge_grid,            &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_diamagnetic, &
                         &   b2FaceData = tmpFace,                             &
@@ -5029,14 +5029,14 @@ contains
                 !! vaecrb: ExB fluid neutral velocity
                       tmpFace(:,:,0) = vaecrb(:,:,0,js)
                       tmpFace(:,:,1) = IDS_REAL_INVALID
-                      call write_face_vector_component(                       &
+                      call write_face_vector_component( edge_grid,            &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_exb,         &
                         &   b2FaceData = tmpFace,                             &
                         &   vectorID = VEC_ALIGN_POLOIDAL_ID )
                       tmpFace(:,:,0) = IDS_REAL_INVALID
                       tmpFace(:,:,1) = vaecrb(:,:,1,js)
-                      call write_face_vector_component(                       &
+                      call write_face_vector_component( edge_grid,            &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_exb,         &
                         &   b2FaceData = tmpFace,                             &
@@ -5083,13 +5083,13 @@ contains
                         &         energy_density_kinetic,                     &
                         &   value = tmpCv )
                 !! cvsa: Ion diffusivity
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum%d,                     &
                         &   b2FaceData = cvsa(:,:,:,js),                      &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum%d,            &
@@ -5097,13 +5097,13 @@ contains
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 !! fmo: Ion momentum flux
                     call divide_by_contact_areas(nx,ny,fmo(-1,-1,0,js),tmpFace)
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum%flux,                  &
                         &   b2FaceData = tmpFace,                             &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum%flux,         &
@@ -5122,13 +5122,13 @@ contains
                 !! fllimvisc: Fluid neutral momentum transport flux limit
                     tmpFace(:,:,0) = fllimvisc(:,:,js)
                     tmpFace(:,:,1) = 1.0_IDS_real
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum%flux_limiter,          &
                         &   b2FaceData = fllimvisc(:,:,js),                   &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_face_vector_component(                         &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum%flux_limiter, &
@@ -5371,14 +5371,14 @@ contains
             !! csig : Electric conductivity
             tmpFace(:,:,0) = csig(:,:,0)
             tmpFace(:,:,1) = IDS_REAL_INVALID
-            call write_face_vector_component(                           &
+            call write_face_vector_component( transport_grid,           &
                 &   vectorComponent = edge_transport%model(1)%          &
                 &         ggd( time_sind )%conductivity,                &
                 &   b2FaceData = tmpFace,                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
             tmpFace(:,:,0) = IDS_REAL_INVALID
             tmpFace(:,:,1) = csig(:,:,1)
-            call write_face_vector_component(                           &
+            call write_face_vector_component( transport_grid,           &
                 &   vectorComponent = edge_transport%model(1)%          &
                 &         ggd( time_sind )%conductivity,                &
                 &   b2FaceData = tmpFace,                               &
@@ -6238,184 +6238,6 @@ contains
         end subroutine write_timed_value
 #endif
 
-
-#if IMAS_MINOR_VERSION > 11
-
-        !> Write a vector component B2 face quantity to ids_generic_grid_vector
-        !! components
-        !! @note Available IDS vector component data fields (vector IDs):
-        !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-        !!          - "diamagnetic",
-        !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
-        !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-        !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
-        subroutine write_face_vector_component( vectorComponent, b2FaceData,   &
-                &   vectorID )
-            type(ids_generic_grid_vector_components), intent(inout),    &
-                &   pointer :: vectorComponent(:) !< Type of IDS data structure,
-                    !> designed for vector data handling
-            real(IDS_real), intent(in) ::  &
-                &   b2FaceData(-1:IDSmap%b2nx, -1:IDSmap%b2ny, 0:1)
-            real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
-                !< handling data field values
-            character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
-                                                        !< VEC_ALIGN_RADIAL_ID)
-            integer :: nSubsets  !< number of grid subsets to fill
-            integer :: iSubset   !< Grid subset iterator
-            integer :: iSubsetID !< Grid subset identifier index
-            integer :: ndim      !< Grid subset dimension
-            integer :: ggdID     !< Grid identifier index
-
-#if IMAS_MINOR_VERSION < 15
-            ggdId = edge_profiles%ggd(slice_index)%grid%identifier%index
-            nSubsets = 1
-#else
-            ggdId = edge_profiles%grid_ggd(slice_index)%identifier%index
-            nSubsets = size(edge_profiles%grid_ggd(slice_index)%grid_subset)
-            if (nSubsets.eq.0) return
-#endif
-            !! If required, allocate storage
-            if ( .not. associated( vectorComponent ) ) then
-                allocate( vectorComponent(nSubsets) )
-            end if
-
-            do iSubset = 1, nSubsets
-#if IMAS_MINOR_VERSION < 15
-               ndim = 2
-               iSubsetID = GRID_SUBSET_FACES
-#else
-               ndim = edge_profiles%grid_ggd(slice_index)%grid_subset(iSubset)%dimension
-               iSubsetID = edge_profiles%grid_ggd(slice_index)%grid_subset(iSubset)%identifier%index
-#endif
-               if (ndim.eq.IDS_INT_INVALID) then
-                  select case (iSubsetID)
-                  case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-                      & GRID_SUBSET_MAGNETIC_AXIS,               &
-                      & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-                      & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-                      & GRID_SUBSET_INNER_STRIKEPOINT,           &
-                      & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-                      & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-                      & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-                     ndim = 1
-                  case( GRID_SUBSET_EDGES, &
-                      & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-                      & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-                      & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-                      & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-                      & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-                      & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-                      & GRID_SUBSET_ALL_WALLS, &
-                      & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
-                      & GRID_SUBSET_SECOND_SEPARATRIX, &
-                      & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-                      & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-                      & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-                      & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-                      & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-                      & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-                      & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-                      & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-                      & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-                      & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-                      & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-                      & GRID_SUBSET_INNER_TARGET_INACTIVE )
-                     ndim = 2
-                  case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-                      & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-                      & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-                      & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-                      & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-                     ndim = 3
-                  case( GRID_SUBSET_VOLUMES )
-                     ndim = 4
-                  end select
-               end if
-               if (ndim.ne.2) cycle
-#if IMAS_MINOR_VERSION < 15
-               idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
-                   &   ggd( slice_index )%grid, iSubset,                   &
-                   &   IDSmap, b2FaceData )
-#else
-               idsdata => b2_IMAS_Transform_Data_B2_To_IDS( edge_profiles% &
-                   &   grid_ggd( slice_index ), iSubset,                   &
-                   &   IDSmap, b2FaceData )
-#endif
-               call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
-                   &   ggdID, iSubsetID, vectorID, idsdata )
-               deallocate(idsdata)
-            end do
-
-        end subroutine write_face_vector_component
-
-#endif
-#if 0
-        !> Write a vector B2 cell quantity to a complexgrid_vector
-        subroutine write_cell_vector( vector, align, alignid, vecdata )
-            type(ids_generic_grid_vector), intent(inout) :: vector
-            real(IDS_real), intent(in) :: vecdata(-1:IDSmap%b2nx, &
-                &   -1:IDSmap%b2ny, 0:2)
-            integer, intent(in) :: align(3)
-            character(LEN=132), intent(in) :: alignid(3)
-            real(IDS_real), dimension(:), pointer :: idsdata
-
-            !! internal
-            integer :: dim, i
-            integer :: ggdId
-
-            dim = size(vecdata, 3)
-
-            !! ITM CPO versus IMAS IDS regarding the ITMs vector%comp,
-            !! vector%align and vector%alignid:
-            !! - ITM vector%comp:
-            !!      Holds data on one of the vector components
-            !!      ( parallel, poloidal, toroidal etc.). The %comp(:)
-            !!      node can hold data for any of those components.
-            !!      However the data inside that node must be properly
-            !!      specified in order to provide necessary information
-            !!      to which component this data relates to.
-            !!      IDS does that differently. IDS has specially designed
-            !!      nodes with node names being the same as names of the
-            !!      components (for example
-            !!      edge_profiles.ggd(:)%e_field(:)%parallel).
-            !!      Each of those nodes hold data for its intended
-            !!      component.
-            !! - ITM vector%alignid:
-            !!      Alignment information for vector components.
-            !!      Describes vector component ID or label
-            !!      ("parallel", "toroidal", etc.). In IDS this is not
-            !!      needed as a node itself indicates to what vector
-            !!      component the data relates to.
-            !! - ITM vector%align:
-            !!      Alignment information for vector components.
-            !!      Holds vector component label (number tag). In IDS this
-            !!      is probably not required as, same as for %alignid, a
-            !!      node itself indicates to what vector component
-            !!      the data relates to.
-
-            ggdId = edge_profiles%grid_ggd(slice_index)%identifier%index
-            !! Fill in vector component data
-            do i = 1, dim
-#if GGD_MINOR_VERSION < 9
-                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
-                    &   edge_profiles%ggd( slice_index )%grid,      &
-                    &   GRID_SUBSET_CELLS, IDSmap, vecdata(:,:,i-1))
-#else
-                idsdata => b2_IMAS_Transform_Data_B2_To_IDS(        &
-                    &   edge_profiles%grid_ggd( slice_index ),      &
-                    &   GRID_SUBSET_CELLS, IDSmap, vecdata(:,:,i-1))
-#endif
-#if GGD_MINOR_VERSION > 8
-                call gridWriteData( vector, ggdId, GRID_SUBSET_CELLS, idsdata )
-#else
-                call gridWriteData( vector, GRID_SUBSET_CELLS, idsdata )
-#endif
-                deallocate(idsdata)
-            end do
-
-        end subroutine write_cell_vector
-
-#endif
     end subroutine B25_process_ids
 
     !> Process averaged B2.5 data and set it to IMAS IDS.
@@ -8627,6 +8449,114 @@ contains
 
     return
     end subroutine write_face_scalar
+
+    !> Write a vector component B2 face quantity to ids_generic_grid_vector
+    !! components
+    !! @note Available IDS vector component data fields (vector IDs):
+    !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
+    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
+    !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    subroutine write_face_vector_component( basegrid, &
+       &   vectorComponent, b2FaceData, vectorID )
+    implicit none
+#if IMAS_MINOR_VERSION < 15
+    type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
+        !< data structure, designed for handling grid geometry data
+#else
+    type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
+        !< data structure, designed for handling grid geometry data
+#endif
+    type(ids_generic_grid_vector_components), intent(inout),    &
+       &   pointer :: vectorComponent(:) !< Type of IDS data structure,
+                                         !> designed for vector data handling
+    real(IDS_real), intent(in) ::  &
+       &   b2FaceData(-1:IDSmap%b2nx, -1:IDSmap%b2ny, 0:1)
+    real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
+                                         !< handling data field values
+    character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
+                                                !< VEC_ALIGN_RADIAL_ID)
+    integer :: nSubsets  !< number of grid subsets to fill
+    integer :: iSubset   !< Grid subset iterator
+    integer :: iSubsetID !< Grid subset identifier index
+    integer :: ndim      !< Grid subset dimension
+    integer :: ggdID     !< Grid identifier index
+
+    ggdId = basegrid%identifier%index
+#if IMAS_MINOR_VERSION < 15
+    nSubsets = 1
+#else
+    nSubsets = size(basegrid%grid_subset)
+    if (nSubsets.eq.0) return
+#endif
+    !! If required, allocate storage
+    if ( .not. associated( vectorComponent ) ) then
+      allocate( vectorComponent(nSubsets) )
+    end if
+
+    do iSubset = 1, nSubsets
+#if IMAS_MINOR_VERSION < 15
+      ndim = 2
+      iSubsetID = GRID_SUBSET_FACES
+#else
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
+#endif
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_ALL_WALLS, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.2) cycle
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
+                   &   basegrid, iSubset, IDSmap, b2FaceData )
+      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+                   &   ggdID, iSubsetID, vectorID, idsdata )
+      deallocate(idsdata)
+    end do
+
+    return
+    end subroutine write_face_vector_component
 
     !> Write a scalar B2 vertex quantity to ids_generic_grid_scalar
     subroutine write_vertex_scalar( basegrid, scalar, b2VertexData )
