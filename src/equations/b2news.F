@@ -557,10 +557,10 @@ cxpb
 *     (= ne before continuity update)
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-        call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           !srv 20.09.06 }!som 02.11.21
-     &                fchanml_a, fchanml)                                !srv 08.09.21
-        call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,           !srv 19.02.21
-     &                cvsa_drho, fac_vis,                                !som 18.08.21
+        call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
+     &                csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
+        call b2tvspa (nx, ny, ns, ismain, bb,                            !srv 19.02.21
+     &                na, ua, cvsa_cl, cvsa_drho, fac_vis,               !som 18.08.21
      &                fchvispar_a, fchvispar)
         call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,
      &                facdrift, fchinert_a, fchinert)

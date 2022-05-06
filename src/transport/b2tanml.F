@@ -21,7 +21,8 @@
      1 csig_an(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     & fchanml_a(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1)
+     & fchanml_a(-1:nx,-1:ny,0:1,0:ns-1),
+     & fchanml(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -144,7 +145,8 @@ cxpb turn off poloidal flows in core boundary
           do ib = 1, nbc
             if(core_boundary(ib)) then
               do ix = 1, bc_list_size(ib)
-                fchanml_a(bc_list_x(ix,ib),bc_list_y(ix,ib),0,:)=0.0_R8
+                fchanml_a(bc_list_x(ix,ib),
+     .                    bc_list_y(ix,ib),0,:)=0.0_R8
                 fchanml(bc_list_x(ix,ib),bc_list_y(ix,ib),0)=0.0_R8
               enddo
             endif

@@ -55,6 +55,9 @@
       if (ncall.lt.3) then
       endif
 
+* ..initialize flubv to zero
+      flubv = 0.0_R8
+
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
@@ -70,13 +73,9 @@
      &      (log(rho_rel(ix,iy))-
      &       log(rho_rel(leftix(ix,iy),leftiy(ix,iy)))))
           endif
-         else
-          flubv(ix,iy,0) = 0.0e0_R8
          endif
         enddo
        enddo
-
-       flubv(:,:,1) = 0.0_R8
 
 * ..return
       ncall = ncall+1

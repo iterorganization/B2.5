@@ -27,10 +27,10 @@
      *  cvmahz(:,:,:,:),                                                !srv 15.12.05
      *  cvsahz(:,:,:,:),                                                !srv 09.01.01
      *  cvsa_cl(:,:,:,:),                                               !srv 04.10.99
-     &  cvsa_drho(:,:,:,:),                                             !som 16.08.21
+     *  cvsa_drho(:,:,:,:),                                             !som 16.08.21
      *  cvsahz_cl(:,:,:,:),                                             !srv 09.01.01
-     &  cvsahz_drho(:,:,:,:),                                           !som 18.08.21
-     *  chci_a(:,:,:,:), 
+     *  cvsahz_drho(:,:,:,:),                                           !som 18.08.21
+     *  chci_a(:,:,:,:),
      *  csig_cl(:,:,:),
      *  calf_cl(:,:,:),
      *  csig_stoch(:,:,:),                                              !srv 24.08.21

@@ -116,9 +116,9 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(0,iy,0)/gs(0,iy,0)/qc(0,iy), 
+     &    fhe(0,iy,0)/gs(0,iy,0)/qc(0,iy),
      &    fhi(0,iy,0)/gs(0,iy,0)/qc(0,iy),
-     &    fne(0,iy,0)/gs(0,iy,0)/qc(0,iy), 
+     &    fne(0,iy,0)/gs(0,iy,0)/qc(0,iy),
      &    fch(0,iy,0)/gs(0,iy,0)/qc(0,iy),
      &   (fna(0,iy,0,is)/gs(0,iy,0)/qc(0,iy),is=0,ns-1)
        enddo
@@ -131,9 +131,9 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy), 
+     &    fhe(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
      &    fhi(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
-     &    fne(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy), 
+     &    fne(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
      &    fch(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
      &   (fna(nx,iy,0,is)/gs(nx,iy,0)/qc(nx,iy),is=0,ns-1)
        enddo

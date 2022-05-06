@@ -422,7 +422,7 @@ csw 13mar2012
 
              nu2(ix,iy) = conn(iy)/(tauVeff
      &        *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
-           else    
+           else
 
              nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
      &        *sqrt(ti(ix,iy)/(mp*am(ismain)))

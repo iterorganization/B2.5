@@ -466,12 +466,12 @@
 *
 *     B2TRTF computes the thermal force transport coefficient.
 *
+*     B2TRVIS_AN computes the viscous stress tensor transport coefficient
+*     analytically.
+*
 *     B2TRZH computes the transport coefficients using the 21N-moment
 *     approach, as detailed in [V. M. Zhdanov. Transport Processes in
 *     Multicomponent Plasma, vol. 44. 10 2002].
-*
-*     B2TRVIS_AN computes the viscous stress tensor transport coefficient
-*     analytically.
 *
 *     B2TSTCH computes the Y component of the electron current
 *     associated with stochastization of the magnetic field.

@@ -137,12 +137,12 @@
         endif
        enddo
       enddo
-      
+
 *   ..compute contribution from the seven-point y-stencil
       
       do is = 0,ns-1
        if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
-     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then      
+     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then
         do iy = -1, ny
          do ix = -1, nx                                              !srv 26.11.02
            ireg = region(ix,iy,0)

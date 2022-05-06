@@ -25,7 +25,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, ismain, iscx(0:nscxmax-1), guard_flows   !xpb
+      integer nx, ny, ns, nscx, ismain, iscx(0:nscxmax-1),
+     & guard_flows                                                       !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
@@ -203,7 +204,8 @@ c Drift terms
       facdriftm = maxval(facdrift)                                       !srv 23.12.19
       fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, nscx, iscx, facdrift, fac_ExB,
+      call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
@@ -408,8 +410,10 @@ cxpb turn off poloidal flows in core boundary
                 fch_p(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8      !srv 10.06.08
                 fchdia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
                 fchin(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
-                fchvispar(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
-                fchvisper(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchvispar(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                         0.0_R8
+                fchvisper(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                         0.0_R8
                 fchvisq(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
               enddo
             endif
