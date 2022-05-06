@@ -576,18 +576,20 @@ contains
   end subroutine create_guard_cells_st
 
   subroutine create_guard_cells(nnCv,nnFc,nnVx,g,m)
-    use b2mod_geo
-    use b2mod_indirect
+    !use b2mod_geo
+    !use b2mod_indirect
+    use b2us_geo
+    use b2us_map
 
     integer, intent(in) :: nnCv, nnFc, nnVx
-    type(geometry_ag), intent(inout) :: g
-    type(mapping_ag), intent(inout) :: m
+    type(geometry), intent(inout) :: g
+    type(mapping), intent(inout) :: m
 
     !internal
 
     integer :: i, cellnumber, cvFcpos, cvVxpos, nGhostCell
     !integer :: facenumbers(nGhostCell)
-    integer :: facenumbers(nnCv)  ! too big 
+    integer :: facenumbers(m%nCg)  ! too big 
 
 
     call logmsg(LOGDEBUG, "create_guard_cells:entering")
@@ -625,7 +627,7 @@ contains
 
     ! change cvCflags(:,1), cvX, cvY
     do i = nnCv+1, m%nCv
-       g%cvCflags(i,1) = GRID_GUARD
+       m%cvLbl(i) = GRID_GUARD
        !iface = m%cvFc(m%cvFc(i,1)) ! just one face
        g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
            &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
@@ -644,13 +646,15 @@ contains
     
     ! Give a list of the boundary faces
     subroutine get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
-      use b2mod_geo
-      use b2mod_indirect
+      !use b2mod_geo
+      !use b2mod_indirect
+      use b2us_geo
+      use b2us_map
 
       integer, intent(in) :: nGhostCell, nnCv
       integer, intent(out) :: facenumbers(nGhostCell)
-      type(mapping_ag) :: m 
-      type(geometry_ag) :: g
+      type(mapping) :: m 
+      type(geometry) :: g
 
       !internal
       integer :: iCv, j, counter, facesQuad(0:3), facesTria(0:2)
@@ -659,7 +663,7 @@ contains
       
       counter = 1
       do iCv = 1, nnCv
-          if (g%cvCflags(iCv,1).eq.GRID_BOUNDARY) then
+          if (m%cvLbl(iCv).eq.GRID_BOUNDARY) then
              if (m%cvFcP(iCv,2).eq.4) then  !Quad
                facesQuad = m%cvFc(m%cvFcP(iCv,1): &
                  &   m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)

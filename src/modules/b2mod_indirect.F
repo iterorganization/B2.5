@@ -111,8 +111,7 @@
       subroutine alloc_b2mod_indirect(m)
       implicit none
       
-      !integer, intent(in) :: nCv, nFc, nVx, nCmxVx, nCmxFc, nFmxCv,
-      !&          nVmxCv, nVmxFc ,nx,ny
+
       type(mapping_ag), intent(inout) :: m
 
       if (b2mod_indirect_allocated) return

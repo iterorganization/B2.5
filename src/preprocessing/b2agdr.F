@@ -3,21 +3,20 @@
 
       subroutine b2agdr (ninp, nout,g,m)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_geo2
       use b2mod_version
-      use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_connectivity
       use b2ag_parameters
       use b2mod_interp
       use b2mod_grid_mapping
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1) 
-      type(geometry_ag) g
-      type(mapping_ag) m
+      type(geometry) :: g
+      type(mapping) :: m
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -95,7 +94,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, geometryType
+      integer idum(0:9), ix, iy, geometryType, redef_gmtry
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
@@ -337,7 +336,7 @@
 
 
 !*   ..compute metric coefficients on auxiliary mesh
-       ! call subroutine b2agmt (nCv,nFc, nVx, g, m)
+       ! call subroutine b2agmt (g, m)
 !      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
 !     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
 !     & cell_width1, cell_height1,

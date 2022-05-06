@@ -114,6 +114,7 @@
       allocate (g%cvOnedBsq(m%nCv))
       allocate (g%cvBzb(m%nCv))
       allocate (g%cvEb(m%nCv,1:3))
+      
       allocate (g%cvCflags(m%nCv,1:5))
       allocate (g%cvCtype(m%nCv))
       allocate (g%cvFpsi(m%nCv))

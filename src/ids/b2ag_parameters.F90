@@ -109,9 +109,9 @@ contains
   !> Read and initialize parameters for b2ag
   !> nCv, nFc, nVx: dimensions for the B2 data structures  
   subroutine b2ag_read_parameters(ninp,nout,m)
-    use b2mod_indirect
+    use b2us_map
     integer, intent(in) :: ninp(0:1), nout(0:1)
-    type(mapping_ag) :: m 
+    type(mapping) :: m 
     !internal
     character :: id*8, cnamip*80, cvalip*80
     integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:3), idum2(0:4), &
@@ -188,8 +188,6 @@ contains
         end if
         
      end if
-     ! always ghostcells need to be computed however
-     ! number of necessary extra, cells, faces is non trivial
 
      ! check that b2ag and geometry file sizes are compatible
      if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then        
@@ -209,12 +207,17 @@ contains
         m%nVx = nVx0
         m%nCmxVx = nCmxVx
         m%nCmxFc = nCmxFc
-        m%nFmxCv = nFmxCv
+        !m%nFmxCv = nFmxCv
         m%nVmxCv = nVmxCv
         m%nVmxFc = nVmxFc
-	! subroutine of b2ag_ghostcells
+
+	 ! subroutine of b2ag_ghostcells
      end if
      close(lun)
+
+      !introduce the flux tubes etc.
+      m%nFs = 0
+      m%nFt = 0
 
 
      return

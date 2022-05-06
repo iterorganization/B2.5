@@ -14,17 +14,19 @@
       use b2mod_constants
       use b2mod_b2cmfs
 !      use b2mod_connectivity
-      use b2mod_indirect
+      !use b2mod_indirect
       use b2ag_parameters
       use b2ag_ghostcells
       use carre_constants
-      use b2mod_geo
+      !use b2mod_geo
+      use b2us_geo
+      use b2us_map
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, istyle
-      type(geometry_ag), intent(inout) :: g
-      type(mapping_ag), intent(inout) :: m
+      type(geometry), intent(inout) :: g
+      type(mapping), intent(inout) :: m
 *   .. output arguments
 !      real (kind=R8) ::
 !     * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
@@ -111,8 +113,8 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, ic, ixl, ixr, iyl, iyr, inseltop, inselbot
-      integer Bt_adjust, Bt_reversal
+      integer ix, iy, i, ic, inseltop, inselbot, iCv, iVx
+      integer Bt_adjust, Bt_reversal, periodic_bc
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
 !     *     crxs(-1:nx1,-1:ny1,0:4),
@@ -127,6 +129,7 @@
      .  min_pitch, geom_match_dist, distval,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
+      real (kind=R8) :: cvBt(m%nCv), cvBp(m%nCv)
       integer ireg,errors
 !      character*1 zone(-1:nx1)
       logical found, concave
@@ -192,21 +195,21 @@
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet,istyle,
-     &     isymm,g,m)
+     &     isymm,g,m,cvBp,cvBt)
 
 
 !       ! all on the nx1, ny1 grid, just do all on regular grid
 
 
       ! Set up magnetic field and shift coordinates
-      do i = 1,m%nCv
-        if ( g%cvCflags(i,1) .eq. GRID_UNDEFINED .or. 
-     &     g%cvCflags(i,1) .eq. GRID_EXTERNAL .or. 
-     &     g%cvCflags(i,1) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
-        g%cvBb(i,1) = g%cvBp(i)
-        g%cvBb(i,2) = 0.0_R8
-        g%cvBb(i,3) = g%cvBt(i)
-        g%cvBb(i,4) = sqrt( g%cvBp(i)**2 + g%cvBt(i)**2 )
+      do iCv = 1,m%nCv
+        if ( m%cvLbl(iCv) .eq. GRID_UNDEFINED .or. 
+     &     m%cvLbl(iCv) .eq. GRID_EXTERNAL .or. 
+     &     m%cvLbl(iCv) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
+        g%cvBb(iCv,0) = cvBp(iCv)
+        g%cvBb(iCv,1) = 0.0_R8
+        g%cvBb(iCv,2) = cvBt(iCv)
+        g%cvBb(iCv,3) = sqrt( cvBp(iCv)**2 + cvBt(iCv)**2 )
 ! WIP B2AG_US
         !verts = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
         !verts = m%cvVx(m%cvVxP(i,1):m%cvVxP(i,1)+m%cvVxP(i,2))
@@ -218,19 +221,19 @@
         !g%vxFpsi(i) = g%vxFpsi(i)
         !g%vxFfbz(i) = g%vxFfbz(i)
         if (Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-          g%cvBb(i,3) = g%cvBt(i)*g%cvX(i)/(g%cvX(i)+xoffset)
-          g%cvBb(i,1) = g%cvBp(i)/g%cvBt(i)*g%cvBb(i,3)
-          g%cvBb(i,4) = sqrt(g%cvBb(i,1)**2 + g%cvBb(i,3)**2)
+          g%cvBb(iCv,2) = cvBt(iCv)*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
+          g%cvBb(iCv,0) = cvBp(iCv)/cvBt(iCv)*g%cvBb(iCv,3)
+          g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,2)**2)
         endif
       enddo
+      g%cvBb(:,0)=g%cvBb(:,0)*Bt_rescale*pit_rescale
       g%cvBb(:,1)=g%cvBb(:,1)*Bt_rescale*pit_rescale
-      g%cvBb(:,2)=g%cvBb(:,2)*Bt_rescale*pit_rescale
       if (Bt_reversal.eq.1) then
-         g%cvBb(:,3) = -g%cvBb(:,3)*Bt_rescale
+         g%cvBb(:,2) = -g%cvBb(:,2)*Bt_rescale
       else
-         g%cvBb(:,3) = g%cvBb(:,3)*Bt_rescale
+         g%cvBb(:,2) = g%cvBb(:,2)*Bt_rescale
       endif
-      g%cvBb(:,4) = sqrt(g%cvBb(:,1)**2+g%cvBb(:,2)**2+g%cvBb(:,3)**2)
+      g%cvBb(:,3) = sqrt(g%cvBb(:,0)**2+g%cvBb(:,1)**2+g%cvBb(:,2)**2)
           
  9999 continue
       ! main connectivity already established in Make_traduit_b2us
@@ -494,7 +497,7 @@ cxpb  if just below the top corner, make the corner cell follow
 *   ..test sign of bb3
 !      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
 !WIP B2AG_US: SHOULD BE THIS, BUT GIVE ERROR BY ABSENT BB at guards (wbbc)
-       !call b2xvs1(nCv,g%cvBb(:,4), 1, 'cvBb4', '.gt.')
+       !call b2xvs1(nCv,g%cvBb(:,3), 1, 'cvBb3', '.gt.')
        
 
 !      write(*,*) 'X regions (from rightix<>ix+1)'
@@ -559,7 +562,7 @@ cxpb  if just below the top corner, make the corner cell follow
       end subroutine b2agfs
 
       subroutine b2gxdr_dummy(local_sonnet,istyle,
-     &  isymm,g,m)
+     &  isymm,g,m,cvBp,cvBt)
       use b2mod_types
       use b2mod_version
       use b2mod_indirect
@@ -569,6 +572,8 @@ cxpb  if just below the top corner, make the corner cell follow
       use b2ag_ghostcells
       use carre_b2ag
       use b2mod_geo
+      use b2us_geo
+      use b2us_map
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -576,8 +581,8 @@ cxpb  if just below the top corner, make the corner cell follow
       integer  istyle, isymm
    
       character*(*) local_sonnet
-      type(geometry_ag) :: g
-      type(mapping_ag) :: m
+      type(geometry) :: g
+      type(mapping) :: m
 
       !nnCv, nnFc, nnVx: dimension of the grid read from file
       !nCv, nFc, nVx: dimension of the grid as used by B2
@@ -591,6 +596,7 @@ cxpb  if just below the top corner, make the corner cell follow
       real (kind=R8) ::
      * ubr, ubt, ubp, upsi
       real(kind=R8) :: bb_tmp_Vx(m%nVx) ! lengte onder voorbehoud
+      real(kind=R8) :: cvBp(m%nCv), cvBt(m%nCv), cvFpsi(m%nCv)
       parameter (line_length=256)
       character*256 meshpath
       character*80 format_string(4)
@@ -650,7 +656,8 @@ cxpb  if just below the top corner, make the corner cell follow
 
            !.. read geometry file
            rewind lun
-           call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,g,m)
+           call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,g,m,
+     1      cvBp,cvBt,cvFpsi)
 
 
            call create_guard_cells
@@ -667,18 +674,18 @@ cxpb  if just below the top corner, make the corner cell follow
            call b2agbb(g,m,isymm)
 
 !     ..and transfer it to the ghost cells with sanity checks
-             do i = 1, m%nCv
-                select case (g%cvCflags(i,1))
+             do iCv = 1, m%nCv
+                select case (m%cvFcP(iCv,1))
                 case(GRID_GUARD)  ! 
-                   g%cvBp(i) = g%cvBb(i,1)
-                   g%cvBt(i) = g%cvBb(i,3)
+                   cvBp(iCv) = g%cvBb(iCv,0)
+                   cvBt(iCv) = g%cvBb(iCv,2)
                 case(GRID_INTERNAL,GRID_BOUNDARY)   
-                   if (abs(abs(g%cvBp(i)) - abs(g%cvBb(i,1))) 
+                   if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0))) 
      $                   > 1e-7 .or.
-     $                 abs(abs(g%cvBt(i)) - abs(g%cvBb(i,3))) 
+     $                 abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2))) 
      $                   > 1e-7) then
                       write(*,*) "b2agfs: not maching carre bb 
-     $                at", i    
+     $                at", iCv    
                    endif
                 end select
              enddo       
@@ -705,27 +712,31 @@ cxpb  if just below the top corner, make the corner cell follow
 
 *----------------------------------------------------------------------
       
-      subroutine read_traduitoutb2us(nrid,nnCv,nnFc,nnVx,g,m)
+      subroutine read_traduitoutb2us(nrid,nnCv,nnFc,nnVx,g,m,
+     &  cvBp,cvBt,cvFpsi)
       use b2mod_types
       use b2mod_version
-      use b2mod_indirect
+      !use b2mod_indirect
       use b2ag_parameters
       use carre_constants
       use b2ag_ghostcells
       !use carre_b2ag
-      use b2mod_geo
+      !use b2mod_geo
+      use b2us_map
+      use b2us_geo
       implicit none
       !input arguments 
       integer nrid, nnCv, nnFc, nnVx, 
      &     nnCmxVx,nnCmxFc,nnFmxCv,nnVmxCv,nnVmxFc
       !output argument
-      type(geometry_ag) :: g 
-      type(mapping_ag)  :: m  
+      type(geometry) :: g 
+      type(mapping)  :: m  
 
 
       !internal
       character idcod*8, id*32
-      integer i, ivx(nnVx), icv(nnCv), idum(0:4)
+      integer :: i, iCv, iVx, iv(nnVx), ic(nnCv), idum(0:4)
+      real(kind=R8) :: cvBp(m%nCv) , cvBt(m%nCv), cvFpsi(m%nCv)
       logical streql
       external subini, subend, xertst, xerrab, streql, cfverr, cfruin
 
@@ -760,22 +771,23 @@ cxpb  if just below the top corner, make the corner cell follow
         !read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
-           do i = 1, nnVx
+           do iVx = 1, nnVx
            ! vx vxX vxY vxPsi vxBx vxBy vxFfbz
-             read(nrid,*,err=91) ivx(i), g%vxX(i), g%vxY(i),
-     &      g%vxFpsi(i), g%vxBx(i), g%vxBy(i), g%vxFfbz(i)
+             read(nrid,*,err=91) iv(iVx), g%vxX(iVx), g%vxY(iVx),
+     &      g%vxFpsi(iVx), g%vxBb(iVx,0), g%vxBb(iVx,1), g%vxFfbz(iVx)
            enddo
         endif
 
         !read cell information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('cv',id)) then
-           do i = 1, nnCv
+           do iCv = 1, nnCv
            ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(1:5) ctype
-              read(nrid,*,err=91) icv(i), m%cvVxP(i,1), m%cvVxP(i,2),
-     &     g%cvX(i), g%cvY(i), g%cvFpsi(i), g%cvBp(i), g%cvBt(i),
-     &     g%cvCflags(i,1), g%cvCflags(i,2), g%cvCflags(i,3),
-     &     g%cvCflags(i,4), g%cvCflags(i,5), g%cvCtype(i)
+              read(nrid,*,err=91) ic(iCv), m%cvVxP(iCv,1), 
+     &      m%cvVxP(iCv,2), g%cvX(iCv), g%cvY(iCv), cvFpsi(iCv),
+     &      cvBp(iCv), cvBt(iCv), m%cvLbl(iCv)
+           ! , g%cvCflags(i,2), g%cvCflags(i,3),
+           !g%cvCflags(i,4), g%cvCflags(i,5), g%cvCtype(i)
            enddo
         endif
         ! put cvFcP equal to cvVxP
@@ -811,12 +823,14 @@ cxpb  if just below the top corner, make the corner cell follow
       
       subroutine order_vertices(g,m)
       use b2mod_types
-      use b2mod_indirect
-      use b2mod_geo
+      !use b2mod_indirect
+      !use b2mod_geo
+      use b2us_map
+      use b2us_geo
       implicit none 
       !output argument
-      type(geometry_ag) :: g 
-      type(mapping_ag)  :: m 
+      type(geometry) :: g 
+      type(mapping)  :: m 
 
       ! internal
 

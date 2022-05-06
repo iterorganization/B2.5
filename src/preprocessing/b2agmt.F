@@ -5,15 +5,17 @@
 *     & fpsi, bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
 *     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
 *     & rightix, rightiy, topix, topiy, cflag)
-      subroutine b2agmt (nCv,nFc, nVx, g, m)
+      subroutine b2agmt (g, m)
       use b2mod_types
       use b2mod_constants
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
-      use b2mod_indirect
+!      use b2mod_indirect
 !     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea
-      use b2mod_geo
+!     use b2mod_geo
+      use b2us_geo
+      use b2us_map
  
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -128,10 +130,10 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j, nCv, nFc, nVx, iCv, iFc
+      integer ix, iy, i, j, iCv, iFc
       integer verts4(0:3), verts3(0:2), faces3(0:2)
-      type(geometry_ag) :: g
-      type(mapping_ag) :: m
+      type(geometry) :: g
+      type(mapping) :: m
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon
       real (kind=R8) ::
@@ -141,24 +143,26 @@
 !     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
 !     *   isx(0:1), isy(0:1)
       real (kind=R8) :: 
-     *   fcX(1:nFc), fcY(1:nFc) 
+     *   fcX(1:m%nFc), fcY(1:m%nFc) 
       integer, save :: style = 0
 *   ..procedures
       intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
+      real (kind=R8) :: norm
+!     *   trim1, norm
+!     * sinang, cosang
+!     *   dist, 
       real (kind=R8) ::
      &  sin_t, cos_t, sin_tl, cos_tl, tt
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+!      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
+!      dist(ix,iy,i,j) = norm (
+!     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+!      sinang(p0x,p0y,p1x,p1y) = trim1(
+!     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
+!      cosang(p0x,p0y,p1x,p1y) = trim1(
+!     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
       save volhmk, width
@@ -185,7 +189,7 @@
       call ipgeti ('b2agmt_style', style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..test nx, ny, isymm
-      call xertst (0.le.nCv.and.0.le.nFc.and.0.le.nVx,
+      call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
      &  'faulty argument nCv, nFc, nVx')
       call xertst (0.le.isymm.and.isymm.le.4,
      &  'faulty argument isymm')
@@ -203,27 +207,22 @@ cnv  new methods are employed
 
 
 *   ..compute hx, hy, hc, ht, ecc, ebc
-      hx = INVALID_DOUBLE
-      hy = INVALID_DOUBLE
-      cell_width = INVALID_DOUBLE
-      cell_height = INVALID_DOUBLE
-      qz(:,:,0) = 0.0_R8
-      qz(:,:,1) = 1.0_R8
+      !hx = INVALID_DOUBLE
+      !hy = INVALID_DOUBLE
+      !cell_width = INVALID_DOUBLE
+      !cell_height = INVALID_DOUBLE
+      !qz(:,:,0) = 0.0_R8
+      !qz(:,:,1) = 1.0_R8
 
 
 
 ! loop over cells
-      do iCv = 1,nCv
+      do iCv = 1,m%nCv
 
        
-       select case (g%cvCtype(iCv))
-       ! 0:Quad
-       ! 1:TRIA_NOLEFT
-       ! 2:TRIA_NOBOT
-       ! 3:TRIA_NORIGHT
-       ! 4:TRIA_NOTOP
+       select case (m%cvFcP(iCv,2))
 
-       case(0)  !Quad
+       case(4)  !Quad
 
        !ebc unit vector of poloidal field in cell center
        verts4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
@@ -235,18 +234,18 @@ cnv  new methods are employed
        t1 = - 0.25_R8 * ( g%vxBb(verts4(0),1) + g%vxBb(verts4(1),1) +
      &        g%vxBb(verts4(2),1) + g%vxBb(verts4(3),1) )
 
-       g%cvEb(iCv,1) = t0 / norm(t0,t1)
-       g%cvEb(iCv,2) = t1 / norm(t0,t1)
+       g%cvEb(iCv,0) = t0 / norm(t0,t1)
+       g%cvEb(iCv,1) = t1 / norm(t0,t1)
 
 *    ..unit vector of total magnetic field, defined in cell center
       ! until this point, cvEb was unit vector of poloidal field
       ! now, correct for toroidal field
-       if (g%cvBb(iCv,4) == 0.0_R8) Then
+       if (g%cvBb(iCv,3) == 0.0_R8) Then
          g%cvEb(iCv,:) = 0.0_R8
        else
-         g%cvEb(iCv,1) = abs(g%cvBb(iCv,1))/g%cvBb(iCv,4)*g%cvEb(iCv,1)
-         g%cvEb(iCv,2) = abs(g%cvBb(iCv,2))/g%cvBb(iCv,4)*g%cvEb(iCv,2)
-         g%cvEb(iCv,3) = g%cvBb(iCv,3)/g%cvBb(iCv,4)
+         g%cvEb(iCv,0) = abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
+         g%cvEb(iCv,1) = abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
+         g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif 
 
 *    ..compute volume, gs
@@ -280,7 +279,7 @@ cnv  new methods are employed
      &       + g%vxY(verts4(3)) )
         else
           ! QUADCENTROID NOT YET ADAPTED for unstructured - WIP
-          centroid = quadCentroid(g%vxX(verts4(0)),g%vxY(verts4(0)),
+          centroid = quadCentroid_us(g%vxX(verts4(0)),g%vxY(verts4(0)),
      &                            g%vxX(verts4(1)),g%vxY(verts4(1)),
      &                            g%vxX(verts4(2)),g%vxY(verts4(2)),
      &                            g%vxX(verts4(3)),g%vxY(verts4(3)))
@@ -297,7 +296,7 @@ cnv  new methods are employed
      &       + g%vxY(verts4(3)) )
         else 
           ! old function quadCentroid can be used if vertices are ordered correctly
-          centroid = quadCentroid(g%vxX(verts4(0)),g%vxY(verts4(0)),
+          centroid = quadCentroid_us(g%vxX(verts4(0)),g%vxY(verts4(0)),
      &                            g%vxX(verts4(1)),g%vxY(verts4(1)),
      &                            g%vxX(verts4(2)),g%vxY(verts4(2)),
      &                            g%vxX(verts4(3)),g%vxY(verts4(3)))
@@ -324,7 +323,7 @@ cnv  new methods are employed
 
  
 
-       case(1,2,3,4)  !Triangle
+       case(3)  !Triangle
        ! Method Wouter to determine cell center for triangles!!! line 290 in structured version
 cwdk      General approach for arbitrary triangle cases:
 cwdk      1) identify vertices with max and min psi values psi_min, psi_max
@@ -367,24 +366,24 @@ cwdk      4) centroid: average between the intersections with faces
       ! qac: cosine of angle between poloidal field and face normal
       ! qas:   sine of angle between poloidal field and face normal
       !     => qac and qas will translate into fcQalf
-      qc  = 1.0_R8
-      qs  = 0.0_R8
-      qac = 0.0_R8
-      qas = 1.0_R8
+      !qc  = 1.0_R8
+      !qs  = 0.0_R8
+      !qac = 0.0_R8
+      !qas = 1.0_R8
 
 ! loop over faces (in st first poloidal faces, then radial faces)
-      do iFc = 1, nFc
+      do iFc = 1, m%nFc
         !compute face centers
         fcX(iFc) = (g%vxX(m%fcVx(iFc,1)) + g%vxX(m%fcVx(iFc,2)) )/2.0_R8
         fcY(iFc) = (g%vxY(m%fcVx(iFc,1)) + g%vxY(m%fcVx(iFc,2)) )/2.0_R8
 
-        !fcHc(nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
+        !fcHc(m%nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
         g%fcHc(iFc,1) = sqrt(  ( g%cvX(m%fcCv(iFc,1)) - fcX(iFc) )**2
      &      + ( g%cvY(m%fcCV(iFc,1)) - fcY(iFc) )**2 ) 
         g%fcHc(iFc,2) = sqrt(  ( g%cvX(m%fcCv(iFc,2)) - fcX(iFc) )**2
      &      + ( g%cvY(m%fcCV(iFc,2)) - fcY(iFc) )**2 ) 
 
-        !fcHt(nFc) Lengths along cell face ("tangential" direction)
+        !fcHt(m%nFc) Lengths along cell face ("tangential" direction)
         g%fcHt(iFc) = sqrt( ( g%vxX(m%fcVx(iFc,1)) - 
      &     g%vxX(m%fcVx(iFc,2)) )**2 + ( g%vxY(m%fcVx(iFc,1)) - 
      &     g%vxY(m%fcVx(iFc,2)) )**2  )
