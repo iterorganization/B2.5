@@ -9,7 +9,9 @@
      .          alloc_mapping_rc, dealloc_mapping_rc,
      .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
-     .          init_mapping, get_version
+     .          init_mapping, get_version,
+     .          triangleArea_us, triangleCentroid_us,
+     .          quadArea_st, quadCentroid_us
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
@@ -632,5 +634,82 @@ cwdk  can be derived directly from data in that file
         call xerrab ('No '//trim(filename))
       endif
       end subroutine get_version
+
+
+***********************************************************************
+
+      !> Area of triangle given by vertex coordinates
+      function triangleArea_us( x0, y0, x1, y1, x2, y2 )
+      implicit none
+      real (kind=R8) :: triangleArea_us
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2
+      intrinsic abs
+
+      triangleArea_us = 0.5_R8*abs((x1-x0)*(y2-y0) -(y1-y0)*(x2-x0))
+
+      end function triangleArea_us 
+
+***********************************************************************
+
+      !> Coordinates of centroid of a triangle given by vertex coordinates
+      function triangleCentroid_us( x0, y0, x1, y1, x2, y2 )
+      implicit none
+      real (kind=R8) :: triangleCentroid_us(0:1)
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2
+
+      triangleCentroid_us(0) = ( x0 + x1 + x2 ) / 3.0_R8
+      triangleCentroid_us(1) = ( y0 + y1 + y2 ) / 3.0_R8
+      return
+      end function triangleCentroid_us
+
+
+***********************************************************************
+
+      !> Area of quadrangle given by vertex coordinates
+      !> The vertices must be in sequence! (=> structured or ordered)
+
+      function quadArea_st( x0, y0, x1, y1, x2, y2, x3, y3 )
+      implicit none
+      real (kind=R8) :: quadArea_st
+      real (kind=R8) ::  x0, y0, x1, y1, x2, y2, x3, y3
+      intrinsic abs
+
+      quadArea_st = TriangleArea_us(x0, y0, x1, y1, x2, y2) +
+     .           TriangleArea_us(x2, y2, x3, y3, x0, y0)
+
+      end function quadArea_st
+
+***********************************************************************
+
+
+      !> Coordinates of centroid of a quadrangle given by vertex coordinates
+      !> Corners are numbered in the B2 convention 2-3
+      !>                                           0-1
+      function quadCentroid_us( x0, y0, x1, y1, x2, y2, x3, y3 )
+      implicit none
+      real (kind=R8) :: quadCentroid_us(0:1)
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+
+      quadCentroid_us = ( triangleCentroid_us(x0,y0,x1,y1,x3,y3) 
+     &   * triangleArea_us(x0,y0,x1,y1,x3,y3) 
+     &   + triangleCentroid_us(x0,y0,x2,y2,x3,y3) 
+     &   * triangleArea_us(x0,y0,x2,y2,x3,y3) ) 
+     &   / ( triangleArea_us(x0,y0,x1,y1,x3,y3) 
+     &   + triangleArea_us(x0,y0,x2,y2,x3,y3) )
+      return
+      end function quadCentroid_us
+
+***********************************************************************      
+
+
+
+
+
+
+
+
+
+
+
 
       end module b2us_map

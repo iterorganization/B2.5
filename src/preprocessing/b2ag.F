@@ -7,6 +7,8 @@
       use b2mod_geo2
       use b2mod_indirect
       use b2ag_parameters
+	  use b2us_geo
+	  use b2us_map
       implicit none
 
 *-----------------------------------------------------------------------
@@ -94,8 +96,8 @@
       data ninp/50,51/
       data nout/60,61/
 
-	  type(geometry_ag), save :: g
-	  type(mapping_ag), save :: m 
+	  type(geometry), save :: g
+	  type(mapping), save :: m 
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -145,8 +147,10 @@
 *    ..obtain nCv, nVx, nFc
 	  call b2ag_read_parameters(ninp,nout,m)
 *    ..call principal driver routine
-	  call alloc_b2mod_indirect(m)
-	  call alloc_b2mod_geo(g,m)
+	  !call alloc_b2mod_indirect(m)
+	  call alloc_mapping(m)
+	  !call alloc_b2mod_geo(g,m)
+	  call alloc_geometry(g,m%nCv,m%nFc,m%nVx,m%nFs,m%nFt,m%nVmxCv)
 	  call b2agdr (ninp, nout,g,m)
 *    ..close graphics files
 *      (none)
@@ -160,8 +164,10 @@
 		if (file_open) close(nout(io))
 	  enddo
 *    ..end of computation
-	  call dealloc_b2mod_geo(g)
-	  call dealloc_b2mod_indirect(m)
+      call dealloc_geometry(g)
+	  !call dealloc_b2mod_geo(g)
+	  call dealloc_mapping(m)
+	  !call dealloc_b2mod_indirect(m)
 
       else
 	  write (*,*) 'Structured b2ag used'
