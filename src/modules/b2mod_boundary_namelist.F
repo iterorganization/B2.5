@@ -89,6 +89,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       real (kind=R8), save :: boundary_time_mod
       real (kind=R8), save :: boundary_time_switch
       integer, save :: bc_elm_count
+      logical, save :: new_boundary_files
 
       private :: boundary
 
@@ -242,6 +243,7 @@ cxpb overwrite the defaults with the namelist data
 
       iftimbound=0
       if(l_timbound .ne. 0) iftimbound(:,:)=ifenebound(:,:)
+      new_boundary_files = .true.
 
       return
       end subroutine initialize_b2mod_boundary
@@ -253,6 +255,7 @@ cxpb overwrite the defaults with the namelist data
       logical catch_up
       external xertst
 
+      new_boundary_files = .false.
       if(boundary_time_mod.gt.0.0_R8) then
         write(*,'(a,1p,3(1x,e14.7),2i4)')
      .       'ELM: ', tim, mod(tim,boundary_time_mod),
@@ -279,6 +282,7 @@ cxpb overwrite the defaults with the namelist data
         call xertst (nniso.le.nnisod,
      .                           'increase DEF_NISO in DIMENSIONS.F')
         call write_b2mod_boundary_namelist
+        new_boundary_files = .true.
       endif
       return
 
