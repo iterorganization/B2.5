@@ -344,14 +344,14 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
         call b2tlc0 (nx, ny, ns, hx, hy, gs, qc, qs, na, te, ti,
-     &    cdpa, flc) !srv 09.07.03 30.11.15
+     &    cdpa, flc)                                                      !srv 09.07.03 30.11.15
         call b2tlc0 (nx, ny, ns, hx, hy, hzgs, qc, qs, na, te, ti,        !srv 30.11.15
      &    cdpahz, flchz)
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
-        call b2tlh0 (nx, ny, ns, hx, hy, gs, qc, qs, na, ti,                !srv 07.12.15 {
+        call b2tlh0 (nx, ny, ns, hx, hy, gs, qc, qs, na, ti,              !srv 07.12.15 {
      &              hcib, chcb, hcimx, fllim0fhi)
         chci = 0.0_R8
         do is = 0, ns-1

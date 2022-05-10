@@ -179,7 +179,7 @@ c***  wnu_pk  : neutrals at total peak
 c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from Eirene
-c***    wldnek  :   heat transferred with neutrals. Evaluated as
+c***    wldnek  :   net kinetic energy deposited by neutrals. Evaluated as
 c***                   EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
 c***    wldnep  :   potential energy released by neutrals. Evaluated as
 c***                   diss_pot_H2*(PRFAML+PRFPML)

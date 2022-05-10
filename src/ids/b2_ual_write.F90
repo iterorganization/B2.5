@@ -108,7 +108,7 @@ program b2_ual_write
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
-    version = '3'
+    write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
     write (*,*) 'Starting b2mn init'
     call b2mn_init
@@ -203,7 +203,7 @@ program b2_ual_write
     end if
     !! If this is a time continuation run, append the new data to the IDS
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IMAS data-entry ", trim(database), shot, run
+      write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
       if ( status.ne.0 ) then

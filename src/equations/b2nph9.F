@@ -6,7 +6,7 @@
      &  rxf, dtim, BoRiS, fac_ExB,                                      !srv 07.07.21
      &  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
-     &  fne, fch, fchstoch, cvsa,
+     &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
      &  reshe, reshi, resht, corte, corti, ierr)
@@ -44,6 +44,8 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), fne(-1:nx,-1:ny,0:1,0:1),
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !som 16.08.21
      1  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -251,8 +253,8 @@
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,
-     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa,
-     *  she0, shi0)                                                     !srv 07.06.00 02.06.99 07.07.09
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
+     *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)

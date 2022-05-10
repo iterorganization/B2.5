@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,  !srv 20.09.06 { 16.10.17 19.02.21
-     &  na, ua, cvsa_cl, fac_vis, fchvispar_a, fchvispar)               !srv 22.06.08 som 18.08.21
+     &  na, ua, cvsa_cl, cvsa_drho, fac_vis, fchvispar_a, fchvispar)    !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -12,6 +12,9 @@
       use b2mod_b2cmpa
       use b2mod_geo
      , , only : hy1
+      use b2mod_zhfrtf
+     , , only: avm_u,                                                   !som 17.08.21
+     &         b2mod_zhfrtf_avm_u                                       !som 18.08.21
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -21,6 +24,7 @@
      &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !srv 16.10.17
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                          !som 18.08.21
      1  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1  qs(-1:nx,-1:ny,0:1),
      1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
@@ -52,6 +56,9 @@
      *   dvpar(-1:nx,-1:ny), wght(-1:nx,-1:ny),
      *   wrk0(-1:nx,-1:ny), gOnedBsq(-1:nx,-1:ny,0:1,0:1)
       save ncall, vis_par
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
+      integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
+      integer, save :: zh_vis_type = 0                                   !som 13.01.22
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -66,6 +73,9 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_vis_par', vis_par)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 16.08.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 16.08.21
+       call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)                !som 16.08.21
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -76,6 +86,13 @@
         call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')          !srv 16.10.17
        enddo
        call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                  !som 13.01.22
+      endif
+
+      if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.
+     &    Zhdanov_visu.ne.0) then
+*   ..re-calculate mass-averaged velocity
+        call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)                     !som 16.08.21
       endif
 
 c Drift terms
@@ -84,14 +101,16 @@ c Drift terms
       dvpar=0.0e0_R8                                                    !srv 24.06.99
       if (vis_par.ne.0.0e0_R8.and.maxval(fac_vis).ne.0.0_R8 .and.
      &   no_current.eq.0) then
-       do is = 0, ns-1                                                  !srv 24.06.99
-*       compute gradients of OnedBsq on cell faces
-        call grad(nx, ny, hx, hy, vol, qz, qs, OnedBsq, gOnedBsq)
-        wght = 1.0_R8
-!        call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc, 
+*      compute gradients of OnedBsq on cell faces
+       call grad(nx, ny, hx, hy, vol, qz, qs, OnedBsq, gOnedBsq)
+       wght = 1.0_R8
+!       call grad_p(nx,ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
 !     .    gOnedBsq(-1,-1,0,0))
-!        call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc, 
+!       call grad_r(nx,ny, 1, hx, hy, wght, qz, qs, OnedBsq, OnedBsqc,
 !     .    gOnedBsq(-1,-1,0,1))
+       do is = 0, ns-1                                                  !srv 24.06.99
+        if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &      Zhdanov_visu.eq.0) then                                     !som 16.08.21
 !          if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
 !     &        .not.is_neutral(is)) then                                !srv 24.06.99
          if(is.eq.ismain .and. .not.is_neutral(is)) then                !srv 19.02.21
@@ -122,6 +141,47 @@ c Drift terms
          else
           dvpar=0.0_R8
          endif
+        else
+         if (.not.is_neutral(is)) then                                  !som 09.11.21
+          if (zh_vis_type.eq.0) then                                    !som 13.01.22
+           do iy = -1, ny
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then
+!           it has been considered that cvsa_cl was multiplied by bx**2
+              dvpar(ix,iy) =
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         cvsa_drho(ix,iy,0,0,is)*
+     &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
+     &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+             endif
+            enddo
+           enddo
+          else if (zh_vis_type.eq.1) then
+           do iy = -1, ny
+            do ix = 0, nx
+             if(leftix(ix,iy).ne.-2) then
+!           it has been considered that cvsa_cl was multiplied by bx**2
+              dvpar(ix,iy) =
+     &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &         cvsa_drho(ix,iy,0,0,is)*
+     &        (avm_u(ix,iy)*sqrt(bb(ix,iy,3))
+     &        -avm_u(leftix(ix,iy),leftiy(ix,iy))*
+     &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))
+             endif
+            enddo
+           enddo
+          endif
+         else
+          dvpar=0.0_R8
+         endif
+        endif
 
 *       X-COMPONENT OF VISCOSITY PARALLEL CURRENT                       !srv
          do iy = 0, ny-1                                                !srv

@@ -31,11 +31,10 @@ module b2mod_ual_io_grid
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
-#if IMAS_MINOR_VERSION < 15
-   use ids_grid_object    & ! IGNORE
+    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
-#else
-   use ids_grid_object    & ! IGNORE
+#if IMAS_MINOR_VERSION > 14
+    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
 #endif
     use ids_grid_object   & ! IGNORE
@@ -1260,6 +1259,30 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
+#if IMAS_MINOR_VERSION > 33 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) )
+          allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content%name(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%name = "node_coordinates"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%index = 1
+          allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content%description(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%description =   &
+             &    "Node coordinates (automatically generated 1D space)"
+          allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content%name(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%name = "unspecified"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%index = 0
+          allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content%description(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%description = &
+             &  "Automatically generated 1D space (unused)"
+#endif
         end if
 
     end subroutine fill_In_Grid_Desc

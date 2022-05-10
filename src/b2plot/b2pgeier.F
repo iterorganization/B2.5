@@ -46,7 +46,8 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
               hlp_flx(iy,is,itrg(j))=(fna(k+1-l,iy,0,0,is)+
      .                                fna(k+1-l,iy,0,1,is))*u
               if (is_neutral(is)) then !{
-                iatm=b2eatcr(is)
+               do iatm=1,natmi !{
+                if (latmscl(iatm).ne.b2espcr(is)) cycle
                 do iss=1,nsts !{
                   if (eirdiag_nds_typ(iss).ne.2) cycle
                   if (eirdiag_nds_srf(iss).ne.ltrgpos(itrg(j))+1) cycle
@@ -57,6 +58,7 @@ c     ,                        ntrgts,lytg,nytg,lrdlsp       !###
                   hlp_flx(iy,is,itrg(j))=hlp_flx(iy,is,itrg(j))+
      .             wldna_res(iatm,iy+ias)
                 end do !}
+               end do !}
               end if !}
             end do !}
           end do !}

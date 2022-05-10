@@ -94,7 +94,7 @@ c*** Volume data:
 c***	srcml	:   power loss due to molecules, including
 c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
-c***	wldnek	:   heat transferred with neutrals
+c***	wldnek	:   net kinetic energy deposited by neutrals
 c***	wldnep	:   energy released by recombination into molecules
 c***	wldna	:   flux of atoms impinging onto the surface
 c***	ewlda	:   their average energy

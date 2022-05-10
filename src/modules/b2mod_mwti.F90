@@ -118,7 +118,7 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, jsep
+    integer iy, ix, ic, ixtl, ixtr, iatm, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
@@ -1136,38 +1136,56 @@ contains
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(1,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(1,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3dl',imap,slice(iylstrt),iret)
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3di',imap,slice(iyistrt),iret)
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3da',imap,slice(iyastrt),iret)
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(nx,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(nx,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
         slice=0.0_R8
         if (ismain0.ne.ismain) then
           slice(iytlstrt:iytlend)= na(ixtl-target_offset,iytlstrt:iytlend,ismain0)
-          slice(0:ny-1)=slice(0:ny-1)+dab2(ixtl,1:ny,b2eatcr(ismain0),1)
+          do iatm=1,nnatmi
+            if (b2espcr(ismain0).eq.latmscl(iatm)) &
+             &  slice(0:ny-1)=slice(0:ny-1)+dab2(ixtl,1:ny,iatm,1)
+          enddo
         endif
         call rwcdf(rw,ncid,'an3dtl',imap,slice(iytlstrt),iret)
         slice=0.0_R8
         if (ismain0.ne.ismain) then
           slice(iytrstrt:iytrend)= na(ixtr+target_offset,iytrstrt:iytrend,ismain0)
-          slice(0:ny-1)=slice(0:ny-1)+dab2(ixtr+1,1:ny,b2eatcr(ismain0),1)
+          do iatm=1,nnatmi
+            if (b2espcr(ismain0).eq.latmscl(iatm)) &
+             &  slice(0:ny-1)=slice(0:ny-1)+dab2(ixtr+1,1:ny,iatm,1)
+          enddo
         endif
         call rwcdf(rw,ncid,'an3dtr',imap,slice(iytrstrt),iret)
       endif

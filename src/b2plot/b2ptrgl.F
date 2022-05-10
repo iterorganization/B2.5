@@ -90,7 +90,7 @@ c***    suffix "_t" denotes totals from distributions,
 c***    and "_w" the totals from Eirene.
 c
 c*** Recap of fluxes from Eirene
-c***    wldnek  :   heat transferred with neutrals. Evaluated as
+c***    wldnek  :   net kinergy energy deposited by neutrals. Evaluated as
 c***                    EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
 c***    wldnep  :   energy released by recombination into molecules. Evaluated as
 c***                    diss_pot_H2*(PRFAML+PRFPML)

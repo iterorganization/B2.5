@@ -174,7 +174,9 @@
 				<default>None</default>
 				<type>None</type>
 				<description>
-					at least 100 additional numbers, of which only the first is relevant for us -1.0 read the mesh data using the "simplified" Carre format -2.0 read the mesh data using the Sonnet format
+					at least 100 additional numbers, of which only the first is relevant, unless using an analytic formulation for the grid.
+					A value of -1.0 asks to read the mesh data using the "simplified" Carre format.
+					A value of -2.0 asks to read the mesh data using the Sonnet format.
 				</description>
 			</switch>
 		</category>
@@ -239,7 +241,7 @@
 				<default>upgrade.geometry</default>
 				<type>string</type>
 				<description>
-					local_sonnet is the file name of the geometry file to be read.
+					contains the file name of the geometry file to be read.
 					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
 			</switch>
@@ -1324,6 +1326,192 @@
 				<type>integer</type>
 				<description>
 					If lvis21.ne.0, then the viscosities are modified according to the 21-moment approach. This should only be used for multi-fluid runs. This switch should not be used along with 'b2tfhe_vis_par' to avoid double-counting of classical viscosity effects.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_Zhdanov_closure</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_closure.eq.1, the Grad-Zhdanov module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for all the ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al. [S. O. Makarov et al., PoP 2021]. Otherwise the standard SOLPS-ITER model is applied.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zh_imp_analyt</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_imp_analyt.eq.0, the Grad-Zhdanov closure method is applied by means of the explicit matrix inversion methed (EMIM).
+					If b2tral_zh_imp_analyt.eq.1, the improved analytical method (IAM) is applied. See [S. O. Makarov et al., PoP 2021] for details.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zh_analyt_mdf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_analyt_mdf.eq.1, the MDF friction force calculation is applied. See [S. O. Makarov et al., PoP 2021] for details.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_cond</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_cond.eq.0, the Braginskii expression for the ion conductivity is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_vish</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_vish.eq.0, the Braginskii expression for the heat flux dependent viscous stress is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_visu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_visu.eq.0, the Braginskii expression for the velocity-dependent viscous stress is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhflcorr</name>
+				<default>3.0</default>
+				<type>real</type>
+				<description>
+					Flux-limiting coefficient multiplier.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhflcorrh</name>
+				<default>0.4</default>
+				<type>real</type>
+				<description>
+					Additional flux-limiting coefficient multiplier for the heat flux.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature and Joule heating between Zhdanov and Braginskii.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corrT</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature between Zhdanov and Braginskii in the thermal force calculation.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr_vq</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr_vq.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled for the heat stress-viscosity.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2sifr_Zhdanov_tf_fr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sifr_Zhdanov_tf_fr.eq.1, the Zhdanov expressions for the thermal and friction forces are used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_Zhdanov_test</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2sifr_Zhdanov_test.eq.1, the Grad-Zhdanov calculation takes place, but is not used. To be used for testing purposes.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tfhi_Zhdanov_vel_heat</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tfhi_Zhdanov_vel_heat.eq.1, the Zhdanov velocity-dependent ion heat flux is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_zh_tf_toff</name>
+				<default>0</default>
+				<type>string</type>
+				<description>
+					String of integers with (nspecies*(nspecies+1))/2-nspecies digits. If a digit is {\tt 1}, turn off the thermal force between corresponding species starting from 1 and 2; 1 and 3;....; up to nspecies-1 and nspecies.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+		          <switch>
+			    <name>b2tral_zh_vis_type</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_smbvi_factor</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					This switch defines the fraction of the cross-ion part of the stress-viscosity term which is applied. The cross-ion part of the stress-viscosity term can lead to numerical problems. If so, it is recommended to start from '0.0' and increase it step by step.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_fr</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_fr.eq.1, an improved analytical form for the friction force is computed instead of the form corrresponding to b2sigp_style.eq.2.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_tf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_tf.eq.1, an improved analytical form for the thermal force is computed instead of the form corresponding to b2sigp_style.eq.2.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo mass multiplicator</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Using this number the impurity mass can be artificialy increased.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
 				</description>
 			</switch>
 			<switch>
@@ -5850,21 +6038,21 @@
 						 7 : prescribe the electron temperature profile from the bv_te.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total electron heat flux with constant flux density, ENEPAR(,1) specifies the energy flux in W
 						 9 : prescribe the decay length for the electron temperature, ENEPAR(,1) specifies the decay length in m (can also use type [19] instead)
-						 10 : feedback option for core, ENEPAR(,1) not used, derived from cbshe(0,coreregno)
-						 11 : not used
-						 12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>
-						 13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
-						 14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-						 15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
-						 16 : feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
-						 17 : feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Replaces [16] for high densities and large values of 'b2stbc_type16_ref'.
-						 18 : fractional drop condition. Not yet working.
-						 19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
-						 20 : feedback boundary condition with constant temperature, as per type [16] but with 'type20_' switches and a different feedback scheme.
-						 21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
+						10 : feedback option for core, ENEPAR(,1) not used, derived from cbshe(0,coreregno)
+						11 : not used
+						12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>
+						13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
+						14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
+						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
+						16 : feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
+						17 : feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Replaces [16] for high densities and large values of 'b2stbc_type16_ref'.
+						18 : fractional drop condition. Not yet working.
+						19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
+						20 : feedback boundary condition with constant temperature, as per type [16] but with 'type20_' switches and a different feedback scheme.
+						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
 						  	ENEPAR(,1) specifies the desired electron temperature in eV.
 						    ENEPAR(,2) is the strength of the feedback
-						 22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
+						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
 				</description>
 			</switch>
 

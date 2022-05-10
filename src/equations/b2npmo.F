@@ -3,7 +3,8 @@
 
       subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
      &  dtim, qz, qs, vol, hx, hy, hz, bb, pbshz, lnlam,               !srv 07.07.21
-     &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
+     &  cvsahz, cvsa, cvsahz_cl, cvsahz_drho, kt_neo,
+     &  alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
      &  smo, smq, cthe, cthi, chci, smof,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
@@ -25,6 +26,8 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_ilutern
+      use b2mod_zhfrtf                                                 !som 13.08.21
+     1 , only : rho_A_rel, avm_u
 #ifdef _OPENMP
 #ifndef NO_OPENMP_B2NPMO
       use b2mod_balance
@@ -84,8 +87,12 @@
      &  pbshz(-1:nx,-1:ny,0:1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
      &  cvsahz_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                         !srv 09.01.01
+     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                       !som 18.08.21
+     &  chci_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                     !som 08.10.21
+     &  chci_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !som 08.10.21
+     &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1), !som 08.10.21
+     &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),              !som 08.10.21
      &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1,0:1),                                     !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
@@ -93,7 +100,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
-     *  kt_neo(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
+     *  kt_neo(-1:nx,-1:ny), alpha1(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
      *  resmo(-1:nx,-1:ny,0:ns-1), resmt(-1:nx,-1:ny),
      &  corua(-1:nx,-1:ny,0:ns-1), corut(-1:nx,-1:ny),
      &  pcca(-1:nx,-1:ny,0:1,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1,0:1),
@@ -137,6 +144,13 @@
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
+      integer, save :: impr_form_tf, impr_form_fr                      !som 13.11.20
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,          !som 21.03.21
+     &  Zhdanov_tf_fr = 1                                              !som 01.07.21
+      integer, save :: Zhdanov_visu = 1, Zhdanov_vish = 1              !som 13.08.21 18.10.21
+      real (kind=R8), save :: smbvi_factor = 1.0_R8                    !som 14.12.21
+      real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
+      real (kind=R8), save :: mass_multiplicator                       !som 13.11.20
       character chns*3                                                 !srv 04.07.08
       logical warning
       real (kind=R8) ::
@@ -145,6 +159,7 @@
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),                !srv 23.07.99 04.10.99
+     *  smbvi(-1:nx,-1:ny,0:3), smbvtemp(-1:nx,-1:ny,0:3),             !som 13.08.21 18.10.21
      *  smbcf(-1:nx,-1:ny,0:3), smban(-1:nx,-1:ny,0:3),                !srv 09.07.01 25.09.17
      1  cvct(-1:nx,-1:ny,0:1,0:1),
      2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1,0:1),
@@ -160,9 +175,12 @@
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny),                          !srv 13.01.17 {
      4  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),
-     5  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     5  cimp1(-1:nx,-1:ny,0:ns-1), cimp2(-1:nx,-1:ny,0:ns-1),          !som 13.11.20
      6  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
-     7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)                             !srv 13.01.17 }
+     7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),                            !srv 13.01.17 }
+     8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                            !som 13.11.20
+     9  z12(-1:nx,-1:ny), z22(-1:nx,-1:ny),
+     1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny)
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
@@ -250,7 +268,20 @@
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
 
-        if (.not.main_lightest .and. style.eq.2) then
+        impr_form_tf = 0                                               !som 13.11.20
+        impr_form_fr = 0
+        mass_multiplicator = 1.0_R8
+        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
+        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
+        call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
+        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
+        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 13.08.21
+        call ipgeti ('b2tral_Zhdanov_vish', Zhdanov_vish)              !som 18.10.21
+        call ipgetr ('b2npmo_smbvi_factor', smbvi_factor)              !som 14.12.21
+        if (.not.main_lightest .and. style.eq.2 .and.
+     .      Zhdanov_closure.eq.0) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
      .    'for plasmas where the main species is not the lightest one!'
          write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
@@ -312,17 +343,62 @@
       call b2xprz (nx, ny, ns, mp, am, na, rz)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !srv 13.01.17 {
-      call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !som 13.11.20 {
 
       do iy = -1, ny
         do ix = -1, nx
           ce1(ix,iy)=fce1(zeff(ix,iy))
           ce2(ix,iy)=fce2(zeff(ix,iy))
-          cimp1(ix,iy)=fce1(zmff(ix,iy))
-          cimp2(ix,iy)=fce2(zmff(ix,iy))
         enddo
-      enddo                                                            !srv 13.01.17 }
+      enddo
+
+      if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &    Zhdanov_tf_fr.eq.0) then                                     !som 01.07.21
+        mm(0:ns-1) = mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1(0:ns-1)= mm(0:ns-1)*am(0:ns-1)
+        call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+        call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+        call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+        call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+        call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+        call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+        call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
+
+        if (impr_form_fr.eq.0) then
+          do iy = -1, ny
+            do ix = -1, nx
+              cimp1(ix,iy,0:ns-1)=fce1(zmff(ix,iy))
+            enddo
+          enddo
+        else
+          do iy = -1, ny
+            do ix = -1, nx
+              do is = 0, ns-1
+                cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
+     &           z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
+              enddo
+            enddo
+          enddo
+        endif
+
+        if (impr_form_tf.eq.0) then
+          do iy = -1, ny
+            do ix = -1, nx
+              cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
+            enddo
+          enddo
+        else
+          do iy = -1, ny
+            do ix = -1, nx
+              do is = 0, ns-1
+                cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
+     &           z11(ix,iy),z12(ix,iy),z22(ix,iy))
+              enddo
+            enddo
+          enddo
+        endif
+      endif                                                            !som 13.11.20 }
 
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
@@ -334,7 +410,9 @@
       zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
       zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
 *   ..compute gti,gte
-      do iy = -1, ny
+      if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &    Zhdanov_tf_fr.eq.0) then                                     !som 01.07.21
+       do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
           gti(ix,iy) = 0.0_R8
@@ -343,7 +421,8 @@
      &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
          endif
         enddo
-      enddo
+       enddo
+      endif
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
@@ -522,8 +601,18 @@
        call b2sscal (n2*4, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,0,is),   !19.02.21
+       if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     & Zhdanov_visu.eq.0) then                                         !som 13.08.21
+        call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,0,is),  !19.02.21
      &                flubv)                                           !srv 01.07.05 11.09.09 16.10.17
+       else
+         if(.not. is_neutral(is)) then
+           call b2nxfv_zh (nx, ny, rho_A_rel(-1,-1,is), hz,            !som 13.08.21
+     &              cvsahz_cl(-1,-1,0,0,is), flubv)
+         else
+           flubv=0.0_R8
+         endif
+       endif
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,:,:,is)=flubv                                  !djm Jan2017
        endif
@@ -533,11 +622,71 @@
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,0,is), flcb, cvcb, wrk0)   !srv 09.01.01
 
 *    ..compute additional viscosity term
-       call b2siav (nx, ny, ns, is, ismain, am(is)*mp,                 !srv 19.02.21
+       if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &    (Zhdanov_visu.eq.0 .and. Zhdanov_vish.eq.0)) then            !som 13.08.21
+         call b2siav (nx, ny, ns, is, ismain, am(is)*mp,               !srv 19.02.21
      &    ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
      &    te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,         !srv 01.07.09
      &    cvsahz(-1,-1,0,0,is), cvsahz_cl(-1,-1,0,0,is),
      &    smbvh, smbvv, kt_neo, wrk0, wrk1, wrk2)                      !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+         smbvi=0.0_R8                                                  !som 13.08.21
+       elseif (Zhdanov_visu.eq.1.and.Zhdanov_vish.eq.1) then
+         if(.not. is_neutral(is)) then
+           call b2siav_zh (nx, ny, ns, is, ismain, am(is)*mp,          !som 13.08.21
+     &      rza(-1,-1,is),
+     &      ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
+     &      te, ti, na(-1,-1,is), ne2, lnlam,
+     &      cvsahz(-1,-1,0,0,is), cvsahz_drho(-1,-1,0,0,is),
+     &      smbvh, smbvv, smbvi, kt_neo,
+     &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
+         else
+           smbvh=0.0_R8                                                !som 13.08.21
+           smbvv=0.0_R8
+           smbvi=0.0_R8
+         endif
+       elseif (Zhdanov_visu.eq.1.and.Zhdanov_vish.eq.0) then
+         if(.not. is_neutral(is)) then
+           call b2siav (nx, ny, ns, is, ismain, am(is)*mp,             !srv 19.02.21
+     &      ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
+     &      te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,       !srv 01.07.09
+     &      cvsahz(-1,-1,0,0,is), cvsahz_cl(-1,-1,0,0,is),
+     &      smbvh, smbvtemp, kt_neo, wrk0, wrk1, wrk2)                    !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+           call b2siav_zh (nx, ny, ns, is, ismain, am(is)*mp,          !som 13.08.21
+     &      rza(-1,-1,is),
+     &      ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
+     &      te, ti, na(-1,-1,is), ne2, lnlam,
+     &      cvsahz(-1,-1,0,0,is), cvsahz_drho(-1,-1,0,0,is),
+     &      smbvtemp, smbvv, smbvi, kt_neo,
+     &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
+         else
+           smbvh=0.0_R8                                                !som 13.08.21
+           smbvv=0.0_R8
+           smbvi=0.0_R8
+         endif
+       elseif (Zhdanov_visu.eq.0.and.Zhdanov_vish.eq.1) then
+         if(.not. is_neutral(is)) then
+           call b2siav (nx, ny, ns, is, ismain, am(is)*mp,             !srv 19.02.21
+     &      ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
+     &      te, ti, na(-1,-1,is), ni(-1,-1,1), ne2, lnlam, chci,       !srv 01.07.09
+     &      cvsahz(-1,-1,0,0,is), cvsahz_cl(-1,-1,0,0,is),
+     &      smbvtemp, smbvv, kt_neo, wrk0, wrk1, wrk2)                 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+           call b2siav_zh (nx, ny, ns, is, ismain, am(is)*mp,          !som 13.08.21
+     &      rza(-1,-1,is),
+     &      ua(-1,-1,is), wadia(-1,-1,0,0,is), vaecrb(-1,-1,0,0,is),
+     &      te, ti, na(-1,-1,is), ne2, lnlam,
+     &      cvsahz(-1,-1,0,0,is), cvsahz_drho(-1,-1,0,0,is),
+     &      smbvh, smbvtemp, smbvi, kt_neo,
+     &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
+         else
+           smbvh=0.0_R8                                                !som 13.08.21
+           smbvv=0.0_R8
+         endif
+         smbvi=0.0_R8
+       endif
+       smbvi=smbvi*smbvi_factor                                        !som 14.12.21
 *    ..compute centrifugal force term                                  !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz,
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb,
@@ -553,10 +702,11 @@
        call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
        b2npmo_smag(:,:,:,is)=smbgp(:,:,:)
        call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
-       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)                 !srv 03.07.08 {
+       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)+smbvi(:,:,:)    !srv 03.07.08 !som 13.08.21
        call b2saxpy (n2*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)
-       call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
+       call b2saxpy (n2*4, 1.0_R8, smbvi, 1, smb, 1)                   !som 13.08.21
+       call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08
        call b2saxpy (n2*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
        call b2nxdv (nx, ny, is, rob, smq(-1,-1,0,is), smqdu, smb)      !srv ???
 *    ..save final source for species (is)                              !srv 10.11.02
@@ -597,6 +747,10 @@ cdjm Mar2019 output the total momentum flux and source for balance
      &         smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
             call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
+            wrks=smbvi(:,:,0)+smbvi(:,:,1)*ua(:,:,is)+                 !som 13.08.21
+     &         smbvi(:,:,2)*na(:,:,is)*mp*am(is)+
+     &         smbvi(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+            call my_out(70,nx,ny,wrks,'b2npmo_smovi'//chns)
             wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
      &         smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -702,6 +856,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
+        call b2saxpy (n2*4, 1.0_R8, smbvi, 1, smb, 1)                  !som 13.08.21
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nx, ny, hx, hy, vol, qs, is, ua(-1,-1,is), rob,   !srv 09.01.01

@@ -1,13 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfch (nx, ny, ns, ismain, ismain0,
+      subroutine b2tfch (nx, ny, ns, nscx, ismain, ismain0, iscx,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
      1  vol, gs, hx, hy, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz,     !xpb
      1  ti, ni, na, fna, uadia,
      2  ua, fne_32, fne_52, csig, csigin, csig_stoch,                    !xpb !srv 24.08.21
-     &  chce, chve, chci, calf, chvemx, cvsa_cl,
-     &  fch, conc, fchstoch, fchdia,                                     !srv 17.12.13 16.10.17
+     &  chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,
+     &  chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                   !som 20.10.21
+     &  fch, conc, fchstoch, fchdia,                                     !srv 17.12.13 16.10.17 som 18.08.21
      &  fch_p, fchvispar, fchvisq, fchin, fchinert, fch_32, fch_52,      !srv 25.11.08
      1  avisper_a, bvisper_a, cvisper_a, fchvisper, csig_cl,
      &  fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a)      !srv 08.09.21
@@ -24,7 +25,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, ismain0, guard_flows                   !xpb
+      integer nx, ny, ns, nscx, ismain, ismain0, iscx(0:nscxmax-1),
+     & guard_flows                                                       !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
@@ -39,6 +41,11 @@
      & chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
      & calf(-1:nx,-1:ny,0:1,0:1), chvemx(-1:nx,-1:ny),
      & cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),      !srv 16.10.17
+     & cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                            !som 18.08.21
+     & chci_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                        !som 20.10.21
+     & chci_a(-1:nx,-1:ny,0:1,0:1,0:ns-1),                               !som 20.10.21
+     & cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),    !som 20.10.21
+     & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                   !som 20.10.21
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
@@ -199,7 +206,8 @@ c Drift terms
       facdriftm = maxval(facdrift)                                       !srv 23.12.19
       fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, facdrift, fac_ExB, ismain, ismain0,
+      call b2tinnt (nx, ny, ns, nscx, ismain, ismain0, iscx,
+     &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, qz, qc, qs, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
@@ -207,7 +215,7 @@ c Drift terms
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa(nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,          !srv 19.02.21
-     &             na, ua, cvsa_cl, fac_vis,                             !srv 20.09.06 16.10.17 !som 18.08.21
+     &             na, ua, cvsa_cl, cvsa_drho, fac_vis,                  !srv 20.09.06 16.10.17 !som 18.08.21
      &             fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
@@ -216,7 +224,8 @@ c Drift terms
      &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
       call b2tvsq (nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni, chci,
+     &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
       call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb,         !srv 22.11.12 08.09.21 }

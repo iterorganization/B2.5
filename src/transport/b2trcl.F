@@ -13,13 +13,15 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_rates                                                    !som 22.06.2021
       use b2mod_geo
      &                    , only : hy1
       use b2mod_transport
      &                    , only :
      &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
      &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
-     &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
+     &                     fllim_al_c, alfx_c, sigx_c,                   !srv 08.10.14
+     &                     alpha1, kt_neo                                !som 05.10.21
       use b2mod_transport_namelist
 #ifdef ASTRA
       use b2mod_geo_corner
@@ -90,6 +92,9 @@
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
       integer, save :: conductive_limit = 1                              !srv 16.06.08
       integer, save :: style = 2                                         !srv 13.01.17
+      integer, save :: Zhdanov_closure = 0                               !som 22.06.21
+      integer, save :: Zhdanov_test = 0                                  !som 22.06.21
+      integer, save :: Zhdanov_cond = 1                                  !som 22.06.21
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
@@ -104,7 +109,7 @@
       real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),     !lk 19.09.07
      &  k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)             !lk 19.09.07
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),              !lk 12.05.11
-     &  k1(-1:nx,-1:ny), t1, t2                                          !lk 12.05.11
+     &  k1(-1:nx,-1:ny), t1, t2, t3, tauVeff                             !lk 12.05.11 !som 22.06.21
       real (kind=R8), save :: cvsa_mltpl = 1.0_R8, csig_mltpl=1.0_R8     !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
@@ -169,6 +174,9 @@ csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
         call ipgeti ('b2trcl_integral_modeling', integral_modeling)      !srv 01.11.11
         call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 22.06.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 22.06.21
+        call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)                !som 22.06.21
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -301,6 +309,8 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       f_luc_et = 1.0_R8
       f_luc_sg = 1.0_R8
       f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
+      alpha1 = 1.0_R8                                                   !som 05.10.21
+      kt_neo = 2.7_R8                                                   !som 05.10.21
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -411,15 +421,43 @@ cwdk  tmp: needed as long as not all contributions are filled later on
      &      +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
      &      /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
 
-           nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
-     &      *sqrt(ti(ix,iy)/(mp*am(ismain)))
-     &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+           if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0 .and.
+     &         Zhdanov_cond.eq.1) then                                   !som 22.06.21
+
+             tauVeff = 0.0e0_R8
+             do is = 0, ns-1
+               if(.not.is_neutral(is)) then
+                 t3=sum(sqrt(2.0e0_R8*am(0:ns-1)/(am(is)+am(0:ns-1)))*
+     &            rz2(ix,iy,0:ns-1)*na(ix,iy,0:ns-1))
+                 tauVeff=tauVeff+(na(ix,iy,is)/ni(ix,iy,1))*
+     &            tauia(ix,iy,is)*(ne2(ix,iy)/t3)*sqrt(ti(ix,iy)/
+     &           (mp*am(is)))
+               endif
+             enddo
+
+             nu2(ix,iy) = conn(iy)/(tauVeff
+     &        *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+           else
+
+             nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
+     &        *sqrt(ti(ix,iy)/(mp*am(ismain)))
+     &        *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+           endif
 
            k2(ix,iy) = (0.66e0_R8+1.88e0_R8*sqrt(eps1(iy))
      &      -1.54e0_R8*eps1(iy))
      &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
      &      +1.17e0_R8*(eps1(iy)**3)*nu2(ix,iy)
      &      /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
+           alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))+
+     &           2.7e0_R8*nu2(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu2(ix,iy))+
+     &           nu2(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)/1.7e0_R8           !som 05.10.21
+           kt_neo(ix,iy) =
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))
+     &           +2.7e0_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu2(ix,iy))+
+     &           (nu2(ix,iy))**2*eps1(iy)**3))                           !som 05.10.21
           endif
          enddo
         enddo                                                            !lk 19.09.07 }

@@ -40,6 +40,11 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_b2mrel
+     & , only : dealloc_b2mod_mrel
+      use b2mod_b2zhco
+      use b2mod_zhfrtf
+     & , only : dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_external
       use b2mod_mwti
       use b2mod_file
@@ -135,9 +140,11 @@
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
+      integer, save :: b2sigp_style = 2
       integer, save :: b2mndt_style = 1
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
+      integer, save :: Zhdanov_closure = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
@@ -1295,6 +1302,17 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
+       call ipgeti ('b2sigp_style', b2sigp_style)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)
+       if (.not.(k.eq.1.or.b2sigp_style.ne.2.or.Zhdanov_closure.eq.1))
+     >  then
+         write(0,'(3a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species ',
+     .    'unless using Zhdanov closure!'
+         write(6,'(3a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species ',
+     .    'unless using Zhdanov closure!'
+       endif
 *
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
        call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
@@ -1305,7 +1323,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
-       call ipgeti ('b2mndr_use_9pt_stencil',use_9pt_stencil)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
 #ifndef NO_CDF
        call ipgeti ('b2mndr_cdf_default', cdf_default)
        if (cdf_default .eq. 0) then        ! not set
@@ -1386,7 +1404,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .    'User name not defined !')
          database = 'solps-iter'
          treename = 'ids'
-         version = '3'
+         write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifndef NO_GETENV
          device_env = ' '
 #ifdef NAGFOR
@@ -2630,8 +2648,8 @@ c new CDF movie option
             end if
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
-              write(*,*)
-     .         "Reading old IMAS data-entry", trim(database), shot, run
+              write(*,*) "Reading old IMAS data-entry: ",
+     .         trim(database), shot, run
               call ids_get( idx, "equilibrium", equilibrium, status)
               call ids_get( idx, "edge_profiles", old_edge_profiles,
      .          status)
@@ -3136,8 +3154,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           end if
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
-            write(*,*)
-     .       "Reading old IMAS data-entry", trim(database), shot, run
+            write(*,*) "Reading old IMAS data-entry: ",
+     .       trim(database), shot, run
             call ids_get( idx, "equilibrium", equilibrium, status)
             call ids_get( idx, "edge_profiles", old_edge_profiles,
      .        status)
@@ -3359,9 +3377,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       deallocate(rsa, rra, rqa, rrd, rbr, rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
       call dealloc_b2mod_ma28
+      call dealloc_b2mod_mrel
       call dealloc_b2mod_wall
+      call dealloc_b2mod_zhco
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
+      call dealloc_b2mod_zhfrtf
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
@@ -3374,6 +3395,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
+      call dealloc_b2mod_zhfrtf_df
       call dealloc_transport_namelist
       call dealloc_b2mod_first_flight
       call dealloc_b2mod_neoclassical

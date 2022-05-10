@@ -3,8 +3,8 @@
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
      *  hx, hy, qz, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,       !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa,
-     *  she0, shi0)                                                    !srv 28.06.03 07.07.09
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
+     *  cvsa_drho, she0, shi0)                                         !som 16.08.21 !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -15,6 +15,11 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_b2zhco
+     & , only: zhd_corr                                               !som 21.03.21
+      use b2mod_zhfrtf
+     & , only: avm_u,                                                 !som 21.03.21 16.08.21
+     &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
       use b2mod_geo
      & , only : hy1
       use b2mod_balance !djm Jan2017
@@ -40,6 +45,8 @@
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1),          !srv 24.08.21
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                        !som 16.08.21
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -68,6 +75,14 @@
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
       integer, save :: use_eirene = 0
       integer, save :: style_int_vel = 0                              !srv 01.04.19
+      integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
+     &                 Zhdanov_tf_fr = 1                              !som 01.07.21
+      integer, save :: Zhdanov_visu = 1                               !som 16.08.21
+      integer, save :: zh_vis_type = 0                              !som 13.01.22
+      real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
+      real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
+      real (kind=R8) :: ft                                            !som 16.08.21
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
@@ -86,12 +101,16 @@
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny,0:1), ehy(-1:nx,-1:ny,0:1) !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
-     4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny,0:ns-1),
+     *  cimp2(-1:nx,-1:ny,0:ns-1),                                    !som 13.11.20
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
-     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)            !srv 13.01.17 05.07.17 }
+     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),           !srv 13.01.17 05.07.17 }
+     8  zmc(-1:nx,-1:ny), z11(-1:nx,-1:ny),                           !som 13.11.20
+     9  z12(-1:nx,-1:ny), z22(-1:nx,-1:ny),
+     1  zf1(-1:nx,-1:ny), zf2(-1:nx,-1:ny)
       character chk*1                                                 !srv 11.09.09 } !srv 05.07.17
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
@@ -157,6 +176,17 @@
        call ipgeti ('b2sigp_style', b2sigp_style)                      !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2sihs_style_int_vel', style_int_vel)             !srv 01.04.19
+       impr_form_tf = 0                                                !som 13.11.20
+       impr_form_fr = 0
+       mass_multiplicator = 1.0_R8
+       call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
+       call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
+       call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 21.03.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 21.03.21
+       call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)             !som 01.07.21
+       call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)               !som 18.08.21
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -416,13 +446,20 @@
       endif
       call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from viscous heating
+      if ((Zhdanov_closure.eq.1) .and. (Zhdanov_test.eq.0).and.
+     &  Zhdanov_visu.eq.1) then                                       !som 18.08.21
+*   ..re-calculate mass-average velocity
+        call b2mod_zhfrtf_avm_u(nx, ny, ns, na, ua)
+      endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
 cwdk compute radial differences of ua at cell faces
-         call diff_r(nx,ny,0,hx,hy,vol,qs,ua(-1,-1,is),wrk0,duar)
-         wrk0 = 0.0e0_R8
+        call diff_r(nx,ny,0,hx,hy,vol,qs,ua(-1,-1,is),wrk0,duar)
+        wrk0 = 0.0e0_R8
+        if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
+     &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                   !som 16.08.21
          do iy = -1, ny                                               !srv 28.08.02 21.07.05 16.10.17 {
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
@@ -433,6 +470,34 @@ cwdk compute radial differences of ua at cell faces
            endif
           enddo
          enddo
+        else
+         if (zh_vis_type.eq.0) then                                   !som 13.01.22
+          do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+            else
+             wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*                        !srv 16.10.17
+     &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
+            endif
+           enddo
+          enddo
+         else if (zh_vis_type.eq.1) then
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy)=0.0e0_R8
+            else
+             wrk0(ix,iy) = (cvsa(ix,iy,0,0,is)-
+     &                ft*cvsa_cl(ix,iy,0,0,is))*
+     &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
+     &         ft*cvsa_drho(ix,iy,0,0,is)*
+     &        (avm_u(ix,iy)-avm_u(leftix(ix,iy),leftiy(ix,iy)))**2    !som 16.08.21
+            endif
+           enddo
+          enddo
+         endif
+        endif
         do iy = -1, ny
          do ix = -1, nx
           if(bottomiy(ix,iy).eq.-2) then
@@ -474,17 +539,62 @@ cwdk compute radial differences of ua at cell faces
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(b2sigp_style.eq.2) then                                      !srv 05.07.17
        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                    !srv 13.01.17 {
-       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                    !som 13.11.20 {
 
        do iy = -1, ny
          do ix = -1, nx
            ce1(ix,iy)=fce1(zeff(ix,iy))
            ce2(ix,iy)=fce2(zeff(ix,iy))
-           cimp1(ix,iy)=fce1(zmff(ix,iy))
-           cimp2(ix,iy)=fce2(zmff(ix,iy))
          enddo
-       enddo                                                          !srv 13.01.17 }
+       enddo
+
+       if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &     Zhdanov_tf_fr.eq.0) then                                   !som 01.07.21
+         mm(0:ns-1) = mass_multiplicator
+         mm(ismain) = 1.0_R8
+         am1(0:ns-1)= mm(0:ns-1)*am(0:ns-1)
+         call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+         call b2xzmc (nx, ny, ns, ismain, rz2, na, am1, zmc)
+         call b2xzf1 (nx, ny, ns, ismain, rz2, na, am1, zf1)
+         call b2xzf2 (nx, ny, ns, ismain, rz2, na, am1, zf2)
+         call b2xz11 (nx, ny, ns, ismain, rz2, na, am1, z11)
+         call b2xz12 (nx, ny, ns, ismain, rz2, na, am1, z12)
+         call b2xz22 (nx, ny, ns, ismain, rz2, na, am1, z22)
+
+         if (impr_form_fr.eq.0) then
+           do iy = -1, ny
+             do ix = -1, nx
+               cimp1(ix,iy,0:ns-1)=fce1(zmff(ix,iy))
+             enddo
+           enddo
+         else
+           do iy = -1, ny
+             do ix = -1, nx
+               do is = 0, ns-1
+                 cimp1(ix,iy,is)=fcim1(ismain,is,ns,am1,z11(ix,iy),
+     &            z12(ix,iy),z22(ix,iy),zf1(ix,iy),zf2(ix,iy))
+               enddo
+             enddo
+           enddo
+         endif
+
+         if (impr_form_tf.eq.0) then
+           do iy = -1, ny
+             do ix = -1, nx
+               cimp2(ix,iy,0:ns-1)=fce2(zmff(ix,iy))
+             enddo
+           enddo
+         else
+           do iy = -1, ny
+             do ix = -1, nx
+               do is = 0, ns-1
+                 cimp2(ix,iy,is)=fcim2(ismain,is,ns,am1,zmc(ix,iy),
+     &            z11(ix,iy),z12(ix,iy),z22(ix,iy))
+               enddo
+             enddo
+           enddo
+         endif
+       endif                                                          !som 13.11.20 }
 
 *   ..compute the Coulomb logarithm
        call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
@@ -496,7 +606,9 @@ cwdk compute radial differences of ua at cell faces
        zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
        zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
 *   ..compute gti,gte
-       do iy = -1, ny
+       if (Zhdanov_closure.eq.0 .or. Zhdanov_test.eq.1 .or.
+     &     Zhdanov_tf_fr.eq.0) then                                    !som 01.07.21
+        do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
            gti(ix,iy) = 0.0_R8
@@ -505,7 +617,8 @@ cwdk compute radial differences of ua at cell faces
      &       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
           endif
          enddo
-       enddo
+        enddo
+       endif
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
@@ -547,7 +660,13 @@ cwdk compute radial differences of ua at cell faces
      &                                               )
          endif
        enddo
-       shefr(:,:,0) =  ue*shefr(:,:,0)
+*   ..add contribution due to Zhdanov multi-species approach
+       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
+     &    Zhdanov_tf_fr.eq.1) then                                    !som 01.07.21
+         shifr(:,:,0) = shifr(:,:,0)-zhd_corr*avm_u*shefr(:,:,0)
+         shefr(:,:,0) = shefr(:,:,0)-zhd_corr*(avm_u/ue)*shefr(:,:,0)
+       endif
+       shefr(:,:,0) = ue*shefr(:,:,0)
 
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8

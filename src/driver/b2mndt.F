@@ -11,6 +11,7 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
+      use b2mod_transport_nspecies
       use b2mod_indirect
       use b2mod_constants
       use b2mod_diag
@@ -335,6 +336,9 @@ ctmp.dpc
      2       cdna, cdpa, cddi, cdde, cvla, cvsa, chce, chve, chci,       !srv 13.10.06 !som 03.11.21
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
+     *       cvsahz_drho, cvsa_drho,                                     !som 18.08.21
+     *       chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,          !som 08.10.21
+     *       cvsa_hAdp_albe, cvsa_hBdp_al,                               !som 20.10.21
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &       csig_stoch, chce_stoch)                                     !srv 24.08.21
           newneo=.true.
@@ -342,7 +346,7 @@ ctmp.dpc
             call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,           !srv 20.09.06 }!som 02.11.21
      &        csig_an, po, ne, na, fchanml_a, fchanml)                   !srv 08.09.21
             call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,   !srv 20.09.06 { 19.02.21
-     &        na, ua, cvsa_cl, fac_vis,
+     &        na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &        fchvispar_a, fchvispar)                                    !som 18.08.21
             call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb,
      &                    na, ua, facdrift, fchinert_a, fchinert)        !srv 08.09.21
@@ -351,7 +355,8 @@ ctmp.dpc
      &                    avisper_a, bvisper_a, cvisper_a,
      &                    fchvisper_a, fchvisper)
             call b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci,
+     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
+     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 !          endif                                                         !srv 18.06.08 }
 *      ..compute electron drift velocities
@@ -374,7 +379,7 @@ ctmp.dpc
           call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, bb,                !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, bb, lnlam,         !srv 09.01.01
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
@@ -384,7 +389,8 @@ ctmp.dpc
      &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &     cdna, cdpa, cvsa_cl,
+     &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
+     &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
      &     cvla, chce, chve, chci, chvi, calf,                           !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
@@ -612,7 +618,7 @@ ctmp.dpc
      &      solveee, solveei, solveet, solvepo, solvemo,               !srv 22.05.18
      &      rxf, dtim, BoRiS, fac_ExB, hx, hy, qz, qc, qs, vol, gs, bb,!srv 07.07.21
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
-     &      fne, fch, fchstoch, cvsa,
+     &      fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,
      &      fchdia, uadia, wadia, vadia, vaecrb,                       !srv 09.07.08 07.07.09 24.08.21
      &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
      &      shef, shif, reshe, reshi, wrk0, corte, corti, ier0)
