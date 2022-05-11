@@ -14,11 +14,9 @@
       use b2mod_constants
       use b2mod_b2cmfs
 !      use b2mod_connectivity
-      !use b2mod_indirect
       use b2ag_parameters
       use b2ag_ghostcells
       use carre_constants
-      !use b2mod_geo
       use b2us_geo
       use b2us_map
       implicit none
@@ -565,13 +563,9 @@ cxpb  if just below the top corner, make the corner cell follow
      &  isymm,g,m,cvBp,cvBt)
       use b2mod_types
       use b2mod_version
-      use b2mod_indirect
-     . ,only: GRID_N_CELLFLAGS
       use b2ag_parameters
       use carre_constants
       use b2ag_ghostcells
-      use carre_b2ag
-      use b2mod_geo
       use b2us_geo
       use b2us_map
 #ifdef NAGF95
@@ -716,12 +710,9 @@ cxpb  if just below the top corner, make the corner cell follow
      &  cvBp,cvBt,cvFpsi)
       use b2mod_types
       use b2mod_version
-      !use b2mod_indirect
       use b2ag_parameters
       use carre_constants
       use b2ag_ghostcells
-      !use carre_b2ag
-      !use b2mod_geo
       use b2us_map
       use b2us_geo
       implicit none
@@ -823,8 +814,6 @@ cxpb  if just below the top corner, make the corner cell follow
       
       subroutine order_vertices(g,m)
       use b2mod_types
-      !use b2mod_indirect
-      !use b2mod_geo
       use b2us_map
       use b2us_geo
       implicit none 
@@ -834,48 +823,200 @@ cxpb  if just below the top corner, make the corner cell follow
 
       ! internal
 
-      logical :: determine_direction
-      integer :: iCv
-      real (kind=R8) :: fcX, fcY, vec_start(1:2), vec_face1(1:2),
-     &     vec_face2(1:2), sin1, sin2
+      logical :: determine_direction, is_ordered(m%nCv)
+      integer :: iCv, i, j, vs(1:2), nv, nf, index(1:2)
+      real (kind=R8) ::  vec_start(1:2), vec_face1(1:2),
+     &     vec_face2(1:2), sin1, sin2, fc1X, fc1Y, fc2X, fc2Y
+      real (kind=R8),allocatable :: vec_vxX(:), vec_vxY(:),
+     &     vec_fcX(:), vec_fcY(:) , fcX(:), fcY(:)
       integer, allocatable :: verts(:), faces(:),  new_verts(:),
-     &     new_faces(:) , verts_of_faces(:,:)
+     &     new_faces(:) , verts_of_faces(:,:), ind_vof(:), vof_h(:)
+!      logical isVertInFace
+    
+
 
       !computation
+      is_ordered = 1
+      ! first CheckVertOrder
 
-      determine_direction = 1
-
-      do iCv = 1,m%nCv
-         allocate(verts(m%cvVxP(iCv,2)))
-         allocate(faces(m%cvFcP(iCv,2)))
-         allocate(new_verts(m%cvVxP(iCv,2)))
-         allocate(new_faces(m%cvFcP(iCv,2)))
-         allocate(verts_of_faces(m%cvFcP(iCv,2),2))
-
+      do iCv = 1,m%nCv   ! or use upper boundary m%nCv-m%nCg
+         nv = m%cvVxP(iCv,2)
+         nf = m%cvFcP(iCv,2)
+         if (nv.lt.3) cycle
+         allocate(verts(nv))
+         allocate(faces(nf))
+         allocate(new_verts(nv))
+         allocate(new_faces(nf))
+         allocate(verts_of_faces(nf,2))
 
          verts = 
-     &    m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + m%cvVxP(iCv,2)-1 )
+     &    m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + nv-1 )
          faces = 
-     &    m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1) + m%cvFcP(iCv,2)-1 )
-         
-         !Starting point
-         new_verts(1) = verts(1)
-         verts_of_faces = m%fcVx(faces,:)
+     &    m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1) + nf-1 )
 
-         !find the two faces connected to that vertex and the other vertex connected to that face
-         ! something with pack function
+      !first check whether vertices and faces are connected according to the correct ordering    
+         do i = 1,nv-1
+            if (( .not. isVertInFace(verts(i),faces(i),m)).or. 
+     &            ( .not. isVertInFace(verts(i+1),faces(i),m))) then
+                is_ordered(iCv) = 0
+            endif
 
-         !if determine_direction then
+         enddo
+         i = nv
+         if (( .not. isVertInFace(verts(i),faces(i),m)) .or. 
+     &      ( .not. isVertInFace(verts(1),faces(i),m))) then
+                is_ordered(iCv) = 0
+         endif
+
+         if (is_ordered(iCv).eq.1) then ! if above is still OK, check the directions
+           allocate(vec_vxX(nv))
+           allocate(vec_vxY(nv))
+
+          !Calculate vectors between centroids and vertices
+          vec_vxX = g%vxX(verts) - g%cvX(iCv)
+          vec_vxY = g%vxY(verts) - g%cvY(iCv)
+
+          !Calculate vectors between centoid and face centers
+          !face centers
+          fcX = 0.5_R8*(g%vxX(m%fcVx(faces,1)) 
+     &               + g%vxX(m%fcVx(faces,2)) )
+          fcY = 0.5_R8*(g%vxY(m%fcVx(faces,1))
+     &               + g%vxY(m%fcVx(faces,2)) )
+          !vectors
+          vec_fcX = fcX - g%cvX(iCv)
+          vec_fcY = fcY - g%cvY(iCv)
+
+          do j =1,m%cvFcP(iCv,2)-1
+            !check sinus between vector to vertex (a) and vector to face
+            !center (b)
+            !calculate angles (sin = |a x b| / norm(a)*norm(b))
+            !with |a x b | = ax*by - bx*ay
+
+               sin1 = vec_vxX(j)*vec_fcY(j) 
+     &               - vec_fcX(j)*vec_vxY(j)
+
+               if (sin1 .lt. 0.0_R8) then
+                  is_ordered(iCv) = 0
+               else
+                !check sinus between vector to face center (b) and vector
+                !to second vertex (a)
+                sin2 = vec_fcX(j) *vec_vxY(j+1) 
+     &             - vec_vxX(j+1)*vec_fcY(j)
+                if (sin2 .lt. 0.0_R8) then
+                   is_ordered(iCv)  = 0
+
+                endif
+               endif
+   
+          enddo
+          deallocate(vec_vxX)
+          deallocate(vec_vxY)
+
+         endif
+
+         ! second ReorderCellConn
+         if (is_ordered(iCv).eq.0) then
+
+             !Starting point 
+             new_verts(1:nv) = 0
+             new_verts(1) = verts(1)
+
+
+             allocate(verts_of_faces(nf,2))
+             verts_of_faces = m%fcVx(faces,:)
+
+             ! find the first face
+             allocate(ind_vof(2*nf))
+             ind_vof(1:nf)      = (/ (i, i = 1,nf) /)
+             ind_vof(nf+1:2*nf) =  (/ (i, i=1,nf) /)
+
+             allocate(vof_h(2*nf))
+             vof_h(1:nf)      = verts_of_faces(1:nf,1)
+             vof_h(nf+1:2*nf) = verts_of_faces(1:nf,2)
+
+             index(1:2) = pack(ind_vof,vof_h == new_verts(1))         
+             ![index,~] = find(verts_of_faces == new_verts(1));
+
+             !Define vector from cell center to first vertex
+             vec_start(1) = g%vxX(new_verts(1)) - g%cvX(iCv)
+             vec_start(2) = g%vxY(new_verts(1)) - g%cvY(iCv)
              
-         !else
-            
-         !endif
-         
+             !Define vector from cell center to first face center
+             fc1X = 0.5_R8*( g%vxX(m%fcVx(faces(index(1)),1)) +
+     &            g%vxX(m%fcVx(faces(index(1)),2))  )
+             fc1Y = 0.5_R8*( g%vxY(m%fcVx(faces(index(1)),1)) +  
+     &          g%vxY(m%fcVx(faces(index(1)),2))  )
+
+             vec_face1(1) = fc1X - g%cvX(iCv)
+             vec_face1(2) = fc1Y - g%cvY(iCv)
+
+             fc2X = 0.5_R8*( g%vxX(m%fcVx(faces(index(2)),1)) +  
+     &           g%vxX(m%fcVx(faces(index(2)),2))  )
+             fc2Y = 0.5_R8*( g%vxY(m%fcVx(faces(index(2)),1)) +  
+     &           g%vxY(m%fcVx(faces(index(2)),2))  )
+
+             vec_face2(1) = fc2X - g%cvX(iCv)
+             vec_face2(2) = fc2Y - g%cvY(iCv)
+
+             !calculate angles
+             sin1 = vec_start(1) * vec_face1(2) - 
+     &               vec_face1(1) * vec_start(2)
+
+             sin2 = vec_start(1) * vec_face2(2) - 
+     &              vec_face2(1) * vec_start(2)
+
+             !Choose the one with positive sign, which is right turning
+             if (sin1 .gt. 0.0_R8) then
+                 new_faces(1) =  faces(index(1))
+             elseif (sin2.gt.0.0_R8) then
+                 new_faces(1) =  faces(index(2))
+             else
+                 call xerrab('order_vertices: no start face assigned')
+             endif 
+
+             !Chain the other verts and face accordingly
+
+
+             do i = 2,m%cvVxP(iCv,2)
+                !find the next vertex
+                vs = m%fcVx(new_faces(i-1),:)
+                if (.not. isMember(vs(1), new_verts,nv)) then
+                    new_verts(i) = vs(1)
+                else 
+                    new_verts(i) = vs(2)                
+                endif
+
+                !find the next face
+                index(1:2) = pack(ind_vof,vof_h == new_verts(i))
+                !index = find(verts_of_faces == new_verts(i))
+
+                if (.not. isMember(faces(index(1)),new_faces,nf)) then
+                   new_faces(i) = faces(index(1))
+                else
+                   new_faces(i) = faces(index(2))
+                endif
+             enddo
+
+             !Plug new_verts and new_faces in cvVx an cvFc
+             m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1) =
+     &               new_verts
+             m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1) =
+     &                new_faces
+
+            deallocate(ind_vof)
+            deallocate(vof_h)                  
+       
+
+         endif
+
          deallocate(verts)
          deallocate(faces)
          deallocate(new_verts)
          deallocate(new_faces)
          deallocate(verts_of_faces)
+
+
+
       enddo
 
 

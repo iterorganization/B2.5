@@ -646,8 +646,6 @@ contains
     
     ! Give a list of the boundary faces
     subroutine get_boundary_faces(facenumbers,g,m,nGhostCell,nnCv)
-      !use b2mod_geo
-      !use b2mod_indirect
       use b2us_geo
       use b2us_map
 

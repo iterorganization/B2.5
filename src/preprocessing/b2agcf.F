@@ -1,15 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agcf (nx,ny,nCv, nFc, nVx, g, m)
+      subroutine b2agcf ( g, m)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nx, ny
-      type(mapping_ag) :: m
-      type(geometry_ag) :: g
+      type(mapping) :: m
+      type(geometry) :: g
 *   ..output arguments (unspecified on entry)
 !      real (kind=R8) ::
 !     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
@@ -89,10 +89,11 @@
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
-     *   rratio, trunc
+     *   rratio
+!     *  trunc
       external subini, subend, xertst, rratio
       external b2agsp
-      trunc(t0,edg) = max(-edg,min(1+edg,t0))
+!      trunc(t0,edg) = max(-edg,min(1+edg,t0))
 
 *-----------------------------------------------------------------------
 *.computation
@@ -101,7 +102,7 @@
 *   ..subprogram start-up calls
       call subini ('b2agcf')
 *   ..test nCv, nFc, nVx
-      call xertst (0.le.nCv.and.0.le.nFc.and.0.le.nVx,
+      call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
      & 'faulty argument nCv, nFc,nVx')
 *   ..set edg
 *     (An appropriate value for edg must be small compared to 1.0/nx

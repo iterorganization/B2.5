@@ -11,9 +11,6 @@
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
-!      use b2mod_indirect
-!     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea
-!     use b2mod_geo
       use b2us_geo
       use b2us_map
  
@@ -130,14 +127,15 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j, iCv, iFc
+      integer ix, iy, i, j, iCv, iFc, iF
       integer verts4(0:3), verts3(0:2), faces3(0:2)
       type(geometry) :: g
       type(mapping) :: m
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1, psic
+     *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), 
+     *   t0, t1, psic
       logical classical
 !      real (kind=R8) ::
 !     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
@@ -228,11 +226,11 @@ cnv  new methods are employed
        verts4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
      &          m%cvVxP(iCv,2)-1 )
        ! b_y
-       t0 = 0.25_R8 * ( g%vxBb(verts4(0),2) + g%vxBb(verts4(1),2) +   
-     &        g%vxBb(verts4(2),2) + g%vxBb(verts4(3),2) )
-       ! b_x
-       t1 = - 0.25_R8 * ( g%vxBb(verts4(0),1) + g%vxBb(verts4(1),1) +
+       t0 = 0.25_R8 * ( g%vxBb(verts4(0),1) + g%vxBb(verts4(1),1) +   
      &        g%vxBb(verts4(2),1) + g%vxBb(verts4(3),1) )
+       ! b_x
+       t1 = - 0.25_R8 * ( g%vxBb(verts4(0),0) + g%vxBb(verts4(1),0) +
+     &        g%vxBb(verts4(2),0) + g%vxBb(verts4(3),0) )
 
        g%cvEb(iCv,0) = t0 / norm(t0,t1)
        g%cvEb(iCv,1) = t1 / norm(t0,t1)
@@ -240,7 +238,7 @@ cnv  new methods are employed
 *    ..unit vector of total magnetic field, defined in cell center
       ! until this point, cvEb was unit vector of poloidal field
       ! now, correct for toroidal field
-       if (g%cvBb(iCv,3) == 0.0_R8) Then
+       if (g%cvBb(iCv,3) == 0.0_R8) then
          g%cvEb(iCv,:) = 0.0_R8
        else
          g%cvEb(iCv,0) = abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
@@ -257,54 +255,54 @@ cnv  new methods are employed
       !&     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(2)),
       !&     g%vxY(verts4(2)), g%vxX(verts4(3)), g%vxY(verts4(3)) )
 
-      ! we assume the vertices are ordered (done in Make_traduit_b2us)
-      ! This should be introduced in b2ag!!
+      ! we assume the vertices are ordered 
       ! Because of this we can employ the quadArea_st which assumes the
       ! vertices in the correct sequence
        g%cvSz(iCv) = quadArea_st(g%vxX(verts4(0)), g%vxY(verts4(0)),  
-     &     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(2)),
-     &     g%vxY(verts4(2)), g%vxX(verts4(3)), g%vxY(verts4(3)) )
+     &     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(3)),
+     &     g%vxY(verts4(3)), g%vxX(verts4(2)), g%vxY(verts4(2)) )
 
 
       if  (isymm.eq.0) then  !slab geometry
       ! volume is area times width
-        g%cvVol = g%cvSz *width     
+        g%cvVol(iCv) = g%cvSz(iCv) *width     
       elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmertry about crx=0 axis
         if (volhmk.eq.0) then 
-          centroid(0) = 0.25*R8*
+          centroid(iCv,0) = 0.25_R8*
      &      (g%vxX(verts4(0)) + g%vxX(verts4(1)) + g%vxX(verts4(2)) 
      &       + g%vxX(verts4(3)) )
-          centroid(1) = 0.25*R8*
+          centroid(iCv,1) = 0.25_R8*
      &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
      &       + g%vxY(verts4(3)) )
         else
-          ! QUADCENTROID NOT YET ADAPTED for unstructured - WIP
-          centroid = quadCentroid_us(g%vxX(verts4(0)),g%vxY(verts4(0)),
+          centroid(iCv,:) = quadCentroid_us(g%vxX(verts4(0)),g%vxY(verts4(0)),
      &                            g%vxX(verts4(1)),g%vxY(verts4(1)),
      &                            g%vxX(verts4(2)),g%vxY(verts4(2)),
      &                            g%vxX(verts4(3)),g%vxY(verts4(3)))
         endif
         ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid 
-        g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(0)
+        g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
       elseif  (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0
         if (volhmk.eq.0) then
-          centroid(0) = 0.25*R8*
+          centroid(iCv,0) = 0.25*R8*
      &      (g%vxX(verts4(0)) + g%vxX(verts4(1)) + g%vxX(verts4(2)) 
      &       + g%vxX(verts4(3)) )
-          centroid(1) = 0.25*R8*
+          centroid(iCv,1) = 0.25*R8*
      &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
      &       + g%vxY(verts4(3)) )
         else 
           ! old function quadCentroid can be used if vertices are ordered correctly
-          centroid = quadCentroid_us(g%vxX(verts4(0)),g%vxY(verts4(0)),
+          centroid(iCv,0:1) = quadCentroid_us(g%vxX(verts4(0)),g%vxY(verts4(0)),
      &                            g%vxX(verts4(1)),g%vxY(verts4(1)),
-     &                            g%vxX(verts4(2)),g%vxY(verts4(2)),
-     &                            g%vxX(verts4(3)),g%vxY(verts4(3)))
+     &                            g%vxX(verts4(3)),g%vxY(verts4(3)),
+     &                            g%vxX(verts4(2)),g%vxY(verts4(2)))
+          
         endif
         ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid 
-        g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(1)       
+        g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)       
 
       endif
+
       ! compute ecc : Unit vectors of connector lines cell center to face centers
       if (m%isClassicalGrid) then
          ! vertices need to be ordered as follows
@@ -340,12 +338,35 @@ cwdk      4) centroid: average between the intersections with faces
        psic = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
 
       ! Loop over faces to find which ones are intersected by the psic surface
-      ! (Loop includes degenerate face; should not cause problems)
       faces3 = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1) + 
      &          m%cvFcP(iCv,2)-1 )
       ii = 0 
+      do iF = 0,2 
+      if (psic.ge.min(g%vxFpsi(m%fcVx(faces3(iFc),1)) , 
+     &             g%vxFpsi(m%fcVx(faces3(iFc)),2)) .and.
+     &   (psic.lt.max(g%vxFpsi(m%fcVx(faces3(iFc),1)),  
+     &             g%vxFpsi(m%fcVx(faces3(iFc),2)))) ) then !intersected  
+        t0 = (psic - g%vxFpsi(m%fcVx(faces3(iFc),1))) / 
+     &        (g%vxFpsi(m%fcVx(faces3(iFc),2)) - 
+     &         g%vxFpsi(m%fcVx(faces3(iFc),1)))
+        isx(ii) = g%vxX(m%fcVx(faces3(iFc),1))) + t0 * 
+     &  ( g%vxX(m%fcVx(faces3(iFc),2)) - g%vxX(m%fcVx(faces3(iFc),1)))
+        isy(ii) = g%vxY(m%fcVx(faces3(iFc),1))) + t0 * 
+     &  ( g%vxY(m%fcVx(faces3(iFc),2)) - g%vxY(m%fcVx(faces3(iFc),1)))     
+        ii = ii+1
+      endif
+      enddo  
+      if (ii.ne.2) then
+         write(*,*) 'Problem with intersections in triangle ', iCv
+         write(*,*) 'Number of intersections found: ' , ii
+         call xerrab('Intersections in triangle not found!')
+      endif         
       
+      !Compute centroid
+      centroid(iCv,0) = 0.5_R8*sum(isx)
+      centroid(iCv,1) = 0.5_R8*sum(isy)
 
+      ! then in b2agmt_st => hc, ht, ecc
 
        end select
        
@@ -356,7 +377,7 @@ cwdk      4) centroid: average between the intersections with faces
        
 
 
-      enddo
+      enddo  !cell loop
 
 * ..compute qc, qs, qac, qas at cell faces
       ! Requirements for US solver:
@@ -378,10 +399,10 @@ cwdk      4) centroid: average between the intersections with faces
         fcY(iFc) = (g%vxY(m%fcVx(iFc,1)) + g%vxY(m%fcVx(iFc,2)) )/2.0_R8
 
         !fcHc(m%nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
-        g%fcHc(iFc,1) = sqrt(  ( g%cvX(m%fcCv(iFc,1)) - fcX(iFc) )**2
-     &      + ( g%cvY(m%fcCV(iFc,1)) - fcY(iFc) )**2 ) 
-        g%fcHc(iFc,2) = sqrt(  ( g%cvX(m%fcCv(iFc,2)) - fcX(iFc) )**2
-     &      + ( g%cvY(m%fcCV(iFc,2)) - fcY(iFc) )**2 ) 
+        g%fcHc(iFc,1) = sqrt(  ( centroid(m%fcCv(iFc,1),0) - fcX(iFc) )**2
+     &      + ( centroid(m%fcCv(iFc,1),1) - fcY(iFc) )**2 ) 
+        g%fcHc(iFc,2) = sqrt(  ( centroid(m%fcCv(iFc,2),1) - fcX(iFc) )**2
+     &      + ( centroid(m%fcCv(iFc,2),1) - fcY(iFc) )**2 ) 
 
         !fcHt(m%nFc) Lengths along cell face ("tangential" direction)
         g%fcHt(iFc) = sqrt( ( g%vxX(m%fcVx(iFc,1)) - 
@@ -399,7 +420,12 @@ cwdk      4) centroid: average between the intersections with faces
           g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxY(m%fcVx(iFc,1)) +
      &                                   g%vxY(m%fcVx(iFc,2)) )
 
-       endif 
+       endif
+
+       !Calculate ecf
+
+
+
       enddo
     
 
