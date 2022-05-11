@@ -31,7 +31,7 @@
 
       allocate (fh(2*m%nFc))
       fh(1:m%nFc)             = m%fcVx(1:m%nFc,1)
-      fh(m%nFc+1:2*m%nFc)       = m%fcVx(1:m%nFc,2)
+      fh(m%nFc+1:2*m%nFc)     = m%fcVx(1:m%nFc,2)
 
       allocate (indCv(m%nCmxVx))
       do ic = 1,m%nCv
@@ -110,14 +110,14 @@
 ! of the boundary cell to which the ghost cell is connected
       integer function ghostGetBndCell(iCv,g,m)
       use b2mod_connectivity
-      use b2mod_geo
-      use b2mod_indirect
+      use b2us_geo
+      use b2us_map
       implicit none
       integer :: iCv, face_g, cells_g(0:1)
-      type(geometry_ag) :: g
-      type(mapping_ag) :: m
+      type(geometry) :: g
+      type(mapping) :: m
 
-       if (g%cvCflags(iCv,1).eq.GRID_GUARD) then
+       if (m%cvLbl(iCv).eq.GRID_GUARD) then
           !steps: 
           !- ghostcell has one face => get that face via cvFc
           !- get the two cell of that face
@@ -127,10 +127,10 @@
           cells_g = m%fcCv(face_g,:)
 
           if ((cells_g(0).eq.iCv) .and. &
-     &         (g%cvCflags(cells_g(1),1).eq.GRID_BOUNDARY)) then
+     &         (m%cvLbl(cells_g(1)).eq.GRID_BOUNDARY)) then
               ghostGetBndCell = cells_g(1)
           elseif  ((cells_g(1).eq.iCv) .and. &
-     &         (g%cvCflags(cells_g(0),1).eq.GRID_BOUNDARY)) then
+     &         (m%cvLbl(cells_g(0)).eq.GRID_BOUNDARY)) then
               ghostGetBndCell = cells_g(0)
           else
               call xerrab  &

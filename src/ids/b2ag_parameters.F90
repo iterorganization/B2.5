@@ -205,6 +205,7 @@ contains
         m%nCv = nCv 
         m%nFc = nFc0
         m%nVx = nVx0
+        m%nCi = m%nCv - m%nCg
         m%nCmxVx = nCmxVx
         m%nCmxFc = nCmxFc
         !m%nFmxCv = nFmxCv
