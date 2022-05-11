@@ -13,7 +13,7 @@
      &  gavm_uc(:,:), Z_to_m1(:,:,:)
       real (kind=R8), allocatable ::
      &  w_out(:,:,:), hTdp_out(:,:,:), hwdp_out(:,:,:),
-     &  rTdpgamma_out(:,:,:), rwdpgamma_out(:,:,:)
+     &  rTdpgamma_out(:,:,:), rwdpgamma_out(:,:,:), piu_out(:,:,:)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -96,6 +96,7 @@
       allocate(hwdp_out(-1:nx,-1:ny,0:ns-1))
       allocate(rTdpgamma_out(-1:nx,-1:ny,0:ns-1))
       allocate(rwdpgamma_out(-1:nx,-1:ny,0:ns-1))
+      allocate(piu_out(-1:nx,-1:ny,0:ns-1))
 
       return
       end subroutine alloc_b2mod_zhfrtf_df
@@ -108,6 +109,7 @@
       deallocate(hwdp_out)
       deallocate(rTdpgamma_out)
       deallocate(rwdpgamma_out)
+      deallocate(piu_out)
       return
       end subroutine dealloc_b2mod_zhfrtf_df
 

@@ -639,6 +639,10 @@
      &           sum(c_rw(0:nspecies-1,inucl)*
      &              (ua(ix,iy,nucl2s(inucl,iz))-
      &               av_ualpha(ix,iy,0:nspecies-1)))
+     
+                piu_out(ix,iy,nucl2s(inucl,iz)) = 
+     &      -4.0e0_R8/3.0e0_R8*eta_cl(ix,iy,nucl2s(inucl,iz))/
+     &      ((bb(ix,iy,0)/bb(ix,iy,3))**2)*gavm_uc(ix,iy)
               enddo
             enddo
           endif

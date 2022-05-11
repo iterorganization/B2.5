@@ -29,7 +29,8 @@
      &         amfact_on
       use b2mod_zhfrtf
      & , only: avm_u, w_out, hTdp_out, hwdp_out,
-     &         rTdpgamma_out, rwdpgamma_out
+     &         rTdpgamma_out, rwdpgamma_out,
+     &         piu_out
       use b2mod_neoclassical
       use b2mod_subsys
       use b2mod_ipmain
@@ -426,6 +427,8 @@
      &       'b2trzh_rTdpgamma'//chns)
             call my_out(70,nx,ny,rwdpgamma_out(-1,-1,is),
      &       'b2trzh_rwdpgamma'//chns)
+            call my_out(70,nx,ny,piu_out(-1,-1,is),
+     &       'b2trzh_piu'//chns)
           enddo
         endif
       else
