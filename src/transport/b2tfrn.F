@@ -445,7 +445,7 @@ c Drift terms
             enddo
           enddo
           call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
-     &                                         wedia(-1,-1,0))
+     &                                          wedia(-1,-1,0))
 
           wrk0=0.0_R8  ! compute ... on the cell faces
           do iy=-1,ny

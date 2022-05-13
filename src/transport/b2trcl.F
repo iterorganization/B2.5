@@ -439,7 +439,7 @@ csw 13mar2012
      &           0.7e0_R8*sqrt(nu2(ix,iy))+
      &           nu2(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)/1.7e0_R8           !som 05.10.21
            kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))         
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))
      &           +2.7e0_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0e0_R8+
      &           0.7e0_R8*sqrt(nu2(ix,iy))+
      &           (nu2(ix,iy))**2*eps1(iy)**3))                           !som 05.10.21

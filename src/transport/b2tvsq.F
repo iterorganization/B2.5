@@ -316,7 +316,8 @@
      &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
      &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
      &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
-     &         /hx(leftix(ix,iy),leftiy(ix,iy))**2)*0.5e0_R8
+     &         /hx(leftix(ix,iy),leftiy(ix,iy))
+     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
      &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
      &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy)
