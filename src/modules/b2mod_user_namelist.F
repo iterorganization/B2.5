@@ -4,7 +4,7 @@
       use b2us_geo
       use b2us_map
       use b2mod_ad
-     & , only : nncf, rrdata, vvdata, TMP1, TMP2
+     & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
       implicit none
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd, mxnCf
@@ -45,6 +45,7 @@
       integer, save :: prior_type(nvmx), nsigma !sc type of prior
       real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
       logical, save :: scale_sigma(nsigmx) = .true.
+      logical, save :: mapToOMP(nncf) = .false.
       real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
       double precision, parameter :: inf_opt = 1.0e30
       private :: user
@@ -58,7 +59,7 @@
      ,  filedata,user_filename,ncf,cfstart,cfend,
      ,  cftype, rzomp, rzimp, cfdef, cfweight, 
      ,  prior_type, prior_par, prior_range, scale_sigma, nsigma,
-     ,  sigma, cf_reg, cf_regP
+     ,  sigma, cf_reg, cf_regP, mapToOMP
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -151,6 +152,7 @@ c***  Standard setup:
       prior_range(:,2) = inf_opt*10.0
       cf_reg = 0
       cf_regP = 0
+      mapToOMP = .false.
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
@@ -163,10 +165,10 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
-      if (allocated(rrdata)) deallocate(rrdata)
-      if (allocated(vvdata)) deallocate(vvdata)
-      if (allocated(TMP1)) deallocate(TMP1)
-      if (allocated(TMP2)) deallocate(TMP2)
+      if (allocated(b2rr)) deallocate(b2rr)
+      if (allocated(b2volOnCf)) deallocate(b2volOnCf)
+      if (allocated(b2data)) deallocate(b2data)
+      if (allocated(b2dataOnCf)) deallocate(b2dataOnCf)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
@@ -454,15 +456,15 @@ c***  Standard setup:
       endif
       if (any(cfread)) then
         ndata = maxval(ncfdata(1:ncf),1)
-        allocate(vvdata(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
-        allocate(TMP2(ndata)) !variable to store SOLPS data interpolated onto CF radial points
+        allocate(b2volOnCf(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
+        allocate(b2dataOnCf(ndata)) !variable to store SOLPS data interpolated onto CF radial points
         ndata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
-        allocate(rrdata(ncf,ndata)) !store here values of cvX from SOLPS for interpolation
-        allocate(TMP1(ndata)) !temporary variable to store SOLPS data for interpolation
-        rrdata = 0.0_R8
-        vvdata = 0.0_R8
-        TMP1 = 0.0
-        TMP2 = 0.0
+        allocate(b2rr(ncf,ndata)) !store here radial distance coordiante of SOLPS data
+        allocate(b2data(ndata)) !temporary variable to store SOLPS data for interpolation
+        b2rr = 0.0_R8
+        b2volOnCf = 0.0_R8
+        b2data = 0.0
+        b2dataOnCf = 0.0
       endif
 
 #ifdef WG_TODO

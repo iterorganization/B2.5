@@ -13,7 +13,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : vold, cfnorm, nncf, rrdata, vvdata, TMP1, TMP2
+     & , only : vold, cfnorm, nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
 #ifdef TEST_MAP
       use b2mod_transport_namelist
      & , only : parm_dna
@@ -74,15 +74,27 @@
             n1 = mpg%cfRegP(icf,2)
             n2 = ncfdata(icf)
             call calc_dist(mpg,geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
-     &        rrdata(icf,1:n1))
-            TMP1(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        TMP1(1:n1),vvdata(icf,1:n2))
-            vold(icf) = sum(vvdata(icf,1:n2))
+     &        b2rr(icf,1:n1))
+            b2data(1:n1) = geo%cvVol(mpg%cfReg(ic1:ic2))
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        b2data(1:n1),b2volOnCf(icf,1:n2))
+            vold(icf) = sum(b2volOnCf(icf,1:n2))
             do iCv = 1, n2
               cfnorm(icf) = cfnorm(icf) + 
-     &                      vvdata(icf,iCv)*cfdata(icf,2,iCv)
+     &                      b2volOnCf(icf,iCv)*cfdata(icf,2,iCv)
             end do
+            if (mapToOMP(icf)) then
+            ! FIXME to be considerably improved!
+            !for now assume radial data rigidly moved at the OMP (like in ST code)
+            ! simply use as b2rr the OMP radial coordiantes.
+              call xertst(mpg.isClassicalGrid,
+     &         'Mapping to OMP need revision for extended grids')
+              ! check on, and then use, only internal Cvs in OMP list
+              call xertst(n1.eq.nomp-2,
+     &         'number of Cv in CF does not equal Cvs in OMP')
+              call calc_dist(mpg,geo,omp(2:nomp-1),n1,icsepomp-1,
+     &          b2rr(icf,1:n1))
+            endif
           endif
         enddo 
 #endif
@@ -115,32 +127,32 @@
           select case (cftype(icf))
           case (0) !sum of other cost function. It is skipped at this stage because it MUST be J(1) for optimization
           case (1) !electron density on desired CVs
-            TMP1(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))/1.0e19_R8
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        TMP1(1:n1),TMP2(1:n2))
+            b2data(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))/1.0e19_R8
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
           case (2) !electron temperature on desired CVs
-            TMP1(1:n1) = st%pl%te(mpg%cfReg(ic1:ic2))/ev
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        TMP1(1:n1),TMP2(1:n2))
+            b2data(1:n1) = st%pl%te(mpg%cfReg(ic1:ic2))/ev
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
           case (3) !ion temperature on desired CVs
-            TMP1(1:n1) = st%pl%ti(mpg%cfReg(ic1:ic2))/ev
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        TMP1(1:n1),TMP2(1:n2))
+            b2data(1:n1) = st%pl%ti(mpg%cfReg(ic1:ic2))/ev
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -178,37 +190,37 @@
               ic2 = ic1 + n1 - 1
               select case (cftype(iicf))
               case (1) !electron density
-                TMP1(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))/1.0e19_R8
+                b2data(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))/1.0e19_R8
               case (2) !electron temperature
-                TMP1(1:n1) = st%pl%te(mpg%cfReg(ic1:ic2))/ev
+                b2data(1:n1) = st%pl%te(mpg%cfReg(ic1:ic2))/ev
               case (3) !ion temperature
-                TMP1(1:n1) = st%pl%ti(mpg%cfReg(ic1:ic2))/ev
+                b2data(1:n1) = st%pl%ti(mpg%cfReg(ic1:ic2))/ev
               case (7) !electron density radial gradient
                 call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%dv%ne, 
      &            funv, gradr)
-                TMP1(1:n1) = gradr(mpg%cfReg(ic1:ic2))/1.0e19_R8
+                b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/1.0e19_R8
               case (8) !electron temperature radial gradient
                 call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%te, 
      &            funv, gradr)
-                TMP1(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
+                b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
               case (9) !ion temperature radial gradient
                 call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
      &            funv, gradr)
-                TMP1(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
+                b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
               case (10) !ion saturation current
                 call b2xprz (nCv, ns, mp, am, st%pl%na, rz, st_ext)
                 call b2xppz (nCv, ns, st%dv%ne, st%pl%na, st%pl%te,
      &            st%pl%ti, pz, st_ext)
                 cs   = sqrt(pz/rz)
-                TMP1(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))*
+                b2data(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))*
      &            cs(mpg%cfReg(ic1:ic2))*eV
               case default
                write(*,*) cftype(iicf)
                call xerrab ('cftype for sum out of bounds for cftype=6')
               end select
-              call interp1d(n1,n2,rrdata(iicf,1:n1),cfdata(iicf,1,1:n2),
-     &          TMP1(1:n1),TMP2(1:n2))
-              call calc_loglikelihood(n2, TMP2(1:n2), 
+              call interp1d(n1,n2,b2rr(iicf,1:n1),cfdata(iicf,1,1:n2),
+     &          b2data(1:n1),b2dataOnCf(1:n2))
+              call calc_loglikelihood(n2, b2dataOnCf(1:n2), 
      &          cfdata(iicf,2,1:n2), lll, isigma)
               lll_cum = lll_cum + lll
               isigma = isigma + 1
@@ -222,11 +234,11 @@
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%dv%ne, 
      &        funv, gradr)
             gradr = gradr/1.0e19_R8
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        gradr(mpg%cfReg(ic1:ic2)),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -234,11 +246,11 @@
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%te, 
      &        funv, gradr)
             gradr = gradr/ev
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        gradr(mpg%cfReg(ic1:ic2)),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -246,11 +258,11 @@
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
      &        funv, gradr)
             gradr = gradr/ev
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        gradr(mpg%cfReg(ic1:ic2)),TMP2(1:n2))
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        gradr(mpg%cfReg(ic1:ic2)),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
@@ -260,13 +272,13 @@
      &        st%pl%ti, pz, st_ext)
             cs   = sqrt(pz/rz)
             ! Calculate saturation current as ne*cs*eV
-            TMP1(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))*
+            b2data(1:n1) = st%dv%ne(mpg%cfReg(ic1:ic2))*
      &        cs(mpg%cfReg(ic1:ic2))*eV
-            call interp1d(n1,n2,rrdata(icf,1:n1),cfdata(icf,1,1:n2),
-     &        TMP1(1:n1),TMP2(1:n2))
+            call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
-              J(icf) = J(icf) + vvdata(icf,iCv)*
-     &        (TMP2(iCv)-cfdata(icf,2,iCv))**2
+              J(icf) = J(icf) + b2volOnCf(icf,iCv)*
+     &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
             end do
             J(icf) = J(icf)*cfweight(icf)*vold(icf)/(cfnorm(icf)**2)/
      &               2.0_R8
