@@ -20,7 +20,6 @@
      *     regionR(:, :),
      *     regionZ(:, :)
       integer, allocatable, save :: nNodesInExternalRegion(:)
-      character*260, allocatable, save :: area(:), angle(:)
 #else
 #     include "DIMENSIONS.F"
       integer NCOIL_MAX
@@ -49,9 +48,6 @@
      *     regionZ(0:NNODES_IN_EXTERNAL_REGION_MAX - 1,
      *     0:NEXTERNAL_REGIONS_MAX - 1)
       integer, save :: nNodesInRegion(0:NEXTERNAL_REGIONS_MAX - 1)
-      character*260, save :: 
-     *     area(0:NEXTERNAL_REGIONS_MAX - 1),
-     *     angle(0:NEXTERNAL_REGIONS_MAX - 1)
 #endif
 
       integer, save :: NCOIL, nExternalRegions
@@ -60,6 +56,7 @@
      *     r_start, r_end, z_start, z_end,
      .     bTor, stepsize, gc_n, gc_s, gc_e, gc_w
       character*260, save :: fn_z, fn_r
+      logical,save :: write_nml_ld = .false.
 
       contains
 
@@ -125,8 +122,6 @@
       gc_w = 1.0e-4_R8
       gc_e = 1.0e-4_R8
 
-      angle(:) = ''
-      area(:) = ''
       regionR(:, :) = 0.0_R8
       regionZ(:, :) = 0.0_R8
       nNodesInRegion(:) = 0
@@ -152,7 +147,7 @@
      4     gc_n, gc_s, gc_w, gc_e, stepsize, bTor,
      5     nExternalRegions, regionR, regionZ, nNodesInRegion,
      6     startCellR, endCellR, startCellZ, endCellZ,
-     7     angle, area
+     7     write_nml_ld
 
       logical :: file_ok, dotest
       integer:: ex
@@ -230,9 +225,12 @@
      4     gc_n, gc_s, gc_w, gc_e, stepsize, bTor,
      5     nExternalRegions, regionR, regionZ, nNodesInRegion,
      7     startCellR, endCellR, startCellZ, endCellZ,
-     8     angle, area
+     8     write_nml_ld
 
-      write(*,grid)
+      if (write_nml_ld) then
+        write(*,grid)
+
+      end if
 
       end subroutine write_b2mod_ld_namelist
 

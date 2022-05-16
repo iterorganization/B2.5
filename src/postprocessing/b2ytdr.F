@@ -2423,6 +2423,12 @@ c 2002-09-11: logic revised
         write(99,'(1x,a,l1,a,l1,a)')
      .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
+        write(hlp_frm,'(a, i2,a)') '(1x,a,',nbc1,'(1x,a,'',''))'
+        write(99,hlp_frm) 'CON_FN=', (CON_FN(ib), ib=1, nbc1)
+        write(99,hlp_frm) 'MOM_FN=', (MOM_FN(ib), ib=1, nbc1)
+        write(99,hlp_frm) 'ENE_FN=', (ENE_FN(ib), ib=1, nbc1)
+        write(99,hlp_frm) 'ENI_FN=', (ENI_FN(ib), ib=1, nbc1)
+        write(99,hlp_frm) 'POT_FN=', (POT_FN(ib), ib=1, nbc1)
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
           write(99, hlp_frm) 'NXISO1=',(nxiso3(is),is=1,nniso)

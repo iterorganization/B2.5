@@ -25,15 +25,16 @@
 *     this program generates a cylindrical symmetric B2.5 geometry for 
 *     modelling of plasma linear devices like Pilot-PSI, Magnum-PSI 
 *     and Pisces. The input file is provided in b2ag.dat as
-*     b2agfs_linearDevice. This gives the number of concentric coils, 
-*     and for each coil:
-*     r0: the inner radius of the coil
-*     r1: the outer radius of the coil
-*     z0: the axial start position
-*     z1: the axial end position
-*     current: the current through the coil
+*     b2agfs_linearDevice. 
+*     ncoil: This gives the number of concentric coils, and for each coil:
+*     r0: the inner radius of the coil in units of m
+*     r1: the outer radius of the coil in units of m
+*     z0: the axial start position in units of m
+*     z1: the axial end position in units of m
+*     current: the current through the coil in units of A
 *     nlayers: number of layers for each coil
 *     windings: the number of windings
+*     bTor: torodial magnetic field in units of T
 *     For the iterative process
 *     stepsize: the initial spacial step size used in calculating the field lines							   																		 
 *     Also the names of the 2-column files consisting of the profiles for 
@@ -409,7 +410,7 @@ c
       real (kind=R8) :: calc_b(0:1)
 
 *local variables
-      real (kind=R8) :: factor, dz1, dz2, dr, rlayer, bfield1(0:1), 
+      real (kind=R8) :: factor, dr, rlayer, bfield1(0:1), 
      *     bfield2(0:1), b1(0:1), b2(0:1)
       integer is, it
 

@@ -10164,9 +10164,159 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           call xerrab ('B2STBC -- BCPOT=13, NOT AVAILABLE FOR W,E')
         endif
 
-* -- BCPOT=14 -- SHEATH CONDITIONS FOR FLOATING TARGET, ELECTRON ENERGY TRANSMISSION
+* -- BCPOT=15 -- Potential profile is read from file
+*-----------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet 
+* of the computational domain of a linear plasma generator.
+*
+*     if POTPAR(IB,2) > 0.0, the profile is scaled such that POTPAR(IB,1) gives 
+*          the max. potential of the profile.
+*     else the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+*-----------------------------------------------------------------------
+      case (15)
+        if (ncall.eq.0) then
+          if (POTPAR(IB,2).gt.0.0_R8) then
+            write(*,*) ' Potential profile from file with maximum of ',
+     1            POTPAR(IB,1),' on ',
+     2            BCCHAR(IB),boundary_location(ib),' for species ',IS
+          else
+*           write(*,*) ' Potential profile from file on ',
+*    2            BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+        endif
+        IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+          filename = pot_fn(ib)
+          call find_file(filename, ex)
+          call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .         BCPOS(IB),profile,ny,potpar(ib,1),potpar(ib,2),0)
+          IF (BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= 
+     &             UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     .              profile(BC_LIST_Y(IY,IB),0)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
+     &             -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            ENDDO
+          ELSEIF (BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= UBIG*
+     &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
+     &             profile(BC_LIST_Y(IY,IB),0)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*
+     &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            ENDDO
+          ENDIF
+        ELSE
+          CALL XERRAB ('B2STBC -- BCPOT=15, NOT AVAILABLE FOR N,S')
+        ENDIF
 
-      case (14)
+* -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
+
+      case (16)
+        if (ncall.eq.0) then
+          write(*,'(a,a,a)')
+     .     'electric potential feedback by current on ',
+     1     BCCHAR(IB),boundary_location(ib)
+! add smth about #ifdef ASTRA here
+          scurpar = 0.0_R8
+c Init variables for BCPOT=16                                  { Solovyev 01.05.14
+          cur_delta = 0.0_R8              ! square of delta between desired and calculated current
+          prev_cur_delta = 0.0_R8         ! previous value of upper value
+          po_step = 0.0_R8                ! step of approximation (set after 1st iteration)
+          coeff_16 = 1.0_R8
+c************************************************************* } Solovyev 01.05.14
+          do ibw=ib,nbc
+            if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
+              scurpar = scurpar + potpar(ibw,1)
+            endif
+          enddo
+          write (*,*) 'SCURPAR = ', scurpar
+          POS = 0.0_R8                                                  !srv 29.09.15
+          VS  = 0.0_R8
+          DO IBW=IB,NBC
+            if(BCCHAR(IBW).EQ.'S'.and.BCPOT(IBW).EQ.BCPOT(IB)) THEN
+              DO IX=1, BC_LIST_SIZE(IBW)
+                POS = POS + PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     *                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+              ENDDO
+            endif
+          ENDDO
+          POS=POS/VS                                                    !srv 29.09.15 }
+          po_prev = POS
+          write (*,*) 'POS at 0 = ', POS
+        endif
+        if (.not.once_bcpot) then
+          if (BCCHAR(ib).eq.'S') then
+            totflux = 0.0_R8
+            do ibw=ib,nbc
+              if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
+                do ix=1, bc_list_size(ibw)
+                  totflux = totflux +
+     &              fch(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
+     &                  topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),1)
+                enddo
+              endif
+            enddo
+c The implementation is based on one step of Newton method
+            cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
+            if (ncall.eq.0) then
+              write (72, *) '# Newton'
+              prev_cur_delta = cur_delta
+            else
+              if (ncall.eq.1) then                                      ! Solovyev 23.05.14
+                po_curr = 0.0_R8                                        !srv 29.09.15
+                VS  = 0.0_R8
+                DO IBW=IB,NBC
+                  if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+                    DO IX=1, BC_LIST_SIZE(IBW)
+                      po_curr=po_curr+
+     &                   PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+     &                 *VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                      VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                    ENDDO
+                  endif
+                ENDDO
+                po_curr=po_curr/VS                                      !srv 29.09.15 }
+              endif                                                     !Solovyev 23.05.14
+              if (mod(ncall,bcpot_16_step).eq.0) then                   !Solovyev 23.05.14
+                if (abs(cur_delta-prev_cur_delta).gt.1.0e-20_R8) then   !{ Solovyev 24.05.14
+                  coeff_16 = (po_prev - po_curr)/
+     &              (cur_delta - prev_cur_delta)
+                endif
+                po_step = coeff_16*cur_delta                            !} Solovyev 24.05.14
+                POS = po_curr + po_step
+                prev_cur_delta = cur_delta
+                po_prev = po_curr
+                po_curr = POS
+                write (72, *) ncall, totflux, POS   ! Solovyev 29.04.14 - test output to b2fdebug
+              endif                                                     ! Solovyev 23.05.14
+            endif                                                       ! } Solovyev 03.05.14
+c end of implementation
+            write (*, *) 'ncall, totflux, POS', ncall,totflux, POS      !Solovyev 29.04.14 - test output to b2fdebug
+            do ibw=ib,nbc
+              if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
+                do ix=1, BC_LIST_SIZE(IBW)
+                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0) =
+     &                 PBIG*POS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)) !Solovyev 27.04.14
+                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1) =
+     &                -PBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))     !Solovyev 27.04.14
+                enddo
+              endif
+            enddo
+            once_bcpot = .true.
+          else
+            call xerrab('B2STBC -- BCPOT=16, NOT AVAILABLE FOR N,W,E')
+          endif
+        endif
+
+* -- BCPOT=17 -- SHEATH CONDITIONS FOR FLOATING TARGET, ELECTRON ENERGY TRANSMISSION
+
+      case (17)
         if(ncall.eq.0) then
           write(*,*) 'sheath potential (floating target) bc on ',
      1         BCCHAR(IB), boundary_location(ib)
@@ -10349,161 +10499,6 @@ c              fchi=0.0_R8
         ELSE
           CALL XERRAB ('B2STBC -- BCPOT=13, NO SHEATH IN RADIAL DIR.')
         END IF
-
-* -- BCPOT=15 -- Potential profile is read from file
-*-----------------------------------------------------------------------
-* This boundary condition is developed for use at the inlet 
-* of the computational domain of a linear plasma generator.
-*
-*     if POTPAR(IB,2) > 0.0, the profile is scaled such that POTPAR(IB,1) gives 
-*          the max. potential of the profile.
-*     else the profile is used directly.
-*
-*     Created by Rob Wieggers (FOM Rijnhuizen)
-*-----------------------------------------------------------------------
-      case (15)
-        if (ncall.eq.0) then
-          if (POTPAR(IB,2).gt.0.0_R8) then
-            write(*,*) ' Potential profile from file with maximum of ',
-     1            POTPAR(IB,1),' on ',
-     2            BCCHAR(IB),boundary_location(ib),' for species ',IS
-          else
-*           write(*,*) ' Potential profile from file on ',
-*    2            BCCHAR(IB),boundary_location(ib),' for species ',IS
-          endif
-        endif
-        IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-          filename = pot_fn(ib)
-          call find_file(filename, ex)
-          call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .         BCPOS(IB),profile,ny,potpar(ib,1),potpar(ib,2),0)
-          IF (BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= 
-     &             UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     .              profile(BC_LIST_Y(IY,IB),0)
-              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
-     &             -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            ENDDO
-          ELSEIF (BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= UBIG*
-     &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
-     &             profile(BC_LIST_Y(IY,IB),0)
-              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*
-     &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            ENDDO
-          ENDIF
-        ELSE
-          CALL XERRAB ('B2STBC -- BCPOT=15, NOT AVAILABLE FOR N,S')
-        ENDIF
-
-* -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
-
-      case (16)
-        if (ncall.eq.0) then
-          write(*,'(a,a,a)')
-     .     'electric potential feedback by current on ',
-     1     BCCHAR(IB),boundary_location(ib)
-! add smth about #ifdef ASTRA here
-          scurpar = 0.0_R8
-c Init variables for BCPOT=16                                  { Solovyev 01.05.14
-          cur_delta = 0.0_R8              ! square of delta between desired and calculated current
-          prev_cur_delta = 0.0_R8         ! previous value of upper value
-          po_step = 0.0_R8                ! step of approximation (set after 1st iteration)
-          coeff_16 = 1.0_R8
-c************************************************************* } Solovyev 01.05.14
-          do ibw=ib,nbc
-            if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
-              scurpar = scurpar + potpar(ibw,1)
-            endif
-          enddo
-          write (*,*) 'SCURPAR = ', scurpar
-          POS = 0.0_R8                                                  !srv 29.09.15
-          VS  = 0.0_R8
-          DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCPOT(IBW).EQ.BCPOT(IB)) THEN
-              DO IX=1, BC_LIST_SIZE(IBW)
-                POS = POS + PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
-     *                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-              ENDDO
-            endif
-          ENDDO
-          POS=POS/VS                                                    !srv 29.09.15 }
-          po_prev = POS
-          write (*,*) 'POS at 0 = ', POS
-        endif
-        if (.not.once_bcpot) then
-          if (BCCHAR(ib).eq.'S') then
-            totflux = 0.0_R8
-            do ibw=ib,nbc
-              if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
-                do ix=1, bc_list_size(ibw)
-                  totflux = totflux +
-     &              fch(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
-     &                  topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),1)
-                enddo
-              endif
-            enddo
-c The implementation is based on one step of Newton method
-            cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
-            if (ncall.eq.0) then
-              write (72, *) '# Newton'
-              prev_cur_delta = cur_delta
-            else
-              if (ncall.eq.1) then                                      ! Solovyev 23.05.14
-                po_curr = 0.0_R8                                        !srv 29.09.15
-                VS  = 0.0_R8
-                DO IBW=IB,NBC
-                  if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
-                    DO IX=1, BC_LIST_SIZE(IBW)
-                      po_curr=po_curr+
-     &                   PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-     &                 *VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                      VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                    ENDDO
-                  endif
-                ENDDO
-                po_curr=po_curr/VS                                      !srv 29.09.15 }
-              endif                                                     !Solovyev 23.05.14
-              if (mod(ncall,bcpot_16_step).eq.0) then                   !Solovyev 23.05.14
-                if (abs(cur_delta-prev_cur_delta).gt.1.0e-20_R8) then   !{ Solovyev 24.05.14
-                  coeff_16 = (po_prev - po_curr)/
-     &              (cur_delta - prev_cur_delta)
-                endif
-                po_step = coeff_16*cur_delta                            !} Solovyev 24.05.14
-                POS = po_curr + po_step
-                prev_cur_delta = cur_delta
-                po_prev = po_curr
-                po_curr = POS
-                write (72, *) ncall, totflux, POS   ! Solovyev 29.04.14 - test output to b2fdebug
-              endif                                                     ! Solovyev 23.05.14
-            endif                                                       ! } Solovyev 03.05.14
-c end of implementation
-            write (*, *) 'ncall, totflux, POS', ncall,totflux, POS      !Solovyev 29.04.14 - test output to b2fdebug
-            do ibw=ib,nbc
-              if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
-                do ix=1, BC_LIST_SIZE(IBW)
-                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0) =
-     &                 PBIG*POS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)) !Solovyev 27.04.14
-                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1) =
-     &                -PBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))     !Solovyev 27.04.14
-                enddo
-              endif
-            enddo
-            once_bcpot = .true.
-          else
-            call xerrab('B2STBC -- BCPOT=16, NOT AVAILABLE FOR N,W,E')
-          endif
-        endif
-
-* -- BCPOT=17 -- Nothing implemented
-
-      case (17)
-        CALL XERRAB ('B2STBC -- BCPOT=17, NOT AVAILABLE FOR S,N,W,E')
 
 * -- BCPOT=18 -- Nothing implemented
 
