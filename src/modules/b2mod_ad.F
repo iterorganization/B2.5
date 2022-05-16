@@ -44,8 +44,8 @@
       logical, save :: b2news_solving(4) = .true.    !srv 06.07.00
 
       real (kind=R8), save :: cfnorm(nncf), vold(nncf)
-      real (kind=R8), allocatable, save :: TMP1(:), TMP2(:)
-      real (kind=R8), allocatable, save :: rrdata(:,:), vvdata(:,:)
+      real (kind=R8), allocatable, save :: b2data(:), b2dataOnCf(:)
+      real (kind=R8), allocatable, save :: b2rr(:,:), b2volOnCf(:,:)
 
       logical, save :: test_residual = .false. 
       integer, save :: b2mndt_itcnt = 0
