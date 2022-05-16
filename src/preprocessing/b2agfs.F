@@ -133,6 +133,7 @@
       call ipgetc ('b2agfs_geometry', local_sonnet)
       lblgm=local_sonnet
       call ipgetc ('b2agfs_linearDevice', local_linearDevice)
+      if (istyle.eq.-3) lblgm=local_linearDevice
       periodic_bc=0
       call ipgeti ('b2agfs_periodic_bc',periodic_bc)
       call xertst (abs(periodic_bc).le.1, 'faulty argument periodic_bc')
@@ -1035,7 +1036,7 @@ c
      3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
       character*(*) local_linearDevice
- 
+
       logical no_flux_data            ! IYS 21.02.2020
 
       integer nnx, nny,
@@ -1106,12 +1107,11 @@ c
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
-!reads parameter for linear device geometry
-      if (istyle.eq.-3) then
-        call b2ld(local_linearDevice, local_sonnet, nx, ny, istyle)
-
-      end if
       username = usrnam()
+      if (istyle.eq.-3) then !read parameters for linear device geometry
+                             !and write them as a Carre format input
+        call b2ld(local_linearDevice, local_sonnet, nx, ny, istyle)
+      end if
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)

@@ -174,7 +174,10 @@
 				<default>None</default>
 				<type>None</type>
 				<description>
-					at least 100 additional numbers, of which only the first is relevant for us -1.0 read the mesh data using the "simplified" Carre format -2.0 read the mesh data using the Sonnet format -3.0 reads the geometry information for a linear device.
+					at least 100 additional numbers, of which only the first is relevant, unless using an analytic formulation for the grid.
+					A value of -1.0 asks to read the mesh data using the "simplified" Carre format.
+					A value of -2.0 asks to read the mesh data using the Sonnet format.
+					A value of -3.0 reads the geometry information for a linear device.
 				</description>
 			</switch>
 		</category>
@@ -239,16 +242,16 @@
 				<default>upgrade.geometry</default>
 				<type>string</type>
 				<description>
-					local_sonnet is the file name of the geometry file to be read.
+					contains the file name of the geometry file to be read.
 					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
 			</switch>
 			<switch>
-				<name>b2agfs_linearDevice</name>
+				<name>b2agfs_lineardevice</name>
 				<default>linear.geometry</default>
 				<type>string</type>
 				<description>
-					local_linearDevice is the file name of the geometry file to be read.
+					contains the file name of the geometry file to be read.
 					The file will be looked for in the run directory, in the ../baserun directory, in $SOLPSTOP/data.local/meshes, and in $SOLPSTOP/modules/Carre/meshes/$DEVICE. To be used in b2ag.dat.
 				</description>
 			</switch>
@@ -1023,7 +1026,7 @@
 					*----------------------------------------------------
 					*        | -14   |  +   |  -   |  +   |  +   |  +   |
 					*----------------------------------------------------
-        </description>
+				</description>
 			</switch>
 			<switch>
 				<name>b2mndr_cpu</name>
@@ -3094,7 +3097,7 @@
 					For b2wdat_iout values 1 to 3, the value of append indicates the frequency, in number of main B2.5 timesteps, at which the files are appended. Data from the last timestep is always included.
 				</description>
 			</switch>
-            <switch>
+			<switch>
 				<name>my_out_digits</name>
 				<default>6 or 15</default>
 				<type>integer</type>
@@ -3439,12 +3442,12 @@
 					'iter' for input files from SOLPS-ITER runs (no conversion necessary)
 				</description>
 			</switch>
-            <switch>
-			    <name>ids_from_43</name>
-                <default>0</default>
-                <type>integer</type>
-                <description>
-				    This switch is to be used when running the b2_ual_write utility program to obtain an IDS from the SOLPS run results.
+			<switch>
+				<name>ids_from_43</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is to be used when running the b2_ual_write utility program to obtain an IDS from the SOLPS run results.
 					If set to 1, the IDS will indicate that the results come from a converted SOLPS4.3 run with no additional calculation. By default, the IDS will indicate a SOLPS-ITER run.
 				</description>
 			</switch>
@@ -5358,7 +5361,7 @@
 			</switch>
 			<switch>
 				<name>L_NEUTFLUX</name>
-                <default>0 for coupled cases, -1 otherwise</default>
+				<default>0 for coupled cases, -1 otherwise</default>
 				<type>integer</type>
 				<description>
 					If l_neutflux &gt;=0, then correct treatment of the incident fluxes in B2.5 and b2plot; if &lt;0, then old (approximate) treatment
@@ -6262,7 +6265,7 @@
 						17 : leakage option for parallel momentum, MOMPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s,a</sub> m<sub>a</sub> n<sub>a</sub> u<sub>a</sub>
 						18 : reads parallel velocity profile from the specified file in MOM_FN. If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity is given by MOMPAR(,,1). Only available for E and W boundaries.
 						19 : reads the momntum fllux profile from MOM\_FN. This has to be used in combination with BCCON = 1, 28, 30 and BCENI = 15. Only available for E and W boundaries.
-						20 : reads the Mach number from the MOM_FN file. Velocity is calculated with the temperature at the boundary and &gamma; = 1. Only available for E and W boundaries.
+						20 : reads the Mach number from the MOM_FN file. Velocity is calculated with the temperature at the boundary and &gamma_i; = 1. Only available for E and W boundaries.
 						21 : reads the parallel velocity gradient from the MOM_FN file.  If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity gradient is given by MOMPAR(,,1). Only available for E and W boundaries.
 				</description>
 			</switch>
@@ -6293,8 +6296,8 @@
 						19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
 						20 : feedback boundary condition with constant temperature, as per type [16] but with 'type20_' switches and a different feedback scheme.
 						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
-						 	ENEPAR(,1) specifies the desired electron temperature in eV.
-						   ENEPAR(,2) is the strength of the feedback
+							ENEPAR(,1) specifies the desired electron temperature in eV.
+							ENEPAR(,2) is the strength of the feedback
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
 						23 : electron temperature profile is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature.
 				</description>
@@ -6520,7 +6523,7 @@
 				<default>b2.con.profile</default>
 				<type>character*256 array of length NBC</type>
 				<description>
-					List of boundary profiles files to be imposed as boundary conditions for the density.
+					List of boundary profile files to be imposed as boundary conditions for the density.
 				</description>
 			</switch>
 			<switch>
@@ -6528,7 +6531,7 @@
 				<default>b2.mom.profile</default>
 				<type>character*256 array of length NBC</type>
 				<description>
-					List of boundary profiles files to be imposed as boundary conditions for the parallel velocity.
+					List of boundary profile files to be imposed as boundary conditions for the parallel velocity.
 				</description>
 			</switch>
 			<switch>
@@ -6536,7 +6539,7 @@
 				<default>b2.eni.profile</default>
 				<type>character*256 array of length NBC</type>
 				<description>
-					List of boundary profiles files to be imposed as boundary conditions for the ion energy.
+					List of boundary profile files to be imposed as boundary conditions for the ion energy.
 				</description>
 			</switch>
 			<switch>
@@ -6544,7 +6547,7 @@
 				<default>b2.ene.profile</default>
 				<type>character*256 array of length NBC</type>
 				<description>
-					List of boundary profiles files to be imposed as boundary conditions for the electron energy.
+					List of boundary profile files to be imposed as boundary conditions for the electron energy.
 				</description>
 			</switch>
 			<switch>
@@ -6552,7 +6555,7 @@
 				<default>b2.pot.profile</default>
 				<type>character*256 array of length NBC</type>
 				<description>
-					List of boundary profiles files to be imposed as boundary conditions for the electric potential.
+					List of boundary profile files to be imposed as boundary conditions for the electric potential.
 				</description>
 			</switch>
 		</category>

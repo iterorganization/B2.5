@@ -383,7 +383,7 @@ cxpb overwrite the defaults with the namelist data
       ene_fn='b2.ene.profile'
       eni_fn='b2.eni.profile'
       pot_fn='b2.pot.profile'
-	
+
 csw 21feb2014, setup some additional work variables for boundary conditions
 cxpb Have to do this here already in case the namelist is not used
       call ipgeti ('b2news_l_fbound', l_fbound)
@@ -474,13 +474,11 @@ cxpb Have to do this here already in case the namelist is not used
       integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found
 
+      real (kind=R8) :: potpar_inter(NBCD,2)
       logical file_ok, todo, assigned, is_closed
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
       external find_file, xerrab, xertst
-
-      real (kind=R8) :: potpar_inter(NBCD,2)
-      logical :: file_exit
 
       filename=boundary_filename
       boundary_time_mod = 0.0_R8
@@ -609,12 +607,12 @@ c.. Make a list of core boundaries
       !..zml if there is bcpot=14 where floating boundary condition is
       !used, potpar(ib,2) is taken from the file potpar_continue in
       !which the last target potential is saved...
-      filename='../potpar_continue'
-      INQUIRE(file=trim(filename),exist=file_exit)
-      if (file_exit) then
-        open(1,file=trim(filename))
-        read(1,*) potpar_inter
-        close(1)
+      filename='potpar_continue'
+      call find_file(filename, file_ok)
+      if (file_ok) then
+        open(99,file=trim(filename))
+        read(99,*) potpar_inter
+        close(99)
         do ib=1,nbc
           if (bcpot(ib).eq.14) potpar(ib,2)=potpar_inter(ib,2)
         enddo

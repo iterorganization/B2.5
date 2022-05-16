@@ -10,10 +10,10 @@
 *
 *  1. purpose
 *
-*     B2ld (subroutine) is a pre-step for b2ag. It generates a 
-*     B2.5 geometry for plasma linear devices (Pilot-PSI, 
-*     Magnum-PSI, Pisces and others). Then, the b2ag program continues
-*     generating the grid for B2.5
+*     B2ld (subroutine) is a pre-step for b2ag. It generates a
+*     B2.5 geometry for plasma linear devices (Pilot-PSI,
+*     Magnum-PSI, PISCES-B and others). Then, the b2ag program continues
+*     generating the grid for B2.5.
 
 *  2. specification
 *
@@ -36,14 +36,14 @@
 *     windings: the number of windings
 *     bTor: torodial magnetic field in units of T
 *     For the iterative process
-*     stepsize: the initial spacial step size used in calculating the field lines							   																		 
-*     Also the names of the 2-column files consisting of the profiles for 
+*     stepsize: the initial spacial step size used in calculating the field lines
+*     Also the names of the 2-column files consisting of the profiles for
 *     radial and axial cell size distributions are given. Use fn_z and fn_r for that.
 *
 *     Input options:
 *     nExternalRegions: defines the number of external regions.
 *     nNodesInRegion(0:nExternalRegions-1): number of nodes used to define the external regions (minimally 3 per region)
-*     regionR(0:nNodesInRegion-1,0:nExternalRegions-1): radial positions of the nodes defining the external regions. 
+*     regionR(0:nNodesInRegion-1,0:nExternalRegions-1): radial positions of the nodes defining the external regions.
 *     regionZ(0:nNodesInRegion-1,0:nExternalRegions-1): see regionR, but now the z component.
 *     startCellR(0:nExternalRegions-1): Radial (Y) index of the node on the B2.5 boundary
 *     startCellZ(0:nExternalRegions-1): Axial (X) index of the node on the B2.5 boundary
@@ -53,32 +53,6 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-c  Common dimensions
-c
-c  version : 01.12.98 21:42
-c
-
-c
-c parameters that are common to Eirene and B2
-c
-
-c NOTE: DEF_NXD should not include the additional cells to handle the cuts
-c*** Max. number of groups of Eirene surfaces for which the data can
-c*** be transferred from B2 (DG specification "Surface special")
-
-c new! [2002.04.22]
-c new! [2002.06.14]
-
-c
-c parameters that are unique to B2
-c
-
-
-c
-c parameters that are unique to Eirene
-c
-
-
       character*260, intent(in):: inputFile
       CHARACTER*260, intent(out):: local_sonnet
       integer, intent(in):: nx, ny
@@ -94,14 +68,14 @@ c
       real (kind=R8), allocatable :: cr(:) !!@param center between node/mesh positions in radial direction
       real (kind=R8), allocatable :: cz(:) !!@param center between node/mesh positions in axial direction
       real (kind=R8), allocatable, save :: mesh(:,:,:)
-      real (kind=R8), allocatable :: r_profile(:), r_profile_pos_r(:), 
+      real (kind=R8), allocatable :: r_profile(:), r_profile_pos_r(:),
      *     r_profile_pos_z(:), z_profile(:), z_profile_pos(:)
 
 *.get file location
       call find_file(inputFile, ex)
-      
+
 *.computation
-      call alloc_b2mod_ld_namelist(200,100,NCOIL_MAX,
+      call alloc_b2mod_ld_namelist(nx,ny,NCOIL_MAX,
      *     NEXTERNAL_REGIONS_MAX, NNODES_IN_EXTERNAL_REGION_MAX)
       call read_b2mod_ld_namelist(inputFile,.true.)
       call write_b2mod_ld_namelist
@@ -113,7 +87,7 @@ c
       allocate(cr(0:ny-1))
       allocate(cz(0:nx-1))
 
-*     determine the maximum value r_max an r-coordinate of mesh point may get 
+*     determine the maximum value r_max an r-coordinate of mesh point may get
 *     (equals the inner radius of the smallest coil)
       r_max = minval(r1(0:ncoil-1))
 
@@ -135,7 +109,7 @@ c
         call cell_dist(mr, cr, ny, r_profile, r_profile_pos_r, nr,
      *                 r_start, r_end)
       else
-        call cell_dist(mr, cr, ny, r_profile, r_profile_pos_r, nr, 
+        call cell_dist(mr, cr, ny, r_profile, r_profile_pos_r, nr,
      *                 r_end, r_start)
       end if
       ! add z-positions (they are on the line rz_start - rz_end)
@@ -145,13 +119,13 @@ c
       ! status: obtained the starting positions
 
       ! determine z_profile, normalized from position 0.0 to 1.0
-      call cell_dist(mz_unit, cz, nx, z_profile, z_profile_pos, nz, 
+      call cell_dist(mz_unit, cz, nx, z_profile, z_profile_pos, nz,
      *               0.0_R8, 1.0_R8)
 
 * start @ (r_profile_pos_r, ,r_profile_pos_z) calculating the fieldline in east and west direction, until z-coordinate passed z_east, z_west. Done in calc_mesh
       mesh(0:nx,0:ny, 0:1) = calc_mesh(mr, mz)
 
-* grid is made, ready to write it into the different output formats.      
+* grid is made, ready to write it into the different output formats.
       call WRITE_OUT('OUT')
 
       ! print some useful data
@@ -166,9 +140,11 @@ c
       !grid generation.
       local_sonnet = 'OUT.ASCII'
       istyle = -1
+      call dealloc_b2mod_ld_namelist
+      return
 
       contains
-  
+
       function calc_mesh(mr_in, mz_in) result (meshOut)
       use b2mod_ld_namelist
       implicit none
@@ -180,14 +156,14 @@ c
 
 *local variables
       integer :: dir, ix, iy, z_index
-      real (kind=R8) :: step, eps, 
+      real (kind=R8) :: step, eps,
      *     rEast, rWest, zEast, zWest, r, z,
      *     rEastOld, rWestOld, zEastOld, zWestOld
       real (kind=R8) :: zPositions(0:nx)
       external xertst
 
       eps = 1.0e-7_R8
-      call xertst (z_nw.lt.z_ne, 
+      call xertst (z_nw.lt.z_ne,
      *     'z_nw should be smaller than z_ne at this stage')
 
       ! determine the index of the node just before the start position z_start.
@@ -200,7 +176,7 @@ c
 
         ! obtain positions at wall
         ! from starting point in positive direction, towards east wall
-        call calc_fieldline(mr_in(iy), mz_in(iy), -step, 
+        call calc_fieldline(mr_in(iy), mz_in(iy), -step,
      *       r_se, z_se, r_ne, z_ne, rEast, zEast)
         ! from starting point in negative direction, towards west wall
         call calc_fieldline(mr_in(iy), mz_in(iy), step,
@@ -215,9 +191,9 @@ c
           zEastOld = zEast
 
           ! from starting point in positive direction, towards east wall
-          call calc_fieldline(mr_in(iy), mz_in(iy), step, 
+          call calc_fieldline(mr_in(iy), mz_in(iy), step,
      *         r_se, z_se, r_ne, z_ne, rEast, zEast)
-          
+
           ! from starting point in negative direction, towards west wall
           call calc_fieldline(mr_in(iy), mz_in(iy), -step,
      *         r_sw, z_sw, r_nw, z_nw, rWest, zWest)
@@ -249,7 +225,7 @@ c
             cycle
           else
             ! determine r positions (using line perpendicular to z-axis)
-            call calc_fieldline(r, z, step, 
+            call calc_fieldline(r, z, step,
      *            0.0_R8, meshOut(ix, iy, 0),
      *            1.0_R8, meshOut(ix, iy, 0), rEast, zEast)
             r = rEast
@@ -257,7 +233,7 @@ c
             meshOut(ix, iy, 1) = rEast
           end if
         end do
-        
+
         ! negative direction
         r = mr_in(iy)
         z = mz_in(iy)
@@ -266,7 +242,7 @@ c
             cycle
           else
             ! determine r positions (using line perpendicular to z-axis)
-            call calc_fieldline(r, z, -step, 
+            call calc_fieldline(r, z, -step,
      *            0.0_R8, meshOut(ix, iy, 0),
      *            1.0_R8, meshOut(ix, iy, 0), rWest, zWest)
             r = rWest
@@ -275,13 +251,13 @@ c
           end if
         end do
 
-      end do 
- 
+      end do
+
       return
       end function calc_mesh
- 
-      subroutine calc_fieldline(r_in, z_in, step, lr0, lz0, lr1, lz1, 
-     *     rWall,zWall) 
+
+      subroutine calc_fieldline(r_in, z_in, step, lr0, lz0, lr1, lz1,
+     *     rWall,zWall)
       use b2mod_ld_namelist
       implicit none
 
@@ -303,7 +279,7 @@ c
       r = r_in
       z = z_in
 
-      crossProduct = 
+      crossProduct =
      .     (r - lr0) * (lz1 - lz0) - (z - lz0) * (lr1 - lr0)
       do ! while line did not hit wall
         ! store current position and crossProduct
@@ -316,29 +292,29 @@ c
         ! update position
         deriv = b(0) / b(1)
         r = r + deriv * step
-        z = z + step        
+        z = z + step
 
         ! calculate cross product with wall
-        crossProduct = 
+        crossProduct =
      .       (r - lr0) * (lz1 - lz0) - (z - lz0) * (lr1 - lr0)
         if (crossProduct * step < 0.0_R8) then
           ! interpolate to wall
           weight = crossProductOld / (crossProductOld - crossProduct)
           rWall = rOld + deriv * weight * step
           zWall = zOld + weight * step
-          
+
           exit
         end if
       end do
 
       end subroutine calc_fieldline
-      
+
 
       subroutine cell_dist(nodes,cc, n, profile, profile_pos, p,
      *     vmin, vmax)
-* This subroutine calculates n+1 nodes and n cell centered positions (cc) 
-* given a profile on p positions (profile_pos). 
-* vmin and vmax are the edge positions of the profile, so finally their values should correspond with node(0) and node(n).   
+* This subroutine calculates n+1 nodes and n cell centered positions (cc)
+* given a profile on p positions (profile_pos).
+* vmin and vmax are the edge positions of the profile, so finally their values should correspond with node(0) and node(n).
 *input variables
       implicit none
       integer n, p
@@ -355,7 +331,7 @@ c
 
 *calculation
       eps=1.0e-10_R8
-      error=10.0_R8*eps !at least larger than eps 
+      error=10.0_R8*eps !at least larger than eps
       call E01BEF(p,profile_pos(0:p-1),profile(0:p-1),
      *     deriv(0:p-1),ifail)
       delta = (vmax-vmin)/n
@@ -368,20 +344,20 @@ c
       cntr=0
       do
         if (cntr.gt.100) then
-        write (*, *) 
+        write (*, *)
      *          'calc_dist: 100 iterations done, break out of loop'
           exit
         end if
         do is = 0, n-1
-          cc(is) = prof(is) 
-        end do 
-       
+          cc(is) = prof(is)
+        end do
+
         call E01BFF(p,profile_pos(0:p-1),profile(0:p-1),deriv(0:p-1),
      *       n,cc(0:n-1),prof(0:n-1),ifail)
         nodes(0) = 0.0_R8
         do is = 0, n-1
-          nodes(is+1) = nodes(is) + prof(is) 
-        end do 
+          nodes(is+1) = nodes(is) + prof(is)
+        end do
         nodes(0) = vmin
         tmp= (vmax - vmin) / nodes(n)
         error=0.0_R8
@@ -390,7 +366,7 @@ c
           prof(is-1) = prof(is-1)*tmp
           prof(is-1) = (nodes(is) + nodes(is-1)) * 0.5_R8
           error = error + (cc(is-1) - prof(is-1))**2.0_R8
-        end do 
+        end do
         error = error**0.5_R8 / n
         if(error.lt.eps) exit
         cntr = cntr + 1
@@ -418,7 +394,7 @@ c
       DO is = 0, ncoil-1
         bfield1 = 0.0_R8
         bfield2 = 0.0_R8
-        factor = current(is)*windings(is)/(Z2(is)-Z1(is))/nlayers(is)  !changed nlayers to array, so just changed to nlayers(is). 
+        factor = current(is)*windings(is)/(Z2(is)-Z1(is))/nlayers(is)  !changed nlayers to array, so just changed to nlayers(is).
         dr = (R2(is)-R1(is))/nlayers(is)
         DO it = 1, nlayers(is)
           rlayer=r1(is)+(it-0.5_R8)*dr
@@ -438,15 +414,15 @@ c
           bfield2(1) = bfield2(1) + (b1(1) - b2(1)) * factor
         END DO
 *??? calc = calc + 2/3 * bfield2 + 1/3 * bfield1??? why assymetric? because of the 2 do loops (nlayers and 2nlayers)? but shouldn't it be the other way around then?
-        calc_b(0) = calc_b(0) + bfield2(0) + 
-     *       (bfield2(0) - bfield1(0)) / 3.0_R8  
-        calc_b(1) = calc_b(1) + bfield2(1) + 
-     *       (bfield2(1) - bfield1(1)) / 3.0_R8  
+        calc_b(0) = calc_b(0) + bfield2(0) +
+     *       (bfield2(0) - bfield1(0)) / 3.0_R8
+        calc_b(1) = calc_b(1) + bfield2(1) +
+     *       (bfield2(1) - bfield1(1)) / 3.0_R8
       END DO
       calc_b(0) = calc_b(0) * PI * 1.0e-7_R8
       calc_b(1) = calc_b(1) * PI * 1.0e-7_R8
       end function calc_b
-     
+
       function calc_bb(zz,rm,rp)
       use b2mod_ld_namelist
       implicit none
@@ -459,7 +435,7 @@ c
 
 *local variables
       integer cntr, cntr_max
-      real (kind=R8) :: tmp1, tmp2, eps, a, b, b0, c, d, d0, m, n, p, 
+      real (kind=R8) :: tmp1, tmp2, eps, a, b, b0, c, d, d0, m, n, p,
      *     xmn, xmp
 *.computation
       cntr_max=50
@@ -484,7 +460,7 @@ c
         IF (cntr >= cntr_max) then
           WRITE (*, *) 'zz, cntr, m, n', zz, cntr, m, n
         END IF
-        call xertst(cntr.lt.cntr_max, 
+        call xertst(cntr.lt.cntr_max,
      *       'B calculation did not converge!!!')
         xmn = m * n
         xmp = xmn / p
@@ -517,20 +493,20 @@ c
       ! to add the guard cells
 
 * construct guard cells around the grid
-* The guard cells are added around the currrent mesh. 
-* The additional nodes are calculated by a linear extrapolation 
+* The guard cells are added around the currrent mesh.
+* The additional nodes are calculated by a linear extrapolation
 * from the last two nodes at the edge.
       write (*, *) 'gc_nsew:', gc_n, gc_s, gc_e, gc_w
       forall (ix=0:nx, is=0:1)
-        mesh(ix,-1,is) = (1.0_R8 + gc_s) * mesh(ix,0,is) - 
+        mesh(ix,-1,is) = (1.0_R8 + gc_s) * mesh(ix,0,is) -
      *     gc_s * mesh(ix,1,is)
-        mesh(ix,ny+1,is) = (1.0_R8 + gc_n) * mesh(ix,ny,is) - 
+        mesh(ix,ny+1,is) = (1.0_R8 + gc_n) * mesh(ix,ny,is) -
      *     gc_n * mesh(ix,ny-1,is)
       end forall
       forall (iy=-1:ny+1, is=0:1) ! -1:ny+1 to add the corner cells too.
-        mesh(-1,iy,is) = (1.0_R8 + gc_w) * mesh(0,iy,is) - 
+        mesh(-1,iy,is) = (1.0_R8 + gc_w) * mesh(0,iy,is) -
      *     gc_w * mesh(1,iy,is)
-        mesh(nx+1,iy,is) = (1.0_R8 + gc_e) * mesh(nx,iy,is) - 
+        mesh(nx+1,iy,is) = (1.0_R8 + gc_e) * mesh(nx,iy,is) -
      *     gc_e * mesh(nx-1,iy,is)
       end forall
 
@@ -542,7 +518,7 @@ c
       bToroidal = bTor
       one = 1.0_R8
       OPEN(UNIT=17,FILE=FN//'.ASCII',STATUS='UNKNOWN')
-      
+
       WRITE(17,'(I3,I3)') nx, ny      !RW + 2 guard cells
       col = -1
       cntr = -1 ! for index in OUT.ELEMENTS
@@ -553,9 +529,9 @@ c
         DO ix = nx+1, 0, -1
           row = row + 1
           cntr = cntr + 1
-          cr = (mesh(IX-1,IY-1,1) + mesh(IX,IY-1,1) + mesh(IX-1,IY,1) + 
+          cr = (mesh(IX-1,IY-1,1) + mesh(IX,IY-1,1) + mesh(IX-1,IY,1) +
      *         mesh(IX,IY,1)) * 0.25_R8
-          cz = (mesh(IX-1,IY-1,0) + mesh(IX,IY-1,0) + mesh(IX-1,IY,0) + 
+          cz = (mesh(IX-1,IY-1,0) + mesh(IX,IY-1,0) + mesh(IX-1,IY,0) +
      *         mesh(IX,IY,0)) * 0.25_R8
           b(0:1) = calc_b(cr, cz)
           WRITE(17,'(I3,I3,12E28.18)') row, col, CR, CZ,

@@ -3418,11 +3418,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1             CONPAR(IS,IB,1),' on ',
      2             BCCHAR(IB),boundary_location(ib),' for species ',IS
               call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
-     1             'BCCON = 15, CONPAR(,,1) !> 0')
+     1             'BCCON = 28, CONPAR(,,1) !> 0')
             else
               write(*,*) ' Density profile from file on ',
-     1              BCCHAR(IB),' at ',BCPOS(IB),' from ',BCSTART(IB),
-     2              ' to ', BCEND(IB),' for species ',IS
+     1              BCCHAR(IB),boundary_location(ib),' for species ',IS
             endif
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
@@ -3476,7 +3475,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             write(*,*) 'constant pressure',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
-     1       'BCCON = 18, CONPAR(,,1) !> 0')
+     1       'BCCON = 29, CONPAR(,,1) !> 0')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -4599,11 +4598,11 @@ cxpb  and max(,,) statement for stability
 *     the profiles of the individual bc's are taken, using ***par(,,1) as
 *     Ti, Te, Ni or ua, otherwise the profiles are used directly from the input file. 
 *     According to the relation
-*     momentumflux = Ni*(ev*(Te+Ti)+mi*ua**2)
+*     momentum_flux = Ni*(ev*(Te+Ti)+mi*ua**2)
 *     those profiles are combined to one single profile.
 *
 *     Note: To be able to handle bc=5 for eni, ene or con as well, 
-*     special cases with adjusted formulas have to be created.
+*     special cases with adjusted formulae have to be created.
 *
 *     Created on 08-04-2009 by Hugo de Blank and Rob Wieggers (FOM Rijnhuizen)
 *-----------------------------------------------------------------------
@@ -4615,7 +4614,7 @@ cxpb  and max(,,) statement for stability
           endif
           call xertst(BCCON(IS,IB).eq.1.or.BCCON(IS,IB).eq.28
      1         .or.BCCON(IS,IB).eq.30,
-     2         'BCMOM = 21, BCCON should be 1, 28 or 30!')
+     2         'BCMOM = 19, BCCON should be 1, 28 or 30!')
 
           !Read density profile
           filename = con_fn(ib)
@@ -4674,9 +4673,9 @@ cxpb  and max(,,) statement for stability
      1           MOMPAR(IS,IB,1),' on ',
      2           BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(MOMPAR(IS,IB,1).ge.-1.0_R8,
-     1           'BCMOM = 23, MOMPAR(,,1) < -1')
+     1           'BCMOM = 20, MOMPAR(,,1) < -1')
             call xertst(MOMPAR(IS,IB,1).le.1.0_R8,
-     1           'BCMOM = 23, MOMPAR(,,1) > 1')
+     1           'BCMOM = 20, MOMPAR(,,1) > 1')
           endif
 
           IF (BCCHAR(IB).EQ.'W') THEN
@@ -4707,7 +4706,7 @@ cxpb  and max(,,) statement for stability
             ENDDO
 
           ELSE
-            CALL XERRAB ('B2STBC -- BCMOM=23, NOT AVAILABLE FOR N,S')
+            CALL XERRAB ('B2STBC -- BCMOM=20, NOT AVAILABLE FOR N,S')
           ENDIF
 
 * -- BCMOM=21 -- Parallel velocity gradient from profile
@@ -4781,7 +4780,7 @@ cxpb  and max(,,) statement for stability
               ENDDO
             ENDIF
           ELSE
-            CALL XERRAB ('B2STBC -- BCMOM=24, NOT AVAILABLE FOR N,S')
+            CALL XERRAB ('B2STBC -- BCMOM=21, NOT AVAILABLE FOR N,S')
           ENDIF
 
         case default
@@ -6778,7 +6777,7 @@ cxpb code segment analog to b2tfhe
      1           ENEPAR(IB,1),' on ',
      2           BCCHAR(IB),boundary_location(ib), ' for species ',IS
             call xertst(ENEPAR(IB,1).gt.0.0_R8,
-     1           'BCENE = 15, ENEPAR(,1) !> 0')
+     1           'BCENE = 23, ENEPAR(,1) !> 0')
           else
 *           write(*,*) ' Te profile from file on ',
 *    1           BCCHAR(IB),boundary_location(ib), ' for species ',IS
@@ -6811,7 +6810,7 @@ cxpb code segment analog to b2tfhe
             ENDDO
           ENDIF
         ELSE
-          CALL XERRAB ('B2STBC -- BCENE=15, NOT AVAILABLE FOR N,S')
+          CALL XERRAB ('B2STBC -- BCENE=23, NOT AVAILABLE FOR N,S')
         ENDIF
 		
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
@@ -9258,7 +9257,7 @@ cxpb Careful here because of BC number clash
      1           ENIPAR(IB,1),' on ',
      2           BCCHAR(IB),boundary_location(ib), ' for species ',IS
             call xertst(ENEPAR(IB,1).gt.0.0_R8,
-     1           'BCENI = 15, ENIPAR(,1) !> 0')
+     1           'BCENI = 28, ENIPAR(,1) !> 0')
           else
 *           write(*,*) ' Ti profile from file on ',
 *    1           BCCHAR(IB),boundary_location(ib), ' for species ',IS
@@ -9291,7 +9290,7 @@ cxpb Careful here because of BC number clash
             ENDDO
           ENDIF
         ELSE
-          CALL XERRAB ('B2STBC -- BCENI=15, NOT AVAILABLE FOR N,S')
+          CALL XERRAB ('B2STBC -- BCENI=28, NOT AVAILABLE FOR N,S')
         ENDIF
 
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
@@ -10497,7 +10496,7 @@ c              fchi=0.0_R8
      .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
           end do
         ELSE
-          CALL XERRAB ('B2STBC -- BCPOT=13, NO SHEATH IN RADIAL DIR.')
+          CALL XERRAB ('B2STBC -- BCPOT=14, NO SHEATH IN RADIAL DIR.')
         END IF
 
 * -- BCPOT=18 -- Nothing implemented
