@@ -87,7 +87,7 @@
       integer ncall, n2, ix, iy, ib, is, is0,
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
-      integer, save :: lim_flux = 0, drift_style = 1
+      integer, save :: lim_flux = 0
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
@@ -162,7 +162,6 @@
        call ipgeti ('b2tfhe_conduction_only', conduction_only)          !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
-       call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
        call ipgetr ('b2sifr_phm2', phm2)                                !srv 15.10.18
        call ipgetr ('b2tfhe_prl_cur', prl_cur)                          !srv 15.10.18

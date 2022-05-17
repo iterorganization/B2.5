@@ -10,6 +10,8 @@
       use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_geo
+     &   , only : hyl, hxb                                               ! IYS 04.03.2019
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -41,7 +43,7 @@
 
 *   ..local variables
       integer ncall, ix, iy, ib, is
-      integer, save :: fch_inert_style = 0                               !srv 19.04.13
+      integer, save :: fch_inert_style                                   !srv 19.04.13
       integer, save :: no_current = 0
       integer, save :: inert_all_ions = 1
       integer, save :: guard_flows
@@ -65,6 +67,11 @@
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2tiner_inert_all_ions', inert_all_ions)
        call ipgeti ('b2news_guard_flows', guard_flows)
+       if (redef_gmtry.eq.0) then
+          fch_inert_style = 1
+       else
+          fch_inert_style = 2
+       end if
        call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)          !srv 07.07.99
       endif
 *   ..test nx, ny
@@ -162,13 +169,13 @@ cwdk cancellation of some terms in poloidal and radial current components
      &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
+cwdk cancellation of some terms in poloidal and radial current components
                fchinert_a(ix,iy,0,1,is)=
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
      &          facdrift(ix,iy)*
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+
      &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*
-     &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+     &           na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
      &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8
      &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
      &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
@@ -192,6 +199,54 @@ cwdk cancelation of some terms in poloidal and radial current components
      &          /2.0e0_R8                                                !srv 07.07.99
      &          *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))       !srv 07.07.99
      &          /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))     !srv 07.07.99
+     &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+          endif                                                          !srv 07.07.99
+          fchinert(:,:,:,:) = fchinert(:,:,:,:) + fchinert_a(:,:,:,:,is)
+         enddo                                                           !srv 07.07.99
+
+        elseif(fch_inert_style.eq.2) then
+
+         do is = 0, ns-1                                                 !srv 07.07.99
+          if (.not.is_neutral(is)) then                                  !srv 07.07.99
+*         X-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny-1                                                  !srv 07.07.99
+             do ix=0,nx                                                  !srv 07.07.99
+               if(leftix(ix,iy).ne.-2) then                              !srv 26.11.02
+                fchinert_a(ix,iy,0,0,is)=                                !srv 07.07.99
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*      ! signmf*    !srv 23.07.05 11.01.13
+     &          facdrift(ix,iy)*                                         !srv 22.06.08
+     &         (ua(ix,iy,is)**2 * na(ix,iy,is) +                         ! IYS 04.03.2019
+     &          ua(leftix(ix,iy),leftiy(ix,iy),is)**2 *
+     &          na(leftix(ix,iy),leftiy(ix,iy),is)) *
+     &          gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+     &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
+               fchinert_a(ix,iy,0,1,is)=
+     &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
+     &          facdrift(ix,iy)*
+     &          (ua(ix,iy,is)**2*na(ix,iy,is)+
+     &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*
+     &           na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8*
+     &           gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)*
+     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &         qs(ix,iy,0)
+     &         *dOnedBsq(ix,iy,0,0)
+               endif                                                     !srv 26.11.02
+             enddo                                                       !srv 07.07.99
+           enddo                                                         !srv 07.07.99
+*         Y-COMPONENT OF INERTIA CURRENT                                 !srv 07.07.99
+           do iy=0,ny                                                    !srv 07.07.99
+             do ix=0,nx-1                                                !srv 07.07.99
+               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
+                fchinert_a(ix,iy,1,1,is)=                                !srv 07.07.99
+     &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy)  ! signmf* !srv 07.07.99 21.04.00 22.06.08 11.01.13
+     &          *0.5e0_R8*( na(ix,iy,is) * ua(ix,iy,is)**2 +             ! IYS 04.03.2019
+     &           na(bottomix(ix,iy),bottomiy(ix,iy),is) *
+     &           ua(bottomix(ix,iy),bottomiy(ix,iy),is)**2) *
+     &           gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
      &          *dOnedBsq(ix,iy,1,0)                                     !srv 07.07.99
                endif                                                     !srv 26.11.02
              enddo                                                       !srv 07.07.99

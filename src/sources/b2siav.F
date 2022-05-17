@@ -115,7 +115,6 @@
           tt1 = 0.0e0_R8
           tt2 = 0.0e0_R8
           tt3 = 0.0e0_R8
-          conn = 0.0e0_R8
           bbaverage2 = 0.0e0_R8
           eps1 = 0.0e0_R8
 !pbwdk          mintopcut = ny
@@ -126,8 +125,6 @@
               if(on_closed_surface(ix,iy)) then
                 tt0(iy) = tt0(iy) + bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
                 tt1(iy) = tt1(iy) + vol(ix,iy)
-                conn(iy) = conn(iy) +
-     .                     hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
                 tt2(iy) = tt2(iy) + hx(ix,iy)
                 tt3(iy) = tt3(iy) + vol(ix,iy)/hy1(ix,iy)
               endif

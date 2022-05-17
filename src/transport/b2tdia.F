@@ -5,6 +5,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
+      use b2mod_geo
+     &   , only : hyl, hxb                       ! IYS 04.03.2019
 #ifdef CLASSICAL_CURRENT
       use b2mod_geo
      &   , only : hy1
@@ -42,6 +44,7 @@
       real (kind=R8) ::
      &  facdriftm, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
+      integer, save :: drift_style                                       !IYS 11.02.2020
       integer, save :: no_current = 0
 #ifdef CLASSICAL_CURRENT
       integer is
@@ -64,6 +67,12 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then                                               !srv
        call ipgetr ('b2tfhe_dia_cur', dia_cur)                           !srv
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
+       call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
        call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..set n2
@@ -98,6 +107,8 @@
 
 *       X-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
+        if (drift_style.ne.2 .or. redef_gmtry.eq.0) then                 !IYS 11.02.2020
+
 !         do iy=-1,ny
          do iy=0,ny-1
            do ix=0,nx
@@ -112,7 +123,7 @@
      &      *dOnedBsq(ix,iy,0,1)
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
+cwdk cancellation of some terms in poloidal and radial current components
              fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
      &      (pz(ix,iy)*bb(ix,iy,2)+                                      !srv 31.03.00 18.01.02
@@ -168,6 +179,40 @@ cwdk cancelation of some terms in poloidal and radial current components
             endif                                                        !srv 26.11.02
            enddo                                                         !srv
          enddo                                                           !srv
+
+        else  ! drift_style                                              !IYS 11.02.2020
+
+         do iy=0,ny-1
+           do ix=0,nx
+            if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
+             fchdia(ix,iy,0,0)=fchdia(ix,iy,0,0)+
+     &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
+     &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *    ! IYS 04.03.2019
+     &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+     &      *dOnedBsq(ix,iy,0,1)
+             fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
+     &                       dia_cur*facdrift(ix,iy)* ! signmf*
+     &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *                            !srv 31.03.00
+     &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+     &      *dOnedBsq(ix,iy,0,0)
+            endif                                                        !srv 26.11.02
+           enddo
+         enddo
+
+*       Y-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
+
+         do iy=0,ny
+           do ix=0,nx-1
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
+             fchdia(ix,iy,1,1)= - dia_cur*facdrift(ix,iy)* ! signmf*     !srv 25.04.00 21.04.00 21.03.02 11.01.13
+     &   0.5e0_R8 * (pz(ix,iy) + pz(bottomix(ix,iy),bottomiy(ix,iy))) *  ! IYS 04.03.2019
+     &         gs(ix,iy,1) * wbbv(ix,iy,2) / hxb(ix,iy)
+     &      *dOnedBsq(ix,iy,1,0)                                         !srv
+            endif                                                        !srv 26.11.02
+           enddo                                                         !srv
+         enddo                                                           !srv
+
+        endif  ! drift_style                                             !IYS 11.02.2020
 
 #ifdef CLASSICAL_CURRENT
 crfs inertia terms

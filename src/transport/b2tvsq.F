@@ -55,6 +55,7 @@
       real (kind=R8), save :: vis_q = 1.0e0_R8                           !srv 11.07.99
       real (kind=R8), save :: cqip1 = 0.5e0_R8                           !lk
       real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                      !iyv 06.12.13
+      integer, save :: drift_style                                       !IYS 26.05.2020
       real (kind=R8) :: tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny)        !lk
      &                  , conn_(-1:ny), tt2(-1:ny), tt3(-1:ny)
      &                  , eps1(-1:ny), fac_vism                          !srv 16.10.17
@@ -89,6 +90,14 @@
        call ipgeti ('b2tral_Zhdanov_vish', Zhdanov_vish)                 !som 20.10.21
        call ipgeti ('b2siav_style_qip', hstyle)                          !lk 23.05.06 05.07.07
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                     !iyv 06.12.13
+       if (redef_gmtry.eq.0) then
+          drift_style = 1
+       else
+          drift_style = 2
+       end if
+       call ipgeti ('b2tfnb_drift_style', drift_style)                   !srv 21.06.08
+!       write(*,*) 'redef_gmtry = ',redef_gmtry,
+!     &               ' drfit_style = ',drift_style
        call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..test nx, ny
@@ -274,6 +283,7 @@
 * ..calculate the x-component of the parallel viscosity current
 *                                  connected with the heat flux
 
+           if (drift_style .le. 1) then                                 !IYS 26.05.2020
              do iy = 0,mintopcut-1                                      !lk 23.05.06 05.07.07 {
                do ix = 0,nx
                  if(on_closed_surface(bottomix(ix,iy),
@@ -299,7 +309,7 @@
      &         *dOnedBsq(ix,iy,0,1)
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
+cwdk cancellation of some terms in poloidal and radial current components
               fchvisq_a(ix,iy,0,1,is) =                                 !srv 16.10.17
      &        -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
@@ -325,8 +335,45 @@ cwdk cancelation of some terms in poloidal and radial current components
             enddo
            enddo
 
+           elseif (drift_style .eq. 2) then                              !IYS 26.05.2020
+
+             do iy = 0,mintopcut-1                                       !lk 23.05.06 05.07.07 {
+               do ix = 0,nx
+                 if(on_closed_surface(bottomix(ix,iy),
+     .                                bottomiy(ix,iy))) then
+                   fchvisq_a(ix,iy,0,0,is) =
+     &         -fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
+     &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
+     &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
+     &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
+     &         /hx(leftix(ix,iy),leftiy(ix,iy))
+     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
+     &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
+     &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy,0)
+     &         *dOnedBsq(ix,iy,0,1)
+              fchvisq_a(ix,iy,0,1,is) =                                 !srv 16.10.17
+     &        -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
+     &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
+     &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
+     &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
+     &         /hx(leftix(ix,iy),leftiy(ix,iy))
+     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
+     &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
+     &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy,0)
+     &         *dOnedBsq(ix,iy,0,0)*qs(ix,iy,0)*
+     &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &         (hy1(ix,iy) + hy1(leftix(ix,iy),leftiy(ix,iy)))
+                 endif                                                   !lk 23.05.06 05.07.07 }
+               enddo
+             enddo
+           endif
+
+
 * ..calculate the y-component of the parallel viscosity current
 *                                  connected with the heat flux
+          if (drift_style .le. 1) then                                   !IYS 26.05.2020
             do iy = 0,mintopcut                                          !lk 23.05.06 05.07.07 {
               do ix = 0,nx
                 if(on_closed_surface(bottomix(ix,iy),
@@ -359,6 +406,36 @@ cwdk cancelation of some terms in poloidal and radial current components
                 endif                                                    !lk 23.05.06 05.07.07 }
               enddo
             enddo
+
+           elseif (drift_style .eq. 2) then                              !IYS 26.05.2020
+
+            do iy = 0,mintopcut                                          !lk 23.05.06 05.07.07 {
+             do ix = 0,nx
+              if(on_closed_surface(bottomix(ix,iy),
+     .                               bottomiy(ix,iy))) then
+               if(rightix(ix,iy).ne.nx+1) then
+                fchvisq_a(ix,iy,1,1,is) =
+     &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
+     &          tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
+     &          +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &                      )*0.5e0_R8
+     &          *(hipgen(rightix(ix,iy),rightiy(ix,iy))
+     &          +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &          -hipgen(ix,iy)-hipgen(bottomix(ix,iy),bottomiy(ix,iy))
+     &            )*0.5e0_R8
+     &          *wbbv(ix,iy,2)/wbbv(ix,iy,3)
+     &          *wbbv(ix,iy,0)/sqrt(wbbv(ix,iy,3))*gs(ix,iy,1)
+     &          *dOnedBsq(ix,iy,1,0)
+               endif
+              endif                                                      !lk 23.05.06 05.07.07 }
+             enddo
+            enddo
+
+           endif
+
           else
             fchvisq_a(:,:,:,:,is)=0.0_R8
           endif
@@ -640,7 +717,7 @@ cwdk cancelation of some terms in poloidal and radial current components
      &            /3.0e0_R8*0.4e0_R8
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
+cwdk cancellation of some terms in poloidal and radial current components
                    fchvisq_a(ix,iy,0,1,is) =
      &              2.0e0_R8*dvq(ix,iy)
      &            /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))

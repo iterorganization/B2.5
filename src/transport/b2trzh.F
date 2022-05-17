@@ -11,6 +11,7 @@
      &  cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)     !som 08.10.2021
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_b2cmpt
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2mrel
@@ -18,6 +19,7 @@
       use b2mod_zhfrtf
       use b2mod_transport
      , , only: f_luc_ki, f_luc_et, alpha1
+      use b2mod_transport_namelist
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -89,6 +91,7 @@
       integer ix, iy, is, inucl, iz,i, j
       real (kind=R8) :: temp
       real (kind=R8) :: wrk(-1:nx,-1:ny), volhz(-1:nx,-1:ny)
+      real (kind=R8) :: cfl(-1:nx,-1:ny)
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
      &  zeffne, nz2n(0:nspecies-1), nati(0:ns-1), eta_cl_xy(0:ns-1),
      &  G2(0:nspecies-1,0:nspecies-1), G8(0:nspecies-1,0:nspecies-1),
@@ -214,6 +217,10 @@
       chci0_luc=0.0_R8
       cvsahz0_luc=0.0_R8
       cvsa0_luc=0.0_R8
+
+*   ..compute viscous flux limit profile
+      call cfl_tanh_profile(nx, ny, cflim(2),
+     .  cflmv_core, cflmv_sol, cflmv_tanh_a, cflmv_tanh_b, cfl)
 
 *   ..calculate transport coefficietns
       do iy = -1, ny
@@ -444,7 +451,8 @@
 *    ..calculate flux limiting for the viscous stress
           nati(0:ns-1) = na(ix,iy,0:ns-1)*ti(ix,iy)
           eta_cl_xy(0:ns-1) = eta_cl(ix,iy,0:ns-1)
-          call b2trfl_vis (ix, iy, ns, eta_cl_xy, nati, gamma, cF_limv)
+          call b2trfl_vis (ix, iy, ns,
+     &     eta_cl_xy, nati, gamma, cfl(ix,iy), cF_limv)
 
 *    ..the velocity-dependent part
           do is = 0, ns-1

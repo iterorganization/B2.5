@@ -326,7 +326,7 @@
      &               chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
      &               fchvisq_a, fchvisq)
 csw 30sep2013, added cdpa in call, uadia
-       call b2tfrn (nx, ny, ns, ismain, guard_flows,                    !srv 19.02.21
+       call b2tfrn (nx, ny, ns, guard_flows,                            !srv 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, hy, qz, gs, qc, qs, bb, pbs,
      &  ua, na, ne, te, ti, po, fch_p,

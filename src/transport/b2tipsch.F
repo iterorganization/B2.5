@@ -51,7 +51,7 @@
       integer, save :: iout = 0
       real (kind=R8) :: wght(-1:nx,-1:ny)
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
-      integer, save :: PSch_style = 1
+      integer, save :: PSch_style
       real (kind=R8) ::
      *   facdriftm                                                       !srv 25.01.02
       save ncall
@@ -71,6 +71,11 @@
       if (ncall.eq.0) then                                               !srv
        call ipgeti ('b2tipsch_iout', iout)                               !srv 16.09.02
        call ipgetr ('b2tfhi_PSch', PSch)                                 !srv 17.01.07
+       if (redef_gmtry.eq.0) then
+         PSch_style = 1
+       else
+         PSch_style = 2
+       end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif                                                              !srv
 *   ..set n2

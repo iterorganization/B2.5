@@ -286,7 +286,7 @@
             enddo
             gs(ix,iy,0) = t0
             qs(ix,iy,0) = t1/t0
-            qc(ix,iy,0) = sqrt(1 - (t1/t0)**2)
+            qc(ix,iy,0) = sqrt(1.0_R8 - (t1/t0)**2)
             pbs(ix,iy,0) = t2
           endif
 *     ..project gsy, pbsy and qc(,,1) to cell (ix,iy)
@@ -303,7 +303,7 @@
      .         (crx1(ix1+jx1,iy1,0)+crx1(ix1+jx1,iy1,1))
             enddo
             qs(ix,iy,1) = t1/t0
-            qc(ix,iy,1) = sqrt(1 - (t1/t0)**2)
+            qc(ix,iy,1) = sqrt(1.0_R8 - (t1/t0)**2)
           else
             t0 = 0.0_R8
             t1 = 0.0_R8
@@ -315,7 +315,7 @@
             enddo
             gs(ix,iy,1) = t0
             qs(ix,iy,1) = t1/t0
-            qc(ix,iy,1) = sqrt(1 - (t1/t0)**2)
+            qc(ix,iy,1) = sqrt(1.0_R8 - (t1/t0)**2)
             pbs(ix,iy,1) = t2
           endif
 *     ..project vol, gsz, and qz to cell (ix,iy)
@@ -803,7 +803,7 @@ cxpb  extra test since cases beyond double-null are not yet coded
 
 cxpb  extra code to allow for overwriting the pbs array with the 
 cxpb  working mesh values
-      if (pbs_from_basis_mesh.eq.0 .or. redef_pbs.eq.1) then
+      if (pbs_from_basis_mesh.eq.0 .or. redef_gmtry.eq.1) then
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)

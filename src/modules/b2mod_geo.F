@@ -147,7 +147,7 @@
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
          if(qc(ix,iy,0).le.0.0_R8) then
-          write(*,*) 'Problem in b2mod_geo: qc(ix,iy) <= 0',
+          write(*,*) 'Problem in b2mod_geo: qc(ix,iy,0) <= 0',
      1     qc(ix,iy,0),ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)

@@ -233,7 +233,7 @@ c
      8     sput_phys_model/1/, sput_phys/0.0_R8/,
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
-     2     use_eirene/0/, ismain0/0/, drift_style/1/
+     2     use_eirene/0/, ismain0/0/
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,
@@ -434,6 +434,11 @@ c
 
 cxpb  This call is moved up from 'f31' so that we used the original cell-faced
 cxpb  quantities before their mapping to cell centers
+      if (redef_gmtry.eq.0) then
+        drift_style = 1
+      else
+        drift_style = 2
+      end if
       call ipgeti ('b2tfnb_drift_style', drift_style)
       call ipgetr ('b2news_BoRiS', BoRiS)
       call b2xpni (nx, ny, ns, na, ni)

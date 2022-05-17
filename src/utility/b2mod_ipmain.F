@@ -181,6 +181,10 @@
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Deprecated, '//
      &     're-run b2ar using "b2ardr_fix_recomb"'
+        case ('b2agdr_redef_pbs','b2mndr_redef_pbs')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Deprecated, '//
+     &     're-run b2ag using "b2agdr_redef_gmtry"'
         case default
           prohib = .false.
         end select

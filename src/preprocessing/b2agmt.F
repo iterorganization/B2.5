@@ -84,17 +84,23 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,0) specifies cos(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,1) specifies cos(t), where
+*     t is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
 *     geometry.
 *     It will hold that 0.lt.qc(,,).le.1.
 *
 *     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy) specifies sin(t), where
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,0) specifies sin(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,1) specifies sin(t), where
+*     t is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
 *     geometry.
 *     It will hold that -1.lt.qs(,,).le.1.
@@ -154,8 +160,6 @@
      &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
      &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
      &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8)
-        cell_width(ix,iy) = hx(ix,iy)
-        cell_height(ix,iy) = hy(ix,iy)
         qz(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -177,6 +181,8 @@
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         qs(ix,iy,1) = 0.0_R8
+        cell_width(ix,iy) = hx(ix,iy)
+        cell_height(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
@@ -314,6 +320,7 @@
 
 *   ..test sign of vol
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+
 
 * ..return
       call subend ()

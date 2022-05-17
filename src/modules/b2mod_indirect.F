@@ -25,7 +25,7 @@
      *  topcut(:),
      *  bottomcut(:)
       integer, save ::
-     *  nncut, nnreg(0:2), periodic_bc, nncutmax, redef_pbs
+     *  nncut, nnreg(0:2), periodic_bc, nncutmax, redef_gmtry
       integer, allocatable, save ::
      *  cflags(:,:,:)
       logical, allocatable, save ::
@@ -63,7 +63,7 @@
       topcut      = -2
       rightcut    = -2
       leftcut     = nxd+1
-      redef_pbs   = 0
+      redef_gmtry = 0
       cflags      = 0
       LSN = .true.
       b2mod_indirect_allocated = .true.

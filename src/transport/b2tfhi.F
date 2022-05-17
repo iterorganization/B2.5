@@ -72,7 +72,7 @@
       integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr
       integer, save :: iout = 0                                          !srv 16.09.02
       integer, save :: lim_flux = 0, mdf_fhi = 0                         !srv 04.02.03 13.10.06
-      integer, save :: drift_style = 1
+      integer, save :: drift_style
       integer, save :: conductive_limit = 1
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
@@ -108,6 +108,11 @@
 *   ..get input parameters
       if (ncall.eq.0) then
         call ipgeti ('b2tfhe_conduction_only', conduction_only)
+        if (redef_gmtry.eq.0) then
+          drift_style = 1
+        else
+          drift_style = 2
+        end if
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call ipgeti ('b2tfhi_no_hybr', no_hybr)
         call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06

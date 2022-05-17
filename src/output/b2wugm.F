@@ -477,9 +477,13 @@ cxpb-end
       if(newversion.ge.'01.001.063') then          !srv 15.02.11
         call cfwure (nput, n2*2, pbs, 'pbs')
       endif
-      if(newversion.ge.'03.000.006') then
-        idum(0)=redef_pbs
+      if(newversion.eq.'03.000.006') then
+        idum(0)=redef_gmtry
         call cfwuin (nput, 1, idum, 'redef_pbs')
+      elseif(newversion.ge.'03.000.007') then
+        idum(0)=redef_gmtry
+        call cfwuin (nput, 1, idum, 'redef_gmtry')
+        call cfwure (nput, n2*4, wbbl, 'wbbl')
       endif
       if(newversion.ge.'01.001.028') then
         call cfwuin (nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')

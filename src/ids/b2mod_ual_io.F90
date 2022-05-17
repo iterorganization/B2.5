@@ -768,6 +768,11 @@ contains
           end do
           if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
           call ipgeti ('b2mwti_ismain0', ismain0)
+          if (redef_gmtry.eq.0) then
+            drift_style = 1
+          else
+            drift_style = 2
+          end if
           call ipgeti ('b2tfnb_drift_style', drift_style)
         end if
 #ifdef B25_EIRENE

@@ -202,11 +202,6 @@
        call ipgeti ('b2mndt_av', iav_run)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-       if (boundary_namelist.ge.1) then
-         call initialize_b2mod_boundary(nx,ny,ns,tim)
-       else
-         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
-       endif
       else
        if (boundary_namelist.ge.1) then
          call catchup_b2mod_boundary(nx,ny,ns,tim)
@@ -379,7 +374,7 @@ ctmp.dpc
           call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,
-     &     vol, crx, hx, hy, hz, qz, qc, qs, gs, pbs, bb, lnlam,         !srv 09.01.01
+     &     vol, hx, hy, hz, qz, qc, qs, gs, pbs, bb, lnlam,              !srv 09.01.01
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02

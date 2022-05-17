@@ -324,8 +324,8 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-      redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
-      call ipgeti ('b2agdr_redef_pbs', redef_pbs)
+      redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
+      call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
@@ -414,12 +414,14 @@
      & cell_width1, cell_height1, leftix1, bottomiy1)
 *   ..improved computation of qc and qs based on interpolation of qz values
 cwdk  avoids artificial reduction of poloidal contact area between faces for
-cwdk  curvilinear grids
+cwdk  curvilinear grids; angle between left face and average direction of top/bottom
+cwdk  faces is not representative for orthogonality of left face to field!
       call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,qz1(-1,-1,0),
-     .  qs1(-1,-1,0))
+     .    qs1(-1,-1,0))
       call intfacev(nx1,ny1,bottomix1,bottomiy1,vol1,qz1(-1,-1,0),
-     .  qs1(-1,-1,1))
-        qc(:,:,:) = sqrt(1.0_R8 - qs(:,:,:)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
+     .    qs1(-1,-1,1))
+cwdk to ensure sin^2 + cos^2 = 1, and cos > 0
+      qc(:,:,:) = sqrt(1.0_R8 - qs(:,:,:)**2)
 *    ..interpolate magnetic field to cell faces
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
@@ -483,7 +485,7 @@ cwdk  curvilinear grids
      2 topix1, topiy1, bottomix1, bottomiy1,
      3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
 *   ..correct pbsx on the proper mesh
-      if(redef_pbs.ne.0) then
+      if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
      1   leftix, rightix, rightiy, region, crx, cry,
      1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,

@@ -17,6 +17,7 @@
       use b2mod_diag
      . , only : label
       use b2mod_subsys
+      use b2mod_transport_nspecies
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:5), nx, ny, ns, ns0
@@ -180,6 +181,7 @@
       call cfruch (ninp(3), 120, lblps, 'label')
       call b2ruzd (ninp(3), b2fstati_version, ns0, 
      &  zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+      call alloc_b2mod_transport_nspecies(nx,ny,nspecies)
       do is = 0, ns0-1
        call xertst (ltst(zpdum(is,1),zamin(is)), 
      &  'faulty data for zamin')

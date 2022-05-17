@@ -195,7 +195,7 @@
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
      & bc_type21_ref/1/, no_current/0/,
-     & use_astra/0/, use_eirene/0/, drift_style/1/, ndes_sol/0.0_R8/
+     & use_astra/0/, use_eirene/0/, ndes_sol/0.0_R8/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
@@ -234,6 +234,11 @@
        call ipgeti ('b2tfhi_no_hybr', no_hybr_i)
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2mndr_astra', use_astra)
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2stbc_type13_ref', bc_type13_ref)
        call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
@@ -4137,9 +4142,9 @@ cxpb  and max(,,) statement for stability
           ENDIF
 
 * -- BCMOM=12 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM   !srv 01.02.09
-
+!srv added accumulation in order to account twice b.c. for corner cells
         case (12)
-          if(ncall.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb parallel momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -4188,9 +4193,9 @@ cxpb  and max(,,) statement for stability
           ENDIF
 
 * -- BCMOM=13 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM
-
+!srv added accumulation in order to account twice b.c. for corner cells
         case (13)
-          if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb parallel momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -4274,9 +4279,9 @@ cxpb  and max(,,) statement for stability
           ENDIF
 
 * -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
-
+!srv added accumulation in order to account twice b.c. for corner cells
         case (14)
-          if(ncall.eq.0) then !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -4538,7 +4543,7 @@ cxpb  and max(,,) statement for stability
       case (1)
         if(ncall.eq.0) then
           IF(BCCHAR(IB).EQ.'S'.and.use_astra.ne.0) THEN
-          ENEPAR(IB,1) = teb_astra*1.0e3_R8                        !srv 14.06.12
+            ENEPAR(IB,1) = teb_astra*1.0e3_R8                        !srv 14.06.12
           ENDIF
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified electron temperature ',ENEPAR(IB,1),
@@ -5539,9 +5544,9 @@ cxpb code segment analog to b2tfhe
         ENDIF
 
 * -- BCENE=11 -- FROM B2STBC_SPB                                       !srv 01.02.09
-
+!srv added accumulation in order to account twice b.c. for corner cells
       case (11)
-        if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+        if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     ' from b2stbc_spb with ENEPAR(,1) =',ENEPAR(IB,1),
      1     ' and ENEPAR(,2) =',ENEPAR(IB,2),
@@ -5728,10 +5733,10 @@ cxpb code segment analog to b2tfhe
         ENDIF
 
 * -- BCENE=15 -- FROM B2STBC_SPB                                        !srv 01.02.09
-
+!srv added accumulation in order to account twice b.c. for corner cells
       case (15)
         if(bcene_15_style.eq.0) then
-          if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a)')
      .       'bcene_15_style = 0 with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
@@ -5823,7 +5828,8 @@ cxpb code segment analog to b2tfhe
           END IF
 
         elseif(bcene_15_style.eq.1) then
-          if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
+!srv added accumulation in order to account twice b.c. for corner cells
+          if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a)')
      &       'bcene_15_style = 1 with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
@@ -9982,13 +9988,13 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      .     'electric potential feedback by current on ',
      1     BCCHAR(IB),boundary_location(ib)
 ! add smth about #ifdef ASTRA here
-          scurpar = 0.0_R8
 c Init variables for BCPOT=16                                  { Solovyev 01.05.14
           cur_delta = 0.0_R8              ! square of delta between desired and calculated current
           prev_cur_delta = 0.0_R8         ! previous value of upper value
           po_step = 0.0_R8                ! step of approximation (set after 1st iteration)
           coeff_16 = 1.0_R8
 c************************************************************* } Solovyev 01.05.14
+          scurpar = 0.0_R8
           do ibw=ib,nbc
             if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
               scurpar = scurpar + potpar(ibw,1)
@@ -10025,8 +10031,8 @@ c************************************************************* } Solovyev 01.05.
 c The implementation is based on one step of Newton method
             cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
             if (ncall.eq.0) then
-              write (72, *) '# Newton'
-              prev_cur_delta = cur_delta
+              write (*, *) '# Newton'
+              prev_cur_delta = cur_delta         ! previous value of upper value
             else
               if (ncall.eq.1) then                                      ! Solovyev 23.05.14
                 po_curr = 0.0_R8                                        !srv 29.09.15
@@ -10053,11 +10059,10 @@ c The implementation is based on one step of Newton method
                 prev_cur_delta = cur_delta
                 po_prev = po_curr
                 po_curr = POS
-                write (72, *) ncall, totflux, POS   ! Solovyev 29.04.14 - test output to b2fdebug
               endif                                                     ! Solovyev 23.05.14
             endif                                                       ! } Solovyev 03.05.14
 c end of implementation
-            write (*, *) 'ncall, totflux, POS', ncall,totflux, POS      !Solovyev 29.04.14 - test output to b2fdebug
+            write (*, *) 'ncall, totflux, POS', ncall, totflux, POS     !Solovyev 29.04.14 - test output to debug
             do ibw=ib,nbc
               if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
                 do ix=1, BC_LIST_SIZE(IBW)

@@ -45,7 +45,7 @@
       integer ncall, n2, ix, iy, ib, area_fix,
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
       integer, save :: iout = 0                                          !srv 02.04.18
-      integer, save :: PSch_style = 1                                    !srv 12.11.08
+      integer, save :: PSch_style                                        !srv 12.11.08
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: PSch = 1.0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -75,6 +75,11 @@
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tnpsch_iout', iout)                              !srv 02.04.18
         call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
+        if (redef_gmtry.eq.0) then
+         PSch_style = 1
+        else
+         PSch_style = 2
+        end if
         call ipgeti ('b2tfnb_PSch_style', PSch_style)
       endif
 *   ..extensive tests on first few calls

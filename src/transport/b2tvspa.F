@@ -198,7 +198,7 @@ c Drift terms
 !     &        /3.0e0_R8                                                !srv 18.02.00
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
-cwdk cancelation of some terms in poloidal and radial current components
+cwdk cancellation of some terms in poloidal and radial current components
 	    fchvispar_a(ix,iy,0,1,is)=
      &       -vis_par*fac_vis(ix,iy)*
      &        dvpar(ix,iy)*gOnedBsq(ix,iy,0,0)/3.0e0_R8*

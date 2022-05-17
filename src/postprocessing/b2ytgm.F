@@ -113,11 +113,11 @@
 *     It will hold that -1.lt.qz1(,,0).lt.1 and 0.lt.qz1(,,1).le.1.
 *
 *     qc1 - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc1(,).le.1.
 *
 *     gs1 - (-1:nx1,-1:ny1,0:2) real*8 array, output.
@@ -134,9 +134,9 @@
 *     pbs1 - (-1:nx1,-1:ny1,0:1) real*8 array.
 *     (Let pbsx(,)=pbs1(,,0) and pbsy(,)=pbs1(,,1).)
 *     For (ix,iy) in (-1:nx1,-1:ny1), pbsx(ix,iy) specifies the product
-*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs1 for the form of interpolation employed.
 *
 *     (parameters in common:)
@@ -174,8 +174,16 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, idum(0:9), periodic_bc
+      integer n2, ix, iy, idum(0:9), periodic_bc, redef_gmtry
       integer iFace, offset
+      real (kind=R8) ::
+     *   ebc1(-1:nx1,-1:ny1,0:1), ebf1(-1:nx1,-1:ny1,0:1),
+     *   hzb(-1:nx1,-1:ny1), hzc(-1:nx1+1,-1:ny1+1)
+      real (kind=R8) ::
+     *   t0, t1
+      logical qc_to_do, pbs_to_do
+      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8) :: hzconst
 *   ..procedures
       external xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
@@ -191,6 +199,10 @@
 *   ..test nget, nx, ny
       call xertst (1.le.nget, 'faulty argument nget')
       call xertst (0.le.nx1.and.0.le.ny1, 'faulty argument nx, ny')
+*   ..read hz flags
+      call ipgetr ('b2mndr_hz', fac_hz)
+      call xertst (0.0_R8.le.fac_hz .and. 1.0_R8.ge.fac_hz,
+     &  'faulty parameter b2mndr_hz')
 
 * ..read geometry and field
 *   ..read coordinates
@@ -208,26 +220,14 @@
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz1, 'qz')
 cxpb
+      qc_to_do = .false.
       if(b2fgmtry_version.ge.'03.001.000') then
         call cfrure (nget, n2*2, qc1, 'qc')
         call cfrure (nget, n2*2, qs1, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
         call cfrure (nget, n2, qc1(-1,-1,0), 'qc')
       else
-       do iy = -1, ny1
-        do ix = -1, nx1
-         qc1(ix,iy,0) = cosang (
-     &    (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
-     &    (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
-     &     crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
-         if(qc1(ix,iy,0).le.0.0_R8) then
-          write(*,*) 'Problem in b2ytgm: qc1(ix,iy) <= 0',
-     1     qc1(ix,iy,0),ix,iy
-          write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
-         endif
-        enddo
-       enddo
+       qc_to_do = .true.
       endif
       if(b2fgmtry_version.lt.'03.001.000') then
        qc1(:,:,1) = 1.0_R8
@@ -235,7 +235,7 @@ cxpb
        if(b2fgmtry_version.ge.'01.001.030') then
          call cfrure_opt (nget, n2, qc1(-1,-1,1), 'qcb')
        end if
-       if (maxval(qc1(:,:,1)).eq.1.0_R8 .and. 
+       if (maxval(qc1(:,:,1)).eq.1.0_R8 .and.
      &     minval(qc1(:,:,1)).eq.1.0_R8) then
         do iy = -1, ny1
          do ix = -1, nx1
@@ -260,6 +260,7 @@ cxpb
      &     crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
         enddo
        enddo
+       qs1(:,:,1) = sign(sqrt(1.0_R8 - qc1(:,:,1)**2),qs1(:,:,1))
       endif
 cxpb-end
       call cfrure (nget, n2*3, gs1, 'gs')
@@ -302,69 +303,307 @@ cxpb
         periodic_bc=0
       endif
 cxpb-end
-*  ..interpolate magnetic field to cell faces
+*   ..read pbs (magnetic field pitch * surface area) at cell faces
+      pbs_to_do = .false.
+      if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
+        call cfrure (nget, n2*2, pbs1, 'pbs')
+      else
+        pbs_to_do = .true.
+      endif
+      if(b2fgmtry_version.eq.'03.000.006') then
+        call cfruin (nget, 1, idum, 'redef_pbs')
+        redef_gmtry=idum(0)
+      elseif(b2fgmtry_version.ge.'03.000.007') then
+        call cfruin (nget, 1, idum, 'redef_gmtry')
+        redef_gmtry=idum(0)
+        call cfrure (nget, n2*4, wbbl1, 'wbbl')
+        if (redef_gmtry.eq.0) write(*,'(a)')
+     .   'Warning: wbbl1 value read from b2fgmtry '//
+     .   'will be overwritten because redef_gmtry.eq.0 !'
+      else
+        redef_gmtry=0
+      endif
+
+*  ..compute qc1 if not yet known
+      if (qc_to_do) then
+cwdk   poloidal unit vector in cell centers, ebc1
+       do iy = -1, ny1
+        do ix = -1, nx1
+         t0 = (crx1(ix,iy,1)+crx1(ix,iy,3))-
+     .        (crx1(ix,iy,0)+crx1(ix,iy,2))
+         t1 = (cry1(ix,iy,1)+cry1(ix,iy,3))-
+     .        (cry1(ix,iy,0)+cry1(ix,iy,2))
+         ebc1(ix,iy,0) = t0/norm(t0,t1)
+         ebc1(ix,iy,1) = t1/norm(t0,t1)
+        enddo
+       enddo
+cwdk   poloidal unit vector at left faces, ebf1
+       call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,ebc1(-1,-1,0),
+     .                                            ebf1(-1,-1,0))
+       call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,ebc1(-1,-1,1),
+     .                                            ebf1(-1,-1,1))
+       do iy = -1, ny1
+        do ix = -1, nx1
+cwdk     note: qc in left ghosts unchanged
+         if (leftix1(ix,iy).ne.-2) then
+          qc1(ix,iy,0) = cosang ( ebf1(ix,iy,0), ebf1(ix,iy,1),
+     &      crx1(ix,iy,2)-crx1(ix,iy,0), cry1(ix,iy,2)-cry1(ix,iy,0))
+         else
+          qc1(ix,iy,0) = cosang (
+     &     (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
+     &     (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
+     &      crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
+         end if
+         if(qc1(ix,iy,0).le.0.0_R8) then
+          write(*,'(a,1f12.6,2i5)')
+     1     'Problem in b2ytgm: qc1(ix,iy,0) <= 0',qc1(ix,iy,0),ix,iy
+          write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
+         endif
+        enddo
+       enddo
+      endif
+cwdk  ensure qc1(:,:,0)**2 + qs1(:,:,0)**2 = 1, in possible event
+cwdk  of improved computation of qc1
+      qs1(:,:,0) = sign(sqrt(1.0_R8 - qc1(:,:,0)**2),qs1(:,:,0))
+
+*   ..compute hz1
+      hzconst = 1.0_R8
+      hz1(:,:) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol1(:,:)/gs1(:,:,2)
+      if (isymm.eq.0) then
+        hzb(:,:) = hz1(:,:)
+        hzc(-1:nx1,-1:ny1) = hz1(-1:nx1,-1:ny1)
+        hzc(nx1+1,-1:ny1)  = hz1(nx1,-1:ny1)
+        hzc(-1:nx1,ny1+1)  = hz1(-1:nx1,ny1)
+        hzc(nx1+1,ny1+1)   = hz1(nx1,ny1)
+      else if (isymm.eq.1 .or. isymm.eq.2) then
+        hzb(:,:) = pi * (crx1(:,:,0)+crx1(:,:,1))
+        hzc(-1:nx1,-1:ny1) = 2.0_R8 * pi * crx1(:,:,0)
+        hzc(nx1+1,-1:ny1)  = 2.0_R8 * pi * crx1(nx1,-1:ny1,1)
+        hzc(-1:nx1,ny1+1)  = 2.0_R8 * pi * crx1(-1:nx1,ny1,2)
+        hzc(nx1+1,ny1+1)   = 2.0_R8 * pi * crx1(nx1,ny1,3)
+      else if (isymm.eq.3 .or. isymm.eq.4) then
+        hzb(:,:) = pi * (cry1(:,:,0)+cry1(:,:,1))
+        hzc(-1:nx1,-1:ny1) = 2.0_R8 * pi * cry1(:,:,0)
+        hzc(nx1+1,-1:ny1)  = 2.0_R8 * pi * cry1(nx1,-1:ny1,1)
+        hzc(-1:nx1,ny1+1)  = 2.0_R8 * pi * cry1(-1:nx1,ny1,2)
+        hzc(nx1+1,ny1+1)   = 2.0_R8 * pi * cry1(nx1,ny1,3)
+      end if
+
+      if (redef_gmtry.eq.0.or.b2fgmtry_version.le.'03.000.006') then
+*  ..old treatment: interpolate magnetic field to cell faces: overwrite wbbl1
 c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!!
-      call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
-      call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
-      call intfacev1(nx1,ny1,2,bottomix1,bottomiy1,vol1,bb1,wbbv1)
-      call my_intcor1(nx1,ny1,2,vol1,periodic_bc,nncut,
+        call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
+        call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
+        call intfacev1(nx1,ny1,2,bottomix1,bottomiy1,vol1,bb1,wbbv1)
+        call my_intcor1(nx1,ny1,2,vol1,periodic_bc,nncut,
      1     leftix1,leftiy1,rightix1,rightiy1,
      1     bottomix1,bottomiy1,topix1,topiy1,region1,bb1,wbbc1)
 *   ..extrapolate magnetic field to edges
-      do iy = -1, ny1
-        do ix = -1, nx1
-          if (leftix1(ix,iy).eq.-2) wbbl1(ix,iy,0:2) =
-     &     bb1(ix,iy,0:2) - (wbbr1(ix,iy,0:2)-bb1(ix,iy,0:2))
-          if (rightix1(ix,iy).eq.nx1+1) wbbr1(ix,iy,0:2) =
-     &     bb1(ix,iy,0:2) - (wbbl1(ix,iy,0:2)-bb1(ix,iy,0:2))
-          if (bottomiy1(ix,iy).eq.-2)
-     &     wbbv1(ix,iy,0:2) = bb1(ix,iy,0:2) -
-     &     (wbbv1(topix1(ix,iy),topiy1(ix,iy),0:2)-bb1(ix,iy,0:2))
-        enddo
-      enddo
-*   .. correct interpolation of magnetic field for diverted island case
-*      as B is not a periodic quantity
-      if(periodic_bc.eq.1 .and. nncut.ge.1) then
         do iy = -1, ny1
           do ix = -1, nx1
-            if(leftix1(ix,iy).ne.ix-1) then
-              if(region1(ix,iy,0).eq.1 .or. region1(ix,iy,0).eq.4) then
-                wbbl1(ix,iy,0)=
-     .           bb1(ix,iy,0)-(wbbr1(ix,iy,0)-bb1(ix,iy,0))
-                wbbl1(ix,iy,1)=
-     .           bb1(ix,iy,1)-(wbbr1(ix,iy,1)-bb1(ix,iy,1))
-                wbbl1(ix,iy,2)=
-     .           bb1(ix,iy,2)-(wbbr1(ix,iy,2)-bb1(ix,iy,2))
+            if (leftix1(ix,iy).eq.-2) wbbl1(ix,iy,0:2) =
+     &       bb1(ix,iy,0:2) - (wbbr1(ix,iy,0:2)-bb1(ix,iy,0:2))
+            if (rightix1(ix,iy).eq.nx1+1) wbbr1(ix,iy,0:2) =
+     &       bb1(ix,iy,0:2) - (wbbl1(ix,iy,0:2)-bb1(ix,iy,0:2))
+            if (bottomiy1(ix,iy).eq.-2)
+     &       wbbv1(ix,iy,0:2) = bb1(ix,iy,0:2) -
+     &       (wbbv1(topix1(ix,iy),topiy1(ix,iy),0:2)-bb1(ix,iy,0:2))
+          enddo
+        enddo
+*   .. correct interpolation of magnetic field for diverted island case
+*      as B is not a periodic quantity
+        if(periodic_bc.eq.1 .and. nncut.ge.1) then
+          do iy = -1, ny1
+            do ix = -1, nx1
+              if(leftix1(ix,iy).ne.ix-1) then
+                if(region1(ix,iy,0).eq.1 .or.
+     &             region1(ix,iy,0).eq.4) then
+                  wbbl1(ix,iy,0)=
+     .             bb1(ix,iy,0)-(wbbr1(ix,iy,0)-bb1(ix,iy,0))
+                  wbbl1(ix,iy,1)=
+     .             bb1(ix,iy,1)-(wbbr1(ix,iy,1)-bb1(ix,iy,1))
+                  wbbl1(ix,iy,2)=
+     .             bb1(ix,iy,2)-(wbbr1(ix,iy,2)-bb1(ix,iy,2))
+                  wbbc1(ix,iy,0)=
+     &             wbbv1(ix,iy,0)-(wbbc1(ix+1,iy,0)-wbbv1(ix,iy,0))
+                  wbbc1(ix,iy,1)=
+     &             wbbv1(ix,iy,1)-(wbbc1(ix+1,iy,1)-wbbv1(ix,iy,1))
+                  wbbc1(ix,iy,2)=
+     &             wbbv1(ix,iy,2)-(wbbc1(ix+1,iy,2)-wbbv1(ix,iy,2))
+                endif
+              else if(rightix1(ix,iy).ne.ix+1) then
+                if(region1(ix,iy,0).eq.1 .or.
+     &             region1(ix,iy,0).eq.3) then
+                  wbbr1(ix,iy,0)=
+     .             bb1(ix,iy,0)-(wbbl1(ix,iy,0)-bb1(ix,iy,0))
+                  wbbr1(ix,iy,1)=
+     .             bb1(ix,iy,1)-(wbbl1(ix,iy,1)-bb1(ix,iy,1))
+                  wbbr1(ix,iy,2)=
+     .             bb1(ix,iy,2)-(wbbl1(ix,iy,2)-bb1(ix,iy,2))
+                endif
               endif
-            else if(rightix1(ix,iy).ne.ix+1) then
-              if(region1(ix,iy,0).eq.1 .or. region1(ix,iy,0).eq.3) then
-                wbbr1(ix,iy,0)=
-     .           bb1(ix,iy,0)-(wbbl1(ix,iy,0)-bb1(ix,iy,0))
-                wbbr1(ix,iy,1)=
-     .           bb1(ix,iy,1)-(wbbl1(ix,iy,1)-bb1(ix,iy,1))
-                wbbr1(ix,iy,2)=
-     .           bb1(ix,iy,2)-(wbbl1(ix,iy,2)-bb1(ix,iy,2))
+            enddo
+          enddo
+          do ix = -1, nx1
+            if(leftix1(ix,ny1).ne.ix-1) then
+              if(region1(ix,ny1,0).eq.1 .or.
+     &           region1(ix,ny1,0).eq.4) then
+                wbbc1(ix,ny1,0)=
+     &           wbbv1(ix,ny1,0)-(wbbc1(ix+1,ny1,0)-wbbv1(ix,ny1,0))
+                wbbc1(ix,ny1,1)=
+     &           wbbv1(ix,ny1,1)-(wbbc1(ix+1,ny1,1)-wbbv1(ix,ny1,1))
+                wbbc1(ix,ny1,2)=
+     &           wbbv1(ix,ny1,2)-(wbbc1(ix+1,ny1,2)-wbbv1(ix,ny1,2))
               endif
             endif
           enddo
-        enddo
-      endif
+        endif
 *   ..compute extrapolated wbb.(:,:,3) components
-      wbbl1(:,:,3)=
-     . sqrt(wbbl1(:,:,0)**2+wbbl1(:,:,1)**2+wbbl1(:,:,2)**2)
-      wbbr1(:,:,3)=
-     . sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
-      wbbv1(:,:,3)=
-     . sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
-      wbbc1(:,:,3)=
-     . sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
-*   ..compute or read pbs (magnetic field pitch * surface area) at cell faces
-      if(b2fgmtry_version.ge.'01.001.063') then                !srv 15.02.11
-        call cfrure (nget, n2*2, pbs1, 'pbs')
-      else
-        call b2xgbs1 (nx1, ny1,
+        wbbl1(:,:,3)=
+     .   sqrt(wbbl1(:,:,0)**2+wbbl1(:,:,1)**2+wbbl1(:,:,2)**2)
+        wbbr1(:,:,3)=
+     .   sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
+        wbbv1(:,:,3)=
+     .   sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
+        wbbc1(:,:,3)=
+     .   sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
+      else ! redef_gmtry.eq.1 treatment
+        wbbr1 = 0.0_R8
+        wbbv1 = 0.0_R8
+        wbbc1 = 0.0_R8
+        do iy = -1, ny1
+          do ix = -1, nx1
+            if (rightix1(ix,iy).lt.nx1+1) then
+              wbbr1(ix,iy,0) = wbbl1(rightix1(ix,iy),rightiy1(ix,iy),0)
+              wbbr1(ix,iy,2) = wbbl1(rightix1(ix,iy),rightiy1(ix,iy),2)
+            else
+              wbbr1(ix,iy,0) =
+     &         bb1(ix,iy,0) - (wbbl1(ix,iy,0)-bb1(ix,iy,0))
+              wbbr1(ix,iy,2) =
+     &         bb1(ix,iy,2) - (wbbl1(ix,iy,2)-bb1(ix,iy,2))
+            end if
+            if (bottomiy1(ix,iy).gt.-2) then
+              wbbv1(ix,iy,0) = (
+     &          bb1(ix,iy,0) * hyy(ix,iy) * hz1(ix,iy) * qz1(ix,iy,1) +
+     &          bb1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
+     &          hyy(bottomix1(ix,iy),bottomiy1(ix,iy)) *
+     &          hz1(bottomix1(ix,iy),bottomiy1(ix,iy)) *
+     &          qz1(bottomix1(ix,iy),bottomiy1(ix,iy),1) ) /
+     &        ( hyy(ix,iy) * hz1(ix,iy) * qz1(ix,iy,1) +
+     &          hyy(bottomix1(ix,iy),bottomiy1(ix,iy)) *
+     &          hz1(bottomix1(ix,iy),bottomiy1(ix,iy)) *
+     &          qz1(bottomix1(ix,iy),bottomiy1(ix,iy),1) )
+            else
+              wbbv1(ix,iy,0) = bb1(ix,iy,0) -
+     &         (wbbv1(topix1(ix,iy),topiy1(ix,iy),0)-bb1(ix,iy,0))
+            end if
+            wbbv1(ix,iy,2) =(ffbz1(ix,iy,0)+ffbz1(ix,iy,1)) /
+     &       (2.0_R8*hzb(ix,iy))
+            wbbc1(ix,iy,2) = ffbz1(ix,iy,0) / hzc(ix,iy)
+            if (bottomiy1(ix,iy).gt.-2) wbbc1(ix,iy,0) =
+     &         (wbbl1(ix,iy,0) * gs1(ix,iy,0) * qc1(ix,iy,0) +
+     &          wbbl1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
+     &            gs1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
+     &            qc1(bottomix1(ix,iy),bottomiy1(ix,iy),0) ) /
+     &         (gs1(ix,iy,0) * qc1(ix,iy,0) +
+     &          gs1(bottomix1(ix,iy),bottomiy1(ix,iy),0) *
+     &          qc1(bottomix1(ix,iy),bottomiy1(ix,iy),0) )
+          end do
+          if (bottomiy1(nx1,iy).gt.-2) wbbc1(nx1+1,iy,0) =
+     &      (wbbr1(nx1,iy,0) *
+     &         hyy(nx1,iy) * hz1(nx1,iy) * qz1(nx1,iy,1) +
+     &       wbbr1(bottomix1(nx1,iy),bottomiy1(nx1,iy),0) *
+     &         hyy(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
+     &         hz1(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
+     &         qz1(bottomix1(nx1,iy),bottomiy1(nx1,iy),1) ) /
+     &      (hyy(nx1,iy) * hz1(nx1,iy) * qz1(nx1,iy,1) +
+     &       hyy(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
+     &       hz1(bottomix1(nx1,iy),bottomiy1(nx1,iy)) *
+     &       qz1(bottomix1(nx1,iy),bottomiy1(nx1,iy),1) )
+          wbbc1(nx1+1,iy,2) = ffbz1(nx1,iy,1) / hzc(nx1+1,iy)
+        end do
+        do iy = -1, ny1
+          do ix = -1, nx1
+            if (bottomiy1(ix,iy).eq.-2)
+     &       wbbc1(ix,iy,0) = wbbl1(ix,iy,0) -
+     &        (wbbc1(topix1(ix,iy),topiy1(ix,iy),0) - wbbl1(ix,iy,0))
+          end do
+          if (bottomiy1(nx1,iy).eq.-2)
+     &     wbbc1(nx1+1,iy,0) = wbbl1(nx1,iy,0) -
+     &       (wbbc1(topix1(nx1,iy),topiy1(nx1,iy),0) - wbbl1(nx1,iy,0))
+        end do
+        do ix = -1, nx1
+          wbbc1(ix,ny1+1,0) =
+     &     wbbl1(ix,ny1,0) - (wbbc1(ix,ny1,0) - wbbl1(ix,ny1,0))
+          wbbc1(ix,ny1+1,2) = ffbz1(ix,ny1,2) / hzc(ix,ny1+1)
+        end do
+        wbbc1(nx1+1,ny1+1,0) =
+     &   wbbr1(nx1,ny1,0) - (wbbc1(nx1,ny1,0) - wbbl1(nx1,ny1,0))
+        wbbc1(nx1+1,ny1+1,0) = ffbz1(nx1,ny1,3) / hzc(nx1+1,ny1+1)
+*   .. correct interpolation of magnetic field for diverted island case
+*      as B is not a periodic quantity
+        if(periodic_bc.eq.1 .and. nncut.ge.1) then
+          do iy = -1, ny1
+            do ix = -1, nx1
+              if(leftix1(ix,iy).ne.ix-1) then
+                if(region1(ix,iy,0).eq.1 .or.
+     &             region1(ix,iy,0).eq.4) then
+                  wbbc1(ix,iy,0)=
+     &             wbbv1(ix,iy,0)-(wbbc1(ix+1,iy,0)-wbbv1(ix,iy,0))
+                  wbbc1(ix,iy,2)=
+     &             wbbv1(ix,iy,2)-(wbbc1(ix+1,iy,2)-wbbv1(ix,iy,2))
+                endif
+              elseif(rightix1(ix,iy).ne.ix+1) then
+                if(region1(ix,iy,0).eq.1 .or.
+     &             region1(ix,iy,0).eq.3) then
+                  wbbr1(ix,iy,0)=
+     &             bb1(ix,iy,0)-(wbbl1(ix,iy,0)-bb1(ix,iy,0))
+                  wbbr1(ix,iy,2)=
+     &             bb1(ix,iy,2)-(wbbl1(ix,iy,2)-bb1(ix,iy,2))
+                endif
+              endif
+            enddo
+          enddo
+          do ix = -1, nx1
+            if(leftix1(ix,ny1).ne.ix-1) then
+              if(region1(ix,ny1,0).eq.1 .or.
+     &           region1(ix,ny1,0).eq.4) then
+                wbbc1(ix,ny1,0)=
+     &           wbbv1(ix,ny1,0)-(wbbc1(ix+1,ny1,0)-wbbv1(ix,ny1,0))
+                wbbc1(ix,ny1,2)=
+     &           wbbv1(ix,ny1,2)-(wbbc1(ix+1,ny1,2)-wbbv1(ix,ny1,2))
+              endif
+            endif
+          enddo
+        endif
+*   ..compute extrapolated wbb.(:,:,3) components
+        wbbr1(:,:,3)=
+     .   sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
+        wbbv1(:,:,3)=
+     .   sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
+        wbbc1(:,:,3)=
+     .   sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
+      end if
+*   ..compute pbs1 (magnetic field pitch * surface area) at cell faces if needed
+      if(pbs_to_do)
+     > call b2xgbs1 (nx1, ny1,
      .   bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
-      endif
+
+      do ix = -1, nx1
+       do iy = -1, ny1
+        if (bottomiy1(ix,iy).ne.-2) then
+         qs1(ix,iy,1) =
+     .     (hyy(ix,iy)*qz1(ix,iy,0) +
+     .      hyy(bottomix1(ix,iy),bottomiy1(ix,iy))*
+     .      qz1(bottomix1(ix,iy),bottomiy1(ix,iy),0))/
+     .     (hyy(ix,iy) + hyy(bottomix1(ix,iy),bottomiy1(ix,iy)))
+        end if
+       end do
+      end do
+cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
+      qs1(:,:,1) = sign(sqrt(1.0_R8 - qc1(:,:,1)**2),qs1(:,:,1))
+
 *   ..read extended grid cell flags
       cflags1 = 0
       if(b2fgmtry_version.ge.'01.001.028') then
@@ -442,6 +681,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
       endif
+
 *   ..test sign of bb
       call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')
       call b2xvsg (n2, wbbl1(-1,-1,3), 1, 'wbbl3', '.gt.')

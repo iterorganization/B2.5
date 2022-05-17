@@ -1383,11 +1383,49 @@
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
       call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
 
+*   .. copied from b2rugm
+      cell_width = hx
+      cell_height(:,:) = hy(:,:)*qz(:,:,1)
+      do iy = -1, ny
+        do ix = -1, nx
+          qc(ix,iy,1) = cosang (
+     &       crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &      (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &      (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+          if(qc(ix,iy,1).le.0.0_R8) then
+            write(*,'(a,1f12.6,2i5)')
+     1       'Problem in b2rugm: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
+            write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+            write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+          endif
+        enddo
+      enddo
+      do iy = -1, ny
+        do ix = -1, nx
+          qs(ix,iy,0) = sinang (
+     &     (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &     (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+          if (bottomiy(ix,iy).eq.-2) then
+            qs(ix,iy,1)=0.0_R8
+          else
+            qs(ix,iy,1) =
+     .      (hy(ix,iy)*qz(ix,iy,0)+hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .       qz(bottomix(ix,iy),bottomiy(ix,iy),0))/
+     .      (hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+          endif
+        enddo
+      enddo
+cwdk  ensure qc(:,:,:)**2 + qs(:,:,:)**2 = 1, in possible event
+cwdk  of improved computation of qc
+      qs(:,:,0) = sign(sqrt(1.0_R8 - qc(:,:,0)**2),qs(:,:,0))
+      qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
+
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
@@ -1417,7 +1455,7 @@
       call cfwuin (nout(2), 2, idum, 'nx,ny')
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
-      call cfwuin (nout(2), 1, idum, 'isymm') 
+      call cfwuin (nout(2), 1, idum, 'isymm')
       call b2wugm (nout(2), nx, ny)
 
       open(91,file='core_boundary.txt')

@@ -396,7 +396,7 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
+              sfne(iy) = sfne(iy) + fne(ix,iy,1,1)
              endif
             endif
           enddo

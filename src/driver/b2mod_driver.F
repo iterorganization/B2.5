@@ -136,7 +136,6 @@
       save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
-      integer, save :: b2mndr_redef_pbs = 0
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
@@ -148,8 +147,6 @@
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
-      integer, save :: use_9pt_stencil = 1
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       integer, save :: iappend = 0
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -246,7 +243,6 @@
       real (kind=R8) ::
      *  min_areshe, min_areshi, min_aresco
       logical quit_residual, test_residual
-      real (kind=R8) :: hzconst                                      !srv 30.01.10
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
@@ -1314,16 +1310,12 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .    'unless using Zhdanov closure!'
        endif
 *
-       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
-     &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
-       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
 #ifndef NO_CDF
        call ipgeti ('b2mndr_cdf_default', cdf_default)
        if (cdf_default .eq. 0) then        ! not set
@@ -1507,23 +1499,9 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
-      call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
-      if (b2mndr_redef_pbs.ne.0) then
-        if (redef_pbs.eq.1) then
-          write(6,*)
-     &     'Magnetic flux correction of pbsx already done in b2ag.'
-        else
-          write(6,*)
-     &     'Magnetic flux correction must now be done in b2ag.'
-          write(6,*)
-     &     'Please set b2agdr_redef_pbs to 1 in b2ag.dat ',
-     &     'and re-run b2ag.'
-          call xerrab ('Obsolete switch b2mndr_redef_pbs!')
-        endif
-      endif
       call alloc_b2mod_tallies(nnreg,ns)
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx, nxtl, nxtr)
@@ -1593,24 +1571,14 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
           OnedBsq(ix,iy)=1.0_R8/bb(ix,iy,3)**2                           !sv
         enddo                                                            !sv
       enddo                                                              !sv
-*  .. interpolate OnedBsq for corners of cell                            !sv
-      call my_intcor (nx,ny,vol,periodic_bc,nncut,
+      if (redef_gmtry.eq.0) then
+*  .. interpolate OnedBsq for corners of cell
+        call my_intcor (nx,ny,vol,periodic_bc,nncut,
      1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)        !sv
-*  .. interpolate magnetic field to cell corners                         !xpb
-c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     1     leftix,leftiy,rightix,rightiy,
-     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)                 !xpb
-*   ..compute extrapolated wbbc(:,:,3) component
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
-*   ..compute hz                                                         !srv 09.01.01  09.06.08 {
-c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
-!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
-      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
-      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
-      hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)
+      else
+        OnedBsqc(:,:)=1.0_R8/wbbc(:,:,3)**2
+      endif
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
       do iy=-1,ny                                                        !srv 11.03.08 {
         do ix=-1,nx
@@ -1636,41 +1604,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           endif
         enddo
       enddo                                                          !srv 11.03.08 }
-      if (use_9pt_stencil.eq.1) then
-!cwdk    For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-!cwdk    temporary computation; should go into geometry routines!
-!        call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
-!     .    qs(-1,-1,1))
-!        qc(:,:,1) = sqrt(1.0_R8 - qs(:,:,1)**2)                            !wdk to ensure sin^2 + cos^2 = 1, and cos > 0
-cwdk  For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
-cwdk  temporary computation; should go into geometry routines!
-cwk:  this interpolation for backwards compatibility in computation of radial conductances etc.
-       do ix = -1, nx
-        do iy = -1, ny
-         if (bottomiy(ix,iy).eq.-2) then
-          qc(ix,iy,1)=1.0_R8
-         else
-          qc(ix,iy,1) =
-     .     (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     .      qz(bottomix(ix,iy),bottomiy(ix,iy),1))/ 
-     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
-          qs(ix,iy,1) =
-     .     (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/ 
-     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
-         endif
-        enddo
-       enddo
-cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
-       qs(:,:,1) = sign(sqrt(1.0_R8 - qc(:,:,1)**2),qs(:,:,1))
-      else
-cwdk    Use 5-point stencil. Overwrite values of qz, qc and qs to ensure
-cwdk    backwards compatible behavior
-cwdk    to be checked: qz(:,:,0) never used !?!
-        qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions on faces 0
-        qz(:,:,0) = 0.0_R8 ! will make all 9-point contributions in cell centers 0
-        qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
-      endif
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
         nmdpl = rightcut(nncut)

@@ -74,7 +74,7 @@
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
-      integer, save :: drift_style = 1
+      integer, save :: drift_style
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
       integer, save :: style_b2mndt = 1
@@ -117,6 +117,11 @@
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit)
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
+       if (redef_gmtry.eq.0) then
+         drift_style = 1
+       else
+         drift_style = 2
+       end if
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07

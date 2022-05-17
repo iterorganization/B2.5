@@ -74,8 +74,8 @@
       if(pot_eq.ne.1 .and. no_current.ne.0) then                         !srv 29.01.20 {
         ehx = 0.0_R8
       else
-        do iy=-1,ny
-          do ix=-1,nx
+        do iy = -1, ny
+          do ix = -1, nx
             hy1_(ix,iy)=hy1(ix,iy)
           enddo
         enddo

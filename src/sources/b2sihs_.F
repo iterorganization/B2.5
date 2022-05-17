@@ -453,6 +453,7 @@
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
+      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
 cwdk compute radial differences of ua at cell faces

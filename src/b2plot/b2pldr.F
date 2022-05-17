@@ -77,8 +77,8 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc,
+     &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
@@ -196,11 +196,14 @@
       enddo
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
-     * leftix,leftiy,rightix,rightiy,
-     * bottomix,bottomiy,topix,topiy,region,bb,wbbc)                     !xpb
+! { IYS 05.02.2020
+! And it seems to be not necessary here after the call to b2rugm above
+!!      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+!!     * leftix,leftiy,rightix,rightiy,
+!!     * bottomix,bottomiy,topix,topiy,region,bb,wbbc)                     !xpb
+! IYS 05.02.2020 }
 *   ..compute extrapolated wbbc(:,:,3) component
-      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+!!      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
       if (external_species.ne.0) then

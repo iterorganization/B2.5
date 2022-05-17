@@ -126,7 +126,7 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test sign of cone, coni
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then           !srv 06.07.06 {
-        call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')
+        call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')        !srv 02.01.07
         call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
        endif                                                          !srv 06.07.06 }
        if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then           !srv 06.07.06 {

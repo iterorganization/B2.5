@@ -379,7 +379,7 @@ csw 01oct2012 initialize potential if necessary
 *   ..recompute currents
       call b2tanml (nx, ny, ns, ismain, vol, hx, hy, qs,                 !srv 20.09.06 }
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 !som 02.11.21
-      call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,         !srv 19.02.21
+      call b2tvspa (nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,         !srv 02.11.21
      &              na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &              fchvispar_a, fchvispar)                              !som 18.08.21
       call b2tiner (nx, ny, ns, ismain, vol, gs, hx, hy, qs, bb, na, ua, !srv 08.09.21
@@ -996,7 +996,7 @@ c      with diamagnetic drift part                                       !srv 13
      2 chvemx, cdde, fch_p, fchstoch,                                    !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, .true.)                        !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
-      call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qc, qs, bb,
+      call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qc, qs, bb,       !som 13.07.21
      1  ti, ni, na, fni, fna_he, ua,
      &  chci, cddi, chvi, chvimx, cvsa, vadia,                           !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,
