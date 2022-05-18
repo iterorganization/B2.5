@@ -5,7 +5,7 @@
 *     & fpsi, bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
 *     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
 *     & rightix, rightiy, topix, topiy, cflag)
-      subroutine b2agmt (g, m)
+      subroutine b2agmt (g, m, isymm)
       use b2mod_types
       use b2mod_constants
       use tradui_constants
@@ -17,6 +17,8 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer isymm
+      type(geometry) :: g
+      type(mapping) :: m
 !      integer nx, ny, isymm
 !      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny), 
 !     &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny),
@@ -129,8 +131,6 @@
 *   ..local variables
       integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2
       integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2)
-      type(geometry) :: g
-      type(mapping) :: m
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon
       real (kind=R8) ::
@@ -420,8 +420,8 @@ cwdk      4) centroid: average between the intersections with faces
          elseif (m%cvFcP(bc,2).eq.3) then ! triangle
          !psi value at cell center according to b2agmt
          ! Identify vertices with min and max psi values
-         verts3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
-     &            m%cvVxP(iCv,2)-1 )
+         verts3 = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1) + 
+     &            m%cvVxP(bc,2)-1 )
          i1 = minloc(g%vxFpsi(verts3(0:2)),1)-1
          i2 = maxloc(g%vxFpsi(verts3(0:2)),1)-1
          bcFpsi = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
