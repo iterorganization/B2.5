@@ -663,17 +663,16 @@ cxpb  if just below the top corner, make the corner cell follow
 !     .. Order the vertices and faces as rightturning 
            call order_vertices(g,m)         
           
-
 !     Compute magnetic field with the same recipe as carre...
            call b2agbb(g,m,isymm)
 
 !     ..and transfer it to the ghost cells with sanity checks
              do iCv = 1, m%nCv
-                select case (m%cvFcP(iCv,1))
-                case(GRID_GUARD)  ! 
+                select case (m%cvFcP(iCv,2))
+                case(1)  ! guard
                    cvBp(iCv) = g%cvBb(iCv,0)
                    cvBt(iCv) = g%cvBb(iCv,2)
-                case(GRID_INTERNAL,GRID_BOUNDARY)   
+                case(3,4) ! internal and boundary   
                    if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0))) 
      $                   > 1e-7 .or.
      $                 abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2))) 
@@ -814,6 +813,7 @@ cxpb  if just below the top corner, make the corner cell follow
       
       subroutine order_vertices(g,m)
       use b2mod_types
+      use b2us_cellhelper
       use b2us_map
       use b2us_geo
       implicit none 
@@ -823,7 +823,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
       ! internal
 
-      logical :: determine_direction, is_ordered(m%nCv)
+      logical :: is_ordered(m%nCv)
       integer :: iCv, i, j, vs(1:2), nv, nf, index(1:2)
       real (kind=R8) ::  vec_start(1:2), vec_face1(1:2),
      &     vec_face2(1:2), sin1, sin2, fc1X, fc1Y, fc2X, fc2Y
@@ -831,7 +831,7 @@ cxpb  if just below the top corner, make the corner cell follow
      &     vec_fcX(:), vec_fcY(:) , fcX(:), fcY(:)
       integer, allocatable :: verts(:), faces(:),  new_verts(:),
      &     new_faces(:) , verts_of_faces(:,:), ind_vof(:), vof_h(:)
-!      logical isVertInFace
+
     
 
 
@@ -1015,11 +1015,62 @@ cxpb  if just below the top corner, make the corner cell follow
          deallocate(new_faces)
          deallocate(verts_of_faces)
 
-
-
       enddo
 
-
-
-
       end subroutine order_vertices
+
+
+*-----------------------------------------------------------------------
+      
+!     subroutine calc_guard_cell_center(g,m)
+!     use b2mod_types
+!     use b2us_map
+!     use b2us_geo
+!     implicit none 
+!     !output argument
+!     type(geometry) :: g 
+!     type(mapping)  :: m
+
+      !internal
+!      integer :: face, iCv, cells(1:2), gc, bc, verts3(0:2), i1, i2
+!      real(kind=R8) :: bcFpsi
+
+!      do iCv = m%nCg+1,m%nCv
+!         face = m%cvFc(cvFcP(iCv,1)) ! face of the guard cell
+!         cells = m%fcCv(face,:)
+
+!         if ((m%cvLbl(cells(1)).eq.GRID_GUARD) .and. 
+!     &      (m%cvLbl(cells(2)).eq.GRID_BOUNDARY)) then
+!            gc = cells(1)   !guard cell 
+!            bc = cells(2)   ! boundary cell
+!         elseif ((m%cvLbl(cells(1)).eq.GRID_BOUNDARY) .and. 
+!     &      (m%cvLbl(cells(2)).eq.GRID_GUARD)) then
+!            gc = cells(2)
+!            bc = cells(1)
+!         else
+!            call xerrab
+!     & ('calc_guard_cell_center: no guard and boundary cell assigned')
+!         endif 
+
+!         if (m%cvFcP(bc,2).eq.4) then !quad
+!         !psi value at cell center - not correct
+!         bcFpsi = 0.25_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(bc,1):
+!     &        m%cvVxP(bc,1)+m%cvVxP(bc,2)-1)))
+            
+            
+
+
+!         elseif (m%cvFcP(boundarycell,2).eq.3) then ! triangle
+!         !psi value at cell center according to b2agmt
+!         ! Identify vertices with min and max psi values
+!         verts3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
+!     &            m%cvVxP(iCv,2)-1 )
+!         i1 = minloc(g%vxFpsi(verts3(0:2)),1)-1
+!         i2 = maxloc(g%vxFpsi(verts3(0:2)),1)-1
+!         bcFpsi = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
+
+
+
+!      enddo
+
+!      end subroutine calc_guard_cell_center    
