@@ -336,7 +336,7 @@
 
 
 !*   ..compute metric coefficients on auxiliary mesh
-       ! call subroutine b2agmt (g, m)
+       call b2agmt (g, m, isymm)
 !      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
 !     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
 !     & cell_width1, cell_height1,
