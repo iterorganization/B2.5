@@ -589,7 +589,8 @@ contains
 
     integer :: i, cellnumber, cvFcpos, cvVxpos, nGhostCell
     !integer :: facenumbers(nGhostCell)
-    integer :: facenumbers(m%nCg)  ! too big 
+    integer :: facenumbers(m%nCg)  ! too big
+    real(kind=R8) :: fcX,fcY 
 
 
     call logmsg(LOGDEBUG, "create_guard_cells:entering")
@@ -625,19 +626,23 @@ contains
        m%cvVx(cvVxpos+1) = m%fcVx(facenumbers(i),2)
     enddo
 
-    ! change cvCflags(:,1), cvX, cvY
+    ! change cvLbl(:,1), cvX, cvY
     do i = nnCv+1, m%nCv
        m%cvLbl(i) = GRID_GUARD
        !iface = m%cvFc(m%cvFc(i,1)) ! just one face
-       g%cvX(i) = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
+       fcX = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
            &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
-       g%cvY(i) = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,1): &
+       g%cvX(i) = fcX
+       fcY = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,1): &
            &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
+       g%cvY(i) = fcY
        !g%cvFpsi(i) = 0.5_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(i,1): &
        !    &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))      
     enddo
 
-    ! calculate cvFpsi , cvBt and cvBp in routine carre_b2agbb in b2agfs.f
+    
+
+    ! calculate cvFpsi , cvBt and cvBp in routine b2agbb in b2agfs.f
 
     call logmsg(LOGDEBUG, "create_guard_cells: # of ghost cells "//int2str(nGhostCell))
     call logmsg(LOGDEBUG, "create_guard_cells: leaving")
