@@ -630,6 +630,8 @@ contains
     do i = nnCv+1, m%nCv
        m%cvLbl(i) = GRID_GUARD
        !iface = m%cvFc(m%cvFc(i,1)) ! just one face
+       ! temporary put the cell center of the guard cells of the boundary face
+       ! in b2agmt the proper cell center is computed
        fcX = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
            &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
        g%cvX(i) = fcX
