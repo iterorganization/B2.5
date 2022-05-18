@@ -34,7 +34,7 @@
 *     current: the current through the coil in units of A
 *     nlayers: number of layers for each coil
 *     windings: the number of windings
-*     bTor: torodial magnetic field in units of T
+*     bTor: toroidal magnetic field in units of T
 *     For the iterative process
 *     stepsize: the initial spacial step size used in calculating the field lines
 *     Also the names of the 2-column files consisting of the profiles for

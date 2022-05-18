@@ -2125,6 +2125,11 @@ c 2002-09-11: logic revised
                 potpar(is,:) = potpar(ib,:)
                 conpar(:,is,:) = conpar(:,ib,:)
                 mompar(:,is,:) = mompar(:,ib,:)
+                con_fn(is) = con_fn(ib)
+                mom_fn(is) = mom_fn(ib)
+                ene_fn(is) = ene_fn(ib)
+                eni_fn(is) = eni_fn(ib)
+                pot_fn(is) = pot_fn(ib)
                 lcbs(is) = 0
               end do
             else if (bcpos1(ib).eq.-2) then
@@ -2252,6 +2257,11 @@ c 2002-09-11: logic revised
                 potpar(is,:) = potpar(ib,:)
                 conpar(:,is,:) = conpar(:,ib,:)
                 mompar(:,is,:) = mompar(:,ib,:)
+                con_fn(is) = con_fn(ib)
+                mom_fn(is) = mom_fn(ib)
+                ene_fn(is) = ene_fn(ib)
+                eni_fn(is) = eni_fn(ib)
+                pot_fn(is) = pot_fn(ib)
                 lcbs(is) = 0
               end do
             else if (bcpos1(ib).eq.-2) then
@@ -2423,12 +2433,45 @@ c 2002-09-11: logic revised
         write(99,'(1x,a,l1,a,l1,a)')
      .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
-        write(hlp_frm,'(a, i2,a)') '(1x,a,',nbc1,'(1x,a,'',''))'
-        write(99,hlp_frm) 'CON_FN=', (CON_FN(ib), ib=1, nbc1)
-        write(99,hlp_frm) 'MOM_FN=', (MOM_FN(ib), ib=1, nbc1)
-        write(99,hlp_frm) 'ENE_FN=', (ENE_FN(ib), ib=1, nbc1)
-        write(99,hlp_frm) 'ENI_FN=', (ENI_FN(ib), ib=1, nbc1)
-        write(99,hlp_frm) 'POT_FN=', (POT_FN(ib), ib=1, nbc1)
+        do ib = 1, nbc1
+          if (any(bccon(:,ib).eq.28).or.any(bccon(:,ib).eq.30).or.
+     .        any(bcmom(:,ib).eq.19)) then
+            write(99,'(1x,a,i2,a,a,a)') 'CON_FN(',ib,')=''',
+     .       trim(CON_FN(ib)),''','
+          else if (.not.streql(con_fn(ib),'b2.con.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'CON_FN(',ib,')=''',
+     .       trim(CON_FN(ib)),''','
+          end if
+          if (any(bcmom(:,ib).eq.18).or.any(bcmom(:,ib).eq.19).or.
+     .        any(bcmom(:,ib).eq.21)) then
+            write(99,'(1x,a,i2,a,a,a)') 'MOM_FN(',ib,')=''',
+     .       trim(MOM_FN(ib)),''','
+          else if (.not.streql(mom_fn(ib),'b2.mom.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'MOM_FN(',ib,')=''',
+     .       trim(MOM_FN(ib)),''','
+          end if
+          if (bcene(ib).eq.23) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENE_FN(',ib,')=''',
+     .       trim(ENE_FN(ib)),''','
+          else if (.not.streql(ene_fn(ib),'b2.ene.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENE_FN(',ib,')=''',
+     .       trim(ENE_FN(ib)),''','
+          end if
+          if (bceni(ib).eq.28) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENI_FN(',ib,')=''',
+     .       trim(ENI_FN(ib)),''','
+          else if (.not.streql(eni_fn(ib),'b2.eni.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENI_FN(',ib,')=''',
+     .       trim(ENI_FN(ib)),''','
+          end if
+          if (bcpot(ib).eq.15) then
+            write(99,'(1x,a,i2,a,a,a)') 'POT_FN(',ib,')=''',
+     .       trim(POT_FN(ib)),''','
+          else if (.not.streql(pot_fn(ib),'b2.pot.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'POT_FN(',ib,')=''',
+     .       trim(POT_FN(ib)),''','
+          end if
+        end do
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
           write(99, hlp_frm) 'NXISO1=',(nxiso3(is),is=1,nniso)
@@ -8190,9 +8233,9 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           ENDIF
           IF (ZEILE(1:8) /= 'SURFMOD_') CYCLE
           IREAD=0
-          READ (IUNIN,6666) idum(0:4) ! REFCUR%JLREF,REFCUR%JLSPT,
+          READ (IUNIN,6666) idum(0:5) ! REFCUR%JLREF,REFCUR%JLSPT,
                                       ! REFCUR%JSRS,REFCUR%JSRC,
-                                      ! REFCUR%JLCHSPNWL
+                                      ! REFCUR%JLCHSPNWL,REFCUR%REFCELL
           IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
           IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >      idum(2) = iatm1(idum(2))
@@ -8208,7 +8251,7 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           ENDIF
           IF (streql(eirene_format,'juelich') .or.
      .        streql(eirene_format,'new')) idum(4) = 1
-          WRITE(IUNOT,6666) idum(0:4)
+          WRITE(IUNOT,6666) idum(0:5)
           READ (IUNIN,'(A80)') ZEILE ! REFCUR%ZNMLR,REFCUR%EWALLR,REFCUR%EWBINR,
                                      ! REFCUR%TRANSPR(1:2),REFCUR%FSHEATR
           WRITE(IUNOT,'(A80)') ZEILE
@@ -8276,20 +8319,22 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
             case default
               IF (streql(eirene_format,'facelift')) THEN
                 READ (ZEILE,6664) rdum(0:1), ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-     .                     rdum(4), rdum(5), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+     .                     rdum(4), rdum(6), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
      .                     rdum(2)           ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
+                rdum(5) = 0.0_R8
               ELSE IF (streql(eirene_format,'iter')) THEN
-                READ (ZEILE,6664) rdum(0:4)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                             ! SPTPRM(1,NLJ),ESPUTS(1,NLJ),
-                                             ! ESPUTC(1,NLJ)
+                READ (ZEILE,6664) rdum(0:5)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+     .                                       ! SPTPRM(1,NLJ),ESPUTS(1,NLJ),
+     .                                       ! ESPUTC(1,NLJ),REFPRESS(NLJ)
               ELSE
                 READ (ZEILE,6664) rdum(0:2)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
                                              ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
                 rdum(4) = 0.0_R8
+                rdum(5) = 0.0_R8
               ENDIF
-              WRITE(IUNOT,6664) rdum(0:4)
+              WRITE(IUNOT,6664) rdum(0:5)
               IREAD=0
             end select
             READ (IUNIN,'(A80)') ZEILE
@@ -12628,7 +12673,7 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
      .     convert_position(ix-rightcut(2),nsize,nsize1,3,atend)
          else if (.not.flip) then
           if (ix.eq.0) then
-            conformal_convert=0
+           conformal_convert=0
           else if (ix.eq.leftcut(1)-1) then
            conformal_convert=leftcut1(1)-1
           else if (ix.eq.leftcut(1)) then
@@ -12654,7 +12699,7 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
            nsize1 = leftcut1(1)
            conformal_convert = convert_position(ix,nsize,nsize1,1,atend)
           else if (nncut.eq.1 .and.
-     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
+     .             ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
            nsize = rightcut(1)-leftcut(1)
            nsize1 = rightcut1(1)-leftcut1(1)
            conformal_convert = leftcut1(1) +
