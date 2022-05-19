@@ -177,10 +177,9 @@
       character*24 hlp_frm
       character*260 filename                                            ! RC 27.03.18
       real (kind=R8) :: profile(-1:ny,0:3)                              ! RC 27.03.18
-      real (kind=R8) :: potentialOld(0:nbcd-1), currentOld(0:nbcd-1)    ! RC 01.06.18
+      real (kind=R8) :: currentOld(0:nbcd-1)                            ! RC 01.06.18
       real (kind=R8) :: currentNew(0:nbcd-1)                            ! RC 01.06.18
       integer :: currentCounter(0:nbcd-1)                               ! RC 01.06.18
-      real (kind=R8) :: potentialNew                                    ! RC 01.06.18
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
      2  na_min, na_new, bc_type21_ref, ndes_sol,
