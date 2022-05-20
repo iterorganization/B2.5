@@ -23,6 +23,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: mdf_fhe       !srv 13.10.06
       integer :: mdf_fhi
       integer :: mdf_fnb
+      integer :: pflux_cor
       integer :: pot_eq          !srv 13.07.05 
       integer :: no_current      !srv 29.01.20
       integer :: sheath_drift_fix
@@ -347,7 +348,7 @@ c k-enstrophy model
       integer :: keps_iout
       real(kind=R8) :: keps_cd
       real(kind=R8) :: keps_heat
-      real(kind=R8) :: dna_min, hce_min, hci_min
+      real(kind=R8) :: dna_min, vsa_min, hce_min, hci_min
       real(kind=R8) :: keps_heat_i
       real(kind=R8) :: keps_sig
       real(kind=R8) :: keps_alf
@@ -391,6 +392,7 @@ c b2tqna
       integer :: b2tqna_ixref
       integer :: b2tqna_transport_inputfile
       integer :: b2tqna_ballooning_sig
+      integer :: b2tqna_limit_coeff
 
 c b2tanml
       real (kind=R8) :: fch_anomalous
@@ -530,6 +532,7 @@ c Feedback
       s % mdf_fhe = 0
       s % mdf_fhi = 0
       s % mdf_fnb = 0
+      s % pflux_cor = 1
       s % pot_eq = 1
       s % no_current = 0
       s % sheath_drift_fix = 1
@@ -838,6 +841,7 @@ c k-enstrophy model
       s % keps_sig = 1.0e-4_R8
       s % keps_alf = 1.0e-4_R8
       s % dna_min = 1.0e-2_R8
+      s % vsa_min = 1.0e-2_R8
       s % hce_min = 1.0e-2_R8
       s % hci_min = 1.0e-2_R8
       s % keps_visc = 0.2_R8
@@ -880,6 +884,7 @@ c b2tqna
       s % b2tqna_ixref = 1
       s % b2tqna_transport_inputfile = 0
       s % b2tqna_ballooning_sig = 1
+      s % b2tqna_limit_coeff = 0
 
 c fch_anomalous
       s % fch_anomalous = 1.0e0_R8
@@ -1022,7 +1027,8 @@ c b2trno
       call ipgeti ('get_residuals',s % get_residuals)    
       call ipgeti ('b2tfhe_mdf', s % mdf_fhe)
       call ipgeti ('b2tfhi_mdf', s % mdf_fhi)   
-      call ipgeti ('b2tfnb_mdf', s % mdf_fnb)     
+      call ipgeti ('b2tfnb_mdf', s % mdf_fnb)  
+      call ipgeti ('b2tfnb_pflux_cor', s % pflux_cor)
       call ipgeti ('b2news_poteq', s % pot_eq)                             
       call ipgeti ('b2tfhe_no_current',s % no_current)   
       call ipgeti ('b2stbc_sheath_drift_fix', s % sheath_drift_fix)
@@ -1358,6 +1364,7 @@ c k-enstrophy model
       call ipgeti ('b2tqna_keps_local', s % keps_local)
       call ipgeti ('b2tqna_keps_iout', s % keps_iout)
       call ipgetr ('b2tqna_keps_dna_min', s % dna_min)
+      call ipgetr ('b2tqna_keps_vsa_min', s % vsa_min)
       call ipgetr ('b2tqna_keps_hce_min', s % hce_min)
       call ipgetr ('b2tqna_keps_hci_min', s % hci_min)
       call ipgetr ('b2tqna_keps_inc', s % keps_inc)
@@ -1396,6 +1403,7 @@ c b2tqna
       call ipgetr ('b2tqna_ballooning_rescale',
      & s%b2tqna_ballooning_rescale)
       call ipgeti ('b2tqna_ballooning_sig', s%b2tqna_ballooning_sig)
+      call ipgeti ('b2tqna_limit_coeff', s%b2tqna_limit_coeff)
       call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
       call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                       !srv 15.12.05
@@ -1824,6 +1832,8 @@ c k-enstrophy model
      &  'keps_alf must be .ge. 0.0')
       call xertst (0.0_R8.lt.s%dna_min,
      &  'dna_min must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%vsa_min,
+     &  'vsa_min must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%hce_min,
      &  'hce_min must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%hci_min,
