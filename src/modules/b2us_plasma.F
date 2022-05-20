@@ -288,6 +288,7 @@ cwdk move to dv
       integer, intent (in) :: nCv, nFc, ns
       type(B2State), intent(inout) :: st
 
+      st%ns = ns
       call createB2Plasma( nCv, ns, st % pl )
       call createB2Coeff( nCv, nFC, ns, st % co )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
