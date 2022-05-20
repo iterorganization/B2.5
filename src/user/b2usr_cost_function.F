@@ -43,8 +43,8 @@
 
       if (first_call .and. ncf .gt. 0) then
         call xertst(ncf.eq.mpg%nCf,'ncf=/mpg%nCf')
-        call xertst(mpg%isClassicalGrid,' Cost function CVs and FCs'//
-     &  ' ordering  and interpolation in case of unstructured grid'//
+        call xertst(mpg%isClassicalGrid.eq.1,' Cost function CVs and '//
+     &  'FCs ordering  and interpolation in case of unstructured grid'//
      &  ' needs to be revised')
 #ifdef TEST_MAP
         ij = 1
@@ -87,7 +87,7 @@
             ! FIXME to be considerably improved!
             !for now assume radial data rigidly moved at the OMP (like in ST code)
             ! simply use as b2rr the OMP radial coordiantes.
-              call xertst(mpg.isClassicalGrid,
+              call xertst(mpg%isClassicalGrid.eq.1,
      &         'Mapping to OMP need revision for extended grids')
               ! check on, and then use, only internal Cvs in OMP list
               call xertst(n1.eq.nomp-2,
