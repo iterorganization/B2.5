@@ -9,6 +9,8 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_numerics_namelist
+     , , only : corr_core_dt, add_te_corr_to_po              ! IYS 19.12.2017, 21.09.2018
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -48,10 +50,13 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, ireg
+      integer iCv, is, ireg, iFt
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), dzt(nCv), t0,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
+      real (kind=R8) :: 
+     *  dte1(nCv), dti1(nCv),                                       !lk 26.10.17
+     *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)      !lk 26.10.17
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -87,6 +92,10 @@
 
 * ..apply the correction
 *   ..adjust te, ti, po
+      tt0 = 0.0e0_R8
+      tt1 = 0.0e0_R8
+      tt2 = 0.0e0_R8
+      tt3 = 0.0e0_R8
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
 *!!   (stylec is a numerical switch, needs experiments)
@@ -128,16 +137,39 @@
          dte(iCv) = rxf*max(-te(iCv),corte(iCv))
          dti(iCv) = rxf*max(-ti(iCv),corti(iCv))
         endif
-        dkt(iCv) = rxf*max(-kt(iCv),corkt(iCv))
-        dzt(iCv) = rxf*max(-zt(iCv),corzt(iCv))
-        if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))	 !xpb
+        dkt(iCv)  = rxf*max(-kt(iCv),corkt(iCv))
+        dzt(iCv)  = rxf*max(-zt(iCv),corzt(iCv))
+ 	dte1(iCv) = dte(iCv)
+        dti1(iCv) = dti(iCv)
+*   ..smooth the correction for inner flux surfaces                 !lk 26.10.2017{
+        if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
+          iFt = mpg%cvFt(iCv)
+          tt0(iFt) = tt0(iFt) + geo%cvVol(iCv)*ni(iCv,1)
+          tt1(iFt) = tt1(iFt) + geo%cvVol(iCv)*ni(iCv,1)*dti1(iCv)
+          tt2(iFt) = tt2(iFt) + geo%cvVol(iCv)*ne(iCv)
+          tt3(iFt) = tt3(iFt) + geo%cvVol(iCv)*ne(iCv)*dte1(iCv)
+        endif
+      enddo
+
+      do iCv = 1, nCv
+        ireg = mpg%cvReg(iCv)
+        if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
+          iFt = mpg%cvFt(iCv)
+          dti1(iCv) = tt1(iFt)/tt0(iFt) +
+     *         corr_core_dt*(dti1(iCv)-tt1(iFt)/tt0(iFt))           ! IYS 19.12.2017
+          dte1(iCv) = tt3(iFt)/tt2(iFt) +
+     *         corr_core_dt*(dte1(iCv)-tt3(iFt)/tt2(iFt))           ! IYS 19.12.2017
+        endif
+        dte(iCv) = dte1(iCv)
+        dti(iCv) = dti1(iCv)                                        !srv 25.07.17
+        if (solvereg(ireg)) te(iCv) = max(1.0e-5_R8*ev,te(iCv)+dte(iCv))  !xpb
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
-     &      iCv.le.mpg%nCi) then
+     &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
         else if (switch%pot_eq.eq.2) then
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
-        if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))	 !xpb
+        if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))  !xpb
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg)) 
      &    kt(iCv) = max(0.0_R8*ev,kt(iCv)+dkt(iCv))

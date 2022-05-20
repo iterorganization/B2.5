@@ -47,7 +47,7 @@
 
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrksig,wrksig_c)
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkalf,wrkalf_c)
-      ve = -sigx_c*wrksig_c - switch%b2sifr_phm2*alfx_c*wrkalf_c
+      ve = -sigx_c*wrksig_c + switch%b2sifr_phm2*alfx_c*wrkalf_c
 
       ve = (ve+fch_pi_c(:,0))/(geo%cvBb(:,0)/geo%cvBb(:,3))/qe*
      &                                               switch%prl_cur      !srv 21.12.15

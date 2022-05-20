@@ -1306,7 +1306,6 @@ csw 09oct2012
       NFLAI = NFL
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL,ifoff)
-      if (switch%spatial_hybrid.ne.0) EIRHYB = .TRUE.
       CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
@@ -1725,6 +1724,7 @@ c   --> better way doing this is necessary)
       endif                                                              !srv 04.02.15 }
 *   ..compute initial ni
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
+      call b2xpnn (nCv, ns, state%pl%na, state%dv%nn)
 *   ..initialise previous state and fluxes
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
       call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
@@ -2138,7 +2138,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo, 
-     .                         state%pl, state%dv,switch%BoRiS,
+     .                         state%pl, state%dv, switch%BoRiS,
      .                         kin_frac_hyb, fnn_inc) ! FIXME progapage somehow kint_frac_hyb
           call write_f31(mpg)
           close(31)

@@ -171,8 +171,8 @@
 *   ..test facdrift and fac_ExB
       if (ncall_b2sral.eq.0) then                                              !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
-     .      mpg%cvOnClosedSurface)
+          call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .      mpg%nnreg,mpg%cvOnClosedSurface)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -185,8 +185,8 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
             write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
-     .        mpg%cvOnClosedSurface)
+            call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .        mpg%nnreg,mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
           else
@@ -201,8 +201,8 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.b2sral_elm_count) then
             b2sral_elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
-     .        mpg%cvOnClosedSurface)
+            call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .        mpg%nnreg,mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
           endif
         endif
