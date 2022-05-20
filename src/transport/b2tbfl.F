@@ -1,12 +1,14 @@
-      subroutine b2tbfl(nx, ny, lcore, flux, tbfl, div)              !srv 12.02.16 {
+      subroutine b2tbfl(nCv, nFc, lcore, mpg, flux, tbfl, div)     !srv 12.02.16 {
       use b2mod_types
       use b2mod_boundary_namelist
+      use b2us_map
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny
+      integer nCv, nFc
       logical lcore
+      type (mapping), intent (in) :: mpg
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) :: flux(-1:nx,-1:ny,0:1,0:1), tbfl(1:nbc), div
+      real (kind=R8) :: flux(nFc,0:1), tbfl(1:nbc), div
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -22,7 +24,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: n2, ib, ix, iy
+      integer :: ib, ibc, iCv, iFc
       integer, save :: ncall = 0
 *-----------------------------------------------------------------------
 *.computation
@@ -30,50 +32,22 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tbfl')
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       div = 0.0_R8
-      do ib=1, nbc
-        tbfl(ib)=0.0e0_R8
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX=1, BC_LIST_SIZE(IB)
-            if(lcore.or.
-     &       mod(region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0),4).ne.1)
-     >        tbfl(ib) = tbfl(ib) +
-     &         flux(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,0) +
-     &         flux(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &              TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1)
-          end do
-          div = div - tbfl(ib)
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX=1, BC_LIST_SIZE(IB)
-            if(lcore.or.
-     &         region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0).ne.5)
-     >       tbfl(ib) = tbfl(ib) +
-     &        flux(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,0) +
-     &        flux(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1)
-          end do
-          div = div + tbfl(ib)
-        ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          DO IY=1, BC_LIST_SIZE(IB)
-            tbfl(ib) = tbfl(ib) +
-     &        flux(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0) +
-     &        flux(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,1)
-          end do
-          div = div - tbfl(ib)
-        ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          DO IY=1, BC_LIST_SIZE(IB)
-            tbfl(ib) = tbfl(ib) +
-     &        flux(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0) +
-     &        flux(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,1)
-          end do
-          div = div + tbfl(ib)
-        ENDIF
+      do ib = 1, nbc
+        tbfl(ib) = 0.0e0_R8
+        ! compute flux through boundary; positive if out of the domain
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                       ! number of the guard cell
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))                              ! number of the guard cell face
+          if (lcore.or.(.not.mpg%cvOnClosedSurface(iCv))) then
+            tbfl(ib) = tbfl(ib) + mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &        (flux(iFc,0) + flux(iFc,1))
+          endif
+        enddo
+        ! add boundary flux to total divergence
+        div = div + tbfl(ib)
       enddo
 * ..return
       ncall = ncall+1
