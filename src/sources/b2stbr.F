@@ -301,6 +301,7 @@
       call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
       call sfill (nCv*4, 0.0_R8, srw%she0, 1)
       call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
+      call sfill (nCv*4, 0.0_R8, srw%shn0, 1)
       call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
       call sfill (nCv*nscx, 0.0_R8, shi0_ff, 1)
       call sfill (nCv*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {

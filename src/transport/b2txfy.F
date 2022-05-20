@@ -16,16 +16,20 @@
      *   t0, t1, kaps, kapsn
       intrinsic max, sqrt
       real (kind=R8) ::
-     *   hy1, harm
+     *   hy1(-1:nx,-1:ny)
+      real (kind=R8) ::
+     *   harm
       external subini, subend, xertst
       external b2xxgs, harm
-!      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txfy')
 *   ..test mode
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txfy--faulty argument mode')
+
+*   ..precompute hy1
+      hy1 = hy*qz(:,:,1)
 
 *   ..compute cony
       do iy = -1, ny

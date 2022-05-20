@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
-     &  itcnt, rxg, ne, ni, te, ti, tn, kt, zt,
+     &  itcnt, rxg, ne, ni, nn, te, ti, tn, kt, zt,
      &  floe, cone, floi, coni, flon, conn, flokt, conkt, flozt, conzt,
      &  she, shi, shn, skt, szt, ceqp,
      &  resht, reshe, reshi, reshn, reskt, reszt,
@@ -25,7 +25,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxg, ne(nCv), ni(nCv,0:1), te(nCv), ti(nCv), tn(nCv), 
+     *  rxg, ne(nCv), ni(nCv,0:1), nn(nCv), te(nCv), ti(nCv), tn(nCv), 
      &  kt(nCv), zt(nCv), floe(nFc,0:1), floi(nFc,0:1), flon(nFc,0:1),
      &  flokt(nFc,0:1), flozt(nFc,0:1),
      &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),
@@ -166,7 +166,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
         if (solveen(ireg).and.switch%tn_style.eq.2) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
-     &    -shn(iCv,1)-shn(iCv,3)*(ni(iCv,0)-ni(iCv,1))
+     &    -shn(iCv,1)-shn(iCv,3)*nn(iCv)
           t0 = min(t0,tn(iCv))
         endif
         if (solveee(ireg).or.solveei(ireg).or.
@@ -632,7 +632,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) =
-     &    (-shn(iCv,1)-shn(iCv,3)*(ni(iCv,0)-ni(iCv,1))+
+     &    (-shn(iCv,1)-shn(iCv,3)*nn(iCv)+
      &    +abs(reshn(iCv))/(rxg*tn(iCv)))
         endif
       enddo

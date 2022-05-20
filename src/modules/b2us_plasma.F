@@ -86,8 +86,8 @@
         ! ni(:,0) is ions, ni(:,1) is neutrals, ue is parallel electron velocity
         ! ne2(:) is electron density, ne2 is elect. den. computed w. squared charge rz2
         ! pa(:,0:ns-1) is partial pressure
-        real(R8), allocatable :: ne(:), ni(:,:), ue(:), ne2(:), pa(:,:),
-     .                           pz(:), lnlam(:)
+        real(R8), allocatable :: ne(:), ni(:,:), nn(:), ue(:), ne2(:),
+     .                           pa(:,:), pz(:), lnlam(:)
 
         ! drift velocities, at cell faces
         ! dimensions: fc, direction, species
@@ -205,7 +205,7 @@ cwdk move to dv
       type B2PlasmaSnapshot
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
         real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt
-        real(R8), allocatable :: ne(:), ni(:,:)
+        real(R8), allocatable :: ne(:), ni(:,:), nn(:)
         real(R8), allocatable :: fch(:,:), fna(:,:,:), 
      .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:),
      .                           fzt(:,:)
@@ -651,7 +651,8 @@ cwdk move to dv
 ! derived state quantities
       allocate( dv % ne( nCv ), SOURCE=0._R8 )    
       allocate( dv % ne2( nCv ), SOURCE=0._R8 )    
-      allocate( dv % ni( nCv, 0:1 ), SOURCE=0._R8 )    
+      allocate( dv % ni( nCv, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % nn( nCv ), SOURCE=0._R8 )        
       allocate( dv % ue( nCv ), SOURCE=0._R8 )
       allocate( dv % pa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % pz( nCv ), SOURCE=0._R8 )
@@ -791,6 +792,7 @@ cwdk move to dv
       deallocate( dv % ne )
       deallocate( dv % ne2 )
       deallocate( dv % ni )
+      deallocate( dv % nn )
       deallocate( dv % ue )
       deallocate( dv % pa )
       deallocate( dv % pz )
@@ -1118,6 +1120,7 @@ cwdk move to dv
 
       allocate( snap % ne( nCv ), SOURCE=0._R8 ) 
       allocate( snap % ni( nCv, 0:1 ), SOURCE=0._R8 )    
+      allocate( snap % nn( nCv ), SOURCE=0._R8 )    
       
       allocate( snap % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -1146,6 +1149,7 @@ cwdk move to dv
       deallocate( snap % tn )
       deallocate( snap % ne )
       deallocate( snap % ni )
+      deallocate( snap % nn )
       deallocate( snap % fch )
       deallocate( snap % fna )
       deallocate( snap % fhe )
@@ -1354,6 +1358,7 @@ cwdk move to dv
         snap % tn = pl % tn
         snap % ne = dv % ne
         snap % ni = dv % ni
+        snap % nn = dv % nn
         snap % fna = dv % fna
         snap % fch = dv % fch
         snap % fhe = dv % fhe
@@ -1380,6 +1385,7 @@ cwdk move to dv
         pl % tn = snap % tn
         dv % ne = snap % ne
         dv % ni = snap % ni
+        dv % nn = snap % nn
         dv % fna = snap % fna
         dv % fch = snap % fch
         dv % fhe = snap % fhe
