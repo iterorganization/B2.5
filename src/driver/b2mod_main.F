@@ -136,14 +136,6 @@
 #else
       integer ninp(0:6), nout(0:10), nCv, nFc, nVx, ns, ns0
 #endif
-c**********************************************************
-!WG_TODO tmp: store main data-types here; put in module b2us_data?
-      type(mapping), save    :: mpg
-      type(geometry), save   :: geo
-      type(B2State), save    :: state
-      type(B2StateExt), save :: state_ext
-      type(switches), save   :: switch
-c**********************************************************
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #ifdef B25_EIRENE
@@ -168,8 +160,13 @@ c**********************************************************
 
       contains
 
-      subroutine b2mn_init ()
+      subroutine b2mn_init (switch, geo, mpg, state, state_ext)
       implicit none
+      type(switches), intent (inout)   :: switch
+      type(mapping), intent (inout)    :: mpg
+      type(geometry), intent (inout)   :: geo
+      type(B2State), intent (inout)    :: state
+      type(B2StateExt), intent (inout) :: state_ext
       integer idum(0:9)
 
 *   ..program start-up calls
@@ -296,7 +293,7 @@ csw
       return
       end subroutine b2mn_init
 
-      subroutine b2mn_step(J)
+      subroutine b2mn_step(switch, geo, mpg, state, state_ext, J)
       use b2mod_types
       use b2mod_b2cmpt
       use b2mod_b2cmrc
@@ -311,14 +308,24 @@ csw
       use b2mod_par_opt
      & , only : par_opt_phys, npar_opt
       implicit none
+      type(switches), intent (inout)   :: switch
+      type(mapping), intent (inout)    :: mpg
+      type(geometry), intent (inout)   :: geo
+      type(B2State), intent (inout)    :: state
+      type(B2StateExt), intent (inout) :: state_ext
       real(kind=R8) :: J(nncf)
 
       call b2mndr_1 (nout, ns, switch, geo, mpg, state, state_ext, J)
 
       end subroutine b2mn_step
 
-      subroutine b2mn_fin ()
+      subroutine b2mn_fin (switch, geo, mpg, state, state_ext)
       implicit none
+      type(switches), intent (inout)   :: switch
+      type(mapping), intent (inout)    :: mpg
+      type(geometry), intent (inout)   :: geo
+      type(B2State), intent (inout)    :: state
+      type(B2StateExt), intent (inout) :: state_ext
       integer io
 
       call b2mndr_2 (nout, ns, switch, geo, mpg, state, state_ext)
