@@ -39,13 +39,14 @@
       integer, save :: cfdef(nncf)
       integer, save :: ncfdata(nncf), ncf, cf_reg(mxnCf),
      & cf_regp(nncf,2)
-      real (kind=R8), save :: cfdata(nncf,2,DEF_NLIM), cfweight(nncf)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
       integer nvmx, nsigmx
       parameter (nvmx = 50, nsigmx=10)
       integer, save :: prior_type(nvmx), nsigma !sc type of prior
       real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
       logical, save :: scale_sigma(nsigmx) = .true.
       logical, save :: mapToOMP(nncf) = .false.
+      logical, save :: read_sigma(nncf) = .false.
       real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
       double precision, parameter :: inf_opt = 1.0e30
       private :: user
@@ -59,7 +60,7 @@
      ,  filedata,user_filename,ncf,cfstart,cfend,
      ,  cftype, rzomp, rzimp, cfdef, cfweight, 
      ,  prior_type, prior_par, prior_range, scale_sigma, nsigma,
-     ,  sigma, cf_reg, cf_regP, mapToOMP
+     ,  sigma, cf_reg, cf_regP, mapToOMP, read_sigma
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -89,6 +90,7 @@ c*** [ij]ntrgrp:  first and last positions in this list for each group
 c*** gntrgrp   :  identifiers for the neutral data surface groups
 c*** filedata  :  flag to turn on/off individual tracing files
 c***              (see b2mod_diag for their definition)
+c FIXME add description of Cf quantieis
 c----------------------------------------------------------------------
 
       contains
@@ -140,6 +142,7 @@ c***  Standard setup:
       cftype = 0
       cfdata = 0.0_R8
       ncfdata = 0
+      read_sigma = .false.
       rzomp = 0.0_R8
       rzimp = 0.0_R8
       cfweight = 1.0_R8
@@ -293,10 +296,14 @@ c***  Standard setup:
      &        'Cost function data limited to DEF_NLIM!')
             open(unit=99,file=cffile,status='old',action='read')
             do i=1,ncfdata(icf)
-!csc The data in the file are (r-rsep), data. Stored in cfdata according to
-!    first dimension (# of cost functions), second dimension ((r-rsep)-data), third
+!csc The data in the file are (r-rsep), data, sigma. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension ((r-rsep)-data-sigma), third
 !    dimension (number of records/data points)
-              read(99,*) cfdata(icf,1:2,i) 
+              if (read_sigma(icf)) then
+                read(99,*) cfdata(icf,1:3,i) 
+              else
+                read(99,*) cfdata(icf,1:2,i) 
+              endif
             enddo
             close(99)
           endif

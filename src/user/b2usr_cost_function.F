@@ -221,7 +221,7 @@
               call interp1d(n1,n2,b2rr(iicf,1:n1),cfdata(iicf,1,1:n2),
      &          b2data(1:n1),b2dataOnCf(1:n2))
               call calc_loglikelihood(n2, b2dataOnCf(1:n2), 
-     &          cfdata(iicf,2,1:n2), lll, isigma)
+     &          cfdata(iicf,2,1:n2), cfdata(iicf,3,1:n2), lll, isigma)
               lll_cum = lll_cum + lll
               isigma = isigma + 1
             end do
