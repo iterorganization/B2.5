@@ -214,9 +214,11 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
       if (switch%tn_style.eq.0) then                       !! default combined ion-neutral energy equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
-      else                                                 !! pure ion and separate ion-neutral energy equation
+      elseif (switch%tn_style.eq.1) then                   !! pure ion equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,1),nif)
-        call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0)-dv%ni(:,1),nnf)
+      else                                                 !! separate tn equation for hydrogenic atoms, all other species in ti-equation
+        call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0)-dv%nn,nif)
+        call intface(nCv,nFc,mpg%fcCv,wght,dv%nn,nnf)
       endif
 
 *   ..contributions from currents

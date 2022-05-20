@@ -814,7 +814,8 @@ cxpb size is changed in DIMENSIONS.F
      &    (fb_actuator(ifb) .eq. 6 .and. !current
      &     bcpot(fb_ib(ifb)) .eq. 8) .or.
      &    (fb_actuator(ifb) .eq. 7 .and. !density
-     &     bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1))
+     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
+     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
       end do
       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      & switch%b2stbc_boundary_namelist.lt.1
@@ -1725,6 +1726,7 @@ cxpb size is changed in DIMENSIONS.F
               psnc%kinrgy = dv%kinrgy
 *   ..compute initial ni
               call b2xpni (nCv, ns, pl%na, dv%ni)
+              call b2xpnn (nCv, ns, pl%na, dv%nn)
 *   ..compute ni0
               psnl%ni = dv%ni
               psnc%ni = dv%ni

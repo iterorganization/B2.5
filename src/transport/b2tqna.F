@@ -116,7 +116,7 @@
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
-     1  dcx, dion, vcx, lcx, lion, din, dnn,
+     1  dion, vcx, lcx, lion, din, dnn,
      1  poloidal_scale_factor
       real (kind=R8) ::
      *  t0, t1,
@@ -273,12 +273,9 @@
             endif
             if(switch%b2tqna_new_df0.eq.1) then
               if(is_neutral(is)) then
-                dcx=0.0_R8
                 vcx=0.0_R8
                 tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
                 do ic = 0, ns-1
-                  dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
-     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
                   vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
      &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
                 enddo
@@ -364,14 +361,9 @@ cxpb Corrected for dimensionality
      &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/abs(geo%cvBb(iCv,3))
             if(cfhci(7,is).ne.0.0_R8)
      &       dfhcb = dfhcb!WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-*      ..compute vsa0, hci0
+*      ..compute vsa0, hcib
             vsa0(iCv,is) = dfvsb*mp*am(is)*pl%na(iCv,is)
-            hcib(iCv,is)=dfhcb*pl%na(iCv,is)
-            if (.not.is_neutral(is)) then
-              hci0(iCv) = hci0(iCv)+hcib(iCv,is)
-            else
-              hcn0(iCv) = hcn0(iCv)+hcib(iCv,is)
-            endif
+            hcib(iCv,is) = dfhcb*pl%na(iCv,is)
 *      ..compute hvi0
             hvi0(iCv,0) = 0.0_R8
             hvi0(iCv,1) = 0.0_R8
@@ -379,9 +371,25 @@ cxpb Corrected for dimensionality
         write(*,'(a,i3,1p,2g14.7)') 'is,min_df0,max_df0 ',
      .   is, min_df0_tmp, max_df0_tmp
       enddo
-      if (switch%tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
-        hci0 = hci0+hcn0
-      endif
+*   ..compute hci0, hcn0
+      do is = 0, ns-1
+*     ..compute hci0
+        if (switch%tn_style.eq.0) then              !! default combined ion-neutral, add neutral contribution to "total" hci0
+          hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
+*     ..compute hcn0
+        if (is_neutral(is).and.zn(is).eq.1) then
+          hcn0 = hcn0 + hcib(:,is)
+        endif
+      enddo
 *   ..compute hce0, sig0, alf0
       do iCv = 1, nCv
 *     ..compute dfhce, dfsig, dfalf
@@ -415,11 +423,26 @@ cxpb Corrected for dimensionality
       if(switch%b2tqna_transport_inputfile.eq.1) then
         call transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt, hcib,
      &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall_b2tqna)
-        do iCv = 1, nCv
-          hci0(iCv)=0.0_R8
-          do is=0,ns-1
-            hci0(iCv)=hci0(iCv)+hcib(iCv,is)
-          enddo
+*     ..recompute hci0, hcn0
+        hci0 = 0.0_R8
+        hcn0 = 0.0_R8
+        do is = 0, ns-1
+*       ..re-compute hci0
+          if (switch%tn_style.eq.0) then              !! default combined ion-neutral, add neutral contribution to "total" hci0
+            hci0 = hci0 + hcib(:,is)
+          elseif (switch%tn_style.eq.1) then
+            if (.not.is_neutral(is))then
+              hci0 = hci0 + hcib(:,is)
+            endif
+          else
+            if (.not.is_neutral(is).or.zn(is).ne.1)then
+              hci0 = hci0 + hcib(:,is)
+            endif
+          endif
+*       ..re-compute hcn0
+          if (is_neutral(is).and.zn(is).eq.1) then
+            hcn0 = hcn0 + hcib(:,is)
+          endif
         enddo
       endif
 
@@ -513,7 +536,7 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
 
       if(switch%transport_afn.ne.0) then
         call set_transport_afn(nCv, nFc,
-     &   nVx, ns, nscx, iscx, switch%tn_style, geo, 
+     &   nVx, ns, nscx, iscx, switch, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       endif
@@ -601,6 +624,19 @@ cdpc
         enddo
       endif
 #endif
+      if(switch%b2tqna_limit_coeff.ne.0) then
+        do is=0,ns-1
+          if(.not.is_neutral(is)) then
+            dna0(:,is) = max(dna0(:,is),switch%dna_min)
+            vsa0(:,is) = max(vsa0(:,is),switch%vsa_min*
+     &        am(is)*mp*pl%na(:,is))
+            hci0 = hci0 - hcib(:,is) + max(hcib(:,is),switch%hci_min*
+     &        pl%na(:,is))
+            hcib(:,is) = max(hcib(:,is),switch%hci_min*pl%na(:,is))
+          endif
+        enddo
+        hce0 = max(hce0,switch%hce_min*dv%ne)
+      endif
       if(switch%iout_b2wdat.eq.4) then                                 !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
@@ -3515,7 +3551,7 @@ c*******************************************************************************
 c*****************     New KU Leuven transport model for neutrals *********************
 c**************************************************************************************
       subroutine set_transport_afn(nCv, nFc,
-     &            nVx, ns, nscx, iscx, tn_style, geo, 
+     &            nVx, ns, nscx, iscx, switch, geo, 
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       use b2mod_types
@@ -3525,6 +3561,7 @@ c*******************************************************************************
       use b2mod_b2cmpt
       use b2mod_rates
       use b2mod_transport_namelist
+      use b2mod_switches
       use b2us_geo
       use b2us_map
       use b2us_plasma
@@ -3532,13 +3569,14 @@ c*******************************************************************************
 
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, iscx(0:nscxmax-1)
+      type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) :: t0, t_av
+      real (kind=R8) :: t0, t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
@@ -3550,7 +3588,7 @@ c*******************************************************************************
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nCv), vcx, dion
-      integer is, k, ic, iCv, tn_style
+      integer is, k, ic, iCv
       intrinsic max, exp
       external expu
 *   ..statement functions
@@ -3558,45 +3596,41 @@ c*******************************************************************************
 
 *   ..subprogram start-up calls
       call subini ('set_transport_afn')
-      	do is = 0, ns-1
-	  if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-            k=0
-            do while (iscx(k).ne.is .and. k.lt.nscx)
-              k = k+1
-            enddo
+      do is = 0, ns-1
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then ! only for hydrogenic species
 
-            call xertst (k.lt.nscx, 'CX species index not found!')
-          endif
+          k=0
+          do while (iscx(k).ne.is .and. k.lt.nscx)
+            k = k+1
+          enddo
+          call xertst (k.lt.nscx, 'CX species index not found!')
 
+          wrk0 = sqrt(pl%tn/mp)
           do iCv = 1, nCv
-            if (is_neutral(is).and.zn(is).eq.1.0_R8) then !! only for H D T
-              vcx=0.0_R8
-              do ic = 0, ns-1
-                t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
-                vcx = vcx + pl%na(iCv,ic) * 
-     &            expu(rt%rlcx(iCv,0,ic,k) +
-     &            rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
-              enddo
-              dion=expu(
-     2         rt%rlsa(iCv,0,is)+
-     3         rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-              vcx = vcx + dion*dv%ne(iCv)
-              dpa0(iCv,is)=1.0_R8/mp/am(is)/(vcx)
+            vcx=0.0_R8
+            do ic = 0, ns-1
+              t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
+              vcx = vcx + pl%na(iCv,ic) * 
+     &          expu(rt%rlcx(iCv,0,ic,k) +
+     &          rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
+            enddo
+            dion=expu(
+     2        rt%rlsa(iCv,0,is)+
+     3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
+*         ..For now, no neutral-neutral collisions inlcuded
+            df0=(wrk0(iCv)/sqrt(am(is)))**2/
+     1           (vcx+dion*dv%ne(iCv))
+            ! limit df0
+            df0=max(switch%b2tqna_min_df0,
+     &          min(switch%b2tqna_max_df0,df0))
 
-*    ..For now, no flux limiters imposed.
-*    ..For now, no neutral-neutral collisions inlcuded
-              vsa0(iCv,is) = pl%na(iCv,is)*pl%tn(iCv)/
-     &         (vcx) 
-              hcib(iCv,is) = 2.5_R8*pl%na(iCv,is)*pl%tn(iCv)/
-     &         (mp*am(is)*(vcx))
-              
-            endif
+            dpa0(iCv,is) = (1.0_R8/pl%tn(iCv))*df0
+            vsa0(iCv,is) = mp*am(is)*pl%na(iCv,is)*df0
+            hcib(iCv,is) = 2.5_R8*pl%na(iCv,is)*df0
+
           enddo !! end loop over cells
 
-
-
 *   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
           if (ANY( dna0(:,is)/=0 )) then
             write(*,*) 'Warning: '//
      .       'dna0 is not zero for neutrals'//
@@ -3615,19 +3649,29 @@ c*******************************************************************************
         endif 
       enddo !! end loop over species
 
-c recompute hci0 and hcn0
+*   ..recompute hci0, hcn0
       hci0 = 0.0_R8
       hcn0 = 0.0_R8
-      do is =0, ns-1
-        if (.not.is_neutral(is)) then
+      do is = 0, ns-1
+*     ..compute hci0
+        if (switch%tn_style.eq.0) then
           hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
         else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
+*     ..compute hcn0
+        if (is_neutral(is).and.zn(is).eq.1) then
           hcn0 = hcn0 + hcib(:,is)
         endif
       enddo
-      if (tn_style.eq.0) then     !! default combined ion-neutral, add neutral contribution to "total" hci0
-        hci0 = hci0+hcn0
-      endif
+
+
 
 *   ..return
       call subend ()
@@ -3721,7 +3765,7 @@ cwdk same dna_ExB for all ion species
           endif
           if (switch%keps_visc.gt.0.0_R8) then
             vsa0(:,is) = switch%keps_visc*am(is)*mp*pl%na(:,is)*
-     &        (dna_ExB + switch%dna_min)*switch%keps_fac + 
+     &        (dna_ExB + switch%vsa_min)*switch%keps_fac + 
      &        (1.0_R8-switch%keps_fac)*vsa0(:,is)
           endif
           if (switch%keps_heat.gt.0.0_R8) then
@@ -3749,9 +3793,20 @@ cwdk same dna_ExB for all ion species
           dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)
         endif
       enddo
+*   ..recompute hci0
       hci0 = 0.0_R8
       do is = 0, ns-1
-        hci0 = hci0 + hcib(:,is)
+        if (switch%tn_style.eq.0) then
+          hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
       enddo
  
 *   ..increase percentage of coefficients from k-eps

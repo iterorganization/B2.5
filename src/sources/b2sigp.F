@@ -68,17 +68,17 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2sigp.lt.3) then
-*    ..test sign of nb, ti, ne, te, rzb
+*    ..test sign of nb, ti, tn, ne, te, rzb
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
-       call b2xvsg (nCv, ti, 1, 'tn', '.gt.')
+       call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, rzb, 1, 'rzb', '.ge.')
       endif
 
 * ..choose the correct temperature
-      if (switch%tn_style.eq.2.and.is_neutral(isb)) then
+      if (switch%tn_style.eq.2.and.is_neutral(isb).and.zn(isb).eq.1)then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti
@@ -99,7 +99,7 @@
           else
            wrk0(ix,iy) = nb(ix,iy)*tb(ix,iy)-
      &      nb(leftix(ix,iy),leftiy(ix,iy))*
-     &      ti(leftix(ix,iy),leftiy(ix,iy))
+     &      tb(leftix(ix,iy),leftiy(ix,iy))
            wrk1(ix,iy) = ne(ix,iy)*te(ix,iy)-
      &      ne(leftix(ix,iy),leftiy(ix,iy))*
      &      te(leftix(ix,iy),leftiy(ix,iy))
@@ -110,7 +110,7 @@
      &                   ne(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy))/
      &                 (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
           endif
-          wrk3(ix,iy) = nb(ix,iy)*ti(ix,iy)                          !djm Jan2017
+          wrk3(ix,iy) = nb(ix,iy)*tb(ix,iy)                          !djm Jan2017
           wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
          enddo
         enddo
@@ -311,26 +311,18 @@ cdjm compute b2sigp_pstat0to3 on left cell face
       endif                                                           !srv 02.07.08 }
 
 cxpb apply restriction to pressure gradient for minority ions
-#ifdef WG_TODO
-      do iy = -1, ny                                                  !lk 23.06.17{  
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1 .and.
-     &     bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1 .and.
-     &     nb(ix,iy)/ne(ix,iy) .lt. 0.1e0_R8) then
-          smbgp(ix,iy,0) = smbgp(ix,iy,0)*min(1.0e0_R8, 
-     &    (2.0e0_R8*hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))
-     &                       +hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(ix,iy)*ti(ix,iy)/
-     &    ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &     nb(rightix(ix,iy),rightiy(ix,iy))
-     &    *ti(rightix(ix,iy),rightiy(ix,iy))+
-     &    (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
-     &     nb(leftix(ix,iy),leftiy(ix,iy))
-     &    *ti(leftix(ix,iy),leftiy(ix,iy))))     
+      if (switch%b2sigp_pressure_restriction .ne. 0) then
+       wrk0 = nb*tb
+       call intface(nCv,nFc,mpg%fcCv,geo%fcHc,wrk0,wrkf)
+       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk1)
+       do iCv = 1, mpg%nCi
+        if (nb(iCv)/ne(iCv) .lt. 0.1e0_R8) then
+         smbgp(iCv,0) = smbgp(iCv,0)*
+     &    min(1.0e0_R8,wrk0(iCv)/wrk1(iCv))
         endif   
-       enddo
-      enddo                                                           !lk 23.06.17}
-#endif
+       enddo                                                          !lk 23.06.17}
+      endif
+
       else                                                            !srv 26.06.18 {
         smbgp = 0.0_R8
 #ifdef WG_TODO

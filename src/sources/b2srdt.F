@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
-     &  na0, ua0, te0, ti0, tn0, ne0, ni0, kinrgy0, kt0, zt0,
-     &  na, ua, te, ti, tn, ne, ni, kinrgy, kt, zt,                           !srv 16.07.10
+     &  na0, ua0, te0, ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0,
+     &  na, ua, te, ti, tn, ne, ni, nn, kinrgy, kt, zt,                 !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
       use b2mod_types 
       use b2mod_numerics_namelist 
@@ -22,7 +22,7 @@
      & , only : ncall_b2srdt
       implicit none
 *   ..input arguments (unchanged on exit)
-      logical(1) :: lout                                             !srv 16.07.10
+      logical(1) :: lout                                                !srv 16.07.10
       integer nCv, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -30,11 +30,11 @@
       real (kind=R8) ::
      *  dtim, BoRiS, na0(nCv,0:ns-1),
      &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
-     &  ne0(nCv), ni0(nCv,0:1),
+     &  ne0(nCv), ni0(nCv,0:1), nn0(nCv),
      &  kinrgy0(nCv,0:ns-1), kt0(nCv), zt0(nCv),
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1),              !srv 16.07.10
      &  te(nCv), ti(nCv), tn(nCv), ne(nCv),
-     &  ni(nCv,0:1), kinrgy(nCv,0:ns-1), kt(nCv), zt(nCv)
+     &  ni(nCv,0:1), nn(nCv), kinrgy(nCv,0:ns-1), kt(nCv), zt(nCv)
 *   ..input/output arguments
       type (B2Source), intent (inout) :: sr
 *   ..common blocks
@@ -189,7 +189,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
           elseif (switch%tn_style.eq.1) then
 
             sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &       1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
+     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
 
 *           shidt(iCv,1) = (unchanged)
 *           shidt(iCv,2) = (otherwise unchanged)
@@ -204,7 +204,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
 
             sr%shn(iCv,0) = sr%shn(iCv,0)+
-     &       1.5_R8*t0*(ni0(iCv,0)-ni0(iCv,1))*tn0(iCv)
+     &       1.5_R8*t0*nn0(iCv)*tn0(iCv)
 *           shndt(iCv,1) = (unchanged)
 *           shndt(iCv,2) = (otherwise unchanged)
             sr%shn(iCv,3) = sr%shn(iCv,3)-1.5_R8*t0
