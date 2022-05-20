@@ -426,11 +426,26 @@ cxpb Corrected for dimensionality
       if(switch%b2tqna_transport_inputfile.eq.1) then
         call transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt, hcib,
      &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall_b2tqna)
-        do iCv = 1, nCv
-          hci0(iCv)=0.0_R8
-          do is=0,ns-1
-            hci0(iCv)=hci0(iCv)+hcib(iCv,is)
-          enddo
+*     ..recompute hci0, hcn0
+        hci0 = 0.0_R8
+        hcn0 = 0.0_R8
+        do is = 0, ns-1
+*       ..re-compute hci0
+          if (switch%tn_style.eq.0) then              !! default combined ion-neutral, add neutral contribution to "total" hci0
+            hci0 = hci0 + hcib(:,is)
+          elseif (switch%tn_style.eq.1) then
+            if (.not.is_neutral(is))then
+              hci0 = hci0 + hcib(:,is)
+            endif
+          else
+            if (.not.is_neutral(is).or.zn(is).ne.1)then
+              hci0 = hci0 + hcib(:,is)
+            endif
+          endif
+*       ..re-compute hcn0
+          if (is_neutral(is).and.zn(is).eq.1) then
+            hcn0 = hcn0 + hcib(:,is)
+          endif
         enddo
       endif
 
@@ -612,6 +627,19 @@ cdpc
         enddo
       endif
 #endif
+      if(switch%b2tqna_limit_coeff.ne.0) then
+        do is=0,ns-1
+          if(.not.is_neutral(is)) then
+            dna0(:,is) = max(dna0(:,is),switch%dna_min)
+            vsa0(:,is) = max(vsa0(:,is),switch%vsa_min*
+     &        am(is)*mp*pl%na(:,is))
+            hci0 = hci0 - hcib(:,is) + max(hcib(:,is),switch%hci_min*
+     &        pl%na(:,is))
+            hcib(:,is) = max(hcib(:,is),switch%hci_min*pl%na(:,is))
+          endif
+        enddo
+        hce0 = max(hce0,switch%hce_min*dv%ne)
+      endif
       if(switch%iout_b2wdat.eq.4) then                                 !srv 10.11.09 {
         do is = 0,ns-1
           write (chns,'(i3.3)') is
@@ -3743,7 +3771,7 @@ cwdk same dna_ExB for all ion species
           endif
           if (switch%keps_visc.gt.0.0_R8) then
             vsa0(:,is) = switch%keps_visc*am(is)*mp*pl%na(:,is)*
-     &        (dna_ExB + switch%dna_min)*switch%keps_fac + 
+     &        (dna_ExB + switch%vsa_min)*switch%keps_fac + 
      &        (1.0_R8-switch%keps_fac)*vsa0(:,is)
           endif
           if (switch%keps_heat.gt.0.0_R8) then
@@ -3771,9 +3799,20 @@ cwdk same dna_ExB for all ion species
           dzt0 = switch%keps_dzt*dna0(:,ismain)*pl%na(:,ismain)
         endif
       enddo
+*   ..recompute hci0
       hci0 = 0.0_R8
       do is = 0, ns-1
-        hci0 = hci0 + hcib(:,is)
+        if (switch%tn_style.eq.0) then
+          hci0 = hci0 + hcib(:,is)
+        elseif (switch%tn_style.eq.1) then
+         if (.not.is_neutral(is))then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        else
+         if (.not.is_neutral(is).or.zn(is).ne.1)then
+          hci0 = hci0 + hcib(:,is)
+         endif
+        endif
       enddo
  
 *   ..increase percentage of coefficients from k-eps
