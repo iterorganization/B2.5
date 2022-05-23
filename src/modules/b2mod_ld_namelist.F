@@ -56,7 +56,7 @@
      *     r_start, r_end, z_start, z_end,
      .     bTor, stepsize, gc_n, gc_s, gc_e, gc_w
       character*260, save :: fn_z, fn_r
-      logical,save :: write_nml_ld = .false.
+      logical, save :: write_nml_ld = .false.
 
       contains
 
@@ -239,7 +239,6 @@
 
       if (write_nml_ld) then
         write(*,grid)
-
       end if
 
       end subroutine write_b2mod_ld_namelist

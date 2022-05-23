@@ -41,7 +41,7 @@
 *.declarations
       implicit none
 *input
-      integer n_out, bc1, bc2, pos_in, ny, index
+      integer bc1, bc2, pos_in, ny, index
       real (kind=R8) :: max_profile, scale
 *output
       real (kind=R8) :: profile(-1:ny,0:3)

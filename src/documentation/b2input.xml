@@ -597,232 +597,6 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
-			<category name="linear.geometry">
-				<switchgroup>
-					<name>grid</name>
-					<description>
-						These switches are used to produce a geometry for a linear device.
-					</description>
-					<switch>
-						<name>NCOIL</name>
-						<default>20</default>
-						<type>integer</type>
-						<description>
-							Number of coils in the device. For each coils the switches R1, Z1, R2, Z2, CURRENT, windings and nlayers have to be provided.
-						</description>
-						<name>R1</name>
-						<default>0.0</default>
-						<type>float array of length NCOIL</type>
-						<description>
-							Inner radius of the coil in units of m.
-						</description>
-						<name>Z1</name>
-						<default>0.0</default>
-						<type>float array of length NCOIL</type>
-						<description>
-							Axial start position of the coil in units of m.
-						</description>
-						<name>R2</name>
-						<default>0.0</default>
-						<type>float array of length NCOIL</type>
-						<description>
-							Outter radius of the coil in units of m.
-						</description>
-						<name>Z2</name>
-						<default>0.0</default>
-						<type>float array of length NCOIL</type>
-						<description>
-							Axial end position of the coil in units of m.
-						</description>
-						<name>CURRENT</name>
-						<default>0.0</default>
-						<type>float array of length NCOIL</type>
-						<description>
-							Current in the coil in units of A.
-						</description>
-						<name>windiwngs</name>
-						<default>0</default>
-						<type>integer array of length NCOIL</type>
-						<description>
-							Number of windigs of each coil.
-						</description>
-						<name>layers</name>
-						<default>5</default>
-						<type>integer array of length NCOIL</type>
-						<description>
-							Number of layers to divide each coil in the radial direction.
-						</description>
-						<name>stepsize</name>
-						<default>1e-4</default>
-						<type>float</type>
-						<description>
-							Initial spacial step size used in the calculation of the field in units of m.
-						</description>
-						<name>bTor</name>
-						<default>0</default>
-						<type>float</type>
-						<description>
-							Torodial magnetic field in units of T.
-						</description>
-						<name>FN_Z</name>
-						<default>z.dat</default>
-						<type>character</type>
-						<description>
-							Two column file with the profile of axial cell size in the numerical space. First line of the file determine the number of rows to read.
-						</description>
-						<name>FN_R</name>
-						<default>r.dat</default>
-						<type>character</type>
-						<description>
-							Two column file with the profile of radial cell size in the numerical space. First line of the file determine the number of rows to read.
-						</description>
-						<name>r_ne</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Radial position in m of the most north-east point of the plasma region.
-						</description>
-						<name>z_ne</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Axial position in m of the most north-east point of the plasma region.
-						</description>
-						<name>r_se</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Radial position in m of the most south-east point of the plasma region.
-						</description>
-						<name>z_se</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Axial position in m of the most south-east point of the plasma region.
-						</description>
-						<name>r_sw</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Radial position in m of the most south-west point of the plasma region.
-						</description>
-						<name>z_sw</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Axial position in m of the most south-west point of the plasma region.
-						</description>
-						<name>r_nw</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Radial position in m of the most north-west point of the plasma region.
-						</description>
-						<name>z_nw</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Axial position in m of the most north-west point of the plasma region.
-						</description>
-						<name>r_start</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Starting radial point in m for the distribution of cells provided by fn_r.
-						</description>
-						<name>r_end</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							End radial point in m for the distribution of cells provided by fn_r.
-						</description>
-						<name>z_start</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							Starting axial point in m for the distribution of cells provided by fn_z.
-						</description>
-						<name>z_end</name>
-						<default>0.0</default>
-						<type>float</type>
-						<description>
-							End axial point in m for the distribution of cells provided by fn_z.
-						</description>
-						<name>gc_n</name>
-						<default>1e-4</default>
-						<type>float</type>
-						<description>
-							Guard cell size for the north boundary in m.
-						</description>
-						<name>gc_s</name>
-						<default>1e-4</default>
-						<type>float</type>
-						<description>
-							Guard cell size for the south boundary in m.
-						</description>
-						<name>gc_w</name>
-						<default>1e-4</default>
-						<type>float</type>
-						<description>
-							Guard cell size for the west boundary in m.
-						</description>
-						<name>gc_e</name>
-						<default>1e-4</default>
-						<type>float</type>
-						<description>
-							Guard cell size for the east boundary in m.
-						</description>
-						<name>nExternalRegions</name>
-						<default>10</default>
-						<type>integer</type>
-						<description>
-							Number of external regions to be used in the grid.
-						</description>
-						<name>nNodesInRegion</name>
-						<default>0</default>
-						<type>integer array of size nExternalRegions</type>
-						<description>
-							Number of nodes per region. Minimum of 3 is required per region.
-						</description>
-						<name>regionR</name>
-						<default>0.0</default>
-						<type>float array of size nNodesInRegion,nExternalRegions</type>
-						<description>
-							Radial positions in m of the nodes defininig the external region
-						</description>
-						<name>regionZ</name>
-						<default>0.0</default>
-						<type>float array of size nNodesInRegion,nExternalRegions</type>
-						<description>
-							Axial positions in m of the nodes defininig the external region
-						</description>
-						<name>startCellR</name>
-						<default>-1</default>
-						<type>integer array of size nExternalRegions</type>
-						<description>
-							Radial starting index of the node on the B2.5 boundary for the region.
-						</description>
-						<name>startCellZ</name>
-						<default>-1</default>
-						<type>integer array of size nExternalRegions</type>
-						<description>
-							Axial starting index of the node on the B2.5 boundary for the region.
-						</description>
-						<name>endCellR</name>
-						<default>-1</default>
-						<type>integer array of size nExternalRegions</type>
-						<description>
-							Radial final index of the node on the B2.5 boundary for the region.
-						</description>
-						<name>endCellZ</name>
-						<default>-1</default>
-						<type>integer array of size nExternalRegions</type>
-						<description>
-							Axial final index of the node on the B2.5 boundary for the region.
-						</description>
-					<switch>
-				</switchgroup>
-			</category>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -6297,7 +6071,7 @@
 						20 : feedback boundary condition with constant temperature, as per type [16] but with 'type20_' switches and a different feedback scheme.
 						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
 							ENEPAR(,1) specifies the desired electron temperature in eV.
-							ENEPAR(,2) is the strength of the feedback
+							ENEPAR(,2) is the strength of the feedback.
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
 						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature in eV.
 				</description>
@@ -6359,7 +6133,7 @@
 						10 : feedback option for core [not yet tested!!!!!!!!!] (based on using cbsch(0,coreregno))
 						11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
 						12 : Imposes the currents due to drifts for the South core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
-						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2.
 						15 : potential profile is read from POT_FN file. Only available for E and W boundaries.
 						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
 							Still experimental, will not work for drift cases.
@@ -6473,7 +6247,6 @@
 					Row number of top right corner of the dead region (iiso).
 				</description>
 			</switch>
-
 			<switch>
 				<name>BOUNDARY_FILENAME</name>
 				<default>b2.boundary.parameters</default>
@@ -8009,6 +7782,310 @@
 				<type>real*8 array of size(0:NS-1)</type>
 				<description>
 					Scaling factors for rtbr: bremsstrahlung radiation rates of species (is).
+				</description>
+			</switch>
+		</category>
+		<category name="linear.geometry">
+			<introduction>
+				<namelist>GRID</namelist>
+				<description>
+					These switches are used to produce a geometry for a linear device.
+				</description>
+			</introduction>
+			<switch>
+				<name>NCOIL</name>
+				<default>20</default>
+				<type>integer</type>
+				<description>
+					Number of coils in the device. For each coils the switches R1, Z1, R2, Z2, CURRENT, windings and nlayers have to be provided.
+				</description>
+			</switch>
+			<switch>
+				<name>R1</name>
+				<default>0.0</default>
+				<type>real array of length NCOIL</type>
+				<description>
+					Inner radius of the coil in units of m.
+				</description>
+			</switch>
+			<switch>
+				<name>Z1</name>
+				<default>0.0</default>
+				<type>real array of length NCOIL</type>
+				<description>
+					Axial start position of the coil in units of m.
+				</description>
+			</switch>
+			<switch>
+				<name>R2</name>
+				<default>0.0</default>
+				<type>real array of length NCOIL</type>
+				<description>
+					Outer radius of the coil in units of m.
+				</description>
+			</switch>
+			<switch>
+				<name>Z2</name>
+				<default>0.0</default>
+				<type>real array of length NCOIL</type>
+				<description>
+					Axial end position of the coil in units of m.
+				</description>
+			</switch>
+			<switch>
+				<name>CURRENT</name>
+				<default>0.0</default>
+				<type>real array of length NCOIL</type>
+				<description>
+					Current in the coil in units of A.
+				</description>
+			</switch>
+			<switch>
+				<name>WINDINGS</name>
+				<default>0</default>
+				<type>integer array of length NCOIL</type>
+				<description>
+					Number of windigs of each coil.
+				</description>
+			</switch>
+			<switch>
+				<name>LAYERS</name>
+				<default>5</default>
+				<type>integer array of length NCOIL</type>
+				<description>
+					Number of layers to divide each coil in the radial direction.
+				</description>
+			</switch>
+			<switch>
+				<name>STEPSIZE</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Initial spacial step size used in the calculation of the field in units of m.
+				</description>
+			</switch>
+			<switch>
+				<name>BTOR</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Toroidal magnetic field in units of T.
+				</description>
+			</switch>
+			<switch>
+				<name>FN_Z</name>
+				<default>z.dat</default>
+				<type>character</type>
+				<description>
+					Two column file with the profile of axial cell size in the numerical space. First line of the file determine the number of rows to read.
+				</description>
+			</switch>
+			<switch>
+				<name>FN_R</name>
+				<default>r.dat</default>
+				<type>character</type>
+				<description>
+					Two column file with the profile of radial cell size in the numerical space. First line of the file determine the number of rows to read.
+				</description>
+			</switch>
+			<switch>
+				<name>R_NE</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Radial position in m of the northeastmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>Z_NE</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Axial position in m of the northeastmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>R_SE</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Radial position in m of the southeastmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>Z_SE</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Axial position in m of the southeastmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>R_SW</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Radial position in m of the southwestmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>Z_SW</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Axial position in m of the southwestmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>R_NW</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Radial position in m of the northwestmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>Z_NW</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Axial position in m of the northwestmost point of the plasma region.
+				</description>
+			</switch>
+			<switch>
+				<name>R_START</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Starting radial point in m for the distribution of cells provided by fn_r.
+				</description>
+			</switch>
+			<switch>
+				<name>R_END</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					End radial point in m for the distribution of cells provided by fn_r.
+				</description>
+			</switch>
+			<switch>
+				<name>Z_START</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Starting axial point in m for the distribution of cells provided by fn_z.
+				</description>
+			</switch>
+			<switch>
+				<name>Z_END</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					End axial point in m for the distribution of cells provided by fn_z.
+				</description>
+			</switch>
+			<switch>
+				<name>GC_N</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Guard cell size for the North boundary in m.
+				</description>
+			</switch>
+			<switch>
+				<name>GC_S</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Guard cell size for the South boundary in m.
+				</description>
+			</switch>
+			<switch>
+				<name>GC_W</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Guard cell size for the West boundary in m.
+				</description>
+			</switch>
+			<switch>
+				<name>GC_E</name>
+				<default>1.0e-4</default>
+				<type>real</type>
+				<description>
+					Guard cell size for the East boundary in m.
+				</description>
+			</switch>
+			<switch>
+				<name>nExternalRegions</name>
+				<default>10</default>
+				<type>integer</type>
+				<description>
+					Number of external regions to be used in the grid.
+				</description>
+			</switch>
+			<switch>
+				<name>nNodesInRegion</name>
+				<default>0</default>
+				<type>integer array of size nExternalRegions</type>
+				<description>
+					Number of nodes per region. Minimum of 3 is required per region.
+				</description>
+			</switch>
+			<switch>
+				<name>regionR</name>
+				<default>0.0</default>
+				<type>real array of size nNodesInRegion,nExternalRegions</type>
+				<description>
+					Radial positions in m of the nodes defininig the external region
+				</description>
+			</switch>
+			<switch>
+				<name>regionZ</name>
+				<default>0.0</default>
+				<type>real array of size nNodesInRegion,nExternalRegions</type>
+				<description>
+					Axial positions in m of the nodes defininig the external region
+				</description>
+			</switch>
+			<switch>
+				<name>startCellR</name>
+				<default>-1</default>
+				<type>integer array of size nExternalRegions</type>
+				<description>
+					Radial starting index of the node on the B2.5 boundary for the region.
+				</description>
+			</switch>
+			<switch>
+				<name>startCellZ</name>
+				<default>-1</default>
+				<type>integer array of size nExternalRegions</type>
+				<description>
+					Axial starting index of the node on the B2.5 boundary for the region.
+				</description>
+			</switch>
+			<switch>
+				<name>endCellR</name>
+				<default>-1</default>
+				<type>integer array of size nExternalRegions</type>
+				<description>
+					Radial final index of the node on the B2.5 boundary for the region.
+				</description>
+			</switch>
+			<switch>
+				<name>endCellZ</name>
+				<default>-1</default>
+				<type>integer array of size nExternalRegions</type>
+				<description>
+					Axial final index of the node on the B2.5 boundary for the region.
+				</description>
+			</switch>
+			<switch>
+				<name>WRITE_NML_LD</name>
+				<default>.false.</default>
+				<type>logical</type>
+				<description>
+					If .true., writes the content of the namelist to stdout after it has been read.
 				</description>
 			</switch>
 		</category>

@@ -34,7 +34,7 @@
 *     current: the current through the coil in units of A
 *     nlayers: number of layers for each coil
 *     windings: the number of windings
-*     bTor: torodial magnetic field in units of T
+*     bTor: toroidal magnetic field in units of T
 *     For the iterative process
 *     stepsize: the initial spacial step size used in calculating the field lines
 *     Also the names of the 2-column files consisting of the profiles for
@@ -58,9 +58,7 @@
       integer, intent(in):: nx, ny
       integer, intent(inout):: istyle
       logical :: ex
-      integer :: ix, iy, nr, nz
-      real (kind=R8) :: foo
-      real (kind=R8) :: r_min
+      integer :: nr, nz
       real (kind=R8) :: r_max
       real (kind=R8), allocatable :: mr(:) !!@param starting positions in radial direction
       real (kind=R8), allocatable :: mz(:) !!@param starting positions in axial direction
@@ -155,11 +153,10 @@
       real (kind=R8) :: meshOut(0:nx,0:ny, 0:1)
 
 *local variables
-      integer :: dir, ix, iy, z_index
+      integer :: ix, iy
       real (kind=R8) :: step, eps,
      *     rEast, rWest, zEast, zWest, r, z,
      *     rEastOld, rWestOld, zEastOld, zWestOld
-      real (kind=R8) :: zPositions(0:nx)
       external xertst
 
       eps = 1.0e-7_R8
@@ -262,7 +259,6 @@
       implicit none
 
 *input variables
-      integer index
       real (kind=R8), INTENT(IN) :: r_in, z_in !initial position, during calculation updated, following the fieldline
       real (kind=R8), intent(in) :: lr0, lz0 , lr1, lz1 ! line to which has to be calculated
       real (kind=R8), INTENT(IN) :: step !stepsize (positive or negative, depending on direction
@@ -379,7 +375,6 @@
       use b2mod_ld_namelist
       use b2mod_constants
       implicit none
-      integer ncoils
       real (kind=R8) :: r,z
 
 *output variables
@@ -435,7 +430,7 @@
 
 *local variables
       integer cntr, cntr_max
-      real (kind=R8) :: tmp1, tmp2, eps, a, b, b0, c, d, d0, m, n, p,
+      real (kind=R8) :: tmp1, eps, a, b, b0, c, d, d0, m, n, p,
      *     xmn, xmp
 *.computation
       cntr_max=50
