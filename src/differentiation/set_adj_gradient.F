@@ -4,6 +4,7 @@
       use b2mod_transport_namelist_diff
       use b2mod_input_profile_diff
       use b2mod_boundary_namelist_diff
+      use b2mod_neutrals_namelist_diff
       use b2mod_switches_diff
       implicit none
       integer :: npar
@@ -24,44 +25,87 @@
         else
 !         non spatially dependent --> specified in b2tqna
           select case (partype(ip))
-          case (1) ! dna
+          ! transport coefficients
+          case (1)
             grad(idir) = parm_dnab(paris(ip))
-          case (2) ! dpa
+          case (2)
             grad(idir) = parm_dpab(paris(ip))
-          case (3) ! hci
+          case (3)
             grad(idir) = parm_hcib(paris(ip))
-          case (4) ! hce
+          case (4)
             grad(idir) = parm_hceb
-          case (5) ! vla
+          case (5)
             grad(idir) = parm_vlab(paris(ip))
-          case (7) ! vsa
+          case (7)
             grad(idir) = parm_vsab(paris(ip))
-          case (8) ! sig
+          case (8)
             grad(idir) = parm_sigb
-          case (9) ! alf
+          case (9)
             grad(idir) = parm_alfb
-          case (10) ! enkpar(1,1)
-            grad(idir) = enkparb(parib(ip),1)
-          case (11) ! b2sikt_fac_sheath
-            grad(idir) = switchdiff%b2sikt_fac_sheath
-          case (12) ! b2sikt_fac_sheath_core
-            grad(idir) = switchdiff%b2sikt_fac_sheath_core
-          case (13) ! keps_cd
-            grad(idir) = switchdiff%keps_cd
-          case (14) ! keps_heat
-            grad(idir) = switchdiff%keps_heat
-          case (15) ! keps_heat_i
-            grad(idir) = switchdiff%keps_heat_i
-          case (16) ! enepar
+          ! boundary conditions
+          case (10)
             grad(idir) = eneparb(parib(ip),1)
-          case (17) ! enipar
+          case (11)
             grad(idir) = eniparb(parib(ip),1) 
-          case (18) ! conpar
+          case (12)
             grad(idir) = conparb(paris(ip),parib(ip),1)
-          case (19) ! mompar
+          case (13)
             grad(idir) = momparb(paris(ip),parib(ip),1)
-          case (20) ! potpar
+          case (14)
             grad(idir) = potparb(parib(ip),1) 
+          case (15)
+            grad(idir) = enkparb(parib(ip),1)
+          ! recycling
+          case (16)
+            grad(idir) = b2recycb(paris(ip),parib(ip))
+          ! ballooning
+          case (17)
+            grad(idir) = switchdiff%b2tqna_ballooning
+          case (18)
+            grad(idir) = switchdiff%b2tqna_ballooning_rescale
+          ! k-model switches
+          case (19)
+            grad(idir) = switchdiff%keps_cd
+          case (20)
+            grad(idir) = switchdiff%keps_heat
+          case (21)
+            grad(idir) = switchdiff%keps_heat_i
+          case (22)
+            grad(idir) = switchdiff%keps_sig
+          case (23)
+            grad(idir) = switchdiff%keps_alf
+          case (24)
+            grad(idir) = switchdiff%keps_visc
+          case (25)
+            grad(idir) = switchdiff%keps_dkt
+          case (26)
+            grad(idir) = switchdiff%keps_dzt
+          case (27)
+            grad(idir) = switchdiff%b2sikt_fac_diss
+          case (28)
+            grad(idir) = switchdiff%b2sikt_fac_diss_core 
+          case (29)
+            grad(idir) = switchdiff%b2sikt_fac_sheath
+          case (30)
+            grad(idir) = switchdiff%b2sikt_fac_sheath_core
+          case (31)
+            grad(idir) = switchdiff%keps_shear
+          case (32)
+            grad(idir) = switchdiff%b2tfhi_fsigkt
+          case (33)
+            grad(idir) = switchdiff%b2sikt_fac_vis_RS
+          case (34)
+            grad(idir) = switchdiff%b2tfhi_fflokt
+          case (35)
+            grad(idir) = switchdiff%b2tfhi_fconkt
+          case (36)
+            grad(idir) = switchdiff%b2tfhi_fflozt
+          case (37)
+            grad(idir) = switchdiff%b2tfhi_fconzt
+          case (38)
+            grad(idir) = switchdiff%b2tfhi_fkt_hie
+          case (39)
+            grad(idir) = switchdiff%b2tfhe_vis_kt
           case default
             write(*,*) partype(ip)
             call xerrab ('partype out of bounds')
