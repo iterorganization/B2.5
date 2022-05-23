@@ -3425,7 +3425,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             endif
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename = con_fn(ib)
+            filename = con_fn(IS,ib)
             call find_file(filename, ex)
      
             call read_profile(filename,BCSTART(IB),BCEND(IB),
@@ -3542,7 +3542,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           endif
 
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename = con_fn(ib)
+            filename = con_fn(IS,ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),0)
@@ -4557,7 +4557,7 @@ cxpb  and max(,,) statement for stability
             endif
   	  endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename = mom_fn(ib)
+            filename = mom_fn(IS,ib)
             call find_file(filename, ex)
 
             call read_profile(filename,BCSTART(IB),BCEND(IB),
@@ -4617,13 +4617,13 @@ cxpb  and max(,,) statement for stability
      2         'BCMOM = 19, BCCON should be 1, 28 or 30!')
 
           !Read density profile
-          filename = con_fn(ib)
+          filename = con_fn(IS,ib)
           call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),2)
 
           !Read velocity profile
-          filename = mom_fn(ib)
+          filename = mom_fn(IS,ib)
           call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),3)
@@ -4661,9 +4661,8 @@ cxpb  and max(,,) statement for stability
 * of the computational domain of a linear plasma generator.
 *
 *     The parallel velocity is based on the temperature and a prescribed mach number.
-*     Since the profile is supposed to be the inlet profile, we assume gamma=1.0.
-*          v(r) = mompar(,,1) * \sqrt(KBolt * (T_e + \gamma T_i) / m_i), T_e, T_i in K
-*                  = mompar(,,1) * \sqrt(ev * (T_e + T_i)) / m_i,  T_e, T_i in eV
+*          v(r) = mompar(,,1) * \sqrt(KBolt * (T_e + \gamma_i T_i)  / m_i), T_e, T_i in K
+*               = mompar(,,1) * \sqrt(ev *    (T_e + \gamma_i T_i)) / m_i,  T_e, T_i in eV
 *
 *     Created by Rob Wieggers (FOM Rijnhuizen)
 * ---------------------------------------------------------------------
@@ -4672,6 +4671,7 @@ cxpb  and max(,,) statement for stability
             write(*,*) ' Parallel velocity at Mach = ', 
      1           MOMPAR(IS,IB,1),' on ',
      2           BCCHAR(IB),boundary_location(ib),' for species ',IS
+     3         
             call xertst(MOMPAR(IS,IB,1).ge.-1.0_R8,
      1           'BCMOM = 20, MOMPAR(,,1) < -1')
             call xertst(MOMPAR(IS,IB,1).le.1.0_R8,
@@ -4683,7 +4683,7 @@ cxpb  and max(,,) statement for stability
               SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) = 
      .         UBIG*NE00*AM(IS) *
      .         sqrt(ev*(te(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) + 
-     .             ti(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))/mp) *
+     .             GAMMAI*ti(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))/mp) *
      .         MOMPAR(IS,IB,1)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)= 
      .        -UBIG*NE00*AM(IS)*
@@ -4738,7 +4738,7 @@ cxpb  and max(,,) statement for stability
   	  endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
             !Read velocity gradient from file
-            filename = mom_fn(ib)
+            filename = mom_fn(IS,ib)
             call find_file(filename, ex)
 
             call read_profile(filename,BCSTART(IB),BCEND(IB),
@@ -10162,6 +10162,11 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
         else
           call xerrab ('B2STBC -- BCPOT=13, NOT AVAILABLE FOR W,E')
         endif
+
+* -- BCPOT=14 -- Nothing implemented
+
+      case (14)
+        CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR S,N,W,E')
 
 * -- BCPOT=15 -- Potential profile is read from file
 *-----------------------------------------------------------------------

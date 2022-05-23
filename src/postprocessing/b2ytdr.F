@@ -2423,9 +2423,14 @@ c 2002-09-11: logic revised
         write(99,'(1x,a,l1,a,l1,a)')
      .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
+        write(hlp_frp,'(a, i2,a)') '(1x,a,i2,a,',ns1,'(1x,a,'',''))'
+        do ib = 1, nbc1
+          write(99,hlp_frp) 'CON_FN(0,',ib,')=', 
+     .                      (CON_FN(is,ib), is=0, ns1-1)
+          write(99,hlp_frp) 'MOM_FN(0,',ib,')=', 
+     .                      (MOM_FN(is,ib), is=0, ns1-1)
+        end do
         write(hlp_frm,'(a, i2,a)') '(1x,a,',nbc1,'(1x,a,'',''))'
-        write(99,hlp_frm) 'CON_FN=', (CON_FN(ib), ib=1, nbc1)
-        write(99,hlp_frm) 'MOM_FN=', (MOM_FN(ib), ib=1, nbc1)
         write(99,hlp_frm) 'ENE_FN=', (ENE_FN(ib), ib=1, nbc1)
         write(99,hlp_frm) 'ENI_FN=', (ENI_FN(ib), ib=1, nbc1)
         write(99,hlp_frm) 'POT_FN=', (POT_FN(ib), ib=1, nbc1)

@@ -6234,7 +6234,7 @@
 						26 : feedback boundary condition: prescribe the total ion flux and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=22 fails). It is recommended to use this boundary condition together with a corresponding condition on the ion temperature (BCENI=26,27). The total desired flux is summed over all BCCON=26 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>.
 						27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density of the ionisation state to which the BCCON=27 condition is applied. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. For main ions and low Z impurities, it is recommended to set BCCON=27 for the highest ionisation state. For high Z impurities, if the ionisation potential of the highest ionisation state of the given isonuclear sequence is much larger than the expected core plasma temperature, the BCCON=27 condition should be set for the ionisation state for which the density is expected to be maximal. For ionisation states higher than that one, it is recommended to set BCCON=2 with CONPAR=0.0, since their densities are expected to be negligible, and BCCON=2 with CONPAR=0.0 seems to be the safest boundary condition for low density species.
 						28 : density is read from the CON_FN file. If CONPAR(,,2) > 0 the profile is scaled so CONPAR(,,1) gives the maximum density. Values for the density are given in m<sup>-3</sup>.
-						29 : presure is prescribed from the CONPAR(,,1).
+						29 : presure is prescribed from the CONPAR(,,1) in Pa.
 						30 : The particle flux per unit area is read from the CON_FN file. If CONPAR(,,2) > 0 the profile is scaled so CONPAR(,,1) gives the maximum particle flux per unit area. Values for the density are given in m<sup>-2</sup>s<sup>-1</sup>.
 				</description>
 			</switch>
@@ -6263,10 +6263,10 @@
 						15 : prescribe the value of the parallel velocity, scaled with B_average/B_local
 						16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
 						17 : leakage option for parallel momentum, MOMPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s,a</sub> m<sub>a</sub> n<sub>a</sub> u<sub>a</sub>
-						18 : reads parallel velocity profile from the specified file in MOM_FN. If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity is given by MOMPAR(,,1). Only available for E and W boundaries.
-						19 : reads the momntum fllux profile from MOM\_FN. This has to be used in combination with BCCON = 1, 28, 30 and BCENI = 15. Only available for E and W boundaries.
+						18 : reads parallel velocity profile in units of m.s<sup>-1</sup> from the specified file in MOM_FN. If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity is given by MOMPAR(,,1) in m.s<sup>-1</sup>. Only available for E and W boundaries.
+						19 : reads the momentum fllux profile from MOM\_FN in units of m<sup>-2</sup>.s<sup>-1</sup>. This has to be used in combination with BCCON = 1, 28, 30 and BCENI = 15. Only available for E and W boundaries.
 						20 : reads the Mach number from the MOM_FN file. Velocity is calculated with the temperature at the boundary and &gamma_i; = 1. Only available for E and W boundaries.
-						21 : reads the parallel velocity gradient from the MOM_FN file.  If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity gradient is given by MOMPAR(,,1). Only available for E and W boundaries.
+						21 : reads the parallel velocity gradient from the MOM_FN file in units of s<sup>-1</sup>.  If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity gradient is given by MOMPAR(,,1). Only available for E and W boundaries.
 				</description>
 			</switch>
 			<switch>
@@ -6299,7 +6299,7 @@
 							ENEPAR(,1) specifies the desired electron temperature in eV.
 							ENEPAR(,2) is the strength of the feedback
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
-						23 : electron temperature profile is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature.
+						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature in eV.
 				</description>
 			</switch>
 
@@ -6337,7 +6337,7 @@
 						25 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away. ENIPAR(,1) specifies the desired ion temperature in eV. ENIPAR(,2) is the strength of the feedback
 						26 : prescribe the poloidally averaged value of the ion temperature and introduce a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=23 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The average is taken over all core boundaries with BCENI=26. ENIPAR(,1) specifies the temperature in eV
 						27 : feedback boundary condition with prescribed total ion heat flux, constant poloidally averaged ion temperature and a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=24 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The flux is summed over all core boundaries with BCENI=27. ENIPAR(,1) specifies the energy flux in W
-						28 : ion temperature profile is read from the ENI_FN file. If ENIPAR(,,2) > 0 the profile is scaled so ENIPAR(,,1) provides the maximum ion temperature.
+						28 : ion temperature profile in eV is read from the ENI_FN file. If ENIPAR(,,2) > 0 the profile is scaled so ENIPAR(,,1) provides the maximum ion temperature in eV.
 				</description>
 			</switch>
 			<switch>
@@ -6363,7 +6363,7 @@
 						15 : potential profile is read from POT_FN file. Only available for E and W boundaries.
 						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
 							Still experimental, will not work for drift cases.
-						17 : Sheath condition for floating target. This BC provides a floating target wiht a neat zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess of the target potential and to store the value during the iterative process.
+						17 : Sheath condition for floating target. This BC provides a floating target wiht a neat zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
 							POTPAR(,,1) specifies the desired potential in V.
 							POTPAR(,,2) is the strength of the feedback
@@ -6521,7 +6521,7 @@
 			<switch>
 				<name>CON_FN</name>
 				<default>b2.con.profile</default>
-				<type>character*256 array of length NBC</type>
+				<type>character*256 array of length NS * NBC</type>
 				<description>
 					List of boundary profile files to be imposed as boundary conditions for the density.
 				</description>
@@ -6529,7 +6529,7 @@
 			<switch>
 				<name>MOM_FN</name>
 				<default>b2.mom.profile</default>
-				<type>character*256 array of length NBC</type>
+				<type>character*256 array of length NS * NBC</type>
 				<description>
 					List of boundary profile files to be imposed as boundary conditions for the parallel velocity.
 				</description>
