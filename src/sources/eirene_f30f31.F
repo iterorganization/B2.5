@@ -1,6 +1,6 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm, 
      &                           pl, dv, BoRiS, kin_frac_hyb,
-     &                           fnn_inc)
+     &                           fluid_frac_hyb,fnn_inc)
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -69,7 +69,8 @@
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
       real (kind=R8) :: wght(nFc,2)
-      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
+      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),
+     &                   fluid_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
@@ -236,7 +237,7 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
             fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
      .                            nafsqalf(1:nFc,1,is)
             call intcell(nFc,nCv,mpg,mpg%intcellR,
-     .              fna_tmp(1:nFc,1,is),vvc(1:nFc,is))
+     .              fna_tmp(1:nFc,1,is),vvc(1:nCv,is))
           endif
         enddo
       endif
@@ -444,14 +445,19 @@ c we derive the guard cell value from its neighbouring interior cell
           trgt(istra)%fsh(i) = delta_sheathb(iFc)
           do ifl = 1, nflai
             trgt(istra)%dnit(i,ifl) = dnib(ic,ifl)
-            if (zab(ifl).ne.0) then !! ion species
+            if (zab(ifl).ne.0.and.mol(istra).eq.0) then !! ion species
               trgt(istra)%flux(i,ifl) = fnib(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            elseif (mol(istra).eq.0) then !! neutral atom species
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.0) then !! neutral atom species
               trgt(istra)%flux(i,ifl) = fnn_inc_b(iFc,ifl)*
      &                mpg%rcFcOr(ian+i-1)*kin_frac_hyb(iFc)
-            else                          !! neutral molecule species
-              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)
+            elseif (zab(ifl).eq.0.and.mol(istra).eq.1) then     !! neutral molecule species
+              trgt(istra)%flux(i,ifl) = 2.0_R8*fnn_mol_b(iFc,ifl)*
+     &                                  fluid_frac_hyb(iFc)
+            else
+              if (fnn_mol_b(iFc,ifl).gt.0) then
+                call xerrab ('no molecular contribution expected here')
+              endif
             endif
             if (trgt(istra)%flux(i,ifl).lt.0.0_R8) then
               write(*,*) 'negative flux !! istra, i, ifl = ',istra,i,ifl
@@ -618,3 +624,4 @@ c
       end do   ! istra
       return
       end subroutine write_f31
+      
