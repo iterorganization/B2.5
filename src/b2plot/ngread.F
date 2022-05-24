@@ -104,7 +104,7 @@ c
 * neutral atoms
 C
       do 11 IS = 1, NATMI
-        READ(44,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        READ(44,'(A)',END=99,ERR=99) TEXTAN(IS-1)
         charns=textan(is-1)(1:3)
         call strip_spaces(charns)
         atoms_list(is)=charns(1:2)
@@ -116,13 +116,13 @@ C
 * neutral molecules
 C
       do 12 IS = 1, NMOLI
-        READ(44,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
+        READ(44,'(A)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
 C
 * test ions
 C
       do 13 IS = 1, NIONI
-        READ(44,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
+        READ(44,'(A)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
 C
 * data

@@ -182,7 +182,7 @@ c
       character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
-      integer is, iss, isp, is2
+      integer is, iss, isp, is2, iatm
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -196,14 +196,14 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done
-      logical open_file, streql
+      logical open_file, streql, isaletter
       integer len_of_digits
       real (kind=R8) ::
      *   qevap, qrad,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external open_file, streql,
+      external open_file, streql, isaletter,
      *   xertst, xerrab, ipgetr, ipgeti, len_of_digits,
      *   qevap, qrad,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
@@ -1800,7 +1800,7 @@ c
           nz=1
           call copy(fhet(:,:,0),1.0_R8,nz,textbl)
         case('fhety')
-        description='Radial electron energy flux [fhety] (W)'
+          description='Radial electron energy flux [fhety] (W)'
           nz=1
           call copy(fhet(:,:,1),1.0_R8,nz,textbl)
         case('fhix')
@@ -5594,64 +5594,69 @@ c     assumes that bb is OK for 1d cases
           if(b2plot_debug.ge.12)
      &     write(*,*) iistack,irstack,isstack,iwrk,iwwrk,stack_req
           if(bad_args(stack_req)) write(*,*) 'Sorry!'
-          do is=1,natmi
-            do iss=0,ns-1
-              stmp1=''
-              i=1
-              j=0
-              do while (i.le.len(textpl(iss)))
-                cc=textpl(iss)(i:i)
-                if (cc.eq.'^'.or.cc.eq.'{'.or.cc.eq.'}'.or.
-     &             (cc.eq.' '.and.i.gt.1) ) then
-                  i=i+1
-                else if (cc.ge.'A'.and.cc.le.'Z') then
-                  i=i+1
-                  j=j+1
-                  stmp1(j:j)=char(ichar(cc)-ichar('A')+ichar('a'))
-                else
-                  i=i+1
-                  j=j+1
-                  stmp1(j:j)=cc
-                endif
-              enddo
-              stmp2=trim(textan(is-1))//'0'
-              call lower_case(stmp2)
-              if(is_neutral(iss) .and. streql(stmp1,stmp2)) then
+          do is=0,ns-1
+            if (is_neutral(is)) then
+              mach(:,:,is)=na(:,:,is)
+              ua(:,:,is)=ua(:,:,is)*na(:,:,is)
+              up(:,:,is)=up(:,:,is)*na(:,:,is)
+              vv(:,:,is)=vv(:,:,is)*na(:,:,is)
+              do iatm=1,natmi
+                if (latmscl(iatm).ne.b2espcr(is)) cycle
+                stmp2=trim(textan(iatm-1))
+                if (isaletter(stmp2(lnblnk(stmp2):lnblnk(stmp2))))
+     >           stmp2=stmp2(1:lnblnk(stmp2))//'0'
                 write(*,'(5a,i3,a,i3,a)')
      .           'We seem to have found a match between ',
-     &            trim(textpl(iss)),' and ',
-     &            trim(textan(is-1))//'0',
-     &           '  (',iss,' & ',is,')'
+     &            trim(textpl(is)),' and ',trim(stmp2),
+     &           '  (',is,' & ',iatm,')'
                 do iy=-1,ny
                   do ix=-1,nx
-                    if (maxval(abs(pfluxa)).gt.0.0_R8) then
-                      fna(ix,iy,0,iss)=fna(ix,iy,0,iss)+
-     &                 pfluxa(ix+1,iy+1,is,1)*gs(ix,iy,0)*qz(ix,iy,1)
-                      fnax(ix,iy,iss)=fna(ix,iy,0,iss)
-                      fna(ix,iy,1,iss)=fna(ix,iy,1,iss)+
-     &                 rfluxa(ix+1,iy+1,is,1)*gs(ix,iy,1)
-                      fnay(ix,iy,iss)=fna(ix,iy,1,iss)
-                      ua(ix,iy,iss)=(ua(ix,iy,iss)*na(ix,iy,iss)+
-     &                  pfluxa(ix+1,iy+1,is,1)*bb(ix,iy,0)/bb(ix,iy,3))/
-     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
-                      uutraj(ix,iy,iss)=ua(ix,iy,iss)
-                      up(ix,iy,iss)=(up(ix,iy,iss)*na(ix,iy,iss)+
-     &                  pfluxa(ix+1,iy+1,is,1))/
-     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
-                      arrowx(ix,iy,iss)=up(ix,iy,iss)
-                      vv(ix,iy,iss)=(vv(ix,iy,iss)*na(ix,iy,iss)+
-     &                      rfluxa(ix+1,iy+1,is,1))/
-     &                     (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
-                      arrowy(ix,iy,iss)=vv(ix,iy,iss)
-                      vvtraj(ix,iy,iss)=vv(ix,iy,iss)
-                    endif
-                    na(ix,iy,iss)=na(ix,iy,iss)+
-     &                            dab2(ix+1,iy+1,is,1)
-                    ro(ix,iy,iss)=am(iss)*mp*na(ix,iy,iss)
+                    mach(ix,iy,is)=mach(ix,iy,is)+dab2(ix+1,iy+1,iatm,1)
                   enddo
                 enddo
-              endif
-            enddo
+                if (maxval(abs(pfluxa(:,:,iatm,1))).gt.0.0_R8) then
+                  do iy=-1,ny
+                    do ix=-1,nx
+                      fna(ix,iy,0,is)=fna(ix,iy,0,is)+
+     &                 pfluxa(ix+1,iy+1,iatm,1)*gs(ix,iy,0)*qz(ix,iy,1)
+                      ua(ix,iy,is)=ua(ix,iy,is)+
+     &                 pfluxa(ix+1,iy+1,iatm,1)*bb(ix,iy,0)/bb(ix,iy,3)
+                      up(ix,iy,is)=up(ix,iy,is)+pfluxa(ix+1,iy+1,iatm,1)
+                    enddo
+                  enddo
+                endif
+                if (maxval(abs(rfluxa(:,:,iatm,1))).gt.0.0_R8) then
+                  do iy=-1,ny
+                    do ix=-1,nx
+                      fna(ix,iy,1,is)=fna(ix,iy,1,is)+
+     &                 rfluxa(ix+1,iy+1,iatm,1)*gs(ix,iy,1)
+                      vv(ix,iy,is)=vv(ix,iy,is)+rfluxa(ix+1,iy+1,iatm,1)
+                    enddo
+                  enddo
+                endif
+              enddo
+              na(:,:,is)=mach(:,:,is)
+              do iy=-1,ny
+                do ix=-1,nx
+                  if(na(ix,iy,is).gt.0.0_R8) then
+                    ua(ix,iy,is)=ua(ix,iy,is)/na(ix,iy,is)
+                    up(ix,iy,is)=up(ix,iy,is)/na(ix,iy,is)
+                    vv(ix,iy,is)=vv(ix,iy,is)/na(ix,iy,is)
+                  else
+                    ua(ix,iy,is)=0.0_R8
+                    up(ix,iy,is)=0.0_R8
+                    vv(ix,iy,is)=0.0_R8
+                  endif
+                enddo
+              enddo
+              fnax(:,:,is)=fna(:,:,0,is)
+              fnay(:,:,is)=fna(:,:,1,is)
+              arrowx(:,:,is)=up(:,:,is)
+              arrowy(:,:,is)=vv(:,:,is)
+              uutraj(:,:,is)=ua(:,:,is)
+              vvtraj(:,:,is)=vv(:,:,is)
+              ro(:,:,is)=am(is)*mp*na(:,:,is)
+            endif
           enddo
           eirc_done=.true.
           return
