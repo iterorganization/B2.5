@@ -2031,6 +2031,10 @@ c 2002-09-11: logic revised
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,mompar(0,ib,1))
           call convert_bundle_r
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,mompar(0,ib,2))
+          call convert_bundle_profile
+     .     (nout(5),ns1,ns,nsm,bundle_frac,con_fn(0,ib))
+          call average_bundle_profile
+     .     (nout(5),ns1,ns,nsm,bundle_frac,mom_fn(0,ib))
           if (bcchar(ib).eq.'S') then
             bcpos1(ib) = conformal_convert(non_commensurate,
      .       2,bcstart(ib),bcpos(ib),nx,ny,nx1,ny1,2)
@@ -2439,7 +2443,7 @@ c 2002-09-11: logic revised
      .        any(bcmom(:,ib).eq.19)) then
             write(99,hlp_frm) 'CON_FN(0,',ib,')=''',
      .       (trim(CON_FN(is,ib)),is = 0,ns1-1)
-          else if (any(con_fn(:,ib).eq.'b2.con.profile')) then
+          else if (any(con_fn(:,ib).ne.'b2.con.profile')) then
             write(99,hlp_frm) 'CON_FN(0,',ib,')=''',
      .       (trim(CON_FN(is,ib)),is = 0,ns1-1)
           end if
@@ -2447,7 +2451,7 @@ c 2002-09-11: logic revised
      .        any(bcmom(:,ib).eq.21)) then
             write(99,hlp_frm) 'MOM_FN(0,',ib,')=',
      .       (trim(MOM_FN(is,ib)),is = 0,ns1-1)
-          else if (any(mom_fn(:,ib).eq.'b2.mom.profile')) then
+          else if (any(mom_fn(:,ib).ne.'b2.mom.profile')) then
             write(99,hlp_frm) 'MOM_FN(0,',ib,')=''',
      .       (trim(MOM_FN(is,ib)),is = 0,ns1-1)
           end if
@@ -13125,6 +13129,84 @@ cxpb We assign to the bundle the value from the highest species from that bundle
       return
       end subroutine convert_bundle_l
 
+      subroutine convert_bundle_profile
+     . (nunit,ns1,ns,nsm,bundle_frac,filenames)
+      use b2mod_types
+      implicit none
+      integer nunit, ns1, ns, nsm
+      real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1)
+      character*256 :: filenames(0:nsm-1)
+      integer idum, is, is1, isbegin, isend, iy, npoints
+      real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
+      character*256 :: fold(0:ns-1)
+      character*3 :: charns, charns1
+
+cxpb This is for converting the content of profile files.
+cxpb This routine is to be used if the profile files contain
+cxpb additive quantities such as densities.
+
+      fold(0:ns-1) = filenames(0:ns-1)
+      filenames(0:ns1-1) = ' '
+      do is1 = 0, ns1-1
+        npoints = 0
+        isbegin = -1
+        isend = -1
+        do is = 0, ns-1
+          if (bundle_frac(is1,is).gt.0.0_R8) then
+            if (isbegin.eq.-1) isbegin = is
+            isend = is
+          end if
+        end do
+        if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
+          filenames(is1) = fold(isbegin)
+        else if (isbegin.ne.-1) then
+cxpb need to write new file with weighted sum of profiles
+cxpb we check the profiles have the same size
+cxpb and use the positions from the last file read
+          write(charns ,'(i3.3)') isbegin
+          write(charns1,'(i3.3)') isend
+          filenames(is1) =
+     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
+          write(nunit,'(a)') trim(filenames(is1))
+          do is = isbegin, isend
+            open(99,file=fold(is1))
+            read(99,*,err=100,end=101) idum
+            if (npoints.eq.0) then
+              npoints = idum
+              allocate(pos(npoints))
+              allocate(values(npoints,isend-isbegin+1))
+              allocate(value1(npoints))
+            else
+              call xertst( idum.eq.npoints,
+     .         'Mismatched profile sizes, conversion case not coded !')
+            end if
+            do iy = 1, npoints
+              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+            end do
+            close(99)
+          end do
+          do iy = 1, npoints
+            value1(iy) = 0.0_R8
+            do is = isbegin, isend
+              value1(iy) = value1(iy) +
+     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
+            end do
+          end do
+          open(99,file=trim(filenames(is1)))
+          write(99,*) npoints
+          do iy = 1, npoints
+            write(99,*) pos(iy), value1(iy)
+          end do
+          close(99)
+          deallocate(pos,values,value1)
+        end if
+      end do
+
+      return
+  100 call xerrab('Could not read profile file !')
+  101 call xerrab('Premature end of profile file !')
+      end subroutine convert_bundle_profile
+
       subroutine average_bundle(ns1,ns,nsm,is_neutral1,bundle_frac,work)
       use b2mod_types
       use b2mod_b2cmpa
@@ -13136,7 +13218,8 @@ cxpb We assign to the bundle the value from the highest species from that bundle
      *   bundle_frac(0:ns1-1,0:ns-1), work(0:nsm-1),
      *   rold(0:ns-1), sum, value
 
-cxpb We assign to the new bundle a weighted average of the values from the old bundle
+cxpb We assign to the new bundle a weighted average of the values
+cxpb from the old bundle
 
       rold(0:ns-1)=work(0:ns-1)
       work(0:ns1-1)=0.0_R8
@@ -13179,6 +13262,90 @@ cxpb We assign to the new bundle a weighted average of the values from the old b
       return
       end subroutine average_bundle
 
+      subroutine average_bundle_profile
+     . (nunit,ns1,ns,nsm,bundle_frac,filenames)
+      use b2mod_types
+      implicit none
+      integer nunit, ns1, ns, nsm
+      real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1)
+      character*256 :: filenames(0:nsm-1)
+      integer idum, is, is1, isbegin, isend, iy, npoints
+      real (kind=R8) :: sum
+      real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
+      character*256 :: fold(0:ns-1)
+      character*3 :: charns, charns1
+
+cxpb This is for converting the content of profile files.
+cxpb This routine is to be used if the profile files contain
+cxpb intensive quantities such as velocities.
+
+      fold(0:ns-1) = filenames(0:ns-1)
+      filenames(0:ns1-1) = ' '
+      do is1 = 0, ns1-1
+        npoints = 0
+        isbegin = -1
+        isend = -1
+        sum = 0.0_R8
+        do is = 0, ns-1
+          if (bundle_frac(is1,is).gt.0.0_R8) then
+            sum = sum + bundle_frac(is1,is)
+            if (isbegin.eq.-1) isbegin = is
+            isend = is
+          end if
+        end do
+        if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
+          filenames(is1) = fold(isbegin)
+        else if (isbegin.ne.-1) then
+cxpb need to write new file with weighted average of profiles
+cxpb we check the profiles have the same size
+cxpb and use the positions from the last file read
+          write(charns ,'(i3.3)') isbegin
+          write(charns1,'(i3.3)') isend
+          filenames(is1) =
+     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
+          write(nunit,'(a)') trim(filenames(is1))
+          do is = isbegin, isend
+            open(99,file=fold(is1))
+            read(99,*,err=100,end=101) idum
+            if (npoints.eq.0) then
+              npoints = idum
+              allocate(pos(npoints))
+              allocate(values(npoints,isend-isbegin+1))
+              allocate(value1(npoints))
+            else
+              call xertst( idum.eq.npoints,
+     .         'Mismatched profile sizes, conversion case not coded !')
+            end if
+            do iy = 1, npoints
+              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+            end do
+            close(99)
+          end do
+          do iy = 1, npoints
+            value1(iy) = 0.0_R8
+            do is = isbegin, isend
+              value1(iy) = value1(iy) +
+     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
+            end do
+            value1(iy) = value1(iy) / sum
+          end do
+          open(99,file=trim(filenames(is1)))
+          write(99,*) npoints
+          do iy = 1, npoints
+            write(99,*) pos(iy), value1(iy)
+          end do
+          close(99)
+          deallocate(pos,values,value1)
+        end if
+      end do
+
+      return
+  100 call xerrab('Could not read profile file !')
+  101 call xerrab('Premature end of profile file !')
+
+      return
+      end subroutine average_bundle_profile
+
       subroutine sum_bundle(ns1,ns,nsm,is_neutral1,bundle_frac,work)
       use b2mod_types
       use b2mod_b2cmpa
@@ -13190,7 +13357,8 @@ cxpb We assign to the new bundle a weighted average of the values from the old b
      *   bundle_frac(0:ns1-1,0:ns-1), work(0:nsm-1),
      *   rold(0:ns-1), sum, value
 
-cxpb We assign to the new bundle a weighted sum of the values from the old bundle
+cxpb We assign to the new bundle a weighted sum of the values
+cxpb from the old bundle
 
       rold(0:ns-1)=work(0:ns-1)
       work(0:ns1-1)=0.0_R8

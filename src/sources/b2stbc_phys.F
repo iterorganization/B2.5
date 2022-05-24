@@ -3428,7 +3428,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             endif
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename = con_fn(IS,ib)
+            filename = con_fn(is,ib)
             call find_file(filename, ex)
 
             call read_profile(filename,BCSTART(IB),BCEND(IB),
@@ -3549,7 +3549,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
      2        BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename = con_fn(IS,ib)
+            filename = con_fn(is,ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),0)
@@ -4567,7 +4567,7 @@ cxpb  and max(,,) statement for stability
             endif
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
-            filename = mom_fn(IS,ib)
+            filename = mom_fn(is,ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),0)
@@ -4632,13 +4632,13 @@ cxpb  and max(,,) statement for stability
           endif
 
           !Read density profile
-          filename = con_fn(IS,ib)
+          filename = con_fn(is,ib)
           call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,conpar(is,ib,1),conpar(is,ib,2),2)
 
           !Read velocity profile
-          filename = mom_fn(IS,ib)
+          filename = mom_fn(is,ib)
           call find_file(filename, ex)
           call read_profile(filename,BCSTART(IB),BCEND(IB),
      .         BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),3)
@@ -4688,7 +4688,6 @@ cxpb  and max(,,) statement for stability
      .          'parallel velocity at Mach = ',
      1           MOMPAR(IS,IB,1),' on ',
      2           BCCHAR(IB),boundary_location(ib),' for species ',IS
-     3         
             call xertst(MOMPAR(IS,IB,1).ge.-1.0_R8,
      1           'BCMOM = 20, MOMPAR(,,1) < -1')
             call xertst(MOMPAR(IS,IB,1).le.1.0_R8,
@@ -4756,7 +4755,7 @@ cxpb  and max(,,) statement for stability
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
             !Read velocity gradient from file
-            filename = mom_fn(IS,ib)
+            filename = mom_fn(is,ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
      .           BCPOS(IB),profile,ny,mompar(is,ib,1),mompar(is,ib,2),0)

@@ -6039,7 +6039,7 @@
 						17 : leakage option for parallel momentum, MOMPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s,a</sub> m<sub>a</sub> n<sub>a</sub> u<sub>a</sub>
 						18 : reads parallel velocity profile in units of m.s<sup>-1</sup> from the specified file in MOM_FN. If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity is given by MOMPAR(,,1) in m.s<sup>-1</sup>. Only available for E and W boundaries.
 						19 : reads the momentum fllux profile from MOM\_FN in units of m<sup>-2</sup>.s<sup>-1</sup>. This has to be used in combination with BCCON = 1, 28, 30 and BCENI = 15. Only available for E and W boundaries.
-						20 : reads the Mach number from the MOM_FN file. Velocity is calculated with the temperature at the boundary and &gamma_i; = 1. Only available for E and W boundaries.
+						20 : reads the Mach number from the MOM_FN file. Velocity is calculated with the temperature at the boundary and &gamma;_i = 1. Only available for E and W boundaries.
 						21 : reads the parallel velocity gradient from the MOM_FN file in units of s<sup>-1</sup>.  If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity gradient is given by MOMPAR(,,1). Only available for E and W boundaries.
 				</description>
 			</switch>
@@ -6137,7 +6137,7 @@
 						15 : potential profile is read from POT_FN file. Only available for E and W boundaries.
 						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
 							Still experimental, will not work for drift cases.
-						17 : Sheath condition for floating target. This BC provides a floating target wiht a neat zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
+						17 : Sheath condition for floating target. This BC provides a floating target with a near zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
 							POTPAR(,,1) specifies the desired potential in V.
 							POTPAR(,,2) is the strength of the feedback

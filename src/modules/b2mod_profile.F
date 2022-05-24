@@ -58,10 +58,10 @@
       ifail = 0
 
 *open and read profile input file
-      inquire(file=filename,exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
-        read(99,*,err=100) npoints
+        read(99,*,err=100,end=101) npoints
 *check input
         if (npoints.LE.3) then
           call XERRAB
@@ -73,7 +73,7 @@
         allocate(deriv(1:npoints))
 
         do iy = 1, npoints
-          read(99,*,err=101) pos(iy), value(iy)
+          read(99,*,err=100,end=101) pos(iy), value(iy)
         enddo
         close(99)
         max = maxval(value(1:npoints))
