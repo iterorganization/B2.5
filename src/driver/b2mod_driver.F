@@ -3204,6 +3204,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             idx = 0
             if (database.eq.'iter') database = 'ITER'
           end if
+        else
+          write(*,*) "Creating a new IMAS data-entry"
+          idx = 0
+          if (database.eq.'iter') database = 'ITER'
         end if
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
