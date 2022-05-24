@@ -883,6 +883,7 @@ c     Calculate the moments of a truncated drifting Maxwellian distribution
       call CalcMomentsMaxwellian(uz,tif,mn,i0l,i0r,i1l,i1r,i2l,i2r,
      2     i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r)
 
+
 c     Calculate incident particle flux density
       fnni = vcx/vtot*(-i1l*nnf+(dnndz*i2l+dnndy*uy*i1l)/vtot)
 
@@ -1622,6 +1623,7 @@ c     Calculate rate coefficients at boundary
       recycle_initialised=.false.
       return
       end subroutine dealloc_recycle_fnn
+      
 
       subroutine precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &  pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)

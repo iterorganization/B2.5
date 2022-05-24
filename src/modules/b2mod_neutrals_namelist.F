@@ -1257,7 +1257,12 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
 cwdk    for multispecies or spatially hybrid cases,
 cwdk    could have multiple recycling strata per boundary;
 cwdk    conservative estimate: assume that there might be one stratum per fluid
-        m%mxnRc = ns*count(m%fcLbl /= 0)
+cwvu    for (advanced) spatially hybrid, might need even more.
+        if (switch%spatial_hybrid.eq.0) then !! default, no spatial hybrid
+          m%mxnRc = ns*count(m%fcLbl /= 0)
+        else 				     !! in case of spatially hybrid neutrals, some neutral strata may be defined twice 
+          m%mxnRc = 3*ns*count(m%fcLbl /= 0)
+        endif
         call alloc_mapping_rc (m)
         m%rcFcP = 0
         
