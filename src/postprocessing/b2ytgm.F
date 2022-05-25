@@ -359,7 +359,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
       if(b2fgmtry_version.ge.'01.001.063') then                !srv 15.02.11
         call cfrure (nget, n2*2, pbs1, 'pbs')
       else
-        call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
+        call b2xgbs_st (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
      &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
       endif
 *   ..read extended grid cell flags
