@@ -282,7 +282,7 @@ cnv  new methods are employed
      &                           g%vxX(verts4(3)),g%vxY(verts4(3)))
 
           ! Calculate the centroid similar to the method for the triangle centroid
-          call calc_psi_centroid(g,m,centroid)   
+          call calc_psi_centroid(g,m,centroid,iCv)   
 
         endif
         ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid 
@@ -304,7 +304,7 @@ cnv  new methods are employed
 
 
           ! Calculate the centroid similar to the method for the triangle centroid
-          call calc_psi_centroid(g,m,centroid)
+          call calc_psi_centroid(g,m,centroid,iCv)
           
         endif
         ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid 
@@ -657,12 +657,47 @@ cwdk      4) centroid: average between the intersections with faces
 
       type(mapping) :: m
       type(geometry) :: g
-      real(kind=R8) ::  centroid(0:1), psic
-      integer iCv
+      real(kind=R8) ::  centroid(m%nCv,0:1), psic, isx(0:1), isy(0:1),
+     * t0
+      integer iCv, verts(0:3), faces(0:3), i1, i2, ii, iF
 
-
-
-
+cnv   General approach similar to calculation of cell center of triangles
+cnv   but now done for quads
+      
+      !Identify vertices with min and max psi values
+      verts = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
+      faces = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
+      
+      i1 = minloc(g%vxFpsi(verts),1) -1
+      i2 = maxloc(g%vxFpsi(verts),1) -1
+      psic = 0.5_R8*(g%vxFpsi(verts(i1)) + g%vxFpsi(verts(i2)))
+      
+      ! Loop over faces to find which ones are intersected by the psic surface
+      ii = 0      
+      do iF = 0,3 
+      if (psic.ge.min(g%vxFpsi(m%fcVx(faces(iF),1)) , 
+     &             g%vxFpsi(m%fcVx(faces(iF),2))) .and.
+     &   (psic.lt.max(g%vxFpsi(m%fcVx(faces(iF),1)),  
+     &             g%vxFpsi(m%fcVx(faces(iF),2)))) ) then !intersected  
+        t0 = (psic - g%vxFpsi(m%fcVx(faces(iF),1))) / 
+     &        (g%vxFpsi(m%fcVx(faces(iF),2)) - 
+     &         g%vxFpsi(m%fcVx(faces(iF),1)))
+        isx(ii) = g%vxX(m%fcVx(faces(iF),1)) + t0 * 
+     &  ( g%vxX(m%fcVx(faces(iF),2)) - g%vxX(m%fcVx(faces(iF),1)))
+        isy(ii) = g%vxY(m%fcVx(faces(iF),1)) + t0 * 
+     &  ( g%vxY(m%fcVx(faces(iF),2)) - g%vxY(m%fcVx(faces(iF),1)))     
+        ii = ii+1
+      endif
+      enddo  
+      if (ii.ne.2) then
+         write(*,*) 'Problem with intersections in quad', iCv
+         write(*,*) 'Number of intersections found: ' , ii
+         call xerrab('Intersections in quad not found!')
+      endif         
+      
+      !Compute centroid
+      centroid(iCv,0) = 0.5_R8*sum(isx)
+      centroid(iCv,1) = 0.5_R8*sum(isy)
 
 
 
