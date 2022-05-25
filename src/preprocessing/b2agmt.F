@@ -137,7 +137,8 @@
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
-     *   guard_rescale, fvec(0:1), dg, fcPsi
+     *   guard_rescale, fvec(0:1), dg, fcPsi, ec1fc(0:1), efcc2(0:1),
+     *   econf(0:1), fn(0:1), tol
       logical classical
 !      real (kind=R8) ::
 !     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
@@ -183,7 +184,7 @@
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_style', style)
-      call ipgeti ('b2agmt_guard_rescale',guard_rescale)
+      call ipgetr ('b2agmt_guard_rescale',guard_rescale)
       call xertst (0.0_R8.lt.width, 'faulty input width')
       call xertst (0.0_R8.lt.guard_rescale, 
      &   'faulty input guard rescale')
@@ -596,28 +597,94 @@ cwdk      4) centroid: average between the intersections with faces
      &          g%fcHc(iFc,1) * g%cvEb(m%fcCv(iFc,2),1))/ 
      &        (g%fcHc(iFc,1) + g%fcHc(iFc,2))
 
-       !Calculate face normal ! NOG NIET CORRECT
-       ! algemeen : dx_normaal = dy_verts  (= y2 - y1)
-       !            dy_normaal = -dx_verts (= x2 - x1)
-       !fn(iFc,0) = 
-       !fn(iFc,1) = 
 
-       !Calculate connector ecf on face center
+
+       !Calculate unit connector econf on face center
        ! is inverse distance average of ecc (unit vector 
        ! between cell center and face center)
-       ! Direction needs to be chosen in such a way that 
-       ! cos gamma is greater than 0
+       t0 = fcX(iFc) - centroid(m%fcCv(iFc,1),0)  
+       t1 = fcY(iFc) - centroid(m%fcCv(iFc,1),1)
+       ec1fc(0) = t0 / norm(t0,t1)
+       ec1fc(1) = t1 / norm(t0,t1)
+
+       t0 = centroid(m%fcCv(iFc,2),0) - fcX(iFc)
+       t1 = centroid(m%fcCv(iFc,2),1) - fcY(iFc)
+       efcc2(0) = t0 / norm(t0,t1)
+       efcc2(1) = t1 / norm(t0,t1)
+       
+       econf(0) = (g%fcHc(iFc,2)*ec1fc(0) + g%fcHc(iFc,1)*efcc2(0)) 
+     &             /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+       econf(1) = (g%fcHc(iFc,2)*ec1fc(1) + g%fcHc(iFc,1)*efcc2(1)) 
+     &            /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+
+       !Calculate face normal ! NOG NIET CORRECT
+       ! algemeen : dx_normaal = dy_verts  (= y2 - y1)
+       !            dy_normaal = -dx_verts (= x1 - x2)
+       t0 = g%vxY(m%fcVx(iFc,2)) - g%vxY(m%fcVx(iFc,1))
+       t1 = - ( g%vxX(m%fcVx(iFc,2)) - g%vxX(m%fcVx(iFc,1)) )
+       fn(0) = t0 /norm(t0,t1)
+       fn(1) = t1 /norm(t0,t1)     
+
+       
+*    .. compute angles
+       !gamma - angle between cell connector (on face) and the face normal
+       g%fcQgam(iFc,0) = cosang(econf(0), econf(1),fn(0), fn(1) )
+       g%fcQgam(iFc,1) = sinang(econf(0), econf(1),fn(0), fn(1) )
+       
+       !alpha - angle between poloidal field vector on face and 
+       g%fcQalf(iFc,0) = 
+     &      cosang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
+       g%fcQalf(iFc,0) = 
+     &      sinang(g%fcEb(iFc,0),g%fcEb(iFc,0),fn(0),fn(1))
+
+       ! beta - angle between connector and poloidal magnetic field vector
+       ! or is equal to gamma minus alpha
+       ! use sin(x+-y) = sin(x)*cos(y) +- cos(x)*sin(y)
+       !     cos(x+-y) = cos(x)*cos(y) -+ sin(x)*sin(y)
+
+!        g%fcQbet(iFc,0) = cosang(econf(0),econf(1),
+!     &                  g%fcEb(iFc,0) , g%fcEb(iFc,1))
+!       g%fcQbet(iFc,1) = sinang(econf(0),econf(1),
+!     &                  g%fcEb(iFc,0) , g%fcEb(iFc,1))
+
+       g%fcQbet(iFc,0) = g%fcQgam(iFc,0)*g%fcQalf(iFc,0) + 
+     &                   g%fcQgam(iFc,1)*g%fcQalf(iFc,1)  
+       g%fcQbet(iFc,1) = g%fcQgam(ifc,1)*g%fcQalf(ifc,0) - 
+     &                   g%fcQgam(ifc,0)*g%fcQalf(ifc,1)     
+            
+       
+*    .. correction of angles for negative toroidal field  
+       g%fcQalf(iFc,1) = g%fcQalf(iFc,1)*sign(1.0_R8,g%fcBb(iFc,2))
+       g%fcQbet(iFc,0) = g%fcQbet(iFc,0)*sign(1.0_R8,g%fcBb(iFc,2))       
+        
+
+*    .. correct angles in special cases (aligned, poloidal,...)  
+
+
+
+
+*    .. angles checks: cos2 + sin2 = 1
+        tol = 1e-5_R8
+        if (( g%fcQalf(iFc,0)**2 + g%fcQalf(iFc,1)**2 - 1) 
+     &         .gt. tol) then
+              write(*,*) "b2agmt: fcQalf not conform at", iFc
+        endif
+        if (( g%fcQgam(iFc,0)**2 + g%fcQgam(iFc,1)**2 - 1) 
+     &         .gt. tol) then
+              write(*,*) "b2agmt: fcQgam not conform at", iFc
+        endif
+        if (( g%fcQbet(iFc,0)**2 + g%fcQbet(iFc,1)**2 - 1) 
+     &         .gt. tol) then
+              write(*,*) "b2agmt: fcQbet not conform at", iFc
+        endif       
+        
 
        ! all angles calculated 
 
        !Calculate fcPbs and fcPbshz - pitch * magnetic surface
        !structured code
        !left faces
-!     &    pbs(ix,iy,0) = gs(ix,iy,0)*qac(ix,iy,0)*abs(wbbl(ix,iy,0))/
-!     &      wbbl(ix,iy,3) 
-       ! bottom faces
-       !     &    pbs(ix,iy,1) = gs(ix,iy,1)*qac(ix,iy,1)*abs(wbbv(ix,iy,0))/
-!     &      wbbv(ix,iy,3) 
+
 
         !unstructured code
         g%fcPbs(iFc) = g%fcS(iFc) * g%fcQalf(iFc,0) * 
