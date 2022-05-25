@@ -74,11 +74,11 @@
 ***********************************************************************
 
 
-      logical function isAligned(iFc,m,g)
+      logical function isAligned(iFc,m,g,tol)
         use b2us_geo
 
         integer :: iFc, verts(1:2)
-        real(kind=R8) :: verts_psi(1:2)
+        real(kind=R8) :: verts_psi(1:2), tol
         type(mapping) :: m
         type(geometry) :: g
         intrinsic abs
@@ -88,7 +88,9 @@
         verts = m%fcVx(iFc,:)
         verts_psi = g%vxFpsi(verts)
 
-        if (abs(verts_psi(1) - verts_psi(2)) .lt. 1.0e-4_R8) then
+        !tol should be 1.0e-4_R8 as default
+
+        if (abs(verts_psi(1) - verts_psi(2)) .lt. tol) then
            isAligned = 1
         endif
       end function isAligned

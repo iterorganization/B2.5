@@ -92,7 +92,7 @@
      &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
+      external b2wups, b2wugm, b2wuzd, b2xgbs_st, xertst, xerrab
       external b2xvgm, b2xvps, b2xvsg
       external cfverw, cfwuin, cfwuch
       external intfaceh1, intfacer1, intfacev1
@@ -808,7 +808,7 @@
       wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
       wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
-      call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
+      call b2xgbs_st (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
 
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
