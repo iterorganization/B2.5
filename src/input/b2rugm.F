@@ -148,7 +148,7 @@
 *     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
 *     field pitch)*(surface area), namely the parallel contact area, 
 *     on the (ix,iy) cell left and bottom faces respectively.  
-*     See routine b2xgbs for the form of interpolation employed.
+*     See routine b2xgbs_st for the form of interpolation employed.
 *
 *     (parameters in common:)
 *
@@ -195,7 +195,7 @@
      *   trim1, norm, cosang, sinang, dist
       external subini, subend, xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
-      external b2xgbs, b2xvsg, b2xvgm
+      external b2xgbs_st, b2xvsg, b2xvgm
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       sinang(p0x,p0y,p1x,p1y) = trim1(
@@ -502,8 +502,8 @@ cxpb-end
         enddo
       endif
       if(b2fgmtry_version.lt.'01.001.063') then                      !srv 15.02.11
-        ! Moved here; b2xgbs now requires cflags and qac
-        call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
+        ! Moved here; b2xgbs_st now requires cflags and qac
+        call b2xgbs_st (nx, ny, wbbl, wbbv, gs, qac, pbs,
      &  leftix, leftiy, bottomix, bottomiy, cflags)
       endif
 *   ..test sign of bb

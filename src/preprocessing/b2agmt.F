@@ -9,8 +9,9 @@
       use b2mod_types
       use b2mod_constants
       use tradui_constants
-      use b2mod_connectivity
-      use b2mod_cellhelper
+      use carre_constants
+      !use b2mod_connectivity
+      !use b2mod_cellhelper
       use b2us_geo
       use b2us_map
  
@@ -136,7 +137,7 @@
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
-     *   guard_rescale, fvec(0:1), dg
+     *   guard_rescale, fvec(0:1), dg, fcPsi
       logical classical
 !      real (kind=R8) ::
 !     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
@@ -159,8 +160,8 @@
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
-      data volhmk/1/, width /1.0_R8/
-      save volhmk, width
+      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-3_R8/
+      save volhmk, width, guard_rescale
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -182,7 +183,10 @@
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_style', style)
+      call ipgeti ('b2agmt_guard_rescale',guard_rescale)
       call xertst (0.0_R8.lt.width, 'faulty input width')
+      call xertst (0.0_R8.lt.guard_rescale, 
+     &   'faulty input guard rescale')
 *   ..test nx, ny, isymm
       call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
      &  'faulty argument nCv, nFc, nVx')
@@ -276,6 +280,10 @@ cnv  new methods are employed
      &          g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),           
      &                           g%vxX(verts4(2)),g%vxY(verts4(2)),
      &                           g%vxX(verts4(3)),g%vxY(verts4(3)))
+
+          ! Calculate the centroid similar to the method for the triangle centroid
+          call calc_psi_centroid(g,m,centroid)   
+
         endif
         ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid 
         g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
@@ -287,12 +295,16 @@ cnv  new methods are employed
           centroid(iCv,1) = 0.25*R8*
      &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
      &       + g%vxY(verts4(3)) )
-        else 
+        else ! default
           ! old function quadCentroid can be used if vertices are ordered correctly
           centroid(iCv,0:1) = quadCentroid_us(g%vxX(verts4(0)),
      &           g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),       
      &                            g%vxX(verts4(3)),g%vxY(verts4(3)),
      &                            g%vxX(verts4(2)),g%vxY(verts4(2)))
+
+
+          ! Calculate the centroid similar to the method for the triangle centroid
+          call calc_psi_centroid(g,m,centroid)
           
         endif
         ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid 
@@ -399,6 +411,8 @@ cwdk      4) centroid: average between the intersections with faces
          v2 = m%fcVx(face,2)
          cells = m%fcCv(face,:)
 
+         fcPsi = 0.5_R8 * (g%vxFpsi(v1) + g%vxFpsi(v2))
+
          if ((m%cvLbl(cells(1)).eq.GRID_GUARD) .and. 
      &      (m%cvLbl(cells(2)).eq.GRID_BOUNDARY)) then
             gc = cells(1)   !guard cell 
@@ -429,7 +443,6 @@ cwdk      4) centroid: average between the intersections with faces
          endif
 
          !Determine intersection of bcFpsi with face
-         guard_rescale = 10.0_R8 
          if (bcFpsi.gt.min(g%vxFpsi(v1),g%vxFpsi(v2) ) .and.
      &       bcFpsi.lt.max(g%vxFpsi(v1),g%vxFpsi(v2)) )  then
             !Calculate intersection point
@@ -472,7 +485,7 @@ cwdk      4) centroid: average between the intersections with faces
 
           !Determine dx, dy of guard cell where sqrt(dx**2 + dy**2) is the
           ! the cell width of the guard cell 
-          ! assumption: guard_cell is 10 times smaller than boundary cells in outward direction
+          ! assumption: guard_cell is 1e-3 times smaller than boundary cells in outward direction
           dx = 2* cf(0) / guard_rescale
           dy = 2* cf(1) / guard_rescale
             
@@ -482,7 +495,7 @@ cwdk      4) centroid: average between the intersections with faces
           g%cvSz = dg * sqrt( (g%vxX(v1) - g%vxX(v2))**2 + 
      &                        (g%vxY(v1) - g%vxY(v2))**2)         
 
-          !Centroid of guard is face center or intersection point plus cf/guard_rescale
+          !Cell center of guard is face center or intersection point plus cf/guard_rescale
           ! Vector from face center is direction of (dx/2, dy/2)
           ! (Because cell center of guard cell should be in the middle of the cell)
           centroid(gc,0) = isx(1) + cf(0) / guard_rescale
@@ -530,6 +543,15 @@ cwdk      4) centroid: average between the intersections with faces
       !qac = 0.0_R8
       !qas = 1.0_R8
 
+
+* ..For the angle calculation, the connectivity data fcVx and fcCv need to comply
+*  to a right turning scheme. For cell fcCv(iFc,1), the vertices in fcVx need to
+*  ordered right turning. Only here (in the code) this is possible to perform 
+*  as the guard cells, only now have a proper cell center. When the cell center 
+*  coincides with the face center, this would complicate the ordering significantly.
+
+      call order_face_inf(g,m)
+
 ! loop over faces (in st first poloidal faces, then radial faces)
       do iFc = 1, m%nFc
         !compute face centers
@@ -552,9 +574,11 @@ cwdk      4) centroid: average between the intersections with faces
        if (isymm.eq.0) then
           g%fcS(iFc) = g%fcHt(iFc) * width
        elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
+          ! face surface =  distance between two vertices * 2 pi * x-coordinate of face center
           g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxX(m%fcVx(iFc,1)) +
      &                                   g%vxX(m%fcVx(iFc,2)) )
-       elseif (isymm.eq.3 .or. isymm.eq.4) then
+       elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0 axis
+          ! face surface =  distance between two vertices * 2 pi * y-coordinate of face center
           g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxY(m%fcVx(iFc,1)) +
      &                                   g%vxY(m%fcVx(iFc,2)) )
 
@@ -584,6 +608,23 @@ cwdk      4) centroid: average between the intersections with faces
        ! Direction needs to be chosen in such a way that 
        ! cos gamma is greater than 0
 
+       ! all angles calculated 
+
+       !Calculate fcPbs and fcPbshz - pitch * magnetic surface
+       !structured code
+       !left faces
+!     &    pbs(ix,iy,0) = gs(ix,iy,0)*qac(ix,iy,0)*abs(wbbl(ix,iy,0))/
+!     &      wbbl(ix,iy,3) 
+       ! bottom faces
+       !     &    pbs(ix,iy,1) = gs(ix,iy,1)*qac(ix,iy,1)*abs(wbbv(ix,iy,0))/
+!     &      wbbv(ix,iy,3) 
+
+        !unstructured code
+        g%fcPbs(iFc) = g%fcS(iFc) * g%fcQalf(iFc,0) * 
+     &   abs(g%fcBb(iFc,0))/g%fcBb(iFc,3)
+
+      
+
 
 
       enddo
@@ -605,5 +646,72 @@ cwdk      4) centroid: average between the intersections with faces
 *.end b2agmt
 
       end subroutine b2agmt
+
+
+*-----------------------------------------------------------------------
+      subroutine calc_psi_centroid(g,m,centroid,iCv)
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      implicit none
+
+      type(mapping) :: m
+      type(geometry) :: g
+      real(kind=R8) ::  centroid(0:1), psic
+      integer iCv
+
+
+
+
+
+
+
+      end subroutine calc_psi_centroid
+
+*-----------------------------------------------------------------------
+      subroutine order_face_inf(g,m)
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      implicit none
+
+      type(mapping) :: m
+      type(geometry) :: g
+
+      integer verts(1:2), cells (1:2), iFc
+      real(kind=R8) ::  fcX, fcY, vec_verts(0:1), vec_cell(0:1), sin
+
+      do iFc = 1,m%nFc
+        verts = m%fcVx(iFc,:)
+        cells = m%fcCv(iFc,:)
+
+        !vector from V1 to V2
+        vec_verts(0) = g%vxX(verts(2)) - g%vxX(verts(1)) 
+        vec_verts(1) = g%vxY(verts(2)) - g%vxY(verts(1))
+
+        !vector from geometric face center to cell center of c1
+        fcX = 0.5_R8*(g%vxX(verts(2)) + g%vxX(verts(1)))
+        fcY = 0.5_R8*(g%vxY(verts(2)) + g%vxY(verts(1)))
+
+        vec_cell(0) = g%cvX(cells(1)) - fcX
+        vec_cell(1) = g%cvY(cells(1)) - fcY
+        
+        !Calculate sinus of vec_verts and vec_cell
+        ! sin = | a x b | / norm(a) * norm(b)
+        ! with | a x b | = ax*by - bx*ay
+        !only the sign of sin matters to no norms are used in the denominator
+        sin = vec_verts(0) * vec_cell(1) - vec_cell(0) * vec_verts(1)
+
+        if (sin.lt.0) then  !reordering needed: change V1 and V2
+           m%fcVx(iFc,1) = verts(2)
+           m%fcVx(iFc,2) = verts(1)
+        endif 
+
+
+      enddo
+
+
+      end subroutine order_face_inf
+
 
 
