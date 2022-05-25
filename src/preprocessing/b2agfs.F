@@ -1,19 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-*      subroutine b2agfs (nrid,nCv,nFc,nVx,nx,ny,nx1,ny1,istyle,
-*     & crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,
-*     1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
-*     2 topix1,topiy1,bottomix1,bottomiy1,
-*     3 leftcut1,rightcut1,bottomcut1,topcut1,
-*     4 periodic_bc,nncut,nncutmax)
-
       subroutine b2agfs (nrid,istyle,lblgm,g,m)
 
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
-!      use b2mod_connectivity
       use b2ag_parameters
       use b2ag_ghostcells
       use carre_constants
@@ -189,6 +181,8 @@
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
+      !Look for guard cell rescale
+
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
@@ -1021,56 +1015,4 @@ cxpb  if just below the top corner, make the corner cell follow
 
 
 *-----------------------------------------------------------------------
-      
-!     subroutine calc_guard_cell_center(g,m)
-!     use b2mod_types
-!     use b2us_map
-!     use b2us_geo
-!     implicit none 
-!     !output argument
-!     type(geometry) :: g 
-!     type(mapping)  :: m
-
-      !internal
-!      integer :: face, iCv, cells(1:2), gc, bc, verts3(0:2), i1, i2
-!      real(kind=R8) :: bcFpsi
-
-!      do iCv = m%nCg+1,m%nCv
-!         face = m%cvFc(cvFcP(iCv,1)) ! face of the guard cell
-!         cells = m%fcCv(face,:)
-
-!         if ((m%cvLbl(cells(1)).eq.GRID_GUARD) .and. 
-!     &      (m%cvLbl(cells(2)).eq.GRID_BOUNDARY)) then
-!            gc = cells(1)   !guard cell 
-!            bc = cells(2)   ! boundary cell
-!         elseif ((m%cvLbl(cells(1)).eq.GRID_BOUNDARY) .and. 
-!     &      (m%cvLbl(cells(2)).eq.GRID_GUARD)) then
-!            gc = cells(2)
-!            bc = cells(1)
-!         else
-!            call xerrab
-!     & ('calc_guard_cell_center: no guard and boundary cell assigned')
-!         endif 
-
-!         if (m%cvFcP(bc,2).eq.4) then !quad
-!         !psi value at cell center - not correct
-!         bcFpsi = 0.25_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(bc,1):
-!     &        m%cvVxP(bc,1)+m%cvVxP(bc,2)-1)))
-            
-            
-
-
-!         elseif (m%cvFcP(boundarycell,2).eq.3) then ! triangle
-!         !psi value at cell center according to b2agmt
-!         ! Identify vertices with min and max psi values
-!         verts3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
-!     &            m%cvVxP(iCv,2)-1 )
-!         i1 = minloc(g%vxFpsi(verts3(0:2)),1)-1
-!         i2 = maxloc(g%vxFpsi(verts3(0:2)),1)-1
-!         bcFpsi = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
-
-
-
-!      enddo
-
-!      end subroutine calc_guard_cell_center    
+   

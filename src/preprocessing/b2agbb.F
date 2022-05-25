@@ -33,7 +33,7 @@
 *
 *
 *  5. parameters
-*  WIP-NV
+*  WIP-NV - see b2agbb_st.F as an example
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -105,8 +105,8 @@
             vx4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
            ! not sure always correct but only the sign of cvBb 
            ! is important here -ISSUE
-           g%cvBb(iCv,0) = ( g%vxFpsi(vx4(2)) - g%vxFpsi(vx4(0)) 
-     &      +  g%vxFpsi(vx4(3)) -  g%vxFpsi(vx4(1)) )
+           !g%cvBb(iCv,0) = ( g%vxFpsi(vx4(2)) - g%vxFpsi(vx4(0)) 
+           !&      +  g%vxFpsi(vx4(3)) -  g%vxFpsi(vx4(1)) )
           
            babs = 0.25_R8*(  
      &      sqrt( g%vxBb(vx4(0),0)**2 + g%vxBb(vx4(0),1)**2 ) + 
@@ -115,7 +115,8 @@
      &      sqrt( g%vxBb(vx4(3),0)**2 + g%vxBb(vx4(3),1)**2 ) )/t0
         
            ! sign takes value of first argument with sign of second argument
-           g%cvBb(iCv,0) = sign(babs,g%cvBb(iCv,0))
+           !g%cvBb(iCv,0) = sign(babs,g%cvBb(iCv,0))
+           g%cvBb(iCv,0) = babs  !just absolute value
         
           elseif (m%cvFcP(iCv,2).eq.1) then !at the end of array, exploit this
            vx2 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
@@ -125,8 +126,8 @@
      &      sqrt( g%vxBb(vx2(0),0)**2 + g%vxBb(vx2(0),1)**2 ) + 
      &      sqrt( g%vxBb(vx2(1),0)**2 + g%vxBb(vx2(1),1)**2 ) )/t0
            ! cell 3 is high probably a quad (PF region)
-           g%cvBb(iCv,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
-
+           !g%cvBb(iCv,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
+           g%cvBb(iCv,0) = babs !just absolute value
 
           else !Triangle
            vx3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
@@ -137,7 +138,8 @@
      &      sqrt( g%vxBb(vx3(1),0)**2 + g%vxBb(vx3(1),1)**2 ) + 
      &      sqrt( g%vxBb(vx3(2),0)**2 + g%vxBb(vx3(2),1)**2 ) )/t0
 
-           g%cvBb(iCv,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
+           !g%cvBb(iCv,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
+           g%cvBb(iCv,0) = babs
 
           endif  
         
@@ -148,15 +150,15 @@
           ! right and upper boundary in structured version)
 
 
-          if (isymm.eq.1.or.isymm.eq.2) then
-            babs = sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )/  
-     &         (2.0*pi*g%vxX(vx0))
-          elseif (isymm.eq.3.or.isymm.eq.4) then
-            babs = sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )/ 
-     &         (2.0*pi*g%vxY(vx0))
-          else
-            babs=sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )
-          endif
+          !if (isymm.eq.1.or.isymm.eq.2) then
+          !  babs = sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )/  
+            !&         (2.0*pi*g%vxX(vx0))
+          ! elseif (isymm.eq.3.or.isymm.eq.4) then
+          !   babs = sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )/ 
+          ! &         (2.0*pi*g%vxY(vx0))
+          !else
+          !  babs=sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )
+          !endif
 
 
           g%cvBb(iCv,1) = 0.0e0
@@ -175,20 +177,20 @@
       
         !endif ! from if
 
-        else   ! Guard cells
+        !else   ! Guard cells
           ! calculation of cvBb at the guard cells
 
           ! 28/4/22 : take the cvBb of a guard cell equal the Bb in the face center of the guard cell
           ! Magnetic field on face center is the average of the magnetic field on the two vertices
           ! -Later improve this 
         
-          iCvBnd = ghostGetBndCell(iCv,g,m)  ! get the boundary cell neighboring the ghost cell
+         ! iCvBnd = ghostGetBndCell(iCv,g,m)  ! get the boundary cell neighboring the ghost cell
         
           !Temporary equal to zero
-          g%cvBb(iCv,0) = 0.0e0
-          g%cvBb(iCv,1) = 0.0e0
-          g%cvBb(iCv,2) = 0.0e0
-          g%cvBb(iCv,3) = 0.0e0
+          !g%cvBb(iCv,0) = 0.0e0
+          !g%cvBb(iCv,1) = 0.0e0
+          !g%cvBb(iCv,2) = 0.0e0
+          !g%cvBb(iCv,3) = 0.0e0
 
 
         endif  !from iCv ne GRID_GUARD

@@ -137,7 +137,7 @@
 *     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
 *     field pitch)*(surface area), namely the parallel contact area, 
 *     on the (ix,iy) cell left and bottom faces respectively.  
-*     See routine b2xgbs for the form of interpolation employed.
+*     See routine b2xgbs_st for the form of interpolation employed.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -918,7 +918,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
         geometryType = geometryId(nnreg, periodic_bc, topcut)
-        call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
+        call b2xgbs_st (nx, ny, wbbl, wbbv, gs, qac, pbs,
      &  leftix, leftiy, bottomix, bottomiy, cflags)      
       endif
 

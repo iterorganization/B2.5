@@ -6,10 +6,10 @@
       use b2mod_version
       use b2mod_b2cmfs
       use b2mod_b2cmgs
-      use b2mod_connectivity
+      !use b2mod_connectivity
       use b2ag_parameters
-      use b2mod_interp
-      use b2mod_grid_mapping
+      !use b2mod_interp
+      !use b2mod_grid_mapping
       use b2us_geo
       use b2us_map
       implicit none
@@ -304,12 +304,6 @@
        !STARTING FROM HERE nx1, ny1 ARE USED IN STRUCTURED FORMAT
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs(ninp(1),istyle,lblgm,g,m)
-!      call b2agfs (ninp(1),nCv,nFc,nVx,nx,ny,nx1,ny1,istyle,
-!     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
-!     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
-!     3 topix1,topiy1,bottomix1,bottomiy1,
-!     4 leftcut1,rightcut1,bottomcut1,topcut1,
-!     5 periodic_bc,nncut,nncutmax)
 
       ! Try to define regions in Make_traduitoub2us
 !      call init_region(nx1,ny1,nncut,nncutmax,
@@ -335,22 +329,16 @@
        !if(istyle.ge.0) call b2agcf ()
 
 
-!*   ..compute metric coefficients on auxiliary mesh
+*   ..compute metric coefficients on auxiliary mesh
        call b2agmt (g, m, isymm)
-!      call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
-!     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
-!     & cell_width1, cell_height1,
-!     & leftix1, leftiy1, bottomix1, bottomiy1, 
-!     & rightix1, rightiy1, topix1, topiy1, cflags1)
-!      call b2agbf (nx1, ny1, isymm, periodic_bc, nncut,
-!     & crx1, cry1, fpsi1, ffbz1,
-!     & vol1, gs1, qz1, qc1, qs1, bb1, wbbl1, wbbr1, wbbv1, region1,
-!     & leftix1, leftiy1, bottomix1, bottomiy1, rightix1, rightiy1,
-!     & topix1, topiy1, cflags1)
-!*    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
-!      geometryType = geometryId(nnreg, periodic_bc, topcut1)
-!      call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
-!     &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
+
+       ! next step would be b2agbf: calculates magnetic field on cell faces but is already done in b2agbb
+
+!*    ..compute pbs1 (magnetic field pitch * surface area) at cell faces, is no real metric coeff
+!      geometryType = geometryId(nnreg, periodic_bc, topcut1) ???
+!       call b2xgbs (g, m)  ! WIP - still to implement
+
+       
 !*   ..project metric coefficients to proper mesh
 !      call b2agmx (nx1, ny1, nx, ny, 
 !     & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
