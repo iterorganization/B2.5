@@ -83,7 +83,7 @@
       integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
-      integer, save :: bccon_29_style =0
+      integer, save :: bccon_flux_fb_style =0
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
@@ -167,7 +167,7 @@
       call subini ('b2stbc_phys')
 *   ..set internal parameters on first call
       if (ncall_b2stbc_phys.eq.0) then
-        call ipgeti ('b2stbc_bccon_29_style', bccon_29_style)
+        call ipgeti ('b2stbc_bccon_flux_fb_style', bccon_flux_fb_style)
         call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
         call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
         call ipgeti ('b2stbc_bcpot_12_style', bcpot_12_style)
@@ -1234,12 +1234,12 @@ cwdk      compatibility for E/W boundaries
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             t0 = t0 + geo%fcS(iFc)
             t1 = t1 + geo%fcS(iFc)*pl%na(iCv1,is)
-            if (bccon_29_style.eq.0) then
+            if (bccon_flux_fb_style.eq.0) then
               totflux = totflux - mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &          (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))
             else
               totflux = totflux - mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &          (dv%fna_mdf(iFc,0,is) + dv%fna_mdf(iFc,1,is))
+     &          (dv%fna_eir(iFc,0,is) + dv%fna_eir(iFc,1,is))
             endif
           enddo
           t1 = t1/t0
@@ -2797,12 +2797,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
              t0 = t0 + geo%cvVol(iCv2)
              t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv1,is)
              t2 = t2 + geo%cvVol(iCv2)*pl%na(iCv2,is)
-             if (bccon_29_style.eq.0) then
+             if (bccon_flux_fb_style.eq.0) then
                totflux = totflux - mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)*
      &           (dv%fna(iFc,0,is) + dv%fna(iFc,1,is))
              else
                totflux = totflux - mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)*
-     &           (dv%fna_mdf(iFc,0,is) + dv%fna_mdf(iFc,1,is))
+     &           (dv%fna_eir(iFc,0,is) + dv%fna_eir(iFc,1,is))
              endif
             enddo
 cnh conpar(is,ib0,3) contains the contribution from the ionized neutrals
@@ -8805,7 +8805,7 @@ cwdk    For testing purposes, use with care!
           srw%sch0(iCv1,1) = 0.0_R8
         enddo  
 
-* -- BCPOT=15 -- Feedback boundary condition on anomalous current with constant potential
+* -- BCPOT=15 -- Feedback boundary condition on total current with constant potential
 
         case (15)
         if(ncall_b2stbc_phys.eq.0) then
@@ -8822,7 +8822,7 @@ cwdk    For testing purposes, use with care!
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
           t0 = t0 + geo%fcS(iFc)
           t1 = t1 + geo%fcS(iFc)*pl%po(iCv1)
-          totflux = totflux - (dv%fchanml(iFc,0) + dv%fchanml(iFc,1))*
+          totflux = totflux - (dv%fch(iFc,0) + dv%fch(iFc,1))*
      &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
         enddo
         t1 = t1/t0
@@ -8830,7 +8830,7 @@ cwdk    For testing purposes, use with care!
         if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
         if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
         t2 = (1.0_R8-t3*(totflux-totpar)/
-     &       max(abs(totflux),abs(totpar)))*t1
+     &       max(abs(totflux),abs(totpar),1.0_R8))*t1
         if (switch%b2stbc_diagno.ge.2) then
           write(*,'(a,1p,4(1x,e15.6))')
      &      'bcpot=15: curr_flux, desired_flux, old/new potential, ',
@@ -8947,10 +8947,51 @@ c end of implementation
           endif
         endif                                                               !srv 29.09.15 }
 #endif
-* -- BCPOT=17 -- Nothing implemented
+* -- BCPOT=17 -- Feedback boundary condition on total current, imposing potential,
+*                with same profile as neighbouring flux tube
 
         case (17)
-        CALL XERRAB ('B2STBC -- BCPOT=17, NOT AVAILABLE FOR S,N,W,E')
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'imposed current on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+*     ..compute average potential on boundary
+        t0 = 0.0e0_R8
+        t1 = 0.0e0_R8
+        t2 = 0.0e0_R8
+        totflux = 0.0e0_R8
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the plasma cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          t0 = t0 + geo%fcS(iFc)
+          t1 = t1 + geo%fcS(iFc)*pl%po(iCv1)
+          t1 = t2 + geo%fcS(iFc)*pl%po(iCv2)
+          totflux = totflux - (dv%fch(iFc,0) + dv%fch(iFc,1))*
+     &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+        enddo
+        t1 = t1/t0
+        t2 = t2/t0
+        totpar = potpar(ib,1)
+        if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
+        if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+        t4 = (1.0_R8-t3*(totflux-totpar)/
+     &       max(abs(totflux),abs(totpar),1.0_R8))*t1
+        if (switch%b2stbc_diagno.ge.2) then
+          write(*,'(a,1p,4(1x,e15.6))')
+     &      'bcpot=17: curr_flux, desired_flux, old/new potential, ',
+     &      totflux,totpar,t1,t4
+        endif
+*     ..impose potential
+        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+          srw%sch0(iCv1,0) =  PBIG*geo%fcS(iFc)*
+     .      (pl%po(iCv2) + t4 - t2)
+          srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
+        enddo
 
 * -- BCPOT=18 -- Nothing implemented
 
