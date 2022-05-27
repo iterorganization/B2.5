@@ -602,7 +602,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
         qac(ix,iy,0) = cosang ( ebf(0), ebf(1), 
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
-        qas(ix,iy,0) = sinang ( ebf(0), ebf(1), 
+        qas(ix,iy,0) = -sinang ( ebf(0), ebf(1), 
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
 
         if(qc(ix,iy,0).le.0.0_R8) then
