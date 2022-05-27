@@ -131,14 +131,15 @@
 
 *   ..local variables
       integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2
-      integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2)
+      integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2), 
+     * fcType(m%nFc)
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, fvec(0:1), dg, fcPsi, ec1fc(0:1), efcc2(0:1),
-     *   econf(0:1), fn(0:1), tol
+     *   econf(0:1), fn(0:1), tol_angles, tol_aligned
       logical classical
 !      real (kind=R8) ::
 !     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
@@ -161,8 +162,9 @@
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
-      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-3_R8/
-      save volhmk, width, guard_rescale
+      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-3_R8/,
+     &  tol_aligned /1.0e-4_R8/
+      save volhmk, width, guard_rescale, tol_aligned
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -522,11 +524,7 @@ cwdk      4) centroid: average between the intersections with faces
 
        end select
        
-         
-
-       
-
-       
+    
 
 
       enddo  !cell loop
@@ -552,6 +550,8 @@ cwdk      4) centroid: average between the intersections with faces
 *  coincides with the face center, this would complicate the ordering significantly.
 
       call order_face_inf(g,m)
+
+      call build_fcType(g,m,fcType,tol_aligned)
 
 ! loop over faces (in st first poloidal faces, then radial faces)
       do iFc = 1, m%nFc
@@ -658,23 +658,35 @@ cwdk      4) centroid: average between the intersections with faces
        g%fcQbet(iFc,0) = g%fcQbet(iFc,0)*sign(1.0_R8,g%fcBb(iFc,2))       
         
 
-*    .. correct angles in special cases (aligned, poloidal,...)  
+*    .. correct angles in special cases (aligned, poloidal,...) 
+       if (fcType(iFc).eq.1) then ! radial face
+           g%fcQalf(iFc,0) = 0.0_R8
+           !g%fcQalf(iFc,1) = +- 1.0_R8 (iets met sign van oorspronkelijke hoek ofzo?)
+           g%fcQalf(iFc,1) = sign(1.0_R8,g%fcQalf(iFc,1))
+
+       elseif (fcType(iFc).eq.2) then ! poloidal face
+           !beta = 0
+           !g%fcQbet(iFc,0) = +-1.0_R8 !cos is +-1
+           g%fcQbet(iFc,0) = sign(1.0_R8,g%fcQbet(iFc,0))
+           g%fcQbet(iFc,1) = 0.0_R8 ! sin is 0
+
+       endif
 
 
 
 
 *    .. angles checks: cos2 + sin2 = 1
-        tol = 1e-5_R8
+        tol_angles = 1e-5_R8
         if (( g%fcQalf(iFc,0)**2 + g%fcQalf(iFc,1)**2 - 1) 
-     &         .gt. tol) then
+     &         .gt. tol_angles) then
               write(*,*) "b2agmt: fcQalf not conform at", iFc
         endif
         if (( g%fcQgam(iFc,0)**2 + g%fcQgam(iFc,1)**2 - 1) 
-     &         .gt. tol) then
+     &         .gt. tol_angles) then
               write(*,*) "b2agmt: fcQgam not conform at", iFc
         endif
         if (( g%fcQbet(iFc,0)**2 + g%fcQbet(iFc,1)**2 - 1) 
-     &         .gt. tol) then
+     &         .gt. tol_angles) then
               write(*,*) "b2agmt: fcQbet not conform at", iFc
         endif       
         
@@ -815,5 +827,34 @@ cnv   but now done for quads
 
       end subroutine order_face_inf
 
+
+*-----------------------------------------------------------------------
+
+      subroutine build_fcType(g,m,fcType,tol)
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      use b2us_cellhelper
+      implicit none
+
+      type(mapping) :: m
+      type(geometry) :: g  
+      integer :: fcType(m%nFc), iFc
+      real(kind=R8) :: tol
+
+      !tol = 1.0e-4_R8
+
+      do iFc = 1,m%nFc
+          if (isAligned(iFc,m,g,tol)) then
+             fcType(iFc) = 1
+          elseif (isPoloidal(iFc,m,g,tol)) then
+             fcType(iFc) = 2
+          else 
+             fcType(iFc) = 0
+          endif
+      enddo
+
+
+      end subroutine build_fcType     
 
 

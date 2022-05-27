@@ -6,7 +6,7 @@
 
 
       public :: isVertInFace, isMember, isQuad,
-     .          isTriangle, isAligned
+     .          isTriangle, isAligned, isPoloidal
 
 
 
@@ -75,7 +75,7 @@
 
 
       logical function isAligned(iFc,m,g,tol)
-        use b2us_geo
+        !use b2us_geo
 
         integer :: iFc, verts(1:2)
         real(kind=R8) :: verts_psi(1:2), tol
@@ -94,5 +94,156 @@
            isAligned = 1
         endif
       end function isAligned
+
+***********************************************************************
+
+      logical function isPoloidal(iFc,m,g,tol)
+      
+        type(mapping) :: m
+        type(geometry) :: g
+        integer :: iFc, cells(1:2), faces3(0:2), faces4_1(0:3), 
+     &             faces4_2(0:3), i1, i2, i  
+        real(kind=R8) :: tol
+
+
+        isPoloidal = 0 
+
+        i1 = 0
+        i2 = 0
+
+        if (.not.isAligned(iFc,m,g,tol) ) then ! not aligned - skips aligned radial faces
+            cells = m%fcCv(iFc,:)
+            !all combinations of cells
+
+            !two quads
+            if ((m%cvFcP(cells(1),2).eq.4) .and.
+     &           (m%cvFcP(cells(2),2).eq.4)) then
+                
+                faces4_1 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+4-1)
+                faces4_2 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+4-1)
+
+                do i = 0,3
+                   if (isAligned(faces4_1(i),m,g,tol)) then
+                       i1 = i1 + 1
+                   endif 
+                enddo
+                do i = 0,3
+                   if (isAligned(faces4_2(i),m,g,tol)) then
+                       i2 = i2 + 1
+                   endif 
+                enddo 
+                if ((i1 .eq. 2) .and. (i2 .eq. 2)) then
+                   isPoloidal = 1 
+                endif               
+        
+            !tria + quad
+            elseif ((m%cvFcP(cells(1),2).eq.3) .and.
+     &           (m%cvFcP(cells(2),2).eq.4)) then
+
+                faces3 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+3-1)
+                faces4_1 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+4-1)
+               do i = 0,2
+                 if (isAligned(faces3(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo 
+               do i = 0,3
+                 if (isAligned(faces4_1(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo
+               if ((i1 .eq. 1).and. (i2.eq.2)) then
+                  isPoloidal = 1
+               endif                                  
+            !quad + tria
+            elseif ((m%cvFcP(cells(1),2).eq.4) .and.
+     &           (m%cvFcP(cells(2),2).eq.3)) then
+                faces4_1 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+4-1)
+                faces3 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+3-1)
+               do i = 0,3
+                 if (isAligned(faces4_1(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo 
+               do i = 0,2
+                 if (isAligned(faces3(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo
+               if ((i1 .eq. 2).and. (i2.eq.1)) then
+                  isPoloidal = 1
+               endif  
+
+
+            !quad + guard
+            elseif ((m%cvFcP(cells(1),2).eq.4) .and.
+     &           (m%cvFcP(cells(2),2).eq.1)) then
+                faces4_1 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+4-1)
+               do i = 0,3
+                 if (isAligned(faces4_1(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo
+               if (i1.eq.2) then
+                 isPoloidal = 1
+               endif            
+        
+            !guard + quad
+            elseif ((m%cvFcP(cells(1),2).eq.1) .and.
+     &           (m%cvFcP(cells(2),2).eq.4)) then
+                 faces4_2 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+4-1)     
+               do i = 0,3
+                 if (isAligned(faces4_2(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo
+               if (i2.eq.2) then
+                 isPoloidal = 1
+               endif 
+
+            !tria + guard
+            elseif ((m%cvFcP(cells(1),2).eq.3) .and.
+     &           (m%cvFcP(cells(2),2).eq.1)) then 
+                 faces3 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+3-1)     
+               do i = 0,2
+                 if (isAligned(faces3(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo
+               if (i1.eq.1) then
+                 isPoloidal = 1
+               endif         
+            !guard + tria
+            elseif ((m%cvFcP(cells(1),2).eq.1) .and.
+     &           (m%cvFcP(cells(2),2).eq.3)) then                 
+                 faces3 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+3-1)     
+               do i = 0,2
+                 if (isAligned(faces3(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo
+               if (i2.eq.1) then
+                 isPoloidal = 1
+               endif 
+
+            endif          
+            
+
+
+        endif   
+        
+
+      end function
+
 
       end module b2us_cellhelper
