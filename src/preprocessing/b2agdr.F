@@ -337,6 +337,15 @@
       geometryType = geometryId(nnreg, periodic_bc, topcut1)
       call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
      &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
+*    ..interpolate magnetic field to cell corners
+      if (maxval(abs(wbbc)).eq.0.0_R8) then
+        !wdk if wbbc not yet provided by grid generator, compute here
+        call my_intcor1(nx1,ny1,2,vol1,periodic_bc,nncut,
+     &     leftix1,leftiy1,rightix1,rightiy1,
+     &     bottomix1,bottomiy1,topix1,topiy1,region1,bb1,wbbc1)
+        wbbc1(:,:,3)=
+     &     sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
+      endif
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
      & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
