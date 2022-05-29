@@ -666,14 +666,22 @@ cxpb  if just below the top corner, make the corner cell follow
                 case(1)  ! guard
                    cvBp(iCv) = g%cvBb(iCv,0)
                    cvBt(iCv) = g%cvBb(iCv,2)
-                case(3,4) ! internal and boundary   
+                case(3) ! internal and boundary triangels   
+                   if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0))) 
+     $                   > 1e-7 .or.
+     $                 abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2))) 
+     $                   > 1e-7) then
+                      write(*,*) "b2agfs: not maching carre bb 
+     $                at", iCv , "because is triangle"   
+                   endif
+                case(4) ! internal and boundary triangels 
                    if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0))) 
      $                   > 1e-7 .or.
      $                 abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2))) 
      $                   > 1e-7) then
                       write(*,*) "b2agfs: not maching carre bb 
      $                at", iCv    
-                   endif
+                   endif                  
                 end select
              enddo       
 
