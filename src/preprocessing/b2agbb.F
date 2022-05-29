@@ -68,8 +68,8 @@
 *   ..compute magnetic field
 
       do iCv = 1, m%nCv
-        if (m%cvLbl(iCv) .ne. GRID_GUARD)  then !guard cells are skipped
-        !   ..compute magnetic field at cell center
+                                    !if (m%cvLbl(iCv) .ne. GRID_GUARD)  then !guard cells are skipped
+        !   ..compute magnetic field at cell center - is approximated here
         if (isymm.ne.0) then
           if (m%cvFcP(iCv,2).eq.4) then !Quad 
            vx4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
@@ -81,8 +81,8 @@
            centroid(1) = 0.5_R8*(sum(g%vxY(vx2)))
           else ! Triangles
            vx3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
-           centroid(0) = 0.3333333_R8*(sum(g%vxX(vx3)))
-           centroid(1) = 0.3333333_R8*(sum(g%vxY(vx3)))
+           centroid(0) = (sum(g%vxX(vx3))) / 3.0_R8
+           centroid(1) = (sum(g%vxY(vx3))) / 3.0_R8
           endif
 
           if (isymm.eq.1 .or. isymm.eq.2) then
@@ -97,7 +97,7 @@
 
 
         if (t0 == 0.0) cycle
-          if (m%cvFcP(iCv,2).eq.4) then
+          if (m%cvFcP(iCv,2).eq.4) then !Quad
            ! structured code
            !bb(ix,iy,0) = & 
            !       &     (fpsi(ix,iy,2)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,1))
@@ -114,52 +114,35 @@
      &      sqrt( g%vxBb(vx4(2),0)**2 + g%vxBb(vx4(2),1)**2 ) + 
      &      sqrt( g%vxBb(vx4(3),0)**2 + g%vxBb(vx4(3),1)**2 ) )/t0
         
-           ! sign takes value of first argument with sign of second argument
-           !g%cvBb(iCv,0) = sign(babs,g%cvBb(iCv,0))
            g%cvBb(iCv,0) = babs  !just absolute value
         
-          elseif (m%cvFcP(iCv,2).eq.1) then !at the end of array, exploit this
+          elseif (m%cvFcP(iCv,2).eq.1) then  !Guard
+          ! 28/4/22 : take the cvBb of a guard cell equal the Bb in the face center of the guard cell
+          ! Magnetic field on face center is the average of the magnetic field on the two vertices
+          ! -Later improve this
            vx2 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
            ! assum sign of cvBb(1) is everywhere the same
 
            babs = 0.5_R8*(  
      &      sqrt( g%vxBb(vx2(0),0)**2 + g%vxBb(vx2(0),1)**2 ) + 
      &      sqrt( g%vxBb(vx2(1),0)**2 + g%vxBb(vx2(1),1)**2 ) )/t0
-           ! cell 3 is high probably a quad (PF region)
-           !g%cvBb(iCv,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
+           
            g%cvBb(iCv,0) = babs !just absolute value
 
           else !Triangle
            vx3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
            ! assum sign of cvBb(1) is everywhere the same
 
-           babs = 0.3333333_R8*( 
+           babs = ( 
      &      sqrt( g%vxBb(vx3(0),0)**2 + g%vxBb(vx3(0),1)**2 ) + 
      &      sqrt( g%vxBb(vx3(1),0)**2 + g%vxBb(vx3(1),1)**2 ) + 
-     &      sqrt( g%vxBb(vx3(2),0)**2 + g%vxBb(vx3(2),1)**2 ) )/t0
+     &      sqrt( g%vxBb(vx3(2),0)**2 + g%vxBb(vx3(2),1)**2 ) )/ 
+     &       (3.0_R8*t0)
 
-           !g%cvBb(iCv,0) = sign(babs,g%cvBb(3,0)) !MAKE THIS GENERAL
            g%cvBb(iCv,0) = babs
 
           endif  
         
-
-          ! operations with single vertex
-          vx0 = m%cvVx(m%cvVxP(iCv,1)) !first vertex of the cell
-          ! choose here right vertex (same as corrections for
-          ! right and upper boundary in structured version)
-
-
-          !if (isymm.eq.1.or.isymm.eq.2) then
-          !  babs = sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )/  
-            !&         (2.0*pi*g%vxX(vx0))
-          ! elseif (isymm.eq.3.or.isymm.eq.4) then
-          !   babs = sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )/ 
-          ! &         (2.0*pi*g%vxY(vx0))
-          !else
-          !  babs=sqrt( g%vxBb(vx0,0)**2 + g%vxBb(vx0,1)**2 )
-          !endif
-
 
           g%cvBb(iCv,1) = 0.0e0
           if (m%cvFcP(iCv,2).eq.4) then !Quad
@@ -167,7 +150,7 @@
           elseif (m%cvFcP(iCv,2).eq.1) then
             g%cvBb(iCv,2) = 0.5_R8*(sum(g%vxFfbz(vx2)))/t0
           else 
-            g%cvBb(iCv,2) = 0.3333333_R8 * sum(g%vxFfbz(vx3))/t0
+            g%cvBb(iCv,2) = sum(g%vxFfbz(vx3))/( 3.0_R8*t0)
           endif 
         
           g%cvBb(iCv,3) = sqrt( g%cvBb(iCv,0)**2 + 
@@ -180,9 +163,7 @@
         !else   ! Guard cells
           ! calculation of cvBb at the guard cells
 
-          ! 28/4/22 : take the cvBb of a guard cell equal the Bb in the face center of the guard cell
-          ! Magnetic field on face center is the average of the magnetic field on the two vertices
-          ! -Later improve this 
+ 
         
          ! iCvBnd = ghostGetBndCell(iCv,g,m)  ! get the boundary cell neighboring the ghost cell
         
@@ -192,8 +173,12 @@
           !g%cvBb(iCv,2) = 0.0e0
           !g%cvBb(iCv,3) = 0.0e0
 
+          !vx2 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
 
-        endif  !from iCv ne GRID_GUARD
+
+
+
+        !endif  !from iCv ne GRID_GUARD
 
 
       enddo
@@ -215,6 +200,16 @@
         g%fcBb(iFc,0) = 0.5_R8 *   
      &   ( sqrt( g%vxBb(vx2(0),0)**2  + g%vxBb(vx2(0),1)**2) + 
      &     sqrt( g%vxBb(vx2(1),0)**2  + g%vxBb(vx2(1),1)**2) ) / hzf
+       ! here direction is lost
+
+       ! other way
+       ! fcBx = (g%vxBb(vx2(0),0) + g%vxBb(vx2(1),0)) / 2.0_R8
+       ! fcBy = (g%vxBb(vx2(0),1) + g%vxBb(vx2(1),1)) / 2.0_R8
+       ! fcBb(iFc,0) = sqrt(fcBx**2 + fcBy**2) / hzf
+       ! tan = fcBy / fcBx 
+       ! cos = fcBx / sqrt(fcBx**2 + fcBy**2)
+       ! sin = fcBy / sqrt(fcBx**2 + fcBy**2)
+
 
         g%fcBb(iFc,1) = 0.0_R8
         g%fcBb(iFc,2) = 0.5_R8 *(g%vxFfbz(vx2(0))  + 
