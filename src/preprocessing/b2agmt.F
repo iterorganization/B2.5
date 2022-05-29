@@ -1,10 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
 
-*      subroutine b2agmt (nx, ny, isymm, crx, cry,
-*     & fpsi, bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
-*     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
-*     & rightix, rightiy, topix, topiy, cflag)
       subroutine b2agmt (g, m, isymm)
       use b2mod_types
       use b2mod_constants
@@ -131,15 +127,16 @@
 
 *   ..local variables
       integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2
-      integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2), 
-     * fcType(m%nFc)
+      integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2),
+     * fcType(m%nFc), c1, c2,  verts2(0:1)  
       integer i1, i2, ii
-      integer volhmk, cgeo, cgeon
+      integer volhmk, cgeo, cgeon, psi_flag
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, fvec(0:1), dg, fcPsi, ec1fc(0:1), efcc2(0:1),
-     *   econf(0:1), fn(0:1), tol_angles, tol_aligned
+     *   econf(0:1), fn(0:1), tol_angles, tol_aligned, cvFpsi(1:m%nCv),
+     *   fcH, fcW
       logical classical
 !      real (kind=R8) ::
 !     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
@@ -245,8 +242,10 @@ cnv  new methods are employed
        if (g%cvBb(iCv,3) == 0.0_R8) then
          g%cvEb(iCv,:) = 0.0_R8
        else
-         g%cvEb(iCv,0) = abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
-         g%cvEb(iCv,1) = abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
+         g%cvEb(iCv,0) = 
+     &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
+         g%cvEb(iCv,1) = 
+     &       abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
          g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif 
 
@@ -285,7 +284,8 @@ cnv  new methods are employed
      &                           g%vxX(verts4(3)),g%vxY(verts4(3)))
 
           ! Calculate the centroid similar to the method for the triangle centroid
-          call calc_psi_centroid(g,m,centroid,iCv)   
+          call calc_psi_centroid(g,m,centroid,iCv,psic)
+          cvFpsi(iCv) = psic   
 
         endif
         ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid 
@@ -307,7 +307,8 @@ cnv  new methods are employed
 
 
           ! Calculate the centroid similar to the method for the triangle centroid
-          call calc_psi_centroid(g,m,centroid,iCv)
+          call calc_psi_centroid(g,m,centroid,iCv,psic)
+          cvFpsi(iCv) = psic
           
         endif
         ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid 
@@ -354,7 +355,7 @@ cwdk      4) centroid: average between the intersections with faces
        i1 = minloc(g%vxFpsi(verts3(0:2)),1)-1
        i2 = maxloc(g%vxFpsi(verts3(0:2)),1)-1
        psic = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
-
+       cvFpsi(iCv) = psic
       ! Loop over faces to find which ones are intersected by the psic surface
       faces3 = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1) + 
      &          m%cvFcP(iCv,2)-1 )
@@ -385,7 +386,7 @@ cwdk      4) centroid: average between the intersections with faces
       centroid(iCv,1) = 0.5_R8*sum(isy)
 
       !Compute cvSz and cvVol
-      g%cvSz = TriangleArea_us(g%vxX(verts3(0)), g%vxY(verts3(0)),
+      g%cvSz(iCv) = TriangleArea_us(g%vxX(verts3(0)), g%vxY(verts3(0)),
      &                        g%vxX(verts3(1)), g%vxY(verts3(1)),
      &                        g%vxX(verts3(2)), g%vxY(verts3(2)))
 
@@ -401,13 +402,36 @@ cwdk      4) centroid: average between the intersections with faces
       endif
 
 
-      ! then in b2agmt_st => hc, ht, ecc = > now in face-loop
+!WIP  !Compute ebc - same method as quad - NEEDS REVIEW
+      !ebc unit vector of poloidal field in cell center
+       verts3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
+     &          m%cvVxP(iCv,2)-1 )
+       ! b_y
+       t0 = ( g%vxBb(verts3(0),1) + g%vxBb(verts3(1),1) +   
+     &        g%vxBb(verts3(2),1) ) / 3.0_R8
+       ! b_x
+       t1 = - ( g%vxBb(verts3(0),0) + g%vxBb(verts3(1),0) +
+     &        g%vxBb(verts3(2),0) ) / 3.0_R8
 
-      !Compute ebc
+       g%cvEb(iCv,0) = t0 / norm(t0,t1)
+       g%cvEb(iCv,1) = t1 / norm(t0,t1)
+
+*    ..unit vector of total magnetic field, defined in cell center
+      ! until this point, cvEb was unit vector of poloidal field
+      ! now, correct for toroidal field
+       if (g%cvBb(iCv,3) == 0.0_R8) then
+         g%cvEb(iCv,:) = 0.0_R8
+       else
+         g%cvEb(iCv,0) = 
+     &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
+         g%cvEb(iCv,1) = 
+     &       abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
+         g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
+       endif
 
 
 
-       case(1)  !Guard Cells (are at the end of the cells array so can us information 
+       case(1)  !Guard Cells (are at the end of the cells array so can use information 
                 ! on triangles and quad calculated above)
          face = m%cvFc(m%cvFcP(iCv,1)) ! face of the guard cell
          v1 = m%fcVx(face,1)
@@ -427,85 +451,96 @@ cwdk      4) centroid: average between the intersections with faces
          else
             call xerrab
      & ('b2agmt cv-loop, guard: no guard and boundary cell assigned')
-         endif 
-
-         if (m%cvFcP(bc,2).eq.4) then !quad
-         !psi value at cell center - not correct
-         bcFpsi = 0.25_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(bc,1):
-     &        m%cvVxP(bc,1)+m%cvVxP(bc,2)-1)))
-
-         elseif (m%cvFcP(bc,2).eq.3) then ! triangle
-         !psi value at cell center according to b2agmt
-         ! Identify vertices with min and max psi values
-         verts3 = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1) + 
-     &            m%cvVxP(bc,2)-1 )
-         i1 = minloc(g%vxFpsi(verts3(0:2)),1)-1
-         i2 = maxloc(g%vxFpsi(verts3(0:2)),1)-1
-         bcFpsi = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
-         
          endif
 
-         !Determine intersection of bcFpsi with face
-         if (bcFpsi.gt.min(g%vxFpsi(v1),g%vxFpsi(v2) ) .and.
-     &       bcFpsi.lt.max(g%vxFpsi(v1),g%vxFpsi(v2)) )  then
-            !Calculate intersection point
+          !set bcFpsi equal to cvFpsi value 
+          bcFpsi = cvFpsi(bc)
+
+          if (abs(fcPsi - bcFpsi) .lt. tol_aligned) then !get the guard cell on the same fpsi
+            !Calculate intersection point - find point on face where psi = fcPsi
             t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))      
             isx(1) =  g%vxX(v1) + t0 *(g%vxX(v2)- g%vxX(v1))
             isy(1) =  g%vxY(v1) + t0 *(g%vxY(v2)- g%vxY(v1))
-
-            !Introduce some cut-off!!
-            !Check angle between vector tangential to face and vector between intersection and centroid
-            ! Calc vector from cell center to intersection
-            cf(0) = isx(1) - centroid(bc,0)
-            cf(1) = isy(1) - centroid(bc,1)
-            ! Calc vector tangential to boundary face
-            fvec(0) = g%vxX(v2) - g%vxX(v1)
-            fvec(1) = g%vxY(v2) - g%vxY(v1)
             
-            !Calculate the cosine of the inclosed angle
-            ! Cut-off is 0.8
-            if (abs(sinang(fvec(0),fvec(1),cf(0),cf(1)) ) 
-     &               .gt. 0.8_R8 ) then
-               ! just use the face center
-               isx(1) = 0.5_R8*(g%vxX(v1) + g%vxX(v2))
-               isy(1) = 0.5_R8*(g%vxY(v1) + g%vxY(v2))
-            endif
+            !Set psi value
+            psi_flag = 1       
+            cvFpsi(iCv) = bcFpsi
+                   
+            
+          else ! use geometric face center
+            isx(1) = 0.5_R8 * (g%vxX(v1) + g%vxX(v2))
+            isy(1) = 0.5_R8 * (g%vxY(v1) + g%vxY(v2))
 
-
-         else 
-            !no intersection point, so boundary face is close to aligned with 
-            ! magnetic field line
-            ! just use face center
-            isx(1) = 0.5_R8*(g%vxX(v1) + g%vxX(v2))
-            isy(1) = 0.5_R8*(g%vxY(v1) + g%vxY(v2))
-         endif
-
+            psi_flag = 0
+          
+          endif
 
           !Determine cell center of guard cell
           !Vector from cell center to face center
           cf(0) = isx(1) - centroid(bc,0)
-          cf(1) = isy(1) - centroid(bc,1)
+          cf(1) = isy(1) - centroid(bc,1) 
 
-          !Determine dx, dy of guard cell where sqrt(dx**2 + dy**2) is the
-          ! the cell width of the guard cell 
-          ! assumption: guard_cell is 1e-3 times smaller than boundary cells in outward direction
-          dx = 2* cf(0) / guard_rescale
-          dy = 2* cf(1) / guard_rescale
-            
+          !Determine length of face (height of cell)
+          fcH = sqrt( (g%vxX(v2)- g%vxX(v1))**2 + 
+     &                (g%vxY(v2)- g%vxY(v1))**2 )
+
+          !Determine width of cell along fcPsi (width of cell)
+          fcW = 2.0_R8 * sqrt(cf(0)**2 + cf(1)**2)
+
+          if (fcH .lt. fcW) then
+             dx = 2.0_R8*cf(0)* guard_rescale * fcH/fcW 
+             dy = 2.0_R8*cf(1)* guard_rescale * fcH/fcW 
+          else
+             dx = 2.0_R8*cf(0) * guard_rescale
+             dy = 2.0_R8*cf(1) * guard_rescale
+          endif          
+
           dg = sqrt(dx**2+dy**2)
             
-          !cell area is dg time face Area
-          g%cvSz = dg * sqrt( (g%vxX(v1) - g%vxX(v2))**2 + 
-     &                        (g%vxY(v1) - g%vxY(v2))**2)         
+          !cell area is dg time face Area (times cosine of dg and face normal, but neglected here)
+          g%cvSz(iCv) = dg * fcH        
 
-          !Cell center of guard is face center or intersection point plus cf/guard_rescale
+          !Cell center of guard is face center or intersection point plus (dx,dy)
           ! Vector from face center is direction of (dx/2, dy/2)
           ! (Because cell center of guard cell should be in the middle of the cell)
-          centroid(gc,0) = isx(1) + cf(0) / guard_rescale
-          centroid(gc,1) = isy(1) + cf(1) / guard_rescale 
+          centroid(gc,0) = isx(1) + 0.5_R8 * dx
+          centroid(gc,1) = isy(1) + 0.5_R8 * dy 
 
           g%cvX(iCv) = centroid(iCv,0)  ! gc is equal to icv
           g%cvY(iCv) = centroid(iCv,1)
+
+!WIP      !Correct the magnetic field of guard cell -
+
+
+
+          !Compute ebc - same method as quad - NEEDS REVIEW
+          !ebc unit vector of poloidal field in cell center
+          verts2 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
+     &          m%cvVxP(iCv,2)-1 )
+          ! b_y
+          t0 = ( g%vxBb(verts2(0),1) + g%vxBb(verts2(1),1)    
+     &           ) / 2.0_R8
+          ! b_x
+          t1 = - ( g%vxBb(verts2(0),0) + g%vxBb(verts2(1),0) 
+     &      ) / 2.0_R8
+
+          g%cvEb(iCv,0) = t0 / norm(t0,t1)
+          g%cvEb(iCv,1) = t1 / norm(t0,t1)
+
+*    ..unit vector of total magnetic field, defined in cell center
+          ! until this point, cvEb was unit vector of poloidal field
+          ! now, correct for toroidal field
+          if (g%cvBb(iCv,3) == 0.0_R8) then
+            g%cvEb(iCv,:) = 0.0_R8
+          else
+            g%cvEb(iCv,0) = 
+     &          abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
+            g%cvEb(iCv,1) = 
+     &          abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1) ! klopt toch niet?!
+            g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
+          endif
+
+
 
 
          !Determine cvVol for the guard cell
@@ -520,13 +555,9 @@ cwdk      4) centroid: average between the intersections with faces
          g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1) 
          endif
 
-
-
        end select
        
-    
-
-
+ 
       enddo  !cell loop
 
 * ..compute qc, qs, qac, qas at cell faces
@@ -555,34 +586,33 @@ cwdk      4) centroid: average between the intersections with faces
 
 ! loop over faces (in st first poloidal faces, then radial faces)
       do iFc = 1, m%nFc
+        v1 = m%fcVx(iFc,1)
+        v2 = m%fcVx(iFc,2)
+        c1 = m%fcCv(iFc,1)
+        c2 = m%fcCv(iFc,2)
         !compute face centers
-        fcX(iFc) = (g%vxX(m%fcVx(iFc,1)) + g%vxX(m%fcVx(iFc,2)) )/2.0_R8
-        fcY(iFc) = (g%vxY(m%fcVx(iFc,1)) + g%vxY(m%fcVx(iFc,2)) )/2.0_R8
+        fcX(iFc) = (g%vxX(v1) + g%vxX(v2) )/2.0_R8
+        fcY(iFc) = (g%vxY(v1) + g%vxY(v2) )/2.0_R8
 
         !fcHc(m%nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
-        g%fcHc(iFc,1) = sqrt(  ( centroid(m%fcCv(iFc,1),0) - fcX(iFc) )**2
-     &      + ( centroid(m%fcCv(iFc,1),1) - fcY(iFc) )**2 ) 
-        g%fcHc(iFc,2) = sqrt(  ( centroid(m%fcCv(iFc,2),1) - fcX(iFc) )**2
-     &      + ( centroid(m%fcCv(iFc,2),1) - fcY(iFc) )**2 ) 
+        g%fcHc(iFc,1) = sqrt(  ( centroid(c1,0) - fcX(iFc) )**2
+     &      + ( centroid(c1,1) - fcY(iFc) )**2 ) 
+        g%fcHc(iFc,2) = sqrt(  ( centroid(c2,1) - fcX(iFc) )**2
+     &      + ( centroid(c2,1) - fcY(iFc) )**2 ) 
 
         !fcHt(m%nFc) Lengths along cell face ("tangential" direction)
-        g%fcHt(iFc) = sqrt( ( g%vxX(m%fcVx(iFc,1)) - 
-     &     g%vxX(m%fcVx(iFc,2)) )**2 + ( g%vxY(m%fcVx(iFc,1)) - 
-     &     g%vxY(m%fcVx(iFc,2)) )**2  )
-
+        g%fcHt(iFc) = sqrt( ( g%vxX(v1) - g%vxX(v2) )**2 + 
+     &                    ( g%vxY(v1) -  g%vxY(v2) )**2  )
 
        ! g%fcS = gs(:,:,0:1)
        if (isymm.eq.0) then
           g%fcS(iFc) = g%fcHt(iFc) * width
        elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about crx=0 axis
           ! face surface =  distance between two vertices * 2 pi * x-coordinate of face center
-          g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxX(m%fcVx(iFc,1)) +
-     &                                   g%vxX(m%fcVx(iFc,2)) )
+          g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxX(v1) + g%vxX(v2) )
        elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0 axis
           ! face surface =  distance between two vertices * 2 pi * y-coordinate of face center
-          g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxY(m%fcVx(iFc,1)) +
-     &                                   g%vxY(m%fcVx(iFc,2)) )
-
+          g%fcS(iFc) = pi*g%fcHt(iFc) * (g%vxY(v1) + g%vxY(v2) )
        endif
 
 
@@ -590,12 +620,23 @@ cwdk      4) centroid: average between the intersections with faces
        ! calculated as the weighted average vector of cvEb of the neighboring cells
        ! using the distance between cell center and face center fcHc as weighting factors
        ! This is called inverse distance interpolation
-       g%fcEb(iFc,0) = (g%fcHc(iFc,2) * g%cvEb(m%fcCv(iFc,1),0) + 
-     &           g%fcHc(iFc,1) * g%cvEb(m%fcCv(iFc,2),0)) /
+       g%fcEb(iFc,0) = (g%fcHc(iFc,2) * g%cvEb(c1,0) + 
+     &           g%fcHc(iFc,1) * g%cvEb(c2,0)) /
      &           (g%fcHc(iFc,1) + g%fcHc(iFc,2))
-       g%fcEb(iFc,1) = (g%fcHc(iFc,2) * g%cvEb(m%fcCv(iFc,1),1) + 
-     &          g%fcHc(iFc,1) * g%cvEb(m%fcCv(iFc,2),1))/ 
+       g%fcEb(iFc,1) = (g%fcHc(iFc,2) * g%cvEb(c1,1) + 
+     &          g%fcHc(iFc,1) * g%cvEb(c2,1))/ 
      &        (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+       
+!WIP       !fcEb kan ook op andere manier!=> via psidx,psidy (zoals in cell centers)
+!       verts4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
+!     &          m%cvVxP(iCv,2)-1 )
+!       ! b_y
+!       t0 = 0.25_R8 * ( g%vxBb(v1,1) + g%vxBb(v2,1) )
+!       ! b_x
+!       t1 = - 0.25_R8 * ( g%vxBb(v1,0) + g%vxBb(v2,0))
+!
+!       g%fcEb(iCv,0) = t0 / norm(t0,t1)
+!       g%fcEb(iCv,1) = t1 / norm(t0,t1)
 
 
 
@@ -728,7 +769,7 @@ cwdk      4) centroid: average between the intersections with faces
 
 
 *-----------------------------------------------------------------------
-      subroutine calc_psi_centroid(g,m,centroid,iCv)
+      subroutine calc_psi_centroid(g,m,centroid,iCv,psic)
       use b2mod_types
       use b2us_map
       use b2us_geo
