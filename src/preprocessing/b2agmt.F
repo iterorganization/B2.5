@@ -620,23 +620,23 @@ cwdk      4) centroid: average between the intersections with faces
        ! calculated as the weighted average vector of cvEb of the neighboring cells
        ! using the distance between cell center and face center fcHc as weighting factors
        ! This is called inverse distance interpolation
-       g%fcEb(iFc,0) = (g%fcHc(iFc,2) * g%cvEb(c1,0) + 
-     &           g%fcHc(iFc,1) * g%cvEb(c2,0)) /
-     &           (g%fcHc(iFc,1) + g%fcHc(iFc,2))
-       g%fcEb(iFc,1) = (g%fcHc(iFc,2) * g%cvEb(c1,1) + 
-     &          g%fcHc(iFc,1) * g%cvEb(c2,1))/ 
-     &        (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+       !OLD METHOD
+       !g%fcEb(iFc,0) = (g%fcHc(iFc,2) * g%cvEb(c1,0) + 
+       !&           g%fcHc(iFc,1) * g%cvEb(c2,0)) /
+       !&           (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+       !g%fcEb(iFc,1) = (g%fcHc(iFc,2) * g%cvEb(c1,1) + 
+       !&          g%fcHc(iFc,1) * g%cvEb(c2,1))/ 
+       !&        (g%fcHc(iFc,1) + g%fcHc(iFc,2))
        
-!WIP       !fcEb kan ook op andere manier!=> via psidx,psidy (zoals in cell centers)
-!       verts4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
-!     &          m%cvVxP(iCv,2)-1 )
-!       ! b_y
-!       t0 = 0.25_R8 * ( g%vxBb(v1,1) + g%vxBb(v2,1) )
-!       ! b_x
-!       t1 = - 0.25_R8 * ( g%vxBb(v1,0) + g%vxBb(v2,0))
-!
-!       g%fcEb(iCv,0) = t0 / norm(t0,t1)
-!       g%fcEb(iCv,1) = t1 / norm(t0,t1)
+!WIP    !fcEb kan ook op andere manier!=> via psidx,psidy (zoals in cell centers)
+        ! similar to linear interpolating Bb to the face centers
+       ! b_y
+       t0 = 0.5_R8 * ( g%vxBb(v1,1) + g%vxBb(v2,1) )
+       ! b_x
+       t1 = - 0.5_R8 * ( g%vxBb(v1,0) + g%vxBb(v2,0))
+
+       g%fcEb(iCv,0) = t0 / norm(t0,t1)
+       g%fcEb(iCv,1) = t1 / norm(t0,t1)
 
 
 
@@ -753,7 +753,13 @@ cwdk      4) centroid: average between the intersections with faces
 
 *    ..test sign of g%cvVol, g%cvS, g%fcS
        ! based on b2xvs1
-
+!      call b2xvsg1(nx, ny, vol(-1,-1),  1, 'vol', '.gt.') - structured example
+!      call b2xvsg1(nx, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
+!      call b2xvsg1(nx, ny, gs(-1,-1,1), 1, 'gsy', '.gt.')
+!      call b2xvsg1(nx, ny, gs(-1,-1,2), 1, 'gsz', '.gt.')       
+       call b2xvs1(m%nCv, g%cvVol, 1,'cvVol' ,'.gt.')
+       call b2xvs1(m%nCv, g%cvSz,   1,'cvS'   ,'.gt.')
+       call b2xvs1(m%nFc, g%fcS,   1,'fcS'   ,'.gt.')
 
 
 
