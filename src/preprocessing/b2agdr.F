@@ -6,12 +6,10 @@
       use b2mod_version
       use b2mod_b2cmfs
       use b2mod_b2cmgs
-      !use b2mod_connectivity
       use b2ag_parameters
-      !use b2mod_interp
-      !use b2mod_grid_mapping
       use b2us_geo
       use b2us_map
+      use b2us_io
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1) 
@@ -334,7 +332,7 @@
 
        ! next step would be b2agbf: calculates magnetic field on cell faces but is already done in b2agbb
 
-!*    ..compute pbs1 (magnetic field pitch * surface area) at cell faces, is no real metric coeff
+!*    ..compute pbs1 (magnetic field pitch * surface area) at cell faces, is no real metric coeff - already done in b2agmt
 !      geometryType = geometryId(nnreg, periodic_bc, topcut1) ???
 !       call b2xgbs (g, m)  ! WIP - still to implement
 
@@ -583,8 +581,44 @@
 !     . 'If already set to "-1.0", set to "1.0" instead.'
 !      write(*,'()')
 
-!* ..output
-!*   ..write summary of geometry
+* ..output - see module b2us_io and b2us.F
+*   ..write headers for output files - code from b2us.F
+      call cfverw (nout(1), newversion)
+      idum(0) = m%nCi
+      idum(1) = m%nCg
+      idum(2) = m%nCv
+      idum(3) = m%nFc
+      idum(4) = m%nVx
+      idum(5) = m%nFs
+      idum(6) = m%nFt
+      call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      idum(0) = m%nCmxVx
+      idum(1) = m%nCmxFc
+      idum(2) = m%nVmxCv
+      idum(3) = m%nVmxFc
+      idum(4) = m%nCmxNv
+      call cfwuin (nout(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      idum(0) = m%isClassicalGrid
+      call cfwuin (nout(1),1,idum,'isClassicalGrid')
+      if (m%isClassicalGrid == 1) then
+        idum(0) = m%nx
+        idum(1) = m%ny
+        idum(2) = m%nncut
+      else
+        ! dummy values for unstructured grid
+        idum(0) = -1
+        idum(1) = -1
+        idum(2) = -1
+      endif
+      call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
+      call cfwuch (nout(1), 120, lblgm, 'label')
+      idum(0) = isymm
+      call cfwuin (nout(1), 1, idum, 'isymm')
+      
+*   ..write summary of geometry
+        call write_b2fgmtry (nout(1), m, g)
+
+        !structured code
 !!      call b2wfgm (nout(0), idout, nx, ny)
 !*   ..write version number
 !      call cfverw (nout(1), newversion)
