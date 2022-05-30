@@ -727,7 +727,8 @@ cxpb  if just below the top corner, make the corner cell follow
 
       !internal
       character idcod*8, id*32
-      integer :: i, iCv, iVx, iv(nnVx), ic(nnCv), idum(0:4)
+      integer :: i, iCv, iVx, iFc, iv(nnVx), ic(nnCv), if(nnFc),
+     &   idum(0:4) 
       real(kind=R8) :: cvBp(m%nCv) , cvBt(m%nCv), cvFpsi(m%nCv)
       logical streql
       external subini, subend, xertst, xerrab, streql, cfverr, cfruin
@@ -791,10 +792,21 @@ cxpb  if just below the top corner, make the corner cell follow
        call cfruin(nrid,nnCmxVx,m%cvVx,'cvVx')
        !read cvFc
        call cfruin(nrid,nnCmxFc,m%cvFc,'cvFc')
+
+       !Read face information
+        read(nrid,*,err=91) idcod, id
+        if (streql('*cf:',idcod).and.streql('fc',id)) then
+           do iFc = 1, nnFc
+           ! fc fcVx(:,1) fcVx(:,1) fcLbl(:)
+              read(nrid,*,err=91) if(iFc), m%fcVx(iFc,1), 
+     &      m%fcVx(iFc,2), m%fcLbl(iFc)
+           enddo
+        endif
+        !old method       
        !read fcVx(:,1)
-       call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,1)')
+       !call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,1)')
        !read fcVx(:,2)
-       call cfruin(nrid,nnFc,m%fcVx(:,2),'fcVx(:,2)')
+       !call cfruin(nrid,nnFc,m%fcVx(:,2),'fcVx(:,2)')
 
 
       else

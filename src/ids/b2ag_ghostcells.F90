@@ -754,9 +754,11 @@ contains
         if ((streql('*cf:',idcod)).and. &
        &   (streql('cv' ,id1))) then
            do i = 1, nCv
+!             read(nrid,*,err=97) cv(i), cvVxP1(i), cvVxP2(i), cvX(i), &
+!       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i), cflags2(i), &
+!       &     cflags3(i), cflags4(i), cflags5(i), ctype(i)
              read(nrid,*,err=97) cv(i), cvVxP1(i), cvVxP2(i), cvX(i), &
-       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i), cflags2(i), &
-       &     cflags3(i), cflags4(i), cflags5(i), ctype(i)
+       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i)
            enddo
            j=1
         else
