@@ -582,7 +582,7 @@ cwdk      4) centroid: average between the intersections with faces
 
       call order_face_inf(g,m)
 
-      call build_fcType(g,m,fcType,tol_aligned)
+      call build_fcType(g,m,fcType,cvFpsi,tol_aligned)
 
 ! loop over faces (in st first poloidal faces, then radial faces)
       do iFc = 1, m%nFc
@@ -877,7 +877,7 @@ cnv   but now done for quads
 
 *-----------------------------------------------------------------------
 
-      subroutine build_fcType(g,m,fcType,tol)
+      subroutine build_fcType(g,m,fcType,cvFpsi,tol)
       use b2mod_types
       use b2us_map
       use b2us_geo
@@ -887,14 +887,14 @@ cnv   but now done for quads
       type(mapping) :: m
       type(geometry) :: g  
       integer :: fcType(m%nFc), iFc
-      real(kind=R8) :: tol
+      real(kind=R8) :: tol, cvFpsi(m%nCv)
 
       !tol = 1.0e-4_R8
 
       do iFc = 1,m%nFc
           if (isAligned(iFc,m,g,tol)) then
              fcType(iFc) = 1
-          elseif (isPoloidal(iFc,m,g,tol)) then
+          elseif (isPoloidal(iFc,m,g,cvFpsi,tol)) then
              fcType(iFc) = 2
           else 
              fcType(iFc) = 0
