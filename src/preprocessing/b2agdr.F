@@ -456,7 +456,8 @@
 !        write(*,*) 'b2agdr sanity check: pbs ',
 !     1   maxval(abs(pbs1-pbs))
 !      endif
-!      write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
+
+      write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
 !      if(istyle.ge.0) then
 !*   ..compute geometry and flux/field functions on proper mesh
 !        call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
@@ -464,122 +465,122 @@
 !        call b2agbb (nx, ny, vol, gs, crx, cry, qz, 
 !     &   fpsi, ffbz, bb)
 !      endif
-!      write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
-!      write(*,'()')
-!      if (bb(nx,ny,2).gt.0.0_R8) then
-!        write(*,'(a)')
-!     .   'This case has POSITIVE toroidal magnetic field.'
-!        if (isymm.ne.0) write(*,'(a)')
-!     .   'This means that the Bx(grad B) direction points DOWN.'
-!        write(*,'(a)')
-!     .   'Bz is out of the page towards you.'
-!        write(nout(0),'(/2x,a)')
-!     .   'This case has POSITIVE toroidal magnetic field.'
-!        if (isymm.ne.0) write(nout(0),'(2x,a)')
-!     .   'This means that the Bx(grad B) direction points DOWN.'
-!        write(nout(0),'(2x,a)')
-!     .   'Bz is out of the page towards you.'
-!      else if (bb(nx,ny,2).lt.0.0_R8) then
-!         write(*,'(a)')
-!     .   'This case has NEGATIVE toroidal magnetic field.'
-!        if (isymm.ne.0) write(*,'(a)')
-!     .   'This means that the Bx(grad B) direction points UP.'
-!        write(*,'(a)')
-!     .   'Bz is into the page away from you.'
-!        write(nout(0),'(/2x,a)')
-!     .   'This case has NEGATIVE toroidal magnetic field.'
-!        if (isymm.ne.0) write(nout(0),'(2x,a)')
-!     .   'This means that the Bx(grad B) direction points UP.'
-!        write(nout(0),'(2x,a)')
-!     .   'Bz is into the page away from you.'
-!      else
-!        write(*,'(a)')
-!     .   'This case has ZERO toroidal magnetic field.'
-!        write(nout(0),'(/2x,a)')
-!     .   'This case has ZERO toroidal magnetic field.'
-!      endif
-!      if (bb(nx,ny,2).ne.0.0_R8) then
-!        write(*,'(a)')
-!     .   'If this is not correct, please set :'
-!        write(*,'(a)')
-!     .   '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
-!        write(*,'(a)')
-!     .   'If already set to "1", set to "0" instead.'
-!      endif
-!      write(*,'()')
-!      if (bb(nx,ny,0).gt.0.0_R8) then
-!        write(*,'(a)')
-!     .   'This case has POSITIVE poloidal magnetic field.'
-!        write(*,'(a)')
-!     .   'This means the poloidal field points in the '//
-!     .   'direction of INCREASING poloidal index ix.'
-!        write(*,'(a)')
-!     .   'The parallel velocities ua and ue will be '//
-!     .   'positive when pointing in the direction of '//
-!     .   'INCREASING poloidal index ix.'
-!        write(*,'(a)')
-!     .   'This is the SAME convention as for poloidal '//
-!     .   'quantities.'
-!        write(nout(0),'(2x,a)')
-!     .   'This case has POSITIVE poloidal magnetic field.'
-!        write(nout(0),'(2x,a)')
-!     .   'This means the poloidal field points in the '//
-!     .   'direction of INCREASING poloidal index ix.'
-!        write(nout(0),'(2x,a)')
-!     .   'The parallel velocities ua and ue will be '//
-!     .   'positive when pointing in the direction of '//
-!     .   'INCREASING poloidal index ix.'
-!        write(nout(0),'(2x,a)')
-!     .   'This is the SAME convention as for poloidal '//
-!     .   'quantities.'
-!      else
-!        write(*,'(a)')
-!     .   'This case has NEGATIVE poloidal magnetic field.'
-!        write(*,'(a)')
-!     .   'This means the poloidal field points in the '//
-!     .   'direction of DECREASING poloidal index ix.'
-!        write(*,'(a)')
-!     .   'The parallel velocities ua and ue will be '//
-!     .   'positive when pointing in the direction of '//
-!     .   'DECREASING poloidal index ix.'
-!        write(*,'(a)')
-!     .   'This is the OPPOSITE convention as for '//
-!     .   'poloidal quantities.'
-!        write(nout(0),'(2x,a)')
-!     .   'This case has NEGATIVE poloidal magnetic field.'
-!        write(nout(0),'(2x,a)')
-!     .   'This means the poloidal field points in the '//
-!     .   'direction of DECREASING poloidal index ix.'
-!        write(nout(0),'(2x,a)')
-!     .   'The parallel velocities ua and ue will be '//
-!     .   'positive when pointing in the direction of '//
-!     .   'DECREASING poloidal index ix.'
-!        write(nout(0),'(2x,a)')
-!     .   'This is the OPPOSITE convention as for '//
-!     .   'poloidal quantities.'
-!      end if
-!      if (bb(nx,ny,0)*bb(nx,ny,2).lt.0.0_R8) then
-!        write(*,'(a)')
-!     .   'This case has CO-directed plasma current and '//
-!     .   'toroidal field.'
-!        write(nout(0),'(2x,a)')
-!     .   'This case has CO-directed plasma current and '//
-!     .   'toroidal field.'
-!      else if (bb(nx,ny,0)*bb(nx,ny,2).gt.0.0_R8) then
-!        write(*,'(a)')
-!     .   'This case has COUNTER-directed plasma current and '//
-!     .   'toroidal field.'
-!        write(nout(0),'(2x,a)')
-!     .   'This case has COUNTER-directed plasma current and '//
-!     .   'toroidal field.'
-!      endif
-!      write(*,'(a)')
-!     . 'If this is not correct, please set :'
-!      write(*,'(a)')
-!     . '"b2agfs_pit_rescale" to "-1.0" in "b2ag.dat" and rerun.'
-!      write(*,'(a)')
-!     . 'If already set to "-1.0", set to "1.0" instead.'
-!      write(*,'()')
+      write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
+      write(*,'()')
+      if (g%cvBb(m%nCv,2).gt.0.0_R8) then
+        write(*,'(a)')
+     .   'This case has POSITIVE toroidal magnetic field.'
+        if (isymm.ne.0) write(*,'(a)')
+     .   'This means that the Bx(grad B) direction points DOWN.'
+        write(*,'(a)')
+     .   'Bz is out of the page towards you.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has POSITIVE toroidal magnetic field.'
+        if (isymm.ne.0) write(nout(0),'(2x,a)')
+     .   'This means that the Bx(grad B) direction points DOWN.'
+        write(nout(0),'(2x,a)')
+     .   'Bz is out of the page towards you.'
+      else if (g%cvBb(m%nCv,2).lt.0.0_R8) then
+         write(*,'(a)')
+     .   'This case has NEGATIVE toroidal magnetic field.'
+        if (isymm.ne.0) write(*,'(a)')
+     .   'This means that the Bx(grad B) direction points UP.'
+        write(*,'(a)')
+     .   'Bz is into the page away from you.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has NEGATIVE toroidal magnetic field.'
+        if (isymm.ne.0) write(nout(0),'(2x,a)')
+     .   'This means that the Bx(grad B) direction points UP.'
+        write(nout(0),'(2x,a)')
+     .   'Bz is into the page away from you.'
+      else
+        write(*,'(a)')
+     .   'This case has ZERO toroidal magnetic field.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has ZERO toroidal magnetic field.'
+      endif
+      if (g%cvBb(m%nCv,2).ne.0.0_R8) then
+        write(*,'(a)')
+     .   'If this is not correct, please set :'
+        write(*,'(a)')
+     .   '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
+        write(*,'(a)')
+     .   'If already set to "1", set to "0" instead.'
+      endif
+      write(*,'()')
+      if (g%cvBb(m%nCv,0).gt.0.0_R8) then
+        write(*,'(a)')
+     .   'This case has POSITIVE poloidal magnetic field.'
+        write(*,'(a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of INCREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'INCREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'This is the SAME convention as for poloidal '//
+     .   'quantities.'
+        write(nout(0),'(2x,a)')
+     .   'This case has POSITIVE poloidal magnetic field.'
+        write(nout(0),'(2x,a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of INCREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'INCREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'This is the SAME convention as for poloidal '//
+     .   'quantities.'
+      else
+        write(*,'(a)')
+     .   'This case has NEGATIVE poloidal magnetic field.'
+        write(*,'(a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of DECREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'DECREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'This is the OPPOSITE convention as for '//
+     .   'poloidal quantities.'
+        write(nout(0),'(2x,a)')
+     .   'This case has NEGATIVE poloidal magnetic field.'
+        write(nout(0),'(2x,a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of DECREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'DECREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'This is the OPPOSITE convention as for '//
+     .   'poloidal quantities.'
+      end if
+      if (g%cvBb(m%nCv,0)*g%cvBb(m%nCv,2).lt.0.0_R8) then
+        write(*,'(a)')
+     .   'This case has CO-directed plasma current and '//
+     .   'toroidal field.'
+        write(nout(0),'(2x,a)')
+     .   'This case has CO-directed plasma current and '//
+     .   'toroidal field.'
+      else if (g%cvBb(m%nCv,0)*g%cvBb(m%nCv,2).gt.0.0_R8) then
+        write(*,'(a)')
+     .   'This case has COUNTER-directed plasma current and '//
+     .   'toroidal field.'
+        write(nout(0),'(2x,a)')
+     .   'This case has COUNTER-directed plasma current and '//
+     .   'toroidal field.'
+      endif
+      write(*,'(a)')
+     . 'If this is not correct, please set :'
+       write(*,'(a)')
+     . '"b2agfs_pit_rescale" to "-1.0" in "b2ag.dat" and rerun.'
+      write(*,'(a)')
+     . 'If already set to "-1.0", set to "1.0" instead.'
+      write(*,'()')
 
 * ..output - see module b2us_io and b2us.F
 *   ..write headers for output files - code from b2us.F
@@ -643,7 +644,7 @@
 !      call cfwure (nout(1), 100, parg, 'parg')
 !      write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
 !*   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
-!      call write_f30
+      call write_f30
 
 !* ..return
       call subend ()

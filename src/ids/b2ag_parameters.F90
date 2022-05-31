@@ -116,7 +116,7 @@ contains
     character :: id*8, cnamip*80, cvalip*80
     integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:3), idum2(0:4), &
         & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0, &
-        & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx
+        & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx, nncut
     character*256 local_sonnet
     integer :: istyle
     logical :: streql, open_file
@@ -178,9 +178,10 @@ contains
                 nFmxCv0 = idum2(2)
                 nVmxCv0 = idum2(3)
                 nVmxFc0 = idum2(4)
-                call cfruin (lun, 2, idum, 'nx,ny')
+                call cfruin (lun, 2, idum, 'nx,ny,nncut') ! here still add nncut?? 
                 m%nx = idum(0)
                 m%ny = idum(1)
+                nncut = idum(2)
             !else
                 !read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
                 !doGhostCells = .true.
@@ -217,8 +218,12 @@ contains
      close(lun)
 
       !introduce the flux tubes etc.
-      m%nFs = 0
-      m%nFt = 0
+      !rough over-estimation
+      m%nFs = max(1,(1 + 2*nncut)*m%ny)
+      m%nFt = m%nFs
+      !m%nFs = 0
+      !m%nFt = 0
+
 
 
      return
