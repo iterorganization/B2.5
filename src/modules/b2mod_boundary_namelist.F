@@ -43,6 +43,16 @@ cank }
      *   BC_LIST_Y(:,:)
       character*1, allocatable, save ::
      *   BCCHAR(:)
+      character*256, allocatable, save :: con_fn(:,:)
+      character*256, allocatable, save :: mom_fn(:,:)
+      character*256, allocatable, save :: ene_fn(:)
+      character*256, allocatable, save :: eni_fn(:)
+      character*256, allocatable, save :: pot_fn(:)
+      real (kind=R8), allocatable, save:: profile_con(:,:,:)
+      real (kind=R8), allocatable, save:: profile_mom(:,:,:)
+      real (kind=R8), allocatable, save:: profile_eni(:,:)
+      real (kind=R8), allocatable, save:: profile_ene(:,:)
+      real (kind=R8), allocatable, save:: profile_pot(:,:)
       logical, allocatable, save ::
      *   core_boundary(:)
 #else
@@ -71,6 +81,16 @@ cank }
       integer, save :: NYISO2(NNISOD)
       real (kind=R8), save :: NIISO(0:nsdmax-1)
       integer, save :: lcbs(NBCD)
+      character*256, save :: con_fn(0:nsdmax-1,NBCD)
+      character*256, save :: mom_fn(0:nsdmax-1,NBCD)
+      character*256, save :: ene_fn(NBCD)
+      character*256, save :: eni_fn(NBCD)
+      character*256, save :: pot_fn(NBCD)
+      real (kind=R8), save:: profile_con(0:nsdmax-1,nbcd,-1:DEF_NYD)
+      real (kind=R8), save:: profile_mom(0:nsdmax-1,nbcd,-1:DEF_NYD)
+      real (kind=R8), save:: profile_eni(nbcd,-1:DEF_NYD)
+      real (kind=R8), save:: profile_ene(nbcd,-1:DEF_NYD)
+      real (kind=R8), save:: profile_pot(nbcd,-1:DEF_NYD)
       logical, save :: core_boundary(NBCD)
 #endif
       integer, save :: boundary_namelist
@@ -100,7 +120,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs, write_nml_bnd
+     6 lcbs, write_nml_bnd, con_fn, mom_fn, ene_fn, eni_fn, pot_fn
 
       contains
 
@@ -318,6 +338,16 @@ cxpb overwrite the defaults with the namelist data
       allocate(NYISO2(nnisod_in))
       allocate(NIISO(0:nsd-1))
       allocate(lcbs(nbcd_in))
+      allocate(con_fn(0:nsd-1,nbcd_in))
+      allocate(mom_fn(0:nsd-1,nbcd_in))
+      allocate(ene_fn(nbcd_in))
+      allocate(eni_fn(nbcd_in))
+      allocate(pot_fn(nbcd_in))
+      allocate(profile_con(0:nsd-1,nbcd_in,-1:NYD))
+      allocate(profile_mom(0:nsd-1,nbcd_in,-1:NYD))
+      allocate(profile_eni(nbcd_in,-1:NYD))
+      allocate(profile_ene(nbcd_in,-1:NYD))
+      allocate(profile_enp(nbcd_in,-1:NYD))
       allocate(core_boundary(nbcd_in))
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
@@ -367,6 +397,16 @@ cxpb overwrite the defaults with the namelist data
       boundary_filename='b2.boundary.parameters'
       boundary_time_mod=0.0_R8
       boundary_time_switch=0.0_R8
+      con_fn='b2.con.profile'
+      mom_fn='b2.mom.profile'
+      ene_fn='b2.ene.profile'
+      eni_fn='b2.eni.profile'
+      pot_fn='b2.pot.profile'
+      profile_con = 0.0_R8
+      profile_mom = 0.0_R8
+      profile_ene = 0.0_R8
+      profile_eni = 0.0_R8
+      profile_pot = 0.0_R8
 
 csw 21feb2014, set up some additional work variables for boundary conditions
 cxpb Have to do this here already in case the namelist is not used
@@ -436,6 +476,16 @@ cxpb Have to do this here already in case the namelist is not used
       deallocate(NYISO2)
       deallocate(NIISO)
       deallocate(LCBS)
+      deallocate(con_fn)
+      deallocate(mom_fn)
+      deallocate(ene_fn)
+      deallocate(eni_fn)
+      deallocate(pot_fn)
+      deallocate(profile_con)
+      deallocate(profile_mom)
+      deallocate(profile_ene)
+      deallocate(profile_eni)
+      deallocate(profile_pot)
       deallocate(core_boundary)
 #endif
       deallocate(iffboundx)
@@ -453,6 +503,7 @@ cxpb Have to do this here already in case the namelist is not used
       integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found
 
+      real (kind=R8) :: potpar_inter(NBCD,2)
       logical file_ok, todo, assigned, is_closed
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
@@ -580,6 +631,20 @@ c.. Make a list of core boundaries
         if (.not.file_ok) write(*,*) 'No ',trim(filename)
         write(*,*) 'Testing skipped!'
         return
+      endif
+
+      !..zml if there is bcpot=14 where floating boundary condition is
+      !used, potpar(ib,2) is taken from the file potpar_continue in
+      !which the last target potential is saved...
+      filename='potpar_continue'
+      call find_file(filename, file_ok)
+      if (file_ok) then
+        open(99,file=trim(filename))
+        read(99,*) potpar_inter
+        close(99)
+        do ib=1,nbc
+          if (bcpot(ib).eq.14) potpar(ib,2)=potpar_inter(ib,2)
+        enddo
       endif
 
 *   ..test input

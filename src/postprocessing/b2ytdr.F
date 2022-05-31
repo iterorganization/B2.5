@@ -2028,6 +2028,10 @@ c 2002-09-11: logic revised
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,mompar(0,ib,1))
           call convert_bundle_r
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,mompar(0,ib,2))
+          call convert_bundle_profile
+     .     (nout(5),ns1,ns,nsm,bundle_frac,con_fn(0,ib))
+          call average_bundle_profile
+     .     (nout(5),ns1,ns,nsm,bundle_frac,mom_fn(0,ib))
           if (bcchar(ib).eq.'S') then
             bcpos1(ib) = conformal_convert(non_commensurate,
      .       2,bcstart(ib),bcpos(ib),nx,ny,nx1,ny1,2)
@@ -2122,6 +2126,11 @@ c 2002-09-11: logic revised
                 potpar(is,:) = potpar(ib,:)
                 conpar(:,is,:) = conpar(:,ib,:)
                 mompar(:,is,:) = mompar(:,ib,:)
+                con_fn(:,is) = con_fn(:,ib)
+                mom_fn(:,is) = mom_fn(:,ib)
+                ene_fn(is) = ene_fn(ib)
+                eni_fn(is) = eni_fn(ib)
+                pot_fn(is) = pot_fn(ib)
                 lcbs(is) = 0
               end do
             else if (bcpos1(ib).eq.-2) then
@@ -2249,6 +2258,11 @@ c 2002-09-11: logic revised
                 potpar(is,:) = potpar(ib,:)
                 conpar(:,is,:) = conpar(:,ib,:)
                 mompar(:,is,:) = mompar(:,ib,:)
+                con_fn(:,is) = con_fn(:,ib)
+                mom_fn(:,is) = mom_fn(:,ib)
+                ene_fn(is) = ene_fn(ib)
+                eni_fn(is) = eni_fn(ib)
+                pot_fn(is) = pot_fn(ib)
                 lcbs(is) = 0
               end do
             else if (bcpos1(ib).eq.-2) then
@@ -2420,6 +2434,46 @@ c 2002-09-11: logic revised
         write(99,'(1x,a,l1,a,l1,a)')
      .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
+        write(hlp_frm,'(a, i2,a)') '(1x,a,i2,a,',ns1,'(1x,a,,'',''))'
+        do ib = 1, nbc1
+          if (any(bccon(:,ib).eq.28).or.any(bccon(:,ib).eq.30).or.
+     .        any(bcmom(:,ib).eq.19)) then
+            write(99,hlp_frm) 'CON_FN(0,',ib,')=''',
+     .       (trim(CON_FN(is,ib)),is = 0,ns1-1)
+          else if (any(con_fn(:,ib).ne.'b2.con.profile')) then
+            write(99,hlp_frm) 'CON_FN(0,',ib,')=''',
+     .       (trim(CON_FN(is,ib)),is = 0,ns1-1)
+          end if
+          if (any(bcmom(:,ib).eq.18).or.any(bcmom(:,ib).eq.19).or.
+     .        any(bcmom(:,ib).eq.21)) then
+            write(99,hlp_frm) 'MOM_FN(0,',ib,')=',
+     .       (trim(MOM_FN(is,ib)),is = 0,ns1-1)
+          else if (any(mom_fn(:,ib).ne.'b2.mom.profile')) then
+            write(99,hlp_frm) 'MOM_FN(0,',ib,')=''',
+     .       (trim(MOM_FN(is,ib)),is = 0,ns1-1)
+          end if
+          if (bcene(ib).eq.23) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENE_FN(',ib,')=''',
+     .       trim(ENE_FN(ib)),''','
+          else if (.not.streql(ene_fn(ib),'b2.ene.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENE_FN(',ib,')=''',
+     .       trim(ENE_FN(ib)),''','
+          end if
+          if (bceni(ib).eq.28) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENI_FN(',ib,')=''',
+     .       trim(ENI_FN(ib)),''','
+          else if (.not.streql(eni_fn(ib),'b2.eni.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'ENI_FN(',ib,')=''',
+     .       trim(ENI_FN(ib)),''','
+          end if
+          if (bcpot(ib).eq.15) then
+            write(99,'(1x,a,i2,a,a,a)') 'POT_FN(',ib,')=''',
+     .       trim(POT_FN(ib)),''','
+          else if (.not.streql(pot_fn(ib),'b2.pot.profile')) then
+            write(99,'(1x,a,i2,a,a,a)') 'POT_FN(',ib,')=''',
+     .       trim(POT_FN(ib)),''','
+          end if
+        end do
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
           write(99, hlp_frm) 'NXISO1=',(nxiso3(is),is=1,nniso)
@@ -8195,9 +8249,9 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           ENDIF
           IF (ZEILE(1:8) /= 'SURFMOD_') CYCLE
           IREAD=0
-          READ (IUNIN,6666) idum(0:4) ! REFCUR%JLREF,REFCUR%JLSPT,
+          READ (IUNIN,6666) idum(0:5) ! REFCUR%JLREF,REFCUR%JLSPT,
                                       ! REFCUR%JSRS,REFCUR%JSRC,
-                                      ! REFCUR%JLCHSPNWL
+                                      ! REFCUR%JLCHSPNWL,REFCUR%REFCELL
           IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
           IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >      idum(2) = iatm1(idum(2))
@@ -8213,7 +8267,7 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           ENDIF
           IF (streql(eirene_format,'juelich') .or.
      .        streql(eirene_format,'new')) idum(4) = 1
-          WRITE(IUNOT,6666) idum(0:4)
+          WRITE(IUNOT,6666) idum(0:5)
           READ (IUNIN,'(A80)') ZEILE ! REFCUR%ZNMLR,REFCUR%EWALLR,REFCUR%EWBINR,
                                      ! REFCUR%TRANSPR(1:2),REFCUR%FSHEATR
           WRITE(IUNOT,'(A80)') ZEILE
@@ -8281,20 +8335,22 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
             case default
               IF (streql(eirene_format,'facelift')) THEN
                 READ (ZEILE,6664) rdum(0:1), ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-     .                     rdum(4), rdum(5), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+     .                     rdum(4), rdum(6), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
      .                     rdum(2)           ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
+                rdum(5) = 0.0_R8
               ELSE IF (streql(eirene_format,'iter')) THEN
-                READ (ZEILE,6664) rdum(0:4)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                READ (ZEILE,6664) rdum(0:5)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
                                              ! SPTPRM(1,NLJ),ESPUTS(1,NLJ),
-                                             ! ESPUTC(1,NLJ)
+                                             ! ESPUTC(1,NLJ),REFPRESS(NLJ)
               ELSE
                 READ (ZEILE,6664) rdum(0:2)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
                                              ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
                 rdum(4) = 0.0_R8
+                rdum(5) = 0.0_R8
               ENDIF
-              WRITE(IUNOT,6664) rdum(0:4)
+              WRITE(IUNOT,6664) rdum(0:5)
               IREAD=0
             end select
             READ (IUNIN,'(A80)') ZEILE
@@ -13085,6 +13141,84 @@ cxpb We assign to the bundle the value from the highest species from that bundle
       return
       end subroutine convert_bundle_l
 
+      subroutine convert_bundle_profile
+     . (nunit,ns1,ns,nsm,bundle_frac,filenames)
+      use b2mod_types
+      implicit none
+      integer nunit, ns1, ns, nsm
+      real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1)
+      character*256 :: filenames(0:nsm-1)
+      integer idum, is, is1, isbegin, isend, iy, npoints
+      real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
+      character*256 :: fold(0:ns-1)
+      character*3 :: charns, charns1
+
+cxpb This is for converting the content of profile files.
+cxpb This routine is to be used if the profile files contain
+cxpb additive quantities such as densities.
+
+      fold(0:ns-1) = filenames(0:ns-1)
+      filenames(0:ns1-1) = ' '
+      do is1 = 0, ns1-1
+        npoints = 0
+        isbegin = -1
+        isend = -1
+        do is = 0, ns-1
+          if (bundle_frac(is1,is).gt.0.0_R8) then
+            if (isbegin.eq.-1) isbegin = is
+            isend = is
+          end if
+        end do
+        if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
+          filenames(is1) = fold(isbegin)
+        else if (isbegin.ne.-1) then
+cxpb need to write new file with weighted sum of profiles
+cxpb we check the profiles have the same size
+cxpb and use the positions from the last file read
+          write(charns ,'(i3.3)') isbegin
+          write(charns1,'(i3.3)') isend
+          filenames(is1) =
+     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
+          write(nunit,'(a)') trim(filenames(is1))
+          do is = isbegin, isend
+            open(99,file=fold(is1))
+            read(99,*,err=100,end=101) idum
+            if (npoints.eq.0) then
+              npoints = idum
+              allocate(pos(npoints))
+              allocate(values(npoints,isend-isbegin+1))
+              allocate(value1(npoints))
+            else
+              call xertst( idum.eq.npoints,
+     .         'Mismatched profile sizes, conversion case not coded !')
+            end if
+            do iy = 1, npoints
+              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+            end do
+            close(99)
+          end do
+          do iy = 1, npoints
+            value1(iy) = 0.0_R8
+            do is = isbegin, isend
+              value1(iy) = value1(iy) +
+     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
+            end do
+          end do
+          open(99,file=trim(filenames(is1)))
+          write(99,*) npoints
+          do iy = 1, npoints
+            write(99,*) pos(iy), value1(iy)
+          end do
+          close(99)
+          deallocate(pos,values,value1)
+        end if
+      end do
+
+      return
+  100 call xerrab('Could not read profile file !')
+  101 call xerrab('Premature end of profile file !')
+      end subroutine convert_bundle_profile
+
       subroutine average_bundle(ns1,ns,nsm,is_neutral1,bundle_frac,work)
       use b2mod_types
       use b2mod_b2cmpa
@@ -13138,6 +13272,90 @@ cxpb We assign to the new bundle a weighted average of the values from the old b
 
       return
       end subroutine average_bundle
+
+      subroutine average_bundle_profile
+     . (nunit,ns1,ns,nsm,bundle_frac,filenames)
+      use b2mod_types
+      implicit none
+      integer nunit, ns1, ns, nsm
+      real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1)
+      character*256 :: filenames(0:nsm-1)
+      integer idum, is, is1, isbegin, isend, iy, npoints
+      real (kind=R8) :: sum
+      real (kind=R8), allocatable :: pos(:), values(:,:), value1(:)
+      character*256 :: fold(0:ns-1)
+      character*3 :: charns, charns1
+
+cxpb This is for converting the content of profile files.
+cxpb This routine is to be used if the profile files contain
+cxpb intensive quantities such as velocities.
+
+      fold(0:ns-1) = filenames(0:ns-1)
+      filenames(0:ns1-1) = ' '
+      do is1 = 0, ns1-1
+        npoints = 0
+        isbegin = -1
+        isend = -1
+        sum = 0.0_R8
+        do is = 0, ns-1
+          if (bundle_frac(is1,is).gt.0.0_R8) then
+            sum = sum + bundle_frac(is1,is)
+            if (isbegin.eq.-1) isbegin = is
+            isend = is
+          end if
+        end do
+        if (isbegin.eq.isend .and. isbegin.ne.-1) then ! simple transfer
+          filenames(is1) = fold(isbegin)
+        else if (isbegin.ne.-1) then
+cxpb need to write new file with weighted average of profiles
+cxpb we check the profiles have the same size
+cxpb and use the positions from the last file read
+          write(charns ,'(i3.3)') isbegin
+          write(charns1,'(i3.3)') isend
+          filenames(is1) =
+     .      trim(fold(isbegin))//'.'//charns//'-'//charns1
+          write(nunit,'(a)') trim(filenames(is1))
+          do is = isbegin, isend
+            open(99,file=fold(is1))
+            read(99,*,err=100,end=101) idum
+            if (npoints.eq.0) then
+              npoints = idum
+              allocate(pos(npoints))
+              allocate(values(npoints,isend-isbegin+1))
+              allocate(value1(npoints))
+            else
+              call xertst( idum.eq.npoints,
+     .         'Mismatched profile sizes, conversion case not coded !')
+            end if
+            do iy = 1, npoints
+              read(99,*,err=100,end=101) pos(iy),values(iy,is-isbegin+1)
+            end do
+            close(99)
+          end do
+          do iy = 1, npoints
+            value1(iy) = 0.0_R8
+            do is = isbegin, isend
+              value1(iy) = value1(iy) +
+     .         bundle_frac(is1,is)*values(iy,is-isbegin+1)
+            end do
+            value1(iy) = value1(iy) / sum
+          end do
+          open(99,file=trim(filenames(is1)))
+          write(99,*) npoints
+          do iy = 1, npoints
+            write(99,*) pos(iy), value1(iy)
+          end do
+          close(99)
+          deallocate(pos,values,value1)
+        end if
+      end do
+
+      return
+  100 call xerrab('Could not read profile file !')
+  101 call xerrab('Premature end of profile file !')
+
+      return
+      end subroutine average_bundle_profile
 
       subroutine sum_bundle(ns1,ns,nsm,is_neutral1,bundle_frac,work)
       use b2mod_types
