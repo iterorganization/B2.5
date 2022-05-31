@@ -97,13 +97,13 @@
 
 ***********************************************************************
 
-      logical function isPoloidal(iFc,m,g,tol)
+      logical function isPoloidal(iFc,m,g,cvFpsi,tol)
       
         type(mapping) :: m
         type(geometry) :: g
         integer :: iFc, cells(1:2), faces3(0:2), faces4_1(0:3), 
      &             faces4_2(0:3), i1, i2, i  
-        real(kind=R8) :: tol
+        real(kind=R8) :: tol, cvFpsi(m%nCv)
 
 
         isPoloidal = 0 
@@ -134,7 +134,13 @@
                        i2 = i2 + 1
                    endif 
                 enddo 
-                if ((i1 .eq. 2) .and. (i2 .eq. 2)) then
+                if  (( i1 .eq. 2 .and. i2 .eq. 2 ) .or. 
+     &              ( i1 .eq. 1 .and. i2.eq.2 .and. 
+     &              abs(cvFpsi(cells(1)) - cvFpsi(cells(2)) 
+     &               .lt.tol )) .or.
+     &              ( i1 .eq. 2 .and. i2.eq.1 .and. 
+     &              abs(cvFpsi(cells(1)) - cvFpsi(cells(2))
+     &               .lt. tol ))) then
                    isPoloidal = 1 
                 endif               
         
