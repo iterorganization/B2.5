@@ -756,7 +756,7 @@ cxpb  if just below the top corner, make the corner cell follow
         nnVmxCv = idum(3)
         nnVmxFc = idum(4)
         !read nx, ny
-        call cfruin (nrid, 2, idum, 'nx,ny')
+        call cfruin (nrid, 3, idum, 'nx,ny,nncut')
         m%nx = idum(0)
         m%ny = idum(1)
         call cfruin (nrid, 1, idum, 'isClassicalGrid')

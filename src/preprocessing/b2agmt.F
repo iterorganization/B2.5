@@ -16,23 +16,6 @@
       integer isymm
       type(geometry) :: g
       type(mapping) :: m
-!      integer nx, ny, isymm
-!      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny), 
-!     &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny),
-!     &  rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny),
-!     &  topix(-1:nx,-1:ny), topiy(-1:nx,-1:ny),
-!     $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS) 
-!      real (kind=R8) ::
-!     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-!     &  fpsi(-1:nx,-1:ny,0:3,0:2), bb(-1:nx,-1:ny,0:3)
-*   ..output arguments (unspecified on entry)
-!      real (kind=R8) ::
-!     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-!     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-!     &  gs(-1:nx,-1:ny,0:2), qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
-!     &  ebc(-1:nx,-1:ny,0:2), 
-!     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
-!     &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -136,16 +119,12 @@
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, fvec(0:1), dg, fcPsi, ec1fc(0:1), efcc2(0:1),
      *   econf(0:1), fn(0:1), tol_angles, tol_aligned, cvFpsi(1:m%nCv),
-     *   fcH, fcW
+     *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc), bcBb(0:1)
       logical classical
-!      real (kind=R8) ::
-!     *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
-      real (kind=R8) :: 
-     *   fcX(1:m%nFc), fcY(1:m%nFc) 
       integer, save :: style = 0
 *   ..procedures
       intrinsic min, max, sqrt
-      real (kind=R8) :: norm, trim1,sinang,cosang
+      real (kind=R8) :: norm, trim1, cosin, sinin
       real (kind=R8) ::
      &  sin_t, cos_t, sin_tl, cos_tl, tt
       external subini, subend, xertst, ipgetr, ipgeti
@@ -154,9 +133,13 @@
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
 !      dist(ix,iy,i,j) = norm (
 !     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
+!      sinang(p0x,p0y,p1x,p1y) = trim1(
+!     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
+!      cosang(p0x,p0y,p1x,p1y) = trim1(
+!     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      cosin(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
+      sinin(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-3_R8/,
@@ -172,6 +155,8 @@
 *     is cos(t), where t is the complementary angle between p0 and p1.
 *     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
 *     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
+*     Cosin and sinin calculate respectively the cosine and sine of the
+*     inclosed angle.
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -509,8 +494,8 @@ cwdk      4) centroid: average between the intersections with faces
           g%cvX(iCv) = centroid(iCv,0)  ! gc is equal to icv
           g%cvY(iCv) = centroid(iCv,1)
 
-!WIP      !Correct the magnetic field of guard cell -
-
+!WIP      !Correct the magnetic field of guard cell 
+          call recalc_guard_bb(m,g,isymm,bc,iCv,centroid,v1,v2)
 
 
           !Compute ebc - same method as quad - NEEDS REVIEW
@@ -669,23 +654,30 @@ cwdk      4) centroid: average between the intersections with faces
        
 *    .. compute angles
        !gamma - angle between cell connector (on face) and the face normal
-       g%fcQgam(iFc,0) = cosang(econf(0), econf(1),fn(0), fn(1) )
-       g%fcQgam(iFc,1) = sinang(econf(0), econf(1),fn(0), fn(1) )
+       !g%fcQgam(iFc,0) = cosang(econf(0), econf(1),fn(0), fn(1) )
+       !g%fcQgam(iFc,1) = sinang(econf(0), econf(1),fn(0), fn(1) )
+       g%fcQgam(iFc,0) = cosin(econf(0), econf(1),fn(0), fn(1) )
+       g%fcQgam(iFc,1) = sinin(econf(0), econf(1),fn(0), fn(1) )
        
        !alpha - angle between poloidal field vector on face and 
-       g%fcQalf(iFc,0) = 
-     &      cosang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
-       g%fcQalf(iFc,0) = 
-     &      sinang(g%fcEb(iFc,0),g%fcEb(iFc,0),fn(0),fn(1))
+       !g%fcQalf(iFc,0) = 
+       !&      cosang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
+       !g%fcQalf(iFc,0) = 
+       !&      sinang(g%fcEb(iFc,0),g%fcEb(iFc,0),fn(0),fn(1))
+
+       g%fcQalf(iFc,0) =
+     &         cosin(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))  
+       g%fcQalf(iFc,1) = 
+     &         sinin(g%fcEb(iFc,0),g%fcEb(iFc,0),fn(0),fn(1))         
 
        ! beta - angle between connector and poloidal magnetic field vector
        ! or is equal to gamma minus alpha
        ! use sin(x+-y) = sin(x)*cos(y) +- cos(x)*sin(y)
        !     cos(x+-y) = cos(x)*cos(y) -+ sin(x)*sin(y)
 
-!        g%fcQbet(iFc,0) = cosang(econf(0),econf(1),
+!        g%fcQbet(iFc,0) = cosin(econf(0),econf(1),
 !     &                  g%fcEb(iFc,0) , g%fcEb(iFc,1))
-!       g%fcQbet(iFc,1) = sinang(econf(0),econf(1),
+!       g%fcQbet(iFc,1) = sinin(econf(0),econf(1),
 !     &                  g%fcEb(iFc,0) , g%fcEb(iFc,1))
 
        g%fcQbet(iFc,0) = g%fcQgam(iFc,0)*g%fcQalf(iFc,0) + 
@@ -702,7 +694,6 @@ cwdk      4) centroid: average between the intersections with faces
 *    .. correct angles in special cases (aligned, poloidal,...) 
        if (fcType(iFc).eq.1) then ! radial face
            g%fcQalf(iFc,0) = 0.0_R8
-           !g%fcQalf(iFc,1) = +- 1.0_R8 (iets met sign van oorspronkelijke hoek ofzo?)
            g%fcQalf(iFc,1) = sign(1.0_R8,g%fcQalf(iFc,1))
 
        elseif (fcType(iFc).eq.2) then ! poloidal face
@@ -904,4 +895,93 @@ cnv   but now done for quads
 
       end subroutine build_fcType     
 
+*-----------------------------------------------------------------------
 
+      subroutine recalc_guard_bb(m,g,isymm,bc,iCv,centroid, v1, v2)
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      use b2mod_constants
+      implicit none
+
+      type(mapping) :: m
+      type(geometry) :: g
+      integer isymm, bc, iCv, verts4(0:3), verts3(0:2), v1, v2
+      real(kind=R8) :: vec1(0:2), vec2(0:2), p(0:2), d, bcBb(0:2), 
+     &   gcBb(0:2), t0, centroid(m%nCv,0:1)
+
+      !1. interpolate vxBb(0:1) to the boundary cell center
+      if (m%cvVxP(bc,2).eq.4) then
+        verts4 = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+3)
+        bcBb(0) = 0.25_R8 * sum( g%vxBb(verts4,0) )
+        bcBb(1) = 0.25_R8 * sum( g%vxBb(verts4,1) )
+        bcBb(2) = 0.25_R8 * sum( g%vxFfbz(verts4))
+      elseif (m%cvVxP(bc,2).eq.3) then
+        verts3 = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+2)
+        bcBb(0) = sum( g%vxBb(verts3,0) ) / 3.0_R8
+        bcBb(1) = sum( g%vxBb(verts3,1) ) / 3.0_R8
+        bcBb(2) = sum( g%vxFfbz(verts3) ) / 3.0_R8          
+      endif
+
+      !2. construct 3d-plane with two guard cell vertices and cell center
+      ! p(0)*x+ p(1)*y + p(2)*z = d met x = x-coordinate, y = y-coordinate, z = bb-value
+      !first the dpsi/dy  = bx value (vxBb(:,0))
+      vec1(0) = g%vxX(v1) - centroid(bc,0)
+      vec1(1) = g%vxY(v1) - centroid(bc,1)
+      vec1(2) = g%vxBb(v1,0) - bcBb(0)
+      vec2(0) = g%vxX(v2) - centroid(bc,0)
+      vec2(1) = g%vxY(v2) - centroid(bc,1)
+      vec2(2) = g%vxBb(v2,0) - bcBb(0)
+
+      !calculate cross to get the normal of the 3d-plane vector p(0:2)
+      p(0) = vec1(1)*vec2(2) - vec1(2)*vec2(1) 
+      p(1) = vec1(0)*vec2(2) - vec1(2)*vec1(0)
+      p(2) = vec1(0)*vec2(1) - vec1(1)*vec2(0)
+
+      !determine 3d-plane with cell center point
+      d = p(0)*centroid(bc,0) + p(1)*centroid(bc,1) + p(2)*bcBb(0)
+
+      ! fill guard cell center coordinate in into the plane
+      gcBb(0) = (d - p(0)*g%cvX(iCv) - p(1)*g%cvY(iCv)) / p(2)
+
+      !same for vxBb(:,1)
+      vec1(2) = g%vxBb(v1,1) - bcBb(1)
+      vec2(2) = g%vxBb(v2,1) - bcBb(1)
+
+      p(0) = vec1(1)*vec2(2) - vec1(2)*vec2(1) 
+      p(1) = vec1(0)*vec2(2) - vec1(2)*vec1(0)
+      p(2) = vec1(0)*vec2(1) - vec1(1)*vec2(0)           
+      d = p(0)*centroid(bc,0) + p(1)*centroid(bc,1) + p(2)*bcBb(1)
+
+      gcBb(1) = (d - p(0)*g%cvX(iCv) - p(1)*g%cvY(iCv)) / p(2)
+
+      !same for vxFfbz
+      vec1(2) = g%vxFfbz(v1) - bcBb(2)
+      vec2(2) = g%vxFfbz(v2) - bcBb(2)
+
+      p(0) = vec1(1)*vec2(2) - vec1(2)*vec2(1) 
+      p(1) = vec1(0)*vec2(2) - vec1(2)*vec1(0)
+      p(2) = vec1(0)*vec2(1) - vec1(1)*vec2(0)           
+      d = p(0)*centroid(bc,0) + p(1)*centroid(bc,1) + p(2)*bcBb(2)
+
+      gcBb(2) = (d - p(0)*g%cvX(iCv) - p(1)*g%cvY(iCv)) / p(2)
+
+      !3. compute magnetic field in guard cell center - same method as in b2agbb but now with only one point
+      if (isymm.ne.0) then
+        if (isymm.eq.1 .or. isymm.eq.2) then
+           t0 = 2.0*pi*centroid(iCv,0)
+        elseif (isymm.eq.3 .or. isymm.eq.4) then
+           t0 = 2.0*pi*centroid(iCv,1)
+        endif
+      else 
+        t0 = 1.0
+      endif
+
+      g%cvBb(iCv,0) = sqrt(gcBb(0)**2 + gcBb(1)**2)/t0
+      g%cvBb(iCv,1) = 0.0_R8
+      g%cvBb(iCv,2) = gcBb(2)/t0
+      g%cvBb(iCv,3) = sqrt( g%cvBb(iCv,0)**2 + 
+     &        g%cvBb(iCv,1)**2 + g%cvBb(iCv,2)**2)
+
+
+      end subroutine recalc_guard_bb
