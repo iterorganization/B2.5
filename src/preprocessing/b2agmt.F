@@ -169,9 +169,12 @@
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_style', style)
       call ipgetr ('b2agmt_guard_rescale',guard_rescale)
+      call ipgetr ('b2agmt_tol_aligned',tol_aligned)
       call xertst (0.0_R8.lt.width, 'faulty input width')
       call xertst (0.0_R8.lt.guard_rescale, 
      &   'faulty input guard rescale')
+      call xertst (0.0_R8.lt.tol_aligned,
+     &   'faulty input tol_algined' )
 *   ..test nx, ny, isymm
       call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
      &  'faulty argument nCv, nFc, nVx')

@@ -635,6 +635,7 @@
 !*   ..save geometry
 !      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
 !     &  wbbc, cell_width, cell_height)
+
 !*   ..create B2GridMap data structure
 !      call b2CreateMap(nx, ny, crx, cry, cflags,
 !     &     leftix, leftiy, rightix, rightiy,
