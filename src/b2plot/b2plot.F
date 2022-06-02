@@ -182,7 +182,7 @@ c
       character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
-      integer is, iss, isp, is2, iatm
+      integer is, iss, isp, is2
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -4540,7 +4540,7 @@ c     assumes that bb is OK for 1d cases
       end subroutine select_matrix
 
       subroutine select_stack_manipulation
-      integer i,ix,iy,is,isp,iss
+      integer i,ix,iy,is,isp,iatm
 
       cflag=.true.
       FVALUE: select case (cval)

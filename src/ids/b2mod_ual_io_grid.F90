@@ -2996,7 +2996,7 @@ contains
            &      object(i3)%measure = &
            &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%measure
-#if IMAS_MINOR_VERSION > 34
+#if IMAS_MINOR_VERSION > 35
           if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%geometry_2d ) ) then
             i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
