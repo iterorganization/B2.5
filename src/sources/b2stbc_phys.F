@@ -1,4 +1,4 @@
-*0-----------------------------------------------------------------------
+*-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nx, ny, ns, ismain, ismain0,
      1  BoRiS, facdrift, fac_ExB,
@@ -192,9 +192,9 @@
       external xertst, ipgeti, bcint, eseec0, streql
       external ipgetr, b2xvsg, b2xvff, b2xvps
 *   ..initialisation
-      data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/,
-     2 ionising_core/0/, na_min/1.0e4_R8/, na_new/1.0e14_R8/,
+      data ncall/0/, coreregn2/4/, bc_type13_ref/1/,
+     1 bc_type16_ref/1/, bc_type20_ref/1/, ionising_core/0/,
+     2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
@@ -3437,28 +3437,28 @@ cxpb  Add contribution from Eirene core boundary fluxes
               call find_file(filename, ex)
 
               call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .             BCPOS(IB),profile_con(is,ib,:),ny,conpar(is,ib,1),
-     .             conpar(is,ib,2))
+     .             BCPOS(IB),profile_con(-1:ny,is,ib),ny,
+     .             conpar(is,ib,1),conpar(is,ib,2))
   
             endif
 
             IF (BCCHAR(IB).EQ.'W') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
-     &               UBIG*profile_con(is,ib,BC_LIST_Y(IY,IB))*
-     .                SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &               UBIG*profile_con(BC_LIST_Y(IY,IB),is,ib)*
+     .               SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS) =
-     &               -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &              -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               ENDDO
             ELSEIF (BCCHAR(IB).EQ.'E') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
-     &               UBIG*profile_con(is,ib,BC_LIST_Y(IY,IB))*
-     .                SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &               UBIG*profile_con(BC_LIST_Y(IY,IB),is,ib)*
+     .               SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                  LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=-UBIG*
      .               SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &                  LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               ENDDO
             ENDIF
           ELSE
@@ -3492,9 +3492,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         VBIG*CONPAR(IS,IB,1)*
-     .         SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .         TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+     .          VBIG*CONPAR(IS,IB,1)*
+     .          SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .          TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
      .         -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             END DO
@@ -3512,9 +3512,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         UBIG*CONPAR(IS,IB,1)*
-     .         SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     .         TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+     .          UBIG*CONPAR(IS,IB,1)*
+     .          SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .          TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .         -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             END DO
@@ -3522,13 +3522,13 @@ cxpb  Add contribution from Eirene core boundary fluxes
             DO IY = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
      .          UBIG*CONPAR(IS,IB,1)*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
-     .         TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+     .          SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .          TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .         -UBIG*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     .          SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             END DO
           ELSE
             CALL XERRAB
@@ -3562,8 +3562,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               filename = con_fn(is,ib)
               call find_file(filename, ex)
               call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .             BCPOS(IB),profile_con(is,ib,:),ny,conpar(is,ib,1),
-     .             conpar(is,ib,2))
+     .             BCPOS(IB),profile_con(-1:ny,is,ib),ny,
+     .             conpar(is,ib,1),conpar(is,ib,2))
             
             endif
 
@@ -3571,15 +3571,15 @@ cxpb  Add contribution from Eirene core boundary fluxes
               do IY = 1, BC_LIST_SIZE(IB)
                 sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS)=
      &               SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) *
-     &               profile_con(is,ib,BC_LIST_Y(IY,IB))
+     &               profile_con(BC_LIST_Y(IY,IB),is,ib)
                 sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1,IS)=0.0_R8
               enddo
             elseif (BCCHAR(IB).eq.'E') then
               do IY = 1, BC_LIST_SIZE(IB)
                 sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS)=
-     &               profile_con(is,ib,BC_LIST_Y(IY,IB))*
-     .                SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
-     &               LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+     &               profile_con(BC_LIST_Y(IY,IB),is,ib)*
+     .               SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &                  LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
                 sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1,IS)=0.0_R8
               enddo
             endif
@@ -4581,30 +4581,30 @@ cxpb  and max(,,) statement for stability
           endif
           IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
             if(new_boundary_files) then
-            filename = mom_fn(is,ib)
-            call find_file(filename, ex)
-            call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_mom(is,ib,:),ny,mompar(is,ib,1),
-     .           mompar(is,ib,2))
+              filename = mom_fn(is,ib)
+              call find_file(filename, ex)
+              call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .             BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
+     .             mompar(is,ib,1),mompar(is,ib,2))
 
             end if
 
             IF (BCCHAR(IB).EQ.'W') THEN
               DO IY=BCSTART(IB), BCEND(IB)
                 SMO0(BCPOS(IB),IY,0,IS)= UBIG*NE00*AM(IS)*
-     .           SX(BCPOS(IB),IY)*profile_mom(is,ib,BC_LIST_Y(IY,IB))*mp
+     .           SX(BCPOS(IB),IY)*profile_mom(BC_LIST_Y(IY,IB),is,ib)*mp
                 SMO0(BCPOS(IB),IY,1,IS)=-UBIG*NE00*AM(IS)*
-     .               SX(BCPOS(IB),IY)*mp
+     .           SX(BCPOS(IB),IY)*mp
               ENDDO
             ELSEIF (BCCHAR(IB).EQ.'E') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     &             UBIG*NE00*AM(IS)*profile_mom(is,ib,BC_LIST_Y(IY,IB))*
-     &              SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*mp
+     &            UBIG*NE00*AM(IS)*profile_mom(BC_LIST_Y(IY,IB),is,ib)*
+     &            SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*mp
                 SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     &               -UBIG*NE00*AM(IS)*
-     .               SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &           -UBIG*NE00*AM(IS)*
+     .            SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*mp
               ENDDO
             ENDIF
@@ -4651,21 +4651,21 @@ cxpb  and max(,,) statement for stability
             filename = con_fn(is,ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_con(is,ib,:),ny,conpar(is,ib,1),
-     .           conpar(is,ib,2))
+     .           BCPOS(IB),profile_con(-1:ny,is,ib),ny,
+     .           conpar(is,ib,1),conpar(is,ib,2))
 
             !Read velocity profile
             filename = mom_fn(is,ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_mom(is,ib,:),ny,mompar(is,ib,1),
-     .           mompar(is,ib,2))
+     .           BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
+     .           mompar(is,ib,1),mompar(is,ib,2))
 
 
             do IY = 1, BC_LIST_SIZE(IB)
-              profile_mom(is,ib,BC_LIST_Y(IY,IB)) =
-     &             profile_con(is,ib,BC_LIST_Y(IY,IB)) *
-     &             profile_mom(is,ib,BC_LIST_Y(IY,IB))**2*am(IS)*mp
+              profile_mom(BC_LIST_Y(IY,IB),is,ib) =
+     &             profile_con(BC_LIST_Y(IY,IB),is,ib) *
+     &             profile_mom(BC_LIST_Y(IY,IB),is,ib)**2*am(is)*mp
             end do
 
           endif
@@ -4673,15 +4673,15 @@ cxpb  and max(,,) statement for stability
           IF(BCCHAR(IB).EQ.'W') THEN
             do IY = 1, BC_LIST_SIZE(IB)
               SMO0(BCPOS(IB),IY,0,IS)=
-     &             profile_mom(is,ib,BC_LIST_Y(IY,IB))*SX(BCPOS(IB),IY)
+     &         profile_mom(BC_LIST_Y(IY,IB),is,ib)*SX(BCPOS(IB),IY)
               SMO0(BCPOS(IB),IY,1,IS)=0.0_R8
             end do
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             do IY = 1, BC_LIST_SIZE(IB)
               SMO0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS) =
-     &             profile_mom(is,ib,BC_LIST_Y(IY,IB))*
-     &             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+     &         profile_mom(BC_LIST_Y(IY,IB),is,ib)*
+     &         SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &            LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
               SMO0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1,IS)=0.0_R8
             end do
           ELSE
@@ -4780,8 +4780,8 @@ cxpb  and max(,,) statement for stability
               filename = mom_fn(is,ib)
               call find_file(filename, ex)
               call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .             BCPOS(IB),profile_mom(is,ib,:),ny,mompar(is,ib,1),
-     .             mompar(is,ib,2))
+     .             BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
+     .             mompar(is,ib,1),mompar(is,ib,2))
         
             end if
 
@@ -4790,34 +4790,34 @@ cxpb  and max(,,) statement for stability
                 SMO0(BCPOS(IB),IY,0,IS)=
      .               VBIG*SX(BCPOS(IB),IY)*AM(IS) *
      .               na(BCPOS(IB),IY,IS) *
-     .               (-profile_mom(is,ib,BC_LIST_Y(IY,IB)))*
+     .               (-profile_mom(BC_LIST_Y(IY,IB),is,ib))*
      1               (HX(BCPOS(IB),IY)+
-     2               HX(RIGHTIX(BCPOS(IB),IY),
-     .               RIGHTIY(BCPOS(IB),IY)))/2 +
-     .         UA(RIGHTIX(BCPOS(IB),IY),
-     .            RIGHTIY(BCPOS(IB),IY),IS)
-              SMO0(BCPOS(IB),IY,1,IS)=
-     .         - VBIG*SX(BCPOS(IB),IY) *
-     .         AM(IS) *
-     .         na(BCPOS(IB),IY,IS)
+     2                HX(RIGHTIX(BCPOS(IB),IY),
+     .                   RIGHTIY(BCPOS(IB),IY)))/2.0_R8 +
+     .                UA(RIGHTIX(BCPOS(IB),IY),
+     .                   RIGHTIY(BCPOS(IB),IY),IS)
+                SMO0(BCPOS(IB),IY,1,IS)=
+     .             - VBIG*SX(BCPOS(IB),IY) *
+     .               AM(IS) *
+     .               na(BCPOS(IB),IY,IS)
               ENDDO
             ELSEIF (BCCHAR(IB).EQ.'E') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)= VBIG*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*AM(IS) *
-     .         na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS) *
-     .         (MOMPAR(IS,IB,1)*
-     1         (HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))+
-     2          HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/2 +
-     .         UA(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=-VBIG*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))) *
-     .         AM(IS) *
-     .         na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)
+     .           SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*AM(IS)*
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS) *
+     .          (MOMPAR(IS,IB,1)*
+     1          (HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))+
+     2           HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/2.0_R8 +
+     .           UA(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS))
+                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=-VBIG*
+     .           SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))) *
+     .           AM(IS) *
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)
               ENDDO
             ENDIF
           ELSE
@@ -6851,28 +6851,28 @@ cxpb code segment analog to b2tfhe
             filename = ene_fn(ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_ene(ib,:),ny,enepar(ib,1),
-     .           enepar(ib,2))
+     .           BCPOS(IB),profile_ene(-1:ny,ib),ny,
+     .           enepar(ib,1),enepar(ib,2))
 
           endif
 
           IF (BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
-     &             UBIG*NE00*EV*profile_ene(ib,BC_LIST_Y(IY,IB))*
+     &             UBIG*NE00*EV*profile_ene(BC_LIST_Y(IY,IB),ib)*
      .             SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
               she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=
-     &             -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
+     &            -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
             ENDDO
           ELSEIF (BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
-     &             UBIG*NE00*EV*profile_ene(ib,BC_LIST_Y(IY,IB))*
+     &             UBIG*NE00*EV*profile_ene(BC_LIST_Y(IY,IB),ib)*
      .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
               she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
      .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
             ENDDO
           ENDIF
         ELSE
@@ -9341,28 +9341,28 @@ cxpb Careful here because of BC number clash
             filename = eni_fn(ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_eni(ib,:),ny,enipar(ib,1),
-     .           enipar(ib,2))
+     .           BCPOS(IB),profile_eni(-1:ny,ib),ny,
+     .           enipar(ib,1),enipar(ib,2))
 
           endif
 
           IF (BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
-     &             UBIG*NE00*EV*profile_eni(ib,BC_LIST_Y(IY,IB))*
+     &             UBIG*NE00*EV*profile_eni(BC_LIST_Y(IY,IB),ib)*
      .             SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=
-     &             -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
+     &            -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
             ENDDO
           ELSEIF (BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
-     &             UBIG*NE00*EV*profile_eni(ib,BC_LIST_Y(IY,IB))*
+     &             UBIG*NE00*EV*profile_eni(BC_LIST_Y(IY,IB),ib)*
      .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
               shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
      .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
             ENDDO
           ENDIF
         ELSE
@@ -10318,27 +10318,27 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
             filename = pot_fn(ib)
             call find_file(filename, ex)
             call read_profile(filename,BCSTART(IB),BCEND(IB),
-     .           BCPOS(IB),profile_pot(ib,:),ny,potpar(ib,1),
-     .           potpar(ib,2))
+     .           BCPOS(IB),profile_pot(-1:ny,ib),ny,
+     .           potpar(ib,1),potpar(ib,2))
 
           endif
           IF (BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
      &             UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     .              profile_pot(ib,BC_LIST_Y(IY,IB))
+     .             profile_pot(BC_LIST_Y(IY,IB),ib)
               sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
-     &             -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &            -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             ENDDO
           ELSEIF (BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= UBIG*
      &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
-     &             profile_pot(ib,BC_LIST_Y(IY,IB))
+     &                LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
+     &             profile_pot(BC_LIST_Y(IY,IB),ib)
               sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*
      &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &                LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             ENDDO
           ENDIF
         ELSE

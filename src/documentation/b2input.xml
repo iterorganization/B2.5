@@ -6069,7 +6069,7 @@
 						18 : fractional drop condition. Not yet working.
 						19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
 						20 : feedback boundary condition with constant temperature, as per type [16] but with 'type20_' switches and a different feedback scheme.
-						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
+						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away.
 							ENEPAR(,1) specifies the desired electron temperature in eV.
 							ENEPAR(,2) is the strength of the feedback.
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.

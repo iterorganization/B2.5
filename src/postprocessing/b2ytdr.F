@@ -2434,23 +2434,23 @@ c 2002-09-11: logic revised
         write(99,'(1x,a,l1,a,l1,a)')
      .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
-        write(hlp_frm,'(a, i2,a)') '(1x,a,i2,a,',ns1,'(1x,a,,'',''))'
+        write(hlp_frm,'(a, i2,a)') '(1x,a,i2,a,',ns1,'(1x,a,'',''))'
         do ib = 1, nbc1
           if (any(bccon(:,ib).eq.28).or.any(bccon(:,ib).eq.30).or.
      .        any(bcmom(:,ib).eq.19)) then
-            write(99,hlp_frm) 'CON_FN(0,',ib,')=''',
-     .       (trim(CON_FN(is,ib)),is = 0,ns1-1)
+            write(99,hlp_frm) 'CON_FN(0,',ib,')=',
+     .       (''''//trim(CON_FN(is,ib))//'''',is = 0,ns1-1)
           else if (any(con_fn(:,ib).ne.'b2.con.profile')) then
-            write(99,hlp_frm) 'CON_FN(0,',ib,')=''',
-     .       (trim(CON_FN(is,ib)),is = 0,ns1-1)
+            write(99,hlp_frm) 'CON_FN(0,',ib,')=',
+     .       (''''//trim(CON_FN(is,ib))//'''',is = 0,ns1-1)
           end if
           if (any(bcmom(:,ib).eq.18).or.any(bcmom(:,ib).eq.19).or.
      .        any(bcmom(:,ib).eq.21)) then
             write(99,hlp_frm) 'MOM_FN(0,',ib,')=',
-     .       (trim(MOM_FN(is,ib)),is = 0,ns1-1)
+     .       (''''//trim(MOM_FN(is,ib))//'''',is = 0,ns1-1)
           else if (any(mom_fn(:,ib).ne.'b2.mom.profile')) then
-            write(99,hlp_frm) 'MOM_FN(0,',ib,')=''',
-     .       (trim(MOM_FN(is,ib)),is = 0,ns1-1)
+            write(99,hlp_frm) 'MOM_FN(0,',ib,')=',
+     .       (''''//trim(MOM_FN(is,ib))//'''',is = 0,ns1-1)
           end if
           if (bcene(ib).eq.23) then
             write(99,'(1x,a,i2,a,a,a)') 'ENE_FN(',ib,')=''',
@@ -8249,7 +8249,9 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           ENDIF
           IF (ZEILE(1:8) /= 'SURFMOD_') CYCLE
           IREAD=0
-          READ (IUNIN,6666) idum(0:5) ! REFCUR%JLREF,REFCUR%JLSPT,
+          READ (IUNIN,'(A72)') ZEILE
+          call fix_integer_input(zeile,6)
+          READ (ZEILE,6666) idum(0:5) ! REFCUR%JLREF,REFCUR%JLSPT,
                                       ! REFCUR%JSRS,REFCUR%JSRC,
                                       ! REFCUR%JLCHSPNWL,REFCUR%REFCELL
           IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
@@ -9961,7 +9963,9 @@ C  SKIP READING REST OF THIS BLOCK
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
         IREAD=0
-        READ (IUNIN,6666) idum(0:2) ! NPRNLI, NINITL_READ, NPRMUL
+        READ (IUNIN,'(A72)') ZEILE
+        call fix_integer_input(zeile,3)
+        READ (ZEILE,6666) idum(0:2) ! NPRNLI, NINITL_READ, NPRMUL
         WRITE(IUNOT,6666) idum(0:2)
         IF (idum(0).LE.0) GOTO 1350
         READ (IUNIN,'(A80)') ZEILE ! NPTST,NTMSTP
