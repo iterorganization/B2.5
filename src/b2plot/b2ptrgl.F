@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(BoRiS)
+      subroutine b2ptrgl(BoRiS, from_b2plot, use_eirene)                    !iyv 11.04.22
 c
 c  version : 07.04.98 13:12
 c
@@ -33,7 +33,8 @@ c======================================================================
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
-      integer, save :: use_eirene = 0
+!      integer, save :: use_eirene = 0
+      integer use_eirene 
 #ifdef B25_EIRENE
       integer eb2atm(nspecies)
 #else
@@ -44,9 +45,11 @@ c======================================================================
 c
       integer i,j,jj,k,kk,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is,ix,ik,ind,ims,ias,nclm_na,nclm_nm
+      integer kval, kflx
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
+      logical from_b2plot                                             !iyv 11.04.22
 c*  s:        area of target segments cut by the grid
 c*  wid_par:  ideal parallel power flux at the targets
 c*  wid_trg:  ideal power on the targets
@@ -60,7 +63,8 @@ c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
-     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
+     ,  wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
+!!!     wpk_tt(0:ntrgsx) now in module b2mod_b2plot_all_loading  iyv 11.04.22            
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),wp_xpt(0:ny-1,ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  wid_par(0:ny-1,ntrgsx),wid_trg(0:ny-1,ntrgsx),
@@ -153,6 +157,7 @@ c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
+      real (kind=R8) :: tti, ptext, faext, uaext, taext 
       character srfs_m(n_srfs_m)*4
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
       data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
@@ -201,7 +206,8 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (from_b2plot)
+     , call ipgeti ('b2mndr_eirene', use_eirene)
       if (use_eirene.ne.0) then
         filename=fort_lc//'44'
         call find_file(filename,ft44)
@@ -212,7 +218,7 @@ c*** which are calculated in Eirene.
 c----------------------------------------------------------------------
 c*** Power loading:
 c*** Radiation load onto the targets
-c
+
       call b2ptrdl(wrdtrg)
 #ifdef DBG
       print '(2a,3i5,2(1x,l1))','After b2ptrdl: ',
@@ -378,46 +384,62 @@ c*** Power loading:
       endif
 c
 c*** Plasma and neutrals
-c
+c 
       l=1
       u=-1.0_R8
       do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
-        if (itrg(j).gt.0) then !{
+        if (itrg(j).gt.0) then !{          
           k=ltrgpos(itrg(j))
-          kk=k+l
+          kval=k+l 
+          kflx=k+1-l
+
+          if( .not. from_b2plot) kflx=k+1
+
           do iy=lytg,ny-1 !{
             wo=0.0_R8
             wnutrg(iy,itrg(j))=0.0_R8
-            whtpl(iy,itrg(j))=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+
-     .                    fhi_ext(k+1-l,iy,0)
+            whtpl(iy,itrg(j))=fhe(kflx,iy,0)+fhi(kflx,iy,0)+
+     .                    fhi_ext(kflx,iy,0)
             do is=0,ns-1 !{
+              tti=ti(kval,iy)
+              if( .not. from_b2plot )
+     *            tti=0.5_R8*(ti(kflx,iy)+ti(k,iy))
               if (.not.is_neutral(is).or.ft44) then
-                wo=wo+fhp(k+1-l,iy,0,is)
+                wo=wo+fhp(kflx,iy,0,is)
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               else
                 wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+(1.0_R8-BoRiS)*
-     *           (fhm(k+1-l,iy,0,is)+fna(k+1-l,iy,0,is)*ti(kk,iy))
+     *           (fhm(kflx,iy,0,is)+fna(kflx,iy,0,is)*tti)
               endif
               whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+(1.0_R8-BoRiS)*
-     *         (fhm(k+1-l,iy,0,is)+fna(k+1-l,iy,0,is)*ti(kk,iy))
+     *         (fhm(kflx,iy,0,is)+fna(kflx,iy,0,is)*tti)
             end do !}
             do is=0,ns_ext-1 !{
+              ptext=pt_ext(kval,iy,is)
+              uaext=ua_ext(kval,iy,is)
+              faext=fa_ext(kflx,iy,0,is)
+              if( .not. from_b2plot) then 
+                ptext=0.5_R8*(pt_ext(kflx,iy,is)+pt_ext(k,iy,is))           
+                uaext=0.5_R8*(ua_ext(kflx,iy,is)+ua_ext(k,iy,is))           
+                faext=0.5_R8*(fa_ext(kflx,iy,0,is)+fa_ext(k,iy,0,is))  
+                taext=0.5_R8*(ta_ext(kflx,iy,is)+ta_ext(k,iy,is))  
+             end if  
               if (.not.is_ext_neutral(is).or.ft44) then
-                wo=wo+fa_ext(k+1-l,iy,0,is)*pt_ext(kk,iy,is)*ev
+               wo=wo+faext*ptext*ev
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               else
                 wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+
-     .                 fa_ext(k+1-l,iy,0,is)
+     .                 faext
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                 ua_ext(kk,iy,is)**2+ta_ext(kk,iy,is))
+     .                 uaext**2+taext)
               end if
               whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+
-     .               fa_ext(k+1-l,iy,0,is)
-     .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
-     .               am_ext(is)*mp*ua_ext(kk,iy,is)**2)
+     .               faext
+     .             *(1.0_R8-BoRiS)*(taext+0.5_R8*
+     .               am_ext(is)*mp*uaext**2)
             end do !}
-            whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+fne(k+1-l,iy,0)
-     .           *(1.0_R8-BoRiS)*te(kk,iy)
+            whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+fne(kflx,iy,0)
+     .           *(1.0_R8-BoRiS)*te(kval,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
 c           wo=-1.0e-6_R8*wo/s(iy,itrg(j))
             wptpl(iy,itrg(j))=wo/s(iy,itrg(j))*u
@@ -425,9 +447,9 @@ c           wo=-1.0e-6_R8*wo/s(iy,itrg(j))
             wpltrg(iy,itrg(j))=wptpl(iy,itrg(j))+whtpl(iy,itrg(j))
             if(.not.ft44) wnutrg(iy,itrg(j))=
      .                    wnutrg(iy,itrg(j))*u/s(iy,itrg(j))
-            netrg(iy,itrg(j))=ne(k+l,iy)
-            tetrg(iy,itrg(j))=te(k+l,iy)/ev
-            titrg(iy,itrg(j))=ti(k+l,iy)/ev
+            netrg(iy,itrg(j))=ne(kval,iy)
+            tetrg(iy,itrg(j))=te(kval,iy)/ev
+            titrg(iy,itrg(j))=ti(kval,iy)/ev
             if (ft44) then
               do iss=1,nsts !{
                 if (eirdiag_nds_typ(iss).ne.2) cycle
@@ -473,12 +495,12 @@ c             kinetic energy of recycled and sputtered neutrals
                   endif
                   imol=imol+1
                 enddo
-                t=tib2(k+l+1,iy+1,is,1)/ev
+                t=tib2(kval+1,iy+1,is,1)/ev
                 if (mion.gt.0.0_R8)
      >           wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+
-     .            s(iy,itrg(j))*dib2(k+l+1,iy+1,is,1)*
+     .            s(iy,itrg(j))*dib2(kval+1,iy+1,is,1)*
      *            sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .           (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+     .           (2.0_R8*tib2(kval+1,iy+1,is,1)+EionH2*ev)
               enddo
             endif
 c carlis  21 feb 2017 added calculation of connection length from midplane to targets
@@ -595,6 +617,9 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
 #endif
       if(lrdlsp) nclm_ld=nclm_ld+nclm_na
       if(lrdlcr) nclm_ld=nclm_ld+1
+      
+      if (from_b2plot) then    ! iyv 11.04.22
+          
       do j=1,ntrgts !{
         jj=itrg(j)
         if(j.eq.ntrgts.and..not.(ntrgts.eq.1.and.itrg(1).eq.1))
@@ -707,6 +732,7 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
         end do !}
         close (lun)
       end do !}
+      end if                 ! iyv 11.04.22
 c----------------------------------------------------------------------
 c*** Calculate the peak power loads onto the targets and write them
 c*** down to the summary file
@@ -738,6 +764,9 @@ c
               wlc_tt(itrg(j))=xtrg(i,itrg(j))
               m_hlp(itrg(j))=i
             end if !}
+            
+            if(from_b2plot) then           !iyv 11.04.22
+                
             if(wrdtrg(i,itrg(j),0) .gt. wpk_rd(itrg(j))) then !{
               wpk_rd(itrg(j))=wrdtrg(i,itrg(j),0)
               wlc_rd(itrg(j))=xtrg(i,itrg(j))
@@ -750,11 +779,15 @@ c
               wpk_nu(itrg(j))=wnutrg(i,itrg(j))
               wlc_nu(itrg(j))=xtrg(i,itrg(j))
             end if !}
+            end if ! if(from_b2plot)   !iyv 11.04.22
           end do !}
         end if !}
         l=1-l
       end do !}
 
+     
+      if ( .not. from_b2plot) return       !iyv 11.04.22
+      
       write(fmt_peak,700) 24
   700 format('(1p,e12.5,',i3,'(a1,e12.5))')
       i1=1
@@ -762,7 +795,7 @@ c
       fn_hlp=fsumm(1)
       tl=' '
       do j=1,2 !{
-        if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
+         if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
           open(lun,file=fn_hlp)
           write(lun,740) 'Peak powers ',pkl_label(j),trim(label)
           if(.not.LSN) then
@@ -772,6 +805,7 @@ c
           endif
           i3=i2-i1
           if (i3.eq.0 .and. ntrgts.eq.1) i3=1
+   
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
@@ -800,7 +834,7 @@ c
      ,      tab, 'loc_n_i',tl,
      ,      tab,'peak_tei',tl,tab,'peak_nei',tl
           end if
-          write(lun,fmt_peak) tim,
+            write(lun,fmt_peak) tim,
      ,     (tab, wpk_tt(i),i=i1,i2,i3), tab, wpk_tt(0),
      ,     (tab, wlc_tt(i),i=i1,i2,i3),
      ,     (tab, wpk_rd(i),i=i1,i2,i3), tab, wpk_rd(0),
@@ -1661,6 +1695,7 @@ c
         write(lun,fmt_peak) 'peak pos.',(tab,ersn_l(itrg(i)),i=1,ntrgts)
         close (lun)
       end if
+      
       return
 
 c======================================================================

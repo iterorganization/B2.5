@@ -145,7 +145,7 @@ c*** Separatrix data
 c*** User-specific data
       if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
 c*** User-specific data
-      if(filedata(ntrc_uss)) call b2usstrc(nx,ny,ns)       ! IYS 22.03.2022
+      if(filedata(ntrc_uss)) call b2usstrc(nx,ny,ns,BoRiS)       ! IYS 22.03.2022
 c
       return
       end subroutine b2trace

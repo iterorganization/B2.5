@@ -26,6 +26,7 @@ c
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
      ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx)
+      real (kind=R8) wpk_tt(0:ntrgsx) ! iyv 11.04.22
       logical lvdg20
       logical l2rdldw, l2rdldt, l2pwinp, lrdlsp, lrdlcr,
      ,  lwlddir(nwldprtx), lskip(DEF_NLIM)
