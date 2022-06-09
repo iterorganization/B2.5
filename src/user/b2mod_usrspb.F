@@ -302,7 +302,7 @@ c======================================================================
       logical :: ex
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
-c*** Only called with filedata(ntrc_bls)=.true.
+c*** Only called with filedata(ntrc_uss)=.true.
 c----------------------------------------------------------------------
 c
 
@@ -449,7 +449,7 @@ c
       
 !      write(*,*) 'filedata, ntrc = ', filedata(ntrc_uss), ntrc_uss 
 
-      if(.not.filedata(ntrc_uss)) return
+      if(.not.filedata(ltrc)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -592,7 +592,7 @@ c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
 c
-      if(.not.filedata(ntrc_bls)) return
+      if(.not.filedata(ltrc)) return
       
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
