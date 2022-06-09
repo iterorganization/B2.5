@@ -886,7 +886,7 @@ ${AMEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${IMASLIBS} ${LDLIBES} ${LDOPTSend}
 
 ${OEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${PLLIBES} ${LDLIBES} ${LDOPTSend}
 
 ${OPEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
