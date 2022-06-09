@@ -17,6 +17,7 @@
       use b2us_plasma
       use b2mod_user_namelist
      & ,only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+      implicit none
       integer, parameter :: nvac=4, nvacreg=4, nMxFbReg = 1000
 #     include "DIMENSIONS.F"
 
@@ -33,7 +34,7 @@
 
       integer, allocatable, save :: fbRegP(:,:) ! (nFb,2) pointing for each feedback to the first index in the fbReg list, and its number of CVs or faces
       integer, allocatable, save :: fbReg(:)  !         listing for each feedback the cells or faces
-      integer, save :: nfbreg = 0
+      integer, save :: nfbreg = 0, nfb = 0
 *   ..namelists
 ! csc new namelist merging all feedback schemes
       real (kind=R8), save ::
