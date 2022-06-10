@@ -467,7 +467,7 @@
 !      endif
       write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
       write(*,'()')
-      if (g%cvBb(m%nCv,2).gt.0.0_R8) then
+      if (g%vxFfBz(m%nVx).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
@@ -480,7 +480,7 @@
      .   'This means that the Bx(grad B) direction points DOWN.'
         write(nout(0),'(2x,a)')
      .   'Bz is out of the page towards you.'
-      else if (g%cvBb(m%nCv,2).lt.0.0_R8) then
+      else if (g%vxFfBz(m%nVx).lt.0.0_R8) then
          write(*,'(a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
@@ -581,6 +581,12 @@
       write(*,'(a)')
      . 'If already set to "-1.0", set to "1.0" instead.'
       write(*,'()')
+
+       !Take absolute values of magnetic field to comply with structured b2ag
+       g%cvBb = abs(g%cvBb)
+       g%fcBb = abs(g%fcBb)
+       g%vxBb = abs(g%vxBb)
+
 
 * ..output - see module b2us_io and b2us.F
 *   ..write headers for output files - code from b2us.F

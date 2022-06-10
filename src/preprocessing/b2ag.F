@@ -147,9 +147,7 @@
 *    ..obtain nCv, nVx, nFc
 	  call b2ag_read_parameters(ninp,nout,m)
 *    ..call principal driver routine
-	  !call alloc_b2mod_indirect(m)
 	  call alloc_mapping(m)
-	  !call alloc_b2mod_geo(g,m)
 	  call alloc_geometry(g,m%nCv,m%nFc,m%nVx,m%nFs,m%nFt,m%nVmxCv)
 	  call b2agdr (ninp, nout,g,m)
 *    ..close graphics files

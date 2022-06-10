@@ -109,9 +109,9 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2
+      integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx
       integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2),
-     * fcType(m%nFc), c1, c2,  verts2(0:1)  
+     * fcType(m%nFc), c1, c2,  verts2(0:1), intersectF(0:1)  
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon, psi_flag
       real (kind=R8) ::
@@ -145,6 +145,7 @@
       data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-3_R8/,
      &  tol_aligned /1.0e-4_R8/
       save volhmk, width, guard_rescale, tol_aligned
+
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -237,7 +238,7 @@ cnv  new methods are employed
          g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif 
 
-*    ..compute volume, gs
+*    ..compute volume
       ! g%cvSz = gs(:,:,2)
       ! g%fcS = gs(:,:,0:1)
 
@@ -266,13 +267,13 @@ cnv  new methods are employed
      &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
      &       + g%vxY(verts4(3)) )
         else
-          centroid(iCv,:) = quadCentroid_us(g%vxX(verts4(0)),
-     &          g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),           
-     &                           g%vxX(verts4(2)),g%vxY(verts4(2)),
-     &                           g%vxX(verts4(3)),g%vxY(verts4(3)))
+!          centroid(iCv,:) = quadCentroid_us(g%vxX(verts4(0)),
+!     &          g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),           
+!     &                           g%vxX(verts4(2)),g%vxY(verts4(2)),
+!     &                           g%vxX(verts4(3)),g%vxY(verts4(3)))
 
           ! Calculate the centroid similar to the method for the triangle centroid
-          call calc_psi_centroid(g,m,centroid,iCv,psic)
+          call calc_psi_centroid(g,m,centroid,iCv,psic,isymm)
           cvFpsi(iCv) = psic   
 
         endif
@@ -288,14 +289,14 @@ cnv  new methods are employed
      &       + g%vxY(verts4(3)) )
         else ! default
           ! old function quadCentroid can be used if vertices are ordered correctly
-          centroid(iCv,0:1) = quadCentroid_us(g%vxX(verts4(0)),
-     &           g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),       
-     &                            g%vxX(verts4(3)),g%vxY(verts4(3)),
-     &                            g%vxX(verts4(2)),g%vxY(verts4(2)))
+!          centroid(iCv,0:1) = quadCentroid_us(g%vxX(verts4(0)),
+!     &           g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),       
+!     &                            g%vxX(verts4(3)),g%vxY(verts4(3)),
+!     &                            g%vxX(verts4(2)),g%vxY(verts4(2)))
 
 
           ! Calculate the centroid similar to the method for the triangle centroid
-          call calc_psi_centroid(g,m,centroid,iCv,psic)
+          call calc_psi_centroid(g,m,centroid,iCv,psic,isymm)
           cvFpsi(iCv) = psic
           
         endif
@@ -359,7 +360,8 @@ cwdk      4) centroid: average between the intersections with faces
         isx(ii) = g%vxX(m%fcVx(faces3(iF),1)) + t0 * 
      &  ( g%vxX(m%fcVx(faces3(iF),2)) - g%vxX(m%fcVx(faces3(iF),1)))
         isy(ii) = g%vxY(m%fcVx(faces3(iF),1)) + t0 * 
-     &  ( g%vxY(m%fcVx(faces3(iF),2)) - g%vxY(m%fcVx(faces3(iF),1)))     
+     &  ( g%vxY(m%fcVx(faces3(iF),2)) - g%vxY(m%fcVx(faces3(iF),1)))
+        intersectF(ii) = faces3(iF)     
         ii = ii+1
       endif
       enddo  
@@ -372,6 +374,12 @@ cwdk      4) centroid: average between the intersections with faces
       !Compute centroid
       centroid(iCv,0) = 0.5_R8*sum(isx)
       centroid(iCv,1) = 0.5_R8*sum(isy)
+      
+      !Store to verify
+      g%cvX(iCv) = centroid(iCv,0)
+      g%cvY(iCv) = centroid(iCv,1)
+
+      call recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
 
       !Compute cvSz and cvVol
       g%cvSz(iCv) = TriangleArea_us(g%vxX(verts3(0)), g%vxY(verts3(0)),
@@ -417,6 +425,8 @@ cwdk      4) centroid: average between the intersections with faces
          g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif
 
+
+    
 
 
        case(1)  !Guard Cells (are at the end of the cells array so can use information 
@@ -497,7 +507,7 @@ cwdk      4) centroid: average between the intersections with faces
           g%cvX(iCv) = centroid(iCv,0)  ! gc is equal to icv
           g%cvY(iCv) = centroid(iCv,1)
 
-!WIP      !Correct the magnetic field of guard cell 
+         !Correct the magnetic field of guard cell 
           call recalc_guard_bb(m,g,isymm,bc,iCv,centroid,v1,v2)
 
 
@@ -623,8 +633,8 @@ cwdk      4) centroid: average between the intersections with faces
        ! b_x
        t1 = - 0.5_R8 * ( g%vxBb(v1,0) + g%vxBb(v2,0))
 
-       g%fcEb(iCv,0) = t0 / norm(t0,t1)
-       g%fcEb(iCv,1) = t1 / norm(t0,t1)
+       g%fcEb(iFc,0) = t0 / norm(t0,t1)
+       g%fcEb(iFc,1) = t1 / norm(t0,t1)
 
 
 
@@ -666,17 +676,18 @@ cwdk      4) centroid: average between the intersections with faces
        !g%fcQalf(iFc,0) = 
        !&      cosang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
        !g%fcQalf(iFc,0) = 
-       !&      sinang(g%fcEb(iFc,0),g%fcEb(iFc,0),fn(0),fn(1))
+       !&      sinang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
 
        g%fcQalf(iFc,0) =
      &         cosin(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))  
        g%fcQalf(iFc,1) = 
-     &         sinin(g%fcEb(iFc,0),g%fcEb(iFc,0),fn(0),fn(1))         
+     &         sinin(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))         
+
 
        ! beta - angle between connector and poloidal magnetic field vector
        ! or is equal to gamma minus alpha
-       ! use sin(x+-y) = sin(x)*cos(y) +- cos(x)*sin(y)
-       !     cos(x+-y) = cos(x)*cos(y) -+ sin(x)*sin(y)
+       ! use sin(x-y) = sin(x)*cos(y) - cos(x)*sin(y)
+       !     cos(x-y) = cos(x)*cos(y) + sin(x)*sin(y)
 
 !        g%fcQbet(iFc,0) = cosin(econf(0),econf(1),
 !     &                  g%fcEb(iFc,0) , g%fcEb(iFc,1))
@@ -685,19 +696,21 @@ cwdk      4) centroid: average between the intersections with faces
 
        g%fcQbet(iFc,0) = g%fcQgam(iFc,0)*g%fcQalf(iFc,0) + 
      &                   g%fcQgam(iFc,1)*g%fcQalf(iFc,1)  
-       g%fcQbet(iFc,1) = g%fcQgam(ifc,1)*g%fcQalf(ifc,0) - 
-     &                   g%fcQgam(ifc,0)*g%fcQalf(ifc,1)     
+       g%fcQbet(iFc,1) = g%fcQgam(iFc,1)*g%fcQalf(iFc,0) - 
+     &                   g%fcQgam(iFc,0)*g%fcQalf(iFc,1)     
             
-       
-*    .. correction of angles for negative toroidal field  
-       g%fcQalf(iFc,1) = g%fcQalf(iFc,1)*sign(1.0_R8,g%fcBb(iFc,2))
-       g%fcQbet(iFc,0) = g%fcQbet(iFc,0)*sign(1.0_R8,g%fcBb(iFc,2))       
-        
+            
 
 *    .. correct angles in special cases (aligned, poloidal,...) 
        if (fcType(iFc).eq.1) then ! radial face
            g%fcQalf(iFc,0) = 0.0_R8
-           g%fcQalf(iFc,1) = sign(1.0_R8,g%fcQalf(iFc,1))
+           g%fcQalf(iFc,1) = sign(1.0_R8,g%fcQalf(iFc,1)) ! rounds to -1 or 1
+
+           !recalculation of fcQbet
+           g%fcQbet(iFc,0) = g%fcQgam(iFc,0)*g%fcQalf(iFc,0) + 
+     &                   g%fcQgam(iFc,1)*g%fcQalf(iFc,1)  
+           g%fcQbet(iFc,1) = g%fcQgam(iFc,1)*g%fcQalf(iFc,0) - 
+     &                   g%fcQgam(iFc,0)*g%fcQalf(iFc,1)           
 
        elseif (fcType(iFc).eq.2) then ! poloidal face
            !beta = 0
@@ -706,6 +719,10 @@ cwdk      4) centroid: average between the intersections with faces
            g%fcQbet(iFc,1) = 0.0_R8 ! sin is 0
 
        endif
+
+*    .. correction of angles for negative toroidal field  
+       g%fcQalf(iFc,1) = g%fcQalf(iFc,1)*sign(1.0_R8,g%fcBb(iFc,2))
+       g%fcQbet(iFc,0) = g%fcQbet(iFc,0)*sign(1.0_R8,g%fcBb(iFc,2))
 
 
 
@@ -738,10 +755,31 @@ cwdk      4) centroid: average between the intersections with faces
      &   abs(g%fcBb(iFc,0))/g%fcBb(iFc,3)
 
       
+      enddo
 
 
+      !Give vxBb the correct magnetic field value, till now is was
+      ! g%vxBb(:,0) = dpsi/dy
+      ! g%vxBb(:,1) = -dpsi/dx, for directional purposes
+
+      do iVx = 1,m%nVx
+         if (isymm.eq.0) then
+            t0 = 1.0_R8
+         elseif (isymm.eq.1 .or. isymm.eq.2) then
+            t0 = 2.0_R8 * pi * g%vxX(iVx)
+         elseif (isymm.eq.3 .or. isymm.eq.4) then
+            t0 = 2.0_R8 * pi * g%vxY(iVx)
+         endif
+
+         g%vxBb(iVx,0) = sqrt(g%vxBb(iVx,0)**2 + g%vxBb(iVx,1)**2)/t0
+         g%vxBb(iVx,1) = 0.0_R8
+         g%vxBb(iVx,2) = abs(g%vxFfbz(iVx))/t0
+         g%vxBb(iVx,3) = sqrt(g%vxBb(iVx,0)**2 + g%vxBb(iVx,1)**2 + 
+     &                      g%vxBb(iVx,2)**2)
+         
 
       enddo
+       
     
 
 
@@ -769,7 +807,7 @@ cwdk      4) centroid: average between the intersections with faces
 
 
 *-----------------------------------------------------------------------
-      subroutine calc_psi_centroid(g,m,centroid,iCv,psic)
+      subroutine calc_psi_centroid(g,m,centroid,iCv,psic,isymm)
       use b2mod_types
       use b2us_map
       use b2us_geo
@@ -779,10 +817,11 @@ cwdk      4) centroid: average between the intersections with faces
       type(geometry) :: g
       real(kind=R8) ::  centroid(m%nCv,0:1), psic, isx(0:1), isy(0:1),
      * t0
-      integer iCv, verts(0:3), faces(0:3), i1, i2, ii, iF
+      integer iCv, verts(0:3), faces(0:3), i1, i2, ii, iF,
+     *  intersectF(0:1), isymm
 
 cnv   General approach similar to calculation of cell center of triangles
-cnv   but now done for quads
+cnv   but now for quads
       
       !Identify vertices with min and max psi values
       verts = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
@@ -805,7 +844,8 @@ cnv   but now done for quads
         isx(ii) = g%vxX(m%fcVx(faces(iF),1)) + t0 * 
      &  ( g%vxX(m%fcVx(faces(iF),2)) - g%vxX(m%fcVx(faces(iF),1)))
         isy(ii) = g%vxY(m%fcVx(faces(iF),1)) + t0 * 
-     &  ( g%vxY(m%fcVx(faces(iF),2)) - g%vxY(m%fcVx(faces(iF),1)))     
+     &  ( g%vxY(m%fcVx(faces(iF),2)) - g%vxY(m%fcVx(faces(iF),1)))
+        intersectF(ii) = faces(iF)     
         ii = ii+1
       endif
       enddo  
@@ -819,6 +859,12 @@ cnv   but now done for quads
       centroid(iCv,0) = 0.5_R8*sum(isx)
       centroid(iCv,1) = 0.5_R8*sum(isy)
 
+      !Store to verify
+      g%cvX(iCv) = centroid(iCv,0)
+      g%cvY(iCv) = centroid(iCv,1)
+
+      !Correct the magnetic field in the new cell center
+      call recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
 
 
       end subroutine calc_psi_centroid
@@ -988,3 +1034,82 @@ cnv   but now done for quads
 
 
       end subroutine recalc_guard_bb
+
+
+*-----------------------------------------------------------------------
+
+      subroutine recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      use b2mod_constants
+      implicit none
+
+      type(mapping) :: m
+      type(geometry) :: g
+      integer :: iCv, isymm, v1, v2, v3, v4, intersectF(0:1)
+      real(kind=R8) :: isx(0:1), isy(0:1), dist_v1v2, dist_is0v1,
+     & dist_is0v2 , dist_is1v3, dist_is1v4, dist_v3v4,
+     & isbb(0:1,0:2), t0
+
+            
+      !Recompute magnetic field in the new cell-center
+      !magnetic field on intersection points
+      v1 = m%fcVx(intersectF(0),1)
+      v2 = m%fcVx(intersectF(0),2)
+      v3 = m%fcVx(intersectF(1),1)
+      v4 = m%fcVx(intersectF(1),2)
+     
+      !magnetic field on intersection point 0
+      ! via inverse distance weighting 
+      dist_is0v1 = sqrt((isx(0) - g%vxX(v1) )**2 + 
+     &       (isy(0) - g%vxY(v1)   )**2)
+      dist_is0v2 = sqrt((isx(0) - g%vxX(v2)  )**2 + 
+     &       (isy(0) - g%vxY(v1)   )**2)
+      dist_v1v2 = sqrt((g%vxX(v2) - g%vxX(v1)  )**2 + 
+     &       (g%vxY(v2) - g%vxY(v1)   )**2)
+      
+
+      isbb(0,0) = (dist_is0v2 * g%vxBb(v1,0) + 
+     &              dist_is0v1* g%vxBb(v2,0))/dist_v1v2
+      isbb(0,1) = (dist_is0v2 * g%vxBb(v1,1) + 
+     &              dist_is0v1* g%vxBb(v2,1))/dist_v1v2
+      isbb(0,2) = (dist_is0v2 * g%vxFfBz(v1) + 
+     &              dist_is0v1* g%vxFfBz(v2))/dist_v1v2
+
+      !magnetic field at intersection point 1
+      dist_is1v3 = sqrt( (isx(1) - g%vxX(v3) )**2 +
+     &                   (isy(1) - g%vxY(v3) )**2  )
+      dist_is1v4 = sqrt( (isx(1) - g%vxX(v4) )**2 + 
+     &                   (isy(1) - g%vxY(v4) )**2  )
+      dist_v3v4 = sqrt(   (g%vxX(v3) - g%vxX(v4) )**2 +
+     &                    (g%vxY(v3) - g%vxY(v4) )**2  )
+
+      isbb(1,0) = (dist_is1v4 * g%vxBb(v3,0) + 
+     &            dist_is1v3 * g%vxBb(v4,0) ) / dist_v3v4
+      isbb(1,1) = (dist_is1v4 * g%vxBb(v3,1) + 
+     &            dist_is1v3 * g%vxBb(v4,1)) /dist_v3v4
+      isbb(1,2) = (dist_is1v4 * g%vxFfBz(v3) + 
+     &            dist_is1v3 * g%vxFfBz(v4)) /dist_v3v4  
+
+      if (isymm.eq.0) then
+          t0 = 1.0_R8
+      elseif (isymm.eq.1 .or. isymm.eq.2) then
+          t0 = 2.0_R8 * pi * g%cvX(iCv)
+      elseif (isymm.eq.3 .or. isymm.eq.4) then
+          t0 = 2.0_R8 * pi * g%cvY(iCv)
+      endif    
+
+      !same method to calculate magnetic field as for the faces
+      ! here cell center is the mean of the intersection points
+
+      g%cvBb(iCv,0) = 0.5_R8 * 
+     &   ( sqrt( isbb(0,0)**2 + isbb(0,1)**2 ) +
+     &     sqrt( isbb(1,0)**2 + isbb(1,1)**2) ) / t0 
+      g%cvBb(iCv,1) = 0.0_R8
+      g%cvBb(iCv,2) = 0.5_R8 * abs( isbb(0,2)+isbb(1,2)) /t0
+      g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,1)**2 +  
+     &                  g%cvBb(iCv,2)**2)
+
+
+      end subroutine recalc_cvBb

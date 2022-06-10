@@ -2,8 +2,6 @@
 *.specification
 
       subroutine b2agbb (g,m,isymm)
-      !use b2mod_geo
-      !use b2mod_indirect
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -147,9 +145,9 @@
           g%cvBb(iCv,1) = 0.0e0
           if (m%cvFcP(iCv,2).eq.4) then !Quad
             g%cvBb(iCv,2) = 0.25_R8*(sum(g%vxFfbz(vx4)))/t0
-          elseif (m%cvFcP(iCv,2).eq.1) then
+          elseif (m%cvFcP(iCv,2).eq.1) then !guard
             g%cvBb(iCv,2) = 0.5_R8*(sum(g%vxFfbz(vx2)))/t0
-          else 
+          else !tria
             g%cvBb(iCv,2) = sum(g%vxFfbz(vx3))/( 3.0_R8*t0)
           endif 
         
@@ -157,28 +155,6 @@
      &     g%cvBb(iCv,1)**2 + g%cvBb(iCv,2)**2)
 
 
-      
-        !endif ! from if
-
-        !else   ! Guard cells
-          ! calculation of cvBb at the guard cells
-
- 
-        
-         ! iCvBnd = ghostGetBndCell(iCv,g,m)  ! get the boundary cell neighboring the ghost cell
-        
-          !Temporary equal to zero
-          !g%cvBb(iCv,0) = 0.0e0
-          !g%cvBb(iCv,1) = 0.0e0
-          !g%cvBb(iCv,2) = 0.0e0
-          !g%cvBb(iCv,3) = 0.0e0
-
-          !vx2 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
-
-
-
-
-        !endif  !from iCv ne GRID_GUARD
 
 
       enddo
