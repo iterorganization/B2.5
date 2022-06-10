@@ -297,7 +297,7 @@ c======================================================================
       
       implicit none
       integer nx, ny, ns, nxtl, nxtr
-      integer i, j, nv, N_ttl_read, N_trg_read, Ntrgts_read 
+      integer i, j, nv, N_ttl_read, N_per_trg_read, Ntrgts_read 
       real (kind=R8), save :: stim = 0.0_R8
       character f*(lenfnm), hlp_c
       logical :: ex
@@ -332,8 +332,8 @@ c*** Input the DG data and prepare the geometry (this routine works once)
       if(nncut > 0) mintopcut = minval(topcut(1:nncut))
 
       headers(1) = ' p_neut_PFR'
-      headers(2) = ' p_neut_PFi'
-      headers(3) = ' p_neut_PFo'
+      headers(2) = 'p_neut_PFRi'
+      headers(3) = 'p_neut_PFRo'
       headers(4) = 'Te_min_LCFS'
           
 ! Western divertor
@@ -440,8 +440,8 @@ c----------------------------------------------------------------------
       if(ex .and. stim.lt.0.0_R8) then
       
         read(lun, *, err=40) 
-     &      hlp_c, nv, N_ttl_read, Ntrgts_read, N_trg_read  
-        write(*,*) hlp_c, nv, N_ttl_read, Ntrgts_read, N_trg_read
+     &      hlp_c, nv, N_ttl_read, Ntrgts_read, N_per_trg_read  
+        write(*,*) hlp_c, nv, N_ttl_read, Ntrgts_read, N_per_trg_read
         read(lun, *) hlp_c
         go to 42
    40   read(lun,*,err=92) hlp_c, i, j
@@ -485,11 +485,11 @@ c?          write(*,*) ' You should remove the file!'
         end if
 
 ! Check total number of targets   
-        if(Ntrgts_read .ne. N_Q_target) then
+        if(N_per_trg_read .ne. N_Q_target) then
           write(*,'(a,i2,3a,i2)')
      ,   '!!! b2mod_usrspb: current number of quantities per targets ',
      ,      N_Q_target,' differs from that in the file ',trim(f),' : ',
-     ,      N_trg_read
+     ,      N_per_trg_read
           write(*,*) 'No ',trim(f),' tracing file - ',
      ,                              'remove the existing file first!'
           filedata(ltrc)=.false.
@@ -497,11 +497,11 @@ c?          write(*,*) ' You should remove the file!'
         end if
 
 ! Check the number of quantities per target   
-        if(N_trg_read .ne. ntrgts) then
+        if(Ntrgts_read .ne. ntrgts) then
           write(*,'(a,i2,3a,i2)')
      ,   '!!! b2mod_usrspb: the number of targets ',
      ,      ntrgts,' differs from that in the file ',trim(f),' : ',
-     ,      N_trg_read
+     ,      Ntrgts_read
           write(*,*) 'No ',trim(f),' tracing file - ',
      ,                              'remove the existing file first!'
           filedata(ltrc)=.false.
@@ -526,7 +526,7 @@ c?        nc = np_tmp
 ! What is 'label' and how is it defined?        
         
         write(hlp_frm,'(a,i3,a)')
-     &   '(a1,6x,a4,4x,',N_Q_total,'(2x,a19))'
+     &   '(a1,6x,a4,3x,',N_Q_total,'(2x,a19))'
 c       print *,'b2blns: nspecies= ',nspecies                       !###
 c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
 
