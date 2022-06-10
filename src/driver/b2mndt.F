@@ -159,7 +159,7 @@
        test_residual=switch%nstg_areshe.gt.0.0_R8.or.
      &               switch%nstg_areshi.gt.0.0_R8.or.
      &               switch%nstg_aresco.gt.0.0_R8
-       if (switch%use_eirene) then
+       if (switch%use_eirene .eq. 1) then
          call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstrat,nnatmi,
      &                         switch)
        endif

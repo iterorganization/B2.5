@@ -505,7 +505,7 @@ c     calculate coordinates of cell centre
         endif   
       endif              !srv   endif for iout=1   
 
-      if(use_mms .and. iout.eq.10) then                                 !srv 26.02.18 {
+      if(use_mms.eq.1 .and. iout.eq.10) then                                 !srv 26.02.18 {
 !WG_TODO        call calc_err(nx, ny, ns)
       endif                                                             !srv 26.02.18 }
 
