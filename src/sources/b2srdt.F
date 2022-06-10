@@ -252,7 +252,7 @@ cdjm Store the total change in linearised sources for balance
          call my_out_us(70,nCv,0,wrk0,'b2srdt_smodt'//chns)
        enddo
       endif
-      if ((switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1 
+      if ((switch%b2npco_iout.eq.1 
      &    .or. switch%iout_b2wdat.eq.4) .and. lout) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
@@ -260,7 +260,7 @@ cdjm Store the total change in linearised sources for balance
           call my_out_us(70,nCv,0,wrk0,'b2srdt_snadt'//chns)
         enddo
       endif
-      if ((switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1 .or. 
+      if ((switch%b2npht_iout.eq.1 .or. 
      &                      switch%iout_b2wdat.eq.4) .and. lout) then
         wrk0=sr%she(:,0)+sr%she(:,1)*te+
      &       sr%she(:,2)*ne + sr%she(:,3)*te*ne

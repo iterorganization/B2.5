@@ -326,6 +326,7 @@ cdjm Store the total change in linearised sources for balance
 !WG_TODO        b2srsm_shi0to3 = sr%shi-shitmp
 !WG_TODO      endif
 
+#ifdef WG_TODO
       if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {
 	 do is = 0, ns-1          
 	  write (chns,'(i3.3)') is
@@ -350,6 +351,7 @@ cdjm Store the total change in linearised sources for balance
 !     &   sr%shi(:,:,2)*ni(:,:,0) + 
 !     &   sr%shi(:,:,3)*ti*ni(:,:,0),'b2srsm_shism')
       endif            
+#endif
 
       if (switch%b2srsm_iout.eq.1) then
         do is = 0, ns-1
