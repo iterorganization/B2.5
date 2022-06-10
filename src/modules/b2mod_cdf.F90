@@ -1573,7 +1573,8 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepm_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepm_stdid, 'long_name', 63, 'variance of separatrix turbulent kinetic energy, outer midplane')
+      iret = nf_put_att_text(ncid, ktsepm_stdid, 'long_name', 63, &
+           'variance of separatrix turbulent kinetic energy, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepm_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
@@ -1593,7 +1594,8 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepi_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepi_stdid, 'long_name', 65, 'variance of separatrix turbulent kinetic energy, inboard divertor')
+      iret = nf_put_att_text(ncid, ktsepi_stdid, 'long_name', 65, &
+           'variance of separatrix turbulent kinetic energy, inboard divertor')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
@@ -1613,7 +1615,8 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepa_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepa_stdid, 'long_name', 66, 'variance of separatrix turbulent kinetic energy, outboard divertor')
+      iret = nf_put_att_text(ncid, ktsepa_stdid, 'long_name', 66, &
+           'variance of separatrix turbulent kinetic energy, outboard divertor')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepa_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
