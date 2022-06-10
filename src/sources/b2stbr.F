@@ -880,8 +880,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        enddo                                                          !srv 29.04.10 }
       endif
       if (switch%b2stbr_iout.eq.1 .or. 
-     &   (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1)
-     &                            .or. switch%iout_b2wdat.eq.4 ) then
+     &   switch%b2npco_iout.eq.1 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -942,8 +941,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        enddo
 #endif
       endif
-      if (switch%b2stbr_iout.eq.1 .or. 
-     &        (switch%b2npht_iout.eq.1 .or. switch%b2nph9_iout.eq.1)
+      if (switch%b2stbr_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                           .or. switch%iout_b2wdat.eq.4 ) then
        if (switch%use_eirene.ne.0) then
         if (switch%iout_b2wdat.ne.4) then

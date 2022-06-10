@@ -459,7 +459,7 @@ c for KUL recycling/reflection model
        enddo
       endif
       if (switch%b2stbr_phys_iout.eq.1 .or. 
-     &   (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1)) then
+     &                        switch%b2npco_iout.eq.1) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !	  do k=0,1
@@ -472,7 +472,7 @@ c for KUL recycling/reflection model
        enddo
       endif
       if (switch%b2stbr_phys_iout.eq.1 .or. 
-     &   (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1)) then
+     &                       switch%b2npht_iout.eq.1) then
 !	 do k=0,3
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_phys_she'//chk)

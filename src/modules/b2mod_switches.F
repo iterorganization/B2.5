@@ -141,11 +141,11 @@ c iout switches
       integer :: b2stbr_output   
       integer :: b2npht_iout   
       integer :: b2npmo_iout   
-      integer :: b2npc9_iout       
+!      integer :: b2npc9_iout       ! No longer needed for unstructured grids 
       integer :: b2npco_iout       
       integer :: b2npp7_iout       
       integer :: b2nppo_iout       
-      integer :: b2nph9_iout  
+!      integer :: b2nph9_iout       ! No longer needed for unstructured grids   
       integer :: b2news_iout        
       integer :: b2nxfx_iout    
       integer :: b2nxfc_iout        !srv 17.06.02   
@@ -647,11 +647,11 @@ c Advanced fluid neutral models
       s % b2stbr_output = 0
       s % b2npht_iout = 0
       s % b2npmo_iout = 0
-      s % b2npc9_iout = 0
+!      s % b2npc9_iout = 0
       s % b2npco_iout = 0
       s % b2npp7_iout = 0
       s % b2nppo_iout = 0
-      s % b2nph9_iout = 0 
+!      s % b2nph9_iout = 0 
       s % b2news_iout = 0 
       s % b2nxfx_iout = 0 
       s % b2nxfc_iout = 0 
@@ -1147,11 +1147,11 @@ c iout switches
       call ipgeti ('b2stbr_output', s % b2stbr_output)  
       call ipgeti ('b2npht_iout', s % b2npht_iout)   
       call ipgeti ('b2npmo_iout', s % b2npmo_iout)   
-      call ipgeti ('b2npc9_iout', s % b2npc9_iout)            
+!      call ipgeti ('b2npc9_iout', s % b2npc9_iout)            
       call ipgeti ('b2npco_iout', s % b2npco_iout)
       call ipgeti ('b2npp7_iout', s % b2npp7_iout)
       call ipgeti ('b2nppo_iout', s % b2nppo_iout)
-      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
+!      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
       call ipgeti ('b2news_iout', s % b2news_iout)
       call ipgeti ('b2nxfx_iout', s % b2nxfx_iout)
       call ipgeti ('b2nxfc_iout', s % b2nxfc_iout)

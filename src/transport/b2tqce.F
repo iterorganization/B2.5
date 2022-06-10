@@ -266,8 +266,7 @@
 !WG_TODO        close(71)
 !WG_TODO        close(70)
       endif                                                          !srv 16.06.08 }
-      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
-     &                         .or. switch%iout_b2wdat.eq.4) then
+      if(switch%b2npht_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nCv,0,tau,'b2tqce_taue')
       endif
 
