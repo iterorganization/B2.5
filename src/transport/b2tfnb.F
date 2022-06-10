@@ -589,8 +589,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbnax'//chns)
         call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
      &   'b2tfnb_fnbPSchx'//chns)
-        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
-        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
+!        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
+!        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
        else
         call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpbx'//chns)
        endif
@@ -637,8 +637,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         call my_out_us(70,nFc,1,dv%fnaPSch(:,1,isb),
      &   'b2tfnb_fnbPSchy'//chns)
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbnay'//chns)
-        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
-        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
+!        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
+!        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
        else
         call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpby'//chns)
        endif

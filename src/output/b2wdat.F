@@ -107,7 +107,7 @@
      *   qe_oup_sum, qi_oup_sum, q_oup_sum,
      *   qe_iup_sum, qi_iup_sum, q_iup_sum,
      *   uvbtot, voltot                                            !iyv 29.11.13
-      character chns*3                                             !srv 27.04.01
+      character chis*3, chib*2                                     !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
       character*26 boundary_location(nbcd)
       character(7), save :: folder                        !srv 26.09.17
@@ -175,91 +175,7 @@
         iout_iout_ASTRA = 0
       endif
 
-      if (iout.eq.1) then                                         !srv begin if for iout
-
-#ifdef B25_EIRENE
-       if (iout.ne.4) then
-        open(70,file=trim(folder)//'eirdiag.dat')              !srv 26.09.17
-        write(70,"(a/6i5)") 'nlimps natm nmol npls nstra nstsid',
-     &                       nlimps, natm, nmol, npls, nstra, nstsid
-        write(70,"(a/6i5)") 'natmid nmolid ', natmid, nmolid
-        write(70,"(a/6i5)") 'nnatmi nnmoli ', nnatmi, nnmoli
-        close(70)
-        do is = 1,nnatmi                                            !srv 04.06.09 16.02.12{
-         write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,0,dab2(1,is,1),'dab2'//chns)
-         call my_out_us(70,nCv,0,tab2(1,is,1),'tab2'//chns)
-         call my_out_us(70,nCv,0,rfluxa(1,is,1),'rfluxa'//chns)
-         call my_out_us(70,nCv,0,refluxa(1,is,1),
-     .                       'refluxa'//chns)
-         call my_out_us(70,nCv,0,pfluxa(1,is,1),'pfluxa'//chns)
-         call my_out_us(70,nCv,0,pefluxa(1,is,1),
-     .                       'pefluxa'//chns)
-        enddo
-        do is = 1,nnmoli                                            !srv 16.02.12
-         write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,0,dmb2(1,is,1),'dmb2'//chns) !srv 29.04.10
-         call my_out_us(70,nCv,0,tmb2(1,is,1),'tmb2'//chns) !srv 29.04.10
-         call my_out_us(70,nCv,0,rfluxm(1,is,1),'rfluxm'//chns)
-         call my_out_us(70,nCv,0,refluxm(1,is,1),'refluxm'//chns)
-         call my_out_us(70,nCv,0,pfluxm(1,is,1),'pfluxm'//chns)
-         call my_out_us(70,nCv,0,pefluxm(1,is,1),'pefluxm'//chns)
-        enddo                                                       !srv 04.06.09 }
-       endif
-#endif
-
-       wrk2=0.0_R8
-       do is = 0,ns-1
-         write (chns,'(i3.3)') is
-         call my_out_us(70,nCv,0,state%pl%na(1,is),'na'//chns)           !srv
-         call my_out_us(70,nCv,0,state%pl%ua(1,is),'ua'//chns)           !srv
-       end do
-
-       call my_out_us(70,nCv,0,state%dv%ne,'ne')                               !srv
-       wrk2=state%pl%te/ev
-       call my_out_us(70,nCv,0,wrk2,'te_eV')
-       wrk2=state%pl%ti/ev
-       call my_out_us(70,nCv,0,wrk2,'ti_eV')
-       call my_out_us(70,nCv,0,state%pl%po,'po')                                !srv
-
-       call my_out_us(70,nCv,0,geo%cvBb(1,0),'bbx')
-       call my_out_us(70,nCv,0,geo%cvBb(1,2),'bbz')
-       call my_out_us(70,nCv,0,geo%cvBb(1,3),'bb')
-       call my_out_us(70,nCv,0,geo%cvHx,'lenght_pol')
-       call my_out_us(70,nFc,1,geo%fcHc,'hx')
-       call my_out_us(70,nFc,1,geo%fcHt,'hy')
-       call my_out_us(70,nCv,0,geo%cvHz,'hz')
-       call my_out_us(70,nFc,1,geo%fcQgam(1,0),'qc')
-       call my_out_us(70,nCv,0,geo%cvVol,'vol')
-       call my_out_us(70,nFc,1,geo%fcPbs,'pbsx')
-
-c     calculate coordinates of cell centre
-!WG_RM    wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {
-       call my_out_us(70,nCv,0,geo%cvX,'crc_')
-       open(70,file=trim(folder)//'crc.dat')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
-       write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
-       close(70)
-!WG_RM        wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
-       call my_out_us(70,nCv,0,geo%cvY,'czc_')
-       open(70,file=trim(folder)//'czc.dat')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
-       write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)
-       close(70)
-
-
-        if (mpg%isClassicalGrid.eq.1) then
-          do iy = -1, ny
-            do ix = -1, nx
-              if(mpg%imapCv(ix,iy) /= 0) then
-                fun_st(ix,iy) = state%dv%ne(mpg%imapCv(ix,iy))  ! fun_us(imapCv(ix,iy))
-              endif
-            enddo
-          enddo
-          call my_out(70, nx, ny, fun_st, 'ne_st_')
-        endif
-
-        if (mpg%isClassicalGrid.eq.1) then
+      if (mpg%isClassicalGrid.eq.1) then
 
 *      ..find the number of the last closed surface in CORE
          ilast_closed_surface = -2
@@ -308,45 +224,84 @@ c     calculate coordinates of cell centre
            endif
           endif
          enddo
-      
-         open(70,file=trim(folder)//'info.dat')
-         write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
-         write(70,"(' Number of inner midplane cell =',i4)") nmdpl_i  !srv 24.03.06 }
-!       write (70,*) ' nncut    =', nncut, ' nnreg =',nnreg          !srv
-!       write (70,*) ' leftcut  =',(leftcut(ix),ix=1,nncut)          !srv
-!       write (70,*) ' rightcut =',(rightcut(ix),ix=1,nncut)         !srv
-         write (70,"(' Number of the last closed surface in CORE ='"//
-     &           ",i4)") ilast_closed_surface
-         write (70,"(' Number of closed surfaces in CORE =',i4)")
-     &           n_closed_surface
-         write (70,"(' Number of the first open surface in SOL =',i4)")
-     &           ifirst_open_surface
-         close(70)
-     
-        endif
+      endif
+
+
+      if (iout.eq.1) then                                          !srv begin if for iout
+*    .. iout = 1 for outputting plasma state files
+#ifdef B25_EIRENE
+       if (iout.ne.4) then
+        open(70,file=trim(folder)//'eirdiag.dat')                   !srv 26.09.17
+        write(70,"(a/6i5)") 'nlimps natm nmol npls nstra nstsid',
+     &                       nlimps, natm, nmol, npls, nstra, nstsid
+        write(70,"(a/6i5)") 'natmid nmolid ', natmid, nmolid
+        write(70,"(a/6i5)") 'nnatmi nnmoli ', nnatmi, nnmoli
+        close(70)
+        do is = 1,nnatmi                                            !srv 04.06.09 16.02.12{
+         write (chns,'(i3.3)') is
+         call my_out_us(70,nCv,0,dab2(1,is,1),'dab2'//chns)
+         call my_out_us(70,nCv,0,tab2(1,is,1),'tab2'//chns)
+         call my_out_us(70,nCv,0,rfluxa(1,is,1),'rfluxa'//chns)
+         call my_out_us(70,nCv,0,refluxa(1,is,1),
+     .                       'refluxa'//chns)
+         call my_out_us(70,nCv,0,pfluxa(1,is,1),'pfluxa'//chns)
+         call my_out_us(70,nCv,0,pefluxa(1,is,1),
+     .                       'pefluxa'//chns)
+        enddo
+        do is = 1,nnmoli                                            !srv 16.02.12
+         write (chns,'(i3.3)') is
+         call my_out_us(70,nCv,0,dmb2(1,is,1),'dmb2'//chns) !srv 29.04.10
+         call my_out_us(70,nCv,0,tmb2(1,is,1),'tmb2'//chns) !srv 29.04.10
+         call my_out_us(70,nCv,0,rfluxm(1,is,1),'rfluxm'//chns)
+         call my_out_us(70,nCv,0,refluxm(1,is,1),'refluxm'//chns)
+         call my_out_us(70,nCv,0,pfluxm(1,is,1),'pfluxm'//chns)
+         call my_out_us(70,nCv,0,pefluxm(1,is,1),'pefluxm'//chns)
+        enddo                                                       !srv 04.06.09 }
+       endif
+#endif
+
+       wrk2=0.0_R8
+       do is = 0,ns-1
+         write (chis,'(i3.3)') is
+         call my_out_us(70,nCv,0,state%pl%na(1,is),'na'//chis)           !srv
+         call my_out_us(70,nCv,0,state%pl%ua(1,is),'ua'//chis)           !srv
+       end do
+
+       call my_out_us(70,nCv,0,state%dv%ne,'ne')                               !srv
+       wrk2=state%pl%te/ev
+       call my_out_us(70,nCv,0,wrk2,'te_eV')
+       wrk2=state%pl%ti/ev
+       call my_out_us(70,nCv,0,wrk2,'ti_eV')
+       call my_out_us(70,nCv,0,state%pl%po,'po')                                !srv
 
         wrk2=0.0_R8
         do ib = 1, nbc
+            write (chib,'(i2.2)') ib
             is=1
+            write (chis,'(i3.3)') is
             do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
               iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
               iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
               iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
               wrk2(iCv1)=state%pl%na(iCv1,is)
             enddo          
+            call my_out_us(70,nCv,0,wrk2,'na_'//chis//'_bnd_'//chib)
         enddo
-        call my_out_us(70,nCv,0,wrk2,'na_bnd')
        
         do ib = 1, nbc
-          write (chns,'(i3.3)') ib
+          write (chib,'(i2.2)') ib
           wrk2=0.0_R8
             do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
               iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
               wrk2(iCv1)=state%dv%ne(iCv1)
             enddo          
-          call my_out_us(70,nCv,0,wrk2,'ne_nbd_'//chns)
+          call my_out_us(70,nCv,0,wrk2,'ne_bnd_'//chib)
         enddo
       
+      endif              !srv   endif for iout=1   
+          
+      if (iout.eq.2) then                                               !srv begin for iout=2
+*    .. iout = 2 for outputting profiles of ne, te and ti at the plates and midplane
         if (mpg%isClassicalGrid.eq.1) then
           !! Identification of target boundaries currently based on (face) region
           !! numbers as used in structured code.
@@ -498,12 +453,89 @@ c     calculate coordinates of cell centre
             icell = icell + 1
            endif
           enddo
-        
           deallocate (clength_r)
           close(70)
-
         endif   
-      endif              !srv   endif for iout=1   
+      endif                                                             !srv   end for iout=2   
+      
+      if(iout.eq.3 .or. iout.eq.4 .or. iout.eq.1) then                  !srv begin for iout=3
+*    .. iout = 3 for outputting geometry files
+       call my_out_us(70,nCv,0,geo%cvBb(1,0),'bbx')
+       call my_out_us(70,nCv,0,geo%cvBb(1,2),'bbz')
+       call my_out_us(70,nCv,0,geo%cvBb(1,3),'bb')
+       call my_out_us(70,nCv,0,geo%cvHx,'lenght_pol')
+       
+       if (mpg%isClassicalGrid.eq.1) then
+         open(70,file=trim(folder)//'info.dat')
+         write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
+         write(70,"(' Number of inner midplane cell =',i4)") nmdpl_i  !srv 24.03.06 }
+         write (70,"(' Number of the last closed surface in CORE ='"//
+     &           ",i4)") ilast_closed_surface
+         write (70,"(' Number of closed surfaces in CORE =',i4)")
+     &           n_closed_surface
+         write (70,"(' Number of the first open surface in SOL =',i4)")
+     &           ifirst_open_surface
+         close(70)
+        do iy = -1, ny_st
+         do ix = -1, nx_st
+           if(imapFcx(ix,iy) /= 0) then                        ! poloidal faces
+             fun_st(ix,iy) = 2.0_R8*geo%fcHc(imapFcx(ix,iy),2) ! get hx in cell centre
+           endif
+         enddo
+        enddo
+*     ..restore the geometry of guard cells (should be redone for DN case)
+        ix=-1
+        fun_st(ix,:)=fun_st(ix+1,:)/1.0e+2_R8 ! for west 
+        iy=-1
+        fun_st(:,iy)=fun_st(:,iy+1)           ! for south
+        iy=ny
+        fun_st(:,iy)=fun_st(:,iy-1)           ! for north
+        call my_out(70, nx, ny, fun_st, 'hx_st')
+       
+        do iy = -1, ny_st
+         do ix = -1, nx_st
+           if(imapFcy(ix,iy) /= 0) then                        ! radial faces
+             fun_st(ix,iy) = 2.0_R8*geo%fcHc(imapFcy(ix,iy),2) ! get hy  in cell centre 
+           endif
+         enddo
+        enddo
+*     ..restore the geometry of guard cells (should be redone for DN case)
+        iy=-1
+        fun_st(:,iy)=fun_st(:,iy+1)/1.0e+2_R8   ! for south
+        ix=-1
+        fun_st(ix,:)=fun_st(ix+1,:)             ! for west 
+        ix=nx
+        fun_st(ix,:)=fun_st(ix-1,:)             ! for east 
+        call my_out(70, nx, ny, fun_st, 'hy_st')
+        
+        do iy = -1, ny_st
+         do ix = -1, nx_st
+           if(imapCv(ix,iy) /= 0) then
+             fun_st(ix,iy) = fun_st(ix,iy)*geo%cvQgam(imapCv(ix,iy),0) ! get hy1=hy*qz(ix,iy,1)  in cell centre qz(ix,iy,1) is cos
+           endif
+         enddo
+        enddo
+        call my_out(70, nx, ny, fun_st, 'hy1_st')
+       endif 
+      
+       call my_out_us(70,nFc,1,geo%fcHt,'ht')
+       call my_out_us(70,nCv,0,geo%cvHz,'hz')
+       call my_out_us(70,nCv,0,geo%cvVol,'vol')
+       call my_out_us(70,nFc,1,geo%fcPbs,'pbs')
+
+*     ..output coordinates of cell centres
+       call my_out_us(70,nCv,0,geo%cvX,'crc')          ! R-coordinate of the (ix,iy) cell centre
+       open(70,file=trim(folder)//'crc.dat')                         !srv 26.09.17
+       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
+       write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
+       close(70)
+       call my_out_us(70,nCv,0,geo%cvY,'czc')          ! Z-coordinate of the (ix,iy) cell centre 
+       open(70,file=trim(folder)//'czc.dat')                         !srv 26.09.17
+       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
+       write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)
+       close(70)
+
+      endif                                                             !srv   end for iout=3   
 
       if(use_mms.eq.1 .and. iout.eq.10) then                                 !srv 26.02.18 {
 !WG_TODO        call calc_err(nx, ny, ns)
