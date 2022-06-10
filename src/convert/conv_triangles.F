@@ -124,7 +124,7 @@
         call EIRENE_insert (baum, xc_old(ico), yc_old(ico), 
      .                      0._R8, 1._R8, ic, inserted)
         IF (INSERTED) THEN
-          if (is_narrow_grid) then
+          if (is_narrow_grid.eq.1) then
             !! if we have a narrow grid, this should not happen because every node of the eirene triangle grid should be in th plasma grid.
             !! therefore this has to do with round-off error of faulty input files. Therefore these cells are printend.
             write(*,*) '------------'
@@ -254,7 +254,7 @@
             icv = mpg%imapCv(ixt,iyt)
             elem_cv(iel) = icv
           end if
-          if  (artificial_slab) then
+          if  (artificial_slab .eq. 1) then
             if ((ixt > -2) .and. (ixt <= nx) .and.
      .          (iyt > -2) .and. (iyt <= ny)) then
               allocate (tel)

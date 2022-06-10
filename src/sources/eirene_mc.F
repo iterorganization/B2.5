@@ -637,7 +637,8 @@ c first save the original NPTS provided by the Eirene input files.
 !! Do not adapt the number of particles if ALLOC =/= 0. If ALLOC =/= 0, NPTS is recomputed every timestep and 
 !! this procedure would not work.
           if (istrai.le.nstrai.and.ncall.gt.0.and.
-     &     switch%use_auto_spatial_hyb.and.HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
+     &         switch%use_auto_spatial_hyb.eq.1.and.
+     &         HYB_TYPE(istrai).eq.'A') then !! 'A' = automatic
             if (ALLOC.eq.0.0_R8) then
             NPTS(istrai) = 
      &           NINT(NPTS_input(istrai)*tflux(istrai)/tflux0(istrai))

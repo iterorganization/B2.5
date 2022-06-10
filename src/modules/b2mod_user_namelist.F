@@ -639,7 +639,7 @@ c*** Set default values according to current species list
       ifc2 = ifc1 + m%fsFcP(ifssep,2) - 1
         if (ii.ge.ifc1 .and. ii.le.ifc2) exit
       enddo
-      if (m%IsClassicalGrid) call xertst(m%fsFcP(ifssep,2).gt.0,
+      if (m%IsClassicalGrid .eq. 1) call xertst(m%fsFcP(ifssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep
 

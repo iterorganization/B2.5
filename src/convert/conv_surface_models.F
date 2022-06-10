@@ -145,7 +145,7 @@
                   end where
                 end do
                 exit            ! surface marked
-              else if (artificial_slab) then
+              else if (artificial_slab .eq. 1) then
                 found = .true.
                 ix = ipos_b2(isf)
                 icut = (isf - mpg%nRc - mpg%nBc) / 4 + 1
