@@ -1938,7 +1938,7 @@ c.. Test consistency with physical edges within the computational domain
       character(1) :: lchar(nstrat)
       type (mapping), intent (inout) :: m
       type (geometry), intent (inout) :: g
-      intrinsic huge
+!      intrinsic huge
 
       m%nRc   = nstrai  ! number of recycling boundaries
       m%mxnRc = 0       ! number of cells with imposed recycling
