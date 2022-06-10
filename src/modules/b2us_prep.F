@@ -3018,7 +3018,7 @@
       nCi = mpg%nCi
       nFc = mpg%nFc
 
-      if (mpg.isClassicalGrid == 1) then
+      if (mpg%isClassicalGrid == 1) then
         nx = mpg%nx
         ny = mpg%ny
       else

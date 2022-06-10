@@ -52,12 +52,12 @@ c     Boolean to indicate whether trim data is present for species/material comb
       return
       end subroutine alloc_b2mod_recycle
 
-      subroutine read_recycle_fnn(nsd,nbnd)
+      subroutine read_recycle_fnn(nsd,nbnd_local)
       use b2mod_b2cmpa
       use b2mod_elements
       use b2mod_neutrals_namelist
       implicit none
-      integer,intent(in):: nsd, nbnd
+      integer,intent(in):: nsd, nbnd_local
       character*256 filename
       integer istra, isp, is, il,it,itm,ndata
       integer idum(0:9)
@@ -66,7 +66,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       character*10::fnn_version
       character lblfnn*120
       character lblfnn_dummy*120              !nh 21.02.2020
-      character*2 target_code(0:nbnd-1)
+      character*2 target_code(0:nbnd_local-1)
 
       character*2 recycle_code(0:nsd-1)
       external open_file
@@ -77,7 +77,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       call subini ('read_recycle_fnn')
       ns1 = nsd
       allocate(recycle_index(0:nsd-1))
-      allocate(target_index(0:nbnd-1))
+      allocate(target_index(0:nbnd_local-1))
 cmb   Check how many different recycled species there are
       recycle_index=-1
       recycle_code='  '
@@ -1575,10 +1575,10 @@ c     Internal variables
       call subini ('CalcMinKn')
 
 c     Calculate rate coefficients at boundary
-      tn = pl.tn(iCv)
-      ti = pl.ti(iCv)
-      ne = dv.ne(iCv)
-      te = pl.te(iCv)
+      tn = pl%tn(iCv)
+      ti = pl%ti(iCv)
+      ne = dv%ne(iCv)
+      te = pl%te(iCv)
       mn = am(isn)*mp
       vcx=0.0_R8
       do ic = 0, pl%ns-1
