@@ -250,7 +250,7 @@ cdjm Jan2017 Store for balance
 !	  call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
-      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1 .or. 
+      if (switch%b2npht_iout.eq.1 .or. 
      &                              switch%iout_b2wdat.eq.4)   then
         wrk0=shest(:,0)+shest(:,1)*te+  !srv 07.10.09
      &       shest(:,2)*ne + shest(:,3)*te*ne

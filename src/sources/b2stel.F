@@ -487,8 +487,7 @@ c accounted for)
           call my_out_us(70,nCv,0,wrk0,'b2stel_smq_rec'//chns)
         enddo
       endif
-      if (switch%b2stel_iout.eq.1 .or. 
-     &     (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1)
+      if (switch%b2stel_iout.eq.1 .or. switch%b2npco_iout.eq.1
      &                           .or. switch%iout_b2wdat .eq. 4) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
@@ -506,8 +505,7 @@ c accounted for)
 
         enddo
       endif
-      if (switch%b2stel_iout.eq.1 .or. 
-     & (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1)
+      if (switch%b2stel_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat .eq. 4) then
 !        do k=0,3
 !         write (chk,'(i1)') k

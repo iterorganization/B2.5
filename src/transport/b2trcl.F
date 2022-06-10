@@ -246,8 +246,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         endif
        enddo
       endif
-      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
-     &                   .or. switch%iout_b2wdat.eq.4) then
+      if(switch%b2npht_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,chce(1,0),'b2trcl_chcex')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_calfx')
@@ -504,21 +503,20 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 !     &              //chns)
        enddo
       endif
-      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
-     &                  .or. switch%iout_b2wdat.eq.4) then
-        call my_out_us(70,nFc,1,chce(1,0),'b2trcl_luciani_chcex')
+      if(switch%b2npht_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
+        call my_out_us(70,nFc,1,chce(1,0),'b2trcl_luciani_chce_th')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_chcey')
-        call my_out_us(70,nFc,1,calf(1,0),'b2trcl_luciani_calfx')
+        call my_out_us(70,nFc,1,calf(1,0),'b2trcl_luciani_calf_th')
         call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_calfy')
-        call my_out_us(70,nFc,1,chci(1,0),'b2trcl_luciani_chcix')
+        call my_out_us(70,nFc,1,chci(1,0),'b2trcl_luciani_chci_th')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_chciy')
       endif
       if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0
      &                  .or. switch%iout_b2wdat.eq.4) then
-        call my_out_us(70,nFc,1,csig(1,0),'b2trcl_luciani_csigx')
+        call my_out_us(70,nFc,1,csig(1,0),'b2trcl_luciani_csig_th')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_luciani_csigy')
-        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
+        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sig_th_c')              !srv 05.07.17
       endif
 
 *   .. save chce(:,0) after applying Luciani
@@ -656,34 +654,34 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        do is = 0, ns-1
        write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,cvsahz(1,0,is),
-     &              'b2trcl_luciani_fllim_cvsahzx'//chns)
+     &              'b2trcl_luciani_fllim_cvsahz_th'//chns)
 !        call my_out_us(70,nFc,1,cvsahz(1,1,is),
 !     &              'b2trcl_luciani_fllim_cvsahzy'//chns)
        enddo
       endif
-      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
-     &       .or. switch%iout_b2wdat.eq.4) then
+      if(switch%b2npht_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,chce(1,0),
-     &             'b2trcl_luciani_fllim_chcex')
+     &             'b2trcl_luciani_fllim_chce_th')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_fllim_chcey')
         call my_out_us(70,nFc,1,calf(1,0),
-     &             'b2trcl_luciani_fllim_calfx')
+     &             'b2trcl_luciani_fllim_calf_th')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_fllim_calfy')
-        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,
+     &             'b2trcl_luciani_fllim_alf_th_c')         !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),
-     &             'b2trcl_luciani_fllim_chcix')
+     &             'b2trcl_luciani_fllim_chci_th')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
                                          
       if(switch%b2trcl_iout.ne.0) then                             !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsax'//chns)
-        call my_out_us(70,nFc,1,cvsa(1,1,is),'cl_cvsay'//chns)
-        call my_out_us(70,nFc,1,cvsahz(1,0,is),'cl_cvsahzx'//chns)
-        call my_out_us(70,nFc,1,cvsahz(1,1,is),'cl_cvsahzy'//chns)
-        call my_out_us(70,nFc,1,cvsa_cl(1,0,is),'cl_cvsa_clx'//chns)
-        call my_out_us(70,nFc,1,cvsa_cl(1,1,is),'cl_cvsa_cly'//chns)
+        call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsa_th'//chns)
+        call my_out_us(70,nFc,1,cvsa(1,1,is),'cl_cvsa_r'//chns)
+        call my_out_us(70,nFc,1,cvsahz(1,0,is),'cl_cvsahz_th'//chns)
+        call my_out_us(70,nFc,1,cvsahz(1,1,is),'cl_cvsahz_r'//chns)
+        call my_out_us(70,nFc,1,cvsa_cl(1,0,is),'cl_cvsa_cl_th'//chns)
+        call my_out_us(70,nFc,1,cvsa_cl(1,1,is),'cl_cvsa_cl_r'//chns)
         call my_out_us(70,nFc,1,cvsahz_cl(1,0,is),
      &              'cl_cvsahz_clx'//chns)
         call my_out_us(70,nFc,1,cvsahz_cl(1,1,is),
@@ -692,26 +690,26 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         call my_out_us(70,nCv,0,cthi(1,is),'cl_cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0 
-         call my_out_us(70,nFc,1,csigin(1,0,is,is0),'cl_csiginx'//
+         call my_out_us(70,nFc,1,csigin(1,0,is,is0),'cl_csigin_th'//
      &        chns//'_'//chns0)
-         call my_out_us(70,nFc,1,csigin(1,1,is,is0),'cl_csiginy'//
+         call my_out_us(70,nFc,1,csigin(1,1,is,is0),'cl_csigin_r'//
      &        chns//'_'//chns0)
         enddo
        enddo
-       call my_out_us(70,nFc,1,chce(1,0),'cl_chcex')
-       call my_out_us(70,nFc,1,chce(1,1),'cl_chcey')
-       call my_out_us(70,nFc,1,chci(1,0),'cl_chcix')
-       call my_out_us(70,nFc,1,chci(1,1),'cl_chciy')
-       call my_out_us(70,nFc,1,chve(1,0),'cl_chvex')
-       call my_out_us(70,nFc,1,chve(1,1),'cl_chvey')
-       call my_out_us(70,nFc,1,chvi(1,0),'cl_chvix')
-       call my_out_us(70,nFc,1,chvi(1,1),'cl_chviy')
-       call my_out_us(70,nFc,1,csig(1,0),'cl_csigx')
-       call my_out_us(70,nFc,1,csig(1,1),'cl_csigy')
-       call my_out_us(70,nFc,1,calf(1,0),'cl_calfx')
-       call my_out_us(70,nFc,1,calf(1,1),'cl_calfy')
-       call my_out_us(70,nCv,0,co%sigx_c,'cl_sigx_c')                      !srv 05.07.17
-       call my_out_us(70,nCv,0,co%alfx_c,'cl_alfx_c')                      !srv 05.07.17
+       call my_out_us(70,nFc,1,chce(1,0),'cl_chce_th')
+       call my_out_us(70,nFc,1,chce(1,1),'cl_chce_r')
+       call my_out_us(70,nFc,1,chci(1,0),'cl_chci_th')
+       call my_out_us(70,nFc,1,chci(1,1),'cl_chci_r')
+       call my_out_us(70,nFc,1,chve(1,0),'cl_chve_th')
+       call my_out_us(70,nFc,1,chve(1,1),'cl_chve_r')
+       call my_out_us(70,nFc,1,chvi(1,0),'cl_chvi_th')
+       call my_out_us(70,nFc,1,chvi(1,1),'cl_chvi_r')
+       call my_out_us(70,nFc,1,csig(1,0),'cl_csig_th')
+       call my_out_us(70,nFc,1,csig(1,1),'cl_csig_r')
+       call my_out_us(70,nFc,1,calf(1,0),'cl_calf_th')
+       call my_out_us(70,nFc,1,calf(1,1),'cl_calf_r')
+       call my_out_us(70,nCv,0,co%sigx_c,'cl_sig_th_c')                      !srv 05.07.17
+       call my_out_us(70,nCv,0,co%alfx_c,'cl_alf_th_c')                      !srv 05.07.17
       endif                                                          !srv 17.06.08 }
 
 * ..return

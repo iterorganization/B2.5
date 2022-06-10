@@ -211,68 +211,70 @@ cwdk combined check for poloidal or radial diffusion
       if(switch%b2tral_iout.ne.0) then                                              !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out_us(70,nFc,1,co%cdna(1,0,is),'cdnax'//chns)
-        call my_out_us(70,nFc,1,co%cdna(1,1,is),'cdnay'//chns)
-        call my_out_us(70,nFc,1,co%cdpa(1,0,is),'cdpax'//chns)
-        call my_out_us(70,nFc,1,co%cdpa(1,1,is),'cdpay'//chns)
-        call my_out_us(70,nFc,1,co%cddi(1,0,is),'cddix'//chns)
-        call my_out_us(70,nFc,1,co%cddi(1,1,is),'cddiy'//chns)
-        call my_out_us(70,nFc,1,co%cvla(1,0,is),'cvlax'//chns)
-        call my_out_us(70,nFc,1,co%cvla(1,1,is),'cvlay'//chns)
-        call my_out_us(70,nFc,1,co%cvsa(1,0,is),'cvsax'//chns)
-        call my_out_us(70,nFc,1,co%cvsa(1,1,is),'cvsay'//chns)
-        call my_out_us(70,nFc,1,co%cdnahz(1,0,is),'cdnahzx'//chns)
-        call my_out_us(70,nFc,1,co%cdnahz(1,1,is),'cdnahzy'//chns)
-        call my_out_us(70,nFc,1,co%cdpahz(1,0,is),'cdpahzx'//chns)
-        call my_out_us(70,nFc,1,co%cdpahz(1,1,is),'cdpahzy'//chns)
-        call my_out_us(70,nFc,1,co%cvlahz(1,0,is),'cvlahzx'//chns)
-        call my_out_us(70,nFc,1,co%cvlahz(1,1,is),'cvlahzy'//chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'cvsahzx'//chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'cvsahzy'//chns)
-        call my_out_us(70,nFc,1,co%cvmahz(1,0,is),'cvmahzx'//chns)
-        call my_out_us(70,nFc,1,co%cvmahz(1,1,is),'cvmahzy'//chns)
-        call my_out_us(70,nFc,1,co%cvsa_cl(1,0,is),'cvsa_clx'//chns)
-        call my_out_us(70,nFc,1,co%cvsa_cl(1,1,is),'cvsa_cly'//chns)
-        call my_out_us(70,nFc,1,co%cvsahz_cl(1,0,is),'cvsahz_clx'//chns)
-        call my_out_us(70,nFc,1,co%cvsahz_cl(1,1,is),'cvsahz_cly'//chns)
+        call my_out_us(70,nFc,1,co%cdna(1,0,is),'cdna_th'//chns)
+        call my_out_us(70,nFc,1,co%cdna(1,1,is),'cdna_r'//chns)
+        call my_out_us(70,nFc,1,co%cdpa(1,0,is),'cdpa_th'//chns)
+        call my_out_us(70,nFc,1,co%cdpa(1,1,is),'cdpa_r'//chns)
+        call my_out_us(70,nFc,1,co%cddi(1,0,is),'cddi_th'//chns)
+        call my_out_us(70,nFc,1,co%cddi(1,1,is),'cddi_r'//chns)
+        call my_out_us(70,nFc,1,co%cvla(1,0,is),'cvla_th'//chns)
+        call my_out_us(70,nFc,1,co%cvla(1,1,is),'cvla_r'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,0,is),'cvsa_th'//chns)
+        call my_out_us(70,nFc,1,co%cvsa(1,1,is),'cvsa_r'//chns)
+        call my_out_us(70,nFc,1,co%cdnahz(1,0,is),'cdnahz_th'//chns)
+        call my_out_us(70,nFc,1,co%cdnahz(1,1,is),'cdnahz_r'//chns)
+        call my_out_us(70,nFc,1,co%cdpahz(1,0,is),'cdpahz_th'//chns)
+        call my_out_us(70,nFc,1,co%cdpahz(1,1,is),'cdpahz_r'//chns)
+        call my_out_us(70,nFc,1,co%cvlahz(1,0,is),'cvlahz_th'//chns)
+        call my_out_us(70,nFc,1,co%cvlahz(1,1,is),'cvlahz_r'//chns)
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'cvsahz_th'//chns)
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'cvsahz_r'//chns)
+        call my_out_us(70,nFc,1,co%cvmahz(1,0,is),'cvmahz_th'//chns)
+        call my_out_us(70,nFc,1,co%cvmahz(1,1,is),'cvmahz_r'//chns)
+        call my_out_us(70,nFc,1,co%cvsa_cl(1,0,is),'cvsa_cl_th'//chns)
+        call my_out_us(70,nFc,1,co%cvsa_cl(1,1,is),'cvsa_cl_r'//chns)
+        call my_out_us(70,nFc,1,co%cvsahz_cl(1,0,is),
+     &    'cvsahz_cl_th'//chns)
+        call my_out_us(70,nFc,1,co%cvsahz_cl(1,1,is),
+     &    'cvsahz_cl_r'//chns)
         call my_out_us(70,nCv,0,co%cthe(1,is),'cthe'//chns)
         call my_out_us(70,nCv,0,co%cthi(1,is),'cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then 
-          call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),'csiginx'//
+          call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),'csigin_th'//
      &        chns//'_'//chns0)
-          call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),'csiginy'//
+          call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),'csigin_r'//
      &        chns//'_'//chns0)
          endif
         enddo
        enddo
-       call my_out_us(70,nFc,1,co%chce(1,0),'chcex')
-       call my_out_us(70,nFc,1,co%chce(1,1),'chcey')
-       call my_out_us(70,nFc,1,co%chci(1,0),'chcix')
-       call my_out_us(70,nFc,1,co%chci(1,1),'chciy')
-       call my_out_us(70,nFc,1,co%chve(1,0),'chvex')
-       call my_out_us(70,nFc,1,co%chve(1,1),'chvey')
-       call my_out_us(70,nFc,1,co%chvi(1,0),'chvix')
-       call my_out_us(70,nFc,1,co%chvi(1,1),'chviy')
-       call my_out_us(70,nFc,1,co%csig(1,0),'csigx')
-       call my_out_us(70,nFc,1,co%csig(1,1),'csigy')
-       call my_out_us(70,nFc,1,co%calf(1,0),'calfx')
-       call my_out_us(70,nFc,1,co%calf(1,1),'calfy')
-       call my_out_us(70,nFc,1,co%cdkt(1,0),'cdktx')
-       call my_out_us(70,nFc,1,co%cdkt(1,1),'cdkty')
+       call my_out_us(70,nFc,1,co%chce(1,0),'chce_th')
+       call my_out_us(70,nFc,1,co%chce(1,1),'chce_r')
+       call my_out_us(70,nFc,1,co%chci(1,0),'chci_th')
+       call my_out_us(70,nFc,1,co%chci(1,1),'chci_r')
+       call my_out_us(70,nFc,1,co%chve(1,0),'chve_th')
+       call my_out_us(70,nFc,1,co%chve(1,1),'chve_r')
+       call my_out_us(70,nFc,1,co%chvi(1,0),'chvi_th')
+       call my_out_us(70,nFc,1,co%chvi(1,1),'chvi_r')
+       call my_out_us(70,nFc,1,co%csig(1,0),'csig_th')
+       call my_out_us(70,nFc,1,co%csig(1,1),'csig_r')
+       call my_out_us(70,nFc,1,co%calf(1,0),'calf_th')
+       call my_out_us(70,nFc,1,co%calf(1,1),'calf_r')
+       call my_out_us(70,nFc,1,co%cdkt(1,0),'cdkt_th')
+       call my_out_us(70,nFc,1,co%cdkt(1,1),'cdkt_r')
       endif                                                          !srv 17.06.08 }
 
-      if(switch%b2npc9_iout.ne.0 .or. switch%b2npco_iout.ne.0) then                !srv 11.09.09 {
+      if(switch%b2npco_iout.ne.0) then                !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2tral_cdnax'//chns)
-        call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2tral_cdnay'//chns)
-        call my_out_us(70,nFc,1,co%cdpa(1,0,is),'b2tral_cdpax'//chns)
-        call my_out_us(70,nFc,1,co%cdpa(1,1,is),'b2tral_cdpay'//chns)
+        call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2tral_cdna_th'//chns)
+        call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2tral_cdna_r'//chns)
+        call my_out_us(70,nFc,1,co%cdpa(1,0,is),'b2tral_cdpa_th'//chns)
+        call my_out_us(70,nFc,1,co%cdpa(1,1,is),'b2tral_cdpa_r'//chns)
         if(.not.is_neutral(is)) then
-         call my_out_us(70,nFc,1,co%cddi(1,0,is),'b2tral_cddix'//chns)
-         call my_out_us(70,nFc,1,co%cddi(1,1,is),'b2tral_cddiy'//chns)
+         call my_out_us(70,nFc,1,co%cddi(1,0,is),'b2tral_cddi_th'//chns)
+         call my_out_us(70,nFc,1,co%cddi(1,1,is),'b2tral_cddi_r'//chns)
         endif
 !        call my_out_us(70,nFc,1,co%cvla(1,0,is),'b2tral_cvlax'//chns)
 !        call my_out_us(70,nFc,1,co%cvla(1,1,is),'b2tral_cvlay'//chns)
@@ -282,9 +284,9 @@ cwdk combined check for poloidal or radial diffusion
       if(switch%b2npmo_iout.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2tral_cvsahzx'//
+        call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2tral_cvsahz_th'//
      &              chns)
-        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2tral_cvsahzy'//
+        call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2tral_cvsahz_r'//
      &              chns)
 !        call my_out_us(70,nFc,1,co%cvsa_cl(1,0,is),'b2tral_cvsa_clx'//
 !     &              chns)
@@ -298,11 +300,11 @@ cwdk combined check for poloidal or radial diffusion
         call my_out_us(70,nCv,0,co%cthi(1,is),'b2tral_cthi'//chns)
        enddo
       endif
-      if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0) then
-       call my_out_us(70,nFc,1,co%chce(1,0),'b2tral_chcex')
-       call my_out_us(70,nFc,1,co%chce(1,1),'b2tral_chcey')
-       call my_out_us(70,nFc,1,co%chci(1,0),'b2tral_chcix')
-       call my_out_us(70,nFc,1,co%chci(1,1),'b2tral_chciy')
+      if(switch%b2npht_iout.ne.0) then
+       call my_out_us(70,nFc,1,co%chce(1,0),'b2tral_chce_th')
+       call my_out_us(70,nFc,1,co%chce(1,1),'b2tral_chce_r')
+       call my_out_us(70,nFc,1,co%chci(1,0),'b2tral_chci_th')
+       call my_out_us(70,nFc,1,co%chci(1,1),'b2tral_chci_r')
 !       call my_out_us(70,nFc,1,co%chve(1,0),'b2tral_chvex')
 !       call my_out_us(70,nFc,1,co%chve(1,1),'b2tral_chvey')
 !       call my_out_us(70,nFc,1,co%chvi(1,0),'b2tral_chvix')
@@ -314,15 +316,15 @@ cwdk combined check for poloidal or radial diffusion
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then 
-          call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),'b2tral_csiginx'
-     &        //chns//'_'//chns0)
-          call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),'b2tral_csiginy'
-     &        //chns//'_'//chns0)
+          call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),
+     &        'b2tral_csigin_th'//chns//'_'//chns0)
+          call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),
+     &        'b2tral_csigin_r'//chns//'_'//chns0)
          endif
         enddo
        enddo
-       call my_out_us(70,nFc,1,co%csig(1,0),'b2tral_csigx')
-       call my_out_us(70,nFc,1,co%csig(1,1),'b2tral_csigy')
+       call my_out_us(70,nFc,1,co%csig(1,0),'b2tral_csig_th')
+       call my_out_us(70,nFc,1,co%csig(1,1),'b2tral_csig_r')
       endif                                                          !srv 11.09.09 }
 
 * ..return

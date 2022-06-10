@@ -10149,7 +10149,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
-      if ((switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1) .or.
+      if ((switch%b2npco_iout.eq.1) .or.
      &                           switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
@@ -10157,7 +10157,7 @@ cwdk    Todo: corrections for BCCON.ne.14
         call my_out_us(70,nCv,0,wrk0,'b2stbc_phys_sna'//chns)
        enddo
       endif
-      if ((switch%b2npht_iout.eq.1 .or. switch%b2nph9_iout.eq.1) .or. 
+      if (switch%b2npht_iout.eq.1 .or. 
      &                           switch%iout_b2wdat.eq.4) then
        wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
      &      srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne

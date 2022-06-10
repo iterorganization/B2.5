@@ -326,10 +326,10 @@ cdjm Jan2017 update momentum source components for balance
 
        if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
          call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
-        call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmox'//chns)
-        call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmoy'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmo_th'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmo_r'//chns)
          if(.not. is_neutral(is)) then
-            call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubvx'//chns)
+            call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubv_th'//chns)
             wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
      &         smbvv(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvv(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
@@ -544,8 +544,8 @@ c     ..compare 9-pt stencil matrices
        enddo
       endif                                                            !srv 12.07.02 }
       if (switch%b2npmo_iout.ne.0) then
-       call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccmx')            !srv 11.01.13
-       call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccmy')            !srv 11.01.13
+       call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccm_th')            !srv 11.01.13
+       call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccm_r')            !srv 11.01.13
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)

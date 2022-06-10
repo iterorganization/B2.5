@@ -185,7 +185,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
             call xerrab ('b2tqca--invalid value b2tqca_model > 2. ')
           endif
         enddo
-        if(switch%b2nph9_iout.ne.0 .or. switch%b2npht_iout.ne.0
+        if (switch%b2npht_iout.ne.0
      &     .or.switch%b2tqca_iout.ne.0.or.switch%iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
          call my_out_us(70,nCv,0,tau,'b2tqca_taua'//chns)
@@ -218,8 +218,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
         call my_out_us(70,nCv,0,dv%lnlam,'b2tqca_lnlam')
       endif
 
-      if(switch%b2tqca_iout.ne.0 .or. switch%b2nph9_iout.ne.0 
-     &                            .or. switch%b2npht_iout.ne.0) then
+      if(switch%b2tqca_iout.ne.0 .or. switch%b2npht_iout.ne.0) then
         call my_out_us(70,nCv,0,hci(1,0),'b2tqca_hcix')
         call my_out_us(70,nCv,0,hci(1,1),'b2tqca_hciy')
       endif                                                          !srv 16.06.08 30.01.10 }

@@ -146,16 +146,16 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nCv,0,sr%sna(1,1,isb),'b2npco_sna1'//chns)
         wrk0=sr%sna(:,0,isb)+pl%na(:,isb)*sr%sna(:,1,isb)
         call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
-        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fnax'//chns)
-        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fnay'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fna_th'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fna_r'//chns)
       elseif (switch%iout_b2wdat.eq.4) then                                  !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
         call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)
         wrk0=sr%sna(:,0,isb)+pl%na(:,isb)*sr%sna(:,1,isb)
         call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
-        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fnax'//chns)
-        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fnay'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fna_th'//chns)
+        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fna_r'//chns)
       endif                                                          
 
 *   ..set error parameter
