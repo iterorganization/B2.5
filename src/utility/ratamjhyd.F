@@ -150,7 +150,7 @@
       real (kind=R8) ::
      *  tmat(0:nt,0:nn),nmat(0:nt,0:nn),rates(0:nt,0:nn)
       CHARACTER(420) :: row
-      CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
+      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
       real (kind = R8) :: tmin, tmax, nmin, nmax,bremsf,depot
       parameter (bremsf=1.69e-38_R8/ev,depot=-13.6_R8)
 
@@ -304,9 +304,9 @@ c     Input/output variables
      2 rates(0:nt,0:nn),D11(0:8,0:8)
       real (kind = R8) :: tmin, tmax, nmin, nmax
 c     For now assume neutral species is Deuterium
-      parameter am = 2.0_R8
+      real(kind=R8), parameter :: am = 2.0_R8
 
-      CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
+      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
 
 c     Local variables
       integer ir,i,j,k,it,jn,iu,iv,ii
