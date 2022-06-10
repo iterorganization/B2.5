@@ -11,7 +11,7 @@
 #include <DIMENSIONS.F>
 
 c
-c  version : 22.03.2022 by Ilya Senichenkov
+c  version : 06.21.2022 by Ilya Senichenkov
 c
 c----------------------------------------------------------------------
 c*** Computes some quantities which are of interest for the SPb group
@@ -23,7 +23,7 @@ c*** N_Q_global:  number of output quantities
 c*** N_Q_target:   number of output per each target
 c
       integer lv, N_Q_global, N_Q_target  !iyv 11.04.22
-      parameter (lv=20220329, N_Q_global=4, N_Q_target=6)  ! IYS 22.03.2022 iyv 11.04.22
+      parameter (lv=20221006, N_Q_global=4, N_Q_target=6)  ! IYS 22.03.2022 iyv 11.04.22
       
       integer, save :: N_Q_total
       integer ltrc
@@ -297,14 +297,14 @@ c======================================================================
       
       implicit none
       integer nx, ny, ns, nxtl, nxtr
-      integer i, j, nv, N_ttl_read, N_trg_read 
+      integer i, j, nv, N_ttl_read, N_trg_read, Ntrgts_read 
       real (kind=R8), save :: stim = 0.0_R8
       character f*(lenfnm), hlp_c
       logical :: ex
 
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
-c*** Only called with filedata(ntrc_bls)=.true.
+c*** Only called with filedata(ltrc)=.true.
 c----------------------------------------------------------------------
 
       if(first_time_step) then
@@ -439,8 +439,9 @@ c*** f     :  the associated file name
 c----------------------------------------------------------------------
       if(ex .and. stim.lt.0.0_R8) then
       
-        read(lun, *, err=40) hlp_c, nv, N_ttl_read, N_trg_read  
-        write(*,*) hlp_c, nv, N_ttl_read, N_trg_read
+        read(lun, *, err=40) 
+     &      hlp_c, nv, N_ttl_read, Ntrgts_read, N_trg_read  
+        write(*,*) hlp_c, nv, N_ttl_read, Ntrgts_read, N_trg_read
         read(lun, *) hlp_c
         go to 42
    40   read(lun,*,err=92) hlp_c, i, j
@@ -483,10 +484,23 @@ c?          end if
 c?          write(*,*) ' You should remove the file!'
         end if
 
-        if(N_trg_read .ne. N_Q_target) then
+! Check total number of targets   
+        if(Ntrgts_read .ne. N_Q_target) then
           write(*,'(a,i2,3a,i2)')
      ,   '!!! b2mod_usrspb: current number of quantities per targets ',
      ,      N_Q_target,' differs from that in the file ',trim(f),' : ',
+     ,      N_trg_read
+          write(*,*) 'No ',trim(f),' tracing file - ',
+     ,                              'remove the existing file first!'
+          filedata(ltrc)=.false.
+          return
+        end if
+
+! Check the number of quantities per target   
+        if(N_trg_read .ne. ntrgts) then
+          write(*,'(a,i2,3a,i2)')
+     ,   '!!! b2mod_usrspb: the number of targets ',
+     ,      ntrgts,' differs from that in the file ',trim(f),' : ',
      ,      N_trg_read
           write(*,*) 'No ',trim(f),' tracing file - ',
      ,                              'remove the existing file first!'
@@ -508,7 +522,7 @@ c----------------------------------------------------------------------
 
 c?        nc = np_tmp
 
-        write(lun, 700) lv, N_Q_total, N_Q_target, trim(label)
+        write(lun, 700) lv, N_Q_total, ntrgts, N_Q_target, trim(label)
 ! What is 'label' and how is it defined?        
         
         write(hlp_frm,'(a,i3,a)')
@@ -535,7 +549,7 @@ c
       return
       
 c----------------------------------------------------------------------
-  700 format('#   ',3i8/'#  ',a)
+  700 format('#   ',4i8/'#  ',a)
 c----------------------------------------------------------------------
       end subroutine b2usstri
       
@@ -555,7 +569,7 @@ c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
 
-      if(.not.filedata(ntrc_bls)) return
+      if(.not.filedata(ltrc)) return
       
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
