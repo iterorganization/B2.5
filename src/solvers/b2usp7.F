@@ -41,6 +41,7 @@
       integer ncall, n2, ix, iy, is, ixb, iyb, ixt, iyt, k         !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
       integer, save :: visper_all_ions = 1
+      integer, save :: use_9pt_stencil = 1
       character chark*1                                            !srv 08.07.08
       integer ireg, ileft, ibot
       real (kind=R8) :: aa11p2, aa11m2, aa11p3, aa11m3             !srv 27.01.00
@@ -61,6 +62,7 @@
       if (ncall.eq.0) then                                         !srv
        call ipgeti ('b2usp7_iout', iout)                           !srv 08.07.08
        call ipgeti ('b2tvspr_visper_all_ions', visper_all_ions)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif                                                        !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -110,23 +112,29 @@
      &       aa11(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0,0)
          if (solvereg(ireg))
      >    aa11(ix,iy,-1) = -conc(ix,iy,0,0)
+         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
-         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-          if (solvereg(ireg)) then
-           aa11(ix,iy,-4) = aa11(ix,iy,-4)-0.25_R8*conc(ix,iy,0,1)
-           aa11(ix,iy,-3) = aa11(ix,iy,-3)-0.25_R8*conc(ix,iy,0,1)
-           aa11(ix,iy, 2) = aa11(ix,iy, 2)+0.25_R8*conc(ix,iy,0,1)
-           aa11(ix,iy, 3) = aa11(ix,iy, 3)+0.25_R8*conc(ix,iy,0,1)
-          endif
-          if (solvereg(ileft)) then
-           aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
-     &      aa11(leftix(ix,iy),leftiy(ix,iy),-3)+0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
-     &      aa11(leftix(ix,iy),leftiy(ix,iy),-2)+0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
-     &      aa11(leftix(ix,iy),leftiy(ix,iy), 3)-0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
-     &      aa11(leftix(ix,iy),leftiy(ix,iy), 4)-0.25_R8*conc(ix,iy,0,1)
+          if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+           if (solvereg(ireg)) then
+            aa11(ix,iy,-4) = aa11(ix,iy,-4)-0.25_R8*conc(ix,iy,0,1)
+            aa11(ix,iy,-3) = aa11(ix,iy,-3)-0.25_R8*conc(ix,iy,0,1)
+            aa11(ix,iy, 2) = aa11(ix,iy, 2)+0.25_R8*conc(ix,iy,0,1)
+            aa11(ix,iy, 3) = aa11(ix,iy, 3)+0.25_R8*conc(ix,iy,0,1)
+           endif
+           if (solvereg(ileft)) then
+            aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
+     &       aa11(leftix(ix,iy),leftiy(ix,iy),-3)+
+     &       0.25_R8*conc(ix,iy,0,1)
+            aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
+     &       aa11(leftix(ix,iy),leftiy(ix,iy),-2)+
+     &       0.25_R8*conc(ix,iy,0,1)
+            aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
+     &       aa11(leftix(ix,iy),leftiy(ix,iy), 3)-
+     &       0.25_R8*conc(ix,iy,0,1)
+            aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
+     &       aa11(leftix(ix,iy),leftiy(ix,iy), 4)-
+     &       0.25_R8*conc(ix,iy,0,1)
+           endif
           endif
          endif
         endif                                                      !srv 26.11.02
@@ -151,29 +159,31 @@ cwdk add 9-point contributions
            aa11(ix,iy, 0) = aa11(ix,iy, 0)+conc(ix,iy,1,1)
            aa11(ix,iy,-3) = aa11(ix,iy,-3)-conc(ix,iy,1,1)
           endif
+          if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
-         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-          if (solvereg(ireg)) then
-           aa11(ix,iy,-4) = aa11(ix,iy,-4) - 0.25_R8*conc(ix,iy,1,0)
-           aa11(ix,iy,-2) = aa11(ix,iy,-2) + 0.25_R8*conc(ix,iy,1,0)
-           aa11(ix,iy,-1) = aa11(ix,iy,-1) - 0.25_R8*conc(ix,iy,1,0)
-           aa11(ix,iy, 1) = aa11(ix,iy, 1) + 0.25_R8*conc(ix,iy,1,0)
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+            if (solvereg(ireg)) then
+             aa11(ix,iy,-4) = aa11(ix,iy,-4) - 0.25_R8*conc(ix,iy,1,0)
+             aa11(ix,iy,-2) = aa11(ix,iy,-2) + 0.25_R8*conc(ix,iy,1,0)
+             aa11(ix,iy,-1) = aa11(ix,iy,-1) - 0.25_R8*conc(ix,iy,1,0)
+             aa11(ix,iy, 1) = aa11(ix,iy, 1) + 0.25_R8*conc(ix,iy,1,0)
+            endif
+            if (solvereg(ibot)) then
+             aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) =
+     &        aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) +
+     &        0.25_R8*conc(ix,iy,1,0)
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) =
+     &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) -
+     &        0.25_R8*conc(ix,iy,1,0)
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) =
+     &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) +
+     &        0.25_R8*conc(ix,iy,1,0)
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) =
+     &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) -
+     &        0.25_R8*conc(ix,iy,1,0)
+            endif
+           endif
           endif
-          if (solvereg(ibot)) then
-           aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) =
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) +
-     &       0.25_R8*conc(ix,iy,1,0)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) =
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) -
-     &       0.25_R8*conc(ix,iy,1,0)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) =
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) +
-     &       0.25_R8*conc(ix,iy,1,0)
-           aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) =
-     &       aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) -
-     &       0.25_R8*conc(ix,iy,1,0)
-          endif
-         endif
         endif
         if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) then
           aa11(ix,iy,3) = 0.0_R8
@@ -181,6 +191,7 @@ cwdk add 9-point contributions
        enddo
       enddo
 
+!TODO: Perpendicular viscosity current terms in 9-point stencil
 CWDK tmp: ignore this
 CWDK will require complex stencil!
 C*   ..compute the seven-point matrix                               !srv 26.01.00

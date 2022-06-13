@@ -77,6 +77,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: no_hybr = 0
       integer, save :: drift_style
+      integer, save :: use_9pt_stencil = 1
       integer, save :: Zhdanov_closure = 0                               !som 09.07.21
       integer, save :: Zhdanov_test = 0                                  !som 09.07.21
       integer, save :: Zhdanov_vel_heat = 1                              !som 09.07.21
@@ -159,6 +160,9 @@
         end if
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+        call xertst (.not.(use_9pt_stencil.ne.0.and.vis_per.ne.0.0_R8),
+     &   'Cannot request 9-pt stencil and perp. viscosity together!')
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -497,7 +501,8 @@ c Drift terms
      &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
             enddo
           enddo
-          call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
+          if (use_9pt_stencil.ne.0)
+     >     call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
      &                                         wedia(-1,-1,0,1))
           call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
      &                                            wedia(-1,-1,1,1))      !srv 14.07.10 }
@@ -538,7 +543,8 @@ c Drift terms
      &         (qe*ne(ix,iy))*(bb(ix,iy,2)/bb(ix,iy,3)**2)               !srv 15.02.12
            enddo
           enddo
-          call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
+          if (use_9pt_stencil.ne.0)
+     >     call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,1),
      &                                         wedia(-1,-1,0,1))
           call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
      &                                            wedia(-1,-1,1,1))      !srv 14.07.10 }
@@ -557,7 +563,8 @@ c Drift terms
      &         * wbbl(ix,iy,2) / (wbbl(ix,iy,3))**2 *
      2         dnete(ix,iy,0,1) /
      &         (ne(ix,iy) + ne(leftix(ix,iy),leftiy(ix,iy))) * 2.0_R8
-              wedia(ix,iy,0,1) = facdrift(ix,iy)/                        !IYS 04.03.2019 {
+              if (use_9pt_stencil.ne.0)
+     >         wedia(ix,iy,0,1) = facdrift(ix,iy)/                       !IYS 04.03.2019 {
      1        (qe * hyl(ix,iy) * qc(ix,iy,0))
      &         * wbbl(ix,iy,2) / (wbbl(ix,iy,3))**2 *
      2         dnete(ix,iy,0,0) /

@@ -27,6 +27,7 @@
       real (kind=R8), allocatable :: w1(:,:)
       character charns*3                                          !srv 13.01.04 }
       integer, save :: flux_limit_style = 2                       !srv 13.06.08
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, t4, dti, vthi, maxfluxlimit(0:1),
      *  flux_limit_min_ti, dtir(-1:nx,-1:ny,0:1), wght(-1:nx,-1:ny),
@@ -57,6 +58,7 @@
         call ipgeti ('b2tlh0_hcimx_flag', hcimx_flag)
         call ipgeti ('b2tlh0_iout', iout)                         !srv 13.01.04
         call ipgeti ('b2tlh0_flux_limit_style', flux_limit_style) !srv 13.06.08
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif
 
       call sfill(n2*2*ns, 0.0_R8, hcimx, 1)
@@ -126,7 +128,7 @@
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)/t3
                  maxfluxlimit(0)=max(maxfluxlimit(0),t3)
                  fllim0fhi(ix,iy,0,0,is) = t3
-                 fllim0fhi(ix,iy,0,1,is) = t4
+                 if (use_9pt_stencil.ne.0) fllim0fhi(ix,iy,0,1,is) = t4
                else
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)
                endif
@@ -209,7 +211,7 @@
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)/t2
                  maxfluxlimit(0)=max(maxfluxlimit(0),t2)
                  fllim0fhi(ix,iy,0,0,is) = t2
-                 fllim0fhi(ix,iy,0,1,is) = t3
+                 if (use_9pt_stencil.ne.0) fllim0fhi(ix,iy,0,1,is) = t3
                else
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)
                endif

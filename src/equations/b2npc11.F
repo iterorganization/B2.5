@@ -226,7 +226,7 @@ cdjm Jan2017 update particle source components for balance
      &    itcnt, rxg, pcm1,
      &    vol, pbs, po, ti, nb, pb, snb(-1,-1,1), flob,
      &    conb, pccb(-1,-1,1,1), rescb, corpb, aa11,
-     &    '_b2usc11_'//chns)                                          !srv 18.05.02 02.04.18
+     &    'b2usc11_'//chns)                                           !srv 18.05.02 02.04.18
 *   ..apply correction
         call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &   vol, corpb, pccb(-1,-1,0,0), pb, nb, ub, isb)                !IYS 19.12.2017

@@ -46,6 +46,7 @@
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
       integer, save :: iout = 0                                          !srv 02.04.18
       integer, save :: PSch_style                                        !srv 12.11.08
+      integer, save :: use_9pt_stencil = 1
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: PSch = 1.0_R8                              !srv 17.01.07
       real (kind=R8) ::
@@ -81,6 +82,7 @@
          PSch_style = 2
         end if
         call ipgeti ('b2tfnb_PSch_style', PSch_style)
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -115,7 +117,8 @@
 cwdk computation of radial PSch flux on x-faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial flux components
-           fnbPSch(ix,iy,0,1) = 0.25e0_R8*PSch*( 
+           if (use_9pt_stencil.ne.0)
+     >      fnbPSch(ix,iy,0,1) = 0.25e0_R8*PSch*(
      &      cddb(topix(ix,iy),topiy(ix,iy),1,1)*
      &       dnbti(topix(ix,iy),topiy(ix,iy),1,0)*
      &       qs(topix(ix,iy),topiy(ix,iy),1)*
@@ -165,7 +168,8 @@ cwdk cancellation of some terms in poloidal and radial flux components
 cwdk computation of radial PSch flux on x-faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial flux components
-           fnbPSch(ix,iy,0,1) = PSch*dnbti(ix,iy,0,0)*
+           if (use_9pt_stencil.ne.0)
+     >      fnbPSch(ix,iy,0,1) = PSch*dnbti(ix,iy,0,0)*
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
      &       qs(ix,iy,0)*

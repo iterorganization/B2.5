@@ -87,10 +87,10 @@
 *     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,0) specifies cos(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,1) specifies cos(t), where
-*     t is the complementary angle between the y-direction of the
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,1) specifies cos(u), where
+*     u is the complementary angle between the y-direction of the
 *     (ix,iy) cell and its bottom face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
 *     geometry.
 *     It will hold that 0.lt.qc(,,).le.1.
 *
@@ -98,12 +98,12 @@
 *     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,0) specifies sin(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
-*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,1) specifies sin(t), where
-*     t is the complementary angle between the y-direction of the
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,1) specifies sin(u), where
+*     u is the complementary angle between the y-direction of the
 *     (ix,iy) cell and its bottom face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
 *     geometry.
-*     It will hold that -1.lt.qs(,,).le.1.
+*     It will hold that -1.lt.qs(,,).lt.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
@@ -207,7 +207,7 @@
       call nancheck(nx, ny, qz(-1:nx,-1:ny,1), 'b2agmt: qz(,,1)')
       call nancheck(nx, ny, qc(-1:nx,-1:ny,0), 'b2agmt: qc(,,0)')
       call nancheck(nx, ny, qc(-1:nx,-1:ny,1), 'b2agmt: qc(,,1)')
-*   ..test sign of qz(,,1) and qc(,)
+*   ..test sign of qz(,,1) and qc
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in
 *     this code.)

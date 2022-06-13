@@ -52,6 +52,7 @@
       real (kind=R8) :: wght(-1:nx,-1:ny)
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       integer, save :: PSch_style
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      *   facdriftm                                                       !srv 25.01.02
       save ncall
@@ -77,6 +78,7 @@
          PSch_style = 2
        end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -147,7 +149,8 @@
 cwdk computation of radial PSch flux on x-faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial flux components
-             fhiPSch(ix,iy,0,1) = fhiPsch(ix,iy,0,1) + 0.25e0_R8*PSch*(
+             if (use_9pt_stencil.ne.0)
+     >        fhiPSch(ix,iy,0,1) = fhiPsch(ix,iy,0,1) + 0.25e0_R8*PSch*(
      &        cddi(topix(ix,iy),topiy(ix,iy),1,1,is)*
      &        dnati2(topix(ix,iy),topiy(ix,iy),1,0)*
      &        qs(topix(ix,iy),topiy(ix,iy),1)*
@@ -169,11 +172,13 @@ cwdk cancellation of some terms in poloidal and radial flux components
      &                               )
              coni(ix,iy,0,0,1) = coni(ix,iy,0,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      *               cddi(ix,iy,1,1,is)*na(ix,iy,is)*ti(ix,iy)
-             coni(ix,iy,0,1,1) = -coni(ix,iy,0,0,1)
              coni(ix,iy,0,0,2) = coni(ix,iy,0,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &        cddi(ix,iy,1,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-             coni(ix,iy,0,1,2) = -coni(ix,iy,0,0,2)
+             if (use_9pt_stencil.ne.0) then
+              coni(ix,iy,0,1,1) = -coni(ix,iy,0,0,1)
+              coni(ix,iy,0,1,2) = -coni(ix,iy,0,0,2)
+             endif
             endif
            enddo
           enddo
@@ -183,17 +188,19 @@ cwdk cancellation of some terms in poloidal and radial flux components
            do ix = -1, nx
             if(topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2
      &       .and. leftix(ix,iy).ne.-2) then
-               fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) +
+             fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) +
      &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy))-
      &       nati2c(ix,iy))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
                coni(ix,iy,0,0,1) = coni(ix,iy,0,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &               cddi(ix,iy,1,1,is)*na(ix,iy,is)*ti(ix,iy)
-               coni(ix,iy,0,1,1) = -coni(ix,iy,0,0,1)
-               coni(ix,iy,0,0,2) = coni(ix,iy,0,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
+             coni(ix,iy,0,0,2) = coni(ix,iy,0,0,2) + 0.5e0_R8*PSch*    ! 0.25*2  !srv 02.01.07
      &          cddi(ix,iy,1,1,is)*
      &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
-             coni(ix,iy,0,1,2) = -coni(ix,iy,0,0,2)
+             if (use_9pt_stencil.ne.0) then
+              coni(ix,iy,0,1,1) = -coni(ix,iy,0,0,1)
+              coni(ix,iy,0,1,2) = -coni(ix,iy,0,0,2)
+             endif
             endif
            enddo
           enddo
@@ -276,9 +283,9 @@ cwdk cancellation of some terms in poloidal and radial flux components
              fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) -
      &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy))-
      &       nati2c(ix,iy))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
-                coni(ix,iy,1,1,1) = coni(ix,iy,1,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
+             coni(ix,iy,1,1,1) = coni(ix,iy,1,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,0,is)*na(ix,iy,is)*ti(ix,iy)
-                coni(ix,iy,1,1,2) = coni(ix,iy,1,1,2)+0.5e0_R8*PSch*     ! 0.25*2
+             coni(ix,iy,1,1,2) = coni(ix,iy,1,1,2)+0.5e0_R8*PSch*     ! 0.25*2
      &       cddi(ix,iy,0,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
      &                        ti(leftix(ix,iy),leftiy(ix,iy))            !srv 02.01.07 }
             endif

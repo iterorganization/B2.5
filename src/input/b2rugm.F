@@ -144,13 +144,27 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,0) specifies cos(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,1) specifies cos(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
 *     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
+*     It will hold that 0.lt.qc(,,).le.1.
+*
+*     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,0) specifies sin(t), where
+*     t is the complementary angle between the x-direction of the
+*     (ix,iy) cell and its left face.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,1) specifies sin(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
+*     geometry.
+*     It will hold that -1.lt.qs(,,).lt.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
@@ -716,7 +730,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
         call cfrure_opt (nget, n2, cell_height, 'cell_height')
       endif
 
-      if (use_9pt_stencil.eq.1) then
+      if (use_9pt_stencil.ne.0) then
 cwdk  For 9-point stencil, compute south-face values of qc (cos) and qs (sin)
 cwk:  this interpolation for backwards compatibility in computation of radial conductances etc.
        do ix = -1, nx

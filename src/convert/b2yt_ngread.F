@@ -173,21 +173,21 @@ c
 * neutral atoms
 C
       do 11 IS = 1, NATMI
-        READ (44,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        READ (44,'(A)',END=99,ERR=99) TEXTAN(IS-1)
    11 CONTINUE
       allocate(textan1(0:natm1-1))
       do is = 1, natmi
         if (iatm1(is).ne.0) TEXTAN1(iatm1(is)-1) = TEXTAN(is-1)
       end do
       do is = 1, natm1
-        WRITE(45,'(A8)') TEXTAN1(IS-1)
+        WRITE(45,'(A)') TEXTAN1(IS-1)
       end do
       deallocate(textan1)
 C
 * neutral molecules
 C
       do 12 IS = 1, NMOLI
-        READ (44,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
+        READ (44,'(A)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
       if (nmol1.gt.0) then
         allocate(textmn1(0:nmol1-1))
@@ -195,7 +195,7 @@ C
           if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
         end do
         do is = 1, nmol1
-          WRITE(45,'(A8)') TEXTMN1(IS-1)
+          WRITE(45,'(A)') TEXTMN1(IS-1)
         end do
         deallocate(textmn1)
       end if
@@ -203,7 +203,7 @@ C
 * test ions
 C
       do 13 IS = 1, NIONI
-        READ (44,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
+        READ (44,'(A)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
       if (nion1.gt.0) then
         allocate(textin1(0:nion1-1))
@@ -211,7 +211,7 @@ C
           if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
         end do
         do is = 1, nion1
-          WRITE(45,'(A8)') TEXTIN1(IS-1)
+          WRITE(45,'(A)') TEXTIN1(IS-1)
         end do
         deallocate(textin1)
       end if

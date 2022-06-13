@@ -78,7 +78,7 @@
           if (bottomiy(ix,iy).ne.-2) then
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
 cwdk temporary: compute differences between guard cells for backwards
-cwdk            compatiblity (avoid problems in corner cells)
+cwdk            compatibility (avoid problems in corner cells)
 cwdk later on : these faces will be removed altogether
               dfunr(ix,iy,1) = 
      &          fun(ix,iy) - fun(bottomix(ix,iy),bottomiy(ix,iy))       ! contribution from y-direction

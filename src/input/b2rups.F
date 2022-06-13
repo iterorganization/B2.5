@@ -98,7 +98,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-* 
+*
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiax(ix,iy,is) specifies
@@ -170,6 +170,19 @@
 *     po - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
 *     potential on the (ix,iy) cell.
+*
+*     Since the introduction of the 9-point stencil, the dimensions of
+*     the flux arrays have increased to f(-1:nx,-1:ny,0:1,0:1), where
+*     f(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
+*     f(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
+*     f(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
+*     f(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
+*
+*     Similarly, the conductivity arrays have increased dimensions, so
+*     cvsb(-1:nx,-1:ny,0,0) relates to (d/dx)ub on an x-face
+*     cvsb(-1:nx,-1:ny,0,1) relates to (d/dy)ub on an x-face
+*     cvsb(-1:nx,-1:ny,1,0) relates to (d/dx)ub on an y-face
+*     cvsb(-1:nx,-1:ny,1,1) relates to (d/dy)ub on an y-face
 *
 *     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array, output.
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
@@ -326,7 +339,7 @@
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
+*     the kinetic energy of a particle of species (is) in cell (ix,iy).
 *
 *     tim - real*8.
 *     The simulation time (in seconds).

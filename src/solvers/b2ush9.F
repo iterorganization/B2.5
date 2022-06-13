@@ -66,10 +66,11 @@
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
       integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
       !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
       !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
-      !$OMP THREADPRIVATE(cor_diag)
+      !$OMP THREADPRIVATE(use_9pt_stencil, cor_diag)
       integer ireg, ileft, ibot
       save ncall
       !$OMP THREADPRIVATE(ncall)
@@ -90,6 +91,7 @@
 *   ..subprogram start-up calls
       call subini ('b2ush9')
       if (ncall.eq.0) then
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06 {
        call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)
@@ -165,7 +167,7 @@
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
-      if (new_matrix.or..true.) call restart_ma28_for_9
+      if (new_matrix.or.use_9pt_stencil.ne.0) call restart_ma28_for_9
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -296,57 +298,59 @@ cwdk add linearization for 9-point terms
           aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &      aa9(leftix(ix,iy),leftiy(ix,iy),0) - t1
          endif
+         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
-         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-          t0  = (0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
+          if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+           t0  = (0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
      &       (1/vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &              leftiy(topix(ix,iy),topiy(ix,iy))) +
      &        1/vol(topix(ix,iy),topiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          t1  = (-0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
+           t1  = (-0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
      &       (1/vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &              bottomiy(leftix(ix,iy),leftiy(ix,iy))) +
      &        1/vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          if (solveee(ireg) .or. solveei(ireg)) then
-           aa9(ix,iy,-4) = aa9(ix,iy,-4)           + t1/
+           if (solveee(ireg) .or. solveei(ireg)) then
+            aa9(ix,iy,-4) = aa9(ix,iy,-4)           + t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa9(ix,iy,-3) = aa9(ix,iy,-3)           + t1/
+            aa9(ix,iy,-3) = aa9(ix,iy,-3)           + t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(ix,iy,-1) = aa9(ix,iy,-1) - (t0 - t1)/
+            aa9(ix,iy,-1) = aa9(ix,iy,-1) - (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(ix,iy, 0) = aa9(ix,iy, 0) - (t0 - t1)/
+            aa9(ix,iy, 0) = aa9(ix,iy, 0) - (t0 - t1)/
      &       vol(ix,iy)
-           aa9(ix,iy, 2) = aa9(ix,iy, 2) -  t0/
+            aa9(ix,iy, 2) = aa9(ix,iy, 2) -  t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(ix,iy, 3) = aa9(ix,iy, 3) -  t0/
+            aa9(ix,iy, 3) = aa9(ix,iy, 3) -  t0/
      &       vol(topix(ix,iy),topiy(ix,iy))
-          endif
-          if (solveee(ileft) .or. solveei(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
+           endif
+           if (solveee(ileft) .or. solveei(ileft)) then
+            aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
+            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
+           endif
           endif
          endif
         endif                                                         !srv 26.11.02
@@ -370,6 +374,7 @@ cwdk add 9-point contributions
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
         endif
+        if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
            t0 = (0.5_R8*flo0(ix,iy,1,0)-con0(ix,iy,1,0,0))/
@@ -423,6 +428,7 @@ cwdk add 9-point contributions
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
          endif
+        endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
@@ -531,7 +537,7 @@ cwdk add 9-point contributions
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
-      if (new_matrix.or..true.) call restart_ma28_for_9
+      if (new_matrix.or.use_9pt_stencil.ne.0) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
@@ -600,57 +606,59 @@ cwdk add linearization for 9-point terms
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          if (solveee(ireg))
      >    aa9(ix,iy,-1) = t1
+         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
-         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-          t0  = (0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
+          if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+           t0  = (0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
      &       (1/vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &              leftiy(topix(ix,iy),topiy(ix,iy))) +
      &        1/vol(topix(ix,iy),topiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          t1  = (-0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
+           t1  = (-0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
      &       (1/vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &              bottomiy(leftix(ix,iy),leftiy(ix,iy))) +
      &        1/vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          if (solveee(ireg)) then
-           aa9(ix,iy,-4) = aa9(ix,iy,-4)           + t1/
+           if (solveee(ireg)) then
+            aa9(ix,iy,-4) = aa9(ix,iy,-4)           + t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa9(ix,iy,-3) = aa9(ix,iy,-3)           + t1/
+            aa9(ix,iy,-3) = aa9(ix,iy,-3)           + t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(ix,iy,-1) = aa9(ix,iy,-1) - (t0 - t1)/
+            aa9(ix,iy,-1) = aa9(ix,iy,-1) - (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(ix,iy, 0) = aa9(ix,iy, 0) - (t0 - t1)/
+            aa9(ix,iy, 0) = aa9(ix,iy, 0) - (t0 - t1)/
      &       vol(ix,iy)
-           aa9(ix,iy, 2) = aa9(ix,iy, 2) -  t0/
+            aa9(ix,iy, 2) = aa9(ix,iy, 2) -  t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(ix,iy, 3) = aa9(ix,iy, 3) -  t0/
+            aa9(ix,iy, 3) = aa9(ix,iy, 3) -  t0/
      &       vol(topix(ix,iy),topiy(ix,iy))
-          endif
-          if (solveee(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
+           endif
+           if (solveee(ileft)) then
+            aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
+            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
+           endif
           endif
          endif
         endif                                                         !srv 26.11.02
@@ -674,6 +682,7 @@ cwdk add 9-point contributions
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1
         endif
+        if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
            t0 = (0.5_R8*flo0(ix,iy,1,0)-con0(ix,iy,1,0,0))/
@@ -727,6 +736,7 @@ cwdk add 9-point contributions
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
          endif
+        endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
@@ -823,7 +833,7 @@ cwdk add 9-point contributions
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
-      if (new_matrix.or..true.) call restart_ma28_for_9
+      if (new_matrix.or.use_9pt_stencil.ne.0) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
@@ -894,58 +904,60 @@ cwdk add linearization for 9-point terms
      &     -t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
          if (solveei(ireg))
      >    aa9(ix,iy,-1) = t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
+         if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
 cwdk todo: scalr()-functionality; is 1.0 for now
-         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-          t0  = (0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
+          if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+           t0  = (0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
      &       (1/vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &              leftiy(topix(ix,iy),topiy(ix,iy))) +
      &        1/vol(topix(ix,iy),topiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          t1  = (-0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
+           t1  = (-0.5_R8*flo0(ix,iy,0,1)-con0(ix,iy,0,1,0))/
      &       (1/vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &              bottomiy(leftix(ix,iy),leftiy(ix,iy))) +
      &        1/vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          if (solveei(ireg)) then
-           aa9(ix,iy,-4) = aa9(ix,iy,-4)           + t1/
+           if (solveei(ireg)) then
+            aa9(ix,iy,-4) = aa9(ix,iy,-4)           + t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa9(ix,iy,-3) = aa9(ix,iy,-3)           + t1/
+            aa9(ix,iy,-3) = aa9(ix,iy,-3)           + t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(ix,iy,-1) = aa9(ix,iy,-1) - (t0 - t1)/
+            aa9(ix,iy,-1) = aa9(ix,iy,-1) - (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(ix,iy, 0) = aa9(ix,iy, 0) - (t0 - t1)/
+            aa9(ix,iy, 0) = aa9(ix,iy, 0) - (t0 - t1)/
      &       vol(ix,iy)
-           aa9(ix,iy, 2) = aa9(ix,iy, 2) -  t0/
+            aa9(ix,iy, 2) = aa9(ix,iy, 2) -  t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(ix,iy, 3) = aa9(ix,iy, 3) -  t0/
+            aa9(ix,iy, 3) = aa9(ix,iy, 3) -  t0/
      &       vol(topix(ix,iy),topiy(ix,iy))
-          endif
-          if (solveei(ileft)) then
-           aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
+           endif
+           if (solveei(ileft)) then
+            aa9(leftix(ix,iy),leftiy(ix,iy),-3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
      &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
+            aa9(leftix(ix,iy),leftiy(ix,iy),-2) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
      &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 1) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
      &       vol(ix,iy)
-           aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 3) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
      &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
+            aa9(leftix(ix,iy),leftiy(ix,iy), 4) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
      &       vol(topix(ix,iy),topiy(ix,iy))
+           endif
           endif
          endif
         endif                                                         !srv 26.11.02
@@ -971,8 +983,9 @@ cwdk todo: scalr()-functionality; is 1.0 for now
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0) - t1*
      &      scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
         endif
+        if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
-        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
           t0 = (0.5_R8*flo0(ix,iy,1,0)-con0(ix,iy,1,0,0))/
      &       (1/vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &              bottomiy(rightix(ix,iy),rightiy(ix,iy))) +
@@ -1023,6 +1036,7 @@ cwdk add 9-point contributions
      &        aa9(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
           endif
+         endif
         endif
        enddo
       enddo

@@ -71,6 +71,7 @@
 *   ..local variables
       integer potit, area_fix, nsmin, nsmax, no_current
       integer, save :: style = 3, pot_eq = 1                             !srv 29.05.02 13.07.05
+      integer, save :: use_9pt_stencil = 1
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: guard_flows = 2
       integer, save :: no_solve = 0                                      !srv 02.07.08
@@ -164,7 +165,10 @@
        call ipgetr ('b2news_potok', potok)
        call xertst (0.0_R8.lt.potok,
      &   'faulty internal parameter potok')
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 06.07.00
+       call xertst (.not.(use_9pt_stencil.ne.0.and.vis_per.ne.0.0_R8),
+     &   '9-point stencil and perp. viscosity terms are incompatible !')
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 13.07.05
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -522,8 +526,9 @@ csw 16oct2012 init ier0
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
-            if(.not.is_neutral(is)) then
-              if(visper_all_ions.ne.0 .or. is.eq.ismain) then
+            if(.not.is_neutral(is).or.use_9pt_stencil.ne.0) then
+              if((visper_all_ions.ne.0 .or. is.eq.ismain) .and.
+     &         .not.is_neutral(is)) then
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
@@ -543,7 +548,8 @@ csw 16oct2012 init ier0
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_9(ireg)
                 end do
-                if(new_matrix) call restart_ma28_for_9
+                if(new_matrix.or.use_9pt_stencil.ne.0)
+     &           call restart_ma28_for_9
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
      &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 24.05.21
      &           vol, pbs, flob, conb,
@@ -853,7 +859,12 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
         if (solving(3)) then
 *   ..solve the potential equation
-          if (vis_per.eq.0.0e0_R8) then                                  !srv 22.12.19 06.07.00
+          if (use_9pt_stencil.ne.0) then                                !srv 22.12.19 06.07.00
+            call restart_ma28_for_9
+            call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
+     &        rxf2, vol, ne, te, conc, sch, po, fch, respo, corpo, ier0)
+            last_solve_9(0:nnreg(0))=solvepo(0:nnreg(0))
+          elseif (vis_per.eq.0.0e0_R8) then                              !srv 22.12.19 06.07.00
             new_matrix = .false.
             do ireg = 0, nnreg(0)
               new_matrix = new_matrix.or.

@@ -1074,12 +1074,27 @@ contains
       call rwcdf(rw,ncid,'te3dl',imap,te(-1+target_offset,iylstrt),iret)
       call rwcdf(rw,ncid,'ti3dl',imap,ti(-1+target_offset,iylstrt),iret)
       call rwcdf(rw,ncid,'po3dl',imap,po(-1+target_offset,iylstrt),iret)
-      call rwcdf(rw,ncid,'fn3dl',imap,fna(0,iylstrt,0,0,ismain),iret)
-      call rwcdf(rw,ncid,'fe3dl',imap,fhe(0,iylstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fi3dl',imap,fhi(0,iylstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fc3dl',imap,fch(0,iylstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fl3dl',imap,fne(0,iylstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fo3dl',imap,fni(0,iylstrt,0,0),iret)
+      imap(1)=1
+      imap(2)=1
+      slice=0.0_R8
+      slice(iylstrt:iylend)=fna(0,iylstrt:iylend,0,0,ismain)+ &
+         &                  fna(0,iylstrt:iylend,0,1,ismain)
+      call rwcdf(rw,ncid,'fn3dl',imap,slice(iylstrt),iret)
+      slice=0.0_R8
+      slice(iylstrt:iylend)=fhe(0,iylstrt:iylend,0,0)+fhe(0,iylstrt:iylend,0,1)
+      call rwcdf(rw,ncid,'fe3dl',imap,slice(iylstrt),iret)
+      slice=0.0_R8
+      slice(iylstrt:iylend)=fhi(0,iylstrt:iylend,0,0)+fhi(0,iylstrt:iylend,0,1)
+      call rwcdf(rw,ncid,'fi3dl',imap,slice(iylstrt),iret)
+      slice=0.0_R8
+      slice(iylstrt:iylend)=fch(0,iylstrt:iylend,0,0)+fch(0,iylstrt:iylend,0,1)
+      call rwcdf(rw,ncid,'fc3dl',imap,slice(iylstrt),iret)
+      slice=0.0_R8
+      slice(iylstrt:iylend)=fne(0,iylstrt:iylend,0,0)+fne(0,iylstrt:iylend,0,1)
+      call rwcdf(rw,ncid,'fl3dl',imap,slice(iylstrt),iret)
+      slice=0.0_R8
+      slice(iylstrt:iylend)=fni(0,iylstrt:iylend,0,0)+fni(0,iylstrt:iylend,0,1)
+      call rwcdf(rw,ncid,'fo3dl',imap,slice(iylstrt),iret)
       imap(1)=nx+2     ! i
       imap(2)=1
       call rwcdf(rw,ncid,'ne3di',imap,ne(jxi,iyistrt),iret)
@@ -1098,12 +1113,32 @@ contains
       call rwcdf(rw,ncid,'te3dr',imap,te(nx-target_offset,iyrstrt),iret)
       call rwcdf(rw,ncid,'ti3dr',imap,ti(nx-target_offset,iyrstrt),iret)
       call rwcdf(rw,ncid,'po3dr',imap,po(nx-target_offset,iyrstrt),iret)
-      call rwcdf(rw,ncid,'fn3dr',imap,fna(nx,iyrstrt,0,0,ismain),iret)
-      call rwcdf(rw,ncid,'fe3dr',imap,fhe(nx,iyrstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fi3dr',imap,fhi(nx,iyrstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fc3dr',imap,fch(nx,iyrstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fl3dr',imap,fne(nx,iyrstrt,0,0),iret)
-      call rwcdf(rw,ncid,'fo3dr',imap,fni(nx,iyrstrt,0,0),iret)
+      imap(1)=1
+      imap(2)=1
+      slice=0.0_R8
+      slice(iyrstrt:iyrend)=fna(nx,iyrstrt:iyrend,0,0,ismain)+ &
+         &                  fna(nx,iyrstrt:iyrend,0,1,ismain)
+      call rwcdf(rw,ncid,'fn3dr',imap,slice(iyrstrt),iret)
+      slice=0.0_R8
+      slice(iyrstrt:iyrend)=fhe(nx,iyrstrt:iyrend,0,0)+ &
+         &                  fhe(nx,iyrstrt:iyrend,0,1)
+      call rwcdf(rw,ncid,'fe3dr',imap,slice(iyrstrt),iret)
+      slice=0.0_R8
+      slice(iyrstrt:iyrend)=fhi(nx,iyrstrt:iyrend,0,0)+ &
+         &                  fhi(nx,iyrstrt:iyrend,0,1)
+      call rwcdf(rw,ncid,'fi3dr',imap,slice(iyrstrt),iret)
+      slice=0.0_R8
+      slice(iyrstrt:iyrend)=fch(nx,iyrstrt:iyrend,0,0)+ &
+         &                  fch(nx,iyrstrt:iyrend,0,1)
+      call rwcdf(rw,ncid,'fc3dr',imap,slice(iyrstrt),iret)
+      slice=0.0_R8
+      slice(iyrstrt:iyrend)=fne(nx,iyrstrt:iyrend,0,0)+ &
+         &                  fne(nx,iyrstrt:iyrend,0,1)
+      call rwcdf(rw,ncid,'fl3dr',imap,slice(iyrstrt),iret)
+      slice=0.0_R8
+      slice(iyrstrt:iyrend)=fni(nx,iyrstrt:iyrend,0,0)+ &
+         &                  fni(nx,iyrstrt:iyrend,0,1)
+      call rwcdf(rw,ncid,'fo3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
         imap(1)=nx+2     ! tr
         imap(2)=1
@@ -1111,24 +1146,64 @@ contains
         call rwcdf(rw,ncid,'te3dtr',imap,te(ixtr+target_offset,iytrstrt),iret)
         call rwcdf(rw,ncid,'ti3dtr',imap,ti(ixtr+target_offset,iytrstrt),iret)
         call rwcdf(rw,ncid,'po3dtr',imap,po(ixtr+target_offset,iytrstrt),iret)
-        call rwcdf(rw,ncid,'fn3dtr',imap,fna(ixtr+1,iytrstrt,0,0,ismain),iret)
-        call rwcdf(rw,ncid,'fe3dtr',imap,fhe(ixtr+1,iytrstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fi3dtr',imap,fhi(ixtr+1,iytrstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fc3dtr',imap,fch(ixtr+1,iytrstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fl3dtr',imap,fne(ixtr+1,iytrstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fo3dtr',imap,fni(ixtr+1,iytrstrt,0,0),iret)
+        imap(1)=1
+        imap(2)=1
+        slice=0.0_R8
+        slice(iytrstrt:iytrend)=fna(ixtr+1,iytrstrt:iytrend,0,0,ismain)+ &
+           &                    fna(ixtr+1,iytrstrt:iytrend,0,1,ismain)
+        call rwcdf(rw,ncid,'fn3dtr',imap,slice(iytrstrt),iret)
+        slice=0.0_R8
+        slice(iytrstrt:iytrend)=fhe(ixtr+1,iytrstrt:iytrend,0,0)+ &
+           &                    fhe(ixtr+1,iytrstrt:iytrend,0,1)
+        call rwcdf(rw,ncid,'fe3dtr',imap,slice(iytrstrt),iret)
+        slice=0.0_R8
+        slice(iytrstrt:iytrend)=fhi(ixtr+1,iytrstrt:iytrend,0,0)+ &
+           &                    fhi(ixtr+1,iytrstrt:iytrend,0,1)
+        call rwcdf(rw,ncid,'fi3dtr',imap,slice(iytrstrt),iret)
+        slice=0.0_R8
+        slice(iytrstrt:iytrend)=fch(ixtr+1,iytrstrt:iytrend,0,0)+ &
+           &                    fch(ixtr+1,iytrstrt:iytrend,0,1)
+        call rwcdf(rw,ncid,'fc3dtr',imap,slice(iytrstrt),iret)
+        slice=0.0_R8
+        slice(iytrstrt:iytrend)=fne(ixtr+1,iytrstrt:iytrend,0,0)+ &
+           &                    fne(ixtr+1,iytrstrt:iytrend,0,1)
+        call rwcdf(rw,ncid,'fl3dtr',imap,slice(iytrstrt),iret)
+        slice=0.0_R8
+        slice(iytrstrt:iytrend)=fni(ixtr+1,iytrstrt:iytrend,0,0)+ &
+           &                    fni(ixtr+1,iytrstrt:iytrend,0,1)
+        call rwcdf(rw,ncid,'fo3dtr',imap,slice(iytrstrt),iret)
         imap(1)=nx+2     ! tl
         imap(2)=1
         call rwcdf(rw,ncid,'ne3dtl',imap,ne(ixtl-target_offset,iytlstrt),iret)
         call rwcdf(rw,ncid,'te3dtl',imap,te(ixtl-target_offset,iytlstrt),iret)
         call rwcdf(rw,ncid,'ti3dtl',imap,ti(ixtl-target_offset,iytlstrt),iret)
         call rwcdf(rw,ncid,'po3dtl',imap,po(ixtl-target_offset,iytlstrt),iret)
-        call rwcdf(rw,ncid,'fn3dtl',imap,fna(ixtl,iytlstrt,0,0,ismain),iret)
-        call rwcdf(rw,ncid,'fe3dtl',imap,fhe(ixtl,iytlstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fi3dtl',imap,fhi(ixtl,iytlstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fc3dtl',imap,fch(ixtl,iytlstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fl3dtl',imap,fne(ixtl,iytlstrt,0,0),iret)
-        call rwcdf(rw,ncid,'fo3dtl',imap,fni(ixtl,iytlstrt,0,0),iret)
+        imap(1)=1
+        imap(2)=1
+        slice=0.0_R8
+        slice(iytlstrt:iytlend)=fna(ixtl,iytlstrt:iytlend,0,0,ismain)+ &
+           &                    fna(ixtl,iytlstrt:iytlend,0,1,ismain)
+        call rwcdf(rw,ncid,'fn3dtl',imap,slice(iytlstrt),iret)
+        slice=0.0_R8
+        slice(iytlstrt:iytlend)=fhe(ixtl,iytlstrt:iytlend,0,0)+ &
+           &                    fhe(ixtl,iytlstrt:iytlend,0,1)
+        call rwcdf(rw,ncid,'fe3dtl',imap,slice(iytlstrt),iret)
+        slice=0.0_R8
+        slice(iytlstrt:iytlend)=fhi(ixtl,iytlstrt:iytlend,0,0)+ &
+           &                    fhi(ixtl,iytlstrt:iytlend,0,1)
+        call rwcdf(rw,ncid,'fi3dtl',imap,slice(iytlstrt),iret)
+        slice=0.0_R8
+        slice(iytlstrt:iytlend)=fch(ixtl,iytlstrt:iytlend,0,0)+ &
+           &                    fch(ixtl,iytlstrt:iytlend,0,1)
+        call rwcdf(rw,ncid,'fc3dtl',imap,slice(iytlstrt),iret)
+        slice=0.0_R8
+        slice(iytlstrt:iytlend)=fne(ixtl,iytlstrt:iytlend,0,0)+ &
+           &                    fne(ixtl,iytlstrt:iytlend,0,1)
+        call rwcdf(rw,ncid,'fl3dtl',imap,slice(iytlstrt),iret)
+        slice=0.0_R8
+        slice(iytlstrt:iytlend)=fni(ixtl,iytlstrt:iytlend,0,0)+ &
+           &                    fni(ixtl,iytlstrt:iytlend,0,1)
+        call rwcdf(rw,ncid,'fo3dtl',imap,slice(iytlstrt),iret)
       endif
     !
       imap(1)=1

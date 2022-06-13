@@ -807,13 +807,27 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,0) specifies cos(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,1) specifies cos(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
 *     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
+*     It will hold that 0.lt.qc(,,).le.1.
+*
+*     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,0) specifies sin(t), where
+*     t is the complementary angle between the x-direction of the
+*     (ix,iy) cell and its left face.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,1) specifies sin(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
+*     geometry.
+*     It will hold that -1.lt.qs(,,).lt.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
@@ -864,6 +878,19 @@
 *     po - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
 *     potential on the (ix,iy) cell.
+*
+*     Since the introduction of the 9-point stencil, the dimensions of
+*     the flux arrays have increased to f(-1:nx,-1:ny,0:1,0:1), where
+*     f(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
+*     f(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
+*     f(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
+*     f(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
+*
+*     Similarly, the conductivity arrays have increased dimensions, so
+*     cvsb(-1:nx,-1:ny,0,0) relates to (d/dx)ub on an x-face
+*     cvsb(-1:nx,-1:ny,0,1) relates to (d/dy)ub on an x-face
+*     cvsb(-1:nx,-1:ny,1,0) relates to (d/dx)ub on an y-face
+*     cvsb(-1:nx,-1:ny,1,1) relates to (d/dy)ub on an y-face
 *
 *     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
@@ -986,10 +1013,10 @@
        call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
        call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0) 
+       if(boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nx,ny,ns)
        call ipgeti ('b2mndr_equation_sources', equation_sources)
-       if(equation_sources.ne.0) 
+       if(equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nx,ny,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -1743,7 +1770,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
         enddo
       enddo                                                          !srv 25.01.16 }
       if(use_mms.ne.0) then                                          !srv 26.02.18 {
-*   ..reset initial state using exact solution 
+*   ..reset initial state using exact solution
        call set_exact_solution(nx, ny, ns)
       endif                                                          !srv 26.02.18 {
 *   ..test plasma state and fluxes
@@ -3220,6 +3247,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             idx = 0
             if (database.eq.'iter') database = 'ITER'
           end if
+        else
+          write(*,*) "Creating a new IMAS data-entry"
+          idx = 0
+          if (database.eq.'iter') database = 'ITER'
         end if
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0

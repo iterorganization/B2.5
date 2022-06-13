@@ -118,6 +118,7 @@
       integer ncall, pot_eq, no_current, no_solve, style, elm_count
       integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       integer, save :: transport_namelist = 0
+      integer, save :: use_9pt_stencil = 1
       integer, save :: Zhdanov_closure = 0                              !som 25.01.21
       integer, save :: Zhdanov_test = 0                                 !som 16.06.21
       integer, save :: Zhdanov_cond = 1                                 !som 22.06.21
@@ -177,6 +178,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall.eq.0) then
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
         call ipgeti ('b2tral_cvsa_style', style)
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
         call ipgetr ('b2tfhe_anomalous', fch_anomalous)
@@ -469,7 +471,8 @@
      &       ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
      &        (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
-           cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
+           if (use_9pt_stencil.ne.0)
+     >      cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
           endif
          enddo
         enddo
@@ -503,7 +506,7 @@
      &     ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
      &      (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
      &      qe
-         cdde(ix,iy,0,1) = cdde(ix,iy,0,0)
+         if (use_9pt_stencil.ne.0) cdde(ix,iy,0,1) = cdde(ix,iy,0,0)
         endif
        enddo
       enddo

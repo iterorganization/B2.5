@@ -52,6 +52,7 @@
       integer, save :: ncall = 0
       integer, save :: hstyle = 0                                        !lk 23.05.06 05.07.07 {
       integer, save :: no_current = 0
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: vis_q = 1.0e0_R8                           !srv 11.07.99
       real (kind=R8), save :: cqip1 = 0.5e0_R8                           !lk
       real (kind=R8), save :: cvsa_mltpl = 1.0e0_R8                      !iyv 06.12.13
@@ -99,6 +100,7 @@
 !       write(*,*) 'redef_gmtry = ',redef_gmtry,
 !     &               ' drfit_style = ',drift_style
        call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -310,7 +312,7 @@
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
-              fchvisq_a(ix,iy,0,1,is) =                                 !srv 16.10.17
+              if (use_9pt_stencil.ne.0) fchvisq_a(ix,iy,0,1,is) =       !srv 16.10.17
      &        -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
@@ -352,7 +354,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
      &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy,0)
      &         *dOnedBsq(ix,iy,0,1)
-              fchvisq_a(ix,iy,0,1,is) =                                 !srv 16.10.17
+              if (use_9pt_stencil.ne.0) fchvisq_a(ix,iy,0,1,is) =                                 !srv 16.10.17
      &        -fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
      &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
@@ -718,7 +720,7 @@ cwdk cancellation of some terms in poloidal and radial current components
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
-                   fchvisq_a(ix,iy,0,1,is) =
+                   if (use_9pt_stencil.ne.0) fchvisq_a(ix,iy,0,1,is) =
      &              2.0e0_R8*dvq(ix,iy)
      &            /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))
      &            *dOnedBsq(ix,iy,0,0)*qs(ix,iy,0)*

@@ -110,7 +110,7 @@
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
        call ipgeti('b2wdat_append', iappend)
-       call ipgeti ('b2mndr_use_mms',use_mms)                     !srv 26.02.18
+       call ipgeti('b2mndr_use_mms', use_mms)                     !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call get_boundary_namelist
        call get_jsep(nx,ny,jxi,jxa,jsep)

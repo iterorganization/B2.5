@@ -46,6 +46,7 @@
       integer, save :: fch_inert_style                                   !srv 19.04.13
       integer, save :: no_current = 0
       integer, save :: inert_all_ions = 1
+      integer, save :: use_9pt_stencil = 1
       integer, save :: guard_flows
       real (kind=R8) ::
      &  fch_inert, wght(-1:nx,-1:ny), dOnedBsq(-1:nx,-1:ny,0:1,0:1)
@@ -73,6 +74,7 @@
           fch_inert_style = 2
        end if
        call ipgeti ('b2tiner_fch_inert_style', fch_inert_style)          !srv 07.07.99
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -110,7 +112,7 @@ c Drift terms
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
-               fchinert_a(ix,iy,0,1,is)=
+                if (use_9pt_stencil.ne.0) fchinert_a(ix,iy,0,1,is)=
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
      &          facdrift(ix,iy)*
      &          (ua(ix,iy,is)**2+ua(leftix(ix,iy),leftiy(ix,iy),is)**2)
@@ -170,7 +172,7 @@ cwdk cancellation of some terms in poloidal and radial current components
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
-               fchinert_a(ix,iy,0,1,is)=
+                if (use_9pt_stencil.ne.0) fchinert_a(ix,iy,0,1,is)=
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
      &          facdrift(ix,iy)*
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+
@@ -223,7 +225,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &          na(leftix(ix,iy),leftiy(ix,iy),is)) *
      &          gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
      &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
-               fchinert_a(ix,iy,0,1,is)=
+                if (use_9pt_stencil.ne.0) fchinert_a(ix,iy,0,1,is)=
      &         +0.5e0_R8*am(is)*mp*0.5e0_R8*fch_inert*
      &          facdrift(ix,iy)*
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+

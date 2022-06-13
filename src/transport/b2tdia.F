@@ -46,6 +46,7 @@
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
       integer, save :: drift_style                                       !IYS 11.02.2020
       integer, save :: no_current = 0
+      integer, save :: use_9pt_stencil = 1
 #ifdef CLASSICAL_CURRENT
       integer is
       real (kind=R8) ::
@@ -74,6 +75,7 @@
        end if
        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
        call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -124,7 +126,8 @@
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
-             fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
+             if (use_9pt_stencil.ne.0)
+     >        fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
      &      (pz(ix,iy)*bb(ix,iy,2)+                                      !srv 31.03.00 18.01.02
      &        pz(leftix(ix,iy),leftiy(ix,iy))                            !srv 31.03.00
@@ -190,7 +193,8 @@ cwdk cancellation of some terms in poloidal and radial current components
      &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *    ! IYS 04.03.2019
      &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
      &      *dOnedBsq(ix,iy,0,1)
-             fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
+             if (use_9pt_stencil.ne.0)
+     >        fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*
      &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *                            !srv 31.03.00
      &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)

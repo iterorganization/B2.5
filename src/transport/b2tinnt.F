@@ -58,6 +58,7 @@
 #endif
       integer, save :: ncall = 0, style = 1
       integer, save :: csigin_style = 1
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: phm0 = 1.0_R8
       real (kind=R8), save :: fch_ion_neutral = 0.0_R8
       real (kind=R8) ::
@@ -101,6 +102,7 @@
         call ipgeti ('b2tfhe_no_current', no_current)
         call ipgeti ('b2tqin_csigin_style', style)
         call ipgetr ('b2sqcx_phm0', phm0)
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -231,7 +233,8 @@
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
      &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnal(ix,iy,0,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-                  fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+                  if (use_9pt_stencil.ne.0)
+     >             fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &              csigin(ix,iy,0,1,is,is0)*(
      &              -dpo(ix,iy,0,1)
      &              -(wrk1(ix,iy,0,1)
@@ -255,7 +258,8 @@
      &                                                      )
      &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnal(ix,iy,0,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-                  fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+                  if (use_9pt_stencil.ne.0)
+     >             fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &              csigin(ix,iy,0,1,is,is0)*(
      &              -dpo(ix,iy,0,1)
      &              -wrk0(ix,iy,0,1,is)/
@@ -379,7 +383,8 @@
      &                     (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                      +wbbl(ix,iy,2)*vntrl(ix,iy)*(hx(ix,iy)+
      &                       hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
-                fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+                if (use_9pt_stencil.ne.0)
+     >           fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &                        csigin(ix,iy,0,1,is,is0)*(
      &                      -dpo(ix,iy,0,1)
      &                      -(wrk1(ix,iy,0,1) +
@@ -402,7 +407,8 @@
      &                       (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                       +wbbl(ix,iy,2)*vntrl(ix,iy)*(hx(ix,iy)+
      &                      hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
-                fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
+                if (use_9pt_stencil.ne.0)
+     >           fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &                        csigin(ix,iy,0,1,is,is0)*(
      &                      -dpo(ix,iy,0,1)
      &                      -wrk0(ix,iy,0,1,is)/

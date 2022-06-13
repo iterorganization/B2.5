@@ -16,7 +16,7 @@
       real (kind=R8) ::
      *   ub(-1:nx,-1:ny), rob(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
      &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
      &  qs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -54,7 +54,7 @@
 *     of geometric factors.
 *
 *     Since the introduction of the 9-point stencil, the dimensions of 
-*     the flux arrays have increase to f(-1:nx,-1:ny,0:1,0:1), where
+*     the flux arrays have increased to f(-1:nx,-1:ny,0:1,0:1), where
 *     f(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
 *     f(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
 *     f(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
@@ -165,7 +165,7 @@ cwdk     add computation of 9-point quantities
            fmo_flua(ix,iy,0,1,isb) = 0.0_R8
            fmo_cvsa(ix,iy,0,0,isb) = -cvsb(ix,iy,0,0)*
      &       (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
-           fmo_cvsa(ix,iy,0,0,isb) = -cvsb(ix,iy,0,1)*
+           fmo_cvsa(ix,iy,0,1,isb) = -cvsb(ix,iy,0,1)*
      &       (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
            fmo_hybr(ix,iy,0,0,isb) = -conhyb*
      &       (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))

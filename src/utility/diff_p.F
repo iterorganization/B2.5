@@ -55,7 +55,7 @@
         do ix = -1,nx
           if(leftix(ix,iy).ne.-2) then
 cwdk temporary: also compute differences between guard cells for backwards
-cwdk            compatiblity (avoid problems in corner cells)
+cwdk            compatibility (avoid problems in corner cells)
 cwdk later on : these faces will be removed altogether
             dfunp(ix,iy,0) = 
      &       fun(ix,iy) - fun(leftix(ix,iy),leftiy(ix,iy))

@@ -13,7 +13,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-5:5), resfun(-1:nx,-1:ny)                  !srv 11.01.00
+     *   aa11(-1:nx,-1:ny,-7:7), resfun(-1:nx,-1:ny)
       character*(*) name                                              !srv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -45,7 +45,7 @@
 *     nx, ny - integer, input.
 *     See the calling routine for description.
 *
-*     aa11 - (-1:nx,-1:ny,-5:5) real*8 array, input.
+*     aa11 - (-1:nx,-1:ny,-7:7) real*8 array, input.
 *     aa11 contains x,y-part of the 11-point stencil.
 *
 *     itcnt - integer, input.
@@ -79,7 +79,7 @@
       save ncall, style, acpar, cpu
       !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
       !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
-      data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -96,7 +96,7 @@
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux11p_cpu', cpu)
        if(style.eq.2) then
-         mult_nonzero=10
+         mult_nonzero=12
          mult_solvdim=15
          mult_solvdim1=10
          call ipgeti ('b2ux11p_mult_nonzero', mult_nonzero)
@@ -107,7 +107,7 @@
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_11diag                              !srv 02.04.18
-         call iniilu_7(nx+2,ny+2)                                      !srv 13.10.06
+!         call iniilu_9(nx+2,ny+2)                                     !srv 13.10.06
          irnh = 0                                                      !srv 15.05.07
          icnh = 0                                                      !srv 15.05.07
          nltrsol=2
@@ -149,7 +149,7 @@
           allocate(wrk1(1:1))
           allocate(wrk2(1:1))
           allocate(iwrk(1:n2))
-        endif
+        endif                                                      !srv 29.05.02 }
         write(*,*)
      .   'Allocated space for solver for 11-point-stencil matrix'   !sv 11.01.00
       endif
@@ -186,23 +186,23 @@
      &               c_end-c_start
 *    ..use ma28
        call cpu_time(cpu_start)
-       call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)   !srv 02.04.18
-!       call ilutern_7(NX+2, NY+2, NX+2,
+!       call ilutern_9(NX+2, NY+2, NX+2,
 !    &   aa11(-1,-1,-3),
 !    &   aa11(-1,-1,-2), aa11(-1,-1,-1), aa11(-1,-1,0),
 !    &   aa11(-1,-1,1), aa11(-1,-1,2), aa11(-1,-1,3),
 !    .   resfun, corfun, name)
-       else if (style.eq.3) then                                     !srv 29.05.02 {
+       call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !srv 02.04.18
+      else if (style.eq.3) then                                        !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
      *                 indexes, iasave, jasave, name)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
-!        write(*,*) 'STORAGE_7: nz = ',nz
+!        write(*,*) 'STORAGE_11: nz = ',nz
         call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
 !        call cpu_time(cpu_start)
-        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)         !srv 29.05.02 }
+        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)           !srv 29.05.02 }
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
@@ -228,12 +228,44 @@
       implicit none
 *  ..input
       integer nx, ny, nnz
-      real (kind=R8) :: aa11(-1:nx,-1:ny,-5:5)
+      real (kind=R8) :: aa11(-1:nx,-1:ny,-7:7)
       character*(*) name
 *  ..output
       integer ia(nnz), ja(nnz), k,
      *        indexes(1:3,nnz), iasave(nnz), jasave(nnz)
       real (kind=R8) :: a(nnz)
+!                                                           7
+!                                                           |
+!                                                           |
+!       2_____3_____4          5___________6           _____3_____
+!       |     |     |          |     |     |          |     |     |
+!       |     |     |          |     |     |          |     |     |
+!      -1_____0_____1          |_____|_____|          |_____0_____|
+!       |     |     |          |     |     |          |     |     |
+!       |     |     |          |     |     |          |     |     |
+!      -4____-3____-2         -6_____|____-5          |____-3_____|
+!                                                           |
+!                                                           |
+!                                                          -7
+!
+!                                 (ix,iy+2)
+!                                    |
+!                                    |
+!                                    |
+!                (ix-1,iy+1)______(ix,iy+1)____(ix+1,iy+1)
+!                     |              |              |
+!                     |              |              |
+!                     |              |              |
+!                (ix-1,iy  )______(ix,iy)______(ix+1,iy  )
+!                     |              |              |
+!                     |              |              |
+!                     |              |              |
+!                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
+!                                    |
+!                                    |
+!                                    |
+!                                (ix,iy-2)
+!
 *  ..locals
       logical :: lord
       logical, save :: lfirst=.true.
@@ -344,6 +376,16 @@
               ja(k) = 2+bottomix(ixl,iyl)+(2+bottomiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
+            if( aa11(ix,iy,-6) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,-6)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= -6
+              ia(k) = i
+              ja(k) = 2+leftix(ixb,iyb)+(2+leftiy(ixb,iyb)-1)*nxp2
+              ner = ner+1
+            endif
 *   ..Case (ix-1,iy+1)
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -357,6 +399,16 @@
               indexes(3,k)=2
               ia(k) = i
               ja(k) = 2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
+              ner = ner+1
+            endif
+            if( aa11(ix,iy,5) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,5)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=5
+              ia(k) = i
+              ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
 *       Case (ix+1,iy-1)
@@ -374,6 +426,16 @@
               ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
+            if( aa11(ix,iy,-5) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,-5)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-5
+              ia(k) = i
+              ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
+              ner = ner+1
+            endif
 *       Case (ix+1,iy+1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
@@ -389,15 +451,25 @@
               ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
+            if( aa11(ix,iy,6) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa11(ix,iy,6)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=6
+              ia(k) = i
+              ja(k) =2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
+              ner = ner+1
+            endif
 *   ..Case of top top neighbor
              ixt = topix(ix,iy)
              iyt = topiy(ix,iy)
-            if( aa11(ix,iy,5) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,7) .ne. 0.0e0_R8 ) then
               k = k+1
-              a(k) = aa11(ix,iy,5)
+              a(k) = aa11(ix,iy,7)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)=5
+              indexes(3,k)=7
               ia(k) = i
               ja(k) =2+topix(ixt,iyt)+(2+topiy(ixt,iyt)-1)*nxp2
               ner = ner+1
@@ -405,12 +477,12 @@
 *   ..Case of bottom bottom neighbor
              ixb = bottomix(ix,iy)
              iyb = bottomiy(ix,iy)
-            if( aa11(ix,iy,-5) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-7) .ne. 0.0e0_R8 ) then
               k = k+1
-              a(k) = aa11(ix,iy,-5)
+              a(k) = aa11(ix,iy,-7)
               indexes(1,k)=ix
               indexes(2,k)=iy
-              indexes(3,k)=-5
+              indexes(3,k)=-7
               ia(k) = i
               ja(k) = 2+bottomix(ixb,iyb)+(2+bottomiy(ixb,iyb)-1)*nxp2
               ner = ner+1

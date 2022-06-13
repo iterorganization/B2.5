@@ -50,6 +50,7 @@
 *   ..local variables
       integer ncall, ix, iy, ib, is
       integer, save :: no_current = 0
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      &  vis_par
       real (kind=R8) ::
@@ -72,6 +73,7 @@
       call subini ('b2tvspa')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgetr ('b2tfhe_vis_par', vis_par)
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 16.08.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 16.08.21
@@ -199,7 +201,7 @@ c Drift terms
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
-	    fchvispar_a(ix,iy,0,1,is)=
+	    if (use_9pt_stencil.ne.0) fchvispar_a(ix,iy,0,1,is)=
      &       -vis_par*fac_vis(ix,iy)*
      &        dvpar(ix,iy)*gOnedBsq(ix,iy,0,0)/3.0e0_R8*
      &       (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/

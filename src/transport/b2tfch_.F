@@ -80,6 +80,7 @@
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
       integer, save :: pot_eq = 1
       integer, save :: no_current = 0
+      integer, save :: use_9pt_stencil = 1
 
       character(3) :: chns, chns0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
@@ -139,6 +140,9 @@
        call ipgeti ('b2tfhe_no_current',no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+       call xertst (.not.(use_9pt_stencil.ne.0.and.vis_per.ne.0.0_R8),
+     &  'Cannot request 9-pt stencil and perp. viscosity together!')
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -233,15 +237,17 @@
       enddo
       do iy = 0, ny
        do ix = -1, nx
+         conc(ix,iy,1,1) = csig(ix,iy,1,1)                               !srv
+         if (use_9pt_stencil.ne.0) then
 cwdk for hybrid 9-point scheme, need to have only "effective diffusion" in coni
 c    (for multiplication with full radial difference), and floi will be used in
 c    an upwind scheme
 c    implementation ensures backwards compatibility for perfectly orthogonal grids
-         t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &         qs(ix,iy,1)
-         conc(ix,iy,1,1) = csig(ix,iy,1,1)                               !srv
-         conc(ix,iy,1,0) = csig(ix,iy,1,1)*t0
+           t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &           (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &           qs(ix,iy,1)
+           conc(ix,iy,1,0) = csig(ix,iy,1,1)*t0
+         endif
          if(fch_ion_neutral.ne.0.0e0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
@@ -250,8 +256,8 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
            do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
             conc(ix,iy,1,1) = conc(ix,iy,1,1) + csigin(ix,iy,1,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
-            conc(ix,iy,1,0) = conc(ix,iy,1,0) +
-     &         csigin(ix,iy,1,1,is,is0)*t0
+            if (use_9pt_stencil.ne.0) conc(ix,iy,1,0) = conc(ix,iy,1,0)
+     &        +csigin(ix,iy,1,1,is,is0)*t0
             endif                                                        !srv 20.10.17
            enddo
           endif
@@ -259,7 +265,8 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
         endif                                                            !srv
         if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
           conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy,1,1)
-          conc(ix,iy,1,0) = conc(ix,iy,1,0) + csig_stoch(ix,iy,1,1)*t0
+          if (use_9pt_stencil.ne.0)
+     >     conc(ix,iy,1,0) = conc(ix,iy,1,0) + csig_stoch(ix,iy,1,1)*t0
           fch(ix,iy,1,1) = fch(ix,iy,1,1) + fchstoch(ix,iy,1,1)
         endif                                                            !lk 31.01.08 }
        enddo

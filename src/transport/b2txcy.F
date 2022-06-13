@@ -20,10 +20,12 @@
 *     cony(:,:,1) contains radial conductivities across y-faces
 *     ------------------------------------------------------------------
       integer ix, iy
+      integer, save :: ncall = 0
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      external xertst
+      external ipgeti, xertst
       external b2xxgs
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
@@ -31,11 +33,15 @@
 *   ..test mode
       call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcy--faulty argument mode')
+*   ..read parameters on first call
+      if (ncall.eq.0) then
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+      endif
 
 *   ..compute cony(:,:,0)
       do iy = -1, ny
        do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
+        if(leftix(ix,iy).eq.-2 .or. use_9pt_stencil.eq.0) then
          cony(ix,iy,0) = 0.0_R8
         else
 cwdk test updated computation for compatibility with wg-code
@@ -128,6 +134,7 @@ cwdk test updated computation for compatibility with wg-code
       call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,0), 1)
       call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,1), 2)
 *   ..return
+      ncall = ncall + 1
       call subend ()
       return
 *     ------------------------------------------------------------------

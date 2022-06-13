@@ -94,7 +94,7 @@
      &    ((art_shi(ix,iy,0),ix=-1,nx),iy=-1,ny)
          close(70)
        else
-         call xerrab('There is no art_she.dat file')
+         call xerrab('There is no art_shi.dat file')
        endif
 
        filename='art_sch.dat'

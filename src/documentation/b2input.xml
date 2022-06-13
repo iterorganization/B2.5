@@ -1743,6 +1743,52 @@
 					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. All files must be present.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_equation_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. All files must be present.
+				</description>
+			</switch>
+			<switchgroup>
+				<name>b2mndr_mms_...</name>
+				<description>
+					If use_mms.ne.0, specifies a run using the Method of Manufactured Solutions. The exact solutions to match are provided by the b2mndr_set_XX_numerical switches.
+					An exact solution is available for comparison if the corresponding set_XX_numerical switch is nonzero. The exact solutions are provided, respectively, in the exact_na.dat and exact_ne.dat, exact_ua.dat, exact_te.dat, exact_ti.dat, and exact_po.dat files.
+					The exact_na.dat and exact_ne.dat files must be provided simultaneously.
+				</description>
+				<switch>
+					<name>b2mndr_use_mms</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_na_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_ua_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_te_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_ti_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_po_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+			</switchgroup>
 			<switchgroup>
 				<name>b2stbr_sputtering...</name>
 				<description>
@@ -1970,7 +2016,8 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					Cannot be used in conjunction with the 9-point stencil numerical treatment.
 				</description>
 			</switch>
 			<switch>
@@ -3257,6 +3304,16 @@
 					If ramp_slow.eq.0 (default), the ExB and diamagnetic drifts multipliers are ramped on each call of b2news, otherwise they are only changed on the first call of the nstg loop on the timestep.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_use_9pt_stencil</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Master switch to turn on the 9-point stencil numerical treatment. If set to 0, reverts to the old 5-point stencil.
+					Only recommended when using the SOLPS5.2 physics model.
+					The perpendicular viscosity current terms are not yet available within this treatment.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndr_min_ares*</name>
 				<description>
@@ -3464,6 +3521,7 @@
 					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
 					The value '1.0' is recommended for runs with drifts when perpendicular viscosity and corresponding perpendicular viscosity current is taken into account.
+					Cannot be used in conjunction with the 9-point stencil numerical treatment.
 				</description>
 			</switch>
 			<switch>

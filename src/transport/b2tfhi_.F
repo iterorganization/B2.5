@@ -69,6 +69,7 @@ csw 30apr2014 added fna_he, ia
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib
+      integer, save :: use_9pt_stencil = 1
       integer, save :: Zhdanov_closure = 0                              !som 13.07.21
       integer, save :: Zhdanov_test = 0                                 !som 13.07.21
       integer, save :: Zhdanov_vel_heat = 1                             !som 13.07.21
@@ -131,9 +132,12 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
-       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 13.07.21
-       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 13.07.21
-       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 13.07.21
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 13.07.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 13.07.21
+       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 13.07.21
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+       call xertst (.not.(use_9pt_stencil.ne.0.and.vis_per.ne.0.0_R8),
+     &  'Cannot request 9-pt stencil and perp. viscosity together!')
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -182,7 +186,7 @@ cpax
 !     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5e0_R8
 !     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
 !     &     *vadia(ix,iy,0,is)
-           flidia(ix,iy,0,1) =
+           if (use_9pt_stencil.ne.0) flidia(ix,iy,0,1) =
      &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
      &       *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))*0.5e0_R8
@@ -268,15 +272,20 @@ cpax
      &    (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &    +scur
          floi0_mdf = floi0_mdf + floi_vhx(ix,iy)                        !som 13.07.21
+         if (use_9pt_stencil.ne.0) then
 cwdk add computation of 9-point terms
-         floi9 = 1.5e0_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*               !srv 11.05.99
+          floi9 = 1.5e0_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*              !srv 11.05.99
      &       (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &           +flidia(ix,iy,0,1)                                     !srv 25.01.02 18.01.07
      &           +scur9
-         floi9_mdf = 1.5e0_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*           !srv 11.05.99
-     &    (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
-     &    +scur9
+          floi9_mdf = 1.5e0_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*          !srv 11.05.99
+     &     (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
+     &     +scur9
 cwdk
+         else
+          floi9 = 0.0_R8
+          floi9_mdf = 0.0_R8
+         endif
 
          if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
 
@@ -558,17 +567,22 @@ csw 27nov2012 added check upwind (SOLPS4 style)
            coni0     = chci(ix,iy,0,0)
            coni0_mdf = chci(ix,iy,0,0)
           endif                                                         !srv 06.07.06 }
-          if(no_Ptncr_y_hi.eq.0) then
+          if (use_9pt_stencil.ne.0) then
+           if(no_Ptncr_y_hi.eq.0) then
 cwdk add computation of 9-point quantities
 c    compute "effective conductivities" of hybrid scheme, keeping sign
 c    of chce for correct orientation of the flow across the face
-           coni9_mdf = sign(hybr(floi9_mdf,chci(ix,iy,0,1)) - 
+            coni9_mdf = sign(hybr(floi9_mdf,chci(ix,iy,0,1)) -
      &                  0.5_R8*abs(floi9_mdf),chci(ix,iy,0,1))
-           coni9     = coni9_mdf
+            coni9     = coni9_mdf
+           else
+            coni9     = chci(ix,iy,0,1)
+            coni9_mdf = chci(ix,iy,0,1)
+           endif
           else
-           coni9     = chci(ix,iy,0,1)
-           coni9_mdf = chci(ix,iy,0,1)
-          endif  
+           coni9     = 0.0_R8
+           coni9_mdf = 0.0_R8
+          endif
 
 csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
           if(b2tfhi_hybr2 .ne. 0) then
@@ -691,16 +705,17 @@ csw 27nov2012 added check upwind (SOLPS4 style)
             fhi_mdf(ix,iy,0,0) = floi0_mdf*                               !srv 13.10.06 {
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0,0)                         !srv 13.10.06 }
-
+            if (use_9pt_stencil.ne.0) then
 cwdk add computation of 9-point fluxes
-            fhi(ix,iy,0,1) = floi9*
+             fhi(ix,iy,0,1) = floi9*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8 -
      &         0.5_R8*abs(floi9_mdf)*dti - coni9*dtir(ix,iy,0)
-            fhi_mdf(ix,iy,0,1) = floi9_mdf*
+             fhi_mdf(ix,iy,0,1) = floi9_mdf*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8 -
      &         0.5_R8*abs(floi9_mdf)*dti - coni9_mdf*dtir(ix,iy,0) -
      &         fhiPSch(ix,iy,0,1)
 cwdk
+            endif
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
      &          (mdf_fhi.eq.0)) then !djm Jan2017
@@ -754,7 +769,7 @@ cwdk
 
 cwdk add linearization coefficients for 9-point fluxes
 c    note: coni9(_mdf) is the "effective diffusion" piece;
-c          part of floi9(_mdf) is transfered to coni, to mimick the 
+c          part of floi9(_mdf) is transferred to coni, to mimic the
 c          upwind discretization needed for the "effective convection"
           t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -767,7 +782,7 @@ c          upwind discretization needed for the "effective convection"
           else
            floi(ix,iy,0,0)   = floi0_mdf + floi9_mdf
            floi(ix,iy,0,1)   = 0.0_R8
-           coni(ix,iy,0,0,0) = coni0_mdf + coni9_mdf*t0 
+           coni(ix,iy,0,0,0) = coni0_mdf + coni9_mdf*t0
      &                                   + 0.5_R8*abs(floi9_mdf)
            coni(ix,iy,0,1,0) = coni9_mdf                                !srv 02.01.07
           endif                                                         !srv 13.10.06 }
@@ -1063,11 +1078,13 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
          if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           floi(ix,iy,1,1)   = floi0
           coni(ix,iy,1,1,0) = coni0
-          coni(ix,iy,1,0,0) = (coni0 - 0.5_R8*abs(floi0))*t0
+          if (use_9pt_stencil.ne.0)
+     >     coni(ix,iy,1,0,0) = (coni0 - 0.5_R8*abs(floi0))*t0
          else
           floi(ix,iy,1,1)   = floi0_mdf
           coni(ix,iy,1,1,0) = coni0_mdf
-          coni(ix,iy,1,0,0) = (coni0_mdf - 0.5_R8*abs(floi0_mdf))*t0    !srv 02.01.07
+          if (use_9pt_stencil.ne.0)
+     >     coni(ix,iy,1,0,0) = (coni0_mdf - 0.5_R8*abs(floi0_mdf))*t0   !srv 02.01.07
          endif                                                          !srv 13.10.06 }
          floi(ix,iy,1,0)   = 0.0_R8
 

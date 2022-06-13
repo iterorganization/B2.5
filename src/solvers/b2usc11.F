@@ -75,12 +75,14 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iadd_11 = 1, iout = 0
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      *   t0, t1
       character chns*3
       save ncall
       !$OMP THREADPRIVATE(ncall, iout, iadd_11)
       !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+      !$OMP THREADPRIVATE(use_9pt_stencil)
 *   ..procedures
       intrinsic abs
       external xertst, ipgetr, sfill
@@ -96,6 +98,7 @@
       call subini ('b2usc11')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
        call ipgeti ('b2usc11_add_11', iadd_11)
@@ -199,61 +202,63 @@
            aa11(ix,iy,-1) = aa11(ix,iy,-1) +
      &       t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           endif                                                        !srv 26.11.02
+          if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
 cwdk todo: rscal(pb)-logic
-         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-          t0  = (0.5_R8*flob(ix,iy,0,1)-conb(ix,iy,0,1,0)
-     &                                 -conb(ix,iy,0,1,1))/
+           if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+            t0  = (0.5_R8*flob(ix,iy,0,1)-conb(ix,iy,0,1,0)
+     &                                   -conb(ix,iy,0,1,1))/
      &       (1/vol(leftix(topix(ix,iy),topiy(ix,iy)),
      &              leftiy(topix(ix,iy),topiy(ix,iy))) +
      &        1/vol(topix(ix,iy),topiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          t1  = (-0.5_R8*flob(ix,iy,0,1)-conb(ix,iy,0,1,0)
-     &                                  -conb(ix,iy,0,1,2))/
+            t1  = (-0.5_R8*flob(ix,iy,0,1)-conb(ix,iy,0,1,0)
+     &                                    -conb(ix,iy,0,1,2))/
      &       (1/vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &              bottomiy(leftix(ix,iy),leftiy(ix,iy))) +
      &        1/vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-          if (solvereg(ireg)) then
-           aa11(ix,iy,-4) = aa11(ix,iy,-4)           + t1/
-     &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa11(ix,iy,-3) = aa11(ix,iy,-3)           + t1/
-     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa11(ix,iy,-1) = aa11(ix,iy,-1) - (t0 - t1)/
-     &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa11(ix,iy, 0) = aa11(ix,iy, 0) - (t0 - t1)/
-     &       vol(ix,iy)
-           aa11(ix,iy, 2) = aa11(ix,iy, 2) -  t0/
-     &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
-     &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa11(ix,iy, 3) = aa11(ix,iy, 3) -  t0/
-     &       vol(topix(ix,iy),topiy(ix,iy))
-          endif
-          if (solvereg(ileft)) then
-           aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
-     &       vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
-     &           bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-           aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
-     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-           aa11(leftix(ix,iy),leftiy(ix,iy), 0) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
-     &       vol(leftix(ix,iy),leftiy(ix,iy))
-           aa11(leftix(ix,iy),leftiy(ix,iy), 1) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
-     &       vol(ix,iy)
-           aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
-     &       vol(leftix(topix(ix,iy),topiy(ix,iy)),
-     &           leftiy(topix(ix,iy),topiy(ix,iy)))
-           aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
-     &       aa11(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
-     &       vol(topix(ix,iy),topiy(ix,iy))
-          endif
+            if (solvereg(ireg)) then
+             aa11(ix,iy,-4) = aa11(ix,iy,-4)           + t1/
+     &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
+             aa11(ix,iy,-3) = aa11(ix,iy,-3)           + t1/
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+             aa11(ix,iy,-1) = aa11(ix,iy,-1) - (t0 - t1)/
+     &        vol(leftix(ix,iy),leftiy(ix,iy))
+             aa11(ix,iy, 0) = aa11(ix,iy, 0) - (t0 - t1)/
+     &        vol(ix,iy)
+             aa11(ix,iy, 2) = aa11(ix,iy, 2) -  t0/
+     &        vol(leftix(topix(ix,iy),topiy(ix,iy)),
+     &            leftiy(topix(ix,iy),topiy(ix,iy)))
+             aa11(ix,iy, 3) = aa11(ix,iy, 3) -  t0/
+     &        vol(topix(ix,iy),topiy(ix,iy))
+            endif
+            if (solvereg(ileft)) then
+             aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
+     &        aa11(leftix(ix,iy),leftiy(ix,iy),-3)       - t1/
+     &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
+             aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
+     &        aa11(leftix(ix,iy),leftiy(ix,iy),-2)       - t1/
+     &        vol(bottomix(ix,iy),bottomiy(ix,iy))
+             aa11(leftix(ix,iy),leftiy(ix,iy), 0) =
+     &        aa11(leftix(ix,iy),leftiy(ix,iy), 0) + (t0 - t1)/
+     &        vol(leftix(ix,iy),leftiy(ix,iy))
+             aa11(leftix(ix,iy),leftiy(ix,iy), 1) =
+     &        aa11(leftix(ix,iy),leftiy(ix,iy), 1) + (t0 - t1)/
+     &        vol(ix,iy)
+             aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
+     &        aa11(leftix(ix,iy),leftiy(ix,iy), 3) + t0/
+     &        vol(leftix(topix(ix,iy),topiy(ix,iy)),
+     &            leftiy(topix(ix,iy),topiy(ix,iy)))
+             aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
+     &        aa11(leftix(ix,iy),leftiy(ix,iy), 4) + t0 /
+     &        vol(topix(ix,iy),topiy(ix,iy))
+            endif
+           endif
          endif
         endif
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
@@ -285,60 +290,62 @@ cwdk todo: rscal(pb)-logic
            aa11(ix,iy,-3) = aa11(ix,iy,-3) +
      &      t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
           endif
+          if (use_9pt_stencil.ne.0) then
 cwdk add 9-point contributions
 cwdk todo: add rscal-logic
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-           t0 = (0.5_R8*flob(ix,iy,1,0)-conb(ix,iy,1,0,0)
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+            t0 = (0.5_R8*flob(ix,iy,1,0)-conb(ix,iy,1,0,0)
      &                                 -conb(ix,iy,1,0,1))/
      &       (1/vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &              bottomiy(rightix(ix,iy),rightiy(ix,iy))) +
      &        1/vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(rightix(ix,iy),rightiy(ix,iy)))
-           t1 = (-0.5_R8*flob(ix,iy,1,0)-conb(ix,iy,1,0,0)
+            t1 = (-0.5_R8*flob(ix,iy,1,0)-conb(ix,iy,1,0,0)
      &                                  -conb(ix,iy,1,0,2))/
      &       (1/vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &              bottomiy(leftix(ix,iy),leftiy(ix,iy))) +
      &        1/vol(bottomix(ix,iy),bottomiy(ix,iy))+
      &        1/vol(ix,iy)+
      &        1/vol(leftix(ix,iy),leftiy(ix,iy)))
-           if (solvereg(ireg)) then
-            aa11(ix,iy,-4) = aa11(ix,iy,-4)       + t1/
+            if (solvereg(ireg)) then
+             aa11(ix,iy,-4) = aa11(ix,iy,-4)       + t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa11(ix,iy,-3) = aa11(ix,iy,-3) - (t0 - t1)/
+             aa11(ix,iy,-3) = aa11(ix,iy,-3) - (t0 - t1)/
      &        vol(bottomix(ix,iy),bottomiy(ix,iy))
-            aa11(ix,iy,-2) = aa11(ix,iy,-2) -  t0/
+             aa11(ix,iy,-2) = aa11(ix,iy,-2) -  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa11(ix,iy,-1) = aa11(ix,iy,-1)       + t1/
+             aa11(ix,iy,-1) = aa11(ix,iy,-1)       + t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa11(ix,iy, 0) = aa11(ix,iy, 0) - (t0 - t1)/
+             aa11(ix,iy, 0) = aa11(ix,iy, 0) - (t0 - t1)/
      &        vol(ix,iy)
-            aa11(ix,iy, 1) = aa11(ix,iy, 1) -  t0/
+             aa11(ix,iy, 1) = aa11(ix,iy, 1) -  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
-           endif
-           if (solvereg(ibot)) then
-            aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) =
+            endif
+            if (solvereg(ibot)) then
+             aa11(bottomix(ix,iy),bottomiy(ix,iy),-1) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy),-1)       - t1/
      &        vol(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &            bottomiy(leftix(ix,iy),leftiy(ix,iy)))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 0) =
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 0) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 0) + (t0 - t1)/
      &        vol(bottomix(ix,iy),bottomiy(ix,iy))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) =
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 1) +  t0/
      &        vol(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &            bottomiy(rightix(ix,iy),rightiy(ix,iy)))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) =
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 2) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 2)      - t1/
      &        vol(leftix(ix,iy),leftiy(ix,iy))
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 3) =
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 3) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 3) + (t0 - t1)/
      &        vol(ix,iy)
-            aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) =
+             aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) =
      &        aa11(bottomix(ix,iy),bottomiy(ix,iy), 4) +  t0/
      &        vol(rightix(ix,iy),rightiy(ix,iy))
+            endif
            endif
           endif
          endif

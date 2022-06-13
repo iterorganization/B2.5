@@ -31,6 +31,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       integer drift_style
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      * poleldr, poldidr, radeldr, raddidr
       real (kind=R8) ::
@@ -68,6 +69,7 @@
         call ipgetr ('b2tfnb_radeldr', radeldr)
         call ipgetr ('b2tfnb_poldidr', poldidr)
         call ipgetr ('b2tfnb_raddidr', raddidr)                         !srv 25.04.00 }
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -170,20 +172,20 @@ cxpb  Standard case
             enddo
           enddo                                                          !xpb
 
-       elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then     ! 5.2 drift treatment
+        elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then     ! 5.2 drift treatment
 
-         weight = 1.0e0_R8                                               !lk
+          weight = 1.0e0_R8                                              !lk
 cwdk add computation of 9-point corrections for drifts
 cwdk precomputation of differences on faces
-        call diff(nx, ny, hx, hy, weight, qs, po, dpo)
-        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
-!        call diff_p(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc,
+          call diff(nx, ny, hx, hy, weight, qs, po, dpo)
+          call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+!         call diff_p(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc,
 !     .    dOnedBsq(-1,-1,0,0))
-!        call diff_r(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc,
+!         call diff_r(nx,ny, 1, hx, hy, weight, qs, OnedBsq, OnedBsqc,
 !     .    dOnedBsq(-1,-1,0,1))
-         do iy = 0, ny-1
-           do ix = 0, nx
-             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
+          do iy = 0, ny-1
+            do ix = 0, nx
+              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
                veecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)/             !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1          (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))* ! signmf* !srv
      2          (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
@@ -193,7 +195,8 @@ cwdk precomputation of differences on faces
 cwdk computation of radial drifts on poloidal faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial drift components
-               veecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)/
+               if (use_9pt_stencil.ne.0)
+     >          veecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)/
      1          (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      &          (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -211,7 +214,8 @@ cwdk cancellation of some terms in poloidal and radial drift components
 cwdk computation of radial drifts on poloidal faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial drift components
-               vedia(ix,iy,0,1) =  raddidr*facdrift(ix,iy)* ! signmf*
+               if (use_9pt_stencil.ne.0)
+     >          vedia(ix,iy,0,1) =  raddidr*facdrift(ix,iy)* ! signmf*
      &           (te(leftix(ix,iy),leftiy(ix,iy))
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)
      &          /(qe*hy1(leftix(ix,iy),leftiy(ix,iy)))
@@ -255,13 +259,20 @@ cwdk cancellation of some terms in poloidal and radial drift components
      &           0.5_R8 * (te(leftix(ix,iy),leftiy(ix,iy)) + te(ix,iy))
      &           * wbbl(ix,iy,2) / (qe * hyl(ix,iy) * qc(ix,iy,0))       ! IYS 04.03.2019
      &          *dOnedBsq(ix,iy,0,1)                                     !srv 05.03.99
-               vedia(ix,iy,0,1) =  raddidr*facdrift(ix,iy)* ! signmf*
+               if (use_9pt_stencil.ne.0) then
+                veecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)*
+     &            wbbl(ix,iy,2)/wbbl(ix,iy,3)**2/hyl(ix,iy)*
+     &           (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))
+     2           *dpo(ix,iy,0,0)
+                vedia(ix,iy,0,1) =  raddidr*facdrift(ix,iy)* ! signmf*
      &           0.5_R8 * (te(leftix(ix,iy),leftiy(ix,iy)) + te(ix,iy))
      &           * wbbl(ix,iy,2) / (qe * hyl(ix,iy) * qc(ix,iy,0))*      ! IYS 04.03.2019
      &           (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           qc(ix,iy,0)
      &          *dOnedBsq(ix,iy,0,0)
+               endif
              endif
            enddo
          enddo

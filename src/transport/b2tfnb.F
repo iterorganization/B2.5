@@ -92,6 +92,7 @@
       integer, save :: pflux_cor = 1                                    !srv 05.03.16
       integer, save :: ion_vlct_restrict = 0                            !iyv 06.02.14
       integer, save :: vlct_diagno = 1
+      integer, save :: use_9pt_stencil = 1
       character chns*3                                                  !srv 16.09.02
       integer, save :: drift_style                                      !srv 21.06.08
       integer, save :: dia_lim_all_ions = 1                             !som 04.11.21
@@ -220,6 +221,9 @@
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
         call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2tfnb_dia_lim_all_ions', dia_lim_all_ions)        !som 04.11.21
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+        call xertst (.not.(use_9pt_stencil.ne.0.and.vis_per.ne.0.0_R8),
+     &   'Cannot request 9-pt stencil and perp. viscosity together!')
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -499,10 +503,11 @@ cwdk precomputation of differences on faces
      2         +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2          bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*                   !srv 05.02.05
      2       dpo(ix,iy,0,1)                                              !srv 13.05.16 }
+            if (use_9pt_stencil.ne.0)
 cwdk computation of radial drifts on poloidal faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial drift components
-             vbecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)/
+     >        vbecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)/
      1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -557,7 +562,8 @@ cwdk cancellation of some terms in poloidal and radial drift components
 cwdk computation of radial drifts on poloidal faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial drift components
-           vbdia(ix,iy,0,1) = -  raddidr*facdrift(ix,iy)* ! signmf*
+           if (use_9pt_stencil.ne.0)
+     >      vbdia(ix,iy,0,1) = -  raddidr*facdrift(ix,iy)* ! signmf*
      &          (ti(leftix(ix,iy),leftiy(ix,iy))
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)
      &           /(qe*zb(ix,iy)*hy1(leftix(ix,iy),leftiy(ix,iy)))
@@ -576,7 +582,8 @@ cwdk cancellation of some terms in poloidal and radial drift components
 cwdk computation of radial drifts on poloidal faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial drift components
-           wbdia(ix,iy,0,1) =   facdrift(ix,iy)/
+           if (use_9pt_stencil.ne.0)
+     >      wbdia(ix,iy,0,1) =   facdrift(ix,iy)/
      1      (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -733,7 +740,8 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
      &       0.5_R8 * (ti(leftix(ix,iy),leftiy(ix,iy)) + ti(ix,iy)) *
      &         wbbl(ix,iy,2) / (qe*zb(ix,iy) * hyl(ix,iy) * qc(ix,iy,0)) ! IYS 04.03.2019
      &         *dOnedBsq(ix,iy,0,1)                                      !srv 05.03.99
-           vbdia(ix,iy,0,1) = -  raddidr*facdrift(ix,iy)* ! signmf*
+           if (use_9pt_stencil.ne.0)
+     >      vbdia(ix,iy,0,1) = -  raddidr*facdrift(ix,iy)* ! signmf*
      &          (ti(leftix(ix,iy),leftiy(ix,iy))
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)
      &           /(qe*zb(ix,iy)*hy1(leftix(ix,iy),leftiy(ix,iy)))
@@ -751,7 +759,8 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
      2         dnbti(ix,iy,0,1)/
      &         (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy))) * 2.0_R8
 !     &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe !IYS 04.03.2019 }
-           wbdia(ix,iy,0,1) =   facdrift(ix,iy)/
+           if (use_9pt_stencil.ne.0)
+     >      wbdia(ix,iy,0,1) =   facdrift(ix,iy)/
      1        (qe*zb(ix,iy) * hyl(ix,iy))*  !(hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -1409,7 +1418,7 @@ cwdk scheme
 cwdk end of 9-point flows
 cwdk add linearization coefficients for 9-point fluxes
 c    note: conb9(_mdf) is the "effective diffusion" piece;
-c          part of flob9(_mdf) is transfered to conb, to mimick the
+c          part of flob9(_mdf) is transferred to conb, to mimic the
 c          upwind discretization needed for the "effective convection"
            t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &           (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -1421,7 +1430,7 @@ c          upwind discretization needed for the "effective convection"
      &        (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))! -
 !     &        con9*dkmprr(ix,iy,0)
              flob(ix,iy,0,1) = 0.0_R8
-             conb(ix,iy,0,0,0) = (con(ix,iy)+con9*t0+0.5_R8*abs(flo9))*                               !srv 13.10.06
+             conb(ix,iy,0,0,0) = (con(ix,iy)+con9*t0+0.5_R8*abs(flo9))* !srv 13.10.06
      &        (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-   !srv 30.01.10
      &        (flo+flo9)*
      &        (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))/4.0_R8
@@ -1440,11 +1449,11 @@ c    is good enough approx. for average between corner values
 !     &         cddb(ix,iy,1,1)*dkmprti(ix,iy,1)                        !srv 21.10.10
              flob(ix,iy,0,1) = 0.0_R8
              conb(ix,iy,0,0,0) =
-     &         (con_mdf(ix,iy)+con9_mdf*t0+0.5_R8*abs(flo9_mdf))*                           !srv 13.10.06
+     &         (con_mdf(ix,iy)+con9_mdf*t0+0.5_R8*abs(flo9_mdf))*       !srv 13.10.06
      &         (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-
      &         (flo_mdf+flo9_mdf)*
      &         (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))/4.0_R8
-     &          +cdpb(ix,iy,0,0) + cdpb(ix,iy,0,1)*t0
+     &         +cdpb(ix,iy,0,0) + cdpb(ix,iy,0,1)*t0
 cwdk for conb(ix,iy,0,1,0), assume that average kmpr between left and center
 c    is good enough approx. for average between corner values
              conb(ix,iy,0,1,0) = con9_mdf*                               !srv 13.10.06
@@ -1596,7 +1605,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           if (drift_style.eq.0) then
             wrk3(ix,iy) =
      1         (vbecrb(ix,iy,0,0)+
-     2         vbecrb(leftix(ix,iy),leftiy(ix,iy),0,0))/
+     2          vbecrb(leftix(ix,iy),leftiy(ix,iy),0,0))/
      5         2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6         +vol(leftix(ix,iy),leftiy(ix,iy))/
      7         hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -1951,7 +1960,8 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
      &        flo*(kmpr(ix,iy)
      &            -kmpr(bottomix(ix,iy),bottomiy(ix,iy)))/4.0_R8+
      &        cdpb(ix,iy,1,1)
-            conb(ix,iy,1,0,0) = (con(ix,iy) - 0.5_R8*abs(flo))*t0*
+            if (use_9pt_stencil.ne.0)
+     >       conb(ix,iy,1,0,0) = (con(ix,iy) - 0.5_R8*abs(flo))*t0*
      &        (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8
      &        +cdpb(ix,iy,1,1)*t0
           else
@@ -1965,13 +1975,16 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
      &        flo_mdf*(kmpr(ix,iy)
      &        -kmpr(bottomix(ix,iy),bottomiy(ix,iy)))/4.0_R8
      &        +cdpb(ix,iy,1,1)
-           conb(ix,iy,1,0,0) = (con_mdf(ix,iy)-0.5_R8*abs(flo_mdf))*t0*
+           if (use_9pt_stencil.ne.0)
+     >      conb(ix,iy,1,0,0) = (con_mdf(ix,iy)-0.5_R8*abs(flo_mdf))*t0*
      &        (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8
      &        +cdpb(ix,iy,1,1)*t0
            conb(ix,iy,1,1,1) = cdpb(ix,iy,1,1)*kmprti(ix,iy,1)
            conb(ix,iy,1,1,2) = conb(ix,iy,1,1,1)
-           conb(ix,iy,1,0,1) = conb(ix,iy,1,1,1)*t0
-           conb(ix,iy,1,0,2) = conb(ix,iy,1,1,2)*t0
+           if (use_9pt_stencil.ne.0) then
+            conb(ix,iy,1,0,1) = conb(ix,iy,1,1,1)*t0
+            conb(ix,iy,1,0,2) = conb(ix,iy,1,1,2)*t0
+           endif
           endif                                                         !srv 23.06.08
           flob(ix,iy,1,0) = 0.0_R8
          else ! SOLPS4.0 basic treatment

@@ -112,13 +112,27 @@
 *     vectors.)
 *     It will hold that -1.lt.qz1(,,0).lt.1 and 0.lt.qz1(,,1).le.1.
 *
-*     qc1 - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where
+*     qc1 - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy,0) specifies cos(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy,1) specifies cos(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
 *     geometry.
-*     It will hold that 0.lt.qc1(,).le.1.
+*     It will hold that 0.lt.qc1(,,).le.1.
+*
+*     qs1 - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qs1(ix,iy,0) specifies sin(t), where
+*     t is the complementary angle between the x-direction of the
+*     (ix,iy) cell and its left face.
+*     For (ix,iy) in (-1:nx,-1:ny), qs1(ix,iy,1) specifies sin(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
+*     geometry.
+*     It will hold that -1.lt.qs1(,,).lt.1.
 *
 *     gs1 - (-1:nx1,-1:ny1,0:2) real*8 array, output.
 *     (Let gsx(,)=gs1(,,0), gsy(,)=gs1(,,1) and gsz(,)=gs1(,,2).)

@@ -44,6 +44,7 @@
       integer ncall, ix, iy, ib, is
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: anml_all_ions = 1
+      integer, save :: use_9pt_stencil = 1
       integer, save :: pot_eq
       integer, save :: guard_flows
       real (kind=R8) :: fch_anomalous, dpo(-1:nx,-1:ny,0:1,0:1),
@@ -67,6 +68,7 @@
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgeti ('b2tfhe_no_current', no_current)                     !srv 27.02.13
        call ipgeti ('b2tanml_anml_all_ions', anml_all_ions)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
@@ -123,6 +125,11 @@
             endif
           enddo
          enddo
+
+         if (use_9pt_stencil.eq.0) then
+          fchanml_a(:,:,0,1,is) = 0.0_R8
+          fchanml_a(:,:,1,0,is) = 0.0_R8
+         endif
         endif
         fchanml(:,:,:,:)=fchanml(:,:,:,:)+fchanml_a(:,:,:,:,is)
        enddo                                                             !srv 08.09.21

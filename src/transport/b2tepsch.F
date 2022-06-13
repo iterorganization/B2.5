@@ -38,6 +38,7 @@
       integer ix, iy, is, ixl, iyl, ixb, iyb
       integer, save :: ncall = 0
       integer, save :: PSch_style
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
      &  facdriftm, nete2(-1:nx,-1:ny), dnete2(-1:nx,-1:ny,0:1,0:1),
@@ -55,8 +56,9 @@
          PSch_style = 1
        else
          PSch_style = 2
-      end if
+       end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       end if
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -97,7 +99,8 @@
 cwdk computation of radial PSch flux on x-faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial flux components
-            fhePSch(ix,iy,0,1)=-0.25e0_R8*PSch*(
+            if (use_9pt_stencil.ne.0)
+     >       fhePSch(ix,iy,0,1)=-0.25e0_R8*PSch*(
      &       cdde(topix(ix,iy),topiy(ix,iy),1,1)*
      &       dnete2(topix(ix,iy),topiy(ix,iy),1,0)*
      &       qs(topix(ix,iy),topiy(ix,iy),1)*
@@ -119,11 +122,13 @@ cwdk cancellation of some terms in poloidal and radial flux components
      &                               )
             cone(ix,iy,0,0,1) = -0.5e0_R8*PSch*cdde(ix,iy,1,1)*          ! 0.25*2  !srv 02.01.07
      *                                             ne(ix,iy)*te(ix,iy)
-            cone(ix,iy,0,1,1) = -cone(ix,iy,0,0,1)
             cone(ix,iy,0,0,2) = -0.5e0_R8*PSch*cdde(ix,iy,1,1)*          ! 0.25*2  !srv 02.01.07
      &                      ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                      te(bottomix(ix,iy),bottomiy(ix,iy))
-            cone(ix,iy,0,1,2) = -cone(ix,iy,0,0,2)
+            if (use_9pt_stencil.ne.0) then
+             cone(ix,iy,0,1,1) = -cone(ix,iy,0,0,1)
+             cone(ix,iy,0,1,2) = -cone(ix,iy,0,0,2)
+            endif
            endif
           enddo
           !print *,fhePSch(:,iy,0,0)
@@ -140,13 +145,19 @@ cwdk cancellation of some terms in poloidal and radial flux components
                 fhePSch(ix,iy,0,0)=-PSch*
      &          dnete2(ix,iy,1,1)*
      &          bzbl(ix,iy)*hzl(ix,iy)/qe
+                if (use_9pt_stencil.ne.0)
+     >           fhePSch(ix,iy,0,1)=-PSch*
+     &           dnete2(ix,iy,1,0)*
+     &           bzbl(ix,iy)*hzl(ix,iy)/qe
                 cone(ix,iy,0,0,1) = -0.5e0_R8*PSch*cdde(ix,iy,1,1)*      ! 0.25*2  !srv 02.01.07
      *                                         ne(ix,iy)*te(ix,iy)
-                cone(ix,iy,0,1,1) = -cone(ix,iy,0,0,1)
                 cone(ix,iy,0,0,2) = -0.5e0_R8*PSch*cdde(ix,iy,1,1)*      ! 0.25*2  !srv 02.01.07
      &                      ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                      te(bottomix(ix,iy),bottomiy(ix,iy))
-                cone(ix,iy,0,1,2) = -cone(ix,iy,0,0,2)
+                if (use_9pt_stencil.ne.0) then
+                  cone(ix,iy,0,1,1) = -cone(ix,iy,0,0,1)
+                  cone(ix,iy,0,1,2) = -cone(ix,iy,0,0,2)
+                endif
 
       !           print *, iy,ix,topiy(ix,iy),topix(ix,iy)
       !           print *, nete2c(topix(ix,iy),topiy(ix,iy)),

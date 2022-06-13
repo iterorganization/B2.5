@@ -26,6 +26,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      *   xfac, t0
       real (kind=R8) ::
@@ -33,7 +34,7 @@
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       save ncall, xfac
 *   ..procedures
-      external xertst, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, diff_r, intfaceh, intfacev
 *   ..initialisation
       data ncall/0/, xfac/1.0_R8/
@@ -48,6 +49,7 @@
       if (ncall.eq.0) then
        call ipgetr ('b2tfcc_xfac', xfac)
        call xertst (0.le.xfac, 'faulty internal parameter xfac')
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -108,7 +110,8 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
-          cone(ix,iy,0,1,0) = cone(ix,iy,0,1,0)+                       !srv 02.01.07
+          if (use_9pt_stencil.ne.0)
+     >     cone(ix,iy,0,1,0) = cone(ix,iy,0,1,0)+                      !srv 02.01.07
      &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,0,1,is)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
@@ -123,7 +126,8 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (cdpa(ix,iy,0,0,is) + cdpa(ix,iy,0,1,is)*t0)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
-          coni(ix,iy,0,1,0) = coni(ix,iy,0,1,0)+                       !srv 02.01.07
+          if (use_9pt_stencil.ne.0)
+     >     coni(ix,iy,0,1,0) = coni(ix,iy,0,1,0)+                      !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,1,is)*
      &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
@@ -150,7 +154,8 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
-          cone(ix,iy,1,0,0) = cone(ix,iy,1,0,0)+                       !srv 02.01.07
+          if (use_9pt_stencil.ne.0)
+     >     cone(ix,iy,1,0,0) = cone(ix,iy,1,0,0)+                      !srv 02.01.07
      &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,1,1,is)*t0*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
@@ -162,7 +167,8 @@ cwdk add linearization coefficients for 9-point fluxes
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
-          coni(ix,iy,1,0,0) = coni(ix,iy,1,0,0)+                       !srv 02.01.07
+          if (use_9pt_stencil.ne.0)
+     >     coni(ix,iy,1,0,0) = coni(ix,iy,1,0,0)+                      !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*t0*
      &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))

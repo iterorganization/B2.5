@@ -83,6 +83,7 @@ csw 10oct2012
       integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
 
       integer, save :: style_b2mndt = 1
+      integer, save :: use_9pt_stencil = 1
       character(3) :: charns
       real (kind=R8), save :: alfTeEh = 0.0_R8                           !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
@@ -149,6 +150,7 @@ csw 10oct2012
        call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
        call ipgeti ('b2tfhe_flo53', flo53)
        call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -191,7 +193,7 @@ csw 10oct2012
 !     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                 !srv 13.09.02 {
 !     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
 !     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                !srv 13.09.02 }
-            fledia(ix,iy,0,1) =
+            if (use_9pt_stencil.ne.0) fledia(ix,iy,0,1) =
      &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
      &       *vedia(ix,iy,0,1)*vdia_par*qs(ix,iy,0)/qc(ix,iy,0)
@@ -252,7 +254,7 @@ csw 10oct2012
       call diff_r(nx, ny, 0, hx, hy, wght, qs, te, wrk0, dter)
       call diff_r(nx, ny, 0, hx, hy, wght, qs, po, wrk0, dpor)
       call diff_r(nx, ny, 0, hx, hy, wght, qs, ne*te, wrk0, dper)
- 
+
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex, fchx, concx
       do iy = -1, ny
@@ -288,17 +290,22 @@ csw 10oct2012
      &    chve(ix,iy,0,0)*
      &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8           !srv 13.06.06 }
      &    -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe                       !srv 30.12.09 13.01.17
+         if (use_9pt_stencil.ne.0) then
 cwdk add computation of 9-point quantities
 cwdk TODO: add contributions from fchstoch to floe9(_mdf)!
-         floe9     = 1.5e0_R8*fne(ix,iy,0,1)+                          
-     &    (chve(ix,iy,0,1)+2.5e0_R8*fledia(ix,iy,0,1))*
-     &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8
-         floe9_mdf =  1.5e0_R8*fne(ix,iy,0,1)+
-     &    chve(ix,iy,0,1)*
-     &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+          floe9     = 1.5e0_R8*fne(ix,iy,0,1)+
+     &     (chve(ix,iy,0,1)+2.5e0_R8*fledia(ix,iy,0,1))*
+     &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+          floe9_mdf =  1.5e0_R8*fne(ix,iy,0,1)+
+     &     chve(ix,iy,0,1)*
+     &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8
 cwdk
+         else
+           floe9 = 0.0_R8
+           floe9_mdf = 0.0_R8
+         endif
 
-        if(lim_flux.eq.1 .and. conductive_limit.eq.0) then               !srv 04.02.03 17.01.12
+         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then              !srv 04.02.03 17.01.12
 
           if(no_Ptncr_x_he.eq.0) then
            cone0 = hybr(floe0,chce(ix,iy,0,0))-abs(floe0/2.0_R8)
@@ -540,7 +547,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
             ehx = 0.0_R8                                                 !srv 27.02.13
           endif                                                          !srv 30.12.09 }
 
-        else !lim_flux                                                   !srv 04.02.03 {
+         else !lim_flux                                                  !srv 04.02.03 {
 
           if(no_Ptncr_x_he.eq.0) then                                    !srv 06.07.06 {
             cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0,0))
@@ -562,18 +569,22 @@ csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
             cone0_mdf = chce(ix,iy,0,0)
           endif                                                          !srv 06.07.06 }
 
-          if(no_Ptncr_y_he.eq.0) then
+          if (use_9pt_stencil.ne.0) then
+            if(no_Ptncr_y_he.eq.0) then
 cwdk add computation of 9-point quantities
 c    compute "effective conductivities" of hybrid scheme, keeping sign
 c    of chce for correct orientation of the flow across the face
-            cone9_mdf = sign(hybr(floe9_mdf,chce(ix,iy,0,1)) - 
-     &                  0.5_R8*abs(floe9_mdf),chce(ix,iy,0,1))
-            cone9     = cone9_mdf
-          else
-            cone9     = chce(ix,iy,0,1)
-            cone9_mdf = chce(ix,iy,0,1)
-          endif                                                          !srv 06.07.06 }
-
+              cone9_mdf = sign(hybr(floe9_mdf,chce(ix,iy,0,1)) -
+     &                    0.5_R8*abs(floe9_mdf),chce(ix,iy,0,1))
+              cone9     = cone9_mdf
+            else
+              cone9     = chce(ix,iy,0,1)
+              cone9_mdf = chce(ix,iy,0,1)
+            endif                                                        !srv 06.07.06 }
+           else
+             cone9     = 0.0_R8
+             cone9_mdf = 0.0_R8
+           endif
 !          if (chce(ix,iy,0,0).eq.0) then                  !iyv 12.05.08 !srv 03.10.08 {
 !           alfe0 = 0.0_R8
 !          else
@@ -595,19 +606,21 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &         -cone0_mdf*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &        -fhePSch(ix,iy,0,0)                                        !srv 13.06.06 }
+            if (use_9pt_stencil.ne.0) then
 cwdk add computation of 9-point fluxes
-            fhe(ix,iy,0,1) =
-     &         floe9*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8- 
+              fhe(ix,iy,0,1) =
+     &         floe9*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
      &         0.5_R8*abs(floe9_mdf)*tex - cone9*dter(ix,iy,0) +
      &         alfTeEh*calf(ix,iy,0,1)*
      &         harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehr9
-            fhe_mdf(ix,iy,0,1) = floe9_mdf*
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8 - 
+              fhe_mdf(ix,iy,0,1) = floe9_mdf*
+     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8 -
      &         0.5_R8*abs(floe9_mdf)*tex - cone9_mdf*dter(ix,iy,0) -
      &         fhePSch(ix,iy,0,1) +
      &         alfTeEh*calf(ix,iy,0,1)*
      &         harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehr9
 cwdk
+            endif
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne(ix,iy,0,0)*
      &               (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
@@ -734,12 +747,12 @@ cwdk
           endif                                                          !srv 16.09.02 }
 cwdk add linearization coefficients for 9-point fluxes
 c    note: cone9(_mdf) is the "effective diffusion" piece;
-c          part of floe9(_mdf) is transfered to cone, to mimick the 
+c          part of floe9(_mdf) is transferred to cone, to mimic the
 c          upwind discretization needed for the "effective convection"
 cwdk (to be checked for new hybrid scheme using mdf...)
           t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &          qs(ix,iy,0)                                              !srv 13.10.06 }
+     &           qs(ix,iy,0)                                             !srv 13.10.06 }
           if(mdf_fhe.eq.0) then                                          !srv 13.10.06 {
            floe(ix,iy,0,0) = floe0 + floe9
            floe(ix,iy,0,1) = 0.0_R8
@@ -748,7 +761,7 @@ cwdk (to be checked for new hybrid scheme using mdf...)
           else
            floe(ix,iy,0,0) = floe0_mdf + floe9_mdf
            floe(ix,iy,0,1) = 0.0_R8
-           cone(ix,iy,0,0,0) = cone0_mdf + cone9_mdf*t0 
+           cone(ix,iy,0,0,0) = cone0_mdf + cone9_mdf*t0
      &                                   + 0.5_R8*abs(floe9_mdf)
            cone(ix,iy,0,1,0) = cone9_mdf
           endif                                                          !srv 13.10.06 }
@@ -994,17 +1007,19 @@ cwdk for hybrid 9-point scheme, need to have only "effective diffusion" in coni
 c    (for multiplication with full radial difference), and floi will be used in
 c    an upwind scheme
 c    implementation ensures backwards compatibility for perfectly orthogonal grids
-         t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+        t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &        (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
      &         qs(ix,iy,1)
         if(mdf_fhe.eq.0) then                                            !srv 13.10.06 {
          floe(ix,iy,1,1)   = floe0
          cone(ix,iy,1,1,0) = cone0                         !srv 02.01.07 !srv 23.06.99
-         cone(ix,iy,1,0,0) = (cone0 - 0.5_R8*abs(floe0))*t0
+         if (use_9pt_stencil.ne.0)
+     >    cone(ix,iy,1,0,0) = (cone0 - 0.5_R8*abs(floe0))*t0
         else
          floe(ix,iy,1,1)   = floe0_mdf
          cone(ix,iy,1,1,0) = cone0_mdf                     !srv 02.01.07 !srv 23.06.99
-         cone(ix,iy,1,0,0) = (cone0_mdf - 0.5_R8*abs(floe0_mdf))*t0      !srv 02.01.07
+         if (use_9pt_stencil.ne.0)
+     >    cone(ix,iy,1,0,0) = (cone0_mdf - 0.5_R8*abs(floe0_mdf))*t0     !srv 02.01.07
         endif                                                            !srv 13.10.06 }
         floe(ix,iy,1,0)   = 0.0_R8
 

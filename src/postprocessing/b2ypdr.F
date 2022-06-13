@@ -435,13 +435,27 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,0) specifies cos(t), where
 *     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy,1) specifies cos(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
 *     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
+*     It will hold that 0.lt.qc(,,).le.1.
+*
+*     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,0) specifies sin(t), where
+*     t is the complementary angle between the x-direction of the
+*     (ix,iy) cell and its left face.
+*     For (ix,iy) in (-1:nx,-1:ny), qs(ix,iy,1) specifies sin(u), where
+*     u is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t and u are in the range (-pi/2 to pi/2) and vanish for an orthogonal
+*     geometry.
+*     It will hold that -1.lt.qs(,,).lt.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
@@ -461,14 +475,6 @@
 *     field pitch)*(surface area), namely the parallel contact area,
 *     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
-*
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
 *
 *     ne - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ne(ix,iy) specifies
@@ -502,6 +508,19 @@
 *     po - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
 *     potential on the (ix,iy) cell.
+*
+*     Since the introduction of the 9-point stencil, the dimensions of
+*     the flux arrays have increased to f(-1:nx,-1:ny,0:1,0:1), where
+*     f(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
+*     f(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
+*     f(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
+*     f(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
+*
+*     Similarly, the conductivity arrays have increased dimensions, so
+*     cvsb(-1:nx,-1:ny,0,0) relates to (d/dx)ub on an x-face
+*     cvsb(-1:nx,-1:ny,0,1) relates to (d/dy)ub on an x-face
+*     cvsb(-1:nx,-1:ny,1,0) relates to (d/dx)ub on an y-face
+*     cvsb(-1:nx,-1:ny,1,1) relates to (d/dy)ub on an y-face
 *
 *     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
