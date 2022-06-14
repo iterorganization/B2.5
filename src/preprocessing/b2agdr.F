@@ -338,7 +338,7 @@
       call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
      &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
 *    ..interpolate magnetic field to cell corners
-      if (maxval(abs(wbbc)).eq.0.0_R8) then
+      if (maxval(abs(wbbc1)).eq.0.0_R8) then
         !wdk if wbbc not yet provided by grid generator, compute here
         call my_intcor1(nx1,ny1,2,vol1,periodic_bc,nncut,
      &     leftix1,leftiy1,rightix1,rightiy1,
