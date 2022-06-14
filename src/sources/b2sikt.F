@@ -64,6 +64,7 @@ c      use b2mod_keps
      &  dktc(nCv),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv), rhol(nCv),
      &  lpar(nCv)
+      real (kind=R8), save :: lpar_ref = 10.0_R8
       character chk*1
 *   ..procedures
       intrinsic min, max, sqrt
@@ -85,6 +86,7 @@ c      use b2mod_keps
         call xertst(icsepomp.gt.0,
      &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
        endif
+       call ipgetr ('b2sikt_fac_diss_lpar', lpar_ref)
       endif
 *   ..test nCv, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv')
@@ -136,7 +138,6 @@ cwdk     parallel transport due to parallel current fluctuations
         endif
         call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
      .    ' connfs in b2sikt <=0!!')
-        lpar = geo%cvConn
 *   ..compute wrk arrays
         if (switch%b2sikt_style .eq. 0) then
 *      ..logarithm of magnetic field in cell center
@@ -185,7 +186,10 @@ cwdk     parallel transport due to parallel current fluctuations
          wrk2 = dv%ni(:,1)*geo%cvVol*csfs/connfs
          if (switch % b2sikt_fac_diss_core_mode .eq.0 ) then
            wrk3 = co%sigx_kt*geo%cvVol*pl%kt*
-     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*lpar))**2
+     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*geo%cvConn))**2
+         elseif (switch % b2sikt_fac_diss_core_mode .eq.1 ) then
+           wrk3 = co%sigx_kt*geo%cvVol*pl%kt*
+     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*lpar_ref))**2
          else
            call gradc_p(nCv,nFc,nVx,0,geo,mpg,sqrt(pl%kt),wrkv,dktc)
            wrk3 = co%sigx_kt*geo%cvVol*dktc**2
