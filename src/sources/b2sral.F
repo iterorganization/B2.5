@@ -212,7 +212,8 @@
       call xertst (0.0_R8.le.minval(dv%fac_ExB) .and.
      &     1.0_R8.ge.maxval(dv%fac_ExB), 'faulty argument fac_ExB')
 
-      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then          !srv 14.07.10 {
+!wdk      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then          !srv 14.07.10 {
+!wdk may want these *_eir-fluxes also without Eirene
 *   ..recompute currents
        call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an, pl%po,
      &   dv%fchanml)
@@ -222,7 +223,7 @@
      &      dv%facdrift, dv%fchinert)
        call b2tfrn (nCv, nFc, nVx, ns, switch, geo, mpg, pl, dv, co, rt, 
      &              st_ext)
-      endif                                                             !srv 14.07.10 }
+!wdk      endif                                                             !srv 14.07.10 }
 
 * ..compute source coefficients
 *   ..compute electron rate coefficients
