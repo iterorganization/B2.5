@@ -172,9 +172,9 @@
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))  !xpb
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg)) 
-     &    kt(iCv) = max(0.0_R8*ev,kt(iCv)+dkt(iCv))
+     &    kt(iCv) = max(1.0e-5_R8*ev,kt(iCv)+dkt(iCv))
         if (switch%solve_keps.gt.1.and.solvzreg(ireg)) 
-     &    zt(iCv) = max(0.0_R8*ev,zt(iCv)+dzt(iCv))
+     &    zt(iCv) = max(1.0e-8_R8*ev,zt(iCv)+dzt(iCv))
       enddo
 *   ..adjust ua
       wrk0 = ne*dte + ni(:,0)*dti
