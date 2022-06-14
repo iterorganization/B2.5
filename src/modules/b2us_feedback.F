@@ -806,7 +806,8 @@ cxpb size is changed in DIMENSIONS.F
      .                  fb_ib(ifb))).eq.8 .and.
      &     fb_type(ifb).eq.6) .or.
      &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
-     &     bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .and.
+     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or. 
+     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
      &     .not.fb_type(ifb).eq.6) .or.
      &    (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
      &     bcene(fb_ib(ifb)) .eq. 8) .or.

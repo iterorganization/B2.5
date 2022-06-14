@@ -361,8 +361,8 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               call intcell(nFc,nCv,mpg,mpg%intcellR,fnan(:,1,is0),
      &          fnac(:,1,is0))
 *      ..get velocities in the cell centre
-              vntrc(:,0) = fnac(:,1,is0)/na(:,is0)
-              vntrc(:,1) = fnac(:,0,is0)/na(:,is0)
+              vntrc(:,0) = fnac(:,0,is0)/na(:,is0)
+              vntrc(:,1) = fnac(:,1,is0)/na(:,is0)
 *      ..interpolate velocities in the cell face
               call intface(nCv, nFc, mpg%fcCv, geo%fcVol, vntrc(:,0),
      &          vntrf(:,0))
