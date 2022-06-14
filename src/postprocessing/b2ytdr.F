@@ -3176,7 +3176,7 @@ cxpb This will need to be checked !!!
 #ifdef WG_TODO
         if (numerics_namelist.eq.0) 
      >   call alloc_b2mod_numerics((nx+2)*(ny+2),ns,nnreg)
-        call read_b2mod_numerics_namelist((nx+2)*(ny+2),nsmin,nsmax,
+        call read_b2mod_numerics_namelist((nx+2)*(ny+2),ns,nsmin,nsmax,
      >    nnreg,on_closed_surface)
 #endif
         if (same_bundling) then
@@ -3273,6 +3273,17 @@ cxpb This will need to be checked !!!
             write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_SWITCH=',numerics_time_switch,','
           endif
+          if(maxval(corr_core_dn(0:ns-1)).ne.1.0_R8 .or.
+     &       minval(corr_core_dn(0:ns-1)).ne.1.0_R8) then
+            call convert_bundle_r(ns1,ns,nsm,is_neutral1,bundle_frac,
+     .       corr_core_dn)
+            write(hlp_frm,'(a,i3,a)')
+     .       '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
+            write(99,hlp_frm)
+     .       'CORR_CORE_DN=',(corr_core_dn(is),is=0,ns1-1)
+          endif
+          if(corr_core_dt.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CORR_CORE_DT=',corr_core_dt,','
           if(core_dt_factor.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CORE_DT_FACTOR=',core_dt_factor,','
           if(core_dt_suppression.ne.1.0_R8)

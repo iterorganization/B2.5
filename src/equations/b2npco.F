@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npco (nCv, nFc, nVx, nregionv, solving, solvcreg,         !srv 22.05.18
-     &  ua_solve, solvmreg, itcnt, isb, rxf, switch, geo, mpg, pl, dv,
-     &  sr, ierr)
+      subroutine b2npco (nCv, nFc, nVx, nregionv, solving,               !srv 22.05.18
+     &  solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, switch, 
+     &  geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
@@ -134,7 +134,7 @@ cdjm Jan2017 update particle source components for balance
         call b2upco (nCv, nFc, nVx, geo, mpg, switch, nregionv, 
      &   ua_solve, solvmreg, rxf, switch%b2npco_pcm0, dv%corpa(:,isb),
      &   dv%pcca(:,0,isb), 
-     &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb))
+     &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb)
       endif                                                             !srv 22.05.18
       if (switch%b2npco_iout.ne.0) then                                               !srv 12.07.02 {
         write (chns,'(i3.3)') isb

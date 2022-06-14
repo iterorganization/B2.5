@@ -278,8 +278,9 @@ c     * cell centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
             if(switch%eirene_uub_style.eq.0) then
-              if (switch%eirene_background.eq.0) then
+              if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
 c     internal cell, old treatment -> grad-B drift only
+c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
                 uub(ic,nflai)=max(min(
      1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
      2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
@@ -313,8 +314,9 @@ c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but may not be fully consistent with respect to drifts.
 c     In particular: convective anomalous contribution  (if present) is missing
 c                    (diffusive anomalous contribution zero due to toroidal symm.)
-              if (switch%eirene_background.eq.0) then
+              if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
 c     internal cell, old treatment -> grad-B drift only (fna)
+c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
                 wwb(ic,nflai)=max(min(
      .            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
      2            (vadiac(ic,0,is)+vaecrbc(ic,0,is))*

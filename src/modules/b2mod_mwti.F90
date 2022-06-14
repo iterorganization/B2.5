@@ -759,14 +759,14 @@ contains
     vssepm = 0.0_R8; nesepa = 0.0_R8; tesepa = 0.0_R8; tisepa = 0.0_R8; tpsepa = 0.0_R8
     posepa = 0.0_R8; ktsepm = 0.0_R8; ktsepi = 0.0_R8; ktsepa = 0.0_R8;
 ! csc For now only identify outer midplane and targets separatrix values using flux tube concept
-    nesepm(1) = dv%ne(omp(icsepomp))
-    tesepm(1) = pl%te(omp(icsepomp))/ev
-    tisepm(1) = pl%ti(omp(icsepomp))/ev
-    posepm(1) = pl%po(omp(icsepomp))
-    dnsepm(1) = co%dna0(omp(icsepomp),ismain0)
-    kesepm(1) = co%hce0(omp(icsepomp))/dv%ne(omp(icsepomp))
-    kisepm(1) = co%hci0(omp(icsepomp))/dv%ni(omp(icsepomp),0)
-    ktsepm(1) = pl%kt(omp(icsepomp))/ev
+    nesepm(1) = 0.5_R8 * (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
+    tesepm(1) = 0.5_R8 * (pl%te(omp(icsepomp-1))+pl%te(omp(icsepomp)))/ev
+    tisepm(1) = 0.5_R8 * (pl%ti(omp(icsepomp-1))+pl%ti(omp(icsepomp)))/ev
+    posepm(1) = 0.5_R8 * (pl%po(omp(icsepomp-1))+pl%po(omp(icsepomp)))
+    dnsepm(1) = 0.5_R8 * (co%dna0(omp(icsepomp-1),ismain0)+co%dna0(omp(icsepomp),ismain0))
+    kesepm(1) = 0.5_R8 * (co%hce0(omp(icsepomp-1))/dv%ne(omp(icsepomp-1))+co%hce0(omp(icsepomp))/dv%ne(omp(icsepomp)))
+    kisepm(1) = 0.5_R8 * (co%hci0(omp(icsepomp-1))/dv%ni(omp(icsepomp-1),0)+co%hci0(omp(icsepomp))/dv%ni(omp(icsepomp),0))
+    ktsepm(1) = 0.5_R8 * (pl%kt(omp(icsepomp-1)) + pl%kt(omp(icsepomp)))/ev
     ift = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
     cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
     nesepi(1) = dv%ne(cvtrg)
