@@ -171,8 +171,8 @@
 *   ..test facdrift and fac_ExB
       if (ncall_b2sral.eq.0) then                                              !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
-     .      mpg%cvOnClosedSurface)
+          call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .      mpg%nnreg,mpg%cvOnClosedSurface)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -185,8 +185,8 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
             write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
-     .        mpg%cvOnClosedSurface)
+            call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .        mpg%nnreg,mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
           else
@@ -201,8 +201,8 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.b2sral_elm_count) then
             b2sral_elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nCv,nsmin,nsmax,mpg%nnreg,
-     .        mpg%cvOnClosedSurface)
+            call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .        mpg%nnreg,mpg%cvOnClosedSurface)
             call write_b2mod_numerics_namelist
           endif
         endif
@@ -212,7 +212,8 @@
       call xertst (0.0_R8.le.minval(dv%fac_ExB) .and.
      &     1.0_R8.ge.maxval(dv%fac_ExB), 'faulty argument fac_ExB')
 
-      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then          !srv 14.07.10 {
+!wdk      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then          !srv 14.07.10 {
+!wdk may want these *_eir-fluxes also without Eirene
 *   ..recompute currents
        call b2tanml (nCv, nFc, ns, switch, geo, mpg, co%csig_an, pl%po,
      &   dv%fchanml)
@@ -222,7 +223,7 @@
      &      dv%facdrift, dv%fchinert)
        call b2tfrn (nCv, nFc, nVx, ns, switch, geo, mpg, pl, dv, co, rt, 
      &              st_ext)
-      endif                                                             !srv 14.07.10 }
+!wdk      endif                                                             !srv 14.07.10 }
 
 * ..compute source coefficients
 *   ..compute electron rate coefficients

@@ -4,7 +4,7 @@
       subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, switch, geo, mpg, 
      &  pl, dv, co, rt, balance)
       use b2mod_types
-!      use b2mod_boundary_namelist
+      use b2mod_boundary_namelist
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmfs
@@ -61,9 +61,9 @@
       real (kind=R8) :: 
      &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
      &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                         !srv 21.10.10
-     &   kmpr(nCv), kmprv(nVx)!,
-!     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
-!     &   rdiv                                                            !srv 05.03.16
+     &   kmpr(nCv), kmprv(nVx),
+     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
+     &   rdiv                                                            !srv 05.03.16
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
@@ -84,7 +84,6 @@
       integer :: xcount, ycount
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
-c      integer, save :: pflux_cor = 1                                     !srv 05.03.16
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intface, diff
@@ -118,7 +117,6 @@ c      integer, save :: pflux_cor = 1                                     !srv 0
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
-c        call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
       endif
 
       meth = switch%b2tfnb_discr_meth
@@ -659,24 +657,23 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadianahzy'//chns)
       call my_out_us(70,nFc,1,dv%fna_fcor(1,1,isb),
      &  'b2tfnb_fnb_fcory'//chns)
-      endif                                                              !srv 11.09.09 }
-
+      endif                                                             !srv 11.09.09 }
 
 * ..compute kinetic energy of species
       dv%kinrgy(:,isb) = 0.5_R8*am(isb)*mp*pl%ua(:,isb)**2
 
-
-#ifdef WG_DRIFTS
 *   ..flux correction
 *   ..we rescale the fnb fluxes to have the same integral over the boundaries
 *   ..as the fnb_mdf fluxes
-      if(pflux_cor.ne.0 .and. switch%mdf_fnb.ne.0) then                        !srv 05.03.16 {
+      if(switch%pflux_cor.ne.0 .and. switch%mdf_fnb.ne.0) then          !srv 05.03.16 {
         if(.not. is_neutral(isb)) then
-          call b2tbfl(nx, ny,.false.,fnb, tbfl_fnb, div_fnb)
-          call b2tbfl(nx, ny,.false.,fnb_mdf, tbfl_fnb_mdf, div_fnb_mdf)
+          call b2tbfl(nCv, nFc, .true., mpg, dv%fna(:,:,isb),
+     &      tbfl_fnb, div_fnb)
+          call b2tbfl(nCv, nFc, .true., mpg, dv%fna_mdf(:,:,isb),
+     &      tbfl_fnb_mdf, div_fnb_mdf)
           if(div_fnb .ne. 0.0_R8) then
             rdiv= div_fnb_mdf/div_fnb
-            fnb = rdiv*fnb
+            dv%fna(:,:,isb) = rdiv*dv%fna(:,:,isb)
           else
             if (ncall_b2tfnb.eq.0) write(*,"(a,i4)")
      >       ' Boundary flux correction not attempted for is = ',isb
@@ -688,9 +685,10 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
      $       isb, div_fnb, div_fnb_mdf
 
-            call b2tbfl(nx, ny,.false., fnb, tbfl_fnb, div_fnb)
-            call b2tbfl(nx, ny,.false., fnb_mdf, tbfl_fnb_mdf,
-     .                                                 div_fnb_mdf)
+            call b2tbfl(nCv, nFc, .true., mpg, dv%fna(:,:,isb),
+     &        tbfl_fnb, div_fnb)
+            call b2tbfl(nCv, nFc, .true., mpg, dv%fna_mdf(:,:,isb),
+     &        tbfl_fnb_mdf, div_fnb_mdf)
             write(*,*) 'After flux correction in b2tfnb, is = ', isb
             write(*,fmt=
      $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
@@ -701,7 +699,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
           endif
         endif
       endif                                                             !srv 05.03.16 }
-#endif
+
       if (switch%iout_b2wdat .eq. 4) then
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnbx'//chns)
        call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2tfnb_fnby'//chns)

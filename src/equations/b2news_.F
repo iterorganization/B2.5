@@ -483,9 +483,9 @@ csw 16oct2012 init ier0
      &       solveco(is,ireg).neqv.last_solve_9(ireg)
           end do
           if(new_matrix.or..true.) call restart_ma28_for_us
-          call b2npco (nCv, nFc, nVx, mpg%nnreg(0), b2news_solving(2),    !srv 22.05.18
-     &      solvedum, b2news_solving(1),  solvedm2, ncall_b2news_, is,
-     &      rxf0, switch, geo, mpg, pl, dv, sr, ier0)
+          call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                  !srv 22.05.18
+     &      b2news_solving(2), solvedum, b2news_solving(1),  solvedm2, 
+     &      ncall_b2news_, is, rxf0, switch, geo, mpg, pl, dv, sr, ier0)
           call xertst (ier0.eq.0, 'error return from b2npco')
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !        endif                                                            !srv 13.10.06 } 22.05.18
