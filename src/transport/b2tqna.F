@@ -3770,19 +3770,19 @@ cwdk same dna_ExB for all ion species
             call xerrab ('wrong value transport_keps')
           endif
           if (switch%keps_visc.gt.0.0_R8) then
-            vsa0(:,is) = switch%keps_visc*am(is)*mp*pl%na(:,is)*
-     &        (dna_ExB + switch%vsa_min)*switch%keps_fac + 
+            vsa0(:,is) = switch%keps_fac*am(is)*mp*pl%na(:,is)*
+     &        (switch%keps_visc*dna_ExB + switch%vsa_min) + 
      &        (1.0_R8-switch%keps_fac)*vsa0(:,is)
           endif
           if (switch%keps_heat.gt.0.0_R8) then
             hce_ExB = switch%keps_heat*dna_ExB*dv%ne
-            hce0 = switch%keps_heat*(dna_ExB + switch%hce_min)*dv%ne*
+            hce0 = (switch%keps_heat*dna_ExB + switch%hce_min)*dv%ne*
      &         switch%keps_fac + (1.0_R8-switch%keps_fac)*hce0
           endif
           if (switch%keps_heat_i.gt.0.0_R8) then
             hci_ExB = hci_ExB + switch%keps_heat_i*dna_ExB*pl%na(:,is)
-            hcib(:,is) = switch%keps_heat_i*switch%keps_fac*
-     &        (dna_ExB + switch%hci_min)*
+            hcib(:,is) = switch%keps_fac*
+     &        (switch%keps_heat_i*dna_ExB + switch%hci_min)*
      &        pl%na(:,is) + (1.0_R8-switch%keps_fac)*hcib(:,is)
           endif
           if (switch%keps_sig.gt.0.0_R8) then
