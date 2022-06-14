@@ -107,7 +107,7 @@
      *   qe_oup_sum, qi_oup_sum, q_oup_sum,
      *   qe_iup_sum, qi_iup_sum, q_iup_sum,
      *   uvbtot, voltot                                            !iyv 29.11.13
-      character chis*3, chib*2                                     !srv 27.04.01
+      character chns*3, chis*3, chib*2                                     !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
       character*26 boundary_location(nbcd)
       character(7), save :: folder                        !srv 26.09.17
