@@ -100,8 +100,8 @@
       endif
 
       if(switch%b2tvskt_iout.eq.1) then
-       call my_out_us(70,nFc,1,fchviskt(1,0),'b2tvskt_fchvisktx')
-       call my_out_us(70,nFc,1,fchviskt(1,1),'b2tvskt_fchviskty')
+       call my_out_us(70,nFc,1,fchviskt(1,0),'b2tvskt_fchviskt_th')
+       call my_out_us(70,nFc,1,fchviskt(1,1),'b2tvskt_fchviskt_r')
       endif
 * ..return
       ncall = ncall+1
