@@ -123,11 +123,11 @@ cwdk    or radial contributions, since neutral transport is isotropic
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
          call my_out_us(70,nFc,1, fllim0fhi(1,0,is),
-     &               'fllim0fhix'//charns)
+     &               'fllim0fhi_th'//charns)
          call my_out_us(70,nFc,1, fllim0fhi(1,1,is),
-     &               'fllim0fhiy'//charns)
-         call my_out_us(70,nFc,1, chcb(1,0,is), 'chcix'//charns)
-         call my_out_us(70,nFc,1, chcb(1,1,is), 'chciy'//charns)
+     &               'fllim0fhi_r'//charns)
+         call my_out_us(70,nFc,1, chcb(1,0,is), 'chci_th'//charns)
+         call my_out_us(70,nFc,1, chcb(1,1,is), 'chci_r'//charns)
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
        endif

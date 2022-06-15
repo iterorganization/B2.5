@@ -109,8 +109,8 @@ cwdk store effective viscosity, for use in viscous heating
 
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
        write (chns,'(i3.3)') isb
-       call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_graduax'//chns)
-       call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_graduay'//chns)
+       call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_gradua_th'//chns)
+       call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_gradua_r'//chns)
       endif  
 
 * ..compute kinetic energy flux

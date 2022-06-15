@@ -180,33 +180,33 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
       endif !no_current
 
       if(switch%b2tfch_iout.ne.0) then                                   !srv 18.06.08 {
-       call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fchx')
-       call my_out_us(70,nFc,1,dv%fch(1,1),'b2tfch__fchy')
-       call my_out_us(70,nFc,1,dv%fchin(1,0),'b2tfch__fchinx')
-       call my_out_us(70,nFc,1,dv%fchin(1,1),'b2tfch__fchiny')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfch__fchvisparx')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfch__fchvispary')
-       call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfch__fchvisqx')
-       call my_out_us(70,nFc,1,dv%fchvisq(1,1),'b2tfch__fchvisqy')
-       call my_out_us(70,nFc,1,dv%fchvisper(1,0),'b2tfch__fchvisperx')
-       call my_out_us(70,nFc,1,dv%fchvisper(1,1),'b2tfch__fchvispery')
-       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfch__fchinertx')
-       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfch__fchinerty')
-       call my_out_us(70,nFc,1,dv%fchdia(1,0),'b2tfch__fchdiax')
-       call my_out_us(70,nFc,1,dv%fchdia(1,1),'b2tfch__fchdiay')
-       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfch__fchanmlx')
-       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfch__fchanmly')
-       call my_out_us(70,nFc,1,fchstoch,'b2tfch__fchstochy')             !lk 31.01.08
-       call my_out_us(70,nFc,1,dv%conc(1,0),'b2tfch__concx')
-       call my_out_us(70,nFc,1,dv%conc(1,1),'b2tfch__concy')
-       call my_out_us(70,nFc,1,dv%fch_p(1,0),'b2tfch__fch_px')
-       call my_out_us(70,nFc,1,dv%fch_p(1,1),'b2tfch__fch_py')
-       call my_out_us(70,nFc,1,co%csig_an(1,0),'b2tfch__csig_anx')
-       call my_out_us(70,nFc,1,co%csig_an(1,1),'b2tfch__csig_any')
-       call my_out_us(70,nFc,1,co%csig(1,0),'b2tfch__csigx')
-       call my_out_us(70,nFc,1,co%csig(1,1),'b2tfch__csigy')
-       call my_out_us(70,nFc,1,co%calf(1,0),'b2tfch__calfx')
-       call my_out_us(70,nFc,1,co%calf(1,1),'b2tfch__calfy')
+       call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fch_th')
+       call my_out_us(70,nFc,1,dv%fch(1,1),'b2tfch__fch_r')
+       call my_out_us(70,nFc,1,dv%fchin(1,0),'b2tfch__fchin_th')
+       call my_out_us(70,nFc,1,dv%fchin(1,1),'b2tfch__fchin_r')
+       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfch__fchvispar_th')
+       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfch__fchvispar_r')
+       call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfch__fchvisq_th')
+       call my_out_us(70,nFc,1,dv%fchvisq(1,1),'b2tfch__fchvisq_r')
+       call my_out_us(70,nFc,1,dv%fchvisper(1,0),'b2tfch__fchvisper_th')
+       call my_out_us(70,nFc,1,dv%fchvisper(1,1),'b2tfch__fchvisper_r')
+       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfch__fchinert_th')
+       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfch__fchinert_r')
+       call my_out_us(70,nFc,1,dv%fchdia(1,0),'b2tfch__fchdia_th')
+       call my_out_us(70,nFc,1,dv%fchdia(1,1),'b2tfch__fchdia_r')
+       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfch__fchanml_th')
+       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfch__fchanml_r')
+       call my_out_us(70,nFc,1,fchstoch,'b2tfch__fchstoch_r')             !lk 31.01.08
+       call my_out_us(70,nFc,1,dv%conc(1,0),'b2tfch__conc_th')
+       call my_out_us(70,nFc,1,dv%conc(1,1),'b2tfch__conc_r')
+       call my_out_us(70,nFc,1,dv%fch_p(1,0),'b2tfch__fch_p_th')
+       call my_out_us(70,nFc,1,dv%fch_p(1,1),'b2tfch__fch_p_r')
+       call my_out_us(70,nFc,1,co%csig_an(1,0),'b2tfch__csig_an_th')
+       call my_out_us(70,nFc,1,co%csig_an(1,1),'b2tfch__csig_an_r')
+       call my_out_us(70,nFc,1,co%csig(1,0),'b2tfch__csig_th')
+       call my_out_us(70,nFc,1,co%csig(1,1),'b2tfch__csig_r')
+       call my_out_us(70,nFc,1,co%calf(1,0),'b2tfch__calf_th')
+       call my_out_us(70,nFc,1,co%calf(1,1),'b2tfch__calf_r')
        call my_out_us(70,nCv,0,pl%te,'b2tfch__te')
        call my_out_us(70,nCv,0,dv%ne,'b2tfch__ne')
        call my_out_us(70,nCv,0,pl%po,'b2tfch__po')
@@ -215,37 +215,37 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
         call my_out_us(70,nCv,0,pl%na(1,is),'b2tfch__na'//charns)
         do is0=0,ns-1
          write (charns0,'(i3.3)') is0
-         call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),'b2tfch__csiginx'
-     &        //charns//'_'//charns0)
-         call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),'b2tfch__csiginy'
-     &        //charns//'_'//charns0)
+         call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),
+     &        'b2tfch__csigin_th'//charns//'_'//charns0)
+         call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),
+     &        'b2tfch__csigin_r'//charns//'_'//charns0)
         enddo
        enddo
       endif                                                              !srv 18.06.08 }
       
       if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0
      &                           .or. switch%iout_b2wdat.eq.4) then
-       call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fchx')
-       call my_out_us(70,nFc,1,dv%fch(1,1),'b2tfch__fchy')
-       call my_out_us(70,nFc,1,dv%fchin(1,0),'b2tfch__fchinx')
-       call my_out_us(70,nFc,1,dv%fchin(1,1),'b2tfch__fchiny')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfch__fchvisparx')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfch__fchvispary')
-       call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfch__fchvisqx')
-       call my_out_us(70,nFc,1,dv%fchvisq(1,1),'b2tfch__fchvisqy')
-       call my_out_us(70,nFc,1,dv%fchvisper(1,0),'b2tfch__fchvisperx')
-       call my_out_us(70,nFc,1,dv%fchvisper(1,1),'b2tfch__fchvispery')
-       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfch__fchinertx')
-       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfch__fchinerty')
-       call my_out_us(70,nFc,1,dv%fchdia(1,0),'b2tfch__fchdiax')
-       call my_out_us(70,nFc,1,dv%fchdia(1,1),'b2tfch__fchdiay')
-       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfch__fchanmlx')
-       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfch__fchanmly')
-       call my_out_us(70,nFc,1,fchstoch,'b2tfch__fchstochy')             !lk 31.01.08
-       call my_out_us(70,nFc,1,dv%fch_p(1,0),'b2tfch__fch_px')
-!       call my_out_us(70,nFc,1,dv%fch_p(1,1),'b2tfch__fch_py')
-       call my_out_us(70,nFc,1,co%csig_an(1,0),'b2tfch__csig_anx')
-       call my_out_us(70,nFc,1,co%csig_an(1,1),'b2tfch__csig_any')
+       call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fch_th')
+       call my_out_us(70,nFc,1,dv%fch(1,1),'b2tfch__fch_r')
+       call my_out_us(70,nFc,1,dv%fchin(1,0),'b2tfch__fchin_th')
+       call my_out_us(70,nFc,1,dv%fchin(1,1),'b2tfch__fchin_r')
+       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfch__fchvispar_th')
+       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfch__fchvispar_r')
+       call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfch__fchvisq_th')
+       call my_out_us(70,nFc,1,dv%fchvisq(1,1),'b2tfch__fchvisq_r')
+       call my_out_us(70,nFc,1,dv%fchvisper(1,0),'b2tfch__fchvisper_th')
+       call my_out_us(70,nFc,1,dv%fchvisper(1,1),'b2tfch__fchvisper_r')
+       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfch__fchinert_th')
+       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfch__fchinert_r')
+       call my_out_us(70,nFc,1,dv%fchdia(1,0),'b2tfch__fchdia_th')
+       call my_out_us(70,nFc,1,dv%fchdia(1,1),'b2tfch__fchdia_r')
+       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfch__fchanml_th')
+       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfch__fchanml_r')
+       call my_out_us(70,nFc,1,fchstoch,'b2tfch__fchstoch_r')             !lk 31.01.08
+       call my_out_us(70,nFc,1,dv%fch_p(1,0),'b2tfch__fch_p_th')
+!       call my_out_us(70,nFc,1,dv%fch_p(1,1),'b2tfch__fch_p_r')
+       call my_out_us(70,nFc,1,co%csig_an(1,0),'b2tfch__csig_an_th')
+       call my_out_us(70,nFc,1,co%csig_an(1,1),'b2tfch__csig_an_r')
       endif                                                              !srv 11.09.09 }
 * ..return
       ncall_b2tfch = ncall_b2tfch+1
