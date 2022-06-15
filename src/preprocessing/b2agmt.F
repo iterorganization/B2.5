@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2agmt (nx, ny, isymm, crx, cry,
-     & fpsi, bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
+     & fpsi, bb, vol, hx, hy, hz, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
      & rightix, rightiy, topix, topiy, cflag)
       use b2mod_types
@@ -26,6 +26,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hz(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  gs(-1:nx,-1:ny,0:2), qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
      &  ebc(-1:nx,-1:ny,0:2), 
@@ -914,6 +915,15 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         enddo
        enddo
       endif
+*   ..compute hz
+      hz = INVALID_DOUBLE
+      do iy = -1, ny
+        do ix = -1, nx
+          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
+          hz(ix,iy) = vol(ix,iy)/gs(ix,iy,2)
+        enddo
+      enddo
+
 *   ..test sign of vol, gs
       call b2xvsg1(nx, ny, vol(-1,-1),  1, 'vol', '.gt.')
 !      call b2xvsg1(nx, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
