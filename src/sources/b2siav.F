@@ -227,8 +227,8 @@
         wrks=smbvh(:,0)+smbvh(:,1)*ub+
      &       smbvh(:,2)*nb*mb+smbvh(:,3)*ub*nb*mb
         call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
-        call my_out_us(70,nFc,1,cvsbhz_cl(1,0),'b2siav_cvsbhzx'//chns)
-        call my_out_us(70,nFc,1,cvsbhz_cl(1,1),'b2siav_cvsbhzy'//chns)
+        call my_out_us(70,nFc,1,cvsbhz_cl(1,0),'b2siav_cvsbhz_th'//chns)
+        call my_out_us(70,nFc,1,cvsbhz_cl(1,1),'b2siav_cvsbhz_r'//chns)
       endif                                                             !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised sources for balance
