@@ -329,11 +329,11 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 30
       &  divertors, &
 #endif
-      &  tim, dteff, shot, new_run, database, version )
+      &  tim, dteff, shot, new_run, database, version, new_eq_ggd )
 
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, &
+        &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
@@ -343,7 +343,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 30
         &   divertors, &
 #endif
-        &   idx )
+        &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
     write(*,*) trim(systemarg)

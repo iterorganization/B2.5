@@ -112,7 +112,7 @@
       external xertst, ipgetr, smin, smax, b2scopy, b2saxpy, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2treq, b2tfnb, b2tfhe, b2tfhi,
-     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,
+     &  b2npmo, b2npco, b2npp5, b2npht, b2nxdp, b2tfcc, b2srsm,
      &  b2tfch, b2xpen, b2xppz
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
@@ -964,8 +964,8 @@ cxpb
      &               solvepo(ireg).neqv.last_solve_5(ireg)
                   end do
                   if (new_matrix.and.ncall.ne.0) call restart_ma28
-                  call b2nppo (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
-     &             ncall, rxf2, vol, ne, te, conc, sch, po, fch,
+                  call b2npp5 (nx, ny, nnreg(0), solving(3), solvepo,    !srv 22.05.18
+     &             ncall, rxf2, ne, te, conc, sch, po, fch,
      &             wrk0, wrk1, ier0)
                   last_solve_5(0:nnreg(0)) = solvepo(0:nnreg(0))
                 else

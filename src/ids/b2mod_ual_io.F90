@@ -122,7 +122,11 @@ module b2mod_ual_io
 #if GGD_MINOR_VERSION < 10
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-     &          GRID_SUBSET_EDGES
+     &          GRID_SUBSET_EDGES, GRID_SUBSET_VOLUMES
+#endif
+#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+    use b2mod_ual_io_grid &
+     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_ALL_WALLS
 #endif
 #if IMAS_MINOR_VERSION > 8
     use ids_schemas &     ! IGNORE
@@ -579,6 +583,7 @@ contains
             &   divertors, &
 #endif
             &   time_IN, time_step_IN, shot, run, database, version, &
+            &   new_eq_ggd, &
             &   time_slice_ind_IN, num_time_slices_IN )
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
@@ -625,6 +630,7 @@ contains
             !< Total number of time steps. It is required to beforehand allocate
             !< required ggd(:) array of nodes structure and for additional
             !< checks for correct use of the routine.
+        logical, intent(out) :: new_eq_ggd
 
         !! Internal variables
         character(len=13)  :: spclabel   !< Species label
@@ -1147,7 +1153,8 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &  summary, &
 #endif
-            &  edge_profiles, database, .true. )
+            &  edge_profiles, database, time_slice_value, &
+            &  .true., new_eq_ggd )
         allocate( radiation%vacuum_toroidal_field%b0( num_time_slices ) )
         radiation%vacuum_toroidal_field%b0( time_sind ) = &
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
@@ -6289,6 +6296,7 @@ contains
             &   summary, &
 #endif
             &   time_IN, shot, run, database, version, &
+            &   new_eq_ggd, &
             &   batch_ind_IN, num_batch_slices_IN )
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
@@ -6319,6 +6327,7 @@ contains
             !< Total number of batches. It is required to beforehand allocate
             !< required ggd(:) array of nodes structure and for additional
             !< checks for correct use of the routine.
+        logical, intent(out) :: new_eq_ggd
 
         !! Internal variables
         integer :: i, is, js, ks, ion_charge_int, nc
@@ -6425,7 +6434,8 @@ contains
 #if IMAS_MINOR_VERSION > 21
             &  summary, &
 #endif
-            &  batch_profiles, database, do_description )
+            &  batch_profiles, database, time, &
+            &  do_description, new_eq_ggd )
 #if IMAS_MINOR_VERSION > 21
         if (do_description) then
           allocate( description%data_entry%user(1) )
@@ -6942,8 +6952,8 @@ contains
 #ifdef B25_EIRENE
     integer p
     character*8 eirene_version
-    character*31 Eirene_git_version
-    character*31 get_Eir_hash
+    character*32 Eirene_git_version
+    character*32 get_Eir_hash
 #endif
 #ifdef AMNS
     type (amns_handle_type) :: amns
@@ -7107,7 +7117,12 @@ contains
 #if IMAS_MINOR_VERSION > 21
        &  summary, &
 #endif
-       &  edgeprof, database, do_summary_data )
+       &  edgeprof, database, time_slice_value, &
+       &  do_summary_data, new_eq_ggd )
+#if IMAS_MINOR_VERSION > 14
+    use b2mod_ual_io_grid &
+       & , only: GGD_copy_AoS3Root_to_Dynamic
+#endif
     implicit none
     type (ids_equilibrium) :: equilibrium !< IDS designed to store
             !< equilibrium data
@@ -7118,13 +7133,31 @@ contains
     type (ids_edge_profiles) :: edgeprof !< IDS designed to store
             !< edge profiles data
     character(len=24), intent(in) :: database
+    real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
-    integer :: i, ix, icnt
+    logical, intent(out) :: new_eq_ggd
+#if IMAS_MINOR_VERSION < 15
+    type(ids_generic_grid_dynamic) :: eq_grid !< Type of IDS
+        !< data structure, designed for handling equilibrium grid geometry data
+#else
+    type(ids_generic_grid_aos3_root) :: eq_grid !< Type of IDS
+        !< data structure, designed for handling equilibrium grid geometry data
+#endif
+    integer :: i, ix, iy, icnt, inode
     integer :: idum(0:3)
     integer, save :: ncall = 0
     real(IDS_real) :: parg(0:99)
     real(IDS_real), save :: pit_rescale = 1.0_IDS_real
     real(IDS_real) :: b0r0_ref, z_eq
+    real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+    real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: er_Vx( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: er_Fc( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+    real(IDS_real) :: er_Cv( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: ez_Vx( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: ez_Fc( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+    real(IDS_real) :: ez_Cv( -1:ubound( na, 1), -1:ubound( na, 2) )
     character*8 id
     character*80 cnamip, cvalip
     character*132 eq_source
@@ -7136,6 +7169,7 @@ contains
     external b2agx0, find_file, ipgetr, strip_spaces
 
     eq_found = .false.
+    new_eq_ggd = .false.
     eq_source = "ITER Baseline q95=3 equilibrium"
     if ( associated( equilibrium%time_slice ) ) then
       if ( size( equilibrium%time_slice ).ge.slice_index ) then
@@ -7340,6 +7374,191 @@ contains
             summary%global_quantities%r0%source = eq_source
           end if
 #endif
+          new_eq_ggd = .not.associated( equilibrium%grids_ggd )
+          if ( .not.new_eq_ggd ) new_eq_ggd = &
+            &  .not.associated( equilibrium%grids_ggd( slice_index )%grid )
+          if ( new_eq_ggd ) then
+            if (.not.associated( equilibrium%grids_ggd ) ) &
+              &  allocate( equilibrium%grids_ggd( num_time_slices ) )
+            allocate( equilibrium%grids_ggd( slice_index )%grid(1) )
+            call b2_IMAS_Fill_Grid_Desc( IDSmap, eq_grid,                     &
+              &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
+              &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
+              &   bottomiy, nnreg, topcut, region, cflags,                    &
+              &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+#if IMAS_MINOR_VERSION > 14
+            call GGD_copy_AoS3Root_to_Dynamic( eq_grid, &
+              &   equilibrium%grids_ggd( slice_index)%grid(1) )
+#else
+            equilibrium%grids_ggd( slice_index)%grid(1) = eq_grid
+#endif
+            equilibrium%grids_ggd( slice_index )%time = time_slice_value
+#if IMAS_MINOR_VERSION > 33
+            if (.not.associated( equilibrium%ids_properties%provenance%node ) ) then
+              inode = 0
+            else
+              inode = size( equilibrium%ids_properties%provenance%node )
+            endif
+            allocate( equilibrium%ids_properties%provenance%node(inode + 1) )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%path(1) )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%sources(1))
+            equilibrium%ids_properties%provenance%node(inode+1)%path =        &
+               & "grids_ggd"
+            equilibrium%ids_properties%provenance%node(inode+1)%sources(1) =  &
+               &  source
+#endif
+          end if
+          if (.not.associated( equilibrium%time_slice )) then
+            allocate( equilibrium%time_slice( num_time_slices ) )
+          end if
+          if ( equilibrium%time_slice( slice_index )%time.eq.IDS_REAL_INVALID ) &
+            &  equilibrium%time_slice( slice_index )%time = time_slice_value
+          if (.not.associated( equilibrium%time_slice( slice_index )%ggd ) )  &
+            & then
+            allocate( equilibrium%time_slice( slice_index )%ggd(1) )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%r ) ) then
+            do iy = -1, ny
+             do ix = -1, nx
+              tmpVx(ix,iy) = crx(ix,iy,0)
+              tmpFace(ix,iy,0) = (crx(ix,iy,0) + crx(ix,iy,1))/2.0_IDS_real
+              tmpFace(ix,iy,1) = (crx(ix,iy,0) + crx(ix,iy,2))/2.0_IDS_real
+              tmpCv(ix,iy) = cr(ix,iy)
+             end do
+            end do
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%r,  &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%r,     &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%r,  &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%z ) ) then
+            do iy = -1, ny
+             do ix = -1, nx
+              tmpVx(ix,iy) = cry(ix,iy,0)
+              tmpFace(ix,iy,0) = (cry(ix,iy,0) + cry(ix,iy,1))/2.0_IDS_real
+              tmpFace(ix,iy,1) = (cry(ix,iy,0) + cry(ix,iy,2))/2.0_IDS_real
+              tmpCv(ix,iy) = cz(ix,iy)
+             end do
+            end do
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%z,  &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%z,     &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%z,  &
+                &   b2CellData = tmpCv )
+          end if
+          if (maxval(abs(fpsi)).ne.0.0_IDS_real .and. .not.associated(        &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%psi ) ) then
+            tmpVx(:,:) = fpsi(:,:,0)
+            tmpFace(:,:,0) = (fpsi(:,:,0) + fpsi(:,:,1))/2.0_IDS_real
+            tmpFace(:,:,1) = (fpsi(:,:,0) + fpsi(:,:,2))/2.0_IDS_real
+            tmpCv(:,:) = (fpsi(:,:,0) + fpsi(:,:,1) +                         &
+                &         fpsi(:,:,2) + fpsi(:,:,3) )/4.0_IDS_real
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            psi,                                             &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%psi,   &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            psi,   &
+                &   b2CellData = tmpCv )
+          end if
+          if (maxval(abs(ffbz)).ne.0.0_IDS_real .and. .not.associated(        &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%phi ) ) then
+            tmpVx(:,:) = ffbz(:,:,0)
+            tmpFace(:,:,0) = (ffbz(:,:,0) + ffbz(:,:,1))/2.0_IDS_real
+            tmpFace(:,:,1) = (ffbz(:,:,0) + ffbz(:,:,2))/2.0_IDS_real
+            tmpCv(:,:) = (ffbz(:,:,0) + ffbz(:,:,1) +                         &
+                &         ffbz(:,:,2) + ffbz(:,:,3) )/4.0_IDS_real
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            phi,                                             &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%phi,   &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &            phi,                                             &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_r ) ) then
+            call compute_er( nx, ny, er_Vx, er_Fc, er_Cv )
+            tmpVx(-1:nx,-1:ny) = wbbc(-1:nx,-1:ny,0)*er_Vx(-1:nx,-1:ny)
+            tmpFace(:,:,0) = wbbl(:,:,0)*er_Fc(:,:,0)
+            tmpFace(:,:,1) = wbbv(:,:,0)*er_Fc(:,:,1)
+            tmpCv(:,:) = bb(:,:,0)*er_Cv(:,:)
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_r,                                          &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_r,                                          &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_r,                                          &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_z ) ) then
+            call compute_ez( nx, ny, ez_Vx, ez_Fc, ez_Cv )
+            tmpVx(-1:nx,-1:ny) = wbbc(-1:nx,-1:ny,0)*ez_Vx(-1:nx,-1:ny)
+            tmpFace(:,:,0) = wbbl(:,:,0)*ez_Fc(:,:,0)
+            tmpFace(:,:,1) = wbbv(:,:,0)*ez_Fc(:,:,1)
+            tmpCv(:,:) = bb(:,:,0)*ez_Cv(:,:)
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_z,                                          &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_z,                                          &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_z,                                          &
+                &   b2CellData = tmpCv )
+          end if
+          if (.not.associated(                                                &
+            &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_tor ) ) then
+            tmpVx(-1:nx,-1:ny) = wbbc(-1:nx,-1:ny,2)
+            tmpFace(:,:,0) = wbbl(:,:,2)
+            tmpFace(:,:,1) = wbbv(:,:,2)
+            tmpCv(:,:) = bb(:,:,2)
+            call write_vertex_scalar( eq_grid,                                &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_tor,                                        &
+                &   b2VertexData = tmpVx )
+            call write_face_scalar( eq_grid,                                  &
+                &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
+                &         b_field_tor,                                        &
+                &   value = tmpFace )
+            call write_cell_scalar( eq_grid,                                  &
+                &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
+                &         b_field_tor,                                        &
+                &   b2CellData = tmpCv )
+          end if
+          if ( equilibrium%time( slice_index ).eq.0.0_IDS_real ) then
+            equilibrium%time( slice_index ) = time_slice_value
+          end if
         else if (isymm.ne.0) then
 #if IMAS_MINOR_VERSION > 21
           if (do_summary_data) &
@@ -7882,7 +8101,14 @@ contains
 #endif
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
-        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -7891,6 +8117,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_ALL_WALLS, &
             & GRID_SUBSET_INNER_MIDPLANE, &
             & GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
@@ -7913,6 +8140,8 @@ contains
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
           ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
         end select
       end if
       select case (ndim)
@@ -7995,7 +8224,14 @@ contains
 #endif
        if (ndim.eq.IDS_INT_INVALID) then
          select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+             & GRID_SUBSET_MAGNETIC_AXIS,               &
+             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_INNER_STRIKEPOINT,           &
+             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
            ndim = 1
          case( GRID_SUBSET_EDGES, &
              & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8004,6 +8240,7 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_ALL_WALLS, &
              & GRID_SUBSET_INNER_MIDPLANE, &
              & GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
@@ -8026,6 +8263,8 @@ contains
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
            ndim = 3
+         case( GRID_SUBSET_VOLUMES )
+           ndim = 4
          end select
        end if
        if (ndim.ne.3) cycle
@@ -8097,7 +8336,14 @@ contains
 #endif
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
-        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8106,6 +8352,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_ALL_WALLS, &
             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8127,6 +8374,8 @@ contains
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
           ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
         end select
       end if
       if (ndim.ne.3) cycle
@@ -8191,7 +8440,14 @@ contains
 #endif
        if (ndim.eq.IDS_INT_INVALID) then
          select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+             & GRID_SUBSET_MAGNETIC_AXIS,               &
+             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_INNER_STRIKEPOINT,           &
+             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
            ndim = 1
          case( GRID_SUBSET_EDGES, &
              & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8200,6 +8456,7 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_ALL_WALLS, &
              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8221,6 +8478,8 @@ contains
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
            ndim = 3
+         case( GRID_SUBSET_VOLUMES )
+           ndim = 4
          end select
        end if
        if (ndim.ne.2) cycle
@@ -8286,7 +8545,14 @@ contains
 #endif
       if (ndim.eq.IDS_INT_INVALID) then
         select case (iSubsetID)
-        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
           ndim = 1
         case( GRID_SUBSET_EDGES, &
             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8295,6 +8561,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_ALL_WALLS, &
             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8316,6 +8583,8 @@ contains
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
           ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
         end select
       end if
       if (ndim.ne.2) cycle
@@ -8372,7 +8641,14 @@ contains
 #endif
        if (ndim.eq.IDS_INT_INVALID) then
          select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS )
+         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+             & GRID_SUBSET_MAGNETIC_AXIS,               &
+             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+             & GRID_SUBSET_INNER_STRIKEPOINT,           &
+             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
            ndim = 1
          case( GRID_SUBSET_EDGES, &
              & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -8381,6 +8657,7 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+             & GRID_SUBSET_ALL_WALLS, &
              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8402,6 +8679,8 @@ contains
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
            ndim = 3
+         case( GRID_SUBSET_VOLUMES )
+           ndim = 4
          end select
        end if
        if (ndim.ne.1) cycle

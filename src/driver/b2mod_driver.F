@@ -223,6 +223,7 @@
       character username*24, database*24, treename*24, version*24
       character old_imas_version*132, imas_version*132
       character systemarg*512
+      logical new_eq_ggd
 #endif
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
@@ -2744,6 +2745,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               divertors,
 #endif
      &               tim, dteff, shot, run, database, version,
+     &               new_eq_ggd,
      &               time_slice_index, num_time_slices )
                     process_ids = .false.
                   end if
@@ -2755,7 +2757,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &               summary,
 #endif
-     &               tim, shot, run, database, version,
+     &               tim, shot, run, database, version, new_eq_ggd,
      &               batch_index, num_batch_slices )
                     process_av = .false.
                   end if
@@ -2789,7 +2791,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &          divertors,
 #endif
-     &          tim, dteff, shot, run, database, version )
+     &          tim, dteff, shot, run, database, version, new_eq_ggd )
               old_start_time = run_start_time
               process_ids = .false.
             end if
@@ -2800,7 +2802,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &         summary,
 #endif
-     &         tim, shot, run, database, version )
+     &         tim, shot, run, database, version, new_eq_ggd )
               process_av = .false.
             end if
           else if (process_ids .or. process_av) then
@@ -2820,7 +2822,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &          divertors,
 #endif
-     &          tim, dteff, shot, run, database, version,
+     &          tim, dteff, shot, run, database, version, new_eq_ggd,
      &          time_slice_index, num_time_slices )
               process_ids = .false.
             end if
@@ -2836,7 +2838,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 21
      &          summary,
 #endif
-     &          tim, shot, run, database, version,
+     &          tim, shot, run, database, version, new_eq_ggd,
      &          batch_index, num_batch_slices )
               process_av = .false.
             end if
@@ -2844,7 +2846,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           if (ids_replace) then
             if (write_ids)
      >       call new_ids_edge( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description,
+     &        edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
@@ -2854,19 +2856,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &        divertors,
 #endif
-     &        idx )
+     &        idx, new_eq_ggd )
+            new_eq_ggd = new_eq_ggd .and. .not.write_ids
             if (write_av)
      &       call new_batch_edge( idx,
-     &        batch_profiles, batch_sources,
+     &        batch_profiles, batch_sources, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
-     &        description, summary_av )
+     &        description, summary_av, new_eq_ggd )
           else
             if (database.eq.'iter') database = 'ITER'
             if (write_ids)
      >       call put_ids_edge( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description,
+     &        edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
@@ -2876,15 +2879,17 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &        divertors,
 #endif
-     &        treename, shot, run, idx, username, database, version )
+     &        treename, shot, run, idx, username, database, version,
+     &        new_eq_ggd )
+            new_eq_ggd = new_eq_ggd .and. .not.write_ids
             if (write_av)
      &       call put_batch_edge(
      &        treename, shot, run, idx, username, database, version,
-     &        batch_profiles, batch_sources,
+     &        batch_profiles, batch_sources, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &        summary,
 #endif
-     &        description, summary_av )
+     &        description, summary_av, new_eq_ggd )
           end if
 #endif
           if (.not.continued) continued = .true.
@@ -3088,7 +3093,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &      divertors,
 #endif
-     &      tim, dteff, shot, run, database, version,
+     &      tim, dteff, shot, run, database, version, new_eq_ggd,
      &      time_slice_index, num_time_slices )
         else if (continued) then
           write(*,*) "Checking if IMAS data-entry already exists : ",
@@ -3231,7 +3236,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &            divertors,
 #endif
-     &            tim, dteff, shot, run, database, version,
+     &            tim, dteff, shot, run, database, version, new_eq_ggd,
      &            time_slice_index, num_time_slices )
               else
                 write(*,'(a)')
@@ -3265,11 +3270,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &      divertors,
 #endif
-     &      tim, dteff, shot, run, database, version )
+     &      tim, dteff, shot, run, database, version, new_eq_ggd )
         end if
         if (ids_replace) then
           call new_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+     &      edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
@@ -3279,10 +3284,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &      divertors,
 #endif
-     &      idx )
+     &      idx, new_eq_ggd )
         else
           call put_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description,
+     &      edge_transport, radiation, description, equilibrium,
 #if IMAS_MINOR_VERSION > 21
      &      summary,
 #endif
@@ -3292,7 +3297,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MINOR_VERSION > 30
      &      divertors,
 #endif
-     &      treename, shot, run, idx, username, database, version )
+     &      treename, shot, run, idx, username, database, version,
+     &      new_eq_ggd )
         end if
         call dealloc_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,

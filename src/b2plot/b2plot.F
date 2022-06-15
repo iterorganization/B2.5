@@ -1807,7 +1807,7 @@ c
           nz=1
           call copy(fhet(:,:,0,0),1.0_R8,nz,textbl)
         case('fhety')
-        description='Radial electron energy flux [fhety] (W)'
+          description='Radial electron energy flux [fhety] (W)'
           nz=1
           call copy(fhet(:,:,1,1),1.0_R8,nz,textbl)
         case('fhix')

@@ -148,7 +148,7 @@
          do ix = -1, nx
 !          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
 !            if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
-!            endif
+!          endif
          enddo
         enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }

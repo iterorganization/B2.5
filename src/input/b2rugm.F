@@ -232,7 +232,7 @@
       real (kind=R8), save :: fac_hz = 1.0e0_R8
       real (kind=R8) :: hzconst
 *   ..procedures
-      external xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin, ipgeti, ipgetr
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
 

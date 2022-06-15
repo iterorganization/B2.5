@@ -86,6 +86,7 @@
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: boundary_sources = 0, equation_sources = 0        !srv 26.02.18
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -129,8 +130,11 @@
        nsmin=0
        nsmax=ns
        call ipgeti ('b2mndt_style', style)                              !srv 18.06.08
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call xertst (-1.le.style.and.2.ge.style,
      &   'faulty internal parameter style')                             !srv 07.07.21
+       call xertst (.not.(style.eq.0 .and. use_9pt_stencil.eq.0),
+     &   'Usage of 9-point stencil restricted to SOLPS5.2 model!')
        call ipgeti ('b2news_guard_flows', guard_flows)                  !srv 18.06.08
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))

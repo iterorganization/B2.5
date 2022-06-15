@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
+      subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 { 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, hy, qz, gs, qc, qs, bb, pbs,
      &  ua, na, ne, te, ti, po, fch_p,
@@ -23,7 +23,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, guard_flows
+      integer nx, ny, ns, guard_flows                                    !srv 19.02.21
       real (kind=R8) ::
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
@@ -625,6 +625,13 @@ c Drift terms
       endif
 
 * ..compute fluxes
+* ..velocity-dependent part of the heat flux
+      floi_vhx = 0.0_R8                                                  !som 09.07.21
+      if (Zhdanov_closure.eq.1 .and. Zhdanov_test.eq.0  .and.
+     &    Zhdanov_vel_heat.eq.1) then                                    !som 09.07.21
+        call b2tfvh (nx,ny,ns,hx,bb,vol,na,ua,floi_vhx)
+      endif
+
 !     do is = 0,ns-1
 !        if(nint(zamax(is)).eq.1) then
 !       if(is.eq.ismain) then                                            !srv 19.02.21

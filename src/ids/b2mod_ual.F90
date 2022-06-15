@@ -69,7 +69,7 @@ contains
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, description, &
+            &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
@@ -79,7 +79,8 @@ contains
 #if IMAS_MINOR_VERSION > 30
             &   divertors, &
 #endif
-            &   treename, shot, run, idx, username, database, version )
+            &   treename, shot, run, idx, username, database, version, &
+            &   new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -97,6 +98,8 @@ contains
             !< designed to store data about plasma radiation
         type (ids_dataset_description), intent(inout) :: description !< IDS
             !<  designed to store a description of the simulation
+        type (ids_equilibrium), intent(inout) :: equilibrium !< IDS
+            !< designed to store a description of the equilibrium
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -120,6 +123,7 @@ contains
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        logical, intent(in) :: new_eq_ggd
             !< database
         integer :: status
 
@@ -173,6 +177,12 @@ contains
         !! (might work much faster than imas_create_env)
         ! call imas_open_env(treename, shot, run, idx, username, &
         !  database, version, status )
+
+          if (new_eq_ggd) then
+            write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+            call ids_put_slice( idx, "equilibrium", equilibrium, status )
+            call xertst( status.eq.0, 'Error putting slice in equilibrium IDS !')
+          end if
 
         !! Put data to IDS
           call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
@@ -252,11 +262,11 @@ contains
 
     subroutine put_batch_edge( &
             &   treename, shot, run, idx, username, database, version, &
-            &   batch_profiles, batch_sources, &
+            &   batch_profiles, batch_sources, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-            &   description, do_summary )
+            &   description, do_summary, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -267,6 +277,8 @@ contains
             !< flux)
         type (ids_dataset_description), intent(inout) :: description
             !< IDS designed to store a description of the simulation
+        type (ids_equilibrium), intent(inout) :: equilibrium
+            !< IDS designed to store a description of the equilibrium
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -282,7 +294,7 @@ contains
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
-        logical, intent(in) :: do_summary
+        logical, intent(in) :: do_summary, new_eq_ggd
             !< database
         integer :: status
 
@@ -322,6 +334,12 @@ contains
         else
         !! Or open and modify existing shot/run
         !! (might work much faster than imas_create_env)
+
+          if (new_eq_ggd) then
+            write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+            call ids_put_slice( idx, "equilibrium", equilibrium, status )
+            call xertst ( status.eq.0, 'Error putting slice in equilibrium IDS !')
+          end if
 
         !! Put data to IDS
           call ids_put_slice( idx, "edge_profiles/1", batch_profiles, status )
@@ -448,7 +466,7 @@ contains
     !> Subroutine used to rewrite data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
     subroutine new_ids_edge( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, description, &
+            &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
@@ -458,7 +476,7 @@ contains
 #if IMAS_MINOR_VERSION > 30
             &   divertors, &
 #endif
-            &   idx )
+            &   idx, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -476,6 +494,8 @@ contains
             !< designed to store data about plasma radiation
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
+        type (ids_equilibrium) :: equilibrium !< IDS designed to store
+            !< a description of the equilibrium
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -490,6 +510,7 @@ contains
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
+        logical, intent(in) :: new_eq_ggd
         integer :: status
 
             !< procedures
@@ -507,6 +528,12 @@ contains
           &  "divertors, "// &
 #endif
           &  "dataset_description, and radiation IDS"
+
+        if (new_eq_ggd) then
+          write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+          call ids_put( idx, "equilibrium", equilibrium, status )
+          call xertst( status.eq.0, 'Error putting equilibrium IDS !')
+        end if
 
         !! Put data to IDS
         call ids_put( idx, "edge_profiles", edge_profiles, status )
@@ -538,10 +565,11 @@ contains
     end subroutine new_ids_edge
 
     subroutine new_batch_edge( idx, batch_profiles, batch_sources, &
+            &   equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
-            &   description, do_summary )
+            &   description, do_summary, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -552,12 +580,14 @@ contains
             !< flux)
         type (ids_dataset_description) :: description !< IDS
             !< designed to store a description of the simulation
+        type (ids_equilibrium) :: equilibrium !< IDS
+            !< designed to store a description of the equilibrium
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
-        logical, intent(in) :: do_summary
+        logical, intent(in) :: do_summary, new_eq_ggd
             !< subsequent data access operation
         integer :: status
 
@@ -573,6 +603,12 @@ contains
             &  "and dataset_description IDS"
         else
           write(*,'(1x,a)') "Writing batch_profiles and batch_sources IDS "
+        end if
+
+        if (new_eq_ggd) then
+          write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+          call ids_put( idx, "equilibrium", equilibrium, status )
+          call xertst( status.eq.0, 'Error putting equilibrium IDS !')
         end if
 
         !! Put data to IDS

@@ -256,7 +256,7 @@ csw 10oct2012
       call diff_r(nx, ny, 0, hx, hy, wght, qs, ne*te, wrk0, dper)
 
 * ..compute fluxes and linearization
-*   ..compute fhex, floex, conex, fchx, concx
+*   ..compute fhex, floex, conex
       do iy = -1, ny
        do ix = -1, nx                                                    !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then                                     !srv 26.11.02
