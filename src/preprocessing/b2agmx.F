@@ -2,11 +2,11 @@
 *.specification
 
       subroutine b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
+     & vol1, hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
-     & vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
+     & vol, hx, hy, hz, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
@@ -26,6 +26,7 @@
       integer nx1, ny1, nx, ny
       real (kind=R8) ::
      *  vol1(-1:nx1,-1:ny1), hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1),
+     &  hz1(-1:nx1,-1:ny1),
      &  hc1(-1:nx1,-1:ny1,0:3), ht1(-1:nx1,-1:ny1,0:1),
      &  qz1(-1:nx1,-1:ny1,0:1), qc1(-1:nx1,-1:ny1,0:1), 
      &  qs1(-1:nx1,-1:ny1,0:1), qac1(-1:nx1,-1:ny1,0:1), 
@@ -48,6 +49,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hz(-1:nx,-1:ny),
      &  hc(-1:nx1,-1:ny1,0:3), ht(-1:nx1,-1:ny1,0:1),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
@@ -193,6 +195,7 @@
          vol = vol1
          hx = hx1
          hy = hy1
+         hz = hz1
          hc = hc1
          ht = ht1
          qc = qc1

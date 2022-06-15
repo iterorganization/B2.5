@@ -13,9 +13,13 @@
       use b2ag_parameters
       use b2mod_interp
       use b2mod_grid_mapping
+      use b2us_geo
+      use b2us_map
+      use b2us_prep
+      use b2us_io
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1
+      integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, nout_us, io
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -97,6 +101,8 @@
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
       integer istyle
+      type(mapping) :: mpg
+      type(geometry) :: gm
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -324,7 +330,7 @@
       if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
-     & hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
+     & hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
      & cell_width1, cell_height1,
      & leftix1, leftiy1, bottomix1, bottomiy1, 
      & rightix1, rightiy1, topix1, topiy1, cflags1)
@@ -348,11 +354,11 @@
       endif
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
+     & vol1, hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
-     & vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
+     & vol, hx, hy, hz, hc, ht, qz, qc, qs, qac, qas, ebc,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
      & cell_width, cell_height,
@@ -618,6 +624,57 @@ cdpc-debug
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
 *   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
       call write_f30
+
+*   ..conversion to new, unstructured data-types
+      call calc_mapping (nx, ny, mpg)
+      write (*,*) 'Mapping created'
+      call prep_geometry (nx, ny,
+     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
+     .        mpg%nVmxCv, gm, mpg)
+      write (*,*) 'Geometry created'
+*     write unstructured b2fgmtry file
+      open (newunit=nout_us,file='b2fgmtry_us',iostat=io)
+
+*   ..write headers for output files
+      call cfverw (nout_us, newversion)
+      idum(0) = mpg%nCi
+      idum(1) = mpg%nCg
+      idum(2) = mpg%nCv
+      idum(3) = mpg%nFc
+      idum(4) = mpg%nVx
+      idum(5) = mpg%nFs
+      idum(6) = mpg%nFt
+      call cfwuin (nout_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      idum(0) = mpg%nCmxVx
+      idum(1) = mpg%nCmxFc
+      idum(2) = mpg%nVmxCv
+      idum(3) = mpg%nVmxFc
+      idum(4) = mpg%nCmxNv
+      call cfwuin (nout_us,5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      idum(0) = mpg%isClassicalGrid
+      call cfwuin (nout_us,1,idum,'isClassicalGrid')
+      if (mpg%isClassicalGrid == 1) then
+        idum(0) = mpg%nx
+        idum(1) = mpg%ny
+        idum(2) = mpg%nncut
+      else
+        ! dummy values for unstructured grid
+        idum(0) = -1
+        idum(1) = -1
+        idum(2) = -1
+      endif
+      call cfwuin (nout_us, 3, idum, 'nx,ny,nncut')
+      call cfwuch (nout_us, 120, lblgm, 'label')
+      idum(0) = isymm
+      call cfwuin (nout_us, 1, idum, 'isymm')
+*   ..write geometry
+      call write_b2fgmtry (nout_us, mpg, gm)
+*   ..clean-up
+      close (nout_us)
+      call dealloc_geometry(gm)
+      call dealloc_mapping(mpg)
+
+
 
 * ..return
       call subend ()
