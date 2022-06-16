@@ -3012,8 +3012,8 @@
       type(B2State), intent(inout) :: st
       integer :: ix, iy, ic, ifc, nfx
 
-      call createB2State (nCv, nFc, ns, st)
-      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
+      call createB2Plasma( nCv, ns, st % pl )
+      call createB2Derivatives( nCv, nFc, ns, st % dv )
 
       st % ns = ns
       st % ismain = 1
