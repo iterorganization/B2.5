@@ -30,7 +30,7 @@
 
       public :: calc_mapping,
      .          prep_geometry,
-     .          prep_plasma, prep_plasma_ext,
+     .          prep_plasma, prep_plasma_ext, prep_state,
      .          to_struct_plasma
 
       contains
@@ -2999,6 +2999,241 @@
 
       end subroutine prep_plasma
       
+
+
+**********************************************************************
+
+      subroutine prep_state (nx, ny, ns, nCv, nCi, nFc, mpg, st)
+      !! convert only a limited set of quantities as needed for the 
+      !! creation of the b2fstate-file
+      implicit none
+      integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
+      type(mapping), intent(in) :: mpg
+      type(B2State), intent(inout) :: st
+      integer :: ix, iy, ic, ifc, nfx
+
+      call createB2State (nCv, nFc, ns, st)
+      call createB2Diagnostic( nCv, ns, nnreg, st % diag )
+
+      st % ns = ns
+      st % ismain = 1
+
+! cell volumes 
+      do iy = -1, ny
+        do ix = -1, nx
+          if(mpg%imapCv(ix,iy)/=0) then
+            ic =  mpg%imapCv(ix,iy)
+! B2plasma
+            st % pl % na(ic,0:ns-1) = na(ix,iy,0:ns-1)
+            st % pl % ua(ic,0:ns-1) = ua(ix,iy,0:ns-1)
+            st % pl % po(ic) = po(ix,iy)
+            st % pl % te(ic) = te(ix,iy)
+            st % pl % ti(ic) = ti(ix,iy)
+            st % pl % tn(ic) = tn(ix,iy)
+            st % pl % kt(ic) = kt(ix,iy)
+            st % pl % zt(ic) = zt(ix,iy)
+
+! derived state quantities
+            st % dv % ne(ic) = ne(ix,iy)
+
+          end if
+        end do
+      end do
+      
+! x faces
+      do iy = 0, ny-1
+        do ix = 0, nx
+          if(mpg%imapFcx(ix,iy)/=0) then
+            ifc = mpg%imapFcx(ix,iy) 
+! fluxes
+            st % dv % fch(ifc,0:1) = fch(ix,iy,0,0:1)
+            st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,0,0:1)
+            st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,0,0:1)
+            st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,0,0:1)
+            st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,0,0:1)
+            st % dv % fchin(ifc,0:1) = fchin(ix,iy,0,0:1)
+            st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,0,0:1)
+            st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,0,0:1)
+            st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,0,0:1)
+            st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,0,0:1)
+            st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,0,0:1)
+            st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,0,0:1)
+
+            st % dv % fne(ifc,0:1) = fne(ix,iy,0,0:1)
+            st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,0,0:1)
+            st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,0,0:1)
+
+            st % dv % fni(ifc,0:1) = fni(ix,iy,0,0:1)
+            st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,0,0:1)
+            st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,0,0:1)
+
+            st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
+     .              fna_mdf(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_he(ifc,0:1,0:ns-1)=fna_he(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_fcor(ifc,0:1,0:ns-1) = 
+     .              fna_fcor(ix,iy,0,0:1,0:ns-1)
+            st % dv % fnaPSch(ifc,0:1,0:ns-1) = 
+     .              fnaPSch(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_32(ifc,0:1,0:ns-1)=fna_32(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_52(ifc,0:1,0:ns-1)=fna_52(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
+     .              fna_32nd(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
+     .              fna_52nd(ix,iy,0,0:1,0:ns-1)
+            st % dv % fna_eir(ifc,0:1,0:ns-1) = 
+     .              fna_eir(ix,iy,0,0:1,0:ns-1)
+            st % dv % fne_eir(ifc,0:1) = 
+     .              fne_eir(ix,iy,0,0:1)
+            st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
+     .              fna_nodrift(ix,iy,0,0:1,0:ns-1)
+
+            st % dv % fhe(ifc,0:1) = fhe(ix,iy,0,0:1)
+            st % dv % fkt(ifc,0:1) = fkt(ix,iy,0,0:1)
+            st % dv % fzt(ifc,0:1) = fzt(ix,iy,0,0:1)
+            st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,0,0:1)
+            st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,0,0:1)
+            st % dv % fhet(ifc,0:1) = fhet(ix,iy,0,0:1)
+            st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,0,0:1)
+            st % dv % fhi(ifc,0:1) = fhi(ix,iy,0,0:1)
+            st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,0,0:1)
+            st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,0,0:1)
+            st % dv % fhit(ifc,0:1) = fhit(ix,iy,0,0:1)
+            st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,0,0:1)
+
+! derived quantities
+            st % dv % uadia(ifc,0:1,0:ns-1) = 
+     .              uadia(ix,iy,0,0:1,0:ns-1)
+            st % dv % vadia(ifc,0:1,0:ns-1) = 
+     .               vadia(ix,iy,0,0:1,0:ns-1)
+            st % dv % wadia(ifc,0:1,0:ns-1) = 
+     .               wadia(ix,iy,0,0:1,0:ns-1)
+            st % dv % vaecrb(ifc,0:1,0:ns-1) = 
+     .              vaecrb(ix,iy,0,0:1,0:ns-1)
+            st % dv % wedia(ifc,0:1) = 
+     .              wedia(ix,iy,0,0:1)
+            st % dv % vedia(ifc,0:1) = 
+     .              vedia(ix,iy,0,0:1)
+            st % dv % veecrb(ifc,0:1) = 
+     .              veecrb(ix,iy,0,0:1)
+! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
+! but actually used as face quantities in case of drift_flows = 1
+            st % dv % facdrift(ifc) = facdrift(ix,iy)
+            st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
+            st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+      
+! numerical coefficients
+            st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,0,0:1)
+            st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,0,0:1)
+
+          end if
+        end do
+      end do
+
+
+
+! y faces
+
+      do ix = 0, nx-1
+        do iy = 0, ny
+!          ifc = nfx + iy+1 + ix*(ny+1)
+          if(mpg%imapFcy(ix,iy)/=0) then
+            ifc = mpg%imapFcy(ix,iy)
+
+          
+! fluxes
+          st % dv % fch(ifc,0:1) = fch(ix,iy,1,0:1)
+          st % dv % fch_32(ifc,0:1) = fch_32(ix,iy,1,0:1)
+          st % dv % fch_52(ifc,0:1) = fch_52(ix,iy,1,0:1)
+          st % dv % fch_p(ifc,0:1) = fch_p(ix,iy,1,0:1)
+          st % dv % fchdia(ifc,0:1) = fchdia(ix,iy,1,0:1)
+          st % dv % fchin(ifc,0:1) = fchin(ix,iy,1,0:1)
+          st % dv % fchvispar(ifc,0:1) = fchvispar(ix,iy,1,0:1)
+          st % dv % fchvisper(ifc,0:1) = fchvisper(ix,iy,1,0:1)
+          st % dv % fchvisq(ifc,0:1) = fchvisq(ix,iy,1,0:1)
+          st % dv % fchviskt(ifc,0:1) = fchviskt(ix,iy,1,0:1)
+          st % dv % fchinert(ifc,0:1) = fchinert(ix,iy,1,0:1)
+          st % dv % fchanml(ifc,0:1) = fchanml(ix,iy,1,0:1)
+          
+          st % dv % fne(ifc,0:1) = fne(ix,iy,1,0:1)
+          st % dv % fne_32(ifc,0:1) = fne_32(ix,iy,1,0:1)
+          st % dv % fne_52(ifc,0:1) = fne_52(ix,iy,1,0:1)
+          
+          st % dv % fni(ifc,0:1) = fni(ix,iy,1,0:1)
+          st % dv % fni_32(ifc,0:1) = fni_32(ix,iy,1,0:1)
+          st % dv % fni_52(ifc,0:1) = fni_52(ix,iy,1,0:1)
+        
+          st % dv % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_mdf(ifc,0:1,0:ns-1) = 
+     .              fna_mdf(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_he(ifc,0:1,0:ns-1) = fna_he(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_fcor(ifc,0:1,0:ns-1) = 
+     .              fna_fcor(ix,iy,1,0:1,0:ns-1)
+          st % dv % fnaPSch(ifc,0:1,0:ns-1) = 
+     .              fnaPSch(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_32(ifc,0:1,0:ns-1) = fna_32(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_52(ifc,0:1,0:ns-1) = fna_52(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_32nd(ifc,0:1,0:ns-1) = 
+     .              fna_32nd(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_52nd(ifc,0:1,0:ns-1) = 
+     .              fna_52nd(ix,iy,1,0:1,0:ns-1)
+          st % dv % fna_eir(ifc,0:1,0:ns-1) = 
+     .              fna_eir(ix,iy,1,0:1,0:ns-1)
+          st % dv % fne_eir(ifc,0:1) = 
+     .              fne_eir(ix,iy,1,0:1)
+          st % dv % fna_nodrift(ifc,0:1,0:ns-1) = 
+     .              fna_nodrift(ix,iy,1,0:1,0:ns-1)
+        
+          st % dv % fhe(ifc,0:1) = fhe(ix,iy,1,0:1)
+          st % dv % fkt(ifc,0:1) = fkt(ix,iy,1,0:1)
+          st % dv % fzt(ifc,0:1) = fzt(ix,iy,1,0:1)
+          st % dv % fhe_mdf(ifc,0:1) = fhe_mdf(ix,iy,1,0:1)
+          st % dv % fhePSch(ifc,0:1) = fhePSch(ix,iy,1,0:1)
+          st % dv % fhet(ifc,0:1) = fhet(ix,iy,1,0:1)
+          st % dv % fhe_eir(ifc,0:1) = fhe_eir(ix,iy,1,0:1)
+          st % dv % fhi(ifc,0:1) = fhi(ix,iy,1,0:1)
+          st % dv % fhi_mdf(ifc,0:1) = fhi_mdf(ix,iy,1,0:1)
+          st % dv % fhiPSch(ifc,0:1) = fhiPSch(ix,iy,1,0:1)
+          st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
+          st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
+
+
+! derived quantities
+          st % dv % uadia(ifc,0:1,0:ns-1) = 
+     .              uadia(ix,iy,1,0:1,0:ns-1)
+          st % dv % vadia(ifc,0:1,0:ns-1) = 
+     .              vadia(ix,iy,1,0:1,0:ns-1)
+          st % dv % wadia(ifc,0:1,0:ns-1) = 
+     .              wadia(ix,iy,1,0:1,0:ns-1)
+          st % dv % vaecrb(ifc,0:1,0:ns-1) = 
+     .              vaecrb(ix,iy,1,0:1,0:ns-1)
+          st % dv % wedia(ifc,0:1) = 
+     .              wedia(ix,iy,1,0:1)
+          st % dv % vedia(ifc,0:1) = 
+     .              vedia(ix,iy,1,0:1)
+          st % dv % veecrb(ifc,0:1) = 
+     .              veecrb(ix,iy,1,0:1)
+! note that facdrift, fac_ExB, fac_vis used to be defined as cell center quantities,
+! but actually used as face quantities in case of drift_flows = 1
+          st % dv % facdrift(ifc) = facdrift(ix,iy)
+          st % dv % fac_ExB(ifc) = fac_ExB(ix,iy)
+          st % dv % fac_vis(ifc) = fac_vis(ix,iy)
+
+! numerical coefficients
+          st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
+          st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
+
+
+          end if
+        end do
+      end do     
+
+
+
+      end subroutine prep_state
+
+
+
 
 **********************************************************************
       
