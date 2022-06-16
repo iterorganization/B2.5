@@ -68,7 +68,9 @@ c     File names will be appended with "*_st.dat".
         
         call to_struct_cell(nel,fun_us,fun_st)
 
-        filename = trim(my_out_folder)//trim(first_name)//'_st.dat'
+!        filename = trim(my_out_folder)//trim(first_name)//'_st.dat'
+        finame=first_name
+        filename = trim(my_out_folder)//trim(finame)//'_st.dat'
         if (iappend.eq.0) then
           open (nwrite,file=trim(filename))
         else
@@ -85,13 +87,21 @@ c     File names will be appended with "*_st.dat".
         close (nwrite)
         
       elseif(flag.eq.1) then
-        my_out_sf(0) ='left_st.dat'
-        my_out_sf(1) ='bottom_st.dat'
+        my_out_sf(0) ='_left_st.dat'
+        my_out_sf(1) ='_bottom_st.dat'
 
         call to_struct_face(nel,fun_us,funf_st)
         
         do ic = 0,1  
-          filename=trim(my_out_folder)//trim(first_name)//my_out_sf(ic)
+!          filename=trim(my_out_folder)//trim(first_name)//my_out_sf(ic)
+           finame=first_name
+           filename = trim(my_out_folder)//trim(finame)//
+     &                                      trim(my_out_sf(ic))
+!          write(*,*) 'first_name = ',first_name)
+!          write(*,*) 'trim(first_name) = ',trim(first_name))
+!          write(*,*) 'filename = ',filename
+!          write(*,*) 'trim(filename) = ',trim(filename)
+          
           if (iappend.eq.0) then
             open (nwrite,file=trim(filename))
           else
