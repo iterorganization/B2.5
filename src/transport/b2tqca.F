@@ -202,8 +202,8 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
       if(switch%b2tqca_iout.ne.0 .or. switch%b2npmo_iout.ne.0) then       !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        call my_out_us(70,nCv,0,vsa(1,0,is),'b2tqca_vsax'//chns)
-        call my_out_us(70,nCv,0,vsa(1,1,is),'b2tqca_vsay'//chns)
+        call my_out_us(70,nCv,0,vsa(1,0,is),'b2tqca_vsa_th'//chns)
+        call my_out_us(70,nCv,0,vsa(1,1,is),'b2tqca_vsa_r'//chns)
 !        call my_out_us(70,nCv,0,pl%na(1,is),'b2tqca_na'//chns)
        enddo
 !        call my_out_us(70,nCv,0,lnlam,'b2tqca_lnlam')
@@ -219,8 +219,8 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
       endif
 
       if(switch%b2tqca_iout.ne.0 .or. switch%b2npht_iout.ne.0) then
-        call my_out_us(70,nCv,0,hci(1,0),'b2tqca_hcix')
-        call my_out_us(70,nCv,0,hci(1,1),'b2tqca_hciy')
+        call my_out_us(70,nCv,0,hci(1,0),'b2tqca_hci_th')
+        call my_out_us(70,nCv,0,hci(1,1),'b2tqca_hci_r')
       endif                                                          !srv 16.06.08 30.01.10 }
 
 * ..return

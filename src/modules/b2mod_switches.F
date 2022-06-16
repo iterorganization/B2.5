@@ -177,6 +177,7 @@ c iout switches
       integer :: copy_background_iout      
       integer :: eirene_mc_iout
       integer :: b2siav_iout         
+      integer :: b2mndr_iout         
                                                                                                            
 
 
@@ -683,6 +684,7 @@ c Advanced fluid neutral models
       s % copy_background_iout =  0 !srv 14.07.10
       s % eirene_mc_iout = 0
       s % b2siav_iout = 0
+      s % b2mndr_iout = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -1182,6 +1184,7 @@ c iout switches
       call ipgeti ('b2stbr_AFN_out',s % AFN_out)
       call ipgeti('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
       call ipgeti ('eirene_mc_iout', s % eirene_mc_iout)
+      call ipgeti ('b2mndr_iout', s % b2mndr_iout)
       
                                                                         
 

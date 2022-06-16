@@ -131,9 +131,9 @@ cwdk    or radial contributions, since neutral transport is isotropic
            if (is_neutral(is)) then                            
              write (charns,'(i3.3)') is
              call my_out_us(70,nFc,1, flc(1,0,is),
-     &               'fl_fn_x'//charns)
+     &               'fl_fn_th'//charns)
              call my_out_us(70,nFc,1, flc(1,1,is),
-     &               'fl_fn_y'//charns)
+     &               'fl_fn_r'//charns)
            endif
          enddo                                            
        endif

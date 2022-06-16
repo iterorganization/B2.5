@@ -14,7 +14,7 @@
 
       character(7), save :: my_out_folder
 #ifdef WG_DEBUG
-      character(8), save :: my_out_sf(0:1)
+      character(16), save :: my_out_sf(0:1)
 #endif
 
       integer, save :: ntstep_b2wall = 0 

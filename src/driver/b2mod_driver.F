@@ -1478,32 +1478,34 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
         call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(iout.ne.0) then                                             !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                                             !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nCv,0,state%pl%na(1,is),'b2mndr_na'//chns)
         call my_out_us(70,nCv,0,state%pl%ua(1,is),'b2mndr_ua'//chns)
         call my_out_us(70,nFc,1,state%dv%uadia(1,0,is),
-     .    'b2mndr_uadiax'//chns)
+     .    'b2mndr_uadia_th'//chns)
         call my_out_us(70,nCv,0,state%dv%uadia(1,1,is),
-     .    'b2mndr_uadiay'//chns)
-       call my_out_us(70,nFc,1,state%dv%fna(1,0,is),'b2mndr_fnax'//chns)
-       call my_out_us(70,nFc,1,state%dv%fna(1,1,is),'b2mndr_fnay'//chns)
+     .    'b2mndr_uadia_r'//chns)
+       call my_out_us(70,nFc,1,state%dv%fna(1,0,is),
+     &    'b2mndr_fna_th'//chns)
+       call my_out_us(70,nFc,1,state%dv%fna(1,1,is),
+     &    'b2mndr_fna_r'//chns)
        enddo
        call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te')
        call my_out_us(70,nCv,0,state%pl%te/ev,'b2mndr_te_eV')
        call my_out_us(70,nCv,0,state%pl%ti,'b2mndr_ti')
        call my_out_us(70,nCv,0,state%pl%ti/ev,'b2mndr_ti_eV')
        call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po')
-       call my_out_us(70,nFc,1,state%dv%fch(1,0),'b2mndr_fchx')
-       call my_out_us(70,nFc,1,state%dv%fch(1,1),'b2mndr_fchy')
+       call my_out_us(70,nFc,1,state%dv%fch(1,0),'b2mndr_fch_th')
+       call my_out_us(70,nFc,1,state%dv%fch(1,1),'b2mndr_fch_r')
        call my_out_us(70,nFc,1,state%dv%fch_p(1,0),'b2mndr_fchx_p')
        call my_out_us(70,nFc,1,state%dv%fch_p(1,1),'b2mndr_fchy_p')
-       call my_out_us(70,nFc,1,state%dv%fhe(1,0),'b2mndr_fhex')
-       call my_out_us(70,nFc,1,state%dv%fhe(1,1),'b2mndr_fhey')
-       call my_out_us(70,nFc,1,state%dv%fhi(1,0),'b2mndr_fhix')
-       call my_out_us(70,nFc,1,state%dv%fhi(1,1),'b2mndr_fhiy')
+       call my_out_us(70,nFc,1,state%dv%fhe(1,0),'b2mndr_fhe_th')
+       call my_out_us(70,nFc,1,state%dv%fhe(1,1),'b2mndr_fhe_r')
+       call my_out_us(70,nFc,1,state%dv%fhi(1,0),'b2mndr_fhi_th')
+       call my_out_us(70,nFc,1,state%dv%fhi(1,1),'b2mndr_fhi_r')
        call my_out_us(70,nFc,1,geo%fcQgam(1,0),'b2mndr_fcQgam0_cosg')
        call my_out_us(70,nFc,1,geo%fcQgam(1,1),'b2mndr_fcQgam1_sing')
        call my_out_us(70,nFc,1,geo%fcQalf(1,0),'b2mndr_fcQalf0_cosa')
