@@ -365,6 +365,7 @@ c k-enstrophy model
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
       integer :: b2sikt_min_source
+      integer :: b2sikt_kt_source_stab
       real(kind=R8) :: b2sikt_fac_aniso
       real(kind=R8) :: b2sikt_fac_sheath
       real(kind=R8) :: b2sikt_fac_sheath_core
@@ -860,6 +861,7 @@ c k-enstrophy model
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_min_source = 0
+      s % b2sikt_kt_source_stab = 1
       s % b2sikt_fac_aniso = 1.0_R8
       s % b2sikt_fac_sheath = 1.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
@@ -1382,6 +1384,7 @@ c k-enstrophy model
       call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
+      call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
       call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)

@@ -218,8 +218,14 @@ cwdk     parallel transport due to parallel current fluctuations
          endif
          she0(ic,0)   = -t1 + t2*pl%kt(ic) + t3
          shi0(ic,0)   = -t0
-         skt0(ic,0)   =  t0 + t1 - t3 - t4
-         skt0(ic,1)   = -t2
+         if (switch%b2sikt_kt_source_stab.eq.0) then
+           skt0(ic,0)   =  t0 + t1 - t3 - t4
+           skt0(ic,1)   = -t2
+         else
+           skt0(ic,0)   =  max(t0 + t1,0.0_R8)
+           skt0(ic,1)   = (min(t0 + t1,0.0_R8) - t3 - t4)/
+     &       (1.0e-8_R8*ev + pl%kt(ic)) - t2
+         endif
          skt_prod(ic) =  t0 + t1
          skt_diss(ic) =  t2*pl%kt(ic) + t3 + t4
         enddo
