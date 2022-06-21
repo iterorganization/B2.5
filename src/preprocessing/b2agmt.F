@@ -234,7 +234,7 @@ cnv  new methods are employed
          g%cvEb(iCv,0) = 
      &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
          g%cvEb(iCv,1) = 
-     &       abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
+     &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
          g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif 
 
@@ -249,10 +249,10 @@ cnv  new methods are employed
 
       ! we assume the vertices are ordered 
       ! Because of this we can employ the quadArea_st which assumes the
-      ! vertices in the correct sequence
+      ! vertices in the correct sequence - right turning
        g%cvSz(iCv) = quadArea_st(g%vxX(verts4(0)), g%vxY(verts4(0)),  
-     &     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(3)),
-     &     g%vxY(verts4(3)), g%vxX(verts4(2)), g%vxY(verts4(2)) )
+     &     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(2)),
+     &     g%vxY(verts4(2)), g%vxX(verts4(3)), g%vxY(verts4(3)) )
 
 
       if  (isymm.eq.0) then  !slab geometry
@@ -421,7 +421,7 @@ cwdk      4) centroid: average between the intersections with faces
          g%cvEb(iCv,0) = 
      &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
          g%cvEb(iCv,1) = 
-     &       abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
+     &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
          g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif
 
@@ -534,7 +534,7 @@ cwdk      4) centroid: average between the intersections with faces
             g%cvEb(iCv,0) = 
      &          abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
             g%cvEb(iCv,1) = 
-     &          abs(g%cvBb(iCv,1))/g%cvBb(iCv,3)*g%cvEb(iCv,1) ! klopt toch niet?!
+     &          abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,1) 
             g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
           endif
 
@@ -595,7 +595,7 @@ cwdk      4) centroid: average between the intersections with faces
         !fcHc(m%nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
         g%fcHc(iFc,1) = sqrt(  ( centroid(c1,0) - fcX(iFc) )**2
      &      + ( centroid(c1,1) - fcY(iFc) )**2 ) 
-        g%fcHc(iFc,2) = sqrt(  ( centroid(c2,1) - fcX(iFc) )**2
+        g%fcHc(iFc,2) = sqrt(  ( centroid(c2,0) - fcX(iFc) )**2
      &      + ( centroid(c2,1) - fcY(iFc) )**2 ) 
 
         !fcHt(m%nFc) Lengths along cell face ("tangential" direction)
@@ -1107,7 +1107,7 @@ cnv   but now for quads
      &   ( sqrt( isbb(0,0)**2 + isbb(0,1)**2 ) +
      &     sqrt( isbb(1,0)**2 + isbb(1,1)**2) ) / t0 
       g%cvBb(iCv,1) = 0.0_R8
-      g%cvBb(iCv,2) = 0.5_R8 * abs( isbb(0,2)+isbb(1,2)) /t0
+      g%cvBb(iCv,2) = 0.5_R8 * ( isbb(0,2)+isbb(1,2)) /t0
       g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,1)**2 +  
      &                  g%cvBb(iCv,2)**2)
 

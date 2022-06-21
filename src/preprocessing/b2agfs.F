@@ -200,7 +200,7 @@
      &     m%cvLbl(iCv) .eq. GRID_DEAD ) cycle  !isUnusedCell works only for unstructured
         g%cvBb(iCv,0) = abs(cvBp(iCv))
         g%cvBb(iCv,1) = 0.0_R8
-        g%cvBb(iCv,2) = abs(cvBt(iCv))
+        g%cvBb(iCv,2) = cvBt(iCv) !keep the sign of the toroidal field
         g%cvBb(iCv,3) = sqrt( cvBp(iCv)**2 + cvBt(iCv)**2 )
 ! WIP B2AG_US
         !verts = m%cvVx(m%cvVxP(i,0)-1:m%cvVxP(i,0)-1+m%cvVxP(i,1)-1)-1
@@ -213,8 +213,8 @@
         !g%vxFpsi(i) = g%vxFpsi(i)
         !g%vxFfbz(i) = g%vxFfbz(i)
         if (Bt_adjust.eq.1 .and. xoffset.ne.0.0_R8) then
-          g%cvBb(iCv,2) = abs(cvBt(iCv))*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
-          g%cvBb(iCv,0) = abs(cvBp(iCv))/abs(cvBt(iCv))*g%cvBb(iCv,3)
+          g%cvBb(iCv,2) = cvBt(iCv)*g%cvX(iCv)/(g%cvX(iCv)+xoffset)
+          g%cvBb(iCv,0) = abs(cvBp(iCv))/cvBt(iCv)*g%cvBb(iCv,3)
           g%cvBb(iCv,3) = sqrt(g%cvBb(iCv,0)**2 + g%cvBb(iCv,2)**2)
         endif
       enddo
