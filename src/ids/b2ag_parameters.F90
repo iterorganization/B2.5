@@ -114,7 +114,7 @@ contains
     type(mapping) :: m 
     !internal
     character :: id*8, cnamip*80, cvalip*80
-    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:3), idum2(0:4), &
+    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:5), idum2(0:4), &
         & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0, &
         & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx, nncut
     character*256 local_sonnet
@@ -165,11 +165,13 @@ contains
             ! Carre grid input
             if (grid_version.eq."03.002.000") then
 		! obtain nCv, nFc, nVx from geometry file
-      	        call cfruin (lun, 4, idum, 'nCv,nFc,nVx,nCg')
+      	        call cfruin (lun, 6, idum, 'nCv,nFc,nVx,nCg,nFs,nFt')
                 nCv0 = idum(0)
                 nFc0 = idum(1)
 	            nVx0 = idum(2)
                 m%nCg = idum(3)
+                m%nFs = idum(4)
+                m%nFt = idum(5)
                 doGhostCells = .true.
         ! obtain nCmxFc and nCmxVx from geometry file
                 call cfruin (lun, 5, idum2, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
@@ -219,8 +221,8 @@ contains
 
       !introduce the flux tubes etc.
       !rough over-estimation
-      m%nFs = max(1,(1 + 2*nncut)*m%ny)
-      m%nFt = m%nFs
+      !m%nFs = max(1,(1 + 2*nncut)*m%ny)
+      !m%nFt = m%nFs
       !m%nFs = 0
       !m%nFt = 0
 

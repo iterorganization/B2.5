@@ -758,7 +758,7 @@ cwdk      4) centroid: average between the intersections with faces
       enddo
 
 
-      !Give vxBb the correct magnetic field value, till now is was
+      !Give vxBb the correct magnetic field value, till now it was
       ! g%vxBb(:,0) = dpsi/dy
       ! g%vxBb(:,1) = -dpsi/dx, for directional purposes
 

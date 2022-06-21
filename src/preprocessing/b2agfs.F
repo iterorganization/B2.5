@@ -574,8 +574,8 @@ cxpb  if just below the top corner, make the corner cell follow
 
       !nnCv, nnFc, nnVx: dimension of the grid read from file
       !nCv, nFc, nVx: dimension of the grid as used by B2
-      integer nnCv, nnFc, nnVx, 
-     1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:3)
+      integer nnCv, nnFc, nnVx, nnFs, nnFt,
+     1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:5)
 #ifdef USE_PXFGETENV
       integer lenval, ierror     
 #else
@@ -634,17 +634,19 @@ cxpb  if just below the top corner, make the corner cell follow
      1     "Reading the geometry file assuming the 'new' format"
           rewind lun
           call cfverr(lun,grid_version)
-          call cfruin (lun, 4, idum, 'nCv,nFc,nVx,nCg')
+          call cfruin (lun, 6, idum, 'nCv,nFc,nVx,nCg,nFs,nFt')
           nnCv = idum(0)
           nnFc = idum(1)
 	    nnVx = idum(2)
+          nnFs = idum(4)
+          nnFt = idum(5)
           if (grid_version.eq."03.002.000") then
            !ghostcells are not provided, nnCv does not match nCv
            !but will match after guard cells are created
 
            !.. read geometry file
            rewind lun
-           call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,g,m,
+           call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,nnFs,nnFt,g,m,
      1      cvBp,cvBt,cvFpsi)
 
 
@@ -707,7 +709,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
 *----------------------------------------------------------------------
       
-      subroutine read_traduitoutb2us(nrid,nnCv,nnFc,nnVx,g,m,
+      subroutine read_traduitoutb2us(nrid,nnCv,nnFc,nnVx,nnFs,nnFt,g,m,
      &  cvBp,cvBt,cvFpsi)
       use b2mod_types
       use b2mod_version
@@ -718,7 +720,7 @@ cxpb  if just below the top corner, make the corner cell follow
       use b2us_geo
       implicit none
       !input arguments 
-      integer nrid, nnCv, nnFc, nnVx, 
+      integer nrid, nnCv, nnFc, nnVx, nnFt, nnFs,
      &     nnCmxVx,nnCmxFc,nnFmxCv,nnVmxCv,nnVmxFc
       !output argument
       type(geometry) :: g 
@@ -728,7 +730,7 @@ cxpb  if just below the top corner, make the corner cell follow
       !internal
       character idcod*8, id*32
       integer :: i, iCv, iVx, iFc, iv(nnVx), ic(nnCv), if(nnFc),
-     &   idum(0:4) 
+     &   idum(0:5) , iFt, iFs, ifcv(nnFt), ifsv(nnFs)
       real(kind=R8) :: cvBp(m%nCv) , cvBt(m%nCv), cvFpsi(m%nCv)
       logical streql
       external subini, subend, xertst, xerrab, streql, cfverr, cfruin
@@ -743,10 +745,12 @@ cxpb  if just below the top corner, make the corner cell follow
       
       if (grid_version.eq."03.002.000") then
         !read nCv, nFc, nVx (without ghostcells)
-        call cfruin (nrid, 4, idum, 'nCv,nFc,nVx,nCg')
+        call cfruin (nrid, 6, idum, 'nCv,nFc,nVx,nCg,nFs,nFt')
         nnCv = idum(0)
         nnFc = idum(1)
 	  nnVx = idum(2)
+        nnFs = idum(4)
+        nnFt = idum(5)
         !read nCmVx, nCmxFc
         call cfruin (nrid, 5, idum, 
      &    'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
@@ -776,10 +780,10 @@ cxpb  if just below the top corner, make the corner cell follow
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('cv',id)) then
            do iCv = 1, nnCv
-           ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(1:5) ctype
+           ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(1) cvReg
               read(nrid,*,err=91) ic(iCv), m%cvVxP(iCv,1), 
      &      m%cvVxP(iCv,2), g%cvX(iCv), g%cvY(iCv), cvFpsi(iCv),
-     &      cvBp(iCv), cvBt(iCv), m%cvLbl(iCv)
+     &      cvBp(iCv), cvBt(iCv), m%cvLbl(iCv), m%cvReg(iCv)
            enddo
         endif
         ! put cvFcP equal to cvVxP
@@ -806,6 +810,34 @@ cxpb  if just below the top corner, make the corner cell follow
        !call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,1)')
        !read fcVx(:,2)
        !call cfruin(nrid,nnFc,m%fcVx(:,2),'fcVx(:,2)')
+
+       !Read flux tube information
+        read(nrid,*,err=91) idcod, id
+        if (streql('*cf:',idcod).and.streql('ft',id)) then
+          do iFt = 1, nnFt
+          ! ft ftCvP(:,1) ftCvP(:,2) ftFcP(:,1) ftFcP(:,2) 
+            read(nrid,*,err=91) ifcv(iFt), m%ftCvP(iFt,1), 
+     &      m%ftCvP(iFt,2), m%ftFcP(iFt,1), m%ftFcP(iFt,2)
+          enddo   
+        endif
+
+        !read ftCv, length nnCv is an estimate
+        call cfruin(nrid,sum(m%ftCvP(nnFt,:))-1,m%ftCv,'ftCv')
+        !read ftFc, length nnFc is an estimate
+        call cfruin(nrid,sum(m%ftFcP(nnFt,:))-1,m%ftFc,'ftFc')
+
+       !Read flux surface information
+        read(nrid,*,err=91) idcod, id
+        if (streql('*cf:',idcod).and.streql('fs',id)) then
+          do iFs = 1, nnFs
+          !fs fsFcP(:,1) fsFcP(:,2) fsPsi
+            read(nrid,*,err=91) ifsv(iFs),  m%fsFcP(iFs,1),
+     &      m%fsFcP(iFs,2), g%fsPsi(iFs)
+          enddo
+        endif
+
+        !read fsFc
+        call cfruin(nrid,sum(m%fsFcP(nnFs,:))-1,m%fsFc,'fsFc')
 
 
       else
