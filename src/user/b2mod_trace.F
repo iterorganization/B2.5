@@ -14,7 +14,7 @@
 
       private
 
-      public :: b2trace, b2trci, b2trcf, b2trcs, b2trcc
+      public :: b2trace, b2trci, b2trcf, b2trcs, b2trccc
 
       integer, save :: use_recyceir
       data use_recyceir /1/
@@ -172,7 +172,7 @@ c*** Initialise tracing routines
       return
       end subroutine b2trci
 c======================================================================
-      subroutine b2trcc(nput,nx,nxtl,nxtr)
+      subroutine b2trccc(nput,nx,nxtl,nxtr)
       implicit none
       integer, intent(in) :: nput, nx, nxtl, nxtr
       integer iline
@@ -223,7 +223,7 @@ c*** Truncate to match savefile
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_uss)), iline
       end if
       return
-      end subroutine b2trcc
+      end subroutine b2trccc
 c======================================================================
       subroutine b2trcs
       implicit none
