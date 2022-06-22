@@ -576,8 +576,6 @@ contains
   end subroutine create_guard_cells_st
 
   subroutine create_guard_cells(nnCv,nnFc,nnVx,g,m)
-    !use b2mod_geo
-    !use b2mod_indirect
     use b2us_geo
     use b2us_map
 
@@ -587,7 +585,7 @@ contains
 
     !internal
 
-    integer :: i, cellnumber, cvFcpos, cvVxpos, nGhostCell
+    integer :: i, iCv, cellnumber, cvFcpos, cvVxpos, nGhostCell
     !integer :: facenumbers(nGhostCell)
     integer :: facenumbers(m%nCg)  ! too big
     real(kind=R8) :: fcX,fcY 
@@ -604,12 +602,12 @@ contains
     ! in cflags(:,1) guard_cell gets flag == GRID_GUARD
     nGhostCell = m%nCv - nnCv
     ! change cvFcP and cvVxP
-    do i = nnCv+1, m%nCv
-       m%cvFcP(i,2) = 1
-       m%cvFcP(i,1) = m%cvFcP(i-1,1) + m%cvFcP(i-1,2)
+    do iCv = nnCv+1, m%nCv
+       m%cvFcP(iCv,2) = 1
+       m%cvFcP(iCv,1) = m%cvFcP(iCv-1,1) + m%cvFcP(iCv-1,2)
 
-       m%cvVxP(i,2) = 2
-       m%cvVxP(i,1) = m%cvVxP(i-1,1) + m%cvVxP(i-1,2)
+       m%cvVxP(iCv,2) = 2
+       m%cvVxP(iCv,1) = m%cvVxP(iCv-1,1) + m%cvVxP(iCv-1,2)
     enddo
     
     ! change cvFc
@@ -627,19 +625,17 @@ contains
     enddo
 
     ! change cvLbl(:,1), cvX, cvY
-    do i = nnCv+1, m%nCv
-       m%cvLbl(i) = GRID_GUARD
+    do iCv = nnCv+1, m%nCv
+       m%cvLbl(iCv) = GRID_GUARD
        !iface = m%cvFc(m%cvFc(i,1)) ! just one face
        ! temporary put the cell center of the guard cells of the boundary face
        ! in b2agmt the proper cell center is computed
-       fcX = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(i,1): &
-           &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
-       g%cvX(i) = fcX
-       fcY = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(i,1): &
-           &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))
-       g%cvY(i) = fcY
-       !g%cvFpsi(i) = 0.5_R8*sum(g%vxFpsi(m%cvVx(m%cvVxP(i,1): &
-       !    &    m%cvVxP(i,1)+m%cvVxP(i,2)-1)))      
+       fcX = 0.5_R8*sum(g%vxX(m%cvVx(m%cvVxP(iCv,1): &
+           &    m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)))
+       g%cvX(iCv) = fcX
+       fcY = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(iCv,1): &
+           &    m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)))
+       g%cvY(iCv) = fcY     
     enddo
 
     

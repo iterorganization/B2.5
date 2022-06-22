@@ -451,6 +451,9 @@ cwdk      4) centroid: average between the intersections with faces
      & ('b2agmt cv-loop, guard: no guard and boundary cell assigned')
          endif
 
+          !set cvReg of guard cell equal to cvReg of boundary cell
+          m%cvReg(gc) = m%cvReg(bc)
+
           !set bcFpsi equal to cvFpsi value 
           bcFpsi = cvFpsi(bc)
 
