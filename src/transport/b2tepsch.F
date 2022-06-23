@@ -54,7 +54,7 @@
          PSch_style = 1
        else
          PSch_style = 2
-      end if
+       end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       end if
 *   ..test nx, ny

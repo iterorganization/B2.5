@@ -151,7 +151,7 @@
       deallocate(cvsa_drho)                                      !som 16.08.21
       deallocate(cvsahz_cl)
       deallocate(cvsahz_drho)                                    !som 18.08.21
-      deallocate(chci_a) 
+      deallocate(chci_a)
       deallocate(csig_cl)
       deallocate(calf_cl)
       deallocate(csig_stoch)                                     !srv 24.08.21

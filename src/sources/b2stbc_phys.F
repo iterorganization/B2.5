@@ -6879,8 +6879,6 @@ cxpb code segment analog to b2tfhe
           CALL XERRAB ('B2STBC -- BCENE=23, NOT AVAILABLE FOR N,S')
         ENDIF
 
-* -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
-
       case default
         write(*,*) BCENE(IB)
         call xerrab ('BCENE out of bounds')

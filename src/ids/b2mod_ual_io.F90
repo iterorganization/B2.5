@@ -3770,7 +3770,7 @@ contains
                         &   b2CellData = tmpCv,                         &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   end do
-                  call write_cell_vector_component(sources_grid,          &
+                  call write_cell_vector_component( sources_grid,         &
                         &   vectorComponent = edge_sources%source(5)%     &
                         &            ggd( time_sind )%ion( is )%momentum, &
                         &   b2CellData = totCv,                           &

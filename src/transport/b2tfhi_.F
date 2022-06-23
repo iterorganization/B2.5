@@ -76,8 +76,8 @@ csw 30apr2014 added fna_he, ia
       integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
-      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-      integer, save :: b2kin=0, b2vis=0
+      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+      integer, save :: b2kin = 0, b2vis = 0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
@@ -127,9 +127,9 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
-       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 13.07.21
-       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 13.07.21
-       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 13.07.21
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 13.07.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 13.07.21
+       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 13.07.21
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)

@@ -71,8 +71,8 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &            *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
      &            /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-            t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
-     &                                                 **(1.0_R8/gamma)
+            t2 = 1.0_R8/(1.0_R8 +
+     &          (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)**(1.0_R8/gamma)
             cdpa(ix,iy,0,is) = cdpa(ix,iy,0,is)*t2
             flc(ix,iy,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)

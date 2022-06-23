@@ -130,7 +130,7 @@
           if (solvereg(ireg)) then
            aa7(ix,iy, 0) = aa7(ix,iy, 0)+conc(ix,iy,1)
            aa7(ix,iy,-2) = aa7(ix,iy,-2)-conc(ix,iy,1)
-         endif
+          endif
         endif
         if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) then
           aa7(ix,iy,2) = 0.0_R8

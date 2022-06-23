@@ -213,7 +213,7 @@ c Drift terms
       if (inert_all_ions.eq.0) then
        do is = 0, ns-1
         if (is.eq.ismain) then
-         fchinert_a(:,:,:,is) = fchinert(:,:,:) 
+         fchinert_a(:,:,:,is) = fchinert(:,:,:)
         else
          fchinert_a(:,:,:,is) = 0.0_R8
         endif

@@ -322,7 +322,7 @@
 				<description>
 					When b2agdr_redef_qc.eq.1, the cosine of the angle between the left face of a cell and the magnetic field direction is interpolated from the values at the cell centers.
 					When b2agdr_redef_qc.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
-					This switch is superseded by b2agmt_qc_style.
+					This switch is only active if b2agmt_qc_style.eq.0.
 				</description>
 			</switch>
 			<switch>
@@ -1972,7 +1972,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
