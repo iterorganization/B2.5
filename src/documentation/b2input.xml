@@ -5455,6 +5455,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>MAXPOIN</name>
+				<default>2000</default>
+				<type>integer</type>
+				<description>
+					Gives an option to override a parameter MAXPOIN previously hard coded in wrmesh.f and plmesh.f - internal EIRENE routines used to write and plot a triangular mesh
+				</description>
+			</switch>
+			<switch>
 				<name>TIME_DEP_PUFF</name>
 				<default>.false. for all strata</default>
 				<type>logical array of length (NSTRAT)</type>
