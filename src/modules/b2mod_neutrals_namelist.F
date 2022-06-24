@@ -379,7 +379,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       else
         l_neutflux=0
       endif
-      MAXPOIN = 2000
+      MAXPOIN=2000
 
       chemical_erosion_redep_fac=1.0_R8
       chemical_erosion_be_fac=.false.
@@ -621,6 +621,7 @@ c
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif
+      call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
       call xertst (0.0_R8.lt.eirene_step_dt,

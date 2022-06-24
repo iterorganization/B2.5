@@ -10997,6 +10997,8 @@ cxpb as they no longer necessarily point to the same species
           end do
         endif
 #endif
+        if (maxpoin.ne.2000) write(99,'(1x,a,i6,a)')
+     >   'MAXPOIN=', maxpoin,','
         if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')

@@ -5459,7 +5459,7 @@
 				<default>2000</default>
 				<type>integer</type>
 				<description>
-					Gives an option to override a parameter MAXPOIN previously hard coded in wrmesh.f and plmesh.f - internal EIRENE routines used to write and plot a triangular mesh
+					Maximum number of points needed to describe a region contour in Eirene.
 				</description>
 			</switch>
 			<switch>
