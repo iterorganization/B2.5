@@ -174,7 +174,7 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 indexes, iasave, jasave, name)
+     *                  indexes, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
      &               c_end-c_start
@@ -203,7 +203,7 @@
       end subroutine b2ux11p                                           !srv 02.04.18 }
 
       subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,          !srv 02.04.18 {
-     *                      indexes, iasave, jasave, name)
+     *                       indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_openmp
       use b2mod_indirect
