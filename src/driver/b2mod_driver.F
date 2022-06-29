@@ -1903,7 +1903,7 @@ cwdk  set some integers
 #ifdef FIXED_POINT
       state0 = state
 ! $AD FP-LOOP "state"
-      do while (res_max.ge.res_quit)
+      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
 #else
     1 continue
 #endif
@@ -2014,8 +2014,8 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         enddo
 *    ..call cost function
-        call b2usr_cost_function(nCv, nFc, nVx, ns, mpg, state, geo,
-     &    switch%BoRiS, J)
+        call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state, 
+     &    state_ext, switch%BoRiS, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
@@ -2401,8 +2401,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..end loop
       end do
 *   ..call cost function
-      call b2usr_cost_function(nCv, nFc, nVx, ns, mpg, state, geo,
-     &    switch%BoRiS, J)
+      call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state, 
+     &    state_ext, switch%BoRiS, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
         write(*,*) 'Cost function value '//ss//': ',J(icf)

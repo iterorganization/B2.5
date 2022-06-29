@@ -2024,6 +2024,7 @@ cwdk also need to correct for degenerate faces?
           enddo
           rcfe(istra) = 0.0_R8
           rcfi(istra) = 2.0_R8
+          accel_ion(istra) = 0
         elseif (crcstra(istra).eq.'N') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
@@ -2036,6 +2037,7 @@ cwdk also need to correct for degenerate faces?
           enddo
           rcfe(istra) = 0.0_R8
           rcfi(istra) = 2.0_R8
+          accel_ion(istra) = 0
         elseif (crcstra(istra).eq.'W') then
           do istrac = 1, rcl(istra)
             instra = instra + 1
@@ -2048,6 +2050,7 @@ cwdk also need to correct for degenerate faces?
           enddo
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
+          accel_ion(istra) = 1
         elseif (crcstra(istra).eq.'E') then 
           do istrac = 1, rcl(istra)
             instra = instra + 1
@@ -2060,6 +2063,7 @@ cwdk also need to correct for degenerate faces?
           enddo
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
+          accel_ion(istra) = 1
         elseif (crcstra(istra).eq.'A') then 
           minlbl(istra) = rcstart(istra)
           maxlbl(istra) = rcend(istra)
@@ -2077,6 +2081,7 @@ cwdk also need to correct for degenerate faces?
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
         else
+          accel_ion(istra) = 0
 !          call xerrab ('conv_rcparms -- wrong CRCSTRA')
         endif
       enddo

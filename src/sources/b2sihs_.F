@@ -25,7 +25,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sihs_, ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
-     &           ncall_b2sifrtf
+#ifdef WG_DEBUG
+     &          my_out_sf,                                              !srv 27.06.21
+#endif
+     &          my_out_folder, ncall_b2sifrtf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17
@@ -68,8 +71,7 @@
      &  wrkc(nCv), wrkf(nFc,0:1),
      &  wrkv(nVx),                      !srv 02.06.99
      &  wrkc1(nCv),                                         !srv 28.08.02
-     &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1),
-     &  dumm0(nFc,0:1), dumm1(nFc,0:1)
+     &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1)
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)  !lk 31.01.08 }
       real (kind=R8) :: 
      *  shidu(nCv,0:3), shidd(nCv,0:3),               !srv 11.09.09 {

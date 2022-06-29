@@ -115,9 +115,6 @@
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, acorkt, acorzt, nasum, na0sum, 
      &  pz(nCv), rz(nCv)                                                 !iyv 06.02.14
-! csc UNCOMMENT WITH AD
-!  REAL(kind=r8) :: acorpad(0:ns-1), acoruad(0:ns-1), acorutd, acorted, &
-!& acortid, acorpod, acorktd
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb
@@ -275,7 +272,7 @@ c checks for use of new energy equations
 *    ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
          call b2spcx (nCv, ns, ev, am(iscx(k)), st%pl%ti, st%dv%ne,
-     &     st%rt%rlcx(1,0,0,k))
+     &     st%rt%rlcx(1:nCv,0:1,0:ns-1,k))
         enddo
 ctmp.dpc
         if (nscx.ge.1) then
@@ -392,10 +389,13 @@ ctmp.dpc
      &       geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st%sr, 
      &       st%srw, st_ext, st%psnc, st%psnl, ier0)
            flush(6)
+#ifdef WG_TODO
+! ier0 seems not appearing anymore in b2news. Additioanlly, irreducible loops should be avoided for Adjoint AD
            if(ier0.eq.10) then
              ierr=ier0
              goto 99999
            endif
+#endif
            call xertst (ier0.eq.0, 'error return from b2news')
 *!!      (should develop other error handling)
            ierr = ier0
@@ -426,12 +426,6 @@ ctmp.dpc
      &       .or.switch%nstg_aresco.eq.0.0_R8)
 *      ..compute norms of the corrections
            call b2mxac (nCv, ns, st%dv, st%diag)
-! csc UNCOMMENT WITH AD
-!!*      ..compute norms of the differentiated residuals
-!           call B2MXAR_DIFF(nCv, ns, nnreg(0), switch%BoRiS, switch, geo, mpg, &
-!&                      std%pl, std%dv, std%diag)
-!!*      ..compute norms of the differentiated corrections
-!          CALL B2MXAC_DIFF(ncv, ns, std%dv, std%diag)
 *      ..decide what output
            domoqt = 0.le.switch%b2mndt_moqtlv.and.
      &      (1.le.switch%b2mndt_moqtlv.or.istg(0).eq.0).and.
@@ -447,10 +441,6 @@ ctmp.dpc
              call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
      &         switch%BoRiS, switch, geo, st%pl, st%dv, st%diag)
              flush(nout(4))
-! csc UNCOMMENT WITH AD
-!              CALL B2MWQT_DIFF(nout(10), ncv, ns, itim, b2mndt_itcnt, &
-!&               switch%BoRiS, switch, geo, std%pl, std%dv, std%diag)
-!              FLUSH(nout(10)) 
             endif
            endif
 #ifdef WG_TODO
@@ -575,7 +565,9 @@ ctmp.dpc
       if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
 
 * ..return
-99999 continue
+#ifdef WG_TODO
+99999 continue !remove if ierr=10 not supported anymore
+#endif
       ncall_b2mndt = ncall_b2mndt+1
       call subend ()
       return

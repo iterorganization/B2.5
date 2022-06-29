@@ -420,7 +420,7 @@
       do k = 0, nscx-1
 *    ..compute charge exchange rate coefficients
         call b2sqcx (nCv, ns, ev, switch, am(iscx(k)), pl%ti, 
-     &   pl%tn, rt%rlcx(1,0,0,k), rtw%rcx)
+     &   pl%tn, rt%rlcx(1:nCv,0:1,0:ns-1,k), rtw%rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
         call b2stcx (nCv, nFc, ns, iscx(k), ismain, BoRiS, switch, 
