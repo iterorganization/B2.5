@@ -172,12 +172,16 @@
       subroutine FormFunctionGradient(tao, XX, F, grad, dummy, ierr)
       use b2us_io_diff &
       , only : write_b2fstate
+      use b2mod_version &
+      , only : newversion
+      use b2mod_b2cmpa_diff
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
-      integer ipar, isigma
+      integer ipar, isigma, idum(0:2)
       integer, save :: iter = 0
       character*3 str
       character(22) :: opt_state_name 
+      character*120 label
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -234,6 +238,14 @@
         write(*,*) 'Saving intermediate optimization state'
         write (opt_state_name,'(a14,i4.4)') 'b2fstate.',iter
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = state%ns
+        call cfverw (99, newversion)
+        call cfwuin (99, 3, idum, 'nCv,nFc,ns')
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        call cfwuch (99, 120, label, 'label')
+        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
       endif
@@ -281,10 +293,18 @@
       end subroutine FormFunction
 
       subroutine FormGradient(tao, XX, grad, dummy, ierr)
+      use b2us_io_diff &
+      , only : write_b2fstate
+      use b2mod_version &
+      , only : newversion
+      use b2mod_b2cmpa_diff
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
-      integer ipar, isigma
+      integer ipar, isigma, idum(0:2)
       character*3 str
+      integer, save :: iter = 0
+      character(22) :: opt_state_name 
+      character*120 label
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -327,6 +347,23 @@
         write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
+! Experimental: write intermediate state file?
+      if (iter .gt. 0) then
+        write(*,*) 'Saving intermediate optimization state'
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate..',iter
+        call cfopen (99,trim(opt_state_name),'new','un*formatted')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = state%ns
+        call cfverw (99, newversion)
+        call cfwuin (99, 3, idum, 'nCv,nFc,ns')
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        call cfwuch (99, 120, label, 'label')
+        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
+        close(99)
+      endif
+      iter = iter + 1
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
       ierr = 0
