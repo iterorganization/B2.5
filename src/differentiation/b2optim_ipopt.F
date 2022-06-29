@@ -443,15 +443,19 @@ C   4          *
       use b2us_data_diff
       use b2us_io_diff
      , , only : write_b2fstate
+      use b2mod_version
+     , , only : newversion
+      use b2mod_b2cmpa_diff
       implicit none
       integer ALG_MODE, ITER_COUNT, LS_TRIAL
       double precision OBJVAL, INF_PR, INF_DU, MU, DNORM, REGU_SIZE
       double precision ALPHA_DU, ALPHA_PR
       double precision DAT(*)
       integer IDAT(*)
-      integer ISTOP
+      integer ISTOP, IDUM(0:2)
       logical quitexist, quitexist_
       character(22) :: opt_state_name
+      character*120 label
 
       write(*,*) 'IPOPT: iteration ', ITER_COUNT
       write(*,*) 'IPOPT: objval ', OBJVAL
@@ -461,6 +465,16 @@ C   4          *
         write(*,*) 'IPOPT: Saving intermediate optimization state'
         write (opt_state_name,'(a14,i4.4)') 'b2fstate.',ITER_COUNT
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = state%ns
+        call cfverw (99, newversion)
+        call cfwuin (99, 3, idum, 'nCv,nFc,ns')
+        write (label,'(a46,i4)') 
+     &    'b2optim_ipopt intermediate optimization state ',ITER_COUNT
+        call cfwuch (99, 120, label, 'label')
+        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,
+     &   am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
       endif
