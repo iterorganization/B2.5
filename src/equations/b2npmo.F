@@ -26,7 +26,7 @@
       use b2mod_ad
      & , only : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
-     &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr,
+     &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
