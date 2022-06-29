@@ -40,7 +40,7 @@
 
       function get_B25_hash()
       implicit none
-      character*32 get_B25_hash
+      character*64 get_B25_hash
 #     include <git_version_B25.h>
 
       get_B25_hash = git_version_B25
