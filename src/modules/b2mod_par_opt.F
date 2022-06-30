@@ -24,7 +24,8 @@
       integer, save :: spatial_points(nvmx) = 0
       integer :: idd, ipp
       logical :: file_ok
-      real (kind=R8) :: typeold(nvmx), rangeold(nvmx,2), parold(nvmx,2)
+      real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
+      integer :: typeold(nvmx)
       private optimization
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
@@ -96,20 +97,39 @@
 !     7  - vsa, anomalous viscosity
 !     8  - sig, field-driven current radial conductivity
 !     9  - alf, temperature-driven current radial conductivity
-!     10 - enkpar(parib(ipar), 1), k boundary condition, parib(ipar) identifies boundary
-!     11 - b2sikt_fac_sheath, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in SOL & PFR)
-!     12 - b2sikt_fac_sheath_core, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in core)
-!     13 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
-!     14 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
-!     15 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
-!     16 - enepar(parib(ipar), 1), with parib(ipar) identifies boundary
-!     17 - enipar(parib(ipar), 1), with parib(ipar) identifies boundary
-!     18 - conpar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
-!     19 - mompar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
-!     20 - potpar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     10 - enepar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     11 - enipar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     12 - conpar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
+!     13 - mompar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
+!     14 - potpar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     15 - enkpar(parib(ipar), 1), k boundary condition, parib(ipar) identifies boundary
+!     16 - b2recyc(paris(ipar),parib(ipar)), with paris(ipar) identifies species, parib(ipar) identifies stratum
+!     17 - b2tqna_ballooning
+!     18 - b2tqna_ballooning_rescale
+!     19 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
+!     20 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
+!     21 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
+!     22 - keps_sig
+!     23 - keps_alf
+!     24 - keps_visc
+!     25 - keps_dkt
+!     26 - keps_dzt
+!     27 - b2sikt_fac_diss
+!     28 - b2sikt_fac_diss_core
+!     29 - b2sikt_fac_sheath, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in SOL & PFR)
+!     30 - b2sikt_fac_sheath_core, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in core)
+!     31 - keps_shear
+!     32 - b2tfhi_fsigkt
+!     33 - b2sikt_fac_vis_RS
+!     34 - b2tfhi_fflokt
+!     35 - b2tfhi_fconkt
+!     36 - b2tfhi_fflozt
+!     37 - b2tfhi_fconzt
+!     38 - b2tfhi_fkt_hie
+!     39 - b2tfhe_vis_kt
       call xertst(any(partype(1:nnvar) .ge. 0) .and.
-     &  any(partype(1:nnvar) .le. 20),
-     &  'b2mod_par_opt: partype<0 or partype>20')
+     &  any(partype(1:nnvar) .le. 39),
+     &  'b2mod_par_opt: partype<0 or partype>39')
       call xertst(any(spatial_points(1:nnvar) .ge. 0),
      &  'b2mod_par_opt: spatial_points<0')
       call xertst(sum(spatial_points(1:nnvar)) .le. nvmx,
@@ -117,13 +137,11 @@
       do ii=1,nnvar
        if (partype(ii) .eq. 1 .or. partype(ii) .eq. 2 .or.
      &     partype(ii) .eq. 3 .or. partype(ii) .eq. 5 .or.
-     &     partype(ii) .eq. 7 .or. partype(ii) .eq. 18 .or.
-     &     partype(ii) .eq. 19) 
+     &     partype(ii) .eq. 7 .or. partype(ii) .eq. 12 .or.
+     &     partype(ii) .eq. 13 .or. partype(ii) .eq. 16) 
      >  call xertst((paris(ii) .ge. 0) .and. (paris(ii) .le. ns-1),
      &  'b2mod_par_opt: paris<0 or >ns-1')
-       if (partype(ii) .eq. 10 .or. partype(ii) .eq. 16 .or.
-     &     partype(ii) .eq. 17 .or. partype(ii) .eq. 18 .or.
-     &     partype(ii) .eq. 19 .or. partype(ii) .eq. 20)
+       if (partype(ii) .ge. 10 .and. partype(ii) .le. 16)
      >  call xertst((parib(ii) .ge. 1) .and. (parib(ii) .le. nBc),
      &   'b2mod_par_opt: parib<0 or >nBc')
       enddo

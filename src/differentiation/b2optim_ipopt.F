@@ -2,10 +2,10 @@
       use b2mod_types
       use b2mod_par_opt_diff
       use b2mod_main_diff
-     , , only : b2mn_init_d, b2mn_step_d, b2mn_step, b2mn_fin_d
+     , , only : b2mn_init_diff, b2mn_step_diff, b2mn_step, b2mn_fin_diff
       use b2mod_ad_diff
      , , only : nncf
-      use b2mod_switches_diff
+      use b2us_data_diff
       implicit none
 
 !     include the Ipopt return codes
@@ -48,8 +48,6 @@
       double precision F
       integer ipar, icon
 
-      type(switches_diffv), save :: switchdiff
-
 !     The following are the Fortran routines for computing the model
 !     functions and their derivatives - their code can be found further
 !     down in this file.
@@ -62,13 +60,14 @@
 
 !     Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_d
+      call b2mn_init_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,
+     &  state_ext, state_extdiff)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
       call xertst(npar_opt.le.nbdirsmax,
      & 'Increase size of nbdirsmax in diffsizes.F')
-      call set_tgt_perturbation(switchdiff)
+      call set_tgt_perturbation(switchd)
 #endif
 
 #ifdef ADJ
@@ -249,17 +248,13 @@
  9000 continue
 
 !     Clean up
-      call b2mn_fin_d
+      call b2mn_fin_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,
+     & state_ext, state_extdiff)
       call IPFREE(IPROBLEM)
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
       deallocate(par_opt_phys)
-#ifdef TGT
-      deallocate(par_opt_physd)
-#endif
-#ifdef ADJ
-      deallocate(par_opt_physb)
-#endif
+      deallocate(par_opt_physdiff)
       stop 'b2optim'
  9990 continue
       write(*,*) 'Error setting an option'
@@ -297,7 +292,7 @@
             isigma = isigma + 1
           endif
         enddo
-        call b2mn_step(j)
+        call b2mn_step(switch, geo, mpg, state, state_ext, j)
       endif
       F = DBLE(j(1))
       IER = 0
@@ -308,12 +303,12 @@
       implicit none
       integer npar, NEW_X
       double precision GRAD(npar), XX(npar)
-      real(kind=r8) j(nncf), jd(nncf), gradd(npar)
+      real(kind=r8) j(nncf), jdiff(nncf), gradd(npar)
       double precision DAT(*)
       integer IDAT(*)
       integer IER, ipar, isigma
       character*3 str
-      save jd
+      save jdiff
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
@@ -335,16 +330,17 @@
             isigma = isigma + 1
           endif
         enddo
-        call b2mn_step_d(j,jd,switchdiff)
+        call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,
+     &   statediff, state_ext, state_extdiff, j, jdiff)
       endif
 #ifdef TGT
       do ipar = 1, npar
-        grad(ipar) = DBLE(jd(1))*par_rescale(ipar) ! rescale par to get order unity
+        grad(ipar) = DBLE(jdiff(1))*par_rescale(ipar) ! rescale par to get order unity
         write (*,*) 'IPOPT GRAD:', grad(ipar)
       end do
 #endif
 #ifdef ADJ
-      call set_adj_gradient(npar,gradd,switchdiff)
+      call set_adj_gradient(npar,gradd,switchb)
       do ipar = 1, npar
         grad(ipar) = DBLE(gradd(ipar))*par_rescale(ipar) ! rescale par to get order unity
         write (*,*) 'IPOPT GRAD:', grad(ipar)
@@ -444,17 +440,44 @@ C   4          *
       subroutine ITER_CB(ALG_MODE, ITER_COUNT, OBJVAL, INF_PR, INF_DU, 
      &    MU, DNORM, REGU_SIZE, ALPHA_DU, ALPHA_PR, LS_TRIAL, IDAT, 
      &    DAT, ISTOP)
+      use b2us_data_diff
+      use b2us_io_diff
+     , , only : write_b2fstate
+      use b2mod_version
+     , , only : newversion
+      use b2mod_b2cmpa_diff
       implicit none
       integer ALG_MODE, ITER_COUNT, LS_TRIAL
       double precision OBJVAL, INF_PR, INF_DU, MU, DNORM, REGU_SIZE
       double precision ALPHA_DU, ALPHA_PR
       double precision DAT(*)
       integer IDAT(*)
-      integer ISTOP
+      integer ISTOP, IDUM(0:2)
       logical quitexist, quitexist_
+      character(22) :: opt_state_name
+      character*120 label
 
       write(*,*) 'IPOPT: iteration ', ITER_COUNT
       write(*,*) 'IPOPT: objval ', OBJVAL
+
+! Experimental: write intermediate state file?
+      if (ITER_COUNT .gt. 0) then
+        write(*,*) 'IPOPT: Saving intermediate optimization state'
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate.',ITER_COUNT
+        call cfopen (99,trim(opt_state_name),'new','un*formatted')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = state%ns
+        call cfverw (99, newversion)
+        call cfwuin (99, 3, idum, 'nCv,nFc,ns')
+        write (label,'(a46,i4)') 
+     &    'b2optim_ipopt intermediate optimization state ',ITER_COUNT
+        call cfwuch (99, 120, label, 'label')
+        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,
+     &   am)
+        call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
+        close(99)
+      endif
 
 !     And set ISTOP to 1 if you want Ipopt to stop now.  Below is just a
 !     simple example.

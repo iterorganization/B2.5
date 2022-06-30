@@ -4,7 +4,7 @@
       use b2us_geo
       use b2us_map
       use b2mod_ad
-     & , only : nncf, rrdata, vvdata, TMP1, TMP2
+     & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
       implicit none
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd, mxnCf
@@ -39,12 +39,14 @@
       integer, save :: cfdef(nncf)
       integer, save :: ncfdata(nncf), ncf, cf_reg(mxnCf),
      & cf_regp(nncf,2)
-      real (kind=R8), save :: cfdata(nncf,2,DEF_NLIM), cfweight(nncf)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
       integer nvmx, nsigmx
       parameter (nvmx = 50, nsigmx=10)
       integer, save :: prior_type(nvmx), nsigma !sc type of prior
       real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
       logical, save :: scale_sigma(nsigmx) = .true.
+      logical, save :: mapToOMP(nncf) = .false.
+      logical, save :: read_sigma(nncf) = .false.
       real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
       double precision, parameter :: inf_opt = 1.0e30
       private :: user
@@ -58,7 +60,7 @@
      ,  filedata,user_filename,ncf,cfstart,cfend,
      ,  cftype, rzomp, rzimp, cfdef, cfweight, 
      ,  prior_type, prior_par, prior_range, scale_sigma, nsigma,
-     ,  sigma, cf_reg, cf_regP
+     ,  sigma, cf_reg, cf_regP, mapToOMP, read_sigma
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -88,6 +90,7 @@ c*** [ij]ntrgrp:  first and last positions in this list for each group
 c*** gntrgrp   :  identifiers for the neutral data surface groups
 c*** filedata  :  flag to turn on/off individual tracing files
 c***              (see b2mod_diag for their definition)
+c FIXME add description of Cf quantities
 c----------------------------------------------------------------------
 
       contains
@@ -139,6 +142,7 @@ c***  Standard setup:
       cftype = 0
       cfdata = 0.0_R8
       ncfdata = 0
+      read_sigma = .false.
       rzomp = 0.0_R8
       rzimp = 0.0_R8
       cfweight = 1.0_R8
@@ -151,6 +155,7 @@ c***  Standard setup:
       prior_range(:,2) = inf_opt*10.0
       cf_reg = 0
       cf_regP = 0
+      mapToOMP = .false.
       call read_b2mod_user_namelist(ns,ntns,geo,m)
       user_initialised = .true.
 
@@ -163,10 +168,10 @@ c***  Standard setup:
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
-      if (allocated(rrdata)) deallocate(rrdata)
-      if (allocated(vvdata)) deallocate(vvdata)
-      if (allocated(TMP1)) deallocate(TMP1)
-      if (allocated(TMP2)) deallocate(TMP2)
+      if (allocated(b2rr)) deallocate(b2rr)
+      if (allocated(b2volOnCf)) deallocate(b2volOnCf)
+      if (allocated(b2data)) deallocate(b2data)
+      if (allocated(b2dataOnCf)) deallocate(b2dataOnCf)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
@@ -254,7 +259,7 @@ c***  Standard setup:
         open (newunit=idb,file='debug_user.out')        
         incf = 0
         do icf = 1, ncf
-          if (cftype(icf).gt.9) call xerrab ('cftype>9 not coded ')
+          if (cftype(icf).gt.10) call xerrab ('cftype>10 not coded ')
           if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
      &     'cftype(1)=0 but no other cost functions are defined')
           if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
@@ -268,11 +273,11 @@ c***  Standard setup:
      &     cfstart(icf).lt.2 .and. cfend(icf).lt.2) call xerrab (
      &     'cost functions type 0/6 requires cfstart/cfend>1')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
-     &        (cftype(icf).ge.7 .and. cftype(icf).le.9)) 
+     &        (cftype(icf).ge.7 .and. cftype(icf).le.10)) 
      >         cfread(icf) = .true.
-          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false. ! FIXME add jsat 
+          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false.
           if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
-     &      call xerrab('cftype 5 must be defined using faces!') ! FIXME add jsat 
+     &      call xerrab('cftype 5 must be defined using faces!')  
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
@@ -291,10 +296,14 @@ c***  Standard setup:
      &        'Cost function data limited to DEF_NLIM!')
             open(unit=99,file=cffile,status='old',action='read')
             do i=1,ncfdata(icf)
-!csc The data in the file are (r-rsep), data. Stored in cfdata according to
-!    first dimension (# of cost functions), second dimension ((r-rsep)-data), third
+!csc The data in the file are (r-rsep), data, sigma. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension ((r-rsep)-data-sigma), third
 !    dimension (number of records/data points)
-              read(99,*) cfdata(icf,1:2,i) 
+              if (read_sigma(icf)) then
+                read(99,*) cfdata(icf,1:3,i) 
+              else
+                read(99,*) cfdata(icf,1:2,i) 
+              endif
             enddo
             close(99)
           endif
@@ -454,15 +463,15 @@ c***  Standard setup:
       endif
       if (any(cfread)) then
         ndata = maxval(ncfdata(1:ncf),1)
-        allocate(vvdata(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
-        allocate(TMP2(ndata)) !variable to store SOLPS data interpolated onto CF radial points
+        allocate(b2volOnCf(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
+        allocate(b2dataOnCf(ndata)) !variable to store SOLPS data interpolated onto CF radial points
         ndata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
-        allocate(rrdata(ncf,ndata)) !store here values of cvX from SOLPS for interpolation
-        allocate(TMP1(ndata)) !temporary variable to store SOLPS data for interpolation
-        rrdata = 0.0_R8
-        vvdata = 0.0_R8
-        TMP1 = 0.0
-        TMP2 = 0.0
+        allocate(b2rr(ncf,ndata)) !store here radial distance coordiante of SOLPS data
+        allocate(b2data(ndata)) !temporary variable to store SOLPS data for interpolation
+        b2rr = 0.0_R8
+        b2volOnCf = 0.0_R8
+        b2data = 0.0
+        b2dataOnCf = 0.0
       endif
 
 #ifdef WG_TODO
@@ -639,7 +648,7 @@ c*** Set default values according to current species list
       ifc2 = ifc1 + m%fsFcP(ifssep,2) - 1
         if (ii.ge.ifc1 .and. ii.le.ifc2) exit
       enddo
-      if (m%IsClassicalGrid .eq. 1) call xertst(m%fsFcP(ifssep,2).gt.0,
+      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(ifssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep
 

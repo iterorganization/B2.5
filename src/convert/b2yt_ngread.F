@@ -98,7 +98,7 @@ c
       logical ex
 
 *  -- PROCEDURES --
-      character*32 :: get_B25_hash
+      character*64 :: get_B25_hash
       logical streql
       EXTERNAL GFSUB2
       external ipgeti, streql, get_B25_hash
@@ -143,7 +143,7 @@ C
       else
         jvftnew = max(jvft44,20160829)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_B25_hash()
+      WRITE(45,'(I4,2X,I4,2x,i8,2x,a64)') nx1,ny1,jvftnew,get_B25_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,NMOL1,NIONI
 #ifndef HPUX

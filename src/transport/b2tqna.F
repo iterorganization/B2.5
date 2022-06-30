@@ -116,7 +116,7 @@
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
-     1  dcx, dion, vcx, lcx, lion, din, dnn,
+     1  dion, vcx, lcx, lion, din, dnn,
      1  poloidal_scale_factor
       real (kind=R8) ::
      *  t0, t1,
@@ -273,12 +273,9 @@
             endif
             if(switch%b2tqna_new_df0.eq.1) then
               if(is_neutral(is)) then
-                dcx=0.0_R8
                 vcx=0.0_R8
                 tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
                 do ic = 0, ns-1
-                  dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
-     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
                   vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
      &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
                 enddo
@@ -3591,7 +3588,7 @@ c*******************************************************************************
      &  vma0(nCv,0:1,0:ns-1)                              !srv 15.12.05
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  wrk0(nCv), dcx, vcx, dion
+     *  wrk0(nCv), vcx, dion
       integer is, k, ic, iCv
       intrinsic max, exp
       external expu
@@ -3611,12 +3608,9 @@ c*******************************************************************************
 
           wrk0 = sqrt(pl%tn/mp)
           do iCv = 1, nCv
-            dcx=0.0_R8
             vcx=0.0_R8
             do ic = 0, ns-1
               t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
-              dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
-     &          rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
               vcx = vcx + pl%na(iCv,ic) * 
      &          expu(rt%rlcx(iCv,0,ic,k) +
      &          rt%rlcx(iCv,1,ic,k)*log(t_av/(am(is)*ev)))
