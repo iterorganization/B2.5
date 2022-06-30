@@ -69,7 +69,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 0
       external b2xvsg, b2xvff, intface
       intrinsic abs, max, min, mod, sqrt
 *   ..initialisation
-
+      scur(:,:) = 0.0_R8
 *-----------------------------------------------------------------------
 *.computation
 
