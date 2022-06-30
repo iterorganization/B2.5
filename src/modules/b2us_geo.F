@@ -450,7 +450,7 @@
 
 *  .. calculate 1/B/B
       gm%cvOnedBsq = 1.0_R8/gm%cvBb(:,3)**2
-      gm%vxOnedBsq = 1.0_R8/gm%vxBb(:,3)**2
+      gm%vxOnedBsq = 1.0_R8/(gm%vxBb(:,3)**2 + 1.0e-30_R8)
 
 *  .. unit vector of magnetic field in X,Y,Z coordinates at faces
       do iFc = 1, mpg%nFc

@@ -6,9 +6,9 @@
       use b2mod_main
       use b2mod_ad
      , , only: nncf
+      use b2us_data
       implicit none
       real(kind=R8) J(nncf)
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -108,9 +108,9 @@
 *-----------------------------------------------------------------------
 *.computation
 
-      call b2mn_init
-      call b2mn_step(J)
-      call b2mn_fin
+      call b2mn_init(switch, geo, mpg, state, state_ext)
+      call b2mn_step(switch, geo, mpg, state, state_ext, J)
+      call b2mn_fin(switch, geo, mpg, state, state_ext)
 
       stop 'b2mn'
 

@@ -154,31 +154,31 @@
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dna0(1,is), co%cdna(1,0,is))
+     &   co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dna0(1,is), co%cdna(1,1,is))
+     &   co%dna0(1:nCv,is), co%cdna(1:nFc,1,is))
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dpa0(1,is), co%cdpa(1,0,is))
+     &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dpa0(1,is), co%cdpa(1,1,is))
+     &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,1,is))
         call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dpa0(1,is), cdpa0(1,is))
+     &   co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
         call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
-     &   co%vla0(1,0,is), co%cvla(1,0,is))
+     &   co%vla0(1:nCv,0,is), co%cvla(1:nFc,0,is))
         call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
-     &   co%vla0(1,1,is), co%cvla(1,1,is))
+     &   co%vla0(1:nCv,1,is), co%cvla(1:nFc,1,is))
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa0(1,is), co%cvsa(1,0,is))
+     &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa0(1,is), co%cvsa(1,1,is))
+     &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,1,is))
         call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa0(1,is), cvsa0(1,is))
+     &   co%vsa0(1:nCv,is), cvsa0(1:nFc,is))
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%hcib(1,is), co%chcb(1,0,is))
+     &   co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%hcib(1,is), co%chcb(1,1,is))
+     &   co%hcib(1:nCv,is), co%chcb(1:nFc,1,is))
         call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%hcib(1,is), chcib(1,is))
+     &   co%hcib(1:nCv,is), chcib(1:nFc,is))
       enddo
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      & co%dna_ExB, co%cdna_ExB(1,0))
@@ -193,25 +193,25 @@
       enddo
       do is = 0, ns-1
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dna0(1,is), co%cdnahz(1,0,is))
+     &   co%dna0(1:nCv,is), co%cdnahz(1:nFc,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dna0(1,is), co%cdnahz(1,1,is))
+     &   co%dna0(1:nCv,is), co%cdnahz(1:nFc,1,is))
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dpa0(1,is), co%cdpahz(1,0,is))
+     &   co%dpa0(1:nCv,is), co%cdpahz(1:nFc,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dpa0(1,is), co%cdpahz(1,1,is))
+     &   co%dpa0(1:nCv,is), co%cdpahz(1:nFc,1,is))
        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
-     &   co%vla0(1,0,is), co%cvlahz(1,0,is))
+     &   co%vla0(1:nCv,0,is), co%cvlahz(1:nFc,0,is))
        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
-     &   co%vla0(1,1,is), co%cvlahz(1,1,is))
+     &   co%vla0(1:nCv,1,is), co%cvlahz(1:nFc,1,is))
        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
-     &   co%vma0(1,0,is), co%cvmahz(1,0,is))
+     &   co%vma0(1:nCv,0,is), co%cvmahz(1:nFc,0,is))
        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
-     &   co%vma0(1,1,is), co%cvmahz(1,1,is))
+     &   co%vma0(1:nCv,1,is), co%cvmahz(1:nFc,1,is))
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
-     &   co%vsa0(1,is), co%cvsahz(1,0,is))
+     &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%vsa0(1,is), co%cvsahz(1,1,is))                            !srv 01.07.05 }
+     &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                            !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 
 
@@ -222,9 +222,9 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
          if (is_neutral(is).and.zn(is).eq.1.0_R8) then
            wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &                 wrkc, co%cdpa(1,0,is))   
+     &                 wrkc, co%cdpa(1:nFc,0,is))   
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &                 wrkc, co%cdpahz(1,0,is))
+     &                 wrkc, co%cdpahz(1:nFc,0,is))
          endif
        enddo
       endif
@@ -233,44 +233,44 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
-     &   hvi0(1,0), co%chvi(1,0))
+     &   hvi0(1:nCv,0), co%chvi(1:nFc,0))
       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
-     &   hvi0(1,1), co%chvi(1,1))
+     &   hvi0(1:nCv,1), co%chvi(1:nFc,1))
       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
-     &   hve0(1,0), co%chve(1,0))
+     &   hve0(1:nCv,0), co%chve(1:nFc,0))
       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
-     &   hve0(1,1), co%chve(1,1))
+     &   hve0(1:nCv,1), co%chve(1:nFc,1))
 
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%hce0, co%chce(1,0))
+     &  co%hce0, co%chce(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce0, co%chce(1,1))
+     &  co%hce0, co%chce(1:nFc,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%sig0, co%csig(1,0))
+     &  co%sig0, co%csig(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%sig0, co%csig(1,1))
+     &  co%sig0, co%csig(1:nFc,1))
       call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%alf0, co%calf(1,0))
+     &  co%alf0, co%calf(1:nFc,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%alf0, co%calf(1,1))
+     &  co%alf0, co%calf(1:nFc,1))
       wrkc = co%dkt0*(1.0_R8 + switch%b2tfhi_fconkt)
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  wrkc, co%cdkt(1,0))
+     &  wrkc, co%cdkt(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%dkt0, co%cdkt(1,1))
+     &  co%dkt0, co%cdkt(1:nFc,1))
       wrkc = co%dzt0*(1.0_R8 + switch%b2tfhi_fconzt)
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  wrkc, co%cdzt(1,0))
+     &  wrkc, co%cdzt(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%dzt0, co%cdzt(1,1))
+     &  co%dzt0, co%cdzt(1:nFc,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%hce_ExB, co%chce_ExB(1,0))
+     &  co%hce_ExB, co%chce_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce_ExB, co%chce_ExB(1,1))
+     &  co%hce_ExB, co%chce_ExB(1:nFc,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
-     &  co%hci_ExB, co%chci_ExB(1,0))
+     &  co%hci_ExB, co%chci_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hci_ExB, co%chci_ExB(1,1))
+     &  co%hci_ExB, co%chci_ExB(1:nFc,1))
 
 *   ..set csigx = 0 and calfx = 0
       if (switch%csig_an_style.eq.1) then

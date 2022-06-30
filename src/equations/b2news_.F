@@ -813,7 +813,9 @@ csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
 
 * ..return
       ierr = 0
-99999 continue
+#ifdef WG_TODO
+99999 continue !seems coming from nowhere
+#endif
       ncall_b2news_ = ncall_b2news_+1
       call subend ()
       return

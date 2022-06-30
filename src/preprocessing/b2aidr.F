@@ -12,6 +12,11 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2us_map
+      use b2us_geo
+      use b2us_plasma
+      use b2us_prep
+      use b2us_io
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:3), nout(0:1), nx, ny, ns                  !srv 22.12.09
@@ -66,9 +71,12 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, js, i, is0, idum(0:9)
-      integer, save :: read_b2fstate = 0                            !srv 22.12.09
+      integer n2, is, js, i, is0, idum(0:9), ninp_us, nout_us, io
+      integer, save :: read_b2fstate_file = 0                       !srv 22.12.09
       real (kind=R8) :: t0, t1                                      !srv 22.12.09
+      type(mapping) :: mpg
+      type(geometry) :: geo
+      type(B2State) :: state
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:,:), fhe1(:,:,:,:),
@@ -500,7 +508,7 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-      call ipgeti ('b2aidr_read_b2fstate', read_b2fstate)
+      call ipgeti ('b2aidr_read_b2fstate', read_b2fstate_file)
       call ipgetr ('b2mndr_na_min', na_min)
       call xertst (na_min.gt.0.0_R8,
      & 'faulty internal parameter na_min')
@@ -527,7 +535,7 @@
      &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
 
-      if(read_b2fstate.ne.0) then
+      if(read_b2fstate_file.ne.0) then
 *  .. copy the data of first n=min(ns0,ns1) species
 *     from the plasma state file b2fstate for ns0 species
 *     into the initial plasma state file b2fstati for ns1 species
@@ -803,6 +811,61 @@
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+
+*   ..read unstructured geometry
+      open (newunit=ninp_us,file='b2fgmtry_us',iostat=io)
+      call cfopen (ninp_us,'b2fgmtry_us','old','un*formatted')
+      call cfverr (ninp_us, b2fgmtry_version)
+      call cfruin (ninp_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      mpg%nCi = idum(0) 
+      mpg%nCg = idum(1) 
+      mpg%nCv = idum(2)
+      mpg%nFc = idum(3)
+      mpg%nVx = idum(4)
+      mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
+      call cfruin (ninp_us,5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      mpg%nCmxVx = idum(0)
+      mpg%nCmxFc = idum(1)
+      mpg%nVmxCv = idum(2)
+      mpg%nVmxFc = idum(3)
+      mpg%nCmxNv = idum(4)
+      call cfruin (ninp_us,1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp_us,3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
+      call cfruch (ninp_us, 120, lblgm, 'label')
+      call cfruin (ninp_us, 1, idum, 'isymm')
+      call alloc_mapping (mpg)
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+     .  mpg%nFt, mpg%nVmxCv)
+      call read_b2fgmtry (ninp_us, mpg, geo)
+
+*   ..convert plasma to unstructured format
+      call prep_state (nx, ny, ns,
+     .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
+      write (*,*) 'State created'
+      call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
+
+*   ..write unstructured b2fstati
+      open (newunit=nout_us,file='b2fstati_us',iostat=io)
+      idum(0) = mpg%nCv
+      idum(1) = mpg%nFc
+      idum(2) = ns
+      call cfverw (nout_us, newversion)
+      call cfwuin (nout_us, 3, idum, 'nCv,nFc,ns')
+      call cfwuch (nout_us, 120, lblps, 'label')
+      call b2wuzd (nout_us, newversion, ns, zamin, zamax, zn, am)
+      call write_b2fstate (nout_us, mpg%nCv, mpg%nFc, ns, state)
+
+*   ..clean up
+      close (ninp_us)
+      close (nout_us)
+      call dealloc_geometry(geo)
+      call dealloc_mapping(mpg)
+      call destroyB2State(state)
 
 * ..return
       call subend ()

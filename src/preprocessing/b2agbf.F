@@ -112,8 +112,13 @@
       wbbv = 0.0_R8
 
 *    ..interpolate magnetic field to cell faces
-      if (maxval(abs(fpsi)).eq.0.0_R8 .or.
-     &    maxval(abs(ffbz)).eq.0.0_R8 ) then
+      if (maxval(abs(fpsi(:,:,:,0))).eq.0.0_R8 .or.
+     &    maxval(abs(fpsi(:,:,:,1))).eq.0.0_R8 .or.
+     &    maxval(abs(fpsi(:,:,:,2))).eq.0.0_R8 .or.
+     &    maxval(abs(ffbz(:,:,0))).eq.0.0_R8   .or.
+     &    maxval(abs(ffbz(:,:,1))).eq.0.0_R8   .or.
+     &    maxval(abs(ffbz(:,:,2))).eq.0.0_R8   .or.
+     &    maxval(abs(ffbz(:,:,3))).eq.0.0_R8) then
         !wdk 'standard' treatment: inverse volume weighting
         call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
         call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)

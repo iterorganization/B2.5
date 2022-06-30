@@ -10,10 +10,10 @@
       use taomodule ! IGNORE
       use b2mod_par_opt_diff
       use b2mod_main_diff &
-      , only : b2mn_init_d, b2mn_step, b2mn_step_d, b2mn_fin_d
+      , only : b2mn_init_diff, b2mn_step, b2mn_step_diff, b2mn_fin_diff
       use b2mod_ad_diff &
       , only : nncf
-      use b2mod_switches_diff
+      use b2us_data_diff
       implicit none
 
       PetscErrorCode       ierr
@@ -26,7 +26,6 @@
       integer :: ncon, nele_jac, ipar
       logical :: streql, hessian
       external streql
-      type(switches_diffv), save :: switchdiff
 
       call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
       if (ierr .ne. 0) then
@@ -38,12 +37,13 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_d
+      call b2mn_init_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
+&      state_ext, state_extdiff)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
       call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
-      call set_tgt_perturbation(switchdiff)
+      call set_tgt_perturbation(switchd)
 #endif
 
 #ifdef ADJ
@@ -99,14 +99,10 @@
       call TaoDestroy(tao,ierr);CHKERRA(ierr)
       call PetscFinalize(ierr)
 
-      call b2mn_fin_d
+      call b2mn_fin_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
+&      state_ext, state_extdiff)
       deallocate(par_opt_phys)
-#ifdef TGT
-      deallocate(par_opt_physd)
-#endif
-#ifdef ADJ
-      deallocate(par_opt_physb)
-#endif
+      deallocate(par_opt_physdiff)
       stop 'b2optim'
 
       stop
@@ -174,10 +170,18 @@
       end subroutine DestroyProblem
 
       subroutine FormFunctionGradient(tao, XX, F, grad, dummy, ierr)
+      use b2us_io_diff &
+      , only : write_b2fstate
+      use b2mod_version &
+      , only : newversion
+      use b2mod_b2cmpa_diff
       implicit none
-      real(kind=r8) j(nncf), jd(nncf), gradd(npar_opt)
-      integer ipar, isigma
+      real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
+      integer ipar, isigma, idum(0:2)
+      integer, save :: iter = 0
       character*3 str
+      character(22) :: opt_state_name 
+      character*120 label
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -211,11 +215,12 @@
           isigma = isigma + 1
         endif
       end do
-      call b2mn_step_d(j,jd,switchdiff)
+      call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
+     &   statediff, state_ext, state_extdiff, j, jdiff)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jd(1)*par_rescale(ipar) ! rescale par to get order unity
+        g_v(g_i+ipar-1) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
         write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
@@ -228,6 +233,23 @@
 #endif
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
+! Experimental: write intermediate state file?
+      if (iter .gt. 0) then
+        write(*,*) 'Saving intermediate optimization state'
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate.',iter
+        call cfopen (99,trim(opt_state_name),'new','un*formatted')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = state%ns
+        call cfverw (99, newversion)
+        call cfwuin (99, 3, idum, 'nCv,nFc,ns')
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        call cfwuch (99, 120, label, 'label')
+        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
+        close(99)
+      endif
+      iter = iter + 1
       ierr = 0
       end subroutine FormFunctionGradient
 
@@ -263,7 +285,7 @@
           isigma = isigma + 1
         endif
       end do
-      call b2mn_step(j)
+      call b2mn_step(switch, geo, mpg, state, state_ext, j)
       F = j(1)
 
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
@@ -271,10 +293,18 @@
       end subroutine FormFunction
 
       subroutine FormGradient(tao, XX, grad, dummy, ierr)
+      use b2us_io_diff &
+      , only : write_b2fstate
+      use b2mod_version &
+      , only : newversion
+      use b2mod_b2cmpa_diff
       implicit none
-      real(kind=r8) j(nncf), jd(nncf), gradd(npar_opt)
-      integer ipar, isigma
+      real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
+      integer ipar, isigma, idum(0:2)
       character*3 str
+      integer, save :: iter = 0
+      character(22) :: opt_state_name 
+      character*120 label
       PetscErrorCode ierr
       PetscInt dummy
       Vec XX,grad
@@ -302,20 +332,38 @@
           isigma = isigma + 1
         endif
       end do
-      call b2mn_step_d(j,jd,switchdiff)
+      call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
+     &   statediff, state_ext, state_extdiff, j, jdiff)
 #ifdef TGT
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jd(1)*par_rescale(ipar) ! rescale par to get order unity
+        g_v(g_i+ipar-1) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
         write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
 #ifdef ADJ
-      call set_adj_gradient(npar_opt,gradd,switchdiff)
+      call set_adj_gradient(npar_opt,gradd,switchb)
       do ipar = 1, npar_opt
         g_v(g_i+ipar-1) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
         write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
       end do
 #endif
+! Experimental: write intermediate state file?
+      if (iter .gt. 0) then
+        write(*,*) 'Saving intermediate optimization state'
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate..',iter
+        call cfopen (99,trim(opt_state_name),'new','un*formatted')
+        idum(0) = mpg%nCv
+        idum(1) = mpg%nFc
+        idum(2) = state%ns
+        call cfverw (99, newversion)
+        call cfwuin (99, 3, idum, 'nCv,nFc,ns')
+        write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',iter
+        call cfwuch (99, 120, label, 'label')
+        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
+        close(99)
+      endif
+      iter = iter + 1
       call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
       call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
       ierr = 0
