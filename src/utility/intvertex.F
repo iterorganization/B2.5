@@ -31,7 +31,7 @@ c
       do iVx = 1, nVx
         volsum = 0.0_R8
         do iCv = 1,mpg%vxCvP(iVx,2)
-          volsum = volsum + 1/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
+          volsum = volsum + 1._R8/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
           vertex(iVx) = vertex(iVx) + 
      &      centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
      &      vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
@@ -59,7 +59,7 @@ c
       vertex = 0.0_R8
       volsum = 0.0_R8
       do iCv = 1,mpg%vxCvP(iVx,2)
-        volsum = volsum + 1/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
+        volsum = volsum + 1._R8/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
         vertex = vertex + 
      &    centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
      &    vxvol(mpg%vxCvP(iVx,1) + iCv - 1)

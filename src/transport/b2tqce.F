@@ -106,6 +106,9 @@
       h153e(z) = c13e   *c55e(z) - c15e   *c53e(z)
       h315e(z) = c35e(z)*c11e    - c31e   *c15e
       f135e(z) = c55e(z)*d13e(z) - c35e(z)*h315e(z) - c15e   *h135e(z)
+
+      alf = 0.0_R8
+      sig = 0.0_R8
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -239,14 +242,15 @@
       else
        call xerrab ('B2TQCE - incorrect value of style_guard_cells')
       endif
-      sig(:,:) = sig(:,:)*switch%prl_cur                                    !srv 15.06.18
-      alf(:,:) = alf(:,:)*switch%prl_cur                                    !srv 15.06.18
 *   ..compute hcey, sigy, alfy
 *!!   (classical perpendicular transport is set to 0)
       call sfill (nCv, 0.0_R8, hce(1,1), 1)
       call sfill (nCv, 0.0_R8, sig(1,1), 1)
       call sfill (nCv, 0.0_R8, alf(1,1), 1)
 
+      sig(:,:) = sig(:,:)*switch%prl_cur                                    !srv 15.06.18
+      alf(:,:) = alf(:,:)*switch%prl_cur                                    !srv 15.06.18
+      
       if(switch%b2tqce_iout.ne.0) then                                !srv 16.06.08 {
         call my_out_us(70,nCv,0,tau,'taue')
         call my_out_us(70,nCv,0,hce(1,0),'hce_th')

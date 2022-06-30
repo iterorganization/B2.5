@@ -335,8 +335,10 @@ c     internal cell -> full diamagnetic drift
               ebx = gm%cvEb(ic,0)
               eby = gm%cvEb(ic,1)
               ebn = sqrt(ebx*ebx + eby*eby)
-              ebx = ebx / ebn
-              eby = eby / ebn
+              if (ebn > 0) then
+                ebx = ebx / ebn
+                eby = eby / ebn
+              endif
               pux(ic) = ebx
               puy(ic) = eby
               pvx(ic) = -eby
@@ -422,7 +424,10 @@ c we derive the guard cell value from its neighbouring interior cell
         ian = mpg%rcFcP(istra,1)
         ien = ian + mpg%rcFcP(istra,2) - 1
         ntrgdat = ien-ian+1
-        if (ien-ian+1 <= 0) cycle
+        if (ien-ian+1 <= 0) then
+            trgt(istra)%ntrgdat = 0
+            cycle
+        endif
         
 #ifdef B25_EIRENE
         call eirene_alloc_target_data(istra,ntrgdat,nflai,ifoff)
@@ -466,8 +471,10 @@ c we derive the guard cell value from its neighbouring interior cell
             ebx = gm%fcEb(iFc,0)
             eby = gm%fcEb(iFc,1)
             ebn = sqrt(ebx*ebx + eby*eby)
-            ebx = ebx / ebn
-            eby = eby / ebn
+            if (ebn > 0) then
+              ebx = ebx / ebn
+              eby = eby / ebn
+            endif
             puxs = ebx
             puys = eby
             pvxs = -eby
