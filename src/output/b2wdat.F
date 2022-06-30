@@ -1,4 +1,4 @@
-      subroutine b2wdat (nCv, nFc, ns, ismain, ismain0, 
+      subroutine b2wdat (nCv, nFc, nVx, ns, ismain, ismain0, 
      .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
@@ -23,7 +23,7 @@
 #endif     
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, ns, ismain, ismain0
+      integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) :: BoRiS
       type(mapping)    :: mpg
       type(geometry)   :: geo
@@ -460,10 +460,30 @@
       
       if(iout.eq.3 .or. iout.eq.4 .or. iout.eq.1) then                  !srv begin for iout=3
 *    .. iout = 3 for outputting geometry files
-       call my_out_us(70,nCv,0,geo%cvBb(1,0),'bbx')
-       call my_out_us(70,nCv,0,geo%cvBb(1,2),'bbz')
-       call my_out_us(70,nCv,0,geo%cvBb(1,3),'bb')
+
+! output of cell-centered values
+       call my_out_us(70,nCv,0,geo%cvBb(1,0),'B_pol')
+       call my_out_us(70,nCv,0,geo%cvBb(1,2),'B_tor')
+       call my_out_us(70,nCv,0,geo%cvBb(1,3),'B_full')
+       call my_out_us(70,nCv,0,geo%cvEb(1,0),'b_R_cyl')
+       call my_out_us(70,nCv,0,geo%cvEb(1,1),'b_Z_cyl')
+       call my_out_us(70,nCv,0,geo%cvEb(1,2),'b_phi_cyl')
        call my_out_us(70,nCv,0,geo%cvHx,'lenght_pol')
+       call my_out_us(70,nCv,0,geo%cvHz,'hz')
+       call my_out_us(70,nCv,0,geo%cvVol,'vol')
+       call my_out_us(70,nCv,0,geo%cvSz,'Sz')
+       call my_out_us(70,nCv,0,geo%cvOnedBsq,'OnedBsq')
+       call my_out_us(70,nCv,0,geo%cvBzB,'BzB')
+       call my_out_us(70,nCv,0,geo%cvX,'crc')          ! R-coordinate of the (ix,iy) cell centre
+       call my_out_us(70,nCv,0,geo%cvY,'czc')          ! Z-coordinate of the (ix,iy) cell centre 
+         open(70,file=trim(folder)//'czc.dat')                         !srv 26.09.17
+         write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
+         write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)
+         close(70)
+         open(70,file=trim(folder)//'crc.dat')                         !srv 26.09.17
+         write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
+         write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
+         close(70)
        
        if (mpg%isClassicalGrid.eq.1) then
          open(70,file=trim(folder)//'info.dat')
@@ -518,23 +538,36 @@
         call my_out(70, nx, ny, fun_st, 'hy1_st')
        endif 
       
+! output of values corresponding to cell faces
        call my_out_us(70,nFc,1,geo%fcHt,'ht')
-       call my_out_us(70,nCv,0,geo%cvHz,'hz')
-       call my_out_us(70,nCv,0,geo%cvVol,'vol')
        call my_out_us(70,nFc,1,geo%fcPbs,'pbs')
+       call my_out_us(70,nFc,1,geo%fcBb(1,0),'B_pol')
+       call my_out_us(70,nFc,1,geo%fcBb(1,2),'B_tor')
+       call my_out_us(70,nFc,1,geo%fcBb(1,3),'B_full')
+       call my_out_us(70,nFc,0,geo%fcEb(1,0),'b_R_cyl')
+       call my_out_us(70,nFc,0,geo%fcEb(1,1),'b_Z_cyl')
+       call my_out_us(70,nFc,0,geo%fcEb(1,2),'b_phi_cyl')
+       call my_out_us(70,nFc,1,geo%fcHz,'hz')
+       call my_out_us(70,nFc,1,geo%fcS,'S')
+       call my_out_us(70,nFc,1,geo%fcPbsHz,'pbshz')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,0),'cos_gamma')
+       call my_out_us(70,nFc,1,geo%fcQgam(1,1),'sin_gamma')
+       call my_out_us(70,nFc,1,geo%fcQbet(1,0),'cos_beta')
+       call my_out_us(70,nFc,1,geo%fcQbet(1,1),'sin_beta')
+       call my_out_us(70,nFc,1,geo%fcQalf(1,0),'cos_alpha')
+       call my_out_us(70,nFc,1,geo%fcQalf(1,1),'sin_alpha')
 
-*     ..output coordinates of cell centres
-       call my_out_us(70,nCv,0,geo%cvX,'crc')          ! R-coordinate of the (ix,iy) cell centre
-       open(70,file=trim(folder)//'crc.dat')                         !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
-       write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
-       close(70)
-       call my_out_us(70,nCv,0,geo%cvY,'czc')          ! Z-coordinate of the (ix,iy) cell centre 
-       open(70,file=trim(folder)//'czc.dat')                         !srv 26.09.17
-       write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
-       write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)
-       close(70)
-
+! output of values corresponding to vertices
+       call my_out_us(70,nVx,2,geo%vxX,'cr')
+       call my_out_us(70,nVx,2,geo%vxY,'cz')
+       call my_out_us(70,nVx,2,geo%vxHz,'hz')
+       call my_out_us(70,nVx,2,geo%vxBb(1,0),'B_pol')
+       call my_out_us(70,nVx,2,geo%vxBb(1,2),'B_tor')
+       call my_out_us(70,nVx,2,geo%vxBb(1,3),'B_full')
+       call my_out_us(70,nVx,2,geo%vxFPsi,'FPsi')
+       call my_out_us(70,nVx,2,geo%vxFfbz,'FfBz')
+       call my_out_us(70,nVx,2,geo%vxOnedBsq,'OnedBsq')
+       call my_out_us(70,nVx,2,geo%vxBzB,'BzB')
       endif                                                             !srv   end for iout=3   
 
       if(use_mms.eq.1 .and. iout.eq.10) then                                 !srv 26.02.18 {
