@@ -364,8 +364,8 @@ PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2us.exe b2mnastra.exe
 PROG_AM = b2ar.exe
 PROG_XD = b2xd.exe
-PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe calc_atomic_data.exe
-PROG_OT = b2ah.exe b2ai.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe
+PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe calc_atomic_data.exe b2ai.exe
+PROG_OT = b2ah.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe
 #PROG_90 = check_b2_output.exe
 PROG_OP = b2op.exe
 PROG_OQ = b2mn_opt.exe
@@ -1326,15 +1326,15 @@ ${OBJDIR}/LISTOBJ: listobj
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
 ${SRCDIR}/include/git_version_B25.h: force
-	@echo "      character*32 :: git_version_B25 =                                 &" > ${SRCDIR}/include/git_version_new.h
+	@echo "      character*64 :: git_version_B25 =                                 &" > ${SRCDIR}/include/git_version_new.h
 	@echo "     & '`git describe --dirty --always`'" >> ${SRCDIR}/include/git_version_new.h
 ifdef SOLPS_CPP
 	@echo "      character*32 :: git_version_ADAS = '`( cd $${SOLPSTOP}/modules/adas ; git describe --dirty --always)`'" >> ${SRCDIR}/include/git_version_new.h
-	@echo "      character*32 :: git_version_SOLPS =                               &" >> ${SRCDIR}/include/git_version_new.h
+	@echo "      character*64 :: git_version_SOLPS =                               &" >> ${SRCDIR}/include/git_version_new.h
 	@echo "     & '`( cd $${SOLPSTOP} ; git describe --dirty --always)`'" >> ${SRCDIR}/include/git_version_new.h
 else
 	@echo "      character*32 :: git_version_ADAS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
-	@echo "      character*32 :: git_version_SOLPS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
+	@echo "      character*64 :: git_version_SOLPS = '0.0.0-0-g0000000'" >> ${SRCDIR}/include/git_version_new.h
 endif
 	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 

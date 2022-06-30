@@ -319,12 +319,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       call cfwuin (nout(4), 1, idum, 'ns')
       call cfwuch (nout(4), 120, lblmn, 'label')
       call b2mwq0 (nout(4), ns, switch)
-! csc UNCOMMENT WITH AD
-!!   ..write header to nout(10)
-!  idum(0) = ns
-!  call cfwuin(nout(10), 1, idum, 'ns')
-!  call cfwuch(nout(10), 120, lblmn, 'label')
-!  call b2mwq0_nodiff(nout(10), ns, switch)
 
 
 * ..return

@@ -366,6 +366,7 @@ c k-enstrophy model
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
       integer :: b2sikt_min_source
+      integer :: b2sikt_kt_source_stab
       real(kind=R8) :: b2sikt_fac_aniso
       real(kind=R8) :: b2sikt_fac_sheath
       real(kind=R8) :: b2sikt_fac_sheath_core
@@ -503,6 +504,9 @@ c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
 c Feedback
       integer :: b2stbc_feedback
+
+c Med
+      integer :: med_style
 
       end type switches
 
@@ -859,6 +863,7 @@ c k-enstrophy model
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_min_source = 0
+      s % b2sikt_kt_source_stab = 1
       s % b2sikt_fac_aniso = 1.0_R8
       s % b2sikt_fac_sheath = 1.0_R8
       s % b2sikt_fac_sheath_core = 0.0_R8
@@ -997,6 +1002,9 @@ c b2stbc_phys
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
+
+c med
+      s % med_style = 0
 
       return
       end subroutine set_defaults_switches
@@ -1379,6 +1387,7 @@ c k-enstrophy model
       call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
+      call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
       call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
@@ -1544,6 +1553,9 @@ c b2trno
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
+
+c Med
+      call ipgeti ('b2mndr_med_style', s%med_style)
 
       return
       end subroutine read_switches
@@ -1971,6 +1983,10 @@ c b2mndr
 c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
+
+c med
+      call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
+     &  'faulty parameter b2mndr_med_style')
          
 
       return

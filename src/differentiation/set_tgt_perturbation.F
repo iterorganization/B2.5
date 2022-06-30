@@ -4,6 +4,7 @@
       use b2mod_transport_namelist_diffv
       use b2mod_input_profile_diffv
       use b2mod_boundary_namelist_diffv
+      use b2mod_neutrals_namelist_diffv
       use b2mod_switches_diffv
       implicit none
       type(switches_diffv), intent(inout) :: switchdiff
@@ -25,11 +26,29 @@
       enepard = 0.0_R8
       enipard = 0.0_R8
       enkpard = 0.0_R8
-      switchdiff%b2sikt_fac_sheath = 0.0_R8
-      switchdiff%b2sikt_fac_sheath_core = 0.0_R8
+      switchdiff%b2tqna_ballooning = 0.0_R8
+      switchdiff%b2tqna_ballooning_rescale = 0.0_R8
       switchdiff%keps_cd = 0.0_R8
       switchdiff%keps_heat = 0.0_R8
       switchdiff%keps_heat_i = 0.0_R8
+      switchdiff%keps_sig = 0.0_R8
+      switchdiff%keps_alf = 0.0_R8
+      switchdiff%keps_visc = 0.0_R8
+      switchdiff%keps_dkt = 0.0_R8
+      switchdiff%keps_dzt = 0.0_R8
+      switchdiff%b2sikt_fac_diss = 0.0_R8
+      switchdiff%b2sikt_fac_diss_core = 0.0_R8 
+      switchdiff%b2sikt_fac_sheath = 0.0_R8
+      switchdiff%b2sikt_fac_sheath_core = 0.0_R8
+      switchdiff%keps_shear = 0.0_R8
+      switchdiff%b2tfhi_fsigkt = 0.0_R8
+      switchdiff%b2sikt_fac_vis_RS = 0.0_R8
+      switchdiff%b2tfhi_fflokt = 0.0_R8
+      switchdiff%b2tfhi_fconkt = 0.0_R8
+      switchdiff%b2tfhi_fflozt = 0.0_R8
+      switchdiff%b2tfhi_fconzt = 0.0_R8
+      switchdiff%b2tfhi_fkt_hie = 0.0_R8
+      switchdiff%b2tfhe_vis_kt = 0.0_R8
       idir = 1 !this indicates the different directions of multidirectional derivative mode
       do ip = 1, nnvar - nsigma_opt
         if (spatial_dep(ip)) then
@@ -41,44 +60,87 @@
         else
 !         non spatially dependent --> specified in b2tqna
           select case (partype(ip))
-          case (1) ! dna
+          ! transport coefficients
+          case (1)
             parm_dnad(idir,paris(ip)) = 1.0_R8 
-          case (2) ! dpa
+          case (2)
             parm_dpad(idir,paris(ip)) = 1.0_R8 
-          case (3) ! hci
+          case (3)
             parm_hcid(idir,paris(ip)) = 1.0_R8
-          case (4) ! hce
+          case (4)
             parm_hced(idir) = 1.0_R8
-          case (5) ! vla
+          case (5)
             parm_vlad(idir,paris(ip)) = 1.0_R8
-          case (7) ! vsa
+          case (7)
             parm_vsad(idir,paris(ip)) = 1.0_R8
-          case (8) ! sig
+          case (8)
             parm_sigd(idir) = 1.0_R8
-          case (9) ! alf
+          case (9)
             parm_alfd(idir) = 1.0_R8
-          case (10) ! enkpar(1,1)
-            enkpard(idir,parib(ip),1) = 1.0_R8
-          case (11) ! b2sikt_fac_sheath
-            switchdiff%b2sikt_fac_sheath(idir) = 1.0_R8
-          case (12) ! b2sikt_fac_sheath_core
-            switchdiff%b2sikt_fac_sheath_core(idir) = 1.0_R8
-          case (13) ! keps_cd
-            switchdiff%keps_cd(idir) = 1.0_R8
-          case (14) ! keps_heat
-            switchdiff%keps_heat(idir) = 1.0_R8
-          case (15) ! keps_heat_i
-            switchdiff%keps_heat_i(idir) = 1.0_R8
-          case (16) ! enepar
-            enepard(idir,parib(ip),1) = 1.0_R8
-          case (17) ! enipar
-            enipard(idir,parib(ip),1) = 1.0_R8 
-          case (18) ! conpar
-            conpard(idir,paris(ip),parib(ip),1) = 1.0_R8 
-          case (19) ! mompar
-            mompard(idir,paris(ip),parib(ip),1) = 1.0_R8 
-          case (20) ! potpar
-            potpard(idir,parib(ip),1) = 1.0_R8 
+          ! boundary conditions
+          case (10)
+            enepard(idir,parib(ip),1) = 1.0_R8     
+          case (11)
+            enipard(idir,parib(ip),1) = 1.0_R8      
+          case (12)
+            conpard(idir,paris(ip),parib(ip),1) = 1.0_R8      
+          case (13)
+            mompard(idir,paris(ip),parib(ip),1) = 1.0_R8      
+          case (14)
+            potpard(idir,parib(ip),1) = 1.0_R8      
+          case (15) 
+            enkpard(idir,parib(ip),1) = 1.0_R8     
+          ! recycling
+          case (16)
+            b2recycd(idir,paris(ip),parib(ip)) = 1.0_R8     
+          ! ballooning switches
+          case (17)
+            switchdiff%b2tqna_ballooning(idir) = 1.0_R8     
+          case (18)
+            switchdiff%b2tqna_ballooning_rescale(idir) = 1.0_R8     
+          ! k-model switches
+          case (19)
+            switchdiff%keps_cd(idir) = 1.0_R8     
+          case (20)
+            switchdiff%keps_heat(idir) = 1.0_R8     
+          case (21)
+            switchdiff%keps_heat_i(idir) = 1.0_R8     
+          case (22)
+            switchdiff%keps_sig(idir) = 1.0_R8     
+          case (23)
+            switchdiff%keps_alf(idir) = 1.0_R8     
+          case (24)
+            switchdiff%keps_visc(idir) = 1.0_R8     
+          case (25)
+            switchdiff%keps_dkt(idir) = 1.0_R8     
+          case (26)
+            switchdiff%keps_dzt(idir) = 1.0_R8     
+          case (27)
+            switchdiff%b2sikt_fac_diss(idir) = 1.0_R8     
+          case (28)
+            switchdiff%b2sikt_fac_diss_core(idir)  = 1.0_R8     
+          case (29)
+            switchdiff%b2sikt_fac_sheath(idir) = 1.0_R8     
+          case (30)
+            switchdiff%b2sikt_fac_sheath_core(idir) = 1.0_R8     
+          case (31)
+            switchdiff%keps_shear(idir) = 1.0_R8     
+          case (32)
+            switchdiff%b2tfhi_fsigkt(idir) = 1.0_R8     
+          case (33)
+            switchdiff%b2sikt_fac_vis_RS(idir) = 1.0_R8     
+          case (34)
+            switchdiff%b2tfhi_fflokt(idir) = 1.0_R8     
+          case (35)
+            switchdiff%b2tfhi_fconkt(idir) = 1.0_R8     
+          case (36)
+            switchdiff%b2tfhi_fflozt(idir) = 1.0_R8     
+          case (37)
+            switchdiff%b2tfhi_fconzt(idir) = 1.0_R8     
+          case (38)
+            switchdiff%b2tfhi_fkt_hie(idir) = 1.0_R8     
+          case (39)
+            switchdiff%b2tfhe_vis_kt(idir) = 1.0_R8     
           case default
             write(*,*) partype(ip)
             call xerrab ('partype out of bounds')

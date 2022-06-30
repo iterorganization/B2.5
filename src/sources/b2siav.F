@@ -191,7 +191,7 @@
           wrk1 = log(geo%cvHz*wrk2)
 
 *       ..poloidal differences of wrk1 on cell faces
-          wrkv = log(geo%vxHz*sqrt(geo%vxBb(:,3)))
+          wrkv = log(geo%vxHz*sqrt(geo%vxBb(:,3))+1.0e-30_R8)
           call diff_p(nCv, nFc, nVx, 1, geo, mpg, wrk1, wrkv, wrkf)
 
 *       ..compute flow and its divergence

@@ -794,7 +794,7 @@ cxpb  Use explicit writing of non-default elements only
       integer ntargsp
       integer nmax, i, ic, ibnd, ifile, itrack
       integer old_file, idone(100), idum(0:9)
-      real (kind=R8) :: sum
+      integer :: sum
       logical open_file, silent_open, done
       external open_file, silent_open, xertst
       character*2  adum
@@ -896,7 +896,7 @@ cxpb  Use explicit writing of non-default elements only
       enddo
 cxpb Normalise surface constituents
       do ibnd = 1, nbnd
-        sum = 0.0_R8
+        sum = 0
         do i = 1, matsurf_nconstituents(ibnd)
           sum = sum + matsurf_nrelconstituents(ibnd,i)
         end do
