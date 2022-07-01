@@ -128,7 +128,7 @@
 *-----------------------------------------------------------------------
 *.computation
 
-*   ..program start-up calls
+!   ..program start-up calls
 #ifdef USE_MPI
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
@@ -140,24 +140,28 @@
       endif
 #endif
       call prgini ('b2ag')
-*   ..open files
+
+!   ..open files
       call cfopen (ninp(0),'b2ag.dat','old','formatted')
-*$$$  call cfopen (ninp(1),'b2mhdeq','old','formatted')
-*     (b2mhdeq is reserved for numerical mhd equilibrium data)
+!$$$  call cfopen (ninp(1),'b2mhdeq','old','formatted')
+!     (b2mhdeq is reserved for numerical mhd equilibrium data)
       call cfopen (nout(0),'b2ag.prt','new','formatted')
       call cfopen (nout(1),'b2fgmtry','new','un*formatted')
-*   ..mark output unit for error messages
+
+!   ..mark output unit for error messages
       call xerset (0)
-*   ..read b2ag.dat file
+
+!   ..read b2ag.dat file
       call b2ag_read_parameters(ninp,nout,nx,ny,nx1,ny1)
-*   ..call principal driver routine
+
+!   ..call principal driver routine
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       call alloc_b2mod_geo(nx,ny)
       call alloc_b2mod_geo2(nx1,ny1,nncutmax)
       call b2agdr (ninp, nout, nx, ny, nx1, ny1)
-*   ..close graphics files
-*     (none)
-*   ..close other files
+!   ..close graphics files
+!     (none)
+!   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
          if (file_open) close(ninp(io))
@@ -167,7 +171,7 @@
          if (file_open) close(nout(io))
       enddo
 
-* ..end of computation
+! ..end of computation
       call dealloc_b2mod_geo
       call dealloc_b2mod_geo2
       call dealloc_b2mod_indirect

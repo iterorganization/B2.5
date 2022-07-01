@@ -66,7 +66,7 @@
      &   rdiv                                                            !srv 05.03.16
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
-     *   wrk5(nFc),wrk6(nFc), wrk7(nFc), wrk8(nFc),
+     *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx), wpo(nCv), wpb(nCv),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
@@ -381,9 +381,9 @@ cwdk                   (original code: simple averaging)
       end if
 
 *   ..apply discretization scheme for density-part of fna_mdf
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),flo_mdf,
-     &  co%cdna(:,:,isb),fna_mdf0(:,:),dv%fna_32(:,:,isb),
-     &  dv%fna_52(:,:,isb))
+      call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb), 
+     &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:), 
+     &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
 
 *   ..compute Rhie-Chow term
       do iFc = 1, nFc
@@ -454,9 +454,9 @@ cwdk                   (original code: simple averaging)
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..apply discretization scheme for density-part of fna_nodrift
-      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),flo_nodrift,
-     &  co%cdna(:,:,isb),dv%fna_nodrift(:,:,isb),dv%fna_32nd(:,0,isb),
-     &  dv%fna_52nd(:,0,isb))
+      call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &     flo_nodrift, co%cdna(:,:,isb), dv%fna_nodrift(:,:,isb), 
+     &     dv%fna_32nd(:,0,isb), dv%fna_52nd(:,0,isb))
 
 *   ..compute _nodrift fluxes
       dv%fna_nodrift(:,0,isb) = dv%fna_nodrift(:,0,isb) - 
@@ -589,7 +589,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         call my_out_us(70,nFc,1,wrk3,'b2tfnb_vaecrbna_th'//chns)
         call my_out_us(70,nFc,1,dv%fnaPSch(1,0,isb),
      &                                'b2tfnb_fnbPSch_th'//chns)
-!        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
+        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
        else
         call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_th'//chns)
