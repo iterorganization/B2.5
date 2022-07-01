@@ -378,10 +378,10 @@ cxpb  Test namelist input
         end do
       end if
 
-#endif
-
 cxpb Fill up array data not given in namelist
       layer_composition = 0.0_R8
+#endif
+
       nbnd = mpg%nCg
       do ibnd = 1, nbnd
         if (backplate_temp(ibnd).eq.0.0_R8)

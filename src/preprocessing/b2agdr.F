@@ -110,7 +110,7 @@
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
       external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
-     &  b2xgbs1, b2wfgm, b2wugm
+     &  b2xgbs, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
 *.documentation-internal
