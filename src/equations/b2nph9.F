@@ -7,7 +7,7 @@
      &  hx, hy, gs, qc, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
-     1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
+     &  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
      &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types

@@ -19,7 +19,7 @@
      *   solveei(:),
      *   solveet(:),
      *   last_solve_5(:),
-     *   last_solve_7(:),                                 !srv 02.04.18
+     *   last_solve_7(:),                                  !srv 02.04.18
      *   last_solve_9(:),
      *   last_solve_11(:),                                 !srv 02.04.18
      *   add_te_corr_to_po(:)  ! IYS 21.09.2018
@@ -31,7 +31,7 @@
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:NNREGMAX)
       real (kind=R8), save :: dtee(0:NNREGMAX)
       real (kind=R8), save :: dtei(0:NNREGMAX)
-      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)   ! IYS 19.12.2017 
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemt(0:NNREGMAX)
@@ -40,14 +40,14 @@
       logical, save :: solveei(0:NNREGMAX)
       logical, save :: solveet(0:NNREGMAX)
       logical, save :: last_solve_5(0:NNREGMAX)
-      logical, save :: last_solve_7(0:NNREGMAX)          !srv 02.04.18
+      logical, save :: last_solve_7(0:NNREGMAX)            !srv 02.04.18
       logical, save :: last_solve_9(0:NNREGMAX)
-      logical, save :: last_solve_11(0:NNREGMAX)         !srv 02.04.18
-      logical, save :: add_te_corr_to_po(0:NNREGMAX)     ! IYS 21.09.2018
+      logical, save :: last_solve_11(0:NNREGMAX)           !srv 02.04.18
+      logical, save :: add_te_corr_to_po(0:NNREGMAX)       ! IYS 21.09.2018
 #endif
       !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
       !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
-      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017
+      real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: dteff
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
@@ -62,10 +62,10 @@
       logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,          !srv 22.05.18
+     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,       !srv 22.05.18
      & write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch,
-     4 corr_core_dn,corr_core_dt,add_te_corr_to_po       ! IYS 19.12.2017
+     4 corr_core_dn,corr_core_dt,add_te_corr_to_po         ! IYS 19.12.2017
 
       contains
 
@@ -91,9 +91,9 @@
       allocate(solveei(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
       allocate(last_solve_5(0:nnreg(0)))
-      allocate(last_solve_7(0:nnreg(0)))        !srv 02.04.18
+      allocate(last_solve_7(0:nnreg(0)))                           !srv 02.04.18
       allocate(last_solve_9(0:nnreg(0)))
-      allocate(last_solve_11(0:nnreg(0)))       !srv 02.04.18
+      allocate(last_solve_11(0:nnreg(0)))                          !srv 02.04.18
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
 #else
       call xertst (nsd.le.nsdmax,
@@ -114,19 +114,19 @@
       solvemo=.true.
       solvemt=.true.
       solvepo=.true.
-      add_te_corr_to_po=.true.            ! IYS 21.09.2018
+      add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
       solveee=.true.
       solveei=.true.
       solveet=.true.
       last_solve_5=.true.
-      last_solve_7=.true.                                            !srv 02.04.18
+      last_solve_7=.true.                                          !srv 02.04.18
       last_solve_9=.true.
-      last_solve_11=.true.                                           !srv 02.04.18
+      last_solve_11=.true.                                         !srv 02.04.18
       numerics_filename='b2.numerics.parameters'
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
       time_factor=1.0_R8
-      write(*,*) 'Allocated space for b2mod_numerics'                !srv 11.11.09
+      write(*,*) 'Allocated space for b2mod_numerics'              !srv 11.11.09
       b2mod_numerics_allocated = .true.
 
       return
@@ -142,19 +142,19 @@
       deallocate(dtmo)
       deallocate(dtee)
       deallocate(dtei)
-      deallocate(corr_core_dn)     ! IYS 19.12.2017
+      deallocate(corr_core_dn)                                     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
       deallocate(solvepo)
-      deallocate(add_te_corr_to_po)            ! IYS 21.09.2018
+      deallocate(add_te_corr_to_po)                                ! IYS 21.09.2018
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveet)
       deallocate(last_solve_5)
-      deallocate(last_solve_7)                                          !srv 02.04.18
+      deallocate(last_solve_7)                                     !srv 02.04.18
       deallocate(last_solve_9)
-      deallocate(last_solve_11)                                         !srv 02.04.18
+      deallocate(last_solve_11)                                    !srv 02.04.18
 #endif
       b2mod_numerics_allocated = .false.
       return

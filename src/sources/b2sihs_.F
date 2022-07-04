@@ -471,29 +471,29 @@
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
+      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
         if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                    !som 16.08.21
-         do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+     &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                   !som 16.08.21
+         do iy = -1, ny                                               !srv 28.08.02 21.07.05 16.10.17 {
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
              wrk0(ix,iy)=0.0e0_R8
            else
-             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
            endif
           enddo
          enddo
         else
-         if (zh_vis_type.eq.0) then                          !som 13.01.22
-          do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+         if (zh_vis_type.eq.0) then                                   !som 13.01.22
+          do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
              wrk0(ix,iy)=0.0e0_R8
             else
-             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
             endif
            enddo

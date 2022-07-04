@@ -18,8 +18,8 @@
      &  te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  cone(-1:nx,-1:ny,0:1,0:2),                                      !srv 02.01.07
-     &  fhePSch(-1:nx,-1:ny,0:1)                                        !srv 13.10.06
+     &  cone(-1:nx,-1:ny,0:1,0:2),                                       !srv 02.01.07
+     &  fhePSch(-1:nx,-1:ny,0:1)                                         !srv 13.10.06
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -54,7 +54,7 @@
          PSch_style = 1
        else
          PSch_style = 2
-      end if
+       end if
        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       end if
 *   ..test nx, ny
@@ -167,9 +167,9 @@
      &                      -ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                       te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cdde(ix,iy,0)*ne(ix,iy)* ! 0.25*2 !som 03.11.21 !srv 02.01.07 {
+            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cdde(ix,iy,0)*ne(ix,iy)*   ! 0.25*2 !som 03.11.21 !srv 02.01.07 {
      &                                                te(ix,iy)
-            cone(ix,iy,1,2) = -0.5e0_R8*PSch*cdde(ix,iy,0)*           ! 0.25*2 !som 03.11.21
+            cone(ix,iy,1,2) = -0.5e0_R8*PSch*cdde(ix,iy,0)*             ! 0.25*2 !som 03.11.21
      &                        ne(leftix(ix,iy),leftiy(ix,iy))*
      &                        te(leftix(ix,iy),leftiy(ix,iy))            !srv 02.01.07 }
            endif

@@ -144,7 +144,7 @@
         call ipgetr ('b2npco_rxg', rxg)
         call ipgetr ('b2npco_pcm0', pcm0)
         call ipgetr ('b2npco_pcm1', pcm1)
-       endif                                                           !srv 07.07.21 }
+       endif                                                          !srv 07.07.21 }
        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')

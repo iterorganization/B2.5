@@ -399,54 +399,6 @@
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
 *
-*     For all the fluxes below, the sign convention is as follows.
-*     Fluxes between poloidal neighbors are positive if directed in the
-*     direction of increasing poloidal (ix) index.
-*     Fluxes between radial neighbors are positive if directed in the
-*     direction of increasing radial (iy) index.
-*
-*     fnb - (-1:nx,-1:ny,0:1) real*8 array.
-*     fnb specifies the flux of one selected atomic species.
-*     If that species has index (is) then fnb(,,)=fna(,,,is).
-*     precisely: (Let fnbx(,)=fnb(,,0) and fnby(,)=fnb(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fnbx(ix,iy) specifies the flux of
-*     the selected atomic species through the face between the
-*     (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnbx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fnby(ix,iy) specifies the flux of
-*     the selected atomic species through the face between the
-*     (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnby(-1:nx,iy) will hold 0.
-*     fnb_mdf is equal to fnb in runs without drifts.
-*
-*     fnb_mdf - (-1:nx,-1:ny,0:1) real*8 array.
-*     fnb_mdf specifies the flux of one selected atomic species.
-*     If that species has index (is) then fnb_mdf(,,)=fna_mdf(,,,is).
-*     precisely: (Let fnbx_mdf(,)=fnb_mdf(,,0) and fnby_mdf(,)=fnb_mdf(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fnbx_mdf(ix,iy) specifies the modified
-*     flux of the selected atomic species through the face between the
-*     (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnbx_mdf(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fnby_mdf(ix,iy) specifies the modified
-*     flux of the selected atomic species through the face between the
-*     (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnby_mdf(-1:nx,iy) will hold 0.
-*
-*     fnb_fcor - (-1:nx,-1:ny,0:1) real*8 array.
-*     fnb_fcor specifies the flux of one selected atomic species
-*     for calculating momentum transport.
-*     If that species has index (is) then fnb_fcor(,,)=fna_fcor(,,,is).
-*     precisely: (Let fnbx_fcor(,)=fnb_fcor(,,0) and fnby_fcor(,)=fnb_fcor(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fnb_fcorx(ix,iy) specifies the flux of
-*     the selected atomic species through the face between the
-*     (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnb_fcorx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fnb_fcory(ix,iy) specifies the flux of
-*     the selected atomic species through the face between the
-*     (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnb_fcory(-1:nx,iy) will hold 0.
-*     fnb_fcor is equal to fnb in runs without drifts.
-*
 *     ni - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ni(ix,iy,0) specifies the total atom
 *     density on the (ix,iy) cell. It will hold that 0.lt.ni(,0).

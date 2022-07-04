@@ -141,6 +141,7 @@
       integer, save :: b2mndt_style = 1
       integer, save :: ird_aver = 0
       integer, save :: zn_rescale = 0
+      integer, save :: Zhdanov_closure = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
       integer, save :: iappend = 0
       real (kind=R8) ::
@@ -1287,15 +1288,16 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
-!      call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
-!    .  'Currents assignment to ions only supported for single '//
-!    .  'hydrogenic species!')
        call ipgeti ('b2sigp_style', b2sigp_style)
-       if (.not.(k.eq.1.or.b2sigp_style.ne.2)) then
-         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
-     .    'for plasmas with more than one hydrogenic species!'
-         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
-     .    'for plasmas with more than one hydrogenic species!'
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)
+       if (.not.(k.eq.1.or.b2sigp_style.ne.2.or.Zhdanov_closure.eq.1))
+     >  then
+         write(0,'(3a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species ',
+     .    'unless using Zhdanov closure!'
+         write(6,'(3a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species ',
+     .    'unless using Zhdanov closure!'
        endif
 *
        call ipgeti ('b2news_poteq', pot_eq)

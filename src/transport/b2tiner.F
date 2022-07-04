@@ -76,7 +76,7 @@
 
 c Drift terms
       fchinert   = 0.0e0_R8
-      fchinert_a =0.0e0_R8
+      fchinert_a = 0.0e0_R8
       if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8.and.
      .   no_current.eq.0)then                                            !srv 07.07.99
 
@@ -213,7 +213,7 @@ c Drift terms
       if (inert_all_ions.eq.0) then
        do is = 0, ns-1
         if (is.eq.ismain) then
-         fchinert_a(:,:,:,is) = fchinert(:,:,:) 
+         fchinert_a(:,:,:,is) = fchinert(:,:,:)
         else
          fchinert_a(:,:,:,is) = 0.0_R8
         endif

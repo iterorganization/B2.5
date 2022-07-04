@@ -113,11 +113,11 @@
 *     It will hold that -1.lt.qz1(,,0).lt.1 and 0.lt.qz1(,,1).le.1.
 *
 *     qc1 - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc1(,).le.1.
 *
 *     gs1 - (-1:nx1,-1:ny1,0:2) real*8 array, output.
@@ -134,9 +134,9 @@
 *     pbs1 - (-1:nx1,-1:ny1,0:1) real*8 array.
 *     (Let pbsx(,)=pbs1(,,0) and pbsy(,)=pbs1(,,1).)
 *     For (ix,iy) in (-1:nx1,-1:ny1), pbsx(ix,iy) specifies the product
-*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs1 for the form of interpolation employed.
 *
 *     (parameters in common:)

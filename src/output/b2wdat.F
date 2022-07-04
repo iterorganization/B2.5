@@ -343,17 +343,17 @@ c     calculate coordinates of cell centre
         wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))  !srv 18.12.14 {
         call my_out(70,nx,ny,wrk0,'crc_')
         call b2wdat_open(70,'crc')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
-        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'          !srv 07.08.15
+        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'            !srv 07.08.15
         do iy = -1, ny
-         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)              !srv 07.08.15
+         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                !srv 07.08.15
         enddo
         close(70)
         wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
         call my_out(70,nx,ny,wrk1,'czc_')
         call b2wdat_open(70,'czc')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
-        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'          !srv 07.08.15
+        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'            !srv 07.08.15
         do iy = -1, ny
-         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)              !srv 07.08.15
+         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                !srv 07.08.15
         enddo
         close(70)
 
@@ -361,41 +361,41 @@ c     calculate coordinates of cell centre
 
       end if
 
-      if (iout.eq.1) then                                         !srv begin if for iout
+      if (iout.eq.1) then                                           !srv begin if for iout
 
        Total_current=0.0_R8
        Total_abscurrent=0.0_R8
        Total_flux=0.0_R8
        Total_absflux=0.0_R8
        wrk2=0.0_R8
-       call b2xpro (nx, ny, ns, mp, am, na, ro)                   !srv 30.01.15 {
+       call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 30.01.15 {
        call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
        call my_out(70,nx,ny,cst,'usound_cst')
        call my_out(70,nx,ny,ro,'ro')
        call my_out(70,nx,ny,rz,'rz')
-       call my_out(70,nx,ny,pr,'pr')                              !srv 30.01.15 }
-       call my_out(70,nx,ny,pz,'pz')                              !srv 30.01.15 }
-       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                    !srv
-       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                    !srv
+       call my_out(70,nx,ny,pr,'pr')                                !srv 30.01.15 }
+       call my_out(70,nx,ny,pz,'pz')                                !srv 30.01.15 }
+       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                      !srv
+       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                      !srv
 
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
         call my_out(70,nx,ny,wrk0,'pb'//chns)
-        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)             !srv
+        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)               !srv
         call my_out(70,nx,ny,cst_a,'usound'//chns)
         wrk1 = ua(:,:,is)/wrk0
-        call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                  !srv 24.03.10 }
-        call my_out(70,nx,ny,uadia(-1,-1,0,is),'uadiax'//chns)    !srv
-        call my_out(70,nx,ny,uadia(-1,-1,1,is),'uadiay'//chns)    !srv
-        call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'vaecrbx'//chns)  !srv
-        call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'vaecrby'//chns)  !srv
-        call my_out(70,nx,ny,vadia(-1,-1,0,is),'vadiax'//chns)    !srv
-        call my_out(70,nx,ny,vadia(-1,-1,1,is),'vadiay'//chns)    !srv
-        call my_out(70,nx,ny,wadia(-1,-1,0,is),'wadiax'//chns)    !srv
-        call my_out(70,nx,ny,wadia(-1,-1,1,is),'wadiay'//chns)    !srv
-        call my_out(70,nx,ny,fna(-1,-1,0,is),'fnax'//chns)        !srv
-        call my_out(70,nx,ny,fna(-1,-1,1,is),'fnay'//chns)        !srv
+        call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                    !srv 24.03.10 }
+        call my_out(70,nx,ny,uadia(-1,-1,0,is),'uadiax'//chns)      !srv
+        call my_out(70,nx,ny,uadia(-1,-1,1,is),'uadiay'//chns)      !srv
+        call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'vaecrbx'//chns)    !srv
+        call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'vaecrby'//chns)    !srv
+        call my_out(70,nx,ny,vadia(-1,-1,0,is),'vadiax'//chns)      !srv
+        call my_out(70,nx,ny,vadia(-1,-1,1,is),'vadiay'//chns)      !srv
+        call my_out(70,nx,ny,wadia(-1,-1,0,is),'wadiax'//chns)      !srv
+        call my_out(70,nx,ny,wadia(-1,-1,1,is),'wadiay'//chns)      !srv
+        call my_out(70,nx,ny,fna(-1,-1,0,is),'fnax'//chns)          !srv
+        call my_out(70,nx,ny,fna(-1,-1,1,is),'fnay'//chns)          !srv
         call my_out(70,nx,ny,fna_mdf(-1,-1,0,is),'fnax_mdf'//chns)  !srv 13.10.06
         call my_out(70,nx,ny,fna_mdf(-1,-1,1,is),'fnay_mdf'//chns)  !srv 13.10.06
         call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'fna_eirx'//chns)  !srv 14.07.10
@@ -410,21 +410,21 @@ c     calculate coordinates of cell centre
      *                      'fna_nodriftx'//chns)
         call my_out(70,nx,ny,fna_nodrift(-1,-1,1,is),
      *                      'fna_nodrifty'//chns)
-        call my_out(70,nx,ny,sna(-1,-1,0,is),'sna0'//chns)        !srv 25.02.16
-        call my_out(70,nx,ny,sna(-1,-1,1,is),'sna1'//chns)        !srv 25.02.16
+        call my_out(70,nx,ny,sna(-1,-1,0,is),'sna0'//chns)          !srv 25.02.16
+        call my_out(70,nx,ny,sna(-1,-1,1,is),'sna1'//chns)          !srv 25.02.16
 
-        call my_out(70,nx,ny,cdna(-1,-1,0,is),'cdnax'//chns)      !srv
-        call my_out(70,nx,ny,cdna(-1,-1,1,is),'cdnay'//chns)      !srv
-        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'cdpax'//chns)      !srv
-        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'cdpay'//chns)      !srv
-        call my_out(70,nx,ny,cddi(-1,-1,0,is),'cddix'//chns)      !srv 13.10.06
-        call my_out(70,nx,ny,cddi(-1,-1,1,is),'cddiy'//chns)      !srv 13.10.06
+        call my_out(70,nx,ny,cdna(-1,-1,0,is),'cdnax'//chns)        !srv
+        call my_out(70,nx,ny,cdna(-1,-1,1,is),'cdnay'//chns)        !srv
+        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'cdpax'//chns)        !srv
+        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'cdpay'//chns)        !srv
+        call my_out(70,nx,ny,cddi(-1,-1,0,is),'cddix'//chns)        !srv 13.10.06
+        call my_out(70,nx,ny,cddi(-1,-1,1,is),'cddiy'//chns)        !srv 13.10.06
         call my_out(70,nx,ny,cvsa_an(-1,-1,0,is),'cvsax_an'//chns)
         call my_out(70,nx,ny,cvsa_cl(-1,-1,0,is),'cvsax_cl'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'cvsay'//chns)
-        call my_out(70,nx,ny,kinrgy(-1,-1,is),'kinrgy'//chns)     !srv 08.10.04
-        call my_out(70,nx,ny,vsa0(-1,-1,is),'vsaAN'//chns)        !srv 25.02.16
+        call my_out(70,nx,ny,kinrgy(-1,-1,is),'kinrgy'//chns)       !srv 08.10.04
+        call my_out(70,nx,ny,vsa0(-1,-1,is),'vsaAN'//chns)          !srv 25.02.16
 
         wrk0=0.0d0
         do iy = -1,ny
@@ -432,12 +432,12 @@ c     calculate coordinates of cell centre
             if (leftix(ix,iy).ne.-2) wrk0(ix,iy)=
      1        wbbl(ix,iy,2)/wbbl(ix,iy,3)
      4       *vaecrb(ix,iy,0,is)*
-     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/       !srv 01.03.00
-     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))          !srv 01.03.00
+     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/         !srv 01.03.00
+     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 01.03.00
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
           enddo
         enddo
-        call my_out(70,nx,ny,wrk0,'fvaecrbx'//chns)               !srv
+        call my_out(70,nx,ny,wrk0,'fvaecrbx'//chns)                 !srv
 
         wrk1=0.0d0
         do iy = -1,ny
@@ -445,15 +445,15 @@ c     calculate coordinates of cell centre
             if (leftix(ix,iy).ne.-2) wrk1(ix,iy)=
      1        wbbl(ix,iy,2)/wbbl(ix,iy,3)
      4       *vadia(ix,iy,0,is)*
-     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/       !srv 01.03.00
-     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))          !srv 01.03.00
+     5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/         !srv 01.03.00
+     6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))            !srv 01.03.00
      7       *(na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
           enddo
         enddo
-        call my_out(70,nx,ny,wrk1,'fvadiax'//chns)                !srv
+        call my_out(70,nx,ny,wrk1,'fvadiax'//chns)                  !srv
 
         wrk0=fna(:,:,0,is)-wrk0-wrk1
-        call my_out(70,nx,ny,wrk0,'fdifx'//chns)                  !srv
+        call my_out(70,nx,ny,wrk0,'fdifx'//chns)                    !srv
 
         wrk0=0.0d0
         do iy = -1, ny
@@ -461,35 +461,35 @@ c     calculate coordinates of cell centre
             if (bottomiy(ix,iy).ne.-2)
      >        wrk0(ix,iy)=vaecrb(ix,iy,1,is)*(na(ix,iy,is)
      &          +na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8*
-     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/   !srv 01.03.00
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
+     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     !srv 01.03.00
+     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 01.03.00
           enddo
         enddo
-        call my_out(70,nx,ny,wrk0,'fvaecrby'//chns)               !srv
+        call my_out(70,nx,ny,wrk0,'fvaecrby'//chns)                 !srv
         wrk1=0.0d0
         do iy = -1, ny
           do ix = -1, nx
             if (bottomiy(ix,iy).ne.-2)
      >        wrk1(ix,iy)=vadia(ix,iy,1,is)*(na(ix,iy,is)
      &          +na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8*
-     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/   !srv 01.03.00
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00
+     5       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     !srv 01.03.00
+     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))      !srv 01.03.00
           enddo
         enddo
-        call my_out(70,nx,ny,wrk1,'fvadiay'//chns)                !srv
+        call my_out(70,nx,ny,wrk1,'fvadiay'//chns)                  !srv
         wrk0=fna(:,:,1,is)-wrk0-wrk1
-        call my_out(70,nx,ny,wrk0,'fdify'//chns)                  !srv
+        call my_out(70,nx,ny,wrk0,'fdify'//chns)                    !srv
 
-        call my_out(70,nx,ny,fmo(-1,-1,0,is),'fmox'//chns)        !srv 24.02.10
+        call my_out(70,nx,ny,fmo(-1,-1,0,is),'fmox'//chns)          !srv 24.02.10
         call my_out(70,nx,ny,fmo(-1,-1,1,is),'fmoy'//chns)
 
-        call b2wdat_open(70,'Total_flux_pm'//chns)                !srv 19.02.02 { 26.09.17
+        call b2wdat_open(70,'Total_flux_pm'//chns)                  !srv 19.02.02 { 26.09.17
         write (70,*) '  N      Total_flux    Total_|flux| '
         do iy = mintopcut,0,-1
           Total_flux(iy) = 0.0d0
           Total_absflux(iy) = 0.0d0
           do ix=-1,nx
-            if(on_closed_surface(ix,iy)) then                  ! for CORE
+            if(on_closed_surface(ix,iy)) then                       ! for CORE
               Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,is)
               Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,is))
             endif

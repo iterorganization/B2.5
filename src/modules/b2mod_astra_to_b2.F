@@ -1,4 +1,4 @@
-      module b2mod_astra_to_b2                              !srv 28.07.11 {
+      module b2mod_astra_to_b2                                !srv 28.07.11 {
        use b2mod_types
        implicit none
        

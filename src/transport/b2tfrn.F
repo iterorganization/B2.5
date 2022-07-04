@@ -74,13 +74,13 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: no_hybr = 0
       integer, save :: drift_style
-      integer, save :: Zhdanov_closure = 0                              !som 09.07.21
-      integer, save :: Zhdanov_test = 0                                 !som 09.07.21
-      integer, save :: Zhdanov_vel_heat = 1                             !som 09.07.21
+      integer, save :: Zhdanov_closure = 0                               !som 09.07.21
+      integer, save :: Zhdanov_test = 0                                  !som 09.07.21
+      integer, save :: Zhdanov_vel_heat = 1                              !som 09.07.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
-     &                 iout_b2npmo =0
+     &                 iout_b2npmo = 0
       integer, save :: style = 2                                         !srv 13.01.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
@@ -142,9 +142,9 @@
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
-        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 09.07.21
-        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 09.07.21
-        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 09.07.21
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 09.07.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 09.07.21
+        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 09.07.21
         if (redef_gmtry.eq.0) then
           drift_style = 1
         else
@@ -660,11 +660,11 @@ c Drift terms
             fhi_eir(ix,iy,1)     = 0.0_R8
           else
 !         flo_eir = cvlb(ix,iy,1)+(wedia(ix,iy,1)+vbecrb(ix,iy,1))*      !srv 14.07.10
-!       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-!        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-!          (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-!           +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-!          (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
+!     &  (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+!     &  (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
+!     &    (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
+!     &     +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
+!     &    (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
             if(drift_style.eq.0) then
               fle_eir = 0.5_R8*
      1         ((veecrb(ix,iy,1)*xvecrb+wedia(ix,iy,1)*xwdia)*
@@ -688,7 +688,7 @@ c Drift terms
      &       2.0_R8
             do is = 0,ns-1                                               !som 07.11.21
               if (.not.is_neutral(is)) then
-                if(no_Ptncr_x_co.eq.0) then
+                if(no_Ptncr_y_co.eq.0) then
                   cone_eir = hybr(fle_eir,cdna(ix,iy,1,is))
                 else
                   cone_eir = cdna(ix,iy,1,is)

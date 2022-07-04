@@ -9905,7 +9905,9 @@ C  SKIP READING REST OF THIS BLOCK
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
         IREAD=0
-        READ (IUNIN,6666) idum(0:2) ! NPRNLI, NINITL_READ, NPRMUL
+        READ (IUNIN,'(A72)') ZEILE
+        call fix_integer_input(zeile,3)
+        READ (ZEILE,6666) idum(0:2) ! NPRNLI, NINITL_READ, NPRMUL
         WRITE(IUNOT,6666) idum(0:2)
         IF (idum(0).LE.0) GOTO 1350
         READ (IUNIN,'(A80)') ZEILE ! NPTST,NTMSTP
@@ -12634,7 +12636,7 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
      .     convert_position(ix-rightcut(2),nsize,nsize1,3,atend)
          else if (.not.flip) then
           if (ix.eq.0) then
-            conformal_convert=0
+           conformal_convert=0
           else if (ix.eq.leftcut(1)-1) then
            conformal_convert=leftcut1(1)-1
           else if (ix.eq.leftcut(1)) then
@@ -12660,7 +12662,7 @@ c If mapping for LSN to USN, or vice-versa, invert the poloidal indexing order
            nsize1 = leftcut1(1)
            conformal_convert = convert_position(ix,nsize,nsize1,1,atend)
           else if (nncut.eq.1 .and.
-     .            ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
+     .             ix.gt.leftcut(1) .and. ix.lt.rightcut(1)-1) then
            nsize = rightcut(1)-leftcut(1)
            nsize1 = rightcut1(1)-leftcut1(1)
            conformal_convert = leftcut1(1) +

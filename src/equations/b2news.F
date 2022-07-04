@@ -777,7 +777,8 @@ cxpb
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
      &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
-     &           vol, pbs, flob, conb, sna(-1,-1,0,is),pcca(-1,-1,0,is),
+     &           vol, pbs, flob, conb, sna(-1,-1,0,is),
+     &           pcca(-1,-1,0,is),
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
@@ -885,13 +886,8 @@ cxpb
               call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
      1         BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,            !xpb  !srv 13.01.17
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
-     &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
+     &         cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
      &         fchstoch, .false.)                                        !djm Jan2017 !srv 17.12.13
-              call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
-     1         BoRiS, vol, hx, te, po, ne, na, vedia, veecrb,            !xpb  !srv 13.01.17
-     &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
-     &         cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06 !som 03.11.21
-     &         fchstoch, .false.)                             !djm Jan2017 !srv 17.12.13
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
      1         vol, hx, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,

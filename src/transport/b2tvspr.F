@@ -22,7 +22,6 @@
      &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper(-1:nx,-1:ny,0:1)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -99,10 +98,10 @@
      &            (rza(ix,iy,is)*na(ix,iy,is)+
      &            rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is)))
-                
-                if (dia_lim_all_ions .eq. 1) then        
+
+                if (dia_lim_all_ions .eq. 1) then
                  t0 = max(ti(ix,iy),ti(bottomix(ix,iy),bottomiy(ix,iy)))
-                 vbar = sqrt(8.0_R8 * t0 / (pi * am(is)*mp))              !som 11.11.21 
+                 vbar = sqrt(8.0_R8 * t0 / (pi * am(is)*mp))            !som 11.11.21
                  va(ix,iy,1) = va(ix,iy,1)/
      &                        (1.0_R8 + abs(va(ix,iy,1))/vbar)
                 endif

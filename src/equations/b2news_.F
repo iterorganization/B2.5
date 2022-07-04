@@ -917,7 +917,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call my_out(70,nx,ny,po,'b2news__po'//charns)
       endif                                                              !srv 12.07.05 }
 
-      if(ion_vlct_restrict .ne. 0 ) then                             !iyv 06.02.14
+      if(ion_vlct_restrict .ne. 0 ) then                                 !iyv 06.02.14
         call b2xprz (nx, ny, ns, mp, am, na, rz)
         call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
         wrk0(:,:)=sqrt(pz(:,:)/rz(:,:))*abs(bb(:,:,0)/bb(:,:,3))
@@ -925,7 +925,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
       else
         cssb = 0.0_R8
-      endif                                                          !iyv 06.02.14
+      endif                                                              !iyv 06.02.14
 
 #ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
 #ifdef WITH_FTIMINGS

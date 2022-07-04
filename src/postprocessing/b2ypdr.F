@@ -462,14 +462,6 @@
 *     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
-*
 *     ne - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ne(ix,iy) specifies
 *     the electron density on the (ix,iy) cell.

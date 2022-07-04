@@ -312,7 +312,7 @@
 				<description>
 					When b2agdr_redef_qc.eq.1, the cosine of the angle between the left face of a cell and the magnetic field direction is interpolated from the values at the cell centers.
 					When b2agdr_redef_qc.eq.0, we only use information from the cell at the right of the face. This is the treatment used up to version 3.0.6, inclusively.
-					This switch is superseded by b2agmt_qc_style.
+					This switch is only active if b2agmt_qc_style.eq.0.
 				</description>
 			</switch>
 			<switch>
@@ -790,7 +790,7 @@
 					*----------------------------------------------------
 					*        | -14   |  +   |  -   |  +   |  +   |  +   |
 					*----------------------------------------------------
-        </description>
+				</description>
 			</switch>
 			<switch>
 				<name>b2mndr_cpu</name>
@@ -1688,44 +1688,44 @@
 				</switch>
 			</switchgroup>
 			<switch>
-			  <name>b2stbc_bcene_16_style</name>
-			  <default>0</default>
-			  <type>integer</type>
-			  <description>
+				<name>b2stbc_bcene_16_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
 				If bcene_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhe_mdf. Recommended when running cases with drifts.
-			  </description>
+				</description>
 			</switch>
 			<switch>
-			  <name>b2stbc_bceni_16_style</name>
-			  <default>0</default>
-			  <type>integer</type>
-			  <description>
+				<name>b2stbc_bceni_16_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
 				If bceni_16_style.eq.1, the boundary condition is enforced using the modified fluxes fhi_mdf. Recommended when running cases with drifts.
-			  </description>
+				</description>
 			</switch>
 			<switch>
-			  <name>b2stbc_bc_ref</name>
-			  <default>0.01</default>
-			  <type>real</type>
-			  <description>
+				<name>b2stbc_bc_ref</name>
+				<default>0.01</default>
+				<type>real</type>
+				<description>
 				Under-relaxation factor used for feedback scheme in boundary condition types BCCON = 16, 19, 22, 23, 26, and 27.
-			  </description>
+				</description>
 			</switch>
 			<switch>
-			  <name>b2stbc_bc_ref_te</name>
-			  <default>0.01</default>
-			  <type>real</type>
-			  <description>
+				<name>b2stbc_bc_ref_te</name>
+				<default>0.01</default>
+				<type>real</type>
+				<description>
 				Under-relaxation factor used for feedback scheme in boundary condition type BCENE = 16 (with bcene_16_style.eq.1).
-			  </description>
+				</description>
 			</switch>
 			<switch>
-			  <name>b2stbc_bc_ref_ti</name>
-			  <default>0.01</default>
-			  <type>real</type>
-			  <description>
+				<name>b2stbc_bc_ref_ti</name>
+				<default>0.01</default>
+				<type>real</type>
+				<description>
 				Under-relaxation factor used for feedback scheme in boundary condition types BCENI = 16 (with bceni_16_style.eq.1), 24, and 27.
-			  </description>
+				</description>
 			</switch>
 			<switch>
 				<name>b2stbc_secmodel</name>
@@ -1962,7 +1962,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-				  vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -2861,7 +2861,7 @@
 					For b2wdat_iout values 1 to 3, the value of append indicates the frequency, in number of main B2.5 timesteps, at which the files are appended. Data from the last timestep is always included.
 				</description>
 			</switch>
-            		<switch>
+			<switch>
 				<name>my_out_digits</name>
 				<default>6 or 15</default>
 				<type>integer</type>
@@ -6052,9 +6052,9 @@
 						18 : fractional drop condition. Not yet working.
 						19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
 						20 : feedback boundary condition with constant temperature, as per type [16] but with 'type20_' switches and a different feedback scheme.
-						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
-						  	ENEPAR(,1) specifies the desired electron temperature in eV.
-						    ENEPAR(,2) is the strength of the feedback
+						21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away.
+							ENEPAR(,1) specifies the desired electron temperature in eV.
+							ENEPAR(,2) is the strength of the feedback.
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
 				</description>
 			</switch>

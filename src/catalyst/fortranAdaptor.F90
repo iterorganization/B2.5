@@ -28,7 +28,7 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
   real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
       & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
   real :: start, finish
-  
+
   call cpu_time(start)
 
   !velocity(10,10,1) = 0

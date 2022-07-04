@@ -23,7 +23,7 @@ c
       
       integer ix,iy,ix1,ix2,iy1,iy2
 
-      corner=0
+      corner=0.0_R8
       do iy=-1,ny
         do ix=-1,nx
           if(leftix(ix,iy).ne.-2.and.bottomiy(ix,iy).ne.-2) then

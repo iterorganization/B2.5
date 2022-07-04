@@ -524,7 +524,7 @@
           ireg1 = cbirea1 + ireg - cbirea
         end if
         write (nput,'(a/2x,i2,2x,a)') '*region', ireg1,
-     &      ''''//trim(id1)//''''
+     &    ''''//trim(id1)//''''
        else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
         call xertst (streql(id1(1:4),'east'),
      &    'faulty input under *region: '//trim(id1))

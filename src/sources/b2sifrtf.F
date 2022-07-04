@@ -239,7 +239,6 @@
          if(isb.ne.is .and.
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
           KabVp=fkabvp(isb,is)
-*       ..contribution from friction between ions
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
@@ -366,7 +365,7 @@
 #else
 !$OMP& SHARED(phm3)
 #endif
-!$OMP& REDUCTION(+: smbtfial)
+!$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
       if(Zhdanov_closure.eq.1.and.Zhdanov_test.eq.0.and.
      &   Zhdanov_tf_fr.eq.1) then                                       !som 01.07.2021

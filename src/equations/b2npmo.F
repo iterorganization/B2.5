@@ -92,7 +92,7 @@
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),   !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                  !som 08.10.21
-     2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
+     &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
      &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
       logical solving
@@ -262,12 +262,6 @@
           main_lightest = main_lightest .and.
      .     nint(am(is)).ge.nint(am(ismain))
         end do
-        if (.not.main_lightest .and. style.eq.2) then
-         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
-     .    'for plasmas where the main species is not the lightest one!'
-         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
-     .    'for plasmas where the main species is not the lightest one!'
-        endif
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
@@ -284,6 +278,13 @@
         call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 13.08.21
         call ipgeti ('b2tral_Zhdanov_vish', Zhdanov_vish)              !som 18.10.21
         call ipgetr ('b2npmo_smbvi_factor', smbvi_factor)              !som 14.12.21
+        if (.not.main_lightest .and. style.eq.2 .and.
+     .      Zhdanov_closure.eq.0) then
+         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas where the main species is not the lightest one!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas where the main species is not the lightest one!'
+        endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -611,7 +612,7 @@
          endif
        endif
        if (balance_netcdf.ne.0) then
-         fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
+         fmo_b2nxfv(:,:,:,is)=flubv                                    !djm Jan2017
        endif
        call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb

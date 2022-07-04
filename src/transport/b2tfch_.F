@@ -79,7 +79,7 @@
       integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
       integer, save :: pot_eq = 1
-      integer, save :: no_current= 0
+      integer, save :: no_current = 0
 
       character(3) :: chns, chns0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
@@ -139,7 +139,7 @@
        call ipgeti ('b2tfhe_no_current',no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       endif
+      endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -198,7 +198,7 @@
       do iy = -1, ny
        do ix = -1, nx                                                    !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2)then                                      !srv 26.11.02
-         conc(ix,iy,0)    = 0.0e0_R8
+         conc(ix,iy,0)    = 0.0_R8
         else                                                             !srv 26.11.02 }
          conc(ix,iy,0) = csig(ix,iy,0)
          if(fch_ion_neutral.ne.0.0e0_R8 .and.
@@ -225,7 +225,7 @@
 
 *   ..compute concy
       do ix = -1, nx
-       conc(ix,-1,1) = 0
+       conc(ix,-1,1) = 0.0_R8
       enddo
       do iy = 0, ny
        do ix = -1, nx
@@ -254,14 +254,14 @@
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,0)  = 0.0e0_R8
-            conc(ix,iy,0) = 0.0e0_R8
+            fch(ix,iy,0)  = 0.0_R8
+            conc(ix,iy,0) = 0.0_R8
           enddo
         enddo
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fch(ix,iy,1)  = 0.0e0_R8
-            conc(ix,iy,1) = 0.0e0_R8
+            fch(ix,iy,1)  = 0.0_R8
+            conc(ix,iy,1) = 0.0_R8
           end do
         enddo
       enddo
@@ -350,7 +350,7 @@
        call my_out(70,nx,ny,fchanml(-1,-1,1),
      &    'b2tfch__for_po_fchanmly')
        call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch__for_po_fch_px')
-!      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__fch_py')
+!      call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch__for_po_fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),
      &    'b2tfch__for_po_csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),

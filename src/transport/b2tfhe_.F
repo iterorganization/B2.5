@@ -181,9 +181,9 @@ csw 10oct2012
      &        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))              !srv 25.01.02 was 5/2
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))                !srv 17.05.99 11.03.00
      &       *vedia(ix,iy,0)*vdia_par                                    !srv 17.05.99 11.03.00 21.04.00 25.01.02 18.01.07
-!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 13.09.02 {
+!     1       *(bb(ix,iy,2)/bb(ix,iy,3)+                                 !srv 13.09.02 {
 !     2       bb(leftix(ix,iy),leftiy(ix,iy),2)/
-!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                 !srv 13.09.02 }
+!     3       bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0e0_R8                !srv 13.09.02 }
            endif                                                         !srv 26.11.02
           enddo
          enddo
@@ -265,7 +265,7 @@ csw 10oct2012
      &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8           !srv 13.06.06 }
      &    -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                         !srv 30.12.09 13.01.17
 
-        if(lim_flux.eq.1 .and. conductive_limit.eq.0) then               !srv 04.02.03 17.01.12
+         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then              !srv 04.02.03 17.01.12
 
           if(no_Ptncr_x_he.eq.0) then
            cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0_R8)
@@ -507,7 +507,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
             ehx = 0.0_R8                                                 !srv 27.02.13
           endif                                                          !srv 30.12.09 }
 
-        else !lim_flux                                                   !srv 04.02.03 {
+         else !lim_flux                                                  !srv 04.02.03 {
 
           if(no_Ptncr_x_he.eq.0) then                                    !srv 06.07.06 {
             cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0))

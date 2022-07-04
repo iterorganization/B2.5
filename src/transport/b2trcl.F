@@ -97,8 +97,8 @@
       integer, save :: Zhdanov_cond = 1                                  !som 22.06.21
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
-     &                 integral_modeling = 1
+     &                 iout_b2npp7 = 0, iout_b2nppo = 0,
+     &                 iout_b2npmo = 0, integral_modeling = 1
       character(3) chns, chns0                                           !srv 17.06.08
       integer mintopcut                                                  !lk 19.09.07
       integer mode

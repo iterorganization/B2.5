@@ -115,7 +115,7 @@
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi),
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol),                                 !IYS 27.01.17
-     &  sna_puff(nspecies),  !sna_eir_tot(nspecies), 
+     &  sna_puff(nspecies),  !sna_eir_tot(nspecies),
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
 #endif
@@ -151,7 +151,7 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
+      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8         !iyv 07.03.18
       logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -699,7 +699,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &                 main_call)
 
 *   ..main part of implementation of method of effective sources (ES)
-        if (sna_corr .gt. 0.0_R8 ) then                                  !iyv 07.03.18 {
+        if (sna_corr .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
           if ( iout .ne. 0 )
      >      write(*,*) '******* sna_eir correction calculations *******'
           sna_core = 0.0_R8
@@ -727,7 +727,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
 !              do im = 1, nnmoli
 !                if (mlcmp(ia,im).gt.0) then
-!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
+!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
 !     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
 !                end if
@@ -822,13 +822,13 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
             sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
             sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
 
-! { IYS 12.01.2018, 
+! { IYS 12.01.2018,
 !      sna_eir = 0.0_R8
-!          if (ank_tracing .gt. 0) then    
+!          if (ank_tracing .gt. 0) then
 !            do iy = -1, ny
 !              do ix = -1, nx
 !                sna_eir(k) = sna_eir(k)*t(k)
-!     &              sna0(ix,iy,0,is) + 
+!     &              sna0(ix,iy,0,is) +
 !     &              sna0(ix,iy,1,is) * na(ix,iy,is)
 !              enddo
 !            enddo
@@ -904,21 +904,21 @@ cwdk these are now put back into the constant part of the sources (0-component)
 
 #ifdef ASTRA
         if (use_astra.ne.0) then
-          do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
+          do is = 0, ns-1                                                !srv 28.07.11 20.02.12 {
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,:,0,is)+
      &             sna0_eir(:,:,1,is)*na(:,:,is)
               call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
             endif
-          enddo                                                           !srv 28.07.11 20.02.12 }
+          enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*te(:,:)+she0_eir(:,:,2)*ne+
      &     she0_eir(:,:,3)*ne*te
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)              !srv 11.06.13
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*ti+shi0_eir(:,:,2)*ni(:,:,0)+
      &     shi0_eir(:,:,3)*ni(:,:,0)*ti
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1284,8 +1284,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         call my_out(70,nx,ny,
      .              fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
         endif
-       enddo 
-      endif                                                           
+       enddo
+      endif
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1

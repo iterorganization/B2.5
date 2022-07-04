@@ -861,7 +861,7 @@ c*** Limiter configuration. Add the CCW target face
      ,                        'Trying to close a target different ',
      ,                        'from the opened one.'
                         write(*,*) 'Segment ',lwldlis(j,il),
-     ,                                   ',  targets: ',k,it(ke)
+     ,                                      ',  targets: ',k,it(ke)
                         write(*,*) 'List ',il
                         write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
                         write(*,*) 'it : ',(it(i),i=1,kk)
@@ -873,7 +873,7 @@ c*** Limiter configuration. Add the CCW target face
                       luwrk(kn)=lwldlis(j,il)
                       lewrk(kn)=leirlis(j,il)
                       k=0
-                   else if(kb.ne.0) then !}{
+                    else if(kb.ne.0) then !}{
                       write(*,*) 'b2pwltrg: unexpected error. ',
      ,                         'Trying to open a target having one ',
      ,                         'already opened.'
@@ -956,7 +956,7 @@ ccc*** Order elements of original plot zone in CCW direction
         end do
         deallocate(lis_ind)
 
-ccc*** Check if a plot zone has starting and ending element which is inside a target     
+ccc*** Check if a plot zone has starting and ending element which is inside a target
         if (.not. istarget(il)) then
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
           k1=abs(lwldlis_old(1));

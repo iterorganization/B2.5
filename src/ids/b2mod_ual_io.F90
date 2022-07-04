@@ -3366,7 +3366,7 @@ contains
                     &   b2CellData = totCv )
                 totCv(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  tmpCv(:,:) = ( snadt(:,:,0,ispion(is,js)) +                &
+                  tmpCv(:,:) = ( snadt(:,:,0,ispion(is,js)) +               &
                         &        snadt(:,:,1,ispion(is,js)) * na(:,:,ispion(is,js)) ) / vol(:,:)
                   totCv(:,:) = totCv(:,:) + tmpCv(:,:)
                   call write_cell_scalar( sources_grid,                     &
@@ -3770,7 +3770,7 @@ contains
                         &   b2CellData = tmpCv,                         &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   end do
-                  call write_cell_vector_component(sources_grid,          &
+                  call write_cell_vector_component( sources_grid,         &
                         &   vectorComponent = edge_sources%source(5)%     &
                         &            ggd( time_sind )%ion( is )%momentum, &
                         &   b2CellData = totCv,                           &
@@ -6912,8 +6912,8 @@ contains
 #ifdef B25_EIRENE
     integer p
     character*8 eirene_version
-    character*31 Eirene_git_version
-    character*31 get_Eir_hash
+    character*32 Eirene_git_version
+    character*32 get_Eir_hash
 #endif
 #ifdef AMNS
     type (amns_handle_type) :: amns

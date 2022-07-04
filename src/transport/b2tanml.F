@@ -63,9 +63,9 @@
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
-       call ipgeti ('b2tfhe_no_current', no_current)                !srv 27.02.13
+       call ipgeti ('b2tfhe_no_current', no_current)                     !srv 27.02.13
        call ipgeti ('b2tanml_anml_all_ions', anml_all_ions)
-       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call ipgeti ('b2news_poteq', pot_eq)                              !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2news_guard_flows', guard_flows)
@@ -76,8 +76,8 @@
       if (ncall.lt.3) then
       endif
 
-      fchanml   = 0.0e0_R8
-      fchanml_a = 0.0e0_R8
+      fchanml   = 0.0_R8
+      fchanml_a = 0.0_R8
       if(no_current.eq.0 .and. fch_anomalous.ne.0.0e0_R8) then           !srv 27.02.13
        do is = 0, ns-1
 !       if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
@@ -85,7 +85,7 @@
          do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2)then
-              fchanml_a(ix,iy,0,is) = 0.0e0_R8
+              fchanml_a(ix,iy,0,is) = 0.0_R8
             else
               fchanml_a(ix,iy,0,is) = - csig_an(ix,iy,0)*
      &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))*
@@ -98,12 +98,12 @@
          enddo
 
          do ix = -1, nx
-          fchanml_a(ix,-1,1,is) = 0.0e0_R8
+          fchanml_a(ix,-1,1,is) = 0.0_R8
          enddo
          do iy = 0, ny
           do ix = -1, nx
             if(bottomiy(ix,iy).eq.-2)then
-              fchanml_a(ix,iy,1,is) = 0.0e0_R8
+              fchanml_a(ix,iy,1,is) = 0.0_R8
             else
               fchanml_a(ix,iy,1,is) = - csig_an(ix,iy,1)*
      &         (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))*
@@ -122,14 +122,14 @@
       if (anml_all_ions.eq.0) then
        do is = 0, ns-1
         if (is.eq.ismain) then
-         fchanml_a(:,:,:,is) = fchanml(:,:,:) 
+         fchanml_a(:,:,:,is) = fchanml(:,:,:)
         else
          fchanml_a(:,:,:,is) = 0.0_R8
         endif
        enddo
       endif
 
-      if(guard_flows.eq.0) then                                         !xpb
+      if(guard_flows.eq.0) then                                          !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
@@ -165,14 +165,14 @@ cxpb turn off poloidal flows in core boundary
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchanml_a(ix,iy,0,:)=0.0e0_R8
-            fchanml(ix,iy,0)=0.0e0_R8
+            fchanml_a(ix,iy,0,:)=0.0_R8
+            fchanml(ix,iy,0)=0.0_R8
           end do
         end do
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchanml_a(ix,iy,1,:)=0.0e0_R8
-            fchanml(ix,iy,1)=0.0e0_R8
+            fchanml_a(ix,iy,1,:)=0.0_R8
+            fchanml(ix,iy,1)=0.0_R8
           end do
         end do
       end do
