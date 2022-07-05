@@ -232,7 +232,8 @@
      & 'faulty parameter dtei')
 
       ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
-      if (ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
+      if (style_b2mndt.ne.2.and.
+     &    ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
      &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
      &    ttf.eq.maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
      &    ttf.eq.minval(dtee(1:nnreg(0))).and.
