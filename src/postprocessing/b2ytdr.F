@@ -10384,8 +10384,8 @@ cxpb  Convert fort.44 file if needed
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
-          call b2yt_ngread(solps_version, eirene_format, nx1, ny1,
-     &     natmi1, iatm1, nmol1, imol1, nion1, iion1,
+          call b2yt_ngread(solps_version, eirene_format,
+     &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
      &     ns1-nspecies1, ipls1, npls,
      &     no_sputtering, savestratum, non_commensurate, flip,
      &     epls_map, jsep1, region1,

@@ -47,7 +47,7 @@ c
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
-      character*9 filename
+      character*256 filename
       data jvftnew / 20170930 /
 
 *   ..initialisation
@@ -55,8 +55,8 @@ c
       save width
 
 *  -- PROCEDURES --
-      character*32 :: get_B25_hash
-      external ipgeti, ipgetr, xertst, get_B25_hash
+      character*32 :: get_Eir_hash
+      external ipgeti, ipgetr, xertst, get_Eir_hash
 #endif
 
 *=======================================================================
@@ -148,8 +148,8 @@ C TO READ THE FILE PRODUCED BY DOS
 C
       rewind (46)
       filename=fort_lc//'46.2'
-      open(unit=47,file=filename,status='unknown')
-      write(*,*) 'Writing '//filename
+      open(unit=47,file=trim(filename),status='unknown')
+      write(*,*) 'Writing '//trim(filename)
 C
       READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
@@ -159,7 +159,7 @@ C
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
-      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
+      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_Eir_hash()
       READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,4i6)')

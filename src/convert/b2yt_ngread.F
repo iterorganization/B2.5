@@ -16,9 +16,9 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ngread(solps_version, eirene_format, nx1, ny1,
-     . natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1, nfla,
-     . no_sputtering, savestratum, non_commensurate, flip,
+      subroutine b2yt_ngread(solps_version, eirene_format,
+     . nx1, ny1, natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1,
+     . nfla, no_sputtering, savestratum, non_commensurate, flip,
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
      . hx, hy, qc, hxx, hyy, qc1, gs1)
@@ -107,10 +107,10 @@ c
 
 *  -- PROCEDURES --
       integer convert_eirdiag, conformal_convert
-      character*32 :: get_B25_hash
+      character*32 :: get_Eir_hash
       logical streql
       EXTERNAL GFSUB2
-      external ipgeti, streql, get_B25_hash
+      external ipgeti, streql, get_Eir_hash
       external convert_eirdiag, conformal_convert
 #endif
 
@@ -149,7 +149,7 @@ C
       else
         jvftnew = max(jvft44,20160829)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_B25_hash()
+      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,5i4)')
@@ -823,7 +823,7 @@ cank-960727
         call write_title(45,'wldpa(0)',nlimps*natm1)
         call wrneutrs(45,wldpa1,natm1)
         call write_title(45,'wldpm(0)',nlimps*nmol1)
-        if (nmol1.gt.0) call wrneutrs(45,wldpm1,nmol1)
+        call wrneutrs(45,wldpm1,nmol1)
         call write_title(45,'wldpeb(0)',nlimps)
         call wrneutrs(45,wldpeb,1)
         call write_title(45,'wldspt(0)',nlimps)
@@ -1127,7 +1127,7 @@ cank
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,npls1),
      ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,npls1),
-     ,                          i=1,nstsi)
+     ,                                                       i=1,nstsi)
           deallocate (wlpump1)
         end if
 
