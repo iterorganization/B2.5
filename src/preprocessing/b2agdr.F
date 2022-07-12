@@ -623,7 +623,8 @@ cdpc-debug
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
 *   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
-      call write_f30
+      !wdk fort.30 no longer written/used in unstructured code
+      !call write_f30
 
 *   ..conversion to new, unstructured data-types
       call calc_mapping (nx, ny, mpg)
