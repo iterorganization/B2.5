@@ -90,7 +90,12 @@
 *    ..test sign of snbv, conb
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
-        call b2xvsg (n2*4*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
+        call b2xvsg (n2, conb(-1,-1,0,0,0), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,1,1,0), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,0,0,1), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,1,1,1), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,0,0,2), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,1,1,2), 1, 'conb', '.ge.')
        endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')

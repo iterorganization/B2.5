@@ -1,7 +1,6 @@
       subroutine b2agbs (nx, ny, nncutmax,
      1 leftix, rightix, rightiy, region, crx, cry,
-     1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
-     1 pbs, cell_width, cell_height)
+     1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol, pbs)
       use b2mod_types
       use b2mod_b2cmfs
       use b2mod_constants
@@ -20,8 +19,7 @@
      *  qc(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
 *   ..input/output arguments (defined on entry, changed upon exit)
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
-     *  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1)
 *   ..local variables
       integer i, ix, iy, ixl, ixr, jxi, jxa, jsep
       integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
@@ -167,9 +165,6 @@
       end do
 
 *   ..copying over modified data
-      cell_width = hx
-      cell_height(:,:) = hy(:,:)*qz(:,:,1)
-
       bb(:,:,3)=sqrt(bb(:,:,0)**2+bb(:,:,1)**2+bb(:,:,2)**2)
 
 *   ..return

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, po, te, ne,                      !srv 07.07.14
+      subroutine b2tstch (nx, ny, vol, hx, hy, qc, qs, po, te, ne,      !srv 07.07.14
      *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
       use b2mod_types
       use b2mod_boundary_namelist
@@ -16,6 +16,8 @@
       integer nx, ny
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     & qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1,0:1)!srv 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -40,10 +42,11 @@
       integer jxi, jxa, jsep
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
       real (kind=R8) :: sig_stoch, delta_stoch, width
+      real (kind=R8) :: ehy(-1:nx,-1:ny,0:1)
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
       external ipgetr, ipgeti, xertst, xerrab
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg, b2xvff, b2xvfx, b2xehy
       external get_jsep
 *   ..initialization
       data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
@@ -84,18 +87,16 @@
 
       fchstoch   = 0.0e0_R8
       if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-        call b2trsc (nx, ny, vol, po, te, ne, csig_stoch)               !srv 24.08.21
+        call b2trsc (nx, ny, vol, hx, hy, qc, qs, po, te, ne,
+     &   csig_stoch)                                                    !srv 24.08.21
+        call b2xehy (nx, ny, te, po, ne, ehy)
         do iy = bottomdelta1, jsep+1
           do ix = -1, nx
+           if(on_closed_surface(ix,iy)) then
+            fchstoch(ix,iy,0,1) = -csig_stoch(ix,iy,0,1)*ehy(ix,iy,0)
+           endif
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-            fchstoch(ix,iy,1,1) = -csig_stoch(ix,iy,1,1)*                   !srv 24.08.21
-     &       ((po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))-
-     &       0.5e0_R8/qe*
-     &       (te(ix,iy) - te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -(te(ix,iy) + te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8/
-     &        qe
-     &      *(log(ne(ix,iy))-
-     &        log(ne(bottomix(ix,iy),bottomiy(ix,iy)))))
+            fchstoch(ix,iy,1,1) = -csig_stoch(ix,iy,1,1)*ehy(ix,iy,1)
            endif
           enddo
         enddo

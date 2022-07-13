@@ -3157,7 +3157,7 @@ contains
     integer cflag(-1:nx,-1:ny, CARREOUT_NCELLFLAGS)
     logical, intent(in) :: includeGhostCells
     ! Optional B2 measure information
-    real(ITM_R8), intent(in), optional :: vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+    real(ITM_R8), intent(in), optional :: vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1)
     real(ITM_R8), save :: width = 1.0_ITM_R8
 
     ! internal
@@ -3334,7 +3334,7 @@ contains
                   & gmap % mapFcI( nix, niy, gmap % mapFcIFace( iFc ) )
           end if
           !! measure: area
-          if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( iFc, 1 ) = gs(ix, iy, ALIGNY)*qc(ix, iy)
+          if (present(gs)) itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % measure( iFc, 1 ) = gs(ix, iy, ALIGNY)*qc(ix, iy, 0)
       end do
 
       !! 2d objects: cells

@@ -362,12 +362,12 @@ cwdk projection of the drift
      &         facdrift(ix,iy)
             else                                                         !xpb
 cxpb  Case of the island X-point cells
-cxpb          vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*fac_ExB(ix,iy)*      !xpb
+cxpb          vbecrb(ix,iy,0,0) = - signmf/hy1(ix,iy)*fac_ExB(ix,iy)*    !xpb
 cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
 cxpb     2             ((po(topix(ix,iy),topiy(ix,iy))*vol(ix,iy)+       !xpb
 cxpb     2               po(ix,iy)*vol(topix(ix,iy),topiy(ix,iy)))/      !xpb
 cxpb     2          (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))-wpo(ix,iy)) !xpb
-cxpb          vbdia(ix,iy,0) = - signmf/hy1(ix,iy)*facdrift(ix,iy)*      !xpb
+cxpb          vbdia(ix,iy,0,0) = - signmf/hy1(ix,iy)*facdrift(ix,iy)*    !xpb
 cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
 cxpb     2             2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*        !xpb
 cxpb     3         ((vol(ix,iy)*bb(topix(ix,iy),topiy(ix,iy),3)+         !xpb
@@ -516,7 +516,7 @@ cwdk cancellation of some terms in poloidal and radial drift components
      2         +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2          bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
      2       dpo(ix,iy,0,0)
-!           vbecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)* ! signmf*         !lk 12.12.07 } !srv 11.01.13
+!           vbecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)* ! signmf*       !lk 12.12.07 } !srv 11.01.13
 !     1       (hz(ix,iy)*bb(ix,iy,2)
 !     2         +hz(leftix(ix,iy),leftiy(ix,iy))*
 !     3         bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0e0_R8*
@@ -626,7 +626,7 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
      2          +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
      2           bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*              !srv 05.02.05
      2        dpo(ix,iy,1,0)                                             !srv 13.05.16 }
-!           vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)* ! signmf*          !srv 11.01.13 07.06.00 21.04.00 25.08.99 17.05.99
+!           vbecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)* ! signmf*        !srv 11.01.13 07.06.00 21.04.00 25.08.99 17.05.99
 !     1       (hz(ix,iy)*bb(ix,iy,2)                                     !lk( 12.12.07
 !     2          +hz(bottomix(ix,iy),bottomiy(ix,iy))*
 !     3          bb(bottomix(ix,iy),bottomiy(ix,iy),2))/2.0e0_R8*
@@ -695,6 +695,9 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
         call intcor(nx,ny,weight,nbti,nbtic)                             !lk 12.12.07
         nbzb = nb*zb                                                     !srv 13.05.16
         call intcor(nx,ny,weight,nbzb,nbzbc)                             !srv 13.05.16
+        call diff(nx, ny, hx, hy, weight, qs, po,   dpo)
+        call diff(nx, ny, hx, hy, weight, qs, nbti, dnbti)
+        call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
         xcount = 0
         do iy = 0, ny-1
          do ix = 0, nx
@@ -702,7 +705,8 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
              vbecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)                !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2      *dpo(ix,iy,0,1)                                              !srv 13.05.16 }
      &      *wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy,0)     ! IYS 04.03.2019
-             vbecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)
+            if (use_9pt_stencil.ne.0)
+     >       vbecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)
      2      *dpo(ix,iy,0,0)                                              !srv 13.05.16 }
      &      *wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)*                ! IYS 04.03.2019
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
@@ -794,7 +798,7 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
              vbecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)                  !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
-     2       *dpo(ix,iy,1,0)                                            !srv 13.05.16 }
+     2       *dpo(ix,iy,1,0)                                             !srv 13.05.16 }
      &      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)            ! IYS 04.03.2019
 
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
@@ -1020,6 +1024,7 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
 
 *   ..init fnb to 0
       fnb = 0.0_R8
+      fnb_53 = 0.0_R8
 
 *   ..compute fnbx, flobx, conbx
       do iy = -1, ny
@@ -1124,27 +1129,28 @@ cwdk TODO: flo9* arrays should additionally contain radial drift flows across an
 cwdk       increase size of drift arrays to ubdia(:,:,0:1,0:1)... temp: neglect drifts
 cwdk  contributions from radial flow (neglect drifts for now)
           flo9 = cvlb(ix,iy,0,1) + scur9
-!     &      0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-!     &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
+!     &      0.5_R8*(ubdia(ix,iy,0,1)*vol(ix,iy)/hy1(ix,iy)
+!     &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),0,1)*
 !     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
 !     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
           flo9_mdf = cvlb(ix,iy,0,1) + scur9
-!     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-!     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+!     &      0.5_R8*(vbecrb(ix,iy,0,1)*vol(ix,iy)/hy1(ix,iy)
+!     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),0,1)*
 !     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
 !     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
           flo9_2dia = cvlbhz(ix,iy,0,1) + scur9*t0
-!     &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
+!     &       (ub2dia(ix,iy,0,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),0,1))
 !     &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
 !     &        hz(bottomix(ix,iy),bottomiy(ix,iy))
 !     5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
 !     &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))                     !srv 01.03.00 09.01.01
           flo9_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,1)!+                      !srv 13.09.02 ( 20.01.11
-!     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-!     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+!     &      0.5_R8*(vbecrb(ix,iy,0,1)*vol(ix,iy)/hy1(ix,iy)
+!     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),0,1)*
 !     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
 !     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
           flo9_nodrift = cvlb(ix,iy,0,1)
+          flo9_53 = 0.0_R8
 cwdk
          elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then       !srv 21.06.08 {
           t0 = (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
@@ -1297,18 +1303,18 @@ cwdk add computation of radial flow across distorted x-faces
 cwdk to reconsider: compute convective pieces of fnb(_*)(:,:,0,1) flows based on average nbcor
 cwdk and y-differences in nbcor for consistency with effective diffusion coeff. from hybrid
 cwdk scheme
-          fnb_nodrift(ix,iy,0,1) = upwind(
+           fnb_nodrift(ix,iy,0,1) = upwind(
      &      flo9_nodrift,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
      &      con9_nodrift*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0)
-          fnb(ix,iy,0,1) = (flo9 - flo9_mdf)*
+           fnb(ix,iy,0,1) = (flo9 - flo9_mdf)*
      &      (nb(leftix(ix,iy),leftiy(ix,iy)) + nb(ix,iy))/2.0_R8 +
      &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
      &      con9*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0)
-          fnb_fcor(ix,iy,0,1) =  (flo9_2dia - t0*flo9_mdf)*             !srv 01.10.99
+           fnb_fcor(ix,iy,0,1) =  (flo9_2dia - t0*flo9_mdf)*            !srv 01.10.99
      &      (nb(leftix(ix,iy),leftiy(ix,iy)) + nb(ix,iy))/2.0_R8 + t0*
      &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
      &      con9_2dia*dnbr(ix,iy,0) - cdpbhz(ix,iy,0,1)*dpbr(ix,iy,0)
-          fnb_mdf(ix,iy,0,1) =                                          !srv 13.10.06 {
+           fnb_mdf(ix,iy,0,1) =                                         !srv 13.10.06 {
      &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
      &      con9_mdf*dnbr(ix,iy,0)-cdpb(ix,iy,0,1)*dpbr(ix,iy,0)-
      &      fnbPSch(ix,iy,0,1)                                          !srv 13.10.06 }
@@ -1613,7 +1619,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           elseif (drift_style .eq. 1 .or. redef_gmtry .eq. 0) then
             wrk3(ix,iy) = vbecrb(ix,iy,0,0) *
      &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *
+     &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *            !IYS 04.03.2019
      &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
             wrk3(ix,iy) = vbecrb(ix,iy,0,0) *
@@ -1842,7 +1848,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      0.5_R8*abs(flo_mdf)*
      &      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      (con(ix,iy)-0.5_R8*abs(flo_mdf))*dnbr(ix,iy,1)-
-     &      cdpb(ix,iy,1,1)*dpbr(ix,iy,1)
+     &      cdpb(ix,iy,1,1)*dpbr(ix,iy,1)+vsprcur                       !srv 02.04.18
 *      fnb_he will be used only for heat equations                      !srv 21.01.00 {
           fnb_he(ix,iy,1,1) = flo_he*
      &      (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy))/2.0_R8 -
@@ -1855,7 +1861,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       0.5_R8*abs(flo_mdf)*t0*
      &       (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       (con_2dia(ix,iy)-0.5_R8*abs(flo_mdf)*t0)*dnbr(ix,iy,1)-
-     &       cdpbhz(ix,iy,1,1)*dpbr(ix,iy,1)
+     &       cdpbhz(ix,iy,1,1)*dpbr(ix,iy,1)+
+     &      t0*vsprcur                                                  !srv 02.04.18
           fnb_nodrift(ix,iy,1,1) = flo_nodrift*
      1       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       0.5_R8*abs(flo_nodrift)*
@@ -1865,7 +1872,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fnb_mdf(ix,iy,1,1) =                                          !srv 13.10.06 {
      &     upwind(flo_mdf,nb(bottomix(ix,iy),bottomiy(ix,iy)),nb(ix,iy))
      &     -(con_mdf(ix,iy)-0.5_R8*abs(flo_mdf))*dnbr(ix,iy,1)
-     &     -cdpb(ix,iy,1,1)*dpbr(ix,iy,1) - fnbPSch(ix,iy,1,1)
+     &     -cdpb(ix,iy,1,1)*dpbr(ix,iy,1)-
+     &      fnbPSch(ix,iy,1,1) + vsprcur                                !srv 13.10.06 } 02.04.18
           fnb_53(ix,iy,1,1) = flo_53*                                   !ajs 06.04.20
      &      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
           if (balance.and.(balance_netcdf.ne.0)) then
@@ -2302,16 +2310,15 @@ cxpb turn off poloidal flows in core boundary
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
             fnb(ix,iy,1,0:1)        = 0.0_R8
-!            fnb_32(ix,iy,1,1)=0.0_R8
-!            fnb_52(ix,iy,1,1)=0.0_R8
-!            fnb_nodrift(ix,iy,1,1)=0.0_R8
-!            fnb_32nd(ix,iy,1,1)=0.0_R8
-!            fnb_52nd(ix,iy,1,1)=0.0_R8
-!            flob(ix,iy,1,1)=0.0_R8
-!            vbecrb(ix,iy,1)=0.0_R8
-!            vbdia(ix,iy,1)=0.0_R8
-!            wbdia(ix,iy,1)=0.0_R8
-!            ubdia(ix,iy,1)=0.0_R8
+            fnb_32(ix,iy,1,0:1)=0.0_R8
+            fnb_52(ix,iy,1,0:1)=0.0_R8
+            fnb_32nd(ix,iy,1,0:1)=0.0_R8
+            fnb_52nd(ix,iy,1,0:1)=0.0_R8
+            flob(ix,iy,1,0:1)=0.0_R8
+            vbecrb(ix,iy,1,0:1)=0.0_R8
+            vbdia(ix,iy,1,0:1)=0.0_R8
+            wbdia(ix,iy,1,0:1)=0.0_R8
+            ubdia(ix,iy,1,0:1)=0.0_R8
             fnb_nodrift(ix,iy,1,0:1) = 0.0_R8
             fnb_fcor(ix,iy,1,0:1)    = 0.0_R8
             fnb_he(ix,iy,1,0:1)      = 0.0_R8
@@ -2335,16 +2342,14 @@ cxpb turn off poloidal flows in core boundary
 *     turn off flows between boundary cells in south and in north
         do iy = -1, ny, ny+1
           fnb(:,iy,0,0:1)       = 0.0_R8
-!          fnb_32(:,iy,0,0) = 0.0_R8
-!          fnb_52(:,iy,0,0) = 0.0_R8
-!          fnb_nodrift(:,iy,0,0) = 0.0_R8
-!          fnb_32nd(:,iy,0,0) = 0.0_R8
-!          fnb_52nd(:,iy,0,0) = 0.0_R8
-!          flob(:,iy,0,0) = 0.0_R8
-!          vbecrb(:,iy,0) = 0.0_R8
-!          vbdia(:,iy,0) = 0.0_R8
-!          wbdia(:,iy,0) = 0.0_R8
-!          ubdia(:,iy,0) = 0.0_R8
+          fnb_32(:,iy,0,0:1) = 0.0_R8
+          fnb_52(:,iy,0,0:1) = 0.0_R8
+          fnb_32nd(:,iy,0,0:1) = 0.0_R8
+          fnb_52nd(:,iy,0,0:1) = 0.0_R8
+          vbecrb(:,iy,0,0:1) = 0.0_R8
+          vbdia(:,iy,0,0:1) = 0.0_R8
+          wbdia(:,iy,0,0:1) = 0.0_R8
+          ubdia(:,iy,0,0:1) = 0.0_R8
           fnb_nodrift(:,iy,0,0:1) = 0.0_R8
           fnb_fcor(:,iy,0,0:1)    = 0.0_R8
           fnb_he(:,iy,0,0:1)      = 0.0_R8

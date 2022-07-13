@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wsst (nspc, nx, ny, ns, crx, cry, bb, vol, hx, hy,
-     &  qz, qc, qs, gs, pbs, cell_width, cell_height,
+      subroutine b2wsst (nspc, nx, ny, ns,
+     &  crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  pr, ro, rz, wrk0, wrk1)
       use b2mod_types
       use b2mod_plasma
@@ -16,8 +16,7 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
-     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), rz(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
@@ -87,8 +86,7 @@
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *   ..test metric coefficients
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  cell_width, cell_height)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs)
 *   ..test plasma state
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

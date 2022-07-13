@@ -94,8 +94,7 @@
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *   ..test metric coefficients
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  cell_width, cell_height)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs)
 *   ..test plasma state
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

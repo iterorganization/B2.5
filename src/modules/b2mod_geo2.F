@@ -24,9 +24,7 @@
      *  wbbr1(:,:,:),
      *  wbbv1(:,:,:),
      *  wbbc1(:,:,:),
-     *  vol1(:,:),
-     *  cell_width1(:,:),
-     *  cell_height1(:,:)
+     *  vol1(:,:)
 
       integer, allocatable, save ::
      *  leftix1(:,:),
@@ -73,8 +71,6 @@
       allocate(wbbv1(-1:nxd,-1:nyd,0:3))
       allocate(wbbc1(-1:nxd+1,-1:nyd+1,0:3))
       allocate(vol1(-1:nxd,-1:nyd))
-      allocate(cell_width1(-1:nxd,-1:nyd))
-      allocate(cell_height1(-1:nxd,-1:nyd))
       allocate(leftix1(-1:nxd,-1:nyd))
       allocate(leftiy1(-1:nxd,-1:nyd))
       allocate(rightix1(-1:nxd,-1:nyd))
@@ -116,8 +112,6 @@
          deallocate(wbbr1)
          deallocate(wbbv1)
          deallocate(vol1)
-         deallocate(cell_width1)
-         deallocate(cell_height1)
          deallocate(leftix1)
          deallocate(leftiy1)
          deallocate(rightix1)

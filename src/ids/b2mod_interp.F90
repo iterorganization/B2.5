@@ -2151,8 +2151,10 @@ contains
 !  This function computes the connection length
 !  For nodes (iclass.eq.1), we compute the length along a field line
 !  For cells (iclass.eq.3), we compute the length of the flux tube
-!  If imode.eq.1, the full length
-!  If imode.eq.2, the length to closest solid surface
+!  If imode.eq.1, the full parallel length
+!  If imode.eq.2, the parallel length to the closest solid surface
+!  If imode.eq.3, the full poloidal length
+!  If imode.eq.4, the poloidal length to the closest solid surface
 
   integer ix1, ixl, ixr, iyl, iop
   real(kind=R8) :: t1, t2
@@ -2171,7 +2173,7 @@ contains
   call xertst(0.lt.ny, 'faulty input ny')
   call xertst(-1.le.ix .and. ix.le.nx, 'faulty input ix')
   call xertst(-1.le.iy .and. iy.le.ny, 'faulty input iy')
-  call xertst(imode.eq.1 .or. imode.eq.2, 'faulty input imode')
+  call xertst(imode.ge.1 .and. imode.le.4, 'faulty input imode')
   call xertst(iclass.eq.3 .or. present(ivx), &
      & 'iclass.eq.1 requires a vertex index !')
   if (region(ix,iy,0).eq.0) return
@@ -2197,36 +2199,54 @@ contains
         ixl=leftix(ix,iy)
         t1=0.0_R8
         if (ixl.ne.-2.and.(ivx.eq.1.or.ivx.eq.3)) then
-          if (region(ix,iy,0).ne.0) t1=dist(ix,iy,ivx,iop)/ &
+          if (region(ix,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t1=dist(ix,iy,ivx,iop)/ &
      &       (sqrt(wbbv(ix,iyl,0)**2+wbbv(ix,iyl,1)**2)/wbbv(ix,iyl,3))
+            if (imode.eq.3.or.imode.eq.4) t1=dist(ix,iy,ivx,iop)
+          endif
         endif
         ix1=ixl
         if (ixl.ne.-2) ixl=leftix(ix1,iy)
         do while(ix1.ne.ix.and.ixl.ne.-2)
-          if (region(ix1,iy,0).ne.0) t1=t1+dist(ix1,iy,ivx,iop)/ &
+          if (region(ix1,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t1=t1+dist(ix1,iy,ivx,iop)/ &
      &       (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+            if (imode.eq.3.or.imode.eq.4) t1=t1+dist(ix1,iy,ivx,iop)
+          endif
           ix1=ixl
           ixl=leftix(ix1,iy)
         end do
-        if(ix1.eq.ix.and.(ivx.eq.0.or.ivx.eq.2)) t1=t1+dist(ix,iy,ivx,iop)/ &
-     &    (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+        if(ix1.eq.ix.and.(ivx.eq.0.or.ivx.eq.2)) then
+          if (imode.eq.1.or.imode.eq.2) t1=t1+dist(ix,iy,ivx,iop)/ &
+     &     (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+          if (imode.eq.3.or.imode.eq.4) t1=t1+dist(ix,iy,ivx,iop)
+        endif
         ixr=rightix(ix,iy)
         t2=0.0_R8
         if (ixr.ne.nx+1.and.(ivx.eq.0.or.ivx.eq.2)) then
-          if (region(ix,iy,0).ne.0) t2=dist(ix,iy,ivx,iop)/ &
+          if (region(ix,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t2=dist(ix,iy,ivx,iop)/ &
      &       (sqrt(wbbv(ix,iyl,0)**2+wbbv(ix,iyl,1)**2)/wbbv(ix,iyl,3))
+            if (imode.eq.3.or.imode.eq.4) t2=dist(ix,iy,ivx,iop)
+          endif
         endif
         ix1=ixr
         if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
         do while(ix1.ne.ix.and.ixr.ne.nx+1)
-          if (region(ix1,iy,0).ne.0) t2=t2+dist(ix1,iy,ivx,iop)/ &
-     &     (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+          if (region(ix1,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t2=t2+dist(ix1,iy,ivx,iop)/ &
+     &       (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+            if (imode.eq.3.or.imode.eq.4) t2=t2+dist(ix1,iy,ivx,iop)
+          endif
           ix1=ixr
           ixr=rightix(ix1,iy)
         end do
-        if(ix1.eq.ix.and.(ivx.eq.1.or.ivx.eq.3)) t2=t2+dist(ix,iy,ivx,iop)/ &
-     &    (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
-        if(imode.eq.1.and.ix1.ne.ix) then
+        if(ix1.eq.ix.and.(ivx.eq.1.or.ivx.eq.3)) then
+          if (imode.eq.1.or.imode.eq.2) t2=t2+dist(ix,iy,ivx,iop)/ &
+     &     (sqrt(wbbv(ix1,iyl,0)**2+wbbv(ix1,iyl,1)**2)/wbbv(ix1,iyl,3))
+          if (imode.eq.3.or.imode.eq.4) t2=t2+dist(ix,iy,ivx,iop)
+        endif
+        if ((imode.eq.1.or.imode.eq.3).and.ix1.ne.ix) then
           get_connection_length = t1+t2
         else
           get_connection_length = min(t1,t2)
@@ -2235,36 +2255,54 @@ contains
         ixl=leftix(ix,iy)
         t1=0.0_R8
         if (ixl.ne.-2) then
-          if (region(ix,iy,0).ne.0) t1=hx(ix,iy)/2.0_R8/ &
+          if (region(ix,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t1=hx(ix,iy)/2.0_R8/ &
      &       (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
+            if (imode.eq.3.or.imode.eq.4) t1=hx(ix,iy)/2.0_R8
+          endif
         endif
         ix1=ixl
         if (ixl.ne.-2) ixl=leftix(ix1,iy)
         do while(ix1.ne.ix.and.ixl.ne.-2)
-          if (region(ix1,iy,0).ne.0) t1=t1+hx(ix1,iy)/ &
+          if (region(ix1,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t1=t1+hx(ix1,iy)/ &
      &       (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+            if (imode.eq.3.or.imode.eq.4) t1=t1+hx(ix1,iy)
+          endif
           ix1=ixl
           ixl=leftix(ix1,iy)
         end do
-        if(ix1.eq.ix) t1=t1+hx(ix1,iy)/2.0_R8/ &
-     &    (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+        if(ix1.eq.ix) then
+          if (imode.eq.1.or.imode.eq.2) t1=t1+hx(ix1,iy)/2.0_R8/ &
+     &     (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+          if (imode.eq.3.or.imode.eq.4) t1=t1+hx(ix1,iy)/2.0_R8
+        endif
         ixr=rightix(ix,iy)
         t2=0.0_R8
         if (ixr.ne.nx+1) then
-          if (region(ix,iy,0).ne.0) t2=hx(ix,iy)/2.0_R8/ &
+          if (region(ix,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t2=hx(ix,iy)/2.0_R8/ &
      &       (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
+            if (imode.eq.3.or.imode.eq.4) t2=hx(ix,iy)/2.0_R8
+          endif
         endif
         ix1=ixr
         if (ixr.ne.nx+1) ixr=rightix(ix1,iy)
         do while(ix1.ne.ix.and.ixr.ne.nx+1)
-          if (region(ix1,iy,0).ne.0) t2=t2+hx(ix1,iy)/ &
+          if (region(ix1,iy,0).ne.0) then
+            if (imode.eq.1.or.imode.eq.2) t2=t2+hx(ix1,iy)/ &
      &       (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+            if (imode.eq.3.or.imode.eq.4) t2=t2+hx(ix1,iy)
+          endif
           ix1=ixr
           ixr=rightix(ix1,iy)
         end do
-        if(ix1.eq.ix) t2=t2+hx(ix1,iy)/2.0_R8/ &
-     &    (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
-        if(imode.eq.1.and.ix1.ne.ix) then
+        if(ix1.eq.ix) then
+          if (imode.eq.1.or.imode.eq.2) t2=t2+hx(ix1,iy)/2.0_R8/ &
+     &     (sqrt(bb(ix1,iy,0)**2+bb(ix1,iy,1)**2)/bb(ix1,iy,3))
+          if (imode.eq.3.or.imode.eq.4) t2=t2+hx(ix1,iy)/2.0_R8
+        endif
+        if ((imode.eq.1.or.imode.eq.3).and.ix1.ne.ix) then
           get_connection_length = t1+t2
         else
           get_connection_length = min(t1,t2)

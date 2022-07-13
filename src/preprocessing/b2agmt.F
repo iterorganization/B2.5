@@ -3,7 +3,7 @@
 
       subroutine b2agmt (nx, ny, isymm,
      & crx, cry, vol, hx, hy, qz, qc, qs, gs,
-     & cell_width, cell_height, leftix, bottomiy)
+     & leftix, leftiy, bottomix, bottomiy)
       use b2mod_types
       use b2mod_math
       use b2mod_constants
@@ -11,16 +11,15 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
-      integer leftix(-1:nx,-1:ny),
-     &  bottomiy(-1:nx,-1:ny)
+      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
+     &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), qs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  gs(-1:nx,-1:ny,0:2), qs(-1:nx,-1:ny,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -68,11 +67,6 @@
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
-*
-*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
-*     specify the average width and height, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
@@ -123,9 +117,14 @@
       integer n2, ix, iy, i
       integer volhmk
       real (kind=R8) ::
-     *   width, centroid(0:1)
+     *   width, centroid(0:1), t0, t1
+      real (kind=R8) ::
+     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
+      integer, save :: redef_qc = 1, qc_style = 2
 *   ..procedures
-      external xertst, ipgetr, ipgeti
+      real (kind=R8) ::
+     &  sin_t, cos_t, sin_tl, cos_tl, tt
+      external xertst, ipgetr, ipgeti, intfaceh, intfacev
       external b2xvsg
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
@@ -140,6 +139,8 @@
 *   ..read input data
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
+      call ipgeti ('b2agmt_redef_qc', redef_qc)
+      call ipgeti ('b2agmt_qc_style', qc_style)
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -173,16 +174,51 @@
         qc(ix,iy,0) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
+
+        if (qc_style .eq. 2) then
+          sin_t = sinang (
+     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &        crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
+          cos_t = cosang (
+     &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &        crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
+          if (leftix(ix,iy) .gt. -2) then
+            sin_tl = sinang (
+     &        (crx(ix,iy,0)+crx(ix,iy,2))-
+     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        (cry(ix,iy,0)+cry(ix,iy,2))-
+     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
+     &         crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+           cos_tl = cosang (
+     &        (crx(ix,iy,0)+crx(ix,iy,2))-
+     &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         crx(leftix(ix,iy),leftiy(ix,iy),2)),
+     &        (cry(ix,iy,0)+cry(ix,iy,2))-
+     &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
+     &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
+     &         crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+
+            tt = sqrt(0.25_R8 * (cos_t + 1.0_R8) * (cos_tl + 1.0_R8))
+            qc(ix,iy,0) = min(1.0_R8,
+     &                        tt - 0.25_R8 * sin_t * sin_tl / tt)
+          else
+            tt = 0.5_R8 * (cos_t + 1.0_R8)
+            qc(ix,iy,0) = min(1.0_R8,
+     &                        tt  - 0.25_R8 * sin_t * sin_t / tt)
+          endif
+        endif
 
         qc(ix,iy,1) = 1.0_R8
         qs(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
         qs(ix,iy,1) = 0.0_R8
-        cell_width(ix,iy) = hx(ix,iy)
-        cell_height(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
         if(qz(ix,iy,1).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
@@ -195,14 +231,54 @@
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
-        if(qc(ix,iy,1).le.0.0_R8) then
-          write(*,'(a,1f12.6,2i4)')
-     1     'Problem in b2agmt: qc(ix,iy,1) <= 0',qc(ix,iy,1),ix,iy
-          write(*,'(a,4f13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
-          write(*,'(a,4f13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+        if(qc(ix,iy,0).gt.1.0_R8) then
+          write(*,'(a,1x,1f9.6,2i4)')
+     1     'Problem in b2agmt: qc(ix,iy,0) > 1',qc(ix,iy,0),ix,iy
+          write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
        enddo
       enddo
+
+*   ..improved computation of qc
+cwdk  based on average field direction of neighboring cells
+cwdk  avoids artificial reduction of poloidal contact area at faces for
+cwdk  curvilinear grids; angle between left face and average direction of top/bottom
+cwdk  faces is not representative for orthogonality of left face to field!
+      if (qc_style.eq.1) then
+cwdk   poloidal unit vector in cell centers, ebc
+       do iy = -1, ny
+        do ix = -1, nx
+         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2))
+         t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
+         ebc(ix,iy,0) = t0/norm(t0,t1)
+         ebc(ix,iy,1) = t1/norm(t0,t1)
+        enddo
+       enddo
+cwdk   poloidal unit vector at left faces, ebf
+       call intfaceh(nx,ny,leftix,leftiy,hx,ebc(-1,-1,0),ebf(-1,-1,0))
+       call intfaceh(nx,ny,leftix,leftiy,hx,ebc(-1,-1,1),ebf(-1,-1,1))
+cwdk   computation of qc
+       do iy = -1, ny
+        do ix = -1, nx
+cwdk     note: qc in left ghosts unchanged
+         if (leftix(ix,iy).ne.-2) then
+          qc(ix,iy,0) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1),
+     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+         endif
+         if(qc(ix,iy,0).le.0.0_R8) then
+          write(*,'(a,1x,1f9.6,2i4)')
+     1     'Problem in b2agmt: qc(ix,iy,0) <= 0',qc(ix,iy,0),ix,iy
+          write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+         endif
+        enddo
+       enddo
+*    ..test sign of qc
+       call b2xvsg (n2, qc, 1, 'qc', '.gt.')
+*   ..improved computation of qc and qs based on interpolation of qz values
+      endif
+
       call nancheck(nx, ny, qz(-1:nx,-1:ny,0), 'b2agmt: qz(,,0)')
       call nancheck(nx, ny, qz(-1:nx,-1:ny,1), 'b2agmt: qz(,,1)')
       call nancheck(nx, ny, qc(-1:nx,-1:ny,0), 'b2agmt: qc(,,0)')
@@ -321,6 +397,36 @@
 *   ..test sign of vol
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 
+      if (redef_qc.eq.1.and.qc_style.eq.0) then
+cwdk  avoids artificial reduction of poloidal contact area between faces for
+cwdk  curvilinear grids; angle between left face and average direction of top/bottom
+cwdk  faces is not representative for orthogonality of left face to field!
+       call intfaceh(nx,ny,leftix,leftiy,vol,qz(-1,-1,0),qs(-1,-1,0))
+       call intfacev(nx,ny,bottomix,bottomiy,vol,qz(-1,-1,0),
+     .                                                   qs(-1,-1,1))
+cwdk to ensure sin^2 + cos^2 = 1, and cos > 0
+       qc(:,:,:) = sqrt(1.0_R8 - qs(:,:,:)**2)
+      else
+       do ix = -1, nx
+        do iy = -1, ny
+         if (bottomiy(ix,iy).eq.-2) then
+          qc(ix,iy,1)=1.0_R8
+         else
+          qc(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,1) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),1))/
+     .     (hy(ix,iy)  + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+          qs(ix,iy,1) =
+     .     (hy(ix,iy)*qz(ix,iy,0) + hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     .      qz(bottomix(ix,iy),bottomiy(ix,iy),0))/
+     .     (hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))
+         endif
+        enddo
+       enddo
+       qs(:,:,:) = sign(sqrt(1.0_R8 - qc(:,:,:)**2), qs(:,:,:))
+      endif
+      call nancheck(nx, ny, qs(-1:nx,-1:ny,0), 'b2agmt: qs(,,0)')
+      call nancheck(nx, ny, qs(-1:nx,-1:ny,1), 'b2agmt: qs(,,1)')
 
 * ..return
       call subend ()

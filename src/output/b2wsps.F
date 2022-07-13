@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2wsps (nspc, nx, ny, ns,
-     &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height)
+     &  crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs)
       use b2mod_types
       use b2mod_rates
       use b2mod_plasma
@@ -19,8 +18,7 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -77,8 +75,7 @@
       call b2xpfi (nx, ny, ns, fna, fni)
 *   ..call output routine
       call b2wsst (nspc, nx, ny, ns,
-     &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
+     &  crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  pr, ro, rz, wrk0, wrk1)
 
 * ..return

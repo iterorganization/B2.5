@@ -27,9 +27,7 @@
      *  qs(:,:,:),
      *  vol(:,:),
      *  pbs(:,:,:), pbshz(:,:,:),                                    !srv 09.01.01
-     *  conn(:),
-     *  cell_width(:,:),
-     *  cell_height(:,:)
+     *  conn(:)
 
       type(B2GridMap), save :: gmap
 
@@ -67,8 +65,6 @@
       allocate(pbs(-1:nxd,-1:nyd,0:1))
       allocate(pbshz(-1:nxd,-1:nyd,0:1))                             !srv 09.01.01
       allocate(conn(-1:nyd))
-      allocate(cell_width(-1:nxd,-1:nyd))
-      allocate(cell_height(-1:nxd,-1:nyd))
 
       b2mod_geo_allocated = .true.
 
@@ -102,8 +98,6 @@
         deallocate(pbs)
         deallocate(pbshz)                                            !srv 09.01.01
         deallocate(conn)
-        deallocate(cell_width)
-        deallocate(cell_height)
 
         b2mod_geo_allocated = .false.
 
@@ -122,9 +116,10 @@
       implicit none
       integer nread, nx, ny, n2
       integer ix, iy
+      real (kind=R8) :: dum(-1:nx,-1:ny)
       external cfrure, cfrure_opt, xerrab
 
-      n2 = (nx+1)*(ny+1)
+      n2 = (nx+2)*(ny+2)
       call cfrure (nread, size(bb), bb, 'bb')
       call cfrure (nread, size(crx), crx, 'crx')
       call cfrure (nread, size(cry), cry, 'cry')
@@ -197,18 +192,10 @@ c conn
       else if(b2fplasma_version.ge.'01.001.025') then   !xpb for 5.0 and 5.1 versions
         call cfrure_opt (nread, size(pbs), pbs, 'pbs')
       endif
-      if(b2fplasma_version.ge.'01.001.033') then
-        call cfrure_opt
-     .   (nread, size(cell_width), cell_width, 'cell_width')
-        call cfrure_opt
-     .   (nread, size(cell_height), cell_height, 'cell_height')
-      else
-        if(isClassicalGrid(cflags)) then
-          cell_width = hx
-          cell_height(:,:) = hy(:,:)*qz(:,:,1)
-        else
-          call xerrab ('Cell widths and heights not set: re-run b2ag!')
-        endif
+      if(b2fplasma_version.ge.'01.001.033'.and.
+     .   b2fplasma_version.lt.'03.001.000') then
+        call cfrure_opt (nread, n2, dum, 'cell_width')
+        call cfrure_opt (nread, n2, dum, 'cell_height')
       endif
 
       return

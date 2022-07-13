@@ -3,6 +3,7 @@
 
       subroutine b2ux11p (nx, ny, aa11, itcnt, resfun, corfun, name)    !srv 02.04.18 {
       use b2mod_types
+      use b2mod_illtern_7
       use b2mod_ilutern_11
       use b2mod_ma28_for_11diag
       use b2mod_ysmp_sdrv
@@ -71,6 +72,7 @@
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
+      integer, allocatable, save :: indices(:,:), ipsave(:), jpsave(:)
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
@@ -79,6 +81,7 @@
       save ncall, style, acpar, cpu
       !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
       !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+      !$OMP THREADPRIVATE (indices, ipsave, jpsave)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -106,10 +109,10 @@
          n_nonzeros=mult_nonzero*nnd
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28_for_11diag                              !srv 02.04.18
-!         call iniilu_9(nx+2,ny+2)                                     !srv 13.10.06
-         irnh = 0                                                      !srv 15.05.07
-         icnh = 0                                                      !srv 15.05.07
+         call alloc_b2mod_ma28_for_11diag                          !srv 02.04.18
+!         call iniilu_9(nx+2,ny+2)                                 !srv 13.10.06
+         irnh = 0                                                  !srv 15.05.07
+         icnh = 0                                                  !srv 15.05.07
          nltrsol=2
          call ipgeti ('b2ux11p_nltrsol', nltrsol)
        endif
@@ -149,7 +152,12 @@
           allocate(wrk1(1:1))
           allocate(wrk2(1:1))
           allocate(iwrk(1:n2))
-        endif                                                      !srv 29.05.02 }
+        else if (style.eq.2) then
+          allocate(indices(1:3,1:solvdim))
+          allocate(ipsave(1:solvdim),jpsave(1:solvdim))
+        else if (style.eq.3) then
+          allocate(ipsave(1:n_nz_sdrv))
+        endif
         write(*,*)
      .   'Allocated space for solver for 11-point-stencil matrix'   !sv 11.01.00
       endif
@@ -180,7 +188,7 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 indexes, iasave, jasave, name)
+     *                  indices, ipsave, jpsave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
      &               c_end-c_start
@@ -195,7 +203,7 @@
       else if (style.eq.3) then                                        !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
-     *                 indexes, iasave, jasave, name)
+     *                   indexes, ipsave, jasave, name)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_11: nz = ',nz
@@ -221,7 +229,7 @@
       end subroutine b2ux11p                                           !srv 02.04.18 }
 
       subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,          !srv 02.04.18 {
-     *                      indexes, iasave, jasave, name)
+     *                       indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_openmp
       use b2mod_indirect

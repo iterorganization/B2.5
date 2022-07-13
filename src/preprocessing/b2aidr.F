@@ -535,8 +535,7 @@
 *   ..read geometry
       call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 
       if(read_b2fstate.ne.0) then
 *  .. copy the data of first n=min(ns0,ns1) species

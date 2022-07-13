@@ -3,8 +3,7 @@
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -28,8 +27,7 @@
      &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  pbs(-1:nx,-1:ny,0:1),
      &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
-     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3)
       type(B2GridMap) :: gmap
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -130,11 +128,6 @@
 *     left faces of the (ix,iy) cell.
 *     It will hold that 0.lt.hzb(,) and 0.lt.hzl(,).
 *
-*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
-*     specify the average width and height, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
-*
 *     qz - (-1:nx,-1:ny,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
 *     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
@@ -224,7 +217,7 @@
       integer iFace, offset
       real (kind=R8) ::
      *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1),
-     *   hzc(-1:nx+1,-1:ny+1)
+     *   hzc(-1:nx+1,-1:ny+1), dum(-1:nx,-1:ny)
       real (kind=R8) ::
      *   t0, t1
       logical qc_to_do, pbs_to_do
@@ -306,7 +299,7 @@ cxpb
          qs(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
         enddo
        enddo
       endif
@@ -723,11 +716,10 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
           end do
         end do
       end if
-      cell_width = hx
-      cell_height(:,:) = hy(:,:)*qz(:,:,1)
-      if(b2fgmtry_version.ge.'01.001.033') then
-        call cfrure_opt (nget, n2, cell_width, 'cell_width')
-        call cfrure_opt (nget, n2, cell_height, 'cell_height')
+      if(b2fgmtry_version.ge.'01.001.033' .and.
+     .   b2fgmtry_version.lt.'03.001.000') then
+        call cfrure_opt (nget, n2, dum, 'cell_width')
+        call cfrure_opt (nget, n2, dum, 'cell_height')
       endif
 
       if (use_9pt_stencil.ne.0) then
@@ -754,7 +746,6 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
       else
 cwdk   Use 5-point stencil. Overwrite values of qz, qc and qs to ensure
 cwdk   backwards compatible behavior
-cwdk   to be checked: qz(:,:,0) never used !?!
        qs(:,:,:) = 0.0_R8 ! will make all 9-point contributions on faces 0
        qz(:,:,0) = 0.0_R8 ! will make all 9-point contributions in cell centers 0
        qc(:,:,1) = 1.0_R8 ! keep qc(:,:,0) unmodified, for corrections to poloidal face areas
@@ -773,8 +764,7 @@ cwdk   to be checked: qz(:,:,0) never used !?!
       call xertst(maxval(region(-1:nx,-1:ny,2)).gt.0 .or.
      &            minval(region(-1:nx,-1:ny,1)).lt.0,
      $            'Y-regions not set, re-run b2ag!')
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &     cell_width, cell_height)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs)
 *   ..create B2GridMap data structure
       if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
         call b2CreateMap(nx, ny, crx, cry, cflags,

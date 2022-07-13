@@ -69,7 +69,7 @@
      6  cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisper(-1:nx,-1:ny,0:1,0:1),
      7  fchvisq(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),        !srv 25.11.08
-     &  fchstoch(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1,0:1)         !srv 24.08.21
+     &  fchstoch(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1)     !srv 24.08.21
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -231,7 +231,8 @@ c Drift terms
      &              na, ua, facdrift, fchinert_a, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)       !srv 07.07.14
+      call b2tstch (nx, ny, vol, hx, hy, qc, qs, po, te, ne,
+     &              csig_stoch, fchstoch)                                !srv 07.07.14
 *   ..compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20
      & ehx_, zeff, fch_p)
@@ -358,7 +359,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1,1)+fchin(ix,iy,1,1)+fchvispar(ix,iy,1,1)    !xpb
      &       +fchvisper(ix,iy,1,1)
-     8       +fchstoch(ix,iy,1)                                          !lk 31.01.08 24.08.21
+     8       +fchstoch(ix,iy,1,1)                                        !lk 31.01.08 24.08.21
             fch_32(ix,iy,1,1)= csig_cl(ix,iy,1,1)*ehy
      .       +fchin(ix,iy,1,1)+fchvispar(ix,iy,1,1)                      !xpb
      &       +fchvisper(ix,iy,1,1)
@@ -497,7 +498,7 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,fchdia(-1,-1,1,1),'b2tfch_fchdiay')
 !       call my_out(70,nx,ny,fchanml(-1,-1,0,0),'b2tfch_fchanmlx')
 !       call my_out(70,nx,ny,fchanml(-1,-1,1,1),'b2tfch_fchanmly')
-       call my_out(70,nx,ny,fchstoch(-1,-1,1),'fchstochy')           !lk 31.01.08 24.08.21
+       call my_out(70,nx,ny,fchstoch(-1,-1,1,1),'fchstochy')           !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0,0),'b2tfch_concx')
        call my_out(70,nx,ny,conc(-1,-1,1,1),'b2tfch_concy')
        call my_out(70,nx,ny,fch_p(-1,-1,0,0),'b2tfch_fch_px')

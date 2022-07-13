@@ -5,11 +5,9 @@
      & vol1, hxx, hyy, qz1, qc1, qs1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
-     & cell_width1, cell_height1,
      & vol, hx, hy, qz, qc, qs,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
-     & cell_width, cell_height,
      1 leftix1, leftiy1, rightix1, rightiy1,
      2 topix1, topiy1, bottomix1, bottomiy1,
      3 leftcut1, rightcut1, bottomcut1, topcut1,
@@ -37,8 +35,7 @@
      2  bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
      3  fpsi1(-1:nx1,-1:ny1,0:3), ffbz1(-1:nx1,-1:ny1,0:3),
      4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
-     &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
-     5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
+     &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3)
       integer
      *  leftix1(-1:nx1,-1:ny1), leftiy1(-1:nx1,-1:ny1),
      1  rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
@@ -55,8 +52,7 @@
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
-     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
-     5  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -96,11 +92,6 @@
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
-*
-*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
-*     specify the average width and height, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
@@ -182,7 +173,7 @@
       call xertst (1.le.nx1.and.1.le.ny1, 'faulty input nx1, ny1')
 *   ..test input metric
       call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qs1, gs1, pbs1,
-     . cell_width1, cell_height1, bottomiy1)
+     . bottomiy1)
 *   ..read input switch
       call ipgeti ('b2agmx_pbs_from_basis_mesh', pbs_from_basis_mesh)
 
@@ -669,7 +660,6 @@ cdpc-end
             t0 = t0+1/t1
           enddo
           hx(ix,iy) = sqrt(vol(ix,iy)/t0)
-          cell_width(ix,iy) = hx(ix,iy)
 *     ..project hy to cell (ix,iy)
           t0 = 0.0_R8
           do jx1 = 0, kx1-1
@@ -681,7 +671,6 @@ cdpc-end
             t0 = t0+1.0_R8/t1
           enddo
           hy(ix,iy) = sqrt(vol(ix,iy)/t0)/qz(ix,iy,1)
-          cell_height(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     ..update cut counters
           if (ix.eq.ixiso(isox+1)-1) then
             isox = isox+1

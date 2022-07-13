@@ -15,7 +15,7 @@
       character*(*) name                                             !srv 18.03.10
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &  conc(-1:nx,-1:ny,0:1),
+     &  conc(-1:nx,-1:ny,0:1,0:1),
      &  sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -76,7 +76,8 @@
 *    ..test sign of ne, te, conc, sch
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2*2, conc, 1, 'conc', '.ge.')
+       call b2xvsg (n2, conc(-1,-1,0,0), 1, 'conc00', '.ge.')
+       call b2xvsg (n2, conc(-1,-1,1,1), 1, 'conc11', '.ge.')
        call b2xvsg (n2, sch(-1,-1,1), 1, 'sch1', '.le.')
        call b2xvsg (n2, sch(-1,-1,3), 1, 'sch3', '.le.')
 *    ..test edge values of conc
@@ -104,14 +105,14 @@
         else
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solvereg(ileft))
-     >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = -conc(ix,iy,0)
+     >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = -conc(ix,iy,0,0)
          if (solvereg(ireg))
-     >    aa5(ix,iy,0) = aa5(ix,iy,0)+conc(ix,iy,0)
+     >    aa5(ix,iy,0) = aa5(ix,iy,0)+conc(ix,iy,0,0)
          if (solvereg(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),0) =
-     &       aa5(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0)
+     &       aa5(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0,0)
          if (solvereg(ireg))
-     >    aa5(ix,iy,-1) = -conc(ix,iy,0)
+     >    aa5(ix,iy,-1) = -conc(ix,iy,0,0)
         endif                                                        !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
@@ -125,14 +126,14 @@
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy), bottomiy(ix,iy),2) = -conc(ix,iy,1)
+     >     aa5(bottomix(ix,iy), bottomiy(ix,iy),2) = -conc(ix,iy,1,1)
           if (solvereg(ireg))
-     >     aa5(ix,iy,0) = aa5(ix,iy,0)+conc(ix,iy,1)
+     >     aa5(ix,iy,0) = aa5(ix,iy,0)+conc(ix,iy,1,1)
           if (solvereg(ibot))
      >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &       aa5(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1)
+     &       aa5(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
           if (solvereg(ireg))
-     >     aa5(ix,iy,-2) = -conc(ix,iy,1)
+     >     aa5(ix,iy,-2) = -conc(ix,iy,1,1)
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
@@ -140,17 +141,17 @@ cxpb
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2uspo for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            if (solvereg(ireg))
-     >      aa5(ix,iy,2) = -conc(topix(ix,iy),topiy(ix,iy),1)
+     >      aa5(ix,iy,2) = -conc(topix(ix,iy),topiy(ix,iy),1,1)
            if (solvereg(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),0) =
      &      aa5(topix(ix,iy),topiy(ix,iy),0)+
-     &      conc(topix(ix,iy),topiy(ix,iy),1)
+     &      conc(topix(ix,iy),topiy(ix,iy),1,1)
            if (solvereg(ireg))
      >      aa5(ix,iy,0) =
-     &      aa5(ix,iy,0)+conc(topix(ix,iy),topiy(ix,iy),1)
+     &      aa5(ix,iy,0)+conc(topix(ix,iy),topiy(ix,iy),1,1)
            if (solvereg(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),2) =
-     &      -conc(topix(ix,iy),topiy(ix,iy),1)
+     &      -conc(topix(ix,iy),topiy(ix,iy),1,1)
           endif
 cxpb
         endif

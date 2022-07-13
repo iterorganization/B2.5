@@ -951,8 +951,7 @@ c 2002-09-11: logic revised
         redef_gmtry_save = redef_gmtry
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
      &   bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &   cell_width, cell_height, gmap)
+     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
         redef_gmtry = redef_gmtry_save
         call get_jsep(nx,ny,jxi,jxa,jsep)
         flip = LSN.neqv.LSN1
@@ -989,8 +988,7 @@ c 2002-09-11: logic revised
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
      &   bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &   cell_width, cell_height, gmap)
+     &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
         call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
       if (invert_bpol.eq.1) then
@@ -1221,7 +1219,8 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hxx, hyy, qc1, bundle_frac, bottomiy1,
+     &    hx, hy, qc(-1,-1,0), hxx, hyy, qc1(-1,-1,0),
+     &    bundle_frac, bottomiy1,
      &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
@@ -10403,7 +10402,7 @@ cxpb  Convert fort.44 file if needed
      &     no_sputtering, savestratum, non_commensurate, flip,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc, hxx, hyy, qc1, gs1)
+     &     hx, hy, qc(-1,-1,0), hxx, hyy, qc1(-1,-1,0), gs1)
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then

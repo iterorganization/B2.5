@@ -200,11 +200,6 @@
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
 *
-*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
-*     specify the average width and height, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
-*
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
 *     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
@@ -424,17 +419,7 @@
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, vol1,
      & hxx, hyy, qz1, qc1, qs1, gs1,
-     & cell_width1, cell_height1, leftix1, bottomiy1)
-*   ..improved computation of qc and qs based on interpolation of qz values
-cwdk  avoids artificial reduction of poloidal contact area between faces for
-cwdk  curvilinear grids; angle between left face and average direction of top/bottom
-cwdk  faces is not representative for orthogonality of left face to field!
-      call intfaceh(nx1,ny1,leftix1,leftiy1,vol1,qz1(-1,-1,0),
-     .    qs1(-1,-1,0))
-      call intfacev(nx1,ny1,bottomix1,bottomiy1,vol1,qz1(-1,-1,0),
-     .    qs1(-1,-1,1))
-cwdk to ensure sin^2 + cos^2 = 1, and cos > 0
-      qc(:,:,:) = sqrt(1.0_R8 - qs(:,:,:)**2)
+     & leftix1, leftiy1, bottomix1, bottomiy1)
 *    ..interpolate magnetic field to cell faces
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
@@ -489,11 +474,9 @@ cwdk to ensure sin^2 + cos^2 = 1, and cos > 0
      & vol1, hxx, hyy, qz1, qc1, qs1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
-     & cell_width1, cell_height1,
      & vol, hx, hy, qz, qc, qs,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
-     & cell_width, cell_height,
      1 leftix1, leftiy1, rightix1, rightiy1,
      2 topix1, topiy1, bottomix1, bottomiy1,
      3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
@@ -501,8 +484,7 @@ cwdk to ensure sin^2 + cos^2 = 1, and cos > 0
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
      1   leftix, rightix, rightiy, region, crx, cry,
-     1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
-     2   pbs, cell_width, cell_height)
+     1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol, pbs)
       end if
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)

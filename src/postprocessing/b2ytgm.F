@@ -192,7 +192,8 @@
       integer iFace, offset
       real (kind=R8) ::
      *   ebc1(-1:nx1,-1:ny1,0:1), ebf1(-1:nx1,-1:ny1,0:1),
-     *   hzb(-1:nx1,-1:ny1), hzc(-1:nx1+1,-1:ny1+1)
+     *   hzb(-1:nx1,-1:ny1), hzc(-1:nx1+1,-1:ny1+1),
+     *   dum(-1:nx1,-1:ny1)
       real (kind=R8) ::
      *   t0, t1
       logical qc_to_do, pbs_to_do
@@ -689,11 +690,10 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
           end do
         end do
       end if
-      cell_width1 = hxx
-      cell_height1(:,:) = hyy(:,:)*qz1(:,:,1)
-      if(b2fgmtry_version.ge.'01.001.033') then
-        call cfrure_opt (nget, n2, cell_width1, 'cell_width')
-        call cfrure_opt (nget, n2, cell_height1, 'cell_height')
+      if(b2fgmtry_version.ge.'01.001.033'.and.
+     .   b2fgmtry_version.lt.'03.001.000') then
+        call cfrure_opt (nget, n2, dum, 'cell_width')
+        call cfrure_opt (nget, n2, dum, 'cell_height')
       endif
 
 *   ..test sign of bb
@@ -710,7 +710,7 @@ cwdk  now ensure sin^2 + cos^2 = 1, cos > 0, and keep sign of sin
      &            minval(region1(-1:nx1,-1:ny1,1)).lt.0,
      $            'Y-regions not set, re-run b2ag!')
       call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qs1, gs1, pbs1,
-     . cell_width1, cell_height1, bottomiy1)
+     .     bottomiy1)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,
      &     leftix1,leftiy1,rightix1,rightiy1,

@@ -133,7 +133,7 @@
        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call xertst (-1.le.style.and.2.ge.style,
      &   'faulty internal parameter style')                             !srv 07.07.21
-       call xertst (.not.(style.eq.0 .and. use_9pt_stencil.eq.0),
+       call xertst (.not.(style.eq.0 .and. use_9pt_stencil.eq.1),
      &   'Usage of 9-point stencil restricted to SOLPS5.2 model!')
        call ipgeti ('b2news_guard_flows', guard_flows)                  !srv 18.06.08
        if (ntim.ne.0) then

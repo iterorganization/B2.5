@@ -69,7 +69,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::  pr(-1:nxd,-1:nyd)
+      real (kind=R8) :: pr(-1:nxd,-1:nyd)
 
       integer ispecies(0:nsd_local-1)
 

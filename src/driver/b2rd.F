@@ -1384,8 +1384,6 @@
       call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
 
 *   .. copied from b2rugm
-      cell_width = hx
-      cell_height(:,:) = hy(:,:)*qz(:,:,1)
       do iy = -1, ny
         do ix = -1, nx
           qc(ix,iy,1) = cosang (
@@ -1423,8 +1421,7 @@ cwdk  of improved computation of qc
 
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  cell_width, cell_height)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs)
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')

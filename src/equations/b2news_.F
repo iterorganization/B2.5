@@ -887,6 +887,7 @@ csw 16oct2012 init ier0
      &        rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
           else
+            call restart_ma28_for_11
             call b2npp7 (nx, ny, ns, ismain, nnreg(0), solving(3),       !srv 27.01.00 22.05.18
      &       solvepo, ncall, rxf2, ne, te, conc, avisper_a, bvisper_a,
      &       cvisper_a, sch, po, fch, respo, corpo, ier0)

@@ -125,6 +125,9 @@
       call diff_r(nx, ny, 0, hx, hy, wght, qs, ub, ubc, dubr)
 
 * ..compute flux
+      fmb = 0.0_R8
+      con = 0.0_R8
+      flv = 0.0_R8
 *   ..compute parallel momentum transport fmbx
       do iy = -1, ny
        do ix = -1, nx

@@ -123,8 +123,7 @@
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)
       call read_b2mod_geo(nx, ny, ninp(4))

@@ -39,7 +39,7 @@
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1),             !srv 09.07.08 24.08.21
+     *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1,0:1),         !srv 09.07.08 24.08.21
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                           !som 16.08.21

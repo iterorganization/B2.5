@@ -266,8 +266,7 @@
 *   ..read geometry and metric
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)

@@ -57,7 +57,7 @@
       integer, save :: iout = 0, iout_b2wdat = 0               !srv 27.12.17
       integer, save :: get_residuals = 0                       !srv 22.05.18
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)             !srv 11.01.00
+     *   aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)             !srv 11.01.00
       save ncall
 *   ..procedures
       external xertst

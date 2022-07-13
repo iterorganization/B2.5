@@ -8,10 +8,12 @@
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
      &   qz(-1:nx,-1:ny,0:1),
-     &   kapx(-1:nx,-1:ny,0:1,0:ns-1), conx(-1:nx,-1:ny)
+     &   kapx(-1:nx,-1:ny,0:1,0:ns-1), conx(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
-*     B2TXFX computes conductances between neighbouring cells in the
-*     x-direction, given the flux-limited conductivities.
+*     B2TXFX computes conductances between neighbouring cells,
+*     given the flux-limited conductivities in cell centers.
+*     conx(:,:,0) contains poloidal conductivities across x-faces
+*     conx(:,:,1) contains poloidal conductivities across y-faces
 *     ------------------------------------------------------------------
       integer n2, ix, iy, is
       real (kind=R8) ::
@@ -43,11 +45,14 @@
      &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
      &  'faulty argument range qz(,,1)')
 
-*   ..compute conx
+*     conx(:,:,1) = 0 as long as y-faces are aligned with
+*     magnetic surfaces, so no change needed yet
+      conx(:,:,1) = 0.0_R8
+*   ..compute conx(:,:,0)
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-          conx(ix,iy) = 0.0_R8
+          conx(ix,iy,0) = 0.0_R8
         else
          kaps = 0.0_R8
          kapsn= 0.0_R8
@@ -63,26 +68,26 @@
      &        hx(leftix(ix,iy),leftiy(ix,iy))**2
            t1 = vol(ix,iy)*kaps/hx(ix,iy)**2
            if (t0*t1.le.0.0_R8) then
-             conx(ix,iy) = 0.0_R8
+             conx(ix,iy,0) = 0.0_R8
            else
-             conx(ix,iy) = harm(t0,t1)
+             conx(ix,iy,0) = harm(t0,t1)
            endif
          else if (mode.eq.0) then
 *    ..use geometric averaging
-           conx(ix,iy) = 2.0_R8*sqrt(max(0.0_R8,
+           conx(ix,iy,0) = 2.0_R8*sqrt(max(0.0_R8,
      &      (vol(leftix(ix,iy),leftiy(ix,iy))*kapsn/
      &       hx(leftix(ix,iy),leftiy(ix,iy)))*
      &      (vol(ix,iy)*kaps/hx(ix,iy))))/
      &      (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
          else if (mode.eq.1) then
 *    ..use arithmetic averaging (SOLPS5.0 formulation)
-           conx(ix,iy) = 2.0_R8*
+           conx(ix,iy,0) = 2.0_R8*
      &        (vol(leftix(ix,iy),leftiy(ix,iy))*kapsn
      &        +vol(ix,iy)*kaps)/
      &        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2
          else if (mode.eq.2) then
 *    ..use arithmetic averaging (SOLPS4.0 formulation)
-           conx(ix,iy) = gs(ix,iy,0)*qz(ix,iy,1)*2.0_R8*
+           conx(ix,iy,0) = gs(ix,iy,0)*qz(ix,iy,1)*2.0_R8*
      &        (hx(leftix(ix,iy),leftiy(ix,iy))*kapsn
      &        +hx(ix,iy)*kaps)/
      &        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2
@@ -91,7 +96,8 @@
        enddo
       enddo
 *   ..reset null regions
-      call b2xxgs (nx, ny, 0.0_R8, conx, 1)
+      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,0), 1)
+      call b2xxgs (nx, ny, 0.0_R8, conx(-1,-1,1), 2)
 *   ..return
       call subend ()
       return

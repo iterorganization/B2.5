@@ -442,8 +442,8 @@
         end if
        end do
       else
-       call b2saxpy(n2*2*ns, 1.0_R8,   cvsa_cl, 1, cvsa, 1)
-       call b2saxpy(n2*2*ns, 1.0_R8, cvsahz_cl, 1, cvsahz, 1)
+       call b2saxpy(n2*4*ns, 1.0_R8,   cvsa_cl, 1, cvsa, 1)
+       call b2saxpy(n2*4*ns, 1.0_R8, cvsahz_cl, 1, cvsahz, 1)
       end if
       if (fch_anomalous.ne.1.0_R8) then
         csig = csig * fch_anomalous

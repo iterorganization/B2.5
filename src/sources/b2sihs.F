@@ -37,7 +37,8 @@
      *  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), fchstoch(-1:nx,-1:ny,0:1)    !srv 24.08.21
+     4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     5  fchstoch(-1:nx,-1:ny,0:1,0:1)                                    !srv 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
@@ -220,10 +221,10 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                                !srv 24.08.21
+     &    *(fchstoch(ix,iy,1,1)*(hy1(ix,iy)                        !srv 24.08.21
      &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)             !srv 24.08.21
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1,1)*(hy1(ix,iy)     !srv 24.08.21
      &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
           endif

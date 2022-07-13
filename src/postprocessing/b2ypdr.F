@@ -655,8 +655,7 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
@@ -739,8 +738,8 @@
       call gdawk (nout(1))
 *   ..produce special output
       call b2wscp (nout(2), nx, ny, ns)
-      call b2wsps (nout(2), nx, ny, ns, crx, cry, bb,
-     &  vol, hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height)
+      call b2wsps (nout(2), nx, ny, ns,
+     &  crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs)
 
 * ..return
       call dealloc_b2mod_b2cmrc

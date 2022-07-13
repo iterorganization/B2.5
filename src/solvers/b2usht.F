@@ -88,8 +88,10 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test sign of cone, coni
-       call b2xvsg (n2*4, cone, 1, 'cone', '.ge.')
-       call b2xvsg (n2*4, coni, 1, 'coni', '.ge.')
+       call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')
+       call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
+       call b2xvsg (n2, coni(-1,-1,0,0,0), 1, 'coni', '.ge.')
+       call b2xvsg (n2, coni(-1,-1,1,1,0), 1, 'coni', '.ge.')
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')

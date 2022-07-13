@@ -294,8 +294,8 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
         else
           call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx,
      &     chci(-1,-1,0,0))
-          call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx,
-     &     chci(-1,-1,0,1))
+          call b2txfy (nx, ny, ns, mode, vol, gs, hx, hy, qz, qc, qs,
+     &     hcimx, chci(-1,-1,0,1))
         endif
       endif
 
@@ -309,9 +309,9 @@ c      call sfill (n2*2, 0.0_R8, chve, 1)
 c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       if(fch_stochastic.ne.0.0e0_R8)then                                  !lk 31.01.08 { !srv 17.12.13
-       call b2trsc (nx, ny, vol, po, te, ne, csig_stoch)                  !srv 24.08.21
+       call b2trsc (nx, ny, vol, hx, hy, qc, qs, po, te, ne, csig_stoch)  !srv 24.08.21
        call b2trsh (nx, ny, vol, po, te, ne, csig_stoch, chce_stoch)      !srv 24.08.21
-       chce(:,:,1,1)=chce(:,:,1,1) + chce_stoch(:,:,1,1)                  !srv 24.08.21
+       chce(:,:,:,1)=chce(:,:,:,1) + chce_stoch(:,:,:,1)                  !srv 24.08.21
       endif                                                               !lk 31.01.08 } !srv 17.12.13
 *   ..scale parallel coefficients if desired
       if (pol_anom_scale.ne.1.0_R8) then
@@ -343,10 +343,10 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 
       if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
-        call b2tlc0 (nx, ny, ns, hx, hy, gs, qc, qs, na, te, ti,
-     &    cdpa, flc)                                                      !srv 09.07.03 30.11.15
-        call b2tlc0 (nx, ny, ns, hx, hy, hzgs, qc, qs, na, te, ti,        !srv 30.11.15
-     &    cdpahz, flchz)
+        call b2tlc0 (nx, ny, ns, hx, hy, vol, gs, qc, qs,
+     &    na, te, ti, cdpa, flc)                                          !srv 09.07.03 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hy, hzvol, hzgs, qc, qs,             !srv 30.11.15
+     &    na, te, ti, cdpahz, flchz)
       endif                                                               !srv 15.06.08 }
 
       if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {

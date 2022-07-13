@@ -101,7 +101,7 @@
       data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02
      *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
      *        , dia_cur/1.0e0_R8/, vis_par/1.0e0_R8/,                    !srv 17.05.99 22.03.02
-     *          vis_q/1.0e0_R8/, vis_per/1.0e0_R8/, sig_stoch/1.0_R8/    !srv 11.07.99 22.11.99 22.03.02
+     *          vis_q/1.0e0_R8/, vis_per/0.0e0_R8/, sig_stoch/1.0_R8/    !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -191,8 +191,8 @@
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 }
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,                 !srv 07.07.14
-     &              fchstoch)
+      call b2tstch (nx, ny, vol, hx, hy, qc, qs, po, te, ne,             !srv 07.07.14
+     &              csig_stoch, fchstoch)
 *  .. compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,
      &  ehx_, zeff, fch_p)
@@ -227,6 +227,10 @@
             endif
           enddo                                                          !srv 24.06.08 }
          endif                                                           !srv
+         if(fch_stochastic.ne.0.0e0_R8 ) then                            !lk 31.01.08 {
+          conc(ix,iy,0,1) = conc(ix,iy,0,1) + csig_stoch(ix,iy,0,1)
+          fch(ix,iy,0,1) = fch(ix,iy,0,1) + fchstoch(ix,iy,0,1)
+         endif                                                           !lk 31.01.08 }
         endif                                                            !srv 26.11.02
        enddo
       enddo
@@ -305,7 +309,7 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
        call my_out(70,nx,ny,fchdia(-1,-1,1,1),'b2tfch__fchdiay')
        call my_out(70,nx,ny,fchanml(-1,-1,0,0),'b2tfch__fchanmlx')
        call my_out(70,nx,ny,fchanml(-1,-1,1,1),'b2tfch__fchanmly')
-       call my_out(70,nx,ny,fchstoch(-1,-1,1,1),'b2tfch__fchstochy')       !lk 31.01.08 24.08.21
+       call my_out(70,nx,ny,fchstoch(-1,-1,1,1),'b2tfch__fchstochy')     !lk 31.01.08 24.08.21
        call my_out(70,nx,ny,conc(-1,-1,0,0),'b2tfch__concx')
        call my_out(70,nx,ny,conc(-1,-1,1,1),'b2tfch__concy')
        call my_out(70,nx,ny,fch_p(-1,-1,0,0),'b2tfch__fch_px')

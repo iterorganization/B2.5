@@ -24,7 +24,7 @@
      *   corpo(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-6:6)                                    !srv 11.01.00
+     *   aa11(-1:nx,-1:ny,-7:7)                                    !srv 11.01.00
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -44,7 +44,7 @@
       integer, save :: use_9pt_stencil = 1
       character chark*1                                            !srv 08.07.08
       integer ireg, ileft, ibot
-      real (kind=R8) :: aa11p2, aa11m2, aa11p3, aa11m3             !srv 27.01.00
+      real (kind=R8) :: aa11p3, aa11m3, aa11p7, aa11m7             !srv 27.01.00
       save ncall                                                   !srv 27.01.00
 *   ..procedures
       external xertst, sfill
@@ -139,7 +139,7 @@ cwdk add 9-point contributions
          endif
         endif                                                      !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa11(ix,iy,1) = 0.0_R8                                     !srv 26.11.02
+     >   aa11(ix,iy,1) = 0.0_R8                                    !srv 26.11.02
        enddo
       enddo
       do iy = -1, ny
@@ -192,81 +192,79 @@ cwdk add 9-point contributions
       enddo
 
 !TODO: Perpendicular viscosity current terms in 9-point stencil
-CWDK tmp: ignore this
 CWDK will require complex stencil!
-C*   ..compute the seven-point matrix                               !srv 26.01.00
-C      aa11(:,:,-3) = 0.0e0_R8
-C      aa11(:,:, 3) = 0.0e0_R8
-C
-C      do is = 0,ns-1
-C       if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
-C     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then
-C        do iy = -1, ny
-C         do ix = -1, nx                                              !srv 26.11.02
-C          ireg = region(ix,iy,0)
-C          ixt = topix(ix,iy)
-C          iyt = topiy(ix,iy)
-C          ixb = bottomix(ix,iy)
-C          iyb = bottomiy(ix,iy)
-C          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-C     &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then   !srv 26.11.02 12.12.17 {
-C*   .. do nothing
-C          else
-C           if(bottomiy(ixb,iyb).eq.-2) then
-C              aa11p3 =
-C     &           avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
-C     &           cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
-C             aa11(ix,iy, 3) = aa11(ix,iy, 3) + aa11p3
-C             aa11m2 =avisper_a(ixt,iyt,1,is)*
-C     &               bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
-C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11m2
-C             aa11p2 =avisper_a(ixt,iyt,1,is)*
-C     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
-C     &         +avisper_a(ixt,iyt,1,is)*
-C     &          bvisper_a(ix ,iy ,1,is)*cvisper_a(ixt,iyt,1,is)
-C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11p3 - aa11p2
-C             aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p2 + aa11m2
-C           elseif(topiy(ixt,iyt).eq.ny+1) then
-C             aa11m3 = avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
-C             aa11(ix,iy,-3) = aa11(ix,iy,-3) + aa11m3
-C             aa11m2 = avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
-C     &         +avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
-C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11m3 - aa11m2
-C             aa11p2 = avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
-C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11p2
-C             aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p2 + aa11m2
-C           else
-C             aa11m3 = avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
-C             aa11(ix,iy,-3) = aa11(ix,iy,-3) + aa11m3
-C             aa11p3 = avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
-C     &          cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
-C             aa11(ix,iy, 3) = aa11(ix,iy, 3) + aa11p3
-C             aa11m2 = avisper_a(ixt,iyt,1,is)*
-C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
-C     &         +avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
-C     &         +avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
-C             aa11(ix,iy,-2) = aa11(ix,iy,-2) - aa11m3  - aa11m2
-C             aa11p2 = avisper_a(ixt,iyt,1,is)*
-C     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
-C     &         +avisper_a(ixt,iyt,1,is)*
-C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
-C     &         +avisper_a(ix,iy,1,is)*
-C     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
-C             aa11(ix,iy,2) = aa11(ix,iy,2) - aa11p3 - aa11p2
-C             aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p2 + aa11m2
-C           endif
-C          endif                                                     !srv 26.11.02 12.12.17 }
-C         enddo
-C        enddo
-C       endif
-C      enddo
+
+      if (use_9pt_stencil.eq.0) then
+       do is = 0,ns-1
+        if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &      (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+         do iy = -1, ny
+          do ix = -1, nx                                          !srv 26.11.02
+           ireg = region(ix,iy,0)
+           ixt = topix(ix,iy)
+           iyt = topiy(ix,iy)
+           ixb = bottomix(ix,iy)
+           iyb = bottomiy(ix,iy)
+           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then   !srv 26.11.02 12.12.17 {
+*   .. do nothing
+           else
+            if(bottomiy(ixb,iyb).eq.-2) then
+              aa11p7 =
+     &           avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
+     &           cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
+              aa11(ix,iy, 7) = aa11(ix,iy, 7) + aa11p7
+              aa11m3 =avisper_a(ixt,iyt,1,is)*
+     &                bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+              aa11(ix,iy,-3) = aa11(ix,iy,-3) - aa11m3
+              aa11p3 =avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
+     &         +avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ix ,iy ,1,is)*cvisper_a(ixt,iyt,1,is)
+              aa11(ix,iy,3) = aa11(ix,iy,3) - aa11p7 - aa11p3
+              aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p3 + aa11m3
+            elseif(topiy(ixt,iyt).eq.ny+1) then
+              aa11m7 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
+              aa11(ix,iy,-7) = aa11(ix,iy,-7) + aa11m7
+              aa11m3 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
+              aa11(ix,iy,-3) = aa11(ix,iy,-3) - aa11m7 - aa11m3
+              aa11p3 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+              aa11(ix,iy,3) = aa11(ix,iy,3) - aa11p3
+              aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p3 + aa11m3
+            else
+              aa11m7 = avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
+              aa11(ix,iy,-7) = aa11(ix,iy,-7) + aa11m7
+              aa11p7 = avisper_a(ixt,iyt,1,is)*bvisper_a(ixt,iyt,1,is)*
+     &          cvisper_a(topix(ixt,iyt),topiy(ixt,iyt),1,is)
+              aa11(ix,iy, 7) = aa11(ix,iy, 7) + aa11p7
+              aa11m3 = avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ix,iy,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
+              aa11(ix,iy,-3) = aa11(ix,iy,-3) - aa11m7  - aa11m3
+              aa11p3 = avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ixt,iyt,1,is)*cvisper_a(ixt,iyt,1,is)
+     &         +avisper_a(ixt,iyt,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+     &         +avisper_a(ix,iy,1,is)*
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+              aa11(ix,iy,3) = aa11(ix,iy,3) - aa11p7 - aa11p3
+              aa11(ix,iy,0) = aa11(ix,iy,0) + aa11p3 + aa11m3
+            endif
+           endif                                                     !srv 26.11.02 12.12.17 }
+          enddo
+         enddo
+        endif
+       enddo
+      endif
 
 *   ..correct RHS if not solving
       do iy = -1, ny
@@ -278,7 +276,8 @@ C      enddo
      &      aa11(ix,iy,3).eq.0.0_R8 .and. aa11(ix,iy,-3).eq.0.0_R8 .and.
      &      aa11(ix,iy,4).eq.0.0_R8 .and. aa11(ix,iy,-4).eq.0.0_R8 .and.
      &      aa11(ix,iy,5).eq.0.0_R8 .and. aa11(ix,iy,-5).eq.0.0_R8 .and.
-     &      aa11(ix,iy,6).eq.0.0_R8 .and. aa11(ix,iy,-6).eq.0.0_R8) then
+     &      aa11(ix,iy,6).eq.0.0_R8 .and. aa11(ix,iy,-6).eq.0.0_R8 .and.
+     &      aa11(ix,iy,7).eq.0.0_R8 .and. aa11(ix,iy,-7).eq.0.0_R8) then
           aa11(ix,iy,0) = 1.0_R8
           respo(ix,iy) = 0.0_R8
         end if
@@ -287,16 +286,14 @@ C      enddo
       enddo
 
 *   ..solve the correction equation
-CWDK tmp: call 9-point solver
-!      call b2ux11p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7')      !srv 11.01.00
-*   ..solve the correction equation
-      call b2ux9p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7_9pt')    !srv 18.05.02
+      call b2ux11p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7')   !srv 18.05.02
 
       if (iout.ne.0) then                                          !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k
           call my_out(70,nx,ny,sch(-1,-1,k),'b2usp7_sch'//chark)
         enddo
+        call my_out(70,nx,ny,aa11(-1,-1,-7),'b2usp7_aa11m7')
         call my_out(70,nx,ny,aa11(-1,-1,-6),'b2usp7_aa11m6')
         call my_out(70,nx,ny,aa11(-1,-1,-5),'b2usp7_aa11m5')
         call my_out(70,nx,ny,aa11(-1,-1,-4),'b2usp7_aa11m4')
@@ -310,6 +307,7 @@ CWDK tmp: call 9-point solver
         call my_out(70,nx,ny,aa11(-1,-1, 4),'b2usp7_aa11p4')
         call my_out(70,nx,ny,aa11(-1,-1, 5),'b2usp7_aa11p5')
         call my_out(70,nx,ny,aa11(-1,-1, 6),'b2usp7_aa11p6')
+        call my_out(70,nx,ny,aa11(-1,-1, 7),'b2usp7_aa11p7')
         call my_out(70,nx,ny,respo,'b2usp7_respo')
         call my_out(70,nx,ny,corpo,'b2usp7_corpo')
       endif                                                        !srv 08.07.08 }

@@ -224,13 +224,13 @@ cwdk cancellation of some terms in poloidal and radial drift components
      &           (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           qc(ix,iy,0)
      &          *dOnedBsq(ix,iy,0,0)
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-         do iy = 0, ny
-           do ix = 0, nx-1
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+          do iy = 0, ny
+            do ix = 0, nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
                veecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)/               !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1          (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))* !signmf*!srv
      2          (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
@@ -243,15 +243,20 @@ cwdk cancellation of some terms in poloidal and radial drift components
      &          /(qe*hx(bottomix(ix,iy),bottomiy(ix,iy)))                !srv
      &           +te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy)))*0.5_R8           !srv
      &          *dOnedBsq(ix,iy,1,0)                                     !srv 05.03.99
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-       elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then             ! IYS 11.02.2020
+        elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then            ! IYS 11.02.2020
 
-         do iy = 0, ny-1
-           do ix = 0, nx
-             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
+          weight = 1.0e0_R8                                              !lk
+cwdk add computation of 9-point corrections for drifts
+cwdk precomputation of differences on faces
+          call diff(nx, ny, hx, hy, weight, qs, po, dpo)
+          call diff(nx, ny, hx, hy, vol, qs, OnedBsq, dOnedBsq)
+          do iy = 0, ny-1
+            do ix = 0, nx
+              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
                veecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)              !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      &          *dpo(ix,iy,0,1)*
      &           wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy,0) ! IYS 04.03.2019
@@ -273,13 +278,13 @@ cwdk cancellation of some terms in poloidal and radial drift components
      &           qc(ix,iy,0)
      &          *dOnedBsq(ix,iy,0,0)
                endif
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-         do iy = 0, ny
-           do ix = 0, nx-1
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+          do iy = 0, ny
+            do ix = 0, nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
                veecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)                !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2           *dpo(ix,iy,1,0)                                         !srv 13.05.16 }
      &           * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)       ! IYS 04.03.2019
@@ -287,19 +292,19 @@ cwdk cancellation of some terms in poloidal and radial drift components
      &           (te(bottomix(ix,iy),bottomiy(ix,iy)) + te(ix,iy))*
      &           0.5_R8*wbbv(ix,iy,2) / (qe * hxb(ix,iy))                ! IYS 04.03.2019
      &          *dOnedBsq(ix,iy,1,0)                                     !srv 05.03.99
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-       else         ! drift_style                                        ! IYS 11.02.2020 {
+        else         ! drift_style                                       ! IYS 11.02.2020 {
 
-         write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
+          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
-         call xerrab (
-     &   'faulty definition of drift_style and redef_gmtry, ' //
-     &   'or logical mistake occurred')
+          call xerrab (
+     &    'faulty definition of drift_style and redef_gmtry, ' //
+     &    'or logical mistake occurred')
 
-       endif
+        endif
 
       endif
 

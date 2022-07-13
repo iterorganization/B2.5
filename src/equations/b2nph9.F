@@ -50,7 +50,7 @@
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      3  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),                             !srv 07.07.09
-     4  fchstoch(-1:nx,-1:ny,0:1)                                       !srv 24.08.21
+     4  fchstoch(-1:nx,-1:ny,0:1,0:1)                                   !srv 24.08.21
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvtreg(0:nregionv),                                           !srv 22.05.18

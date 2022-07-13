@@ -26,6 +26,7 @@
       use b2mod_openmp
       use b2mod_subsys
       use b2mod_ilutern
+      use b2mod_ilutern_9
       use b2mod_zhfrtf                                                 !som 13.08.21
      1 , only : rho_A_rel, avm_u
 #ifdef _OPENMP

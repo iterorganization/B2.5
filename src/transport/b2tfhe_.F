@@ -98,7 +98,7 @@ csw 10oct2012
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                           !srv 13.01.17
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
-     *    wrk0(-1:nx,-1:ny),
+     *    wrk0(-1:nx,-1:ny), pe(-1:nx,-1:ny),
      *    dter(-1:nx,-1:ny,0:1), dpor(-1:nx,-1:ny,0:1),
      *    dper(-1:nx,-1:nx,0:1), wght(-1:nx,-1:ny)
       real (kind=R8), allocatable ::
@@ -251,9 +251,10 @@ csw 10oct2012
 *   ..compute radial differences of te and po, for 9-point terms
       wght = 1.0_R8
       wght = vol
+      pe = ne*te
       call diff_r(nx, ny, 0, hx, hy, wght, qs, te, wrk0, dter)
       call diff_r(nx, ny, 0, hx, hy, wght, qs, po, wrk0, dpor)
-      call diff_r(nx, ny, 0, hx, hy, wght, qs, ne*te, wrk0, dper)
+      call diff_r(nx, ny, 0, hx, hy, wght, qs, pe, wrk0, dper)
 
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex
@@ -292,13 +293,14 @@ csw 10oct2012
      &    -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe                       !srv 30.12.09 13.01.17
          if (use_9pt_stencil.ne.0) then
 cwdk add computation of 9-point quantities
-cwdk TODO: add contributions from fchstoch to floe9(_mdf)!
           floe9     = 1.5e0_R8*fne(ix,iy,0,1)+
      &     (chve(ix,iy,0,1)+2.5e0_R8*fledia(ix,iy,0,1))*
-     &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+     &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8+
+     &     2.5_R8*fchstoch(ix,iy,0,1)/qe
           floe9_mdf =  1.5e0_R8*fne(ix,iy,0,1)+
      &     chve(ix,iy,0,1)*
-     &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+     &     (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8+
+     &     2.5_R8*fchstoch(ix,iy,0,1)/qe
 cwdk
          else
            floe9 = 0.0_R8

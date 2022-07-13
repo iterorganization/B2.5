@@ -88,8 +88,7 @@
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *   ..test geometry
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  cell_width, cell_height)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs)
 *   ..obtain isolated region data
       call ipgeti('b2agdr_nxiso1', nxiso1)
       call ipgeti('b2agdr_nxiso2', nxiso2)
@@ -487,10 +486,6 @@ cxpb-end
       endif
       if(newversion.ge.'01.001.028') then
         call cfwuin (nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
-      endif
-      if(newversion.ge.'01.001.033') then
-        call cfwure (nput, n2, cell_width, 'cell_width')
-        call cfwure (nput, n2, cell_height, 'cell_height')
       endif
 * ..return
       call subend ()

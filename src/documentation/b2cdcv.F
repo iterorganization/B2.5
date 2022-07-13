@@ -181,7 +181,7 @@
 *     hzb(:,:) * wbbv(:,:,2) = (ffbz(:,:,0)+ffbz(:,:,1))/2,
 *     hzc(:,:) * wbbc(:,:,2) = ffbz(:,:,:),
 *     and conservation of magnetic flux for constant iy (for all ix values):
-*     hyl(:,iy) * qc(:,iy) * hzl(:,iy) * wbbl(:,iy,0) = hy(:,iy) * qz(:,iy,1) * hz(:,iy) * bb(:,iy,0)
+*     hyl(:,iy) * qc(:,iy,0) * hzl(:,iy) * wbbl(:,iy,0) = hy(:,iy) * qz(:,iy,1) * hz(:,iy) * bb(:,iy,0)
 *     It will hold that 0.lt.hzb(,) and 0.lt.hzl(,) and 0.lt.hzc(,).
 *
 *     isymm - integer.

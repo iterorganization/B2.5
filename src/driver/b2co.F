@@ -201,8 +201,7 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
       call get_nxt(nx, nxtl, nxtr)
 *   ..read initial state
       call cfverr (ninp(4), plasmastate_version)                        !xpb

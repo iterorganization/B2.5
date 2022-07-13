@@ -121,7 +121,7 @@
          call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
 *   ..pre-computation of differences
          do is = 0, ns-1
-           wrk  = log(na(:,:,is))
+           wrk = log(na(:,:,is))
            call diff(nx, ny, hx, hy, wght, qs, wrk,
      &          wrk0(-1,-1,0,0,is))
          end do
@@ -134,7 +134,8 @@
            call intfacev(nx, ny, bottomix, bottomiy, vol,
      &                 na(-1,-1,is), nab(-1,-1,is))                     !som 04.11.21
 *   ..pre-computation of differences
-           call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,is)*ti,
+           wrk = na(:,:,is)*ti(:,:)
+           call diff(nx, ny, hx, hy, wght, qs, wrk,
      &                 wrk0(-1,-1,0,0,is))
          enddo
        endif

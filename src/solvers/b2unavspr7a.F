@@ -29,7 +29,7 @@
 *   ..local variables
       integer, save :: ncall = 0, iout = 0
       integer ix, iy, ixt, ixb, iyt, iyb, ireg
-      real (kind=R8), save :: vis_per = 1.0_R8
+      real (kind=R8), save :: vis_per = 0.0_R8
       real (kind=R8) ::
      &   avisper_b(-1:nx,-1:ny,0:1), bvisper_b(-1:nx,-1:ny,0:1),
      &   cvisper_b(-1:nx,-1:ny,0:1), dvisper_b(-1:nx,-1:ny,0:1),

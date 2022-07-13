@@ -1528,8 +1528,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
       call alloc_b2mod_tallies(nnreg,ns)
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx, nxtl, nxtr)

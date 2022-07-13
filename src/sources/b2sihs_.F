@@ -43,7 +43,7 @@
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1),          !srv 24.08.21
+     *  fne(-1:nx,-1:ny,0:1,0:1), fchstoch(-1:nx,-1:ny,0:1,0:1),      !srv 24.08.21
      &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:1,0:ns-1),                        !som 16.08.21
@@ -261,24 +261,41 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                             !srv 24.08.21
+     &    *(fchstoch(ix,iy,1,1)*(hy1(ix,iy)                         !srv 24.08.21
      &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)          !srv 24.08.21
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1,1)*(hy1(ix,iy)      !srv 24.08.21
      &    +hy1(topix(ix,iy),topiy(ix,iy)))
-     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
+     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8-
+     &    (ne(rightix(ix,iy),rightiy(ix,iy))
+     &    *te(rightix(ix,iy),rightiy(ix,iy))
+     &    -ne(leftix(ix,iy),leftiy(ix,iy))
+     &    *te(leftix(ix,iy),leftiy(ix,iy)))
+     &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
+     &    *(fchstoch(ix,iy,0,1)*(hy1(ix,iy)                         !srv 24.08.21
+     &    +hy1(leftix(ix,iy),leftiy(ix,iy)))
+     &    *(hy(ix,iy)+hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &      qc(ix,iy,0)
+     &    /(vol(ix,iy) + vol(leftix(ix,iy),leftiy(ix,iy)))
+     &    +fchstoch(rightix(ix,iy),rightiy(ix,iy),0,1)*(hy1(ix,iy)  !srv 24.08.21
+     &    +hy1(rightix(ix,iy),rightiy(ix,iy)))
+     &    *(hy(ix,iy)+hy(rightix(ix,iy),rightiy(ix,iy)))/
+     &     (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*
+     &      qc(rightix(ix,iy),rightiy(ix,iy),0)
+     &    /(vol(ix,iy) + vol(rightix(ix,iy),rightiy(ix,iy))))/4.0e0_R8
          endif
         enddo
        enddo
-       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)               !srv 17.12.13 24.08.21
-      endif                                                           !lk 31.01.08 }
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)             !srv 17.12.13 24.08.21
+      endif                                                         !lk 31.01.08 }
 *   ..contribution from divergence ue
-      do iy = 0, ny-1                                                 !srv 05.03.11 {
+      do iy = 0, ny-1                                               !srv 05.03.11 {
         do ix = 0, nx
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy) = 0.0e0_R8
           else
-            if(style_int_vel.eq.0) then                               !srv 01.04.19 {
+            if(style_int_vel.eq.0) then                             !srv 01.04.19 {
               wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
      1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
      2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)

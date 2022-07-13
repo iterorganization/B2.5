@@ -39,7 +39,7 @@
      *   hy1_(-1:nx,-1:ny),
      *   dpop(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:ny,0:1),
      *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
-     *   dum(-1:nx,-1:ny)
+     *   dum(-1:nx,-1:ny), work(-1:nx,-1:ny)
       save ncall
 *   ..procedures
       external xertst
@@ -76,7 +76,7 @@
       else
         do iy = -1, ny
           do ix = -1, nx
-            hy1_(ix,iy)=hy1(ix,iy)
+            hy1_(ix,iy) = hy1(ix,iy)
           enddo
         enddo
 
@@ -88,26 +88,45 @@ c     to be considered: volume-weighted interpolation
         if(mode_ehx.eq.0) then
 *       ..compute poloidal differences of po and pe
           call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
-          call diff_p(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
+          work = ne*te
+          call diff_p(nx, ny, 0, hx, hy, wrk, qs, work, dum, wrk0)
 *       ..interpolate ne to faces
           call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk1(-1,-1,0))
           call intfacev(nx,ny,bottomix,bottomiy,wrk,ne,wrk1(-1,-1,1))
 *       ..compute ehx      
-          ehx = -dpop + wrk0/(qe*wrk1)
+          ehx = -dpop
+          do iy = -1, ny
+            do ix = -1, nx
+              if (wrk1(ix,iy,0).ne.0.0_R8) ehx(ix,iy,0) = ehx(ix,iy,0)
+     .         + wrk0(ix,iy,0)/(qe*wrk1(ix,iy,0))
+              if (wrk1(ix,iy,1).ne.0.0_R8) ehx(ix,iy,1) = ehx(ix,iy,1)
+     .         + wrk0(ix,iy,1)/(qe*wrk1(ix,iy,1))
+            end do
+          end do
         else if (mode_ehx.eq.1) then
 *       ..compute poloidal differences of po and pe
           call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
-          call diff_p(nx, ny, 0, hx, hy, wrk, qs, ne*te, dum, wrk0)
+          work = ne*te
+          call diff_p(nx, ny, 0, hx, hy, wrk, qs, work, dum, wrk0)
 *       ..interpolate ne to faces
           call intfaceh(nx,ny,leftix,leftiy,hx,ne,wrk1(-1,-1,0))
           call intfacev(nx,ny,bottomix,bottomiy,hy1_,ne,wrk1(-1,-1,1))
 *       ..compute ehx      
-          ehx = -dpop + wrk0/(qe*wrk1)
+          ehx = -dpop
+          do iy = -1, ny
+            do ix = -1, nx
+              if (wrk1(ix,iy,0).ne.0.0_R8) ehx(ix,iy,0) = ehx(ix,iy,0)
+     .         + wrk0(ix,iy,0)/(qe*wrk1(ix,iy,0))
+              if (wrk1(ix,iy,1).ne.0.0_R8) ehx(ix,iy,1) = ehx(ix,iy,1)
+     .         + wrk0(ix,iy,1)/(qe*wrk1(ix,iy,1))
+            end do
+          end do
         else
 *       ..compute poloidal differences of po, te and log(ne) on faces
           call diff_p(nx, ny, 0, hx, hy, wrk, qs, po, dum, dpop)
           call diff_p(nx, ny, 0, hx, hy, wrk, qs, te, dum, wrk0)
-          call diff_p(nx, ny, 0, hx, hy, wrk, qs, log(ne), dum, wrk1)
+          work = log(ne)
+          call diff_p(nx, ny, 0, hx, hy, wrk, qs, work, dum, wrk1)
 *       ..interpolate te to faces
           wrk = 1.0_R8
           call intfaceh(nx,ny,leftix,leftiy,wrk,te,wrk2(-1,-1,0))

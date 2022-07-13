@@ -35,7 +35,7 @@
       real (kind=R8), allocatable, save ::
      *  fchvispar(:,:,:,:), fchvisper(:,:,:,:), fchvisq(:,:,:,:),        !srv 11.07.99
      *  fchinert(:,:,:,:), fchin(:,:,:,:), fchanml(:,:,:,:),             !srv 07.07.99 24.03.07 10.06.08 }
-     *  fchstoch(:,:,:),                                                 !srv 24.08.21
+     *  fchstoch(:,:,:,:),                                               !srv 24.08.21
      *  vadia(:,:,:,:,:), vedia(:,:,:,:), wadia(:,:,:,:,:),              !xpb
      *  vaecrb(:,:,:,:,:), veecrb(:,:,:,:),
      *  wedia(:,:,:,:), ve(:,:),                                         !srv 14.07.10
@@ -171,7 +171,7 @@
       allocate(fchin(-1:nxd,-1:nyd,0:1,0:1))                         !srv 30.09.02
       fchin=0.0_R8
       allocate(fchanml(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.03.07
-      allocate(fchstoch(-1:nxd,-1:nyd,0:1))                          !srv 24.08.21
+      allocate(fchstoch(-1:nxd,-1:nyd,0:1,0:1))                      !srv 24.08.21
       fchstoch = 0.0_R8                                              !srv 24.08.21
       allocate(fchanml_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 08.09.21 {
       allocate(fchinert_a(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
@@ -612,6 +612,11 @@
         fchinert(:,:,1,1) = floc(:,:,1)
       endif
       if(b2fplasma_version.ge.'03.001.000') then
+        call cfrure_opt (nread, size(fht), fht, 'fht')
+        call cfrure_opt (nread, size(fhj), fhj, 'fhj')
+        call cfrure_opt (nread, size(fhm), fhm, 'fhm')
+        call cfrure_opt (nread, size(fhp), fhp, 'fhp')
+      elseif(b2fplasma_version.ge.'03.000.007') then
         call cfrure_opt (nread, size(floc), floc, 'fht')
         fht = 0.0_R8
         fht(:,:,0,0) = floc(:,:,0)
@@ -628,11 +633,6 @@
         fhp = 0.0_R8
         fhp(:,:,0,0,:) = flocs(:,:,0,:)
         fhp(:,:,1,1,:) = flocs(:,:,1,:)
-      elseif(b2fplasma_version.ge.'03.000.007') then
-        call cfrure_opt (nread, size(fht), fht, 'fht')
-        call cfrure_opt (nread, size(fhj), fhj, 'fhj')
-        call cfrure_opt (nread, size(fhm), fhm, 'fhm')
-        call cfrure_opt (nread, size(fhp), fhp, 'fhp')
       endif
 
       return

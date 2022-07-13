@@ -1,8 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  cell_width, cell_height)
+      subroutine b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs)
       use b2mod_types
       use b2mod_b2cmgs
       use b2mod_cellhelper
@@ -13,8 +12,7 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..variables in common
@@ -75,8 +73,6 @@
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-      call b2xvsg (n2, cell_width, 1, 'cell_width', '.gt.')
-      call b2xvsg (n2, cell_height, 1, 'cell_height', '.gt.')
 *   ..test range of qz, qc
       call xertst (smin(n2,qz(-1,-1,0),1).gt.-1.0_R8.and.
      &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -135,7 +131,7 @@
 *.specification
 
       subroutine b2xvgm1(nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
-     . cell_width, cell_height, bottomiy1)
+     . bottomiy1)
       use b2mod_types
       use b2mod_b2cmgs
       use b2mod_cellhelper
@@ -146,8 +142,7 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+     &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..variables in common
@@ -209,8 +204,6 @@
       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
       call b2xvsg (n2, hx, 1, 'hx', '.gt.')
       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-      call b2xvsg (n2, cell_width, 1, 'cell_width', '.gt.')
-      call b2xvsg (n2, cell_height, 1, 'cell_height', '.gt.')
 *   ..test range of qz, qc
       call xertst (smin(n2,qz(-1,-1,0),1).gt.-1.0_R8.and.
      &  smax(n2,qz(-1,-1,0),1).lt.1.0_R8,

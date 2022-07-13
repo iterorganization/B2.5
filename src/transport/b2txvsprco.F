@@ -29,7 +29,7 @@
 *   ..local variables
       integer ix, iy
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
-      real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns

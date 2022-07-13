@@ -18,7 +18,7 @@
       real (kind=R8) ::
 !    *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  nb(-1:nx,-1:ny),!  hzl(-1:nx,-1:ny),hzb(-1:nx,-1:ny),            !srv 21.10.10
-!     &  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
+!     &  qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny,0:1),
      &  facdrift(-1:nx,-1:ny), zb(-1:nx,-1:ny),
      &  ti(-1:nx,-1:ny), cddb(-1:nx,-1:ny,0:1,0:1)                       !srv 13.10.06 !iyv 06.02.14
 *   ..output arguments (unspecified on entry)

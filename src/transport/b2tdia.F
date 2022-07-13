@@ -1,12 +1,12 @@
       subroutine b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
-     &   pz, fna, uadia, facdrift, fchdia)       !srv 16.19.17 {
+     &   pz, fna, uadia, facdrift, fchdia)                       !srv 16.19.17 {
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_geo
-     &   , only : hyl, hxb                       ! IYS 04.03.2019
+     &   , only : hyl, hxb                                       !IYS 04.03.2019
 #ifdef CLASSICAL_CURRENT
       use b2mod_geo
      &   , only : hy1

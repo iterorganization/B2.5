@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trsc (nx, ny, vol, po, te, ne, csig_stoch)           !srv 24.08.21
+      subroutine b2trsc (nx, ny, vol, hx, hy, qc, qs, po, te, ne,
+     &  csig_stoch)                                                     !srv 24.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -14,11 +15,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
+     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     & qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     1 po(-1:nx,-1:ny), te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     & csig_stoch(-1:nx,-1:ny,0:1)
+     & csig_stoch(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -37,6 +39,7 @@
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
+      integer, save :: use_9pt_stencil = 1
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 }
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
@@ -54,6 +57,7 @@
       call subini ('b2trsc')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
         call xertst (0.0_R8.le.sig_stoch,
@@ -84,8 +88,15 @@
       csig_stoch = 0.0e0_R8
       do iy = bottomdelta1, jsep+1
         do ix = -1, nx
+         if(on_closed_surface(ix,iy).and.use_9pt_stencil.ne.0) then
+          csig_stoch(ix,iy,0,1) = -sig_stoch*qs(ix,iy,0)/qc(ix,iy,0)**2*
+     &     qe*(ne(ix,iy)+ne(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8*
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8/
+     &     (hy(ix,iy)+hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+         endif
          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-          csig_stoch(ix,iy,1) = sig_stoch*
+          csig_stoch(ix,iy,1,1) = sig_stoch*
      &     qe*(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8*  !lk 24.03.08 17.12.13
      &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
      &     /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2         !srv 07.07.14
@@ -93,7 +104,7 @@
         enddo
       enddo
 
-!      call my_out(70,nx,ny,csig_stoch(-1,-1,1),'b2tstch_csigy_stoch')
+!      call my_out(70,nx,ny,csig_stoch(-1,-1,1,1),'b2tstch_csigy_stoch')
 
 * ..return
       ncall = ncall+1

@@ -87,6 +87,11 @@
       chce_stoch = 0.0e0_R8
       do iy = bottomdelta1, jsep+1
         do ix = -1, nx
+         if(on_closed_surface(ix,iy)) then
+          chce_stoch(ix,iy,0,1)=alpha_stoch*1.6e0_R8*
+     &      csig_stoch(ix,iy,0,1)/qe/qe*
+     &     (te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
+         endif
          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
           chce_stoch(ix,iy,1,1)=alpha_stoch*1.6e0_R8*
      &      csig_stoch(ix,iy,1,1)/qe/qe*
