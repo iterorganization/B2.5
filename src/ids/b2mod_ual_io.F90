@@ -863,7 +863,6 @@ contains
             if (.not.allocated(xtrian)) then ! Eirene has not been called
               open(unit=46,file=filename)
               call ntread
-              close(46)
             else if (.not.allocated(triangle_vol)) then ! this is the first pass
               call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
               call compute_triangle_area
