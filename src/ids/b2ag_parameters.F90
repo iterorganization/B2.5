@@ -134,7 +134,7 @@ contains
      call xertst (streql(id,'*param'),&
     & 'faulty input instead of *param, id='//id)
      read (ninp(0),*,err=94) parg
-     ! extract istyle (what does it mean?, still appl. for us)
+     ! extract istyle 
      istyle = nint(parg(0))
 
      !   ..echo parg
@@ -184,15 +184,12 @@ contains
                 m%nx = idum(0)
                 m%ny = idum(1)
                 nncut = idum(2)
-            !else
-                !read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
-                !doGhostCells = .true.
             end if
         end if
         
      end if
 
-     ! check that b2ag and geometry file sizes are compatible
+     ! check that b2ag.dat and geometry file sizes are compatible
      if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then        
         write(*,'(a,4i4)') 'b2ag_read_parameters: nCv,nFc, nVx code and data disagree',nCv,nFc,nVx,nCv0,nFc0,nVx0
         stop
@@ -202,7 +199,7 @@ contains
      if (doGhostCells) then
         rewind lun
         nCi = nCv
-        call computeGridSizeWithGhostCells(lun,nCv,m%nCg,nCmxVx0,nCmxFc0, &
+        call computeGridSizeWithGhostCells(lun,nCv,m%nCg,nFc,nCmxVx0,nCmxFc0, &
               &  nFmxCv0, nVmxCv0, nVmxFc0,nCv,nCmxVx,nCmxFc, &
               &  nFmxCv, nVmxCv, nVmxFc)
         m%nCv = nCv 
@@ -215,18 +212,8 @@ contains
         m%nVmxCv = nVmxCv
         m%nVmxFc = nVmxFc
 
-	 ! subroutine of b2ag_ghostcells
      end if
      close(lun)
-
-      !introduce the flux tubes etc.
-      !rough over-estimation
-      !m%nFs = max(1,(1 + 2*nncut)*m%ny)
-      !m%nFt = m%nFs
-      !m%nFs = 0
-      !m%nFt = 0
-
-
 
      return
 

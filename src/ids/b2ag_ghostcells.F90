@@ -26,10 +26,10 @@ contains
     ny = nny
   end subroutine computeGridSizeWithGhostCells_st
 
-  subroutine computeGridSizeWithGhostCells(nrid,nCi,nCg,nCmxVx0,nCmxFc0, &
+  subroutine computeGridSizeWithGhostCells(nrid,nCi,nCg,nFc,nCmxVx0,nCmxFc0, &
               &  nFmxCv0, nVmxCv0, nVmxFc0, nCv, nCmxVx, nCmxFc, &
               &  nFmxCv, nVmxCv, nVmxFc ) 
-    integer, intent(in) :: nrid, nCi, nCg, nCmxVx0, nCmxFc0, nFmxCv0, &
+    integer, intent(in) :: nrid, nCi, nCg, nFc, nCmxVx0, nCmxFc0, nFmxCv0, &
               &  nVmxCv0, nVmxFc0
     integer, intent(out) :: nCv, nCmxVx, nCmxFc, nFmxCv, &
               &   nVmxCv, nVmxFc
@@ -37,24 +37,27 @@ contains
     
      
     !internal
-    integer :: i, cflags(1:nCi), nBc
+    integer :: i, cflags(1:nCi), nBc, cvFc(1:nCmxFc0), iFc, nBF
     character id*32
 
     !With the assumption that each boundary cell has only one boundary face
     !read the cflag van cell information, count the number of 3's
     !read(nrid)
    
-    call read_cflags(nrid, nCv, cflags)
-    !.. count number of boundary cells, better count boundaryfaces but information not available
-    !nBc = 0
-    !do i = 1, nCi
-    !  if (cflags(i).eq.GRID_BOUNDARY) then
-    !    nBc = nBc + 1
-    !  endif
-    !enddo
-    !.. four or two more ghost cells at corners, depends on grid type
+    call read_cvFc(nrid,nCv,cvFc,nCmxFc0)
+    !count how many faces only appear once in cvFc, this are boundary faces (nBF)
+    nBF = 0
+    do iFc = 1,nFc
+      if (count (cvFc == iFc) .eq. 1) then
+         nBF = nBF + 1
+      endif
+    enddo
+    
+    if(nCg.ne.nBF) then        
+       write(*,'(a,4i4)') 'b2ag_ghostcells: nCg and nBF disagree',nCg,nBF
+       stop
+    endif
 
-    !nCg = nBc + 2
     nCv = nCi + nCg
 
     !.. calculate nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc
@@ -638,6 +641,10 @@ contains
        g%cvY(iCv) = fcY     
     enddo
 
+    ! add flux tubes of guard cells
+    do iCv = nnCv+1,m%nCv
+       
+    enddo
     
 
     ! calculate cvFpsi , cvBt and cvBp in routine b2agbb in b2agfs.f
@@ -721,18 +728,18 @@ contains
 
 
 
-  subroutine read_cflags(nrid, nCv, cflags1)
+  subroutine read_cvFc(nrid, nCv, cvFc,nCmxFc)
      
       use b2mod_types
       implicit none
-      integer, intent(in) :: nrid, nCv
-      integer :: cflags1(nCv), cflags2(nCv), &
-       & cflags3(nCv), cflags4(nCv), cflags5(nCv), &
+      integer, intent(in) :: nrid, nCv, nCmxFc
+      integer :: cflags1(nCv), &
        & cv(nCv), cvVxP1(nCv), & 
-       & cvVxP2(nCv), ctype(nCv)
+       & cvVxP2(nCv), cvreg(nCv), cvFc(nCmxFc)
       real (kind=R8) :: &
        & cvX(nCv), cvY(nCv), &
        & psi(nCv), bp(nCv), bt(nCv)
+      integer, allocatable :: cvVx(:) 
       
       integer i, j
       character idcod*5, id0*32, id1*32
@@ -750,13 +757,15 @@ contains
         if ((streql('*cf:',idcod)).and. &
        &   (streql('cv' ,id1))) then
            do i = 1, nCv
-!             read(nrid,*,err=97) cv(i), cvVxP1(i), cvVxP2(i), cvX(i), &
-!       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i), cflags2(i), &
-!       &     cflags3(i), cflags4(i), cflags5(i), ctype(i)
              read(nrid,*,err=97) cv(i), cvVxP1(i), cvVxP2(i), cvX(i), &
-       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i)
+       &     cvY(i), psi(i), bp(i), bt(i), cflags1(i), cvreg(i)
            enddo
            j=1
+           allocate(cvVx(cvVxP1(nCv)+cvVxP2(nCv)-1))
+           !read cvVx
+           call cfruin(nrid,cvVxP1(nCv)+cvVxP2(nCv)-1,cvVx,'cvVx')
+           !read cvFc
+           call cfruin(nrid,nCmxFc,cvFc,'cvFc')           
         else
          read(nrid,*,err=97) idcod, id1
 !         read(nrid,'(2a8,a32)',err=96) idcod, id1 !read the next line
@@ -770,7 +779,7 @@ contains
 97 call xerrab('read_cflags - error reading grid file')           
 
 
-  end subroutine read_cflags
+  end subroutine read_cvFc
 
 
 end module b2ag_ghostcells

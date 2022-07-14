@@ -374,6 +374,10 @@ cwdk      4) centroid: average between the intersections with faces
       !Compute centroid
       centroid(iCv,0) = 0.5_R8*sum(isx)
       centroid(iCv,1) = 0.5_R8*sum(isy)
+
+      !Compute poloidal length
+      g%cvHx(iCv) = sqrt( (isx(2) - isx(1))**2 +  (isy(2) - isy(1))**2 ) 
+
       
       !Store to verify
       g%cvX(iCv) = centroid(iCv,0)
@@ -497,6 +501,7 @@ cwdk      4) centroid: average between the intersections with faces
           endif          
 
           dg = sqrt(dx**2+dy**2)
+          g%cvHx(iCv) = dg * 2
             
           !cell area is dg time face Area (times cosine of dg and face normal, but neglected here)
           g%cvSz(iCv) = dg * fcH        
@@ -861,6 +866,9 @@ cnv   but now for quads
       !Compute centroid
       centroid(iCv,0) = 0.5_R8*sum(isx)
       centroid(iCv,1) = 0.5_R8*sum(isy)
+      
+      !Compute poloidal length
+      g%cvHx(iCv) = sqrt( (isx(2) - isx(1))**2 +  (isy(2) - isy(1))**2 ) 
 
       !Store to verify
       g%cvX(iCv) = centroid(iCv,0)
