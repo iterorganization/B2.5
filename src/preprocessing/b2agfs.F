@@ -17,20 +17,6 @@
       integer nrid, istyle
       type(geometry), intent(inout) :: g
       type(mapping), intent(inout) :: m
-*   .. output arguments
-!      real (kind=R8) ::
-!     * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-!     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3,0:2),
-!     2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
-!     integer
-!     *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
-!     1  rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1),
-!     2  topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1),
-!     3  bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1),
-!     4  leftcut1(nncutmax),rightcut1(nncutmax),
-!     5  bottomcut1(nncutmax),topcut1(nncutmax),
-!     6  periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
-!      integer periodic_bc
       character*(*) lblgm
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -657,7 +643,11 @@ cxpb  if just below the top corner, make the corner cell follow
            call calc_add_connectivity(g,m)
 
 !     .. Order the vertices and faces as rightturning 
-           call order_vertices(g,m)         
+           call order_vertices(g,m) 
+
+!     .. Construct intcellP and intcellR
+           call calc_intcell(g,m)     
+
           
 !     Compute magnetic field with the same recipe as carre...
            call b2agbb(g,m,isymm)
@@ -1067,3 +1057,68 @@ cxpb  if just below the top corner, make the corner cell follow
 
 *-----------------------------------------------------------------------
    
+      subroutine calc_intcell(g,m)
+
+      use b2mod_types
+      use b2us_cellhelper
+      use b2us_map
+      use b2us_geo
+      implicit none 
+      !output argument
+      type(geometry) :: g 
+      type(mapping)  :: m
+
+      !internal 
+      integer :: iCv, faces4(0:3),dpsi4(0:3), i1, i2, i 
+
+      do iCv = 1, m%nCv
+
+         if (m%cvFcP(iCv,2) == 4) then !quad
+
+             faces4 = m%cvFc(m%cvFcP(iCv,1):
+     &            m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
+
+         !find the most aligned face
+             dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) - 
+     &        g%vxFpsi(m%fcVx(faces4,2)))
+             i1 = minloc(dpsi4(0:3),1)-1
+         !find the opposite face index of the most aligned faces
+         ! as faces are right turned ordered
+
+             i2 = i1 + 2
+             if (i2 .gt. 4) then
+                i2 = i2 - 4   
+             endif
+
+             do i = 0,3
+                 if ((i .eq. i1) .or. (i .eq. i2)) then 
+                     ! aligned faces
+                     !intcellP = 0 and intcellR = 1
+                     m%intcellP(m%cvFcP(iCv,1)+i) = 0
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 1
+                 else 
+                     ! not aligned faces => poloidal faces
+                     m%intcellP(m%cvFcP(iCv,1)+i) = 1
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 0
+                 endif
+             enddo
+             
+
+         elseif (m%cvFcP(iCv,2) == 3) then !tria
+
+         elseif (m%cvFcP(iCv,2) == 1) then !guard
+            !For guard cell both intcellP and intcellR at one
+
+            m%intcellP(m%cvFcP(iCv,1)) = 1
+            m%intcellR(m%cvFcP(iCv,1)) = 1
+
+         endif
+
+      enddo
+      
+
+
+      end subroutine calc_intcell
+
+
+*-----------------------------------------------------------------------      

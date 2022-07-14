@@ -39,20 +39,16 @@
 *
 *     B2 employs a two-dimensional, curvilinear, topologically
 *     rectangular mesh. The coordinates of the mesh are labelled 'x'
-*     and 'y'. There are nx+2 cells along the x-coordinate and ny+2
-*     cells along the y-coordinate. The cells of the mesh are indexed
-*     by (ix,iy) in (-1:nx,-1:ny); the interior cells have index in
-*     (0:nx-1,0:ny-1). The mesh may contain cuts, which typically
-*     originate from an x-point in the real*8 geometry.
+*     and 'y'. 
 *
 *     The primary data describing the mesh are the coordinates of the
 *     four vertices of all the cells of the mesh. These data are stored
-*     in the arrays crx and cry. The metric parameters (vol, hx, hy, qz,
-*     qc and gs; described elsewhere) are derived from crx and cry.
+*     in the arrays vxX and vxY. The metric parameters (cvVvol, fcQalf,
+*     fcQbet, fcQgam; described elsewhere) are derived from vxX and vxY.
 *
 *     The primary data describing the magnetic field are the flux
-*     functions fpsi and ffbz at the cell vertices. The magnetic field
-*     components at cell centers are derived from fpsi and ffbz.
+*     functions vxFpsi and vxFfbz at the cell vertices. The magnetic 
+*     field components at cell centers are derived from vxFpsi and vxFfbz.
 *
 *     Singular regions in the geometry are specified by the data in the
 *     commmon block /b2cmgs/.
@@ -69,21 +65,13 @@
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides summary printed output.
 *     nout(1): un*formatted; full specification of the geometry and
-*      field.
+*     field.
 *
-*     nx, ny - integer, input.
-*     nx and ny specify the number of interior cells along the first
-*     and the second coordinate, respectively. The total number of
-*     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-*     It will hold that 0.le.nx and 0.le.ny.
+*     g - type, input.
+*     g specifies the geometry type as described module b2us_geo
 *
-*     nx1, ny1 - integer, input.
-*     nx1 and ny1 specify the mesh dimensions for an auxiliary mesh
-*     that will be used to evaluate accurately the metric coefficients.
-*     This auxiliary mesh has no role outside the present program.
-*     nx1 will be a multiple of nx and ny1 will be a multiple of ny.
-*     The multiplicity test is put off till b2agmx, so we know if there
-*     are any internal isolating cuts inside the domain.
+*     m - type, input.
+*     m specifies the mapping type as described module b2us_map
 *
 *     (parameters in common:)
 *
@@ -92,7 +80,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, geometryType, redef_gmtry
+      integer idum(0:9), ix, iy, redef_gmtry
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
@@ -330,10 +318,8 @@
 *   ..compute metric coefficients on auxiliary mesh
        call b2agmt (g, m, isymm)
 
-       ! next step would be b2agbf: calculates magnetic field on cell faces but is already done in b2agbb
 
-!*    ..compute pbs1 (magnetic field pitch * surface area) at cell faces, is no real metric coeff - already done in b2agmt
-!      geometryType = geometryId(nnreg, periodic_bc, topcut1) ???
+
 !       call b2xgbs (g, m)  ! WIP - still to implement
 
        
