@@ -6,7 +6,7 @@
 
       private
 
-      public :: to_struct_cell, to_struct_face
+      public :: to_struct_cell, to_struct_face, to_struct_vertex
 
       integer, public :: nx_st, ny_st, isClassicalGrid
       integer, allocatable, public :: imapCv(:,:),
@@ -42,9 +42,10 @@
           endif
         enddo
       enddo
-
       
       end subroutine to_struct_cell
+      
+      
 
       subroutine to_struct_face(nFc,fun_us,funf_st)
       implicit none
@@ -69,5 +70,37 @@
       enddo
 
       end subroutine to_struct_face
+      
+      
+      subroutine to_struct_vertex(nVx, fun_us, fun_st)
+      implicit none
+      integer :: nVx, ix, iy
+      real (kind=R8) :: fun_us(nvX), fun_st(-1:nx_st,-1:ny_st)
+
+      do iy = -1, ny_st
+        do ix = -1, nx_st
+          if(imapvX(ix,iy) /= 0) then
+            fun_st(ix,iy) = fun_us(imapVx(ix,iy))
+          endif
+        enddo
+      enddo
+      ! corner cells: pragmatic solution
+!      do iy = -1, ny_st
+!        do ix = -1, nx_st
+!          if(imapCv(ix,iy) == 0) then
+!            if (iy == -1) then
+!              fun_st(ix,iy) = fun_st(ix,0)
+!            elseif (iy == ny_st) then
+!              fun_st(ix,iy) = fun_st(ix,ny_st-1)
+!            else
+!              fun_st(ix,iy) = 0.0_R8
+!            endif
+!          endif
+!        enddo
+!      enddo
+      
+      end subroutine to_struct_vertex
+      
+      
 
       end module b2us_debug
