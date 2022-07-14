@@ -2431,7 +2431,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      integer nCv, nFc, is                                            !srv 29.11.18 
+      integer nCv, nFc, nVx, is                                            !srv 29.11.18 
       character*256 filename
       logical found
       
@@ -2463,6 +2463,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
       nCv = mpg%nCv
       nFc = mpg%nFc
+      nVx = mpg%nVx
 
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
@@ -2527,7 +2528,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
          call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')      
        endif          
       endif                                                              !srv 29.11.18 }
-      call b2wdat (nCv, nFc, ns, ismain, ismain0, 
+      call b2wdat (nCv, nFc, nVx, ns, ismain, ismain0, 
      .                   mpg, geo, state, state_ext, switch%BoRiS)       !srv 05.10.01
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
