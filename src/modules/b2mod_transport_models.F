@@ -46,7 +46,7 @@
       external xertst
 
       call xertst (transport_models_allocated,
-     .	'Error: transport_models not yet allocated')
+     .	'Error -- transport_models not yet allocated')
       if (edition.eq.'    ') then
         filename = 'b2.transport_models_save.parameters'
       else
