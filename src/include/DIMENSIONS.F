@@ -22,7 +22,7 @@
 #define DEF_NMOL 3
 #define DEF_NION 3
 #define DEF_NLIM 300
-#define DEF_NSTS 50
+#define DEF_NSTS 80
 #define DEF_NTOR 60
 !*** Max. number of groups of Eirene surfaces for which the data can
 !*** be transferred from B2 (DG specification "Surface special")
@@ -32,7 +32,7 @@
 #define DEF_NADD 4
 #define DEF_NPRNL 50000
 ! new! [2002.06.14]
-#define DEF_NSRFS 4
+#define DEF_NSRFS 37
 
 !
 ! parameters that are unique to B2
