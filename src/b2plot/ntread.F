@@ -293,7 +293,7 @@ C
         read(48,*,END=948)
         read(48,*) aver_frac46
 
-        if (aver_frac46.lt.0.0_R8.or.aver_frac.gt.1.0_R8) then
+        if (aver_frac46.lt.0.0_R8.or.aver_frac46.gt.1.0_R8) then
           aver_frac46 = 0.99_R8
         else
           read(48,*,END=98) idummy
