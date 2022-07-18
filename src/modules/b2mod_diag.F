@@ -67,13 +67,13 @@ c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
 c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
 c***  ntrc_src  :  tracing/sources.trc    :  integral sources
 c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
-c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
 c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
 c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
-c***  ntrc_uss  :  tracing/user_SPb.trc   :  data set which is of interest for SPb group    ! IYS 22.03.2022
 c***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 c***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
+c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
+c***  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data set which is of interest for SPb group    ! IYS 22.03.2022
 c***
 c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing

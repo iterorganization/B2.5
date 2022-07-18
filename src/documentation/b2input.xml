@@ -7492,7 +7492,7 @@
 				<namelist>USER</namelist>
 				<description>
 					Contains additional data for user-specific diagnostics. Always read if present.
-					This version provided by Andrei Kukushkin for ITER cases.
+					This version originally provided by Andrei Kukushkin for ITER cases, however, it may be used (at least partially) for arbitrary machine.
 				</description>
 			</introduction>
 			<switch>
@@ -7672,10 +7672,23 @@
 			<switch>
 				<name>FILEDATA</name>
 				<default>.true.</default>
-				<type>logical array of size 10</type>
+				<type>logical array of size 12</type>
 				<description>
-					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order, starting with element 2 of the filedata array: test.trc, residuals.trc, sources.trc, blnn.trc, blne.trc, integral.trc, user.trc, blnm.trc, sepdata.trc.
-					If there is no b2.user.parameters file present, the flag for user.trc is set to .false..
+					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order: 
+					   1:  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
+					   2:  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
+					   3:  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
+					   4:  ntrc_src  :  tracing/sources.trc    :  integral sources
+					   5:  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
+					   6:  ntrc_ble  :  tracing/blne.trc       :  energy balance
+					   7:  ntrc_int  :  tracing/integral.trc   :  additional integrals
+					   8:  ntrc_usr  :  tracing/user.trc       :  user-specific data
+					   9:  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
+					  10:  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
+					  11:  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
+					  12:  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data set which is of interest for SPb group
+
+					If there is no b2.user.parameters file present, the flags for user.trc and user_SPb.trc are set to .false..
 					If the tracing files are to be appended but a reading error occurs when opening them, the corresponding filedata element is overwritten to .false..
 				</description>
 			</switch>
