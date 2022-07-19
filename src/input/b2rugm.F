@@ -187,6 +187,7 @@
 *   ..local variables
       integer n2, ix, iy, i,j, idum(0:9)
       integer iFace, offset
+      integer, save :: ht_style = 1
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, t0, t1, t2
 *   ..procedures
@@ -470,31 +471,41 @@ cxpb-end
         ! Initialize ebc and ht for 'classical' grids
         do iy=-1,ny
           do ix=-1,nx
-            ! Unit vector of magnetic field in Cartesian X,Y,Z coordinates
+
             ! Unit vectors of line between W/E face centers
             t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
             t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
             t2 = norm(t0,t1)
 
+            ! Unit vector of magnetic field in Cartesian X,Y,Z coordinates
             ebc(ix,iy,0) = bb(ix,iy,0)/bb(ix,iy,3)*t0/t2
             ebc(ix,iy,1) = bb(ix,iy,0)/bb(ix,iy,3)*t1/t2
             ebc(ix,iy,2) = bb(ix,iy,2)/bb(ix,iy,3)
 
             ! Length along faces, ht
-            ! Note: this implementation ensures backwards compatibility
-            ! Could be made exact using dist, but the loss of backwards
-            ! compatibility
             if (leftix(ix,iy).ne.-2) then
-              ht(ix,iy,0) = 
-     &          0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
-!WG-TODO              ht(ix,iy,0) = dist(ix,iy,0,2)
+              if (ht_style.eq.0) then
+                ! Implementation intended for backwards compatibility
+                ! testing
+                ht(ix,iy,0) =
+     &            0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
+              else
+                ! Precise computation
+                ht(ix,iy,0) = dist(ix,iy,0,2)
+              endif
             else
               ht(ix,iy,0) = 0.0_R8
             endif
             if (bottomiy(ix,iy).ne.-2) then
-              ht(ix,iy,1) = 
-     &        0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))
-!WG-TODO              ht(ix,iy,1) = dist(ix,iy,0,1)
+              if (ht_style.eq.0) then
+                ! Implementation intended for backwards compatibility
+                ! testing
+                ht(ix,iy,1) =
+     &            0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))
+              else
+                ! Precise computation
+                ht(ix,iy,1) = dist(ix,iy,0,1)
+              endif
             else
               ht(ix,iy,1) = 0.0_R8
             endif
