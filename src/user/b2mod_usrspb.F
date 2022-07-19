@@ -128,7 +128,7 @@ c*** sclstra: scaling factors for species and strata
 c*** lmolscl: pointer to the species with which these molecules scale
 c----------------------------------------------------------------------
 *   ..initialisation
-      data use_recyceir /1/, use_eirene /0/
+      data use_recyceir /1/  
 c
       data first / .true. /
       data from_b2plot / .false. /
@@ -136,19 +136,18 @@ c
 c----------------------------------------------------------------------
       save !i, j, k, l, m, n, ic, is, ix, iy,
 !     1 js, ks, ls, kks, 
-     2 use_recyceir, use_eirene, first
+     2 use_recyceir,  first 
 c----------------------------------------------------------------------
 
       if(first_time_step) return
       
       if(first) then
-       call ipgeti ('b2mndr_eirene', use_eirene)   
        first=.false.
       end if
 
 ! Calculate the peak power loads (with account of radiation)      
       irdparm=1
-      call b2ptrgl(BoRiS, from_b2plot, use_eirene)
+      call b2ptrgl(BoRiS, from_b2plot)
 
 ! neutral pressure in PFR 
 ! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
@@ -306,11 +305,11 @@ c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ltrc)=.true.
 c----------------------------------------------------------------------
-
+!      print *, '!!! In b2usstri: first_time_step=', 
+!     &                  first_time_step
       if(first_time_step) then
         call alloc_b2plot_wall_loading(nlim,nsgmx)
       endif
-      
 c*** Input the DG data and prepare the geometry (this routine works once)
       call b2pwinp
       

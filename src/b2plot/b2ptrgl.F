@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(BoRiS, from_b2plot, use_eirene)                    !iyv 11.04.22
+      subroutine b2ptrgl(BoRiS, from_b2plot)               
 c
 c  version : 07.04.98 13:12
 c
@@ -33,8 +33,8 @@ c======================================================================
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
-!      integer, save :: use_eirene = 0
-      integer use_eirene 
+      integer, save :: use_eirene = 0
+!      integer use_eirene 
 #ifdef B25_EIRENE
       integer eb2atm(nspecies)
 #else
@@ -147,6 +147,7 @@ c***                     (PRFAML+PRFPML)*H_EDISS
      *   ersn_l(ntrgsx)
       logical ft44
       logical streql
+      integer, save :: ncall=0   ! iyv 19.07.22
       external streql
       intrinsic sqrt
 c*** Data for erosion calculations
@@ -206,7 +207,7 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-      if (from_b2plot)
+       if (ncall.eq.0)       ! iyv 19.07.22            
      , call ipgeti ('b2mndr_eirene', use_eirene)
       if (use_eirene.ne.0) then
         filename=fort_lc//'44'
@@ -1696,6 +1697,7 @@ c
         close (lun)
       end if
       
+      ncall = ncall+1   !iyv 19.07.22
       return
 
 c======================================================================

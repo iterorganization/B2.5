@@ -6,11 +6,11 @@ c  version : 26.08.97 22:43
 c
 c======================================================================
       implicit none
-      integer ig,ii,iret, use_eirene ! iyv
+      integer ig,ii,iret  
       real (kind=R8) :: BoRiS
       logical from_b2plot
       data from_b2plot / .true. /
-      data use_eirene /0/
+
 c======================================================================
 c
       print *,'b2pwld: ',ig
@@ -21,7 +21,7 @@ c
       if(mod(ii,10) .gt. 0) call b2pnwl(iret)
       ii=ii/10
       irdparm=1
-      if(mod(ii,10) .gt. 0) call b2ptrgl(BoRiS, from_b2plot, use_eirene)
+      if(mod(ii,10) .gt. 0) call b2ptrgl(BoRiS, from_b2plot) 
       ii=ii/10
       irdparm=2
       if(mod(ii,10) .gt. 0) call b2pwldl(BoRiS)
