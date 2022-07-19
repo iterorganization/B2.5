@@ -743,7 +743,7 @@ cxpb
 
       filename=fort_lc//'44_aver'
       call find_file(filename,ex)
-      if (ex) then ! average fluxes, Makarov 02.04.2019
+      if (ex) then ! average fluxes, som 02.04.19
         OPEN (UNIT=48,FILE=filename,ACCESS='SEQUENTIAL')
         rewind(48)
         read(48,1028,END=948)
