@@ -376,7 +376,7 @@ cwdk      4) centroid: average between the intersections with faces
       centroid(iCv,1) = 0.5_R8*sum(isy)
 
       !Compute poloidal length
-      g%cvHx(iCv) = sqrt( (isx(2) - isx(1))**2 +  (isy(2) - isy(1))**2 ) 
+      g%cvHx(iCv) = sqrt( (isx(1) - isx(0))**2 +  (isy(1) - isy(0))**2 ) 
 
       
       !Store to verify
@@ -868,7 +868,7 @@ cnv   but now for quads
       centroid(iCv,1) = 0.5_R8*sum(isy)
       
       !Compute poloidal length
-      g%cvHx(iCv) = sqrt( (isx(2) - isx(1))**2 +  (isy(2) - isy(1))**2 ) 
+      g%cvHx(iCv) = sqrt( (isx(1) - isx(0))**2 +  (isy(1) - isy(0))**2 ) 
 
       !Store to verify
       g%cvX(iCv) = centroid(iCv,0)

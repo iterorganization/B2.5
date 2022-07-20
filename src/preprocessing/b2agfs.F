@@ -1069,7 +1069,9 @@ cxpb  if just below the top corner, make the corner cell follow
       type(mapping)  :: m
 
       !internal 
-      integer :: iCv, faces4(0:3),dpsi4(0:3), i1, i2, i 
+      integer :: iCv, faces4(0:3), i1, i2, i, verts3(0:2), f3(0:2),
+     &    v3(0:2) 
+      real (kind=R8) :: dpsi4(0:3), dpsi_max   
 
       do iCv = 1, m%nCv
 
@@ -1094,23 +1096,40 @@ cxpb  if just below the top corner, make the corner cell follow
                  if ((i .eq. i1) .or. (i .eq. i2)) then 
                      ! aligned faces
                      !intcellP = 0 and intcellR = 1
-                     m%intcellP(m%cvFcP(iCv,1)+i) = 0
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 1
+                     m%intcellP(m%cvFcP(iCv,1)+i) = 0.0_R8
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 0.5_R8
                  else 
                      ! not aligned faces => poloidal faces
-                     m%intcellP(m%cvFcP(iCv,1)+i) = 1
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 0
+                     m%intcellP(m%cvFcP(iCv,1)+i) = 0.5_R8
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
                  endif
              enddo
              
 
          elseif (m%cvFcP(iCv,2) == 3) then !tria
+             v3 = m%cvVx(m%cvVxP(iCv,1):
+     &            m%cvVxP(iCv,1)+2)
+             f3 = m%cvFc(m%cvFcP(iCv,1):
+     &            m%cvFcP(iCv,1)+2)
+
+             i1 = minloc(g%vxFpsi(v3),1) -1
+             i2 = maxloc(g%vxFpsi(v3),1) -1
+             dpsi_max = g%vxFpsi(v3(i2)) - g%vxFpsi(v3(i1)) 
+
+             do i = 0,2
+             m%intcellP(m%cvFcP(iCv,1) + i) = 
+     &        abs( g%vxFpsi(m%fcVx(f3(i),1)) - 
+     &             g%vxFpsi(m%fcVx(f3(i),2)) ) / (2.0_R8 * dpsi_max)         
+              m%intcellR(m%cvFcP(iCv,1)+i) = 
+     &         m%intcellP(m%cvFcP(iCv,1)+i)
+             enddo
+
 
          elseif (m%cvFcP(iCv,2) == 1) then !guard
             !For guard cell both intcellP and intcellR at one
 
-            m%intcellP(m%cvFcP(iCv,1)) = 1
-            m%intcellR(m%cvFcP(iCv,1)) = 1
+            m%intcellP(m%cvFcP(iCv,1)) = 1.0_R8
+            m%intcellR(m%cvFcP(iCv,1)) = 1.0_R8
 
          endif
 
