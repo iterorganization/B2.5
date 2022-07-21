@@ -295,7 +295,7 @@
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)           !Solovyev 23.05.14 !srv 29.09.15
-       call ipgetr ('b2tfhi_ycur', ycur)
+       call ipgetr ('b2tfnb_ycur', ycur)
        call ipgetr ('b2tfnb_vis_per', vis_per)                       !srv 02.10.17
        call ipgetr ('b2tfnb_vis_q', vis_q)                           !srv 02.10.17
        call ipgeti ('eirene_sheath_pot', eirene_sheath_pot)
