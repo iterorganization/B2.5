@@ -7686,7 +7686,7 @@
 					   9:  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 					  10:  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
 					  11:  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
-					  12:  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data set which is of interest for SPb group
+					  12:  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data introduced by SPb group - contains alternative to user.trc set of data and is more straightforward in programming
 
 					If there is no b2.user.parameters file present, the flags for user.trc and user_SPb.trc are set to .false..
 					If the tracing files are to be appended but a reading error occurs when opening them, the corresponding filedata element is overwritten to .false..

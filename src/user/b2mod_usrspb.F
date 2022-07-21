@@ -14,7 +14,20 @@ c
 c  version : 06.21.2022 by Ilya Senichenkov
 c
 c----------------------------------------------------------------------
-c*** Computes some quantities which are of interest for the SPb group
+c*** This tracing file is alternative to user.trc - it contains different traced quantities and
+c*** is more straightforvard in programming and processing
+
+!    Q_pneut            - neutral pressure in PFR in Pa - mean (the same as in user.trc)
+!    Q_pneut_trg(:)     - neutral pressure in PFR in Pa on two targets (the same as in user.trc)
+!    Q_Te_min_LCFS      - minimal Te (in eV) on the outermost closed flux tube - of interest in XPR regime
+!    Q_Te_max(:)        - peak Te on each target, in eV
+!    Q_det_wdth(:)      - on each target, distance from the strike point to the point where Te < Te_det_threshold (2.0 eV by default), or 0.0 if Te_sep > Te_det_threshold.
+!    Area_pneut_trg(:)  - auxiliary variable which means the area (in m^2) of those surfaces (on each of two targets) where the neutral pressure is computed
+!    Q_I_tot_trg(:)     - on each target, the net electric current (in A, with sign) collected by target
+!    Q_jsat_max_trg(:)  - on each target, peak saturation current density (in A/m^2, with sign)
+!    Q_Isat_trg(:)      - on each target, the integral of saturation current density along the target (in A, with sign)
+!    Q_qmax_trg(:)      - on each target, the peak energy flux density with account of volumetric radiation
+!                         i.e. is the same as computed by `echo "1101 wlld" | b2plot`, AND DIFFERS FROM WHAT IS WRITTEN TO user.trc 
 
 c----------------------------------------------------------------------
 c
@@ -36,7 +49,7 @@ c*** Output data (for each species):
 c***
 c----------------------------------------------------------------------
 
-      integer, save :: nc, lun, mintopcut
+      integer, save :: lun, mintopcut
       real (kind=R8), allocatable, save :: 
      &          Q_pneut, Q_Te_min_LCFS, Q_pneut_trg(:),
      &    Q_Te_max(:), Q_det_wdth(:), Area_pneut_trg(:),
@@ -268,10 +281,6 @@ c------------------------------
 
 c*** Write the data in a separate file for plotting...
 c
-c?        if(nc.gt.np_tmp .or. nc.le.0) then
-c?          write(*,*) 'b2mod_usrspb: unexpected error. nc =',nc
-c?          filedata(ltrc)=.false.
-c?        else
           write(lun,hlp_frm) tim,
      &    Q_pneut,  
      &    (Q_pneut_trg(it), it=1,2), 
@@ -305,8 +314,7 @@ c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ltrc)=.true.
 c----------------------------------------------------------------------
-!      print *, '!!! In b2usstri: first_time_step=', 
-!     &                  first_time_step
+
       if(first_time_step) then
         call alloc_b2plot_wall_loading(nlim,nsgmx)
       endif
@@ -411,18 +419,13 @@ c***              3 - in upper PFR, 4 - on the inner wall
 
       call ipgetr ('b2mndr_stim', stim)
       
-!      write(*,*) 'filedata, ntrc = ', filedata(ntrc_uss), ntrc_uss 
-
       if(.not.filedata(ntrc_uss)) return
 
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
-      nc = 0
+!      nc = 0
       lun = ntrc(ltrc)
       f = fn_ntrc(ltrc)
-      
-!      write(*,*) 'lun = ', lun
-!      write(*,*) 'f = ', f
       
       call find_file(f,ex)
       
@@ -446,13 +449,7 @@ c----------------------------------------------------------------------
    40   read(lun,*,err=92) hlp_c, i, j
    
         lv_trc(ltrc)=lv
-        
-c?        if(i.lt.960727) then
-c?          nc=16
-c?        else
-c?          go to 92
-c?        end if
-        
+                
    42   continue
    
 ! Check version   
@@ -471,16 +468,12 @@ c?        end if
 ! Check total number of columns   
         if(N_ttl_read .ne. N_Q_total) then
           write(*,'(a,i4,3a,i4)')
-     ,     '!!! b2mod_usrspb: current version ',lv,
-     ,     ' differs from tha current number of columns ',N_Q_total,
+     ,     '!!! b2mod_usrspb: current number of columns ',N_Q_total,
      ,     ' differs from that in the file ',trim(f),' : ',N_ttl_read
-c?          if(nc.gt.np_tmp) then
-c?            write(*,*) 'No ',trim(f),' tracing file - ',
-c?     ,                                'remove the existing file first!'
+          write(*,*) 'Writing into file ',trim(f),
+     ,   ' cannot be continued - remove the existing file first!'
             filedata(ltrc)=.false.
             return
-c?          end if
-c?          write(*,*) ' You should remove the file!'
         end if
 
 ! Check total number of targets   
@@ -489,8 +482,8 @@ c?          write(*,*) ' You should remove the file!'
      ,   '!!! b2mod_usrspb: current number of quantities per targets ',
      ,      N_Q_target,' differs from that in the file ',trim(f),' : ',
      ,      N_per_trg_read
-          write(*,*) 'No ',trim(f),' tracing file - ',
-     ,                              'remove the existing file first!'
+          write(*,*) 'Writing into file ',trim(f),
+     ,   ' cannot be continued - remove the existing file first!'
           filedata(ltrc)=.false.
           return
         end if
@@ -501,8 +494,8 @@ c?          write(*,*) ' You should remove the file!'
      ,   '!!! b2mod_usrspb: the number of targets ',
      ,      ntrgts,' differs from that in the file ',trim(f),' : ',
      ,      Ntrgts_read
-          write(*,*) 'No ',trim(f),' tracing file - ',
-     ,                              'remove the existing file first!'
+          write(*,*) 'Writing into file ',trim(f),
+     ,   ' cannot be continued - remove the existing file first!'
           filedata(ltrc)=.false.
           return
         end if
@@ -519,15 +512,11 @@ c----------------------------------------------------------------------
       
         write(*,*) 'File user_SPb.trc does not exist!'
 
-c?        nc = np_tmp
-
         write(lun, 700) lv, N_Q_total, ntrgts, N_Q_target, trim(label)
 ! What is 'label' and how is it defined?        
         
         write(hlp_frm,'(a,i3,a)')
      &   '(a1,6x,a4,3x,',N_Q_total,'(2x,a19))'
-c       print *,'b2blns: nspecies= ',nspecies                       !###
-c       print *,'species_list :',(species_list(j),':',j=1,nspecies) !###
 
         write(lun, hlp_frm) '#','time',
      &   (headers(i), i=1, N_Q_total)

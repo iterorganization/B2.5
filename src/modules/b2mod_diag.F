@@ -73,7 +73,7 @@ c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
 c***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 c***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
 c***  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
-c***  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data set which is of interest for SPb group    ! IYS 22.03.2022
+c***  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data introduced by SPb group - contains alternative to user.trc set of data and is more straightforward in programming
 c***
 c*** print_first_step : if false, skip the first timestep in the history
 c***                    tracing
