@@ -207,7 +207,7 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-       if (ncall.eq.0)       ! iyv 19.07.22            
+      if (ncall.eq.0)       ! iyv 19.07.22            
      , call ipgeti ('b2mndr_eirene', use_eirene)
       if (use_eirene.ne.0) then
         filename=fort_lc//'44'
@@ -787,7 +787,10 @@ c
       end do !}
 
      
-      if ( .not. from_b2plot) return       !iyv 11.04.22
+      if ( .not. from_b2plot) then
+        ncall = ncall + 1 
+        return       !iyv 11.04.22
+      endif
       
       write(fmt_peak,700) 24
   700 format('(1p,e12.5,',i3,'(a1,e12.5))')
