@@ -53,8 +53,8 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-      character*260, intent(in):: inputFile
-      CHARACTER*260, intent(out):: local_sonnet
+      character*256, intent(in):: inputFile
+      CHARACTER*256, intent(out):: local_sonnet
       integer, intent(in):: nx, ny
       integer, intent(inout):: istyle
       logical :: ex
