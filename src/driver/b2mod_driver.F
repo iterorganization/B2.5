@@ -1437,6 +1437,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 #endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
+        IUNOUT=6
         CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)

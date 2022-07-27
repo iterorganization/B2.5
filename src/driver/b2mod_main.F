@@ -27,6 +27,12 @@
       use timings
 #endif
       use b2mod_xerset
+#ifdef B25_EIRENE
+#ifdef USE_MPI
+      use eirmod_cpes
+     , , only : my_pe
+#endif
+#endif
 #if MPI_MOD > 0
 #ifdef USE_MPI
       use mpi  ! IGNORE
@@ -192,6 +198,8 @@ csw 28feb2011 mpi
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
       if(rank_mpi .ne. 0) then
 #ifdef B25_EIRENE
+        my_pe=rank_mpi
+        iunout=7
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
