@@ -1037,6 +1037,7 @@ c
         nsw=ns
         call eirene_mc_init(nx,ny)
         call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+        nlimi=0
         p1=0.0_R8
         p2=0.0_R8
       else

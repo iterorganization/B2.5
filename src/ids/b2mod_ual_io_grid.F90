@@ -2953,8 +2953,13 @@ contains
         allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      object( nobjects ) )
         do i3 = 1, nobjects
-          nboundary = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary ) ) then
+            nboundary = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%boundary )
+          else
+            nboundary = 0
+          end if
           if (nboundary.gt.0) then
             allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%boundary( nboundary ) )
