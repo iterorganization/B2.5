@@ -58,7 +58,7 @@
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
       use b2mod_b2plot
-     , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     , ,only: nlimi, wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -1411,6 +1411,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 #endif
 #endif
          if (.not.streql(device_env,' ')) database = device_env
+         if (streql(database,'iter')) database = 'ITER'
 #endif
          call ipgetc('b2mndr_device', database )
          call ipgetc('b2mndr_database', database )
@@ -2022,6 +2023,7 @@ cxpb initialize the numerics data
       endif
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
+      nlimi = 0
 #ifdef B25_EIRENE
       filename=fort_lc//'44'
       call find_file(filename,ex)

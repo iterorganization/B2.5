@@ -7347,9 +7347,9 @@ contains
               &   INCLUDE_GHOST_CELLS, vol, gs, qc )
 #if IMAS_MINOR_VERSION > 14
             call GGD_copy_AoS3Root_to_Dynamic( eq_grid, &
-              &   equilibrium%grids_ggd( slice_index)%grid(1) )
+              &   equilibrium%grids_ggd( slice_index )%grid(1) )
 #else
-            equilibrium%grids_ggd( slice_index)%grid(1) = eq_grid
+            equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
 #endif
             equilibrium%grids_ggd( slice_index )%time = time_slice_value
 #if IMAS_MINOR_VERSION > 33

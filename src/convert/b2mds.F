@@ -12,7 +12,7 @@
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
      *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     *          natmi, nmoli, nioni, wklng,
+     *          natmi, nmoli, nioni, nlimi, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
@@ -423,6 +423,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         nioni=0
         textin(0)=' ZERO'
         call eirene_mc_init(nx,ny)
+        nlimi=0
       else
         open(unit=44,file=filename)
         call ngread(ismain,iflag)
