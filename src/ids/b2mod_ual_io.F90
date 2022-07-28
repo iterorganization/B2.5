@@ -863,7 +863,6 @@ contains
             if (.not.allocated(xtrian)) then ! Eirene has not been called
               open(unit=46,file=filename)
               call ntread
-              close(46)
             else if (.not.allocated(triangle_vol)) then ! this is the first pass
               call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
               call compute_triangle_area
@@ -3494,11 +3493,11 @@ contains
               do iy=-1,ny
                 do ix=-1,nx
                   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                    ue(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+             &
-                      &         fch_p(rightix(ix,iy),rightiy(ix,iy),0)/  &
+                    ue(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+               &
+                      &         fch_p(rightix(ix,iy),rightiy(ix,iy),0)/    &
                       &         pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_IDS_real
                   elseif(leftix(ix,iy).eq.-2) then
-                    ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/   &
+                    ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/     &
                       &        pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
                   elseif(rightix(ix,iy).eq.nx+1) then
                     ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
@@ -4215,8 +4214,8 @@ contains
 #endif
 
             !! fchanml: Anomalous current
-            call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,           & !som 02.11.21
-                &         fchanml_a, fchanml)
+            call b2tanml (nx, ny, ns, ismain,                                & !som 02.11.21
+                &         csig_an, po, ne, na, fchanml_a, fchanml)
             call divide_by_contact_areas(nx,ny,fchanml,tmpFace)
             totFace(:,:,0) = tmpFace(:,:,0)
             totFace(:,:,1) = IDS_REAL_INVALID

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na, !som 02.11.21
-     & fchanml_a, fchanml)                                         !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, ismain,                           !som 02.11.21
+     & csig_an, po, ne, na, fchanml_a, fchanml)                         !srv 20.09.06 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect

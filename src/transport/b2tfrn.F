@@ -27,7 +27,8 @@
       real (kind=R8) ::
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1), fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fch_p(-1:nx,-1:ny,0:1),
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchinert_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 20.09.06
      &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),
@@ -218,8 +219,8 @@ csw 30sep2013, added check for no_hybr
            scur =
      &      (fchinert_a(ix,iy,0,is)+fchvispar_a(ix,iy,0,is)+
      &       vis_per*fchvisper_a(ix,iy,0,is)                             !srv 02.10.17
-     &      +fchanml_a(ix,iy,0,is)+vis_q*fchvisq_a(ix,iy,0,is))*xcur/    !srv 02.10.17
-     &      (rza(ix,iy,is)*qe*
+     &      +fchanml_a(ix,iy,0,is)+vis_q*fchvisq_a(ix,iy,0,is))*         !srv 02.10.17
+     &       xcur/(rza(ix,iy,is)*qe*
      &      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
           else
             scur = 0.0_R8
@@ -336,11 +337,12 @@ csw 30sep2013, added check for no_hybr
            if (.not.is_neutral(is)) then                                 !srv 08.09.21
             scur =
      &        (fchvispar_a(ix,iy,1,is)+fchinert_a(ix,iy,1,is)+
-     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is))*ycur/  !srv 02.10.17 08.09.21
-     &        (rza(ix,iy,is)*qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &        na(ix,iy,is))/2.0_R8)
-            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
-     &              ycur                                                 !srv 02.04.18 08.09.21
+     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is))*       !srv 02.10.17 08.09.21
+     &         ycur/(rza(ix,iy,is)*qe*
+     &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &         na(ix,iy,is))/2.0_R8)
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
+     &              (rza(ix,iy,is)*qe)*ycur                              !srv 02.04.18 08.09.21
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -384,11 +386,12 @@ csw 30sep2013, added check for no_hybr
            if(.not.is_neutral(is)) then                                  !srv 20.09.06 08.09.21
             scur =
      &       (fchinert_a(ix,iy,1,is)+fchvispar_a(ix,iy,1,is)+
-     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is))*ycur/   !srv 02.10.17
-     &       (rza(ix,iy,is)*qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &             na(ix,iy,is))/2.0_R8)
-            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
-     &              ycur                                                 !srv 02.04.18 08.09.21
+     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is))*        !srv 02.10.17
+     &        ycur/(rza(ix,iy,is)*qe*
+     &       (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/
+     &        2.0_R8)
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
+     &       (rza(ix,iy,is)*qe)*ycur                                     !srv 02.04.18 08.09.21
            else
              scur = 0.0_R8
              vsprcur = 0.0_R8                                            !srv 02.04.18

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,       !srv 20.09.06 {
-     &                    facdrift, fchinert_a, fchinert)                !srv 22.06.08
+      subroutine b2tiner (nx, ny, ns, ismain, vol, gs, bb,               !srv 20.09.06 {
+     &                    na, ua, facdrift, fchinert_a, fchinert)        !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -22,7 +22,7 @@
      1 bb(-1:nx,-1:ny,0:3), facdrift(-1:nx,-1:ny)                        !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &     fchinert_a(-1:nx,-1:ny,0:1,0:ns-1), fchinert(-1:nx,-1:ny,0:1)
+     & fchinert_a(-1:nx,-1:ny,0:1,0:ns-1), fchinert(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

@@ -34,7 +34,8 @@
       real (kind=R8) ::
      * poleldr, poldidr, radeldr, raddidr
       real (kind=R8) ::
-     * wpo(-1:nx,-1:ny), poc(-1:nx,-1:ny), weight(-1:nx,-1:ny)
+     * wpo(-1:nx,-1:ny), weight(-1:nx,-1:ny),
+     * poc(-1:nx,-1:ny)
       save ncall, drift_style, poleldr, poldidr, radeldr, raddidr
 *   ..procedures
       intrinsic min
@@ -93,7 +94,7 @@ cxpb  Must check that we are not at the island X-point or at the mesh edge
      &           rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
      &           region(ix,iy,0).ne.0) then                              !xpb
 cxpb  Standard case
-                veecrb(ix,iy,0) = - 1.0_R8/hy1(ix,iy)*     ! signmf      !xpb !srv 11.01.13
+                veecrb(ix,iy,0) = - 1.0_R8/hy1(ix,iy)*       ! signmf    !xpb !srv 11.01.13
      1            bb(ix,iy,2)/bb(ix,iy,3)**2*                            !xpb
      2           (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
      &            poleldr*fac_ExB(ix,iy)                                 !xpb

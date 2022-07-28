@@ -120,7 +120,7 @@
       call subini ('b2npco')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21 {
        if(style_b2mndt.eq.2) then
         rxg = huge(1.0_R8)
         pcm0 = 0.0_R8

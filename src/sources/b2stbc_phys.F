@@ -30,6 +30,7 @@
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_profile
       use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_wneutrals
@@ -133,7 +134,7 @@
      &                         sconpar(0:DEF_NSD-1), scurpar
       real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
      * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
-      integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
+      integer, save :: bcpot_16_step = 50, ncall_16 = 0                 !Solovyev 23.05.14 !srv 29.09.15 }
       integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
      *  vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,                !srv 15.11.07
@@ -175,6 +176,10 @@
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
+      character*260 filename                                            ! RC 27.03.18
+      real (kind=R8) :: currentOld(0:nbcd-1)                            ! RC 01.06.18
+      real (kind=R8) :: currentNew(0:nbcd-1)                            ! RC 01.06.18
+      integer :: currentCounter(0:nbcd-1)                               ! RC 01.06.18
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
      2  na_min, na_new, bc_type21_ref, ndes_sol,
@@ -183,7 +188,8 @@
       intrinsic abs, sqrt, mod
       real (kind=R8) ::
      *  bcint
-      external xertst, ipgeti, bcint, eseec0
+      logical streql
+      external xertst, ipgeti, bcint, eseec0, streql
       external ipgetr, b2xvsg, b2xvff, b2xvps
 *   ..initialisation
       data ncall/0/, coreregn2/4/, bc_type13_ref/1/,
@@ -192,7 +198,7 @@
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & bc_type21_ref/1/, no_current/0/,
+     & bc_type21_ref/1/, no_current/0/, prev_cur_delta/0.0_R8/,
      & use_astra/0/, use_eirene/0/, ndes_sol/0.0_R8/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
@@ -289,7 +295,7 @@
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)           !Solovyev 23.05.14 !srv 29.09.15
-       call ipgetr ('b2tfhi_ycur', ycur)
+       call ipgetr ('b2tfnb_ycur', ycur)
        call ipgetr ('b2tfnb_vis_per', vis_per)                       !srv 02.10.17
        call ipgetr ('b2tfnb_vis_q', vis_q)                           !srv 02.10.17
        call ipgeti ('eirene_sheath_pot', eirene_sheath_pot)
@@ -544,8 +550,10 @@ cwdk  now need to recompute full diamagnetic component for ud
      .         '1 radial step.'
             endif
           ENDIF
+        ENDIF
 
 * -- Consistency checks
+        IF (new_boundary_files) THEN
           consistent = .true.
           bccon14(ib) = .true.
           IF (BCENE(IB).EQ.15 .OR. BCENI(IB).EQ.15 .OR. BCPOT(IB).EQ.11)
@@ -672,6 +680,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
+      new_boundary_files = .false.
       call subend ()
       return
 
@@ -687,6 +696,7 @@ cwdk  now need to recompute full diamagnetic component for ud
       integer k, ism
 #endif
       integer bc_type13_i, bc_type20_i, bc_type21_i
+      logical ex
 
       if (bcpos(ib).eq.-2) then
         write(boundary_location(ib),'(a23,i2)')
@@ -711,7 +721,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=1 -- PRESCRIBE THE VALUE OF THE DENSITY
 
         case (1)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             IF(core_boundary(ib)) THEN
              if(is.eq.ismain.and.use_astra.ne.0) then
               CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
@@ -793,7 +803,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=2 -- PRESCRIBE THE GRADIENT OF THE DENSITY
 
         case (2)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density gradient ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -869,7 +879,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=3 -- SHEATH CONDITIONS
 
         case (3)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,a,a,a,i3)')
      .       'sheath density bc on ',BCCHAR(IB),
      1       boundary_location(ib),
@@ -908,7 +918,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 *                 A MIXED BOUNDARY CONDITION
 
         case (4)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'weak density ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -972,7 +982,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=5 -- PRESCRIBE THE PARTICLE FLUX PER UNIT AREA
 
         case (5)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'particle flux per area ',CONPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1018,7 +1028,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 *                 CONSTANT DENSITY
 
         case (6)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .      'total particle flux ',CONPAR(IS,IB,1),
      1      ' with const density on ',BCCHAR(IB),
@@ -1097,7 +1107,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 *                 CONSTANT FLUX DENSITY
 
         case (8)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             if(is.eq.ismain.and.BCCHAR(IB).eq.'S'.and.use_astra.ne.0)
      >       CONPAR(IS,IB,1) = fneb_astra                               !srv 04.10.11
             write(*,'(a20,1p,g14.7,a4,a1,a,a13,i3)')
@@ -1335,7 +1345,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=9 -- PRESCRIBE THE DECAY LENGTH FOR THE DENSITY
 
         case (9)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'density decay length ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1436,7 +1446,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=10 -- leakage option for density, recommended for cases with drifts
 
         case (10)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'leakage ',CONPAR(IS,IB,1),' on ',BCCHAR(IB),
      1       boundary_location(ib),
@@ -1447,8 +1457,8 @@ cwdk  now need to recompute full diamagnetic component for ud
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
-              s0 = vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .             hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))              !srv 26.02.09
+              s0 = gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -1489,8 +1499,7 @@ cwdk  now need to recompute full diamagnetic component for ud
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
-              s0=vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     .           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))                !srv 26.02.09
+              s0=gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -1526,8 +1535,10 @@ cwdk  now need to recompute full diamagnetic component for ud
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-              s0 = vol(bc_list_x(iy,ib),bc_list_y(iy,ib))/
-     .              hx(bc_list_x(iy,ib),bc_list_y(iy,ib))
+              s0 = gs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)*
+     .             qc(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -1568,8 +1579,8 @@ cwdk  now need to recompute full diamagnetic component for ud
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
-              s0 = vol(bc_list_x(iy,ib),bc_list_y(iy,ib))/
-     .              hx(bc_list_x(iy,ib),bc_list_y(iy,ib))
+              s0 = gs(bc_list_x(iy,ib),bc_list_y(iy,ib),0)*
+     .             qc(bc_list_x(iy,ib),bc_list_y(iy,ib))
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=s0*
      2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
@@ -1610,7 +1621,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=11 -- particle flux feedback boundary condition
 
         case (11)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
            write(*,'(a,a,a,a,i3)')
      .      'particle flux feedback boundary condition on ',
      1      BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1700,7 +1711,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=12 -- particle density feedback boundary condition
 
         case (12)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
            write(*,'(a,a,a,a,i3)')
      .      'particle density feedback boundary condition on ',
      1      BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1786,7 +1797,7 @@ cwdk  now need to recompute full diamagnetic component for ud
 * -- BCCON=13 -- Feedback constant density for a given particle flux
 
         case (13)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,a,a,a,i3,a,1p,2g14.7)')
      .       'particle density to achieve specified total flux on ',
      1       BCCHAR(IB),boundary_location(ib),
@@ -1887,7 +1898,7 @@ c dpc
 * -- BCCON=14 -- Sound speed flux
 
         case (14)
-          if (ncall.eq.0) then
+          if (new_boundary_files) then
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
@@ -1955,7 +1966,7 @@ c dpc
 * -- BCCON=15 -- prescribe a radial leakage velocity, as a multiplier to the local thermal velocity
 
         case (15)                                                   !srv 25.09.09 16.02.12
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(2a,1p,g14.7,a,a,a,a,i3)')
      .       'prescribe the decay length for the density',
      &       ' for drifs switched on ',CONPAR(IS,IB,1),' on ',
@@ -2009,7 +2020,7 @@ c dpc
 * -- BCCON=16 -- Feedback boundary condition: given total particle flux with constant density  !srv 16.02.12 {
 
         case (16)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
 #ifdef ASTRA
             ! IYS 08.04.2014 temporary solution while we do not have impurities in ASTRA
             call xertst(is.eq.ismain,
@@ -2133,7 +2144,7 @@ c dpc
 * -- BCCON=18 -- PRESCRIBE THE MODIFIED TOTAL PARTICLE FLUX
 
         case (18)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,a,a,a,i3)') 'modified total particle flux on ',
      1         BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(is.eq.ismain,
@@ -2151,7 +2162,7 @@ c dpc
             END DO
             CONPAR(IS,IB,1) = (fSeNBI_astra - t0)                     !srv 29.11.11
 
-!            if(ncall.eq.0) then
+!            if(new_boundary_files) then
                write (*,'(a,a,i3,1p,3(a,g11.4))')
      &        ' BCCON=18', ' IS =', IS,
      &        ' CONPAR=',CONPAR(IS,IB,1), ' fSeNBI_astra=',fSeNBI_astra,
@@ -2196,7 +2207,7 @@ c dpc
 *                main ion particle fluxes with constant ion density.
 
         case (19)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
      1       'BCCON = 19 can only be applied to ions in their '//
      2       'highest ionisation stage')
@@ -2346,7 +2357,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCCON=20 -- constant density feedback condition
 
         case (20)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'constant density (neo) ',
      1       CONPAR(IS,IB,1),' on ',
@@ -2424,7 +2435,7 @@ cxpb Careful here because of BC number clash
 * CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=23,24)
 
         case (21)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             if (boundary_version.ge.'01.001.030' .and.
      &          boundary_version.lt.'02.000.000') then
               write(*,*) 'BCCON=21 type B.C. moved to 24 ',
@@ -2544,7 +2555,7 @@ cxpb Careful here because of BC number clash
 *    (BCENI=23,24) !srv 16.02.12, IYS 01.03.2013 {
 
         case (22)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             call xertst(is.eq.ismain,
      1       'BCCON = 22 is applied for main ion only ')
             write(*,'(a,a,i3)')
@@ -2685,7 +2696,7 @@ cxpb Careful here because of BC number clash
 *    If a minor impurity is present, please use the BCCON=27 instead. ! IYS 21.01.2016
 
        case (23)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             call xertst(is.eq.ismain,
      1       'BCCON = 23 is applied for main ion only ')
             write(*,'(a,a,i3)')
@@ -2844,7 +2855,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCCON=24 -- constant density scaled by density on the ring bc_type21_ref away
 
         case (24)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'constant density (modified by nearby ring) ',
      1       CONPAR(IS,IB,1),' on ',
@@ -2961,7 +2972,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=26,27)
 
         case (25)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7)')
      .       'constant average density',CONPAR(IS,IB,1)
             DO IBW=IB,NBC
@@ -3066,7 +3077,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 
         case (26)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,a,i3)')                                     !IYS 21.01.2016
      .       'given total particle flux with constant',             !IYS 21.01.2016
      &       ' average density for ion is =', is                    !IYS 21.01.2016
@@ -3097,7 +3108,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
             ENDDO
             if (ishigh) call xertst (ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 26')
-          endif  ! ncall == 0
+          endif  ! new_boundary_files
           IF(core_boundary(ib)) THEN
             if(.not.once_bccon(is)) then
               if (use_astra.ne.0) then
@@ -3203,7 +3214,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 
         case (27)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
 !========== IYS 13.10.2021
             isb = is+1
             do while (b2espcr(is).eq.b2espcr(isb))
@@ -3386,6 +3397,196 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1       ('B2STBC -- BCCON=27 IS AVAILABLE FOR CORE ONLY')
           ENDIF
 
+* -- BCCON=28 -- Density profile is read from file
+* ---------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if CONPAR(IS,IB,2) > 0.0, the profile is scaled such that CONPAR(IS,IB,1) gives
+*          the max. density of the profile.
+*     else the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+* ---------------------------------------------------------------------
+        case (28)
+          if (new_boundary_files) then
+            call xertst(.not.streql(con_fn(is,ib),' '),
+     .       'Density profile file CON_FN not specified!')
+            if (CONPAR(IS,IB,2).gt.0.0_R8) then
+              if (CONPAR(IS,IB,1).eq.0.0_R8) then
+                CONPAR(IS,IB,1) = na_min
+                write(*,*) 'Zero density B.C. no longer allowed!'
+                write(*,*) 'Changed to na_min.'
+              endif
+              write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     .            'density profile from file ',trim(con_fn(is,ib)),
+     1            ' with maximum of ',CONPAR(IS,IB,1),' on ',
+     2             BCCHAR(IB),boundary_location(ib),' for species ',IS
+              call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
+     1             'BCCON = 28, CONPAR(,,1) !> 0')
+            else
+              write(*,'(a,a,a,a,a,a,i3)')
+     .             'density profile from file ',trim(con_fn(is,ib)),
+     1             ' on ', BCCHAR(IB),boundary_location(ib),
+     2             ' for species ',IS
+            endif
+          endif
+          IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+            if(new_boundary_files) then
+              filename = con_fn(is,ib)
+              call find_file(filename, ex)
+
+              call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .             BCPOS(IB),profile_con(-1:ny,is,ib),ny,
+     .             conpar(is,ib,1),conpar(is,ib,2))
+  
+            endif
+
+            IF (BCCHAR(IB).EQ.'W') THEN
+              DO IY = 1, BC_LIST_SIZE(IB)
+                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
+     &               UBIG*profile_con(BC_LIST_Y(IY,IB),is,ib)*
+     .               SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS) =
+     &              -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              ENDDO
+            ELSEIF (BCCHAR(IB).EQ.'E') THEN
+              DO IY = 1, BC_LIST_SIZE(IB)
+                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
+     &               UBIG*profile_con(BC_LIST_Y(IY,IB),is,ib)*
+     .               SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                  LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=-UBIG*
+     .               SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                  LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+              ENDDO
+            ENDIF
+          ELSE
+            CALL XERRAB ('B2STBC -- BCCON=28, NOT AVAILABLE FOR N,S')
+          ENDIF
+
+* -- BCCON=29 -- PRESCRIBE CONSTANT PRESSURE
+* ---------------------------------------------------------------------
+* This boundary condition is developed for use at the beam edge
+* of a linear plasma generator. CONPAR(,,1) gives the pressure,
+* The density is calculated by dividing this pressure by the
+* temperature at the edge. This temperature is gotten from the
+* variable, so it is not fixed.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+* ---------------------------------------------------------------------
+
+        case (29)
+          if(new_boundary_files) then
+            if (CONPAR(IS,IB,1).eq.0.0_R8) then
+              CONPAR(IS,IB,1) = na_min/maxval(TI)
+              write(*,*) 'Zero density B.C. no longer allowed!'
+              write(*,*) 'Changed pressure to na_min/max(Ti).'
+            endif
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .      'constant pressure ',CONPAR(IS,IB,1),' on ',
+     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
+     1       'BCCON = 29, CONPAR(,,1) !> 0')
+          endif
+          IF(BCCHAR(IB).EQ.'S') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     .          VBIG*CONPAR(IS,IB,1)*
+     .          SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .          TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     .         -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            END DO
+          ELSEIF(BCCHAR(IB).EQ.'N') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     .         VBIG*CONPAR(IS,IB,1)*
+     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
+     .         TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=-VBIG*
+     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            END DO
+          ELSEIF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .          UBIG*CONPAR(IS,IB,1)*
+     .          SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     .          TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .         -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            END DO
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .          UBIG*CONPAR(IS,IB,1)*
+     .          SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .          TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .         -UBIG*
+     .          SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            END DO
+          ELSE
+            CALL XERRAB
+     1       ('B2STBC -- BCCON=29, INVALID OPTION.')
+          ENDIF
+
+* -- BCCON=30 -- Particle flux per unit area profile is read from a file.
+* ---------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if CONPAR(IS,IB,2) > 0.0, the profile is scaled such that CONPAR(IS,IB,1) gives
+*          the max. density of the profile.
+*     otherwise the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+* ---------------------------------------------------------------------
+        case (30)
+          if(new_boundary_files) then
+            call xertst(.not.streql(con_fn(is,ib),' '),
+     .       'Particle flux profile file CON_FN not specified!')
+            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     .       'particle flux per area: profile from file ',
+     1        trim(con_fn(is,ib)),' with a maximum of ',
+     .        CONPAR(IS,IB,1),' on ',
+     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+
+          if (BCCHAR(IB).eq.'E'.or.BCCHAR(IB).eq.'W') then
+            if(new_boundary_files) then
+              filename = con_fn(is,ib)
+              call find_file(filename, ex)
+              call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .             BCPOS(IB),profile_con(-1:ny,is,ib),ny,
+     .             conpar(is,ib,1),conpar(is,ib,2))
+            
+            endif
+
+            if (BCCHAR(IB).eq.'W') then
+              do IY = 1, BC_LIST_SIZE(IB)
+                sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS)=
+     &               SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) *
+     &               profile_con(BC_LIST_Y(IY,IB),is,ib)
+                sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1,IS)=0.0_R8
+              enddo
+            elseif (BCCHAR(IB).eq.'E') then
+              do IY = 1, BC_LIST_SIZE(IB)
+                sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS)=
+     &               profile_con(BC_LIST_Y(IY,IB),is,ib)*
+     .               SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &                  LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+                sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1,IS)=0.0_R8
+              enddo
+            endif
+          else
+            call xerrab ('B2STBC -- BCCON=30, NOT AVAILABLE FOR N,S')
+          endif
+
         case default
           write(*,*) BCCON(IS,IB)
           call xerrab ('BCCON out of bounds')
@@ -3400,7 +3601,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCMOM=1 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY
 
         case (1)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'specified parallel velocity ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3472,7 +3673,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCMOM=2 -- PRESCRIBE THE GRADIENT OF THE PARALLEL VELOCITY
 
         case (2)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel velocity gradient ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3552,7 +3753,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCMOM=3 -- SHEATH CONDITIONS, MACH NUMBER AS INPUT
 
         case (3)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'sheath velocity bc ',MOMPAR(IS,IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3709,7 +3910,7 @@ cxpb  and max(,,) statement for stability
 *                 A MIXED BOUNDARY CONDITION
 
         case (4)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'weak velocity ',MOMPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3765,7 +3966,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=5 -- PRESCRIBE THE PARALLEL MOMENTUM FLUX PER UNIT AREA
 
         case (5)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum flux per unit area ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3818,7 +4019,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=8 -- SPECIAL : LIMITED SHEAR
 
         case (8)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,a,a,a,i3)')
      .       'limited shear velocity on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3863,7 +4064,7 @@ cxpb  and max(,,) statement for stability
 *                 CONSTANT FLUX DENSITY
 
         case (9)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'total parallel momentum flux ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3945,7 +4146,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=10 -- PRESCRIBE THE DECAY LENGTH FOR THE PARALLEL MOMENTUM
 
         case (10)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum decay length ',MOMPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -3994,7 +4195,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=11 -- ROZHANSKY VISCOSITY CONDITION FOR THE PARALLEL MOMENTUM
 
         case (11)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'ROZ parallel momentum bc on ',BCCHAR(IB),
      1       boundary_location(ib),
@@ -4031,7 +4232,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=12 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM   !srv 01.02.09
 !srv added accumulation in order to account twice b.c. for corner cells
         case (12)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb parallel momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -4082,7 +4283,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=13 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM
 !srv added accumulation in order to account twice b.c. for corner cells
         case (13)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb parallel momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -4159,7 +4360,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
         case (14)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
      .       'from b2stbc_spb momentum bc with mompar1 =',
      1       MOMPAR(IS,IB,1),' and mompar2 =', MOMPAR(IS,IB,2),' on ',
@@ -4224,7 +4425,7 @@ cxpb  and max(,,) statement for stability
 *                B_average/B_local
 
         case (15)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
      .       'specified parallel velocity as a function of',
      &       ' poloidal coordinate ',MOMPAR(IS,IB,1),
@@ -4249,7 +4450,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=16 -- PRESCRIBE THE AVERAGE VALUE OF THE PARALLEL VELOCITY   !lk 12.12.12 {
 
         case (16)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'specified average parallel velocity ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -4296,7 +4497,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=17 -- leakage option for parallel momentum
 
         case (17)
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'parallel momentum leakage ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -4349,6 +4550,280 @@ cxpb  and max(,,) statement for stability
             CALL XERRAB ('B2STBC -- BCMOM=17, NOT AVAILABLE')
           ENDIF
 
+* -- BCMOM=18 -- Parallel velocity profile is read from file
+*-----------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if MOMPAR(IS,IB,2) > 0.0, the profile is scaled such that MOMPAR(IS,IB,1) gives
+*          the max. parallel velocity of the profile.
+*     else the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+*-----------------------------------------------------------------------
+        case (18)
+          if (new_boundary_files) then
+            call xertst(.not.streql(mom_fn(is,ib),' '),
+     .       'Velocity profile file MOM_FN not specified!')
+            if (MOMPAR(IS,IB,2).gt.0.0_R8) then
+              write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     1         'parallel velocity profile from file ',
+     .          trim(mom_fn(is,ib)),' with maximum of ',
+     2          MOMPAR(IS,IB,1),' on ',BCCHAR(IB),
+     3          boundary_location(ib),' for species ',IS
+            else
+              write(*,'(a,a,a,a,a,a,a,a,i3)')
+     .         'parallel velocity profile from file ',
+     .          trim(mom_fn(is,ib)),' on ',
+     1          BCCHAR(IB),' at ',BCPOS(IB),
+     2          boundary_location(ib),' for species ',IS
+            endif
+          endif
+          IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+            if(new_boundary_files) then
+              filename = mom_fn(is,ib)
+              call find_file(filename, ex)
+              call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .             BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
+     .             mompar(is,ib,1),mompar(is,ib,2))
+
+            end if
+
+            IF (BCCHAR(IB).EQ.'W') THEN
+              DO IY=BCSTART(IB), BCEND(IB)
+                SMO0(BCPOS(IB),IY,0,IS)= UBIG*NE00*AM(IS)*
+     .           SX(BCPOS(IB),IY)*profile_mom(BC_LIST_Y(IY,IB),is,ib)*mp
+                SMO0(BCPOS(IB),IY,1,IS)=-UBIG*NE00*AM(IS)*
+     .           SX(BCPOS(IB),IY)*mp
+              ENDDO
+            ELSEIF (BCCHAR(IB).EQ.'E') THEN
+              DO IY = 1, BC_LIST_SIZE(IB)
+                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     &            UBIG*NE00*AM(IS)*profile_mom(BC_LIST_Y(IY,IB),is,ib)*
+     &            SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*mp
+                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     &           -UBIG*NE00*AM(IS)*
+     .            SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*mp
+              ENDDO
+            ENDIF
+          ELSE
+            CALL XERRAB ('B2STBC -- BCMOM=18, NOT AVAILABLE FOR N,S')
+          ENDIF
+
+* -- BCMOM=19 -- PRESCRIBE THE MOMENTUM FLUX PROFILE
+*-----------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     This boudary condition is built out of the temperatures,
+*     density and parallel velocity profiles. These profiles may
+*     be flat (bc=1), but also bccon=28,30, bceni=15 and bcene=15
+*     could be applied. In case of non-flat profiles, if ***par(,,2) > 0.0,
+*     the profiles of the individual bc's are taken, using ***par(,,1) as
+*     Ti, Te, Ni or ua maximum value, otherwise the profiles are used
+*     directly from the input file.
+*     According to the relation
+*     momentum_flux = Ni*(ev*(Te+Ti)+mi*ua**2)
+*     those profiles are combined to one single profile.
+*
+*     Note: To be able to handle bc=5 for eni, ene or con as well,
+*     special cases with adjusted formulae have to be created.
+*
+*     Created on 08-04-2009 by Hugo de Blank and Rob Wieggers (FOM Rijnhuizen)
+*-----------------------------------------------------------------------
+        case (19)
+          if(new_boundary_files) then
+            call xertst(.not.streql(con_fn(is,ib),' '),
+     .       'Density profile file CON_FN not specified!')
+            call xertst(.not.streql(mom_fn(is,ib),' '),
+     .       'Velocity profile file MOM_FN not specified!')
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'momentum flux profile per unit area ',
+     1        MOMPAR(IS,IB,1),' on ',BCCHAR(IB),
+     2        boundary_location(ib),' for species ',IS
+            call xertst(BCCON(IS,IB).eq.1.or.BCCON(IS,IB).eq.28
+     1         .or.BCCON(IS,IB).eq.30,
+     2         'BCMOM = 19, BCCON should be 1, 28 or 30!')
+
+            !Read density profile
+            filename = con_fn(is,ib)
+            call find_file(filename, ex)
+            call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .           BCPOS(IB),profile_con(-1:ny,is,ib),ny,
+     .           conpar(is,ib,1),conpar(is,ib,2))
+
+            !Read velocity profile
+            filename = mom_fn(is,ib)
+            call find_file(filename, ex)
+            call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .           BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
+     .           mompar(is,ib,1),mompar(is,ib,2))
+
+
+            do IY = 1, BC_LIST_SIZE(IB)
+              profile_mom(BC_LIST_Y(IY,IB),is,ib) =
+     &             profile_con(BC_LIST_Y(IY,IB),is,ib) *
+     &             profile_mom(BC_LIST_Y(IY,IB),is,ib)**2*am(is)*mp
+            end do
+
+          endif
+
+          IF(BCCHAR(IB).EQ.'W') THEN
+            do IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BCPOS(IB),IY,0,IS)=
+     &         profile_mom(BC_LIST_Y(IY,IB),is,ib)*SX(BCPOS(IB),IY)
+              SMO0(BCPOS(IB),IY,1,IS)=0.0_R8
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            do IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS) =
+     &         profile_mom(BC_LIST_Y(IY,IB),is,ib)*
+     &         SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &            LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+              SMO0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1,IS)=0.0_R8
+            end do
+          ELSE
+            CALL XERRAB
+     1       ('B2STBC -- BCMOM=19, OPTION NOT AVAILABLE FOR N,S')
+          ENDIF
+
+* -- BCMOM=20 -- Parallel velocity with defined Mach number.
+* ---------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     The parallel velocity is based on the temperature and a
+*     prescribed Mach number.
+*          v(r) = mompar(,,1) * \sqrt(KBolt * (T_e + \gamma_i T_i) / m_i),
+*                     T_e, T_i in K
+*               = mompar(,,1) * \sqrt(ev * (T_e + \gamma_i T_i)) / m_i,
+*                     T_e, T_i in eV
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+* ---------------------------------------------------------------------
+        case (20)
+          if(new_boundary_files) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .          'parallel velocity at Mach = ',
+     1           MOMPAR(IS,IB,1),' on ',
+     2           BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(MOMPAR(IS,IB,1).ge.-1.0_R8,
+     1           'BCMOM = 20, MOMPAR(,,1) < -1')
+            call xertst(MOMPAR(IS,IB,1).le.1.0_R8,
+     1           'BCMOM = 20, MOMPAR(,,1) > 1')
+          endif
+
+          IF (BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
+     .         UBIG*NE00*AM(IS) *
+     .         sqrt(ev*(te(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) + 
+     .             GAMMAI*ti(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))/mp) *
+     .         MOMPAR(IS,IB,1)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .        -UBIG*NE00*AM(IS)*
+     .         SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            ENDDO
+          ELSEIF (BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
+     .         UBIG*NE00*AM(IS) *
+     .         sqrt(ev*(te(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) +
+     .             ti(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))/mp) *
+     .         MOMPAR(IS,IB,1) *
+     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .        -UBIG*NE00*AM(IS)*
+     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            ENDDO
+          ELSE
+            CALL XERRAB ('B2STBC -- BCMOM=20, NOT AVAILABLE FOR N,S')
+          ENDIF
+
+* -- BCMOM=21 -- Parallel velocity gradient from profile
+* ---------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if MOMPAR(IS,IB,2) > 0.0, the profile is scaled such that MOMPAR(IS,IB,1) gives
+*          the max. parallel velocity gradient of the profile.
+*     else the profile is used directly.
+*
+*     Created by Ray Chandra
+* ---------------------------------------------------------------------
+
+        case (21)
+          if (ncall.eq.0) then
+            call xertst(.not.streql(mom_fn(is,ib),' '),
+     .       'Velocity gradient profile file MOM_FN not specified!')
+            if (MOMPAR(IS,IB,2).gt.0.0_R8) then
+              write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     1         'parallel velocity gradient profile from file ',
+     2          trim(mom_fn(is,ib)),' with maximum of ',
+     3          MOMPAR(IS,IB,1),' on ',BCCHAR(IB),
+     4          boundary_location(ib),' for species ',IS
+            else
+              write(*,'(a,a,a,a,a,a,a,a,i3)')
+     .         'parallel velocity gradient profile from file ',
+     1          trim(mom_fn(is,ib)),'  on ',
+     2          BCCHAR(IB),' at ',BCPOS(IB),
+     3          boundary_location(ib),' for species ',IS
+            endif
+          endif
+          IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+            !Read velocity gradient from file
+            if(new_boundary_files) then
+              filename = mom_fn(is,ib)
+              call find_file(filename, ex)
+              call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .             BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
+     .             mompar(is,ib,1),mompar(is,ib,2))
+        
+            end if
+
+            IF (BCCHAR(IB).EQ.'W') THEN
+              DO IY=BCSTART(IB), BCEND(IB)
+                SMO0(BCPOS(IB),IY,0,IS)=
+     .               VBIG*SX(BCPOS(IB),IY)*AM(IS) *
+     .               na(BCPOS(IB),IY,IS) *
+     .               (-profile_mom(BC_LIST_Y(IY,IB),is,ib))*
+     1               (HX(BCPOS(IB),IY)+
+     2                HX(RIGHTIX(BCPOS(IB),IY),
+     .                   RIGHTIY(BCPOS(IB),IY)))/2.0_R8 +
+     .                UA(RIGHTIX(BCPOS(IB),IY),
+     .                   RIGHTIY(BCPOS(IB),IY),IS)
+                SMO0(BCPOS(IB),IY,1,IS)=
+     .             - VBIG*SX(BCPOS(IB),IY) *
+     .               AM(IS) *
+     .               na(BCPOS(IB),IY,IS)
+              ENDDO
+            ELSEIF (BCCHAR(IB).EQ.'E') THEN
+              DO IY = 1, BC_LIST_SIZE(IB)
+                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)= VBIG*
+     .           SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*AM(IS)*
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS) *
+     .          (MOMPAR(IS,IB,1)*
+     1          (HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))+
+     2           HX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/2.0_R8 +
+     .           UA(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS))
+                SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=-VBIG*
+     .           SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))) *
+     .           AM(IS) *
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),IS)
+              ENDDO
+            ENDIF
+          ELSE
+            CALL XERRAB ('B2STBC -- BCMOM=21, NOT AVAILABLE FOR N,S')
+          ENDIF
+
         case default
           write(*,*) BCMOM(IS,IB)
           call xerrab ('BCMOM out of bounds')
@@ -4364,6 +4839,7 @@ cxpb  and max(,,) statement for stability
       integer ib
       integer ix, iy, is, ibw, ism
       integer bc_type16_i, bc_type20_i, bc_type21_i
+      logical ex
 
 * -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
       select case (BCENE(IB))
@@ -4373,7 +4849,7 @@ cxpb  and max(,,) statement for stability
 * -- BCENE=1 -- PRESCRIBE THE VALUE OF THE ELECTRON TEMPERATURE
 
       case (1)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           IF(BCCHAR(IB).EQ.'S'.and.use_astra.ne.0) THEN
             ENEPAR(IB,1) = teb_astra*1.0e3_R8                        !srv 14.06.12
           ENDIF
@@ -4441,7 +4917,7 @@ cxpb  and max(,,) statement for stability
 * -- BCENE=2 -- PRESCRIBE THE GRADIENT OF THE ELECTRON TEMPERATURE
 
       case (2)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature gradient ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4510,7 +4986,7 @@ cxpb  and max(,,) statement for stability
 * -- BCENE=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
      .     'sheath electron with MOMPAR(ismain,IB,2) =',
      1     MOMPAR(ismain,IB,2),' and MOMPAR(ismain,IB,1) =',
@@ -4751,7 +5227,7 @@ cxpb  and max(,,) statement for stability
 *                 WEAKLY A MIXED BOUNDARY CONDITION
 
       case (4)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'weak electron temperature ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4803,7 +5279,7 @@ cxpb  and max(,,) statement for stability
 * -- BCENE=5 -- PRESCRIBE THE ELECTRON ENERGY FLUX PER UNIT AREA
 
       case (5)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron energy flux per area ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -4842,7 +5318,7 @@ cxpb  and max(,,) statement for stability
 *                 CONSTANT ELECTRON TEMPERATURE
 
       case (6)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total electron energy flux ',ENEPAR(IB,1),
      1     ' with const Te on ',BCCHAR(IB),boundary_location(ib)
@@ -5129,7 +5605,7 @@ cxpb code segment analog to b2tfhe
 *                 FLUX DENSITY
 
       case (8)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           if (use_astra.ne.0) ENEPAR(IB,1) = fheb_astra           !srv 28.07.11
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total electron energy flux ',ENEPAR(IB,1),' on ',
@@ -5212,7 +5688,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ELECTRON TEMPERATURE
 
       case (9)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature decay length ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -5310,7 +5786,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=10 -- Feedback option for core
 
       case (10)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a)')
      .     'electron heat flux feedback bc on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -5335,7 +5811,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=11 -- FROM B2STBC_SPB                                       !srv 01.02.09
 !srv added accumulation in order to account twice b.c. for corner cells
       case (11)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     ' from b2stbc_spb with ENEPAR(,1) =',ENEPAR(IB,1),
      1     ' and ENEPAR(,2) =',ENEPAR(IB,2),
@@ -5391,44 +5867,58 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=12 -- SHEATH CONDITIONS, EL ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a)')
      .     'sheath (12) el on ',BCCHAR(IB),
      1     boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3) =
-     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3)-
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1)-
      1       ENEPAR(IB,1)*max(0.0_R8,
      1        -fne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))/
-     1       ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
+     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0)-
+     1       QE*PO(bc_list_x(ix,ib),bc_list_y(ix,ib))*max(0.0_R8,
+     1        -fne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3) =
-     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),3)-
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),1)-
      1             ENEPAR(IB,1)*max(0.0_R8,
-     .       fne(bc_list_x(ix,ib),bc_list_y(ix,ib),1))/
-     1       ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
+     .       fne(bc_list_x(ix,ib),bc_list_y(ix,ib),1))
+            she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .      she0(bc_list_x(ix,ib),bc_list_y(ix,ib),0)-
+     1       QE*PO(bc_list_x(ix,ib),bc_list_y(ix,ib))*max(0.0_R8,
+     .       fne(bc_list_x(ix,ib),bc_list_y(ix,ib),1))
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3) =
-     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3)-
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-
      1       ENEPAR(IB,1)*max(0.0_R8,
      1        -fne(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
-     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))/
-     1       ne(bc_list_x(iy,ib),bc_list_y(iy,ib))
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)-
+     1       QE*PO(bc_list_x(iy,ib),bc_list_y(iy,ib))*max(0.0_R8,
+     1        -fne(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
-            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3) =
-     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),3)-
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-
      1             ENEPAR(IB,1)*max(0.0_R8,
-     .       fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))/
-     1       ne(bc_list_x(iy,ib),bc_list_y(iy,ib))
+     .       fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+            she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .      she0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)-
+     1       QE*PO(bc_list_x(iy,ib),bc_list_y(iy,ib))*max(0.0_R8,
+     .       fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
           end do
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=12, INVALID OPTION')
@@ -5438,7 +5928,7 @@ cxpb code segment analog to b2tfhe
 *             -- PROPORTIONAL TO TEMPERATURE
 
       case (13)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      1     'electron energy flux per area proportional to temperature ',
      2     ENEPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -5480,7 +5970,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=14 -- leakage option for electron energy
 
       case (14)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron energy leakage ',ENEPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -5488,19 +5978,20 @@ cxpb code segment analog to b2tfhe
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))   !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     1       gs(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     2          topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
      3       cs*ENEPAR(IB,1)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))   !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs*ENEPAR(IB,1)
+     1       gs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*cs*ENEPAR(IB,1)
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=14, NOT AVAILABLE FOR W,E')
@@ -5510,7 +6001,7 @@ cxpb code segment analog to b2tfhe
 !srv added accumulation in order to account twice b.c. for corner cells
       case (15)
         if(bcene_15_style.eq.0) then
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a)')
      .       'bcene_15_style = 0 with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
@@ -5603,7 +6094,7 @@ cxpb code segment analog to b2tfhe
 
         elseif(bcene_15_style.eq.1) then
 !srv added accumulation in order to account twice b.c. for corner cells
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a)')
      &       'bcene_15_style = 1 with GAMMAE =',GAMMAE,
      1       ' on ',BCCHAR(IB),boundary_location(ib)
@@ -5713,7 +6204,7 @@ cxpb code segment analog to b2tfhe
 
         if(bcene_16_style.eq.0) then
 
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .       'electron temperature feedback by flux ',
      1       ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -5766,7 +6257,7 @@ cxpb code segment analog to b2tfhe
 
         elseif(bcene_16_style.eq.1)then
 
-          if(ncall.eq.0) then
+          if(new_boundary_files) then
             write(*,*)
      &       'Given integrated electron heat flux with constant Te '
 !          write all boundaries with this type of boundary condition
@@ -5877,7 +6368,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=17 -- Feedback boundary condition with constant shared temperature
 
       case (17)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'shared temperature feedback by flux ',
      1     ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -5964,7 +6455,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=18 -- FRACTIONAL DROP CONDITION (FOR EDGE2D COMPARISON)
 
       case (18)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature fractional drop ',
      1     ENEPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -6022,7 +6513,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=19 -- PRESCRIBE THE DECAY LENGTH FOR THE ELECTRON TEMPERATURE
 
       case (19)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'electron temperature decay length (new) ',
      .     ENEPAR(IB,1), ' on ',
@@ -6100,7 +6591,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=20 -- Feedback boundary condition with constant temperature
 
       case (20)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'electron temperature feedback by flux ',
      1     ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -6183,7 +6674,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENE=21 -- constant temperature scaled by temperature on the ring bc_type21_ref away
 
       case (21)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'fixed electron temperature (modified by nearby ring) ',
      1     ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
@@ -6289,7 +6780,7 @@ cxpb code segment analog to b2tfhe
 *                UNITS OF THE ELECTRON THERMAL VELOCITY
 
       case (22)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCENE=22 with ENEPAR(IB,1)= ',ENEPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -6325,6 +6816,69 @@ cxpb code segment analog to b2tfhe
           CALL XERRAB ('B2STBC -- BCENE=22, NOT AVAILABLE FOR W,E')
         END IF                                                         !srv 23.07.10 }
 
+* -- BCENE=23 -- Electron temperature profile is read from file
+* -----------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if ENEPAR(IB,2) > 0.0, the profile is scaled such that ENEPAR(IB,1) gives
+*          the max. electron temperature of the profile.
+*     else the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+* -----------------------------------------------------------------------
+      case (23)
+        if (new_boundary_files) then
+          call xertst(.not.streql(ene_fn(ib),' '),
+     .     'Electron temperature profile file ENE_FN not specified!')
+          if (ENEPAR(IB,2).gt.0.0_R8) then
+            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     .       'electron temperature profile from file ',
+     .        trim(ene_fn(ib)),' with a maximum of ',
+     1        ENEPAR(IB,1),' on ',
+     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(ENEPAR(IB,1).gt.0.0_R8,
+     1           'BCENE = 23, ENEPAR(,1) !> 0')
+          else
+            write(*,'(a,a,a,a,a,a,i3)')
+     .       'electron temperature profile from file ',
+     .        trim(ene_fn(ib)),' on ',
+     1        BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+        endif
+        IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+          if(new_boundary_files) then
+            filename = ene_fn(ib)
+            call find_file(filename, ex)
+            call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .           BCPOS(IB),profile_ene(-1:ny,ib),ny,
+     .           enepar(ib,1),enepar(ib,2))
+
+          endif
+
+          IF (BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
+     &             UBIG*NE00*EV*profile_ene(BC_LIST_Y(IY,IB),ib)*
+     .             SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
+              she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=
+     &            -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
+            ENDDO
+          ELSEIF (BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
+     &             UBIG*NE00*EV*profile_ene(BC_LIST_Y(IY,IB),ib)*
+     .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+              she0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
+     .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+            ENDDO
+          ENDIF
+        ELSE
+          CALL XERRAB ('B2STBC -- BCENE=23, NOT AVAILABLE FOR N,S')
+        ENDIF
+
       case default
         write(*,*) BCENE(IB)
         call xerrab ('BCENE out of bounds')
@@ -6337,6 +6891,7 @@ cxpb code segment analog to b2tfhe
       integer ib
       integer ix, iy, is, ibw
       integer bc_type16_i, bc_type20_i, bc_type21_i
+      logical ex
 
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
       select case (BCENI(IB))
@@ -6346,7 +6901,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENI=1 -- PRESCRIBE THE VALUE OF THE ION TEMPERATURE
 
       case (1)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           IF(BCCHAR(IB).EQ.'S'.and.use_astra.ne.0) THEN
             ENIPAR(IB,1) = tib_astra*1.0e3_R8                          !srv 14.06.12
           ENDIF
@@ -6414,7 +6969,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENI=2 -- PRESCRIBE THE GRADIENT OF THE ION TEMPERATURE
 
       case (2)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature gradient ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6483,7 +7038,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENI=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (3)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,g14.7,a,g14.7,a,a,a)')
      .     'sheath ion with MOMPAR(ismain,IB,2) =',
      1     MOMPAR(ismain,IB,2),' and MOMPAR(ismain,IB,1) =',
@@ -6660,7 +7215,7 @@ cxpb code segment analog to b2tfhe
 *                 A MIXED BOUNDARY CONDITION
 
       case (4)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'weak ion temperature ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6710,7 +7265,7 @@ cxpb code segment analog to b2tfhe
 * -- BCENI=5 -- PRESCRIBE THE ION ENERGY FLUX PER UNIT AREA
 
       case (5)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion energy flux per area ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -6749,7 +7304,7 @@ cxpb code segment analog to b2tfhe
 *                 CONSTANT ION TEMPERATURE
 
       case (6)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total ion energy flux ',ENIPAR(IB,1),
      1     ' with const Ti on ',BCCHAR(IB),boundary_location(ib)
@@ -7062,7 +7617,7 @@ cxpb code segment analog to b2tfhi
 *                 FLUX DENSITY
 
       case (8)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           if (use_astra.ne.0) ENIPAR(IB,1) = fhib_astra           !srv 28.07.11
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total ion energy flux',ENIPAR(IB,1),' on ',
@@ -7170,7 +7725,7 @@ cxpb code segment analog to b2tfhi
 * -- BCENI=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ION TEMPERATURE
 
       case (9)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature decay length ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -7284,7 +7839,7 @@ cxpb          endif
 * -- BCENI=10 -- Feedback option for core
 
       case (10)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion heat flux feedback bc on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -7311,7 +7866,7 @@ cxpb          endif
 * -- BCENI=11 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (11)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a)')
      .     'sheath (11) ion on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -7404,7 +7959,7 @@ cxpb          endif
 * -- BCENI=12 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
 
       case (12)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a)')
      .     'sheath (12) ion on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -7459,7 +8014,7 @@ cxpb          endif
 *             -- PROPORTIONAL TO TEMPERATURE
 
       case (13)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      1     'ion energy flux per area proportional to temperature ',
      2     ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -7501,7 +8056,7 @@ cxpb          endif
 * -- BCENI=14 -- leakage option for ion energy
 
       case (14)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion energy leakage ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -7509,19 +8064,20 @@ cxpb          endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))  !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
-     2       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*
+     1       gs(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     2          topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
      .       cs*ENIPAR(IB,1)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
-            CS=SQRT(bcint(PZ,nx,ny,IX,IB)/bcint(RZ,nx,ny,IX,IB))  !srv 01.02.09
+            CS=SQRT(PZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     .              RZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 01.02.09
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
-     1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
-     .       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*cs*ENIPAR(IB,1)
+     1       gs(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*cs*ENIPAR(IB,1)
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=14, NOT AVAILABLE FOR W,E')
@@ -7530,7 +8086,7 @@ cxpb          endif
 * -- BCENI=15 -- from b2stbc_spb                                        !srv 01.02.09
 
       case (15)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1       'BCENI = 15, ENIPAR(I,,1) <= 0 not allowed!')              !srv 20.09.17
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
@@ -7607,7 +8163,7 @@ cxpb          endif
 
       case (16)
         if(bceni_16_style.eq.0) then
-         if(ncall.eq.0) then
+         if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .       'ion temperature feedback by flux ',
      1       ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -7665,7 +8221,7 @@ cxpb          endif
 
         elseif(bceni_16_style.eq.1)then                                 !srv 16.02.12 {
 
-         if(ncall.eq.0) then
+         if(new_boundary_files) then
            write(*,*) 'Given integrated ion heat flux',
      &                 ' with constant Ti '
 !          write all boundaries with this type of boundary condition
@@ -7783,7 +8339,7 @@ cxpb          endif
 * -- BCENI=17 -- Feedback boundary condition with constant temperature
 
       case (17)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'ion temperature feedback by flux ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -7805,7 +8361,7 @@ c see label 2980
 * -- BCENI=18 -- FRACTIONAL DROP CONDITION (FOR EDGE2D COMPARISON)
 
       case (18)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'Ion temperature fractional drop',
      1     ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
@@ -7863,7 +8419,7 @@ c see label 2980
 * -- BCENI=19 -- PRESCRIBE THE DECAY LENGTH FOR THE ION TEMPERATURE
 
       case (19)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'ion temperature decay length (new) ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -7926,7 +8482,7 @@ c see label 2980
 * -- BCENI=20 -- Feedback boundary condition with constant temperature scaled by temperature on the ring bc_type20_ref away
 
       case (20)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'ion temperature feedback by flux (neo) ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -8016,7 +8572,7 @@ cxpb Careful here because of BC number clash
 * -- BCENI=21 -- from b2stbc_spb                                     !srv 01.02.09
 
       case (21)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           if (boundary_version.ge.'01.001.030' .and.
      &        boundary_version.lt.'02.000.000') then
             write(*,*) 'BCENI=21 type B.C. moved to 25 ',
@@ -8097,7 +8653,7 @@ cxpb Careful here because of BC number clash
 *                UNITS OF THE COLLECTIVE ION THERMAL VELOCITY
 
       case (22)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      &     'BCENI=22 with ENIPAR(IB,1)= ',ENIPAR(IB,1),
      &     ' on ', BCCHAR(IB),boundary_location(ib)
@@ -8155,7 +8711,7 @@ cxpb Careful here because of BC number clash
 * CONDITION ON ION DENSITY BCCON = 21,22,23
 
       case (23)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7)')
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
@@ -8278,7 +8834,7 @@ cxpb Careful here because of BC number clash
 
       case (24)
 !IYS 04.03.2013 {
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,*) 'Given integrated ion heat flux',
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
@@ -8436,7 +8992,7 @@ cxpb Careful here because of BC number clash
 * was BCENI=21 in 5.0/5.1
 
       case (25)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'fixed ion temperature (modified by nearby ring) ',
      1     ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
@@ -8543,7 +9099,7 @@ cxpb Careful here because of BC number clash
 * CONDITION ON ION DENSITY BCCON = 25,26,27
 
       case (26)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7)')
      .     'specified ion temperature ',ENIPAR(IB,1)
 !          write all boundaries with this type of boundary condition
@@ -8627,7 +9183,7 @@ cxpb Careful here because of BC number clash
 * CONDITION ON ION DENSITY BCCON = 25,26,27
 
       case (27)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,*) 'Given integrated ion heat flux',
      &               ' with constant Ti '
 !          write all boundaries with this type of boundary condition
@@ -8748,6 +9304,70 @@ cxpb Careful here because of BC number clash
      1     ('B2STBC -- BCENI=27 IS AVAILABLE FOR CORE ONLY')
         ENDIF
 
+* -- BCENI=28 -- Ion temperature profile is read from file
+*-----------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if ENIPAR(IB,2) > 0.0, the profile is scaled such that ENIPAR(IB,1) gives
+*          the max. ion temperature of the profile.
+*     else the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+*-----------------------------------------------------------------------
+      case (28)
+        if (new_boundary_files) then
+          call xertst(.not.streql(eni_fn(ib),' '),
+     .     'Ion temperature profile file ENI_FN not specified!')
+          if (ENIPAR(IB,2).gt.0.0_R8) then
+            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     .       'ion temperature profile from file ',
+     .        trim(eni_fn(ib)),' with a maximum of ',
+     1        ENIPAR(IB,1),' on ',
+     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(ENEPAR(IB,1).gt.0.0_R8,
+     1           'BCENI = 28, ENIPAR(,1) !> 0')
+          else
+            write(*,'(a,a,a,a,a,a,i3)')
+     .       'ion temperature profile from file ',
+     .        trim(eni_fn(ib)),' on ',
+     1        BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+        endif
+        IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+          if(new_boundary_files) then
+            filename = eni_fn(ib)
+            call find_file(filename, ex)
+            call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .           BCPOS(IB),profile_eni(-1:ny,ib),ny,
+     .           enipar(ib,1),enipar(ib,2))
+
+          endif
+
+          IF (BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
+     &             UBIG*NE00*EV*profile_eni(BC_LIST_Y(IY,IB),ib)*
+     .             SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
+              shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=
+     &            -UBIG*NE00*SX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB))
+            ENDDO
+          ELSEIF (BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0)=
+     &             UBIG*NE00*EV*profile_eni(BC_LIST_Y(IY,IB),ib)*
+     .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+              shi0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),1)=-UBIG*NE00*
+     .             SX(LEFTIX(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)),
+     &                LEFTIY(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))
+            ENDDO
+          ENDIF
+        ELSE
+          CALL XERRAB ('B2STBC -- BCENI=28, NOT AVAILABLE FOR N,S')
+        ENDIF
+
+* -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
       case default
         write(*,*) BCENI(IB)
         call xerrab ('BCENI out of bounds')
@@ -8760,6 +9380,7 @@ cxpb Careful here because of BC number clash
       integer ib
       integer ix, iy, is, ibw
       integer bc_type21_i
+      logical ex
 
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
       select case (BCPOT(IB))
@@ -8769,7 +9390,7 @@ cxpb Careful here because of BC number clash
 * -- BCPOT=1 -- PRESCRIBE THE VALUE OF THE POTENTIAL
 
       case (1)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified potential ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8830,7 +9451,7 @@ cxpb Careful here because of BC number clash
 * -- BCPOT=2 -- PRESCRIBE THE GRADIENT OF THE POTENTIAL
 
       case (2)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'potential gradient ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -8917,7 +9538,7 @@ cxpb Careful here because of BC number clash
 * -- BCPOT=3 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION
 
       case (3)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a,1p,g14.7,a)')
      .     'sheath potential bc on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -9087,7 +9708,7 @@ c              fchi=0.0_R8
 *                 WEAKLY A MIXED BOUNDARY CONDITION
 
       case (4)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'weak potential ',POTPAR(IB,1),' on ',BCCHAR(IB),
      1     boundary_location(ib)
@@ -9136,7 +9757,7 @@ c              fchi=0.0_R8
 * -- BCPOT=5 -- PRESCRIBE THE CURRENT FLUX DENSITY PER UNIT AREA
 
       case (5)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'current flux density per area ',POTPAR(IB,1),
      1     ' on ',BCCHAR(IB),boundary_location(ib)
@@ -9175,7 +9796,7 @@ c              fchi=0.0_R8
 *                 CONSTANT POTENTIAL
 
       case (6)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total current flux density',POTPAR(IB,1),
      1     ' with const potential on ',BCCHAR(IB),boundary_location(ib)
@@ -9192,7 +9813,7 @@ c              fchi=0.0_R8
 *                 FLUX DENSITY
 
       case (8)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total current ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -9249,7 +9870,7 @@ c              fchi=0.0_R8
 *                 THE POTENTIAL
 
       case (9)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'potential decay length ',POTPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
@@ -9281,7 +9902,7 @@ c              fchi=0.0_R8
 *                NOT YET TESTED!!!!!!!!!
 
       case (10)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a)') 'current feedback bc on ',
      1     BCCHAR(IB),boundary_location(ib)
           write(*,*) 'NOT YET TESTED !!!!!!!!!!'
@@ -9306,7 +9927,7 @@ c              fchi=0.0_R8
 * -- BCPOT=11 -- SHEATH CONDITIONS, CURRENT CONTINUITY; FROM b2stbc_spb !srv 01.02.09
 
       case (11)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,1p,g14.7,a,g14.7,a,a,a)')
      &     'sheath potential bc from b2stbc_spb',
      &     ' with POTPAR(IB,2) =',POTPAR(IB,2),' gammae =', gammae,
@@ -9506,7 +10127,7 @@ c              fchi=0.0_R8
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
       case (12)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from diamagnetic and inertial currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
@@ -9568,7 +10189,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
       case (13)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from all currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
@@ -9616,29 +10237,125 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           call xerrab ('B2STBC -- BCPOT=13, NOT AVAILABLE FOR W,E')
         endif
 
-* -- BCPOT=14 -- Nothing implemented
+* -- BCPOT=14 -- PRESCRIBE THE VALUE OF THE RADIAL SHEATH POTENTIAL
 
       case (14)
-        CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR S,N,W,E')
+        if(new_boundary_files) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'specified radial sheath potential ',POTPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+        endif
+        IF(BCCHAR(IB).EQ.'S') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= PBIG*
+     .       (POTPAR(IB,1)*TE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/QE)*
+     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+     .      -PBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathyb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)+1) =
+     &          POTPAR(IB,1)
+            endif
+#endif
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'N') THEN
+          DO IX = 1, BC_LIST_SIZE(IB)
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= PBIG*
+     .       (POTPAR(IB,1)*TE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/QE)*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-PBIG*
+     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathyb
+              delta_sheathyb(BC_LIST_X(IX,IB)+1,BC_LIST_Y(IX,IB)) =
+     &          POTPAR(IB,1)
+            endif
+#endif
+          end do
+        ELSE
+          CALL XERRAB ('B2STBC -- BCPOT=14, NOT AVAILABLE FOR W,E')
+        ENDIF
 
-* -- BCPOT=15 -- Nothing implemented
-
+* -- BCPOT=15 -- Potential profile is read from file
+*-----------------------------------------------------------------------
+* This boundary condition is developed for use at the inlet
+* of the computational domain of a linear plasma generator.
+*
+*     if POTPAR(IB,2) > 0.0, the profile is scaled such that POTPAR(IB,1) gives
+*          the max. potential of the profile.
+*     else the profile is used directly.
+*
+*     Created by Rob Wieggers (FOM Rijnhuizen)
+*-----------------------------------------------------------------------
       case (15)
-        CALL XERRAB ('B2STBC -- BCPOT=15, NOT AVAILABLE FOR S,N,W,E')
+        if (new_boundary_files) then
+          call xertst(.not.streql(pot_fn(ib),' '),
+     .     'Potential profile file POT_FN not specified!')
+          if (POTPAR(IB,2).gt.0.0_R8) then
+            write(*,'(a,a,a,1p,g14.7,a,a,a,a,i3)')
+     .       'potential profile from file ',
+     .        trim(pot_fn(ib)),' with maximum of ',
+     1        POTPAR(IB,1),' on ',
+     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+          else
+            write(*,'(a,a,a,a,a,a,i3)')
+     .       'potential profile from file ',
+     .        trim(pot_fn(ib)),' on ',
+     2        BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+        endif
+        IF (BCCHAR(IB).EQ.'E'.OR.BCCHAR(IB).EQ.'W') THEN
+          if(new_boundary_files) then
+            filename = pot_fn(ib)
+            call find_file(filename, ex)
+            call read_profile(filename,BCSTART(IB),BCEND(IB),
+     .           BCPOS(IB),profile_pot(-1:ny,ib),ny,
+     .           potpar(ib,1),potpar(ib,2))
+
+          endif
+          IF (BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
+     &             UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     .             profile_pot(BC_LIST_Y(IY,IB),ib)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
+     &            -UBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            ENDDO
+          ELSEIF (BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= UBIG*
+     &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*
+     &             profile_pot(BC_LIST_Y(IY,IB),ib)
+              sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-UBIG*
+     &             SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            ENDDO
+          ENDIF
+        ELSE
+          CALL XERRAB ('B2STBC -- BCPOT=15, NOT AVAILABLE FOR N,S')
+        ENDIF
 
 * -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
 
       case (16)
-        if (ncall.eq.0) then
+        if (new_boundary_files) then
           write(*,'(a,a,a)')
      .     'electric potential feedback by current on ',
      1     BCCHAR(IB),boundary_location(ib)
 ! add smth about #ifdef ASTRA here
 c Init variables for BCPOT=16                                  { Solovyev 01.05.14
-          cur_delta = 0.0_R8              ! square of delta between desired and calculated current
-          prev_cur_delta = 0.0_R8         ! previous value of upper value
-          po_step = 0.0_R8                ! step of approximation (set after 1st iteration)
-          coeff_16 = 1.0_R8
+          if (ncall_16.eq.0) then
+            po_step = 0.0_R8      ! step of approximation (set after 1st iteration)
+            coeff_16 = 1.0_R8
+          endif
 c************************************************************* } Solovyev 01.05.14
           scurpar = 0.0_R8
           do ibw=ib,nbc
@@ -9676,11 +10393,11 @@ c************************************************************* } Solovyev 01.05.
             enddo
 c The implementation is based on one step of Newton method
             cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
-            if (ncall.eq.0) then
+            if (ncall_16.eq.0) then
               write (*, *) '# Newton'
               prev_cur_delta = cur_delta         ! previous value of upper value
             else
-              if (ncall.eq.1) then                                      ! Solovyev 23.05.14
+              if (ncall_16.eq.1) then                                   ! Solovyev 23.05.14
                 po_curr = 0.0_R8                                        !srv 29.09.15
                 VS  = 0.0_R8
                 DO IBW=IB,NBC
@@ -9695,7 +10412,7 @@ c The implementation is based on one step of Newton method
                 ENDDO
                 po_curr=po_curr/VS                                      !srv 29.09.15 }
               endif                                                     !Solovyev 23.05.14
-              if (mod(ncall,bcpot_16_step).eq.0) then                   !Solovyev 23.05.14
+              if (mod(ncall_16,bcpot_16_step).eq.0) then                !Solovyev 23.05.14
                 if (abs(cur_delta-prev_cur_delta).gt.1.0e-20_R8) then   !{ Solovyev 24.05.14
                   coeff_16 = (po_prev - po_curr)/
      &              (cur_delta - prev_cur_delta)
@@ -9708,7 +10425,7 @@ c The implementation is based on one step of Newton method
               endif                                                     ! Solovyev 23.05.14
             endif                                                       ! } Solovyev 03.05.14
 c end of implementation
-            write (*, *) 'ncall, totflux, POS', ncall,totflux, POS      !Solovyev 29.04.14 - test output to b2fdebug
+            write (*, *) 'ncall, totflux, POS', ncall_16,totflux,POS    !Solovyev 29.04.14 - test output to debug
             do ibw=ib,nbc
               if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
                 do ix=1, BC_LIST_SIZE(IBW)
@@ -9720,15 +10437,197 @@ c end of implementation
               endif
             enddo
             once_bcpot = .true.
+            if (ncall_16.eq.0 .or. main_call) ncall_16 = ncall_16 + 1
           else
             call xerrab('B2STBC -- BCPOT=16, NOT AVAILABLE FOR N,W,E')
           endif
         endif
 
-* -- BCPOT=17 -- Nothing implemented
+* -- BCPOT=17 -- SHEATH CONDITIONS FOR FLOATING TARGET, ELECTRON ENERGY TRANSMISSION
 
       case (17)
-        CALL XERRAB ('B2STBC -- BCPOT=17, NOT AVAILABLE FOR S,N,W,E')
+        if(ncall.eq.0) then
+          write(*,*) 'sheath potential (floating target) bc on ',
+     1         BCCHAR(IB), boundary_location(ib)
+          currentOld(ib) = potpar(ib,2)
+          currentCounter(ib) = 0
+        endif
+        ! potpar(,1) > 0.0 used as multiplication factor.
+        ! when modifying the target potential, it will be changed by potpar(,1) * total current.
+        ! potpar(,2) to store target potential (like in BCPOT=3)
+        ! namelist value of potpar(,2) used as initial guess of target potential
+
+        ! steps to get floating target
+        ! - determine total current through target
+        ! - correct target potential to reduce this current
+        !   (correction ~ total current)
+
+        if (main_call) then
+          t0 = 0.0_R8
+          IF (BCCHAR(IB).EQ.'W') THEN
+            ! loop over wall to determine total current
+            DO IY = 1, BC_LIST_SIZE(IB)
+              t0 = t0 - fch(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     *             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0)
+            END DO
+
+          ELSE IF (BCCHAR(IB).EQ.'E') THEN
+            ! loop over wall to determine total current
+            DO IY = 1, BC_LIST_SIZE(IB)
+              t0 = t0 + fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
+            END DO
+          END IF
+
+          IF (abs(t0) > 0.1_R8) THEN
+            currentCounter(ib) = currentCounter(ib) + 1
+          ELSE
+            currentCounter(ib) = 0
+          END IF
+          currentNew(ib) = t0
+
+          IF (currentCounter(ib) > 5) THEN
+            ! current is converged for given potential, determine new potential
+            currentCounter(ib) = 0
+            potpar(ib, 2) = potpar(ib, 2) + potpar(ib, 1) * t0
+            WRITE (*, '(A,I3,A,2E12.5)') 'bc: ', ib,
+     *       ' potential, current:', potpar(ib,2), currentNew(ib)
+          END IF
+        ENDIF
+
+        IF(BCCHAR(IB).EQ.'W') THEN
+
+          DO IY = 1, BC_LIST_SIZE(IB)
+            s1 = abs(pbs(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .                   rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
+            vte = sqrt(bcint(te,nx,ny,iy,ib)/me)
+            t0 = 0.0_R8
+            do is = 0, ns-1
+              t0 = t0-bcint(rza(-1,-1,is),nx,ny,iy,ib)*
+     1         fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+            enddo
+            do is = 0, ns_ext-1
+              t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     1         fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .                rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+            enddo
+            fchi = qe*t0
+            if(t0.lt.0.0_R8 .and.
+     .       bottomiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.-2 .and.
+     &       topiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.ny+1) then
+              wrong_flow = .true.                                     !xpb
+              if(diagno.ge.0) then
+                write(*,'(a,2i4,g14.7)') 'b2stbc_west:ix,iy,fchi',
+     1           bc_list_x(iy,ib),bc_list_y(iy,ib),fchi
+                write(*,'(2g14.7)')
+     .         rza(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),ismain),
+     &         fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .             rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,ismain)
+                write(*,'(a,4g14.7)') 'Bx,Bz,Ud,-Ua =',
+     &           wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     .           wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),2),
+     &           ud(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain),
+     .          -ua(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)
+               endif
+c              fchi=0.0_R8
+            endif
+            fche = sqrt(1/(2*pi))*qe*bcint(ne,nx,ny,iy,ib)*vte*s1*
+     &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
+     .       bcint(te,nx,ny,iy,ib))
+            if (secmodel.eq.1) then
+              if (ne(bc_list_x(iy,ib),bc_list_y(iy,ib))/
+     .           (rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)*
+     .            na(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain))
+     .           .gt.1.1_R8) then
+                write(*,*) 'Large ne contribution from impurities!'
+                write(*,*) 'Kinetic s.e.c. model may not be valid!'
+              endif
+              call eseec0 (bcint(te,nx,ny,iy,ib),
+     &         bcint(ti,nx,ny,iy,ib),bcint(ne,nx,ny,iy,ib),
+     &         bcint(po,nx,ny,iy,ib),
+     .         wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     &         wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3),0,
+     .         bc_list_x(iy,ib),bc_list_y(iy,ib),
+     &         nx,ny,ns,ismain,seec,diagno)                           !cfs
+            else
+              seec = gammae
+            endif
+            t0 = max(fchi,(1.0_R8-seec)*fche)*qe/bcint(te,nx,ny,iy,ib)
+*    ..compute charge source
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .       sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)+
+     &       (1.0_R8-seec)*fche-fchi+
+     .       t0*po(bc_list_x(iy,ib),bc_list_y(iy,ib))
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            s1 = abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
+            vte = sqrt(bcint(te,nx,ny,iy,ib)/me)
+            t0 = 0.0_R8
+            do is = 0, ns-1
+              t0 = t0+
+     &         bcint(rza(-1,-1,is),nx,ny,iy,ib)*
+     .         fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+            enddo
+            do is = 0, ns_ext-1
+              t0 = t0+bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     &         fa_ext(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+            enddo
+            fchi = qe*t0
+            if(t0.lt.0.0_R8 .and.
+     .       bottomiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.-2 .and.
+     &       topiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.ny+1) then
+              wrong_flow = .true.                                     !xpb
+              if(diagno.ge.0) then
+                write(*,'(a,2i4,g14.7)') 'b2stbc_east:ix,iy,fchi',
+     1           bc_list_x(iy,ib),bc_list_y(iy,ib),fchi
+                write(*,'(2g14.7)')
+     &           rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain),
+     .           fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,ismain)
+                write(*,'(a,4g14.7)') 'Bx,Bz,Ud,Ua =',
+     &           wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     .           wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),2),
+     &           ud(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain),
+     .           ua(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)
+               endif
+c              fchi=0.0_R8
+            endif
+            fche = sqrt(1/(2*pi))*qe*bcint(ne,nx,ny,iy,ib)*vte*s1*
+     &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
+     .       bcint(te,nx,ny,iy,ib))
+            if (secmodel.eq.1) then
+              if (ne(bc_list_x(iy,ib),bc_list_y(iy,ib))/
+     .           (rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)*
+     .            na(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain))
+     .           .gt.1.1_R8) then
+                write(*,*) 'Large ne contribution from impurities!'
+                write(*,*) 'Kinetic s.e.c. model may not be valid!'
+              endif
+              call eseec0 (bcint(te,nx,ny,iy,ib),
+     &         bcint(ti,nx,ny,iy,ib),bcint(ne,nx,ny,iy,ib),
+     &         bcint(po,nx,ny,iy,ib),
+     .         wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
+     &         wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3),0,
+     .         bc_list_x(iy,ib),bc_list_y(iy,ib),
+     &         nx,ny,ns,ismain,seec,diagno)                           !cfs
+            else
+              seec = gammae
+            endif
+            t0 = max(fchi,(1.0_R8-seec)*fche)*qe/bcint(te,nx,ny,iy,ib)
+*    ..compute charge source
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),0)+
+     &       (1.0_R8-seec)*fche-fchi+
+     .       t0*po(bc_list_x(iy,ib),bc_list_y(iy,ib))
+            sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
+          end do
+        ELSE
+          CALL XERRAB ('B2STBC -- BCPOT=17, NO SHEATH IN RADIAL DIR.')
+        END IF
 
 * -- BCPOT=18 -- Nothing implemented
 
@@ -9748,7 +10647,7 @@ c end of implementation
 * -- BCPOT=21 -- constant potential scaled by potential on the ring bc_type21_ref away
 
       case (21)
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .     'fixed potential (modified by nearby ring) ',
      1     POTPAR(IB,1),' with ',POTPAR(IB,2),' on ',
@@ -9857,7 +10756,7 @@ c end of implementation
 !xpb  Special attention is paid to the case where there is a discontinuity in B
 !xpb
         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (ncall.eq.0) write(*,'(a,i2,a,i2)')
+          if (new_boundary_files) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential is imposed by BCPOT =',BCPOT(IB)
         ELSE IF(BCCHAR(IB).EQ.'S') THEN
@@ -9881,7 +10780,7 @@ c end of implementation
      &              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))) !sv
                 else
-                  if(ncall.eq.0) write(*,*)
+                  if(new_boundary_files) write(*,*)
      >             'b2stbc: special treatment for cell ix,iy = ',
      .              bc_list_x(ix,ib),bc_list_y(ix,ib)
                   fchy_dia = -praverage(1)
@@ -9915,7 +10814,7 @@ c end of implementation
      .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))*
      .              b2stbc_fchy_dia
                 else
-                  if (ncall.eq.0) write(*,*)
+                  if (new_boundary_files) write(*,*)
      .             'b2stbc: special treatment for cell ix,iy = ',
      .              bc_list_x(ix,ib),bc_list_y(ix,ib)
                   fchy_dia = -bcint(wdia,nx,ny,ix,ib)
@@ -10012,7 +10911,7 @@ c end of implementation
       elseif(istyle_cur_contr_on_S_and_N.eq.1) then                   !srv 01.02.09 { 27.03.14
 
         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (ncall.eq.0) write(*,'(a,i2,a,i2)')
+          if (new_boundary_files) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential there is imposed by BCPOT=',
      &          BCPOT(IB)
@@ -10087,7 +10986,7 @@ c end of implementation
         ENDIF
       else if (pot_eq.eq.1.and.
      &        (BCPOT(IB).eq.0.or.BCPOT(IB).eq.5.or.BCPOT(IB).eq.8)) then !srv 27.03.14
-        if(ncall.eq.0) then
+        if(new_boundary_files) then
           IF (BCCHAR(IB).EQ.'S') THEN
             IF (core_boundary(ib)) THEN
               write(0,'(a/a)')

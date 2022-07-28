@@ -165,11 +165,12 @@
       call b2tdia(nx, ny, ns, vol, gs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,             !srv 19.02.21
-     &              cvsa_drho, fac_vis,                                  !som 18.08.21
+      call b2tvspa (nx, ny, ns, ismain, bb,                              !srv 19.02.21
+     &              na, ua, cvsa_cl, cvsa_drho, fac_vis,                 !som 18.08.21
      &              fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, ismain, fac_vis, vol, po, ti, na,         !srv 10.10.17 19.02.21
+      call b2tvspr(nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
+     &             vol, po, ti, na,
      &             avisper_a, bvisper_a, cvisper_a,
      &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
@@ -178,11 +179,11 @@
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  .. calculate inertia current                                          !srv 07.07.99
-      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 22.11.12
-     &              facdrift, fchinert_a, fchinert)
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 22.11.12
+     &              na, ua, facdrift, fchinert_a, fchinert)
 *  .. calculate the x,y-components of anomalous current
-      call b2tanml (nx, ny, ns, ismain, csig_an, po, ne, na,             !som 02.11.21
-     &              fchanml_a, fchanml)                                  !srv 08.09.21 }
+      call b2tanml (nx, ny, ns, ismain,                                  !som 02.11.21
+     &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 }
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,                 !srv 07.07.14
@@ -332,7 +333,8 @@
      &   'b2tfch__for_po_fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1),
      &   'b2tfch__for_po_fchvispary')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch__for_po_fchvisqx')
+!       call my_out(70,nx,ny,fchvisq(-1,-1,0),
+!     &   'b2tfch__for_po_fchvisqx')
        call my_out(70,nx,ny,fchvisq(-1,-1,1),
      &   'b2tfch__for_po_fchvisqy')
 !       call my_out(70,nx,ny,fchvisper(-1,-1,0),

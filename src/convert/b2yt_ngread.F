@@ -16,9 +16,9 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ngread(solps_version, eirene_format, nx1, ny1,
-     . natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1, nfla,
-     . no_sputtering, savestratum, non_commensurate, flip,
+      subroutine b2yt_ngread(nwrite, solps_version, eirene_format,
+     . nx1, ny1, natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1,
+     . nfla, no_sputtering, savestratum, non_commensurate, flip,
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
      . hx, hy, qc, hxx, hyy, qc1, gs1)
@@ -42,7 +42,7 @@ c
 *  -- INPUT ARGUMENTS --
       integer nx1,ny1,natm1,nmol1,nion1,npls1,nfla,non_commensurate
       integer iatm1(natm), imol1(nmol), iion1(nion), ipls1(npls)
-      integer jsep1
+      integer jsep1, nwrite
       integer region1(-1:nx1,-1:ny1,0:2)
       integer leftcut1(nncutmax), rightcut1(nncutmax)
       integer bottomcut1(nncutmax), topcut1(nncutmax)
@@ -59,8 +59,8 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra, istra1
-      integer i, j, k, ncl, ncl1, nclm, jvftnew, nstra1, n2
+      INTEGER NNX, NNY, IX, IY, jvft44, istra, istra1, idum
+      integer i, j, k, ncl, ncl1, nclm, jvftnew, nstra1, nfla1, n2
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
       real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
       real (kind=R8), allocatable :: dmb1(:,:,:), tmb1(:,:,:)
@@ -102,15 +102,15 @@ c
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
       character*8, allocatable :: eirtxt1(:)
       character*3 stnum
-      character*256 filename
+      character*256 filename, message
       logical ex
 
 *  -- PROCEDURES --
       integer convert_eirdiag, conformal_convert
-      character*32 :: get_B25_hash
+      character*32 :: get_Eir_hash
       logical streql
       EXTERNAL GFSUB2
-      external ipgeti, streql, get_B25_hash
+      external ipgeti, streql, get_Eir_hash
       external convert_eirdiag, conformal_convert
 #endif
 
@@ -149,7 +149,7 @@ C
       else
         jvftnew = max(jvft44,20160829)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_B25_hash()
+      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,5i4)')
@@ -823,7 +823,7 @@ cank-960727
         call write_title(45,'wldpa(0)',nlimps*natm1)
         call wrneutrs(45,wldpa1,natm1)
         call write_title(45,'wldpm(0)',nlimps*nmol1)
-        if (nmol1.gt.0) call wrneutrs(45,wldpm1,nmol1)
+        call wrneutrs(45,wldpm1,nmol1)
         call write_title(45,'wldpeb(0)',nlimps)
         call wrneutrs(45,wldpeb,1)
         call write_title(45,'wldspt(0)',nlimps)
@@ -1127,7 +1127,7 @@ cank
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,npls1),
      ,                                                       i=1,nlim1)
           write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,npls1),
-     ,                          i=1,nstsi)
+     ,                                                       i=1,nstsi)
           deallocate (wlpump1)
         end if
 
@@ -1582,8 +1582,6 @@ cank
               WRITE(45,1028)
             END IF
           END IF
-          deallocate (eirtxt1)
-          deallocate (wd_old, wd_new)
           deallocate (eirdiag_nds_ind1,eirdiag_nds_srf1)
           deallocate (eirdiag_nds_start1,eirdiag_nds_end1)
         end if
@@ -1801,6 +1799,210 @@ cank
 
    99 CONTINUE
  1028 format()
+
+      filename=fort_lc//'44_aver'
+      call find_file(filename,ex)
+      if (ex) then ! average fluxes, Makarov 02.04.2019
+        OPEN (UNIT=48,FILE=filename,ACCESS='SEQUENTIAL')
+        filename=fort_lc//'44_aver.2'
+        OPEN (UNIT=49,FILE=filename,status='unknown')
+        write(*,*) 'Writing '//trim(filename)
+        write(nwrite,'(a)') fort_lc//'44_aver.2'
+        rewind(48)
+        READ (48,'(I4,2X,I4,2x,i8)') nnx,nny,jvft44
+        write(49,'(I4,2X,I4,2x,i8,2x,a32)')
+     .                               nx1,ny1,jvftnew,get_Eir_hash()
+        read (48,'(e16.8)') aver_frac
+        write(49,'(e16.8)') aver_frac
+        if (aver_frac.ge.0.0_R8) then
+          read (48,'(i4)') idum
+          write(message,'(a)')
+     .     'Mismatched number of plasma species between '//
+     .      fort_lc//'44 and '//fort_lc//'44_aver files !'
+          call xertst(idum.eq.nfla,message)
+          nfla1 = 0
+          do i = 1, nfla
+            if (ipls1(i).ne.0) nfla1 = nfla1 + 1
+          end do
+          write(49,'(i4)') nfla1
+          call rdneutrs(48,wldnek_aver,1)
+          call rdneutrs(48,wldnep_aver,1)
+          call rdneutrs(48,wldna_aver,natmi)
+          call rdneutrs(48,ewlda_aver,natmi)
+          call rdneutrs(48,wldnm_aver,nmoli)
+          call rdneutrs(48,ewldm_aver,nmoli)
+          call rdneutrs(48,wldra_aver,natmi)
+          call rdneutrs(48,wldrm_aver,nmoli)
+          call rdneutrs(48,wldpp_aver,nfla)
+          call rdneutrs(48,wldpa_aver,natmi)
+          call rdneutrs(48,wldpm_aver,nmoli)
+          call rdneutrs(48,wldpeb_aver,1)
+          call rdneutrs(48,wldspt_aver,1)
+          call rdneutrs(48,wldspta_aver,natmi)
+          call rdneutrs(48,wldsptm_aver,nmoli)
+          call write_title(49,'wldnek_aver(0)',nlimps)
+          call wrneutrs(49,wldnek_aver,1)
+          call write_title(49,'wldnep_aver(0)',nlimps)
+          call wrneutrs(49,wldnep_aver,1)
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              wldna1(:,iatm1(is),0) = wldna_aver(:,is,0)
+              ewlda1(:,iatm1(is),0) = ewlda_aver(:,is,0)
+            end if
+          end do
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              wldnm1(:,imol1(is),0) = wldnm_aver(:,is,0)
+              ewldm1(:,imol1(is),0) = ewldm_aver(:,is,0)
+            end if
+          end do
+          call write_title(49,'wldna_aver(0)',nlimps*natm1)
+          call wrneutrs(49,wldna1,natm1)
+          call write_title(49,'ewlda_aver(0)',nlimps*natm1)
+          call wrneutrs(49,ewlda1,natm1)
+          call write_title(49,'wldnm_aver(0)',nlimps*nmol1)
+          call wrneutrs(49,wldnm1,nmol1)
+          call write_title(49,'ewldm_aver(0)',nlimps*nmol1)
+          call wrneutrs(49,ewldm1,nmol1)
+          do is = 1, natmi
+            if (iatm1(is).ne.0)
+     >       wldra1(:,iatm1(is),0) = wldra_aver(:,is,0)
+          end do
+          do is =3 1, nmoli
+            if (imol1(is).ne.0)
+     >       wldrm1(:,imol1(is),0) = wldrm_aver(:,is,0)
+          end do
+          call write_title(49,'wldra_aver(0)',nlimps*natm1)
+          call wrneutrs(49,wldra1,natm1)
+          call write_title(49,'wldrm_aver(0)',nlimps*nmol1)
+          call wrneutrs(49,wldrm1,nmol1)
+          wd_old(nfla+1:nplsi)=0.0_R8
+          do i = 1, nlimps
+            wd_old(1:nfla)=wldpp_aver(i,1:nfla,0)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .       wd_old,wd_new,1)
+            wldpp1(i,1:nfla1,0)=wd_new(1:nfla1)
+          end do
+          do is = 1, natmi
+            if (iatm1(is).ne.0)
+     >       wldpa1(:,iatm1(is),0) = wldpa_aver(:,is,0)
+          end do
+          do is = 1, nmoli
+            if (imol1(is).ne.0)
+     >       wldpm1(:,imol1(is),0) = wldpm_aver(:,is,0)
+          end do
+          call write_title(49,'wldpp_aver(0)',nlimps*nfla1)
+          call wrneutrs(49,wldpp1,nfla1)
+          call write_title(49,'wldpa_aver(0)',nlimps*natm1)
+          call wrneutrs(49,wldpa1,natm1)
+          call write_title(49,'wldpm_aver(0)',nlimps*nmol1)
+          call wrneutrs(49,wldpm1,nmol1)
+          call write_title(49,'wldpeb_aver(0)',nlimps)
+          call wrneutrs(49,wldpeb_aver,1)
+          call write_title(49,'wldspt_aver(0)',nlimps)
+          if (no_sputtering) wldspt_aver(:,0) = 0.0_R8
+          call wrneutrs(49,wldspt_aver,1)
+          if (no_sputtering) then
+            wldspta1 = 0.0_R8
+            wldsptm1 = 0.0_R8
+          else
+            do is = 1, natmi
+              if (iatm1(is).ne.0)
+     >          wldspta1(:,iatm1(is),0) = wldspta_aver(:,is,0)
+            end do
+            do is = 1, nmoli
+              if (imol1(is).ne.0)
+     >          wldsptm1(:,imol1(is),0) = wldsptm_aver(:,is,0)
+            end do
+          end if
+          call write_title(49,'wldspta_aver(0)',nlimps*natm1)
+          call wrneutrs(49,wldspta1,natm1)
+          call write_title(49,'wldsptm_aver(0)',nlimps*nmol1)
+          call wrneutrs(49,wldsptm1,nmol1)
+          k=0
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,natmi),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,natmi),
+     ,                                                        i=1,nstsi)
+          k=k+nnatmi
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nmoli),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nmoli),
+     ,                                                        i=1,nstsi)
+          k=k+nnmoli
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nioni),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nioni),
+     ,                                                        i=1,nstsi)
+          k=k+nnioni
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nfla),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nfla),
+     ,                                                        i=1,nstsi)
+          allocate (wlpump1(natm1+nmol1+nion1+nfla1,nlim+nstsi))
+          do k = 1, natmi
+            if (iatm1(k).ne.0) wlpump1(iatm1(k),:) = wlpump_aver(k,:)
+          end do
+          do k = 1, nmoli
+            if (imol1(k).ne.0)
+     >       wlpump1(natm1+imol1(k),:) = wlpump_aver(natmi+k,:)
+          end do
+          do k = 1, nioni
+            if (iion1(k).ne.0) wlpump1(natm1+nmol1+iion1(k),:) =
+     >       wlpump_aver(natmi+nmoli+k,:)
+          end do
+          do i = 1, nlimi
+            wd_old(1:nfla)=wlpump_aver(natmi+nmoli+nioni+1:
+     .                                 natmi+nmoli+nioni+nfla,i)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+           wlpump1(natm1+nmol1+nion1+1:natm1+nmol1+nion1+nfla1,i)=
+     .      wd_new(1:nfla1)
+          end do
+          do i = 1, nstsi
+            wd_old(1:nfla)=wlpump_aver(natmi+nmoli+nioni+1:
+     .                                 natmi+nmoli+nioni+nfla,nlim+i)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+           wlpump1(natm1+nmol1+nion1+1:
+     .             natm1+nmol1+nion1+nfla1,nlim+i)=wd_new(1:nfla1)
+          end do
+          k=0
+          call write_title(49,'wlpump_aver(A)',(nnlimi+nnstsi)*natm1)
+          write(49,'(6a13)') (eirtxt1(j+k),j=1,natm1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,natm1),
+     ,                                                       i=1,nlim1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,natm1),
+     ,                                                       i=1,nstsi)
+          k=k+natm1
+          call write_title(49,'wlpump_aver(M)',(nnlimi+nnstsi)*nmol1)
+          write(49,'(6a13)') (eirtxt1(j+k),j=1,nmol1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nmol1),
+     ,                                                       i=1,nlim1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nmol1),
+     ,                                                       i=1,nstsi)
+          k=k+nmol1
+          call write_title(49,'wlpump_aver(I)',(nnlimi+nnstsi)*nion1)
+          write(49,'(6a13)') (eirtxt1(j+k),j=1,nion1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nion1),
+     ,                                                       i=1,nlim1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nion1),
+     ,                                                       i=1,nstsi)
+          k=k+nion1
+          call write_title(49,'wlpump_aver(P)',(nnlimi+nnstsi)*nfla1)
+          write(49,'(6a13)') (eirtxt1(j+k),j=1,nfla1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nfla1),
+     ,                                                       i=1,nlim1)
+          write(49,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nfla1),
+     ,                                                       i=1,nstsi)
+          deallocate (wlpump1)
+        endif
+        rewind(48)
+        close(48)
+        close(49)
+      endif
+      if (allocated(eirtxt1)) deallocate (eirtxt1)
+      if (allocated(wd_old))  deallocate (wd_old, wd_new)
 #endif
 
 *  ---------------------------------------------------------------------
