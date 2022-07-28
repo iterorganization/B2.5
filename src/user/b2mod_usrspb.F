@@ -239,7 +239,7 @@ c------------------------------
 ! Saturation current density to targets and net saturation current
           Q_jsat_trg(-1:ny,it) = 0.0_R8
 
-          do is=0, ns
+          do is = 0, ns-1
             Q_jsat_trg(-1:ny,it) = Q_jsat_trg(-1:ny,it) +
      &        u * fna(ixt_fl,-1:ny,0,is) * rza(ixt_fl,-1:ny,is)
 !  factor 'u' is used here to make saturation current positive on Eastern and Western targets
