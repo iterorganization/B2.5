@@ -114,8 +114,8 @@ c----------------------------------------------------------------------
       logical
      &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
      
-      real (kind=R8) :: Te_det_threshold
-      parameter (Te_det_threshold = 2.0_R8)
+!      real (kind=R8) :: Te_det_threshold
+!      parameter (Te_det_threshold = 2.0_R8)
 
 c----------------------------------------------------------------------
 c
@@ -250,7 +250,7 @@ c------------------------------
 ! Saturation current density to targets and net saturation current
           Q_jsat_trg(-1:ny,it) = 0.0_R8
 
-          do is=0, ns-1
+          do is = 0, ns-1
             Q_jsat_trg(-1:ny,it) = Q_jsat_trg(-1:ny,it) +
      &        u * fna(ixt_fl,-1:ny,0,is) * rza(ixt_fl,-1:ny,is)
 !  factor 'u' is used here to make saturation current positive on Eastern and Western targets
