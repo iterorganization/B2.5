@@ -7670,6 +7670,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>TE_DET_THRESHOLD</name>
+				<default>2.0</default>
+				<type>real*8</type>
+				<description>
+					Electron temperature at the target (in eV) which is used a threshold identifying the transition of the local magnetic flux tube to detachment. The width of the zone with Te less than TE_DET_THRESHOLD (counted from the strike point towards the SOL side) is outputted into user_SPb.trc. This distance monotonically increases with increasing of radiated power fraction or with decreasing of peak target energy loads, therefore it may be used as a measure of the degree of detachment.
+				</description>
+			</switch>
+			<switch>
 				<name>FILEDATA</name>
 				<default>.true.</default>
 				<type>logical array of size 12</type>

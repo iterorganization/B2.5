@@ -25,7 +25,7 @@
       logical user_namelist_used, written
       logical, save :: write_nml_user = .true.
       logical, save :: user_initialised = .false.
-
+      real (kind=R8), save :: Te_det_threshold = 2.0_R8
       private :: user
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -34,7 +34,7 @@
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename
+     ,  filedata,user_filename,Te_det_threshold
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -223,6 +223,8 @@ c*** Set default values according to current species list
       call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
       call xertst (abs(lpfrt_o).le.nx, 'faulty input lpfrt_o')
       call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
+      call xertst(0.0_R8.le.Te_det_threshold,
+     . 'faulty input Te_det_threshold')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),
      .   'faulty inputs ipfrgrp, jpfrgrp')

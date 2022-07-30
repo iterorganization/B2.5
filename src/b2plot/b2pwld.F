@@ -8,8 +8,6 @@ c======================================================================
       implicit none
       integer ig,ii,iret  
       real (kind=R8) :: BoRiS
-      logical from_b2plot
-      data from_b2plot / .true. /
 
 c======================================================================
 c
@@ -21,7 +19,7 @@ c
       if(mod(ii,10) .gt. 0) call b2pnwl(iret)
       ii=ii/10
       irdparm=1
-      if(mod(ii,10) .gt. 0) call b2ptrgl(BoRiS, from_b2plot) 
+      if(mod(ii,10) .gt. 0) call b2ptrgl(BoRiS) 
       ii=ii/10
       irdparm=2
       if(mod(ii,10) .gt. 0) call b2pwldl(BoRiS)

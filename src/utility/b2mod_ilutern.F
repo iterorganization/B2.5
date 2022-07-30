@@ -222,28 +222,28 @@ cdpc
             !$OMP END MASTER
           else
             if (ncall.eq.0) then
-              write(*,*) 'Opening 69'
-              open(69,file='b2_matrix')
+              write(*,*) 'Opening 84'
+              open(84,file='b2_matrix')
             end if
-            write(*,*) 'Writing 69'
-            write(69,*) 'Called from '//trim(name)
-            write(69,*) n,' n'
-            write(69,*) 'ASO AWE ACP AEA ANO RHS'
+            write(*,*) 'Writing 84'
+            write(84,*) 'Called from '//trim(name)
+            write(84,*) n,' n'
+            write(84,*) 'ASO AWE ACP AEA ANO RHS'
             do i=1,n
               iy = (i-1)/n1+1
               ix = i-(iy-1)*n1
-              write(69,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
+              write(84,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
      .         aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
      .         ano(ix,iy), rhs(ix,iy)
             enddo
-            write(69,*) nz,' nz'
+            write(84,*) nz,' nz'
             do i=1,nz
-              write(69,'(4(i6,1x),1p,1e15.8)')
+              write(84,'(4(i6,1x),1p,1e15.8)')
      .         IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
             enddo
             if (ncall+1.eq.nwrite) then
-              write(*,*) 'Closing 69'
-              close(69)
+              write(*,*) 'Closing 84'
+              close(84)
             end if
           end if
         endif

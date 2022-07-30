@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(BoRiS, from_b2plot)               
+      subroutine b2ptrgl(BoRiS)               
 c
 c  version : 07.04.98 13:12
 c
@@ -49,7 +49,6 @@ c
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
-      logical from_b2plot                                             !iyv 11.04.22
 c*  s:        area of target segments cut by the grid
 c*  wid_par:  ideal parallel power flux at the targets
 c*  wid_trg:  ideal power on the targets

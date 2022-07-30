@@ -1059,60 +1059,63 @@ c*** structure and of the plot zones
 
 c*** The whole wall including the refined targets (shadowing)
 
-      open(lun_w,file='shadow.dat')
-      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-      write(lun_w,'(3a)') '# R',tab,'Z'
-      do i=1,nwldlis(1) !{
-        k=iabs(lwldlis(i,1))
-        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
-      end do !}
-      write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
-      close(lun_w)
+      if ( from_b2plot ) then
+
+        open(lun_w,file='shadow.dat')
+        write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+        write(lun_w,'(3a)') '# R',tab,'Z'
+        do i=1,nwldlis(1) !{
+          k=iabs(lwldlis(i,1))
+          write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
+        end do !}
+        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
+        close(lun_w)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance
 
-      do il=2,nwldprt !{
-        l=len_trim(pltzlbl(il))
+        do il=2,nwldprt !{
+          l=len_trim(pltzlbl(il))
 c*** create the filename for the output
-        if(l.eq.0) then !{
+          if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
-          write(fn_hlp,'(a,i2.2,a)') 'wlly_',il-1,'.dat'
-        else !}{
-          fn_hlp='wlly_'//pltzlbl(il)(:l)//'.dat'
-        end if !}
-        open(lun_w,file=fn_hlp)
-        write(lun_w,'(4a)') '#Layout of plot zone ',
+            write(fn_hlp,'(a,i2.2,a)') 'wlly_',il-1,'.dat'
+          else !}{
+            fn_hlp='wlly_'//pltzlbl(il)(:l)//'.dat'
+          end if !}
+          open(lun_w,file=fn_hlp)
+          write(lun_w,'(4a)') '#Layout of plot zone ',
      ,                                      pltzlbl(il)(:l),' : ',label
-        write(lun_w,'(11a)') '#R',tab,'Z',tab,'Rc',tab,'Zc',tab,'x',
-     ,    tab,'DG_elm'
-        do i=1,nwldlis(il) !{
-          k=iabs(lwldlis(i,il))
-          write(lun_w,'(1p,e12.5,4(a1,e12.5),a1,i5)') pp1(1,k),
-     ,      tab,pp1(2,k),
-     ,      tab,0.5_R8*(pp1(1,k)+pp2(1,k)),
-     ,      tab,0.5_R8*(pp1(2,k)+pp2(2,k)),
-     ,      tab,wldrfdst(i,il),tab,k
+          write(lun_w,'(11a)') '#R',tab,'Z',tab,'Rc',tab,'Zc',tab,'x',
+     ,                                      tab,'DG_elm'
+          do i=1,nwldlis(il) !{
+            k=iabs(lwldlis(i,il))
+            write(lun_w,'(1p,e12.5,4(a1,e12.5),a1,i5)') pp1(1,k),
+     ,        tab,pp1(2,k),
+     ,        tab,0.5_R8*(pp1(1,k)+pp2(1,k)),
+     ,        tab,0.5_R8*(pp1(2,k)+pp2(2,k)),
+     ,        tab,wldrfdst(i,il),tab,k
+          end do !}
+          write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
+          close(lun_w)
         end do !}
-        write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
-        close(lun_w)
-      end do !}
 #ifdef DBG
-      print *,'Leaving b2pwltrg. lytg,nytg= ',lytg,nytg
-      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
-      print '(16i5)',(nwldlis(i),i=1,nwldprt)
-      print '(16l5)',(lwlddir(i),i=1,nwldprt)
-      do il=1,nwldprt
-        print '(a,i5,1x,a/(1x,8i11))','lwldlis :',il,pltzlbl(il),
+        print *,'Leaving b2pwltrg. lytg,nytg= ',lytg,nytg
+        print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
+        print '(16i5)',(nwldlis(i),i=1,nwldprt)
+        print '(16l5)',(lwlddir(i),i=1,nwldprt)
+        do il=1,nwldprt
+          print '(a,i5,1x,a/(1x,8i11))','lwldlis :',il,pltzlbl(il),
      ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-        print '(a,i5/(1x,8i11))','leirlis :',il,
+          print '(a,i5/(1x,8i11))','leirlis :',il,
      ,                                  (leirlis(i,il),i=1,nwldlis(il))
-        print '(a,i5/(1x,1p,8e11.3))','length  :',il,
+          print '(a,i5/(1x,1p,8e11.3))','length  :',il,
      ,                        (segm_len(lwldlis(i,il)),i=1,nwldlis(il))
-        print '(a,i5/(1x,1p,8e11.3))','distance:',il,
+          print '(a,i5/(1x,1p,8e11.3))','distance:',il,
      ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
-      end do
+        end do
 #endif
+      endif  !(from_b2plot)
 c*** Fill in the input arrays for b2pwrdld
 c
       nwldrad=0

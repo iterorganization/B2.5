@@ -77,7 +77,6 @@ c*** Column headers:
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
- 
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_clgin
@@ -114,7 +113,6 @@ c----------------------------------------------------------------------
      &                        bsign, hlp_nw, hlp_pump
       logical
      &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
-       logical from_b2plot
      
       real (kind=R8) :: Te_det_threshold
       parameter (Te_det_threshold = 2.0_R8)
@@ -144,7 +142,6 @@ c----------------------------------------------------------------------
       data use_recyceir /1/  
 c
       data first / .true. /
-      data from_b2plot / .false. /
       
 c----------------------------------------------------------------------
       save !i, j, k, l, m, n, ic, is, ix, iy,
@@ -156,11 +153,12 @@ c----------------------------------------------------------------------
       
       if(first) then
        first=.false.
+       from_b2plot = .false.
       end if
 
 ! Calculate the peak power loads (with account of radiation)      
       irdparm=1
-      call b2ptrgl(BoRiS, from_b2plot)
+      call b2ptrgl(BoRiS)
 
 ! neutral pressure in PFR 
 ! Q_pneut - mean, Q_pneut_trg(1) - inner PFR, Q_pneut_trg(2) - outer PFR
@@ -213,10 +211,13 @@ c------------------------------
 ! It is measured along the target from the strike point 
 ! (nsep(it) should point to first cell in the SOL at given target)
 ! up to the point where Te rises above the prescribed threshold
-          if (te(ixt,lseppos(it)) / qe .le. Te_det_threshold) then 
+          if (te(bottomix(ixt,lseppos(it)),bottomiy(ixt,lseppos(it))) 
+     &                    / qe .le. Te_det_threshold) then 
 
-            Q_det_wdth(it) = 0.5_R8 * hy(ixt,lseppos(it))
-            iy = lseppos(it) + 1
+!            Q_det_wdth(it) = 0.5_R8 * hy(ixt,lseppos(it))
+            Q_det_wdth(it) = - 0.5_R8 * 
+     &        hy(bottomix(ixt,lseppos(it)),bottomiy(ixt,lseppos(it)))
+            iy = lseppos(it)
 
             do while (iy .lt. ny .and. 
      &           te(ixt,iy) / qe .le. Te_det_threshold)
@@ -225,6 +226,16 @@ c------------------------------
 
               iy = iy + 1                        
             enddo
+            
+! Linear interpolation            
+            Q_det_wdth(it) = Q_det_wdth(it) + 
+     & 0.5_R8 * (hy(bottomix(ixt,lseppos(it)),bottomiy(ixt,lseppos(it)))
+     &    + hy(ixt,iy)) / (te(ixt,iy) -
+     &        te(bottomix(ixt,lseppos(it)),bottomiy(ixt,lseppos(it)))) *
+     &    (Te_det_threshold * qe - 
+     &          te(bottomix(ixt,lseppos(it)),bottomiy(ixt,lseppos(it))))
+           
+           Q_det_wdth(it) = max(Q_det_wdth(it), 0.0_R8)  
  
           else
 ! Width of detached target is zero if strike point temperature is
@@ -239,7 +250,7 @@ c------------------------------
 ! Saturation current density to targets and net saturation current
           Q_jsat_trg(-1:ny,it) = 0.0_R8
 
-          do is=0, ns
+          do is=0, ns-1
             Q_jsat_trg(-1:ny,it) = Q_jsat_trg(-1:ny,it) +
      &        u * fna(ixt_fl,-1:ny,0,is) * rza(ixt_fl,-1:ny,is)
 !  factor 'u' is used here to make saturation current positive on Eastern and Western targets
@@ -317,6 +328,7 @@ c----------------------------------------------------------------------
 
       if(first_time_step) then
         call alloc_b2plot_wall_loading(nlim,nsgmx)
+        from_b2plot = .false.
       endif
 c*** Input the DG data and prepare the geometry (this routine works once)
       call b2pwinp

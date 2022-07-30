@@ -211,18 +211,18 @@ c
 c*** Tracing unit assignment (see b2file, b2blnc, etc.)
 c
 c<<<
-      NTRC(ntrc_tst) = 80
+      NTRC(ntrc_tst) = 69
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
 c>>>
-      NTRC(ntrc_srt) = 71
+      NTRC(ntrc_srt) = 70
       fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
-      NTRC(ntrc_res) = 72
+      NTRC(ntrc_res) = 71
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
-      NTRC(ntrc_src) = 73
+      NTRC(ntrc_src) = 72
       fn_ntrc(ntrc_src) = 'tracing/sources.trc'
-      NTRC(ntrc_bln) = 74
+      NTRC(ntrc_bln) = 73
       fn_ntrc(ntrc_bln) = 'tracing/blnn.trc'
-      NTRC(ntrc_bls) = 174                        ! IYS 07.11.2018
+      NTRC(ntrc_bls) = 74                        ! IYS 07.11.2018
       fn_ntrc(ntrc_bls) = 'tracing/blnn_SPb.trc'  ! IYS 07.11.2018
       NTRC(ntrc_ble) = 75
       fn_ntrc(ntrc_ble) = 'tracing/blne.trc'
@@ -230,11 +230,11 @@ c>>>
       fn_ntrc(ntrc_int) = 'tracing/integral.trc'
       NTRC(ntrc_usr) = 77
       fn_ntrc(ntrc_usr) = 'tracing/user.trc'
-      NTRC(ntrc_uss) = 177                        ! IYS 22.03.2022
+      NTRC(ntrc_uss) = 78                        ! IYS 22.03.2022
       fn_ntrc(ntrc_uss) = 'tracing/user_SPb.trc'  ! IYS 22.03.2022
-      NTRC(ntrc_blm) = 78
+      NTRC(ntrc_blm) = 79
       fn_ntrc(ntrc_blm) = 'tracing/blnm.trc'
-      NTRC(ntrc_sep) = 79
+      NTRC(ntrc_sep) = 80
       fn_ntrc(ntrc_sep) = 'tracing/sepdata.trc'
 
       ntrc_used = 12
