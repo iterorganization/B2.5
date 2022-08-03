@@ -43,7 +43,7 @@ c======================================================================
       character*8 TEXTA(DEF_NATM)
 #endif
 c
-      integer i,j,jj,k,kk,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
+      integer i,j,jj,k,l,m,n,iss,imol,iy,js,nn,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is,ix,ik,ind,ims,ias,nclm_na,nclm_nm
       integer kval, kflx
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)

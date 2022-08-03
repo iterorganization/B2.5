@@ -56,7 +56,7 @@ c*** Open the file and write the heading line
 
         do i=1,nwldlis(il) !{
 c*** Write the next line to the output file
-          call b2pwldw(lun_w,.false.,il,i,BoRiS,)
+          call b2pwldw(lun_w,.false.,il,i,BoRiS)
         end do !}
         close(lun_w)
    20 continue !}

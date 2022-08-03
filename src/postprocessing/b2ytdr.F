@@ -11894,6 +11894,9 @@ cxpb as they no longer necessarily point to the same species
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
         if (Spmp_nom.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
+        if (Te_det_threshold.ne.2.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'TE_DET_THRESHOLD=',Te_det_threshold,','
         do i=1,3
           if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
         end do
