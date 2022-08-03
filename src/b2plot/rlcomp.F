@@ -79,7 +79,8 @@ c<<<
 c        print *
 c        print *,'Source number, ssrc, xsrc, ysrc'
 c        print '(1p,2x,i4,3e10.2)',i, ssrc, xsrc, ysrc
-        if (uu_dbg) write(lun_s,*) xsrc,tab,ysrc,tab,ssrc
+        if (uu_dbg .and. from_b2plot)
+     >   write(lun_s,*) xsrc,tab,ysrc,tab,ssrc
 c>>>
 c
 c*** Loop over the target segments
@@ -201,7 +202,7 @@ c
       end do
 c======================================================================
 c<<<
-      if (uu_dbg) then
+      if (uu_dbg .and. from_b2plot) then
         close(lun_s)
         close(lun_t)
         close(lun_l)

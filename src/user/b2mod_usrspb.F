@@ -520,12 +520,11 @@ c----------------------------------------------------------------------
 !!! FIXME
 
 c----------------------------------------------------------------------
-      else ! file 'user_SPb.trc' does not exist
+      else ! file 'user_SPb.trc' does not yet exist
       
-        write(*,*) 'File user_SPb.trc does not exist!'
+        write(*,*) 'File user_SPb.trc not present. Will be created...'
 
         write(lun, 700) lv, N_Q_total, ntrgts, N_Q_target, trim(label)
-! What is 'label' and how is it defined?        
         
         write(hlp_frm,'(a,i3,a)')
      &   '(a1,6x,a4,3x,',N_Q_total,'(2x,a19))'
