@@ -7183,6 +7183,7 @@ contains
           b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
                             &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0_R8
         end if
+        r0 = b0r0 / b0
       end if
     end if
 
@@ -7305,8 +7306,8 @@ contains
 #endif
         edgeprof%vacuum_toroidal_field%r0 = 6.2_IDS_real
       else
+        allocate( edgeprof%vacuum_toroidal_field%b0( num_slices ) )
         if (eq_found) then
-          allocate( edgeprof%vacuum_toroidal_field%b0( num_slices ) )
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
           edgeprof%vacuum_toroidal_field%r0 = r0
 #if IMAS_MINOR_VERSION > 21
@@ -7524,12 +7525,14 @@ contains
             & call write_sourced_value( summary%global_quantities%b0, -b0 )
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
         else
 #if IMAS_MINOR_VERSION > 21
           if (do_summary_data) &
             & call write_sourced_value( summary%global_quantities%b0, b0 )
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
         end if
       end if
     end if
