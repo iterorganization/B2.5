@@ -7183,7 +7183,11 @@ contains
           b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
                             &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0_R8
         end if
-        r0 = b0r0 / b0
+        if (b0.ne.0.0_R8) then
+          r0 = b0r0 / b0
+        else
+          r0 = IDS_REAL_INVALID
+        end if
       end if
     end if
 
