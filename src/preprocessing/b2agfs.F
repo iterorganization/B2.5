@@ -802,6 +802,7 @@ cxpb  if just below the top corner, make the corner cell follow
        !call cfruin(nrid,nnFc,m%fcVx(:,2),'fcVx(:,2)')
 
        !Read flux tube information
+        if (nnFt .gt. 0.0_R8) then
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('ft',id)) then
           do iFt = 1, nnFt
@@ -828,7 +829,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
         !read fsFc
         call cfruin(nrid,sum(m%fsFcP(nnFs,:))-1,m%fsFc,'fsFc')
-
+        endif
 
       else
         call xerrab
