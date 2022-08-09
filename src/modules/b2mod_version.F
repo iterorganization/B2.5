@@ -24,7 +24,7 @@
       character*12 chf
       character*7 label
       logical streql
-      external streql
+      external streql, xerrab
 
       inquire (nget,form=chf,err=10)
       if (streql(chf,'formatted')) then
