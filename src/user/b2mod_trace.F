@@ -167,7 +167,7 @@ c*** Initialise tracing routines
       if(filedata(ntrc_srt)) call b2wrsrti(nregionv)
       if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns)
       if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns)
-      if(filedata(ntrc_uss)) call b2usstri(nx,ny,ns,nxtl,nxtr) ! IYS 22.03.2022
+      if(filedata(ntrc_uss)) call b2usstri(nx,ny,nxtl,nxtr) ! IYS 22.03.2022
       tracing_initialised = .true.
       return
       end subroutine b2trci

@@ -41,8 +41,6 @@ c
       integer, save :: N_Q_total
       integer ltrc
       parameter (ltrc=ntrc_uss)
-      integer it  ! counter for targets
-
 
 c----------------------------------------------------------------------
 c*** Output data (for each species):
@@ -79,8 +77,6 @@ c*** Column headers:
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
       use eirmod_wneutrals
-      use eirmod_clgin
-     ,   , only : iliin
 #endif
 
 #include "DIMENSIONS.F"
@@ -96,31 +92,16 @@ c----------------------------------------------------------------------
       implicit none
 
       integer nx, ny, ns
-      real (kind=R8) :: dtim
 
-      integer idir, ix, iy, is, k, l, j, ixt, ixt_fl, iyp       !iyv 11.04.22
+      integer it  ! counter for targets
+      integer ix, iy, is, k, l, j, ixt, ixt_fl, iyp                 !iyv 11.04.22
 
       logical first
-      integer, save :: mdf_fnb = 0, style_b2mndt = 1                ! IYS 12.01.2018
 
-      real (kind=R8) :: hlp_pls(nbcd,ns)
-      integer use_recyceir, use_eirene
-      real (kind=R8) :: recyctmp
       real (kind=R8) :: BoRiS
 
-
-      real (kind=R8) :: u, hlpdt, hlp, hlp_rec, hlp_sput,
-     &                        bsign, hlp_nw, hlp_pump
-      logical
-     &     hlp_pump_counted(nnatmi+nnmoli+nnioni+nnplsi,nnstsi+nnlimi)
+      real (kind=R8) :: u
      
-!      real (kind=R8) :: Te_det_threshold
-!      parameter (Te_det_threshold = 2.0_R8)
-
-c----------------------------------------------------------------------
-c
-      character hlp_prt*26
-c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:
 c***
@@ -139,14 +120,10 @@ c*** sclstra: scaling factors for species and strata
 c*** lmolscl: pointer to the species with which these molecules scale
 c----------------------------------------------------------------------
 *   ..initialisation
-      data use_recyceir /1/  
-c
       data first / .true. /
       
 c----------------------------------------------------------------------
-      save !i, j, k, l, m, n, ic, is, ix, iy,
-!     1 js, ks, ls, kks, 
-     2 use_recyceir,  first 
+      save first
 c----------------------------------------------------------------------
 
       if(first_time_step) return
@@ -312,10 +289,10 @@ c======================================================================
 c======================================================================
 c======================================================================
 
-      subroutine b2usstri(nx,ny,ns,nxtl,nxtr)
+      subroutine b2usstri(nx,ny,nxtl,nxtr)
       
       implicit none
-      integer nx, ny, ns, nxtl, nxtr
+      integer nx, ny, nxtl, nxtr
       integer i, j, nv, N_ttl_read, N_per_trg_read, Ntrgts_read 
       real (kind=R8), save :: stim = 0.0_R8
       character f*(lenfnm), hlp_c
