@@ -287,170 +287,18 @@
 *   ..use parg, obtain isymm and lblgm
        call b2xxid ('b2ag', lblgm(1:60))
        call b2agsi (parg, isymm, lblgm(61:120), istyle)
-       !STARTING FROM HERE nx1, ny1 ARE USED IN STRUCTURED FORMAT
 *   ..obtain grid and mhd equilibrium data from file
       call b2agfs(ninp(1),istyle,lblgm,g,m)
-
-      ! Try to define regions in Make_traduitoub2us
-!      call init_region(nx1,ny1,nncut,nncutmax,
-!     1 leftcut1,rightcut1,topcut1,bottomcut1,
-!     2 leftix1,leftiy1,rightix1,rightiy1,
-!     3 topix1,topiy1,bottomix1,bottomiy1,
-!     4 region1,nnreg,resignore1,crx1,cry1,periodic_bc,cflags1)
-
-      ! b2gavg1 from b2mod_geo2
-!      write(*,*) 'b2agdr0: Average bb1(:,:,0) ',
-!     . b2gavg1(nx1,ny1,bb1(-1:nx1,-1:ny1,0))
-
 
 *   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
 
 
-!*   ..compute geometry and flux/field functions on auxiliary mesh
-!*   ..if not provided already by Carre grid
-!      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
-!WIP - B2AG_US
-       !if(istyle.ge.0) call b2agcf ()
-
-
 *   ..compute metric coefficients on auxiliary mesh
        call b2agmt (g, m, isymm)
 
-
-
-!       call b2xgbs (g, m)  ! WIP - still to implement
-
-       
-!*   ..project metric coefficients to proper mesh
-!      call b2agmx (nx1, ny1, nx, ny, 
-!     & vol1, hx1, hy1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
-!     & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
-!     & wbbl1, wbbr1, wbbv1, wbbc1,
-!     & cell_width1, cell_height1,
-!     & vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc,
-!     & gs, crx, cry, bb, pbs, fpsi, ffbz,
-!     & wbbl, wbbr, wbbv, wbbc,
-!     & cell_width, cell_height,
-!     & leftix1, leftiy1, rightix1, rightiy1,
-!     & topix1, topiy1, bottomix1, bottomiy1,
-!     & leftcut1, rightcut1, bottomcut1, topcut1,
-!     & cflags1)
-!*   ..correct pbsx on the proper mesh
-!      if(redef_gmtry.ne.0) then
-!        call b2agbs (nx, ny, nncutmax,
-!     1   leftix, rightix, rightiy, region, crx, cry,
-!     1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
-!     2   pbs, cell_width, cell_height)
-!      end if
-!*   ..establish an isolated region if needed
-!      call ipgeti('b2agdr_nxiso1', nxiso1)
-!      call ipgeti('b2agdr_nxiso2', nxiso2)
-!      call ipgeti('b2agdr_nyiso1', nyiso1)
-!      call ipgeti('b2agdr_nyiso2', nyiso2)
-!      if (nxiso1.ne.-2) then
-!        if (nxiso2.eq.-2) nxiso2 = nx
-!        if (nyiso1.eq.-2) nyiso1 = -1
-!        if (nyiso2.eq.-2) nyiso2 = ny
-!      endif
-!      if (nxiso2.ne.-2) then
-!        if (nxiso1.eq.-2) nxiso1 = -1
-!        if (nyiso1.eq.-2) nyiso1 = -1
-!        if (nyiso2.eq.-2) nyiso2 = ny
-!      endif
-!      if (nyiso1.ne.-2) then
-!        if (nxiso1.eq.-2) nxiso1 = -1
-!        if (nxiso2.eq.-2) nxiso2 = nx
-!        if (nyiso2.eq.-2) nyiso2 = ny
-!      endif
-!      if (nyiso2.ne.-2) then
-!        if (nxiso1.eq.-2) nxiso1 = -1
-!        if (nxiso2.eq.-2) nxiso2 = nx
-!        if (nyiso1.eq.-2) nyiso1 = -1
-!      endif
-!      if (nxiso1.ne.-2) then
-!        do iy = nyiso1, nyiso2
-!          if (isInDomain(nx,ny,leftix(nxiso1,iy),
-!     .                         leftiy(nxiso1,iy))) then
-!            rightix(leftix(nxiso1,iy),leftiy(nxiso1,iy)) = nx+1
-!            region(leftix(nxiso1,iy),leftiy(nxiso1,iy),1) =
-!     .       region(nxiso2,iy,1)
-!          end if
-!          if (isInDomain(nx,ny,rightix(nxiso2,iy),
-!     .                         rightiy(nxiso2,iy))) then
-!            leftix(rightix(nxiso2,iy),rightiy(nxiso2,iy)) = -2
-!            region(rightix(nxiso2,iy),rightiy(nxiso2,iy),1) =
-!     .       region(nxiso1,iy,1)
-!          end if
-!        end do
-!        do ix = nxiso1, nxiso2
-!          if (isInDomain(nx,ny,topix(ix,nyiso2),topiy(ix,nyiso2))) then
-!            bottomiy(topix(ix,nyiso2),topiy(ix,nyiso2)) = -2
-!            region(topix(ix,nyiso2),topiy(ix,nyiso2),2) =
-!     .       region(ix,nyiso1,2)
-!          endif
-!          if (isInDomain(nx,ny,bottomix(ix,nyiso1),
-!     .                         bottomiy(ix,nyiso1))) then
-!            topiy(bottomix(ix,nyiso1),bottomiy(ix,nyiso1)) = ny+1
-!            region(bottomix(ix,nyiso1),bottomiy(ix,nyiso1),2) =
-!     .       region(ix,nyiso2,2)
-!          end if
-!        end do
-!        write(*,'()')
-!        write(*,*) 'Established an isolated region in the range'
-!        write(*,*) 'NXISO1 = ', nxiso1,' , NXISO2 = ', nxiso2
-!        write(*,*) 'NYISO1 = ', nyiso1,' , NYISO2 = ', nyiso2
-!        write(*,'()')
-!        region(nxiso1:nxiso2,nyiso1:nyiso2,0:2) = 0
-!        resignore(nxiso1:nxiso2,nyiso1:nyiso2,1:2) = 0
-!        do iy = nyiso1,nyiso2
-!          if (isInDomain(nx,ny,leftix(nxiso1,iy),leftiy(nxiso1,iy)))
-!     >     leftix(nxiso1,iy) = nxiso2
-!          if (isInDomain(nx,ny,rightix(nxiso2,iy),rightiy(nxiso2,iy)))
-!     >     rightix(nxiso2,iy) = nxiso1
-!        end do
-!        do ix = nxiso1,nxiso2
-!          if (isInDomain(nx,ny,bottomix(ix,nyiso1),bottomiy(ix,nyiso1)))
-!     >     bottomiy(ix,nyiso1) = nyiso2
-!          if (isInDomain(nx,ny,topix(ix,nyiso2),topiy(ix,nyiso2)))
-!     >     topiy(ix,nyiso2) = nyiso1
-!        end do
-!      endif
-!cdpc-debug
-!      if(nx1.eq.nx.and.ny1.eq.ny) then
-!        write(*,*) 'b2agdr sanity check: vol ',
-!     1   maxval(abs(vol1-vol))
-!        write(*,*) 'b2agdr sanity check: hx  ',
-!     1   maxval(abs(hx1-hx))
-!        write(*,*) 'b2agdr sanity check: hy  ',
-!     1   maxval(abs(hy1-hy))
-!        write(*,*) 'b2agdr sanity check: qz  ',
-!     1   maxval(abs(qz1-qz))
-!        write(*,*) 'b2agdr sanity check: qc  ',
-!     1   maxval(abs(qc1-qc))
-!        write(*,*) 'b2agdr sanity check: qs ',
-!     1   maxval(abs(qs1-qs))
-!        write(*,*) 'b2agdr sanity check: gs  ',
-!     1   maxval(abs(gs1-gs))
-!        write(*,*) 'b2agdr sanity check: crx ',
-!     1   maxval(abs(crx1-crx))
-!        write(*,*) 'b2agdr sanity check: cry ',
-!     1   maxval(abs(cry1-cry))
-!        write(*,*) 'b2agdr sanity check: bb  ',
-!     1   maxval(abs(bb1-bb))
-!        write(*,*) 'b2agdr sanity check: pbs ',
-!     1   maxval(abs(pbs1-pbs))
-!      endif
-
       write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
-!      if(istyle.ge.0) then
-!*   ..compute geometry and flux/field functions on proper mesh
-!        call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
-!*   ..compute magnetic field on proper mesh
-!        call b2agbb (nx, ny, vol, gs, crx, cry, qz, 
-!     &   fpsi, ffbz, bb)
-!      endif
       write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
       write(*,'()')
       if (g%vxFfBz(m%nVx).gt.0.0_R8) then
@@ -611,35 +459,9 @@
 *   ..write summary of geometry
         call write_b2fgmtry (nout(1), m, g)
 
-        !structured code
-!!      call b2wfgm (nout(0), idout, nx, ny)
-!*   ..write version number
-!      call cfverw (nout(1), newversion)
-!*   ..save dimensions
-!      idum(0) = nx
-!      idum(1) = ny
-!      call cfwuin (nout(1), 2, idum, 'nx,ny')
-!*   ..save label
-!      call cfwuch (nout(1), 120, lblgm, 'label')
-!*   ..save isymm
-!      idum(0) = isymm
-!      call cfwuin (nout(1), 1, idum, 'isymm')
-!*   ..save geometry
-!      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-!     &  wbbc, cell_width, cell_height)
-
-!*   ..create B2GridMap data structure
-!      call b2CreateMap(nx, ny, crx, cry, cflags,
-!     &     leftix, leftiy, rightix, rightiy,
-!     &     topix, topiy, bottomix, bottomiy, .true., gmap)
-!      mapInitialized = .true.
-!*   ..save parameters
-!      call cfwure (nout(1), 100, parg, 'parg')
-!      write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
-!*   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
       call write_f30
 
-!* ..return
+* ..return
       call subend ()
       return
 
