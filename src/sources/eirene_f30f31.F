@@ -283,15 +283,17 @@ c     * guard cell values used for source sampling in infcop
 c     internal cell, old treatment -> grad-B drift only
 c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
                 uub(ic,nflai)=max(min(
-     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
-     2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
-     3               switch%eir_ua_max),switch%eir_ua_min)
+     &               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     &               switch%xwdia*vadiac(ic,0,is)+
+     &               switch%xvecrb*vaecrbc(ic,0,is),
+     &               switch%eir_ua_max),switch%eir_ua_min)
               else
 c     internal cell -> full diamagnetic drift
                 uub(ic,nflai)=max(min(
-     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
-     2               wadiac(ic,0,is)+vaecrbc(ic,0,is),
-     3               switch%eir_ua_max),switch%eir_ua_min)
+     &               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     &               switch%xwdia*wadiac(ic,0,is)+
+     &               switch%xvecrb*vaecrbc(ic,0,is),
+     &               switch%eir_ua_max),switch%eir_ua_min)
                  endif
             elseif(switch%eirene_uub_style.eq.1) then
 cwdk  uub computed from face fluxes, and interpolated to cell centers
@@ -319,17 +321,19 @@ c                    (diffusive anomalous contribution zero due to toroidal symm
 c     internal cell, old treatment -> grad-B drift only (fna)
 c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
                 wwb(ic,nflai)=max(min(
-     .            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
-     2            (vadiac(ic,0,is)+vaecrbc(ic,0,is))*
-     3            gm%cvBb(ic,0)/gm%cvBb(ic,2),
-     4            switch%eir_ua_max),switch%eir_ua_min)
+     &            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
+     &            (switch%xwdia*vadiac(ic,0,is)+
+     &             switch%xvecrb*vaecrbc(ic,0,is))*
+     &            gm%cvBb(ic,0)/gm%cvBb(ic,2),
+     &            switch%eir_ua_max),switch%eir_ua_min)
               else
 c     internal cell -> full diamagnetic drift
                  wwb(ic,nflai)=max(min(
-     1             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
-     2             (wadiac(ic,0,is)+vaecrbc(ic,0,is))*
-     3             gm%cvBb(ic,0)/gm%cvBb(ic,2),
-     4             switch%eir_ua_max),switch%eir_ua_min)
+     &             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
+     &             (switch%xwdia*wadiac(ic,0,is)+
+     &              switch%xvecrb*vaecrbc(ic,0,is))*
+     &             gm%cvBb(ic,0)/gm%cvBb(ic,2),
+     &             switch%eir_ua_max),switch%eir_ua_min)
               end if
               
               ebx = gm%cvEb(ic,0)
