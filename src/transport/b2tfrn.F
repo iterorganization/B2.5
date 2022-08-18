@@ -136,9 +136,9 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
      &   (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
         scur(:,1) = 
      &   (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
-     &    switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,1) + 
+     &    switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) + 
      &    switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
-     &   (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
+     &   (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
         flo_eir   = flo_eir + switch%fnb_drift_hyb*scur
        end if
 
