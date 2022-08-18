@@ -531,6 +531,7 @@
         call cfwuin (nout, 0, idum, 'imapFcx')
         call cfwuin (nout, 0, idum, 'imapFcy')
         call cfwuin (nout, 0, idum, 'imapVx')
+        call cfwuin (nout, 0, idum, 'icornVx')
       endif      
 
       call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')
