@@ -131,18 +131,12 @@
       external b2xvsg
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-!      dist(ix,iy,i,j) = norm (
-!     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-!      sinang(p0x,p0y,p1x,p1y) = trim1(
-!     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-!      cosang(p0x,p0y,p1x,p1y) = trim1(
-!     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       cosin(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       sinin(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
-      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-3_R8/,
+      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-2_R8/,
      &  tol_aligned /1.0e-4_R8/
       save volhmk, width, guard_rescale, tol_aligned
 
@@ -183,24 +177,6 @@
      &  'faulty argument isymm')
 
 * ..compute metric coefficients
-!      classical = isClassicalGrid(cflag)
-
-cnv  Exploit the structuredness of a classical grid in unstructured format
-cnv  similar methods as in b2agmt_st, but first the ording of the vertices 
-cnv  need to be checked and adapted if necessary. For non-classical grid,
-cnv  new methods are employed
-!      if (m%isClassicalGrid.eq.1) then
-!         call order_vertices(g,m)
-!      endif 
-
-
-*   ..compute hx, hy, hc, ht, ecc, ebc
-      !hx = INVALID_DOUBLE
-      !hy = INVALID_DOUBLE
-      !cell_width = INVALID_DOUBLE
-      !cell_height = INVALID_DOUBLE
-      !qz(:,:,0) = 0.0_R8
-      !qz(:,:,1) = 1.0_R8
 
 
 
@@ -242,11 +218,6 @@ cnv  new methods are employed
       ! g%cvSz = gs(:,:,2)
       ! g%fcS = gs(:,:,0:1)
 
-      ! quadArea compute area of quads with random order of vertices
-      !g%cvSz(iCv) = quadArea(g%vxX(verts4(0)), g%vxY(verts4(0)),  
-      !&     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(2)),
-      !&     g%vxY(verts4(2)), g%vxX(verts4(3)), g%vxY(verts4(3)) )
-
       ! we assume the vertices are ordered 
       ! Because of this we can employ the quadArea_st which assumes the
       ! vertices in the correct sequence - right turning
@@ -267,10 +238,6 @@ cnv  new methods are employed
      &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
      &       + g%vxY(verts4(3)) )
         else
-!          centroid(iCv,:) = quadCentroid_us(g%vxX(verts4(0)),
-!     &          g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),           
-!     &                           g%vxX(verts4(2)),g%vxY(verts4(2)),
-!     &                           g%vxX(verts4(3)),g%vxY(verts4(3)))
 
           ! Calculate the centroid similar to the method for the triangle centroid
           call calc_psi_centroid(g,m,centroid,iCv,psic,isymm)
@@ -288,12 +255,6 @@ cnv  new methods are employed
      &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
      &       + g%vxY(verts4(3)) )
         else ! default
-          ! old function quadCentroid can be used if vertices are ordered correctly
-!          centroid(iCv,0:1) = quadCentroid_us(g%vxX(verts4(0)),
-!     &           g%vxY(verts4(0)),g%vxX(verts4(1)),g%vxY(verts4(1)),       
-!     &                            g%vxX(verts4(3)),g%vxY(verts4(3)),
-!     &                            g%vxX(verts4(2)),g%vxY(verts4(2)))
-
 
           ! Calculate the centroid similar to the method for the triangle centroid
           call calc_psi_centroid(g,m,centroid,iCv,psic,isymm)
@@ -311,26 +272,12 @@ cnv  new methods are employed
 
 
 
-      ! compute ecc : Unit vectors of connector lines cell center to face centers
-      if (m%isClassicalGrid) then
-         ! vertices need to be ordered as follows
-         ! verts4(0) = left under
-         ! verts4(1) = right under
-         ! verts4(2) = right top
-         ! verts4(3) = left top
 
-      else
-
-
-      endif
         
-
-
-
  
 
        case(3)  !Triangle
-       ! Method Wouter to determine cell center for triangles!!! line 290 in structured version
+       ! Method to determine cell center for triangles!!! line 290 in structured version
 cwdk      General approach for arbitrary triangle cases:
 cwdk      1) identify vertices with max and min psi values psi_min, psi_max
 cwdk      2) assume the triangle lies on the flux surface with psic = 0.5*(psi_min + psi_max)
@@ -429,8 +376,6 @@ cwdk      4) centroid: average between the intersections with faces
          g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
        endif
 
-
-    
 
 
        case(1)  !Guard Cells (are at the end of the cells array so can use information 
@@ -590,7 +535,7 @@ cwdk      4) centroid: average between the intersections with faces
 
       call build_fcType(g,m,fcType,cvFpsi,tol_aligned)
 
-! loop over faces (in st first poloidal faces, then radial faces)
+! loop over faces 
       do iFc = 1, m%nFc
         v1 = m%fcVx(iFc,1)
         v2 = m%fcVx(iFc,2)
@@ -675,16 +620,9 @@ cwdk      4) centroid: average between the intersections with faces
        
 *    .. compute angles
        !gamma - angle between cell connector (on face) and the face normal
-       !g%fcQgam(iFc,0) = cosang(econf(0), econf(1),fn(0), fn(1) )
-       !g%fcQgam(iFc,1) = sinang(econf(0), econf(1),fn(0), fn(1) )
        g%fcQgam(iFc,0) = cosin(econf(0), econf(1),fn(0), fn(1) )
        g%fcQgam(iFc,1) = sinin(econf(0), econf(1),fn(0), fn(1) )
        
-       !alpha - angle between poloidal field vector on face and 
-       !g%fcQalf(iFc,0) = 
-       !&      cosang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
-       !g%fcQalf(iFc,0) = 
-       !&      sinang(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))
 
        g%fcQalf(iFc,0) =
      &         cosin(g%fcEb(iFc,0),g%fcEb(iFc,1),fn(0),fn(1))  
@@ -754,10 +692,6 @@ cwdk      4) centroid: average between the intersections with faces
        ! all angles calculated 
 
        !Calculate fcPbs and fcPbshz - pitch * magnetic surface
-       !structured code
-       !left faces
-
-
         !unstructured code
         g%fcPbs(iFc) = g%fcS(iFc) * g%fcQalf(iFc,0) * 
      &   abs(g%fcBb(iFc,0))/g%fcBb(iFc,3)
@@ -791,12 +725,7 @@ cwdk      4) centroid: average between the intersections with faces
     
 
 
-*    ..test sign of g%cvVol, g%cvS, g%fcS
-       ! based on b2xvs1
-!      call b2xvsg1(nx, ny, vol(-1,-1),  1, 'vol', '.gt.') - structured example
-!      call b2xvsg1(nx, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
-!      call b2xvsg1(nx, ny, gs(-1,-1,1), 1, 'gsy', '.gt.')
-!      call b2xvsg1(nx, ny, gs(-1,-1,2), 1, 'gsz', '.gt.')       
+*    ..test sign of g%cvVol, g%cvS, g%fcS     
        call b2xvs1(m%nCv, g%cvVol, 1,'cvVol' ,'.gt.')
        call b2xvs1(m%nCv, g%cvSz,   1,'cvS'   ,'.gt.')
        call b2xvs1(m%nFc, g%fcS,   1,'fcS'   ,'.gt.')
