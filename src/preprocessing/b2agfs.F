@@ -93,13 +93,6 @@
       integer Bt_adjust, Bt_reversal, periodic_bc
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
-!     *     crxs(-1:nx1,-1:ny1,0:4),
-!     1     crys(-1:nx1,-1:ny1,0:4),
-!     2     bp(-1:nx1,-1:ny1),
-!     3     bt(-1:nx1,-1:ny1),
-!     4     psi(-1:nx1,-1:ny1,0:4,0:2), ! Dims: 1,2: cell position, 3: center=0/corners=1..4, 4: value, ddx, ddy
-!     5     ffbz(-1:nx1,-1:ny1,0:3), ! ffbz at cell corners
-!     6     wbbc(-1:nx1+1,-1:ny1+1,0:3)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
      .  min_pitch, geom_match_dist, distval,
@@ -107,7 +100,6 @@
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
       real (kind=R8) :: cvBt(m%nCv), cvBp(m%nCv)
       integer ireg,errors
-!      character*1 zone(-1:nx1)
       logical found, concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
@@ -118,16 +110,6 @@
       external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
      * b2xvsg, b2gxdr_dummy
       intrinsic abs, sqrt, cos, sin, min, max, sign, acos
-!      real (kind=R8) ::
-!     *  dist
-!      integer ix1,iy1,ip1,ix2,iy2,ip2
-!      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-!     1 sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+
-!     2 (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
-!      logical match
-!      match(ix1,iy1,ix2,iy2)=
-!     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-!     2 geom_match_dist
 
 *-----------------------------------------------------------------------
 *.computation
@@ -174,9 +156,6 @@
       ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet,istyle,
      &     isymm,g,m,cvBp,cvBt)
-
-
-!       ! all on the nx1, ny1 grid, just do all on regular grid
 
 
       ! Set up magnetic field and shift coordinates
