@@ -36,7 +36,7 @@ c
      &      centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
      &      vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
         enddo
-        vertex(iVx) = vertex(iVx)/volsum
+        vertex(iVx) = vertex(iVx)/(volsum + 1.0e-30_R8)
       enddo
 
       return
@@ -64,7 +64,7 @@ c
      &    centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
      &    vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
       enddo
-      vertex = vertex/volsum
+      vertex = vertex/(volsum + 1.0e-30_R8)
 
       return
       end function intvertex_s
