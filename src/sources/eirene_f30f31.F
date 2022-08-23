@@ -544,7 +544,7 @@ c
      .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
      .      'V','??','??',' ',' ',' ',' '
 
-      write (31,'(2i6)') mpg%nCv, mpg%nCi, mpg%nFc
+      write (31,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
       
       do ic = 1, mpg%nCi
         write (31,'(i7,15es15.7)') ic, teb(ic), neb(ic), 
