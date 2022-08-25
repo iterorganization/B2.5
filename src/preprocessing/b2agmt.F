@@ -183,6 +183,13 @@
 ! loop over cells
       do iCv = 1,m%nCv
 
+      !Default values - should be change later
+      !Compute qz which is cvQgam
+      !g%cvQgam(iCv,0) = qz(iCv,1) = cosang()
+      !g%cvQgam(iCv,1) = -qz(iCv,0) = - sinang()
+      g%cvQgam(iCv,0) = 1.0_R8 !default value
+      g%cvQgam(iCv,1) = 0.0_R8 ! default value
+
        
        select case (m%cvFcP(iCv,2))
 
@@ -266,9 +273,7 @@
 
       endif
 
-      !Compute qz which is cvQgam
-      ! g%cvQgam(iCv,0) = qz(iCv,1) = cosang()
-      ! g%cvQgam(iCv,1) = -qz(iCv,0) = - sinang()
+
 
 
 

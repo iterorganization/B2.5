@@ -749,10 +749,11 @@ cxpb  if just below the top corner, make the corner cell follow
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('cv',id)) then
            do iCv = 1, nnCv
-           ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(1) cvReg
+           ! cv cvVxP(:,1) cvVxP(:,2) cvX cvY psi bp bt cflags(1) cvReg cvFt
               read(nrid,*,err=91) ic(iCv), m%cvVxP(iCv,1), 
      &      m%cvVxP(iCv,2), g%cvX(iCv), g%cvY(iCv), cvFpsi(iCv),
-     &      cvBp(iCv), cvBt(iCv), m%cvLbl(iCv), m%cvReg(iCv)
+     &      cvBp(iCv), cvBt(iCv), m%cvLbl(iCv), m%cvReg(iCv), 
+     &      m%cvFt(iCv)
            enddo
         endif
         ! put cvFcP equal to cvVxP
@@ -769,25 +770,21 @@ cxpb  if just below the top corner, make the corner cell follow
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('fc',id)) then
            do iFc = 1, nnFc
-           ! fc fcVx(:,1) fcVx(:,1) fcLbl(:)
+           ! fc fcVx(:,1) fcVx(:,1) fcLbl(:) fcReg
               read(nrid,*,err=91) if(iFc), m%fcVx(iFc,1), 
-     &      m%fcVx(iFc,2), m%fcLbl(iFc)
+     &      m%fcVx(iFc,2), m%fcLbl(iFc), m%fcReg(iFc)
            enddo
         endif
-        !old method       
-       !read fcVx(:,1)
-       !call cfruin(nrid,nnFc,m%fcVx(:,1),'fcVx(:,1)')
-       !read fcVx(:,2)
-       !call cfruin(nrid,nnFc,m%fcVx(:,2),'fcVx(:,2)')
 
        !Read flux tube information
         if (nnFt .gt. 0.0_R8) then
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('ft',id)) then
           do iFt = 1, nnFt
-          ! ft ftCvP(:,1) ftCvP(:,2) ftFcP(:,1) ftFcP(:,2) 
+          ! ft ftCvP(:,1) ftCvP(:,2) ftFcP(:,1) ftFcP(:,2), ftReg
             read(nrid,*,err=91) ifcv(iFt), m%ftCvP(iFt,1), 
-     &      m%ftCvP(iFt,2), m%ftFcP(iFt,1), m%ftFcP(iFt,2)
+     &      m%ftCvP(iFt,2), m%ftFcP(iFt,1), m%ftFcP(iFt,2), 
+     &      m%ftReg(iFt)
           enddo   
         endif
 
