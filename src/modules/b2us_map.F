@@ -114,7 +114,7 @@
       allocate (m%cvFt(m%nCv))
       allocate (m%fsFc(m%nFc))
       allocate (m%fsFcP(m%nFs,2))
-      allocate (m%fcReg(m%nFC))
+      allocate (m%fcReg(m%nFc))
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
       allocate (m%cvOnClosedSurface(m%nCv))

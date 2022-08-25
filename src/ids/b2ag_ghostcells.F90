@@ -28,11 +28,11 @@ contains
 
   subroutine computeGridSizeWithGhostCells(nrid,nCi,nCg,nFc,nCmxVx0,nCmxFc0, &
               &  nFmxCv0, nVmxCv0, nVmxFc0, nCv, nCmxVx, nCmxFc, &
-              &  nFmxCv, nVmxCv, nVmxFc ) 
+              &  nFmxCv, nVmxCv, nVmxFc, nCmxNv ) 
     integer, intent(in) :: nrid, nCi, nCg, nFc, nCmxVx0, nCmxFc0, nFmxCv0, &
               &  nVmxCv0, nVmxFc0
     integer, intent(out) :: nCv, nCmxVx, nCmxFc, nFmxCv, &
-              &   nVmxCv, nVmxFc
+              &   nVmxCv, nVmxFc, nCmxNv
     
     
      
@@ -66,7 +66,7 @@ contains
     nFmxCv = nFmxCv0 + nCg    ! every boundary faces is now also used in a ghost cell
     nVmxCv = nVmxCv0 + 2*nCg  ! every vertex at the boundary get two more cells
     nVmxFc = nVmxFc0          ! no new faces created for ghost cells 
-
+    nCmxNv = 9 * nCv          ! over-estimate for 9-point stencil
 
 
     return
