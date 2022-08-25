@@ -485,6 +485,7 @@ c*** Set default values according to current species list
           ifcc = m%cvFc(jj)
           if (ifc.eq.ifcc) exit
         enddo
+        if (ifc.eq.ifcc) exit
       end do
       ! find this face in fsFc --> ii
       do ii = 1, size(m%fsFc,1)
