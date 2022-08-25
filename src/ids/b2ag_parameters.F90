@@ -116,7 +116,8 @@ contains
     character :: id*8, cnamip*80, cvalip*80
     integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:5), idum2(0:4), &
         & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0, &
-        & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx, nncut
+        & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx, nncut, &
+        & nCmxNv
     character*256 local_sonnet
     integer :: istyle
     logical :: streql, open_file
@@ -201,7 +202,7 @@ contains
         nCi = nCv
         call computeGridSizeWithGhostCells(lun,nCv,m%nCg,nFc,nCmxVx0,nCmxFc0, &
               &  nFmxCv0, nVmxCv0, nVmxFc0,nCv,nCmxVx,nCmxFc, &
-              &  nFmxCv, nVmxCv, nVmxFc)
+              &  nFmxCv, nVmxCv, nVmxFc,nCmxNv)
         m%nCv = nCv 
         m%nFc = nFc0
         m%nVx = nVx0
@@ -211,6 +212,7 @@ contains
         !m%nFmxCv = nFmxCv
         m%nVmxCv = nVmxCv
         m%nVmxFc = nVmxFc
+        m%nCmxNv = nCmxNv
 
      end if
      close(lun)
