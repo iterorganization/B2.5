@@ -185,6 +185,8 @@ contains
                 m%nx = idum(0)
                 m%ny = idum(1)
                 nncut = idum(2)
+                call cfruin (lun, 1, idum, 'isClassicalGrid')
+                m%isClassicalGrid = idum(0)
             end if
         end if
         

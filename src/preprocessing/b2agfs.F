@@ -699,7 +699,7 @@ cxpb  if just below the top corner, make the corner cell follow
       !internal
       character idcod*8, id*32
       integer :: i, iCv, iVx, iFc, iv(nnVx), ic(nnCv), if(nnFc),
-     &   idum(0:5) , iFt, iFs, ifcv(nnFt), ifsv(nnFs)
+     &   idum(0:5) , iFt, iFs, ifcv(nnFt), ifsv(nnFs), n2
       real(kind=R8) :: cvBp(m%nCv) , cvBt(m%nCv), cvFpsi(m%nCv)
       logical streql
       external subini, subend, xertst, xerrab, streql, cfverr, cfruin
@@ -805,6 +805,14 @@ cxpb  if just below the top corner, make the corner cell follow
 
         !read fsFc
         call cfruin(nrid,sum(m%fsFcP(nnFs,:))-1,m%fsFc,'fsFc')
+        endif
+
+        if (m%isClassicalGrid.eq.1) then
+           n2 = (m%nx+2)*(m%ny+2)
+           call cfruin(nrid,n2,m%imapCv,'imapCv')
+           call cfruin(nrid,n2,m%imapFcx,'imapFcx')
+           call cfruin(nrid,n2,m%imapFcy,'imapFcy')
+           call cfruin(nrid,n2,m%imapVx,'imapVx')
         endif
 
       else
