@@ -125,7 +125,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis,dv%fchvisper)
 *     ..calculate the parallel viscosity current connected with the heat flux
         call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
-     &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni, co%hcix_c,
+     &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni(:,1), co%hcix_c,
      &    dv%fchvisq)
 *     ..calculate inertia current                                        !srv 07.07.99
         call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
