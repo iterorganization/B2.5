@@ -1,12 +1,12 @@
       subroutine b2tdia(nx, ny, ns, vol, gs, bb,
-     &   pz, fna, uadia, facdrift, fchdia)       !srv 16.19.17 {
+     &   pz, fna, uadia, facdrift, fchdia)                               !srv 16.19.17 {
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_geo
-     &   , only : hyl, hxb                       ! IYS 04.03.2019
+     &   , only : hyl, hxb                                               !IYS 04.03.2019
 #ifdef CLASSICAL_CURRENT
       use b2mod_geo
      &   , only : hy1
@@ -44,6 +44,7 @@
      &  facdriftm
       real (kind=R8), save :: dia_cur = 1.0e0_R8                         !srv 17.05.99
       integer, save :: drift_style                                       !IYS 11.02.2020
+      integer, save :: no_current = 0
 #ifdef CLASSICAL_CURRENT
       integer is
       real (kind=R8) ::
@@ -69,6 +70,7 @@
          drift_style = 2
        end if
        call ipgeti ('b2tfnb_drift_style', drift_style)                   !IYS 11.02.2020
+       call ipgeti ('b2tfhe_no_current', no_current)
       end if
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -83,7 +85,8 @@
       
       fchdia = 0.0e0_R8
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8) then            !srv 16.10.17
+      if (facdriftm.ne.0.0_R8 .and. dia_cur.ne.0.0e0_R8
+     &                        .and. no_current.eq.0) then                !srv 16.10.17
 *       X-COMPONENT OF DIVERGENT PART OF DIAMAGNETIC CURRENT
 
         if (drift_style.ne.2 .or. redef_gmtry.eq.0) then                 !IYS 11.02.2020

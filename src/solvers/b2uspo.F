@@ -37,8 +37,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
-      !$OMP THREADPRIVATE(ncall)
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
+      integer, save :: iout = 0
+      character chark*1
+      !$OMP THREADPRIVATE(ncall, iout)
       save ncall
 *   ..procedures
       intrinsic min
@@ -53,6 +55,16 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2uspo')
+*   ..set internal parameters on first call
+      if (ncall.eq.0) then
+       call ipgeti ('b2uspo_iout', iout)
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
+      endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -163,6 +175,20 @@ cxpb
 *   ..solve the correction equation
       write(*,'(1x,a,a)') 'Calling b2ux5p from '//trim(name)
       call b2ux5p (nx, ny, aa5, itcnt, respo, corpo, name)           !srv 18.03.10
+
+      if (iout.ne.0) then                                            !srv 08.07.08 {
+        do k=0,3
+          write (chark,'(i1)') k
+          call my_out(70,nx,ny,sch(-1,-1,k),'b2uspo_sch'//chark)
+        enddo
+        call my_out(70,nx,ny,aa5(-1,-1,-2),'b2uspo_aa5m2')
+        call my_out(70,nx,ny,aa5(-1,-1,-1),'b2uspo_aa5m1')
+        call my_out(70,nx,ny,aa5(-1,-1, 0),'b2uspo_aa5m0')
+        call my_out(70,nx,ny,aa5(-1,-1, 1),'b2uspo_aa5p1')
+        call my_out(70,nx,ny,aa5(-1,-1, 2),'b2uspo_aa5p2')
+        call my_out(70,nx,ny,respo,'b2uspo_respo')
+        call my_out(70,nx,ny,corpo,'b2uspo_corpo')
+      endif
 
 * ..return
       ncall = ncall+1

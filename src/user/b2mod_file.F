@@ -25,6 +25,7 @@ c
       integer lvr, lvs, lvt
 c      parameter (lvr=960719, lvs=960821, lvt=980805)
       parameter (lvr=960719, lvs=960821, lvt=20001218)
+c
 c*** nf_tmp: number of files which are written in b2filew
 c*** lf_tmp: number of files whose buffers should be flushed in b2filef
 c***        (must be consistent with ntrc assignment)
@@ -53,7 +54,9 @@ c
       use b2mod_plasma
       use b2mod_version
       implicit none
+c
       integer ns, nregionv
+c
       integer, save :: i, j, k, l, m, n, lf_tmp
       integer :: mh_tmp(0:ns-1)
       logical, save :: ex

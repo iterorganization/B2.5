@@ -314,7 +314,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .          FHE(IX,BCPOS(IB)+1,1)/SYhelp,
      .          FHI(IX,BCPOS(IB)+1,1)/SYhelp,
      .      SUM(RZA(IX,BCPOS(IB)+1,0:ns-1)*
-     .          FNA(IX,BCPOS(IB)+1,1,0:NS-1))/syhelp,
+     .          FNA(IX,BCPOS(IB)+1,1,0:NS-1))/SYhelp,
      .           PO(IX,BCPOS(IB)),
      .         (FNA(IX,BCPOS(IB)+1,1,IS)/SYhelp, IS = 0, NS-1)
           WRITE (NPRT, '((1X, T13, 2ES11.3, (T59,6D11.3)))')
@@ -449,7 +449,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      FHI(IX,IY,0)/SXhelp,
      .      SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0:NS-1))/SXhelp,
      .      PO(BCPOS(IB),IY),
-     .      (FNA(IX,IY,0,IS)/SXhelp, IS = 0, NS-1)
+     .     (FNA(IX,IY,0,IS)/SXhelp, IS = 0, NS-1)
           RZO = 0.0_R8
           DO IS = 0, NS-1
             IF (IS_NEUTRAL(IS)) CYCLE
@@ -467,7 +467,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
      .      GS(IX,IY,0),
      .      FHE(IX,IY,0), FHI(IX,IY,0),
      .      SUM(RZA(IX,IY,0:NS-1)*FNA(IX,IY,0,0:NS-1)),
-     .      (FNA(IX,IY,0,IS), IS = 0, NS-1)
+     .     (FNA(IX,IY,0,IS), IS = 0, NS-1)
           SFEE=SFEE-FHE(IX,IY,0)
           SFEI=SFEI-FHI(IX,IY,0)
           DO IS = 0, NS-1

@@ -87,9 +87,8 @@
       character chns*3
 !     character chk*1                                             !srv 30.06.08
       real (kind=R8) ::
-     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0, na_min
-      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
-     *  na_min
+     *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
+      save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       real (kind=R8) ::
      *  rf0, t0, t1, t2
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
@@ -105,7 +104,7 @@
       data ncall/0/, styl0/0/, rg0/1.0_R8/,
      &  rg1/1.0_R8/, rxm0/0.0_R8/,
      &  rxm1/0.0_R8/, rxm2/0.0_R8/,
-     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/, na_min/1.0e4_R8/
+     &  rxm3/0.0_R8/, rxm4/0.0_R8/, phm0/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -115,9 +114,6 @@
       call subini ('b2stel')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2mndr_na_min', na_min)
-       call xertst (na_min.gt.0.0_R8,
-     &  'faulty internal parameter na_min')
        call ipgetr ('b2stel_rg0', rg0)
        call ipgetr ('b2stel_rg1', rg1)
        call xertst (0.0_R8.le.rg0.and.0.0_R8.le.rg1,
@@ -218,7 +214,7 @@
       rrahireg=0.0_R8
       rramoreg=0.0_R8
       rqahereg=0.0_R8
-           
+
       call sfill (n2*ns, 0.0_R8, rrana, 1)
       call sfill (n2*ns, 0.0_R8, rrahi, 1)
       call sfill (n2*ns, 0.0_R8, rramo, 1)
@@ -240,7 +236,7 @@
 !$OMP& shared(ns, nx, ny, nspecies)
 !$OMP& shared(rightix, leftix, topiy, bottomiy, zn)
 !$OMP& shared(region, rlsa, rsa, vol, ne, na, ni, te, ti, am, ua)
-!$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1, na_min)
+!$OMP& shared(phm0, rxm0, rxm1, rxm2, rxm3, rxm4, rg0, rg1)
 !$OMP& shared(rlra, rra, rpi, rlqa, rqa, rrd, hz)
 !$OMP& shared(sna0_ion, shi0_ion, smq0_ion, she0)
 !$OMP& shared(she0_ion, she0_rec)
@@ -505,7 +501,7 @@ c accounted for)
                 rad_imp(jimp_tmp(b2espcr(is)))=
      &           rad_imp(jimp_tmp(b2espcr(is)))-rqrad(ix,iy,is)
               end if
-            end do 
+            end do
           end if
         end do
       end do

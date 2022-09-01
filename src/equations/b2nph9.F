@@ -4,10 +4,10 @@
       subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,               !srv 22.05.18
      &  rxf, dtim, BoRiS, fac_ExB,                                      !srv 07.07.21
-     &  hx, hy, vol, bb, pbs, lnlam,
+     &  hx, hy, gs, qc, vol, bb, pbs, lnlam,
      &  floe, cone, floi, coni, ceqp, pccm, she, shi,                   !srv 28.06.03
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                   !srv 24.08.21 !som 16.08.21
-     1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
+     &  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif,                       !srv 10.11.02
      &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
@@ -30,7 +30,8 @@
       integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
      *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),       !srv 07.06.00 02.06.99 07.07.21
-     *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      &  lnlam(-1:nx,-1:ny)                                              !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
@@ -46,7 +47,8 @@
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1),
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),  !srv 07.07.09
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     3  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 07.07.09
      4  fchstoch(-1:nx,-1:ny,0:1)                                       !srv 24.08.21
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
@@ -188,8 +190,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
         call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                     !srv 02.01.07
@@ -247,7 +249,7 @@
      &  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)  !xpb !srv 24.08.21
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,
+     *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
      *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif

@@ -86,7 +86,7 @@
 
 * ..compute parallel current
       if(pot_eq.eq.1 .and. no_current.eq.0) then                         !srv 26.07.06 27.02.13
-        call b2xehx (nx, ny, hx, te, po, ne, ehx)                        !srv 13.01.17 {
+        call b2xehx (nx, ny, te, po, ne, ehx)                            !srv 13.01.17 {
 *   ..compute fch_p
         do iy = -1, ny
           do ix = -1, nx                                                 !srv 26.11.02 {

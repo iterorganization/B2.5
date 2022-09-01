@@ -45,6 +45,7 @@ module b2mod_connectivity
     integer, parameter :: REGIONTYPE_CELL = 0   !< First region type
     integer, parameter :: REGIONTYPE_XEDGE = 1  !< Second region type
     integer, parameter :: REGIONTYPE_YEDGE = 2  !< Third region type
+    integer, parameter :: REGIONTYPE_EDGE = 3   !< Undifferentiated edge type
 
     !! Region counts and names
 
@@ -97,7 +98,7 @@ module b2mod_connectivity
         &    'Annular geometry, curved in the third direction   ', &
         &    'Stellarator island geometry                       '  &
         &   /)
- 
+
     !! Region names
     !! First dimension: geometry type (given in comments)
     !! Second dimension: region type

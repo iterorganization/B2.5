@@ -21,9 +21,6 @@ c  version : 06.11.97 22:11
 c
       use b2mod_types
       use b2mod_b2plot
-      use b2mod_b2cmfs
-      use b2mod_indirect
-      use b2mod_constants
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -44,17 +41,8 @@ c
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       INTEGER is, i, j, n, io, idummy, jvft46
-      real (kind=R8) :: width
       character*256 filename
       logical ex
-#endif
-
-*  -- PROCEDURES --
-#ifdef B25_EIRENE
-      external ipgetr, xertst
-*   ..initialisation
-      data width /1.0_R8/
-      save width
 #endif
 
 *=======================================================================
@@ -68,13 +56,6 @@ C
 *  READ EIRENE SPECIES DENSITIES AND TEMPERATURES
 * ----------------------------------------------------------------------
 *
-*   ..read input data
-      call ipgetr ('b2agmt_1d_width', width)
-      call xertst (0.0_R8.lt.width, 'faulty input width')
-*   ..test isymm
-      call xertst (0.le.isymm.and.isymm.le.4,
-     &  'faulty argument isymm')
-
       filename=fort_lc//'46'
       call find_file(filename,ex)
       if (.not.ex) then
@@ -158,31 +139,8 @@ C
         xtrian(i)=xtrian(i)/100.0_R8
         ytrian(i)=ytrian(i)/100.0_R8
       end do
-      do i=1,ntrii
-        triangle_area(i)=triangleArea(
-     .   xtrian(necke(1,i)), ytrian(necke(1,i)),
-     .   xtrian(necke(2,i)), ytrian(necke(2,i)),
-     .   xtrian(necke(3,i)), ytrian(necke(3,i)))
-      end do
-      if (isymm.eq.0) then ! slab geometry
-        do i=1,ntrii
-          triangle_vol(i)=triangle_area(i)*width
-        end do
-      else if (isymm.eq.1 .or. isymm.eq.2) then
-*    ..case of rotational symmetry about crx=0 axis
-        do i=1,ntrii
-          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
-     .     (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
-     .      3.0_R8
-        end do
-      else if (isymm.eq.3 .or. isymm.eq.4) then
-*    ..case of rotational symmetry about cry=0 axis
-        do i=1,ntrii
-          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
-     .     (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/
-     .      3.0_R8
-        end do
-      end if
+      call compute_triangle_area
+      call compute_triangle_vol
   
       rewind (46)
 C
@@ -205,19 +163,19 @@ c
 * neutral atoms
 C
       do 11 IS = 1, NATMI
-        READ(46,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        READ(46,'(A)',END=99,ERR=99) TEXTAN(IS-1)
    11 CONTINUE
 C
 * neutral molecules
 C
       do 12 IS = 1, NMOLI
-        READ(46,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
+        READ(46,'(A)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
 C
 * test ions
 C
       do 13 IS = 1, NIONI
-        READ(46,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
+        READ(46,'(A)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
 C
 * data
@@ -288,8 +246,9 @@ C
         read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
       end if
    99 CONTINUE
+      call ntread_save
 #endif
-
+      close (46)
 *  ---------------------------------------------------------------------
 C
       call subend ()
@@ -312,6 +271,127 @@ C
       call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
       END SUBROUTINE NTREAD
+
+#ifdef B25_EIRENE
+      subroutine ntread_save
+      use b2mod_types
+      use eirmod_ctrig
+      use eirmod_cinit
+      use eirmod_comusr
+      use eirmod_extrab25
+      use eirmod_wneutrals
+      implicit none
+      integer i, j, idummy
+      character*256 filename, message
+      logical ex
+
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) then ! average fluxes, som 02.04.19
+        OPEN (UNIT=48,FILE=trim(filename),ACCESS='SEQUENTIAL')
+        rewind (48)
+        read(48,*,END=948)
+        read(48,*) aver_frac46
+
+        if (aver_frac46.lt.0.0_R8.or.aver_frac46.gt.1.0_R8) then
+          aver_frac46 = 0.99_R8
+        else
+          read(48,*,END=98) idummy
+          write(message,'(a)')
+     .     'Mismatched number of triangles between '//
+     .      fort_lc//'46 and '//fort_lc//'46_aver files !'
+          call xertst(idummy.eq.ntrii,message)
+          call read_title(48)
+          read(48,'(6e15.7)') ((PDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((PDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+          call read_title(48)
+          read(48,'(6e15.7)') ((EDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((EDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VXDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VXDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+
+          call read_title(48)
+          read(48,'(6e15.7)') ((VYDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VYDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+
+          call read_title(48)
+          read(48,'(6e15.7)') ((VZDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VZDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        endif
+   98   continue
+        rewind (48)
+        close (48)
+      endif
+      return
+ 948  call xerrab(fort_lc//'46_aver file found empty!')
+      end subroutine ntread_save
+
+      subroutine compute_triangle_area
+      use b2mod_b2plot
+      use b2mod_indirect
+      use eirmod_ctrig
+      implicit none
+      integer i
+
+      do i=1,ntrii
+        triangle_area(i)=triangleArea(
+     .   xtrian(necke(1,i)), ytrian(necke(1,i)),
+     .   xtrian(necke(2,i)), ytrian(necke(2,i)),
+     .   xtrian(necke(3,i)), ytrian(necke(3,i)))
+      end do
+      return
+      end subroutine compute_triangle_area
+
+      subroutine compute_triangle_vol
+      use b2mod_types
+      use b2mod_b2cmfs
+      use b2mod_b2plot
+      use b2mod_constants
+      use eirmod_ctrig
+      implicit none
+      integer i
+      real (kind=R8) :: width
+*   ..initialisation
+      data width /1.0_R8/
+      save width
+*   ..procedures
+      external ipgetr, xertst
+
+*   ..read input data
+      call ipgetr ('b2agmt_1d_width', width)
+      call xertst (0.0_R8.lt.width, 'faulty input width')
+*   ..test isymm
+      call xertst (0.le.isymm.and.isymm.le.4,
+     &  'faulty argument isymm')
+
+      if (isymm.eq.0) then ! slab geometry
+        do i=1,ntrii
+          triangle_vol(i)=triangle_area(i)*width
+        end do
+      else if (isymm.eq.1 .or. isymm.eq.2) then
+*    ..case of rotational symmetry about crx=0 axis
+        do i=1,ntrii
+          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .     (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
+     .      3.0_R8
+        end do
+      else if (isymm.eq.3 .or. isymm.eq.4) then
+*    ..case of rotational symmetry about cry=0 axis
+        do i=1,ntrii
+          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .     (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/
+     .      3.0_R8
+        end do
+      end if
+      return
+      end subroutine compute_triangle_vol
+#endif
 
 
 

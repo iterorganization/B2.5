@@ -77,8 +77,8 @@
               enddo
               do is = 0, ns_ext-1
                 t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
-     .           fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
-     .                  rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+     .        fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
               enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*(fchi+

@@ -27,7 +27,8 @@
       real (kind=R8) ::
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1), fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fch_p(-1:nx,-1:ny,0:1),
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchinert_a(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 20.09.06
      &  fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  fchvisq_a(-1:nx,-1:ny,0:1,0:ns-1),
@@ -74,13 +75,13 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: no_hybr = 0
       integer, save :: drift_style
-      integer, save :: Zhdanov_closure = 0                              !som 09.07.21
-      integer, save :: Zhdanov_test = 0                                 !som 09.07.21
-      integer, save :: Zhdanov_vel_heat = 1                             !som 09.07.21
+      integer, save :: Zhdanov_closure = 0                               !som 09.07.21
+      integer, save :: Zhdanov_test = 0                                  !som 09.07.21
+      integer, save :: Zhdanov_vel_heat = 1                              !som 09.07.21
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,                !srv 02.04.18
-     &                 iout_b2npmo =0
+     &                 iout_b2npmo = 0
       integer, save :: style = 2                                         !srv 13.01.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
@@ -100,7 +101,7 @@
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny),                           !srv 13.01.17
-     *   floi_vhx(-1:nx,-1:ny)                                          !som 09.07.21
+     *   floi_vhx(-1:nx,-1:ny)                                           !som 09.07.21
       real (kind=R8) :: t0,t1,t2,cvmgp
       save ncall
 *   ..procedures
@@ -142,9 +143,9 @@
         call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
         call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
-        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 09.07.21
-        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 09.07.21
-        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 09.07.21
+        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 09.07.21
+        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 09.07.21
+        call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 09.07.21
         if (redef_gmtry.eq.0) then
           drift_style = 1
         else
@@ -218,8 +219,8 @@ csw 30sep2013, added check for no_hybr
            scur =
      &      (fchinert_a(ix,iy,0,is)+fchvispar_a(ix,iy,0,is)+
      &       vis_per*fchvisper_a(ix,iy,0,is)                             !srv 02.10.17
-     &      +fchanml_a(ix,iy,0,is)+vis_q*fchvisq_a(ix,iy,0,is))*xcur/    !srv 02.10.17
-     &      (rza(ix,iy,is)*qe*
+     &      +fchanml_a(ix,iy,0,is)+vis_q*fchvisq_a(ix,iy,0,is))*         !srv 02.10.17
+     &       xcur/(rza(ix,iy,is)*qe*
      &      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
           else
             scur = 0.0_R8
@@ -336,11 +337,12 @@ csw 30sep2013, added check for no_hybr
            if (.not.is_neutral(is)) then                                 !srv 08.09.21
             scur =
      &        (fchvispar_a(ix,iy,1,is)+fchinert_a(ix,iy,1,is)+
-     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is))*ycur/  !srv 02.10.17 08.09.21
-     &        (rza(ix,iy,is)*qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &        na(ix,iy,is))/2.0_R8)
-            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
-     &              ycur                                                 !srv 02.04.18 08.09.21
+     &         vis_q*fchvisq_a(ix,iy,1,is)+fchanml_a(ix,iy,1,is))*       !srv 02.10.17 08.09.21
+     &         ycur/(rza(ix,iy,is)*qe*
+     &        (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &         na(ix,iy,is))/2.0_R8)
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
+     &              (rza(ix,iy,is)*qe)*ycur                              !srv 02.04.18 08.09.21
            else
             scur = 0.0_R8
             vsprcur = 0.0_R8                                             !srv 02.04.18
@@ -384,11 +386,12 @@ csw 30sep2013, added check for no_hybr
            if(.not.is_neutral(is)) then                                  !srv 20.09.06 08.09.21
             scur =
      &       (fchinert_a(ix,iy,1,is)+fchvispar_a(ix,iy,1,is)+
-     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is))*ycur/   !srv 02.10.17
-     &       (rza(ix,iy,is)*qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &             na(ix,iy,is))/2.0_R8)
-            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/(rza(ix,iy,is)*qe)*
-     &              ycur                                                 !srv 02.04.18 08.09.21
+     &        fchanml_a(ix,iy,1,is)+vis_q*fchvisq_a(ix,iy,1,is))*        !srv 02.10.17
+     &        ycur/(rza(ix,iy,is)*qe*
+     &       (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/
+     &        2.0_R8)
+            vsprcur=vis_per*fchvisper_a(ix,iy,1,is)/
+     &       (rza(ix,iy,is)*qe)*ycur                                     !srv 02.04.18 08.09.21
            else
              scur = 0.0_R8
              vsprcur = 0.0_R8                                            !srv 02.04.18
@@ -442,7 +445,7 @@ c Drift terms
             enddo
           enddo
           call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
-     &                                         wedia(-1,-1,0))
+     &                                          wedia(-1,-1,0))
 
           wrk0=0.0_R8  ! compute ... on the cell faces
           do iy=-1,ny
@@ -660,11 +663,11 @@ c Drift terms
             fhi_eir(ix,iy,1)     = 0.0_R8
           else
 !         flo_eir = cvlb(ix,iy,1)+(wedia(ix,iy,1)+vbecrb(ix,iy,1))*      !srv 14.07.10
-!       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-!        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-!          (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-!           +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-!          (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
+!     &  (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+!     &  (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
+!     &    (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
+!     &     +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
+!     &    (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
             if(drift_style.eq.0) then
               fle_eir = 0.5_R8*
      1         ((veecrb(ix,iy,1)*xvecrb+wedia(ix,iy,1)*xwdia)*
@@ -688,7 +691,7 @@ c Drift terms
      &       2.0_R8
             do is = 0,ns-1                                               !som 07.11.21
               if (.not.is_neutral(is)) then
-                if(no_Ptncr_x_co.eq.0) then
+                if(no_Ptncr_y_co.eq.0) then
                   cone_eir = hybr(fle_eir,cdna(ix,iy,1,is))
                 else
                   cone_eir = cdna(ix,iy,1,is)

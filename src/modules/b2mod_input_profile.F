@@ -88,7 +88,7 @@
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
-!*     Inputfile: b2.sources.profile                                     *
+!*     Inputfile: b2.sources.profile                                      *
 !**************************************************************************
       integer :: nx,ny,ns,nc
       integer :: ix,iy,i,ireg
@@ -188,7 +188,7 @@
       endif
  
       if (new_files) then
-        if (maxval(nsdata).gt.0) open (96,file='dx2')
+        if (maxval(nxdata).gt.0) open (96,file='dx2')
         if (maxval(nxdata).gt.0) open (95,file='dx1')
         if (maxval(nsdata).gt.0) open (94,file='da1')
         if (maxval(nsdata).gt.0) open (93,file='da2')
@@ -309,9 +309,9 @@
      &             'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
                   if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &             'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
+                  if (new_files) write (96,*) xr(ix),xf(ix)
                 endif
               endif
-              if (new_files) write (96,*) xr(ix),xf(ix)
             enddo
             if (nc.eq.0.or.debug) then
               if (ndat.gt.0) then
@@ -327,9 +327,9 @@
      &           'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
                 if (kind_source.eq.6) write(*,'(a,1p,2(1x,e14.7))')
      &           'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
+                if (new_files) write (94,*) pr(iy),pf(iy)
               endif
             endif
-            if (new_files) write (94,*) pr(iy),pf(iy)
           enddo
     1     continue
         enddo
@@ -458,7 +458,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !*     subroutine for reading in experimental transport coefficients from *
 !*     the midplane and calculating transport coefficients                *
 !*     for B2.5 (written by Heimo Buerbaumer 1999)                        *
-!*     Inputfile: b2.transport.inputfile                                 *
+!*     Inputfile: b2.transport.inputfile                                  *
 !**************************************************************************
       use b2mod_time
       use b2mod_constants

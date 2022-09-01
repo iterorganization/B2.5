@@ -14,7 +14,7 @@
       integer nx, ny, ns, ismain, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1),
-     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1), 
+     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
@@ -130,19 +130,19 @@
           if (solvereg(ireg)) then
            aa7(ix,iy, 0) = aa7(ix,iy, 0)+conc(ix,iy,1)
            aa7(ix,iy,-2) = aa7(ix,iy,-2)-conc(ix,iy,1)
-         endif
+          endif
         endif
         if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) then
           aa7(ix,iy,2) = 0.0_R8
         endif
        enddo
       enddo
-      
+
 *   ..compute contribution from the seven-point y-stencil
-      
+
       do is = 0,ns-1
        if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
-     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then      
+     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then
         do iy = -1, ny
          do ix = -1, nx                                              !srv 26.11.02
            ireg = region(ix,iy,0)
@@ -167,7 +167,7 @@
      &         +avisper_a(ixt,iyt,1,is)*
      &          bvisper_a(ix ,iy ,1,is)*cvisper_a(ixt,iyt,1,is)
               aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p3 - aa7p2
-              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
+              aa7(ix,iy,0) = aa7(ix,iy,0) + aa7p2 + aa7m2
             elseif(topiy(ixt,iyt).eq.ny+1) then
               aa7m3 = avisper_a(ix,iy,1,is)*
      &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)
@@ -178,9 +178,9 @@
      &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ix,iy,1,is)
               aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7m3 - aa7m2
               aa7p2 = avisper_a(ix,iy,1,is)*
-     &         bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
+     &          bvisper_a(ix,iy,1,is)*cvisper_a(ixt,iyt,1,is)
               aa7(ix,iy,2) = aa7(ix,iy,2) - aa7p2
-              aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2
+              aa7(ix,iy,0) = aa7(ix,iy,0) + aa7p2 + aa7m2
             else
               aa7m3 = avisper_a(ix,iy,1,is)*
      &          bvisper_a(ixb,iyb,1,is)*cvisper_a(ixb,iyb,1,is)

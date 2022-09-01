@@ -68,7 +68,9 @@
      &  sna0_eir_tot(:,:,:),
      &  smo0_eir_tot(:,:,:),
      &  she0_eir_tot(:,:),
-     &  shi0_eir_tot(:,:)
+     &  shi0_eir_tot(:,:),
+     &  sne0_eir_tot(:,:),
+     &  sch0_eir_tot(:,:)
       real (kind=R8), allocatable, save ::                             !srv 11.09.09 16.07.10
      *  snasm(:,:,:,:), smosm(:,:,:,:),
      &  shesm(:,:,:), shism(:,:,:),
@@ -147,6 +149,8 @@
       allocate(smo0_eir_tot(-1:nxd,-1:nyd,0:nsd-1))
       allocate(she0_eir_tot(-1:nxd,-1:nyd))
       allocate(shi0_eir_tot(-1:nxd,-1:nyd))
+      allocate(sne0_eir_tot(-1:nxd,-1:nyd))
+      allocate(sch0_eir_tot(-1:nxd,-1:nyd))
 
       allocate(snedt(-1:nxd,-1:nyd,0:1))
       allocate(schdt(-1:nxd,-1:nyd,0:3))                        !srv 16.07.10 {
@@ -214,6 +218,8 @@
       smo0_eir_tot=0.0_R8
       she0_eir_tot=0.0_R8
       shi0_eir_tot=0.0_R8
+      sne0_eir_tot=0.0_R8
+      sch0_eir_tot=0.0_R8
 
       return
       end subroutine alloc_b2mod_sources
@@ -286,6 +292,8 @@
       deallocate(smo0_eir_tot)
       deallocate(she0_eir_tot)
       deallocate(shi0_eir_tot)
+      deallocate(sne0_eir_tot)
+      deallocate(sch0_eir_tot)
       deallocate(schdt)                        !srv 16.07.10 {
       deallocate(snedt)
       deallocate(shedt)

@@ -89,11 +89,11 @@
 *    ..test sign of ne, te
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-*    ..test sign of conc, avisper_a, bvisper_a, cvisper_a                 !srv 27.01.00
+*    ..test sign of conc, avisper_a, bvisper_a, cvisper_a             !srv 27.01.00
        call b2xvsg (n2*2, conc, 1, 'conc', '.ge.')
-       call b2xvsg (n2*2*ns, avisper_a, 1, 'avisper_a', '.ge.')           !srv 27.01.00
-       call b2xvsg (n2*2*ns, bvisper_a, 1, 'bvisper_a', '.ge.')           !srv 27.01.00
-       call b2xvsg (n2*2*ns, cvisper_a, 1, 'cvisper_a', '.ge.')           !srv 27.01.00
+       call b2xvsg (n2*2*ns, avisper_a, 1, 'avisper_a', '.ge.')       !srv 27.01.00
+       call b2xvsg (n2*2*ns, bvisper_a, 1, 'bvisper_a', '.ge.')       !srv 27.01.00
+       call b2xvsg (n2*2*ns, cvisper_a, 1, 'cvisper_a', '.ge.')       !srv 27.01.00
 *    ..test edge values of conc
        call b2xvff (nx, ny, conc, 'conc')
 *    ..test sign of sch
@@ -105,24 +105,24 @@
 
       if(iout .eq. 1) then                !srv 11.09.09 {
         call my_out(70,nx,ny,po,'b2npp7_po0')
-      endif                                                         !srv 11.09.09 }
+      endif                                                           !srv 11.09.09 }
 
 * ..main computation
 *   ..compute residual
       if((solving.and.any(solvereg(0:nregionv))).or.
-     &                get_residuals.eq.1) then                      !srv 22.05.18
+     &                get_residuals.eq.1) then                        !srv 22.05.18
        call b2ursd (nx, ny, ne, po, sch, fch, respo)
-      endif                                                         !srv 22.05.18
+      endif                                                           !srv 22.05.18
 *   ..compute correction
-      if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
-        call b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt, !srv 27.12.17
+      if(solving.and.any(solvereg(0:nregionv))) then                  !srv 22.05.18
+        call b2usp7 (nx, ny, ns, ismain, nregionv, solvereg, itcnt,   !srv 27.12.17
      &    ne, te, conc, avisper_a, bvisper_a, cvisper_a,
      &    sch, respo, corpo, aa7)
 *   ..apply correction
         call b2uppo (nx, ny, rxf, corpo, po)
-      endif                                                         !srv 22.05.18
+      endif                                                           !srv 22.05.18
 
-      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                  !srv 11.09.09 {
+      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                    !srv 11.09.09 {
 !       call my_out(70,nx,ny,te,'b2npp7_te')
 !       call my_out(70,nx,ny,ne,'b2npp7_ne')
         call my_out(70,nx,ny,po,'b2npp7_po')
@@ -136,7 +136,7 @@
         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
      &       sch(:,:,3)*ne*po
         call my_out(70,nx,ny,wrk0,'b2npp7_sch')
-      endif                                                         !srv 11.09.09 }
+      endif                                                           !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)
       ierr = 0

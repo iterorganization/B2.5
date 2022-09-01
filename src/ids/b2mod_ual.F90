@@ -46,6 +46,8 @@ module b2mod_ual
   public open_ual, close_ual
 #ifdef IMAS
   public put_ids_edge, new_ids_edge, delete_ids_edge
+  public dealloc_ids_edge, dealloc_batch_edge
+  public put_batch_edge, new_batch_edge
   public b25_process_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation, ids_dataset_description, ids_equilibrium
@@ -67,7 +69,7 @@ contains
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
     subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, description, &
+            &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
@@ -77,8 +79,9 @@ contains
 #if IMAS_MINOR_VERSION > 30
             &   divertors, &
 #endif
-            &   treename, shot, run, idx, username, database, version )
-        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+            &   treename, shot, run, idx, username, database, version, &
+            &   new_eq_ggd )
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
@@ -95,6 +98,8 @@ contains
             !< designed to store data about plasma radiation
         type (ids_dataset_description), intent(inout) :: description !< IDS
             !<  designed to store a description of the simulation
+        type (ids_equilibrium), intent(inout) :: equilibrium !< IDS
+            !< designed to store a description of the equilibrium
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -118,6 +123,7 @@ contains
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        logical, intent(in) :: new_eq_ggd
             !< database
         integer :: status
 
@@ -172,6 +178,12 @@ contains
         ! call imas_open_env(treename, shot, run, idx, username, &
         !  database, version, status )
 
+          if (new_eq_ggd) then
+            write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+            call ids_put_slice( idx, "equilibrium", equilibrium, status )
+            call xertst( status.eq.0, 'Error putting slice in equilibrium IDS !')
+          end if
+
         !! Put data to IDS
           call ids_put_slice( idx, "edge_profiles", edge_profiles, status )
           call xertst( status.eq.0, 'Error putting slice in edge_profiles IDS !')
@@ -197,25 +209,190 @@ contains
 #endif
         end if
 
-        !! Close IDS
+        write(*,*) "IDS write finished"
+        return
+
+    end subroutine put_ids_edge
+
+    subroutine dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+            &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+            &   divertors, &
+#endif
+            &   radiation )
+        implicit none
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
+            !< designed to store  data on edge plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_radiation), intent(inout) :: radiation !< IDS
+            !< designed to store data about plasma radiation
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+        type (ids_numerics), intent(inout) :: numerics !< IDS designed to store
+            !< run numerics data
+#endif
+#if IMAS_MINOR_VERSION > 30
+        type (ids_divertors), intent(inout) :: divertors !< IDS
+            !< designed to store run data related to the divertor plates
+#endif
+        if (.not.associated( edge_profiles%ids_properties%comment )) return
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
         call ids_deallocate( radiation )
-        call ids_deallocate( description )
-#if IMAS_MINOR_VERSION > 21
-        call ids_deallocate( summary )
-#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
         call ids_deallocate( numerics )
 #endif
 #if IMAS_MINOR_VERSION > 30
         call ids_deallocate( divertors )
 #endif
-        write(*,*) "IDS write finished"
+         return
+    end subroutine dealloc_ids_edge
+
+    subroutine put_batch_edge( &
+            &   treename, shot, run, idx, username, database, version, &
+            &   batch_profiles, batch_sources, equilibrium, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+            &   description, do_summary, new_eq_ggd )
+        type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: batch_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_dataset_description), intent(inout) :: description
+            !< IDS designed to store a description of the simulation
+        type (ids_equilibrium), intent(inout) :: equilibrium
+            !< IDS designed to store a description of the equilibrium
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+            !< (i.e. "edge_profiles" (mandatory) )
+        integer, intent(in) :: shot   !< The shot number of the database being created
+        integer, intent(in) :: run    !< The run number of the database being created
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+            !< subsequent data access operation
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS
+            !< database
+        character(len=24), intent(in) :: database   !< IMAS database name
+            !< (i. e. solps-iter, ITER, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+        logical, intent(in) :: do_summary, new_eq_ggd
+            !< database
+        integer :: status
+
+            !< procedures
+        external xertst, xerrab
+
+        !! Set data to edge_profiles IDS
+        if (do_summary) then
+          write(*,'(1x,a)') "Writing batch_profiles, batch_sources, "// &
+#if IMAS_MINOR_VERSION > 21
+            &  "summary, "// &
+#endif
+            &  "and dataset_description IDS"
+        else
+          write(*,'(1x,a)') "Writing batch_profiles and batch_sources IDS "
+        end if
+
+        !! Create and modify new shot/run
+        if ( idx.eq.0 ) then
+          call imas_create_env( treename, shot, run, 0, 0, idx, username, &
+             & database, version, status )
+          call xertst( status.eq.0, 'Error opening IMAS database !')
+
+        !! Put data to IDS
+          call ids_put( idx, "edge_profiles/1", batch_profiles, status )
+          call xertst( status.eq.0, 'Error putting batch_profiles IDS !')
+          call ids_put( idx, "edge_sources/1", batch_sources, status )
+          call xertst( status.eq.0, 'Error putting batch_sources IDS !')
+          if (do_summary) then
+            call ids_put( idx, "dataset_description", description, status )
+            call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+            call ids_put( idx, "summary", summary, status )
+            call xertst( status.eq.0, 'Error putting summary IDS !')
+#endif
+          end if
+        else
+        !! Or open and modify existing shot/run
+        !! (might work much faster than imas_create_env)
+
+          if (new_eq_ggd) then
+            write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+            call ids_put_slice( idx, "equilibrium", equilibrium, status )
+            call xertst ( status.eq.0, 'Error putting slice in equilibrium IDS !')
+          end if
+
+        !! Put data to IDS
+          call ids_put_slice( idx, "edge_profiles/1", batch_profiles, status )
+          call xertst( status.eq.0, 'Error putting slice in batch_profiles IDS !')
+          call ids_put_slice( idx, "edge_sources/1", batch_sources, status )
+          call xertst( status.eq.0, 'Error putting slice in batch_sources IDS !')
+          if (do_summary) then
+            call ids_put_slice( idx, "dataset_description", description, status )
+            call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+            call ids_put_slice( idx, "summary", summary, status )
+            call xertst( status.eq.0, 'Error putting slice in summary IDS !')
+#endif
+          end if
+        end if
+
+        write(*,*) "IDS write finished for batch averages"
         return
 
-    end subroutine put_ids_edge
+    end subroutine put_batch_edge
+
+    subroutine dealloc_batch_edge( batch_profiles, batch_sources, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+            &   description )
+        implicit none
+        type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: batch_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_dataset_description), intent(inout) :: description
+            !< IDS designed to store a description of the simulation
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+        if (associated( batch_profiles%ids_properties%comment ) ) then
+          call ids_deallocate( batch_profiles )
+          call ids_deallocate( batch_sources )
+        end if
+        if (associated( description%ids_properties%comment ) ) then
+          call ids_deallocate( description )
+#if IMAS_MINOR_VERSION > 21
+          call ids_deallocate( summary )
+#endif
+        end if
+        return
+    end subroutine dealloc_batch_edge
 
     !> Subroutine used to delete data from edge_profiles, edge_sources and
     !! edge_transport IDSs.
@@ -231,7 +408,7 @@ contains
             &   divertors, &
 #endif
             &   idx )
-        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
@@ -289,7 +466,7 @@ contains
     !> Subroutine used to rewrite data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
     subroutine new_ids_edge( edge_profiles, edge_sources, edge_transport, &
-            &   radiation, description, &
+            &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
 #endif
@@ -299,8 +476,8 @@ contains
 #if IMAS_MINOR_VERSION > 30
             &   divertors, &
 #endif
-            &   idx )
-        type(ids_edge_profiles), intent(inout) :: edge_profiles    !< IDS
+            &   idx, new_eq_ggd )
+        type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
         type (ids_edge_sources), intent(inout) :: edge_sources     !< IDS
@@ -317,6 +494,8 @@ contains
             !< designed to store data about plasma radiation
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
+        type (ids_equilibrium) :: equilibrium !< IDS designed to store
+            !< a description of the equilibrium
 #if IMAS_MINOR_VERSION > 21
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -331,6 +510,7 @@ contains
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
+        logical, intent(in) :: new_eq_ggd
         integer :: status
 
             !< procedures
@@ -348,6 +528,12 @@ contains
           &  "divertors, "// &
 #endif
           &  "dataset_description, and radiation IDS"
+
+        if (new_eq_ggd) then
+          write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+          call ids_put( idx, "equilibrium", equilibrium, status )
+          call xertst( status.eq.0, 'Error putting equilibrium IDS !')
+        end if
 
         !! Put data to IDS
         call ids_put( idx, "edge_profiles", edge_profiles, status )
@@ -373,25 +559,76 @@ contains
         call xertst( status.eq.0, 'Error putting divertors IDS !')
 #endif
 
-        !! Close IDS
-        call ids_deallocate( edge_profiles )
-        call ids_deallocate( edge_sources )
-        call ids_deallocate( edge_transport )
-        call ids_deallocate( radiation )
-        call ids_deallocate( description )
-#if IMAS_MINOR_VERSION > 21
-        call ids_deallocate( summary )
-#endif
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
-        call ids_deallocate( numerics )
-#endif
-#if IMAS_MINOR_VERSION > 30
-        call ids_deallocate( divertors )
-#endif
         write(*,*) "IDS rewrite finished"
         return
 
     end subroutine new_ids_edge
+
+    subroutine new_batch_edge( idx, batch_profiles, batch_sources, &
+            &   equilibrium, &
+#if IMAS_MINOR_VERSION > 21
+            &   summary, &
+#endif
+            &   description, do_summary, new_eq_ggd )
+        type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
+            !< designed to store data on edge plasma profiles (includes the
+            !< scrape-off layer and possibly part of the confined plasma)
+        type (ids_edge_sources), intent(inout) :: batch_sources     !< IDS
+            !< designed to store data on edge plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_dataset_description) :: description !< IDS
+            !< designed to store a description of the simulation
+        type (ids_equilibrium) :: equilibrium !< IDS
+            !< designed to store a description of the equilibrium
+#if IMAS_MINOR_VERSION > 21
+        type (ids_summary), intent(inout) :: summary !< IDS
+            !< designed to store run summary data
+#endif
+        integer, intent(inout) :: idx !< The returned identifier to be used in the
+        logical, intent(in) :: do_summary, new_eq_ggd
+            !< subsequent data access operation
+        integer :: status
+
+            !< procedures
+        external xertst
+
+        !! Set data to edge_profiles IDS
+        if (do_summary) then
+          write(*,'(1x,a)') "Writing batch_profiles, batch_sources, "// &
+#if IMAS_MINOR_VERSION > 21
+            &  "summary, "// &
+#endif
+            &  "and dataset_description IDS"
+        else
+          write(*,'(1x,a)') "Writing batch_profiles and batch_sources IDS "
+        end if
+
+        if (new_eq_ggd) then
+          write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
+          call ids_put( idx, "equilibrium", equilibrium, status )
+          call xertst( status.eq.0, 'Error putting equilibrium IDS !')
+        end if
+
+        !! Put data to IDS
+        call ids_put( idx, "edge_profiles/1", batch_profiles, status )
+        call xertst( status.eq.0, 'Error putting batch_profiles IDS !')
+        call ids_put( idx, "edge_sources/1", batch_sources, status )
+        call xertst( status.eq.0, 'Error putting batch_sources IDS !')
+        if (do_summary) then
+          call ids_put( idx, "dataset_description", description, status )
+          call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#if IMAS_MINOR_VERSION > 21
+          call ids_put( idx, "summary", summary, status )
+          call xertst( status.eq.0, 'Error putting summary IDS !')
+#endif
+        end if
+
+        write(*,*) "IDS rewrite finished for averaged solution"
+        return
+
+    end subroutine new_batch_edge
 
 #endif
 
@@ -446,7 +683,7 @@ contains
 
         logical :: namelistExists, openEnv = .false.
 
-        external xertst, xerrab
+        external xerrab, xertst
 
         namelist /ual_namelist/ lTreename, lShot, lRun, lTime, lRefshot,    &
             &   lRefrun, lUser, lTokamak, lDataversion, openEnv, lDoCreate, &
@@ -583,11 +820,12 @@ contains
         integer :: status
         external xertst
 
-        call imas_close(idx, status)
-        call xertst ( status.eq.0, 'Error closing IMAS database !')
+        !! Close IDS
+        call imas_close( idx, status )
+        call xertst( status.eq.0, 'Error closing IMAS database !' )
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
-        call euITM_close(idx)
+        call euITM_close( idx )
 # endif
 #endif
     end subroutine close_ual

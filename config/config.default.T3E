@@ -18,7 +18,20 @@ DEFINES += -DUSE_PXFGETENV -DNO_CDF
 ifndef SOLPS_CPP
 ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
 DEFINES += -DCONSTANTS_PROVIDED
-INCMODS += `pkg-config fundamental-constants --cflags`
+ifdef AMNS_PREFIX
+  AMNS_VERSION = `pkg-config amns --modversion`
+  AMNS_MAJOR_VERSION = $(shell echo ${AMNS_VERSION} | cut -d '.' -f1 )
+  AMNS_MINOR_VERSION = $(shell echo ${AMNS_VERSION} | cut -d '.' -f2 )
+else
+  AMNS_MAJOR_VERSION = 0
+  AMNS_MINOR_VERSION = 0
+endif
+ifeq ($(shell test ${AMNS_MAJOR_VERSION} -le 1; echo $$?),0)
+  ifeq ($(shell test ${AMNS_MINOR_VERSION} -le 3; echo $$?),0)
+    SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
+    INCMODS += `pkg-config fundamental-constants --cflags`
+  endif
+endif
 endif
 endif
 
@@ -48,7 +61,7 @@ PLLIBES = $(LD_MSCL)
 LDLIBES = $(LD_NAG)
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+CXXFLAGS = -std=c++11
 endif
 
 LD = f90 -lapp

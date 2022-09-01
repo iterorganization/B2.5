@@ -339,6 +339,7 @@ program b2_ual_write_b2mod
 #endif
 #endif
     if (.not.streql(device_env,' ')) database = device_env
+    if (streql(database,'iter')) database = 'ITER'
 #endif
 
     !! Check if arguments are found
@@ -541,7 +542,7 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 30
              &  divertors, &
 #endif
-             &  tim, dtim, shot, run, database, version, &
+             &  tim, dteff, shot, run, database, version, new_eq_ggd, &
              &  time_slice_index, num_time_slices )
         else
           write (0,*) "Not a time continuation, IDS will be overwritten !"
@@ -565,13 +566,13 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 30
          &  divertors, &
 #endif
-         &  tim, dtim, shot, run, database, version )
+         &  tim, dteff, shot, run, database, version, new_eq_ggd )
     end if
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
     call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, &
+        &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
@@ -581,7 +582,21 @@ program b2_ual_write_b2mod
 #if IMAS_MINOR_VERSION > 30
         &   divertors, &
 #endif
-        &   treename, shot, run, idx, username, database, version )
+        &   treename, shot, run, idx, username, database, version, &
+        &   new_eq_ggd )
+    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+        &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
+        &   radiation )
+    call dealloc_batch_edge( batch_profiles, batch_sources, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
+        &   description )
     call close_ual(idx)
     idx = 0
 

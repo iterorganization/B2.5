@@ -141,7 +141,7 @@ c first deal with the time vector
      *     'build_with_units($,"s")'//char(0),
      *     descr2(idtype_double,dimsize(1),0),data1,0)
 #endif
-	  write(*,*) 'mdsput2'
+          write(*,*) 'mdsput2'
           call mds_err_msg(status)
           deallocate(data1)
         elseif(ndims.eq.3) then
@@ -179,7 +179,7 @@ c first deal with the time vector
      *       descr2(idtype_double,dimsize(1),dimsize(2),
      1       dimsize(3),0),data3,0)
 #endif
-	    write(*,*) 'mdsput2'
+            write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
             allocate(data3T(dimsize(3),dimsize(1),dimsize(2)))
@@ -250,7 +250,7 @@ c first deal with the time vector
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       '$'//char(0),
-     *	     descr2(idtype_cstring,dimsize(2),0,len(str1(1))),str1,0)
+     *       descr2(idtype_cstring,dimsize(2),0,len(str1(1))),str1,0)
 #endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
@@ -277,7 +277,7 @@ c first deal with the time vector
               status=mdsput2(
      *         trim(mds_signal_name)//char(0),
      *         tdi//char(0),
-     *	       descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
+     *         descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
 #endif
               write(*,*) 'mdsput2'
               call mds_err_msg(status)

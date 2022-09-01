@@ -159,7 +159,7 @@
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then
               fnbPSch(ix,iy,0) = 0.0e0_R8
             else
-              fnbPSch(ix,iy,0) = PSch*                                  !
+              fnbPSch(ix,iy,0) = PSch*
      &      (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))*bzbl(ix,iy)/
      &      (qe*zb(ix,iy))*hzl(ix,iy)
             endif
@@ -196,7 +196,6 @@
      &                  -nb(bottomix(ix,iy),bottomiy(ix,iy))*
      &                   ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &                                         )
-
           endif
          enddo
         enddo
@@ -229,7 +228,7 @@
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fnbPSch(ix,iy,1)= 0.0e0_R8
             else
-              fnbPSch(ix,iy,1) = -PSch*                                    !
+              fnbPSch(ix,iy,1) = -PSch*
      &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
      &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
             endif

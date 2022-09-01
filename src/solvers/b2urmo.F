@@ -138,7 +138,7 @@
            fmo_flua(ix,iy,0,isb) = fmb(ix,iy,0)-flv(ix,iy,0)
            fmo_cvsa(ix,iy,0,isb) = flv(ix,iy,0)
            fmo_hybr(ix,iy,0,isb) = 0.0_R8
-          endif          
+          endif
          endif
         endif
        enddo

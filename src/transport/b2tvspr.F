@@ -1,4 +1,5 @@
-      subroutine b2tvspr(nx, ny, ns, ismain, fac_vis, vol, po, ti, na,  !srv 10.10.17 19.02.21
+      subroutine b2tvspr(nx, ny, ns, ismain, fac_vis,                   !srv 10.10.17 19.02.21
+     &   vol, po, ti, na,
      &   avisper_a, bvisper_a, cvisper_a, fchvisper_a, fchvisper)
       use b2mod_types
       use b2mod_indirect
@@ -12,16 +13,16 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
-     1   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     1   fac_vis(-1:nx,-1:ny),
+     1   vol(-1:nx,-1:ny),
      1   po(-1:nx,-1:ny), ti(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),            !srv 27.01.00
+     &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 27.01.00
      &   bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &   fchvisper(-1:nx,-1:ny,0:1)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -90,7 +91,7 @@
               elseif(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1) then
                 va(ix,iy,1) = 0.0_R8     ! we do not want to have va in guard cells on West and East
               else
-                va(ix,iy,1) = -cvisper_a(ix,iy,1,is)*                      ! va is calculated on bottom cell face
+                va(ix,iy,1) = -cvisper_a(ix,iy,1,is)*                   ! va is calculated on bottom cell face
      &            (po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy))+
      &            2.0_R8/qe*(na(ix,iy,is)*ti(ix,iy)-
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is)*
@@ -98,10 +99,10 @@
      &            (rza(ix,iy,is)*na(ix,iy,is)+
      &            rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is)))
-                
-                if (dia_lim_all_ions .eq. 1) then        
+
+                if (dia_lim_all_ions .eq. 1) then
                  t0 = max(ti(ix,iy),ti(bottomix(ix,iy),bottomiy(ix,iy)))
-                 vbar = sqrt(8.0_R8 * t0 / (pi * am(is)*mp))              !som 11.11.21 
+                 vbar = sqrt(8.0_R8 * t0 / (pi * am(is)*mp))            !som 11.11.21
                  va(ix,iy,1) = va(ix,iy,1)/
      &                        (1.0_R8 + abs(va(ix,iy,1))/vbar)
                 endif
@@ -118,7 +119,7 @@
      &             bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
                 dva(ix,iy) = 0.0_R8                ! we do not want to have dva in guard cells on West and East
               else
-                dva(ix,iy)=bvisper_a(ix,iy,1,is)*       ! dva is calculated at the cell centre
+                dva(ix,iy)=bvisper_a(ix,iy,1,is)*  ! dva is calculated at the cell centre
      &          (va(topix(ix,iy),topiy(ix,iy),1)-va(ix,iy,1))
               endif
             enddo
@@ -153,7 +154,7 @@
         else
           fchvisper_a(:,:,:,is)=0.0_R8
         endif                                                           !srv 16.10.17
-        fchvisper(:,:,:) = fchvisper(:,:,:) + fchvisper_a(:,:,:,is)
+        fchvisper(:,:,:)=fchvisper(:,:,:)+fchvisper_a(:,:,:,is)
        enddo                                                            !srv 16.10.17
       endif                                                             !srv 22.11.99
 

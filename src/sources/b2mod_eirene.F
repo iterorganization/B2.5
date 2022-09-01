@@ -219,7 +219,7 @@ c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical ex, last, na_feedback_on
+      logical ex, last, found, na_feedback_on
       integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, save_f31,
@@ -547,15 +547,13 @@ cxpb compute core boundary surface area
 cxpb compute ishigh and ion_name arrays
         ishigh = -1
         ion_name = ' '
-        do is = 0, ns-1
-          j = b2espcr(is)
-          if (ishigh(j).eq.-1) then
-            do js = is+1, ns-1
-              if (lnext(is,js)) ishigh(j) = js
-            enddo
-            if (ishigh(j).eq.-1) ishigh(j) = is
-            call species (ishigh(j), ion_name(j), .false.)
-          endif
+        do j = 1, nnatmi
+          is = eb2atcr(j)
+          do js = is+1, ns-1
+            if (lnext(is,js)) ishigh(j) = js
+          enddo
+          if (ishigh(j).eq.-1) ishigh(j) = is
+          call species (ishigh(j), ion_name(j), .false.)
         enddo
       endif
 
@@ -894,7 +892,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
       if (main_call.and.mod(ncall,eirene_mod).eq.0
      & .and.ank_tracing.ne.0.and.output_style.ge.2) then
         write(*,*) 'Eirene output in eirene_mc :'
-        sum_wld(1:2,1:2+nnatmi)=0.0_R8
+        sum_wld(1:4,1:2+nnatmi)=0.0_R8
         do istrai = 1, nstrat
           do i=1,ntns
             sum_wld(ktns(i),1)=sum_wld(ktns(i),1)+
@@ -3884,23 +3882,27 @@ cxpb  core recycling into ions of the highest ionisation stage
         ib=abs(ionising_core)
         call xertst (ib.le.nbc,
      1   'faulty input ionising_core, abs(ionising_core) > NBC')
+        found = .false.
+        conpar(:,ib,3) = 0.0_R8
         do j = 1, nnatmi
-          is=ishigh(j)
-          if(bccon(is,ib).ne.13) then
+          is = ishigh(j)
+          if(bccon(is,ib).eq.13) then
+            found = .true.
+            conpar(is,ib,3) = conpar(is,ib,3) + core_flux(j)
             if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,'(a,i3,1x,i3,a,i3)')
-     .       'eirene_mc: bccon for is,ib = ',is,ib,
-     2       ' <> 13, current value = ',bccon(is,ib)
-c            call xerrab
-c     .    ('Negative eirene_ionising_core must be used with BCCON=13')
-          else
-            conpar(is,ib,3)=core_flux(j)
-            if(output_style.ge.2 .or. ncall.lt.3)
-     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3)')
-     .       'eirene_mc: conpar(is,ib,3) = ',
-     2       conpar(is,ib,3),' for is,ib = ',is,ib
-          endif
-        enddo
+     1       write(*,'(a,1p,1e12.5,a,i3,1x,i3,1x,i3)')
+     .        'eirene_mc: conpar(is,ib,3) = ',
+     2         conpar(is,ib,3),' for j,is,ib = ',j,is,ib
+          end if
+        end do
+        if(.not.found .and. (output_style.ge.2 .or. ncall.lt.3)) then
+          write(hlp_frm,'(a,i3,a)') '(a,i3,a,',ns,'(i3,1x))'
+          write(*,hlp_frm)
+     1     'eirene_mc: bccon for ib = ',ib,
+     2     ' <> 13, current value = ',(bccon(is,ib),is=0,ns-1)
+c          call xerrab
+c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
+        endif
       endif
 
       cum_volrec=0.0_R8
@@ -4635,8 +4637,8 @@ c!###}
           is2 = fluids_list(species_end(jtrg))
           if (crcstra(jtrg).ne.rcchr_eir(itrg) .or.
      &        rcpos(jtrg)  .ne.rcpos_eir(itrg) .or.
-     &        rcstart(jtrg).le.rcbeg_eir(itrg) .or.
-     &        rcend(jtrg)  .ge.rcend_eir(itrg) .or.
+     &        rcstart(jtrg).gt.rcbeg_eir(itrg) .or.
+     &        rcend(jtrg)  .lt.rcend_eir(itrg) .or.
      &        is1          .ne.rcspi_eir(itrg) .or.
      &        is2          .ne.rcspe_eir(itrg)) ierror = ierror + 1
           if (.not.first) icnt = icnt + 1

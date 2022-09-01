@@ -4,21 +4,21 @@ module b2mod_mwti
   implicit none
   private
   public :: b2mwti, output_ds, dealloc_b2mod_mwti
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
          nesepa_av(:), tesepa_av(:), tisepa_av(:), &
          posepi_av(:), posepm_av(:), posepa_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_av(:), temxip_av(:), timxip_av(:), &
          nemxap_av(:), temxap_av(:), timxap_av(:), &
          pomxip_av(:), pomxap_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_std(:), tesepi_std(:), tisepi_std(:), &
          nesepm_std(:), tesepm_std(:), tisepm_std(:), &
          nesepa_std(:), tesepa_std(:), tisepa_std(:), &
          posepi_std(:), posepm_std(:), posepa_std(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
@@ -118,7 +118,7 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, jsep
+    integer iy, ix, ic, ixtl, ixtr, iatm, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
@@ -151,7 +151,8 @@ contains
     character*5 rw
     character*256, save :: filename, filename_av
     real(kind=R8) :: rratio
-    external rratio
+    external ipgetr, get_jsep, find_file, rratio, &
+             check_cdf_status, batch_average_sq
 #endif
     !   ..initialisation
     save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
@@ -1135,38 +1136,56 @@ contains
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(1,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(1,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3dl',imap,slice(iylstrt),iret)
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3di',imap,slice(iyistrt),iret)
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3da',imap,slice(iyastrt),iret)
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,ismain0)
-        slice(0:ny-1)=slice(0:ny-1)+dab2(nx,1:ny,b2eatcr(ismain0),1)
+        do iatm=1,nnatmi
+          if (b2espcr(ismain0).eq.latmscl(iatm)) &
+           &  slice(0:ny-1)=slice(0:ny-1)+dab2(nx,1:ny,iatm,1)
+        enddo
       endif
       call rwcdf(rw,ncid,'an3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
         slice=0.0_R8
         if (ismain0.ne.ismain) then
           slice(iytlstrt:iytlend)= na(ixtl-target_offset,iytlstrt:iytlend,ismain0)
-          slice(0:ny-1)=slice(0:ny-1)+dab2(ixtl,1:ny,b2eatcr(ismain0),1)
+          do iatm=1,nnatmi
+            if (b2espcr(ismain0).eq.latmscl(iatm)) &
+             &  slice(0:ny-1)=slice(0:ny-1)+dab2(ixtl,1:ny,iatm,1)
+          enddo
         endif
         call rwcdf(rw,ncid,'an3dtl',imap,slice(iytlstrt),iret)
         slice=0.0_R8
         if (ismain0.ne.ismain) then
           slice(iytrstrt:iytrend)= na(ixtr+target_offset,iytrstrt:iytrend,ismain0)
-          slice(0:ny-1)=slice(0:ny-1)+dab2(ixtr+1,1:ny,b2eatcr(ismain0),1)
+          do iatm=1,nnatmi
+            if (b2espcr(ismain0).eq.latmscl(iatm)) &
+             &  slice(0:ny-1)=slice(0:ny-1)+dab2(ixtr+1,1:ny,iatm,1)
+          enddo
         endif
         call rwcdf(rw,ncid,'an3dtr',imap,slice(iytrstrt),iret)
       endif
@@ -1509,6 +1528,9 @@ contains
     real (kind=R8) :: dvals(1)
     ! CDF format variable
     integer, save :: cdf_default = 0    ! used for setting a default NetCDF format
+    ! Procedures
+    external ipgeti, check_cdf_status
+
     ! Create and enter define mode
     call ipgeti ('b2mndr_cdf_default', cdf_default)
     if (cdf_default.eq.3 .or. cdf_default.eq.4) then
@@ -3051,7 +3073,7 @@ contains
 #else
     logical, parameter :: debug = .false.
 #endif
-    external xerrab
+    external check_cdf_status, xerrab
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
@@ -3213,8 +3235,10 @@ contains
     integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
     real(kind=R8) :: kintmp, rpttmp, taf
     real(kind=R8) :: h(-1:nx,-1:ny)
-    ! computation
+    ! Procedures
+    external xerrab
 
+    ! Computation
     select case (side)
     case ('l','L')
       ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
@@ -3251,9 +3275,10 @@ contains
     if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
     if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
     if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
-    fet = fac_flux*(fht(ix_flux,iy_flux,idir) - fhj(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
+    fet = fac_flux*(fht(ix_flux,iy_flux,idir) - fhj(ix_flux,iy_flux,idir)     &
+            & + fhi_ext(ix_flux,iy_flux,idir))
     do is=0,ns_ext-1
-      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
+      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+  &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))

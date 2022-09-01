@@ -18,10 +18,13 @@
         jxi=nx/4
         jxa=nx/2
         jsep=ny/2
-        call ipgeti ('b2mwti_jsep',jsep)
       elseif(nnreg(0).eq.4) then
         if (cry(leftcut(1)+1,topcut(1),0).lt.
-     .      cry(leftcut(1)+1,0,0)) then ! LSN topology
+     .      cry(leftcut(1)+1,0,0).or.
+     .     (cry(leftcut(1)+1,topcut(1),0).eq.
+     .      cry(leftcut(1)+1,0,0).and.
+     .      crx(leftcut(1)+1,topcut(1),0).lt.
+     .      crx(leftcut(1)+1,0,0))) then ! LSN topology
           jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
           jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
         else ! USN topology
@@ -55,7 +58,9 @@
       else
         call xerrab ('Invalid number of regions!')
       endif
-      write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
+      write(*,'(a,3i5)') 'Default settings for jxi, jxa, jsep : ',
+     1                                         jxi, jxa, jsep
+      if (nnreg(0).eq.1) call ipgeti ('b2mwti_jsep',jsep)
       call xertst (-1.le.jsep.and.jsep.le.ny,
      2  'faulty parameter jsep')
       call ipgeti ('b2mwti_jxi',jxi)
@@ -64,6 +69,9 @@
       call ipgeti ('b2mwti_jxa',jxa)
       call xertst (-1.le.jxa.and.jxa.le.nx,
      2 'faulty internal parameter jxa')
+      write(*,'(a,3i5)')
+     .           'User-corrected settings for jxi, jxa, jsep : ',
+     1                                        jxi, jxa, jsep
       if (.not.LSN) write(*,*) 'Detected USN-like topology'
 
       call subend ()

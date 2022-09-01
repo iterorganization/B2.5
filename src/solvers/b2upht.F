@@ -44,7 +44,7 @@
       integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
      *  ctt, dte, dti, t0
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  dte1(-1:nx,-1:ny), dti1(-1:nx,-1:ny),                             !lk 26.10.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny), tt3(-1:ny)                    !lk 26.10.17
       integer, save :: nrings, jxi, jxa, jsep
@@ -75,7 +75,7 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test rxf, pcm0
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      & 'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 *   ..test sign of na, ni, vol, te, ti, ne
@@ -86,7 +86,7 @@
         call b2xvsg (n2, te, 1, 'te', '.gt.')
         call b2xvsg (n2, ti, 1, 'ti', '.gt.')
         call b2xvsg (n2, ne, 1, 'ne', '.gt.')
-      endif 
+      endif
 
 * ..apply the correction
 *   ..adjust te, ti, po
@@ -130,7 +130,7 @@
         dte1(ix,iy) = dte
         dti1(ix,iy) = dti
 *   ..smooth the correction for inner flux surfaces      !lk 26.10.2017{
-        if(on_closed_surface(ix,iy) .and. 
+        if(on_closed_surface(ix,iy) .and.
      *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           tt0(iy) = tt0(iy) + vol(ix,iy)*ni(ix,iy,1)
           tt1(iy) = tt1(iy) + vol(ix,iy)*ni(ix,iy,1)*dti1(ix,iy)
@@ -143,7 +143,7 @@
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if(on_closed_surface(ix,iy) .and. 
+        if(on_closed_surface(ix,iy) .and.
      *     iy .le. jsep - nrings .and. bottomiy(ix,iy).ne.-2) then  ! IYS 27.03.2019
           dti1(ix,iy) = tt1(iy)/tt0(iy) +
      *         corr_core_dt*(dti1(ix,iy)-tt1(iy)/tt0(iy))    ! IYS 19.12.2017
@@ -152,7 +152,7 @@
         endif
         dte = dte1(ix,iy)
         dti = dti1(ix,iy)                                       !srv 25.07.17
-        if (leftix(ix,iy).ne.-2) 
+        if (leftix(ix,iy).ne.-2)
      >   wrk0(ix,iy) = ne(ix,iy)*dte+ni(ix,iy,0)*dti-
      &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
      &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti

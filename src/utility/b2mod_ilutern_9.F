@@ -82,7 +82,7 @@ c
          nwrite = 0
          kwrite_fmt = -1
          kwrite_bnr = -1
-       endif 
+       endif
 #ifdef GFORTRAN
        call set_data_bd1copy
        call set_data_bd2copy
@@ -178,7 +178,7 @@ cdpc
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
-     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)") 
+     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)")
      *    trim(name), iflag                                          !srv 09.07.02 28.06.16
         if(iflag.lt.0) then
           do i=1,nz
@@ -200,7 +200,7 @@ cdpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false. 
+        lfirst=.false.
       endif
 
       call ma28idcopy

@@ -2,9 +2,9 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,                       !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,               !srv 07.06.00 02.06.99 07.05.08 05.07.17
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                         !som 16.08.21!srv 28.06.03 07.07.09
+     *  cvsa_drho, she0, shi0)                                         !som 16.08.21 !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -35,17 +35,18 @@
       integer nx, ny, ns, ismain                                      !srv 05.07.17
       real (kind=R8) :: BoRiS,
      *  fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),       !srv 07.06.00 02.06.99
-     *  vol(-1:nx,-1:ny),
+     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
+     &  qc(-1:nx,-1:ny),
      &  lnlam(-1:nx,-1:ny)                                            !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  fne(-1:nx,-1:ny,0:1), fchstoch(-1:nx,-1:ny,0:1),              !srv 24.08.21
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                              !som 16.08.21
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                            !som 16.08.21
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -73,6 +74,7 @@
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       integer, save :: b2sigp_style = 2                               !srv 05.07.17
       integer, save :: use_eirene = 0
+      integer, save :: style_int_vel = 0                              !srv 01.04.19
       integer, save :: impr_form_tf, impr_form_fr                     !som 13.11.20
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      &                 Zhdanov_tf_fr = 1                              !som 01.07.21
@@ -98,7 +100,7 @@
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)         !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
-     4  ce2(-1:nx,-1:ny),  cimp1(-1:nx,-1:ny,0:ns-1),
+     4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny,0:ns-1),
      *  cimp2(-1:nx,-1:ny,0:ns-1),                                    !som 13.11.20
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
@@ -172,17 +174,18 @@
      &                      istyle_Joule_heating)                      !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                      !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
-        impr_form_tf = 0                                               !som 13.11.20
-        impr_form_fr = 0
-        mass_multiplicator = 1.0_R8
-        call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
-        call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
-        call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
-        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)        !som 21.03.21
-        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)              !som 21.03.21
-        call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)            !som 01.07.21
-        call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)              !som 18.08.21
-        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
+       call ipgeti ('b2sihs_style_int_vel', style_int_vel)             !srv 01.04.19
+       impr_form_tf = 0                                                !som 13.11.20
+       impr_form_fr = 0
+       mass_multiplicator = 1.0_R8
+       call ipgeti ('b2npmo_impr_form_tf', impr_form_tf)
+       call ipgeti ('b2npmo_impr_form_fr', impr_form_fr)
+       call ipgetr ('b2npmo_mass_multiplicator', mass_multiplicator)
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 21.03.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 21.03.21
+       call ipgeti ('b2sifr_Zhdanov_tf_fr', Zhdanov_tf_fr)             !som 01.07.21
+       call ipgeti ('b2tral_Zhdanov_visu', Zhdanov_visu)               !som 18.08.21
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                 !som 13.01.22
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -211,7 +214,7 @@
        call b2xvff (nx, ny, fch, 'fch')
 *    ..test edge values of cvsa
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa') !srv 01.07.05
+        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa')             !srv 01.07.05
        enddo
       endif
 *   ..compute ctaup
@@ -274,9 +277,15 @@
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy) = 0.0e0_R8
           else
-            wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
+            if(style_int_vel.eq.0) then                               !srv 01.04.19 {
+              wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
      1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
      2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+            else
+              wrk0(ix,iy)=(vol(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
+     1                   vol(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
+     2        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))*pbs(ix,iy,0)
+            endif                                                     !srv 01.04.19 }
           endif
         enddo
       enddo                                                           !srv 05.03.11 }
@@ -310,9 +319,15 @@
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy) = 0.0e0_R8
           else
-            wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
-     1         hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+            if(style_int_vel.eq.0) then                               !srv 01.04.19 {
+             wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
+     1                hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
      2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
+            else
+             wrk0(ix,iy)=(vol(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
+     1                vol(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
+     2       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))*pbs(ix,iy,0)
+            endif                                                     !srv 01.04.19 }
           endif                                                       !srv 21.07.05 }
 !         if(leftix(ix,iy).eq.-2) then
 !           wrk0(ix,iy) = 0.0e0_R8
@@ -456,29 +471,29 @@
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17
+      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
         if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
-     &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                    !som 16.08.21
-         do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+     &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                   !som 16.08.21
+         do iy = -1, ny                                               !srv 28.08.02 21.07.05 16.10.17 {
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
              wrk0(ix,iy)=0.0e0_R8
            else
-             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
            endif
           enddo
          enddo
         else
-         if (zh_vis_type.eq.0) then                          !som 13.01.22
-          do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
+         if (zh_vis_type.eq.0) then                                   !som 13.01.22
+          do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
              wrk0(ix,iy)=0.0e0_R8
             else
-             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+             wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
             endif
            enddo
@@ -703,8 +718,8 @@
 *     (a.k.a. Joule heating) in case of small impurity amount;
 *     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
-       call b2xehx (nx, ny, hx, te, po, ne, ehx)
-       if (istyle_Joule_heating.eq.0)
+       call b2xehx (nx, ny, te, po, ne, ehx)
+       if (istyle_Joule_heating.eq.0 .or. istyle_Joule_heating.eq.3)
      &   call b2xehy (nx, ny, te, po, ne, ehy)                        !srv 13.01.17
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
@@ -713,17 +728,34 @@
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
+          if (istyle_Joule_heating.le.1) then
            t0 = fch(ix,iy,0)*ehx(ix,iy)/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &        fch(rightix(ix,iy),rightiy(ix,iy),0)*
      &        ehx(rightix(ix,iy),rightiy(ix,iy))/
      &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+          else
+           t0 = fch(ix,iy,0)*ehx(ix,iy)/(gs(ix,iy,0)*qc(ix,iy)*
+     &      (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))) +
+     &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
+     &      ehx(rightix(ix,iy),rightiy(ix,iy))/(
+     &      gs(rightix(ix,iy),rightiy(ix,iy),0)*
+     &      qc(rightix(ix,iy),rightiy(ix,iy))*
+     &      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy))))
+          endif
           if (istyle_Joule_heating.eq.0) t0 = t0 +
      &      fch(ix,iy,1)*ehy(ix,iy)/
      &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
      &       fch(topix(ix,iy),topiy(ix,iy),1)*
      &       ehy(topix(ix,iy),topiy(ix,iy))/
      &      (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
+          if (istyle_Joule_heating.eq.2) t0 = t0 +
+     &      fch(ix,iy,1)*ehy(ix,iy)/(gs(ix,iy,1)*
+     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))) +
+     &      fch(topix(ix,iy),topiy(ix,iy),1)*
+     &      ehy(topix(ix,iy),topiy(ix,iy))/(
+     &      gs(topix(ix,iy),topiy(ix,iy),1)*
+     &     (hy1(ix,iy)+hy1(topix(ix,iy),topiy(ix,iy))))
           t0 = phm3*vol(ix,iy)*t0
           shefr(ix,iy,0) = shefr(ix,iy,0)+max(0.0e0_R8,t0)+rf3*abs(t0)
           shefr(ix,iy,3) = shefr(ix,iy,3)+

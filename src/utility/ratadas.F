@@ -1200,13 +1200,11 @@ c     read in data
       type (amns_handle_rx_type) ::
      &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
      &    amns_lr(0:nc), amns_ze(0:nc), amns_ze2(0:nc), amns_eip(0:nc)
-      type (amns_version_type) :: amns_database
       type (amns_reaction_type) :: rc_rx, ei_rx, cx_rx, br_rx,
      &     lr_rx, ze_rx, ze2_rx, eip_rx
       type (amns_reactants_type) :: species(0:nc)
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
-      type (amns_set_type) :: set
 #endif
 #else
 #ifdef ITM
@@ -1215,13 +1213,11 @@ c     read in data
       type (amns_handle_rx_type) ::
      &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
      &    amns_lr(0:nc), amns_ze(0:nc), amns_ze2(0:nc), amns_eip(0:nc)
-      type (amns_version_type) :: amns_database
       type (amns_reaction_type) :: rc_rx, ei_rx, cx_rx, br_rx,
      &     lr_rx, ze_rx, ze2_rx, eip_rx
       type (amns_reactants_type) :: species(0:nc)
       type (amns_query_type) :: query
       type (amns_answer_type) :: answer
-      type (amns_set_type) :: set
 #endif
 #endif
 #endif

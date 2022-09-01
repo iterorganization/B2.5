@@ -36,7 +36,7 @@ c======================================================================
       logical lim_cnf,target_east,target_west
 c<<<
       integer lun_w
-      parameter (lun_w=76)
+      parameter (lun_w=96)
       character tab
 c>>>
       integer use_eirene
@@ -342,7 +342,7 @@ c*** wsrttol : a tolerance parameter for defining coinciding segments
       parameter (wsrttol=1.0e-6_R8)
 c<<<
       integer lun_w, lfn_hlp
-      parameter (lun_w=76, lfn_hlp=mlblprtx+9)
+      parameter (lun_w=96, lfn_hlp=mlblprtx+9)
       character tab, fn_hlp*(lfn_hlp)
 c
 c======================================================================
@@ -364,7 +364,7 @@ c
       l=iabs(lwldlis(1,1))
       k=iabs(lwldlis(n,1))
       if(lwlddir(1)) then
-        if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or. 
+        if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or.
      .     abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
           write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
@@ -376,7 +376,7 @@ c
           return
         end if
       else
-        if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or. 
+        if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or.
      .     abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
           write(*,*) 'b2pwltrg: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
@@ -861,7 +861,7 @@ c*** Limiter configuration. Add the CCW target face
      ,                        'Trying to close a target different ',
      ,                        'from the opened one.'
                         write(*,*) 'Segment ',lwldlis(j,il),
-     ,                                   ',  targets: ',k,it(ke)
+     ,                                      ',  targets: ',k,it(ke)
                         write(*,*) 'List ',il
                         write(*,'(1x,30i4)') (lwldlis(i,il),i=1,n)
                         write(*,*) 'it : ',(it(i),i=1,kk)
@@ -873,7 +873,7 @@ c*** Limiter configuration. Add the CCW target face
                       luwrk(kn)=lwldlis(j,il)
                       lewrk(kn)=leirlis(j,il)
                       k=0
-                   else if(kb.ne.0) then !}{
+                    else if(kb.ne.0) then !}{
                       write(*,*) 'b2pwltrg: unexpected error. ',
      ,                         'Trying to open a target having one ',
      ,                         'already opened.'
@@ -956,8 +956,8 @@ ccc*** Order elements of original plot zone in CCW direction
         end do
         deallocate(lis_ind)
 
-ccc*** Check if a plot zone has starting and ending element which is inside a target     
-        if (.not. istarget(il)) then 
+ccc*** Check if a plot zone has starting and ending element which is inside a target
+        if (.not. istarget(il)) then
           !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
           k1=abs(lwldlis_old(1));
           k2=abs(lwldlis_old(nwldlis_old))
@@ -1023,11 +1023,11 @@ c*** Now change also the new plot zone according to the CW or CCW order
             end do
           end if
         end if !}
-      deallocate(lwldlis_old)
-      deallocate(leirlis_old)
+        deallocate(lwldlis_old)
+        deallocate(leirlis_old)
       end do !}
 
-      deallocate(istarget) 
+      deallocate(istarget)
 
 
 c*** Calculate the segment areas and related quantities
@@ -1067,6 +1067,7 @@ c*** The whole wall including the refined targets (shadowing)
         write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
       end do !}
       write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
+      close(lun_w)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance
@@ -1094,8 +1095,8 @@ c*** use the zone index to label the plot zone
      ,      tab,wldrfdst(i,il),tab,k
         end do !}
         write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
+        close(lun_w)
       end do !}
-      close(lun_w)
 #ifdef DBG
       print *,'Leaving b2pwltrg. lytg,nytg= ',lytg,nytg
       print *,'nwldprt, nwldlis, lwlddir = ',nwldprt

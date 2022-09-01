@@ -174,7 +174,7 @@
       else if (style.eq.2) then
        call cpu_time(c_start)
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 indexes, iasave, jasave, name)
+     *                  indexes, iasave, jasave, name)
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
      &               c_end-c_start
@@ -185,12 +185,12 @@
 !     & aa11(-1,-1, 3,0),
 !     & aa11(-1,-1,-4,0), aa11(-1,-1,-2,0), aa11(-1,-1,2,0), aa11(-1,-1,4,0),
 !     & aa11(-1,-1,-4,1), aa11(-1,-1,-2,1), aa11(-1,-1,2,1), aa11(-1,-1,4,1),
-!     & resfun, corfun, name)                        !srv 18.05.02
+!     & resfun, corfun, name)                                          !srv 18.05.02
        call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !srv 02.04.18
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
-     &             cpu_end-cpu_start
+     &                                  cpu_end-cpu_start
 
 * ..return
       ncall = ncall+1
@@ -203,7 +203,7 @@
       end subroutine b2ux11p                                           !srv 02.04.18 }
 
       subroutine storage_11 (nx, ny, aa11, nnz, ia, ja, a, k,          !srv 02.04.18 {
-     *                      indexes, iasave, jasave, name)
+     *                       indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_openmp
       use b2mod_indirect
@@ -380,7 +380,7 @@
               indexes(2,k)=iy
               indexes(3,k)=2
               ia(k) = i
-              ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
+              ja(k) = 2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
             if( aa11(ix,iy,5) .ne. 0.0e0_R8 ) then

@@ -80,10 +80,12 @@
       return
       end function harm
 
+cwdk  although not strictly necessary, abs(dif) is used now because in case
+c     of cross-flows across surfaces, dif may be negative
       function hybr(flo,dif)
       implicit none
       real(kind=R8) :: hybr, flo, dif
-      hybr = max(dif,abs(flo/2.0_R8),sqrt(dif**2+flo**2/4.0_R8))
+      hybr = max(abs(dif),abs(flo/2.0_R8),sqrt(dif**2+flo**2/4.0_R8))
       return
       end function hybr
 

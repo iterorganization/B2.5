@@ -1,11 +1,11 @@
-      subroutine b2xbzb (nx, ny, bb,wbbv,wbbl,vol,bzb,bzbv,bzbl)              !srv 13.10.06 23.07.10 {
+      subroutine b2xbzb (nx,ny,bb,wbbv,wbbl,vol,bzb,bzbv,bzbl)           !srv 13.10.06 23.07.10 {
       use b2mod_types
       use b2mod_indirect
       implicit none
       integer nx, ny
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), bzb(-1:nx,-1:ny),
-     & bzbl(-1:nx,-1:ny),bzbv(-1:nx,-1:ny),wbbl(-1:nx,-1:ny,0:3), 
+     & bzbl(-1:nx,-1:ny),bzbv(-1:nx,-1:ny),wbbl(-1:nx,-1:ny,0:3),
      & wbbv(-1:nx,-1:ny,0:3)
 *     ------------------------------------------------------------------
 *     B2XBZB calculates Bz/B**2 - Bz/<B**2>.

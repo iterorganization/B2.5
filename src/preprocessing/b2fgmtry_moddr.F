@@ -114,11 +114,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
@@ -296,11 +296,12 @@
      .     form='formatted')
       do ix=-1,nx
         do iy=-1,ny
-          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy) - 1.d0
-          sxdiff(ix,iy) = sxdiff(ix,iy) / (qc(ix,iy)*gs(ix,iy,0))-1.d0
-          vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)-1.d0
-          hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy)-1.d0
-          hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy)-1.d0
+          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy) - 1.0_R8
+          sxdiff(ix,iy) = sxdiff(ix,iy) /
+     .                       (qc(ix,iy)*gs(ix,iy,0))- 1.0_R8
+          vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)- 1.0_R8
+          hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy) - 1.0_R8
+          hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy) - 1.0_R8
           write(4711,'(2i6,5(1x,e13.6))') ix,iy,vldiff(ix,iy), 
      .           qcdiff(ix,iy), sxdiff(ix,iy), hxdiff(ix,iy),
      .           hydiff(ix,iy)

@@ -889,7 +889,7 @@
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),rfx,0,retlen)
 #endif
-        fchdia(0:nx,-1:ny,0)=rfx(-1:nx,0:ny)
+        fchdia(0:nx,-1:ny,0)=rfx(0:nx,-1:ny)
         fchdia(-1,:,0)=0.0_R8
         call mds_err_msg(status)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
@@ -1381,25 +1381,25 @@
       cell_width = hx
       cell_height(:,:) = hy(:,:)*qz(:,:,1)
       do iy = -1, ny
-         do ix = -1, nx
-            qcb(ix,iy) = cosang (
-     &         crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
-     &         (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
-     &         (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-            if(qcb(ix,iy).le.0.0_R8) then
-               write(*,'(a,1f12.6,2i5)')
-     1            'Problem in b2rugm: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
-               write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
-               write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
-            endif
-         enddo
+        do ix = -1, nx
+          qcb(ix,iy) = cosang (
+     &       crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &      (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &      (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+          if(qcb(ix,iy).le.0.0_R8) then
+            write(*,'(a,1f12.6,2i5)')
+     1       'Problem in b2rugm: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
+            write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+            write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+          endif
+        enddo
       enddo
 
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
      &  cell_width, cell_height)
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
@@ -1429,7 +1429,7 @@
       call cfwuin (nout(2), 2, idum, 'nx,ny')
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
-      call cfwuin (nout(2), 1, idum, 'isymm') 
+      call cfwuin (nout(2), 1, idum, 'isymm')
       call b2wugm (nout(2), nx, ny)
 
       open(91,file='core_boundary.txt')

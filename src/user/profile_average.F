@@ -1,6 +1,7 @@
 
       subroutine profile_average (laststep,itim,ntim_batch,nx,ny,ns)
       use b2mod_types
+      use b2mod_rates
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
@@ -20,28 +21,32 @@
      .                             e_ti(:,:), e_ua(:,:,:),
      .                             e_po(:,:)
       real (kind=R8), allocatable, save :: 
-     .                             sna_mean(:,:,:,:),
-     .                             sne_mean(:,:,:),
-     .                             smo_mean(:,:,:,:),
-     .                             she_mean(:,:,:),
-     .                             shi_mean(:,:,:),
-     .                             sch_mean(:,:,:)
+     .                             sna_mean(:,:,:),
+     .                             sne_mean(:,:),
+     .                             smo_mean(:,:,:),
+     .                             she_mean(:,:),
+     .                             shi_mean(:,:),
+     .                             sch_mean(:,:)
       real (kind=R8), allocatable, save :: 
-     .                             e_sna(:,:,:,:),
-     .                             e_sne(:,:,:),
-     .                             e_smo(:,:,:,:),
-     .                             e_she(:,:,:),
-     .                             e_shi(:,:,:),
-     .                             e_sch(:,:,:)
+     .                             e_sna(:,:,:),
+     .                             e_sne(:,:),
+     .                             e_smo(:,:,:),
+     .                             e_she(:,:),
+     .                             e_shi(:,:),
+     .                             e_sch(:,:)
 
-      integer :: io, iun, n2, itp, idum(0:2)
-!      integer :: ix, iy, is, k
+      integer :: io, is, iun, n2, itp, idum(0:2)
+!      integer :: ix, iy, is
 !      real (kind=R8) :: gold, gnew
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt
       character lble*120, lbli*120
       real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4)
+     *   zpdum(0:nsdecl-1,4), zero(-1:nx,-1:ny),
+     *   swrk2(-1:nx,-1:ny,0:1), swrk2s(-1:nx,-1:ny,0:1,0:ns-1),
+     *   swrk4(-1:nx,-1:ny,0:3), swrk4s(-1:nx,-1:ny,0:3,0:ns-1),
+     *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
+      external b2xpne, b2xpni
 
       n2 = (nx+2)*(ny+2)
 
@@ -60,20 +65,18 @@
          allocate (e_ti(-1:nx,-1:ny))
          allocate (e_po(-1:nx,-1:ny))
 
-ctb: the sources are now stored in linearized form I propose to store the total part only 
-ctb..as the mean of the product does not equal the product of the means etc.
-         allocate (sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
-         allocate (sne_mean(-1:nx,-1:ny,0:1))
-         allocate (smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
-         allocate (she_mean(-1:nx,-1:ny,0:3))
-         allocate (shi_mean(-1:nx,-1:ny,0:3))
-         allocate (sch_mean(-1:nx,-1:ny,0:3))
-         allocate (e_sna(-1:nx,-1:ny,0:1,0:ns-1))
-         allocate (e_sne(-1:nx,-1:ny,0:1))
-         allocate (e_smo(-1:nx,-1:ny,0:3,0:ns-1))
-         allocate (e_she(-1:nx,-1:ny,0:3))
-         allocate (e_shi(-1:nx,-1:ny,0:3))
-         allocate (e_sch(-1:nx,-1:ny,0:3))
+         allocate (sna_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (sne_mean(-1:nx,-1:ny))
+         allocate (smo_mean(-1:nx,-1:ny,0:ns-1))
+         allocate (she_mean(-1:nx,-1:ny))
+         allocate (shi_mean(-1:nx,-1:ny))
+         allocate (sch_mean(-1:nx,-1:ny))
+         allocate (e_sna(-1:nx,-1:ny,0:ns-1))
+         allocate (e_sne(-1:nx,-1:ny))
+         allocate (e_smo(-1:nx,-1:ny,0:ns-1))
+         allocate (e_she(-1:nx,-1:ny))
+         allocate (e_shi(-1:nx,-1:ny))
+         allocate (e_sch(-1:nx,-1:ny))
 
          na_mean = 0.0_R8
          te_mean = 0.0_R8
@@ -127,12 +130,47 @@ ctb..as the mean of the product does not equal the product of the means etc.
                call cfrure (iun, n2,    po_mean, 'po_mean')
                call cfrure (iun, n2*ns, ua_mean, 'ua_mean')
 
-               call cfrure (iun, n2*2*ns, sna_mean, 'sna_mean')
-               call cfrure (iun, n2*2, sne_mean, 'sne_mean')
-               call cfrure (iun, n2*4, she_mean, 'she_mean')
-               call cfrure (iun, n2*4, shi_mean, 'shi_mean')
-               call cfrure (iun, n2*4, sch_mean, 'sch_mean')
-               call cfrure (iun, n2*4*ns, smo_mean, 'smo_mean')
+               if (b2faveri_version.ge.'03.000.008') then
+                 call cfrure (iun, n2*ns, sna_mean, 'sna_mean')
+                 call cfrure (iun, n2,    sne_mean, 'sne_mean')
+                 call cfrure (iun, n2,    she_mean, 'she_mean')
+                 call cfrure (iun, n2,    shi_mean, 'shi_mean')
+                 call cfrure (iun, n2,    sch_mean, 'sch_mean')
+                 call cfrure (iun, n2*ns, smo_mean, 'smo_mean')
+               else
+                 zero = 0.0_R8
+                 call b2xpne ( nx, ny, ns, rza, na_mean, zero, ne_mean)
+                 call b2xpni ( nx, ny, ns, na_mean, ni_mean)
+                 call cfrure (iun, n2*2*ns, swrk2s, 'sna_mean')
+                 sna_mean(:,:,:) = swrk2s(:,:,0,:) +
+     .            swrk2s(:,:,1,:) * na_mean(:,:,:)
+                 call cfrure (iun, n2*2,    swrk2 , 'sne_mean')
+                 sne_mean(:,:) = swrk2(:,:,0) +
+     .            swrk2(:,:,1) * ne_mean(:,:)
+                 call cfrure (iun, n2*4,    swrk4 , 'she_mean')
+                 she_mean(:,:) = swrk4(:,:,0) +
+     .            swrk4(:,:,1) * ne_mean(:,:) +
+     .            swrk4(:,:,2) * te_mean(:,:) +
+     .            swrk4(:,:,3) * ne_mean(:,:) * te_mean(:,:)
+                 call cfrure (iun, n2*4,    swrk4 , 'shi_mean')
+                 shi_mean(:,:) = swrk4(:,:,0) +
+     .            swrk4(:,:,1) * ni_mean(:,:,0) +
+     .            swrk4(:,:,2) * ti_mean(:,:) +
+     .            swrk4(:,:,3) * ni_mean(:,:,0) * ti_mean(:,:)
+                 call cfrure (iun, n2*4,    swrk4 , 'sch_mean')
+                 sch_mean(:,:) = swrk4(:,:,0) +
+     .            swrk4(:,:,1) * po_mean(:,:) +
+     .            swrk4(:,:,2) * ne_mean(:,:) +
+     .            swrk4(:,:,3) * ne_mean(:,:) * po_mean(:,:)
+                 call cfrure (iun, n2*4*ns, swrk4s, 'smo_mean')
+                 do is = 0, ns-1
+                   smo_mean(:,:,is) = swrk4s(:,:,0,is) +
+     .              swrk4s(:,:,1,is) * ua_mean(:,:,is) +
+     .              swrk4s(:,:,2,is) * na_mean(:,:,is) * mp * am(is) +
+     .              swrk4s(:,:,1,is) * ua_mean(:,:,is) *
+     .                                 na_mean(:,:,is) * mp * am(is)
+                 end do
+               end if
 
                close (iun)
             end if
@@ -152,12 +190,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
         call batch_average (n2,    po, po_mean, itp, ntim_batch)
         call batch_average (n2*ns, ua, ua_mean, itp, ntim_batch)
 
-        call batch_average (n2*2*ns, sna, sna_mean, itp, ntim_batch)
-        call batch_average (n2*2,    sne, sne_mean, itp, ntim_batch)
-        call batch_average (n2*4,    she, she_mean, itp, ntim_batch)
-        call batch_average (n2*4,    shi, shi_mean, itp, ntim_batch)
-        call batch_average (n2*4,    sch, sch_mean, itp, ntim_batch)
-        call batch_average (n2*4*ns, smo, smo_mean, itp, ntim_batch)
+        call batch_average (n2*ns, sna, sna_mean, itp, ntim_batch)
+        call batch_average (n2,    sne, sne_mean, itp, ntim_batch)
+        call batch_average (n2,    she, she_mean, itp, ntim_batch)
+        call batch_average (n2,    shi, shi_mean, itp, ntim_batch)
+        call batch_average (n2,    sch, sch_mean, itp, ntim_batch)
+        call batch_average (n2*ns, smo, smo_mean, itp, ntim_batch)
 
         call batch_average_sq (n2*ns, na, e_na, itp, ntim_batch)
         call batch_average_sq (n2,    te, e_te, itp, ntim_batch)
@@ -165,12 +203,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
         call batch_average_sq (n2,    po, e_po, itp, ntim_batch)
         call batch_average_sq (n2*ns, ua, e_ua, itp, ntim_batch)
 
-        call batch_average_sq (n2*2*ns, sna, e_sna, itp, ntim_batch)
-        call batch_average_sq (n2*2,    sne, e_sne, itp, ntim_batch)
-        call batch_average_sq (n2*4,    she, e_she, itp, ntim_batch)
-        call batch_average_sq (n2*4,    shi, e_shi, itp, ntim_batch)
-        call batch_average_sq (n2*4,    sch, e_sch, itp, ntim_batch)
-        call batch_average_sq (n2*4*ns, smo, e_smo, itp, ntim_batch)
+        call batch_average_sq (n2*ns, sna, e_sna, itp, ntim_batch)
+        call batch_average_sq (n2,    sne, e_sne, itp, ntim_batch)
+        call batch_average_sq (n2,    she, e_she, itp, ntim_batch)
+        call batch_average_sq (n2,    shi, e_shi, itp, ntim_batch)
+        call batch_average_sq (n2,    sch, e_sch, itp, ntim_batch)
+        call batch_average_sq (n2*ns, smo, e_smo, itp, ntim_batch)
         
 !        gnew = 1.0_R8 / naver
 !        gold = (naver - 1) * gnew
@@ -197,43 +235,43 @@ ctb..as the mean of the product does not equal the product of the means etc.
 !        e_ua(-1:nx,-1:ny,0:ns-1) = gold*e_ua(-1:nx,-1:ny,0:ns-1) +
 !     .                             gnew*ua(-1:nx,-1:ny,0:ns-1)**2
 
-!        sna_mean(-1:nx,-1:ny,0:1,0:ns-1) =
-!     .        gold*sna_mean(-1:nx,-1:ny,0:1,0:ns-1) +
-!     .        gnew*sna(-1:nx,-1:ny,0:1,0:ns-1)
-!        sne_mean(-1:nx,-1:ny,0:1) =
-!     .        gold*sne_mean(-1:nx,-1:ny,0:1) +
-!     .        gnew*sne(-1:nx,-1:ny,0:1)
-!        she_mean(-1:nx,-1:ny,0:3) =
-!     .        gold*she_mean(-1:nx,-1:ny,0:3) +
-!     .        gnew*she(-1:nx,-1:ny,0:3)
-!        shi_mean(-1:nx,-1:ny,0:3) =
-!     .        gold*shi_mean(-1:nx,-1:ny,0:3) +
-!     .        gnew*shi(-1:nx,-1:ny,0:3)
-!        sch_mean(-1:nx,-1:ny,0:3) =
-!     .        gold*sch_mean(-1:nx,-1:ny,0:3) +
-!     .        gnew*sch(-1:nx,-1:ny,0:3)
-!        smo_mean(-1:nx,-1:ny,0:3,0:ns-1) =
-!     .        gold*smo_mean(-1:nx,-1:ny,0:3,0:ns-1) +
-!     .        gnew*smo(-1:nx,-1:ny,0:3,0:ns-1)
+!        sna_mean(-1:nx,-1:ny,0:ns-1) =
+!     .        gold*sna_mean(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*sna(-1:nx,-1:ny,0:ns-1)
+!        sne_mean(-1:nx,-1:ny) =
+!     .        gold*sne_mean(-1:nx,-1:ny) +
+!     .        gnew*sne(-1:nx,-1:ny)
+!        she_mean(-1:nx,-1:ny) =
+!     .        gold*she_mean(-1:nx,-1:ny) +
+!     .        gnew*she(-1:nx,-1:ny)
+!        shi_mean(-1:nx,-1:ny) =
+!     .        gold*shi_mean(-1:nx,-1:ny) +
+!     .        gnew*shi(-1:nx,-1:ny)
+!        sch_mean(-1:nx,-1:ny) =
+!     .        gold*sch_mean(-1:nx,-1:ny) +
+!     .        gnew*sch(-1:nx,-1:ny)
+!        smo_mean(-1:nx,-1:ny,0:ns-1) =
+!     .        gold*smo_mean(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*smo(-1:nx,-1:ny,0:ns-1)
 
-!        e_sna(-1:nx,-1:ny,0:1,0:ns-1)  =
-!     .        gold*e_sna(-1:nx,-1:ny,0:1,0:ns-1) +
-!     .        gnew*sna(-1:nx,-1:ny,0:1,0:ns-1)**2
-!        e_sne(-1:nx,-1:ny,0:1) =
-!     .        gold*e_sne(-1:nx,-1:ny,0:1) +
-!     .        gnew*sne(-1:nx,-1:ny,0:1)**2
-!        e_she(-1:nx,-1:ny,0:3) =
-!     .        gold*e_she(-1:nx,-1:ny,0:3) +
-!     .        gnew*she(-1:nx,-1:ny,0:3)**2
-!        e_shi(-1:nx,-1:ny,0:3) =
-!     .        gold*e_shi(-1:nx,-1:ny,0:3) +
-!     .        gnew*shi(-1:nx,-1:ny,0:3)**2
-!        e_sch(-1:nx,-1:ny,0:3) =
-!     .        gold*e_sch(-1:nx,-1:ny,0:3) +
-!     .        gnew*sch(-1:nx,-1:ny,0:3)**2
-!        e_smo(-1:nx,-1:ny,0:3,0:ns-1)  =
-!     .        gold*e_smo(-1:nx,-1:ny,0:3,0:ns-1) +
-!     .        gnew*smo(-1:nx,-1:ny,0:3,0:ns-1)**2
+!        e_sna(-1:nx,-1:ny,0:ns-1)  =
+!     .        gold*e_sna(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*sna(-1:nx,-1:ny,0:ns-1)**2
+!        e_sne(-1:nx,-1:ny) =
+!     .        gold*e_sne(-1:nx,-1:ny) +
+!     .        gnew*sne(-1:nx,-1:ny)**2
+!        e_she(-1:nx,-1:ny) =
+!     .        gold*e_she(-1:nx,-1:ny) +
+!     .        gnew*she(-1:nx,-1:ny)**2
+!        e_shi(-1:nx,-1:ny) =
+!     .        gold*e_shi(-1:nx,-1:ny) +
+!     .        gnew*shi(-1:nx,-1:ny)**2
+!        e_sch(-1:nx,-1:ny) =
+!     .        gold*e_sch(-1:nx,-1:ny) +
+!     .        gnew*sch(-1:nx,-1:ny)**2
+!        e_smo(-1:nx,-1:ny,0:ns-1)  =
+!     .        gold*e_smo(-1:nx,-1:ny,0:ns-1) +
+!     .        gnew*smo(-1:nx,-1:ny,0:ns-1)**2
 
 !pb      if (laststep) then
       else
@@ -268,12 +306,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
         call cfwure (iun, n2,    po_mean, 'po_mean')
         call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
 
-        call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')
-        call cfwure (iun, n2*2, sne_mean, 'sne_mean')
-        call cfwure (iun, n2*4, she_mean, 'she_mean')
-        call cfwure (iun, n2*4, shi_mean, 'shi_mean')
-        call cfwure (iun, n2*4, sch_mean, 'sch_mean')
-        call cfwure (iun, n2*4*ns, smo_mean, 'smo_mean')
+        call cfwure (iun, n2*ns, sna_mean, 'sna_mean')
+        call cfwure (iun, n2,    sne_mean, 'sne_mean')
+        call cfwure (iun, n2,    she_mean, 'she_mean')
+        call cfwure (iun, n2,    shi_mean, 'shi_mean')
+        call cfwure (iun, n2,    sch_mean, 'sch_mean')
+        call cfwure (iun, n2*ns, smo_mean, 'smo_mean')
 !        write (iun,'(6es24.16)') 
 !     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 !        write (iun,'(6es24.16)') 
@@ -285,17 +323,17 @@ ctb..as the mean of the product does not equal the product of the means etc.
 !        write (iun,'(6es24.16)') 
 !     .        (((e_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 !        write (iun,'(6es24.16)') 
-!     .    ((((e_sna(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
+!     .        (((e_sna(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 !        write (iun,'(6es24.16)') 
-!     .        (((e_sne(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,1)
+!     .        ((e_sne(ix,iy),ix=-1,nx),iy=-1,ny)
 !        write (iun,'(6es24.16)') 
-!     .        (((e_she(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!     .        ((e_she(ix,iy),ix=-1,nx),iy=-1,ny)
 !        write (iun,'(6es24.16)') 
-!     .        (((e_shi(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!     .        ((e_shi(ix,iy),ix=-1,nx),iy=-1,ny)
 !        write (iun,'(6es24.16)') 
-!     .        (((e_sch(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!     .        ((e_sch(ix,iy),ix=-1,nx),iy=-1,ny)
 !        write (iun,'(6es24.16)') 
-!     .    ((((e_smo(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
+!     .       (((e_smo(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
 
         close(iun)
 

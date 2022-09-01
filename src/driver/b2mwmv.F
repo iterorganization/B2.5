@@ -55,7 +55,7 @@
 *     It will hold that 0.le.tim.
 *
 *     dtim - real, input.
-*     dtim specifies the timestep for the present call to b2mndt.
+*     dtim specifies the effective timestep for the present call to b2mndt.
 *     It will hold that 0.lt.dtim.
 *
 *     na0, ua0, te0, ti0, po0 - real*8 array, input.

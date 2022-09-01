@@ -22,35 +22,34 @@ module b2mod_ual_io_grid
     use b2mod_types , B2_R8 => R8, B2_R4 => R4
     use b2mod_constants , B2_PI => PI
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 8
+# if IMAS_MINOR_VERSION > 8
     use ids_schemas  & ! IGNORE
      & , only : IDS_real
-#endif
-#if IMAS_MINOR_VERSION > 11
+# endif
+# if IMAS_MINOR_VERSION > 11
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
-#if IMAS_MINOR_VERSION < 15
-   use ids_grid_object    & ! IGNORE
+    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
-#else
-   use ids_grid_object    & ! IGNORE
+#  if IMAS_MINOR_VERSION > 14
+    use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
-#endif
+#  endif
     use ids_grid_object   & ! IGNORE
      & , only : ids_generic_grid_dynamic_grid_subset, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
-#if GGD_MINOR_VERSION > 9
+#  if GGD_MINOR_VERSION > 9
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES
-#else
+#  else
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
      &          GRID_SUBSET_FACES
-#endif
+#  endif
     use ids_grid_structured & ! IGNORE
      & , only : GridWriteData, GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
@@ -87,7 +86,15 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,                       &
      &          GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,                       &
      &          IDS_GRID_UNDEFINED => GRID_UNDEFINED
-#endif
+#  if GGD_MINOR_VERSION > 9
+    use ids_grid_common     & ! IGNORE
+     & , only : GRID_SUBSET_VOLUMES
+#  endif
+#  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
+    use ids_grid_common     & ! IGNORE
+     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
+#  endif
+# endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -171,6 +178,7 @@ module b2mod_ual_io_grid
     !!      Class 1 - nodes/vertices (0D objects)
     !!      Class 2 - edges/faces (1D objects)
     !!      Class 3 - 2D cells (2D objects)
+    !!      Class 4 - 3D volumes (3D objects)
     !! Fortran90 does not allow initialization of constants using SUM. This is
     !! permitted in newer Fortran 2003. Current workaround is to directly
     !! specify the primary IDS class constants
@@ -198,6 +206,8 @@ module b2mod_ual_io_grid
     ! integer, parameter :: IDS_CLASS_CELL = sum(IDS_CLASS_CELL)
     integer, parameter :: IDS_CLASS_CELL = 3 !< Object class tuple
         !< (IMAS class definition): Cell (2D)
+    integer, parameter :: IDS_CLASS_VOLUME = 4 !< Object class tuple
+        !< (IMAS class definition): Volume (3D)
 
     !! Subgrid/Grid subset name constants
 
@@ -311,12 +321,15 @@ module b2mod_ual_io_grid
        &    'INNER_DIVERTOR_INACTIVE   ' , &
        &    'OUTER_TARGET_INACTIVE     ' , &
        &    'INNER_TARGET_INACTIVE     ' , &
+       &    'VOLUMES                   ' , &
+       &    'FULL_WALL                 ' , &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU,         &
+       &     UU, UU, UU, UU, UU,                     &
+       &    'MAGNETIC_AXIS             ' , &
        &    'OUTER_MIDPLANE_SEPARATRIX ' , &
        &    'INNER_MIDPLANE_SEPARATRIX ' , &
        &    'OUTER_STRIKEPOINT         ' , &
@@ -373,12 +386,15 @@ module b2mod_ual_io_grid
        &    'Cells defining the inner inactive divertor region                                            ' , &
        &    'y-aligned edges defining the outer inactive target                                           ' , &
        &    'y-aligned edges defining the inner inactive target                                           ' , &
+       &    'All volumes (3D objects)                                                                     ' , &
+       &    'All edges defining walls, baffles, and targets                                               ' , &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
-       &     US, US, US, US, US, US, US, US,                                                                  &
+       &     US, US, US, US, US,                                                                              &
+       &    'Point on magnetic axis                                                                       ' , &
        &    'Point on active separatrix at outer midplane                                                 ' , &
        &    'Point on active separatrix at inner midplane                                                 ' , &
        &    'Point on active separatrix at outer active target                                            ' , &
@@ -388,11 +404,21 @@ module b2mod_ual_io_grid
        &   /)
 #endif
 #ifdef IMAS
-#if GGD_MINOR_VERSION < 10
+# if GGD_MINOR_VERSION < 10
+    !> All volumes
+    integer, parameter :: GRID_SUBSET_VOLUMES = 43
+# endif
+# if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+    !> All edges defining walls, baffles, and targets
+    integer, parameter :: GRID_SUBSET_FULL_WALL = 44
+    !> Point on magnetic axis
+    integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
+# endif
+# if GGD_MINOR_VERSION < 10
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_Y_ALIGNED_EDGES = GRID_SUBSET_Y_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_EDGES = GRID_SUBSET_FACES
-#endif
+# endif
 #endif
 #ifdef ITM_ENVIRONMENT_LOADED
     !! For ITM duplicates were made (old and new variable) in case of ITM code
@@ -504,17 +530,22 @@ contains
 
         !! Internal variables
         integer, parameter :: NDIM = 2  !< Dimension of the space
+        integer, save :: ncall = 0
 
         !! Procedures
         external ipgetr, xertst
 
-        call ipgetr ('b2agmt_1d_width', width)
-        call xertst (0.0_R8.lt.width, 'faulty input width')
+        if (ncall.eq.0) then
+          call ipgetr ('b2agmt_1d_width', width)
+          call xertst (0.0_R8.lt.width, 'faulty input width')
+        end if
 
         !! Set GGD grid geometry
         call fill_In_Grid_Desc()
         !! Set grid subsets
         call fill_In_GridSubset_Desc()
+
+        ncall = ncall + 1
 
 contains
     !> Fill in the General Grid Description
@@ -1208,7 +1239,6 @@ contains
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description(1) )
           if (isymm.eq.0) then
-            call ipgetr ('b2agmt_1d_width', width)
             call gridSetupStruct1dSpace(                                      &
                 &   grid_ggd%space( SPACE_TOROIDALANGLE ), COORDTYPE_Y,       &
                 &   (/                                                        &
@@ -1256,6 +1286,30 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
+#if IMAS_MINOR_VERSION > 33 && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) )
+          allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content%name(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%name = "node_coordinates"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%index = 1
+          allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(1)%geometry_content%description(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%description =   &
+             &    "Node coordinates (automatically generated 1D space)"
+          allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content%name(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%name = "unspecified"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%index = 0
+          allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
+             &     objects_per_dimension(2)%geometry_content%description(1) )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%description = &
+             &  "Automatically generated 1D space (unused)"
+#endif
         end if
 
     end subroutine fill_In_Grid_Desc
@@ -1372,14 +1426,14 @@ contains
     !> Define grid subsets
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
-        integer :: geoId
+        integer, save :: geoId
 #if GGD_MINOR_VERSION > 8
         integer :: iRegion
         integer :: iPrivateB2
 #endif
         integer :: GSubsetCount
         integer :: iType
-        integer :: RegionsInSubset(6)
+        integer :: RegionsInSubset(14)
         integer :: nGSubset !< Total number of grid subsets
         integer :: nInd     !< Size of grid subset element list
         integer :: xIn
@@ -1399,7 +1453,9 @@ contains
         integer :: ind     !< indexList2d start index
         integer :: iInd    !< indexList iterator
         integer :: isize
-        integer :: jsep, nxtl, nxtr, ix1, ix2, ix3, ix4
+        integer :: ix1, ix2, ix3, ix4
+        integer, save :: jsep, nxtl, nxtr
+        character*26 SubsetName
         character*128 RegionDescription
 
         !! Procedures
@@ -1408,9 +1464,11 @@ contains
         external xerrab
 #endif
 
-        geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
-        call get_jsep( nx, ny, jxi, jxa, jsep )
-        call get_nxt ( nx, nxtl, nxtr )
+        if (ncall.eq.0) then
+          geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
+          call get_jsep( nx, ny, jxi, jxa, jsep )
+          call get_nxt ( nx, nxtl, nxtr )
+        end if
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
@@ -1422,20 +1480,20 @@ contains
         !! Add pre-defined grid subsets (regions + points)
         select case ( geoId )
         case ( GEOMETRY_LINEAR )
-            nGSubset = nGSubset + 5 + 2
+            nGSubset = nGSubset + 6 + 2
             if ( jsep .ne. B2_GRID_UNDEFINED ) nGSubset = nGSubset + 2
         case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
             nGSubset = nGSubset + 3
         case ( GEOMETRY_LIMITER )
-            nGSubset = nGSubset + 10 + 2
+            nGSubset = nGSubset + 11 + 2
         case ( GEOMETRY_SN )
-            nGSubset = nGSubset + 20 + 2
+            nGSubset = nGSubset + 21 + 2
         case ( GEOMETRY_STELLARATORISLAND )
-            nGSubset = nGSubset + 14 + 2
+            nGSubset = nGSubset + 15 + 2
         case ( GEOMETRY_CDN)
-            nGSubset = nGSubset + 32 + 4
-        case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
             nGSubset = nGSubset + 33 + 4
+        case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
+            nGSubset = nGSubset + 34 + 4
         end select
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
@@ -1697,7 +1755,7 @@ contains
 #endif
 
 !! Do the grid subsets that map directly to B2 regions
-        do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_TARGET_INACTIVE
+        do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE
             if (iSubset == GRID_SUBSET_OUTER_MIDPLANE ) cycle ! Already handled below
             if (iSubset == GRID_SUBSET_INNER_MIDPLANE ) cycle ! Already handled below
             if (iSubset == GRID_SUBSET_BETWEEN_SEPARATRICES ) cycle ! Handled below
@@ -1723,12 +1781,17 @@ contains
                 & GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
                 & GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE )
                 iType = REGIONTYPE_XEDGE
+            case ( GRID_SUBSET_FULL_WALL )
+                iType = REGIONTYPE_EDGE
+            case default
+                iType = NODIRECTION
             end select
+            if ( iType == NODIRECTION ) cycle
 
             select case(iType)
             case( REGIONTYPE_CELL )
                 cls = CLASS_CELL
-            case( REGIONTYPE_YEDGE, REGIONTYPE_XEDGE )
+            case( REGIONTYPE_EDGE, REGIONTYPE_YEDGE, REGIONTYPE_XEDGE )
                 cls = CLASS_POLOIDALRADIAL_EDGE
             end select
 
@@ -1744,6 +1807,10 @@ contains
                     RegionsinSubset(1) = 2
                 case ( GRID_SUBSET_INNER_TARGET )
                     RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 2
+                    RegionsinSubset(3) = -2
                 end select
             case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
                 select case( iSubset )
@@ -1780,6 +1847,10 @@ contains
                     end if
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 3
+                    RegionsinSubset(3) = -2
                 end select
             case ( GEOMETRY_SN )
                 select case( iSubset )
@@ -1836,6 +1907,14 @@ contains
                 case ( GRID_SUBSET_PFR_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = 3
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 3
+                    RegionsinSubset(7) = 1
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_PFR_CUT )
@@ -1886,6 +1965,11 @@ contains
                 case ( GRID_SUBSET_PFR_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = 3
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = -1
+                    RegionsinSubset(3) = -4
+                    RegionsinSubset(4) = 3
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_PFR_CUT )
@@ -1976,6 +2060,21 @@ contains
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
                     RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 3
+                    RegionsinSubset(7) = 8
+                    RegionsinSubset(8) = -5
+                    RegionsinSubset(9) = 12
+                    RegionsinSubset(10)= 13
+                    RegionsinSubset(11)= 14
+                    RegionsinSubset(12)= -8
+                    RegionsinSubset(13)= 10
+                    RegionsinSubset(14)= 1
                 end select
             case ( GEOMETRY_DDN_TOP )
                 select case( iSubset )
@@ -2054,6 +2153,21 @@ contains
                     RegionsinSubset(1) = 1
                 case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
                     RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 3
+                    RegionsinSubset(7) = 8
+                    RegionsinSubset(8) = -5
+                    RegionsinSubset(9) = 12
+                    RegionsinSubset(10)= 13
+                    RegionsinSubset(11)= 14
+                    RegionsinSubset(12)= -8
+                    RegionsinSubset(13)= 10
+                    RegionsinSubset(14)= 1
                 end select
             case ( GEOMETRY_UNSPECIFIED )
                 continue
@@ -2061,17 +2175,24 @@ contains
             if (RegionsinSubset(1) == 0) cycle
             GSubsetCount = GSubsetCount + 1
 
+            SubsetName = gridSubsetName( iSubset )
+            RegionDescription = gridSubsetDescription( iSubset )
+#if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+            if ( iSubset == GRID_SUBSET_FULL_WALL ) then
+              SubsetName = 'FULL_WALL'
+              RegionDescription = &
+               &  'All edges defining walls, baffles, and targets'
+            end if
+#endif
             call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                &   int2str(GSubsetCount)//": "//                       &
-               &   trim(gridSubsetName ( iSubset ))//                  &
-               &   ", iType "//int2str(iType) )
+               &   trim(SubsetName)//", iType "//int2str(iType) )
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                     &
                &   grid_ggd%grid_subset( GSubsetCount ),    &
-               &   iSubset, gridSubsetName ( iSubset ),     &
-               &   gridSubsetDescription( iSubset )  )
+               &   iSubset, SubsetName, RegionDescription )
 
             !! Get explicit object list of the grid subset using
             !! subroutine collectIndexListForRegionSubroutine
@@ -2084,13 +2205,25 @@ contains
                 allocate( indextmp2d ( gmap%nFcx , SPACE_COUNT ) )
             case ( REGIONTYPE_YEDGE )
                 allocate( indextmp2d ( gmap%nFcy , SPACE_COUNT ) )
+            case ( REGIONTYPE_EDGE )
+                allocate( indextmp2d ( gmap%nFcx + gmap%nFcy , SPACE_COUNT ) )
             end select
             indextmp2d = 1
             isize = 0
             do ireg = 1, size(RegionsinSubset)
                 if (RegionsinSubset(ireg) == 0) cycle
-                call collectIndexListForRegionSubroutine( gmap, cflag, region,   &
-                   &   iType, RegionsinSubset( ireg ), indexPart2d )
+                if (iType .eq. REGIONTYPE_EDGE) then
+                  if (RegionsinSubset(ireg) .gt. 0) then
+                    call collectIndexListForRegionSubroutine( gmap, cflag, region, &
+                      &   REGIONTYPE_YEDGE, RegionsinSubset( ireg ), indexPart2d )
+                  else
+                    call collectIndexListForRegionSubroutine( gmap, cflag, region, &
+                      &   REGIONTYPE_XEDGE, abs(RegionsinSubset( ireg )), indexPart2d )
+                  end if
+                else
+                  call collectIndexListForRegionSubroutine( gmap, cflag, region, &
+                      &   iType, RegionsinSubset( ireg ), indexPart2d )
+                end if
                 indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
                 isize = isize + size(indexPart2d,1)
             end do
@@ -2776,6 +2909,224 @@ contains
 
     end subroutine find_Midplane_Cells
 
+#if IMAS_MINOR_VERSION > 14
+    subroutine GGD_copy_AoS3Root_to_Dynamic( AoS3_grid, dynamic_grid )
+    implicit none
+    type(ids_generic_grid_aos3_root), intent(in) :: AoS3_grid
+    type(ids_generic_grid_dynamic), intent(out) :: dynamic_grid
+    integer :: i, j, k, i1, i2, i3, i4
+    integer :: nspaces, ndims, nobjects, nboundary, nsubsets, nelems, nbase
+
+    allocate( dynamic_grid%identifier%name(1) )
+    dynamic_grid%identifier%name = AoS3_grid%identifier%name
+    dynamic_grid%identifier%index = AoS3_grid%identifier%index
+    allocate( dynamic_grid%identifier%description(1) )
+    dynamic_grid%identifier%description = AoS3_grid%identifier%description
+
+    nspaces = size( AoS3_grid%space )
+    allocate( dynamic_grid%space( nspaces ) )
+    do i1 = 1, nspaces
+      allocate( dynamic_grid%space(i1)%identifier%name(1) )
+      dynamic_grid%space(i1)%identifier%name = &
+       & AoS3_grid%space(i1)%identifier%name
+      dynamic_grid%space(i1)%identifier%index = &
+       & AoS3_grid%space(i1)%identifier%index
+      allocate( dynamic_grid%space(i1)%identifier%description(1) )
+      dynamic_grid%space(i1)%identifier%description = &
+       & AoS3_grid%space(i1)%identifier%description
+      allocate( dynamic_grid%space(i1)%geometry_type%name(1) )
+      dynamic_grid%space(i1)%geometry_type%name = &
+       & AoS3_grid%space(i1)%geometry_type%name
+      dynamic_grid%space(i1)%geometry_type%index = &
+       & AoS3_grid%space(i1)%geometry_type%index
+      allocate( dynamic_grid%space(i1)%geometry_type%description(1) )
+      dynamic_grid%space(i1)%geometry_type%description = &
+       & AoS3_grid%space(i1)%geometry_type%description
+      i = size( AoS3_grid%space(i1)%coordinates_type )
+      allocate( dynamic_grid%space(i1)%coordinates_type( i ) )
+      dynamic_grid%space(i1)%coordinates_type( : ) = &
+       & AoS3_grid%space(i1)%coordinates_type( : )
+      ndims = size( AoS3_grid%space(i1)%objects_per_dimension )
+      allocate( dynamic_grid%space(i1)%objects_per_dimension( ndims ) )
+      do i2 = 1, ndims
+        nobjects = size( AoS3_grid%space(i1)%objects_per_dimension(i2)%object )
+        allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object( nobjects ) )
+        do i3 = 1, nobjects
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary ) ) then
+            nboundary = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary )
+          else
+            nboundary = 0
+          end if
+          if (nboundary.gt.0) then
+            allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary( nboundary ) )
+            do i4 = 1, nboundary
+              dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%index = &
+           &     AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%index
+              i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours )
+              allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours( i ) )
+              dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours( : ) = &
+           &    AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary(i4)%neighbours( : )
+            end do
+          end if
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry ) ) then
+            i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry )
+            allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry( i ) )
+            dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry( : ) = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry( : )
+          end if
+          i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes )
+          allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes( i ) )
+          dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes( : ) = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%nodes( : )
+          dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%measure = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%measure
+#if IMAS_MINOR_VERSION > 35
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d ) ) then
+            i = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d, 1 )
+            j = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d, 2 )
+            allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d( i , j ) )
+            dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d( : , : ) = &
+           &   AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%geometry_2d( : , : )
+          end if
+#endif
+        end do
+#if IMAS_MINOR_VERSION > 33
+        allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%name(1) )
+        dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%name = &
+         & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%name
+        dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%index = &
+         & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%index
+        allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%description(1) )
+        dynamic_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%description = &
+         & AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      geometry_content%description
+#endif
+      end do
+    end do
+
+    nsubsets = size( AoS3_grid%grid_subset )
+    allocate( dynamic_grid%grid_subset( nsubsets ) )
+    do i1 = 1, nsubsets
+      allocate( dynamic_grid%grid_subset(i1)%identifier%name(1) )
+      dynamic_grid%grid_subset(i1)%identifier%name = &
+       & AoS3_grid%grid_subset(i1)%identifier%name
+      dynamic_grid%grid_subset(i1)%identifier%index = &
+       & AoS3_grid%grid_subset(i1)%identifier%index
+      allocate( dynamic_grid%grid_subset(i1)%identifier%description(1) )
+      dynamic_grid%grid_subset(i1)%identifier%description = &
+       & AoS3_grid%grid_subset(i1)%identifier%description
+      dynamic_grid%grid_subset(i1)%dimension = &
+       & AoS3_grid%grid_subset(i1)%dimension
+      nelems = size( AoS3_grid%grid_subset(i1)%element )
+      allocate( dynamic_grid%grid_subset(i1)%element( nelems ) )
+      do i2 = 1, nelems
+        nobjects = size( AoS3_grid%grid_subset(i1)%element(i2)%object )
+        allocate( dynamic_grid%grid_subset(i1)%element(i2)%object( nobjects ) )
+        do i3 = 1, nobjects
+          dynamic_grid%grid_subset(i1)%element(i2)%object(i3)%space = &
+           & AoS3_grid%grid_subset(i1)%element(i2)%object(i3)%space
+          dynamic_grid%grid_subset(i1)%element(i2)%object(i3)%dimension = &
+           & AoS3_grid%grid_subset(i1)%element(i2)%object(i3)%dimension
+          dynamic_grid%grid_subset(i1)%element(i2)%object(i3)%index = &
+           & AoS3_grid%grid_subset(i1)%element(i2)%object(i3)%index
+        end do
+      end do
+      if ( associated( dynamic_grid%grid_subset(i1)%base ) ) then
+        nbase = size( AoS3_grid%grid_subset(i1)%base )
+        allocate( dynamic_grid%grid_subset(i1)%base( nbase ) )
+        do i2 = 1, nbase
+          i = size( AoS3_grid%grid_subset(i1)%base(i2)%jacobian )
+          allocate( dynamic_grid%grid_subset(i1)%base(i2)%jacobian( i ) )
+          dynamic_grid%grid_subset(i1)%base(i2)%jacobian( : ) = &
+           & AoS3_grid%grid_subset(i1)%base(i2)%jacobian( : )
+          i = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_covariant, 1 )
+          j = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_covariant, 2 )
+          k = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_covariant, 3 )
+          allocate( dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_covariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_covariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_covariant( : , : , : )
+          i = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_contravariant, 1 )
+          j = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_contravariant, 2 )
+          k = size( AoS3_grid%grid_subset(i1)%base(i2)%tensor_contravariant, 3 )
+          allocate( dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_contravariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_contravariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%base(i2)% &
+             &      tensor_contravariant( : , : , : )
+        end do
+      end if
+      if ( associated( dynamic_grid%grid_subset(i1)%metric%jacobian ) ) then
+        i = size( AoS3_grid%grid_subset(i1)%metric%jacobian )
+        allocate( dynamic_grid%grid_subset(i1)%metric%jacobian( i ) )
+        dynamic_grid%grid_subset(i1)%metric%jacobian( : ) = &
+         & AoS3_grid%grid_subset(i1)%metric%jacobian( : )
+      end if
+      if ( associated( dynamic_grid%grid_subset(i1)%metric% &
+        &              tensor_covariant ) ) then
+        i = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 1 )
+        j = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 2 )
+        k = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 3 )
+        allocate( dynamic_grid%grid_subset(i1)%metric% &
+           &      tensor_covariant( i, j, k ) )
+        dynamic_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : ) = &
+         & AoS3_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : )
+      end if
+      if ( associated( dynamic_grid%grid_subset(i1)%metric% &
+        &              tensor_contravariant ) ) then
+        i = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 1 )
+        j = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 2 )
+        k = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 3 )
+        allocate( dynamic_grid%grid_subset(i1)%metric% &
+           &      tensor_contravariant( i, j, k ) )
+        dynamic_grid%grid_subset(i1)%metric% &
+           &      tensor_contravariant( : , : , : ) = &
+         & AoS3_grid%grid_subset(i1)%metric% &
+           &      tensor_contravariant( : , : , : )
+      end if
+    end do
+
+    return
+    end subroutine GGD_copy_AoS3Root_to_Dynamic
+#endif
+
 #endif
 #else
 #ifdef ITM_ENVIRONMENT_LOADED
@@ -2816,11 +3167,18 @@ contains
 
     ! internal
     integer, parameter :: NDIM = 2
+    integer, save :: ncall = 0
 
-    call ipgetr('b2agmt_1d_width', width)
-    call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
+    ! procedures
+    external ipgetr, xertst
+
+    if (ncall.eq.0) then
+      call ipgetr('b2agmt_1d_width', width)
+      call xertst(0.0_ITM_R8.lt.width, 'faulty input width')
+    end if
     call xertst( present( gs ) .EQV. present( qc ) , &
         "Assert error ( gz or qc missing ) in b2ITMFillGridDescription" )
+    ncall = ncall + 1
 
     call fill_In_Grid_Desc()
     call fillInSubGridDescription()
@@ -3071,6 +3429,9 @@ contains
       integer :: cls(SPACE_COUNT_MAX)
       integer, allocatable :: xpoints(:,:)
 
+      !! procedures
+      external xertst
+
       geoId = geometryId(nnreg, isymm, periodic_bc, topcut)
 
       !! Figure out total number of subgrids
@@ -3208,11 +3569,13 @@ contains
     real (ITM_R8), intent(in) :: crx(-1:gmap%b2nx,-1:gmap%b2ny,0:3)
     integer, intent(out) :: xIn, yIn, xOut, yOut
 
-
     !! internal
     real(ITM_R8) :: rMin, rMax
     type(GridObject) :: obj
     integer :: ix, iy, iObj
+
+    !! procedures
+    external xertst
 
     rMin = huge(rMin)
     rMax = -huge(rMax)

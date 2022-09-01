@@ -414,18 +414,18 @@
 *
 *     B2TRCA computes the inversed matrix for heat flux/R-moments.
 *
-*     B2TRCC calculates charge state corrections to the thermal and
-*     friction force terms.
-*
 *     B2TRCL computes the classical transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
 *
 *     B2TRCN computes the N-coefficients and all mass-related variables.
 *
-*     B2TRCS calculates charge state corrections for the viscous
+*     B2TRCV computes the inverted matrix for the viscous stress tensor.
+*
+*     B2TRCW calculates charge state corrections for the viscous
 *     stress tensor.
 *
-*     B2TRCV computes the inverted matrix for the viscous stress tensor.
+*     B2TRCZ calculates charge state corrections to the thermal and
+*     friction force terms.
 *
 *     B2TREQ computes the cell-integrated energy equipartition
 *     multiplier.
@@ -466,12 +466,12 @@
 *
 *     B2TRTF computes the thermal force transport coefficient.
 *
+*     B2TRVIS_AN computes the viscous stress tensor transport coefficient
+*     analytically.
+*
 *     B2TRZH computes the transport coefficients using the 21N-moment
 *     approach, as detailed in [V. M. Zhdanov. Transport Processes in
 *     Multicomponent Plasma, vol. 44. 10 2002].
-*
-*     B2TRVIS_AN computes the viscous stress tensor transport coefficient
-*     analytically.
 *
 *     B2TSTCH computes the Y component of the electron current
 *     associated with stochastization of the magnetic field.

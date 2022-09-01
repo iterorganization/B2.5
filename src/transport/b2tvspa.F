@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nx, ny, ns, ismain, bb, na, ua, cvsa_cl,      !srv 20.09.06 { 16.10.17 19.02.21
-     &  cvsa_drho, fac_vis, fchvispar_a, fchvispar)                     !srv 22.06.08 som 18.08.21
+      subroutine b2tvspa (nx, ny, ns, ismain, bb,                       !srv 20.09.06 { 16.10.17 19.02.21
+     &  na, ua, cvsa_cl, cvsa_drho, fac_vis, fchvispar_a, fchvispar)    !srv 22.06.08 som 18.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -27,7 +27,8 @@
      1  bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                       !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1), fchvispar(-1:nx,-1:ny,0:1)
+     &  fchvispar_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvispar(-1:nx,-1:ny,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -78,9 +79,11 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of cvsa_cl
-        call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                        !srv 16.10.17
-        call ipgeti ('b2tfhe_no_current', no_current)
-        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
+       do is = 0, ns-1
+        call b2xvff (nx, ny, cvsa_cl(-1,-1,0,is), 'cvsa_cl')            !srv 16.10.17
+       enddo
+       call ipgeti ('b2tfhe_no_current', no_current)
+       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)                  !som 13.01.22
       endif
 
       if (Zhdanov_closure.ne.0 .and. Zhdanov_test.ne.1 .and.
@@ -130,7 +133,7 @@ c Drift terms
          endif
         else
          if (.not.is_neutral(is)) then                                  !som 09.11.21
-          if (zh_vis_type.eq.0) then                          !som 13.01.22
+          if (zh_vis_type.eq.0) then                                    !som 13.01.22
            do iy = -1, ny
             do ix = 0, nx
              if(leftix(ix,iy).ne.-2) then
@@ -209,7 +212,7 @@ c Drift terms
            endif                                                        !srv 26.11.02
           enddo
          enddo
-         fchvispar(:,:,:) = fchvispar(:,:,:) + fchvispar_a(:,:,:,is)
+         fchvispar(:,:,:)=fchvispar(:,:,:)+fchvispar_a(:,:,:,is)
        enddo
 
       endif                                                             !srv

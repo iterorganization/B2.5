@@ -98,7 +98,7 @@
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
      2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),              !srv 09.07.03 30.11.15
      3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 09.07.03 30.11.15
-     1  pol_anom_scale
+     1  pol_anom_scale, hzgs(-1:nx,-1:ny,0:2)
       save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
       real (kind=R8) ::
@@ -152,8 +152,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -235,15 +235,20 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
+      call intfaceh(nx,ny,leftix,leftiy,vol,hz,wrk)
+      hzgs(:,:,0) = gs(:,:,0)*wrk
+      call intfacev(nx,ny,bottomix,bottomiy,vol,hz,wrk)
+      hzgs(:,:,1) = gs(:,:,1)*wrk
+      hzgs(:,:,2) = gs(:,:,2)*hz
       hzvol = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz,
+       call b2txcx (nx, ny, mode, hzvol, hzgs, hx, qz,
      &   dna0(-1,-1,is), cdnahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz,
+       call b2txcy (nx, ny, mode, hzvol, hzgs, hy, qz,
      &   dna0(-1,-1,is), cdnahz(-1,-1,1,is))
-       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz,
+       call b2txcx (nx, ny, mode, hzvol, hzgs, hx, qz,
      &   dpa0(-1,-1,is), cdpahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz,
+       call b2txcy (nx, ny, mode, hzvol, hzgs, hy, qz,
      &   dpa0(-1,-1,is), cdpahz(-1,-1,1,is))
        call b2txsx (nx, ny, hzvol, hx, vla0(-1,-1,0,is),
      &   cvlahz(-1,-1,0,is))
@@ -253,9 +258,9 @@ cwdk  tmp: needed as long as not all contributions are filled later on
      &   cvmahz(-1,-1,0,is))
        call b2txsy (nx, ny, hzvol, hy, vma0(-1,-1,1,is),              !srv 15.12.05
      &   cvmahz(-1,-1,1,is))
-       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz,                  !srv 01.07.05 {
+       call b2txcx (nx, ny, mode, hzvol, hzgs, hx, qz,                !srv 01.07.05 {
      &   vsa0(-1,-1,is), cvsahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz,
+       call b2txcy (nx, ny, mode, hzvol, hzgs, hy, qz,
      &   vsa0(-1,-1,is), cvsahz(-1,-1,1,is))                          !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
@@ -412,14 +417,14 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'b2trno_cvsay'//chns)
         call my_out(70,nx,ny,cdnahz(-1,-1,0,is),'b2trno_dnahzx'//chns)
         call my_out(70,nx,ny,cdnahz(-1,-1,1,is),'b2trno_dnahzy'//chns)
-        call my_out(70,nx,ny,cdpahz(-1,-1,0,is),'b2trno_cdpahzx'//chns)
-        call my_out(70,nx,ny,cdpahz(-1,-1,1,is),'b2trno_cdpahzy'//chns)
-        call my_out(70,nx,ny,cvlahz(-1,-1,0,is),'b2trno_cvlahzx'//chns)
-        call my_out(70,nx,ny,cvlahz(-1,-1,1,is),'b2trno_cvlahzy'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trno_cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
-        call my_out(70,nx,ny,cvmahz(-1,-1,0,is),'b2trno_cvmahzx'//chns)
-        call my_out(70,nx,ny,cvmahz(-1,-1,1,is),'b2trno_cvmahzy'//chns)
+       call my_out(70,nx,ny,cdpahz(-1,-1,0,is),'b2trno_cdpahzx'//chns)
+       call my_out(70,nx,ny,cdpahz(-1,-1,1,is),'b2trno_cdpahzy'//chns)
+       call my_out(70,nx,ny,cvlahz(-1,-1,0,is),'b2trno_cvlahzx'//chns)
+       call my_out(70,nx,ny,cvlahz(-1,-1,1,is),'b2trno_cvlahzy'//chns)
+       call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trno_cvsahzx'//chns)
+       call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
+       call my_out(70,nx,ny,cvmahz(-1,-1,0,is),'b2trno_cvmahzx'//chns)
+       call my_out(70,nx,ny,cvmahz(-1,-1,1,is),'b2trno_cvmahzy'//chns)
         if (flux_limit_style.eq.2) then                                 !srv 07.12.15 {
          call my_out(70,nx,ny,chcb(-1,-1,0,is),'b2trno_chcixa'//chns)
          call my_out(70,nx,ny,chcb(-1,-1,1,is),'b2trno_chciya'//chns)

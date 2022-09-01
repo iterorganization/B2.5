@@ -3,8 +3,8 @@
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
-     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+     &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv,
+     &  wbbc, cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -145,11 +145,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     qcb - (-1:nx,-1:ny) real*8 array, output.
@@ -174,9 +174,9 @@
 *     pbs - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     (parameters in common:)
@@ -367,7 +367,7 @@ cxpb-end
 cwdk   poloidal unit vector in cell centers, ebc
        do iy = -1, ny
         do ix = -1, nx
-         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+         t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2))
          t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
          ebc(ix,iy,0) = t0/norm(t0,t1)
          ebc(ix,iy,1) = t1/norm(t0,t1)
@@ -380,7 +380,7 @@ cwdk   poloidal unit vector at left faces, ebf
         do ix = -1, nx
 cwdk     note: qc in left ghosts unchanged
          if (leftix(ix,iy).ne.-2) then
-          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1), 
+          qc(ix,iy) = cosang ( ebf(ix,iy,0), ebf(ix,iy,1),
      &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
          else
           qc(ix,iy) = cosang (

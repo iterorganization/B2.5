@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trcl (nx, ny, ns, nscx, iscx, ismain,
-     &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
+     &  bb, conn, vol, gs, hx, hy,                                       !srv 23.11.10
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2,         !srv 09.01.01 01.07.09
      2  lnlam, chvemx, chvimx, cvsahz,                                   !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
@@ -97,8 +97,8 @@
       integer, save :: Zhdanov_cond = 1                                  !som 22.06.21
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
-     &                 integral_modeling = 1
+     &                 iout_b2npp7 = 0, iout_b2nppo = 0,
+     &                 iout_b2npmo = 0, integral_modeling = 1
       character(3) chns, chns0                                           !srv 17.06.08
       integer mintopcut                                                  !lk 19.09.07
       integer mode
@@ -422,7 +422,7 @@ csw 13mar2012
 
              nu2(ix,iy) = conn(iy)/(tauVeff
      &        *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
-           else    
+           else
 
              nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
      &        *sqrt(ti(ix,iy)/(mp*am(ismain)))
@@ -439,7 +439,7 @@ csw 13mar2012
      &           0.7e0_R8*sqrt(nu2(ix,iy))+
      &           nu2(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)/1.7e0_R8           !som 05.10.21
            kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))         
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu2(ix,iy))
      &           +2.7e0_R8*(nu2(ix,iy))**2*eps1(iy)**3)/(1.0e0_R8+
      &           0.7e0_R8*sqrt(nu2(ix,iy))+
      &           (nu2(ix,iy))**2*eps1(iy)**3))                           !som 05.10.21

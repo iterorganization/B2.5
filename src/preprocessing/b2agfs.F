@@ -98,6 +98,8 @@
       integer Bt_adjust, Bt_reversal
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
+      character*256 local_lineardevice
+      data local_lineardevice /'linear.geometry'/
       real (kind=R8) ::
      *  bp((nx1+2)*(ny1+2)),bt((nx1+2)*(ny1+2)),
      .  crxs((nx1+2)*(ny1+2)*5),crys((nx1+2)*(ny1+2)*5),
@@ -130,6 +132,8 @@
 
       call ipgetc ('b2agfs_geometry', local_sonnet)
       lblgm=local_sonnet
+      call ipgetc ('b2agfs_lineardevice', local_linearDevice)
+      if (istyle.eq.-3) lblgm=local_linearDevice
       periodic_bc=0
       call ipgeti ('b2agfs_periodic_bc',periodic_bc)
       call xertst (abs(periodic_bc).le.1, 'faulty argument periodic_bc')
@@ -155,7 +159,8 @@
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
 
-      call b2gxdr_dummy(local_sonnet, nx1, ny1, istyle, isymm,
+      call b2gxdr_dummy(local_sonnet, local_lineardevice,
+     & nx1, ny1, istyle, isymm,
      & crxs, crys, bp, bt, fpsi, ffbz)
       n2=(nx1+2)*(ny1+2)
       ic=1
@@ -978,7 +983,7 @@ cxpb
             do while(ixr.ne.ix.and.ixr.ge.-1.and.ixr.le.nx1)
               zone(ixr)=ireg
               call xertst(rightix1(ixr,iy).ne.ixr,
-     .         'Problem in connectivity to the right!') 
+     .         'Problem in connectivity to the right!')
               ixr=rightix1(ixr,iy)
             enddo
             ixl=leftix1(ix,iy)
@@ -1013,7 +1018,8 @@ cxpb
 
       end subroutine b2agfs
 c
-      subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
+      subroutine b2gxdr_dummy(local_sonnet, local_lineardevice,
+     & nx, ny, istyle, isymm,
      & crxs, crys, bp, bt, fpsi, ffbz)
       use b2mod_types
       use b2mod_constants
@@ -1029,7 +1035,8 @@ c
      2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
      3 fpsi(0:nx+1,0:ny+1,0:3),ffbz(0:nx+1,0:ny+1,0:3)
       character*(*) local_sonnet
- 
+      character*(*) local_lineardevice
+
       logical no_flux_data            ! IYS 21.02.2020
 
       integer nnx, nny,
@@ -1053,9 +1060,11 @@ c
       character*80 format_string(4)
       integer, save :: new_format
       character*12 device
+      character*16 username
       logical open_file, uop, first_read, ex
       character uline*(line_length)
-      external xertst, open_file
+      character*16 usrnam
+      external xertst, open_file, usrnam
       intrinsic index, sqrt
       real (kind=R8) :: t0
 
@@ -1070,7 +1079,7 @@ c
       call subini('b2gxdr_dummy')
 *   ..test nx, ny, istyle
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (istyle.eq.-1 .or. istyle.eq.-2,
+      call xertst (istyle.eq.-1 .or. istyle.eq.-2 .or. istyle.eq.-3,
      & 'faulty input parameter istyle')
 
       i=-1
@@ -1098,9 +1107,15 @@ c
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
+      username = usrnam()
+      if (istyle.eq.-3) then !read parameters for linear device geometry
+                             !and write them as a Carre format input
+        call b2ld(local_lineardevice, local_sonnet, nx, ny, istyle)
+      end if
       if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
+     .   //'|modules/Carre/meshes/'//trim(device)//'/'//trim(username)
         call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
@@ -1157,6 +1172,7 @@ c
       elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
+     .   //'|modules/DivGeo/device/'//trim(device)//'/'//trim(username)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
      1     "Reading the geometry file assuming the Sonnet format"

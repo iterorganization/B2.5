@@ -193,7 +193,7 @@ contains
                 if( iCv .eq. 0 ) then
                    idsdata( iObj ) = 0.0 !! TODO DP skip when no index present
                 else
-                                !! copy data
+                !! copy data
                    idsdata( iObj ) =   &
                       & b2CellData( gmap%mapCvix( iCv ), gmap%mapCviy( iCv ) )
                 end if

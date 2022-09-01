@@ -113,11 +113,11 @@
 *     It will hold that -1.lt.qz1(,,0).lt.1 and 0.lt.qz1(,,1).le.1.
 *
 *     qc1 - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc1(,).le.1.
 *
 *     gs1 - (-1:nx1,-1:ny1,0:2) real*8 array, output.
@@ -134,9 +134,9 @@
 *     pbs1 - (-1:nx1,-1:ny1,0:1) real*8 array.
 *     (Let pbsx(,)=pbs1(,,0) and pbsy(,)=pbs1(,,1).)
 *     For (ix,iy) in (-1:nx1,-1:ny1), pbsx(ix,iy) specifies the product
-*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs1 for the form of interpolation employed.
 *
 *     (parameters in common:)
@@ -301,14 +301,14 @@ cxpb-end
         call cfruin (nget, 1, idum, 'redef_gmtry')
         redef_gmtry=idum(0)
         call cfrure (nget, n2*4, wbbl1, 'wbbl')
-        if (redef_gmtry.eq.0) write(*,*)
-     .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
-     .   'because redef_gmtry.eq.0 !'
+        if (redef_gmtry.eq.0) write(*,'(a)')
+     .   'Warning: wbbl1 value read from b2fgmtry '//
+     .   'will be overwritten because redef_gmtry.eq.0 !'
       else
         redef_gmtry=0
       endif
 
-*  ..compute qc if not yet known
+*  ..compute qc1 if not yet known
       if (qc_to_do) then
 cwdk   poloidal unit vector in cell centers, ebc1
        do iy = -1, ny1
@@ -348,9 +348,7 @@ cwdk     note: qc in left ghosts unchanged
        enddo
       endif
 
-*   ..compute hz
-!      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
-!      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
+*   ..compute hz1
       hzconst = 1.0_R8
       hz1(:,:) = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol1(:,:)/gs1(:,:,2)
       if (isymm.eq.0) then
@@ -372,7 +370,8 @@ cwdk     note: qc in left ghosts unchanged
         hzc(-1:nx1,ny1+1)  = 2.0_R8 * pi * cry1(-1:nx1,ny1,2)
         hzc(nx1+1,ny1+1)   = 2.0_R8 * pi * cry1(nx1,ny1,3)
       end if
-      if (redef_gmtry.eq.0) then
+
+      if (redef_gmtry.eq.0.or.b2fgmtry_version.le.'03.000.006') then
 *  ..old treatment: interpolate magnetic field to cell faces: overwrite wbbl1
 c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!!
         call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
@@ -567,7 +566,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         wbbc1(:,:,3)=
      .   sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
       end if
-*   ..compute pbs (magnetic field pitch * surface area) at cell faces if needed
+*   ..compute pbs1 (magnetic field pitch * surface area) at cell faces if needed
       if(pbs_to_do)
      > call b2xgbs1 (nx1, ny1,
      .   bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
@@ -649,6 +648,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
       endif
+
 *   ..test sign of bb
       call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')
       call b2xvsg (n2, wbbl1(-1,-1,3), 1, 'wbbl3', '.gt.')

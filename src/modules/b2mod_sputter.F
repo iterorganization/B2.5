@@ -152,10 +152,12 @@
       end subroutine read_b2mod_sputter_namelist
 
       subroutine write_b2mod_sputter_namelist(nwrite,nx,ny,ns,edition)
+      use b2mod_math
       implicit none
       integer nwrite, nx, ny, ns
       character*4 edition
       integer ix, iy, is, ib
+      real (kind=R8) :: tmp1, tmp2
       character*256 filename
 
       if(maxval(sputter_yield).gt.0.0_R8.or.
@@ -180,13 +182,22 @@ cxpb  Replaced with explicit writing of nonzero elements only
      &            sputter_yield2(ix,iy,is,1).ne.0.0_R8 .or.
      &            sputter_yield2(ix,iy,is,2).ne.0.0_R8) then
                 do ib = 1, 2
+                  if (abs(sputter_yield(ix,iy,is,ib)).lt.cutlo) then
+                    tmp1 = 0.0_R8
+                  else
+                    tmp1 = sputter_yield(ix,iy,is,ib)
+                  end if
+                  if (abs(sputter_yield2(ix,iy,is,ib)).lt.cutlo) then
+                    tmp2 = 0.0_R8
+                  else
+                    tmp2 = sputter_yield2(ix,iy,is,ib)
+                  end if
                   write(nwrite,
      &             '(a14,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,'//
      &              'a17,i4,a1,i4,a1,i3,a1,i1,a2,1pe21.13e3,a1)')
-     .             'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=',
-     .              sputter_yield(ix,iy,is,ib),
-     .           ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',
-     .              sputter_yield2(ix,iy,is,ib),','
+     .             'SPUTTER_YIELD(',ix,',',iy,',',is,',',ib,')=' ,tmp1,
+     .           ', SPUTTER_YIELD2(',ix,',',iy,',',is,',',ib,')=',tmp2,
+     .           ','
                 end do
               end if
             end do

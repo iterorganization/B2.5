@@ -244,5 +244,6 @@ c*** Correct the neutral data
           end do !}
         end do !}
       end if !}
+      return
 c=======================================================================
-      end
+      end subroutine fix_user

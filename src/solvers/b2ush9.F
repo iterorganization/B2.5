@@ -65,14 +65,16 @@
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1                                     !srv 02.01.07
       integer, save :: style_b2mndt = 1                               !srv 07.07.21
-      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9)
-      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi)
+      integer, save :: iout = 0
+      real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
+      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
+      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
+      !$OMP THREADPRIVATE(cor_diag)
       integer ireg, ileft, ibot
       save ncall
       !$OMP THREADPRIVATE(ncall)
       real (kind=R8) ::
      *   t0, t1
-      real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
@@ -95,6 +97,13 @@
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
        call ipgetr ('b2ush9_cor_diag', cor_diag)                      !srv 07.07.21
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
+       call ipgeti ('b2ush9_iout', iout)
+       if (in_parallel() .and. iout.ne.0) then
+         !$OMP MASTER
+         write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
+         !$OMP END MASTER
+         iout = 0
+       endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -108,8 +117,8 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of ne, ni, te, ti
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
@@ -316,6 +325,25 @@
       enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
+
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,aa9(-1,-1,-6),'b2ush9_total_aa9m6')
+       call my_out(70,nx,ny,aa9(-1,-1,-5),'b2ush9_total_aa9m5')
+       call my_out(70,nx,ny,aa9(-1,-1,-4),'b2ush9_total_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),'b2ush9_total_aa9m3')
+       call my_out(70,nx,ny,aa9(-1,-1,-2),'b2ush9_total_aa9m2')
+       call my_out(70,nx,ny,aa9(-1,-1,-1),'b2ush9_total_aa9m1')
+       call my_out(70,nx,ny,aa9(-1,-1, 0),'b2ush9_total_aa9m0')
+       call my_out(70,nx,ny,aa9(-1,-1, 1),'b2ush9_total_aa9p1')
+       call my_out(70,nx,ny,aa9(-1,-1, 2),'b2ush9_total_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),'b2ush9_total_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_total_aa9p4')
+       call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_total_aa9p5')
+       call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_total_aa9p6')
+       call my_out(70,nx,ny,resht,'b2ush9_resht')
+       call my_out(70,nx,ny,cortt,'b2ush9_cortt')
+      endif
+
       endif                                                           !srv 22.05.18
 
 * ..electron temperature correction equation
@@ -433,6 +461,25 @@
       enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
+
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,aa9(-1,-1,-6),'b2ush9_he_aa9m6')
+       call my_out(70,nx,ny,aa9(-1,-1,-5),'b2ush9_he_aa9m5')
+       call my_out(70,nx,ny,aa9(-1,-1,-4),'b2ush9_he_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),'b2ush9_he_aa9m3')
+       call my_out(70,nx,ny,aa9(-1,-1,-2),'b2ush9_he_aa9m2')
+       call my_out(70,nx,ny,aa9(-1,-1,-1),'b2ush9_he_aa9m1')
+       call my_out(70,nx,ny,aa9(-1,-1, 0),'b2ush9_he_aa9m0')
+       call my_out(70,nx,ny,aa9(-1,-1, 1),'b2ush9_he_aa9p1')
+       call my_out(70,nx,ny,aa9(-1,-1, 2),'b2ush9_he_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),'b2ush9_he_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_he_aa9p4')
+       call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_he_aa9p5')
+       call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_he_aa9p6')
+       call my_out(70,nx,ny,reshe,'b2ush9_reshe')
+       call my_out(70,nx,ny,corte,'b2ush9_corte')
+      endif
+
       endif                                                           !srv 22.05.18
 
 * ..atom temperature correction equation
@@ -560,6 +607,25 @@
         corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
        enddo
       enddo
+
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,aa9(-1,-1,-6),'b2ush9_hi_aa9m6')
+       call my_out(70,nx,ny,aa9(-1,-1,-5),'b2ush9_hi_aa9m5')
+       call my_out(70,nx,ny,aa9(-1,-1,-4),'b2ush9_hi_aa9m4')
+       call my_out(70,nx,ny,aa9(-1,-1,-3),'b2ush9_hi_aa9m3')
+       call my_out(70,nx,ny,aa9(-1,-1,-2),'b2ush9_hi_aa9m2')
+       call my_out(70,nx,ny,aa9(-1,-1,-1),'b2ush9_hi_aa9m1')
+       call my_out(70,nx,ny,aa9(-1,-1, 0),'b2ush9_hi_aa9m0')
+       call my_out(70,nx,ny,aa9(-1,-1, 1),'b2ush9_hi_aa9p1')
+       call my_out(70,nx,ny,aa9(-1,-1, 2),'b2ush9_hi_aa9p2')
+       call my_out(70,nx,ny,aa9(-1,-1, 3),'b2ush9_hi_aa9p3')
+       call my_out(70,nx,ny,aa9(-1,-1, 4),'b2ush9_hi_aa9p4')
+       call my_out(70,nx,ny,aa9(-1,-1, 5),'b2ush9_hi_aa9p5')
+       call my_out(70,nx,ny,aa9(-1,-1, 6),'b2ush9_hi_aa9p6')
+       call my_out(70,nx,ny,reshi,'b2ush9_reshi')
+       call my_out(70,nx,ny,corti,'b2ush9_corti')
+      endif
+
       endif                                                           !srv 22.05.18
 
 *   ..return

@@ -3,7 +3,7 @@
 
       subroutine b2npht (nx, ny, ns, nregionv, itcnt, ismain, solving,   !srv 05.07.17
      &  solvereg, solvireg, solvtreg, solvpreg, solvmreg,                !srv 22.05.18
-     1  rxf, dtim, BoRiS, fac_ExB, hx, hy, vol, bb,                      !srv 07.07.21
+     &  rxf, dtim, BoRiS, fac_ExB, hx, hy, gs, qc, vol, bb,              !srv 07.07.21
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                    !som 16.08.21 !srv 24.08.21
      &  fchdia, uadia, wadia, vadia, vaecrb,
@@ -30,6 +30,7 @@
       real (kind=R8) ::
      *  rxf, dtim, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),        !srv 07.07.21
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny),
      *  lnlam(-1:nx,-1:ny)                                               !srv 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
@@ -137,7 +138,7 @@
       call subini ('b2npht')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
+       call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21 {
        if(style_b2mndt.eq.2) then
         rxg = huge(1.0_R8)
         pcm0 = 0.0_R8
@@ -163,7 +164,7 @@
         call ipgetr ('b2npht_rxg', rxg)
         call ipgetr ('b2npht_pcm0', pcm0)
         call ipgetr ('b2npht_pcm1', pcm1)
-       endif                                                           !srv 07.07.21 }
+       endif                                                          !srv 07.07.21 }
        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')
@@ -252,7 +253,7 @@
      &  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)   !xpb !srv 24.08.21
       else
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                 !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  hx, hy, vol, bb, pbs, lnlam, na, ua, ue,
+     *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,           !som 16.08.21 !srv 24.08.21
      *  cvsa_drho, she0, shi0)                                           !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
@@ -304,14 +305,14 @@ cdjm Jan2017 update particle source components for balance
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
-     &                    get_residuals.eq.1) then                   !srv 22.05.18
+     &                    get_residuals.eq.1) then                      !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
-      endif                                                          !srv 22.05.18
+      endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
-     &                   get_residuals.eq.1) then                    !srv 22.05.18
+     &                   get_residuals.eq.1) then                       !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-      endif                                                          !srv 22.05.18
-*   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
+      endif                                                             !srv 22.05.18
+*   ..compute heat source due to electron-ions collisions               !srv 18.09.09 30.01.10 {
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
@@ -401,9 +402,9 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,ti,'b2npht_ti')
        call my_out(70,nx,ny,po,'b2npht_po')
       elseif (iout_b2wdat.eq.4) then
-        call my_out(70,nx,ny,te,'b2npht_te')
-        call my_out(70,nx,ny,ti,'b2npht_ti')
-        if(style_b2mndt.eq.2) then                                      !srv 07.07.21
+       call my_out(70,nx,ny,te,'b2npht_te')
+       call my_out(70,nx,ny,ti,'b2npht_ti')
+       if(style_b2mndt.eq.2) then                                     !srv 07.07.21
          wrk0=1.5_R8*vol*ne*(te-tep)/dtim
          call my_out(70,nx,ny,wrk0,'b2npht_nedtedt')
          wrk0=1.5_R8*vol*tep*(ne-nep)/dtim
@@ -412,7 +413,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
          call my_out(70,nx,ny,wrk0,'b2npht_nidtidt')
          wrk0=1.5_R8*vol*tip*(ni(:,:,0)-nip(:,:,0))/dtim
          call my_out(70,nx,ny,wrk0,'b2npht_tidnidt')
-        else
+       else
          do iy = -1,ny
           do ix = -1,nx
            ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
@@ -430,7 +431,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
           enddo
          enddo
          call my_out(70,nx,ny,wrk0,'b2npht_dnitidt')
-        endif                                                           !srv 07.07.21 }
+       endif                                                          !srv 07.07.21 }
       end if
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)

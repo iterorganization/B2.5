@@ -98,7 +98,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-* 
+*
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiax(ix,iy,is) specifies
@@ -326,7 +326,7 @@
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
+*     the kinetic energy of a particle of species (is) in cell (ix,iy).
 *
 *     tim - real*8.
 *     The simulation time (in seconds).

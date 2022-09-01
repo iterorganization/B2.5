@@ -141,7 +141,7 @@
        call xertst (0.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-       call ipgeti ('b2npc11_iout', iout)                              !srv 13.07.05
+       call ipgeti ('b2npc11_iout', iout)                             !srv 13.07.05
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
@@ -291,7 +291,7 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,wrk0,'b2npc11_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc11_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc11_fnay'//chns)
-        if(style_b2mndt.eq.2) then                                     !srv 24.05.21 {
+        if(style_b2mndt.eq.2) then                                    !srv 24.05.21 {
          wrk0 = vol*(nb-nap(:,:,isb))/dtim
         else
          wrk0 = 0.0_R8
@@ -307,7 +307,7 @@ cdjm Jan2017 update particle source components for balance
           enddo
          enddo
         endif
-        call my_out(70,nx,ny,wrk0,'b2npc11_dnadt'//chns)                !srv 24.05.21 }
+        call my_out(70,nx,ny,wrk0,'b2npc11_dnadt'//chns)              !srv 24.05.21 }
        endif
       endif
 

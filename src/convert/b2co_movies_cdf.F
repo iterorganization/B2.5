@@ -7,8 +7,8 @@
       implicit none
       integer nx, ny, ns, natm, nmol
       real (kind=R8) :: tim
-      real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
+#     include <netcdf.inc>
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #else
@@ -37,8 +37,6 @@
 
       call subini ('b2co_movies_cdf')
       write(*,*) 'b2co_movies_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2movies.nc file

@@ -289,12 +289,13 @@ c
               hlp_p=hlp_p+fhp(ixf,iyf,1,is)
             end do !}
             do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+fa_ext(ixf,iyf,1,is)*ev*
+              hlp_p=hlp_p+
+     .          fa_ext(ixf,iyf,1,is)*ev*
      .         (pt_ext(ix,iy,is)*hy1(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,1,is)*(1.0_R8-BoRiS)*
-     .          0.5_R8*am_ext(is)*mp*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,1,is)*
+     .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hy1(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
@@ -312,12 +313,13 @@ c
               hlp_p=hlp_p+fhp(ixf,iyf,0,is)
             end do !}
             do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+fa_ext(ixf,iyf,0,is)*ev*
+              hlp_p=hlp_p+
+     .          fa_ext(ixf,iyf,0,is)*ev*
      .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*(1.0_R8-BoRiS)*
-     .          0.5_R8*am_ext(is)*mp*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*
+     .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))

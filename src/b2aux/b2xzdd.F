@@ -33,7 +33,7 @@
           enddo
         enddo
       endif
-      if(zero_dead_and_core.ge.2) then
+      if (zero_dead_and_core.ge.2) then
         if (boundary_namelist.eq.1) then
           do ib = 1, nbc
             if (core_boundary(ib)) then

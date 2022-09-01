@@ -16,7 +16,8 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(natm1, iatm1, nmol1, imol1, nion1, iion1)
+      subroutine b2yt_ntread(nwrite,
+     &  natm1, iatm1, nmol1, imol1, nion1, iion1)
 c
 c  version : 06.11.97 22:11
 c
@@ -37,6 +38,7 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
+      integer nwrite
       integer natm1, nmol1, nion1
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
@@ -47,7 +49,8 @@ c
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
-      character*9 filename
+      character*256 filename, message
+      logical ex
       data jvftnew / 20170930 /
 
 *   ..initialisation
@@ -55,8 +58,8 @@ c
       save width
 
 *  -- PROCEDURES --
-      character*32 :: get_B25_hash
-      external ipgeti, ipgetr, xertst, get_B25_hash
+      character*32 :: get_Eir_hash
+      external ipgeti, ipgetr, xertst, get_Eir_hash
 #endif
 
 *=======================================================================
@@ -148,8 +151,8 @@ C TO READ THE FILE PRODUCED BY DOS
 C
       rewind (46)
       filename=fort_lc//'46.2'
-      open(unit=47,file=filename,status='unknown')
-      write(*,*) 'Writing '//filename
+      open(unit=47,file=trim(filename),status='unknown')
+      write(*,*) 'Writing '//trim(filename)
 C
       READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
@@ -159,7 +162,7 @@ C
         call xerrab
      .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
-      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
+      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_Eir_hash()
       READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
       write(*,'(3a,4i6)')
@@ -176,7 +179,7 @@ c
 * neutral atoms
 C
       do 11 IS = 1, NATMI
-        READ (46,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        READ (46,'(A)',END=99,ERR=99) TEXTAN(IS-1)
    11 CONTINUE
       if (natm1.gt.0) then
         allocate(textan1(0:natm1-1))
@@ -184,7 +187,7 @@ C
           if (iatm1(is).ne.0) TEXTAN1(iatm1(is)-1) = TEXTAN(is-1)
         end do
         do is = 1, natm1
-          WRITE(47,'(A8)') TEXTAN1(IS-1)
+          WRITE(47,'(A)') TEXTAN1(IS-1)
         end do
         deallocate(textan1)
       end if
@@ -192,7 +195,7 @@ C
 * neutral molecules
 C
       do 12 IS = 1, NMOLI
-        READ (46,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
+        READ (46,'(A)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
       if (nmol1.gt.0) then
         allocate(textmn1(0:nmol1-1))
@@ -200,7 +203,7 @@ C
           if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
         end do
         do is = 1, nmol1
-          WRITE(47,'(A8)') TEXTMN1(IS-1)
+          WRITE(47,'(A)') TEXTMN1(IS-1)
         end do
         deallocate(textmn1)
       end if
@@ -208,7 +211,7 @@ C
 * test ions
 C
       do 13 IS = 1, NIONI
-        READ (46,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
+        READ (46,'(A)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
       if (nion1.gt.0) then
         allocate(textin1(0:nion1-1))
@@ -216,7 +219,7 @@ C
           if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
         end do
         do is = 1, nion1
-          WRITE(47,'(A8)') TEXTIN1(IS-1)
+          WRITE(47,'(A)') TEXTIN1(IS-1)
         end do
         deallocate(textin1)
       end if
@@ -517,6 +520,176 @@ C
       deallocate(field1)
       deallocate(pux,puy,pvx,pvy)
    99 CONTINUE
+
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) then ! average fluxes, Makarov 02.04.2019
+        OPEN (UNIT=48,FILE=trim(filename),ACCESS='SEQUENTIAL')
+        filename=fort_lc//'46_aver.2'
+        OPEN (UNIT=49,FILE=trim(filename),status='unknown')
+        write(*,*) 'Writing '//trim(filename)
+        write(nwrite,'(a)') fort_lc//'46_aver.2'
+        rewind(48)
+        read (48,*) jvft46
+        write(49,'(2x,i8,2x,a32)') jvftnew,get_Eir_hash()
+        read (48,'(e16.8)') aver_frac46
+        write(49,'(e16.8)') aver_frac46
+        read (46,*) idummy
+        write(message,'(a)')
+     .   'Mismatched number of triangles between '//
+     .    fort_lc//'46 and '//fort_lc//'46_aver files !'
+        call xertst(idummy.eq.ntrii,message)
+        write(49,'(i6)') ntrii
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((PDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((PDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = pdena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'pdena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'pdena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = pdenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'pdenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'pdenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((EDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((EDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = edena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'edena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'edena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = edenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'edenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'edenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((VXDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((VXDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = vxdena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vxdena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vxdena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = vxdenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vxdenm',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vxdenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((VYDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((VYDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = vydena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vydena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vydena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = vydenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vydenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vydenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((VZDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((VZDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = vzdena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vzdena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vzdena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = vzdenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vzdenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vzdenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        rewind(48)
+        close(48)
+        close(49)
+      endif
 #endif
 
 *  ---------------------------------------------------------------------
@@ -542,6 +715,3 @@ C
       call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
       end subroutine b2yt_ntread
-
-
-

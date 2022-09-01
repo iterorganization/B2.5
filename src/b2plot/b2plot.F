@@ -19,8 +19,8 @@ c 2002-09-11: logic revised
       use b2mod_diag
       use b2mod_rates
       use b2mod_b2plot
-      use b2mod_plasma
       use b2mod_movies
+      use b2mod_plasma
       use b2mod_sources
       use b2mod_sputter
       use b2mod_indirect
@@ -78,6 +78,9 @@ c 2002-09-11: logic revised
       use b2mod_subsys
       implicit none
 #     include <DIMENSIONS.F>
+#ifndef NO_CDF
+#     include <netcdf.inc>
+#endif
       integer nxd,nyd,nsd_local
 c
 c  version : 27.07.96 20:37
@@ -193,14 +196,14 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done
-      logical open_file, streql
+      logical open_file, streql, isaletter
       integer len_of_digits
       real (kind=R8) ::
      *   qevap, qrad,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external open_file, streql,
+      external open_file, streql, isaletter,
      *   xertst, xerrab, ipgetr, ipgeti, len_of_digits,
      *   qevap, qrad,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
@@ -1034,6 +1037,7 @@ c
         nsw=ns
         call eirene_mc_init(nx,ny)
         call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+        nlimi=0
         p1=0.0_R8
         p2=0.0_R8
       else
@@ -1797,7 +1801,7 @@ c
           nz=1
           call copy(fhet(:,:,0),1.0_R8,nz,textbl)
         case('fhety')
-        description='Radial electron energy flux [fhety] (W)'
+          description='Radial electron energy flux [fhety] (W)'
           nz=1
           call copy(fhet(:,:,1),1.0_R8,nz,textbl)
         case('fhix')
@@ -2070,7 +2074,7 @@ c
         case('ehx')
           description='ehx'
           nz=1
-          call b2xehx(nx, ny, hx, te, po, ne, mach(-1,-1,0))
+          call b2xehx(nx, ny, te, po, ne, mach(-1,-1,0))
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'
@@ -4537,7 +4541,7 @@ c     assumes that bb is OK for 1d cases
       end subroutine select_matrix
 
       subroutine select_stack_manipulation
-      integer i,ix,iy,is,isp,iss
+      integer i,ix,iy,is,isp,iatm
 
       cflag=.true.
       FVALUE: select case (cval)
@@ -5591,64 +5595,69 @@ c     assumes that bb is OK for 1d cases
           if(b2plot_debug.ge.12)
      &     write(*,*) iistack,irstack,isstack,iwrk,iwwrk,stack_req
           if(bad_args(stack_req)) write(*,*) 'Sorry!'
-          do is=1,natmi
-            do iss=0,ns-1
-              stmp1=''
-              i=1
-              j=0
-              do while (i.le.len(textpl(iss)))
-                cc=textpl(iss)(i:i)
-                if (cc.eq.'^'.or.cc.eq.'{'.or.cc.eq.'}'.or.
-     &             (cc.eq.' '.and.i.gt.1) ) then
-                  i=i+1
-                else if (cc.ge.'A'.and.cc.le.'Z') then
-                  i=i+1
-                  j=j+1
-                  stmp1(j:j)=char(ichar(cc)-ichar('A')+ichar('a'))
-                else
-                  i=i+1
-                  j=j+1
-                  stmp1(j:j)=cc
-                endif
-              enddo
-              stmp2=trim(textan(is-1))//'0'
-              call lower_case(stmp2)
-              if(is_neutral(iss) .and. streql(stmp1,stmp2)) then
+          do is=0,ns-1
+            if (is_neutral(is)) then
+              mach(:,:,is)=na(:,:,is)
+              ua(:,:,is)=ua(:,:,is)*na(:,:,is)
+              up(:,:,is)=up(:,:,is)*na(:,:,is)
+              vv(:,:,is)=vv(:,:,is)*na(:,:,is)
+              do iatm=1,natmi
+                if (latmscl(iatm).ne.b2espcr(is)) cycle
+                stmp2=trim(textan(iatm-1))
+                if (isaletter(stmp2(lnblnk(stmp2):lnblnk(stmp2))))
+     >           stmp2=stmp2(1:lnblnk(stmp2))//'0'
                 write(*,'(5a,i3,a,i3,a)')
      .           'We seem to have found a match between ',
-     &            trim(textpl(iss)),' and ',
-     &            trim(textan(is-1))//'0',
-     &           '  (',iss,' & ',is,')'
+     &            trim(textpl(is)),' and ',trim(stmp2),
+     &           '  (',is,' & ',iatm,')'
                 do iy=-1,ny
                   do ix=-1,nx
-                    if (maxval(abs(pfluxa)).gt.0.0_R8) then
-                      fna(ix,iy,0,iss)=fna(ix,iy,0,iss)+
-     &                 pfluxa(ix+1,iy+1,is,1)*gs(ix,iy,0)*qz(ix,iy,1)
-                      fnax(ix,iy,iss)=fna(ix,iy,0,iss)
-                      fna(ix,iy,1,iss)=fna(ix,iy,1,iss)+
-     &                 rfluxa(ix+1,iy+1,is,1)*gs(ix,iy,1)
-                      fnay(ix,iy,iss)=fna(ix,iy,1,iss)
-                      ua(ix,iy,iss)=(ua(ix,iy,iss)*na(ix,iy,iss)+
-     &                  pfluxa(ix+1,iy+1,is,1)*bb(ix,iy,0)/bb(ix,iy,3))/
-     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
-                      uutraj(ix,iy,iss)=ua(ix,iy,iss)
-                      up(ix,iy,iss)=(up(ix,iy,iss)*na(ix,iy,iss)+
-     &                  pfluxa(ix+1,iy+1,is,1))/
-     &                 (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
-                      arrowx(ix,iy,iss)=up(ix,iy,iss)
-                      vv(ix,iy,iss)=(vv(ix,iy,iss)*na(ix,iy,iss)+
-     &                      rfluxa(ix+1,iy+1,is,1))/
-     &                     (na(ix,iy,iss)+dab2(ix+1,iy+1,is,1))
-                      arrowy(ix,iy,iss)=vv(ix,iy,iss)
-                      vvtraj(ix,iy,iss)=vv(ix,iy,iss)
-                    endif
-                    na(ix,iy,iss)=na(ix,iy,iss)+
-     &                            dab2(ix+1,iy+1,is,1)
-                    ro(ix,iy,iss)=am(iss)*mp*na(ix,iy,iss)
+                    mach(ix,iy,is)=mach(ix,iy,is)+dab2(ix+1,iy+1,iatm,1)
                   enddo
                 enddo
-              endif
-            enddo
+                if (maxval(abs(pfluxa(:,:,iatm,1))).gt.0.0_R8) then
+                  do iy=-1,ny
+                    do ix=-1,nx
+                      fna(ix,iy,0,is)=fna(ix,iy,0,is)+
+     &                 pfluxa(ix+1,iy+1,iatm,1)*gs(ix,iy,0)*qz(ix,iy,1)
+                      ua(ix,iy,is)=ua(ix,iy,is)+
+     &                 pfluxa(ix+1,iy+1,iatm,1)*bb(ix,iy,0)/bb(ix,iy,3)
+                      up(ix,iy,is)=up(ix,iy,is)+pfluxa(ix+1,iy+1,iatm,1)
+                    enddo
+                  enddo
+                endif
+                if (maxval(abs(rfluxa(:,:,iatm,1))).gt.0.0_R8) then
+                  do iy=-1,ny
+                    do ix=-1,nx
+                      fna(ix,iy,1,is)=fna(ix,iy,1,is)+
+     &                 rfluxa(ix+1,iy+1,iatm,1)*gs(ix,iy,1)
+                      vv(ix,iy,is)=vv(ix,iy,is)+rfluxa(ix+1,iy+1,iatm,1)
+                    enddo
+                  enddo
+                endif
+              enddo
+              na(:,:,is)=mach(:,:,is)
+              do iy=-1,ny
+                do ix=-1,nx
+                  if(na(ix,iy,is).gt.0.0_R8) then
+                    ua(ix,iy,is)=ua(ix,iy,is)/na(ix,iy,is)
+                    up(ix,iy,is)=up(ix,iy,is)/na(ix,iy,is)
+                    vv(ix,iy,is)=vv(ix,iy,is)/na(ix,iy,is)
+                  else
+                    ua(ix,iy,is)=0.0_R8
+                    up(ix,iy,is)=0.0_R8
+                    vv(ix,iy,is)=0.0_R8
+                  endif
+                enddo
+              enddo
+              fnax(:,:,is)=fna(:,:,0,is)
+              fnay(:,:,is)=fna(:,:,1,is)
+              arrowx(:,:,is)=up(:,:,is)
+              arrowy(:,:,is)=vv(:,:,is)
+              uutraj(:,:,is)=ua(:,:,is)
+              vvtraj(:,:,is)=vv(:,:,is)
+              ro(:,:,is)=am(is)*mp*na(:,:,is)
+            endif
           enddo
           eirc_done=.true.
           return
@@ -6846,7 +6855,8 @@ cdpc still in testing phase
             call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
           end if
         case('vxa')
-          description='Atoms X-directed velocity (m.s^{-1})'
+          description=
+     .     'Atoms Cartesian X-directed velocity (m.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vxa,1.0_R8,nz,textan)
@@ -6855,7 +6865,8 @@ cdpc still in testing phase
             call eirene_copy(vxa,1.0_R8,nz,textbl)
           end if
         case('vxm')
-          description='Molecules X-directed velocity (m.s^{-1})'
+          description=
+     .     'Molecules Cartesian X-directed velocity (m.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vxm,1.0_R8,nz,textmn)
@@ -6864,7 +6875,8 @@ cdpc still in testing phase
             call eirene_copy(vxm,1.0_R8,nz,textbl)
           end if
         case('vxi')
-          description='Test ions X-directed velocity (m.s^{-1})'
+          description=
+     .     'Test ions Cartesian X-directed velocity (m.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vxi,1.0_R8,nz,textin)
@@ -6873,7 +6885,8 @@ cdpc still in testing phase
             call eirene_copy(vxi,1.0_R8,nz,textbl)
           end if
         case('vya')
-          description='Atoms Y-directed velocity (m.s^{-1})'
+          description=
+     .     'Atoms Cartesian Y-directed velocity (m.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vya,1.0_R8,nz,textan)
@@ -6882,7 +6895,8 @@ cdpc still in testing phase
             call eirene_copy(vya,1.0_R8,nz,textbl)
           end if
         case('vym')
-          description='Molecules Y-directed velocity (m.s^{-1})'
+          description=
+     .     'Molecules Cartesian Y-directed velocity (m.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vym,1.0_R8,nz,textmn)
@@ -6891,7 +6905,8 @@ cdpc still in testing phase
             call eirene_copy(vym,1.0_R8,nz,textbl)
           end if
         case('vyi')
-          description='Test ions Y-directed velocity (m.s^{-1})'
+          description=
+     .     'Test ions Cartesian Y-directed velocity (m.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vyi,1.0_R8,nz,textin)
@@ -6900,7 +6915,8 @@ cdpc still in testing phase
             call eirene_copy(vyi,1.0_R8,nz,textbl)
           end if
         case('vza')
-          description='Atoms Z-directed velocity (m.s^{-1})'
+          description=
+     .     'Atoms Cartesian Z-directed velocity (m.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vza,1.0_R8,nz,textan)
@@ -6909,7 +6925,8 @@ cdpc still in testing phase
             call eirene_copy(vza,1.0_R8,nz,textbl)
           end if
         case('vzm')
-          description='Molecules Z-directed velocity (m.s^{-1})'
+          description=
+     .     'Molecules Cartesian Z-directed velocity (m.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vzm,1.0_R8,nz,textmn)
@@ -6918,7 +6935,8 @@ cdpc still in testing phase
             call eirene_copy(vzm,1.0_R8,nz,textbl)
           end if
         case('vzi')
-          description='Test ions Z-directed velocity (m.s^{-1})'
+          description=
+     .     'Test ions Cartesian Z-directed velocity (m.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vzi,1.0_R8,nz,textin)
@@ -6928,7 +6946,7 @@ cdpc still in testing phase
           end if
         case('vxdena')
           description=
-     .     'Atoms X-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Atoms Cartesian X-momentum density (kg.m^{-2}.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vxdena,10.0_R8,nz,textan)
@@ -6938,7 +6956,7 @@ cdpc still in testing phase
           end if
         case('vxdenm')
           description=
-     .     'Molecules X-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Molecules Cartesian X-momentum density (kg.m^{-2}.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vxdenm,10.0_R8,nz,textmn)
@@ -6948,7 +6966,7 @@ cdpc still in testing phase
           end if
         case('vxdeni')
           description=
-     .     'Test ions X-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Test ions Cartesian X-momentum density (kg.m^{-2}.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vxdeni,10.0_R8,nz,textin)
@@ -6958,7 +6976,7 @@ cdpc still in testing phase
           end if
         case('vydena')
           description=
-     .     'Atoms Y-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Atoms Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vydena,10.0_R8,nz,textan)
@@ -6968,7 +6986,7 @@ cdpc still in testing phase
           end if
         case('vydenm')
           description=
-     .     'Molecules Y-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Molecules Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vydenm,10.0_R8,nz,textmn)
@@ -6978,7 +6996,7 @@ cdpc still in testing phase
           end if
         case('vydeni')
           description=
-     .     'Test ions Y-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Test ions Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vydeni,10.0_R8,nz,textin)
@@ -6988,7 +7006,7 @@ cdpc still in testing phase
           end if
         case('vzdena')
           description=
-     .     'Atoms Z-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Atoms Cartesian Z-momentum density (kg.m^{-2}.s^{-1})'
           if (natmi.gt.0) then
             nz=natmi
             call eirene_copy(vzdena,10.0_R8,nz,textan)
@@ -6998,7 +7016,7 @@ cdpc still in testing phase
           end if
         case('vzdenm')
           description=
-     .     'Molecules Z-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Molecules Cartesian Z-momentum density (kg.m^{-2}.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
             call eirene_copy(vzdenm,10.0_R8,nz,textmn)
@@ -7008,7 +7026,7 @@ cdpc still in testing phase
           end if
         case('vzdeni')
           description=
-     .     'Test ions Z-directed momentum density (kg.m^{-2}.s^{-1})'
+     .     'Test ions Cartesian Z-momentum density (kg.m^{-2}.s^{-1})'
           if (nioni.gt.0) then
             nz=nioni
             call eirene_copy(vzdeni,10.0_R8,nz,textin)
@@ -7125,8 +7143,8 @@ cdpc still in testing phase
         case('eclvd')    ! customise Eirene contour level delta
           stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call
-     .     eclvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
+          call eclvd(rstack(irstack-2),rstack(irstack-1),
+     1               rstack(irstack))
           do iclv=1,3
             dummy=rpop(rstack,irstack)
           end do
@@ -8691,8 +8709,8 @@ c normalised weights is 1
         case('wclvd')    ! customise wall contour level delta
           stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call
-     .     wclvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
+          call wclvd(rstack(irstack-2),rstack(irstack-1),
+     .               rstack(irstack))
           do iclv=1,3
             dummy=rpop(rstack,irstack)
           end do
@@ -10751,7 +10769,7 @@ c
         case('nion')     ! nion
           stack_name='integer'
           call ipush(istack,iistack,nion)
-        case('nxtl')     ! nxtl 
+        case('nxtl')     ! nxtl
           stack_name='integer'
           if (nnreg(0).eq.8) then
             call ipush(istack,iistack,nxtl)
@@ -11425,6 +11443,7 @@ c calculate neoclassical diagnostics
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.
       endif
+      return
       end subroutine initialize_neoclassical
 
       end subroutine b2plot
@@ -11442,5 +11461,5 @@ c calculate neoclassical diagnostics
      .    'tdata(1,',i,',',kind,',',is,')=',s_ref(i),',',
      1   ' tdata(2,',i,',',kind,',',is,')=',q(i),','
       enddo
+      return
       end subroutine write_crazy
-

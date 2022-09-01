@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, bb, ti,        !som 13.07.21
-     1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
-     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
+      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx,                !som 13.07.21
+     1  bb, ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,  !srv 17.05.99 27.12.01
+     &  vadia, fchvispar, fchvisper, fchvisq, fchinert, fchanml,        !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
@@ -26,8 +26,9 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       integer nx, ny, ns
       real (kind=R8) ::
      * ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
-     & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
-     * bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
+     & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
+     & chvi(-1:nx,-1:ny,0:1),
+     & bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      & cddi(-1:nx,-1:ny,0:1,0:ns-1),
      & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny),
@@ -75,8 +76,8 @@ csw 30apr2014 added fna_he, ia
       integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
-      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-      integer, save :: b2kin=0, b2vis=0
+      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+      integer, save :: b2kin = 0, b2vis = 0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
@@ -84,7 +85,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8) ::
      *   floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,              !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf,                          !srv 13.10.06 17.06.09
-     *   floi_vhx(-1:nx,-1:ny)                                          !som 13.07.21
+     &   floi_vhx(-1:nx,-1:ny)                                          !som 13.07.21
 cpax
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
@@ -126,9 +127,9 @@ cpax
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
-       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)         !som 13.07.21
-       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)               !som 13.07.21
-       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)       !som 13.07.21
+       call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 13.07.21
+       call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 13.07.21
+       call ipgeti ('b2tfhi_Zhdanov_vel_heat', Zhdanov_vel_heat)        !som 13.07.21
       endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -147,7 +148,7 @@ cpax
        call b2xvff (nx, ny, chvi, 'chvi')
       endif
 
-      call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,                 !srv 02.04.18
+      call b2tipsch (nx, ny, ns, facdrift, !vol, hx, hy,                !srv 02.04.18
      1  na, ti, cddi, coni, fhiPSch)                                    !srv 13.10.06
 
       facdriftm = maxval(facdrift)

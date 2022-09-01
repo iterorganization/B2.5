@@ -34,7 +34,8 @@
       real (kind=R8) ::
      * poleldr, poldidr, radeldr, raddidr
       real (kind=R8) ::
-     * wpo(-1:nx,-1:ny), poc(-1:nx,-1:ny), weight(-1:nx,-1:ny)
+     * wpo(-1:nx,-1:ny), weight(-1:nx,-1:ny),
+     * poc(-1:nx,-1:ny)
       save ncall, drift_style, poleldr, poldidr, radeldr, raddidr
 *   ..procedures
       intrinsic min
@@ -93,7 +94,7 @@ cxpb  Must check that we are not at the island X-point or at the mesh edge
      &           rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
      &           region(ix,iy,0).ne.0) then                              !xpb
 cxpb  Standard case
-                veecrb(ix,iy,0) = - 1.0_R8/hy1(ix,iy)*     ! signmf      !xpb !srv 11.01.13
+                veecrb(ix,iy,0) = - 1.0_R8/hy1(ix,iy)*       ! signmf    !xpb !srv 11.01.13
      1            bb(ix,iy,2)/bb(ix,iy,3)**2*                            !xpb
      2           (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
      &            poleldr*fac_ExB(ix,iy)                                 !xpb
@@ -108,7 +109,7 @@ cxpb  Standard case
               endif                                                      !xpb
             enddo
           enddo
-        
+
           call intfaceh(nx,ny,leftix,leftiy,vol,po,wpo)
           do iy = -1, ny                                                 !xpb
             do ix = -1, nx
@@ -143,7 +144,7 @@ cxpb  Standard case
      .            vedia(leftix(ix,iy),leftiy(ix,iy),:)                   !xpb
               endif
               if(topiy(ix,iy).eq.ny+1) then                              !xpb
-                veecrb(ix,iy,:) = 
+                veecrb(ix,iy,:) =
      .            veecrb(bottomix(ix,iy),bottomiy(ix,iy),:)              !xpb
                 vedia(ix,iy,:) =
      .            vedia(bottomix(ix,iy),bottomiy(ix,iy),:)               !xpb
@@ -169,13 +170,13 @@ cxpb  Standard case
             enddo
           enddo                                                          !xpb
 
-       elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then     ! 5.2 drift treatment
+        elseif (drift_style.eq.1 .or. redef_gmtry.eq.0) then     ! 5.2 drift treatment
 
-         weight = 1.0e0_R8                                               !lk   
-         call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
-         do iy = 0, ny-1
-           do ix = 0, nx
-             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
+          weight = 1.0e0_R8                                              !lk
+          call intcor(nx,ny,weight,po,poc)                               !lk 12.12.07
+          do iy = 0, ny-1
+            do ix = 0, nx
+              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
                veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)/               !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1          (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))* ! signmf* !srv
      2          (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
@@ -188,13 +189,13 @@ cxpb  Standard case
      &          /(qe*hy1(leftix(ix,iy),leftiy(ix,iy)))                   !srv
      &           +te(ix,iy)*bb(ix,iy,2)/(qe*hy1(ix,iy)))*0.5_R8          !srv 05.02.05
      &          *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv 05.03.99
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-         do iy = 0, ny 
-           do ix = 0, nx-1
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+          do iy = 0, ny
+            do ix = 0, nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
                veecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)/                 !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      1          (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))* !signmf*!srv
      2          (bb(ix,iy,2)/bb(ix,iy,3)**2                              !srv 05.02.05
@@ -208,31 +209,31 @@ cxpb  Standard case
      &           +te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy)))*0.5_R8           !srv
      &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
      &            OnedBsqc(ix,iy))                                       !srv 05.03.99
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-       elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then             ! IYS 11.02.2020
+        elseif (drift_style.eq.2 .and. redef_gmtry.eq.1) then            ! IYS 11.02.2020
 
-         weight = 1.0e0_R8                                               !lk   
-         call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
-         do iy = 0, ny-1
-           do ix = 0, nx
-             if(leftix(ix,iy).ne.-2) then                                !srv 26.11.02
-               veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)                !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+          weight = 1.0e0_R8                                              !lk
+          call intcor(nx,ny,weight,po,poc)                               !lk 12.12.07
+          do iy = 0, ny-1
+            do ix = 0, nx
+              if(leftix(ix,iy).ne.-2) then                               !srv 26.11.02
+                veecrb(ix,iy,0) = - poleldr*fac_ExB(ix,iy)               !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2              *(poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))*        !srv 13.05.16 }
      &           wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy)   ! IYS 04.03.2019
-               vedia(ix,iy,0) = -poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
+                vedia(ix,iy,0) = -poldidr*facdrift(ix,iy)* ! signmf*     !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &           0.5_R8 * (te(leftix(ix,iy),leftiy(ix,iy)) + te(ix,iy))
      &           * wbbl(ix,iy,2) / (qe * hyl(ix,iy) * qc(ix,iy))         ! IYS 04.03.2019
      &           *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))  !srv 05.03.99
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-         do iy = 0, ny 
-           do ix = 0, nx-1
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
+          do iy = 0, ny
+            do ix = 0, nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
                veecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)                  !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2           *(poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))        !srv 13.05.16 }
      &           * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)       ! IYS 04.03.2019
@@ -240,19 +241,19 @@ cxpb  Standard case
      &           (te(bottomix(ix,iy),bottomiy(ix,iy)) + te(ix,iy))*
      &           0.5_R8*wbbv(ix,iy,2) / (qe * hxb(ix,iy))                ! IYS 04.03.2019
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv 05.03.99
-             endif
-           enddo
-         enddo
+              endif
+            enddo
+          enddo
 
-       else         ! drift_style                                    ! IYS 11.02.2020 {                            
+        else         ! drift_style                                       ! IYS 11.02.2020 {
 
-         write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
+          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
-         call xerrab (
-     &   'faulty definition of drift_style and redef_gmtry, ' // 
-     &   'or logical mistake occurred')
+          call xerrab (
+     &    'faulty definition of drift_style and redef_gmtry, ' //
+     &    'or logical mistake occurred')
 
-       endif
+        endif
 
       endif
 

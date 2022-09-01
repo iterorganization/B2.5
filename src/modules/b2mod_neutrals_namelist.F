@@ -44,6 +44,7 @@ cank }
       use eirdiag   ! IGNORE
       use ceirsrt   ! IGNORE
 #endif
+      use eirmod_solps
 #else
       use b2mod_eirdiag
 #endif
@@ -157,6 +158,7 @@ cank }
       real (kind=R8), save :: fchar_chemical
       integer, save :: igass_chemical, itsput_chemical, issput_chemical
 #endif
+      integer, save :: MAXPOIN
 #endif
 
 csw 21feb2012
@@ -199,7 +201,7 @@ csw 21feb2012
      6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf,
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
+     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN
 
       contains
 
@@ -377,6 +379,7 @@ cwdk 0% momentum recycling, for backwards compatibility
       else
         l_neutflux=0
       endif
+      MAXPOIN=2000
 
       chemical_erosion_redep_fac=1.0_R8
       chemical_erosion_be_fac=.false.
@@ -618,6 +621,7 @@ c
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif
+      call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
       call xertst (0.0_R8.lt.eirene_step_dt,
@@ -1127,6 +1131,9 @@ c.. Test consistency with physical edges within the computational domain
       integer istra
       logical file_ok
       external find_file, xertst
+#ifdef USE_MPI
+      external xerrab
+#endif
 
       saved_volrec(:)=0.0_R8
 

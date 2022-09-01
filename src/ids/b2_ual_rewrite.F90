@@ -117,7 +117,7 @@ program b2_ual_rewrite
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
-    version = '3'
+    write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
     same_run_number = .true.
     write (*,*) 'Starting b2mn init'
@@ -169,6 +169,7 @@ program b2_ual_rewrite
 #endif
 #endif
     if (.not.streql(device_env,' ')) database = device_env
+    if (streql(database,'iter')) database = 'ITER'
 #endif
     call ipgetc('b2mndr_device', database )
     call ipgetc('b2mndr_database', database )
@@ -226,7 +227,7 @@ program b2_ual_rewrite
     call imas_open_env(treename, shot, run, idx, &
       &                username, database, version, status)
     if ( status.eq.0 .and. idx.ne.0 ) then
-      write (0,*) "Reading old IMAS data-entry ", trim(database), shot, run
+      write (0,*) "Reading old IMAS data-entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
       call ids_get( idx, "dataset_description", old_description, status)
@@ -329,11 +330,11 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 30
       &  divertors, &
 #endif
-      &  tim, dtim, shot, new_run, database, version )
+      &  tim, dteff, shot, new_run, database, version, new_eq_ggd )
 
     write(*,*) "START new_ids_edge"
     call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, &
+        &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
         &   summary, &
 #endif
@@ -343,7 +344,7 @@ program b2_ual_rewrite
 #if IMAS_MINOR_VERSION > 30
         &   divertors, &
 #endif
-        &   idx )
+        &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
     write(*,*) trim(systemarg)
@@ -363,6 +364,19 @@ program b2_ual_rewrite
       call system(systemarg)
 #endif
     end if
+    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+        &   numerics, &
+#endif
+#if IMAS_MINOR_VERSION > 30
+        &   divertors, &
+#endif
+        &   radiation )
+    call dealloc_batch_edge( batch_profiles, batch_sources, &
+#if IMAS_MINOR_VERSION > 21
+        &   summary, &
+#endif
+        &   description )
     call close_ual(idx)
     idx = 0
 

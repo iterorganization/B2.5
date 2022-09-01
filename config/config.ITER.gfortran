@@ -37,7 +37,7 @@ endif
 
 DDBLOPTION =
 
-LDLIBES = -lm
+LDLIBES =
 
 GGD_VERSION ?= `pkg-config ggd --modversion`
 

@@ -19,6 +19,7 @@
       use b2mod_indirect
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
@@ -37,7 +38,7 @@
      ,  , only : eirene_mc
       use b2mod_sources
      , , only : sna0_eir_tot, smo0_eir_tot, she0_eir_tot, shi0_eir_tot,
-     ,          ext_sna
+     ,          sne0_eir_tot, sch0_eir_tot, ext_sna
       use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
@@ -99,7 +100,7 @@
 *   ..local variables
       integer n2, ix, iy, is, ib, ic, ibnd, itrack, k                   !iyv 07.03.18
       integer, save :: jxi, jxa, jsep
-      integer, save :: no_b2stbr_phys_call=0, mdf_fnb = 0               !IYS 27.11.2018
+      integer, save :: no_b2stbr_phys_call = 0, mdf_fnb = 0             !IYS 27.11.2018
       integer, save :: out_tfiles = 1                                   !xpb 28.09.16
       integer, save :: iout = 0,        iout_b2npmo = 0,                !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
@@ -114,7 +115,7 @@
       real (kind=R8) :: flxtmp(0:nx+1,0:ny+1),
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi),
      &  fmol_eir(-1:nx,-1:ny,0:1,nmol),                                 !IYS 27.01.17
-     &  sna_puff(nspecies),  !sna_eir_tot(nspecies), 
+     &  sna_puff(nspecies),  !sna_eir_tot(nspecies),
      &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies)
 #endif
@@ -150,7 +151,7 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8             !iyv 07.03.18
+      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8         !iyv 07.03.18
       logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -406,8 +407,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -506,7 +507,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+        call b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -535,9 +536,9 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   hx, gs, na, ua,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
+        call b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
+     &   hx, gs,
+     &   na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   coreregno, coreregn2, output,
@@ -698,7 +699,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &                 main_call)
 
 *   ..main part of implementation of method of effective sources (ES)
-        if (sna_corr .gt. 0.0_R8 ) then                                  !iyv 07.03.18 {
+        if (sna_corr .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
           if ( iout .ne. 0 )
      >      write(*,*) '******* sna_eir correction calculations *******'
           sna_core = 0.0_R8
@@ -726,7 +727,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
 !              do im = 1, nnmoli
 !                if (mlcmp(ia,im).gt.0) then
-!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) - 
+!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
 !     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
 !     &                              - wldpm(ix,im,0))
 !                end if
@@ -821,13 +822,13 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
             sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
             sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
 
-! { IYS 12.01.2018, 
+! { IYS 12.01.2018,
 !      sna_eir = 0.0_R8
-!          if (ank_tracing .gt. 0) then    
+!          if (ank_tracing .gt. 0) then
 !            do iy = -1, ny
 !              do ix = -1, nx
 !                sna_eir(k) = sna_eir(k)*t(k)
-!     &              sna0(ix,iy,0,is) + 
+!     &              sna0(ix,iy,0,is) +
 !     &              sna0(ix,iy,1,is) * na(ix,iy,is)
 !              enddo
 !            enddo
@@ -872,6 +873,7 @@ cwdk i.e. fully replaced by the averaged values from b2faveri
 cwdk get the averaged sources
           call run_av_get_sources(sna0_eir_tot, smo0_eir_tot,
      &                            she0_eir_tot, shi0_eir_tot,
+     &                            sch0_eir_tot, sne0_eir_tot,
      &                            nx, ny, ns)
 
 cwdk note: only total Eirene source are averaged!
@@ -902,21 +904,21 @@ cwdk these are now put back into the constant part of the sources (0-component)
 
 #ifdef ASTRA
         if (use_astra.ne.0) then
-          do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
+          do is = 0, ns-1                                                !srv 28.07.11 20.02.12 {
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,:,0,is)+
      &             sna0_eir(:,:,1,is)*na(:,:,is)
               call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
             endif
-          enddo                                                           !srv 28.07.11 20.02.12 }
+          enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*te(:,:)+she0_eir(:,:,2)*ne+
      &     she0_eir(:,:,3)*ne*te
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)              !srv 11.06.13
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*ti+shi0_eir(:,:,2)*ni(:,:,0)+
      &     shi0_eir(:,:,3)*ni(:,:,0)*ti
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1026,7 +1028,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           enddo
           if (.not.over_erosion) then
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)
+     1       dteff*plate_time_factor(ibnd)
             do itrack = 1, ntargsp
               if (.not.equilibrium(itrack)) then
                 if (sput_frac_flag.ne.0)
@@ -1050,7 +1052,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
             enddo
           else
             plate_time(ibnd)=plate_time(ibnd)+
-     1       dtim*plate_time_factor(ibnd)*t_frac
+     1       dteff*plate_time_factor(ibnd)*t_frac
             do itrack = 1, ntargsp
               particle_inventory(ibnd,itrack)= max( 0.0_R8,
      .         particle_inventory(ibnd,itrack)+t_frac*
@@ -1282,8 +1284,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         call my_out(70,nx,ny,
      .              fna(-1:nx,-1:ny,1,is),'b2stbr_fnay'//chns)
         endif
-       enddo 
-      endif                                                           
+       enddo
+      endif
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
@@ -1548,4 +1550,3 @@ c        write(*,*) 'Called neutr_scl'
 *.end b2stbr_init
 
       end subroutine b2stbr_init
-

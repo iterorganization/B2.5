@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfch (nx, ny, ns, ismain,
+      subroutine b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,         !xpb
      1  ti, ni, na, fna, uadia,
@@ -25,7 +25,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain, guard_flows                            !xpb
+      integer nx, ny, ns, nscx, ismain, iscx(0:nscxmax-1),
+     & guard_flows                                                       !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
@@ -65,7 +66,8 @@
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      5  avisper_a(-1:nx,-1:ny,0:1,0:ns-1),
      &  bvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
-     6  cvisper_a(-1:nx,-1:ny,0:1,0:ns-1), fchvisper(-1:nx,-1:ny,0:1),
+     6  cvisper_a(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fchvisper(-1:nx,-1:ny,0:1),
      7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
      &  fchstoch(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1)             !srv 24.08.21
 *   ..common blocks
@@ -203,18 +205,20 @@ c Drift terms
       facdriftm = maxval(facdrift)                                       !srv 23.12.19
       fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, facdrift, fac_ExB,
+      call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, bb,
      & pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, ismain, bb, na, ua, cvsa_cl,              !srv 19.02.21
-     &             cvsa_drho, fac_vis,                                   !srv 20.09.06 16.10.17 !som 18.08.21
+      call b2tvspa(nx, ny, ns, ismain, bb,                               !srv 19.02.21
+     &             na, ua, cvsa_cl, cvsa_drho, fac_vis,                  !srv 20.09.06 16.10.17 !som 18.08.21
      &             fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
-      call b2tvspr(nx, ny, ns, ismain, fac_vis, vol, po, ti, na,         !srv 10.10.17 19.02.21
+      call b2tvspr(nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
+     &             vol, po, ti, na,
      &             avisper_a, bvisper_a, cvisper_a,
      &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
@@ -223,8 +227,8 @@ c Drift terms
      &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &             fchvisq_a, fchvisq)
 *  ..  calculate inertia current                                         !srv 07.07.99
-      call b2tiner (nx, ny, ns, ismain, vol, gs, bb, na, ua,             !srv 22.11.12 08.09.21 }
-     &              facdrift, fchinert_a, fchinert)
+      call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                     !srv 22.11.12 08.09.21 }
+     &              na, ua, facdrift, fchinert_a, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
       call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)       !srv 07.07.14
@@ -291,7 +295,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               fch_p(ix,iy,0) =
      &         ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
      &         phm2*calf(ix,iy,0)*tex0)*prl_cur
-              fch(ix,iy,0) = ((csig(ix,iy,0)-csig_an(ix,iy,0))*ehx-
+              fch(ix,iy,0) = ((csig(ix,iy,0)-
+     &         csig_an(ix,iy,0))*ehx-
      &         phm2*calf(ix,iy,0)*tex0)*prl_cur
      &       +fch_anomalous*(csig_an(ix,iy,0)*ehx_po-
      &                  phm2*calf_an(ix,iy,0)*tex0)*prl_cur
@@ -408,8 +413,10 @@ cxpb turn off poloidal flows in core boundary
                 fch_p(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8      !srv 10.06.08
                 fchdia(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
                 fchin(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
-                fchvispar(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
-                fchvisper(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
+                fchvispar(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                         0.0_R8
+                fchvisper(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
+     .                                                         0.0_R8
                 fchvisq(bc_list_x(ix,ib),bc_list_y(ix,ib),0) = 0.0_R8
               enddo
             endif

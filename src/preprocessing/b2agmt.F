@@ -179,11 +179,11 @@
           sin_t = sinang (
      &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &        crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
           cos_t = cosang (
      &       (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &       (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &       crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &        crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
           if (leftix(ix,iy) .gt. -2) then
             sin_tl = sinang (
      &        (crx(ix,iy,0)+crx(ix,iy,2))-
@@ -192,7 +192,7 @@
      &        (cry(ix,iy,0)+cry(ix,iy,2))-
      &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
      &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
-     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &         crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
            cos_tl = cosang (
      &        (crx(ix,iy,0)+crx(ix,iy,2))-
      &        (crx(leftix(ix,iy),leftiy(ix,iy),0)+
@@ -200,15 +200,13 @@
      &        (cry(ix,iy,0)+cry(ix,iy,2))-
      &        (cry(leftix(ix,iy),leftiy(ix,iy),0)+
      &         cry(leftix(ix,iy),leftiy(ix,iy),2)),
-     &        crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &         crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
 
             tt = sqrt(0.25_R8 * (cos_t + 1.0_R8) * (cos_tl + 1.0_R8))
-            qc(ix,iy) =
-     &             tt - 0.25_R8 * sin_t * sin_tl / tt
+            qc(ix,iy) = tt - 0.25_R8 * sin_t * sin_tl / tt
           else
             tt = 0.5_R8 * (cos_t + 1.0_R8)
-            qc(ix,iy) =
-     &             tt  - 0.25_R8 * sin_t * sin_t / tt
+            qc(ix,iy) = tt  - 0.25_R8 * sin_t * sin_t / tt
           endif
         endif
 
@@ -469,4 +467,3 @@ C Coordinates of centroid of a triangle given by vertex coordinates
       end function dist
 
       end subroutine b2agmt
-

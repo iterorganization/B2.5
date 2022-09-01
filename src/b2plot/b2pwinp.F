@@ -56,7 +56,7 @@ c
       mimp=lun
       keylen=8
       fixkey=.false.
-      finish = repeat(' ',8)
+      finish = 'finish'
       promp(1) = repeat(' ',8)
       promp(2) = repeat(' ',8)
       ufile='param.dg'

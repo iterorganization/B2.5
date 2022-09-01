@@ -18,7 +18,6 @@ c
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
 #endif
       implicit none
 #include <DIMENSIONS.F>
@@ -34,7 +33,7 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
+      logical goup,placed(DEF_NLIM),found,direction_same
       logical is_target_edge
       integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
@@ -54,9 +53,6 @@ c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
 c        end do
 c      end do
 cc%%%
-      no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
-     &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
-
       do il=1,nwldprt
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
@@ -151,7 +147,7 @@ c*** No connection found
               if (lskip(j)) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=0
-              elseif (no_fort44) then
+              elseif (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else 
@@ -163,7 +159,7 @@ c*** No connection found
                 if (is_target_edge) then
                   k = 1
                   found = .false.
-                  do while (.not.found .and. k.le.nlim)
+                  do while (.not.found .and. k.le.nlimi)
                     if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .                 abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
                       direction_same = abs(
@@ -220,7 +216,7 @@ c*** No connection found
                 else
                   k = 1
                   found = .false.
-                  do while (.not.found .and. k.le.nlim)
+                  do while (.not.found .and. k.le.nlimi)
                     if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .                  abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
      .                  abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.

@@ -5,7 +5,7 @@
       character*(*) label
       extralabel=label
       return
-      end
+      end subroutine clear_extralabel
 
       subroutine clear_xlabel(label)
       use b2mod_types
@@ -13,7 +13,7 @@
       character*(*) label
       xlabel=label
       return
-      end
+      end subroutine clear_xlabel
 
       subroutine clear_ylabel(label)
       use b2mod_types
@@ -21,4 +21,4 @@
       character*(*) label
       ylabel=label
       return
-      end
+      end subroutine clear_ylabel

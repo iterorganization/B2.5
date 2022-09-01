@@ -11,6 +11,7 @@
      &  cvsahz_hAdp, cvsahz_hBdp, cvsahz_hAdp_luc, cvsahz_hBdp_luc)     !som 08.10.2021
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_b2cmpt
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2mrel
@@ -18,6 +19,7 @@
       use b2mod_zhfrtf
       use b2mod_transport
      , , only: f_luc_ki, f_luc_et, alpha1
+      use b2mod_transport_namelist
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -89,6 +91,7 @@
       integer ix, iy, is, inucl, iz,i, j
       real (kind=R8) :: temp
       real (kind=R8) :: wrk(-1:nx,-1:ny), volhz(-1:nx,-1:ny)
+      real (kind=R8) :: cfl(-1:nx,-1:ny)
       real (kind=R8) :: zn_temp, am_temp, amti(0:nspecies-1),
      &  amti_mdf(0:nspecies-1),
      &  zeffne, nz2n(0:nspecies-1), nati(0:ns-1), eta_cl_xy(0:ns-1),
@@ -227,6 +230,10 @@
       cvsahz0_luc=0.0_R8
       cvsa0_luc=0.0_R8
 
+*   ..compute viscous flux limit profile
+      call cfl_tanh_profile(nx, ny, cflim(2),
+     .  cflmv_core, cflmv_sol, cflmv_tanh_a, cflmv_tanh_b, cfl)
+
 *   ..calculate transport coefficietns
       do iy = -1, ny
         do ix = -1, nx
@@ -235,12 +242,12 @@
 *    ..normalized average Z**2*n
           nz2n=z2n_xy(ix,iy,0:nspecies-1)/zeffne
 *    ..calculate the correction for each charge state (heat flux/R-moment/friction)
-          call b2trcc(nspecies, mum, mdm, nz2n,
+          call b2trcz(nspecies, mum, mdm, nz2n,
      &     wrkc, wrkcB, c_hwB, c_rwB, c_hTB, c_rTB)
           c_R_TB_nofl(ix,iy,0:nspecies-1) = wrkc
           c_R_wB(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcB
 *    ..calculate the correction for each charge state (viscous stress tensor)
-          call b2trcs(nspecies, mum, mdm, nz2n,
+          call b2trcw(nspecies, mum, mdm, nz2n,
      &     c_pi_uB(0:nspecies-1), c_pi_hB(0:nspecies-1))
 
           if (zh_imp_analyt.eq.0) then
@@ -297,7 +304,7 @@
             call b2trtf(nspecies, wrkG2, wrkG8,
      &        mum, mdm, Ainv_fl, Ainv_mdf_fl,
      &        wrkcc)
-           c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
+            c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
             do j = 0, nspecies-1
 *    ..calculate the transport coefficient of the velocity-dependent part
@@ -519,7 +526,8 @@
 *    ..calculate flux limiting for the viscous stress
           nati(0:ns-1) = na(ix,iy,0:ns-1)*ti(ix,iy)
           eta_cl_xy(0:ns-1) = eta_cl(ix,iy,0:ns-1)
-          call b2trfl_vis (ix, iy, ns, eta_cl_xy, nati, gamma, cF_limv)
+          call b2trfl_vis (ix, iy, ns,
+     &     eta_cl_xy, nati, gamma, cfl(ix,iy), cF_limv)
 
 *    ..the velocity-dependent part
           do is = 0, ns-1
@@ -741,8 +749,8 @@
               if (on_closed_surface(ix,iy)) then
                 cvsahz0_luc(ix,iy,0,is) = cvsahz0(ix,iy,0,is)*
      &           f_luc_et(ix,iy)
-                cvsahz_drho_luc(ix,iy,0,is) = cvsahz_drho(ix,iy,0,is)*
-     &           f_luc_et(ix,iy)
+                cvsahz_drho_luc(ix,iy,0,is) =
+     &           cvsahz_drho(ix,iy,0,is)*f_luc_et(ix,iy)
                 cvsa0_luc(ix,iy,0,is) = cvsa0(ix,iy,0,is)*
      &           f_luc_et(ix,iy)
                 cvsa_drho_luc(ix,iy,0,is) = cvsa_drho(ix,iy,0,is)*
@@ -765,10 +773,10 @@
           do iy = -1, ny
             do ix = 0, nx
               if (on_closed_surface(ix,iy)) then
-                cvsahz_hAdp_luc(ix,iy,0,i,j) = cvsahz_hAdp(ix,iy,0,i,j)*
-     &           f_luc_et(ix,iy)*alpha1(ix,iy)
-                cvsa_hAdp_luc(ix,iy,0,i,j) = cvsa_hAdp(ix,iy,0,i,j)*
-     &           f_luc_et(ix,iy)*alpha1(ix,iy)
+                cvsahz_hAdp_luc(ix,iy,0,i,j) =
+     &           cvsahz_hAdp(ix,iy,0,i,j)*f_luc_et(ix,iy)*alpha1(ix,iy)
+                cvsa_hAdp_luc(ix,iy,0,i,j) =
+     &           cvsa_hAdp(ix,iy,0,i,j)*f_luc_et(ix,iy)*alpha1(ix,iy)
               else
                 cvsahz_hAdp_luc(ix,iy,0,i,j) = cvsahz_hAdp(ix,iy,0,i,j)
                 cvsa_hAdp_luc(ix,iy,0,i,j) = cvsa_hAdp(ix,iy,0,i,j)

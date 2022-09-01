@@ -7,9 +7,23 @@ FC = pgf90
 
 ifndef SOLPS_CPP
 DEFINES += -DPGF90 -DNOQUAD
+FCOPTS  += -Mnorpath
 ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
 DEFINES += -DCONSTANTS_PROVIDED
-INCMODS += `pkg-config fundamental-constants --cflags`
+ifdef AMNS_PREFIX
+  AMNS_VERSION = `pkg-config amns --modversion`
+  AMNS_MAJOR_VERSION = $(shell echo ${AMNS_VERSION} | cut -d '.' -f1 )
+  AMNS_MINOR_VERSION = $(shell echo ${AMNS_VERSION} | cut -d '.' -f2 )
+else
+  AMNS_MAJOR_VERSION = 0
+  AMNS_MINOR_VERSION = 0
+endif
+ifeq ($(shell test ${AMNS_MAJOR_VERSION} -le 1; echo $$?),0)
+  ifeq ($(shell test ${AMNS_MINOR_VERSION} -le 3; echo $$?),0)
+    SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
+    INCMODS += `pkg-config fundamental-constants --cflags`
+  endif
+endif
 endif
 endif
 
@@ -47,21 +61,24 @@ IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
 LD_UAL  ?= `pkg-config imas-pgi ggd --libs`
 INCMODS += `pkg-config imas-pgi ggd --cflags`
 else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
 LD_UAL  ?= `pkg-config imas-pgi --libs` -lggd-pgi
 INCMODS += `pkg-config imas-pgi --cflags`
 else
-GGD_MINOR_VERSION = 0
+GGD_MINOR_VERSION ?= 0
+GGD_MICRO_VERSION ?= 0
 LD_UAL  ?= `pkg-config imas-lowlevel imas-pgi --libs`
 INCMODS += `pkg-config imas-lowlevel imas-pgi --cflags`
 endif
 endif
 ifndef SOLPS_CPP
-DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION}
+DEFINES += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
 endif
 IMASLIBS = ${LD_UAL}
 endif
@@ -77,7 +94,7 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES += ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+CXXFLAGS = -std=c++11
 endif
 
 LD = ${FC}
