@@ -121,4 +121,4 @@ c     so the standard cleanup routine can still be used (checks on allocation of
       endif 
 
       return
-      end
+      end subroutine eirene_mc_init

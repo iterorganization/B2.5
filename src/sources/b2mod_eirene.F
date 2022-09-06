@@ -4647,8 +4647,8 @@ c!###}
           is2 = fluids_list(species_end(jtrg))
           if (crcstra(jtrg).ne.rcchr_eir(itrg) .or.
      &        rcpos(jtrg)  .ne.rcpos_eir(itrg) .or.
-     &        rcstart(jtrg).le.rcbeg_eir(itrg) .or.
-     &        rcend(jtrg)  .ge.rcend_eir(itrg) .or.
+     &        rcstart(jtrg).gt.rcbeg_eir(itrg) .or.
+     &        rcend(jtrg)  .lt.rcend_eir(itrg) .or.
      &        is1          .ne.rcspi_eir(itrg) .or.
      &        is2          .ne.rcspe_eir(itrg)) ierror = ierror + 1
           if (.not.first) icnt = icnt + 1

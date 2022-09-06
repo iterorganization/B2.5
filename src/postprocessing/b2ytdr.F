@@ -10384,7 +10384,7 @@ cxpb  Convert fort.44 file if needed
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
-          call b2yt_ngread(solps_version, eirene_format,
+          call b2yt_ngread(nout(5), solps_version, eirene_format,
      &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
      &     ns1-nspecies1, ipls1, npls,
      &     no_sputtering, savestratum, non_commensurate, flip,
@@ -10401,7 +10401,8 @@ cxpb  Convert fort.46 file if needed
         filename=fort_lc//'46'
         inquire(file=filename,exist=todo)
         if (todo.and..not.same_atoms) then
-          call b2yt_ntread(natmi1, iatm1, nmol1, imol1, nion1, iion1)
+          call b2yt_ntread(nout(5),
+     &     natmi1, iatm1, nmol1, imol1, nion1, iion1)
           write(nout(5),'(a)') fort_lc//'46.2'
         else if (todo) then
           write(nout(5),'(a)') 'fort.46'

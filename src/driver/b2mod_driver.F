@@ -58,7 +58,7 @@
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
       use b2mod_b2plot
-     , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     , ,only: nlimi, wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -71,6 +71,8 @@
      , ,only: iunout
       use eirmod_comusr
      , ,only: eirene_alloc_comusr
+      use eirmod_refusr
+     , ,only: write_conbe
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
@@ -1409,6 +1411,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 #endif
 #endif
          if (.not.streql(device_env,' ')) database = device_env
+         if (streql(database,'iter')) database = 'ITER'
 #endif
          call ipgetc('b2mndr_device', database )
          call ipgetc('b2mndr_database', database )
@@ -1435,6 +1438,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 #endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
+        IUNOUT=6+IFOFF
         CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
@@ -2020,6 +2024,7 @@ cxpb initialize the numerics data
       endif
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
+      nlimi = 0
 #ifdef B25_EIRENE
       filename=fort_lc//'44'
       call find_file(filename,ex)
@@ -2034,6 +2039,9 @@ cxpb for neutral fluxes used in b2stbc_phys
           call ngread(ismain,iflag)
         endif
       endif
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) call ntread_save
 #else
       if (ids_save.ne.0.or.ids_av.gt.0.or.delta_ids_time.gt.0.0_R8)
      > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
@@ -2466,6 +2474,7 @@ c new CDF movie option
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
+            call write_conbe(savefile(13:16))
             filename=fort_lc//'13'
             inquire(file=filename,exist=found)
             if (found) then

@@ -211,7 +211,7 @@
      &                    log(na(leftix(ix,iy),leftiy(ix,iy),is))))/
      &                     (qe*rza(ix,iy,is)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnal(ix,iy,0,is0)*
+     &             +csigia(ix,iy,0)*wbbl(ix,iy,3)*fnal(ix,iy,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -229,7 +229,7 @@
      &              (nal(ix,iy,is)*qe*rza(ix,iy,is)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnal(ix,iy,0,is0)*
+     &             +csigia(ix,iy,0)*wbbl(ix,iy,3)*fnal(ix,iy,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -249,7 +249,7 @@
      &                log(na(bottomix(ix,iy),bottomiy(ix,iy),is))))/
      &              (qe*rza(ix,iy,is))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnav(ix,iy,1,is0)*    !srv 11.01.13
+     &            - csigia(ix,iy,1)*wbbv(ix,iy,3)*fnav(ix,iy,1,is0)*    !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -266,7 +266,7 @@
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &             (nab(ix,iy,is)*qe*rza(ix,iy,is))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnav(ix,iy,1,is0)*    !srv 11.01.13
+     &            - csigia(ix,iy,1)*wbbv(ix,iy,3)*fnav(ix,iy,1,is0)*    !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
                  endif
                 enddo
