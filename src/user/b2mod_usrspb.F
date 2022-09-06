@@ -446,12 +446,8 @@ c----------------------------------------------------------------------
           write(*,'(a,i8,3a,i8)')
      ,     '!!! b2mod_usrspb: current version ',lv,
      ,     ' differs from that in the file ',trim(f),' : ',nv
-! FIXME
-! These lines also should be revised, since they might lead to run-time error
-! or, in some other cases, prevent it (depending on what is in input)
-            filedata(ltrc)=.false.
-            return
-! FIXME
+          filedata(ltrc)=.false.
+          return
         end if
         
 ! Check total number of columns   
@@ -461,8 +457,8 @@ c----------------------------------------------------------------------
      ,     ' differs from that in the file ',trim(f),' : ',N_ttl_read
           write(*,*) 'Writing into file ',trim(f),
      ,   ' cannot be continued - remove the existing file first!'
-            filedata(ltrc)=.false.
-            return
+          filedata(ltrc)=.false.
+          return
         end if
 
 ! Check total number of targets   
@@ -489,12 +485,9 @@ c----------------------------------------------------------------------
           return
         end if
         
-!!! FIXME
-! This block is still leads to run-time error...
    50   read(lun,fmt='(a1)',end=55,err=55) hlp_c
         go to 50
    55   backspace lun
-!!! FIXME
 
 c----------------------------------------------------------------------
       else ! file 'user_SPb.trc' does not yet exist
