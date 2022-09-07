@@ -8290,7 +8290,7 @@ cxpb          endif
      1        (ENIPAR(IB,1)*max(0.0_R8,
      .         fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0,is))+
      2                      max(0.0_R8,
-     2         fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,0,is)))/
+     2         fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,1,is)))/
      2         ni(bc_list_x(iy,ib),bc_list_y(iy,ib),0)
             end do
           end do
