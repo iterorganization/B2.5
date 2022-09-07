@@ -469,7 +469,9 @@
      &         bzb(leftix(ix,iy),leftiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
      &       ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &        (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
+     &        (hy(leftix(ix,iy),leftiy(ix,iy))*
+     &         qz(leftix(ix,iy),leftiy(ix,iy),1)+
+     &         hy(ix,iy)*qz(ix,iy,1)))/
      &        (rza(ix,iy,is)*qe)
            if (use_9pt_stencil.ne.0)
      >      cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
@@ -485,7 +487,9 @@
      &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
      &       ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &        (hy(bottomix(ix,iy),bottomiy(ix,iy))+hy(ix,iy)))/
+     &        (hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     &         qz(bottomix(ix,iy),bottomiy(ix,iy),1)+
+     &         hy(ix,iy)*qz(ix,iy,1)))/
      &        (rza(ix,iy,is)*qe)
           endif
          enddo
@@ -504,7 +508,9 @@
      &       bzb(leftix(ix,iy),leftiy(ix,iy))
      &       +vol(ix,iy)*bzb(ix,iy))/
      &     ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &      (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
+     &      (hy(leftix(ix,iy),leftiy(ix,iy))*
+     &       qz(leftix(ix,iy),leftiy(ix,iy),1)+
+     &       hy(ix,iy)*qz(ix,iy,1)))/
      &      qe
          if (use_9pt_stencil.ne.0) cdde(ix,iy,0,1) = cdde(ix,iy,0,0)
         endif
@@ -519,7 +525,9 @@
      &       bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &       +vol(ix,iy)*bzb(ix,iy))/
      &     ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &      (hy(bottomix(ix,iy),bottomiy(ix,iy))+hy(ix,iy)))/
+     &      (hy(bottomix(ix,iy),bottomiy(ix,iy))*
+     &       qz(bottomix(ix,iy),bottomiy(ix,iy),1)+
+     &       hy(ix,iy)*qz(ix,iy,1)))/
      &      qe
         endif
        enddo

@@ -185,7 +185,7 @@ cpax
 !     &            /bb(leftix(ix,iy),leftiy(ix,iy),3)
 !     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5e0_R8
 !     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
-!     &     *vadia(ix,iy,0,is)
+!     &     *vadia(ix,iy,0,0,is)
            if (use_9pt_stencil.ne.0) flidia(ix,iy,0,1) =
      &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))

@@ -399,7 +399,7 @@
              iy = -1                                              !sv 15.02.02
              smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                 !sv 09.01.01 01.07.05
      &       s0hz*(am(is)*mp)*naaverage(is)                       !sv 15.02.02
-!     &     *(2.0e0_R8*vadia(ix,iy,1,is))
+!     &     *(2.0e0_R8*vadia(ix,iy,1,1,is))
      &        *(-2.0e0_R8*facdrift(ix,iy)*phm2*       ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
      &           tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy)) !sv 15.02.02
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !sv 05.03.99 15.02.02
@@ -773,6 +773,7 @@ c         fchi=0.0e0_R8                            ! was commented
            if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
               sna0(ix,iy,0,is) = sna0(ix,iy,0,is)-
      &                     fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+     &                    -fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,1,is)
            endif                                                         !sv 13.10.06 }
            if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08 {
      &       sna0(ix,iy,0,is) = sna0(ix,iy,0,is) - cbsna(7,is,ireg)*
@@ -845,11 +846,13 @@ c         sna0(-1,iy,1,1) = -1.0d60
           if(mdf_fhi.ne.0) then                                          !sv 13.10.06 {
            shi0(ix,iy,0) = shi0(ix,iy,0) -
      .      fhiPSch(rightix(ix,iy),rightiy(ix,iy),0,0)
+     .     -fhiPSch(rightix(ix,iy),rightiy(ix,iy),0,1)
           endif                                                          !sv 13.10.06 }
 *    ..compute electron heat source
           she0(ix,iy,0) = she0(ix,iy,0)+                                 !sv 26.11.02
      &     cbshe(0,ireg)*s0+cbshe(6,ireg)*
-     &     max(0.0e0_R8,fne(rightix(ix,iy),rightiy(ix,iy),0,0))          !sv 26.11.02
+     &     max(0.0e0_R8,fne(rightix(ix,iy),rightiy(ix,iy),0,0)+
+     &                  fne(rightix(ix,iy),rightiy(ix,iy),0,1))          !sv 26.11.02
           she0(ix,iy,1) = she0(ix,iy,1)+                                 !sv 26.11.02
      &     cbshe(1,ireg)*s0
           she0(ix,iy,3) = she0(ix,iy,3)+                                 !sv 26.11.02
@@ -859,15 +862,17 @@ c         sna0(-1,iy,1,1) = -1.0d60
      &     cbshe(5,ireg)*cstm*s1+                                        !sv 11.02.00
 !     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
      &     cbshe(7,ireg)*((2.0e0_R8-1.0e0_R8)/1.0e0_R8+3.0e0_R8)         !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-!     &    *max(0.0e0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0))/ne(ix,iy)!sv 11.02.00 26.11.02 25.12.06
+!     &    *max(0.0e0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0)
+!     &                  -fne(rightix(ix,iy),rightiy(ix,iy),0,1))/ne(ix,iy)!sv 11.02.00 26.11.02 25.12.06
      &    *max(0.0e0_R8, (pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst       !sv 25.12.06
-     &     +fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)))      !sv 25.12.06
+     &       +fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)))    !sv 25.12.06
 !         write(*,"('pbs*cst=',es10.3,' fch_p/qe/ne=',es10.3)")
 !     &             pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst,
-!     &             fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)
+!     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)
           if(mdf_fhe.ne.0) then                                          !sv 01.06.06 {
            she0(ix,iy,0) = she0(ix,iy,0) -
      .      fhePSch(rightix(ix,iy),rightiy(ix,iy),0,0)
+     .     -fhePSch(rightix(ix,iy),rightiy(ix,iy),0,1)
           endif                                                          !sv 01.06.06 }
 *    ..compute charge source
           sch0(ix,iy,2) = sch0(ix,iy,2)+                                 !sv 26.11.02
@@ -985,6 +990,7 @@ c         fchi=0.0e0_R8                      !sv was commented
      &      cbsna(6,is,ireg)*max(0.0e0_R8,-ua(ix,iy,is)*pbs(ix,iy,0))    !sv 26.11.02
            if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
             sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + fnaPSch(ix,iy,0,0,is)
+     &                                          + fnaPSch(ix,iy,0,1,is)
            endif                                                         !sv 13.10.06 }
            if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08
      &      sna0(ix,iy,0,is) = sna0(ix,iy,0,is) -
@@ -1040,7 +1046,8 @@ c         sna0(nx,iy,1,1) = -1.0d160
            t0 = na(ix,iy,is)/ni(ix,iy,0)                                 !sv 26.11.02
            shi0(ix,iy,0) = shi0(ix,iy,0)+                                !sv 26.11.02
      &      cbshi(0,is,ireg)*t0*s0+
-     &      cbshi(6,is,ireg)*max(0.0e0_R8,-fna(ix,iy,0,0,is))            !sv 26.11.02
+     &      cbshi(6,is,ireg)*max(0.0e0_R8,-fna(ix,iy,0,0,is)
+     &                                    -fna(ix,iy,0,1,is))            !sv 26.11.02
            shi0(ix,iy,1) = shi0(ix,iy,1)+                                !sv 26.11.02
      &      cbshi(1,is,ireg)*t0*s0
            shi0(ix,iy,3) = shi0(ix,iy,3)+                                !sv 26.11.02
@@ -1049,15 +1056,17 @@ c         sna0(nx,iy,1,1) = -1.0d160
      &      cbshi(4,is,ireg)*t0*cstm*s0+
      &      cbshi(5,is,ireg)*t0*cstm*s1+
      &      cbshi(7,is,ireg)*t0*cst*pbs(ix,iy,0)                         !sv 26.11.02 28.01.03
-!     &    cbshi(7,is,ireg)*max(0.0e0_R8,fna(ix,iy,0,0,is))/ni(ix,iy,0)  !sv 26.11.02
+!     &    cbshi(7,is,ireg)*max(0.0e0_R8,fna(ix,iy,0,0,is)+
+!     &                                  fna(ix,iy,0,1,is))/ni(ix,iy,0)  !sv 26.11.02
           enddo
           if(mdf_fhi.ne.0) then                                          !sv 13.10.06 {
             shi0(ix,iy,0) = shi0(ix,iy,0)+fhiPSch(ix,iy,0,0)
+     &                                   +fhiPSch(ix,iy,0,1)
           endif                                                          !sv 13.10.06 }
 *    ..compute electron heat source
           she0(ix,iy,0) = she0(ix,iy,0)+                                 !sv 26.11.02
      &     cbshe(0,ireg)*s0+
-     &     cbshe(6,ireg)*max(0.0e0_R8,-fne(ix,iy,0,0))                   !sv 26.11.02
+     &     cbshe(6,ireg)*max(0.0e0_R8,-fne(ix,iy,0,0)-fne(ix,iy,0,1))    !sv 26.11.02
           she0(ix,iy,1) = she0(ix,iy,1)+                                 !sv 26.11.02
      &     cbshe(1,ireg)*s0
           she0(ix,iy,3) = she0(ix,iy,3)+                                 !sv 26.11.02
@@ -1067,11 +1076,13 @@ c         sna0(nx,iy,1,1) = -1.0d160
      &     cbshe(5,ireg)*cstm*s1+                                        !sv 11.02.00
 !     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
      &     cbshe(7,ireg)*((2.0e0_R8-1.0e0_R8)/1.0e0_R8+3.0e0_R8)         !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-!     &                *max(0.0e0_R8,fne(ix,iy,0,0))/ne(ix,iy)           !sv 11.02.00 26.11.02 25.12.06
+!     &                *max(0.0e0_R8,fne(ix,iy,0,0)+
+!     &                              fne(ix,iy,0,1))/ne(ix,iy)           !sv 11.02.00 26.11.02 25.12.06
      &    *max(0.0e0_R8,
      &                (pbs(ix,iy,0)*cst-fch_p(ix,iy,0,0)/qe/ne(ix,iy)))  !sv 25.12.06
           if(mdf_fhe.ne.0) then                                          !sv 13.10.06 {
             she0(ix,iy,0) = she0(ix,iy,0)+fhePSch(ix,iy,0,0)             !sv 09.11.08
+     &                                   +fhePSch(ix,iy,0,1)
           endif                                                          !sv 13.10.06 }
 *    ..compute charge source
           sch0(ix,iy,2) = sch0(ix,iy,2)+                                 !sv 26.11.02

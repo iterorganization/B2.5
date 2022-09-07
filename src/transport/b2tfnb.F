@@ -274,7 +274,7 @@
           else
            wrk4(ix,iy)=
      &      (wrk3(ix,iy)-wrk3(bottomix(ix,iy),bottomiy(ix,iy)))
-!     &    /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*2.0_R8 because cddi contains factor vol/hx/hy
+!     &    /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*2.0_R8 because cddi contains factor vol/hx/hy1
           endif
          enddo
         enddo
@@ -298,7 +298,7 @@
            wrk4(ix,iy) = 0.0_R8
           else
            wrk4(ix,iy) = (wrk3(ix,iy)-wrk3(leftix(ix,iy),leftiy(ix,iy)))
-!     &    /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*2.0_R8  because cddi contains factor vol/hx/hy
+!     &    /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*2.0_R8  because cddi contains factor vol/hx/hy1
           endif
          enddo
         enddo
@@ -702,13 +702,13 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
         do iy = 0, ny-1
          do ix = 0, nx
           if(leftix(ix,iy).ne.-2) then                                   !srv 26.11.02
-             vbecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)                !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
-     2      *dpo(ix,iy,0,1)                                              !srv 13.05.16 }
-     &      *wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)/qc(ix,iy,0)     ! IYS 04.03.2019
+            vbecrb(ix,iy,0,0) = - poleldr*fac_ExB(ix,iy)                 !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
+     2       *dpo(ix,iy,0,1)                                             !srv 13.05.16 }
+     &       *wbbl(ix,iy,2)/wbbl(ix,iy,3)**2/hyl(ix,iy)/qc(ix,iy,0)      ! IYS 04.03.2019
             if (use_9pt_stencil.ne.0)
      >       vbecrb(ix,iy,0,1) =   radeldr*fac_ExB(ix,iy)
      2      *dpo(ix,iy,0,0)                                              !srv 13.05.16 }
-     &      *wbbl(ix,iy,2)/(wbbl(ix,iy,3))**2/hyl(ix,iy)*                ! IYS 04.03.2019
+     &      *wbbl(ix,iy,2)/wbbl(ix,iy,3)**2/hyl(ix,iy)*                  ! IYS 04.03.2019
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))
 
@@ -741,36 +741,36 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
            endif                                                         !iyv 06.02.14  }
 
            vbdia(ix,iy,0,0) =    poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
-     &       0.5_R8 * (ti(leftix(ix,iy),leftiy(ix,iy)) + ti(ix,iy)) *
-     &         wbbl(ix,iy,2) / (qe*zb(ix,iy) * hyl(ix,iy) * qc(ix,iy,0)) ! IYS 04.03.2019
+     &       0.5_R8 *
+     &        (ti(leftix(ix,iy),leftiy(ix,iy))/
+     &         zb(leftix(ix,iy),leftiy(ix,iy)) + ti(ix,iy)/zb(ix,iy)) *
+     &         wbbl(ix,iy,2) / (qe* hyl(ix,iy) * qc(ix,iy,0))            ! IYS 04.03.2019
      &         *dOnedBsq(ix,iy,0,1)                                      !srv 05.03.99
            if (use_9pt_stencil.ne.0)
      >      vbdia(ix,iy,0,1) = -  raddidr*facdrift(ix,iy)* ! signmf*
-     &          (ti(leftix(ix,iy),leftiy(ix,iy))
-     &           *bb(leftix(ix,iy),leftiy(ix,iy),2)
-     &           /(qe*zb(ix,iy)*hy1(leftix(ix,iy),leftiy(ix,iy)))
-     &         +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hy1(ix,iy)))*0.5_R8*
+     &       wbbl(ix,iy,2)*(ti(leftix(ix,iy),leftiy(ix,iy))/
+     &                      zb(leftix(ix,iy),leftiy(ix,iy))
+     &                     +ti(ix,iy)/zb(ix,iy))/(qe*hyl(ix,iy))*0.5_R8*
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
-     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &       qc(ix,iy,0)
+     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))
      &         *dOnedBsq(ix,iy,0,0)
            wbdia(ix,iy,0,0) = - facdrift(ix,iy)/                         ! IYS 04.03.2019 {
-     1        (qe*zb(ix,iy) * hyl(ix,iy) * qc(ix,iy,0))  !(hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
+     1        (qe* hyl(ix,iy) * qc(ix,iy,0))  !(hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
 !     2        (bb(ix,iy,2)/bb(ix,iy,3)**2
 !     2        +bb(leftix(ix,iy),leftiy(ix,iy),2)/
 !    2         bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*
-     &         * wbbl(ix,iy,2) / (wbbl(ix,iy,3))**2 *
+     &         * wbbl(ix,iy,2) / wbbl(ix,iy,3)**2 *
      2         dnbti(ix,iy,0,1)/
-     &         (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy))) * 2.0_R8
+     &         (nbzb(ix,iy) + nbzb(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
 !     &        (nbzbc(topix(ix,iy),topiy(ix,iy))+nbzbc(ix,iy))*2.0_R8/qe !IYS 04.03.2019 }
            if (use_9pt_stencil.ne.0)
      >      wbdia(ix,iy,0,1) =   facdrift(ix,iy)/
-     1        (qe*zb(ix,iy) * hyl(ix,iy))*  !(hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
+     1        (qe*hyl(ix,iy))*  !(hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*
      &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
-     &         * wbbl(ix,iy,2) / (wbbl(ix,iy,3))**2 *
+     &         wbbl(ix,iy,2) / wbbl(ix,iy,3)**2 *
      2         dnbti(ix,iy,0,0)/
-     &         (nb(ix,iy) + nb(leftix(ix,iy),leftiy(ix,iy))) * 2.0_R8
+     &         (nbzb(ix,iy) + nbzb(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
            ubdia(ix,iy,0,0) = vbecrb(ix,iy,0,0) + vbdia(ix,iy,0,0)       !srv 17.05.99
            ubdia(ix,iy,0,1) = vbecrb(ix,iy,0,1) + vbdia(ix,iy,0,1)
            ub2dia(ix,iy,0,0) =
@@ -799,7 +799,7 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
              vbecrb(ix,iy,1,1) = radeldr*fac_ExB(ix,iy)                  !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2       *dpo(ix,iy,1,0)                                             !srv 13.05.16 }
-     &      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)            ! IYS 04.03.2019
+     &      * wbbv(ix,iy,2) / wbbv(ix,iy,3)**2 / hxb(ix,iy)              ! IYS 04.03.2019
 
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
              if( abs(vbecrb(ix,iy,1,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
@@ -818,14 +818,16 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
            endif                                                         !iyv 06.02.14  }
 
            vbdia(ix,iy,1,1) =  -raddidr*facdrift(ix,iy)* ! signmf*       !srv 11.01.13 07.06.00 17.05.99 25.04.00
-     &     0.5_R8*(ti(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy))*
-     &       wbbv(ix,iy,2) / (qe*zb(ix,iy) * hxb(ix,iy))
+     &     0.5_R8*(
+     &       ti(bottomix(ix,iy),bottomiy(ix,iy))/
+     &       zb(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy)/zb(ix,iy))*
+     &       wbbv(ix,iy,2) / (qe*hxb(ix,iy))
      &        *dOnedBsq(ix,iy,1,0)                                       !srv 05.03.99
            wbdia(ix,iy,1,1) = facdrift(ix,iy)/                           !IYS 04.03.2019 {
-     1      (qe*zb(ix,iy) * hxb(ix,iy))   !(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     2      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 *
+     1      (qe*hxb(ix,iy))   !(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     2      * wbbv(ix,iy,2) / wbbv(ix,iy,3)**2 *
      2      dnbti(ix,iy,1,0) /
-     &     (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy)) * 2.0_R8 !/qe     !IYS 04.03.2019 }
+     &     (nbzb(bottomix(ix,iy),bottomiy(ix,iy))+nbzb(ix,iy))*2.0_R8 !/qe     !IYS 04.03.2019 }
 
            ubdia(ix,iy,1,0) = vbecrb(ix,iy,1,0) + vbdia(ix,iy,1,0)
            ubdia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + vbdia(ix,iy,1,1)       !srv 17.05.99
@@ -1968,7 +1970,7 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
      &        flo*(kmpr(ix,iy)
      &            -kmpr(bottomix(ix,iy),bottomiy(ix,iy)))/4.0_R8+
      &        cdpb(ix,iy,1,1)
-            if (use_9pt_stencil.ne.0)
+            if (use_9pt_stencil.ne.0.and.topiy(ix,iy).ne.ny+1)
      >       conb(ix,iy,1,0,0) = (con(ix,iy) - 0.5_R8*abs(flo))*t0*
      &        (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8
      &        +cdpb(ix,iy,1,1)*t0
@@ -1983,13 +1985,13 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
      &        flo_mdf*(kmpr(ix,iy)
      &        -kmpr(bottomix(ix,iy),bottomiy(ix,iy)))/4.0_R8
      &        +cdpb(ix,iy,1,1)
-           if (use_9pt_stencil.ne.0)
+           if (use_9pt_stencil.ne.0.and.topiy(ix,iy).ne.ny+1)
      >      conb(ix,iy,1,0,0) = (con_mdf(ix,iy)-0.5_R8*abs(flo_mdf))*t0*
      &        (kmpr(bottomix(ix,iy),bottomiy(ix,iy))+kmpr(ix,iy))/2.0_R8
      &        +cdpb(ix,iy,1,1)*t0
            conb(ix,iy,1,1,1) = cdpb(ix,iy,1,1)*kmprti(ix,iy,1)
            conb(ix,iy,1,1,2) = conb(ix,iy,1,1,1)
-           if (use_9pt_stencil.ne.0) then
+           if (use_9pt_stencil.ne.0.and.topiy(ix,iy).ne.ny+1) then
             conb(ix,iy,1,0,1) = conb(ix,iy,1,1,1)*t0
             conb(ix,iy,1,0,2) = conb(ix,iy,1,1,2)*t0
            endif

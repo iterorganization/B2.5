@@ -6,7 +6,7 @@
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_geo
-     &   , only : hyl, hxb                                       !IYS 04.03.2019
+     &   , only : hyl, hxb, hzl                                  !IYS 04.03.2019
 #ifdef CLASSICAL_CURRENT
       use b2mod_geo
      &   , only : hy1
@@ -196,8 +196,11 @@ cwdk cancellation of some terms in poloidal and radial current components
              if (use_9pt_stencil.ne.0)
      >        fchdia(ix,iy,0,1)=fchdia(ix,iy,0,1)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*
-     &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *                            !srv 31.03.00
-     &       gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
+     &     0.5e0_R8 * (pz(ix,iy) + pz(leftix(ix,iy),leftiy(ix,iy))) *    !srv 31.03.00
+     &       hzl(ix,iy) * wbbl(ix,iy,2) *
+     &      (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &      (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &       qs(ix,iy,0)
      &      *dOnedBsq(ix,iy,0,0)
             endif                                                        !srv 26.11.02
            enddo

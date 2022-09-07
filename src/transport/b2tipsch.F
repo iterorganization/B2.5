@@ -49,7 +49,8 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0
-      real (kind=R8) :: wght(-1:nx,-1:ny)
+      real (kind=R8) :: wght(-1:nx,-1:ny),
+     *   nati2z(-1:nx,-1:ny), dnati2z(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       integer, save :: PSch_style
       integer, save :: use_9pt_stencil = 1
@@ -184,15 +185,24 @@ cwdk cancellation of some terms in poloidal and radial flux components
           enddo
          else
 !        print *,'b2tipsch style=2'
+          wght = 1.0_R8
+          nati2z(:,:) = na(:,:,is)*ti(:,:)**2/rza(:,:,is)
+          call diff(nx, ny, hx, hy, wght, qs, nati2z, dnati2z)
           do iy = -1, ny
            do ix = -1, nx
             if(topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2
      &       .and. leftix(ix,iy).ne.-2) then
              fhiPSch(ix,iy,0,0) = fhiPSch(ix,iy,0,0) +
-     &          PSch*(nati2c(topix(ix,iy),topiy(ix,iy))-
-     &       nati2c(ix,iy))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
+     &          PSch*dnati2z(ix,iy,0,1)/qe*
+     &          bzbl(ix,iy)*hzl(ix,iy)
                coni(ix,iy,0,0,1) = coni(ix,iy,0,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &               cddi(ix,iy,1,1,is)*na(ix,iy,is)*ti(ix,iy)
+             if (use_9pt_stencil.ne.0)
+     >        fhiPSch(ix,iy,0,1) = fhiPSch(ix,iy,0,1) +
+     &           PSch*dnati2z(ix,iy,0,0)*
+     &           bzbl(ix,iy)*hzl(ix,iy)/qe*qs(ix,iy,0)*
+     &          (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))
              coni(ix,iy,0,0,2) = coni(ix,iy,0,0,2) + 0.5e0_R8*PSch*    ! 0.25*2  !srv 02.01.07
      &          cddi(ix,iy,1,1,is)*
      &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
@@ -281,8 +291,7 @@ cwdk cancellation of some terms in poloidal and radial flux components
             if(bottomiy(ix,iy).ne.-2 .and. leftix(ix,iy).ne.-2 .and.
      &        rightix(ix,iy).ne.nx+1) then
              fhiPSch(ix,iy,1,1) = fhiPSch(ix,iy,1,1) -
-     &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy))-
-     &       nati2c(ix,iy))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
+     &          PSch*dnati2z(ix,iy,1,0)/qe*bzbv(ix,iy)*hzb(ix,iy)
              coni(ix,iy,1,1,1) = coni(ix,iy,1,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,0,is)*na(ix,iy,is)*ti(ix,iy)
              coni(ix,iy,1,1,2) = coni(ix,iy,1,1,2)+0.5e0_R8*PSch*     ! 0.25*2

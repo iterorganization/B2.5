@@ -457,6 +457,7 @@ cwdk add 9-point contributions
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
+      if (use_9pt_stencil.ne.0) then
       do iy=-1,ny
        do ix=-1,nx
         if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
@@ -501,11 +502,12 @@ cwdk add 9-point contributions
 !        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
          aa9(ix,iy,-1) =-1.00_R8
          resht(ix,iy)  = 0.5_R8*
-     &    (te(bottomix(ix,iy),bottomiy(ix,iy)) - te(ix,iy) +
-     &     ti(bottomix(ix,iy),bottomiy(ix,iy)) - ti(ix,iy))
+     &    (te(leftix(ix,iy),leftiy(ix,iy)) - te(ix,iy) +
+     &     ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
         endif
        enddo
       enddo
+      endif ! 9-point stencil
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
@@ -761,6 +763,7 @@ cwdk add 9-point contributions
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
+      if (use_9pt_stencil.ne.0) then
       do iy=-1,ny
        do ix=-1,nx
         if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
@@ -802,6 +805,7 @@ cwdk add 9-point contributions
         endif
        enddo
       enddo
+      endif ! 9-point stencil
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
@@ -1062,6 +1066,7 @@ cwdk add 9-point contributions
       enddo
 *   ..temporary fix to stabilize 9-point stencil in corners:
 *   ..set guard cell value equal to neighboring cell
+      if (use_9pt_stencil.ne.0) then
       do iy=-1,ny
        do ix=-1,nx
         if (leftix(ix,iy).eq.-2.and.bottomiy(ix,iy).eq.-2) then
@@ -1103,6 +1108,7 @@ cwdk add 9-point contributions
         endif
        enddo
       enddo
+      endif ! 9-point stencil
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')

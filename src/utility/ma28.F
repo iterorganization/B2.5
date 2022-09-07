@@ -1653,7 +1653,7 @@ c innermost loop.
               pivrow = ijpos - iq(j)
 #ifdef DBG
               if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
-     &           (a(pivrow).ge.tiny(1.0_R8).or.
+     &           (a(pivrow).ge. tiny(1.0_R8).or.
      &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
                 if (product.ge.cutll) a(jj) = a(jj) + au*a(pivrow)

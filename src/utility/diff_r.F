@@ -76,7 +76,8 @@
       do iy = -1,ny
         do ix = -1,nx
           if (bottomiy(ix,iy).ne.-2) then
-            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &         topiy(ix,iy).eq.ny+1) then
 cwdk temporary: compute differences between guard cells for backwards
 cwdk            compatibility (avoid problems in corner cells)
 cwdk later on : these faces will be removed altogether

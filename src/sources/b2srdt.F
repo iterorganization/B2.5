@@ -140,10 +140,10 @@
           do ix = -1, nx
 csw 24feb2014 check for guard cell (SOLPS4)
            if(iftimbound(ix,iy) .ne. 0) cycle
-!           if((guard_flows.eq.2 .or.
-!     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
-!     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-!     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
+           if((guard_flows.eq.2 .or.
+     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
+     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
            t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
            snadt(ix,iy,0,is) = t0*na0(ix,iy,is)                          !srv 06.01.21

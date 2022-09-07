@@ -401,7 +401,7 @@ cwdk todo: add rscal-logic
 !        aa11(ix,iy,-3) =-1.00_R8
 !        rescb(ix,iy)  = pb(bottomix(ix,iy),bottomiy(ix,iy)) - pb(ix,iy)
          aa11(ix,iy,1) =-1.00_R8*nb(rightix(ix,iy),rightiy(ix,iy))/
-     .                           pb(rightix(ix,iy),rightix(ix,iy))
+     .                           pb(rightix(ix,iy),rightiy(ix,iy))
          rescb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy)) - nb(ix,iy)
         endif
         if (rightix(ix,iy).eq.nx+1.and.bottomiy(ix,iy).eq.-2) then

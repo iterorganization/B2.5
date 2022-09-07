@@ -873,8 +873,8 @@ cxpb turn off poloidal flows in core boundary
 !             fne_eir(ix,iy,1,1)   = 0.0_R8
 !             fhe_eir(ix,iy,1,1)   = 0.0_R8
 !             fhi_eir(ix,iy,1,1)   = 0.0_R8
-!             wedia(ix,iy,1)=0.0_R8
-!             ubdia(ix,iy,1)=0.0_R8
+!             wedia(ix,iy,1,1)=0.0_R8
+!             ubdia(ix,iy,1,1)=0.0_R8
             endif
           enddo
         enddo
@@ -884,8 +884,8 @@ cxpb turn off poloidal flows in core boundary
 !         fne_eir(:,iy,0,0)         = 0.0_R8
 !         fhe_eir(:,iy,0,0)         = 0.0_R8
 !         fhi_eir(:,iy,0,0)         = 0.0_R8
-!         wedia(:,iy,0) = 0.0_R8
-!         ubdia(:,iy,0) = 0.0_R8
+!         wedia(:,iy,0,0) = 0.0_R8
+!         ubdia(:,iy,0,0) = 0.0_R8
         enddo                                                            !srv 20.06.08 }
       endif                                                              !xpb
 

@@ -51,8 +51,8 @@
       real (kind=R8), save :: PSch = 1.0_R8                              !srv 17.01.07
       real (kind=R8) ::
      *   nbcor(-1:nx,-1:ny),  !srv 01.10.99 !lk 09.06.11
-     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),
-     *   dnbti(-1:nx,-1:ny,0:1,0:1)                                      !srv 08.10.04
+     *   nbti(-1:nx,-1:ny), nbtiz(-1:nx,-1:ny),
+     *   dnbti(-1:nx,-1:ny,0:1,0:1), dnbtiz(-1:nx,-1:ny,0:1,0:1)         !srv 08.10.04
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
       save ncall, area_fix
 *   ..procedures
@@ -184,7 +184,7 @@ cwdk cancellation of some terms in poloidal and radial flux components
       else                                                              !nn
         nbti=nb*ti
         weight = 1.0e0_R8
-        call intcor(nx,ny,weight,nbti,nbtic)
+        call diff(nx, ny, hx, hy, weight, qs, nbti, dnbti)
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or.
@@ -192,9 +192,13 @@ cwdk cancellation of some terms in poloidal and radial flux components
               fnbPSch(ix,iy,0,0) = 0.0e0_R8
               fnbPSch(ix,iy,0,1) = 0.0e0_R8
             else
-              fnbPSch(ix,iy,0,0) = PSch*
-     &      (nbtic(topix(ix,iy),topiy(ix,iy))-nbtic(ix,iy))*bzbl(ix,iy)/
-     &      (qe*zb(ix,iy))*hzl(ix,iy)
+              fnbPSch(ix,iy,0,0) = PSch*dnbti(ix,iy,0,1)*bzbl(ix,iy)/
+     &         (qe*zb(ix,iy))*hzl(ix,iy)
+              if (use_9pt_stencil.ne.0)
+     >         fnbPSch(ix,iy,0,1) = PSch*dnbti(ix,iy,0,0)*bzbl(ix,iy)/
+     &          (qe*zb(ix,iy))*hzl(ix,iy)*
+     &          (hy(ix,iy)+hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*qs(ix,iy,0)
             endif
           enddo
         enddo
@@ -247,14 +251,16 @@ cwdk cancellation of some terms in poloidal and radial flux components
          enddo
         enddo
       else                                                              !nn
-        do iy = -1, ny
+        nbtiz = nb*ti/zb
+        weight = 1.0_R8
+        call diff(nx, ny, hx, hy, weight, qs, nbtiz, dnbtiz)
+        do iy = 0, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fnbPSch(ix,iy,1,0:1)= 0.0e0_R8
             else
-              fnbPSch(ix,iy,1,1) = -PSch*
-     &      (nbtic(rightix(ix,iy),rightiy(ix,iy))-nbtic(ix,iy))*
-     &      bzbv(ix,iy)/(qe*zb(ix,iy))*hzb(ix,iy)
+              fnbPSch(ix,iy,1,1) = -PSch*dnbtiz(ix,iy,1,0)*
+     &         bzbv(ix,iy)/qe*hzb(ix,iy)
             endif
           enddo
         enddo
