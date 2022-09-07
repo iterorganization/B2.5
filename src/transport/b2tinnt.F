@@ -211,7 +211,7 @@
      &                    log(na(leftix(ix,iy),leftiy(ix,iy),is))))/
      &                     (qe*rza(ix,iy,is)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,3)*fnal(ix,iy,0,is0)*
+     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnal(ix,iy,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -229,7 +229,7 @@
      &              (nal(ix,iy,is)*qe*rza(ix,iy,is)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,3)*fnal(ix,iy,0,is0)*
+     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnal(ix,iy,0,is0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                  endif
                 enddo
