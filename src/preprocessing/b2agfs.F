@@ -1619,6 +1619,30 @@ c region 6 === right SOL
 c region 7 === right inboard divertor
 c region 8 === right outboard divertor
 c
+c                           +++++++++++++++++++++++++
+c
+c                    X-point target/low field side snowflake geometry case
+
+c
+c    +-------+-----------------------+-------+-------++-------+-------+  
+c    |       :                       :       :       ||       :       |
+c    |       :           2           :       :       ||       :       |
+c    |       :                       +       :...5...||...6...+...7...|
+c    |       :                       |       :       ||       |       |
+c    |...3...+-----------------------+---4---+       ||       +       |
+c    |       |           1           |       |       ||       |       |
+c    |       |                       |       |       ||       |       |
+c    +-------+-----------------------+-------+-------++-------+-------+
+c
+c X-point target/low field side snowflake geometry case:
+c region 1 === core
+c region 2 === SOL
+c region 3 === inboard divertor
+c region 4 === outboard divertor entrance
+c region 5 === outboard divertor leg 1
+c region 6 === outboard divertor leg 2
+c region 7 === outboard divertor leg 3
+c
       integer ix,iy,inseliy,inselix,iyt
       real (kind=R8) :: geom_match_dist
       data geom_match_dist/1.0e-6_R8/
@@ -1746,7 +1770,7 @@ c volume component
             else
               nnreg(0)=4
             endif
-          elseif(nncut.eq.2) then
+          elseif(nncut.eq.2.and.leftcut(2).le.rightcut(1)) then
             do ix = -1, leftcut(1)-1
               do iy = -1, ny
                 region(ix,iy,0)=3
@@ -1788,6 +1812,45 @@ c volume component
               enddo
             enddo
             nnreg(0)=8
+c specification for snowflake
+          elseif(nncut.eq.2.and.leftcut(2).ge.rightcut(1)) then
+            do ix = -1, leftcut(1)-1
+              do iy = -1, ny
+                region(ix,iy,0)=3
+              enddo
+            enddo
+            do ix = leftcut(1), rightcut(1)-1
+              do iy = max(bottomcut(1),bottomcut(2)), ny
+                if (iy.lt.min(topcut(1),topcut(2))) then
+                  region(ix,iy,0)=1
+                else
+                  region(ix,iy,0)=2
+                endif
+              enddo
+            enddo
+            do ix = rightcut(1), leftcut(2)-1
+              do iy = -1, ny
+                region(ix,iy,0)=4
+              enddo
+            enddo
+            do iy = -1, ny
+              ix = leftcut(2)
+              do while (leftix(ix,iy).ne.-2)
+                region(ix,iy,0)=5
+                ix=ix+1
+              enddo
+              ix = rightcut(2)-1
+              do while (rightix(ix,iy).ne.nx+1)
+                region(ix,iy,0)=6
+                ix=ix-1
+              enddo
+            enddo
+            do ix = rightcut(2), nx
+              do iy = -1, ny
+                region(ix,iy,0)=7
+              enddo
+            enddo
+            nnreg(0)=7
           endif
         endif
       endif

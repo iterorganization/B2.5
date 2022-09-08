@@ -37,6 +37,10 @@
         jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
         jxa=leftcut(1)+(rightcut(1)-leftcut(1))/2
         jsep=topcut(1)-1
+      elseif(nnreg(0).eq.7) then
+        jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
+        jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        jsep=min(topcut(1),topcut(2))-1
       elseif(nnreg(0).eq.8) then
         jxi=(leftcut(1)+leftcut(2))/2
         jxa=(rightcut(1)+rightcut(2))/2

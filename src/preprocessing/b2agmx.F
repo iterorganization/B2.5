@@ -774,13 +774,7 @@ c dpc 2000.06.02 end    xpb 11.08.00
       endif
       if(nncut.ge.2) then
         call ipgeti ('b2agfs_leftcut2', leftcut(2))
-        call xertst (leftcut(1).lt.leftcut(2).and.
-     .               leftcut(2).lt.rightcut(1),
-     .              'faulty argument leftcut2')
         call ipgeti ('b2agfs_rightcut2', rightcut(2))
-        call xertst (leftcut(2).lt.rightcut(2).and.
-     .               rightcut(2).lt.rightcut(1),
-     .              'faulty argument rightcut2')
         call ipgeti ('b2agfs_topcut2', topcut(2))
         call xertst (-2.le.topcut(2).and.topcut(2).le.ny,
      .              'faulty argument topcut2')
