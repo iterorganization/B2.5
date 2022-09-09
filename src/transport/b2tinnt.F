@@ -390,7 +390,7 @@
      &                  -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                    tib(ix,iy)*(log(na(ix,iy,is))-
      &                    log(na(bottomix(ix,iy),bottomiy(ix,iy),is))))/
-     &                   (qe*rza(ix,iy,is))-wbbv(ix,iy,2)*vntrb(ix,iy)* !srv 11.01.13
+     &                   (qe*rza(ix,iy,is))-wbbv(ix,iy,3)*vntrb(ix,iy)* !srv 11.01.13
      &                   (hy1(ix,iy)+
      &                    hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
                endif
@@ -407,7 +407,7 @@
      &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                   (nab(ix,iy,is)*qe*rza(ix,iy,is))
-     &                  - wbbv(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)        !srv 11.01.13
+     &                  - wbbv(ix,iy,3)*vntrb(ix,iy)*(hy1(ix,iy)        !srv 11.01.13
      &                   +hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
                endif
               enddo
