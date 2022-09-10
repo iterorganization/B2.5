@@ -126,7 +126,7 @@ module b2mod_ual_io
 #endif
 #if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
     use b2mod_ual_io_grid &
-     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_ALL_WALLS
+     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
 #if IMAS_MINOR_VERSION > 8
     use ids_schemas &     ! IGNORE
@@ -863,7 +863,6 @@ contains
             if (.not.allocated(xtrian)) then ! Eirene has not been called
               open(unit=46,file=filename)
               call ntread
-              close(46)
             else if (.not.allocated(triangle_vol)) then ! this is the first pass
               call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
               call compute_triangle_area
@@ -7224,6 +7223,11 @@ contains
           b0r0 = bb(jxa,-1,2)*(cry(jxa,-1,0)+cry(jxa,-1,1)+ &
                             &  cry(jxa,-1,2)+cry(jxa,-1,3))/4.0_R8
         end if
+        if (b0.ne.0.0_R8) then
+          r0 = b0r0 / b0
+        else
+          r0 = IDS_REAL_INVALID
+        end if
       end if
     end if
 
@@ -7346,8 +7350,8 @@ contains
 #endif
         edgeprof%vacuum_toroidal_field%r0 = 6.2_IDS_real
       else
+        allocate( edgeprof%vacuum_toroidal_field%b0( num_slices ) )
         if (eq_found) then
-          allocate( edgeprof%vacuum_toroidal_field%b0( num_slices ) )
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
           edgeprof%vacuum_toroidal_field%r0 = r0
 #if IMAS_MINOR_VERSION > 21
@@ -7388,9 +7392,9 @@ contains
               &   INCLUDE_GHOST_CELLS, vol, gs, qc )
 #if IMAS_MINOR_VERSION > 14
             call GGD_copy_AoS3Root_to_Dynamic( eq_grid, &
-              &   equilibrium%grids_ggd( slice_index)%grid(1) )
+              &   equilibrium%grids_ggd( slice_index )%grid(1) )
 #else
-            equilibrium%grids_ggd( slice_index)%grid(1) = eq_grid
+            equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
 #endif
             equilibrium%grids_ggd( slice_index )%time = time_slice_value
 #if IMAS_MINOR_VERSION > 33
@@ -7565,12 +7569,14 @@ contains
             & call write_sourced_value( summary%global_quantities%b0, -b0 )
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
         else
 #if IMAS_MINOR_VERSION > 21
           if (do_summary_data) &
             & call write_sourced_value( summary%global_quantities%b0, b0 )
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
+          edgeprof%vacuum_toroidal_field%r0 = r0
         end if
       end if
     end if
@@ -8117,7 +8123,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-            & GRID_SUBSET_ALL_WALLS, &
+            & GRID_SUBSET_FULL_WALL, &
             & GRID_SUBSET_INNER_MIDPLANE, &
             & GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
@@ -8240,7 +8246,7 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_ALL_WALLS, &
+             & GRID_SUBSET_FULL_WALL, &
              & GRID_SUBSET_INNER_MIDPLANE, &
              & GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
@@ -8352,7 +8358,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-            & GRID_SUBSET_ALL_WALLS, &
+            & GRID_SUBSET_FULL_WALL, &
             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8456,7 +8462,7 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_ALL_WALLS, &
+             & GRID_SUBSET_FULL_WALL, &
              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8561,7 +8567,7 @@ contains
             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-            & GRID_SUBSET_ALL_WALLS, &
+            & GRID_SUBSET_FULL_WALL, &
             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
@@ -8657,7 +8663,7 @@ contains
              & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_ALL_WALLS, &
+             & GRID_SUBSET_FULL_WALL, &
              & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &

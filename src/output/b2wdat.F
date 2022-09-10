@@ -277,7 +277,7 @@
         write (70,*) ' leftcut  =',(leftcut(ix),ix=1,nncut)       !srv
         write (70,*) ' rightcut =',(rightcut(ix),ix=1,nncut)      !srv
         write (70,*) ' topcut   =',(topcut(ix),ix=1,nncut)        !srv
-     &   , ' is the number of the last ring inside the separatrix'
+     &   , ' is the radial index of the ring directly above the X-point'
         write (70,*) ' bottomcut=',(bottomcut(ix),ix=1,nncut)     !srv
         write (70,*) ' Number of dead (or isolated) regions NNISO',NNISO
         if (NNISO.gt.0) then
@@ -491,7 +491,8 @@ c     calculate coordinates of cell centre
           Total_flux(iy) = 0.0d0
           Total_absflux(iy) = 0.0d0
           do ix=-1,nx
-            if(on_closed_surface(ix,iy)) then                    ! for CORE
+            if(bottomiy(ix,iy).eq.-2) cycle
+            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then ! for CORE
               Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,1,is)
               Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,1,is))
             endif
@@ -629,7 +630,8 @@ c     calculate coordinates of cell centre
         Total_current(iy) = 0.0_R8
         Total_abscurrent(iy) = 0.0_R8
         do ix = -1, nx
-          if(on_closed_surface(ix,iy)) then                       ! for CORE
+          if(bottomiy(ix,iy).eq.-2) cycle
+          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then ! for CORE
             Total_current(iy) = Total_current(iy) + fch(ix,iy,1,1)
             Total_abscurrent(iy)=Total_current(iy)+abs(fch(ix,iy,1,1))
           endif
@@ -1476,14 +1478,14 @@ c     calculate coordinates of cell centre
          else if (ic.eq.2) then
            ixx = leftcut(2)
          end if
-         do iy = topcut(ic)+1,ny
+         do iy = topcut(ic), ny
            iw = 1
            wdim(iw)= crdy_c_cell(ixx,iy)
-           do is=0,ns-1
+           do is = 0, ns-1
              iw = iw + 1
              wdim(iw)= na(ixx,iy,is)
            enddo
-           do is=0,ns-1
+           do is = 0, ns-1
              iw = iw + 1
              wdim(iw)= ua(ixx,iy,is)
            enddo
@@ -1503,7 +1505,7 @@ c     calculate coordinates of cell centre
          else if (ic.eq.2) then
            ixx = leftcut(2)
          end if
-         do iy = topcut(ic)+1,ny
+         do iy = topcut(ic), ny
            iw = 1
            wdim(iw)= crdy_c_cell(ixx,iy)
            iw = 2
@@ -1542,14 +1544,14 @@ c     calculate coordinates of cell centre
          else if (ic.eq.2) then
            ixx = rightcut(2)-1
          end if
-         do iy = topcut(ic)+1,ny
+         do iy = topcut(ic), ny
            iw = 1
            wdim(iw)= crdy_c_cell(ixx,iy)
-           do is=0,ns-1
+           do is = 0, ns-1
              iw = iw + 1
              wdim(iw)= na(ixx,iy,is)
            enddo
-           do is=0,ns-1
+           do is = 0, ns-1
              iw = iw + 1
              wdim(iw)= ua(ixx,iy,is)
            enddo
@@ -1569,7 +1571,7 @@ c     calculate coordinates of cell centre
          else if (ic.eq.2) then
            ixx = rightcut(2)-1
          end if
-         do iy = topcut(ic)+1,ny
+         do iy = topcut(ic), ny
            iw = 1
            wdim(iw)= crdy_c_cell(ixx,iy)
            iw = 2
@@ -1581,12 +1583,12 @@ c     calculate coordinates of cell centre
            iw = 4
            wdim(iw) = fhj(ixx,iy,0,0)/gs(ixx,iy,0)/qc(ixx,iy,0)/
      .                                             pitx(ixx,iy)
-           do is=0,ns-1
+           do is = 0, ns-1
              iw = iw + 1
              wdim(iw)= fhm(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
      .                                             pitx(ixx,iy)
            enddo
-           do is=0,ns-1
+           do is = 0, ns-1
              iw = iw + 1
              wdim(iw)= fhp(ixx,iy,0,0,is)/gs(ixx,iy,0)/qc(ixx,iy,0)/
      .                                             pitx(ixx,iy)
@@ -1834,7 +1836,8 @@ c     calculate coordinates of cell centre
         Total_energy_flux_i(iy) = 0.0_R8
         Total_energy_flux_i_mdf(iy) = 0.0_R8
         do ix = -1, nx
-          if(on_closed_surface(ix,iy)) then                     ! for CORE
+          if(bottomiy(ix,iy).eq.-2) cycle
+          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then ! for CORE
             Total_energy_flux_i(iy) =
      &       Total_energy_flux_i(iy) + fhi(ix,iy,1,0)
      &                               + fhi(ix,iy,1,1)
@@ -1855,7 +1858,8 @@ c     calculate coordinates of cell centre
         Total_energy_flux_e(iy) = 0.0_R8
         Total_energy_flux_e_mdf(iy) = 0.0_R8
         do ix = -1, nx
-          if(on_closed_surface(ix,iy)) then                     ! for CORE
+          if(bottomiy(ix,iy).eq.-2) cycle
+          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then ! for CORE
             Total_energy_flux_e(iy) =
      &       Total_energy_flux_e(iy) + fhe(ix,iy,1,0)
      &                               + fhe(ix,iy,1,1)

@@ -169,6 +169,7 @@ program b2_ual_rewrite
 #endif
 #endif
     if (.not.streql(device_env,' ')) database = device_env
+    if (streql(database,'iter')) database = 'ITER'
 #endif
     call ipgetc('b2mndr_device', database )
     call ipgetc('b2mndr_database', database )

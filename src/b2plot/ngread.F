@@ -80,7 +80,6 @@ C
 *  READ EIRENE SPECIES DENSITIES AND TEMPERATURES
 * ----------------------------------------------------------------------
 *
-
       rewind (44)
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
@@ -742,7 +741,7 @@ cxpb
       NFEND = 1
    99 CONTINUE
 #endif
-
+      close (44)
 *  ---------------------------------------------------------------------
 C
       call subend ()

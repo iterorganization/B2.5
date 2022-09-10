@@ -20,7 +20,11 @@
         jsep=ny/2
       elseif(nnreg(0).eq.4) then
         if (cry(leftcut(1)+1,topcut(1),0).lt.
-     .      cry(leftcut(1)+1,0,0)) then ! LSN topology
+     .      cry(leftcut(1)+1,0,0).or.
+     .     (cry(leftcut(1)+1,topcut(1),0).eq.
+     .      cry(leftcut(1)+1,0,0).and.
+     .      crx(leftcut(1)+1,topcut(1),0).lt.
+     .      crx(leftcut(1)+1,0,0))) then ! LSN topology
           jxi=leftcut(1)+(rightcut(1)-leftcut(1))/4
           jxa=rightcut(1)-(rightcut(1)-leftcut(1))/4
         else ! USN topology

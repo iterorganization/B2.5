@@ -49,7 +49,7 @@
 *other
       integer iy, npoints, ifail
       real (kind=R8), allocatable :: deriv(:), pos(:), value(:)
-      real (kind=R8) :: max, cntr, tmp
+      real (kind=R8) :: max, cntr(1), tmp(1)
       logical file_ok
       character*260 filename
 
@@ -82,14 +82,14 @@
         call E01BEF(npoints,pos(1:npoints),value(1:npoints),
      .       deriv(1:npoints),ifail)
         do iy= bc1, bc2
-          cntr=center_of_cell(pos_in,iy,1)
+          cntr(1)=center_of_cell(pos_in,iy,1)
           call E01BFF(npoints,pos,value,deriv,1,cntr,tmp,
      .         ifail)
           if (scale.gt.0.0_R8) then
 c     scale the profile to max_profile
-            profile(iy) = tmp * max_profile / max
+            profile(iy) = tmp(1) * max_profile / max
           else
-            profile(iy) = tmp
+            profile(iy) = tmp(1)
           endif
         enddo
       else

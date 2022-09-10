@@ -241,7 +241,7 @@
      &              -(wrk1(ix,iy,0,1)
      &               +til(ix,iy)*wrk0(ix,iy,0,1,is))/
      &                     (qe*rza(ix,iy,is)) )
-     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnal(ix,iy,0,1,is0)*
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,3)*fnal(ix,iy,0,1,is0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -265,7 +265,7 @@
      &              -dpo(ix,iy,0,1)
      &              -wrk0(ix,iy,0,1,is)/
      &              (nal(ix,iy,is)*qe*rza(ix,iy,is)) )
-     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnal(ix,iy,0,1,is0)*
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,3)*fnal(ix,iy,0,1,is0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -283,7 +283,7 @@
      &            -(wrk1(ix,iy,1,1)+tib(ix,iy)*wrk0(ix,iy,1,1,is))/
      &              (qe*rza(ix,iy,is))
      &                                                      )
-     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnav(ix,iy,1,1,is0)*    !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*fnav(ix,iy,1,1,is0)*    !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -298,7 +298,7 @@
      &            - wrk0(ix,iy,1,1,is)/
      &             (nab(ix,iy,is)*qe*rza(ix,iy,is))
      &                                                      )
-     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnav(ix,iy,1,1,is0)*    !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*fnav(ix,iy,1,1,is0)*    !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
                  endif
                 enddo
@@ -391,7 +391,7 @@
      &                      -(wrk1(ix,iy,0,1) +
      &                       til(ix,iy)*wrk0(ix,iy,0,1,is))/
      &                      (qe*rza(ix,iy,is))
-     &                      -wbbl(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)+
+     &                      -wbbl(ix,iy,3)*vntrb(ix,iy)*(hy1(ix,iy)+
      &                       hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
                endif
               enddo
@@ -414,7 +414,7 @@
      &                      -dpo(ix,iy,0,1)
      &                      -wrk0(ix,iy,0,1,is)/
      &                      (nal(ix,iy,is)*qe*rza(ix,iy,is))
-     &                      -wbbl(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)+
+     &                      -wbbl(ix,iy,3)*vntrb(ix,iy)*(hy1(ix,iy)+
      &                       hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8 )
                endif
               enddo
@@ -437,7 +437,7 @@
      &                  -dpo(ix,iy,1,1)
      &                  -(wrk1(ix,iy,1,1)+
      &                    tib(ix,iy)*wrk0(ix,iy,1,1,is))/
-     &                   (qe*rza(ix,iy,is))-wbbv(ix,iy,2)*vntrb(ix,iy)* !srv 11.01.13
+     &                   (qe*rza(ix,iy,is))-wbbv(ix,iy,3)*vntrb(ix,iy)* !srv 11.01.13
      &                   (hy1(ix,iy)+
      &                    hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
                endif
@@ -452,7 +452,7 @@
      &                  -dpo(ix,iy,1,1)
      &                  -wrk0(ix,iy,1,1,is)/
      &                   (nab(ix,iy,is)*qe*rza(ix,iy,is))
-     &                  - wbbv(ix,iy,2)*vntrb(ix,iy)*(hy1(ix,iy)        !srv 11.01.13
+     &                  - wbbv(ix,iy,3)*vntrb(ix,iy)*(hy1(ix,iy)        !srv 11.01.13
      &                   +hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
                endif
               enddo

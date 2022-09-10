@@ -92,7 +92,7 @@ module b2mod_ual_io_grid
 #  endif
 #  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
-     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_ALL_WALLS
+     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #  endif
 # endif
 #else
@@ -322,7 +322,7 @@ module b2mod_ual_io_grid
        &    'OUTER_TARGET_INACTIVE     ' , &
        &    'INNER_TARGET_INACTIVE     ' , &
        &    'VOLUMES                   ' , &
-       &    'ALL_WALLS                 ' , &
+       &    'FULL_WALL                 ' , &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
@@ -387,7 +387,7 @@ module b2mod_ual_io_grid
        &    'y-aligned edges defining the outer inactive target                                           ' , &
        &    'y-aligned edges defining the inner inactive target                                           ' , &
        &    'All volumes (3D objects)                                                                     ' , &
-       &    'All faces defining walls, baffles, and targets                                               ' , &
+       &    'All edges defining walls, baffles, and targets                                               ' , &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
@@ -409,8 +409,8 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
 # endif
 # if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
-    !> All faces defining walls, baffles, and targets
-    integer, parameter :: GRID_SUBSET_ALL_WALLS = 44
+    !> All edges defining walls, baffles, and targets
+    integer, parameter :: GRID_SUBSET_FULL_WALL = 44
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
 # endif
@@ -1781,7 +1781,7 @@ contains
                 & GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
                 & GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE )
                 iType = REGIONTYPE_XEDGE
-            case ( GRID_SUBSET_ALL_WALLS )
+            case ( GRID_SUBSET_FULL_WALL )
                 iType = REGIONTYPE_EDGE
             case default
                 iType = NODIRECTION
@@ -1807,7 +1807,7 @@ contains
                     RegionsinSubset(1) = 2
                 case ( GRID_SUBSET_INNER_TARGET )
                     RegionsinSubset(1) = 1
-                case ( GRID_SUBSET_ALL_WALLS )
+                case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 2
                     RegionsinSubset(3) = -2
@@ -1847,7 +1847,7 @@ contains
                     end if
                 case ( GRID_SUBSET_CORE_CUT )
                     RegionsinSubset(1) = 3
-                case ( GRID_SUBSET_ALL_WALLS )
+                case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 3
                     RegionsinSubset(3) = -2
@@ -1907,7 +1907,7 @@ contains
                 case ( GRID_SUBSET_PFR_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = 3
-                case ( GRID_SUBSET_ALL_WALLS )
+                case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 5
                     RegionsinSubset(3) = 6
@@ -1965,7 +1965,7 @@ contains
                 case ( GRID_SUBSET_PFR_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = 3
-                case ( GRID_SUBSET_ALL_WALLS )
+                case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = 1
                     RegionsinSubset(2) = -1
                     RegionsinSubset(3) = -4
@@ -2060,7 +2060,7 @@ contains
                     RegionsinSubset(1) = 5
                 case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
                     RegionsinSubset(1) = 4
-                case ( GRID_SUBSET_ALL_WALLS )
+                case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 5
                     RegionsinSubset(3) = 6
@@ -2153,7 +2153,7 @@ contains
                     RegionsinSubset(1) = 1
                 case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
                     RegionsinSubset(1) = 8
-                case ( GRID_SUBSET_ALL_WALLS )
+                case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 5
                     RegionsinSubset(3) = 6
@@ -2178,10 +2178,10 @@ contains
             SubsetName = gridSubsetName( iSubset )
             RegionDescription = gridSubsetDescription( iSubset )
 #if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
-            if ( iSubset == GRID_SUBSET_ALL_WALLS ) then
-              SubsetName = 'ALL_WALLS'
+            if ( iSubset == GRID_SUBSET_FULL_WALL ) then
+              SubsetName = 'FULL_WALL'
               RegionDescription = &
-               &  'All faces defining walls, baffles, and targets'
+               &  'All edges defining walls, baffles, and targets'
             end if
 #endif
             call logmsg( LOGDEBUG,                                     &
@@ -2953,8 +2953,13 @@ contains
         allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      object( nobjects ) )
         do i3 = 1, nobjects
-          nboundary = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+          if ( associated( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
+           &      object(i3)%boundary ) ) then
+            nboundary = size( AoS3_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%boundary )
+          else
+            nboundary = 0
+          end if
           if (nboundary.gt.0) then
             allocate( dynamic_grid%space(i1)%objects_per_dimension(i2)% &
            &      object(i3)%boundary( nboundary ) )

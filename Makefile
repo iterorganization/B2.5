@@ -9,7 +9,7 @@ endif
 SRCB2    = ${PWD}
 SRCDIR   = ${SRCB2}/src
 DOCDIR   = ${SRCDIR}/documentation
-PYTHON   = python
+PYTHON  ?= python
 TAGSLIST =
 SOLPSINCLUDE ?=
 

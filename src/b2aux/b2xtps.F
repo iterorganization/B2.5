@@ -648,7 +648,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hxx, bottomiy1)
-            if (drift_style.eq.1) then
+            if (drift_style.gt.0) then
              call b2xtfx (nx, ny, nx1, ny1, uadia(-1,-1,0,0,is),
      &        uadia1(-1,-1,0,0,is1),
      &        nncutmax, non_commensurate, flip,

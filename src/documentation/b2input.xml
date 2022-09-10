@@ -2206,7 +2206,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to 1 the limitation of the diamagnatic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
+					When set to 1 the limitation of the diamagnetic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
 					Otherwise the limitation is not applied.
 				</description>
 			</switch>
@@ -5518,6 +5518,14 @@
 				<type>logical</type>
 				<description>
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
+				</description>
+			</switch>
+			<switch>
+				<name>MAXPOIN</name>
+				<default>2000</default>
+				<type>integer</type>
+				<description>
+					Maximum number of points needed to describe a region contour in Eirene.
 				</description>
 			</switch>
 			<switch>

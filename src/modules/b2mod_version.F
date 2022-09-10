@@ -24,13 +24,13 @@
       character*12 chf
       character*7 label
       logical streql
-      external streql
+      external streql, xerrab
 
       inquire (nget,form=chf,err=10)
       if (streql(chf,'formatted')) then
-        read(nget,'(a,a)',err=10) label,version_in
+        read(nget,'(a,a)',err=10,end=20) label,version_in
       else
-        read(nget,err=10) label,version_in
+        read(nget,err=10,end=20) label,version_in
       endif
       if(label.eq.'VERSION') then
         readversion=version_in
@@ -41,6 +41,10 @@
       rewind(nget)
       write(*,'(a,a)') 'VERSION defaulted to : ',newversion
       readversion=newversion
+      return
+   20 continue
+      call xerrab
+     . ('Found empty file when attempting to read version number!')
       return
       end subroutine cfverr
 
