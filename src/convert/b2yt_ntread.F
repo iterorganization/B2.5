@@ -16,7 +16,8 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(natm1, iatm1, nmol1, imol1, nion1, iion1)
+      subroutine b2yt_ntread(nwrite,
+     &  natm1, iatm1, nmol1, imol1, nion1, iion1)
 c
 c  version : 06.11.97 22:11
 c
@@ -37,6 +38,7 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
+      integer nwrite
       integer natm1, nmol1, nion1
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
@@ -47,7 +49,8 @@ c
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
-      character*256 filename
+      character*256 filename, message
+      logical ex
       data jvftnew / 20170930 /
 
 *   ..initialisation
@@ -517,6 +520,176 @@ C
       deallocate(field1)
       deallocate(pux,puy,pvx,pvy)
    99 CONTINUE
+
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) then ! average fluxes, Makarov 02.04.2019
+        OPEN (UNIT=48,FILE=trim(filename),ACCESS='SEQUENTIAL')
+        filename=fort_lc//'46_aver.2'
+        OPEN (UNIT=49,FILE=trim(filename),status='unknown')
+        write(*,*) 'Writing '//trim(filename)
+        write(nwrite,'(a)') fort_lc//'46_aver.2'
+        rewind(48)
+        read (48,*) jvft46
+        write(49,'(2x,i8,2x,a32)') jvftnew,get_Eir_hash()
+        read (48,'(e16.8)') aver_frac46
+        write(49,'(e16.8)') aver_frac46
+        read (46,*) idummy
+        write(message,'(a)')
+     .   'Mismatched number of triangles between '//
+     .    fort_lc//'46 and '//fort_lc//'46_aver files !'
+        call xertst(idummy.eq.ntrii,message)
+        write(49,'(i6)') ntrii
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((PDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((PDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = pdena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'pdena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'pdena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = pdenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'pdenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'pdenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((EDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((EDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = edena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'edena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'edena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = edenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'edenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'edenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((VXDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((VXDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = vxdena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vxdena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vxdena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = vxdenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vxdenm',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vxdenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((VYDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((VYDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = vydena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vydena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vydena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = vydenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vydenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vydenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        call read_title(48)
+        read(48,'(6e15.7)') ((VZDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+        call read_title(48)
+        read(48,'(6e15.7)') ((VZDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        if (natm1.gt.0) then
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field1(iatm1(is),1:ntrii) = vzdena_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vzdena_aver',ntrii*natm1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vzdena (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+        if (nmol1.gt.0) then
+          do is = 1, nmoli
+            if (imol1(is).ne.0) then
+              field1(imol1(is),1:ntrii) = vzdenm_aver(is,1:ntrii)
+            end if
+          end do
+          call write_title(49,'vzdenm_aver',ntrii*nmol1)
+        else
+          field1(1,1:ntrii) = 0.0_R8
+          call write_title(49,'vzdenm (not computed)',ntrii)
+        end if
+        write(49,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+
+        rewind(48)
+        close(48)
+        close(49)
+      endif
 #endif
 
 *  ---------------------------------------------------------------------

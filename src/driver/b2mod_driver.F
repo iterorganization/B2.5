@@ -73,6 +73,8 @@
      , ,only: iunout
       use eirmod_comusr
      , ,only: eirene_alloc_comusr
+      use eirmod_refusr
+     , ,only: write_conbe
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_infcop
@@ -2080,6 +2082,9 @@ cxpb for neutral fluxes used in b2stbc_phys
           call ngread(ismain,iflag)
         endif
       endif
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) call ntread_save
 #else
       if (ids_save.ne.0.or.ids_av.gt.0.or.delta_ids_time.gt.0.0_R8)
      > call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
@@ -2512,6 +2517,7 @@ c new CDF movie option
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
+            call write_conbe(savefile(13:16))
             filename=fort_lc//'13'
             inquire(file=filename,exist=found)
             if (found) then

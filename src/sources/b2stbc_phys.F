@@ -8746,8 +8746,8 @@ c see label 2980
       case (19)
         if(new_boundary_files) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'ion temperature decay length (new) ',ENIPAR(IB,1),' on ',
-     1     BCCHAR(IB),boundary_location(ib)
+     .     'BCENI = 19 : ion temperature decay length (new) ',
+     1     ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
           call xertst(ENIPAR(IB,1).ne.0.0_R8,
      1     'BCENI = 19, ENIPAR(,1) = 0')
         endif

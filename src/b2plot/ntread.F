@@ -246,6 +246,7 @@ C
         read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
       end if
    99 CONTINUE
+      call ntread_save
 #endif
       close (46)
 *  ---------------------------------------------------------------------
@@ -272,6 +273,65 @@ C
       END SUBROUTINE NTREAD
 
 #ifdef B25_EIRENE
+      subroutine ntread_save
+      use b2mod_types
+      use eirmod_ctrig
+      use eirmod_cinit
+      use eirmod_comusr
+      use eirmod_extrab25
+      use eirmod_wneutrals
+      implicit none
+      integer i, j, idummy
+      character*256 filename, message
+      logical ex
+
+      filename=fort_lc//'46_aver'
+      call find_file(filename,ex)
+      if (ex) then ! average fluxes, som 02.04.19
+        OPEN (UNIT=48,FILE=trim(filename),ACCESS='SEQUENTIAL')
+        rewind (48)
+        read(48,*,END=948)
+        read(48,*) aver_frac46
+
+        if (aver_frac46.lt.0.0_R8.or.aver_frac46.gt.1.0_R8) then
+          aver_frac46 = 0.99_R8
+        else
+          read(48,*,END=98) idummy
+          write(message,'(a)')
+     .     'Mismatched number of triangles between '//
+     .      fort_lc//'46 and '//fort_lc//'46_aver files !'
+          call xertst(idummy.eq.ntrii,message)
+          call read_title(48)
+          read(48,'(6e15.7)') ((PDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((PDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+          call read_title(48)
+          read(48,'(6e15.7)') ((EDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((EDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VXDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VXDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+
+          call read_title(48)
+          read(48,'(6e15.7)') ((VYDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VYDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+
+          call read_title(48)
+          read(48,'(6e15.7)') ((VZDENA_aver(i,j),j=1,ntrii),i=1,natmi)
+          call read_title(48)
+          read(48,'(6e15.7)') ((VZDENM_aver(i,j),j=1,ntrii),i=1,nmoli)
+        endif
+   98   continue
+        rewind (48)
+        close (48)
+      endif
+      return
+ 948  call xerrab(fort_lc//'46_aver file found empty!')
+      end subroutine ntread_save
+
       subroutine compute_triangle_area
       use b2mod_b2plot
       use b2mod_indirect

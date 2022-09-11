@@ -43,13 +43,13 @@ c
       INTEGER IS, nplsi
 #ifdef B25_EIRENE
       INTEGER NNX, NNY, IX, IY, jvft44, istra
-      integer i, j, k, ncl
+      integer i, j, k, idum, ncl
       integer geometryType
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       character*18 hlp_frm
-      character*256 filename
+      character*256 filename, message
       logical ex, target_east, target_west
 #endif
       integer, save :: use_recyceir, iout
@@ -740,12 +740,72 @@ cxpb
  1028 format()
       NFEND = 1
    99 CONTINUE
+
+      filename=fort_lc//'44_aver'
+      call find_file(filename,ex)
+      if (ex) then ! average fluxes, som 02.04.19
+        OPEN (UNIT=48,FILE=filename,ACCESS='SEQUENTIAL')
+        rewind(48)
+        read(48,1028,END=948)
+        read(48,'(e16.8)') aver_frac
+        if (aver_frac.lt.0.0_R8.or.aver_frac.gt.1.0_R8) then
+          aver_frac = 0.99_R8
+        else
+          read(48,'(i4)',END=98) idum
+          write(message,'(a)')
+     .     'Mismatched number of plasma species between '//
+     .      fort_lc//'44 and '//fort_lc//'44_aver files !'
+          call xertst(idum.eq.nplsi,message)
+          call rdneutrs(48,wldnek_aver,1)
+          call rdneutrs(48,wldnep_aver,1)
+          call rdneutrs(48,wldna_aver,natmi)
+          call rdneutrs(48,ewlda_aver,natmi)
+          call rdneutrs(48,wldnm_aver,nmoli)
+          call rdneutrs(48,ewldm_aver,nmoli)
+          call rdneutrs(48,wldra_aver,natmi)
+          call rdneutrs(48,wldrm_aver,nmoli)
+          call rdneutrs(48,wldpp_aver,nplsi)
+          call rdneutrs(48,wldpa_aver,natmi)
+          call rdneutrs(48,wldpm_aver,nmoli)
+          call rdneutrs(48,wldpeb_aver,1)
+          call rdneutrs(48,wldspt_aver,1)
+          call rdneutrs(48,wldspta_aver,natmi)
+          call rdneutrs(48,wldsptm_aver,nmoli)
+          k=0
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,natmi),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,natmi),
+     ,                                                        i=1,nstsi)
+          k=k+nnatmi
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nmoli),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nmoli),
+     ,                                                        i=1,nstsi)
+          k=k+nnmoli
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nioni),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nioni),
+     ,                                                        i=1,nstsi)
+          k=k+nnioni
+          call read_title(48)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,i),j=1,nplsi),i=1,nlimi)
+          read(48,'(6e13.5)') ((wlpump_aver(j+k,nlim+i),j=1,nplsi),
+     ,                                                        i=1,nstsi)
+        endif
+   98   continue
+        rewind (48)
+        close (48)
+      endif
 #endif
       close (44)
 *  ---------------------------------------------------------------------
 C
       call subend ()
       RETURN
+
+#ifdef B25_EIRENE
+ 948  call xerrab (fort_lc//'44_aver file found empty!')
+#endif
 
 *=======================================================================
 *//END NGREAD//
