@@ -865,7 +865,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
 !     &    *max(0.0e0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0)
 !     &                  -fne(rightix(ix,iy),rightiy(ix,iy),0,1))/ne(ix,iy)!sv 11.02.00 26.11.02 25.12.06
      &    *max(0.0e0_R8, (pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst       !sv 25.12.06
-     &       +fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)))    !sv 25.12.06
+     &     +fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)))      !sv 25.12.06
 !         write(*,"('pbs*cst=',es10.3,' fch_p/qe/ne=',es10.3)")
 !     &             pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst,
 !     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)

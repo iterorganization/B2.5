@@ -285,7 +285,8 @@
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
      &           /2.0_R8
-            dti = chcb(ix,iy,1,1,is)*abs(dtir(ix,iy,1))
+            dti = chcb(ix,iy,1,1,is)*
+     &            abs(dtir(ix,iy,1))
             vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
      &           *gs(ix,iy,1)
             t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)

@@ -333,9 +333,9 @@ cwdk cancellation of some terms in poloidal and radial current components
      &         *dOnedBsq(ix,iy,0,0)*qs(ix,iy,0)*
      &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &         (hy1(ix,iy) + hy1(leftix(ix,iy),leftiy(ix,iy)))
-             endif                                                       !lk 23.05.06 05.07.07 }
-            enddo
-           enddo
+                 endif                                                   !lk 23.05.06 05.07.07 }
+               enddo
+             enddo
 
            elseif (drift_style .eq. 2) then                              !IYS 26.05.2020
 

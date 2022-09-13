@@ -606,7 +606,7 @@
 *    ..add convective term due to new form of ion viscosity term only
        if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
      & Zhdanov_visu.eq.0) then                                         !som 13.08.21
-        call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,0,is),  !19.02.21
+         call b2nxfv (nx, ny, is, ismain, hz, cvsahz_cl(-1,-1,0,0,is), !19.02.21
      &                flubv)                                           !srv 01.07.05 11.09.09 16.10.17
        else
          if(.not. is_neutral(is)) then

@@ -221,7 +221,6 @@ c conn
       if(newversion.ge.'03.001.000') then
         call cfwure (nwrite, size(qs), qs, 'qs')
       endif
-
       call cfwure (nwrite, size(vol), vol, 'vol')
 c conn
       if(newversion.ge.'01.001.063') then               !srv 15.02.11

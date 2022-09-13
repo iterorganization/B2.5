@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
+      subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,              !srv 19.02.21
      1  BoRiS, vol, hx, hy, qs, te, po, ne, na, vedia, veecrb,           !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06 !som 03.11.21

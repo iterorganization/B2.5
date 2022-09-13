@@ -102,7 +102,8 @@
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + 
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8
-            dpb = cdpa(ix,iy,1,1,is)*abs(dpbr(ix,iy,1))
+            dpb = cdpa(ix,iy,1,1,is)*
+     &            abs(dpbr(ix,iy,1))
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &           *gs(ix,iy,1)
             t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)

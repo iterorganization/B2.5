@@ -3,6 +3,8 @@
       use b2mod_constants
       use b2mod_diag
       use b2mod_subsys
+      use b2mod_b2plot_wall_loading
+     ,  , only : from_b2plot
       implicit none
 c
 c  version : 18.02.98 19:00
@@ -38,7 +40,7 @@ c======================================================================
       external xerrab
 c<<<
       integer lun_s, lun_t, lun_l
-      parameter (lun_s=76, lun_t=75, lun_l=74)
+      parameter (lun_s=97, lun_t=98, lun_l=99)
       real (kind=R8) :: uu_xe, uu_ye
       logical uu_dbg
       character tab
@@ -58,7 +60,7 @@ c
 c*** Loop over the sources
 c
 c<<<
-      if (uu_dbg) then
+      if (uu_dbg .and. from_b2plot) then
         print *,'rlcomp: nsrc,ntrg = ',nsrc,ntrg
         open(lun_s,file='sources.dat')
         write(lun_s,'(2a)') '# Radiation sources : ',trim(label)
@@ -76,13 +78,14 @@ c<<<
 c        print *
 c        print *,'Source number, ssrc, xsrc, ysrc'
 c        print '(1p,2x,i4,3e10.2)',i, ssrc, xsrc, ysrc
-        if (uu_dbg) write(lun_s,*) xsrc,tab,ysrc,tab,ssrc
+        if (uu_dbg .and. from_b2plot)
+     >   write(lun_s,*) xsrc,tab,ysrc,tab,ssrc
 c>>>
 c
 c*** Loop over the target segments
 c
 c<<<
-        if(uu_dbg.and.i.eq.1) then
+        if(uu_dbg .and. i.eq.1 .and. from_b2plot) then
           open(lun_t,file='targ-rlc.dat')
           write(lun_t,'(2a)') '# Target geometry : ',trim(label)
           write(lun_t,
@@ -177,7 +180,7 @@ c>>>
             angle=0.0e0_R8
           end if
 c<<<
-          if(uu_dbg) then
+          if(uu_dbg .and. from_b2plot) then
             write(lun_t,'(1p,10(e12.5,2x))')
      ,         xb,yb,uu_xe,uu_ye,ddx,ddy,uda/udpi,anglb,angle,radld(j)
             if (i.eq.1) then
@@ -198,7 +201,7 @@ c
       end do
 c======================================================================
 c<<<
-      if (uu_dbg) then
+      if (uu_dbg .and. from_b2plot) then
         close(lun_s)
         close(lun_t)
         close(lun_l)

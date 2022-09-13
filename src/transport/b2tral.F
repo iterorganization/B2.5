@@ -44,7 +44,7 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
      &  fch_p(-1:nx,-1:ny,0:1,0:1), conn(-1:ny), qc(-1:nx,-1:ny,0:1),   !srv 10.06.08
-     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
+     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)                      !srv 03.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1),

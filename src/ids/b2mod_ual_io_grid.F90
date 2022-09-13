@@ -408,7 +408,7 @@ module b2mod_ual_io_grid
     !> All volumes
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
 # endif
-# if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
     !> All edges defining walls, baffles, and targets
     integer, parameter :: GRID_SUBSET_FULL_WALL = 44
     !> Point on magnetic axis

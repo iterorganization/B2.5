@@ -827,7 +827,7 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
      1      (qe*hxb(ix,iy))   !(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
      2      * wbbv(ix,iy,2) / wbbv(ix,iy,3)**2 *
      2      dnbti(ix,iy,1,0) /
-     &     (nbzb(bottomix(ix,iy),bottomiy(ix,iy))+nbzb(ix,iy))*2.0_R8 !/qe     !IYS 04.03.2019 }
+     &     (nbzb(bottomix(ix,iy),bottomiy(ix,iy))+nbzb(ix,iy))*2.0_R8 !/qe !IYS 04.03.2019 }
 
            ubdia(ix,iy,1,0) = vbecrb(ix,iy,1,0) + vbdia(ix,iy,1,0)
            ubdia(ix,iy,1,1) = vbecrb(ix,iy,1,1) + vbdia(ix,iy,1,1)       !srv 17.05.99
@@ -1435,8 +1435,8 @@ c          upwind discretization needed for the "effective convection"
              flob(ix,iy,0,0) = (flo + flo9)*
      &        (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-
      &        (con(ix,iy) + 0.5_R8*abs(flo9))*
-     &        (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))! -
-!     &        con9*dkmprr(ix,iy,0)
+     &        (kmpr(ix,iy)-kmpr(leftix(ix,iy),leftiy(ix,iy)))
+!     &       -con9*dkmprr(ix,iy,0)
              flob(ix,iy,0,1) = 0.0_R8
              conb(ix,iy,0,0,0) = (con(ix,iy)+con9*t0+0.5_R8*abs(flo9))* !srv 13.10.06
      &        (kmpr(leftix(ix,iy),leftiy(ix,iy))+kmpr(ix,iy))/2.0_R8-   !srv 30.01.10

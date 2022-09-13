@@ -164,7 +164,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &          facdrift(ix,iy)*                                         !srv 22.06.08
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+                           !IYS 01.02.2013
      &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*                  !IYS 01.02.2013
-     &          na(leftix(ix,iy),leftiy(ix,iy),is))
+     &           na(leftix(ix,iy),leftiy(ix,iy),is))
      &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
      &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
      &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99
@@ -177,7 +177,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &          facdrift(ix,iy)*
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+
      &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*
-     &           na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+     &           na(leftix(ix,iy),leftiy(ix,iy),is))
      &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8
      &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
      &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))*
@@ -192,7 +192,7 @@ cwdk cancellation of some terms in poloidal and radial current components
            do iy=0,ny                                                    !srv 07.07.99
              do ix=0,nx-1                                                !srv 07.07.99
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
-               fchinert_a(ix,iy,1,1,is)=                                 !srv 07.07.99
+                fchinert_a(ix,iy,1,1,is)=                                !srv 07.07.99
      &          -0.5e0_R8*am(is)*mp*fch_inert*facdrift(ix,iy) ! signmf*  !srv 07.07.99 21.04.00 22.06.08 11.01.13
      &          *0.5e0_R8*(na(ix,iy,is)*ua(ix,iy,is)**2 +                !IYS 01.02.2013
      &          na(bottomix(ix,iy),bottomiy(ix,iy),is)*                  !IYS 01.02.2013
@@ -222,7 +222,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &          facdrift(ix,iy)*                                         !srv 22.06.08
      &         (ua(ix,iy,is)**2 * na(ix,iy,is) +                         ! IYS 04.03.2019
      &          ua(leftix(ix,iy),leftiy(ix,iy),is)**2 *
-     &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8 *
+     &          na(leftix(ix,iy),leftiy(ix,iy),is)) *
      &          gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)
      &         *dOnedBsq(ix,iy,0,1)                                      !srv 07.07.99
                 if (use_9pt_stencil.ne.0) fchinert_a(ix,iy,0,1,is)=
@@ -230,7 +230,7 @@ cwdk cancellation of some terms in poloidal and radial current components
      &          facdrift(ix,iy)*
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+
      &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*
-     &           na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8*
+     &           na(leftix(ix,iy),leftiy(ix,iy),is))*
      &           gs(ix,iy,0) * wbbl(ix,iy,2) / hyl(ix,iy)*
      &         (hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
      &         (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*

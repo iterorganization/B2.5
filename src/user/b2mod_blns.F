@@ -974,7 +974,7 @@ c*** It was a major change of the file format - impossible to continue
           filedata(ltrc)=.false.
           return
         end if
-   50   read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55,err=55) hlp_c
         go to 50
    55   backspace lun
 

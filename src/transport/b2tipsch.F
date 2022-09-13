@@ -22,8 +22,6 @@
 !     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),          !srv 13.10.06
      1  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
      &  cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  nati2c(-1:nx,-1:ny), nati2(-1:nx,-1:ny),
-     &  dnati2(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   fhiPSch(-1:nx,-1:ny,0:1,0:1), coni(-1:nx,-1:ny,0:1,0:1,0:2)     !srv 13.10.06
@@ -50,7 +48,10 @@
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0
       real (kind=R8) :: wght(-1:nx,-1:ny),
-     *   nati2z(-1:nx,-1:ny), dnati2z(-1:nx,-1:ny,0:1,0:1)
+     &  nati2c(-1:nx,-1:ny),
+     &  nati2(-1:nx,-1:ny),
+     &  dnati2(-1:nx,-1:ny,0:1,0:1),
+     *  nati2z(-1:nx,-1:ny), dnati2z(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       integer, save :: PSch_style
       integer, save :: use_9pt_stencil = 1

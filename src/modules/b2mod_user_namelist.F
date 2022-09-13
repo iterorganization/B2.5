@@ -19,6 +19,7 @@
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
+      real (kind=R8) :: Te_det_threshold
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -34,10 +35,12 @@
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
-     ,  filedata,user_filename
+     ,  filedata,user_filename,Te_det_threshold
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
+c*** Te_det_threshold : Temperature threshold at the target below which
+c***                    a flux tube is considered detached (typically, 2.0 eV)
 c*** lhetrgts  :  list of surface indices (EIRENE notation) which
 c***              are used for calculation of helium enrichment
 c*** lpfrb_[io]:  B2 x-cell indices corresponding to the bottom of the
@@ -91,6 +94,7 @@ c***  Standard set-up:
       fusion_power=0.0_R8    ! no helium
       Spmp_He_to_D=1.0_R8    ! same pumping speed for He and D
       Spmp_nom=0.0_R8
+      Te_det_threshold = 2.0_R8
       j_h_at =0
       l_h_mol=0
       j_he_at=0
@@ -218,6 +222,8 @@ c*** Set default values according to current species list
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
+      call xertst(0.0_R8.lt.Te_det_threshold,
+     . 'faulty input Te_det_threshold')
       call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
       call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
       call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')

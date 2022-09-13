@@ -142,7 +142,7 @@ cwdk cancellation of some terms in poloidal and radial flux components
                 fhePSch(ix,iy,0,0:1)= 0.0e0_R8
                 cone(ix,iy,0,:,:) = 0.0e0_R8
               else
-                fhePSch(ix,iy,0,0)=-PSch*
+                fhePSch(ix,iy,0,0) = -PSch*
      &           dnete2(ix,iy,0,1)*
      &           bzbl(ix,iy)*hzl(ix,iy)/qe
                 if (use_9pt_stencil.ne.0)
@@ -192,9 +192,9 @@ cwdk cancellation of some terms in poloidal and radial flux components
      &       cdde(rightix(ixb,iyb),rightiy(ixb,iyb),0,0)*                !som 03.11.21
      &       dnete2(rightix(ixb,iyb),rightiy(ixb,iyb),0,0)
      &                               )
-            cone(ix,iy,1,1,1) = -0.5e0_R8*PSch*cdde(ix,iy,0,0)*          ! 0.25*2 !srv 02.01.07 {
+            cone(ix,iy,1,1,1) = -0.5e0_R8*PSch*cdde(ix,iy,0,0)*          ! 0.25*2 !som 03.11.21 !srv 02.01.07 {
      &                                      ne(ix,iy)*te(ix,iy)
-            cone(ix,iy,1,1,2) = -0.5e0_R8*PSch*cdde(ix,iy,0,0)*          ! 0.25*2
+            cone(ix,iy,1,1,2) = -0.5e0_R8*PSch*cdde(ix,iy,0,0)*          ! 0.25*2 !som 03.11.21
      &                        ne(leftix(ix,iy),leftiy(ix,iy))*
      &                        te(leftix(ix,iy),leftiy(ix,iy))            !srv 02.01.07 }
            endif

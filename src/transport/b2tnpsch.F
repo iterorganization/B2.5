@@ -159,7 +159,8 @@ cwdk cancellation of some terms in poloidal and radial flux components
 !     &      (bzb(ix,iy)*hz(ix,iy)*vol(ixl,iyl)
 !     &      +bzb(ixl,iyl)*hz(ixl,iyl)*vol(ix,iy))
 !     &      /(vol(ixl,iyl)+vol(ix,iy))/(qe*zb(ix,iy))                  !lk }
-           fnbPSch(ix,iy,0,0) = PSch*dnbti(ix,iy,0,1)*                  !lk {
+           fnbPSch(ix,iy,0,0) = PSch*                                   !lk {
+     &       dnbti(ix,iy,0,1)*
      &      (bzb(ix,iy)*(vol(ix,iy)/gs(ix,iy,2))*vol(ixl,iyl)
      &      +bzb(ixl,iyl)*(vol(ixl,iyl)/gs(ixl,iyl,2))*vol(ix,iy))
      &      /(vol(ixl,iyl)+vol(ix,iy))/(qe*zb(ix,iy))                   !lk }
@@ -223,7 +224,8 @@ cwdk cancellation of some terms in poloidal and radial flux components
      &    cddb(bottomix(ix,iy),bottomiy(ix,iy),0,0)*
      &     dnbti(bottomix(ix,iy),bottomiy(ix,iy),0,0)+
      &    cddb(rightix(ixb,iyb),rightiy(ixb,iyb),0,0)*
-     &     dnbti(rightix(ixb,iyb),rightiy(ixb,iyb),0,0) )
+     &     dnbti(rightix(ixb,iyb),rightiy(ixb,iyb),0,0)
+     &                                         )
           endif
          enddo
         enddo
@@ -259,7 +261,8 @@ cwdk cancellation of some terms in poloidal and radial flux components
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fnbPSch(ix,iy,1,0:1)= 0.0e0_R8
             else
-              fnbPSch(ix,iy,1,1) = -PSch*dnbtiz(ix,iy,1,0)*
+              fnbPSch(ix,iy,1,1) = -PSch*
+     &         dnbtiz(ix,iy,1,0)*
      &         bzbv(ix,iy)/qe*hzb(ix,iy)
             endif
           enddo

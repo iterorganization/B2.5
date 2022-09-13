@@ -226,7 +226,7 @@
                 do ix=-1,nx
                  if(leftix(ix,iy).ne.-2) then
                   fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
-     &              csigin(ix,iy,0,0,is,is0)*(
+     &              csigin(ix,iy,0,0,is,is0)*(                          !som 04.11.21
      &            ( -dpo(ix,iy,0,0)
      &              -(wrk1(ix,iy,0,0)
      &               +til(ix,iy)*wrk0(ix,iy,0,0,is))/

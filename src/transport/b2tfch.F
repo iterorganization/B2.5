@@ -211,7 +211,7 @@ c Drift terms
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
       call b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
-     & pz, fna, uadia, facdrift, fchdia)
+     &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
       call b2tvspa(nx, ny, ns, ismain, vol, hx, hy, qz, qs, bb,          !srv 19.02.21
      &             na, ua, cvsa_cl, cvsa_drho, fac_vis,                  !srv 20.09.06 16.10.17 !som 18.08.21
