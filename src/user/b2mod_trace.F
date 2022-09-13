@@ -152,7 +152,7 @@ c
 c======================================================================
       subroutine b2trci(nx,ny,ns,nxtl,nxtr,nregionv)
       implicit none
-      integer, intent(in) :: nx, ny, ns, nxtl,nxtr, nregionv
+      integer, intent(in) :: nx, ny, ns, nxtl, nxtr, nregionv
 c*** Initialisation call
       if (tracing_initialised) return
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)

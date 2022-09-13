@@ -21,8 +21,7 @@
      *  facdrift(-1:nx,-1:ny), ! vol(-1:nx,-1:ny),
 !     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),          !srv 13.10.06
      1  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     &  cddi(-1:nx,-1:ny,0:1,0:ns-1),
-     &  nati2c(-1:nx,-1:ny,0:ns-1), nati2(-1:nx,-1:ny,0:ns-1)
+     &  cddi(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   fhiPSch(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)             !srv 13.10.06
@@ -48,7 +47,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0
-      real (kind=R8) :: wght(-1:nx,-1:ny)
+      real (kind=R8) :: wght(-1:nx,-1:ny),
+     &  nati2c(-1:nx,-1:ny,0:ns-1),
+     &  nati2(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       integer, save :: PSch_style
       real (kind=R8) ::
@@ -284,7 +285,7 @@
               if(.not.is_neutral(is)) then
                 fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) -
      &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy),is)-
-     &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
+     &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbv(ix,iy)*hzb(ix,iy)
                 coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*         ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
                 coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*         ! 0.25*2

@@ -524,7 +524,7 @@ csw 16oct2012 init ier0
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is)) then
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
-                 do ireg = 0, nnreg(0)
+                do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(ireg)
                 end do

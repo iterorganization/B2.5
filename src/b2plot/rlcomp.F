@@ -4,8 +4,7 @@
       use b2mod_diag
       use b2mod_subsys
       use b2mod_b2plot_wall_loading
-     ,  , only : from_b2plot 
-
+     ,  , only : from_b2plot
       implicit none
 c
 c  version : 18.02.98 19:00

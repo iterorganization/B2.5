@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(BoRiS)               
+      subroutine b2ptrgl(BoRiS)
 c
 c  version : 07.04.98 13:12
 c
@@ -34,7 +34,6 @@ c======================================================================
       integer lun
       parameter (lun=96)
       integer, save :: use_eirene = 0
-!      integer use_eirene 
 #ifdef B25_EIRENE
       integer eb2atm(nspecies)
 #else
@@ -63,7 +62,7 @@ c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
      ,  wpk_rd(0:ntrgsx),wpk_te(ntrgsx),wpk_ne(ntrgsx),
-!!!     wpk_tt(0:ntrgsx) now in module b2mod_b2plot_all_loading  iyv 11.04.22            
+!!!     wpk_tt(0:ntrgsx) now in module b2mod_b2plot_all_loading  iyv 11.04.22
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),wp_xpt(0:ny-1,ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  wid_par(0:ny-1,ntrgsx),wid_trg(0:ny-1,ntrgsx),
@@ -157,7 +156,7 @@ c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
-      real (kind=R8) :: tti, ptext, faext, uaext, taext 
+      real (kind=R8) :: tti, ptext, faext, uaext, taext
       character srfs_m(n_srfs_m)*4
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
       data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
@@ -206,7 +205,7 @@ c*** which are calculated in Eirene.
       print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
       tab=char(9)
-      if (ncall.eq.0)       ! iyv 19.07.22            
+      if (ncall.eq.0)       ! iyv 19.07.22
      , call ipgeti ('b2mndr_eirene', use_eirene)
       if (use_eirene.ne.0) then
         filename=fort_lc//'44'
@@ -384,17 +383,15 @@ c*** Power loading:
       endif
 c
 c*** Plasma and neutrals
-c 
+c
       l=1
       u=-1.0_R8
       do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
-        if (itrg(j).gt.0) then !{          
+        if (itrg(j).gt.0) then !{
           k=ltrgpos(itrg(j))
-          kval=k+l 
+          kval=k+l
           kflx=k+1-l
-
           if( .not. from_b2plot) kflx=k+1
-
           do iy=lytg,ny-1 !{
             wo=0.0_R8
             wnutrg(iy,itrg(j))=0.0_R8
@@ -418,14 +415,14 @@ c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               ptext=pt_ext(kval,iy,is)
               uaext=ua_ext(kval,iy,is)
               faext=fa_ext(kflx,iy,0,is)
-              if( .not. from_b2plot) then 
-                ptext=0.5_R8*(pt_ext(kflx,iy,is)+pt_ext(k,iy,is))           
-                uaext=0.5_R8*(ua_ext(kflx,iy,is)+ua_ext(k,iy,is))           
-                faext=0.5_R8*(fa_ext(kflx,iy,0,is)+fa_ext(k,iy,0,is))  
-                taext=0.5_R8*(ta_ext(kflx,iy,is)+ta_ext(k,iy,is))  
-             end if  
+              if( .not. from_b2plot) then
+                ptext=0.5_R8*(pt_ext(kflx,iy,is)+pt_ext(k,iy,is))
+                uaext=0.5_R8*(ua_ext(kflx,iy,is)+ua_ext(k,iy,is))
+                faext=0.5_R8*(fa_ext(kflx,iy,0,is)+fa_ext(k,iy,0,is))
+                taext=0.5_R8*(ta_ext(kflx,iy,is)+ta_ext(k,iy,is))
+              end if
               if (.not.is_ext_neutral(is).or.ft44) then
-               wo=wo+faext*ptext*ev
+                wo=wo+faext*ptext*ev
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               else
                 wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+
@@ -617,9 +614,9 @@ c     ,     1.0e-6_R8*wnutrg(iy,itrg(j))*wi(itrg(j))/s(iy,itrg(j))
 #endif
       if(lrdlsp) nclm_ld=nclm_ld+nclm_na
       if(lrdlcr) nclm_ld=nclm_ld+1
-      
+
       if (from_b2plot) then    ! iyv 11.04.22
-          
+
       do j=1,ntrgts !{
         jj=itrg(j)
         if(j.eq.ntrgts.and..not.(ntrgts.eq.1.and.itrg(1).eq.1))
@@ -764,9 +761,9 @@ c
               wlc_tt(itrg(j))=xtrg(i,itrg(j))
               m_hlp(itrg(j))=i
             end if !}
-            
+
             if(from_b2plot) then           !iyv 11.04.22
-                
+
             if(wrdtrg(i,itrg(j),0) .gt. wpk_rd(itrg(j))) then !{
               wpk_rd(itrg(j))=wrdtrg(i,itrg(j),0)
               wlc_rd(itrg(j))=xtrg(i,itrg(j))
@@ -785,12 +782,12 @@ c
         l=1-l
       end do !}
 
-     
+
       if ( .not. from_b2plot) then
-        ncall = ncall + 1 
+        ncall = ncall + 1
         return       !iyv 11.04.22
       endif
-      
+
       write(fmt_peak,700) 24
   700 format('(1p,e12.5,',i3,'(a1,e12.5))')
       i1=1
@@ -798,7 +795,7 @@ c
       fn_hlp=fsumm(1)
       tl=' '
       do j=1,2 !{
-         if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
+        if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
           open(lun,file=fn_hlp)
           write(lun,740) 'Peak powers ',pkl_label(j),trim(label)
           if(.not.LSN) then
@@ -808,7 +805,7 @@ c
           endif
           i3=i2-i1
           if (i3.eq.0 .and. ntrgts.eq.1) i3=1
-   
+
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
@@ -837,7 +834,7 @@ c
      ,      tab, 'loc_n_i',tl,
      ,      tab,'peak_tei',tl,tab,'peak_nei',tl
           end if
-            write(lun,fmt_peak) tim,
+          write(lun,fmt_peak) tim,
      ,     (tab, wpk_tt(i),i=i1,i2,i3), tab, wpk_tt(0),
      ,     (tab, wlc_tt(i),i=i1,i2,i3),
      ,     (tab, wpk_rd(i),i=i1,i2,i3), tab, wpk_rd(0),
@@ -1698,7 +1695,7 @@ c
         write(lun,fmt_peak) 'peak pos.',(tab,ersn_l(itrg(i)),i=1,ntrgts)
         close (lun)
       end if
-      
+
       ncall = ncall+1   !iyv 19.07.22
       return
 

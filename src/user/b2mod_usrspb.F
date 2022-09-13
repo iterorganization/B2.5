@@ -48,8 +48,9 @@ c***
 c----------------------------------------------------------------------
 
       integer, save :: lun, mintopcut
+      real (kind=R8), save :: Q_pneut, Q_Te_min_LCFS
       real (kind=R8), allocatable, save :: 
-     &          Q_pneut, Q_Te_min_LCFS, Q_pneut_trg(:),
+     &    Q_pneut_trg(:),
      &    Q_Te_max(:), Q_det_wdth(:), Area_pneut_trg(:),
      &    Q_I_tot_trg(:), Q_jsat_trg(:,:), Q_Isat_trg(:),
      &    Q_qmax_trg(:), Q_jsat_max_trg(:)
@@ -312,13 +313,13 @@ c*** Input the DG data and prepare the geometry (this routine works once)
       
       N_Q_total = N_Q_global + ntrgts * N_Q_target     
 
-      if (.not. allocated(Q_pneut)) then
+      if (.not. allocated(Q_pneut_trg)) then
         allocate(
-     &   Q_pneut, Q_pneut_trg(2), Area_pneut_trg(ntrgts),
+     &   Q_pneut_trg(2), Area_pneut_trg(ntrgts),
      &   Q_Te_max(ntrgts), Q_det_wdth(ntrgts),
      &   Q_I_tot_trg(ntrgts), Q_jsat_trg(-1:ny,ntrgts),
      &   Q_jsat_max_trg(ntrgts), Q_Isat_trg(ntrgts), 
-     &   Q_qmax_trg(ntrgts), Q_Te_min_LCFS)
+     &   Q_qmax_trg(ntrgts))
         allocate(
      &   ix_pneut_beg(2), ix_pneut_end(2))
         allocate(headers(N_Q_total))
@@ -593,9 +594,9 @@ c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 
-      if (allocated(Q_pneut))
+      if (allocated(Q_pneut_trg))
      &  deallocate(
-     &   Q_pneut, Q_Te_min_LCFS, Q_pneut_trg, Area_pneut_trg,
+     &   Q_pneut_trg, Area_pneut_trg,
      &   Q_Te_max, Q_det_wdth, Q_I_tot_trg,
      &   Q_jsat_trg, Q_Isat_trg, Q_qmax_trg)
         deallocate( 
