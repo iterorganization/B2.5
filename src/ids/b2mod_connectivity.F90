@@ -20,7 +20,7 @@ module b2mod_connectivity
 
     !! Geometry/topology IDs (obtain using function geometryId(..:))
 
-    integer, parameter :: GEOMETRY_COUNT = 11
+    integer, parameter :: GEOMETRY_COUNT = 12
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
     !! The IDs, matching the IDS definitions of the GGD identifiers
@@ -34,7 +34,8 @@ module b2mod_connectivity
     integer, parameter :: GEOMETRY_DDN_TOP = 7
     integer, parameter :: GEOMETRY_ANNULUS = 8
     integer, parameter :: GEOMETRY_STELLARATORISLAND = 9
-    integer, parameter :: GEOMETRY_SNOWFLAKE = 10
+    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 10
+    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 11
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
     !! i.e. zero-based.
@@ -68,7 +69,8 @@ module b2mod_connectivity
         &       8, 13, 14,  & !! GEOMETRY_DDN_TOP
         &       1,  2,  2,  & !! GEOMETRY_ANNULUS
         &       5,  7,  8,  & !! GEOMETRY_STELLARATORISLAND
-        &       7, 13, 13   & !! GEOMETRY_SNOWFLAKE
+        &       7, 12, 13,  & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
+        &       7, 12, 13   & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
@@ -84,7 +86,8 @@ module b2mod_connectivity
         &    'DDN_TOP    ', &
         &    'ANNULUS    ', &
         &    'ISLAND     ', &
-        &    'SNOWFLAKE  '  &
+        &    'LFS_SF-    ', &
+        &    'LFS_SF+    '  &
         &   /)
 
     character(50), dimension(0:GEOMETRY_COUNT-1), parameter :: geometryDescription = &
@@ -99,7 +102,8 @@ module b2mod_connectivity
         &    'Disconnected double null, top X-point is active   ', &
         &    'Annular geometry, curved in the third direction   ', &
         &    'Stellarator island geometry                       ', &
-        &    'Snowflake geometry                                '  &
+        &    'Low-field side Snowflake-minus geometry           ',  &
+        &    'Low-field side Snowflake-plus geometry            '  &
         &   /)
 
     !! Region names
@@ -339,14 +343,14 @@ module b2mod_connectivity
         &   'Entrance to outer PFR           ',                         &
         &   'Island boundary                 ',                         &
         &   UU, UU, UU, UU, UU, UU,                                     &
-        & & ! GEOMETRY_Snowflake
+        & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
         &   'Core                            ',                         &
         &   'SOL                             ',                         &
         &   'Inner divertor                  ',                         &
         &   'outer divertor entrance         ',                         &
         &   'first outboard divertor leg     ',                         &
-        &   'first outboard divertor leg     ',                         &
-        &   'first outboard divertor leg     ',                         &
+        &   'second outboard divertor leg    ',                         &
+        &   'third outboard divertor leg     ',                         &
         &   UU, UU, UU, UU, UU, UU, UU,                                 &
         & &
         &   'Inner target                    ',                         &
@@ -354,30 +358,67 @@ module b2mod_connectivity
         &   'Outer divertor entrance         ',                         &
         &   'First outer divertor target     ',                         &
         &   'Second outer divertor target    ',                         &
-        &   'First outer divertor leg throat ',                         &
-        &   'Connection of snowflake SOLs    ',                         &
+        &   'SOL connection outer leg 1      ',                         &
+        &   'SOL connection outer leg 2/3    ',                         &
         &   'Third outer divertor target     ',                         &
         &   'Core cut                        ',                         &
         &   'PFR cut                         ',                         &
-        &   'Core-like cut in outer div.     ',                         &
-        &   'PFR-like cut in outer div.      ',                         &
-        &   'Between separatrices div. cut   ',                         &
-        &   UU,                                                         &
+        &   'Cut outer entrance to leg 3 ',                         &
+        &   'PFR cut outer leg 1 to leg 2    ',                         &
+        &   UU,UU,                                                      &
         & &
         &   'Inner PFR wall                  ',                         &
         &   'Core boundary                   ',                         &
-        &   'First outer PFR wall            ',                         &
+        &   'Outer entrance PFR wall         ',                         &
         &   'Separatrix                      ',                         &
         &   'Inner baffle                    ',                         &
         &   'Main chamber wall               ',                         &
-        &   'First outer baffle              ',                         &
-        &   'Second outer PFR wall           ',                         &
-        &   'Third outer PFR wall            ',                         &
-        &   'Fourth outer PFR wall           ',                         &
-        &   'Second outer baffle             ',                         &
-        &   'Third outer baffle              ',                         &
-        &   'Fourth outer baffle             ',                         &
-        &   UU                                                         &
+        &   'Outer entrance baffle           ',                         &
+        &   'First outer leg PFR wall        ',                         &
+        &   'Second outer leg PFR wall       ',                         &
+        &   'Third outer leg PFR wall        ',                         &
+        &   'First outer leg baffle          ',                         &
+        &   'Second outer leg baffle         ',                         &
+        &   'Third outer leg baffle          ',                         &
+        &   UU,                                                         &
+        & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &   'Core                            ',                         &
+        &   'SOL                             ',                         &
+        &   'Inner divertor                  ',                         &
+        &   'outer divertor entrance         ',                         &
+        &   'first outboard divertor leg     ',                         &
+        &   'second outboard divertor leg    ',                         &
+        &   'third outboard divertor leg     ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU,                                 &
+        & &
+        &   'Inner target                    ',                         &
+        &   'Inner divertor entrance         ',                         &
+        &   'Outer divertor entrance         ',                         &
+        &   'First outer divertor target     ',                         &
+        &   'Second outer divertor target    ',                         &
+        &   'SOL connection outer leg 1      ',                         &
+        &   'SOL connection outer leg 2/3    ',                         &
+        &   'Third outer divertor target     ',                         &
+        &   'Core cut                        ',                         &
+        &   'PFR cut                         ',                         &
+        &   'Cut outer entrance to leg 3 ',                         &
+        &   'PFR cut outer leg 1 to leg 2    ',                         &
+        &   UU,UU,                                                      &
+        & &
+        &   'Inner PFR wall                  ',                         &
+        &   'Core boundary                   ',                         &
+        &   'Outer entrance PFR wall         ',                         &
+        &   'Separatrix                      ',                         &
+        &   'Inner baffle                    ',                         &
+        &   'Main chamber wall               ',                         &
+        &   'Outer entrance baffle           ',                         &
+        &   'First outer leg PFR wall        ',                         &
+        &   'Second outer leg PFR wall       ',                         &
+        &   'Third outer leg PFR wall        ',                         &
+        &   'First outer leg baffle          ',                         &
+        &   'Second outer leg baffle         ',                         &
+        &   'Third outer leg baffle          ',                         &
+        &   UU                                                 &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -549,12 +590,22 @@ contains
         return
     end if
     if (nnreg(0) == 7) then
-        geometryId = GEOMETRY_SNOWFLAKE
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND")
-            first = .false.
+        if (topcut(1) < topcut(2)) then
+            geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_MINUS")
+                first = .false.
+            end if
+            return
         end if
-        return
+        if (topcut(1) > topcut(2)) then
+            geometryId = GEOMETRY_LFS_SNOWFLAKE_PLUS
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_PLUS")
+                first = .false.
+            end if
+            return
+        end if
     end if
     if (nnreg(0) == 8) then
 

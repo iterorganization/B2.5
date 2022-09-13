@@ -628,7 +628,7 @@ contains
           fchyap(1) = fchyap(1) + fchtmp
           fetyap(1) = fetyap(1) + fettmp
         endif
-        if(region(ix,ny,0).ge.3) then
+        if(region(ix,-1,0).ge.3) then
           iy = -1 ! 11
           call calc_fet(ix,iy,'B',-1._R8,nx,ny,ismain,BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
           fniyap(1) = fniyap(1) + fnitmp
