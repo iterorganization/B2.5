@@ -407,7 +407,7 @@ c
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               else
                 wnutrg(iy,itrg(j))=wnutrg(iy,itrg(j))+(1.0_R8-BoRiS)*
-     *           (fhm(kflx,iy,0,0,is)+fna(kflx,iy,0,0,is)*tti
+     *           (fhm(kflx,iy,0,0,is)+fna(kflx,iy,0,0,is)*tti+
      *            fhm(kflx,iy,0,1,is)+fna(kflx,iy,0,1,is)*tti)
               endif
               whtpl(iy,itrg(j))=whtpl(iy,itrg(j))+(1.0_R8-BoRiS)*
@@ -421,7 +421,8 @@ c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               if( .not. from_b2plot) then
                 ptext=0.5_R8*(pt_ext(kflx,iy,is)+pt_ext(k,iy,is))
                 uaext=0.5_R8*(ua_ext(kflx,iy,is)+ua_ext(k,iy,is))
-                faext=0.5_R8*(fa_ext(kflx,iy,0,0,is)+fa_ext(k,iy,0,0,is))+
+                faext=0.5_R8*(fa_ext(kflx,iy,0,0,is)+
+     *                        fa_ext(k,iy,0,0,is))+
      *                        fa_ext(kflx,iy,0,1,is)
                 taext=0.5_R8*(ta_ext(kflx,iy,is)+ta_ext(k,iy,is))
               end if
