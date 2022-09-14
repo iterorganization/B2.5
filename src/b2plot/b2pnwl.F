@@ -398,7 +398,7 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
+      logical goup,placed(DEF_NLIM),found,direction_same
       integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
@@ -422,8 +422,6 @@ c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
 c        end do
 c      end do
 cc%%%
-      no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
-     &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
       iret=0
       do il=1,nwldprt
         is=lwldstrt(il)
@@ -519,7 +517,7 @@ c*** No connection found
               if (lskip(j)) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=0
-              else if (no_fort44) then
+              else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.

@@ -67,7 +67,7 @@ c*** Column headers:
 
       contains
 
-      subroutine b2usstrc(nx,ny,ns,BoRis)
+      subroutine b2usstrc(nx,ny,ns,BoRiS)
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_plasma
@@ -144,7 +144,7 @@ c----------------------------------------------------------------------
         iy=0
         iyp=1
         if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
-          iy = ny
+          iy=ny
           iyp=ny
         end if  
         Area_pneut_trg(it) = 0.0_R8
@@ -291,7 +291,8 @@ c======================================================================
 c======================================================================
 
       subroutine b2usstri(nx,ny,nxtl,nxtr)
-      
+      use b2mod_b2plot
+     & , only : ny_b2plot => ny
       implicit none
       integer nx, ny, nxtl, nxtr
       integer i, j, nv, N_ttl_read, N_per_trg_read, Ntrgts_read 
@@ -307,6 +308,7 @@ c----------------------------------------------------------------------
       if(first_time_step) then
         call alloc_b2plot_wall_loading(nlim,nsgmx)
         from_b2plot = .false.
+        ny_b2plot = ny
       endif
 c*** Input the DG data and prepare the geometry (this routine works once)
       call b2pwinp
@@ -339,71 +341,71 @@ c***  lpfrs_pmp - location of the pump: 0 - no pump at all,
 c***              1 - in lower PFR, 2 - on the outer wall,
 c***              3 - in upper PFR, 4 - on the inner wall
 
-       ix_pneut_beg(1) = lpfrb_i !{
-       if (ix_pneut_beg(1) .le. 0) then !{
-         if (lpfrs_pmp .eq. 1) then !{
-           ix_pneut_beg(1) = leftcut(1) - 1 + ix_pneut_beg(1)
-         elseif (lpfrs_pmp .eq. 2) then !}{
-           ix_pneut_beg(1) = nx - 1 + ix_pneut_beg(1)
-         elseif(lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
-          ix_pneut_beg(1) = nxtl - 1 + ix_pneut_beg(1)
-         end if !}
-       end if !}
-         ix_pneut_end(1) = lpfrt_i
-       if (ix_pneut_end(1) .le. 0) then !{
-         if (lpfrs_pmp .eq. 1) then !{
-           ix_pneut_end(1) = leftcut(1) - 1 + ix_pneut_end(1)
-         elseif (lpfrs_pmp .eq. 2) then !}{
-           ix_pneut_end(1) = nx - 1 + ix_pneut_end(1)
-         elseif (lpfrs_pmp .eq. 3) then !}{
-           ix_pneut_end(1) = leftcut(2) - ix_pneut_end(1)
-         elseif(lpfrs_pmp.eq.4) then !}{
-           ix_pneut_end(1) = nxtl - 1 + ix_pneut_end(1)
-         end if !}
-       end if !}
+        ix_pneut_beg(1) = lpfrb_i !{
+        if (ix_pneut_beg(1) .le. 0) then !{
+          if (lpfrs_pmp .eq. 1) then !{
+            ix_pneut_beg(1) = leftcut(1) - 1 + ix_pneut_beg(1)
+          elseif (lpfrs_pmp .eq. 2) then !}{
+            ix_pneut_beg(1) = nx - 1 + ix_pneut_beg(1)
+          elseif(lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
+            ix_pneut_beg(1) = nxtl - 1 + ix_pneut_beg(1)
+          end if !}
+        end if !}
+        ix_pneut_end(1) = lpfrt_i
+        if (ix_pneut_end(1) .le. 0) then !{
+          if (lpfrs_pmp .eq. 1) then !{
+            ix_pneut_end(1) = leftcut(1) - 1 + ix_pneut_end(1)
+          elseif (lpfrs_pmp .eq. 2) then !}{
+            ix_pneut_end(1) = nx - 1 + ix_pneut_end(1)
+          elseif (lpfrs_pmp .eq. 3) then !}{
+            ix_pneut_end(1) = leftcut(2) - ix_pneut_end(1)
+          elseif(lpfrs_pmp.eq.4) then !}{
+            ix_pneut_end(1) = nxtl - 1 + ix_pneut_end(1)
+          end if !}
+        end if !}
 
 ! Eastern divertor      
 
-       ix_pneut_beg(2) = lpfrt_o
-       if (ix_pneut_beg(2) .le. 0) then !{
-         if (lpfrs_pmp .eq. 1) then !{
-           ix_pneut_beg(2) = rightcut(1) - ix_pneut_beg(2)
-         elseif(lpfrs_pmp .eq. 2) then !}{
-           ix_pneut_beg(2) = nx - 1 + ix_pneut_beg(2)
-         elseif(lpfrs_pmp .eq. 3) then !}{
-           ix_pneut_beg(2) = rightcut(2) - 1 + ix_pneut_beg(2)
-         elseif(lpfrs_pmp.eq.4) then !}{
-           ix_pneut_beg(2) = nxtr - 1 - ix_pneut_beg(2)
-         end if !}
-       end if !}
-       ix_pneut_end(2) = lpfrb_o
-       if (ix_pneut_end(2) .le. 0) then !{
-         if(lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
-           ix_pneut_end(2) = nx - 1 + ix_pneut_end(2)
-         else if(lpfrs_pmp .eq. 3) then !}{
-           ix_pneut_end(2) = nxtr + 1 - ix_pneut_end(2)
-         else if(lpfrs_pmp .eq. 4) then !}{
-           ix_pneut_end(2) = nxtl - 1 + ix_pneut_end(2)
-         end if !}
-       end if !}
+        ix_pneut_beg(2) = lpfrt_o
+        if (ix_pneut_beg(2) .le. 0) then !{
+          if (lpfrs_pmp .eq. 1) then !{
+            ix_pneut_beg(2) = rightcut(1) - ix_pneut_beg(2)
+          elseif(lpfrs_pmp .eq. 2) then !}{
+            ix_pneut_beg(2) = nx - 1 + ix_pneut_beg(2)
+          elseif(lpfrs_pmp .eq. 3) then !}{
+            ix_pneut_beg(2) = rightcut(2) - 1 + ix_pneut_beg(2)
+          elseif(lpfrs_pmp.eq.4) then !}{
+            ix_pneut_beg(2) = nxtr - 1 - ix_pneut_beg(2)
+          end if !}
+        end if !}
+        ix_pneut_end(2) = lpfrb_o
+        if (ix_pneut_end(2) .le. 0) then !{
+          if(lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
+            ix_pneut_end(2) = nx - 1 + ix_pneut_end(2)
+          else if(lpfrs_pmp .eq. 3) then !}{
+            ix_pneut_end(2) = nxtr + 1 - ix_pneut_end(2)
+          else if(lpfrs_pmp .eq. 4) then !}{
+            ix_pneut_end(2) = nxtl - 1 + ix_pneut_end(2)
+          end if !}
+        end if !}
       else !}{
-         ix_pneut_beg(1) =1
-         ix_pneut_end(1) =0
-         ix_pneut_beg(2) =1
-         ix_pneut_end(2) =0
+        ix_pneut_beg(1) = 1
+        ix_pneut_end(1) = 0
+        ix_pneut_beg(2) = 1
+        ix_pneut_end(2) = 0
       end if !}
     
       if (ntrgts .eq. 2) then
         do i=1,N_Q_target
-       headers(N_Q_global+(i-1)*ntrgts+1) = header_tmpl(i) // '_i '  ! inner target
-       headers(N_Q_global+(i-1)*ntrgts+2) = header_tmpl(i) // '_o '  ! outer target
+          headers(N_Q_global+(i-1)*ntrgts+1) = header_tmpl(i)//'_i '  ! inner target
+          headers(N_Q_global+(i-1)*ntrgts+2) = header_tmpl(i)//'_o '  ! outer target
         enddo        
       elseif (ntrgts .eq. 4) then
         do i=1,N_Q_target
-       headers(N_Q_global+(i-1)*ntrgts+1) = header_tmpl(i) // '_i '  ! inner target
-       headers(N_Q_global+(i-1)*ntrgts+2) = header_tmpl(i) // '_iu'  ! outer target
-       headers(N_Q_global+(i-1)*ntrgts+3) = header_tmpl(i) // '_ou'  ! inner upper target
-       headers(N_Q_global+(i-1)*ntrgts+4) = header_tmpl(i) // '_o '  ! outer upper target
+          headers(N_Q_global+(i-1)*ntrgts+1) = header_tmpl(i)//'_i '  ! inner target
+          headers(N_Q_global+(i-1)*ntrgts+2) = header_tmpl(i)//'_iu'  ! outer target
+          headers(N_Q_global+(i-1)*ntrgts+3) = header_tmpl(i)//'_ou'  ! inner upper target
+          headers(N_Q_global+(i-1)*ntrgts+4) = header_tmpl(i)//'_o '  ! outer upper target
         enddo
       endif
 
