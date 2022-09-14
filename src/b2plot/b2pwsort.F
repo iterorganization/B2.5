@@ -147,7 +147,7 @@ c*** No connection found
               if (lskip(j)) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=0
-              elseif (nlimi.eq.0) then
+              else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else 
