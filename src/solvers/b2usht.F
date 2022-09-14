@@ -10,6 +10,7 @@
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_switches
+      use b2mod_constants
       use b2us_geo
       use b2us_map
       use b2mod_ma28_for_us
@@ -784,7 +785,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solvekt(ireg))
      &   aa(mpg%cvNvP(iCv,1)) =
-     &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1)
+     &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1) + 
+     &     abs(reskt(iCv))/(rxg*(kt(iCv)+1.0e-5_R8*ev))
        enddo
 ! $AD II-LOOP
        do iFc = 1, nFc
@@ -931,7 +933,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solvezt(ireg))
      &   aa(mpg%cvNvP(iCv,1)) =
-     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1)
+     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1) + 
+     &     abs(reszt(iCv))/(rxg*(zt(iCv)+1.0e-5_R8*ev))
        enddo
 ! $AD II-LOOP
        do iFc = 1, nFc
