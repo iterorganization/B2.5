@@ -10,7 +10,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_geo_corner
-     &  , only : bzbl
+     &  , only : bzbl, bzbv
       use b2mod_geo
 !     &   , only : hzl,hzb
       use b2mod_subsys
@@ -284,7 +284,7 @@
               if(.not.is_neutral(is)) then
                 fhiPSch(ix,iy,1) = fhiPSch(ix,iy,1) -
      &          PSch*(nati2c(rightix(ix,iy),rightiy(ix,iy),is)-
-     &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbl(ix,iy)*hzl(ix,iy)
+     &       nati2c(ix,iy,is))/rza(ix,iy,is)/qe*bzbv(ix,iy)*hzb(ix,iy)
                 coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*         ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
                 coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*         ! 0.25*2
