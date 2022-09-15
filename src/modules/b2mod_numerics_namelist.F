@@ -5,10 +5,10 @@
 
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   dtco(:,:),
-     *   dtmo(:,:),
-     *   dtee(:),
-     *   dtei(:)
+     *   dtco(:,:), dtco_SOL(:),
+     *   dtmo(:,:), dtmo_SOL(:),
+     *   dtee(:), dtee_SOL,
+     *   dtei(:), dtei_SOL
      *   , corr_core_dn(:)                                 ! IYS 19.12.2017
       logical, allocatable, save ::
      *   solveco(:,:),
@@ -27,10 +27,12 @@
 #     include "DIMENSIONS.F"
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
-      real (kind=R8), save :: dtco(0:nsdmax-1,0:NNREGMAX)
-      real (kind=R8), save :: dtmo(0:nsdmax-1,0:NNREGMAX)
-      real (kind=R8), save :: dtee(0:NNREGMAX)
-      real (kind=R8), save :: dtei(0:NNREGMAX)
+      real (kind=R8), save :: 
+     &    dtco(0:nsdmax-1,0:NNREGMAX), dtco_SOL(0:nsdmax-1)
+      real (kind=R8), save :: 
+     &    dtmo(0:nsdmax-1,0:NNREGMAX), dtmo_SOL(0:nsdmax-1)
+      real (kind=R8), save :: dtee(0:NNREGMAX), dtee_SOL
+      real (kind=R8), save :: dtei(0:NNREGMAX), dtei_SOL
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
@@ -57,15 +59,18 @@
       real (kind=R8), save :: numerics_time_switch
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
+      integer, save :: iy_SOL_dtXX = 1
 
       private :: numerics
       logical, save :: write_nml_num = .true.
-      namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
-     1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveet,       !srv 22.05.18
+      namelist /numerics/ dtco, dtmo, dtee, dtei,
+     & dtco_SOL, dtmo_SOL, dtee_SOL, dtei_SOL, iy_SOL_dtXX,
+     & time_factor_required,
+     & core_dt_suppression, core_dt_factor,
+     & solveco, solvemo, solvemt, solvepo, solveee, solveei, solveet,       !srv 22.05.18
      & write_nml_num,
-     3 numerics_filename,numerics_time_mod,numerics_time_switch,
-     4 corr_core_dn,corr_core_dt,add_te_corr_to_po         ! IYS 19.12.2017
+     & numerics_filename, numerics_time_mod, numerics_time_switch,
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po         ! IYS 19.12.2017
 
       contains
 
@@ -79,9 +84,12 @@
       allocate(time_factor(-1:nxd,-1:nyd))
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(dtco(0:nsd-1,0:nnreg(0)))
+      allocate(dtco_SOL(0:nsd-1))
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
+      allocate(dtmo_SOL(0:nsd-1))
       allocate(dtee(0:nnreg(0)))
-      allocate(dtei(0:nnreg(0)))
+      allocate(dtee_SOL)
+      allocate(dtei_SOL)
       allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
@@ -105,6 +113,10 @@
       dtmo=1.0_R8
       dtee=1.0_R8
       dtei=1.0_R8
+      dtco_SOL=1.0_R8
+      dtmo_SOL=1.0_R8
+      dtee_SOL=1.0_R8
+      dtei_SOL=1.0_R8
       corr_core_dn=1.0_R8     ! IYS 19.12.2017
       corr_core_dt=1.0_R8     ! IYS 19.12.2017
       time_factor_required=0.1_R8
@@ -138,10 +150,10 @@
       if (.not.b2mod_numerics_allocated) return
       deallocate(time_factor)
 #ifdef ALLOCATE_AND_NAMELIST
-      deallocate(dtco)
-      deallocate(dtmo)
-      deallocate(dtee)
-      deallocate(dtei)
+      deallocate(dtco, dtco_SOL)
+      deallocate(dtmo, dtmo_SOL)
+      deallocate(dtee, dtee_SOL)
+      deallocate(dtei, dtei_SOL)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
@@ -222,13 +234,13 @@
       end do
       call xertst (0.0_R8.le.time_factor_required,
      & 'faulty parameter time_factor_required')
-      call xertst (0.0_R8.lt.minval(dtco),
+      call xertst (0.0_R8.lt.min(minval(dtco), minval(dtco_SOL)),
      & 'faulty parameter dtco')
-      call xertst (0.0_R8.lt.minval(dtmo),
+      call xertst (0.0_R8.lt.min(minval(dtmo), minval(dtmo_SOL)),
      & 'faulty parameter dtmo')
-      call xertst (0.0_R8.lt.minval(dtee),
+      call xertst (0.0_R8.lt.min(minval(dtee), dtee_SOL),
      & 'faulty parameter dtee')
-      call xertst (0.0_R8.lt.minval(dtei),
+      call xertst (0.0_R8.lt.min(minval(dtei), dtei_SOL),
      & 'faulty parameter dtei')
 
       ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))

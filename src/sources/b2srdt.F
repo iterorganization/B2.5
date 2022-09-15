@@ -56,6 +56,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
      &                 iout_b2nppo = 0, iout_b2wdat = 0
+      integer jxi,jxa,jsep                                           !iyv 15.02.22 
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
@@ -95,6 +96,16 @@
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)                     !srv 11.09.09 }
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+        if( iy_SOL_dtXX .gt. 1 ) then                                !iyv 15.02.22 {
+         call get_jsep(nx,ny,jxi,jxa,jsep)
+         write(*,*) 'jsep=', jsep, 'iy_SOL_dtXX=', iy_SOL_dtXX
+         call xertst (jsep.le.iy_SOL_dtXX.and.iy_SOL_dtXX.le.ny, 
+     &                            'faulty argument iy_SOL_dtXX')
+         write(*,*) 'dtco_SOL=', (dtco_SOL(k), k=0,ns-1)
+         write(*,*) 'dtmo_SOL=', (dtmo_SOL(k), k=0,ns-1)
+         write(*,*) 'dtee_SOL=', dtee_SOL
+         write(*,*) 'dtei_SOL=', dtei_SOL
+        endif                                                        !iyv 15.02.22 }
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -144,10 +155,13 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
      &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-           ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-           t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
-           snadt(ix,iy,0,is) = t0*na0(ix,iy,is)                          !srv 06.01.21
-           snadt(ix,iy,1,is) =-t0                                        !srv 06.01.21
+            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
+            if( iy_SOL_dtXX .gt. 1 .and. iy .ge. iy_SOL_dtXX) then      !iyv 15.02.22 {
+             ttim=ttim*dtco_SOL(is)
+            endif                                             !iyv 15.02.22  }
+            t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
+            snadt(ix,iy,0,is) = t0*na0(ix,iy,is)                          !srv 06.01.21
+            snadt(ix,iy,1,is) =-t0                                        !srv 06.01.21
           enddo
         enddo
       enddo
@@ -167,6 +181,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
             if(iftimbound(ix,iy) .ne. 0) cycle
 
             ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
+            if( iy_SOL_dtXX .gt. 1 .and. iy .ge. iy_SOL_dtXX) then      !iyv 15.02.22 {
+             ttim=ttim*dtmo_SOL(is)
+            endif                                             !iyv 15.02.22  }
             t0 = (phm1/ttim)*vol(ix,iy)*hz(ix,iy)                        !srv 09.01.01
             smodt(ix,iy,0,is) = t0*am(is)*mp*ua0(ix,iy,is)*na0(ix,iy,is) !srv 06.01.21 {
             smodt(ix,iy,1,is) = 0.0_R8
@@ -189,6 +206,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
           if(iftimbound(ix,iy) .ne. 0) cycle
 
           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
+          if( iy_SOL_dtXX .gt. 1 .and. iy .ge. iy_SOL_dtXX) then      !iyv 15.02.22 {
+            ttim=ttim*dtee_SOL
+          endif                                             !iyv 15.02.22  }
           t0 = (phm3/ttim)*vol(ix,iy)
           shedt(ix,iy,0) = 1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)               !srv 06.01.21 {
           shedt(ix,iy,1) = 0.0_R8
@@ -207,6 +227,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
           if(iftimbound(ix,iy) .ne. 0) cycle
 
           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
+          if( iy_SOL_dtXX .gt. 1 .and. iy .ge. iy_SOL_dtXX) then      !iyv 15.02.22 {
+            ttim=ttim*dtei_SOL
+          endif                                             !iyv 15.02.22  }
           t0 = (phm3/ttim)*vol(ix,iy)
           shidt(ix,iy,0) = 1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)             !srv 06.01.21 {
           shidt(ix,iy,1) = 0.0_R8
