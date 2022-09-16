@@ -111,8 +111,9 @@
 *   ..local variables
       integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx
       integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2),
-     * fcType(m%nFc), c1, c2,  verts2(0:1), intersectF(0:1)  
-      integer i1, i2, ii
+     * fcType(m%nFc), c1, c2,  verts2(0:1), intersectF(0:1), 
+     * faces4_1(0:3), faces4_2(0:3)
+      integer i1, i2, ii, i1_1, i1_2, i2_1, i2_2
       integer volhmk, cgeo, cgeon, psi_flag
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
@@ -177,8 +178,6 @@
      &  'faulty argument isymm')
 
 * ..compute metric coefficients
-
-
 
 ! loop over cells
       do iCv = 1,m%nCv
@@ -272,14 +271,6 @@
         g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)       
 
       endif
-
-
-
-
-
-
-        
- 
 
        case(3)  !Triangle
        ! Method to determine cell center for triangles!!! line 290 in structured version
@@ -541,14 +532,22 @@ cwdk      4) centroid: average between the intersections with faces
       call build_fcType(g,m,fcType,cvFpsi,tol_aligned)
 
 ! loop over faces 
+      !pre compute face centers
+      do iFc = 1,m%nFc
+         v1 = m%fcVx(iFc,1)
+         v2 = m%fcVx(iFc,2) 
+        !compute face centers
+        fcX(iFc) = (g%vxX(v1) + g%vxX(v2) )/2.0_R8
+        fcY(iFc) = (g%vxY(v1) + g%vxY(v2) )/2.0_R8             
+      enddo
       do iFc = 1, m%nFc
         v1 = m%fcVx(iFc,1)
         v2 = m%fcVx(iFc,2)
         c1 = m%fcCv(iFc,1)
         c2 = m%fcCv(iFc,2)
-        !compute face centers
-        fcX(iFc) = (g%vxX(v1) + g%vxX(v2) )/2.0_R8
-        fcY(iFc) = (g%vxY(v1) + g%vxY(v2) )/2.0_R8
+        !!compute face centers
+        !fcX(iFc) = (g%vxX(v1) + g%vxX(v2) )/2.0_R8
+        !fcY(iFc) = (g%vxY(v1) + g%vxY(v2) )/2.0_R8
 
         !fcHc(m%nFc,2) : Lengths between cell face center and neighboring cell centers ("connector" direction)
         g%fcHc(iFc,1) = sqrt(  ( centroid(c1,0) - fcX(iFc) )**2
@@ -584,7 +583,6 @@ cwdk      4) centroid: average between the intersections with faces
        !&          g%fcHc(iFc,1) * g%cvEb(c2,1))/ 
        !&        (g%fcHc(iFc,1) + g%fcHc(iFc,2))
        
-!WIP    !fcEb kan ook op andere manier!=> via psidx,psidy (zoals in cell centers)
         ! similar to linear interpolating Bb to the face centers
        ! b_y
        t0 = 0.5_R8 * ( g%vxBb(v1,1) + g%vxBb(v2,1) )
@@ -614,13 +612,79 @@ cwdk      4) centroid: average between the intersections with faces
        econf(1) = (g%fcHc(iFc,2)*ec1fc(1) + g%fcHc(iFc,1)*efcc2(1)) 
      &            /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
 
+       !Corrections for specific geometries
+       !poloidal faces
+       ! =  is a face across the poloidal direction in a cell with aligned radial faces
+       if (fcType(iFc).eq.2) then 
+          
+          t0 = econf(0)*g%fcEb(iFc,0) + econf(1)*g%fcEb(iFc,1)
+          if (t0.ge.0.0_R8) then ! econf in same direction as fcEb
+              econf(0) = g%fcEb(iFc,0)
+              econf(1) = g%fcEb(iFc,1)
+          else 
+              econf(0) = -g%fcEb(iFc,0)
+              econf(1) = -g%fcEb(iFc,1)
+          endif
+
+       !
+       elseif (fcType(iFc).eq.1) then
+
+         !if ((m%cvFcP(c1,2).eq.4 .and. m%cvFcP(c2,2).eq.4) .and.
+         !&           (m%cvLbl(c1).eq.GRID_INTERNAL .and. 
+         !&           m%cvLbl(c2).eq.GRID_INTERNAL) ) then
+         !More accuracy needed for fcGam => cell connector calculation as in unstructured version for quad faces
+         !First get the opposite faces
+        !  faces4_1 = m%cvFc(m%cvFcP(c1,1):
+        !&                  m%cvFcP(c1,1)+m%cvFcP(c1,2)-1)
+         !  faces4_2 = m%cvFc(m%cvFcP(c2,1):
+        !&                  m%cvFcP(c2,1)+m%cvFcP(c2,2)-1)
+        !   i1_1 = 0
+        !   i1_2 = 0
+        !   do i = 0,3
+        !     if (faces4_1(i).eq.iFc) then
+        !          i1_1 = i
+        !      endif
+        !      if (faces4_2(i).eq.iFc) then
+        !          i1_2 = i
+        !      endif
+        !   enddo
+
+        !   i2_1 = i1_1 + 2
+        !   i2_2 = i1_2 + 2
+        !     if (i2_1 .gt. 3) then
+        !        i2_1 = i2_1 - 4   
+        !     endif
+        !     if (i2_2 .gt. 3) then
+        !        i2_2 = i2_2 - 4
+        !     endif
+
+        !   t0 = fcX(iFc) - fcX(faces4_1(i2_1))  
+        !   t1 = fcY(iFc) - fcY(faces4_1(i2_1))
+        !   ec1fc(0) = t0 / norm(t0,t1)
+        !   ec1fc(1) = t1 / norm(t0,t1)
+
+        !   t0 = fcX(faces4_2(i2_2)) - fcX(iFc)
+        !   t1 = fcY(faces4_2(i2_2)) - fcY(iFc)
+        !   efcc2(0) = t0 / norm(t0,t1)
+        !   efcc2(1) = t1 / norm(t0,t1)
+       
+        !   econf(0) = (g%fcHc(iFc,2)*ec1fc(0) + g%fcHc(iFc,1)*efcc2(0)) 
+        !&             /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+        !   econf(1) = (g%fcHc(iFc,2)*ec1fc(1) + g%fcHc(iFc,1)*efcc2(1)) 
+        !&            /  (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+        ! endif       
+
+
+       endif
+
+
        !Calculate face normal ! NOG NIET CORRECT
        ! algemeen : dx_normaal = dy_verts  (= y2 - y1)
        !            dy_normaal = -dx_verts (= x1 - x2)
        t0 = g%vxY(m%fcVx(iFc,2)) - g%vxY(m%fcVx(iFc,1))
        t1 = - ( g%vxX(m%fcVx(iFc,2)) - g%vxX(m%fcVx(iFc,1)) )
-       fn(0) = t0 /norm(t0,t1)
-       fn(1) = t1 /norm(t0,t1)     
+       fn(0) = t0 !/norm(t0,t1)
+       fn(1) = t1 !/norm(t0,t1)     
 
        
 *    .. compute angles
@@ -664,11 +728,21 @@ cwdk      4) centroid: average between the intersections with faces
      &                   g%fcQgam(iFc,0)*g%fcQalf(iFc,1)           
 
        elseif (fcType(iFc).eq.2) then ! poloidal face
+           
            !beta = 0
            !g%fcQbet(iFc,0) = +-1.0_R8 !cos is +-1
+
            g%fcQbet(iFc,0) = sign(1.0_R8,g%fcQbet(iFc,0))
            g%fcQbet(iFc,1) = 0.0_R8 ! sin is 0
 
+           ! gamma = +- alfa
+           g%fcQgam(iFc,0) = abs(g%fcQalf(iFc,0))
+           if (g%fcQbet(iFc,0).eq.-1.0_R8) then
+           g%fcQgam(iFc,1) = sign(g%fcQalf(iFc,1),g%fcQgam(iFc,1))
+           !for sin gamma, it has the value of fcQalf(:,1) and the sign of fcQgam(:,1)
+           else
+              g%fcQgam(iFc,1) = g%fcQalf(iFc,1)
+           endif
        endif
 
 *    .. correction of angles for negative toroidal field  

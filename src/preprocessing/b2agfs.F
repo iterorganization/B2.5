@@ -1073,7 +1073,7 @@ cxpb  if just below the top corner, make the corner cell follow
          ! as faces are right turned ordered
 
              i2 = i1 + 2
-             if (i2 .gt. 4) then
+             if (i2 .gt. 3) then
                 i2 = i2 - 4   
              endif
 
@@ -1082,10 +1082,10 @@ cxpb  if just below the top corner, make the corner cell follow
                      ! aligned faces
                      !intcellP = 0 and intcellR = 1
                      m%intcellP(m%cvFcP(iCv,1)+i) = 0.0_R8
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 0.5_R8
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
                  else 
                      ! not aligned faces => poloidal faces
-                     m%intcellP(m%cvFcP(iCv,1)+i) = 0.5_R8
+                     m%intcellP(m%cvFcP(iCv,1)+i) = 1.0_R8
                      m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
                  endif
              enddo
