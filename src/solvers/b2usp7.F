@@ -141,10 +141,10 @@
 *   ..compute contribution from the seven-point y-stencil
 
       do is = 0,ns-1
-       if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
-     &     (visper_all_ions.eq.0 .and. is.eq.ismain)) then
-        do iy = -1, ny
-         do ix = -1, nx                                              !srv 26.11.02
+        if( (visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
+     &      (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+         do iy = -1, ny
+          do ix = -1, nx                                          !srv 26.11.02
            ireg = region(ix,iy,0)
            ixt = topix(ix,iy)
            iyt = topiy(ix,iy)
@@ -205,9 +205,9 @@
               aa7(ix,iy,0) = aa7(ix,iy,0) + aa7p2 + aa7m2
             endif
            endif                                                     !srv 26.11.02 12.12.17 }
+          enddo
          enddo
-        enddo
-       endif
+        endif
       enddo
 
 *   ..correct RHS if not solving

@@ -33,7 +33,7 @@ c<<<
         print *,' !!!!!!!!!'
         print '(a/7a10/1p,l10,5i10,e10.2)','After b2pwinp','l2pwinp',
      ,             'lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
-     ,                   l2pwinp,lppp,nwldprt,lytg,nytg,nadsrc,add_rad
+     ,    l2pwinp , lppp , nwldprt , lytg , nytg , nadsrc , add_rad
         print '(a/(16i5))','Shadowing structure',
      ,                                   (lwldlis(i,1),i=1,nwldlis(1))
         do j=1,ntrgts !{

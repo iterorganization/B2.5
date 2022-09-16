@@ -17,7 +17,6 @@
       use b2mod_time
       use b2mod_rates
       use b2mod_trace
-!      use b2mod_b2plot
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_balance !djm Jan2017
@@ -887,16 +886,13 @@ c           l_ddt=l_ddt+1
       end if !}
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
-
-      write(*,*) 'in b2mod_eirene: ncall = ', ncall
-      write(*,*) 'in b2mod_eirene: main_call = ', main_call
-
+      if (output_style.gt.1) then
+        write(*,*) 'in b2mod_eirene: ncall = ', ncall
+        write(*,*) 'in b2mod_eirene: main_call = ', main_call
+      end if
       if (ncall.eq.0) then
         call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-        if (main_call) then
-!          call get_jsep(nx,ny,jxi,jxa,jsep)
-          call b2trci(nx,ny,ns,nxtl,nxtr,nnreg(0))
-        endif  
+        if (main_call) call b2trci(nx,ny,ns,nxtl,nxtr,nnreg(0))
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0

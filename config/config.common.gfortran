@@ -37,7 +37,7 @@ INCMOD = -I
 
 FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
 ifdef SOLPS_DEBUG
-FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ftrapv
+FCOPTS += -g -fbounds-check -fbacktrace -ffpe-trap=denormal -ffpe-trap=invalid -ffpe-trap=zero -ffpe-trap=overflow -ftrapv
 else
 FCOPTS += -O2
 endif

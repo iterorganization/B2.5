@@ -686,7 +686,7 @@ csw 16oct2012 init ier0
           new_matrix = .false.
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
             if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
-     &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+     &         (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)

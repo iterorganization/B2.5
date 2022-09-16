@@ -231,7 +231,8 @@ c Drift terms
      &              na, ua, facdrift, fchinert_a, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch, fchstoch)       !srv 07.07.14
+      call b2tstch (nx, ny, vol, po, te, ne,
+     &              csig_stoch, fchstoch)                                !srv 07.07.14
 *   ..compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20
      & ehx_, zeff, fch_p)

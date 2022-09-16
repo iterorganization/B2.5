@@ -107,10 +107,10 @@
          n_nonzeros=mult_nonzero*nnd
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28_for_11diag                              !srv 02.04.18
-!         call iniilu_9(nx+2,ny+2)                                     !srv 13.10.06
-         irnh = 0                                                      !srv 15.05.07
-         icnh = 0                                                      !srv 15.05.07
+         call alloc_b2mod_ma28_for_11diag                          !srv 02.04.18
+!         call iniilu_9(nx+2,ny+2)                                 !srv 13.10.06
+         irnh = 0                                                  !srv 15.05.07
+         icnh = 0                                                  !srv 15.05.07
          nltrsol=2
          call ipgeti ('b2ux11p_nltrsol', nltrsol)
        endif

@@ -412,7 +412,7 @@
          if (solveee(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0
          if (solveee(ileft))
-     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
+     >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          if (solveee(ireg))
      >    aa9(ix,iy,-1) = t1

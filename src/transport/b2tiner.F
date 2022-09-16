@@ -138,7 +138,7 @@ c Drift terms
      &          facdrift(ix,iy)*                                         !srv 22.06.08
      &          (ua(ix,iy,is)**2*na(ix,iy,is)+                           !IYS 01.02.2013
      &           ua(leftix(ix,iy),leftiy(ix,iy),is)**2*                  !IYS 01.02.2013
-     &          na(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+     &           na(leftix(ix,iy),leftiy(ix,iy),is))
      &         *(bb(ix,iy,2)+bb(leftix(ix,iy),leftiy(ix,iy),2))/2.0_R8   !srv 07.07.99
      &         *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))            !srv 07.07.99
      &         /(gs(ix,iy,2)+gs(leftix(ix,iy),leftiy(ix,iy),2))          !srv 07.07.99

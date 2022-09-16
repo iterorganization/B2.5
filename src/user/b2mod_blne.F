@@ -318,12 +318,14 @@ c
      .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,0,is)*
      .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,0,is)*
      .         (ta_ext(ix,iy,is)*hx(ixr,iyr)+
      .          ta_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
