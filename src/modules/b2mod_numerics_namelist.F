@@ -243,15 +243,19 @@
       call xertst (0.0_R8.lt.min(minval(dtei), dtei_SOL),
      & 'faulty parameter dtei')
 
-      ttf = minval(dtco(nsmin:nsmax-1,1:nnreg(0)))
+      ttf = min(minval(dtco(nsmin:nsmax-1,1:nnreg(0))),
+     &                        minval(dtco_SOL(nsmin:nsmax-1)))
       if (style_b2mndt.ne.2.and.
-     &    ttf.eq.maxval(dtco(nsmin:nsmax-1,1:nnreg(0))).and.
-     &    ttf.eq.minval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
-     &    ttf.eq.maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))).and.
-     &    ttf.eq.minval(dtee(1:nnreg(0))).and.
-     &    ttf.eq.maxval(dtee(1:nnreg(0))).and.
-     &    ttf.eq.minval(dtei(1:nnreg(0))).and.
-     &    ttf.eq.maxval(dtei(1:nnreg(0)))) then
+     &    ttf.eq.max(maxval(dtco(nsmin:nsmax-1,1:nnreg(0))),
+     &                        maxval(dtco_SOL(nsmin:nsmax-1))).and.
+     &    ttf.eq.min(minval(dtmo(nsmin:nsmax-1,1:nnreg(0))),
+     &                        minval(dtmo_SOL(nsmin:nsmax-1))).and.
+     &    ttf.eq.max(maxval(dtmo(nsmin:nsmax-1,1:nnreg(0))),
+     &                        maxval(dtmo_SOL(nsmin:nsmax-1))).and.
+     &    ttf.eq.min(minval(dtee(1:nnreg(0))),dtee_SOL).and.
+     &    ttf.eq.max(maxval(dtee(1:nnreg(0))),dtee_SOL).and.
+     &    ttf.eq.min(minval(dtei(1:nnreg(0))),dtei_SOL).and.
+     &    ttf.eq.max(maxval(dtei(1:nnreg(0))),dtei_SOL)) then
         dteff = dtim*ttf
         if (ttf.ne.1.0_R8) write(0,*)
      &   'Effective plasma timestep rescaled to ', dteff,' seconds'
