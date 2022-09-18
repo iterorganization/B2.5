@@ -32,7 +32,7 @@
       use b2mod_subsys
       use b2mod_ipmain
       use b2mod_geo
-     &   , only : hzl,hzb
+     &   , only : hy1, hzl,hzb
       use b2mod_geo_corner
      &  , only : bzbl, bzbv
       implicit none
@@ -477,7 +477,7 @@
      &         bzb(leftix(ix,iy),leftiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
      &       ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &        (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/
+     &        (hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
            endif
 !          enddo
@@ -491,7 +491,7 @@
      &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
      &       ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &        (hy(bottomix(ix,iy),bottomiy(ix,iy))+hy(ix,iy)))/
+     &        (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
            endif
           endif
@@ -504,7 +504,7 @@
      &       bzb(leftix(ix,iy),leftiy(ix,iy))
      &       +vol(ix,iy)*bzb(ix,iy))/
      &     ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &      (hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy)))/ qe
+     &      (hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy)))/ qe
          endif
          if(bottomiy(ix,iy).ne.-2) then
           cdde(ix,iy,1) =
@@ -512,7 +512,7 @@
      &       bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &       +vol(ix,iy)*bzb(ix,iy))/
      &     ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &      (hy(bottomix(ix,iy),bottomiy(ix,iy))+hy(ix,iy)))/
+     &      (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)))/
      &      qe
          endif                                                         !som 03.11.21 }
         enddo  !ix
