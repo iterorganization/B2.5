@@ -130,7 +130,13 @@
 
 !pbwdk           mintopcut = ny
            mintopcut = -2
-           if (nncut > 0) mintopcut = minval(topcut(1:nncut))
+           if (nncut > 0) then
+             if (nnreg(0).eq.7) then
+               mintopcut=topcut(1)
+             else
+               mintopcut=minval(topcut(1:nncut))
+             endif
+           endif
 
            do iy = 0,mintopcut    ! for inner surfaces and first open surface
             do ix = 0,nx
@@ -412,7 +418,13 @@
 
 !pbwdk           mintopcut = ny
          mintopcut = -2
-         if (nncut > 0) mintopcut = minval(topcut(1:nncut))
+         if (nncut > 0) then
+           if (nnreg(0).eq.7) then
+             mintopcut=topcut(1)
+           else
+             mintopcut=minval(topcut(1:nncut))
+           endif
+         endif
 
          do iy = 0, mintopcut    ! for inner surfaces and first open surface
           do ix = 0, nx

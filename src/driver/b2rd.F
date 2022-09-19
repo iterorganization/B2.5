@@ -1441,7 +1441,13 @@
       enddo
       close(91)
       open(91,file='separatrix_boundary.txt')
-      iy=minval(topcut(1:nncut))-1
+      if (nncut > 0) then
+        if (nnreg(0).eq.7) then
+          iy=topcut(1)-1
+        else
+          iy=minval(topcut(1:nncut))-1
+        endif
+      endif
       write(*,*) 'sep = ',iy
       do ix=-1,nx
          if(mod(region(ix,iy,0),4).eq.1) then

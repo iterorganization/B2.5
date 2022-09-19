@@ -359,11 +359,11 @@ module b2mod_connectivity
         &   'First outer divertor target     ',                         &
         &   'Second outer divertor target    ',                         &
         &   'SOL connection outer leg 1      ',                         &
-        &   'SOL connection outer leg 2/3    ',                         &
+        &   'SOL connection outer leg 2 to 3 ',                         &
         &   'Third outer divertor target     ',                         &
         &   'Core cut                        ',                         &
         &   'PFR cut                         ',                         &
-        &   'Cut outer entrance to leg 3 ',                         &
+        &   'Cut outer entrance to leg 3     ',                         &
         &   'PFR cut outer leg 1 to leg 2    ',                         &
         &   UU,UU,                                                      &
         & &
@@ -397,11 +397,11 @@ module b2mod_connectivity
         &   'First outer divertor target     ',                         &
         &   'Second outer divertor target    ',                         &
         &   'SOL connection outer leg 1      ',                         &
-        &   'SOL connection outer leg 2/3    ',                         &
+        &   'SOL connection outer leg 2 to 3 ',                         &
         &   'Third outer divertor target     ',                         &
         &   'Core cut                        ',                         &
         &   'PFR cut                         ',                         &
-        &   'Cut outer entrance to leg 3 ',                         &
+        &   'Cut outer entrance to leg 3     ',                         &
         &   'PFR cut outer leg 1 to leg 2    ',                         &
         &   UU,UU,                                                      &
         & &
@@ -602,6 +602,14 @@ contains
             geometryId = GEOMETRY_LFS_SNOWFLAKE_PLUS
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_PLUS")
+                first = .false.
+            end if
+            return
+        end if
+        if (topcut(1) == topcut(2)) then
+            geometryId = GEOMETRY_UNSPECIFIED
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unkown GEOMETRY_UNSPECIFIED")
                 first = .false.
             end if
             return

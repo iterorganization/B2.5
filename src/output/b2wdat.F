@@ -131,9 +131,14 @@
         iout_iout_ASTRA = 0
       endif
 
-      mintopcut = ny                                              !srv 25.02.16
-      if(nncut > 0) mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
-
+      mintopcut = ny                                     !srv 25.02.16
+      if(nncut > 0) then
+        if (nnreg(0).eq.7) then
+          mintopcut = topcut(1)   
+        else
+          mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
+        endif
+      endif
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xprz (nx, ny, ns, mp, am, na, rz)                    !srv 30.01.15 {
       cst = sqrt(pz/rz)

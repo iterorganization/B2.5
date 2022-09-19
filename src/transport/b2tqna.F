@@ -1087,7 +1087,11 @@ c
        if(nncut > 0) then                                         !srv 25.02.16
         select case (itype)
          case (10)                                                !etm 24.07.19 {
-          mintopcut=minval(topcut(1:nncut))
+          if (nnreg(0).eq.7) then
+            mintopcut=topcut(1)
+          else
+            mintopcut=minval(topcut(1:nncut))
+          endif
 *   ..modification of case (9)
           do iy = -1, ny                  ! for SOL and PR region
            do ix = -1, nx

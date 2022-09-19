@@ -370,7 +370,13 @@ csw 13mar2012
 !wdk init mintopcut to -2 to skip loops in case nncut = 0
 !pbwdk        mintopcut = ny
         mintopcut = -2
-        if (nncut > 0) mintopcut = minval(topcut(1:nncut))
+        if (nncut > 0) then
+          if (nnreg(0).eq.7) then
+            mintopcut=topcut(1)
+          else
+            mintopcut=minval(topcut(1:nncut))
+          endif
+        endif 
 
         do iy = -1,mintopcut-1    ! for inner surfaces                   !srv 22.04.16
          do ix = -1,nx
