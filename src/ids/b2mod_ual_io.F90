@@ -8252,7 +8252,7 @@ contains
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
     !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
@@ -8460,7 +8460,7 @@ contains
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
     !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
@@ -8824,7 +8824,7 @@ contains
     !!          necessary.
     !! @note Available IDS vector component data fields:
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
     !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
@@ -8866,11 +8866,11 @@ contains
       end if
       !! copy radial data field
       idsField_vcomp%radial = data
-    case( "diamagnetic" )
+    case( VEC_ALIGN_DIAMAGNETIC_ID )
       !! Writing diamagnetic quantity
       !! Make sure the data field is properly allocated
       if ( associated( idsField_vcomp%diamagnetic ) ) then
-        if ( .not. all( shape( idsField_vcomp%diamagnetic) ==   &
+        if ( .not. all( shape( idsField_vcomp%diamagnetic ) ==   &
                     &   shape(data) )) then
           deallocate( idsField_vcomp%diamagnetic )
         end if
