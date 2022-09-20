@@ -39,14 +39,15 @@ c<<<
       parameter (lun_w=96)
       character tab
 c>>>
-      integer use_eirene
-      data use_eirene/0/
-      save use_eirene
+      integer use_eirene, ncall
+      data use_eirene/0/, ncall/0/
+      save use_eirene, ncall
       external ipgeti, ipgetr, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call get_boundary_namelist
-      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (ncall.eq.0) call ipgeti ('b2mndr_eirene', use_eirene)
+      ncall = ncall + 1
 c<<<
       tab=char(9)
 c
@@ -109,6 +110,7 @@ c
         write(*,*) 'b2pwlprp: no shadowing structure in the data!'
         call walloff
         l2pwinp=.false.
+        shadow=.false.
         call subend ()
         return
       end if
@@ -374,6 +376,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp2(1,k),pp2(2,k)
           call walloff
           l2pwinp=.false.
+          shadow=.false.
           call subend ()
           return
         end if
@@ -386,6 +389,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp1(1,k),pp1(2,k)
           call walloff
           l2pwinp=.false.
+          shadow=.false.
           call subend ()
           return
         end if
@@ -577,7 +581,6 @@ c                print *,'== OK'
                   print '(a,i3,1p,4e12.4)',
      .             'DG (mod): ', j,pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
                 end if !}
-
               else !}{
                 write(0,*)
      .           'Edges check failed - not in Eirene:',l,k,j,jj

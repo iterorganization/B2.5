@@ -31,11 +31,15 @@ c
 c<<<
 #ifdef DBG
         print *,' !!!!!!!!!'
-        print '(a/7a10/1p,l10,5i10,e10.2)','After b2pwinp','l2pwinp',
-     ,             'lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
+        print '(a/7a10/1p,l10,5i10,e10.2)','After b2pwinp',
+     ,   'l2pwinp','lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
      ,    l2pwinp , lppp , nwldprt , lytg , nytg , nadsrc , add_rad
-        print '(a/(16i5))','Shadowing structure',
+        if (nwldlis(1).gt.0) then !{
+          print '(a/(16i5))','Shadowing structure',
      ,                                   (lwldlis(i,1),i=1,nwldlis(1))
+        else !}{
+          print *,' No shadowing structure found !'
+        end if !}
         do j=1,ntrgts !{
           print '(a,i2/(5(2f8.3,1x)))','Target',j,
      ,     (pp1(1,lppp+(j-1)*nytg+i),pp1(2,lppp+(j-1)*nytg+i),i=1,nytg),
