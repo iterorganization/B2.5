@@ -244,6 +244,7 @@ c***  sfpr_m    : list of active materials
      *          n_hdpr_er*n_srfs_m*(m_hdpr+4))
       integer n_line_x, n_sfpr_sp, n_sfpr_er
       integer do_spt_wll(DEF_NLIM+DEF_NSTS)
+      integer i_sfpr_sp(DEF_NATM+DEF_NMOL)
       real (kind=R8), allocatable :: w_line(:)
       real (kind=R8) :: nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
@@ -275,6 +276,7 @@ c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
 c***  wllersf   : ratio of erosion to sputtering for different meterials
+      integer map_mtr(n_srfs_m)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
@@ -393,19 +395,22 @@ c        print '((1h:,20(a,1h:)))',(mtrwldsg(i),i=lppp+1,k)          !###
         n_sfpr_er=0
         do k=1,lppp+ny*ntrgts !{
           l=0
-          do i=1,n_sfpr_er !{
+          if(.not.lskip(k).and.
+     &       .not.streql(mtrwldsg(k),' ').and.
+     &       .not.streql(mtrwldsg(k),'dummy')) then !{
+            do i=1,n_sfpr_er !{
 c carlis l is index of wall material referred to list of ACTIVE materials
-            if(streql(mtrwldsg(k),'dummy')) cycle
-            if(streql(sfpr_m(i),mtrwldsg(k))) l=i
-          end do !}
-          if(l.eq.0) then !{
-            if(n_sfpr_er.lt.nsptmx) then !{
-              n_sfpr_er=n_sfpr_er+1
-              l=n_sfpr_er
+              if(streql(sfpr_m(i),mtrwldsg(k))) l=i
+            end do !}
+            if(l.eq.0) then !{
+              if(n_sfpr_er.lt.nsptmx) then !{
+                n_sfpr_er=n_sfpr_er+1
+                l=n_sfpr_er
 c carlis added if not in the list of ACTIVE materials
-              sfpr_m(l)=mtrwldsg(k)
+                sfpr_m(l)=mtrwldsg(k)
 c              print *,'Added :',sfpr_m(l),':',k,l                   !###
-            else !}{
+              else !}{
+              end if !}
             end if !}
           end if !}
 c carlis list of indices of wall materials referred to list of ACTIVE materials
@@ -414,25 +419,30 @@ c carlis list of indices of wall materials referred to list of ACTIVE materials
 c        print *,'Input materials: ',sfpr_m                        !###
 c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
         l_ersmtr(0)=0
+        map_mtr(:)=0
         m=0
-        do k=1,n_sfpr_er !{
+        do k=1,lppp+ny*ntrgts !{
           l=0
-          do i=1,n_srfs_m !{
+          if(i_ersmtr(k).ne.0) then !{
+            do i=1,n_srfs_m !{
 c carlis l is index of wall material in ACTIVE list referred to list of POSSIBLE materials
-            if(streql(srfs_m(i),sfpr_m(k))) l=i
-          end do !}
-          if(l.eq.0) then !{
-            if (.not.streql(sfpr_m(k),'dummy'))
-     >       write(*,*) 'b2pwldw: unknown wall material ',sfpr_m(k)
-            l_ersmtr(k)=0
-
-          else !}{
-            m=m+1
+              if(streql(srfs_m(i),sfpr_m(i_ersmtr(k)))) then !{
+                l=i
 c carlis in list of ACTIVE materials we put the 'real' material e.g. CFC becomes C
-c        the list is not erdered as the list of possible materials
-            sfpr_m(m)=srfs_x(l)
+c        the list is not ordered as the list of possible materials
+                if(map_mtr(i_ersmtr(k)).eq.0) then !{
+                  m=m+1
+                  sfpr_m(m)=srfs_x(l)
 c carlis     [s/y*m2*mm]   =[s/y]*[m2/cm2*mm/cm*]*[g/mol]/[1/mol]/[g/cm3]
-            wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
+                  wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
+                  map_mtr(i_ersmtr(k))=m
+                else !}{
+                  m=map_mtr(i_ersmtr(k))
+                end if !}
+              end if !}
+            end do !}
+            if(l.eq.0) write(*,*)
+     .       'b2pwldw: unknown wall material ',sfpr_m(i_ersmtr(k))
 c carlis list of indices that tells the new ordering of wall materials in active list wrt the ordering of i_ersmtr
             l_ersmtr(k)=m
           end if !}
@@ -454,6 +464,7 @@ c        print *,'i_sptmtr'                                    !###
 c        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+ny*ntrgts)    !###
 
         do_spt_wll(:)=0
+        i_sfpr_sp(:)=0
         sptflx(:)=0.0_R8
         i=0
 #ifdef B25_EIRENE
@@ -470,6 +481,7 @@ c carlis evaluate number of sputtered atoms and molecules
           end do
           if (match_found) then
             i=i+1
+            i_sfpr_sp(i)=ia
             sfpr_sp(i)=trim(TEXTA(ia))
           end if
         end do
@@ -485,6 +497,7 @@ c carlis evaluate number of sputtered atoms and molecules
           end do
           if (match_found) then
             i=i+1
+            i_sfpr_sp(i)=imol+natm
             sfpr_sp(i)=trim(adjustl(textmn(imol-1)))
           end if
         end do
@@ -1262,12 +1275,12 @@ c        print *,hdr_line(1:k-1)
                            !###
         write(lun,740) 'x',tab,'coordinate along plot zone [m].'
         write(lun,740) 'Wtot',tab,'total power flux [W/m^2]'
-        write(lun,740) 'Wrad',tab,'power flux with radiation [W/m^2]'
-        write(lun,740) 'Wpart',tab,'power flux with particles [W/m^2]'
+        write(lun,740) 'Wrad',tab,'power flux from radiation [W/m^2]'
+        write(lun,740) 'Wpart',tab,'power flux from particles [W/m^2]'
         write(lun,740) 'Wpls',tab,
-     .   'power flux with charged particles [W/m^2]'
+     .   'power flux from charged particles [W/m^2]'
         write(lun,740) 'Wneut',tab,
-     .   'power flux with neutral particles [W/m^2]'
+     .   'power flux from neutral particles [W/m^2]'
         write(lun,740) 'Wheat',tab,
      .   'power flux due to particles impinging on wall [W/m^2]'
         write(lun,740) 'Wpot',tab,
@@ -1345,7 +1358,7 @@ c*** Print the line
         end do !}
         if (do_spt_wll(m).gt.0) then
           do is=1,n_sfpr_sp
-            if(do_spt_wll(m).eq.is) then !{
+            if(do_spt_wll(m).eq.i_sfpr_sp(is)) then !{
 c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
 c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
               if (do_spt_wll(m).le.natm) then
@@ -1361,7 +1374,7 @@ c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
               end if
               w_line(k+1)=0.0_R8 !net sputtering
               w_line(k+2)=sptflx(m)*nsecyr/avogr*sptmass !gross sputtering
-              l=l_ersmtr(ils)
+              l=i_sfpr_sp(l_ersmtr(ils))
               if(l.gt.0) then !{
                 wo=0.0_R8
                 do i=1,natmi !{
@@ -1372,6 +1385,7 @@ c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
                   wo=wo-mlcmp(l,i)*(wldnm(m,i,0)-
      -                  wldrm(m,i,0)-wldpm(m,i,0))
                 end do !}
+                i1=0
                 do i=1,l-1 !{
                   i1=i1+nfluids(i)
                 end do !}
@@ -1392,7 +1406,7 @@ c carlis For output erosion I assume that the sputtered flux is acting on the ta
 c carlis        [mm/y] = [1/s]*[s*mm*m2/y]/[m2]
               w_line(k+1)=0.0_R8 !net erosion
               w_line(k+2)=sptflx(m)*wllersf(is)/segm_area(ils) !gross erosion
-              l=l_ersmtr(ils)
+              l=i_sfpr_sp(l_ersmtr(ils))
               if(l.gt.0) then !{
                 wo=0.0_R8
                 do i=1,natmi !{
@@ -1406,6 +1420,7 @@ c carlis        [mm/y] = [1/s]*[s*mm*m2/y]/[m2]
      -                                  wldrm(m,i,0)-wldpm(m,i,0))
                   end do !}
                 end do !}
+                i1=0
                 do i=1,l-1 !{
                   i1=i1+nfluids(i)
                 end do !}

@@ -54,7 +54,7 @@ c*  wid_trg:  ideal power on the targets
 c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
      *  h,ha,hb,hc,t,u,a,b,d,p,wo,wt,mion,t1(2),
-     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
+     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
      ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),wi(ntrgsx),
      ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),
      ,  xtrg(0:ny-1,ntrgsx),netrg(0:ny-1,ntrgsx),tetrg(0:ny-1,ntrgsx),
@@ -247,6 +247,7 @@ c*** Target geometry
           z_hlp(i)=z_hlp(i)+0.5_R8*h
           xtg_hlp(iy,i)=z_hlp(i)
         end do !}
+        xtg_hlp(ny,i)=xtg_hlp(ny-1,i)+0.5_R8*h
       end do !}
 #ifdef DBG
       print *
@@ -254,7 +255,7 @@ c*** Target geometry
       do j=1,ntrgts !{
         k=itrg(j)
         print '(1x,i3,10(1x,f9.6)/(4x,10(1x,f9.6)))',lseppos(k)+1,
-     ,                                         (xtg_hlp(i,k),i=-1,ny-1)
+     ,                                         (xtg_hlp(i,k),i=-1,ny)
       end do !}
 #endif
 
@@ -936,8 +937,8 @@ c!###}
               else !}{
                 h=1.0_R8
               end if !}
-              b=xtg_hlp(i+1,itrg(j))*(1.0_R8-h)+xtg_hlp(i,itrg(j))*h
-              d=xmc_hlp(i+1,itrg(j))*(1.0_R8-h)+xmc_hlp(i,itrg(j))*h
+              b=xtg_hlp(i,itrg(j))*(1.0_R8-h)+xtg_hlp(i-1,itrg(j))*h
+              d=xmc_hlp(i,itrg(j))*(1.0_R8-h)+xmc_hlp(i-1,itrg(j))*h
               ib=i  !###
               hb=h  !###
               exit
