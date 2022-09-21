@@ -1055,8 +1055,8 @@ cxpb  if just below the top corner, make the corner cell follow
 
       !internal 
       integer :: iCv, faces4(0:3), i1, i2, i, verts3(0:2), f3(0:2),
-     &    v3(0:2) 
-      real (kind=R8) :: dpsi4(0:3), dpsi_max   
+     &    v3(0:2) , f5(0:4) , v5(0:4), counter, faces3(0:2)
+      real (kind=R8) :: dpsi4(0:3), dpsi_max, dpsi3(0:2)   
 
       do iCv = 1, m%nCv
 
@@ -1071,11 +1071,28 @@ cxpb  if just below the top corner, make the corner cell follow
              i1 = minloc(dpsi4(0:3),1)-1
          !find the opposite face index of the most aligned faces
          ! as faces are right turned ordered
+         ! find the second most aligned face
+             counter = 0
+             do i = 0,3
+               if (i.ne.i1) then
+                faces3(counter + 1) = faces4(i)
+                counter = counter + 1
+               endif
+             enddo
 
-             i2 = i1 + 2
-             if (i2 .gt. 3) then
-                i2 = i2 - 4   
-             endif
+             dpsi3 = abs(g%vxFpsi(m%fcVx(faces3,1)) - 
+     &       g%vxFpsi(m%fcVx(faces3,2)))
+             i2 = minloc(dpsi3(0:2),1)-1  
+
+             if (i2 .ge. i1) then ! compensate for removed face out of the array
+              i2 = i2 + 1
+             endif           
+
+
+             !i2 = i1 + 2
+             !if (i2 .gt. 3) then
+             !   i2 = i2 - 4   
+             !endif
 
              do i = 0,3
                  if ((i .eq. i1) .or. (i .eq. i2)) then 
@@ -1109,6 +1126,28 @@ cxpb  if just below the top corner, make the corner cell follow
      &         m%intcellP(m%cvFcP(iCv,1)+i)
              enddo
 
+         elseif (m%cvFcP(iCv,2) == 5) then !pent
+            write (*,*) 'intcell only for quasi-quad pents'
+             v5 = m%cvVx(m%cvVxP(iCv,1):
+     &            m%cvVxP(iCv,1)+2)
+             f5 = m%cvVx(m%cvVxP(iCv,1):
+     &            m%cvVxP(iCv,1)+2)
+             
+             i1 = minloc(g%vxFpsi(v5),1) -1
+             i2 = maxloc(g%vxFpsi(v5),1) -1
+             dpsi_max = g%vxFpsi(v5(i2)) - g%vxFpsi(v5(i1)) 
+             do i = 0,4
+               m%intcellP(m%cvFcP(iCv,1) + i) = 
+     &        abs( g%vxFpsi(m%fcVx(f5(i),1)) - 
+     &             g%vxFpsi(m%fcVx(f5(i),2)) ) / (2.0_R8 * dpsi_max)
+              if (m%intcellP(m%cvFcP(iCv,1) + i) .gt. 1.0e-1) then
+                 m%intcellR(m%cvFcP(iCv,1) + i) = 0.0_R8
+              else 
+                 m%intcellR(m%cvFcP(iCv,1) + i) = 1.0_R8
+              endif
+      
+             enddo          
+
 
          elseif (m%cvFcP(iCv,2) == 1) then !guard
             !For guard cell both intcellP and intcellR at one
@@ -1116,6 +1155,9 @@ cxpb  if just below the top corner, make the corner cell follow
             m%intcellP(m%cvFcP(iCv,1)) = 1.0_R8
             m%intcellR(m%cvFcP(iCv,1)) = 1.0_R8
 
+         else
+           call xerrab('calc_intcell: type of cell not implemented')
+           
          endif
 
       enddo
