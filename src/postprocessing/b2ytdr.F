@@ -3649,6 +3649,35 @@ cxpb This will need to be checked !!!
           if(minval(dtei(0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtei(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
      .     'DTEI=',(dttmp(ireg),ireg=0,nnreg(0))
+          write(hlp_frm,'(a,i2,a)')
+     .     '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
+          if(minval(dtco_SOL(0:ns-1)).ne.1.0_R8 .or.
+     &       maxval(dtco_SOL(0:ns-1)).ne.1.0_R8) then
+            cftmp(0:ns-1) = dtco_SOL(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            dtco_SOL(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'DTCO_SOL=',dtco_SOL(0:ns1-1)
+          endif
+          if(minval(dtmo_SOL(0:ns-1)).ne.1.0_R8 .or.
+     &       maxval(dtmo_SOL(0:ns-1)).ne.1.0_R8) then
+            cftmp(0:ns-1) = dtmo_SOL(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            dtmo_SOL(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'DTMO_SOL=',dtco_SOL(0:ns1-1)
+          endif
+          if(dtee_SOL.ne.1.0_R8) write(99,'(1x,a,1p,1x,g10.3,a)')
+     .     'DTEE_SOL=',dtee_SOL,','
+          if(dtei_SOL.ne.1.0_R8) write(99,'(1x,a,1p,1x,g10.3,a)')
+     .     'DTEI_SOL=',dtei_SOL,','
+          if(iy_SOL_dtXX.ne.-2) then
+            iy_SOL_dtXX = conformal_convert
+     .       (non_commensurate,2,jxa,iy_SOL_dtXX,nx,ny,nx1,ny1,0)
+            write(99,'(1x,a,1x,i4,a)') 'IY_SOL_DTXX=',iy_SOL_dtXX,','
+          endif
           write(hlp_frm,'(a,i3,a)') '(1x,a,i2,a,',ns1,'l1,a)'
           do ireg = 0, nnreg(0)
             todo = .false.

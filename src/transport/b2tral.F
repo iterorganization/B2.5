@@ -32,7 +32,7 @@
       use b2mod_subsys
       use b2mod_ipmain
       use b2mod_geo
-     &   , only : hy1, hzl,hzb
+     &   , only : hy1, hzl, hzb
       use b2mod_geo_corner
      &  , only : bzbl, bzbv
       implicit none
@@ -263,9 +263,9 @@
           enddo
         endif
         if (redef_gmtry.eq.0) then
-         PSch_style = 1
+          PSch_style = 1
         else
-         PSch_style = 2
+          PSch_style = 2
         end if
         call ipgeti ('b2tfnb_PSch_style', PSch_style)
       else
@@ -480,11 +480,6 @@
      &        (hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
            endif
-!          enddo
-!         enddo
-
-!         do iy = -1, ny
-!          do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then
             cddi(ix,iy,1,is) =
      &       2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*

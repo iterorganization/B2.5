@@ -59,7 +59,7 @@
       real (kind=R8), save :: numerics_time_switch
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
-      integer, save :: iy_SOL_dtXX = 1
+      integer, save :: iy_SOL_dtXX = -2
 
       private :: numerics
       logical, save :: write_nml_num = .true.
@@ -88,8 +88,7 @@
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
       allocate(dtmo_SOL(0:nsd-1))
       allocate(dtee(0:nnreg(0)))
-      allocate(dtee_SOL)
-      allocate(dtei_SOL)
+      allocate(dtei(0:nnreg(0)))
       allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
@@ -152,8 +151,8 @@
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(dtco, dtco_SOL)
       deallocate(dtmo, dtmo_SOL)
-      deallocate(dtee, dtee_SOL)
-      deallocate(dtei, dtei_SOL)
+      deallocate(dtee)
+      deallocate(dtei)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
@@ -242,6 +241,8 @@
      & 'faulty parameter dtee')
       call xertst (0.0_R8.lt.min(minval(dtei), dtei_SOL),
      & 'faulty parameter dtei')
+      call xertst (-2.le.iy_SOL_dtXX.and.iy_SOL_dtXX.lt.ny,
+     & 'faulty parameter iy_SOL_dtXX')
 
       ttf = min(minval(dtco(nsmin:nsmax-1,1:nnreg(0))),
      &                        minval(dtco_SOL(nsmin:nsmax-1)))
