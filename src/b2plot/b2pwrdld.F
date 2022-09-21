@@ -164,7 +164,7 @@ c      write(*,*) 'b2pwrdld: after rlcomp'
      >  write(*,*) '(of which add. core rad.) : ',add_rad*1.0e6
       if (irdparm.eq.1) then
         write(*,*) '  Reaching the targets    : ',tttrg
-      else if (irdparm.eq.2) then
+      else if (irdparm.eq.2 .and. nwldprt.gt.1) then
         write(*,*) '  Reaching the plot zones : ',tttrg
       end if
       if(n_hlperr.gt.0) then !{
@@ -245,7 +245,7 @@ c*** Calculate the radiation load split by impurity species from B2
           write(*,*)   '  Total radiation         : ',ttsrc
           if (irdparm.eq.1) then
             write(*,*) '  Reaching the targets    : ',tttrg
-          else if (irdparm.eq.2) then
+          else if (irdparm.eq.2 .and. nwldprt.gt.1) then
             write(*,*) '  Reaching the plot zones : ',tttrg
           end if
           k=0

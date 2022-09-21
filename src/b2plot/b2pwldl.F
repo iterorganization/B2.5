@@ -38,7 +38,11 @@ c*** (data input and geometry initialisation also done there)
 
 c*** Produce the output files - one for a zone
 
-      print *,'  nwldprt:',nwldprt  !### 
+      if(nwldprt.gt.1) then
+       print *,'  nwldprt:',nwldprt  !###
+      else
+       print *,'  No plot zones declared: nothing to do.'
+      end if
       do 20 il=2,nwldprt !{
         l=len_trim(pltzlbl(il))
 c        print *,'il,l,pltzlbl(il)=',il,l,' ',pltzlbl(il)    !###
