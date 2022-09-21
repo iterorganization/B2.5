@@ -11,7 +11,7 @@
      .          read_mapping, write_mapping,
      .          init_mapping, get_version,
      .          triangleArea_us, triangleCentroid_us,
-     .          quadArea_st, quadCentroid_us
+     .          quadArea_st, quadCentroid_us, pentArea
       
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
@@ -679,6 +679,21 @@ cwdk  can be derived directly from data in that file
      .           TriangleArea_us(x2, y2, x3, y3, x0, y0)
 
       end function quadArea_st
+
+***********************************************************************
+      !> Area of a convex pentagonal cell
+      !> The vertices must be in sequence
+
+      function pentArea(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4)
+      implicit none
+      real (kind=R8) :: pentArea
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3, x4, y4
+
+      pentArea = TriangleArea_us(x0, y0, x1, y1, x2, y2) + 
+     .         TriangleArea_us(x2, y2, x3, y3, x4, y4) +
+     .         TriangleArea_us(x2, y2, x0, y0, x4, y4) 
+      
+      end function pentArea
 
 ***********************************************************************
 

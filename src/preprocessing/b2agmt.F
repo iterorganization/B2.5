@@ -6,8 +6,6 @@
       use b2mod_constants
       use tradui_constants
       use carre_constants
-      !use b2mod_connectivity
-      !use b2mod_cellhelper
       use b2us_geo
       use b2us_map
  
@@ -110,10 +108,11 @@
 
 *   ..local variables
       integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx
-      integer verts4(0:3), verts3(0:2), faces3(0:2), cells(1:2),
+      integer verts3(0:2), faces3(0:2), cells(1:2),
      * fcType(m%nFc), c1, c2,  verts2(0:1), intersectF(0:1), 
      * faces4_1(0:3), faces4_2(0:3)
-      integer i1, i2, ii, i1_1, i1_2, i2_1, i2_2
+      integer, allocatable :: verts(:)
+      integer i1, i2, ii, i1_1, i1_2, i2_1, i2_2, nv
       integer volhmk, cgeo, cgeon, psi_flag
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
@@ -192,17 +191,17 @@
        
        select case (m%cvFcP(iCv,2))
 
-       case(4)  !Quad
+       case(3,4,5)  !Triangles, quadrilateral and pentagonal
+
+       nv = m%cvVxP(iCv,2)
+       allocate(verts(0:nv-1))
 
        !ebc unit vector of poloidal field in cell center
-       verts4 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
-     &          m%cvVxP(iCv,2)-1 )
+       verts = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+nv-1 )
        ! b_y
-       t0 = 0.25_R8 * ( g%vxBb(verts4(0),1) + g%vxBb(verts4(1),1) +   
-     &        g%vxBb(verts4(2),1) + g%vxBb(verts4(3),1) )
+       t0 = sum(g%vxBb(verts,1)) / nv
        ! b_x
-       t1 = - 0.25_R8 * ( g%vxBb(verts4(0),0) + g%vxBb(verts4(1),0) +
-     &        g%vxBb(verts4(2),0) + g%vxBb(verts4(3),0) )
+       t1 = - sum(g%vxBb(verts,0)) / nv
 
        g%cvEb(iCv,0) = t0 / norm(t0,t1)
        g%cvEb(iCv,1) = t1 / norm(t0,t1)
@@ -227,9 +226,23 @@
       ! we assume the vertices are ordered 
       ! Because of this we can employ the quadArea_st which assumes the
       ! vertices in the correct sequence - right turning
-       g%cvSz(iCv) = quadArea_st(g%vxX(verts4(0)), g%vxY(verts4(0)),  
-     &     g%vxX(verts4(1)), g%vxY(verts4(1)), g%vxX(verts4(2)),
-     &     g%vxY(verts4(2)), g%vxX(verts4(3)), g%vxY(verts4(3)) )
+      if (nv.eq.4) then
+       g%cvSz(iCv) = quadArea_st(g%vxX(verts(0)), g%vxY(verts(0)),  
+     &     g%vxX(verts(1)), g%vxY(verts(1)), g%vxX(verts(2)),
+     &     g%vxY(verts(2)), g%vxX(verts(3)), g%vxY(verts(3)) )
+      elseif (nv.eq.5) then
+      !WIP AREA FOR PENT - no check on convexity!
+       g%cvSz(iCv) = pentArea(g%vxX(verts(0)), g%vxY(verts(0)),  
+     &     g%vxX(verts(1)), g%vxY(verts(1)), g%vxX(verts(2)),
+     &     g%vxY(verts(2)), g%vxX(verts(3)), g%vxY(verts(3)), 
+     &     g%vxX(verts(4)), g%vxY(verts(4)) )
+      elseif (nv.eq.3) then
+       g%cvSz(iCv) = TriangleArea_us(g%vxX(verts(0)), g%vxY(verts(0)),
+     &                        g%vxX(verts(1)), g%vxY(verts(1)),
+     &                        g%vxX(verts(2)), g%vxY(verts(2)))
+      else
+         call xerrab('Area computation not implemented for this type')
+      endif
 
 
       if  (isymm.eq.0) then  !slab geometry
@@ -237,12 +250,8 @@
         g%cvVol(iCv) = g%cvSz(iCv) *width     
       elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmertry about crx=0 axis
         if (volhmk.eq.0) then 
-          centroid(iCv,0) = 0.25_R8*
-     &      (g%vxX(verts4(0)) + g%vxX(verts4(1)) + g%vxX(verts4(2)) 
-     &       + g%vxX(verts4(3)) )
-          centroid(iCv,1) = 0.25_R8*
-     &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
-     &       + g%vxY(verts4(3)) )
+          centroid(iCv,0) = sum(g%vxX(verts)) / nv
+          centroid(iCv,1) = sum(g%vxY(verts)) / nv
         else
 
           ! Calculate the centroid similar to the method for the triangle centroid
@@ -254,12 +263,8 @@
         g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
       elseif  (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0
         if (volhmk.eq.0) then
-          centroid(iCv,0) = 0.25*R8*
-     &      (g%vxX(verts4(0)) + g%vxX(verts4(1)) + g%vxX(verts4(2)) 
-     &       + g%vxX(verts4(3)) )
-          centroid(iCv,1) = 0.25*R8*
-     &      (g%vxY(verts4(0)) + g%vxY(verts4(1)) + g%vxY(verts4(2)) 
-     &       + g%vxY(verts4(3)) )
+          centroid(iCv,0) = sum(g%vxX(verts)) / nv
+          centroid(iCv,1) = sum(g%vxY(verts)) / nv
         else ! default
 
           ! Calculate the centroid similar to the method for the triangle centroid
@@ -271,107 +276,8 @@
         g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1)       
 
       endif
-
-       case(3)  !Triangle
-       ! Method to determine cell center for triangles!!! line 290 in structured version
-cwdk      General approach for arbitrary triangle cases:
-cwdk      1) identify vertices with max and min psi values psi_min, psi_max
-cwdk      2) assume the triangle lies on the flux surface with psic = 0.5*(psi_min + psi_max)
-cwdk         => through middle of the corresponding face; defines 1st intersection
-cwdk      3) identify 2nd intersection of this surface with one of the other two faces
-cwdk      4) centroid: average between the intersections with faces       
-
-       ! Identify vertices with min and max psi values
-       verts3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
-     &          m%cvVxP(iCv,2)-1 )
-       i1 = minloc(g%vxFpsi(verts3(0:2)),1)-1
-       i2 = maxloc(g%vxFpsi(verts3(0:2)),1)-1
-       psic = 0.5_R8*(g%vxFpsi(verts3(i1)) + g%vxFpsi(verts3(i2)))
-       cvFpsi(iCv) = psic
-      ! Loop over faces to find which ones are intersected by the psic surface
-      faces3 = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1) + 
-     &          m%cvFcP(iCv,2)-1 )
-      ii = 0 
-      do iF = 0,2 
-      if (psic.ge.min(g%vxFpsi(m%fcVx(faces3(iF),1)) , 
-     &             g%vxFpsi(m%fcVx(faces3(iF),2))) .and.
-     &   (psic.lt.max(g%vxFpsi(m%fcVx(faces3(iF),1)),  
-     &             g%vxFpsi(m%fcVx(faces3(iF),2)))) ) then !intersected  
-        t0 = (psic - g%vxFpsi(m%fcVx(faces3(iF),1))) / 
-     &        (g%vxFpsi(m%fcVx(faces3(iF),2)) - 
-     &         g%vxFpsi(m%fcVx(faces3(iF),1)))
-        isx(ii) = g%vxX(m%fcVx(faces3(iF),1)) + t0 * 
-     &  ( g%vxX(m%fcVx(faces3(iF),2)) - g%vxX(m%fcVx(faces3(iF),1)))
-        isy(ii) = g%vxY(m%fcVx(faces3(iF),1)) + t0 * 
-     &  ( g%vxY(m%fcVx(faces3(iF),2)) - g%vxY(m%fcVx(faces3(iF),1)))
-        intersectF(ii) = faces3(iF)     
-        ii = ii+1
-      endif
-      enddo  
-      if (ii.ne.2) then
-         write(*,*) 'Problem with intersections in triangle ', iCv
-         write(*,*) 'Number of intersections found: ' , ii
-         call xerrab('Intersections in triangle not found!')
-      endif         
-      
-      !Compute centroid
-      centroid(iCv,0) = 0.5_R8*sum(isx)
-      centroid(iCv,1) = 0.5_R8*sum(isy)
-
-      !Compute poloidal length
-      g%cvHx(iCv) = sqrt( (isx(1) - isx(0))**2 +  (isy(1) - isy(0))**2 ) 
-
-      
-      !Store to verify
-      g%cvX(iCv) = centroid(iCv,0)
-      g%cvY(iCv) = centroid(iCv,1)
-
-      call recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
-
-      !Compute cvSz and cvVol
-      g%cvSz(iCv) = TriangleArea_us(g%vxX(verts3(0)), g%vxY(verts3(0)),
-     &                        g%vxX(verts3(1)), g%vxY(verts3(1)),
-     &                        g%vxX(verts3(2)), g%vxY(verts3(2)))
-
-      if  (isymm.eq.0) then  !slab geometry
-      ! volume is area times width
-        g%cvVol(iCv) = g%cvSz(iCv) *width      
-      elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmertry about crx=0 axis
-        ! volume is area time circumference of circle with radius equal to the x-coordinate of centroid 
-        g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
-      elseif  (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about cry=0      
-        ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid 
-        g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1) 
-      endif
-
-
-!WIP  !Compute ebc - same method as quad - NEEDS REVIEW
-      !ebc unit vector of poloidal field in cell center
-       verts3 = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1) + 
-     &          m%cvVxP(iCv,2)-1 )
-       ! b_y
-       t0 = ( g%vxBb(verts3(0),1) + g%vxBb(verts3(1),1) +   
-     &        g%vxBb(verts3(2),1) ) / 3.0_R8
-       ! b_x
-       t1 = - ( g%vxBb(verts3(0),0) + g%vxBb(verts3(1),0) +
-     &        g%vxBb(verts3(2),0) ) / 3.0_R8
-
-       g%cvEb(iCv,0) = t0 / norm(t0,t1)
-       g%cvEb(iCv,1) = t1 / norm(t0,t1)
-
-*    ..unit vector of total magnetic field, defined in cell center
-      ! until this point, cvEb was unit vector of poloidal field
-      ! now, correct for toroidal field
-       if (g%cvBb(iCv,3) == 0.0_R8) then
-         g%cvEb(iCv,:) = 0.0_R8
-       else
-         g%cvEb(iCv,0) = 
-     &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,0)
-         g%cvEb(iCv,1) = 
-     &       abs(g%cvBb(iCv,0))/g%cvBb(iCv,3)*g%cvEb(iCv,1)
-         g%cvEb(iCv,2) = g%cvBb(iCv,2)/g%cvBb(iCv,3)
-       endif
-
+       
+       deallocate(verts)
 
 
        case(1)  !Guard Cells (are at the end of the cells array so can use information 
@@ -501,6 +407,9 @@ cwdk      4) centroid: average between the intersections with faces
          ! volume is area time circumference of circle with radius equal to the y-coordinate of centroid 
          g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,1) 
          endif
+
+       !case default
+       !   call xerrab('b2agmt: Type of cell not implemented')
 
        end select
        
@@ -833,15 +742,20 @@ cwdk      4) centroid: average between the intersections with faces
       type(geometry) :: g
       real(kind=R8) ::  centroid(m%nCv,0:1), psic, isx(0:1), isy(0:1),
      * t0
-      integer iCv, verts(0:3), faces(0:3), i1, i2, ii, iF,
-     *  intersectF(0:1), isymm
+      integer iCv, i1, i2, ii, iF,
+     *  intersectF(0:1), isymm, nv
+      integer, allocatable :: verts(:), faces(:)
 
 cnv   General approach similar to calculation of cell center of triangles
 cnv   but now for quads
+
+      nv = m%cvVxP(iCv,2)
+      allocate(verts(0:nv-1))
+      allocate(faces(0:nv-1))
       
       !Identify vertices with min and max psi values
-      verts = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)
-      faces = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
+      verts = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+nv-1)
+      faces = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+nv-1)
       
       i1 = minloc(g%vxFpsi(verts),1) -1
       i2 = maxloc(g%vxFpsi(verts),1) -1
@@ -849,7 +763,7 @@ cnv   but now for quads
       
       ! Loop over faces to find which ones are intersected by the psic surface
       ii = 0      
-      do iF = 0,3 
+      do iF = 0,nv-1 
       if (psic.ge.min(g%vxFpsi(m%fcVx(faces(iF),1)) , 
      &             g%vxFpsi(m%fcVx(faces(iF),2))) .and.
      &   (psic.lt.max(g%vxFpsi(m%fcVx(faces(iF),1)),  
@@ -866,9 +780,9 @@ cnv   but now for quads
       endif
       enddo  
       if (ii.ne.2) then
-         write(*,*) 'Problem with intersections in quad', iCv
+         write(*,*) 'Problem with intersections in cell', iCv
          write(*,*) 'Number of intersections found: ' , ii
-         call xerrab('Intersections in quad not found!')
+         call xerrab('Intersections in cell not found!')
       endif         
       
       !Compute centroid
@@ -884,6 +798,9 @@ cnv   but now for quads
 
       !Correct the magnetic field in the new cell center
       call recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
+
+      deallocate(verts)
+      deallocate(faces)
 
 
       end subroutine calc_psi_centroid
@@ -974,22 +891,20 @@ cnv   but now for quads
 
       type(mapping) :: m
       type(geometry) :: g
-      integer isymm, bc, iCv, verts4(0:3), verts3(0:2), v1, v2
+      integer isymm, bc, iCv, v1, v2, nv
       real(kind=R8) :: vec1(0:2), vec2(0:2), p(0:2), d, bcBb(0:2), 
      &   gcBb(0:2), t0, centroid(m%nCv,0:1)
+      integer, allocatable :: verts(:)
 
       !1. interpolate vxBb(0:1) to the boundary cell center
-      if (m%cvVxP(bc,2).eq.4) then
-        verts4 = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+3)
-        bcBb(0) = 0.25_R8 * sum( g%vxBb(verts4,0) )
-        bcBb(1) = 0.25_R8 * sum( g%vxBb(verts4,1) )
-        bcBb(2) = 0.25_R8 * sum( g%vxFfbz(verts4))
-      elseif (m%cvVxP(bc,2).eq.3) then
-        verts3 = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+2)
-        bcBb(0) = sum( g%vxBb(verts3,0) ) / 3.0_R8
-        bcBb(1) = sum( g%vxBb(verts3,1) ) / 3.0_R8
-        bcBb(2) = sum( g%vxFfbz(verts3) ) / 3.0_R8          
-      endif
+      nv = m%cvVxP(bc,2)
+      allocate(verts(nv))
+
+      verts = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+nv-1)
+      bcBb(0) = 0.25_R8 * sum( g%vxBb(verts,0) )
+      bcBb(1) = 0.25_R8 * sum( g%vxBb(verts,1) )
+      bcBb(2) = 0.25_R8 * sum( g%vxFfbz(verts))
+
 
       !2. construct 3d-plane with two guard cell vertices and cell center
       ! p(0)*x+ p(1)*y + p(2)*z = d met x = x-coordinate, y = y-coordinate, z = bb-value
@@ -1050,6 +965,8 @@ cnv   but now for quads
       g%cvBb(iCv,2) = gcBb(2)/t0
       g%cvBb(iCv,3) = sqrt( g%cvBb(iCv,0)**2 + 
      &        g%cvBb(iCv,1)**2 + g%cvBb(iCv,2)**2)
+
+      deallocate(verts)
 
 
       end subroutine recalc_guard_bb
