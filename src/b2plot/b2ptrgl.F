@@ -131,18 +131,18 @@ c***                     (PRFAML+PRFPML)*H_EDISS
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
      ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
-     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
-     ,   sn_t,spt_out(2),mol_out(2*DEF_NMOL)
-      character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
+     ,   sjs_s(0:ntrgsx), sjs_t(ntrgsx), sjs_w(ntrgsx), sptmass,
+     ,   sn_t, spt_out(2), mol_out(2*DEF_NMOL)
+      character*11 spt_str(2,ntrgsx), fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
-      character*16 ssmol,ssion
+      character*16 ssmol, ssion
       real (kind=R8) ::
      *   ers_factor, nsecyr
-      parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
+      parameter (nsecyr=24.0_R8*3600.0_R8*365.2425_R8)
       parameter (ers_factor=nsecyr*1.0e-3_R8/avogr)
       real (kind=R8) ::
-     *   ss(ntrgsx),ersn_a(ntrgsx),ss_m,ersn_am,ersn_p(ntrgsx),ersn_pm,
-     *   ersn_l(ntrgsx)
+     *   ss(ntrgsx), ersn_a(ntrgsx),
+     *   ss_m, ersn_am, ersn_p(ntrgsx), ersn_pm, ersn_l(ntrgsx)
       logical ft44
       logical streql
       integer, save :: ncall=0   ! iyv 19.07.22
@@ -1187,6 +1187,7 @@ c      print *,'Particle fluxes...' !###
         ersn_l(j)=0.0_R8
         sjs_w(j)=0.0_R8
         sjs_t(j)=0.0_R8
+        sjs_s(j)=0.0_R8
         do ia=1,nclm_na
           sja_w(j,ia)=0.0_R8
           sja_t(j,ia)=0.0_R8
@@ -1416,7 +1417,7 @@ c        Temporary solution for this routine is to use the bulk track_species
 
           if (sjs_t(itrg(j)).gt.0.0_R8) then
             do_sput(itrg(j))=.true.
-            do iy=lytg,ny-1!{
+            do iy=lytg,ny-1 !{
               sjs(iy,itrg(j))=sjs_t(itrg(j))*sjs(iy,itrg(j))
 c carlis The erosion of the wall is evaluated using the wall material and not the emitted atom/molecule
 c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/srfs_d[g/cm3]/s[m2]
@@ -1437,8 +1438,8 @@ c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/
 c carlis The emitted amount in g/y is evaluated using the sputtered atom or molecule
 c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
               sjs(iy,itrg(j))=sjs(iy,itrg(j))*sptmass*nsecyr/avogr
-              sjs_w(itrg(j))=sjs_w(itrg(j))+sjs(iy,itrg(j))
-            end do
+              sjs_s(itrg(j))=sjs_s(itrg(j))+sjs(iy,itrg(j))
+            end do !}
             if (sptlis(itrg(j)).le.natmi) then
               ssmol=texta(sptlis(itrg(j)))
             else
@@ -1454,7 +1455,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           else ! no sputtering
             print *,'b2ptrgl, zero sputtering flux for target j=',
      ,                                                   itrg(j)
-            sjs_w(itrg(j))=0.0_R8
+            sjs_s(itrg(j))=0.0_R8
           end if
         end do !loop on targets
       else
@@ -1591,7 +1592,7 @@ c
       do imol=1,nmoli
         sjm_w(0,imol)=0.0_R8
       end do
-      sjs_w(0)=0.0_R8
+      sjs_s(0)=0.0_R8
       do j=1,ntrgts
         do ia=1,nclm_na
           sja_w(0,ia)=sja_w(0,ia)+sja_w(itrg(j),ia)
@@ -1611,10 +1612,10 @@ c
       write(lun,'(2a)') 'Target erosion summary: ',trim(label)
       write(lun,*)
       if (LSN .and. itrg(1).eq.1) then
-        write(lun,'(12x,3(a1,a12))')
+        write(lun,'(12x,5(a1,a12))')
      -                   (tab,trg_label(i),i=1,ntrgsx,k),tab,'total   '
       else
-        write(lun,'(12x,3(a1,a12))')
+        write(lun,'(12x,5(a1,a12))')
      -                   (tab,trg_label(i),i=ntrgsx,1,-k),tab,'total   '
       endif
       write(fmt_peak,730) ntrgts+1
@@ -1649,15 +1650,15 @@ c
       if (ntargsp.gt.0.and.ft44) then
         k=0
         do j=1,ntrgts
-          sjs_w(0)=sjs_w(0)+sjs_w(itrg(j))
+          sjs_s(0)=sjs_s(0)+sjs_s(itrg(j))
           if(k.eq.0.and..not.streql(mtrtrgsg(itrg(j)),' ')) k=itrg(j)
         end do
         if (k.ne.0) then
           write(lun,*)
           write(lun,*) 'Total sputtering [g/y]'
           write(lun,fmt_peak) trim(mtrtrgsg(k)),
-     ,                       (tab,sjs_w(itrg(i)),i=1,ntrgts),
-     ,                        tab,sjs_w(0)
+     ,                       (tab,sjs_s(itrg(i)),i=1,ntrgts),
+     ,                        tab,sjs_s(0)
         end if
         write(lun,*)
         write(lun,*) 'Erosion [mm/y]'
@@ -1666,22 +1667,21 @@ c
         ss_m=0.0_R8
         do j=1,ntrgts !{
           if (do_sput(itrg(j))) then
+            sn_t=0.0_R8
             ss(itrg(j))=0.0_R8
             ersn_p(itrg(j))=0.0_R8
             do iy=lytg,ny-1 !{
-              sn_t=0.0_R8
               ss(itrg(j))=ss(itrg(j))+s(iy,itrg(j))
-              sn_t=sn_t+sje(iy,itrg(j))
-              if(sn_t .gt. ersn_p(itrg(j))) then !{
-                ersn_p(itrg(j))=sn_t
+              sn_t=sn_t+sje(iy,itrg(j))*s(iy,itrg(j))
+              if(sje(iy,itrg(j)) .gt. ersn_p(itrg(j))) then !{
+                ersn_p(itrg(j))=sje(iy,itrg(j))
                 ersn_l(itrg(j))=xtrg(iy,itrg(j))
               end if !}
             end do !}
-            ersn_a(itrg(j))=0.0_R8
-            ersn_a(itrg(j))=ersn_a(itrg(j))+sjs_w(itrg(j))/ss(itrg(j))
+            ersn_a(itrg(j))=sn_t/ss(itrg(j))
             ersn_pm=max(ersn_p(itrg(j)),ersn_pm)
             ss_m=ss_m+ss(itrg(j))
-            ersn_am=ersn_am+ersn_a(itrg(j))*ss(itrg(j))
+            ersn_am=ersn_am+sn_t
           else
             ersn_a(itrg(j))=0.0_R8
             ersn_p(itrg(j))=0.0_R8
