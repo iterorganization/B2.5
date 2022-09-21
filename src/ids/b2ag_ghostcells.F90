@@ -665,35 +665,26 @@ contains
       type(geometry) :: g
 
       !internal
-      integer :: iCv, j, counter, facesQuad(0:3), facesTria(0:2)
+      integer :: iCv, j, counter, nf
+      integer, allocatable :: faces(:)
       logical :: Bface
       intrinsic count
       
       counter = 1
       do iCv = 1, nnCv
           if (m%cvLbl(iCv).eq.GRID_BOUNDARY) then
-             if (m%cvFcP(iCv,2).eq.4) then  !Quad
-               facesQuad = m%cvFc(m%cvFcP(iCv,1): &
-                 &   m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
-               do j = 0, 3
-                  Bface = isBoundaryFace(facesQuad(j))
+             nf = m%cvFcP(iCv,2)
+             allocate(faces(0:nf-1)) 
+             faces = m%cvFc(m%cvFcP(iCv,1): &
+                 &   m%cvFcP(iCv,1)+nf-1)
+               do j = 0, nf-1
+                  Bface = isBoundaryFace(faces(j))
                   if (Bface) then
-                     facenumbers(counter) = facesQuad(j)
+                     facenumbers(counter) = faces(j)
                      counter = counter+1
                   endif
                enddo
-             else !Triangle
-               facesTria = m%cvFc(m%cvFcP(iCv,1): &
-                 &   m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
-               do j = 0,2
-                 Bface = isBoundaryFace(facesTria(j))
-                 if (Bface) then
-                    facenumbers(counter) = facesTria(j)
-                    counter = counter+1
-                 endif
-               enddo
-             endif
-
+             deallocate(faces)
           endif
       enddo
 
@@ -705,13 +696,8 @@ contains
       integer :: counter
 
       counter = 0
-      ! count how many times iface is present in cvFc
-      !do i = 1, m%nCmxFc
-      !   if ((m%cvFc(i)-1).eq.iface) then
-      !       counter = counter +1
-      !   endif 
-      !enddo
-     counter = count (m%cvFc == iface)
+
+      counter = count (m%cvFc == iface)
 
 
       ! if the face is present once, it is a boundary face
