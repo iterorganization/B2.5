@@ -859,7 +859,7 @@ c!###{
 c                  print '(a,7i6)','is,j,i1,i2,k,kk,ib=',
 c     ,                       is,itrg(j),i1,i2,k,kk,ib
 c                  zz=0.0_R8
-c                  print '(3x,7(2x,a8))','phi','fti','wo','wwo',
+c                  print '(5x,7(2x,a8))','phi','fti','wo','wwo',
 c     ,             'fiitrg','eiitrg','s'
 c!###}
                   do iy=0,ny-1 !{
@@ -907,7 +907,7 @@ c*** Atomic fluxes and energies
 c!###{
 c                    print '(a,7i6)','is,j,i1,i2,k,kk,ib=',
 c     ,                         is,itrg(j),i1,i2,k,kk,ib
-c                    print '(3x,4(2x,a8))',
+c                    print '(5x,4(2x,a8))',
 c     ,                         'faitrg','eaitrg','dab2','tab2'
 c!###}
                     do iy=0,ny-1 !{
@@ -925,8 +925,8 @@ c carlis using values directly from Eirene
                         IAS=IND+1-(eirdiag_nds_start(iss)-1)
                         faitrg(iy,itrg(j),iatm)=wldna_res(iatm,iy+IAS)*
      .                       sarea_res(iy+IAS) !units in 1/m2/s*m2
-                        eaitrg(iy,itrg(j),iatm)=ewlda_res(iatm,iy+IAS)
-     .                       *sarea_res(iy+IAS) !units in W/m2*m2
+                        eaitrg(iy,itrg(j),iatm)=ewlda_res(iatm,iy+IAS)*
+     .                       sarea_res(iy+IAS) !units in W/m2*m2
                       end do
 c!###{
 c                    print '(1x,i4,1p,4e10.2)',iy,
@@ -1020,8 +1020,8 @@ c*** Molecules fluxes and energies
                         pmitrg(iy,itrg(j),imol)=dmb2(kk+1,iy+1,imol,1)*
      *                     tmb2(kk+1,iy+1,imol,1)
                         nmitrg(iy,itrg(j),imol)=dmb2(kk+1,iy+1,imol,1)
-                        emitrg(iy,itrg(j),imol)=ewldm_res(imol,iy+IAS)
-     .                     *sarea_res(iy+IAS)
+                        emitrg(iy,itrg(j),imol)=ewldm_res(imol,iy+IAS)*
+     .                     sarea_res(iy+IAS) !units in W/m2*m2
                       end do !}
                     end do !} loop over B2 cells
                     wo=0.0_R8
