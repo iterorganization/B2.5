@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+      subroutine b2tfcc (nx, ny, ns, vol, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
@@ -14,6 +14,7 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny),
      &  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..input/output arguments
       real (kind=R8) ::
