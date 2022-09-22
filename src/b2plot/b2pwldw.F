@@ -995,7 +995,7 @@ c carlis             [J]=[J/s]/[1/s]
                       faitrg(iy,itrg(j),iatm)=u*
      .                               (fna(ib,iy,0,0,eb2atcr(iatm))+
      .                                fna(ib,iy,0,1,eb2atcr(iatm)))
-                      eaitrg(iy,itrg(j),iatm)=2.0_R8*ti(kk,iy)
+                      eaitrg(iy,itrg(j),iatm)=2.0_R8*ti(kk,iy)/ev
                     end do !} loop over B2 cells
                   end if
                 end if !}
