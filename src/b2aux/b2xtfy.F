@@ -6,6 +6,7 @@
      &        hx, hxx, bottomiy1)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_indirect
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
@@ -19,7 +20,7 @@
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
       integer bottomiy1(-1:nx1,-1:ny1)
-      logical flip, isSnowflake
+      logical flip
 *     ------------------------------------------------------------------
 *     B2XTFY transfers a y-face flux to a new mesh.
 *     When mapping between USN and LSN topologies, we flip the order
@@ -36,12 +37,6 @@
       intrinsic min, max
 *     ------------------------------------------------------------------
       call subini ('b2xtfy')
-      isSnowflake = .False.
-      if (nncut.eq.2) then
-         if (rightcut(1).le.rightcut(2)) then
-            isSnowflake = .True.
-         endif
-      endif
       if (non_commensurate.eq.0) then   ! commensurate mapping
 *   ..transfer fy
        do ix1 = -1, nx1
@@ -187,7 +182,7 @@
           ixd = nx1-1
           fy1(-1,iyc:iyd) = 0.0_R8   ! western dead cells
           fy1(ny1,iyc:iyd) = 0.0_R8  ! eastern dead cells
-        else if (nncut.eq.1 .or. isSnowflake) then   ! SN core
+        else if (nncut.eq.1 .or. nnreg(0).eq.7) then   ! SN core
           ixa = leftcut(1)
           ixb = rightcut(1)-1
           ixm = rightcut(1)-1
@@ -241,7 +236,7 @@
           iyb = ny
           iyd = ny1
         else if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
-          if (isSnowflake) then
+          if (nnreg(0).eq.7) then
             ixa = leftcut(1)
             ixm = leftcut(1)-1
             ixc = leftcut1(1)
@@ -425,7 +420,7 @@
      .    fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 3 : DDN HFS lower divertor : between separatrices
         if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
-         if (topcut(1).lt.topcut(2) .and. .not.isSnowflake) then
+         if (topcut(1).lt.topcut(2) .and. nnreg(0).ne.7) then
           ixp = leftcut(1)   ! position past the X-point
          endif
          iya = min(topcut(1),topcut(2))
@@ -514,7 +509,7 @@
            ixc = 0
            ixd = leftcut1(1)-1
          endif
-        else if (isSnowflake) then
+        else if (nnreg(0).eq.7) then
          ixa = rightcut(1)
          ixm = leftcut(1)-1
          ixb = leftcut(2)-1
@@ -690,7 +685,7 @@
      .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
        else if (nncut.eq.2) then  ! DN LFS core
 *     ..region 5 : DN LFS core : central part
-        if (isSnowflake) then
+        if (nnreg(0).eq.7) then
           iya = 0
           iyb = ny
           iyc = 0
@@ -746,7 +741,7 @@
        endif
 *    ..region 6 :
        if (nncut.eq.2) then
-        if (isSnowflake) then
+        if (nnreg(0).eq.7) then
           ixb = rightcut(2)-1
           ixd = rightcut1(2)-1
           do while (region(ixa-1,jsep,0).eq.6)
@@ -774,7 +769,7 @@
          ixm = rightcut(2)-1 ! position past the X-point
          iyb = ny
          iyd = ny1
-        else if (isSnowflake) then
+        else if (nnreg(0).eq.7) then
           ixm = leftcut(2)-1
           ixp = rightcut(1)
           iyb = max(topcut(1),topcut(2))
@@ -813,7 +808,7 @@
      .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
         if (topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
 *     ..region 6 : DDN LFS SOL above the second separatrix
-         if (.not.isSnowflake) then
+         if (nnreg(0).ne.7) then
           ixp = rightcut(1)   ! position past the X-point
           ixm = rightcut(2)-1 ! position past the X-point
          endif
@@ -839,7 +834,7 @@
        endif
 *    ..region 7 :
        if (nncut.eq.2) then
-        if (isSnowflake) then
+        if (nnreg(0).eq.7) then
           ixa = rightcut(2)
           ixm = leftcut(1)-1
           ixc = rightcut1(2)
@@ -894,7 +889,7 @@
      .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
 *     ..region 7 : DDN LFS upper divertor : between separatrices
         if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
-         if (topcut(1).gt.topcut(2) .and. .not.isSnowflake) then
+         if (topcut(1).gt.topcut(2) .and. nnreg(0).ne.7) then
           ixp = rightcut(2)   ! position past the X-point
          endif
          iya = min(topcut(1),topcut(2))
@@ -948,7 +943,7 @@
      .   fa1(ixc:ixd,iyc:iyd)*hxx(ixc:ixd,iyc:iyd)
        endif
 *    ..region 8 :
-       if (nncut.eq.2 .and. .not.isSnowflake) then
+       if (nncut.eq.2 .and. nnreg(0).ne.7) then
         ixa = rightcut(1)
         ixm = leftcut(1)-1
         ixb = nx-1

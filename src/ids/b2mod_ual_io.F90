@@ -117,7 +117,11 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
      &          GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
      &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
-     &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
+     &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE, &
+     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,  &
+     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1,  &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2,   
 #endif
 #if GGD_MINOR_VERSION < 10
     use b2mod_ual_io_grid &
@@ -506,9 +510,29 @@ contains
             &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
             &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
             &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
+      elseif (nnreg(0).eq.7) then
+        ixmid(1) = jxa
+        flux_expansion(1) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(0,jsep),topiy(0,jsep),0)/       &
+            &                 wbbc(topix(0,jsep),topiy(0,jsep),3) )
+        ixmid(2) = jxa
+        flux_expansion(2) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nxtl,jsep),topiy(nxtl,jsep),0)/ &
+            &                 wbbc(topix(nxtl,jsep),topiy(nxtl,jsep),3) )
+        ixmid(3) = jxa
+        flux_expansion(3) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nxtr,jsep),topiy(nxtr,jsep),0)/ &
+            &                 wbbc(topix(nxtr,jsep),topiy(nxtr,jsep),3) )
+        ixmid(4) = jxa
+        flux_expansion(4) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
+            &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
       else
-        if (topcut(1).lt.topcut(2) .or. &
-        &   GeometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+        if (topcut(1).lt.topcut(2)) then
           ixmid(1) = jxa
           flux_expansion(1) = &
               &  ( wbbv(topix(jxa,topcut(1)),topiy(jxa,topcut(1)),0)/    &
@@ -523,8 +547,7 @@ contains
               & ( wbbc(topix(0,topcut(1)),topiy(0,topcut(1)),0)/        &
               &   wbbc(topix(0,topcut(1)),topiy(0,topcut(1)),3) )
         end if
-        if (topcut(2).lt.topcut(1) .and. &
-        &   GeometryType.ne.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+        if (topcut(2).lt.topcut(1)) then
           ixmid(2) = jxa
           flux_expansion(2) = &
               & ( wbbv(topix(jxa,topcut(2)),topiy(jxa,topcut(2)),0)/    &
@@ -8137,7 +8160,12 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
+             )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8260,7 +8288,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,                          &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,                          &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1,                        &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8371,7 +8403,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8475,7 +8511,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,                          &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,                          &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1,                        &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8580,7 +8620,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8676,7 +8720,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
