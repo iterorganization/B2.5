@@ -7047,6 +7047,46 @@
 				</description>
 			</switch>
 			<switch>
+				<name>DTCO_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1)</type>
+				<description>
+					Multiplier to the time used in solving the continuity equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>DTMO_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1,0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the parallel momentum equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEE_SOL</name>
+				<default>1.0</default>
+				<type>real*8</type>
+				<description>
+					Multiplier to the time used in solving the electron heat equation in the far SOL defined by iy >= iy_SOL_dtXX).
+				</description>
+			</switch>
+			<switch>
+				<name>DTEI_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the ion heat equation in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>IY_SOL_DTXX</name>
+				<default>-2</default>
+				<type>integer</type>
+				<description>
+					Defines the region of the SOL (iy >= iy_SOL_dtXX) where the time multipliers dt[XX]_SOL should be applied. If iy_SOL_dtXX.eq.-2 (default), no time multiplication is applied for any equation independently of dt[XX]_SOL values. If iy_SOL_dtXX points to a closed flux surface (i.e. if iy_SOL_dtXX.le.jsep), the code produces an error message and stops.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVECO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>

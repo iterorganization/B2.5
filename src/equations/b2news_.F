@@ -1036,7 +1036,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        call my_out(70,nx,ny,fht(-1,-1,1,1),'b2news__fhty')
       endif
 *   ..add contribution from cdpa to floe, cone, floi, coni
-      call b2tfcc (nx, ny, ns, hx, hy, qs, na, te, ti, cdpa,
+      call b2tfcc (nx, ny, ns, vol, hx, hy, qs, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {

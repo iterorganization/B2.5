@@ -1159,7 +1159,7 @@ c     with diamagnetic drift part                                        !xpb
      1   ua, cvsa, rpt, te, ti,                                          !ajs 07.04.20
      2   po, BoRiS, fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
-        call b2tfcc (nx, ny, ns, hx, hy, qs, na, te, ti, cdpa,
+        call b2tfcc (nx, ny, ns, vol, hx, hy, qs, na, te, ti, cdpa,
      &    floe, cone, floi, coni)
 *    ..add contributions from the divergent total diamagnetic flux
         call b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx,

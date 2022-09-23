@@ -31,6 +31,10 @@
       use b2mod_neoclassical
       use b2mod_subsys
       use b2mod_ipmain
+      use b2mod_geo
+     &   , only : hy1, hzl, hzb
+      use b2mod_geo_corner
+     &  , only : bzbl, bzbv
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain      !srv 23.11.10
@@ -127,6 +131,7 @@
       integer, save :: icase = 0                                        !som 05.03.21
       integer, save :: mode = 1                                         !som 10.06.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
+      integer, save :: PSch_style
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2npc7 = 0, iout_b2npc11 = 0,               !srv 02.04.18
@@ -259,6 +264,12 @@
             endif
           enddo
         endif
+        if (redef_gmtry.eq.0) then
+          PSch_style = 1
+        else
+          PSch_style = 2
+        end if
+        call ipgeti ('b2tfnb_PSch_style', PSch_style)
       else
         if(transport_namelist.eq.1) then
           if(transport_time_mod.gt.0.0_R8) then
@@ -459,80 +470,85 @@
       call b2saxpy (n2*4, 1.0_R8, calf0, 1, calf, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       cddi = 0.0_R8
-      do is = 0, ns-1
-       if(.not.is_neutral(is)) then
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).ne.-2) then
-           cddi(ix,iy,0,0,is) =
-     &      +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
+      cdde = 0.0_R8
+      if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
+       do iy = -1, ny
+        do ix = -1, nx
+         do is = 0, ns-1
+          if(.not.is_neutral(is)) then
+           if(leftix(ix,iy).ne.-2) then
+            cddi(ix,iy,0,0,is) =
+     &       +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
      &         bzb(leftix(ix,iy),leftiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
      &       ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &        (hy(leftix(ix,iy),leftiy(ix,iy))*
-     &         qz(leftix(ix,iy),leftiy(ix,iy),1)+
-     &         hy(ix,iy)*qz(ix,iy,1)))/
+     &        (hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
-           if (use_9pt_stencil.ne.0)
-     >      cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
-          endif
-         enddo
-        enddo
-
-        do iy = -1, ny
-         do ix = -1, nx
-          if(bottomiy(ix,iy).ne.-2) then
-           cddi(ix,iy,1,1,is) =
+            if (use_9pt_stencil.ne.0)
+     >       cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
+           endif
+           if(bottomiy(ix,iy).ne.-2) then
+            cddi(ix,iy,1,1,is) =
      &       2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
      &       ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &        (hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     &         qz(bottomix(ix,iy),bottomiy(ix,iy),1)+
-     &         hy(ix,iy)*qz(ix,iy,1)))/
+     &        (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)))/
      &        (rza(ix,iy,is)*qe)
+           endif
           endif
-         enddo
-        enddo
+         enddo  ! is
 
-       endif
-      enddo                                                           !srv 13.10.06 }
-
-*   ..compute terms from diamagnetic parts for electrons              !som 03.11.21 {
-      cdde = 0.0_R8
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2) then
-         cdde(ix,iy,0,0) =
-     &    +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
+*   ..compute terms from diamagnetic parts for electrons               !som 03.11.21 {
+         if(leftix(ix,iy).ne.-2) then
+          cdde(ix,iy,0,0) =
+     &      +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
      &       bzb(leftix(ix,iy),leftiy(ix,iy))
      &       +vol(ix,iy)*bzb(ix,iy))/
      &     ((hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &      (hy(leftix(ix,iy),leftiy(ix,iy))*
-     &       qz(leftix(ix,iy),leftiy(ix,iy),1)+
-     &       hy(ix,iy)*qz(ix,iy,1)))/
-     &      qe
-         if (use_9pt_stencil.ne.0) cdde(ix,iy,0,1) = cdde(ix,iy,0,0)
-        endif
-       enddo
-      enddo
-
-      do iy = -1, ny
-       do ix = -1, nx
-        if(bottomiy(ix,iy).ne.-2) then
-         cdde(ix,iy,1,1) =
+     &      (hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy)))/ qe
+          if (use_9pt_stencil.ne.0) cdde(ix,iy,0,1) = cdde(ix,iy,0,0)
+         endif
+         if(bottomiy(ix,iy).ne.-2) then
+          cdde(ix,iy,1,1) =
      &     2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &       bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &       +vol(ix,iy)*bzb(ix,iy))/
      &     ((hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))*
-     &      (hy(bottomix(ix,iy),bottomiy(ix,iy))*
-     &       qz(bottomix(ix,iy),bottomiy(ix,iy),1)+
-     &       hy(ix,iy)*qz(ix,iy,1)))/
+     &      (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)))/
      &      qe
-        endif
-       enddo
-      enddo
-                                                                      !som 03.11.21 }
+         endif                                                         !som 03.11.21 }
+        enddo  !ix
+       enddo   !iy                                                     !srv 13.10.06 }
+
+      else !if (PSch_style.eq.2)) then                                 !IYS 15.09.22 {
+       do iy = -1, ny
+        do ix = -1, nx
+         do is = 0, ns-1
+          if(.not.is_neutral(is)) then
+           if(leftix(ix,iy).ne.-2) then
+            cddi(ix,iy,0,0,is) =
+     &         bzbl(ix,iy) * hzl(ix,iy) / (rza(ix,iy,is)*qe)
+            if (use_9pt_stencil.ne.0)
+     >       cddi(ix,iy,0,1,is) = cddi(ix,iy,0,0,is)
+           endif
+           if(bottomiy(ix,iy).ne.-2) then
+            cddi(ix,iy,1,1,is) =
+     &         bzbv(ix,iy) * hzb(ix,iy) / (rza(ix,iy,is)*qe)
+           endif
+          endif
+           if(leftix(ix,iy).ne.-2) then
+            cdde(ix,iy,0,0) = bzbl(ix,iy) * hzl(ix,iy) / qe
+            if (use_9pt_stencil.ne.0) cdde(ix,iy,0,1) = cdde(ix,iy,0,0)
+           endif
+           if(bottomiy(ix,iy).ne.-2) then
+            cdde(ix,iy,1,1) = bzbv(ix,iy) * hzb(ix,iy) / qe
+           endif
+         enddo
+        enddo
+       enddo                                                           !IYS 15.09.22 }
+
+      endif
 
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {

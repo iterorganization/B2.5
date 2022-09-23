@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfcc (nx, ny, ns, hx, hy, qs, na, te, ti, cdpa,
+      subroutine b2tfcc (nx, ny, ns, vol, hx, hy, qs, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       use b2mod_types
       use b2mod_rates
@@ -14,8 +14,8 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     &  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1), qs(-1:nx,-1:ny,0:1),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny)
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1), qs(-1:nx,-1:ny,0:1)
 *   ..input/output arguments
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1,0:1), cone(-1:nx,-1:ny,0:1,0:1,0:2),       !srv 02.01.07
@@ -30,7 +30,8 @@
       real (kind=R8) ::
      *   xfac, t0
       real (kind=R8) ::
-     *   nw(-1:nx,-1:ny,0:ns-1), dnwr(-1:nx,-1:ny,0:1,0:ns-1),
+     *   nw(-1:nx,-1:ny,0:ns-1),
+     *   dnwr(-1:nx,-1:ny,0:1,0:ns-1), dnar(-1:nx,-1,ny,0:1,0:ns-1),
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       save ncall, xfac
 *   ..procedures
@@ -83,9 +84,11 @@
 *   ..compute radial differences of te, ti, nw for 9-point terms
       wght = 1.0_R8
       do is = 0, ns-1
-        nw(:,:,is) = (rza(:,:,is) + 1.0_R8)*na(:,:,is)
-        call diff_r(nx, ny, 0, hx, hy, wght, qs, nw(-1,-1,is), 
+        nw(:,:,is) = rza(:,:,is)*na(:,:,is)
+        call diff_r(nx, ny, 0, hx, hy, wght, qs, nw(-1,-1,is),
      &    wrk, dnwr(-1,-1,0,is))
+        call diff_r(nx, ny, 0, hx, hy, wght, qs, na(-1,-1,is),
+     &    wrk, dnar(-1,-1,0,is))
       enddo
 
 * ..correct floe, cone, floi, coni
@@ -99,37 +102,43 @@ cwdk add linearization coefficients for 9-point fluxes
      &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
      &           qs(ix,iy,0)
           floe(ix,iy,0,0) = floe(ix,iy,0,0)-
-     &     (xfac*2.5_R8/4.0_R8)*(cdpa(ix,iy,0,0,is)*
-     &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) +
-     &     cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
-     &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
-     &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
+     &     (xfac*2.5_R8/2.0_R8)*(cdpa(ix,iy,0,0,is)*
+     &     (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
+     &     (nw(ix,iy,is)-nw(leftix(ix,iy),leftiy(ix,iy),is))+
+     &      cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
+     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           cone(ix,iy,0,0,0) = cone(ix,iy,0,0,0)+                       !srv 02.01.07
-     &     (xfac*2.5_R8/8.0_R8)*
+     &     (xfac*2.5_R8/4.0_R8)*
      &     (cdpa(ix,iy,0,0,is) + cdpa(ix,iy,0,1,is)*t0)*
-     &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
-     &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
-     &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
+     &     (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
+     &     (nw(ix,iy,is)+nw(leftix(ix,iy),leftiy(ix,iy),is))*
+     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           if (use_9pt_stencil.ne.0)
      >     cone(ix,iy,0,1,0) = cone(ix,iy,0,1,0)+                      !srv 02.01.07
-     &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,0,1,is)*
-     &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
-     &     (rza(ix,iy,is) + rza(leftix(ix,iy),leftiy(ix,iy),is))*
+     &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,1,is)*
+     &     (nw(ix,iy,is)+nw(leftix(ix,iy),leftiy(ix,iy),is))*
+     &     (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
      &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
           floi(ix,iy,0,0) = floi(ix,iy,0,0)-
      &     (xfac*2.5_R8/2.0_R8)*(cdpa(ix,iy,0,0,is)*
-     &     (nw(ix,iy,is) - nw(leftix(ix,iy),leftiy(ix,iy),is)) +
-     &     cdpa(ix,iy,0,1,is)*dnwr(ix,iy,0,is))*
+     &     (na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))+
+     &     cdpa(ix,iy,0,1,is)*dnar(ix,iy,0,is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
           coni(ix,iy,0,0,0) = coni(ix,iy,0,0,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*
      &     (cdpa(ix,iy,0,0,is) + cdpa(ix,iy,0,1,is)*t0)*
-     &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
+     &     (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
           if (use_9pt_stencil.ne.0)
      >     coni(ix,iy,0,1,0) = coni(ix,iy,0,1,0)+                      !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,0,1,is)*
-     &     (nw(ix,iy,is) + nw(leftix(ix,iy),leftiy(ix,iy),is))*
+     &     (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is))*
      &     (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
          endif
         enddo
@@ -146,31 +155,37 @@ cwdk add linearization coefficients for 9-point fluxes
      &          (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
      &           qs(ix,iy,1)
           floe(ix,iy,1,1) = floe(ix,iy,1,1)-
-     &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*dnwr(ix,iy,1,is)*
-     &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
+     &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,1,1,is)*dnwr(ix,iy,1,is)*
+     &     (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
           cone(ix,iy,1,1,0) = cone(ix,iy,1,1,0)+                       !srv 02.01.07
-     &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,1,1,is)*
-     &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
-     &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
+     &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*
+     &     (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is)+nw(ix,iy,is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
           if (use_9pt_stencil.ne.0)
      >     cone(ix,iy,1,0,0) = cone(ix,iy,1,0,0)+                      !srv 02.01.07
-     &     (xfac*2.5_R8/8.0_R8)*cdpa(ix,iy,1,1,is)*t0*
-     &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
-     &     (rza(ix,iy,is) + rza(bottomix(ix,iy),bottomiy(ix,iy),is))*
+     &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*t0*
+     &     (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &      rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/
+     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is)+nw(ix,iy,is))*
      &     (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))
           floi(ix,iy,1,1) = floi(ix,iy,1,1)-
-     &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,1,1,is)*dnwr(ix,iy,1,is)*
+     &     (xfac*2.5_R8/2.0_R8)*cdpa(ix,iy,1,1,is)*dnar(ix,iy,1,is)*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
           coni(ix,iy,1,1,0) = coni(ix,iy,1,1,0)+                       !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*
-     &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
+     &     (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
           if (use_9pt_stencil.ne.0)
      >     coni(ix,iy,1,0,0) = coni(ix,iy,1,0,0)+                      !srv 02.01.07
      &     (xfac*2.5_R8/4.0_R8)*cdpa(ix,iy,1,1,is)*t0*
-     &     (nw(bottomix(ix,iy),bottomiy(ix,iy),is) + nw(ix,iy,is))*
+     &     (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))
          endif
         enddo

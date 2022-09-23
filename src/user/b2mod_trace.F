@@ -150,9 +150,9 @@ c
       return
       end subroutine b2trace
 c======================================================================
-      subroutine b2trci(nx,ny,ns,nxtl,nxtr,nregionv)
+      subroutine b2trci(nx,ny,ns,nxtl,nxtr,jsep,nregionv)
       implicit none
-      integer, intent(in) :: nx, ny, ns, nxtl, nxtr, nregionv
+      integer, intent(in) :: nx, ny, ns, nxtl, nxtr, jsep, nregionv
 c*** Initialisation call
       if (tracing_initialised) return
       call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
@@ -167,7 +167,7 @@ c*** Initialise tracing routines
       if(filedata(ntrc_srt)) call b2wrsrti(nregionv)
       if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns)
       if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns)
-      if(filedata(ntrc_uss)) call b2usstri(nx,ny,nxtl,nxtr) ! IYS 22.03.2022
+      if(filedata(ntrc_uss)) call b2usstri(nx,ny,nxtl,nxtr,jsep) ! IYS 22.03.2022
       tracing_initialised = .true.
       return
       end subroutine b2trci

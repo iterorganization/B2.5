@@ -377,7 +377,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(nx,ny,ns,nxtl,nxtr,nnreg(0))
+        call b2trci(nx,ny,ns,nxtl,nxtr,jsep,nnreg(0))
         call b2trccc(nout(1),nx,nxtl,nxtr)
         call b2filei(ns,nnreg(0))
         call b2filec

@@ -10,7 +10,7 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_geo_corner
-     &  , only : bzbl
+     &  , only : bzbl, bzbv
       use b2mod_geo
 !     &   , only : hzl,hzb
       use b2mod_subsys
