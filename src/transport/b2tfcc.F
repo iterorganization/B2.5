@@ -31,7 +31,7 @@
      *   xfac, t0
       real (kind=R8) ::
      *   nw(-1:nx,-1:ny,0:ns-1),
-     *   dnwr(-1:nx,-1:ny,0:1,0:ns-1), dnar(-1:nx,-1,ny,0:1,0:ns-1),
+     *   dnwr(-1:nx,-1:ny,0:1,0:ns-1), dnar(-1:nx,-1:ny,0:1,0:ns-1),
      *   wght(-1:nx,-1:ny), wrk(-1:nx,-1:ny)
       save ncall, xfac
 *   ..procedures
