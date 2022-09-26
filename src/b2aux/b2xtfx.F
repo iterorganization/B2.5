@@ -1,12 +1,12 @@
       subroutine b2xtfx (nx, ny, nx1, ny1, fx, fx1,
      &        nncutmax, non_commensurate, flip,
-     &        nnreg,nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
       use b2mod_types
       use b2mod_subsys
-      use b2mod_indirect
+      use b2mod_indirect, only : nnreg
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::

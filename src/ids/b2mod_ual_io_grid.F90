@@ -68,10 +68,6 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_INNER_TARGET, GRID_SUBSET_OUTER_TARGET,           &
      &          GRID_SUBSET_INNER_TARGET_INACTIVE,                            &
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE,                            &
-     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,                          &
-     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,                          &
-     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1,                        &
-     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2,                        &
      &          GRID_SUBSET_MAIN_CHAMBER_WALL, GRID_SUBSET_MAIN_WALL,         &
      &          GRID_SUBSET_PFR_WALL,                                         &
      &          GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL,       &
@@ -96,7 +92,11 @@ module b2mod_ual_io_grid
 #  endif
 #  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
-     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
+     & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL, &
+     & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+     & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
+     & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+     & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2   
 #  endif
 # endif
 #else
@@ -428,11 +428,18 @@ module b2mod_ual_io_grid
     !> All volumes
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
 # endif
-# if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+# if GGD_MINOR_VERSION < 11 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
     !> All edges defining walls, baffles, and targets
     integer, parameter :: GRID_SUBSET_FULL_WALL = 44
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
+    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
+    !> y-aligned edges defining the SOL enterance to the third SF leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 = 46
+    !> y-aligned edges defining the PFR connection of div entrance and leg 3
+    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 = 47
+    !> y-aligned edges defining the PFR connection of SF leg 1 and 2
+    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
 # endif
 # if GGD_MINOR_VERSION < 10
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES

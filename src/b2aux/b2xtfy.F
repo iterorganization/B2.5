@@ -6,7 +6,7 @@
      &        hx, hxx, bottomiy1)
       use b2mod_types
       use b2mod_subsys
-      use b2mod_indirect
+      use b2mod_indirect, only : nnreg
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
