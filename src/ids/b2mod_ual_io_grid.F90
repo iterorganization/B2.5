@@ -94,7 +94,7 @@ module b2mod_ual_io_grid
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #  endif
-#  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION ==3 )
+#  if ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
@@ -437,7 +437,7 @@ module b2mod_ual_io_grid
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
 # endif
-# if ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION == 3 )
+# if ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
     !> y-aligned edges defining the SOL enterance to the first SF leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
     !> y-aligned edges defining the SOL enterance to the third SF leg
