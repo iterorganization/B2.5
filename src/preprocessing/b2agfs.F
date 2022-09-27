@@ -2026,12 +2026,12 @@ c x-flux component
           nnreg(1)=6
         elseif(nncut.eq.1.and.nnreg(0).eq.5) then    ! Stellarator island case
           nnreg(1)=7
+        elseif(nnreg(0).eq.7) then   ! Snowflake case
+          nnreg(1)=11
         elseif(nncut.eq.2.and.topcut(1).eq.topcut(2)) then   ! DNC case
           nnreg(1)=12
         elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case
           nnreg(1)=13
-        elseif(nnreg(0).eq.7) then   ! DND case
-          nnreg(1)=11
         endif
 c y-flux component
         if(periodic_bc.eq.1) then
@@ -2073,13 +2073,13 @@ c y-flux component
             region(ix,ny,2)=7
           enddo
           ix = leftcut(2)
-          do while (leftix(ix,ny/2).ne.-2)
+          do while (leftix(ix,topcut(1)).ne.-2)
             region(topix(ix,-1),topiy(ix,-1),2)=8
             region(ix,ny,2)=11
             ix=ix+1
           enddo
           ix = rightcut(2)-1
-          do while (rightix(ix,ny/2).ne.nx+1)
+          do while (rightix(ix,topcut(1)).ne.nx+1)
             region(topix(ix,-1),topiy(ix,-1),2)=9
             region(ix,ny,2)=12
             ix=ix-1
@@ -2120,9 +2120,9 @@ c y-flux component
           nnreg(2)=8
         elseif(nncut.lt.2) then
           nnreg(2)=7
-        elseif(nnreg(0).eq.7) then
+        elseif(nnreg(0).eq.7) then   ! Snowflake case
           nnreg(2)=13
-        elseif(nncut.eq.2) then
+        elseif(nncut.eq.2) then   
           nnreg(2)=14
         endif
       else ! 1-D and 2-D slab cases
