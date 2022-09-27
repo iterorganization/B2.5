@@ -94,13 +94,6 @@ module b2mod_ual_io_grid
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #  endif
-#  if ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
-    use ids_grid_common     & ! IGNORE
-     & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-     & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
-     & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-     & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2   
-#  endif
 # endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED

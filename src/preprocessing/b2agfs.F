@@ -1639,8 +1639,8 @@ c    +-------+-----------------------+-------+-------++-------+-------+
 c    |       :                       :       :       ||       :       |
 c    |       2                       3       6       ||       7       |
 c    |       :                       :       +.......45.......+.......8
-c    |       :                       :       |       ||       |12     |
-c    1.......+-----------------------+-------+11     ||       |       |
+c    |       :                       :       |       ||       |       |
+c    1.......+-----------------------+-------+11     ||       |12     |
 c    |       |9                      |10     |       ||       |       |
 c    |       |                       |       |       ||       |       |
 c    +-------+-----------------------+-------+-------++-------+-------+
@@ -1974,7 +1974,7 @@ c x-flux component
           region(leftcut(1),iy,1)=2
           if(nncut.eq.1) then
             region(rightcut(1),iy,1)=3
-          elseif(nncut.eq.2) then
+          elseif(nncut.eq.2 .and. nnreg(0).ne.7) then
             region(rightcut(1),iy,1)=7
           endif
         enddo
@@ -1982,6 +1982,9 @@ c x-flux component
           if(nncut.eq.1) then
             region(leftcut(1),iy,1)=5
             region(rightcut(1),iy,1)=6
+          elseif(nnreg(0).eq.7) then
+            region(leftcut(1),iy,1)=9
+            region(rightcut(1),iy,1)=10
           elseif(nncut.eq.2) then
             if(iy.ge.bottomcut(2).and.iy.lt.topcut(2)) then
               region(leftcut(1),iy,1)=9
@@ -1991,7 +1994,16 @@ c x-flux component
             region(rightcut(1),iy,1)=12
           endif
         enddo
-        if(nncut.eq.2) then
+        if(nnreg(0).eq.7) then
+          do iy=bottomcut(2),topcut(2)-1
+            region(leftcut(2),iy,1)=11
+            region(rightcut(2),iy,1)=12
+          enddo
+          do iy=topcut(2),iyt
+            region(leftcut(2),iy,1)=6
+            region(rightcut(2),iy,1)=7
+          enddo
+        elseif(nncut.eq.2) then
           do iy=bottomcut(2),topcut(2)-1
             region(leftcut(2),iy,1)=10
             if(iy.ge.bottomcut(1).and.iy.lt.topcut(1)) then
@@ -2018,6 +2030,8 @@ c x-flux component
           nnreg(1)=12
         elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case
           nnreg(1)=13
+        elseif(nnreg(0).eq.7) then   ! DND case
+          nnreg(1)=11
         endif
 c y-flux component
         if(periodic_bc.eq.1) then
@@ -2047,6 +2061,32 @@ c y-flux component
           do ix=rightcut(1),nx
             region(topix(ix,-1),topiy(ix,-1),2)=3
             region(ix,iyt,2)=7
+          enddo
+        elseif(nnreg(0).eq.7) then
+          do ix=leftcut(1),rightcut(1)-1
+            region(topix(ix,-1),topiy(ix,-1),2)=2
+            region(ix,topcut(1),2)=4
+            region(ix,ny,2)=6
+          enddo
+          do ix = rightcut(1),leftcut(2)-1
+            region(topix(ix,-1),topiy(ix,-1),2)=3
+            region(ix,ny,2)=7
+          enddo
+          ix = leftcut(2)
+          do while (leftix(ix,ny/2).ne.-2)
+            region(topix(ix,-1),topiy(ix,-1),2)=8
+            region(ix,ny,2)=11
+            ix=ix+1
+          enddo
+          ix = rightcut(2)-1
+          do while (rightix(ix,ny/2).ne.nx+1)
+            region(topix(ix,-1),topiy(ix,-1),2)=9
+            region(ix,ny,2)=12
+            ix=ix-1
+          enddo
+          do ix = rightcut(2),nx
+            region(topix(ix,-1),topiy(ix,-1),2)=10
+            region(ix,ny,2)=13
           enddo
         elseif(nncut.eq.2) then
           do ix=leftcut(1),leftcut(2)-1
@@ -2080,6 +2120,8 @@ c y-flux component
           nnreg(2)=8
         elseif(nncut.lt.2) then
           nnreg(2)=7
+        elseif(nnreg(0).eq.7) then
+          nnreg(2)=13
         elseif(nncut.eq.2) then
           nnreg(2)=14
         endif
