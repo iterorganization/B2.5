@@ -120,8 +120,13 @@ cdjm Jan2017 update particle source components for balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb), 
+       if (switch%mdf_fnb.eq.0) then
+        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna(:,:,isb), dv%resco(:,isb))
+       else
+        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+     &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
+       endif
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
@@ -148,6 +153,10 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fna_th'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fna_r'//chns)
+        call my_out_us(70,nFc,1,dv%fna_mdf(1,0,isb),
+     .    'b2npco_fna_mdf_th'//chns)
+        call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
+     .    'b2npco_fna_mdf_r'//chns)
       elseif (switch%iout_b2wdat.eq.4) then                                  !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
@@ -156,6 +165,10 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fna_th'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fna_r'//chns)
+        call my_out_us(70,nFc,1,dv%fna_mdf(1,0,isb),
+     .    'b2npco_fna_mdf_th'//chns)
+        call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
+     .    'b2npco_fna_mdf_r'//chns)
       endif                                                          
 
 *   ..set error parameter
