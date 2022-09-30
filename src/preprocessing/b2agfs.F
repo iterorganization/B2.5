@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agfs (nrid,istyle,lblgm,g,m)
+      subroutine b2agfs (nrid,istyle,lblgm,g,m,artificial_slab)
 
       use b2mod_types
       use b2mod_constants
@@ -90,7 +90,7 @@
 
 *   ..local variables
       integer ix, iy, i, ic, inseltop, inselbot, iCv, iVx
-      integer Bt_adjust, Bt_reversal, periodic_bc
+      integer Bt_adjust, Bt_reversal, periodic_bc, artificial_slab
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
       real (kind=R8) ::
@@ -155,7 +155,7 @@
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet,istyle,
-     &     isymm,g,m,cvBp,cvBt)
+     &     isymm,g,m,cvBp,cvBt,artificial_slab)
 
 
       ! Set up magnetic field and shift coordinates
@@ -519,7 +519,7 @@ cxpb  if just below the top corner, make the corner cell follow
       end subroutine b2agfs
 
       subroutine b2gxdr_dummy(local_sonnet,istyle,
-     &  isymm,g,m,cvBp,cvBt)
+     &  isymm,g,m,cvBp,cvBt,artificial_slab)
       use b2mod_types
       use b2mod_version
       use b2ag_parameters
@@ -540,7 +540,8 @@ cxpb  if just below the top corner, make the corner cell follow
       !nnCv, nnFc, nnVx: dimension of the grid read from file
       !nCv, nFc, nVx: dimension of the grid as used by B2
       integer nnCv, nnFc, nnVx, nnFs, nnFt,
-     1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:5)
+     1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:5),
+     2 artificial_slab
 #ifdef USE_PXFGETENV
       integer lenval, ierror     
 #else
@@ -621,17 +622,23 @@ cxpb  if just below the top corner, make the corner cell follow
 !     .. Construct additional connectivity data 
            call calc_add_connectivity(g,m)
 
-!     .. Order the vertices and faces as rightturning 
-           call order_vertices(g,m) 
+!     .. Order the vertices and faces as rightturning
+!     .. and consequently check convexity
+         !Only if it is no artificial slab
+         call order_vertices(g,m)
+         call check_convexity(g,m)
+
 
 !     .. Construct intcellP and intcellR
            call calc_intcell(g,m)     
 
           
 !     Compute magnetic field with the same recipe as carre...
-           call b2agbb(g,m,isymm)
+            if (artificial_slab.eq.0) then
+              call b2agbb(g,m,isymm)
 
 !     ..and transfer it to the ghost cells with sanity checks
+
              do iCv = 1, m%nCv
                 select case (m%cvFcP(iCv,2))
                 case(1)  ! guard
@@ -645,7 +652,7 @@ cxpb  if just below the top corner, make the corner cell follow
                       write(*,*) "b2agfs: not maching carre bb 
      $                at", iCv , "because is triangle"   
                    endif
-                case(4) ! internal and boundary triangels 
+                case(4,5) ! internal and boundary triangels 
                    if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0))) 
      $                   > 1e-7 .or.
      $                 abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2))) 
@@ -654,7 +661,18 @@ cxpb  if just below the top corner, make the corner cell follow
      $                at", iCv    
                    endif                  
                 end select
-             enddo       
+             enddo  
+
+            else ! for artificial slab constant magnetic field
+                g%cvBb(:,0) = cvBp(1)
+                g%cvBb(:,1) = 0
+                g%cvBb(:,2) = cvBt(1)
+                g%cvBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
+                g%fcBb(:,0) = cvBp(1)
+                g%fcBb(:,1) = 0
+                g%fcBb(:,2) = cvBt(1)
+                g%fcBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
+            endif        
 
            endif  ! if of the grid_version
 
@@ -941,8 +959,6 @@ cxpb  if just below the top corner, make the corner cell follow
              new_verts(1:nv) = 0
              new_verts(1) = verts(1)
 
-
-             allocate(verts_of_faces(nf,2))
              verts_of_faces = m%fcVx(faces,:)
 
              ! find the first face
@@ -1039,6 +1055,54 @@ cxpb  if just below the top corner, make the corner cell follow
 
       end subroutine order_vertices
 
+*-----------------------------------------------------------------------
+
+      subroutine check_convexity(g,m)
+      use b2mod_types
+      use b2us_map
+      use b2us_geo
+      implicit none 
+      !output argument 
+      type(mapping)  :: m
+      type(geometry)  :: g
+      integer iCv, nv, i, j, k
+      integer, allocatable ::  vx(:)
+      real (kind=R8) :: sin, dx1, dx2, dy1, dy2
+
+      do iCv = 1,m%nCv
+         nv = m%cvVxP(iCv,2)
+         if (nv.ge.4) then
+           allocate(vx(nv))
+           vx = m%cvVx(m%cvVxP(iCv,1):m%cvVxP(iCv,1)+nv-1) 
+           do i = 1,nv
+              j = i-1
+              if (j .lt. 1) then
+                 j = nv
+              endif
+              k = i+1
+              if (k.gt.nv) then
+                 k = 1
+              endif
+
+              dx1 = g%vxX(vx(j)) - g%vxX(vx(i))
+              dy1 = g%vxY(vx(j)) - g%vxY(vx(i))
+              dx2 = g%vxX(vx(k)) - g%vxX(vx(i))
+              dy2 = g%vxY(vx(k)) - g%vxY(vx(i)) 
+
+              sin = dx1*dy2 - dy1*dx2
+
+              if (sin.gt.1.0e-7_R8) then
+                write(*,*) "b2agfs: cell no convex", iCv
+                call xerrab('Check convexity: cell is not convex') 
+              endif           
+           enddo
+           deallocate(vx)
+         endif
+      enddo
+
+
+      end subroutine check_convexity
+
 
 *-----------------------------------------------------------------------
    
@@ -1072,7 +1136,7 @@ cxpb  if just below the top corner, make the corner cell follow
          !find the opposite face index of the most aligned faces
          ! as faces are right turned ordered
          ! find the second most aligned face
-             counter = 0
+             counter = -1
              do i = 0,3
                if (i.ne.i1) then
                 faces3(counter + 1) = faces4(i)
@@ -1087,12 +1151,6 @@ cxpb  if just below the top corner, make the corner cell follow
              if (i2 .ge. i1) then ! compensate for removed face out of the array
               i2 = i2 + 1
              endif           
-
-
-             !i2 = i1 + 2
-             !if (i2 .gt. 3) then
-             !   i2 = i2 - 4   
-             !endif
 
              do i = 0,3
                  if ((i .eq. i1) .or. (i .eq. i2)) then 
@@ -1129,9 +1187,9 @@ cxpb  if just below the top corner, make the corner cell follow
          elseif (m%cvFcP(iCv,2) == 5) then !pent
             write (*,*) 'intcell only for quasi-quad pents'
              v5 = m%cvVx(m%cvVxP(iCv,1):
-     &            m%cvVxP(iCv,1)+2)
-             f5 = m%cvVx(m%cvVxP(iCv,1):
-     &            m%cvVxP(iCv,1)+2)
+     &            m%cvVxP(iCv,1)+4)
+             f5 = m%cvFc(m%cvFcP(iCv,1):
+     &            m%cvFcP(iCv,1)+4)
              
              i1 = minloc(g%vxFpsi(v5),1) -1
              i2 = maxloc(g%vxFpsi(v5),1) -1
@@ -1139,7 +1197,7 @@ cxpb  if just below the top corner, make the corner cell follow
              do i = 0,4
                m%intcellP(m%cvFcP(iCv,1) + i) = 
      &        abs( g%vxFpsi(m%fcVx(f5(i),1)) - 
-     &             g%vxFpsi(m%fcVx(f5(i),2)) ) / (2.0_R8 * dpsi_max)
+     &             g%vxFpsi(m%fcVx(f5(i),2)) ) / ( dpsi_max)
               if (m%intcellP(m%cvFcP(iCv,1) + i) .gt. 1.0e-1) then
                  m%intcellR(m%cvFcP(iCv,1) + i) = 0.0_R8
               else 

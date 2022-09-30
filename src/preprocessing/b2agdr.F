@@ -81,12 +81,13 @@
 *   ..common blocks
 *   ..local variables
       integer idum(0:9), ix, iy, redef_gmtry
-      integer nxiso1, nxiso2, nyiso1, nyiso2
+      integer nxiso1, nxiso2, nyiso1, nyiso2, artificial_slab
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
       integer istyle
 *   ..initialisation
-      data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
+      data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/, 
+     . artificial_slab/0/
 *   ..procedures
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
@@ -284,11 +285,14 @@
 * ..initialise the geometry
       redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
       call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
+      call ipgeti ('b2agdr_artificial_slab', artificial_slab)
+      call xertst (artificial_slab.eq.0 .or. artificial_slab.eq.1, 
+     & 'faulty argument artificial_slab' )
 *   ..use parg, obtain isymm and lblgm
        call b2xxid ('b2ag', lblgm(1:60))
        call b2agsi (parg, isymm, lblgm(61:120), istyle)
 *   ..obtain grid and mhd equilibrium data from file
-      call b2agfs(ninp(1),istyle,lblgm,g,m)
+      call b2agfs(ninp(1),istyle,lblgm,g,m,artificial_slab)
 
 *   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
@@ -296,7 +300,13 @@
 
 
 *   ..compute metric coefficients on auxiliary mesh
-       call b2agmt (g, m, isymm)
+       call b2agmt (g, m, isymm, artificial_slab)
+
+*   ..for artificial_slab, correct the connectivity for the cuts
+       if (artificial_slab.eq.1) then
+        !set_connectivity_us
+        call set_connectivity_us(g,m)
+       endif
 
       write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
       write(*,*) 'b2agdr2: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
@@ -421,6 +431,177 @@
        g%fcBb = abs(g%fcBb)
        g%vxBb = abs(g%vxBb)
 
+       !Check all field to not contain Nan
+       !mapping
+       if (m%nCi .ne. m%nCi) then
+          call xerrab('Nan in nCi')
+       endif   
+       if (m%nCg .ne. m%nCg) then
+          call xerrab('Nan in nCg')
+       endif
+       if (m%nCv .ne. m%nCv) then
+          call xerrab('Nan in nCv')
+       endif 
+       if (m%nFc .ne. m%nFc) then
+          call xerrab('Nan in nFc')
+       endif   
+       if (m%nVx .ne. m%nVx) then
+          call xerrab('Nan in nVx')
+       endif
+       if (m%nFt .ne. m%nFt) then
+          call xerrab('Nan in nFt')
+       endif                        
+       if (m%nFs .ne. m%nFs) then
+          call xerrab('Nan in nFs')
+       endif
+
+       if (any(m%cvFcP .ne. m%cvFcP)) then
+          call xerrab('Nan in cvFcP')
+       endif   
+       if (any(m%cvFc .ne. m%cvFc)) then
+          call xerrab('Nan in cvFc')
+       endif
+       if (any(m%fcCv .ne. m%fcCv)) then
+          call xerrab('Nan in fcCv')
+       endif 
+       if (any(m%fcVx .ne. m%fcVx)) then
+          call xerrab('Nan in fcVx')
+       endif   
+       if (any(m%cvVxP .ne. m%cvVxP)) then
+          call xerrab('Nan in cvVxP')
+       endif
+       if (any(m%cvVx .ne. m%cvVx)) then
+          call xerrab('Nan in cvVx')
+       endif                        
+       if (any(m%vxFcP .ne. m%vxFcP)) then
+          call xerrab('Nan in vxFcP')
+       endif
+
+       if (any(m%vxFc .ne. m%vxFc)) then
+          call xerrab('Nan in vxFc')
+       endif   
+       if (any(m%vxCvP .ne. m%vxCvP)) then
+          call xerrab('Nan in vxCvP')
+       endif
+       if (any(m%vxCv .ne. m%vxCv)) then
+          call xerrab('Nan in vxCv')
+       endif 
+       if (any(m%ftCvP .ne. m%ftCvP)) then
+          call xerrab('Nan in ftCvP')
+       endif   
+       if (any(m%ftCv .ne. m%ftCv)) then
+          call xerrab('Nan in ftCv')
+       endif
+       if (any(m%ftFcP .ne. m%ftFcP)) then
+          call xerrab('Nan in ftFcP')
+       endif                        
+       if (any(m%ftFc .ne. m%ftFc)) then
+          call xerrab('Nan in ftFc')
+       endif
+       if (any(m%cvFt .ne. m%cvFt)) then
+          call xerrab('Nan in cvFt')
+       endif
+       if (any(m%fsFcP .ne. m%fsFcP)) then
+          call xerrab('Nan in fsFcP')
+       endif                        
+       if (any(m%fsFc .ne. m%fsFc)) then
+          call xerrab('Nan in fsFc')
+       endif
+
+       if (any(m%fcReg .ne. m%fcReg)) then
+          call xerrab('Nan in fcReg')
+       endif
+       if (any(m%cvReg .ne. m%cvReg)) then
+          call xerrab('Nan in cvReg')
+       endif                        
+       if (any(m%ftReg .ne. m%ftReg)) then
+          call xerrab('Nan in ftReg')
+       endif
+       if (any(m%intcellP .ne. m%intcellP)) then
+          call xerrab('Nan in intcellP')
+       endif
+       if (any(m%intcellR .ne. m%intcellR)) then
+          call xerrab('Nan in intcellR')
+       endif       
+       if (any(m%fcLbl .ne. m%fcLbl)) then
+          call xerrab('Nan in fcLbl')
+       endif                        
+       if (any(m%cvLbl .ne. m%cvLbl)) then
+          call xerrab('Nan in cvLbl')
+       endif       
+       if (any(m%ftLbl .ne. m%ftLbl)) then
+          call xerrab('Nan in ftLbl')
+       endif 
+       !geometry
+       if (any(g%cvBb .ne. g%cvBb)) then
+          call xerrab('Nan in cvBb')
+       endif 
+       if (any(g%cvEb .ne. g%cvEb)) then
+          call xerrab('Nan in cvEb')
+       endif 
+       if (any(g%cvX .ne. g%cvX)) then
+          call xerrab('Nan in cvX')
+       endif 
+       if (any(g%cvY .ne. g%cvY)) then
+          call xerrab('Nan in cvY')
+       endif 
+       if (any(g%cvSz .ne. g%cvSz)) then
+          call xerrab('Nan in cvSz')
+       endif 
+       if (any(g%cvHz .ne. g%cvHz)) then
+          call xerrab('Nan in cvHz')
+       endif 
+       if (any(g%cvQgam .ne. g%cvQgam)) then
+          call xerrab('Nan in cvQgam')
+       endif 
+       if (any(g%cvVol .ne. g%cvVol)) then
+          call xerrab('Nan in cvVol')
+       endif
+       if (any(g%fcBb .ne. g%fcBb)) then
+          call xerrab('Nan in fcBb')
+       endif  
+       if (any(g%fcS .ne. g%fcS)) then
+          call xerrab('Nan in fcS')
+       endif   
+       if (any(g%fcHc .ne. g%fcHc)) then
+          call xerrab('Nan in fcHc')
+       endif  
+       if (any(g%fcHt .ne. g%fcHt)) then
+          call xerrab('Nan in fcHt')
+       endif  
+       if (any(g%fcQgam .ne. g%fcQgam)) then
+          call xerrab('Nan in fcQgam')
+       endif  
+       if (any(g%fcQalf .ne. g%fcQalf)) then
+          call xerrab('Nan in fcQalf')
+       endif   
+       if (any(g%fcQbet .ne. g%fcQbet)) then
+          call xerrab('Nan in fcQbet')
+       endif  
+       if (any(g%fcPbs .ne. g%fcPbs)) then
+          call xerrab('Nan in fcPbs')
+       endif
+       if (any(g%vxBb .ne. g%vxBb)) then
+          call xerrab('Nan in vxBb')
+       endif       
+       if (any(g%vxX .ne. g%vxX)) then
+          call xerrab('Nan in vxX')
+       endif
+       if (any(g%vxY .ne. g%vxY)) then
+          call xerrab('Nan in vxY')
+       endif
+       if (any(g%vxFfbz .ne. g%vxFfbz)) then
+          call xerrab('Nan in vxFfbz')
+       endif       
+       if (any(g%vxFpsi .ne. g%vxFpsi)) then
+          call xerrab('Nan in vxFpsi')
+       endif
+       if (any(g%cvConn .ne. g%cvConn)) then
+          call xerrab('Nan in cvConn')
+       endif  
+       if (any(g%fsPsi .ne. g%fsPsi)) then
+          call xerrab('Nan in fsPsi')
+       endif     
 
 * ..output - see module b2us_io and b2us.F
 *   ..write headers for output files - code from b2us.F
@@ -477,3 +658,202 @@
 *.end b2agdr
 
       end subroutine b2agdr
+
+      subroutine set_connectivity_us(g,m)
+      use b2mod_types
+      use b2us_geo
+      use b2us_map
+      implicit none
+
+      type(geometry) :: g 
+      type(mapping)  :: m
+      integer ncvl, ncvr, nfpl, nfpr, nfrl, nfrr, nvl1, nvl2,
+     &  nvr1, nvr2, cvl(m%nCv), cvr(m%nCv),
+     & fpl(m%nFc), fpr(m%nFc), frl(m%nFc), frr(m%nFc),
+     & vl1(m%nVx), vl2(m%nVx), vr1(m%nVx), vr2(m%nVx), 
+     & iFc, cvs(1:2), i, iCgl, iCgr
+      intrinsic pack
+
+      !Identify cells, faces and vertices along the cut
+      ncvl = 0
+      ncvr = 0
+      nfpl = 0
+      nfpr = 0
+      nfrl = 0
+      nfrr = 0
+      nvl1 = 0
+      nvl2 = 0
+      nvr1 = 0
+      nvr2 = 0
+
+      do iFc = 1,m%nFc
+          cvs = m%fcCv(iFc,:)
+          if (m%cvReg(cvs(1)).ne.m%cvReg(cvs(2))) then
+            if ((m%cvReg(cvs(1)).eq.1) .and.
+     &          (m%cvReg(cvs(2)).eq.3)) then
+            !left cut
+            cvl(ncvl+1) = cvs(2)
+            ncvl = ncvl + 1
+            fpl(nfpl+1) = iFc
+            nfpl = nfpl + 1
+            vl1(nvl1+1) = m%cvVx(m%cvVxP(cvs(2),1)+1) 
+            vl2(nvl2+1) = m%cvVx(m%cvVxP(cvs(2),1)+2)
+            nvl1 = nvl1 +1
+            nvl2 = nvl2 +1
+            frl(nfrl+1) = m%cvFc(m%cvFcP(cvs(2),1)) 
+            nfrl = nfrl + 1
+            elseif ((m%cvReg(cvs(2)).eq.1) .and.
+     &            (m%cvReg(cvs(1)).eq.3)) then
+            !left cut
+            cvl(ncvl+1) = cvs(1)
+            ncvl = ncvl + 1
+            fpl(nfpl+1) = iFc
+            nfpl = nfpl + 1
+            vl1(nvl1+1) = m%cvVx(m%cvVxP(cvs(1),1)+1)
+            vl2(nvl2+1) = m%cvVx(m%cvVxP(cvs(1),1)+2)
+            nvl1 = nvl1 +1
+            nvl2 = nvl2 +1
+            frl(nfrl+1) = m%cvFc(m%cvFcP(cvs(1),1))
+            nfrl = nfrl + 1
+            elseif ((m%cvReg(cvs(1)).eq.1) .and.
+     &            (m%cvReg(cvs(2)).eq.4)) then 
+            !right cut
+            cvr(ncvr+1) = cvs(1)
+            ncvr = ncvr + 1
+            fpr(nfpr+1) = iFc
+            nfpr = nfpr + 1
+            vr1(nvr1+1) = m%cvVx(m%cvVxP(cvs(1),1)+1)
+            vr2(nvr2+1) = m%cvVx(m%cvVxP(cvs(1),1)+2)
+            nvr1 = nvr1 +1
+            nvr2 = nvr2 +1
+            frr(nfrr+1) = m%cvFc(m%cvFcP(cvs(1),1))
+            nfrr = nfrr + 1
+
+            elseif ((m%cvReg(cvs(1)).eq.4) .and.
+     &            (m%cvReg(cvs(2)).eq.1)) then
+            !right cut
+            cvr(ncvr+1) = cvs(2)
+            fpr(nfpr+1) = iFc
+            nfpr = nfpr + 1
+            vr1(nvr1+1) = m%cvVx(m%cvVxP(cvs(2),1)+1)
+            vr2(nvr2+1) = m%cvVx(m%cvVxP(cvs(2),1)+2)
+            nvr1 = nvr1 +1
+            nvr2 = nvr2 +1
+            frr(nfrr+1) = m%cvFc(m%cvFcP(cvs(2),1)) 
+            nfrr = nfrr + 1   
+            endif
+          endif
+      enddo
+
+        !Cut the arrays
+        cvl = cvl(1:ncvl)
+        cvr = cvr(1:ncvr)
+        fpl = fpl(1:nfpl)
+        fpr = fpr(1:nfpr)
+        frl = frl(1:nfrl)
+        frr = frr(1:nfrr)
+        vl1  = vl1(1:nvl1)
+        vl2  = vl2(1:nvl2)
+        vr1  = vr1(1:nvr1)
+        vr2  = vr2(1:nvr2)
+
+      !Change the connectivity
+      !connect the left and right information via psi values (more general of
+      !psi is accurate enough) or based on the original structured ordening
+      !Here based on original structured ordening
+      do i = 1,ncvl  
+        !Cell left of left cut
+        m%cvVx(m%cvVxP(cvl(i),1)+1) = vr1(i)
+        m%cvVx(m%cvVxP(cvl(i),1)+2) = vr2(i)
+        m%cvFc(m%cvFcP(cvl(i),1)+1) = fpr(i)
+
+        !Poloidal face at left cut
+        !m%fcCv(fpl(i),1) = cvr(i)
+
+        !Radial face left of left cut
+        ! replace vl1 with vr1
+        if (m%fcVx(frl(i),1).eq.vl1(i)) then
+           m%fcVx(frl(i),1) = vr1(i)
+        elseif (m%fcVx(frl(i),2).eq.vl1(i)) then
+           m%fcVx(frl(i),2) = vr1(i)
+        else
+          call xerrab('set_connectivity_us: verts of radial face')           
+        endif
+
+        !Cell left of right cut
+        m%cvVx(m%cvVxP(cvr(i),1)+1) = vl1(i)
+        m%cvVx(m%cvVxP(cvr(i),1)+2) = vl2(i)
+        m%cvFc(m%cvFcP(cvr(i),1)+1) = fpl(i)
+
+        !Poloidal face at right cut
+        !m%fcCv(fpr(i),1) = cvl(i)
+
+        !Radial face left of right cut
+        if (m%fcVx(frr(i),1) .eq. vr1(i)) then
+           m%fcVx(frr(i),1) = vl1(i)
+        elseif (m%fcVx(frr(i),2) .eq. vr1(i)) then
+           m%fcVx(frr(i),2) = vl1(i)
+        else
+          call xerrab('set_connectivity_us: verts of radial face')
+        endif
+        
+        
+      enddo
+
+      !Correct vertices of guard cells
+      !left guard cell
+       cvs = m%fcCv(frl(1),:)
+       if ((cvs(1) .ne. cvl(1)) .and. (cvs(2) .eq. cvl(1))) then
+         iCgl = cvs(1)
+       elseif((cvs(2) .ne. cvl(1)) .and. (cvs(1) .eq. cvl(1))) then
+         iCgl = cvs(2)
+       else
+         call xerrab('set_connectivity_us: no icgl found')
+       endif
+      !right cut
+       cvs = m%fcCv(frr(1),:)
+       if ((cvs(1) .ne. cvr(1)) .and. (cvs(2) .eq. cvr(1))) then
+         iCgr = cvs(1)
+       elseif ((cvs(2) .ne. cvr(1)) .and. (cvs(1) .eq. cvr(1))) then
+         iCgr = cvs(2)
+       else
+         call xerrab('set_connectivity_us: no icgr found')
+       endif  
+    
+       !vertex replacement for guard cells
+       if (m%cvVx(m%cvVxP(iCgl,1)) .eq. vl1(1)) then
+         m%cvVx(m%cvVxP(iCgl,1)) = vr1(1)
+       elseif (m%cvVx(m%cvVxP(iCgl,1)+1) .eq. vl1(1)) then
+         m%cvVx(m%cvVxP(iCgl,1)+1) = vr1(1)
+       else
+         call xerrab('set_connectivity_us: vl1(1) not in guard')
+       endif
+       if (m%cvVx(m%cvVxP(iCgr,1)) .eq. vr1(1)) then
+         m%cvVx(m%cvVxP(iCgr,1)) = vl1(1)
+       elseif (m%cvVx(m%cvVxP(iCgr,1)+1) .eq. vr1(1)) then
+         m%cvVx(m%cvVxP(iCgr,1)+1) = vl1(1)
+       else
+         call xerrab('set_connectivity_us: vr1(1) not in guard')
+       endif       
+
+
+       !Correction at X-point
+       do i = 1,m%cvVxP(m%nCv,1)+m%cvVxP(m%nCv,2)-1
+           if (m%cvVx(i) .eq. vr2(ncvl)) then
+              m%cvVx(i) = vl2(ncvl) 
+           endif
+       enddo
+       do i = 1,m%nFc
+          if (m%fcVx(i,1).eq.vr2(ncvl)) then
+              m%fcVx(i,1) = vl2(ncvl)
+          elseif (m%fcVx(i,2).eq.vr2(ncvl)) then
+              m%fcVx(i,2) = vl2(ncvl)
+          endif
+       enddo
+       !m%cvVx(pack(1:m%nCmVx, m%cvVx == vr2(ncvl))) = vl2(ncvl)
+       !m%fcVx(pack(1:m%nFc, m%fcVx(:,1) == vr2(ncvl)),1) = vl2(ncvl)
+       !m%fcVx(pack(1:m%nFc, m%fcVx(:,2) == vr2(ncvl)),2) = vl2(ncvl)
+
+       call calc_add_connectivity(g,m)
+
+      end subroutine set_connectivity_us
