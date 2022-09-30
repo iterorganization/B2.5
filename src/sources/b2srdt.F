@@ -56,7 +56,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo = 0, iout_b2npp7 = 0,
      &                 iout_b2nppo = 0, iout_b2wdat = 0
-      integer jxi,jxa,jsep                                           !iyv 15.02.22 
+      integer jxi, jxa, jsep                                         !iyv 15.02.22
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
@@ -156,13 +156,13 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
      &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-            if( iy_SOL_dtXX .ne. -2 .and. iy .ge. iy_SOL_dtXX) then       !iyv 15.02.22 {
-              ttim=ttim*dtco_SOL(is)
-            endif                                                         !iyv 15.02.22  }
-            t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
-            snadt(ix,iy,0,is) = t0*na0(ix,iy,is)                          !srv 06.01.21
-            snadt(ix,iy,1,is) =-t0                                        !srv 06.01.21
+           ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
+           if( iy_SOL_dtXX .ne. -2 .and. iy .ge. iy_SOL_dtXX) then       !iyv 15.02.22 {
+             ttim=ttim*dtco_SOL(is)
+           endif                                                         !iyv 15.02.22  }
+           t0=(phm0/ttim)*vol(ix,iy)                                     !srv 06.01.21
+           snadt(ix,iy,0,is) = t0*na0(ix,iy,is)                          !srv 06.01.21
+           snadt(ix,iy,1,is) =-t0                                        !srv 06.01.21
           enddo
         enddo
       enddo

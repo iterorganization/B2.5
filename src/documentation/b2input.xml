@@ -4355,7 +4355,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used.
+					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
 					It is recommended '1'.
 				</description>
 			</switch>

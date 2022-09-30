@@ -464,7 +464,7 @@
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
 
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
-      cddi = 0.0_R8     
+      cddi = 0.0_R8
       cdde = 0.0_R8
       if((PSch_style.eq.0).or.(PSch_style.eq.1)) then
        do iy = -1, ny

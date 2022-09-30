@@ -7,9 +7,10 @@
       real (kind=R8), allocatable, save ::
      *   dtco(:,:), dtco_SOL(:),
      *   dtmo(:,:), dtmo_SOL(:),
-     *   dtee(:), dtee_SOL,
-     *   dtei(:), dtei_SOL
-     *   , corr_core_dn(:)                                 ! IYS 19.12.2017
+     *   dtee(:),
+     *   dtei(:),
+     *   corr_core_dn(:)                                   ! IYS 19.12.2017
+      real (kind=R8), save :: dtee_SOL, dtei_SOL
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -70,7 +71,7 @@
      & solveco, solvemo, solvemt, solvepo, solveee, solveei, solveet,       !srv 22.05.18
      & write_nml_num,
      & numerics_filename, numerics_time_mod, numerics_time_switch,
-     & corr_core_dn, corr_core_dt, add_te_corr_to_po         ! IYS 19.12.2017
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po       ! IYS 19.12.2017
 
       contains
 
