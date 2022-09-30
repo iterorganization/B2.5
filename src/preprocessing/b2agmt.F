@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmt (g, m, isymm)
+      subroutine b2agmt (g, m, isymm,artificial_slab)
       use b2mod_types
       use b2mod_constants
       use tradui_constants
@@ -107,7 +107,8 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx
+      integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx,
+     * artificial_slab 
       integer verts3(0:2), faces3(0:2), cells(1:2),
      * fcType(m%nFc), c1, c2,  verts2(0:1), intersectF(0:1), 
      * faces4_1(0:3), faces4_2(0:3)
@@ -230,6 +231,7 @@
        g%cvSz(iCv) = quadArea_st(g%vxX(verts(0)), g%vxY(verts(0)),  
      &     g%vxX(verts(1)), g%vxY(verts(1)), g%vxX(verts(2)),
      &     g%vxY(verts(2)), g%vxX(verts(3)), g%vxY(verts(3)) )
+
       elseif (nv.eq.5) then
       !WIP AREA FOR PENT - no check on convexity!
        g%cvSz(iCv) = pentArea(g%vxX(verts(0)), g%vxY(verts(0)),  
@@ -247,11 +249,17 @@
 
       if  (isymm.eq.0) then  !slab geometry
       ! volume is area times width
-        g%cvVol(iCv) = g%cvSz(iCv) *width     
+        g%cvVol(iCv) = g%cvSz(iCv) *width 
+        call calc_psi_centroid(g,m,centroid,iCv,psic,isymm)
+        cvFpsi(iCv) = psic  
+        !cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
+        !centroid(iCv,0) = sum(g%vxX(verts)) / nv
+        !centroid(iCv,1) = sum(g%vxY(verts)) / nv        
       elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmertry about crx=0 axis
         if (volhmk.eq.0) then 
           centroid(iCv,0) = sum(g%vxX(verts)) / nv
           centroid(iCv,1) = sum(g%vxY(verts)) / nv
+          cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
         else
 
           ! Calculate the centroid similar to the method for the triangle centroid
@@ -265,6 +273,7 @@
         if (volhmk.eq.0) then
           centroid(iCv,0) = sum(g%vxX(verts)) / nv
           centroid(iCv,1) = sum(g%vxY(verts)) / nv
+          cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
         else ! default
 
           ! Calculate the centroid similar to the method for the triangle centroid
@@ -363,7 +372,14 @@
           g%cvY(iCv) = centroid(iCv,1)
 
          !Correct the magnetic field of guard cell 
+         if (artificial_slab.eq.0) then
           call recalc_guard_bb(m,g,isymm,bc,iCv,centroid,v1,v2)
+         else
+          g%cvBb(iCv,0) = g%cvBb(1,0)
+          g%cvBb(iCv,1) = g%cvBb(1,1)
+          g%cvBb(iCv,2) = g%cvBb(1,2)
+          g%cvBb(iCv,3) = g%cvBb(1,3)
+         endif
 
 
           !Compute ebc - same method as quad - NEEDS REVIEW
@@ -797,7 +813,9 @@ cnv   but now for quads
       g%cvY(iCv) = centroid(iCv,1)
 
       !Correct the magnetic field in the new cell center
-      call recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
+      if (isymm.ne.0) then
+        call recalc_cvBb(iCv,g,m,isx,isy,intersectF,isymm)
+      endif
 
       deallocate(verts)
       deallocate(faces)

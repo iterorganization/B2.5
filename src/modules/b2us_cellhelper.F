@@ -102,7 +102,7 @@
         type(mapping) :: m
         type(geometry) :: g
         integer :: iFc, cells(1:2), faces3(0:2), faces4_1(0:3), 
-     &             faces4_2(0:3), i1, i2, i  
+     &             faces4_2(0:3), i1, i2, i, faces5(0:4)
         real(kind=R8) :: tol, cvFpsi(m%nCv)
 
 
@@ -241,12 +241,113 @@
                if (i2.eq.1) then
                  isPoloidal = 1
                endif 
-
+            !pent + quad   
+            elseif ((m%cvFcP(cells(1),2).eq.4) .and.
+     &           (m%cvFcP(cells(2),2).eq.5)) then 
+                faces4_1 =
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+4-1) 
+               do i = 0,3
+                 if (isAligned(faces4_1(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo  
+               faces5 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1) 
+               do i = 0,4
+                 if (isAligned(faces5(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo 
+               if ((i1.eq.2) .and. (i2.eq.2)) then 
+                 isPoloidal = 1 
+               endif    
+            elseif ((m%cvFcP(cells(1),2).eq.5) .and.
+     &           (m%cvFcP(cells(2),2).eq.4)) then
+                faces4_1 =
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+4-1) 
+               do i = 0,3
+                 if (isAligned(faces4_1(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo  
+               faces5 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1) 
+               do i = 0,4
+                 if (isAligned(faces5(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo         
+               if ((i1.eq.2) .and. (i2.eq.2)) then 
+                 isPoloidal = 1 
+               endif   
+            elseif ((m%cvFcP(cells(1),2).eq.3) .and.
+     &           (m%cvFcP(cells(2),2).eq.5)) then
+                 faces3 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+3-1)
+               do i = 0,2
+                 if (isAligned(faces3(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo 
+               faces5 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1) 
+               do i = 0,4
+                 if (isAligned(faces5(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo         
+               if ((i1.eq.1) .and. (i2.eq.2)) then 
+                 isPoloidal = 1 
+               endif               
+            elseif ((m%cvFcP(cells(1),2).eq.5) .and.
+     &           (m%cvFcP(cells(2),2).eq.3)) then
+                 faces3 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+3-1)
+               do i = 0,2
+                 if (isAligned(faces3(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo 
+               faces5 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1) 
+               do i = 0,4
+                 if (isAligned(faces5(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif
+               enddo         
+               if ((i1.eq.1) .and. (i2.eq.2)) then 
+                 isPoloidal = 1 
+               endif
+            elseif ((m%cvFcP(cells(1),2).eq.1) .and.
+     &           (m%cvFcP(cells(2),2).eq.5)) then 
+               faces5 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+5-1) 
+               do i = 0,4
+                 if (isAligned(faces5(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo         
+               if (i1.eq.2)  then 
+                 isPoloidal = 1 
+               endif
+            elseif ((m%cvFcP(cells(1),2).eq.5) .and.
+     &           (m%cvFcP(cells(2),2).eq.1)) then 
+               faces5 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+5-1) 
+               do i = 0,4
+                 if (isAligned(faces5(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif
+               enddo         
+               if (i1.eq.2)  then 
+                 isPoloidal = 1 
+               endif                                    
+            else
+              call xerrab('isPoloidal: case not implemented')    
             endif          
             
+        endif
 
-
-        endif   
         
 
       end function
