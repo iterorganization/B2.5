@@ -566,7 +566,7 @@ ${OBJDIR}/eirmod_eirbra.${MOD}:
 ${OBJDIR}/eirmod_eirdiag.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_eirdiag.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD}
+${OBJDIR}/eirmod_infcop.${MOD}: ${OBJDIR}/eirmod_cplot.${MOD} ${OBJDIR}/eirmod_refusr.${MOD}
 	ln -sf ${EIRDIR}/eirmod_infcop.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_module_avltree.${MOD}:
@@ -753,7 +753,7 @@ ${OBJDIR}/eirmod_czt1.o:
 ${OBJDIR}/eirmod_eirbra.o:
 	ln -sf ${EIRDIR}/eirmod_eirbra.o ${OBJDIR}
 
-${OBJDIR}/eirmod_infcop.o: ${OBJDIR}/eirmod_cplot.o
+${OBJDIR}/eirmod_infcop.o: ${OBJDIR}/eirmod_cplot.o ${OBJDIR}/eirmod_refusr.o
 	ln -sf ${EIRDIR}/eirmod_infcop.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_module_avltree.o:
