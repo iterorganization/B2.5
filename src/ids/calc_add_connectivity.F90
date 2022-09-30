@@ -4,8 +4,6 @@
 !! on the connectivity data of the traduitoutb2us file
       subroutine calc_add_connectivity(g,m)
       use b2mod_types
-      !use b2mod_indirect   ! causes issue
-      !use b2mod_geo        ! causes issue
       use b2us_map
       use b2us_geo
       implicit none

@@ -592,6 +592,7 @@ contains
     !integer :: facenumbers(nGhostCell)
     integer :: facenumbers(m%nCg)  ! too big
     real(kind=R8) :: fcX,fcY 
+    intrinsic maxval
 
 
     call logmsg(LOGDEBUG, "create_guard_cells:entering")
@@ -638,7 +639,8 @@ contains
        g%cvX(iCv) = fcX
        fcY = 0.5_R8*sum(g%vxY(m%cvVx(m%cvVxP(iCv,1): &
            &    m%cvVxP(iCv,1)+m%cvVxP(iCv,2)-1)))
-       g%cvY(iCv) = fcY     
+       g%cvY(iCv) = fcY
+       m%cvFt(iCv) = maxval(m%cvFt)     
     enddo
 
     ! add flux tubes of guard cells
