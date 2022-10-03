@@ -227,7 +227,7 @@ c------------------------------
           endif
 c------------------------------
 ! Net electric current to targets
-          Q_I_tot_trg(it) = u*sum(fch(ixt_fl,0:ny-1,0))
+          Q_I_tot_trg(it) = sum(fch(ixt_fl,0:ny-1,0))
 
 c------------------------------
 ! Saturation current density to targets and net saturation current
