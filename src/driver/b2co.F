@@ -355,6 +355,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       write_nml_user = .false.
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call init_wall(nx,ny)
+      first_time_step = .true.  ! IYS 21.06.2022
       if (use_eirene.eq.0) then
         nnatmi = 0
         nnmoli = 0
@@ -377,8 +378,8 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(nx,ny,ns,nnreg(0))
-        call b2trcc(nout(1),nx,nxtl,nxtr)
+        call b2trci(nx,ny,ns,nxtl,nxtr,jsep,nnreg(0))
+        call b2trccc(nout(1),nx,nxtl,nxtr)
         call b2filei(ns,nnreg(0))
         call b2filec
       end if

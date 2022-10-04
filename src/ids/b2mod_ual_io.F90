@@ -8329,10 +8329,12 @@ contains
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
+    !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine write_cell_vector_component( basegrid, &
        &  vectorComponent, b2CellData, vectorID )
     implicit none
@@ -8545,10 +8547,12 @@ contains
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
+    !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine write_face_vector_component( basegrid, &
        &   vectorComponent, b2FaceData, vectorID )
     implicit none
@@ -8917,10 +8921,12 @@ contains
     !!          necessary.
     !! @note Available IDS vector component data fields:
     !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - "diamagnetic",
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
     !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
     !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" )
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
+    !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp, &
              &   grid_index, grid_subset_index, vectorID, data)
     implicit none
@@ -8959,11 +8965,11 @@ contains
       end if
       !! copy radial data field
       idsField_vcomp%radial = data
-    case( "diamagnetic" )
+    case( VEC_ALIGN_DIAMAGNETIC_ID )
       !! Writing diamagnetic quantity
       !! Make sure the data field is properly allocated
       if ( associated( idsField_vcomp%diamagnetic ) ) then
-        if ( .not. all( shape( idsField_vcomp%diamagnetic) ==   &
+        if ( .not. all( shape( idsField_vcomp%diamagnetic ) ==   &
                     &   shape(data) )) then
           deallocate( idsField_vcomp%diamagnetic )
         end if
@@ -9019,6 +9025,38 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
+#if IMAS_MINOR_VERSION > 37
+    case( VEC_ALIGN_R_MAJOR_ID )
+      !! Writing major radius aligned quantity
+      !! Make sure the data field is properly allocated
+      if ( associated( idsField_vcomp%r ) ) then
+        if ( .not. all( shape( idsField_vcomp%r ) ==  &
+                    &   shape(data) )) then
+          deallocate( idsField_vcomp%r )
+        end if
+      end if
+      !! If required, allocate storage
+      if ( .not. associated( idsField_vcomp%r ) ) then
+        allocate(idsField_vcomp%r( size(data, 1) ))
+      end if
+      !! copy major radius aligned data field
+      idsField_vcomp%r = data
+    case( VEC_ALIGN_Z_ID )
+      !! Writing vertical quantity
+      !! Make sure the data field is properly allocated
+      if ( associated( idsField_vcomp%z ) ) then
+        if ( .not. all( shape( idsField_vcomp%z ) ==  &
+                    &   shape(data) )) then
+          deallocate( idsField_vcomp%z )
+        end if
+      end if
+      !! If required, allocate storage
+      if ( .not. associated( idsField_vcomp%z ) ) then
+        allocate(idsField_vcomp%z( size(data, 1) ))
+      end if
+      !! copy vertical data field
+      idsField_vcomp%z = data
+#endif
     end select
 
     return

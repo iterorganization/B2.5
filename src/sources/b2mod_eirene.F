@@ -239,6 +239,8 @@ csw 26feb2014
       integer, save :: ih_end
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
+      integer, save :: jxi, jxa, jsep
+      integer, save :: nxtl, nxtr   ! IYS 29.03.2022
 
 *   ..procedures
       real (kind=R8) :: rratio
@@ -447,6 +449,8 @@ csw 26feb2013
 
       if(ncall.eq.0) then
         call write_f30(nx, ny)
+        call get_nxt(nx, nxtl, nxtr)
+        call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         call copy_background(nx,ny,ns,BoRiS)
@@ -884,9 +888,13 @@ c           l_ddt=l_ddt+1
       end if !}
 
 cxpb  Additional diagnostic for comparison with SOLPS4.0
+      if (output_style.gt.1) then
+        write(*,*) 'in b2mod_eirene: ncall = ', ncall
+        write(*,*) 'in b2mod_eirene: main_call = ', main_call
+      end if
       if (ncall.eq.0) then
         call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-        if (main_call) call b2trci(nx,ny,ns,nnreg(0))
+        if (main_call) call b2trci(nx,ny,ns,nxtl,nxtr,jsep,nnreg(0))
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0

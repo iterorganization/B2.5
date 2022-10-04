@@ -158,7 +158,8 @@
       facdriftm = maxval(facdrift)
       fac_ExBm  = maxval(fac_ExB)                                        !srv 23.12.19
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
-      call b2tinnt (nx, ny, ns, nscx, iscx, facdrift, fac_ExB,
+      call b2tinnt (nx, ny, ns, nscx, iscx,
+     &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, qz, qc, bb,
      &              te, po, ti, na, fna, csigin, fchin)                  !srv 11.05.09
 *   .. compute x,y-components of divergent part of diamagnetic current
@@ -186,8 +187,8 @@
      &              csig_an, po, ne, na, fchanml_a, fchanml)             !srv 08.09.21 }
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, po, te, ne, csig_stoch,                 !srv 07.07.14
-     &              fchstoch)
+      call b2tstch (nx, ny, vol, po, te, ne,                             !srv 07.07.14
+     &              csig_stoch, fchstoch)
 *  .. compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,
      &  ehx_, zeff, fch_p)

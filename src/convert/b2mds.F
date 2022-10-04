@@ -69,7 +69,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::  pr(-1:nxd,-1:nyd)
+      real (kind=R8) :: pr(-1:nxd,-1:nyd)
 
       integer ispecies(0:nsd_local-1)
 
@@ -125,11 +125,12 @@ c
 c Function to check the correct parameters!
 c
       call subini('b2mds')
+      call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
-      if (ex) then
+      if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
@@ -150,7 +151,7 @@ c
  6999 continue
       ex = .false.
  7000 continue
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
@@ -172,6 +173,9 @@ c
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
       endif
+#else
+      call xertst(use_eirene.eq.0,
+     &    'Compile code with B25_EIRENE option for coupled runs')
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
@@ -390,7 +394,6 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
       call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
-      call ipgeti ('b2mndr_eirene', use_eirene)
       call alloc_b2mod_neutrals
      > (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)

@@ -66,6 +66,10 @@ FCOPTS  += -vec_report0
 LDOPTS  += -i_dynamic
 endif
 
+ifdef USE_MPI
+LDLIBES += ${LD_MPI}
+endif
+
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 

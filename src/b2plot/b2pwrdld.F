@@ -87,20 +87,23 @@ c
       end do
       ntrg=k
 #ifdef DBG
-      print *,'Shadowing structure: ',
-     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-      print '(20i4)',(lbnd(i),i=1,nplgs)
-      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
-      print '(a,12i5)','Radiation target ',ntrg,(nwldlis(i),i=2,nwldprt)
-      print '(20i4)',(ltrg(i),i=1,ntrg)
+      if (from_b2plot) then
+        print *,'Shadowing structure: ',
+     ,          nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+        print '(20i4)',(lbnd(i),i=1,nplgs)
+        print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
+        print '(a,12i5)','Radiation target ',ntrg,
+     ,         (nwldlis(i),i=2,nwldprt)
+        print '(20i4)',(ltrg(i),i=1,ntrg)
 
-      open(lun_w,file='layout-w.dat')
-      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-      write(lun_w,'(3a)') '# R',tab,'Z'
-      do i=1,nplgs
-        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
-      end do
-      close(lun_w)
+        open(lun_w,file='layout-w.dat')
+        write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+        write(lun_w,'(3a)') '# R',tab,'Z'
+        do i=1,nplgs
+          write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
+        end do
+        close(lun_w)
+      end if
 #endif
 c
 c*** Now specify the radiation sources - in W (remember, the additional
@@ -161,7 +164,7 @@ c      write(*,*) 'b2pwrdld: after rlcomp'
      >  write(*,*) '(of which add. core rad.) : ',add_rad*1.0e6
       if (irdparm.eq.1) then
         write(*,*) '  Reaching the targets    : ',tttrg
-      else if (irdparm.eq.2) then
+      else if (irdparm.eq.2 .and. nwldprt.gt.1) then
         write(*,*) '  Reaching the plot zones : ',tttrg
       end if
       if(n_hlperr.gt.0) then !{
@@ -242,7 +245,7 @@ c*** Calculate the radiation load split by impurity species from B2
           write(*,*)   '  Total radiation         : ',ttsrc
           if (irdparm.eq.1) then
             write(*,*) '  Reaching the targets    : ',tttrg
-          else if (irdparm.eq.2) then
+          else if (irdparm.eq.2 .and. nwldprt.gt.1) then
             write(*,*) '  Reaching the plot zones : ',tttrg
           end if
           k=0

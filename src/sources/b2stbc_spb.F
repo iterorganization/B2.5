@@ -864,7 +864,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
      &     +fch_p(rightix(ix,iy),rightiy(ix,iy),0)/qe/ne(ix,iy)))        !sv 25.12.06
 !         write(*,"('pbs*cst=',es10.3,' fch_p/qe/ne=',es10.3)")
 !     &             pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst,
-!     &             fch_p(rightix(ix,iy),rightiy(ix,iy),0)/qe/ne(ix,iy)
+!     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/qe/ne(ix,iy)
           if(mdf_fhe.ne.0) then                                          !sv 01.06.06 {
            she0(ix,iy,0) = she0(ix,iy,0) -
      .      fhePSch(rightix(ix,iy),rightiy(ix,iy),0)

@@ -1750,7 +1750,7 @@
 				<description>
 					Sputtering model switches. See the code in b2stbr and the b2mod_sputter module for specific implementation details and references.
 					The default values represent the case of Graphite plates. Sput_src is the atomic number of the plasma species which causes chemical sputtering.
-					Sput_dst (when .ge.0) is the species index of the destination species produced by physical sputtering, chemical sputtering and/or RES. If either of the latter two processes are included, the production chemical sputtering and RES rate calculations provided in the code assume that sput_dst points to a Carbon species.
+					Sput_dst (when .ge.0) is the species index of the destination species produced by physical sputtering, chemical sputtering and/or RES. If either of the latter two processes are included, the chemical sputtering and RES production rate calculations provided in the code assume that sput_dst points to a Carbon species.
 					Sput_dst2 and sput_dst3 (when .ge.0) represent other species produced by wall interactions for mixed materials scenarios.
 					Sput_frac_flag is the switch to turn on mixed materials scenarios (when sput_frac_flag.eq.1).
 					Plate_model.eq.0 means the 0-D time-independent plate heating model while plate_model.eq.1 indicates the 1-D time-dependent plate heating treatment. Plate_model.eq.2 gives acces to a 2-D time-dependent model. Plate_option chooses the initialisation of the plate temperature profile. If plate_option.eq.1, the profile is set to the constant given in plate_temp. If plate_option.eq.2, the profile is computed to be the 0-D equilibrium profile. If plate_option.eq.3, the profile is read from results of the previous run.
@@ -2151,7 +2151,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to 1 the limitation of the diamagnatic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
+					When set to 1 the limitation of the diamagnetic and ExB velocities is applied in perpendicular viscosity current calculation. The SOLPS5.2 physics model is used.
 					Otherwise the limitation is not applied.
 				</description>
 			</switch>
@@ -4355,7 +4355,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used.
+					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -6980,6 +6980,46 @@
 				</description>
 			</switch>
 			<switch>
+				<name>DTCO_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1)</type>
+				<description>
+					Multiplier to the time used in solving the continuity equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>DTMO_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NS-1,0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the parallel momentum equation of species (is) in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEE_SOL</name>
+				<default>1.0</default>
+				<type>real*8</type>
+				<description>
+					Multiplier to the time used in solving the electron heat equation in the far SOL defined by iy >= iy_SOL_dtXX).
+				</description>
+			</switch>
+			<switch>
+				<name>DTEI_SOL</name>
+				<default>1.0</default>
+				<type>real*8 array of size (0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the ion heat equation in the far SOL defined by iy >= iy_SOL_dtXX.
+				</description>
+			</switch>
+			<switch>
+				<name>IY_SOL_DTXX</name>
+				<default>-2</default>
+				<type>integer</type>
+				<description>
+					Defines the region of the SOL (iy >= iy_SOL_dtXX) where the time multipliers dt[XX]_SOL should be applied. If iy_SOL_dtXX.eq.-2 (default), no time multiplication is applied for any equation independently of dt[XX]_SOL values. If iy_SOL_dtXX points to a closed flux surface (i.e. if iy_SOL_dtXX.le.jsep), the code produces an error message and stops.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVECO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -7492,7 +7532,7 @@
 				<namelist>USER</namelist>
 				<description>
 					Contains additional data for user-specific diagnostics. Always read if present.
-					This version provided by Andrei Kukushkin for ITER cases.
+					This version originally provided by Andrei Kukushkin for ITER cases, however, it may be used (at least partially) for arbitrary machine.
 				</description>
 			</introduction>
 			<switch>
@@ -7670,12 +7710,33 @@
 				</description>
 			</switch>
 			<switch>
+				<name>TE_DET_THRESHOLD</name>
+				<default>2.0</default>
+				<type>real*8</type>
+				<description>
+					Electron temperature at the target (in eV) which is used a threshold identifying the transition of the local magnetic flux tube to detachment. The width of the zone with Te less than TE_DET_THRESHOLD (counted from the strike point towards the SOL side) is outputted into user_SPb.trc. This distance monotonically increases with increasing of radiated power fraction or with decreasing of peak target energy loads, therefore it may be used as a measure of the degree of detachment.
+				</description>
+			</switch>
+			<switch>
 				<name>FILEDATA</name>
 				<default>.true.</default>
-				<type>logical array of size 10</type>
+				<type>logical array of size 12</type>
 				<description>
-					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order, starting with element 2 of the filedata array: test.trc, residuals.trc, sources.trc, blnn.trc, blne.trc, integral.trc, user.trc, blnm.trc, sepdata.trc.
-					If there is no b2.user.parameters file present, the flag for user.trc is set to .false..
+					Switches to turn on/off the tracing files controlled by the ank_tracing switch. The files are defined in b2mod_diag, in order:
+					   1:  ntrc_srt  :  tracing/intshrt.trc    :  integral data (short version)
+					   2:  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
+					   3:  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
+					   4:  ntrc_src  :  tracing/sources.trc    :  integral sources
+					   5:  ntrc_bln  :  tracing/blnn.trc       :  particle balance - old style by A.Kukushkin
+					   6:  ntrc_ble  :  tracing/blne.trc       :  energy balance
+					   7:  ntrc_int  :  tracing/integral.trc   :  additional integrals
+					   8:  ntrc_usr  :  tracing/user.trc       :  user-specific data
+					   9:  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
+					  10:  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
+					  11:  ntrc_bls  :  tracing/blnn_SPb.trc   :  particle balance - new SPb style compatible with speed-up schemes (Kaveeva et al., Nucl. Fusion 58 126018)
+					  12:  ntrc_uss  :  tracing/user_SPb.trc   :  user-specific data introduced by SPb group - contains alternative to user.trc set of data and is more straightforward in programming
+
+					If there is no b2.user.parameters file present, the flags for user.trc and user_SPb.trc are set to .false..
 					If the tracing files are to be appended but a reading error occurs when opening them, the corresponding filedata element is overwritten to .false..
 				</description>
 			</switch>

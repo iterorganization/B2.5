@@ -686,7 +686,7 @@ csw 16oct2012 init ier0
           new_matrix = .false.
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
             if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
-     &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+     &         (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(ireg)
@@ -1025,7 +1025,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        call my_out(70,nx,ny,fht(-1,-1,1),'b2news__fhty')
       endif
 *   ..add contribution from cdpa to floe, cone, floi, coni
-      call b2tfcc (nx, ny, ns, na, te, ti, cdpa,
+      call b2tfcc (nx, ny, ns, vol, na, te, ti, cdpa,
      &  floe, cone, floi, coni)
       if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {

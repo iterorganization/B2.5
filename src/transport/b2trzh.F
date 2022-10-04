@@ -678,7 +678,8 @@
      &           f_luc_et(ix,iy)
               else
                 cvsahz0_luc(ix,iy,0,is) = cvsahz0(ix,iy,0,is)
-                cvsahz_drho_luc(ix,iy,0,is) = cvsahz_drho(ix,iy,0,is)
+                cvsahz_drho_luc(ix,iy,0,is) =
+     &                                  cvsahz_drho(ix,iy,0,is)
                 cvsa0_luc(ix,iy,0,is) = cvsa0(ix,iy,0,is)
                 cvsa_drho_luc(ix,iy,0,is) = cvsa_drho(ix,iy,0,is)
               endif
@@ -695,11 +696,13 @@
             do ix = 0, nx
               if (on_closed_surface(ix,iy)) then
                 cvsahz_hAdp_luc(ix,iy,0,i,j) =
-     &           cvsahz_hAdp(ix,iy,0,i,j)*f_luc_et(ix,iy)*alpha1(ix,iy)
+     &           cvsahz_hAdp(ix,iy,0,i,j)*
+     &                                    f_luc_et(ix,iy)*alpha1(ix,iy)
                 cvsa_hAdp_luc(ix,iy,0,i,j) =
      &           cvsa_hAdp(ix,iy,0,i,j)*f_luc_et(ix,iy)*alpha1(ix,iy)
               else
-                cvsahz_hAdp_luc(ix,iy,0,i,j) = cvsahz_hAdp(ix,iy,0,i,j)
+                cvsahz_hAdp_luc(ix,iy,0,i,j) =
+     &              cvsahz_hAdp(ix,iy,0,i,j)
                 cvsa_hAdp_luc(ix,iy,0,i,j) = cvsa_hAdp(ix,iy,0,i,j)
               endif
             enddo

@@ -251,7 +251,7 @@
           else
            wrk4(ix,iy)=
      &      (wrk3(ix,iy)-wrk3(bottomix(ix,iy),bottomiy(ix,iy)))
-!     &    /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*2.0_R8 because cddi contains factor vol/hx/hy
+!     &    /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*2.0_R8 because cddi contains factor vol/hx/hy1
           endif
          enddo
         enddo
@@ -275,7 +275,7 @@
            wrk4(ix,iy) = 0.0_R8
           else
            wrk4(ix,iy) = (wrk3(ix,iy)-wrk3(leftix(ix,iy),leftiy(ix,iy)))
-!     &    /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*2.0_R8  because cddi contains factor vol/hx/hy
+!     &    /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*2.0_R8  because cddi contains factor vol/hx/hy1
           endif
          enddo
         enddo
@@ -663,7 +663,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
              vbecrb(ix,iy,1) = radeldr*fac_ExB(ix,iy)                    !srv 17.05.99 25.08.99 07.06.00 05.02.05 13.05.16 {
      2      *(poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))             !srv 13.05.16 }
-     &      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 / hxb(ix,iy)            ! IYS 04.03.2019
+     &      * wbbv(ix,iy,2) / wbbv(ix,iy,3)**2 / hxb(ix,iy)              ! IYS 04.03.2019
 
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
              if( abs(vbecrb(ix,iy,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
@@ -683,15 +683,15 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 
            vbdia(ix,iy,1) =  -raddidr*facdrift(ix,iy)* ! signmf*         !srv 11.01.13 07.06.00 17.05.99 25.04.00
      &     0.5_R8*(ti(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy))*
-     &       wbbv(ix,iy,2) / (qe*zb(ix,iy) * hxb(ix,iy))
+     &       wbbv(ix,iy,2) / (qe*zb(ix,iy)*hxb(ix,iy))
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv 05.03.99
            wbdia(ix,iy,1) = facdrift(ix,iy)/                             !IYS 04.03.2019 {
-     1      (qe*zb(ix,iy) * hxb(ix,iy))   !(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     2      * wbbv(ix,iy,2) / (wbbv(ix,iy,3))**2 *
+     1      (qe*zb(ix,iy)*hxb(ix,iy))   !(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     2      * wbbv(ix,iy,2) / wbbv(ix,iy,3)**2 *
 !     2       +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
 !     2       bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*
      2     (nbtic(rightix(ix,iy),rightiy(ix,iy)) - nbtic(ix,iy)) /
-     &     (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy)) * 2.0_R8 !/qe     !IYS 04.03.2019 }
+     &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))*2.0_R8 !/qe   !IYS 04.03.2019 }
 
            ubdia(ix,iy,1) = vbecrb(ix,iy,1) + vbdia(ix,iy,1)             !srv 17.05.99
            ub2dia(ix,iy,1) = vbecrb(ix,iy,1) + 2.0e0_R8*vbdia(ix,iy,1)   !srv 01.10.99
@@ -745,13 +745,13 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &          )
               fnbPSch(ix,iy,0)= fnbPSch(ix,iy,0)/t2
               vbdia(ix,iy,0)= vbdia(ix,iy,0)/
-     &                            (1.0_R8 + abs(vbdia(ix,iy,0))/vbar)
+     &                          (1.0_R8 + abs(vbdia(ix,iy,0))/vbar)
               wbdia(ix,iy,0)= wbdia(ix,iy,0)/
-     &                            (1.0_R8 + abs(wbdia(ix,iy,0))/vbar)
+     &                          (1.0_R8 + abs(wbdia(ix,iy,0))/vbar)
               ubdia(ix,iy,0)= ubdia(ix,iy,0)/
-     &                            (1.0_R8 + abs(ubdia(ix,iy,0))/vbar)
+     &                          (1.0_R8 + abs(ubdia(ix,iy,0))/vbar)
               ub2dia(ix,iy,0)= ub2dia(ix,iy,0)/
-     &                            (1.0_R8 + abs(ub2dia(ix,iy,0))/vbar)
+     &                          (1.0_R8 + abs(ub2dia(ix,iy,0))/vbar)
             endif
             if (bottomiy(ix,iy).ne.-2) then
               t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -1283,7 +1283,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      *     (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           if (drift_style.eq.0) then
             wrk3(ix,iy) =
-     1         (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     1         (vbecrb(ix,iy,0)+
+     2          vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5         2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6         +vol(leftix(ix,iy),leftiy(ix,iy))/
      7         hx(leftix(ix,iy),leftiy(ix,iy)))*
@@ -1294,7 +1295,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))) *            !IYS 04.03.2019
      &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           elseif (drift_style .eq. 2 .and. redef_gmtry .eq. 1) then
-            wrk3(ix,iy) = vbecrb(ix,iy,0) * gs(ix,iy,0) * qc(ix,iy) *   !IYS 04.03.2019
+            wrk3(ix,iy) = vbecrb(ix,iy,0) *
+     &          gs(ix,iy,0) * qc(ix,iy) *                               !IYS 04.03.2019
      &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
           wrk4(ix,iy) = -con_2dia(ix,iy)*(nb(ix,iy)-

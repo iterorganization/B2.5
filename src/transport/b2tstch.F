@@ -84,7 +84,8 @@
 
       fchstoch   = 0.0e0_R8
       if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-        call b2trsc (nx, ny, vol, po, te, ne, csig_stoch)               !srv 24.08.21
+        call b2trsc (nx, ny, vol, po, te, ne,
+     &   csig_stoch)                                                    !srv 24.08.21
         do iy = bottomdelta1, jsep+1
           do ix = -1, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then

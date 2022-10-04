@@ -39,14 +39,15 @@ c<<<
       parameter (lun_w=96)
       character tab
 c>>>
-      integer use_eirene
-      data use_eirene/0/
-      save use_eirene
+      integer use_eirene, ncall
+      data use_eirene/0/, ncall/0/
+      save use_eirene, ncall
       external ipgeti, ipgetr, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call get_boundary_namelist
-      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (ncall.eq.0) call ipgeti ('b2mndr_eirene', use_eirene)
+      ncall = ncall + 1
 c<<<
       tab=char(9)
 c
@@ -109,6 +110,7 @@ c
         write(*,*) 'b2pwlprp: no shadowing structure in the data!'
         call walloff
         l2pwinp=.false.
+        shadow=.false.
         call subend ()
         return
       end if
@@ -333,9 +335,10 @@ c======================================================================
       real (kind=R8) ::
      *   d,x
 c
+      integer use_eirene
       real (kind=R8) :: width
-      data width /1.0_R8/
-      save width
+      data use_eirene/0/, width/1.0_R8/
+      save use_eirene, width
 c*** wsrttol : a tolerance parameter for defining coinciding segments
       real (kind=R8) ::
      *   wsrttol
@@ -350,6 +353,7 @@ c*** Add segments for the B2 targets to the wall structures
 c======================================================================
       call subini ('b2pwltrg')
       call ipgetr ('b2agmt_1d_width', width)
+      call ipgeti ('b2mndr_eirene', use_eirene)
       lim_cnf=nncut.eq.0 .and. nnreg(0).eq.2
       tab=char(9)
 c
@@ -372,6 +376,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp2(1,k),pp2(2,k)
           call walloff
           l2pwinp=.false.
+          shadow=.false.
           call subend ()
           return
         end if
@@ -384,6 +389,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp1(1,k),pp1(2,k)
           call walloff
           l2pwinp=.false.
+          shadow=.false.
           call subend ()
           return
         end if
@@ -542,12 +548,13 @@ c>>>
 
 c*** Check whether the modified edges coincide with the saved ones
 
-      do k=1,ntrgts !{
-        do l=1,2 !{
-          j=ltrgedge(l,k)
-          if(j.gt.0) then !{
-            jj=lelmind(j)
-            if (jj.gt.0) then !{
+      if (use_eirene.ne.0) then !{
+        do k=1,ntrgts !{
+          do l=1,2 !{
+            j=ltrgedge(l,k)
+            if(j.gt.0) then !{
+              jj=lelmind(j)
+              if (jj.gt.0) then !{
 c!###{
 c              print *,'%% Check ',l,k,j,jj
 c              print '(14x,4(a2,13x))','R1','Z1','R2','Z2'
@@ -556,31 +563,33 @@ c     ,                              p1(1,jj),p1(2,jj),p2(1,jj),p2(2,jj)
 c              print '(1x,a8,1p,4e15.6)','b2plot',
 c     ,                              pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
 c!###}
-              if(abs(p1(1,jj)-pp1(1,j)) .le. wsrttol  .and.
-     .           abs(p1(2,jj)-pp1(2,j)) .le. wsrttol  .and.
-     .           abs(p2(1,jj)-pp2(1,j)) .le. wsrttol  .and.
-     .           abs(p2(2,jj)-pp2(2,j)) .le. wsrttol) then !{
+                if(abs(p1(1,jj)-pp1(1,j)) .le. wsrttol  .and.
+     .             abs(p1(2,jj)-pp1(2,j)) .le. wsrttol  .and.
+     .             abs(p2(1,jj)-pp2(1,j)) .le. wsrttol  .and.
+     .             abs(p2(2,jj)-pp2(2,j)) .le. wsrttol) then !{
 c                print *,'== OK'
-                do il=1,nwldprt !{
-                  n=nwldlis(il)
-                  do i=1,n !{
-                    if(iabs(lwldlis(i,il)).eq.j) lwldlis(i,il)=j
+                  do il=1,nwldprt !{
+                    n=nwldlis(il)
+                    do i=1,n !{
+                      if(iabs(lwldlis(i,il)).eq.j) lwldlis(i,il)=j
+                    end do !}
                   end do !}
-                end do !}
-              else if (p1(1,jj).ne.0.0_R8 .or. p1(2,jj).ne.0.0_R8 .or.
-     .                 p2(1,jj).ne.0.0_R8 .or. p2(2,jj).ne.0.0_R8) then !}{
-                print '(a,i3,1p,4e12.4)',
-     .           'Eirene  : ',jj,p1(1,jj),p1(2,jj),p2(1,jj),p2(2,jj)
-                print '(a,i3,1p,4e12.4)',
-     .           'DG (mod): ', j,pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
+                else if (p1(1,jj).ne.0.0_R8.or.p1(2,jj).ne.0.0_R8 .or.
+     .                   p2(1,jj).ne.0.0_R8.or.p2(2,jj).ne.0.0_R8) then !}{
+                  print '(a,i3,1p,4e12.4)',
+     .             'Eirene  : ',jj,p1(1,jj),p1(2,jj),p2(1,jj),p2(2,jj)
+                  print '(a,i3,1p,4e12.4)',
+     .             'DG (mod): ', j,pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
+                end if !}
+              else !}{
+                write(0,*)
+     .           'Edges check failed - not in Eirene:',l,k,j,jj
+                call xerrab('==> Check the DG model')
               end if !}
-            else !}{
-              write(0,*) 'Edges check failed - not in Eirene:',l,k,j,jj
-              call xerrab('==> Check the DG model')
             end if !}
-          end if !}
+          end do !}
         end do !}
-      end do !}
+      end if !}
 c
 c<<<
 c      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts)
@@ -1059,44 +1068,47 @@ c*** structure and of the plot zones
 
 c*** The whole wall including the refined targets (shadowing)
 
-      open(lun_w,file='shadow.dat')
-      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-      write(lun_w,'(3a)') '# R',tab,'Z'
-      do i=1,nwldlis(1) !{
-        k=iabs(lwldlis(i,1))
-        write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
-      end do !}
-      write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
-      close(lun_w)
+      if ( from_b2plot ) then
+
+        open(lun_w,file='shadow.dat')
+        write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+        write(lun_w,'(3a)') '# R',tab,'Z'
+        do i=1,nwldlis(1) !{
+          k=iabs(lwldlis(i,1))
+          write(lun_w,'(1p,2(1x,e15.8))') pp1(1,k),pp1(2,k)
+        end do !}
+        write(lun_w,'(1p,2(1x,e15.8))') pp2(1,k),pp2(2,k)
+        close(lun_w)
 
 c*** The plot zones: one file for each zone. Here we also write the
 c*** coordinates of the segment centers and the reference distance
 
-      do il=2,nwldprt !{
-        l=len_trim(pltzlbl(il))
+        do il=2,nwldprt !{
+          l=len_trim(pltzlbl(il))
 c*** create the filename for the output
-        if(l.eq.0) then !{
+          if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
-          write(fn_hlp,'(a,i2.2,a)') 'wlly_',il-1,'.dat'
-        else !}{
-          fn_hlp='wlly_'//pltzlbl(il)(:l)//'.dat'
-        end if !}
-        open(lun_w,file=fn_hlp)
-        write(lun_w,'(4a)') '#Layout of plot zone ',
+            write(fn_hlp,'(a,i2.2,a)') 'wlly_',il-1,'.dat'
+          else !}{
+            fn_hlp='wlly_'//pltzlbl(il)(:l)//'.dat'
+          end if !}
+          open(lun_w,file=fn_hlp)
+          write(lun_w,'(4a)') '#Layout of plot zone ',
      ,                                      pltzlbl(il)(:l),' : ',label
-        write(lun_w,'(11a)') '#R',tab,'Z',tab,'Rc',tab,'Zc',tab,'x',
-     ,    tab,'DG_elm'
-        do i=1,nwldlis(il) !{
-          k=iabs(lwldlis(i,il))
-          write(lun_w,'(1p,e12.5,4(a1,e12.5),a1,i5)') pp1(1,k),
-     ,      tab,pp1(2,k),
-     ,      tab,0.5_R8*(pp1(1,k)+pp2(1,k)),
-     ,      tab,0.5_R8*(pp1(2,k)+pp2(2,k)),
-     ,      tab,wldrfdst(i,il),tab,k
+          write(lun_w,'(11a)') '#R',tab,'Z',tab,'Rc',tab,'Zc',tab,'x',
+     ,                                      tab,'DG_elm'
+          do i=1,nwldlis(il) !{
+            k=iabs(lwldlis(i,il))
+            write(lun_w,'(1p,e12.5,4(a1,e12.5),a1,i5)') pp1(1,k),
+     ,        tab,pp1(2,k),
+     ,        tab,0.5_R8*(pp1(1,k)+pp2(1,k)),
+     ,        tab,0.5_R8*(pp1(2,k)+pp2(2,k)),
+     ,        tab,wldrfdst(i,il),tab,k
+          end do !}
+          write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
+          close(lun_w)
         end do !}
-        write(lun_w,'(1p,e12.5,4(a1,e12.5))') pp2(1,k),tab,pp2(2,k)
-        close(lun_w)
-      end do !}
+      endif  !(from_b2plot)
 #ifdef DBG
       print *,'Leaving b2pwltrg. lytg,nytg= ',lytg,nytg
       print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
