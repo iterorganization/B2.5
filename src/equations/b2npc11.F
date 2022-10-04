@@ -237,8 +237,8 @@ cdjm Jan2017 update particle source components for balance
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
           iy=-1                                                       !srv 27.06.08 {
           do ix = -1, nx
-           if(leftix(ix,iy).eq.-2 ) then
-            if (use_9pt_stencil.ne.0) then
+           if(leftix(ix,iy).eq.-2) then
+            if(use_9pt_stencil.ne.0) then
              nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
             else
              nb(ix,iy) = exp(
@@ -248,8 +248,8 @@ cdjm Jan2017 update particle source components for balance
      &                topiy(rightix(ix,iy),rightiy(ix,iy)))))
             end if
            end if
-           if(rightix(ix,iy).eq.nx+1 ) then
-            if (use_9pt_stencil.ne.0) then
+           if(rightix(ix,iy).eq.nx+1) then
+            if(use_9pt_stencil.ne.0) then
              nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
             else
              nb(ix,iy) = exp(
@@ -262,8 +262,8 @@ cdjm Jan2017 update particle source components for balance
           enddo
           iy=ny
           do ix = -1, nx
-            if(leftix(ix,iy).eq.-2 ) then
-             if (use_9pt_stencil.ne.0) then
+            if(leftix(ix,iy).eq.-2) then
+             if(use_9pt_stencil.ne.0) then
               nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
              else
               nb(ix,iy) = exp(
@@ -273,8 +273,8 @@ cdjm Jan2017 update particle source components for balance
      &                 bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
              end if
             end if
-            if(rightix(ix,iy).eq.nx+1 ) then
-             if (use_9pt_stencil.ne.0) then
+            if(rightix(ix,iy).eq.nx+1) then
+             if(use_9pt_stencil.ne.0) then
               nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
              else
               nb(ix,iy) = exp(

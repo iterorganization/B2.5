@@ -100,7 +100,7 @@
       real (kind=R8) ::
      *   t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1),
      *   qpl, qex, surface_temp,
-     *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
+     *   Einc, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   lnorm, deposition_error(ntrack), reflection_max,
      *   redep_max, yself_max
       logical l_chem_sput, lcore, match
@@ -881,7 +881,7 @@ cdpc
          t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) +
      &                          fna(ixf,iyf,idir,1,is))) *
      1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
-         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
+         Einc=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
@@ -913,11 +913,11 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
      &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
      &        recyc(is,istra)*t0*hz(ix,iy)
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then    ! xpb: no sputtering in core!
@@ -927,13 +927,13 @@ c chemical sputtering
      &           (l_chem_sput.or.sput_frac_flag.ne.0)) then
                if(zbulk.eq.6.or.sput_frac_flag.ne.0) then      ! chemical sputtering only for C
                   if(sput_chem_model.eq.1) then
-                     if (Ei.gt.0.0_R8) then
+                     if (Einc.gt.0.0_R8) then
 #ifdef DBG
-                        product =-((sput_chem_cutoff_alpha/Ei)
+                        product =-((sput_chem_cutoff_alpha/Einc)
      &                            **sput_chem_cutoff_beta)
                         if(product.gt.cutll) then
                            ytmp = chem_sput(is,istra) *
-     &                       exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                       exp(-(sput_chem_cutoff_alpha/Einc)**
      &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                            t1=t0 * ytmp
                            chemical_sputtering(iwall,is) = ytmp
@@ -943,7 +943,7 @@ c chemical sputtering
                         end if
 #else
                         ytmp = chem_sput(is,istra) *
-     &                       exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                       exp(-(sput_chem_cutoff_alpha/Einc)**
      &                       sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                         t1=t0 * ytmp
                         chemical_sputtering(iwall,is) = ytmp
@@ -953,7 +953,7 @@ c chemical sputtering
                         chemical_sputtering(iwall,is) = 0.0_R8
                      endif
                   else if (zbulk.eq.6) then
-                     call chmsput(iwall,Ei,zaf(is),zn(is),
+                     call chmsput(iwall,Einc,zaf(is),zn(is),
      &                    zn(sput_dst_bulk),
      &                    am(is),am(sput_dst_bulk),surface_temp,
      &                    Pflx/neutral_sources_rescale,yldchm)
@@ -970,7 +970,7 @@ c chemical sputtering
                endif
                if(sput_frac_flag.ne.0) then
                   if (zbulk.ne.6 .and. sput_chem_model.ne.1) then
-                     call chmsput(iwall,Ei,zaf(is),zn(is),
+                     call chmsput(iwall,Einc,zaf(is),zn(is),
      &                    6.0_R8,am(is),12.011_R8,surface_temp,
      &                    Pflx/neutral_sources_rescale,yldchm)
                      t1=Pflx*neutral_sources_rescale*
@@ -1076,14 +1076,14 @@ cxpb We first treat the bulk material
      .               ix, iy, pof-Phi_app, yself
                   yself_max=max(yself_max,yself)
                   if(sput_frac_flag.eq.0) then
-                    ytmp=sputter(is,zaf(is),sput_dst_bulk,Ei*ev) *
+                    ytmp=sputter(is,zaf(is),sput_dst_bulk,Einc*ev) *
      1               phys_sput(is,istra) *
      2               (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))/
      3               (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk)*yself)
 ! the two lines above are the reduction of sputtering due to prompt redeposition
 ! and then the multiplication due to self-sputtering of the redeposited particles
                   else
-                    ytmp=sputter(is,zaf(is),sput_dst_bulk,Ei*ev) *
+                    ytmp=sputter(is,zaf(is),sput_dst_bulk,Einc*ev) *
      1               phys_sput(is,istra) *
      2               (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))/
      3               (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk)*yself*
@@ -1209,7 +1209,7 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      .                 ix, iy, pof-Phi_app, yself
                     yself_max=max(yself_max,yself)
                     ytmp=
-     .               sputter(is,zaf(is),target_intcode(itrack),Ei*ev)*
+     .               sputter(is,zaf(is),target_intcode(itrack),Einc*ev)*
      1                   phys_sput(is,istra) * sput_frac(itrack) *
      2                   (1.0_R8-
      3                    f_redep(ixn,iyn,target_intcode(itrack)))/
@@ -1257,9 +1257,9 @@ cxpb  with mixed materials model
      1                          sput_dst_bulk,
      .                  (pof-Phi_app)*zaf(sput_dst_bulk+1)*ev)*
      2                   phys_sput(sput_dst_bulk+1,istra)
-                     ytmp=sputter(is,zaf(is),sput_dst_bulk,Ei*ev) *
+                     ytmp=sputter(is,zaf(is),sput_dst_bulk,Einc*ev) *
      1                 phys_sput(is,istra)
-                     ztmp=sputter2(is,sput_dst_bulk,Ei*ev) *
+                     ztmp=sputter2(is,sput_dst_bulk,Einc*ev) *
      1                 phys_sput(is,istra) *
      2                 (1.0_R8-f_redep(ixn,iyn,sput_dst_bulk))
                      if(sput_frac_flag.ne.0) then
@@ -1267,7 +1267,7 @@ cxpb  with mixed materials model
                        ztmp=ztmp*sput_frac(0)
                        yself=yself*sput_frac(0)
                      endif
-                     t2=t0 * ztmp * Ei * ev
+                     t2=t0 * ztmp * Einc * ev
 cxpb  We now must remove the energy lost in ionizing the promptly redeposited material
 cxpb  but from the electrons!
                      t3=-t0*ev*rpi(ixn,iyn,sput_dst_bulk+1)*
@@ -1316,13 +1316,13 @@ cxpb  We must now add the energy brought back in by the self-sputtered material
      2                   phys_sput(target_intcode(itrack)+1,istra)*
      3                   sput_frac(itrack)
                         ytmp=sputter(is,zaf(is),
-     1                               target_intcode(itrack),Ei*ev) *
+     1                               target_intcode(itrack),Einc*ev) *
      1                       phys_sput(is,istra) * sput_frac(itrack)
-                        ztmp=sputter2(is,target_intcode(itrack),Ei*ev) *
-     1                       phys_sput(is,istra) * sput_frac(itrack) *
+                        ztmp=sputter2(is,target_intcode(itrack),Einc*ev)
+     1                     * phys_sput(is,istra) * sput_frac(itrack) *
      2                       (1.0_R8-
      3                        f_redep(ixn,iyn,target_intcode(itrack)))
-                        t2=t0 * ztmp * Ei * ev
+                        t2=t0 * ztmp * Einc * ev
 cxpb  We now must remove the energy lost in ionizing the promptly redeposited material
 cxpb  but from the electrons
                         t3=-t0*ev*rpi(ixn,iyn,target_intcode(itrack)+1)*
@@ -1398,7 +1398,7 @@ c radiation enhanced sublimation
             if(sput_res.gt.0.0_R8.and.
      &        (l_chem_sput.or.sput_frac_flag.ne.0)) then
                if(zbulk.eq.6) then
-                  call ressput(Ei,zaf(is),zn(is),zn(sput_dst_bulk),
+                  call ressput(Einc,zaf(is),zn(is),zn(sput_dst_bulk),
      &              am(is),am(sput_dst_bulk),surface_temp,
      &              Pflx/neutral_sources_rescale,sput_dst_bulk,yldres)
                   RES_sputtering(iwall,is) = yldres
@@ -1407,7 +1407,7 @@ c radiation enhanced sublimation
                endif
                if(sput_frac_flag.ne.0) then
                   if(zbulk.ne.6) then
-                    call ressput(Ei,zaf(is),zn(is),6.0_R8,
+                    call ressput(Einc,zaf(is),zn(is),6.0_R8,
      &               am(is),12.011_R8,surface_temp,
      &               Pflx/neutral_sources_rescale,sput_dst_bulk,yldres)
                     RES_sputtering(iwall,is) = yldres
@@ -1481,10 +1481,10 @@ c back scattering ! mixed materials included thru layer constituents definitions
             if (recyc(is,istra).eq.0.0_R8 .and.
      &         erecyc(is,istra).eq.0.0_R8 .and. .not.is_neutral(is)
      &   .and. reflection_on.ne.0) then ! use reflection model
-               local_reflection = reflect(is,Ei*ev,iwall)
+               local_reflection = reflect(is,Einc*ev,iwall)
                reflection_max = max(reflection_max, local_reflection)
                t1=t0 * local_reflection
-               t2=t0 * reflect2(is,Ei*ev,iwall)*Ei*ev
+               t2=t0 * reflect2(is,Einc*ev,iwall)*Einc*ev
                itrack=track_index(is0)
 cxpb  Removal from the deposited material if backscattered
 cxpb  because incoming non-recycling flux was originally counted
@@ -1494,9 +1494,9 @@ cxpb  as deposition
                   deposition(iwall,itrack)=deposition(iwall,itrack)-
      1                 dteff*plate_time_factor(iwall)*t1
                endif
-               backscattering(iwall,is) = reflect(is,Ei*ev,iwall)
+               backscattering(iwall,is) = reflect(is,Einc*ev,iwall)
                backscattering_energy(iwall,is) =
-     &              reflect2(is,Ei*ev,iwall)
+     &              reflect2(is,Einc*ev,iwall)
                if(reflection_on.eq.1) then
                  sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
                  if (is_neutral(is)) then                           ! IYS 18.09.2018

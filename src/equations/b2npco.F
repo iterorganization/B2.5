@@ -77,6 +77,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
       integer, save :: get_residuals = 0                           !srv 22.05.18
       integer, save :: style_b2mndt = 1                            !srv 07.07.21
+      integer, save :: use_9pt_stencil = 1
       character chns*3                                             !srv 04.07.08
       logical warning
       !$OMP THREADPRIVATE(iout, iout_b2wdat)
@@ -121,6 +122,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21 {
+       call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        if(style_b2mndt.eq.2) then
         rxg = huge(1.0_R8)
         pcm0 = 0.0_R8
@@ -238,33 +240,53 @@ csw 11dec2012, check for solv flags
 *   ..replace the incorrect corner values by the interpolated values
         iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2)
-     &     nb(ix,iy) = exp(
+         if(leftix(ix,iy).eq.-2) then
+          if(use_9pt_stencil.ne.0) then
+           nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
+          else
+           nb(ix,iy) = exp(
      .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
      &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
-          if(rightix(ix,iy).eq.nx+1)
-     &     nb(ix,iy) = exp(
+          end if
+         end if
+         if(rightix(ix,iy).eq.nx+1) then
+          if(use_9pt_stencil.ne.0) then
+           nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
+          else
+           nb(ix,iy) = exp(
      .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
      &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+          end if
+         end if
         enddo
         iy=ny
         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2)
-     &     nb(ix,iy) = exp(
+         if(leftix(ix,iy).eq.-2) then
+          if(use_9pt_stencil.ne.0) then
+           nb(ix,iy) = nb(rightix(ix,iy),rightiy(ix,iy))
+          else
+           nb(ix,iy) = exp(
      .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
-          if(rightix(ix,iy).eq.nx+1)
-     &     nb(ix,iy) = exp(
+          end if
+         end if
+         if(rightix(ix,iy).eq.nx+1) then
+          if(use_9pt_stencil.ne.0) then
+           nb(ix,iy) = nb(leftix(ix,iy),leftiy(ix,iy))
+          else
+           nb(ix,iy) = exp(
      .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+          end if
+         end if
         enddo                                                           !srv 27.06.08 }
        endif                                                            !srv 06.07.08 }
       endif

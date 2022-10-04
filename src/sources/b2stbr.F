@@ -214,7 +214,7 @@
         call get_jsep(nx,ny,jxi,jxa,jsep)
         call ipgeti ('b2stbr_output', output)
         call ipgeti ('b2mndr_eirene', use_eirene)
-        if (use_eirene.eq.1) out_tfiles=0
+        if (use_eirene.ne.0) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_iout', iout)                            !srv 11.09.09 {
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17

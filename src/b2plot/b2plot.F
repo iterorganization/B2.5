@@ -259,11 +259,12 @@ c
 c Function to check the correct parameters!
 c
       call subini ('b2plot')
+      call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
-      if (ex) then
+      if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
@@ -284,7 +285,7 @@ c
  6999 continue
       ex = .false.
  7000 continue
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
@@ -306,6 +307,9 @@ c
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
       endif
+#else
+      call xertst(use_eirene.eq.0,
+     &    'Compile code with B25_EIRENE option for coupled runs')
 #endif
       natmi = natm
       nmoli = nmol
@@ -541,7 +545,6 @@ c 0 15 30 45 55 65 75 80 85 degree impact
      .   'invalid main neutral species index ismain0')
       call get_boundary_namelist
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
-      call ipgeti ('b2mndr_eirene', use_eirene)
 
       call initialise_potentials(ns)
       isp=0
