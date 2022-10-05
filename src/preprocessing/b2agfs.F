@@ -1621,10 +1621,10 @@ c region 8 === right outboard divertor
 c
 c                           +++++++++++++++++++++++++
 c
-c                X-point target/low field side snowflake geometry case 
-c            (SF-minus, where second x point is on top of the primary)
+c           X-point target/low field side snowflake geometry case
+c       (SF-minus, where the second X-point is on top of the primary)
 c
-c    +-------+-----------------------+-------+-------++-------+-------+  
+c    +-------+-----------------------+-------+-------++-------+-------+
 c    |       :                       :       :       ||       :       |
 c    |       :           2           :       :       ||       :       |
 c    |       :                       :       +...5...||...6...+...7...|
@@ -1635,7 +1635,7 @@ c    |       |                       |       |       ||       |       |
 c    +-------+-----------------------+-------+-------++-------+-------+
 c
 c
-c    +-------+-----------------------+-------+-------++-------+-------+  
+c    +-------+-----------------------+-------+-------++-------+-------+
 c    |       :                       :       :       ||       :       |
 c    |       2                       3       6       ||       7       |
 c    |       :                       :       +.......45.......+.......8
@@ -1646,7 +1646,7 @@ c    |       |                       |       |       ||       |       |
 c    +-------+-----------------------+-------+-------++-------+-------+
 c
 c
-c    +---5---+-----------6-----------+---7---+--11---++--12---+---13--+  
+c    +---5---+-----------6-----------+---7---+--11---++--12---+---13--+
 c    |       :                       :       :       ||       :       |
 c    |       :                       :       :       ||       :       |
 c    |       :                       :       +.......||.......+.......|
@@ -1658,10 +1658,10 @@ c    +---1---+-----------2-----------+---3---+---8---++---9---+---10--+
 c
 c                           - - - - - - - - - - - - -
 c
-c              X-point target/low field side snowflake geometry case 
-c               (SF-plus, where second x point is below the primary)
+c           X-point target/low field side snowflake geometry case
+c         (SF-plus, where the second X-point is below the primary)
 c
-c    +-------+-----------------------+-------+-------++-------+-------+  
+c    +-------+-----------------------+-------+-------++-------+-------+
 c    |       :           2           :       :       ||       :       |
 c    |       :                       :       :       ||       :       |
 c    |...3...+-----------------------+---4---+       ||       :       |
@@ -1672,7 +1672,7 @@ c    |       |                       |       |       ||       |       |
 c    +-------+-----------------------+-------+-------++-------+-------+
 c
 c
-c    +-------+-----------------------+-------+-------++-------+-------+  
+c    +-------+-----------------------+-------+-------++-------+-------+
 c    |       :                       :       :       ||       :       |
 c    |       2                       3       6       ||       7       |
 c    1.......+-----------------------+-------+       ||       :       |
@@ -1683,7 +1683,7 @@ c    |       |                       |       |       ||       |       |
 c    +-------+-----------------------+-------+-------++-------+-------+
 c
 c
-c    +---5---+-----------6-----------+---7---+---11--++---12--+---13--+  
+c    +---5---+-----------6-----------+---7---+---11--++---12--+---13--+
 c    |       :                       :       :       ||       :       |
 c    |       :                       :       :       ||       :       |
 c    |.......+-----------4-----------+-------+       ||       :       |
@@ -1830,7 +1830,7 @@ c volume component
             else
               nnreg(0)=4
             endif
-          elseif(nncut.eq.2.and.leftcut(2).le.rightcut(1)) then
+          elseif(nncut.eq.2.and.leftcut(2).lt.rightcut(1)) then
             do ix = -1, leftcut(1)-1
               do iy = -1, ny
                 region(ix,iy,0)=3
@@ -1873,7 +1873,7 @@ c volume component
             enddo
             nnreg(0)=8
 c specification for snowflake
-          elseif(nncut.eq.2.and.leftcut(2).ge.rightcut(1)) then
+          elseif(nncut.eq.2.and.leftcut(2).gt.rightcut(1)) then
             do ix = -1, leftcut(1)-1
               do iy = -1, ny
                 region(ix,iy,0)=3
@@ -2122,7 +2122,7 @@ c y-flux component
           nnreg(2)=7
         elseif(nnreg(0).eq.7) then   ! Snowflake case
           nnreg(2)=13
-        elseif(nncut.eq.2) then   
+        elseif(nncut.eq.2) then
           nnreg(2)=14
         endif
       else ! 1-D and 2-D slab cases

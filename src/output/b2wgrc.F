@@ -146,7 +146,7 @@
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *  Rydberg, Ei, Ef, zmin, zmax
+     *  Rydberg, Ef, Eg, zmin, zmax
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
       intrinsic nint, int, log
@@ -172,7 +172,7 @@
       izn0 = nint(zn(0))
 *   ..compute ionisation potential scale
       Ef = 1.10_R8 * zn(0)**2
-      Ei = 1.12_R8 * zn(0)**2.4_R8
+      Eg = 1.12_R8 * zn(0)**2.4_R8
 *   ..write blank line
       write (nprt,'()')
 
@@ -559,7 +559,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ei*Rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Eg*Rydberg+0.5_R8,
      &   'rtt', 'rtpt', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -577,7 +577,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ei*Rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Eg*Rydberg+0.5_R8,
      &   'rtn', 'rtpt', header)
        do k = 0, ns0-1
         do j = 0, nn

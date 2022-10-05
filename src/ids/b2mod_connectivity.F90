@@ -20,7 +20,7 @@ module b2mod_connectivity
 
     !! Geometry/topology IDs (obtain using function geometryId(..:))
 
-    integer, parameter :: GEOMETRY_COUNT = 12
+    integer, parameter :: GEOMETRY_COUNT = 13
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
 
     !! The IDs, matching the IDS definitions of the GGD identifiers
@@ -34,8 +34,9 @@ module b2mod_connectivity
     integer, parameter :: GEOMETRY_DDN_TOP = 7
     integer, parameter :: GEOMETRY_ANNULUS = 8
     integer, parameter :: GEOMETRY_STELLARATORISLAND = 9
-    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 10
-    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 11
+    integer, parameter :: GEOMETRY_STRUCTURED_SPACES = 10
+    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_MINUS = 11
+    integer, parameter :: GEOMETRY_LFS_SNOWFLAKE_PLUS = 12
     !! Region types
     !! Region type indices are the ones used in the B2 region array,
     !! i.e. zero-based.
@@ -69,6 +70,7 @@ module b2mod_connectivity
         &       8, 13, 14,  & !! GEOMETRY_DDN_TOP
         &       1,  2,  2,  & !! GEOMETRY_ANNULUS
         &       5,  7,  8,  & !! GEOMETRY_STELLARATORISLAND
+        &       1,  0,  0,  & !! GEOMETRY_STRUCTURED_SPACES
         &       7, 12, 13,  & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
         &       7, 12, 13   & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
         &    /),            &
@@ -86,6 +88,7 @@ module b2mod_connectivity
         &    'DDN_TOP    ', &
         &    'ANNULUS    ', &
         &    'ISLAND     ', &
+        &    'STRUCTURED ', &
         &    'LFS_SF-    ', &
         &    'LFS_SF+    '  &
         &   /)
@@ -102,7 +105,8 @@ module b2mod_connectivity
         &    'Disconnected double null, top X-point is active   ', &
         &    'Annular geometry, curved in the third direction   ', &
         &    'Stellarator island geometry                       ', &
-        &    'Low-field side Snowflake-minus geometry           ',  &
+        &    'Structured grid built with multiple 1-D spaces    ', &
+        &    'Low-field side Snowflake-minus geometry           ', &
         &    'Low-field side Snowflake-plus geometry            '  &
         &   /)
 
@@ -224,8 +228,6 @@ module b2mod_connectivity
         &   'Upper outer baffle              ',                         &
         &   'Outer main chamber wall         ',                         &
         &   'Lower outer baffle              ',                         &
-        & &
-        & &
         & & ! GEOMETRY_DDN_BOTTOM
         &   'Inner core                      ',                         &
         &   'Inner SOL                       ',                         &
@@ -266,7 +268,6 @@ module b2mod_connectivity
         &   'Upper outer baffle              ',                         &
         &   'Outer main chamber wall         ',                         &
         &   'Lower outer baffle              ',                         &
-        & &
         & & ! GEOMETRY_DDN_TOP
         &   'Inner core                      ',                         &
         &   'Inner SOL                       ',                         &
@@ -343,14 +344,25 @@ module b2mod_connectivity
         &   'Entrance to outer PFR           ',                         &
         &   'Island boundary                 ',                         &
         &   UU, UU, UU, UU, UU, UU,                                     &
+        & & ! GEOMETRY_STRUCTURED_SPACES
+        &   'Plasma'//repeat(' ',26),                                   &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,         &
+        & &
+        &   'Left boundary                   ',                         &
+        &   'Right boundary                  ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
+        & &
+        &   'Top boundary                    ',                         &
+        &   'Bottom boundary                 ',                         &
+        &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,             &
         & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
         &   'Core                            ',                         &
         &   'SOL                             ',                         &
         &   'Inner divertor                  ',                         &
-        &   'outer divertor entrance         ',                         &
-        &   'first outboard divertor leg     ',                         &
-        &   'second outboard divertor leg    ',                         &
-        &   'third outboard divertor leg     ',                         &
+        &   'Outer divertor entrance         ',                         &
+        &   'First outboard divertor leg     ',                         &
+        &   'Second outboard divertor leg    ',                         &
+        &   'Third outboard divertor leg     ',                         &
         &   UU, UU, UU, UU, UU, UU, UU,                                 &
         & &
         &   'Inner target                    ',                         &
@@ -385,10 +397,10 @@ module b2mod_connectivity
         &   'Core                            ',                         &
         &   'SOL                             ',                         &
         &   'Inner divertor                  ',                         &
-        &   'outer divertor entrance         ',                         &
-        &   'first outboard divertor leg     ',                         &
-        &   'second outboard divertor leg    ',                         &
-        &   'third outboard divertor leg     ',                         &
+        &   'Outer divertor entrance         ',                         &
+        &   'First outboard divertor leg     ',                         &
+        &   'Second outboard divertor leg    ',                         &
+        &   'Third outboard divertor leg     ',                         &
         &   UU, UU, UU, UU, UU, UU, UU,                                 &
         & &
         &   'Inner target                    ',                         &
@@ -418,7 +430,7 @@ module b2mod_connectivity
         &   'First outer leg baffle          ',                         &
         &   'Second outer leg baffle         ',                         &
         &   'Third outer leg baffle          ',                         &
-        &   UU                                                 &
+        &   UU                                                          &
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
@@ -589,6 +601,7 @@ contains
         end if
         return
     end if
+
     if (nnreg(0) == 7) then
         if (topcut(1) < topcut(2)) then
             geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
@@ -609,12 +622,13 @@ contains
         if (topcut(1) == topcut(2)) then
             geometryId = GEOMETRY_UNSPECIFIED
             if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unkown GEOMETRY_UNSPECIFIED")
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
                 first = .false.
             end if
             return
         end if
     end if
+
     if (nnreg(0) == 8) then
 
         if (topcut(1) == topcut(2)) then

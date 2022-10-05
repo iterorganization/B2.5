@@ -38,7 +38,7 @@
       elseif(nnreg(0).eq.7) then
         jxi1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
         jxa1=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4
-        jsep1=min(topcut1(1),topcut1(2))-1
+        jsep1=topcut1(1)-1
       elseif(nnreg(0).eq.8) then
         jxi1=(leftcut1(1)+leftcut1(2))/2
         jxa1=(rightcut1(1)+rightcut1(2))/2

@@ -91,7 +91,7 @@
       character*15 hlp_frm
       real (kind=R8) ::
      *   t0, t1, t2, t3, qpl, qex, surface_temp,
-     *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
+     *   Einc, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   redep_max, yself_max
       logical lcore
 *   ..procedures
@@ -502,7 +502,7 @@ cdpc
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
      1        neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
-         Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
+         Einc=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
          Pflx = t0/area          ! xpb: Incident particle flux (part/m^2/s)
          if (is_neutral(is)) then
@@ -519,11 +519,11 @@ cdpc
      2           (1.0_R8-cbrec(0,is,ireg))*t0
          endif
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Einc*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Ei*ev,
+     &        cbrec(1,is,ireg)*(1.5_R8+BoRiS)*Einc*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*cbrec(0,is,ireg)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then     ! xpb: no sputtering in core!
@@ -531,17 +531,17 @@ c chemical sputtering
             if(sput_frc.gt.0.0_R8.and.nint(zn(is)).eq.sput_src.and.
      &         sput_dst.ge.0.and.sput_dst.lt.ns) then
                if(sput_chem_model.eq.1) then
-                  if (Ei.gt.0.0_R8) then
+                  if (Einc.gt.0.0_R8) then
 #ifdef DBG
-                     product =-((sput_chem_cutoff_alpha/Ei)
+                     product =-((sput_chem_cutoff_alpha/Einc)
      &                         **sput_chem_cutoff_beta)
                      if(product.gt.cutll) then
                         t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
-     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    exp(-(sput_chem_cutoff_alpha/Einc)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                         chemical_sputtering(iwall,is) =
      .                    (sput_frc+cbrec(4,is,ireg)) *
-     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    exp(-(sput_chem_cutoff_alpha/Einc)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                      else
                         t1=0.0_R8
@@ -549,11 +549,11 @@ c chemical sputtering
                      end if
 #else
                      t1=t0 * (sput_frc+cbrec(4,is,ireg)) *
-     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    exp(-(sput_chem_cutoff_alpha/Einc)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
                      chemical_sputtering(iwall,is) =
      .                    (sput_frc+cbrec(4,is,ireg)) *
-     &                    exp(-(sput_chem_cutoff_alpha/Ei)**
+     &                    exp(-(sput_chem_cutoff_alpha/Einc)**
      &                    sput_chem_cutoff_beta) ! dpc: cut off chem sputter at 1eV
 #endif
                   else
@@ -561,7 +561,7 @@ c chemical sputtering
                      chemical_sputtering(iwall,is) = 0.0_R8
                   endif
                else
-                  call chmsput(iwall,Ei,zaf(is),zn(is),
+                  call chmsput(iwall,Einc,zaf(is),zn(is),
      &                 zn(sput_dst),am(is),am(sput_dst),surface_temp,
      &                 Pflx/neutral_sources_rescale,yldchm)
                   t1=Pflx*neutral_sources_rescale*
@@ -616,14 +616,14 @@ c physical sputtering
      .            'Self-sputtering coefficient ', is_codes(sput_dst),
      .            ix, iy, pof-Phi_app, redep_self_sputter
                yself_max=max(yself_max,redep_self_sputter)
-               t1=t0 * sputter(is,zaf(is),sput_dst,Ei*ev) *
+               t1=t0 * sputter(is,zaf(is),sput_dst,Einc*ev) *
      1           (sput_phys+cbrec(3,is,ireg)) *
      2           (1.0_R8-f_redep(ixn,iyn,sput_dst))/
      3           (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
 ! the two lines above are the reduction of sputtering due to prompt redeposition
 ! and then the multiplication due to self-sputtering of the redeposited particles
                physical_sputtering(iwall,is) =
-     .              sputter(is,zaf(is),sput_dst,Ei*ev) *
+     .              sputter(is,zaf(is),sput_dst,Einc*ev) *
      1              (sput_phys+cbrec(3,is,ireg)) *
      2           (1.0_R8-f_redep(ixn,iyn,sput_dst))/
      3           (1.0_R8-f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
@@ -653,25 +653,25 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      .              sputter2(sput_dst+1,sput_dst,
      .                       (pof-Phi_app)*zaf(sput_dst+1)*ev)*
      1              (sput_phys+cbrec(3,sput_dst+1,ireg))
-                  t2=t0 * sputter2(is,sput_dst,Ei*ev) *
-     1              (sput_phys+cbrec(3,is,ireg))*Ei*ev *
+                  t2=t0 * sputter2(is,sput_dst,Einc*ev) *
+     1              (sput_phys+cbrec(3,is,ireg))*Einc*ev *
      2              (1.0_R8-f_redep(ixn,iyn,sput_dst))
 cxpb  We now must remove the energy lost in ionizing the promptly redeposited material
 cxpb  but from the electrons!
-                  t3=-t0*ev*sputter(is,zaf(is),sput_dst,Ei*ev)*
+                  t3=-t0*ev*sputter(is,zaf(is),sput_dst,Einc*ev)*
      1              (sput_phys+cbrec(3,is,ireg))*
      1              rpi(ixn,iyn,sput_dst+1)*f_redep(ixn,iyn,sput_dst)/
      2              (1.0_R8-
      3                 f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
 cxpb  We must now add the energy brought back in by the self-sputtered material
-                  t2=t2+t0*sputter(is,zaf(is),sput_dst,Ei*ev)*
+                  t2=t2+t0*sputter(is,zaf(is),sput_dst,Einc*ev)*
      1              (sput_phys+cbrec(3,is,ireg))*
      .              f_redep(ixn,iyn,sput_dst)*
      1              redep_self_energy*(pof-Phi_app)*ev/
      2              (1.0_R8-
      3                 f_redep(ixn,iyn,sput_dst)*redep_self_sputter)
                   physical_sputtering_energy(iwall,is) =
-     .                 sputter2(is,sput_dst,Ei*ev) *
+     .                 sputter2(is,sput_dst,Einc*ev) *
      1                 (sput_phys+cbrec(3,is,ireg))
                   if(ncall .ne. 0 .or. sputter_namelist_used) then
                      t2=(sputter_yield2(ix,iy,is,2)+sput_phys_alpha*t2)/
@@ -719,7 +719,7 @@ c thermal evaporation of species is if bulk or tracked
 c radiation enhanced sublimation  ! the plate is assumed to be carbon !!!
             if(sput_res.gt.0.0_R8.and.
      &         sput_dst.ge.0.and.sput_dst.lt.ns) then
-               call ressput(Ei,zaf(is),zn(is),zn(sput_dst),
+               call ressput(Einc,zaf(is),zn(is),zn(sput_dst),
      &              am(is),am(sput_dst),surface_temp,
      &              Pflx/neutral_sources_rescale,sput_dst,yldres)
                RES_sputtering(iwall,is) = yldres
@@ -744,17 +744,17 @@ c back scattering
             if (cbrec(0,is,ireg).eq.0.0_R8 .and.
      &          cbrec(1,is,ireg).eq.0.0_R8 .and. .not.is_neutral(is)
      &    .and. reflection_on.ne.0) then ! use reflection model
-               t1=t0 * reflect(is,Ei*ev,iwall)
-               t2=t0 * reflect2(is,Ei*ev,iwall)*Ei*ev
+               t1=t0 * reflect(is,Einc*ev,iwall)
+               t2=t0 * reflect2(is,Einc*ev,iwall)*Einc*ev
                itrack=track_index(is0)
                if(itrack.gt.0.and.itrack.le.ntrack
      1              .and.iwall.gt.0.and.main_call) then
                   deposition(iwall,itrack)=deposition(iwall,itrack)-
      1                 dteff*plate_time_factor(iwall)*t1
                endif
-               backscattering(iwall,is) = reflect(is,Ei*ev,iwall)
+               backscattering(iwall,is) = reflect(is,Einc*ev,iwall)
                backscattering_energy(iwall,is) =
-     &              reflect2(is,Ei*ev,iwall)
+     &              reflect2(is,Einc*ev,iwall)
                if(reflection_on.eq.1) then
                  sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
                else

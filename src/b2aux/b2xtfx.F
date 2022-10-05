@@ -36,7 +36,6 @@
       external b2xvfx, xerrab, interp2d, rratio
       external E01BEF, E01BFF
       intrinsic min, max
-
 *     ------------------------------------------------------------------
       call subini ('b2xtfx')
       if (non_commensurate.eq.0) then   ! commensurate mapping
@@ -1004,16 +1003,16 @@
           enddo
           ixd = ixd - 1   ! step back to avoid counting guard cells
         else
-         iya = 0
-         iyb = min(topcut(1),topcut(2))-1
-         iyc = 0
-         iyd = min(topcut1(1),topcut1(2))-1
-         ixa = rightcut(2)
-         ixb = rightcut(1)-1
-         ixm = leftcut(2)-1
-         ixp = leftcut(1)  ! for continuity
-         ixc = rightcut1(2)
-         ixd = rightcut1(1)-1
+          iya = 0
+          iyb = min(topcut(1),topcut(2))-1
+          iyc = 0
+          iyd = min(topcut1(1),topcut1(2))-1
+          ixa = rightcut(2)
+          ixb = rightcut(1)-1
+          ixm = leftcut(2)-1
+          ixp = leftcut(1)  ! for continuity
+          ixc = rightcut1(2)
+          ixd = rightcut1(1)-1
         endif
         xx(ixa) = 0.0_R8
         do ix = ixa+1, ixb+1
@@ -1031,7 +1030,6 @@
         call E01BFF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,-1),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,-1),ifail)
 *     ..region 5 : DN LFS core : central part
-
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb
           yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
@@ -1067,27 +1065,27 @@
 *    ..region 6 :
        if (nncut.eq.2) then
          if (nnreg(0).eq.7) then
-            ixb = rightcut(2)-1
-            ixd = rightcut1(2)-1
-            do while (region(ixa-1,jsep,0).eq.6)
-               ixa = ixa-1
-            enddo
-            ixa = ixa + 1  ! step back to not count guard cell
-            ixm = ixa
-            ixc = ixd
-            do while (region1(ixc-1,jsep1,0).eq.6)
-            ixc = ixc-1
-            enddo
-            ixc = ixc + 1  ! step back to not count guard cell
-            iya = 0
-            iyc = 0
+           ixb = rightcut(2)-1
+           ixd = rightcut1(2)-1
+           do while (region(ixa-1,jsep,0).eq.6)
+             ixa = ixa-1
+           enddo
+           ixa = ixa + 1  ! step back to not count guard cell
+           ixm = ixa
+           ixc = ixd
+           do while (region1(ixc-1,jsep1,0).eq.6)
+             ixc = ixc-1
+           enddo
+           ixc = ixc + 1  ! step back to not count guard cell
+           iya = 0
+           iyc = 0
          else
-            ixa = rightcut(2)
-            iya = min(topcut(1),topcut(2))
-            ixb = rightcut(1)-1
-            ixc = rightcut1(2)
-            iya = min(topcut1(1),topcut1(2))
-            ixd = rightcut1(1)-1
+           ixa = rightcut(2)
+           iya = min(topcut(1),topcut(2))
+           ixb = rightcut(1)-1
+           ixc = rightcut1(2)
+           iya = min(topcut1(1),topcut1(2))
+           ixd = rightcut1(1)-1
          endif
          if (topcut(1).eq.topcut(2)) then   ! CDN Balanced X-points
            ixm = rightcut(2)-1
@@ -1210,17 +1208,17 @@
           ixp = nx-1
           ixd = nx1-1
         else
-         ixb = rightcut(2)-1
-         ixa = ixb
-         do while (region(ixa-1,jsep,0).eq.7)
+          ixb = rightcut(2)-1
+          ixa = ixb
+          do while (region(ixa-1,jsep,0).eq.7)
             ixa = ixa-1
-         enddo
-         ixp = leftcut(2)                 ! position on HFS
-         ixd = rightcut1(2)-1
-         ixc = ixd
-         do while (region1(ixc-1,jsep1,0).eq.7)
+          enddo
+          ixp = leftcut(2)                 ! position on HFS
+          ixd = rightcut1(2)-1
+          ixc = ixd
+          do while (region1(ixc-1,jsep1,0).eq.7)
             ixc = ixc-1
-         enddo
+          enddo
         endif
         do ix = ixa, ixb
          xx(ix) = rratio(ix-ixa,ixb-ixa+1)

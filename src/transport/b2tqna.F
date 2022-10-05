@@ -516,33 +516,38 @@ cdpc
         enddo
       endif
       if(pfr_rescale.ne.1.0_R8) then
-        do iy=-1,maxval(topcut)
+        do iy=-1,maxval(topcut)-1
           do ix=-1,nx
-c added extra pfr definition for nreg 7
-            if((region(ix,iy,0).ne.0.and.
-     1       mod(region(ix,iy,0),4).ne.1.and.
-     1       mod(region(ix,iy,0),4).ne.2.and.
-     2       (((ix.lt.leftcut(1).or.ix.ge.rightcut(1)).and.
-     3       iy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
-     4       ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
-     5       iy.lt.topcut(2)))) .or.
-     6       (nnreg(0).eq.7 .and.
-     7       region(ix,iy,0).ne.1 .and. region(ix,iy,0).ne.2)) then
-              do is=0,ns-1
-                if(.not.is_neutral(is)) then
-                  dna0(ix,iy,is)=dna0(ix,iy,is)*pfr_rescale
-                  dpa0(ix,iy,is)=dpa0(ix,iy,is)*pfr_rescale
-                  vla0(ix,iy,:,is)=vla0(ix,iy,:,is)*pfr_rescale
-                  vsa0(ix,iy,is)=vsa0(ix,iy,is)*pfr_rescale
-                  hci0(ix,iy)=hci0(ix,iy)+
+            if(region(ix,iy,0).eq.0) cycle
+            if(region(ix,iy,0).eq.1) cycle
+            if(region(ix,iy,0).eq.2) cycle
+            if(region(ix,iy,0).eq.3.and.iy.ge.topcut(1)) cycle
+            if(region(ix,iy,0).eq.4.and.nnreg(0).lt.8.and.
+     &         iy.ge.topcut(1)) cycle
+            if(region(ix,iy,0).eq.4.and.nnreg(0).eq.8.and.
+     &         iy.ge.topcut(2)) cycle
+            if(region(ix,iy,0).eq.5.and.nnreg(0).ne.7) cycle
+            if(region(ix,iy,0).eq.5.and.nnreg(0).eq.7.and.
+     &         iy.ge.topcut(2)) cycle
+            if(region(ix,iy,0).eq.6.and.nnreg(0).eq.8) cycle
+            if(region(ix,iy,0).eq.6.and.nnreg(0).eq.7.and.
+     &         iy.ge.topcut(2)) cycle
+            if(region(ix,iy,0).eq.7.and.iy.ge.topcut(2)) cycle
+            if(region(ix,iy,0).eq.8.and.iy.ge.topcut(1)) cycle
+            do is=0,ns-1
+              if(.not.is_neutral(is)) then
+                dna0(ix,iy,is)=dna0(ix,iy,is)*pfr_rescale
+                dpa0(ix,iy,is)=dpa0(ix,iy,is)*pfr_rescale
+                vla0(ix,iy,:,is)=vla0(ix,iy,:,is)*pfr_rescale
+                vsa0(ix,iy,is)=vsa0(ix,iy,is)*pfr_rescale
+                hci0(ix,iy)=hci0(ix,iy)+
      1             hcib(ix,iy,is)*(pfr_rescale-1.0_R8)
-                  hcib(ix,iy,is)=hcib(ix,iy,is)*pfr_rescale
-                endif
-              enddo
-              hce0(ix,iy)=hce0(ix,iy)*pfr_rescale
-              sig0(ix,iy)=sig0(ix,iy)*pfr_rescale
-              alf0(ix,iy)=alf0(ix,iy)*pfr_rescale
-            endif
+                hcib(ix,iy,is)=hcib(ix,iy,is)*pfr_rescale
+              endif
+            enddo
+            hce0(ix,iy)=hce0(ix,iy)*pfr_rescale
+            sig0(ix,iy)=sig0(ix,iy)*pfr_rescale
+            alf0(ix,iy)=alf0(ix,iy)*pfr_rescale
           enddo
         enddo
       endif
@@ -658,7 +663,7 @@ cdpc
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-          iyref=2*min(topcut(1),topcut(2))/3
+          iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
@@ -1242,15 +1247,15 @@ c
           if(ncall.eq.0) then
            if(nncut.eq.2) then
             if(nnreg(0).eq.8) then
-              nmdpl = rightcut(nncut)
-              do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
+             nmdpl = rightcut(nncut)
+             do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
               if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-              enddo
+             enddo
             else
-              nmdpl = rightcut(1)
-              do ix = leftcut(1)+1, rightcut(1)-1
+             nmdpl = leftcut(1)
+             do ix = leftcut(1)+1, rightcut(1)-1
               if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-              enddo
+             enddo
             endif
            elseif(nncut.eq.1) then
             nmdpl = leftcut(nncut)
@@ -1834,7 +1839,7 @@ c
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-          iyref=2*min(topcut(1),topcut(2))/3
+          iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
@@ -2588,7 +2593,7 @@ c*** We only apply this in the outer SOL region
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-          iyref=2*min(topcut(1),topcut(2))/3
+          iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
@@ -2787,7 +2792,7 @@ c*** We only apply this in the outer SOL region
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-          iyref=2*min(topcut(1),topcut(2))/3
+          iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3

@@ -226,7 +226,7 @@ c------------------------------
             Q_det_wdth(it) = 0.0_R8
           endif
 c------------------------------
-! Net electric current to targets
+! Total poloidal electric current flowing between plasma and targets
           Q_I_tot_trg(it) = sum(fch(ixt_fl,0:ny-1,0))
 
 c------------------------------

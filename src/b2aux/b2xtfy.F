@@ -770,10 +770,10 @@
          iyb = ny
          iyd = ny1
         else if (nnreg(0).eq.7) then
-          ixm = leftcut(2)-1
-          ixp = rightcut(1)
-          iyb = max(topcut(1),topcut(2))
-          iyd = max(topcut1(1),topcut1(2))
+         ixm = leftcut(2)-1
+         ixp = rightcut(1)
+         iyb = max(topcut(1),topcut(2))
+         iyd = max(topcut1(1),topcut1(2))
         else if (topcut(1).lt.topcut(2)) then   ! Bottom X-point is active or CDN
          ixp = rightcut(1)   ! position past the X-point
          ixm = leftcut(2)-1  ! continuity to HFS

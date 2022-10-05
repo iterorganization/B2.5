@@ -778,11 +778,11 @@ c dpc 2000.06.02 end    xpb 11.08.00
         if(nnreg(0).eq.7) then
           call xertst (leftcut(2).gt.rightcut(1).or.
      .                 leftcut(2).gt.rightcut(2),
-     .                 'faulty argument leftcut2')
+     .                'faulty argument leftcut2')
         else
           call xertst (leftcut(1).lt.leftcut(2).and.
      .                 leftcut(2).lt.rightcut(1),
-     .                 'faulty argument leftcut2')
+     .                'faulty argument leftcut2')
           call xertst (leftcut(2).lt.rightcut(2).and.
      .                 rightcut(2).lt.rightcut(1),
      .                'faulty argument rightcut2')

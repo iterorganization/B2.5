@@ -1447,7 +1447,7 @@
           write(*,*) 'sep = ',iy
           do ix=-1,nx
             if(region(ix,iy,0).eq.1) then
-            write(91,*) crx(ix,iy,2),cry(ix,iy,2)
+              write(91,*) crx(ix,iy,2),cry(ix,iy,2)
             endif
           enddo
         else
@@ -1455,7 +1455,7 @@
           write(*,*) 'sep = ',iy
           do ix=-1,nx
             if(mod(region(ix,iy,0),4).eq.1) then
-            write(91,*) crx(ix,iy,2),cry(ix,iy,2)
+              write(91,*) crx(ix,iy,2),cry(ix,iy,2)
             endif
           enddo
         endif

@@ -260,13 +260,13 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
     !> y-aligned edges defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
-    !> y-aligned edges defining the SOL enterance to the first SF leg
+    !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
-    !> y-aligned edges defining the SOL enterance to the third SF leg
+    !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 = 46
-    !> y-aligned edges defining the PFR connection of div entrance and leg 3
+    !> y-aligned edges defining the connection between the outer snowflake entrance and third leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 = 47
-    !> y-aligned edges defining the PFR connection of SF leg 1 and 2
+    !> y-aligned edges defining the connection between the outer snowflake first and second leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
     !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
@@ -329,12 +329,12 @@ module b2mod_ual_io_grid
        &    'INNER_DIVERTOR_INACTIVE   ' , &
        &    'OUTER_TARGET_INACTIVE     ' , &
        &    'INNER_TARGET_INACTIVE     ' , &
+       &    'VOLUMES                   ' , &
+       &    'FULL_WALL                 ' , &
        &    'OUTER_SF_LEG_ENTRANCE_1   ' , &
        &    'OUTER_SF_LEG_ENTRANCE_2   ' , &
        &    'OUTER_SF_PFR_CONNECTION_1 ' , &
        &    'OUTER_SF_PFR_CONNECTION_2 ' , &
-       &    'VOLUMES                   ' , &
-       &    'FULL_WALL                 ' , &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
@@ -398,18 +398,18 @@ module b2mod_ual_io_grid
        &    'Cells defining the inner inactive divertor region                                            ' , &
        &    'y-aligned edges defining the outer inactive target                                           ' , &
        &    'y-aligned edges defining the inner inactive target                                           ' , &
-       &    'y-aligned edges defining the SOL entrance of the first SF outer leg                          ' , &
-       &    'y-aligned edges defining the SOL entrance of the second SF outer leg                         ' , &
-       &    'y-aligned edges defining the connection between the outer SF entrance and third leg          ' , &
-       &    'y-aligned edges defining the connection between the outer SF first and second leg            ' , &
        &    'All volumes (3D objects)                                                                     ' , &
        &    'All edges defining walls, baffles, and targets                                               ' , &
+       &    'y-aligned edges defining the SOL entrance of the first snowflake outer leg                   ' , &
+       &    'y-aligned edges defining the SOL entrance of the third snowflake outer leg                   ' , &
+       &    'y-aligned edges defining the connection between the outer snowflake entrance and third leg   ' , &
+       &    'y-aligned edges defining the connection between the outer snowflake first and second leg     ' , &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
-       &     US, US, US, US, US,                                                                              &
+       &     US,                                                                                              &
        &    'Point on magnetic axis                                                                       ' , &
        &    'Point on active separatrix at outer midplane                                                 ' , &
        &    'Point on active separatrix at inner midplane                                                 ' , &
@@ -430,14 +430,14 @@ module b2mod_ual_io_grid
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
 # endif
-# if ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
-    !> y-aligned edges defining the SOL enterance to the first SF leg
+# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+    !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
-    !> y-aligned edges defining the SOL enterance to the third SF leg
+    !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 = 46
-    !> y-aligned edges defining the PFR connection of div entrance and leg 3
+    !> y-aligned egdes defining the connection between the outer snowflake entrance and third leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 = 47
-    !> y-aligned edges defining the PFR connection of SF leg 1 and 2
+    !> y-aligned edges defining the connection between the outer snowflake first and second leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
 # endif
 # if GGD_MINOR_VERSION < 10
@@ -2117,10 +2117,10 @@ contains
                 case ( GRID_SUBSET_INNER_DIVERTOR )
                     RegionsinSubset(1) = 3
                 case ( GRID_SUBSET_OUTER_DIVERTOR )
-                        RegionsinSubset(1) = 4
-                        RegionsinSubset(2) = 5
-                        RegionsinSubset(3) = 6
-                        RegionsinSubset(4) = 7
+                    RegionsinSubset(1) = 4
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
                 case ( GRID_SUBSET_CORE_BOUNDARY )
                     RegionsinSubset(1) = 2
                 case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
@@ -2454,7 +2454,7 @@ contains
 
                 end if
             end do
-        case ( GEOMETRY_SN,GEOMETRY_LFS_SNOWFLAKE_MINUS,GEOMETRY_LFS_SNOWFLAKE_PLUS )
+        case ( GEOMETRY_SN, GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
             iType = REGIONTYPE_YEDGE
             cls = CLASS_POLOIDALRADIAL_EDGE
             iSubset = GRID_SUBSET_SEPARATRIX
