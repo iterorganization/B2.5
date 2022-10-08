@@ -134,8 +134,13 @@
       endif
 
       mintopcut = ny                                              !srv 25.02.16
-      if(nncut > 0) mintopcut = minval(topcut(1:nncut))           !iyv 29.11.13 25.02.16
-
+      if(nncut > 0) then
+        if (nnreg(0).eq.7) then
+          mintopcut = topcut(1)
+        else
+          mintopcut = minval(topcut(1:nncut))                     !iyv 29.11.13 25.02.16
+        endif
+      endif
       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
       call b2xprz (nx, ny, ns, mp, am, na, rz)                    !srv 30.01.15 {
       cst = sqrt(pz/rz)
@@ -2064,7 +2069,7 @@ c     calculate coordinates of cell centre
        close(70)                                                          !srv 12.04.12 }
 
       endif              !srv   endif for iout=1 .or. iout=3
-      
+
       if(use_mms.eq.1 .and. iout.eq.10) then                            !srv 26.02.18 {
         call calc_err(nx, ny, ns)
       endif                                                             !srv 26.02.18 }

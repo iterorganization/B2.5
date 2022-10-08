@@ -128,6 +128,13 @@ module b2mod_ual_io
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
+#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+    use b2mod_ual_io_grid &
+     & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
+#endif
 #if IMAS_MINOR_VERSION > 8
     use ids_schemas &     ! IGNORE
      & , only : ids_real, ids_real_invalid
@@ -503,6 +510,27 @@ contains
             &                 wbbc(topix(0,jsep),topiy(0,jsep),3) )
         ixmid(2) = jxa
         flux_expansion(2) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
+            &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
+      elseif (nnreg(0).eq.7) then
+        ixmid(1) = jxa
+        flux_expansion(1) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(0,jsep),topiy(0,jsep),0)/       &
+            &                 wbbc(topix(0,jsep),topiy(0,jsep),3) )
+        ixmid(2) = jxa
+        flux_expansion(2) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nxtl,jsep),topiy(nxtl,jsep),0)/ &
+            &                 wbbc(topix(nxtl,jsep),topiy(nxtl,jsep),3) )
+        ixmid(3) = jxa
+        flux_expansion(3) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
+            &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
+            &               ( wbbc(topix(nxtr,jsep),topiy(nxtr,jsep),0)/ &
+            &                 wbbc(topix(nxtr,jsep),topiy(nxtr,jsep),3) )
+        ixmid(4) = jxa
+        flux_expansion(4) = ( wbbv(topix(jxa,jsep),topiy(jxa,jsep),0)/   &
             &                 wbbv(topix(jxa,jsep),topiy(jxa,jsep),3) )/ &
             &               ( wbbc(topix(nx,jsep),topiy(nx,jsep),0)/     &
             &                 wbbc(topix(nx,jsep),topiy(nx,jsep),3) )
@@ -1199,7 +1227,8 @@ contains
         case ( GEOMETRY_CYLINDER, GEOMETRY_LIMITER, GEOMETRY_ANNULUS )
           icnt = 1
           isep(1) = 2
-        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND,  &
+        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
           icnt = 1
           isep(1) = 4
         case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
@@ -1263,7 +1292,8 @@ contains
 #endif
         case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
             &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
-            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
           u = 0.0_IDS_real
           do ix = 0, nx-1
             do iy = 0, ny-1
@@ -1733,16 +1763,13 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, &
             &  recycled_flux(1) )
-        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
           allocate( divertors%divertor(2) )
           allocate( divertors%divertor(1)%name(1) )
           allocate( divertors%divertor(1)%identifier(1) )
           allocate( divertors%divertor(2)%name(1) )
           allocate( divertors%divertor(2)%identifier(1) )
-          divertors%divertor(1)%name = 'Lower divertor'
-          divertors%divertor(1)%identifier = 'LD'
-          divertors%divertor(2)%name = 'Upper divertor'
-          divertors%divertor(2)%identifier = 'UD'
           allocate( divertors%divertor(1)%target(2) )
           allocate( divertors%divertor(2)%target(2) )
           allocate( divertors%divertor(1)%target(1)%name(1) )
@@ -1753,6 +1780,34 @@ contains
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%name(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
+          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Lower SF divertor'
+            divertors%divertor(2)%identifier = 'LSFD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Snowflake lower outer target"
+            divertors%divertor(2)%target(1)%identifier = "LSFOD"
+            divertors%divertor(2)%target(2)%name = "Snowflake lower inner target"
+            divertors%divertor(2)%target(2)%identifier = "LSFID"
+          else
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Upper divertor'
+            divertors%divertor(2)%identifier = 'UD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Upper inner target"
+            divertors%divertor(2)%target(1)%identifier = "UID"
+            divertors%divertor(2)%target(2)%name = "Upper outer target"
+            divertors%divertor(2)%target(2)%identifier = "UOD"
+          endif
 !! FIXME: Should represent the full extent of the physical divertor
           divertors%divertor(1)%target(1)%extension_r = extension_r(1)
           divertors%divertor(1)%target(1)%extension_z = extension_z(1)
@@ -1762,10 +1817,6 @@ contains
           divertors%divertor(2)%target(1)%extension_z = extension_z(2)
           divertors%divertor(2)%target(2)%extension_r = extension_r(3)
           divertors%divertor(2)%target(2)%extension_z = extension_z(3)
-          divertors%divertor(1)%target(1)%name = "Lower inner target"
-          divertors%divertor(1)%target(1)%identifier = "LID"
-          divertors%divertor(1)%target(2)%name = "Lower outer target"
-          divertors%divertor(1)%target(2)%identifier = "LOD"
           call write_timed_value( &
             &  divertors%divertor(1)%target(1)%power_flux_peak, &
             &  power_flux_peak(1) )
@@ -1876,10 +1927,6 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, &
             &  recycled_flux(1)+recycled_flux(4) )
-          divertors%divertor(2)%target(1)%name = "Upper inner target"
-          divertors%divertor(2)%target(1)%identifier = "UID"
-          divertors%divertor(2)%target(2)%name = "Upper outer target"
-          divertors%divertor(2)%target(2)%identifier = "UOD"
           call write_timed_value( &
             &  divertors%divertor(2)%target(1)%power_flux_peak, &
             &  power_flux_peak(2) )
@@ -6060,7 +6107,9 @@ contains
         do ix = 0, nx-1
           do iy = 0, ny-1
             if (geometryType.eq.GEOMETRY_LIMITER .or. &
-             &  geometryType.eq.GEOMETRY_SN) then
+             &  geometryType.eq.GEOMETRY_SN .or. &
+             &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+             &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
               if (region(ix,iy,0).ne.2) cycle
             else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
               if (region(ix,iy,0).ne.2 .and. region(ix,iy,0).ne.5) cycle
@@ -6103,7 +6152,8 @@ contains
           else
             ix = 0
           end if
-        case (GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM)
+        case (GEOMETRY_SN, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
+        &     GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
           if (LSN) then
             ix = rightcut(1)-1
           else
@@ -7641,6 +7691,9 @@ contains
       end if
     case( GEOMETRY_CDN , GEOMETRY_DDN_BOTTOM , GEOMETRY_DDN_TOP )
       call write_sourced_integer( summary%boundary%type, 13 )
+    case( GEOMETRY_LFS_SNOWFLAKE_MINUS , &
+        & GEOMETRY_LFS_SNOWFLAKE_PLUS )
+      call write_sourced_integer( summary%boundary%type, 14 )
     end select
     if (LSN) then
       call write_sourced_value( summary%boundary%strike_point_inner_r, crx(-1,topcut(1),1) )
@@ -7680,6 +7733,10 @@ contains
           at_mid = bcchar(ib).eq.'N'
           at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4)
           at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+        case (GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          at_mid = bcchar(ib).eq.'N'
+          at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3 .or. ireg.eq.4 .or. &
+        &                                 ireg.eq.5 .or. ireg.eq.6 .or. ireg.eq.7)
         case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
           at_mid = bcchar(ib).eq.'N'
           at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.8)
@@ -7795,7 +7852,9 @@ contains
               else
                 if (pfrregno1.eq.0 .and. &
                  & (pfrregno2.eq.pfrregno1 .or. &
-                 & (pfrregno2.eq.2 .and. GeometryType.eq.GEOMETRY_SN) .or. &
+                 & (pfrregno2.eq.2 .and. (GeometryType.eq.GEOMETRY_SN .or. &
+                 &  GeometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+                 &  GeometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS)) .or. &
                  & (pfrregno2.eq.5 .and.(GeometryType.eq.GEOMETRY_CDN .or. &
                  &  GeometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
                  &  GeometryType.eq.GEOMETRY_DDN_TOP)))) then
@@ -7824,10 +7883,12 @@ contains
                 at_mid = bcchar(ib).eq.'N'.or.bcchar(ib).eq.'W'.or.bcchar(ib).eq.'E'
                 at_bot = bcchar(ib).eq.'S'.and.LSN
                 at_top = bcchar(ib).eq.'S'.and..not.LSN
-              case (GEOMETRY_SN)
+              case (GEOMETRY_SN, GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
                 at_mid = bcchar(ib).eq.'N'
-                at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4)
-                at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.ireg.eq.4)
+                at_bot = bcchar(ib).eq.'S'.and.LSN.and.(ireg.eq.3.or.ireg.eq.4.or. &
+        &                                               ireg.eq.5.or.ireg.eq.6.or.ireg.eq.7)
+                at_top = bcchar(ib).eq.'S'.and..not.LSN.and.(ireg.eq.3.or.  &
+        &                                  ireg.eq.4.or.ireg.eq.5.or.ireg.eq.6.or.ireg.eq.7)
               case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
                 at_mid = bcchar(ib).eq.'N'
                 at_bot = bcchar(ib).eq.'S'.and.(ireg.eq.3.or.ireg.eq.8)
@@ -8138,7 +8199,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8261,7 +8326,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8374,7 +8443,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8478,7 +8551,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8585,7 +8662,11 @@ contains
             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-            & GRID_SUBSET_INNER_TARGET_INACTIVE )
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
@@ -8681,7 +8762,11 @@ contains
              & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
              & GRID_SUBSET_INNER_THROAT_INACTIVE, &
              & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE )
+             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &

@@ -144,7 +144,13 @@
           bbaverage2 = 0.0e0_R8
 !pbwdk          mintopcut = ny
           mintopcut = -2
-          if (nncut > 0) mintopcut = minval(topcut(1:nncut))
+          if (nncut > 0) then
+            if (nnreg(0).eq.7) then
+              mintopcut=topcut(1)
+            else
+              mintopcut=minval(topcut(1:nncut))
+            endif
+          endif
           do iy = 0, mintopcut-1    ! for inner surfaces
             do ix = 0, nx
               if(on_closed_surface(ix,iy)) then

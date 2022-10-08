@@ -6,6 +6,7 @@
      &        hy, qc, hyy, qc1)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_indirect, only : nnreg
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
@@ -172,7 +173,7 @@
          ixd = nx1-1
          iyd = topcut1(1)-1
          fx1(nx1,-1:topcut1(1)) = 0.0_R8   ! eastern dead cells
-        else if (nncut.eq.1) then  ! SN geometry (core)
+        else if (nncut.eq.1 .or. nnreg(0).eq.7) then  ! SN or SF geometry (core)
          ixa = leftcut(1)
          iya = 0
          ixb = rightcut(1)-1
@@ -356,7 +357,7 @@
      .   fa1(0:nx1,topcut(1):inseliy1-1)*
      .   (hyy(0:nx1,topcut1(1):inseliy1-1)*
      .    qc1(0:nx1,topcut1(1):inseliy1-1))
-       else if (nncut.eq.1 .or.
+       else if (nncut.eq.1 .or. nnreg(0).eq.7 .or.
      &  (nncut.eq.2 .and. topcut(1).eq.topcut(2))) then  ! SN or CDN HFS SOL
         ixa = leftcut(1)
         iya = topcut(1)
@@ -364,7 +365,7 @@
         ixc = leftcut1(1)
         iyc = topcut1(1)
         iyd = ny1-1
-        if (nncut.eq.1) then
+        if (nncut.eq.1 .or. nnreg(0).eq.7) then
           ixb = rightcut(1)-1
           ixp = rightcut(1)   ! position past the X-pt
           ixm = leftcut(1)-1
@@ -617,8 +618,10 @@
         fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .    (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
 *     ..region 3 : DDN HFS lower divertor : between separatrices
-        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
-         if (topcut(1).lt.topcut(2)) ixp = leftcut(1)   ! position past the X-point
+        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
+         if (topcut(1).lt.topcut(2) .and. nnreg(0).ne.7) then
+           ixp = leftcut(1)   ! position past the X-point
+         endif
          iya = min(topcut(1),topcut(2))
          iyb = max(topcut(1),topcut(2))-1
          iyc = min(topcut1(1),topcut1(2))
@@ -729,6 +732,13 @@
            ixc = 0
            ixd = leftcut1(1)-1
          endif
+        else if (nnreg(0).eq.7) then
+         ixa = rightcut(1)
+         ixm = leftcut(1)-1
+         ixb = leftcut(2)-1
+         ixp = leftcut(2)-1
+         ixc = rightcut1(1)
+         ixd = leftcut1(2)-1
         else if (nncut.eq.2) then
          ixa = rightcut(2)
          ixb = ixa
@@ -811,8 +821,10 @@
         fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .   (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
 *     ..region 4 : HFS DDN top divertor : between the separatrices (including eastern edge)
-        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
-         if (topcut(1).gt.topcut(2)) ixm = rightcut(1)-1
+        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
+         if (topcut(1).gt.topcut(2) .and. nnreg(0).ne.7) then
+          ixm = rightcut(1)-1
+         endif
          iya = min(topcut(1),topcut(2))
          iyb = max(topcut(1),topcut(2))-1
          iyc = min(topcut1(1),topcut1(2))
@@ -969,12 +981,39 @@
         call E01BFF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,ny),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,ny1),ifail)
        else if (nncut.eq.2) then  ! DN LFS core
-        ixa = rightcut(2)
-        ixb = rightcut(1)-1
-        ixm = leftcut(2)-1
-        ixp = leftcut(1)  ! for continuity
-        ixc = rightcut1(2)
-        ixd = rightcut1(1)-1
+        if (nnreg(0).eq.7) then
+          iya = 0
+          iyb = ny
+          iyc = 0
+          iyd = ny1
+          ixa = leftcut(2)
+          ixb = ixa
+          ixc = leftcut1(2)
+          ixd = ixc
+          ixm = leftcut(2)-1
+          ixp = leftcut(1)
+          do while (region(ixb+1,jsep,0).eq.5)
+           ixb = ixb + 1
+          enddo
+          ixb = ixb - 1   ! step back to avoid counting guard cells
+          ixp = ixb
+          ixd = ixc
+          do while (region1(ixd+1,jsep1,0).eq.5)
+           ixd = ixd + 1
+          enddo
+          ixd = ixd - 1   ! step back to avoid counting guard cells
+        else
+          iya = 0
+          iyb = min(topcut(1),topcut(2))-1
+          iyc = 0
+          iyd = min(topcut1(1),topcut1(2))-1
+          ixa = rightcut(2)
+          ixb = rightcut(1)-1
+          ixm = leftcut(2)-1
+          ixp = leftcut(1)  ! for continuity
+          ixc = rightcut1(2)
+          ixd = rightcut1(1)-1
+        endif
         xx(ixa) = 0.0_R8
         do ix = ixa+1, ixb+1
          xx(ix) = rratio(ix-ixa,ixb-ixa+2)
@@ -991,10 +1030,6 @@
         call E01BFF(ixb-ixa+3,xx(ixa:ixb+2),fa(ixa:ixb+2,-1),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,-1),ifail)
 *     ..region 5 : DN LFS core : central part
-        iya = 0
-        iyb = min(topcut(1),topcut(2))-1
-        iyc = 0
-        iyd = min(topcut1(1),topcut1(2))-1
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb
           yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
@@ -1029,17 +1064,39 @@
        endif
 *    ..region 6 :
        if (nncut.eq.2) then
-         ixa = rightcut(2)
-         iya = min(topcut(1),topcut(2))
-         ixb = rightcut(1)-1
-         ixc = rightcut1(2)
-         iya = min(topcut1(1),topcut1(2))
-         ixd = rightcut1(1)-1
+         if (nnreg(0).eq.7) then
+           ixb = rightcut(2)-1
+           ixd = rightcut1(2)-1
+           do while (region(ixa-1,jsep,0).eq.6)
+             ixa = ixa-1
+           enddo
+           ixa = ixa + 1  ! step back to not count guard cell
+           ixm = ixa
+           ixc = ixd
+           do while (region1(ixc-1,jsep1,0).eq.6)
+             ixc = ixc-1
+           enddo
+           ixc = ixc + 1  ! step back to not count guard cell
+           iya = 0
+           iyc = 0
+         else
+           ixa = rightcut(2)
+           iya = min(topcut(1),topcut(2))
+           ixb = rightcut(1)-1
+           ixc = rightcut1(2)
+           iya = min(topcut1(1),topcut1(2))
+           ixd = rightcut1(1)-1
+         endif
          if (topcut(1).eq.topcut(2)) then   ! CDN Balanced X-points
            ixm = rightcut(2)-1
            ixp = rightcut(1)  ! position past the X-point
            iyb = ny-1
            iyd = ny1-1
+         else if (nnreg(0).eq.7) then
+          ixm = leftcut(2)-1
+          ixp = rightcut(1)
+          iyb = max(topcut(1),topcut(2))
+          iyd = max(topcut1(1),topcut1(2))
          else if (topcut(1).lt.topcut(2)) then   ! Bottom X-point is active or CDN
            ixm = leftcut(2)-1
            ixp = rightcut(1)  ! position past the X-point
@@ -1091,10 +1148,12 @@
      .    fa(ixa:ixb+2,iya-1:iyb+1),fa1(ixc:ixd,iyc:iyd))
          fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .    (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
-         if (topcut(1).ne.topcut(2)) then
+         if (topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
 *     ..region 6 : DDN LFS SOL above the second separatrix
-           ixm = rightcut(2)-1
-           ixp = rightcut(1)  ! position past the X-point
+           if (nnreg(0).ne.7) then
+            ixm = rightcut(2)-1
+            ixp = rightcut(1)  ! position past the X-point
+           endif
            iya = max(topcut(1),topcut(2))
            iyb = ny-1
            iyc = max(topcut1(1),topcut1(2))
@@ -1141,17 +1200,26 @@
        endif
 *    ..region 7 :
        if (nncut.eq.2) then
-        ixb = rightcut(2)-1
-        ixa = ixb
-        do while (region(ixa-1,jsep,0).eq.7)
-          ixa = ixa-1
-        enddo
-        ixp = leftcut(2)                 ! position on HFS
-        ixd = rightcut1(2)-1
-        ixc = ixd
-        do while (region1(ixc-1,jsep1,0).eq.7)
-          ixc = ixc-1
-        enddo
+        if (nnreg(0).eq.7) then
+          ixa = rightcut(2)
+          ixm = leftcut(1)-1
+          ixc = rightcut1(2)
+          ixb = nx-1
+          ixp = nx-1
+          ixd = nx1-1
+        else
+          ixb = rightcut(2)-1
+          ixa = ixb
+          do while (region(ixa-1,jsep,0).eq.7)
+            ixa = ixa-1
+          enddo
+          ixp = leftcut(2)                 ! position on HFS
+          ixd = rightcut1(2)-1
+          ixc = ixd
+          do while (region1(ixc-1,jsep1,0).eq.7)
+            ixc = ixc-1
+          enddo
+        endif
         do ix = ixa, ixb
          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
@@ -1196,8 +1264,10 @@
         fx1(ixc:ixd,iyc:iyd) = fa1(ixc:ixd,iyc:iyd)*
      .    (hyy(ixc:ixd,iyc:iyd)*qc1(ixc:ixd,iyc:iyd))
 *     ..region 7 : DDN LFS upper divertor : between separatrices
-        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
-         if (topcut(1).gt.topcut(2)) ixp = rightcut(2)   ! position past the X-point
+        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
+         if (topcut(1).gt.topcut(2) .and. nnreg(0).eq.7) then
+          ixp = rightcut(2)   ! position past the X-point
+         endif
          iya = min(topcut(1),topcut(2))
          iyb = max(topcut(1),topcut(2))-1
          iyc = min(topcut1(1),topcut1(2))
@@ -1267,7 +1337,7 @@
      .               ixd-ixc+1,xx1(ixc:ixd),fx1(ixc:ixd,ny1),ifail)
        endif
 *    ..region 8 :
-       if (nncut.eq.2) then
+       if (nncut.eq.2 .and. nnreg(0).ne.7) then
         ixa = rightcut(1)
         ixb = nx
         ixp = leftcut(1)-1

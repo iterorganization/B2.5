@@ -93,7 +93,7 @@ c     to be considered: volume-weighted interpolation
 *       ..interpolate ne to faces
           call intfaceh(nx,ny,leftix,leftiy,wrk,ne,wrk1(-1,-1,0))
           call intfacev(nx,ny,bottomix,bottomiy,wrk,ne,wrk1(-1,-1,1))
-*       ..compute ehy      
+*       ..compute ehy
           ehy = -dpor
           do iy = -1, ny
             do ix = -1, nx

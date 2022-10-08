@@ -260,6 +260,14 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
     !> y-aligned edges defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
+    !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
+    !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 = 46
+    !> y-aligned edges defining the connection between the outer snowflake entrance and third leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 = 47
+    !> y-aligned edges defining the connection between the outer snowflake first and second leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
     !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
     !> Point on active separatrix at inner midplane
@@ -323,12 +331,16 @@ module b2mod_ual_io_grid
        &    'INNER_TARGET_INACTIVE     ' , &
        &    'VOLUMES                   ' , &
        &    'FULL_WALL                 ' , &
+       &    'OUTER_SF_LEG_ENTRANCE_1   ' , &
+       &    'OUTER_SF_LEG_ENTRANCE_2   ' , &
+       &    'OUTER_SF_PFR_CONNECTION_1 ' , &
+       &    'OUTER_SF_PFR_CONNECTION_2 ' , &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
        &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU,                     &
+       &     UU,                                     &
        &    'MAGNETIC_AXIS             ' , &
        &    'OUTER_MIDPLANE_SEPARATRIX ' , &
        &    'INNER_MIDPLANE_SEPARATRIX ' , &
@@ -388,12 +400,16 @@ module b2mod_ual_io_grid
        &    'y-aligned edges defining the inner inactive target                                           ' , &
        &    'All volumes (3D objects)                                                                     ' , &
        &    'All edges defining walls, baffles, and targets                                               ' , &
+       &    'y-aligned edges defining the SOL entrance of the first snowflake outer leg                   ' , &
+       &    'y-aligned edges defining the SOL entrance of the third snowflake outer leg                   ' , &
+       &    'y-aligned edges defining the connection between the outer snowflake entrance and third leg   ' , &
+       &    'y-aligned edges defining the connection between the outer snowflake first and second leg     ' , &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
        &     US, US, US, US, US, US, US, US, US, US,                                                          &
-       &     US, US, US, US, US,                                                                              &
+       &     US,                                                                                              &
        &    'Point on magnetic axis                                                                       ' , &
        &    'Point on active separatrix at outer midplane                                                 ' , &
        &    'Point on active separatrix at inner midplane                                                 ' , &
@@ -413,6 +429,16 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_FULL_WALL = 44
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
+# endif
+# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+    !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
+    !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 = 46
+    !> y-aligned egdes defining the connection between the outer snowflake entrance and third leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 = 47
+    !> y-aligned edges defining the connection between the outer snowflake first and second leg
+    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
 # endif
 # if GGD_MINOR_VERSION < 10
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES
@@ -1494,6 +1520,8 @@ contains
             nGSubset = nGSubset + 33 + 4
         case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
             nGSubset = nGSubset + 34 + 4
+        case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+            nGSubset = nGSubset + 32 + 4
         end select
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
@@ -1779,7 +1807,11 @@ contains
                 & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
                 & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
                 & GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
-                & GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE )
+                & GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE, &
+                & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+                & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+                & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+                & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
                 iType = REGIONTYPE_XEDGE
             case ( GRID_SUBSET_FULL_WALL )
                 iType = REGIONTYPE_EDGE
@@ -2076,6 +2108,90 @@ contains
                     RegionsinSubset(13)= 10
                     RegionsinSubset(14)= 1
                 end select
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_INNER_DIVERTOR )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_OUTER_DIVERTOR )
+                    RegionsinSubset(1) = 4
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_OUTER_BAFFLE )!
+                    RegionsinSubset(1) = 7
+                    RegionsinSubset(2) = 11
+                    RegionsinSubset(3) = 12
+                    RegionsinSubset(4) = 13
+                case ( GRID_SUBSET_INNER_BAFFLE )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    RegionsinSubset(1) = 3
+                    RegionsinSubset(2) = 8
+                    RegionsinSubset(3) = 9
+                    RegionsinSubset(4) = 10
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 5
+                    RegionsinSubset(2) = 6
+                    RegionsinSubset(3) = 7
+                    RegionsinSubset(4) = 11
+                    RegionsinSubset(5) = 12
+                    RegionsinSubset(6) = 13
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 3
+                    RegionsinSubset(3) = 8
+                    RegionsinSubset(4) = 9
+                    RegionsinSubset(5) = 10
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 9
+                case ( GRID_SUBSET_PFR_CUT )!
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_INNER_THROAT )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 4
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 8
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 )
+                    RegionsinSubset(1) = 11
+                case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
+                    RegionsinSubset(1) = 12
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = -1
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                    RegionsinSubset(5) = 11
+                    RegionsinSubset(5) = -4
+                    RegionsinSubset(6) = 8
+                    RegionsinSubset(7) = 9
+                    RegionsinSubset(8) = -5
+                    RegionsinSubset(9) = 12
+                    RegionsinSubset(10)= 13
+                    RegionsinSubset(12)= -8
+                    RegionsinSubset(13)= 10
+                    RegionsinSubset(14)= 1
+                end select
             case ( GEOMETRY_DDN_TOP )
                 select case( iSubset )
                 case ( GRID_SUBSET_CORE )
@@ -2338,7 +2454,7 @@ contains
 
                 end if
             end do
-        case ( GEOMETRY_SN )
+        case ( GEOMETRY_SN, GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
             iType = REGIONTYPE_YEDGE
             cls = CLASS_POLOIDALRADIAL_EDGE
             iSubset = GRID_SUBSET_SEPARATRIX
@@ -2657,6 +2773,12 @@ contains
            case ( GEOMETRY_DDN_TOP )
               ix = nxtr + 1
               iVx = VX_LOWERLEFT
+           case ( GEOMETRY_LFS_SNOWFLAKE_MINUS )
+              ix = gmap%b2nx - 1
+              iVx = VX_LOWERRIGHT
+           case ( GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              ix = nxtl + 1
+              iVx = VX_LOWERLEFT
            case default
               ix = B2_GRID_UNDEFINED
               iVx = GRID_UNDEFINED
@@ -2700,7 +2822,9 @@ contains
                   iVx = VX_LOWERRIGHT
               end if
            case ( GEOMETRY_LINEAR, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
-               &  GEOMETRY_STELLARATORISLAND )
+               &  GEOMETRY_STELLARATORISLAND, &
+               &  GEOMETRY_LFS_SNOWFLAKE_MINUS, &
+               &  GEOMETRY_LFS_SNOWFLAKE_PLUS )
               ix = 0
               iVx = VX_LOWERLEFT
            case ( GEOMETRY_DDN_TOP )

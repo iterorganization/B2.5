@@ -35,6 +35,10 @@
         jxi1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
         jxa1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/2
         jsep1=topcut1(1)-1
+      elseif(nnreg(0).eq.7) then
+        jxi1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
+        jxa1=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4
+        jsep1=topcut1(1)-1
       elseif(nnreg(0).eq.8) then
         jxi1=(leftcut1(1)+leftcut1(2))/2
         jxa1=(rightcut1(1)+rightcut1(2))/2
@@ -94,7 +98,7 @@
 cxpb  Compute position of additional targets in DN configuration
       nxtl = -2
       nxtr = nx1+1
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         nxtl = 0
         do while (rightix1(nxtl,max(topcut1(1),topcut1(2))).ne.nx1+1
      &   .and.nxtl.lt.nx1)

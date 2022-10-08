@@ -368,7 +368,8 @@ cxpb-end
         do ix = -1, nx
           if (nnreg(0).eq.1) then
             on_closed_surface(ix,iy) = periodic_bc.eq.1
-          else if (nnreg(0).eq.2 .or. nnreg(0).eq.4) then
+          else if (nnreg(0).eq.2 .or. nnreg(0).eq.4 .or.
+     &             nnreg(0).eq.7) then
             on_closed_surface(ix,iy) = region(ix,iy,0).eq.1
           else if (nnreg(0).eq.5 .or. nnreg(0).eq.8) then
             on_closed_surface(ix,iy) = mod(region(ix,iy,0),4).eq.1
