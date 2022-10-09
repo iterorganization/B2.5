@@ -926,7 +926,6 @@
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
        else if (nncut.eq.2) then
-
         if (isSnowflake) then
           iya = 0
           iyb = ny
@@ -1140,7 +1139,6 @@
           enddo
           ixc = ixc + 1  ! step back to not count guard cell
         endif
-        
         xx(ixa-1) = 0.0_R8
         do ix = ixa, ixb+1
          xx(ix) = (ix+0.5_R8-ixa)/real(ixb-ixa+1)

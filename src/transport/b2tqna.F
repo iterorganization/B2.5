@@ -530,9 +530,9 @@ cdpc
             if(region(ix,iy,0).eq.5.and.nnreg(0).eq.7.and.
      &         iy.ge.topcut(2)) cycle
             if(region(ix,iy,0).eq.6.and.nnreg(0).eq.8) cycle
-            if(region(ix,iy,0).eq.6.and.nnreg(0).eq.7.and.
-     &         iy.ge.topcut(2)) cycle
-            if(region(ix,iy,0).eq.7.and.iy.ge.topcut(2)) cycle
+            if(region(ix,iy,0).eq.7.and.
+     &         iy.ge.min(topcut(1),topcut(2)).and.
+     &         iy.lt.max(topcut(1),topcut(2))) cycle
             if(region(ix,iy,0).eq.8.and.iy.ge.topcut(1)) cycle
             do is=0,ns-1
               if(.not.is_neutral(is)) then

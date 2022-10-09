@@ -1521,7 +1521,7 @@ contains
         case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
             nGSubset = nGSubset + 34 + 4
         case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
-            nGSubset = nGSubset + 32 + 4
+            nGSubset = nGSubset + 33 + 4
         end select
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
@@ -2176,6 +2176,7 @@ contains
                     RegionsinSubset(1) = 11
                 case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
                     RegionsinSubset(1) = 12
+                    RegionsinSubset(2) = 13
                 case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 5
@@ -2822,9 +2823,9 @@ contains
                   iVx = VX_LOWERRIGHT
               end if
            case ( GEOMETRY_LINEAR, GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
-               & GEOMETRY_STELLARATORISLAND, &
-               & GEOMETRY_LFS_SNOWFLAKE_MINUS, &
-               & GEOMETRY_LFS_SNOWFLAKE_PLUS )
+               &  GEOMETRY_STELLARATORISLAND, &
+               &  GEOMETRY_LFS_SNOWFLAKE_MINUS, &
+               &  GEOMETRY_LFS_SNOWFLAKE_PLUS )
               ix = 0
               iVx = VX_LOWERLEFT
            case ( GEOMETRY_DDN_TOP )

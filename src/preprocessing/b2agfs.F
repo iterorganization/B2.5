@@ -1638,10 +1638,10 @@ c
 c    +-------+-----------------------+-------+-------++-------+-------+
 c    |       :                       :       :       ||       :       |
 c    |       2                       3       6       ||       7       |
-c    |       :                       :       +.......45.......+.......8
-c    |       :                       :       |       ||       |       |
-c    1.......+-----------------------+-------+11     ||       |12     |
-c    |       |9                      |10     |       ||       |       |
+c    |       :                       :       +.......45.......+.......|
+c    |       :                       :       |       ||       |13     |
+c    1.......+-----------------------+-------+11     ||       +.......8
+c    |       |9                      |10     |       ||       |12     |
 c    |       |                       |       |       ||       |       |
 c    +-------+-----------------------+-------+-------++-------+-------+
 c
@@ -1972,9 +1972,9 @@ c x-flux component
         enddo
         do iy=topcut(1),iyt
           region(leftcut(1),iy,1)=2
-          if(nncut.eq.1) then
+          if(nncut.eq.1.or.nnreg(0).eq.7) then
             region(rightcut(1),iy,1)=3
-          elseif(nncut.eq.2 .and. nnreg(0).ne.7) then
+          elseif(nncut.eq.2) then
             region(rightcut(1),iy,1)=7
           endif
         enddo
@@ -1995,11 +1995,15 @@ c x-flux component
           endif
         enddo
         if(nnreg(0).eq.7) then
-          do iy=bottomcut(2),topcut(2)-1
+          do iy=bottomcut(2),min(topcut(1),topcut(2))-1
             region(leftcut(2),iy,1)=11
             region(rightcut(2),iy,1)=12
           enddo
-          do iy=topcut(2),iyt
+          do iy=min(topcut(1),topcut(2)),max(topcut(1),topcut(2))-1
+            region(leftcut(2),iy,1)=11
+            region(rightcut(2),iy,1)=13
+          enddo
+          do iy=max(topcut(1),topcut(2)),iyt
             region(leftcut(2),iy,1)=6
             region(rightcut(2),iy,1)=7
           enddo
