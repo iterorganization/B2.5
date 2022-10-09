@@ -1284,20 +1284,20 @@ c     ------------------------------------------------------------------
       locsolps=' '
 #else
 #ifdef NAGFOR
-        call get_environment_variable('GRPSOLPS',
+      call get_environment_variable('GRPSOLPS',
      .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('GRPSOLPS',value=grpsolps)
-        elseif (ierror.eq.1) then
-          grpsolps=' '
-        endif
-        call get_environment_variable('LOCSOLPS',
+      if (ierror.eq.0) then
+        call get_environment_variable('GRPSOLPS',value=grpsolps)
+      elseif (ierror.eq.1) then
+        grpsolps=' '
+      endif
+      call get_environment_variable('LOCSOLPS',
      .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('LOCSOLPS',value=locsolps)
-        elseif (ierror.eq.1) then
-          locsolps=' '
-        endif
+      if (ierror.eq.0) then
+        call get_environment_variable('LOCSOLPS',value=locsolps)
+      elseif (ierror.eq.1) then
+        locsolps=' '
+      endif
 #else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)

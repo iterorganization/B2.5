@@ -83,7 +83,7 @@ contains
     function b2_IMAS_Transform_Data_B2_To_IDS_Face( grid, gridSubsetInd, gmap,  &
             &   b2FaceData ) result( idsdata )
 #if IMAS_MINOR_VERSION > 14
-        type(ids_generic_grid_aos3_root), intent(in)  :: grid !< Type of IDS
+        type(ids_generic_grid_aos3_root), intent(in) :: grid !< Type of IDS
             !< data structure, designed for handling grid geometry data
 #else
         type(ids_generic_grid_dynamic), intent(in) :: grid !< Type of IDS

@@ -72,8 +72,8 @@ module b2mod_connectivity
         &       1,  2,  2,  & !! GEOMETRY_ANNULUS
         &       5,  7,  8,  & !! GEOMETRY_STELLARATORISLAND
         &       1,  0,  0,  & !! GEOMETRY_STRUCTURED_SPACES
-        &       7, 12, 13,  & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &       7, 12, 13   & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &       7, 13, 13,  & !! GEOMETRY_LFS_SNOWFLAKE_MINUS
+        &       7, 13, 13   & !! GEOMETRY_LFS_SNOWFLAKE_PLUS
         &    /),            &
         &    (/ REGIONTYPE_COUNT, GEOMETRY_COUNT /) )   !< Region counts
 
@@ -371,14 +371,15 @@ module b2mod_connectivity
         &   'Outer divertor entrance         ',                         &
         &   'First outer divertor target     ',                         &
         &   'Second outer divertor target    ',                         &
-        &   'SOL connection outer leg 1      ',                         &
-        &   'SOL connection outer leg 2 to 3 ',                         &
+        &   'SOL connection to outer leg 1   ',                         &
+        &   'Connection of outer leg 2 and 3 ',                         &
         &   'Third outer divertor target     ',                         &
         &   'Core cut                        ',                         &
         &   'PFR cut                         ',                         &
-        &   'Cut outer entrance to leg 3     ',                         &
-        &   'PFR cut outer leg 1 to leg 2    ',                         &
-        &   UU,UU,                                                      &
+        &   'Connection of outer leg 1 and 2 ',                         &
+        &   'PFR connection to outer leg 3   ',                         &
+        &   'CFR connection to outer leg 3   ',                         &
+        &   UU,                                                         &
         & &
         &   'Inner PFR wall                  ',                         &
         &   'Core boundary                   ',                         &
@@ -409,14 +410,15 @@ module b2mod_connectivity
         &   'Outer divertor entrance         ',                         &
         &   'First outer divertor target     ',                         &
         &   'Second outer divertor target    ',                         &
-        &   'SOL connection outer leg 1      ',                         &
-        &   'SOL connection outer leg 2 to 3 ',                         &
+        &   'SOL connection to outer leg 1   ',                         &
+        &   'Connection of outer leg 2 and 3 ',                         &
         &   'Third outer divertor target     ',                         &
         &   'Core cut                        ',                         &
         &   'PFR cut                         ',                         &
-        &   'Cut outer entrance to leg 3     ',                         &
-        &   'PFR cut outer leg 1 to leg 2    ',                         &
-        &   UU,UU,                                                      &
+        &   'Connection of outer leg 1 and 2 ',                         &
+        &   'PFR connection to outer leg 3   ',                         &
+        &   'CFR connection to outer leg 3   ',                         &
+        &   UU,                                                         &
         & &
         &   'Inner PFR wall                  ',                         &
         &   'Core boundary                   ',                         &
