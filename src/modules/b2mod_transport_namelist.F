@@ -153,6 +153,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 #else
         read(99,transport)
 #endif
+        close(99)
         write(*,*) 'Read namelist transport from ',trim(filename)
         cflim(0)=cflme
         cflim(1)=cflmi

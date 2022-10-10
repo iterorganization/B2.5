@@ -8,4 +8,5 @@
 #else
       status=0
 #endif
+      return
       end subroutine check_cdf_status

@@ -123,8 +123,8 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
-   10   folder=''
-   20   continue
+   10  folder=''
+   20  continue
       endif
 * ..initialisation
       if (use_astra.ne.0) then

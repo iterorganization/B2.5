@@ -22,7 +22,11 @@
         call ipgeti ('b2ytdr_jsep1',jsep1)
       elseif(nnreg(0).eq.4) then
         if (cry1(leftcut1(1)+1,topcut1(1),0).lt.
-     .      cry1(leftcut1(1)+1,0,0)) then ! LSN topology
+     .      cry1(leftcut1(1)+1,0,0).or.
+     .     (cry1(leftcut1(1)+1,topcut1(1),0).eq.
+     .      cry1(leftcut1(1)+1,0,0).and.
+     .      crx1(leftcut1(1)+1,topcut1(1),0).lt.
+     .      crx1(leftcut1(1)+1,0,0))) then ! LSN topology
           jxi1=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4
           jxa1=rightcut1(1)-(rightcut1(1)-leftcut1(1))/4
         else ! USN topology

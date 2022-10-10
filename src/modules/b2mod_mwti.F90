@@ -1394,7 +1394,7 @@ contains
 
       iret = nf_close(ncid)
       call check_cdf_status(iret)
-    endif
+    endif !lwti
 
 !wdk only write batch data if lwav is true
     if (lwav) then
@@ -1477,7 +1477,7 @@ contains
       call rwcdf(rw,ncid,'pomxap_std',imap,pomxap_std,iret)
       iret = nf_close(ncid)
       call check_cdf_status(iret)
-    endif
+    endif !lwav
 #endif
 
     ! ..return
