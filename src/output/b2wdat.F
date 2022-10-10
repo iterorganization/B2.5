@@ -121,8 +121,8 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
-   10   folder=''
-   20   continue
+   10  folder=''
+   20  continue
       endif
 * ..initialisation
       if (use_astra.ne.0) then
@@ -134,7 +134,7 @@
       mintopcut = ny                                              !srv 25.02.16
       if(nncut > 0) then
         if (nnreg(0).eq.7) then
-          mintopcut = topcut(1)   
+          mintopcut = topcut(1)
         else
           mintopcut = minval(topcut(1:nncut))                     !iyv 29.11.13 25.02.16
         endif

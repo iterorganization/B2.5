@@ -263,6 +263,7 @@ cxpb
         read(74,*) dext(:,:)     ! electron heat source by radiation = ee_rd
         she_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         deallocate(dext)
+        close(74)
         call extend(na_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ua_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
         call extend(ta_ext,nxd,nyd,ns_ext,nxd,nyd,ns_ext)
@@ -315,7 +316,7 @@ cxpb Computing ua from fa is what we really want to do
                 fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
      .           1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
      .           ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-               endif
+              endif
             enddo
           enddo
         endif
@@ -338,7 +339,6 @@ cxpb
       endif
 
       initialised_externals=.true.
-      close(74)
       return
   974 continue
       if (.not.initialised_externals)

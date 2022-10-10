@@ -11069,7 +11069,7 @@ cxpb as they no longer necessarily point to the same species
         write(hlp_frm,'(a,i3,a)') '(1x,a,',nmol1,'(1x,i3,'',''))'
         if (maxval(lmolscl1).gt.0)
      >   write(99,hlp_frm) 'LMOLSCL=',(lmolscl1(is),is=1,nmol1)
-        write(hlp_frm,'(a,i3,a)') '(1x,a,',nioni,'(1x,i3,'',''))'
+        write(hlp_frm,'(a,i3,a)') '(1x,a,',nion1,'(1x,i3,'',''))'
         if (maxval(lionscl1).gt.0)
      >   write(99,hlp_frm) 'LIONSCL=',(lionscl1(is),is=1,nion1)
         write(hlp_frm,'(a,i3,a)') '(1x,a,',ns1,'(1x,i3,'',''))'

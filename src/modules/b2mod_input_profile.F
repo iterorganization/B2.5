@@ -611,7 +611,7 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (new_files) write(93,*) r(i),f(i),felm(i)
             enddo
-              
+
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
@@ -700,7 +700,7 @@ cdjm Jan2017 Keep linearised sources for balance
      1                 prof(iy)*poloidal_scale_factor/
      &                 (rza(ix,iiy,nsp(is))*te(ix,iiy)+ti(ix,iiy))
 
-                    elseif (kind_coeff.eq.3) then         
+                    elseif (kind_coeff.eq.3) then
                       hcib(ix,iiy,nsp(is))=poloidal_scale_factor*
      &                 prof(iy)*na(ix,iiy,nsp(is))
              
@@ -713,8 +713,8 @@ cdjm Jan2017 Keep linearised sources for balance
      1                 prof(iy)*poloidal_scale_factor
                 
                     elseif (kind_coeff.eq.6) then
-                     vla0(ix,iiy,1,nsp(is))=
-     1                prof(iy)*poloidal_scale_factor
+                      vla0(ix,iiy,1,nsp(is))=
+     1                 prof(iy)*poloidal_scale_factor
 
                     elseif (kind_coeff.eq.7) then
                       vsa0(ix,iiy,nsp(is))=poloidal_scale_factor*
@@ -817,7 +817,6 @@ cdjm Jan2017 Keep linearised sources for balance
           enddo
         enddo
       enddo
-       
        
       goto 100
    99 write (*,*) 'Error in reading the dsp file'

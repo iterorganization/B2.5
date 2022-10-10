@@ -2173,10 +2173,10 @@ contains
                 case ( GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 )
                     RegionsinSubset(1) = 7
                 case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 )
-                    RegionsinSubset(1) = 11
-                case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
                     RegionsinSubset(1) = 12
                     RegionsinSubset(2) = 13
+                case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
+                    RegionsinSubset(1) = 11
                 case ( GRID_SUBSET_FULL_WALL )
                     RegionsinSubset(1) = -1
                     RegionsinSubset(2) = 5
