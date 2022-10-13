@@ -133,7 +133,7 @@ cxpb The default is to force usage of b2.boundary.namelist for DN cases
       boundary_namelist=0
       call ipgeti('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.0) then
-        if (nnreg(0).ge.8) boundary_namelist=1
+        if (nnreg(0).ge.7) boundary_namelist=1
       end if
       boundary_namelist_set = .true.
       return

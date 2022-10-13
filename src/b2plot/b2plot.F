@@ -2502,7 +2502,7 @@ c
             ix=ix+1
           end do
           ixr=ix
-          if(nnreg(0).eq.8) then
+          if(nncut.eq.2) then
             ix=nx
             do while(leftix(ix,iy).eq.ix-1 .and. ix.gt.-1)
               ix=ix-1
@@ -2546,7 +2546,7 @@ c
             sumr(1)=sumr(1)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
-            if(nnreg(0).eq.8) then
+            if(nncut.eq.2) then
               ix=ixl+1
               suml(2)=suml(2)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
@@ -2563,6 +2563,13 @@ c
             write(*,*) 'Eastern target:    ',sumr(1)
             write(*,*) 'Pressure drop (inner & outer): ',
      1             suml(1)/sumjxa,sumr(1)/sumjxa
+          else if(nnreg(0).eq.7) then
+            write(*,*) 'Outer midplane pressure: ',sumjxa
+            write(*,*) 'Inner target:            ',suml(1)
+            write(*,*) 'Near SOL target:         ',sumr(1)
+            write(*,*) 'Far SOL target:          ',sumr(2)
+            write(*,*) 'Pressure drop (inner & outer): ',
+     1             suml(1)/sumjxa,sumr(1)+sumr(2)/sumjxa
           else if(nnreg(0).eq.8) then
             write(*,*) 'Outer midplane pressure: ',sumjxa
             write(*,*) 'Outer top target:        ',suml(2)
@@ -10783,7 +10790,7 @@ c
           call ipush(istack,iistack,nion)
         case('nxtl')     ! nxtl
           stack_name='integer'
-          if (nnreg(0).eq.8) then
+          if (nnreg(0).ge.7) then
             call ipush(istack,iistack,nxtl)
           else
             write(*,*) cval,
@@ -10791,7 +10798,7 @@ c
           endif
         case('nxtr')     ! nxtr
           stack_name='integer'
-          if (nnreg(0).eq.8) then
+          if (nnreg(0).ge.7) then
             call ipush(istack,iistack,nxtr)
           else
             write(*,*) cval,

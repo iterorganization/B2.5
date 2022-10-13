@@ -245,6 +245,7 @@ c          v=vol(ix,iy)
       end do !}
 
       do i=2,nnreg(0) !{
+        if(nnreg(0).eq.8.and.(i.eq.5.or.i.eq.6)) cycle
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
 

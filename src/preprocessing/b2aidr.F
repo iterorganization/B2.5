@@ -700,8 +700,8 @@
        floe_noc  = floe_noc1
        floi_noc  = floi_noc1
        deallocate( zcdum, na1, ua1, ne1, uadia1, te1, ti1, po1,
-     &    fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
-     &    fna_mdf1, fhe_mdf1, fhi_mdf1,
+     &    fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1,
+     &    kinrgy1, fna_mdf1, fhe_mdf1, fhi_mdf1,
      &    fna_fcor1, fna_nodrift1, fna_he1,
      &    fnaPSch1, fhePSch1, fhiPSch1,
      &    fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,

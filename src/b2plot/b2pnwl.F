@@ -407,7 +407,7 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      if (nnreg(0).lt.8) then
+c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -524,7 +524,7 @@ c*** No connection found
      .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
      .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
      .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
-     .                 nnreg(0).eq.8)) then
+     .                 nnreg(0).ge.7)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)

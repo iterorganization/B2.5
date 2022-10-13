@@ -57,7 +57,7 @@
       call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
       call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
 #ifndef NO_CDF
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.
      .            ixtl.lt.nx)

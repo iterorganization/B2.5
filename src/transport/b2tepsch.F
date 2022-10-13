@@ -70,7 +70,7 @@
 
 *   ..precompute differences
         wght = 1.0_R8
-        nete2=ne*te*te
+        nete2 = ne*te*te
         call diff(nx, ny, hx, hy, wght, qs, nete2, dnete2)
 
 *   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {

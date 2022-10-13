@@ -63,7 +63,7 @@ c      if(nidim .ne. 2) call line(2)
      .          (region(ix,iystart,0).eq.5 .or.
      .           region(ix,iystart,0).eq.6)) then
           ixc = jxa
-        else if (nnreg(0).eq.4 .and.
+        else if((nnreg(0).eq.4 .or. nnreg(0).eq.7) .and.
      .          (region(ix,iystart,0).eq.1 .or.
      .           region(ix,iystart,0).eq.2)) then
           ixc = jxa
@@ -73,7 +73,15 @@ c      if(nidim .ne. 2) call line(2)
           ixc = leftcut(1)-1
         else if (nnreg(0).eq.8 .and. region(ix,iystart,0).eq.4) then
           ixc = rightcut(2)
+        else if (nnreg(0).eq.7 .and. region(ix,iystart,0).eq.4) then
+          ixc = rightcut(1)
         else if (nnreg(0).eq.4 .and. region(ix,iystart,0).eq.4) then
+          ixc = rightcut(1)
+        else if (nnreg(0).eq.7 .and. region(ix,iystart,0).eq.5) then
+          ixc = leftcut(2)
+        else if (nnreg(0).eq.7 .and. region(ix,iystart,0).eq.6) then
+          ixc = rightcut(2)-1
+        else if (nnreg(0).eq.7 .and. region(ix,iystart,0).eq.7) then
           ixc = rightcut(1)
         else if (nnreg(0).eq.8 .and. region(ix,iystart,0).eq.7) then
           ixc = leftcut(2)-1

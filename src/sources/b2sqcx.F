@@ -142,6 +142,7 @@
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
 #endif
+
 * ..return
       ncall = ncall+1
       call subend ()

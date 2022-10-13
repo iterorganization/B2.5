@@ -129,7 +129,7 @@
          endif
         enddo
        enddo
-      else ! style                                     !srv 26.10.08 {
+      else ! style                                                   !srv 26.10.08 {
 *   ..compute wrk0 and wrk1
        do iy = -1, ny
         do ix = -1, nx

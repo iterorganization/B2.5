@@ -3,7 +3,7 @@
       use b2mod_constants
       use b2mod_wall
       use b2mod_layer
-
+      implicit none
       integer, save :: sput_dst, sput_dst2, sput_dst3
       integer, save :: target_intcode(3+6), target_index(92)
       integer, save :: zwall(6)

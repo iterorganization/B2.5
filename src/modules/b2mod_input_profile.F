@@ -659,12 +659,24 @@ cdjm Jan2017 Keep linearised sources for balance
      1               'ix,iy,region(ix,iy) ',ix,iiy,iir
                     iir=NNREGMAX
                   endif
-                  lpflux=mod(iir-1,4)+1.ge.3.and.
-     2             (((ix.lt.leftcut(1).or.ix.ge.rightcut(1)).and.
-     3               iiy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
-     4               ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
-     5               iiy.lt.topcut(2)))
+                  lpflux=iir.eq.3.and.iiy.le.topcut(1).and.nnreg(0).ge.4
+                  lpflux=lpflux.or.
+     &             (iir.eq.4.and.iiy.le.topcut(1).and.
+     &             (nnreg(0).eq.4.or.nnreg(0).eq.5.or.nnreg(0).eq.7))
+                  lpflux=lpflux.or.
+     &             (iir.eq.4.and.iiy.le.topcut(2).and.nnreg(0).eq.8)
+                  lpflux=lpflux.or.
+     &             (iir.eq.5.and.iiy.le.topcut(2).and.nnreg(0).eq.7)
+                  lpflux=lpflux.or.(iir.eq.6.and.nnreg(0).eq.7)
+                  lpflux=lpflux.or.(iir.eq.7.and.nnreg(0).eq.7.and.
+     &             (iiy.lt.min(topcut(1),topcut(2)).or.
+     &              iiy.ge.max(topcut(1),topcut(2))))
+                  lpflux=lpflux.or.
+     &             (iir.eq.7.and.iiy.le.topcut(2).and.nnreg(0).eq.8)
+                  lpflux=lpflux.or.(iir.eq.8.and.iiy.le.topcut(1))
                   ldiv=mod(iir-1,4)+1.ge.3
+                  ldiv=ldiv.or.
+     &             (nnreg(0).eq.7.and.(iir.eq.5.or.iir.eq.6))
                   poloidal_scale_factor = 1.0_R8
                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
