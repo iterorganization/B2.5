@@ -123,6 +123,9 @@
       elseif(nnreg(0).eq.5) then
         ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
         iyref=2*topcut(1)/3
+      elseif(nnreg(0).eq.7) then
+        ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+        iyref=2*topcut(1)/3
       elseif(nnreg(0).eq.8) then
         ixref=(rightcut(1)+rightcut(2))/2
         iyref=2*min(topcut(1),topcut(2))/3

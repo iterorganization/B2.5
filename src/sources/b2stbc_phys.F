@@ -4858,7 +4858,9 @@ cxpb  and max(,,) statement for stability
       logical ex
 
 * -- BOUNDARY CONDITIONS FOR ELECTRON ENERGY EQUATION --
+
       select case (BCENE(IB))
+
       case (0)
         continue
 
@@ -5635,7 +5637,7 @@ cxpb code segment analog to b2tfhe
      1     ' on ',BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
             US=US+SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           end do
@@ -5658,7 +5660,7 @@ cxpb code segment analog to b2tfhe
             endif                                                     !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
             US=US+SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .               BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
@@ -5683,7 +5685,7 @@ cxpb code segment analog to b2tfhe
             endif                                                     !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IY = 1, BC_LIST_SIZE(IB)
             US=US+SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
           end do
@@ -5693,7 +5695,7 @@ cxpb code segment analog to b2tfhe
             she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=0.0_R8
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IY = 1, BC_LIST_SIZE(IB)
             US=US+SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -6915,7 +6917,9 @@ cxpb code segment analog to b2tfhe
       logical ex
 
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
+
       select case (BCENI(IB))
+
       case (0)
         continue
 
@@ -7645,7 +7649,7 @@ cxpb code segment analog to b2tfhi
      1     BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
             US=US+SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           end do
@@ -7685,7 +7689,7 @@ cxpb code segment analog to b2tfhi
             endif                                                 !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
             US=US+SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .               BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
@@ -7718,7 +7722,7 @@ cxpb code segment analog to b2tfhi
             endif                                                 !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IY = 1, BC_LIST_SIZE(IB)
             US=US+SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
           end do
@@ -7728,7 +7732,7 @@ cxpb code segment analog to b2tfhi
             shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=0.0_R8
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IY = 1, BC_LIST_SIZE(IB)
             US=US+SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -9407,7 +9411,9 @@ cxpb Careful here because of BC number clash
       logical ex
 
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
+
       select case (BCPOT(IB))
+
       case (0)
         continue
 
@@ -9843,7 +9849,7 @@ c              fchi=0.0_R8
      1     BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
             US=US+SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           end do
@@ -9853,7 +9859,7 @@ c              fchi=0.0_R8
             sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=0.0_R8
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
             US=US+SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .               BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
@@ -9865,7 +9871,7 @@ c              fchi=0.0_R8
             sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=0.0_R8
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IY = 1, BC_LIST_SIZE(IB)
             US=US+SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
           end do
@@ -9875,7 +9881,7 @@ c              fchi=0.0_R8
             sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=0.0_R8
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          US=0.0_R8
+          US = 0.0_R8
           DO IY = 1, BC_LIST_SIZE(IB)
             US=US+SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))

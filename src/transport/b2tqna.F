@@ -1440,7 +1440,7 @@ c
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
             topdelta2 = mintopcut                 !srv 24.06.03 {
             width = 0.0e0_R8
-            do iy =mintopcut,ny                                         !srv 23.01.18
+            do iy = mintopcut,ny                                       !srv 23.01.18
              width = width + hy(nmdpl,iy)
              if(width.ge.delta2) then
               topdelta2 = iy

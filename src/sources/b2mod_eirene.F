@@ -586,7 +586,7 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
       end do
 
       tfl=0.0_R8
-      tflux=0.0_R8
+      tflux=0.0_R8            !! the actual flux passed to EIRENE
       flux_scale=0.0_R8
       do istrai = 1, nstrat !{
         feedback_stratum=.false.
@@ -839,29 +839,29 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 #ifdef B25_EIRENE
-        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
+      call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-        call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
+      call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
-        call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+      call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
-        call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+      call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
 #endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
@@ -1943,14 +1943,14 @@ csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
 c             (this is new and similar to SOLPS4 style from Kotov,
 c              it is NOT IYSs style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
-        allocate(sni_av(0:(size(sni,1)-1), 0:(size(sni,2)-1),
-     .                    size(sni,3), size(sni,4)))
-        allocate(smo_av(0:(size(smo,1)-1), 0:(size(smo,2)-1),
-     .                    size(smo,3), size(smo,4)))
-        allocate(sei_av(0:(size(sei,1)-1), 0:(size(sei,2)-1),
-     .                    size(sei,3)))
-        allocate(see_av(0:(size(see,1)-1), 0:(size(see,2)-1),
-     .                    size(see,3)))
+        allocate(sni_av(0:(size(sni,1)-1),0:(size(sni,2)-1),
+     .                     size(sni,3),size(sni,4)))
+        allocate(smo_av(0:(size(smo,1)-1),0:(size(smo,2)-1),
+     .                     size(smo,3),size(smo,4)))
+        allocate(sei_av(0:(size(sei,1)-1),0:(size(sei,2)-1),
+     .                     size(sei,3)))
+        allocate(see_av(0:(size(see,1)-1),0:(size(see,2)-1),
+     .                     size(see,3)))
         sni_av=0.0_R8
         smo_av=0.0_R8
         see_av=0.0_R8
@@ -4360,6 +4360,7 @@ c!###}
       allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
       allocate(dab2_h(0:ndxp,0:ndyp,natm,1,nhistd))
       call clear_hist_arrays
+      return
       end subroutine alloc_hist_arrays
 
       subroutine dealloc_hist_arrays
@@ -4443,6 +4444,7 @@ c!###}
         sei_h_eipl = 0.0_R8
         sei_h_eppl = 0.0_R8
       endif
+      return
       end subroutine clear_hist_arrays                            !IYS 28.03.12 }
 
       subroutine alloc_sum_arrays
@@ -4526,6 +4528,7 @@ c!###}
       allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(dab2_s(0:ndxp,0:ndyp,natm,1))
       call clear_sum_arrays
+      return
       end subroutine alloc_sum_arrays
 
       subroutine dealloc_sum_arrays
@@ -4602,6 +4605,7 @@ c!###}
       rfluxa_s = 0.0_R8
       rfluxm_s = 0.0_R8
       dab2_s = 0.0_R8
+      return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
 
 #ifdef B25_EIRENE

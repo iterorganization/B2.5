@@ -2031,7 +2031,7 @@ c x-flux component
         elseif(nncut.eq.1.and.nnreg(0).eq.5) then    ! Stellarator island case
           nnreg(1)=7
         elseif(nnreg(0).eq.7) then   ! Snowflake case
-          nnreg(1)=11
+          nnreg(1)=13
         elseif(nncut.eq.2.and.topcut(1).eq.topcut(2)) then   ! DNC case
           nnreg(1)=12
         elseif(nncut.eq.2.and.topcut(1).ne.topcut(2)) then   ! DND case

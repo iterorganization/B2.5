@@ -12270,6 +12270,7 @@ cxpb as they no longer necessarily point to the same species
       deallocate(iatm1)
       deallocate(imol1)
       deallocate(ipls1)
+      deallocate(ipls2)
       deallocate(na_mean)
       deallocate(ua_mean)
       deallocate(te_mean)

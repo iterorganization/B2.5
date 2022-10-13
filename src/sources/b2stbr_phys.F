@@ -581,7 +581,7 @@
 !     &                       'b2stbr_phys_sna'//chk//chns)
 !         enddo
         wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
-       call my_out(70,nx,ny,wrk0,'b2stbr_phys_sna'//chns)
+        call my_out(70,nx,ny,wrk0,'b2stbr_phys_sna'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
@@ -908,8 +908,8 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
          smo0(ix,iy,0,is0) = smo0(ix,iy,0,is0) + mrecyc(is,istra)*
      &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
      &        recyc(is,istra)*t0*hz(ix,iy)
-         shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
+         shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*
+     &        max(erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
@@ -1562,8 +1562,8 @@ cxpb
             endif
 cxpb
 *          (species (is) recycles into is0)
-            t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
-     .           core_sources_rescale ! xpb: 2002.02.01
+            t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is))
+     .          *core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
      &          recyc(is,istra)*t0

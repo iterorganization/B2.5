@@ -12,13 +12,13 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isb                                             !srv 28.01.02
+      integer nx, ny, isb                                               !srv 28.01.02
       real (kind=R8) ::
-     *   mb, bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),  !srv 22.07.05
+     *   mb, bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),    !srv 22.07.05
      *   hz(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbcf(-1:nx,-1:ny,0:3), ctcf(-1:nx,-1:ny),                   !srv 06.04.07
+     *   smbcf(-1:nx,-1:ny,0:3), ctcf(-1:nx,-1:ny),                     !srv 06.04.07
      *   smbcb(-1:nx,-1:ny)
 *   ..workspace
       real (kind=R8) ::
@@ -35,8 +35,8 @@
 
 *   ..local variables
       integer ncall, style, n2, ix, iy, k
-      integer, save :: iout = 0                                       !srv 17.06.02
-      character chns*3, chark*1                                       !srv 17.06.02
+      integer, save :: iout = 0                                         !srv 17.06.02
+      character chns*3, chark*1                                         !srv 17.06.02
       real (kind=R8) ::
      *    phm0, phm1
       real (kind=R8) :: wrks(-1:nx,-1:ny)
@@ -46,7 +46,7 @@
       external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
 *   ..initialization
-      data ncall/0/, style/0/, phm0/1.0e0_R8/, phm1/1.0e0_R8/         !srv 18.01.02
+      data ncall/0/, style/0/, phm0/1.0e0_R8/, phm1/1.0e0_R8/           !srv 18.01.02
 
 *-----------------------------------------------------------------------
 *.computation

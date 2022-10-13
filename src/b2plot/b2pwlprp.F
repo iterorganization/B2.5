@@ -52,7 +52,7 @@ c<<<
       tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
-c      if(nnreg(0).lt.8) then
+c      if(nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -452,7 +452,7 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-c      if (nnreg(0).lt.8) then
+c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
 c        print '((2(1x,a3,1p,4e12.4)))',
 c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),

@@ -933,7 +933,7 @@ cwdk these are now put back into the constant part of the sources (0-component)
 ! IYS 27.01.2017
         enddo
 ! IYS 27.01.2017
-        do im = 1, nmol
+        do im = 1, nnmoli
 ! interpolate molecule fluxes to cell faces (for output only)
          flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,

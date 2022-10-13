@@ -69,7 +69,8 @@
       endif
 *   ..open file
       open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
-      call xertst (ios.eq.0, 'cfopen--open failure: file='//
+      call xertst (ios.eq.0,
+     & 'cfopen--open failure: file='//
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------

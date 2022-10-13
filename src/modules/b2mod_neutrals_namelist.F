@@ -63,7 +63,8 @@ cank }
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), recyceir(:),
+     *   RECYC(:,:), ERECYC(:,:),
+     *   MRECYC(:,:), RCION(:,:), recyceir(:),
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
@@ -178,7 +179,8 @@ csw 21feb2012
       private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      1  rc_list_size, rc_list_x, rc_list_y,
-     4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
+     4  recyc, erecyc, mrecyc, rcion, recyceir,
+     .  userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
@@ -633,6 +635,7 @@ c
      . 'faulty input neutrals_time_mod')
       call xertst (0.0_R8.le.neutrals_time_switch,
      . 'faulty input neutrals_time_switch')
+
       do istra = 1, nstrat
         if (crcstra(istra).eq.'N') then
           if (old_style(istra)) then
@@ -737,10 +740,10 @@ c
      .   'faulty inputs species_start > species_end')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
-          call xertst (0.0_R8.le.erecyc(is,istra),
-     .     'faulty input erecyc')
           call xertst (0.0_R8.le.mrecyc(is,istra),
      .     'faulty input mrecyc')
+          call xertst (0.0_R8.le.erecyc(is,istra),
+     .     'faulty input erecyc')
           call xertst (0.0_R8.le.rcion(is,istra), 'faulty input rcion')
           call xertst (0.0_R8.le.phys_sput(is,istra),
      .     'faulty input phys_sput')

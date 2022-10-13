@@ -68,7 +68,8 @@
      & dtco_SOL, dtmo_SOL, dtee_SOL, dtei_SOL, iy_SOL_dtXX,
      & time_factor_required,
      & core_dt_suppression, core_dt_factor,
-     & solveco, solvemo, solvemt, solvepo, solveee, solveei, solveet,       !srv 22.05.18
+     & solveco, solvemo, solvemt, solvepo,
+     & solveee, solveei, solveet,                          !srv 22.05.18
      & write_nml_num,
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po       ! IYS 19.12.2017
@@ -219,9 +220,9 @@
       endif
 
       call xertst (0.0_R8.le.numerics_time_mod,
-     . 'faulty input boundary_time_mod')
+     . 'faulty input numerics_time_mod')
       call xertst (0.0_R8.le.numerics_time_switch,
-     . 'faulty input boundary_time_switch')
+     . 'faulty input numerics_time_switch')
       call xertst (0.0_R8.lt.core_dt_suppression,
      & 'faulty parameter core_dt_suppression')
       call xertst (0.0_R8.lt.core_dt_factor,
