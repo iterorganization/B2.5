@@ -187,19 +187,6 @@
 !     & aa11(-1,-1,-4,1), aa11(-1,-1,-2,1), aa11(-1,-1,2,1), aa11(-1,-1,4,1),
 !     & resfun, corfun, name)                                          !srv 18.05.02
        call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !srv 02.04.18
-      else if (style.eq.3) then                                     !srv 29.05.02 {
-!        call cpu_time(cpu_start)
-        call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
-     *                   indexes, ipsave, jasave, name)
-!        call cpu_time(cpu_end)
-!        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
-!        write(*,*) 'STORAGE_11: nz = ',nz
-        call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
-*    ..use sdrv from YSMP
-!        call cpu_time(cpu_start)
-        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)        !srv 29.05.02 }
-!        call cpu_time(cpu_end)
-!        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
       call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
