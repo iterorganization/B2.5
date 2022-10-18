@@ -6,8 +6,8 @@
      &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa5, name)
       use b2mod_types
+      use b2mod_ma28
       use b2mod_b2cmpa
-      use b2mod_ilutern
       use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_boundary_namelist

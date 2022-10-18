@@ -145,7 +145,7 @@ c***                     (PRFAML+PRFPML)*H_EDISS
      *   ss_m, ersn_am, ersn_p(ntrgsx), ersn_pm, ersn_l(ntrgsx)
       logical ft44
       logical streql
-      integer, save :: ncall=0   ! iyv 19.07.22
+      integer, save :: ncall = 0   ! iyv 19.07.22
       external streql
       intrinsic sqrt
 c*** Data for erosion calculations
@@ -1039,7 +1039,7 @@ c!###}
           print *,'m_hlp,wtttrg:',m_hlp(itrg(j))
           print '(1x,i3,1p,10e10.2/(4x,10e10.2))',lseppos(itrg(j))+1,
      ,                                     (wtttrg(i,itrg(j)),i=0,ny-1)
-          print '(5a4,a7,9a12)','j','imx','ia','ib','ic','a','b','d',
+          print '(5a4,a7,8a12)','j','imx','ia','ib','ic','a','b','d',
      ,      'wpk','pwr','p','ha','hb','hc'
           print '(5i4,1p,9e12.4)',itrg(j),m_hlp(itrg(j)),ia,ib,ic,a,b,d,
      ,      wpk_tt(itrg(j)),pwr_tt(itrg(j)),p,ha,hb,hc

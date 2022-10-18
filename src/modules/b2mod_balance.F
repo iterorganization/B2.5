@@ -2178,7 +2178,7 @@ cdjm Update ion heat sources
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer itim,ntim
+      integer, intent(in) :: itim,ntim
 *   ..local variables
       real (kind=R8) :: avmlt, curmlt
 *   ..procedures

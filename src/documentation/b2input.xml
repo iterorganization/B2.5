@@ -920,7 +920,7 @@
 				<name>b2srdt_*_namelist</name>
 				<description>
 					Namelist file indicators. If xxx_namelist.eq.1, then the code looks for the file b2.xxx.parameters, in which it expects to find the xxx namelist.
-					In the case of boundary_namelist, defaults to 1 for double-null geometries, 0 otherwise.
+					In the case of boundary_namelist, defaults to 1 for double-null and snowflake geometries, 0 otherwise.
 				</description>
 				<switch>
 					<name>b2stbc_boundary_namelist</name>

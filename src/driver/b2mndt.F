@@ -20,7 +20,7 @@
       use b2mod_file
       use b2mod_batch
       use b2mod_b2cmpa
-      use b2mod_average
+      use b2mod_running_average
       use b2mod_external
       use b2mod_neoclassical
       use b2mod_user_namelist

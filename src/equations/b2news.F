@@ -6,6 +6,7 @@
      &  dtim, rxf, ierr, wrong_flow, ramp_call)
       use b2mod_types
       use b2mod_geo
+      use b2mod_ma28
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -24,7 +25,6 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_ilutern
       use b2mod_illtern_7
       use b2mod_ilutern_7
       use b2mod_ilutern_9

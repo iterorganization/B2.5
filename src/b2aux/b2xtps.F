@@ -851,13 +851,15 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hxx, bottomiy1)
-      call b2xtfx (nx, ny, nx1, ny1, fhi(-1,-1,0), fhi1(-1,-1,0),
+      call b2xtfx (nx, ny, nx1, ny1,
+     &        fhi(-1,-1,0), fhi1(-1,-1,0),
      &        nncutmax, non_commensurate, flip,
      &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hyy, qc1)
-      call b2xtfy (nx, ny, nx1, ny1, fhi(-1,-1,1), fhi1(-1,-1,1),
+      call b2xtfy (nx, ny, nx1, ny1,
+     &        fhi(-1,-1,1), fhi1(-1,-1,1),
      &        nncutmax, non_commensurate, flip,
      &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,

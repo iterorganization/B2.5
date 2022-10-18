@@ -5,6 +5,7 @@
      &  ismain, ismain0, dtim, rxf, ierr, ramp_call) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
+      use b2mod_ma28
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -22,7 +23,6 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_ilutern
       use b2mod_illtern_7
       use b2mod_ilutern_7
       use b2mod_ilutern_9
@@ -1154,7 +1154,7 @@ c   recompute particle fluxes
 *    ..perform iteration
         new_matrix = .false.
         if(mdf_fnb.eq.0) then                                            !srv 13.10.06
-!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv  22.05.18
+!         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 22.05.18
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.

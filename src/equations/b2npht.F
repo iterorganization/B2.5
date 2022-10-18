@@ -17,13 +17,13 @@
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
-      use b2mod_subsys
       use b2mod_sources
      & , only : shedt, shidt                                             !srv 31.01.21
       use b2mod_numerics_namelist
      & , only : dtee, dtei, time_factor
       use b2mod_plasma
      , , only : tep, tip, nep, nip, nap, kinrgyp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt, ismain                        !srv 05.07.17

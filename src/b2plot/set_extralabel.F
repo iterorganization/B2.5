@@ -197,7 +197,7 @@ C ===================================================================
 #endif
 #endif
 #endif
-        if(envvar.eq.' ') then
+        if(streql(envvar,' ')) then
           write(*,*) 'Environment variable ',var(1:lnblnk(var)),
      1       ' does not exist'
         endif

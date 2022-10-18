@@ -8,4 +8,4 @@
       ix_page=1
       iy_page=1
       new_page=.true.
-      end
+      end subroutine b2page

@@ -52,13 +52,13 @@
       use b2mod_trace
       use b2mod_ipmain
       use b2mod_openmp
-      use b2mod_average
+      use b2mod_running_average
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
       use b2mod_b2plot
-     , ,only: nlimi, wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+     , , only : nlimi, wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -172,11 +172,12 @@
       logical lwti, lwav, lrav, lrer, continued, ids_replace
       character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
-     *  cputarget, cpuincrement, neutral_rescale,
-     *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
-     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
-     3  dt_min, dt_max, max_delta
+     *  cputarget, cpuincrement,
+     *  neutral_rescale, neutral_sources_rescale,
+     1  na_eps, te_eps, ti_eps, po_eps, ua_eps,
+     2  sput_frc, sput_phys,
+     3  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     4  dt_min, dt_max, max_delta
       real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -1243,8 +1244,8 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
-           write(*,*)
-     *      'Adding ',log(neutral_sources_rescale),' to relevant rtlra'
+           write(*,*) 'Adding ',log(neutral_sources_rescale),
+     *      ' to relevant rtlra'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
@@ -1729,7 +1730,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),na_min)
+            na(ix,iy,is) = max(na(ix,iy,is),na_min)
           enddo
         enddo
       enddo                                                          !srv 25.01.16 }
@@ -2412,7 +2413,8 @@ c new CDF movie option
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
      &       b2mndr_elapsed.gt.0.0_R8).or.
-     2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
+     2      (etim.gt.stim.and.tim.ge.etim.and.
+     &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
         write_save=write_save.or.
@@ -2449,6 +2451,7 @@ c new CDF movie option
      &     fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
+          close(nout(6))
 *       ..write additional save namelist data
           filename='b2.feedback_save.parameters'
           call find_file(filename,found)
@@ -2528,7 +2531,6 @@ c new CDF movie option
             endif
           endif
 #endif
-          close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
           if (iav_run > 0) then
             write (aver_name,'(a17,a4)')
