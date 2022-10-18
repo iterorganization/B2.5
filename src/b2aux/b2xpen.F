@@ -18,8 +18,8 @@
      5  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny), BoRiS
 ! outputs
       real (kind=R8) ::
-     &  fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),fhp(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     1  fhj(-1:nx,-1:ny,0:1,0:1),       fht(-1:nx,-1:ny,0:1,0:1)
+     *  fhm(-1:nx,-1:ny,0:1,0:1,0:ns-1),fhp(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     *  fhj(-1:nx,-1:ny,0:1,0:1),       fht(-1:nx,-1:ny,0:1,0:1)
 *     ------------------------------------------------------------------
 *     B2XPEN computes contributions to the total energy fluxes,
 *     as well as the total energy fluxes

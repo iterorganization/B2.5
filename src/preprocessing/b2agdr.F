@@ -477,9 +477,9 @@
      & vol, hx, hy, qz, qc, qs,
      & gs, crx, cry, bb, pbs, fpsi, ffbz,
      & wbbl, wbbr, wbbv, wbbc,
-     1 leftix1, leftiy1, rightix1, rightiy1,
-     2 topix1, topiy1, bottomix1, bottomiy1,
-     3 leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
+     & leftix1, leftiy1, rightix1, rightiy1,
+     & topix1, topiy1, bottomix1, bottomiy1,
+     & leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
 *   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
@@ -589,7 +589,8 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, hx, hy, qz, fpsi, ffbz, bb)
+        call b2agbb (nx, ny, vol, hx, hy, qz,
+     &   fpsi, ffbz, bb)
       endif
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')

@@ -171,7 +171,7 @@
 *     logu(rtrqa), where rtrqa is the electron heat loss rate
 *     coefficient at electron temperature rtt(i) and electron density
 *     rtn(j), for processes starting from atomic species k. rtrqa has
-*     dimension ev*m**3/s.
+*     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
 *     logu(rtrcx), where rtrcx is the charge exchange rate coefficient

@@ -135,7 +135,7 @@
 *   ..obtain work space
       if (ncall.eq.0) then
         write(*,*)
-     .   'Allocating space for solver for 11-point-stencil matrix'  !sv 11.01.00
+     .   'Allocating space for solver for 11-point-stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
           call xerrab ('Style not applicable to 11-point-stencil!')
 *    ..obtain workspace for iluter
@@ -159,7 +159,7 @@
           allocate(ipsave(1:n_nz_sdrv))
         endif
         write(*,*)
-     .   'Allocated space for solver for 11-point-stencil matrix'   !sv 11.01.00
+     .   'Allocated space for solver for 11-point-stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -199,8 +199,8 @@
 !    &   aa11(-1,-1,-2), aa11(-1,-1,-1), aa11(-1,-1,0),
 !    &   aa11(-1,-1,1), aa11(-1,-1,2), aa11(-1,-1,3),
 !    .   resfun, corfun, name)
-       call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !srv 02.04.18
-      else if (style.eq.3) then                                        !srv 29.05.02 {
+       call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)  !srv 02.04.18
+      else if (style.eq.3) then                                     !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
      *                   indexes, ipsave, jasave, name)
@@ -210,7 +210,7 @@
         call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
 !        call cpu_time(cpu_start)
-        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)           !srv 29.05.02 }
+        call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)        !srv 29.05.02 }
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
@@ -575,5 +575,6 @@
 
       ncall = ncall + 1
 
+      return
       end subroutine storage_11                                       !srv 02.04.18 }
 

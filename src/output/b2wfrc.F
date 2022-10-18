@@ -111,7 +111,7 @@
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqa(i,j,k)) specifies
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
-*     charge state k. rtqa has dimension ev*m**3/s.
+*     charge state k. rtqa has dimension eV*m**3/s.
 *
 *     rtlcx - (0:nt,0:nn,0:ns0-1) real*8 array, input.
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlcx(i,j,k)) specifies

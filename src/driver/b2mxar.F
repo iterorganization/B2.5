@@ -49,15 +49,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, is
+      integer ix, iy, is
       real (kind=R8) ::
      *  navi, movi, mtvi, nevi, prvi, t0, t1, t2
-      save ncall
 *   ..procedures
       intrinsic sqrt, abs
       external xertst
 *   ..initialisation
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -183,7 +181,6 @@
       reshireg = reshireg/((1.5_R8+BoRiS)*prvi)
 
 * ..return
-      ncall = ncall+1
       call subend ()
       return
 

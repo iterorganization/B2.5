@@ -1751,7 +1751,7 @@ c
           nz=1
           call copy(div_fch,1.0_R8,nz,textbl)
         case('dfna')
-          description='\mtD\dfna (#/s)'
+          description='\mtD\dfna (particles/s)'
           nz=ns
           call copy(div_fna,1.0_R8,nz,textpl)
         case('dfmo')

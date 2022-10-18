@@ -299,7 +299,7 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
         endif
       endif
 
-*   .. set csigx = 0 and calfx = 0
+*   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
         call sfill (n2*2, 0.0e0_R8, csig(-1,-1,0,0), 1)
         call sfill (n2*2, 0.0e0_R8, calf(-1,-1,0,0), 1)

@@ -1616,14 +1616,14 @@
      &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hxx, bottomiy1)
+     &        hx, hxx, bottomiy1)
       call b2xtfy (nx, ny, nx1, ny1,
      &        fch_52(-1,-1,1,1), fch1_52(-1,-1,1,1),
      &        nncutmax, non_commensurate, flip,
      &        nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     .        hx, hxx, bottomiy1)
+     &        hx, hxx, bottomiy1)
       call b2xtfx (nx, ny, nx1, ny1,
      &        fch_p(-1,-1,0,0), fch1_p(-1,-1,0,0),
      &        nncutmax, non_commensurate, flip,

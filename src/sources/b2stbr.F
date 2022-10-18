@@ -20,7 +20,7 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
-      use b2mod_average
+      use b2mod_running_average
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne

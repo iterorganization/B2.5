@@ -703,7 +703,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
      &   ti, ua(-1,-1,is), cvsa(-1,-1,0,0,is), cvsahz(-1,-1,0,0,is),
      &   fllimvisc(-1,-1,is))
       enddo
-*   .. save the classical transport coefficients
+*   ..save the classical transport coefficients
       csig_cl = csig
       calf_cl = calf
       cvsa_cl = cvsa

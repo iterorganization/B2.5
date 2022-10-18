@@ -225,7 +225,6 @@
 
        pass='exact_'//trim(nmvar)//'.dat'
        call find_file(pass,l_exist)
-       inquire(file=trim(pass),exist=l_exist)
        call xertst(l_exist,'Did not find '//trim(pass)//' file')
 
        open(70,file=pass)
@@ -238,32 +237,35 @@
        era = var(:,:)-exact_var(:,:)
        call my_out(70,nx,ny,era/scl,trim(nmvar)//'_aerr')
        ind = maxloc(abs(era))                                          !srv 09.07.18
-       write(71,"(' Max|era',a,'|',10x,'=',es10.3,a,i4,a,i4)")
-     &           trim(nmvar),abs(era(ind(1)-2,ind(2)-2))/scl,
-     &          '   is in ix = ', ind(1)-2,' iy = ', ind(2)-2
+       write(71,'(a,a,a,10x,a,es10.3,a,i4,a,i4)')
+     &  ' Max|era',trim(nmvar),'|','=',abs(era(ind(1)-2,ind(2)-2))/scl,
+     &  '   is at ix = ', ind(1)-2,' iy = ', ind(2)-2
        if(all(var.ne.0.0_R8)) then
-        err = abs(era/exact_var)
+        err = abs(era)/exact_var
         ind = maxloc(abs(err))                                          !srv 09.07.18
-        write(71,"(' Max|era',a,'/',a,'|       =',es10.3,a,i4,a,i4)")
-     &          trim(nmvar), trim(nmvar), err(ind(1)-2,ind(2)-2),     !srv 09.07.18
-     &          '   is in ix = ', ind(1)-2,' iy = ', ind(2)-2
+        write(71,'(a,a,a,a,a,es10.3,a,i4,a,i4)')
+     &  ' Max|era',trim(nmvar),'/',trim(nmvar),'|       =',
+     &   abs(err(ind(1)-2,ind(2)-2)),
+     &  '   is at ix = ', ind(1)-2,' iy = ', ind(2)-2
         call my_out(70,nx,ny,err,trim(nmvar)//'_rerr')
        else
-        write(71,"(' Max|era',a,'/',a,'|     =',a4)")
-     &              trim(nmvar), trim(nmvar),' inf'
+        write(71,'(a,a,a,a,a,a4)')
+     &   ' Max|era',trim(nmvar),'/',trim(nmvar),'|     =',' Inf'
        endif
 
        L2norm=norm2(exact_var)                                          !srv 09.07.18 {
        if(L2norm.ne.0.0_R8) then
-        write(71,"(' L2era',a,'/L2',a,'        =',es10.3)")
-     &         trim(nmvar),trim(nmvar),norm2(era)/L2norm
-        write(71,"(' C_era',a,'/C_',a,'        =',es10.3)")
-     &   trim(nmvar),trim(nmvar),maxval(abs(era))/maxval(abs(exact_var))
+        write(71,'(a,a,a,a,a,es10.3)')
+     &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',
+     &   norm2(era)/L2norm
+        write(71,'(a,a,a,a,a,es10.3)')
+     &   ' C_era',trim(nmvar),'/C_',trim(nmvar),'        =',
+     &   maxval(abs(era))/maxval(abs(exact_var))
        else
-        write(71,"(' L2era',a,'/L2',a,'        =',a4)")
-     &              trim(nmvar),trim(nmvar),' inf'
-        write(71,"(' C_era',a,'/C_',a,'        =',a4)")
-     &              trim(nmvar),trim(nmvar),' inf'
+        write(71,'(a,a,a,a,a,a4)')
+     &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',' Inf'
+        write(71,'(a,a,a,a,a,a4)')
+     &   ' C_era',trim(nmvar),'/C_',trim(nmvar),'        =',' Inf'
        endif                                                             !srv 09.07.18 }
 
        write(71,*)

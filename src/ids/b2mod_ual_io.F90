@@ -30,7 +30,7 @@ module b2mod_ual_io
     use b2mod_elements
     use b2mod_constants
     use b2mod_sources
-    use b2mod_average
+    use b2mod_running_average
     use b2mod_feedback
     use b2mod_transport
     use b2mod_transport_nspecies
@@ -6250,23 +6250,6 @@ contains
         ncall = ncall + 1
 
         contains
-
-        integer function get_atom_number( compname )
-            implicit none
-            character*2 compname
-            integer is, iatm
-            logical streql
-            external streql
-
-            get_atom_number = 0
-            do iatm = 1, natmi
-               if ( get_atom_number > 0 ) cycle
-               is = eb2atcr(iatm)
-               if (streql( is_codes( is ), compname ) ) get_atom_number = iatm
-            end do
-            return
-
-        end function get_atom_number
 
         function separatrix_average( field, weight )
         ! This function is devoted to obtain the weighted average along the active separatrix

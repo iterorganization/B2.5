@@ -81,8 +81,8 @@
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
 
 c Drift terms
-      vedia=0.0_R8                                                       !xpb
-      veecrb=0.0_R8                                                      !xpb
+      vedia  = 0.0_R8                                                    !xpb
+      veecrb = 0.0_R8                                                    !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
 
         if(drift_style.eq.0) then ! 5.0 treatment

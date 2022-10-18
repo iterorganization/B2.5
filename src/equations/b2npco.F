@@ -46,7 +46,6 @@
      *  rescb(-1:nx,-1:ny), corpb(-1:nx,-1:ny)
 *   ..common blocks
 
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -347,6 +346,7 @@ csw 11dec2012, check for solv flags
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
+
 * ..return
       ncall = ncall+1
       call subend ()

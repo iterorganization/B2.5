@@ -67,11 +67,11 @@
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-         wrk0(ix,iy) = wrk0(ix,iy)+smq(ix,iy,1,is)+
+         wrk0(ix,iy) = wrk0(ix,iy) + smq(ix,iy,1,is) +
      &     smq(ix,iy,3,is)*roxa(ix,iy,is)
-         wrk1(ix,iy) = wrk1(ix,iy)+smq(ix,iy,0,is)+
-     &     smq(ix,iy,1,is)*ua(ix,iy,is)+
-     &     smq(ix,iy,2,is)*roxa(ix,iy,is)+
+         wrk1(ix,iy) = wrk1(ix,iy) + smq(ix,iy,0,is)+
+     &     smq(ix,iy,1,is)*ua(ix,iy,is) +
+     &     smq(ix,iy,2,is)*roxa(ix,iy,is) +
      &     smq(ix,iy,3,is)*roxa(ix,iy,is)*ua(ix,iy,is)
         enddo
        enddo

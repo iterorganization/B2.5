@@ -49,7 +49,7 @@
 *   ..compute new po
       do iy = -1, ny
        do ix = -1, nx
-        po(ix,iy) = po(ix,iy)+rxf*corpo(ix,iy)
+        po(ix,iy) = po(ix,iy) + rxf*corpo(ix,iy)
        enddo
       enddo
 

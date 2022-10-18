@@ -1543,7 +1543,7 @@ contains
    nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, &
    ncid, batch_only, iret)
     use b2mod_constants
-#     include <netcdf.inc>
+#   include <netcdf.inc>
     integer nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret
     integer, intent(in) :: write_2d
     logical, intent(in) :: batch_only
@@ -2124,7 +2124,7 @@ contains
         iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
         call check_cdf_status(iret)
       endif
-    endif
+    endif !not.batch_only
 
     !wdk averages
     if (batch_only) then
@@ -2219,6 +2219,7 @@ contains
       iret  = nf_def_var(ncid, 'pomxap_std', NCDOUBLE, 2, dims, pomxap_stdid)
       call check_cdf_status(iret)
     endif
+
     ! assign attributes
     if (.not.batch_only) then
       iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
