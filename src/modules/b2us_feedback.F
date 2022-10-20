@@ -28,7 +28,6 @@
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
       real (kind=R8) :: charge_frac(DEF_NSD)
-      real (kind=R8), parameter :: amtol = 1.0e-2_R8
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
 

@@ -1,109 +1,112 @@
-      module b2mod_equation_sources                                     !srv 26.02.18 { 
+      module b2mod_equation_sources                                     !srv 26.02.18 {
       use b2mod_types
       implicit none
        real (kind=R8), allocatable, save ::
-     *  art_sch(:,:), 
-     *  art_she(:,:),               
-     *  art_shi(:,:), 
-     *  art_smo(:,:,:), 
+     *  art_sch(:,:),
+     *  art_she(:,:),
+     *  art_shi(:,:),
+     *  art_smo(:,:,:),
      *  art_sna(:,:,:)
 
       contains
 
       subroutine alloc_b2mod_equation_sources(nCv,nsd)
        implicit none
-       integer nCv, nsd 
-       
+       integer nCv, nsd
+
        allocate(art_sch(nCv,0:3))
        allocate(art_she(nCv,0:3))
        allocate(art_shi(nCv,0:3))
        allocate(art_smo(nCv,0:3,0:nsd-1))
        allocate(art_sna(nCv,0:1,0:nsd-1))
-       
+
        art_sch =0.0_R8
        art_she =0.0_R8
        art_shi =0.0_R8
        art_smo =0.0_R8
        art_sna =0.0_R8
 
-       write(*,*)'Allocated space for b2mod_equation_sources' 
+       write(*,*)'Allocated space for b2mod_equation_sources'
+       return
 
-      end subroutine alloc_b2mod_equation_sources 
+      end subroutine alloc_b2mod_equation_sources
 
       subroutine dealloc_b2mod_equation_sources
        implicit none
-       
+
        deallocate(art_sch)
        deallocate(art_she)
        deallocate(art_shi)
        deallocate(art_smo)
        deallocate(art_sna)
 
+       return
       end subroutine dealloc_b2mod_equation_sources
-      
+
       subroutine read_equation_sources(nCv, ns)
        use b2mod_types
        implicit none
        integer nCv, ns
-
        integer is, iCv
+       character*27 filename
        logical art_exists
 
-       INQUIRE (FILE = '../art_sna_us.dat', EXIST = art_exists)
+       filename = 'art_sna_us.dat'
+       call find_file(filename,art_exists)
        if(art_exists) then
-         open(70,FILE = '../art_sna_us.dat')
-         read (70,"(2x,e23.16)") 
-     &       ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+         open(70,FILE=trim(filename))
+         read (70,"(2x,e23.16)")
+     &    ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
          close(70)
        else
-         write(*,*) ' There is no file ../art_sna_us.dat'
-         stop
-       endif 
-
-       INQUIRE (FILE = '../art_smo_us.dat', EXIST = art_exists)
-       if(art_exists) then
-         open(70,FILE = '../art_smo_us.dat')
-         read (70,"(2x,e23.16)") 
-     &       ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-         close(70)
-       else
-         write(*,*) ' There is no file ../art_smo_us.dat'
-         stop
-       endif 
-
-       INQUIRE (FILE = '../art_she_us.dat', EXIST = art_exists)
-       if(art_exists) then
-         open(70,FILE = '../art_she_us.dat')
-         read (70,"(2x,e23.16)") 
-     &        (art_she(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         write(*,*) ' There is no file ../art_she_us.dat'
-         stop
-       endif 
-
-       INQUIRE (FILE = '../art_shi_us.dat', EXIST = art_exists)
-       if(art_exists) then
-         open(70,FILE = '../art_shi_us.dat')
-         read (70,"(2x,e23.16)") 
-     &        (art_shi(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         write(*,*) ' There is no file ../art_she_us.dat'
-         stop
-       endif 
-
-       INQUIRE (FILE = '../art_sch_us.dat', EXIST = art_exists)
-       if(art_exists) then
-         open(70,FILE = '../art_sch_us.dat')
-         read (70,"(2x,e23.16)") 
-     &        (art_sch(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         write(*,*) ' There is no file ../art_sch_us.dat'
-         stop
+         call xerrab ('There is no art_sna_us.dat file')
        endif
-      
+
+       filename='art_smo_us.dat'
+       call find_file(filename,art_exists)
+       if(art_exists) then
+         open(70,FILE=trim(filename))
+         read (70,"(2x,e23.16)")
+     &    ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+         close(70)
+       else
+         call xerrab('There is no art_smo_us.dat file')
+       endif
+
+       filename='art_she_us.dat'
+       call find_file(filename,art_exists)
+       if(art_exists) then
+         open(70,FILE=trim(filename))
+         read (70,"(2x,e23.16)") 
+     &    (art_she(iCv,0),iCv=1,nCv)
+         close(70)
+       else
+         call xerrab('There is no art_she_us.dat file')
+       endif
+
+       filename='art_shi_us.dat'
+       call find_file(filename,art_exists)
+       if(art_exists) then
+         open(70,FILE=trim(filename))
+         read (70,"(2x,e23.16)") 
+     &    (art_shi(iCv,0),iCv=1,nCv)
+         close(70)
+       else
+         call xerrab('There is no art_shi_us.dat file')
+       endif
+
+       filename='art_sch_us.dat'
+       call find_file(filename,art_exists)
+       if(art_exists) then
+         open(70,FILE=trim(filename))
+         read (70,"(2x,e23.16)") 
+     &    (art_sch(iCv,0),iCv=1,nCv)
+         close(70)
+       else
+         call xerrab('There is no art_sch_us.dat file')
+       endif
+
+       return
       end subroutine read_equation_sources
 
 

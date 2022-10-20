@@ -24,7 +24,7 @@ c
      1 '/(m^{-3}) (FRACTIONAL)'
       call customise_label(stmp,graphlabel(iwrk))
       return
-      end
+      end subroutine pne
 c
       subroutine pwne()
       use b2mod_types
@@ -50,4 +50,4 @@ c
       stmp=wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//'/(m^{-3})'
       call customise_label(stmp,wall_label(iwwrk))
       return
-      end
+      end subroutine pwne

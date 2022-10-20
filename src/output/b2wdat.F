@@ -1,4 +1,4 @@
-      subroutine b2wdat (nCv, nFc, nVx, ns, ismain, ismain0, 
+      subroutine b2wdat (nCv, nFc, nVx, ns, ismain, ismain0,
      .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
@@ -20,7 +20,8 @@
       use b2us_plasma
 #ifdef WG_DEBUG
       use b2us_debug
-#endif     
+#endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
@@ -53,7 +54,7 @@
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       integer, save :: use_mms = 0                                 !srv 26.02.18
-      
+
       integer nmdpl, nmdpl_i, ilast_closed_surface, iCvp, ncells,
      *  n_closed_surface, ifirst_open_surface,
      *  iFcp, iRFc, nRFc, icell
@@ -96,7 +97,7 @@
       real (kind=R8) ::                                            !srv
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
-      real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
+      real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
 #endif
       real (kind=R8) ::
@@ -107,18 +108,19 @@
      *   qe_oup_sum, qi_oup_sum, q_oup_sum,
      *   qe_iup_sum, qi_iup_sum, q_iup_sum,
      *   uvbtot, voltot                                            !iyv 29.11.13
-      character chns*3, chis*3, chib*2                                     !srv 27.04.01
-      character(23) hlp_frm                                        !srv 03.04.13
+      character chns*3, chis*3, chib*2                             !srv 27.04.01
+      character*32 hlp_frm                                         !srv 03.04.13
       character*26 boundary_location(nbcd)
-      character(7), save :: folder                        !srv 26.09.17
-      logical ex                                          !srv 26.09.17
+      character(7), save :: folder                                 !srv 26.09.17
+      logical ex                                                   !srv 26.09.17
 #ifdef B25_EIRENE
       integer js
       real (kind=R8), save :: hlp_neu_peak
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 #endif
 *   ..procedures
-      external subini, subend, ipgeti, machsfr
+      external machsfr
+      external ipgeti
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
       real (kind=R8) ::                                            !srv
@@ -126,6 +128,7 @@
 *   ..initialisation
       save ncall, iout, use_astra, boundary_namelist
       data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
+
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -138,7 +141,7 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-       call ipgeti ('b2mndr_use_mms',use_mms)                     !srv 26.02.18
+       call ipgeti('b2mndr_use_mms',use_mms)                      !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
 *    ..try to create a file in optional output folder
@@ -149,8 +152,8 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
- 10    folder=''
- 20    continue
+   10  folder=''
+   20  continue
       endif
 
       ! At the moment, some output is only supported for grids that were

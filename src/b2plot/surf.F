@@ -26,25 +26,25 @@ c
         if(typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'
           call init_page(titlestring,
-     1	   values(1),values(2),values(3),values(4),1,.false.,.true.,
+     1     values(1),values(2),values(3),values(4),1,.false.,.true.,
      2     .false.)
           call plotpatch(NX,NY,is,
-     .	   crx,cry,region,work(:,:,is,iwrk),
-     4	   values(9),values(10),.false.,linlog,igraphs)
+     .     crx,cry,region,work(:,:,is,iwrk),
+     4     values(9),values(10),.false.,linlog,igraphs)
           call end_page
         endif
         if(mod(typeofplot,2) .eq. 1) then
           if(b2plot_debug.ge.7) write(*,*) 'physical domain'
           call init_page(titlestring,
-     1	   values(5),values(6),values(7),values(8),1,.true.,.true.,
+     1     values(5),values(6),values(7),values(8),1,.true.,.true.,
      2     .true.)
           call plotpatch(nx,ny,is,
-     2	   crx,cry,region,
-     3	   work(:,:,is,iwrk),
-     4	   values(9),values(10),.true.,linlog,igraphs)
+     2     crx,cry,region,
+     3     work(:,:,is,iwrk),
+     4     values(9),values(10),.true.,linlog,igraphs)
           if(arrowl .gt. 0.0_R8) call plot_arrows(is)
           call end_page
         endif
       enddo
       return
-      end
+      end subroutine surf

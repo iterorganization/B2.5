@@ -13,7 +13,7 @@ c
         write (*,*) 'User specified',nofcls,'contour levels'
         write (*,*) 'Using customised contour levels:'
         do iclv=1,nofcls
-          clval(iclv)=rstack(irstack-nofcls+iclv)
+          clval(iclv)=real(rstack(irstack-nofcls+iclv),R4)
           write (*,*) 'contour level',iclv,'at',clval(iclv)
         enddo
       endif
@@ -34,7 +34,7 @@ c
         write (*,*) 'User specified',nofecls,'Eirene contour levels'
         write (*,*) 'Using customised Eirene contour levels:'
         do iclv=1,nofecls
-          eclval(iclv)=rstack(irstack-nofwcls+iclv)
+          eclval(iclv)=real(rstack(irstack-nofecls+iclv),R4)
           write (*,*) 'Eirene contour level',iclv,'at',eclval(iclv)
         enddo
       endif
@@ -55,7 +55,7 @@ c
         write (*,*) 'User specified',nofwcls,'wall contour levels'
         write (*,*) 'Using customised wall contour levels:'
         do iclv=1,nofwcls
-          wclval(iclv)=rstack(irstack-nofwcls+iclv)
+          wclval(iclv)=real(rstack(irstack-nofwcls+iclv),R4)
           write (*,*) 'wall contour level',iclv,'at',wclval(iclv)
         enddo
       endif
@@ -76,7 +76,7 @@ c
         write (*,*) 'User specified',noftcls,'target contour levels'
         write (*,*) 'Using customised target contour levels:'
         do iclv=1,noftcls
-          tclval(iclv)=rstack(irstack-noftcls+iclv)
+          tclval(iclv)=real(rstack(irstack-noftcls+iclv),R4)
           write (*,*) 'target contour level',iclv,'at',tclval(iclv)
         enddo
       endif

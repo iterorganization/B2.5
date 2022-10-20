@@ -34,6 +34,8 @@
      &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, 
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl,
      &          ncall_b2ttia
+      use b2mod_subsys
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
@@ -47,7 +49,6 @@
       type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
       type (B2Coeff), intent (inout) :: co
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -92,10 +93,10 @@
      *  wrkc(nCv), wrkf(nFc), wrkmin, wght(nFc,2)
       character*72 message
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2saxpy
+      external xertst, ipgetr, b2saxpy
       external b2trcl, b2trno
 *   ..initialisation
-      intrinsic huge
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -183,7 +184,7 @@ cwdk combined check for poloidal or radial diffusion
           do iFc = 1, nFc
             wrkmin = min(wrkmin, wrkf(iFc))
           enddo
-          write(message,'(a, i3)') 
+          write(message,'(a, i3)')
      .     'No particle diffusion for species ',is
           call xertst (wrkmin.gt.0.0_R8 .or. 
      .     switch%pol_anom_scale.eq.0.0_R8 .or. .not.b2news_solving(2),
@@ -203,14 +204,14 @@ cwdk combined check for poloidal or radial diffusion
         do iFc = 1, nFc
               wrkmin = min(wrkmin, wrkf(iFc))
         enddo
-        call xertst (wrkmin.gt.0.0_R8 .or. switch%pot_eq.ne.1 .or. 
+        call xertst (wrkmin.gt.0.0_R8 .or. switch%pot_eq.ne.1 .or.
      .   switch%fch_anomalous.eq.0.0_R8 .or. .not.b2news_solving(3) .or.
      .   switch%no_current.eq.1, 'No anomalous perpendicular currents')
       endif                                                           !srv 12.03.12 }
 
       if(switch%b2tral_iout.ne.0) then                                              !srv 17.06.08 {
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,co%cdna(1,0,is),'cdna_th'//chns)
         call my_out_us(70,nFc,1,co%cdna(1,1,is),'cdna_r'//chns)
         call my_out_us(70,nFc,1,co%cdpa(1,0,is),'cdpa_th'//chns)
@@ -265,7 +266,7 @@ cwdk combined check for poloidal or radial diffusion
        call my_out_us(70,nFc,1,co%cdkt(1,1),'cdkt_r')
       endif                                                          !srv 17.06.08 }
 
-      if(switch%b2npco_iout.ne.0) then                !srv 11.09.09 {
+      if(switch%b2npco_iout.ne.0) then                               !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2tral_cdna_th'//chns)
@@ -280,10 +281,10 @@ cwdk combined check for poloidal or radial diffusion
 !        call my_out_us(70,nFc,1,co%cvla(1,1,is),'b2tral_cvlay'//chns)
        enddo
       endif
-        
+
       if(switch%b2npmo_iout.ne.0) then
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,co%cvsahz(1,0,is),'b2tral_cvsahz_th'//
      &              chns)
         call my_out_us(70,nFc,1,co%cvsahz(1,1,is),'b2tral_cvsahz_r'//
@@ -312,10 +313,10 @@ cwdk combined check for poloidal or radial diffusion
       endif
       if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0) then
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
-         if(is0.ne.is .and. .not.is_neutral(is)) then 
+         if(is0.ne.is .and. .not.is_neutral(is)) then
           call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),
      &        'b2tral_csigin_th'//chns//'_'//chns0)
           call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),

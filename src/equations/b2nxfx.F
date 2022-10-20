@@ -1,12 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, ne, te, 
+      subroutine b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, ne, te,
      &     po, ehxp, wrk0, wrk1)
       use b2mod_types
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
@@ -18,6 +19,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   ehxp(nCv)
+
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -55,7 +57,7 @@
       integer iCv
       real (kind=R8) :: wrkc0(nCv), wrkc1(nCv), wrkv(nVx)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -78,7 +80,7 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-	   if(rightix(ix,iy).eq.nx+1) then
+           if(rightix(ix,iy).eq.nx+1) then
              ehxp(ix,iy) = 0.0_R8
            else
              ehxp(ix,iy) = 
@@ -87,7 +89,7 @@
      &        (wrk0(rightix(ix,iy),rightiy(ix,iy))-qe*ne(ix,iy)*
      &         wrk1(rightix(ix,iy),rightiy(ix,iy)))/
      &        (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-	   endif
+           endif
          elseif(rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 
      &     (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)*           !srv 11.01.13
@@ -107,7 +109,7 @@
         enddo
        enddo
 #endif
-      else ! style                                                      !srv 26.10.08 {
+      else ! style                                                   !srv 26.10.08 {
 *   ..compute wrk0 and wrk1
        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrkc0)
        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrkc1)

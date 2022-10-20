@@ -1,5 +1,6 @@
       subroutine interp1d(nn,nn1,xx,xx1,fa,fb)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *..   input arguments
       integer nn, nn1
@@ -12,7 +13,7 @@
       integer i
       integer ib, ih, it
 *..   procedures
-      external subini, subend, xertst
+      external xertst
 
 csc
 c     This routine performs simple 1D interpolation

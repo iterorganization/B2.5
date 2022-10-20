@@ -1,10 +1,13 @@
       subroutine b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, kapy, cony)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
       integer nx, ny, ns, mode
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), hy(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
+     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &   hy(-1:nx,-1:ny),
      &   qz(-1:nx,-1:ny,0:1),
      &   kapy(-1:nx,-1:ny,0:1,0:ns-1), cony(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
@@ -19,7 +22,7 @@
      *   hy1(-1:nx,-1:ny)
       real (kind=R8) ::
      *   harm
-      external subini, subend, xertst
+      external xertst
       external b2xxgs, harm
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
@@ -85,4 +88,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txfy

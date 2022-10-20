@@ -6,6 +6,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -72,7 +73,7 @@
       integer ix, iy, is
 *   ..procedures
       logical strmas
-      external subini, subend, xertst, strmas
+      external xertst, strmas
       external b2xvff
 
 *-----------------------------------------------------------------------
@@ -105,7 +106,7 @@
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(ix,0,1,1)/gs(ix,0,1), fhi(ix,0,1,1)/gs(ix,0,1),
      &    fne(ix,0,1,1)/gs(ix,0,1), fch(ix,0,1,1)/gs(ix,0,1),
-     &    (fna(ix,0,1,1,is)/gs(ix,0,1),is=0,ns-1)
+     &   (fna(ix,0,1,1,is)/gs(ix,0,1),is=0,ns-1)
        enddo
       endif
 *   ..write pzno segment?
@@ -118,7 +119,7 @@
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(ix,ny,1,1)/gs(ix,ny,1), fhi(ix,ny,1,1)/gs(ix,ny,1),
      &    fne(ix,ny,1,1)/gs(ix,ny,1), fch(ix,ny,1,1)/gs(ix,ny,1),
-     &    (fna(ix,ny,1,1,is)/gs(ix,ny,1),is=0,ns-1)
+     &   (fna(ix,ny,1,1,is)/gs(ix,ny,1),is=0,ns-1)
        enddo
       endif
 *   ..write pzwe segment?
@@ -129,9 +130,9 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(0,iy,0,0)/gs(0,iy,0)/qc(0,iy), 
+     &    fhe(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
      &    fhi(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
-     &    fne(0,iy,0,0)/gs(0,iy,0)/qc(0,iy), 
+     &    fne(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
      &    fch(0,iy,0,0)/gs(0,iy,0)/qc(0,iy),
      &   (fna(0,iy,0,0,is)/gs(0,iy,0)/qc(0,iy),is=0,ns-1)
        enddo
@@ -144,9 +145,9 @@
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
         write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
-     &    fhe(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy), 
+     &    fhe(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
      &    fhi(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
-     &    fne(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy), 
+     &    fne(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
      &    fch(nx,iy,0,0)/gs(nx,iy,0)/qc(nx,iy),
      &   (fna(nx,iy,0,0,is)/gs(nx,iy,0)/qc(nx,iy),is=0,ns-1)
        enddo
@@ -184,4 +185,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfpk
 
-      end
+      end subroutine b2wfpk

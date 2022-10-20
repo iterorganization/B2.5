@@ -5,10 +5,12 @@
      &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny, isymm
@@ -17,14 +19,14 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
+     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
      &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3), 
+     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3),
      &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
      &  wbbc(-1:nx+1,-1:ny+1,0:3), 
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
      &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
-     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
+     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
      &  ebc(-1:nx,-1:ny,0:2)
       type(B2GridMap) :: gmap
 *   ..common blocks
@@ -39,7 +41,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit (nget) the specification of a b2
+*     This routine reads from unit (nget) the specification of a B2
 *     geometry and magnetic field. Unit nget must be connected to an
 *     un*formatted file.
 *     The data consists of the coordinates of the four corners of all
@@ -124,11 +126,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
@@ -145,9 +147,9 @@
 *     pbs - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     (parameters in common:)
@@ -191,13 +193,12 @@
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, t0, t1, t2
 *   ..procedures
-      intrinsic min, max, sqrt
+      intrinsic min, max
       real (kind=R8) ::
-     *   trim1, norm, cosang, sinang, dist
-      external subini, subend, xertst, cfrure, cfruin
+     *   trim1, cosang, sinang, dist
+      external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       sinang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
@@ -239,10 +240,10 @@
       call cfrure (nget, n2*2, qz, 'qz')
 cxpb
       if(b2fgmtry_version.ge.'03.001.000') then
-        call cfrure (nget, n2*2, qc, 'qc')
-        call cfrure (nget, n2*2, qs, 'qs')
+       call cfrure (nget, n2*2, qc, 'qc')
+       call cfrure (nget, n2*2, qs, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
-        call cfrure (nget, n2, qc(-1,-1,0), 'qc')
+       call cfrure (nget, n2, qc(-1,-1,0), 'qc')
       else
        do iy = -1, ny
         do ix = -1, nx
@@ -259,7 +260,7 @@ cxpb
         enddo
        enddo
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -359,7 +360,7 @@ cxpb-end
         call cfruin (nget, 1, idum, 'redef_gmtry')
         redef_gmtry=idum(0)
         call cfrure (nget, n2*4, wbbl, 'wbbl')
-        if (redef_gmtry.eq.0) write(*,*)
+        if (redef_gmtry.eq.0) write(*,'(a)')
      .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
      .   'because redef_gmtry.eq.0 !'
       else
@@ -374,6 +375,7 @@ cxpb-end
      1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
         wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
       endif
+
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then
@@ -522,7 +524,7 @@ cxpb-end
       call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl3', '.ge.')
       call b2xvsg (n2, wbbr(-1,-1,3), 1, 'wbbr3', '.ge.')
       call b2xvsg (n2, wbbv(-1,-1,3), 1, 'wbbv3', '.ge.')
-      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.ge.')
+      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.gt.')
 *   ..test geometry
       call xertst(maxval(region(-1:nx,-1:ny,1)).gt.0 .or.
      &            minval(region(-1:nx,-1:ny,2)).lt.0,
@@ -533,10 +535,12 @@ cxpb-end
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &     cell_width, cell_height)
 *   ..create B2GridMap data structure
-      call b2CreateMap(nx,ny,crx,cry,cflags,
-     &     leftix,leftiy,rightix,rightiy,
-     &     topix,topiy,bottomix,bottomiy,.true.,gmap)
-      mapInitialized = .true.
+      if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
+        call b2CreateMap(nx, ny, crx, cry, cflags,
+     &     leftix, leftiy, rightix, rightiy,
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .false.)
+        mapInitialized = .true.
+      endif
 
 * ..return
       call subend ()

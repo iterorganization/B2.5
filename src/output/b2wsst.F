@@ -1,13 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wsst (nspc, nx, ny, ns, crx, cry, bb, vol, hx, hy,
-     &  qz, qc, qs, gs, pbs, cell_width, cell_height,
+      subroutine b2wsst (nspc, nx, ny, ns,
+     &  crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch,
      &  ne, ni, pr, ro, rz, fne, fni, wrk0, wrk1)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspc, nx, ny, ns
@@ -43,7 +45,7 @@
 *
 *     This routine is available for use as the occasion may require;
 *     it is a suitable location for code to produce output that is of
-*     interest only for a specific application of b2.
+*     interest only for a specific application of B2.
 *     The basic version of b2wsst produces no output.
 *
 *
@@ -61,7 +63,7 @@
 *     na, ua, te, ti, po, fna, fhe, fhi, fch - real*8 array, input.
 *     See the calling routine for description.
 *
-*     ne, ni, pr, ro, rz, fne, fni - (-1:nx,-1:ny) real*8 array, input.
+*     ne, ni, pr, ro, rz, fne, fni - real*8 array, input.
 *     See the calling routine for description.
 *
 *     wrk0, wrk1 - (-1:nx,-1:ny) real*8 array, workspace.
@@ -81,7 +83,7 @@
       real (kind=R8) ::
      *  b2ssum, rfnax, rfnay, rfhex, rfhey,
      &  rfhix, rfhiy, rfchx, rfchy, rfnex, rfney, rfnix, rfniy
-      external subini, subend, xertst, b2ssum
+      external xertst, b2ssum
       external b2xvsg, b2xvff, b2xvgm, b2xvps
       rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
       rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)

@@ -13,6 +13,7 @@
 #ifdef WG_DEBUG
      &        , my_out_sf                                               !srv 27.06.21
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -35,7 +36,7 @@
       real (kind=R8) :: weight(nFc,2)
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation

@@ -20,7 +20,10 @@
       use b2mod_ppout
       use b2mod_diag
       use b2mod_work
+      use b2mod_math
       use b2mod_external
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -43,8 +46,7 @@
       data ismain/1/, external_species/0/
 *   ..procedures
       logical ltst, is_comment, cfendf
-      intrinsic sqrt
-      external subini, subend, xertst, xerrab, is_comment
+      external xertst, xerrab, is_comment
       external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
@@ -76,8 +78,9 @@
       isymm = idum(0)
 #ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
@@ -195,6 +198,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)

@@ -40,7 +40,7 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end function b2ssum
       function b2sasum (n, sx, incx)
       use b2mod_types
       implicit none
@@ -159,7 +159,7 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end subroutine b2sscal 
+      end subroutine b2sscal
 ! $AD NOCHECKPOINT
       subroutine b2scopy (n, sx, incx, sy, incy)
       use b2mod_types

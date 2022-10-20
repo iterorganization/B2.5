@@ -34,9 +34,9 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
+      logical goup,placed(DEF_NLIM),found,direction_same
       logical is_target_edge
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
       parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
@@ -54,9 +54,6 @@ c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
 c        end do
 c      end do
 cc%%%
-      no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
-     &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
-
       do il=1,nwldprt
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
@@ -80,7 +77,7 @@ c*** initialise the chain counter and the chain list
             lwsrtwrk(nwsrtwrk)=is
 c*** both ends of the first element will be checked (goup=.true. here)
             k=2
-            do 100 ii=2,nwldlis(il)
+            do ii=2,nwldlis(il)
 c              print *,'do 100:',ii,is,goup
               do ik=1,k
 c                print *,'do ik:',ik,is,goup
@@ -140,8 +137,9 @@ c*** Look in the opposite direction
               end do
 c*** No connection found
               go to 50
- 100        k=1
- 50         if(nwsrtwrk .ne. nwldlis(il)) then
+  100         k=1
+            end do
+   50       if(nwsrtwrk .ne. nwldlis(il)) then
               write (*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
@@ -150,7 +148,7 @@ c*** No connection found
               if (lskip(j)) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=0
-              elseif (no_fort44) then
+              else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else 
@@ -162,10 +160,9 @@ c*** No connection found
                 if (is_target_edge) then
                   k = 1
                   found = .false.
-                  do while (.not.found .and. k.le.nlim)
+                  do while (.not.found .and. k.le.nlimi)
                     if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .                 abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                      ic = 1
                       direction_same = abs(
      .                 (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
      .                   (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -176,7 +173,6 @@ c*** No connection found
                     else
      .               if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .                  abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                      ic = 2
                       direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
@@ -187,7 +183,6 @@ c*** No connection found
                     else
      .               if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .                  abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                      ic = 2
                       direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -198,7 +193,6 @@ c*** No connection found
                     else
      .               if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .                  abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                      ic = 1
                       direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/
@@ -223,7 +217,7 @@ c*** No connection found
                 else
                   k = 1
                   found = .false.
-                  do while (.not.found .and. k.le.nlim)
+                  do while (.not.found .and. k.le.nlimi)
                     if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .                  abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
      .                  abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.

@@ -10,7 +10,7 @@
         call intcor(nx,ny,vol,centre(-1,-1,is),corner(-1,-1,is))
       enddo
       return
-      end
+      end subroutine intcor1
 c
       subroutine intcor(nx,ny,vol,centre,corner)
       use b2mod_types
@@ -108,7 +108,7 @@ cxpb Check that this is a standard X-point                               !xpb
               corner(ix2,iy)=corner(ix1,iy)                              !xpb
             endif                                                        !xpb
           endif                                                          !xpb
-	   endif
+         endif
         enddo                                                            !xpb
       enddo                                                              !xpb
 
@@ -167,4 +167,4 @@ c special treatment of limiter tangency X-points                         !xpb
       enddo                                                              !xpb
 
       return
-      end
+      end subroutine intcor

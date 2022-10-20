@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agmx (nx1, ny1, nx, ny, 
+      subroutine b2agmx (nx1, ny1, nx, ny,
      & vol1, hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
@@ -13,14 +13,16 @@
      1 leftix1, leftiy1, rightix1, rightiy1,
      2 topix1, topiy1, bottomix1, bottomiy1,
      3 leftcut1, rightcut1, bottomcut1, topcut1,
-     $ cflags1)
+     & cflags1)
       use b2mod_types
-      use b2mod_interp
+      use b2mod_math
       use b2mod_b2cmfs
+      use b2mod_interp
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx1, ny1, nx, ny
@@ -32,18 +34,18 @@
      &  qs1(-1:nx1,-1:ny1,0:1), qac1(-1:nx1,-1:ny1,0:1), 
      &  qas1(-1:nx1,-1:ny1,0:1), ebc1(-1:nx1,-1:ny1,0:2),
      &  gs1(-1:nx1,-1:ny1,0:2),
-     1	crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     2	bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
+     1  crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
+     2  bb1(-1:nx1,-1:ny1,0:3), pbs1(-1:nx1,-1:ny1,0:1),
      3  fpsi1(-1:nx1,-1:ny1,0:3,0:2), ffbz1(-1:nx1,-1:ny1,0:3),
      4  wbbl1(-1:nx1,-1:ny1,0:3), wbbr1(-1:nx1,-1:ny1,0:3),
      &  wbbv1(-1:nx1,-1:ny1,0:3), wbbc1(-1:nx1+1,-1:ny1+1,0:3),
      5  cell_width1(-1:nx1,-1:ny1), cell_height1(-1:nx1,-1:ny1)
       integer
      *  leftix1(-1:nx1,-1:ny1), leftiy1(-1:nx1,-1:ny1),
-     1	rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
-     2	topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
-     3	bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
-     4	leftcut1(1:nncutmax), rightcut1(1:nncutmax),
+     1  rightix1(-1:nx1,-1:ny1), rightiy1(-1:nx1,-1:ny1),
+     2  topix1(-1:nx1,-1:ny1), topiy1(-1:nx1,-1:ny1),
+     3  bottomix1(-1:nx1,-1:ny1), bottomiy1(-1:nx1,-1:ny1),
+     4  leftcut1(1:nncutmax), rightcut1(1:nncutmax),
      5  bottomcut1(1:nncutmax), topcut1(1:nncutmax)
       integer, intent(in) :: cflags1(-1:nx1,-1:ny1, CARREOUT_NCELLFLAGS)
 *   ..output arguments (unspecified on entry)
@@ -54,8 +56,8 @@
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
      &  ebc(-1:nx,-1:ny,0:2),
-     1	gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     2	bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
+     1  gs(-1:nx,-1:ny,0:2), crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      3  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
      4  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
@@ -115,11 +117,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
@@ -136,16 +138,16 @@
 *     pbs - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
-      integer ic, isox, isoy, ix, iy, ix1, iy1, jx1, jy1, kx1, ky1, 
+      integer ic, isox, isoy, ix, iy, ix1, iy1, jx1, jy1, kx1, ky1,
      *   nxeff, nx1eff, ixiso(0:nncutmax), ix1iso(0:nncutmax),
      *   nyeff, ny1eff, iyiso(0:nncutmax), iy1iso(0:nncutmax)
       real (kind=R8) ::
@@ -153,16 +155,13 @@
       logical iniso, error
       integer i, j
       integer pbs_from_basis_mesh, geometryType
-      real (kind=R8) ::
-     *   p0x, p0y
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   norm, dist1
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+     *   dist1
       dist1(ix,iy,i,j) = norm (
      &  crx1(ix,iy,j)-crx1(ix,iy,i), cry1(ix,iy,j)-cry1(ix,iy,i))
-      external subini, subend, xertst, ipgeti
+      external xertst, ipgeti
       external b2xvgm1
 *   ..initialisation
       save pbs_from_basis_mesh
@@ -242,7 +241,6 @@
          return
  !     endif
 
-
 * ..compute metric coefficients on coarse mesh
 *   ..for multiple-null case, identify inner isolating cuts
       ix1iso(:) = nx1+1
@@ -263,15 +261,15 @@
       nxeff = nx - 2*isox
       nx1eff= nx1- 2*isox
 *   ..test nxeff, nx1eff
-      call xertst (1.le.nxeff.and.1.le.nx1eff, 
+      call xertst (1.le.nxeff.and.1.le.nx1eff,
      &  'faulty values nxeff, nx1eff')
-      call xertst (nxeff*(nx1eff/nxeff).eq.nx1eff, 
+      call xertst (nxeff*(nx1eff/nxeff).eq.nx1eff,
      & 'nx1eff/nxeff not integer')
 *   ..for multiple-null case, inner isolating cuts, mapped to new mesh
       ixiso(:) = nx+1
       ixiso(0) = -1
       do ic = 1, isox
-        ixiso(ic) = floor(1.0_R8*(ix1iso(ic)-(2*ic-1))*nxeff/nx1eff) 
+        ixiso(ic) = floor(1.0_R8*(ix1iso(ic)-(2*ic-1))*nxeff/nx1eff)
      .   + 2*ic-1
       enddo
 *   ..for limiter case, identify horizontal inner boundaries
@@ -284,7 +282,7 @@
           if ((.not.isInDomain(nx1,ny1,topix1(ix1,iy1),topiy1(ix1,iy1))
      &     .or. .not.isInDomain(nx1,ny1,bottomix1(ix1,iy1),
      &                                  bottomiy1(ix1,iy1)))
-     &     .and. (.not. iniso)) then  
+     &     .and. (.not. iniso)) then
             iniso = .true.
             isoy = isoy+1
             iy1iso(isoy) = iy1
@@ -295,15 +293,15 @@
       nyeff = ny - isoy
       ny1eff= ny1- isoy
 *   ..test nyeff, ny1eff
-      call xertst (1.le.nyeff.and.1.le.ny1eff, 
+      call xertst (1.le.nyeff.and.1.le.ny1eff,
      &  'faulty values nyeff, ny1eff')
-      call xertst (nyeff*(ny1eff/nyeff).eq.ny1eff, 
+      call xertst (nyeff*(ny1eff/nyeff).eq.ny1eff,
      & 'ny1eff/nyeff not integer')
 *   ..for limiter case, horizontal boundaries, mapped to new mesh
       iyiso(:) = ny+1
       iyiso(0) = -1
       do ic = 1, isoy
-        iyiso(ic) = floor(1.0_R8*(iy1iso(ic)-(ic-1))*nyeff/ny1eff) 
+        iyiso(ic) = floor(1.0_R8*(iy1iso(ic)-(ic-1))*nyeff/ny1eff)
      .   + ic
       enddo
 *   ..loop over cells
@@ -323,7 +321,7 @@
         do ix = -1, nx
           if (ix.gt.ixiso(isox).and.ix.lt.ixiso(isox+1)-1) then   ! inner cells
             kx1 = nx1eff/nxeff
-            ix1 = (ix-2*isox)*nx1eff/nxeff + 2*isox 
+            ix1 = (ix-2*isox)*nx1eff/nxeff + 2*isox
           elseif (ix.eq.ixiso(isox)) then           ! left edges
             kx1 = 1
             ix1 = (ix-(2*isox-1))*nx1eff/nxeff + (2*isox-1)
@@ -465,9 +463,9 @@ cxpb and if they needed coarsening
      >     cflags(ix,iy,CELLFLAG_TYPE) = GRID_BOUNDARY
           if (cflags1(ix1+kx1-1,iy1,CELLFLAG_TYPE) ==
      &                                     GRID_BOUNDARY_COARSEN
-     &       .and. cflags1(ix1,iy1,CELLFLAG_RIGHTFACE).ne.0 .and. 
+     &       .and. cflags1(ix1,iy1,CELLFLAG_RIGHTFACE).ne.0 .and.
      &       ky1.gt.1)
-     >     cflags(ix,iy,CELLFLAG_TYPE) = GRID_BOUNDARY    
+     >     cflags(ix,iy,CELLFLAG_TYPE) = GRID_BOUNDARY
 cxpb We now check type compatibilities
           error = .false.
           do jx1 = 0, kx1-1
@@ -475,7 +473,7 @@ cxpb We now check type compatibilities
             do jy1 = 0, ky1-1
               if (error) exit  ! no need to look further
               if (jx1.eq.0 .and. jy1.eq.0) cycle  ! initial data
-              if (cflags(ix,iy,CELLFLAG_TYPE) == 
+              if (cflags(ix,iy,CELLFLAG_TYPE) ==
      .            cflags1(ix1+jx1,iy1+jy1,CELLFLAG_TYPE)) cycle  ! OK case
               TYPE: select case (cflags1(ix1+jx1,iy1+jy1,CELLFLAG_TYPE))
                 case(GRID_UNDEFINED)
@@ -596,7 +594,7 @@ cxpb  We import face data, which must match
      .     cflags1(ix1+kx1-1,iy1,CELLFLAG_RIGHTFACE)
           do jy1 = 1, ky1-1
             call xertst(
-     .       cflags1(ix1+kx1-1,iy1+jy1,CELLFLAG_RIGHTFACE).eq. 
+     .       cflags1(ix1+kx1-1,iy1+jy1,CELLFLAG_RIGHTFACE).eq.
      .       cflags(ix,iy,CELLFLAG_RIGHTFACE),
      .       'Boundary number mismatch on right face')
           end do
@@ -604,7 +602,7 @@ cxpb  We import face data, which must match
      .     cflags1(ix1,iy1+ky1-1,CELLFLAG_TOPFACE)
           do jx1 = 1, kx1-1
             call xertst(
-     .       cflags1(ix1+jx1,iy1+ky1-1,CELLFLAG_TOPFACE).eq. 
+     .       cflags1(ix1+jx1,iy1+ky1-1,CELLFLAG_TOPFACE).eq.
      .       cflags(ix,iy,CELLFLAG_TOPFACE),
      .       'Boundary number mismatch on top face')
           end do
@@ -643,11 +641,11 @@ cxpb Moving on to connectivity arrays
           enddo
           if(topix1(ix1+kx1-1,iy1+ky1-1).eq.ix1iso(ic)) then
             topix(ix,iy) = floor(1.0_R8*
-     .       (topix1(ix1+kx1-1,iy1+ky1-1) - (2*ic-1)) *nxeff/nx1eff) + 
+     .       (topix1(ix1+kx1-1,iy1+ky1-1) - (2*ic-1)) *nxeff/nx1eff) +
      .       (2*ic-1)
           else
             topix(ix,iy) = floor(1.0_R8*
-     .       (topix1(ix1+kx1-1,iy1+ky1-1) - (2*ic)) *nxeff/nx1eff) + 
+     .       (topix1(ix1+kx1-1,iy1+ky1-1) - (2*ic)) *nxeff/nx1eff) +
      .       (2*ic)
           endif
           ic = 0
@@ -669,7 +667,7 @@ cxpb Moving on to connectivity arrays
             leftiy(ix,iy) =
      .       floor(1.0_R8*(leftiy1(ix1,iy1)-(ic-1))*nyeff/ny1eff)+(ic-1)
           else
-            leftiy(ix,iy) = 
+            leftiy(ix,iy) =
      .       floor(1.0_R8*(leftiy1(ix1,iy1)-ic)*nyeff/ny1eff)+ic
           endif
           ic = 0
@@ -701,7 +699,7 @@ cxpb Moving on to connectivity arrays
           endif
           if(bottomiy1(ix1,iy1).ne.-2) then
             ic = 0
-            do while (bottomiy1(ix1,iy1).ge.iy1iso(ic+1)) 
+            do while (bottomiy1(ix1,iy1).ge.iy1iso(ic+1))
               ic = ic + 1
             enddo
             if (bottomiy1(ix1,iy1).eq.iy1iso(ic+1)) then
@@ -733,7 +731,7 @@ cdpc-end
             t1 = 0.0_R8
             do jy1 = 0, ky1-1
               t1 = t1+(hy1(ix1+jx1,iy1+jy1)*qz1(ix1+jx1,iy1+jy1,1))**2/
-     &	       vol1(ix1+jx1,iy1+jy1)
+     &         vol1(ix1+jx1,iy1+jy1)
             enddo
             t0 = t0+1.0_R8/t1
           enddo
@@ -773,11 +771,11 @@ c dpc 2000.06.02 end    xpb 11.08.00
         enddo
         if(leftcut1(ic).ne.nx1+1) then
           if (leftcut1(ic).eq.ix1iso(isox+1)) then
-            leftcut(ic) = 
-     .       floor(1.0_R8*(leftcut1(ic)-(2*isox-1))*nxeff/nx1eff) 
+            leftcut(ic) =
+     .       floor(1.0_R8*(leftcut1(ic)-(2*isox-1))*nxeff/nx1eff)
      .      + (2*isox-1)
           else
-            leftcut(ic) = 
+            leftcut(ic) =
      .       floor(1.0_R8*(leftcut1(ic)-2*isox)*nxeff/nx1eff) + (2*isox)
           endif
         endif
@@ -787,11 +785,11 @@ c dpc 2000.06.02 end    xpb 11.08.00
         enddo
         if(rightcut1(ic).ne.-2) then
           if (rightcut1(ic).eq.ix1iso(isox+1)) then
-            rightcut(ic) = 
+            rightcut(ic) =
      .       floor(1.0_R8*(rightcut1(ic)-(2*isox-1))*nxeff/nx1eff)+
      .       (2*isox-1)
           else
-            rightcut(ic) = 
+            rightcut(ic) =
      .       floor(1.0_R8*(rightcut1(ic)-2*isox)*nxeff/nx1eff)+(2*isox)
           endif
         endif
@@ -842,13 +840,19 @@ c dpc 2000.06.02 end    xpb 11.08.00
       endif
       if(nncut.ge.2) then
         call ipgeti ('b2agfs_leftcut2', leftcut(2))
-        call xertst (leftcut(1).lt.leftcut(2).and.
-     .               leftcut(2).lt.rightcut(1),
-     .              'faulty argument leftcut2')
         call ipgeti ('b2agfs_rightcut2', rightcut(2))
-        call xertst (leftcut(2).lt.rightcut(2).and.
-     .               rightcut(2).lt.rightcut(1),
-     .              'faulty argument rightcut2')
+        if(nnreg(0).eq.7) then
+          call xertst (leftcut(2).gt.rightcut(1).or.
+     .                 leftcut(2).gt.rightcut(2),
+     .                'faulty argument leftcut2')
+        else
+          call xertst (leftcut(1).lt.leftcut(2).and.
+     .                 leftcut(2).lt.rightcut(1),
+     .                'faulty argument leftcut2')
+          call xertst (leftcut(2).lt.rightcut(2).and.
+     .                 rightcut(2).lt.rightcut(1),
+     .                'faulty argument rightcut2')
+        endif
         call ipgeti ('b2agfs_topcut2', topcut(2))
         call xertst (-2.le.topcut(2).and.topcut(2).le.ny,
      .              'faulty argument topcut2')
@@ -860,19 +864,19 @@ cxpb  extra test since cases beyond double-null are not yet coded
       call xertst (nncut.le.2, 'faulty argument nncut')
 
       if(nncut.eq.0) write(*,'(a)') 'No cuts found'
-      if(nncut.ge.1) write(*,'(a,4i4)') 
+      if(nncut.ge.1) write(*,'(a,4i4)')
      > 'Using leftcut , rightcut , topcut , bottomcut  = ',
      1 leftcut(1), rightcut(1), topcut(1), bottomcut(1)
-      if(nncut.ge.2) write(*,'(a,4i4)') 
+      if(nncut.ge.2) write(*,'(a,4i4)')
      > 'Using leftcut2, rightcut2, topcut2, bottomcut2 = ',
      1 leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       call init_region(nx,ny,nncut,nncutmax,
-     1  leftcut,rightcut,topcut,bottomcut,
-     1  leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
-     2  region,nnreg,resignore,crx,cry,periodic_bc,cflags)
+     1 leftcut,rightcut,topcut,bottomcut,
+     1 leftix,leftiy,rightix,rightiy,topix,topiy,bottomix,bottomiy,
+     2 region,nnreg,resignore,crx,cry,periodic_bc,cflags)
 
-cxpb  extra code to allow for overwriting the pbs array with the 
+cxpb  extra code to allow for overwriting the pbs array with the
 cxpb  working mesh values
       if (pbs_from_basis_mesh.eq.0 .or. redef_gmtry.eq.1) then
 *  ..interpolate magnetic field to cell faces
@@ -883,10 +887,10 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 *   ..extrapolate magnetic field to edges
         do iy = -1, ny
           do ix = -1, nx
-            if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
+            if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy)))
      >       wbbl(ix,iy,0:2) =
      &        bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-            if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) 
+            if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)))
      >        wbbr(ix,iy,0:2) =
      &         bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
             if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
@@ -922,7 +926,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 *   ..compute pbs (magnetic field pitch * surface area) at cell faces
         geometryType = geometryId(nnreg, periodic_bc, topcut)
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qac, pbs,
-     &  leftix, leftiy, bottomix, bottomiy, cflags)      
+     &  leftix, leftiy, bottomix, bottomiy, cflags)
       endif
 
 * ..return

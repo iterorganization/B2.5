@@ -30,6 +30,7 @@
 #endif
      &          ncall_b2trno, ncall_b2tqna,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2tlh0
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
@@ -97,7 +98,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
-      external subini, subend, xertst, sfill, smin, smax, b2scopy
+      external xertst, sfill, smin, smax, b2scopy
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation
@@ -113,7 +114,6 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2trno.eq.0) then
-
       end if
 *   ..extensive tests on first few calls
       if (ncall_b2trno.lt.3) then
@@ -125,16 +125,16 @@
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test range of cvQgam, fcQgam
        call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
-     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range cvQgam(,1)')
        call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
-     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range cvQgam(,0)')
        call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
-     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range fcQgam(,1)')
        call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
-     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, te, ti
        call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
@@ -146,10 +146,10 @@
 
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain, 
+      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
      &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
-     &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB, 
+     &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB,
      &  co%hci_ExB)
 *   ..incorporate geometry
       do is = 0, ns-1
@@ -200,18 +200,18 @@
      &   co%dpa0(1:nCv,is), co%cdpahz(1:nFc,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dpa0(1:nCv,is), co%cdpahz(1:nFc,1,is))
-       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
+       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk,
      &   co%vla0(1:nCv,0,is), co%cvlahz(1:nFc,0,is))
-       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
+       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk,
      &   co%vla0(1:nCv,1,is), co%cvlahz(1:nFc,1,is))
-       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
+       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk,
      &   co%vma0(1:nCv,0,is), co%cvmahz(1:nFc,0,is))
-       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk, 
+       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk,
      &   co%vma0(1:nCv,1,is), co%cvmahz(1:nFc,1,is))
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
      &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                            !srv 01.07.05 }
+     &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                    !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 
 
@@ -232,42 +232,42 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
-      call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   hvi0(1:nCv,0), co%chvi(1:nFc,0))
-      call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   hvi0(1:nCv,1), co%chvi(1:nFc,1))
-      call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   hve0(1:nCv,0), co%chve(1:nFc,0))
-      call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   hve0(1:nCv,1), co%chve(1:nFc,1))
 
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce0, co%chce(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce0, co%chce(1:nFc,1))
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%sig0, co%csig(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%sig0, co%csig(1:nFc,1))
-      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  co%alf0, co%calf(1:nFc,0))
-      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  co%alf0, co%calf(1:nFc,1))
       wrkc = co%dkt0*(1.0_R8 + switch%b2tfhi_fconkt)
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, co%cdkt(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%dkt0, co%cdkt(1:nFc,1))
       wrkc = co%dzt0*(1.0_R8 + switch%b2tfhi_fconzt)
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, co%cdzt(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%dzt0, co%cdzt(1:nFc,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce_ExB, co%chce_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce_ExB, co%chce_ExB(1:nFc,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, 
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hci_ExB, co%chci_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hci_ExB, co%chci_ExB(1:nFc,1))
@@ -296,7 +296,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
            endif                                                          !srv 20.09.17
 	    enddo
         enddo
-        call b2saxpy (n2, 1.0_R8, chce_stoch, 1, chce(-1,-1,1,1), 1)        !srv 20.09.17 }
+        call b2saxpy (n2, 1.0_R8, chce_stoch, 1, chce(-1,-1,1,1), 1)      !srv 20.09.17 }
 #endif
       endif                                                               !lk 31.01.08 } !srv 17.12.13
 *   ..scale parallel coefficients if desired
@@ -369,7 +369,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
 
       if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then                  !srv 19.05.10 {
        do is = 0, ns-1
-	write (chns,'(i3.3)') is
+        write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
           call my_out_us(70,nFc,1,co%cdpa(1,0,is),
      &                          'b2trno_cdpa_th'//chns)
@@ -485,5 +485,5 @@ c the logic statements below could be simplfied but for now we go for readabilit
 *-----------------------------------------------------------------------
 *.end b2trno
 
-      end
+      end subroutine b2trno
 

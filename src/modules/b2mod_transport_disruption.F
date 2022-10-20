@@ -3,7 +3,7 @@
       use b2mod_version
 
       integer, save :: quenching
-      real, save :: time_quenching
+      real (kind=R8), save :: time_quenching
       real (kind=R8), allocatable, save ::
      *  rho_(:), f_quench(:,:)
 

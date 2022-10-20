@@ -14,6 +14,7 @@
       use b2us_plasma
       use b2mod_diag
      &     , only: fluids_list
+      use b2mod_subsys
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -39,17 +40,17 @@
 #endif
       integer nCv, nFc, ns
       real (kind=R8) :: BoRiS
-      type (switches), intent (in) :: switch
+      type (switches), intent(in) :: switch
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
       type(B2Plasma), intent(in) :: pl
       type(B2Derivatives), intent(in) :: dv
 
-      character chns*3                                                  !srv 16.09.02
+      character chns*3                                                 !srv 16.09.02
       character(2) :: ccall
-      integer, save :: icall = 0             !srv 21.06.08
+      integer, save :: icall = 0                                       !srv 21.06.08
       integer ix,iy,is,ncall,in
-      external ipgetr, ipgeti, subini, subend, xerrab
+      external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
      * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
@@ -152,7 +153,8 @@ c Initialization
         call my_out_us(70,nCv,0,gm%cvBb(1,1),'copy_bb_1')
         call my_out_us(70,nCv,0,gm%cvBb(1,2),'copy_bb_2')
         call my_out_us(70,nCv,0,gm%cvBb(1,3),'copy_bb_3')
-      endif 
+      endif
+
 * cell centred
       do ic=1,nCv
         neb(ic)=max(min(dv%ne(ic),switch%eir_ne_max),switch%eir_ne_min)
@@ -275,7 +277,7 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
               prb(ic)=prb(ic)+tnb(ic)*dnib(ic,nflai)
             endif
 c     Velocities uub, vvb, wwb
-c     * cell centered
+c     * cell-centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
             if(switch%eirene_uub_style.eq.0) then
@@ -299,7 +301,7 @@ c     internal cell -> full diamagnetic drift
 cwdk  uub computed from face fluxes, and interpolated to cell centers
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
-c     in fna may have been set 0. Should consider using the eirene_uub_style.eq.0 treatment 
+c     in fna may have been set to 0. Should consider using the eirene_uub_style.eq.0 treatment
 c     in these cells!
               uub(ic,nflai)=max(min(uuc(ic,is),switch%eir_ua_max),
      1                                           switch%eir_ua_min)
@@ -309,13 +311,13 @@ cwdk  vvb computed from face fluxes, and interpolated to cell centers
 c     Compatible with SOLPS4.3.
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at E/W boundaries questionable, because (certain/all) terms
-c     in fna may have been set 0. 
+c     in fna may have been set to 0.
             vvb(ic,nflai)=max(min(vvc(ic,is),switch%eir_ua_max),
      1                                         switch%eir_ua_min)
 cwdk  wwb directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but may not be fully consistent with respect to drifts.
-c     In particular: convective anomalous contribution  (if present) is missing
+c     In particular: convective anomalous contribution (if present) is missing
 c                    (diffusive anomalous contribution zero due to toroidal symm.)
               if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
 c     internal cell, old treatment -> grad-B drift only (fna)
@@ -384,7 +386,7 @@ c we derive the guard cell value from its neighbouring interior cell
         enddo
       else
         write(*,*) switch%eirene_extrap,
-     1   ' not avaible as an eirene_extrap option'
+     1   ' not available as an eirene_extrap option'
       endif
 
       if(switch%eirene_print_minmax.ne.0) then

@@ -2,13 +2,14 @@
 *.specification
 
       subroutine b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
-     . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch, 
+     . ismain, ismain0, nscx, nscxmax, iscx, itim, dtim, ntim, switch,
      . geo, mpg, st, st_ext, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_diag
      &   , only : nnatmi, alloc_b2mod_diag
       use b2mod_time
+      use b2mod_file
       use b2mod_b2cmpa
       use b2mod_user_namelist
       use b2mod_boundary_namelist
@@ -31,7 +32,7 @@
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
       use b2mod_b2cmpt
-     & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
+     & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna,
      &          cfhce, cfhci
       use b2mod_input_profile
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
@@ -47,6 +48,7 @@
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
       use b2mod_ad
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:10), nCv, nFc, nVx, ns, nxtl, nxtr, ismain,
@@ -71,7 +73,7 @@
 *
 *  1. purpose
 *
-*     B2MNDT performs one implicit timestep for the b2 system of
+*     B2MNDT performs one implicit timestep for the B2 system of
 *     equations.
 *
 *
@@ -80,7 +82,7 @@
 *     For a detailed description of the equations and the method of
 *     solution, see the references cited in the main program unit.
 *
-*     This routine performs one timestep for the b2 equations.
+*     This routine performs one timestep for the B2 equations.
 *     An outline of the procedure follows.
 *     ..test input arguments
 *     ..compute auxiliary quantities
@@ -106,14 +108,14 @@
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
-      save ramp_slow                                                     !xpb 
+      save ramp_slow                                                     !xpb
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical quit_residual, main_call
       logical solving(4)
       integer istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, acorkt, acorzt, nasum, na0sum, 
+     &  acorte, acorti, acorpo, acorkt, acorzt, nasum, na0sum,
      &  pz(nCv), rz(nCv)                                                 !iyv 06.02.14
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
@@ -129,14 +131,12 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
-      external subini, subend, xertst, ipgeti, ipgetr, smin,
-     &  smax, b2sasum, samax
+      external xertst, ipgeti, ipgetr, smin, smax, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *   ..initialisation
       data ramp_slow/0/
-
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -297,12 +297,12 @@ ctmp.dpc
 *   ..one-off calculation of transport coefficients
           call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
           call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
-          call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne, 
+          call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
      .      st%dv%ne)
-          call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, 
+          call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2,
      .      st%dv%ne2)
 *   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv, 
+          call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv,
      .      st_ext, st%co%chvemx, st%co%chvimx)
           call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
      1      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
@@ -328,12 +328,13 @@ ctmp.dpc
           cor_ei=0.0_R8
 #endif
 *     ..compute source linearisation
+          wrong_flow = .false.
           main_call = ntim.ne.0
-          call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr, nscx, 
-     &      nscxmax, switch%nsmin, switch%nsmax, iscx, ismain, ismain0,
-     &      dtim, switch%BoRiS, switch, geo, mpg, st%pl, st%dv, st%co,
-     &      st%rt, st%rtw, st_ext, st%sr, st%srw, st%psnc, st%psnl, 
-     &      wrong_flow, main_call)
+          call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr, nscx,
+     &     nscxmax, switch%nsmin, switch%nsmax, iscx, ismain, ismain0,
+     &     dtim, switch%BoRiS, switch, geo, mpg, st%pl, st%dv, st%co,
+     &     st%rt, st%rtw, st_ext, st%sr, st%srw, st%psnc, st%psnl,
+     &     wrong_flow, main_call)
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -342,7 +343,7 @@ ctmp.dpc
 !WG_TODO     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
 *     ..include contributions due to timestep
           call b2srdt (nCv, ns, dtim, switch%BoRiS, switch, geo, mpg,
-     &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, 
+     &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti,
      &    st%psnc%tn, st%psnc%ne, st%psnc%ni, st%psnc%nn,
      &    st%psnc%kinrgy,
      &    st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
@@ -360,15 +361,15 @@ ctmp.dpc
           if(equation_sources.ne.0) then                                 !srv 26.02.18 {
 	    do iCv = 1,nCv
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
-     &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1) 
+     &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
               st%sr%smo(iCv,0:3,0:ns-1) = st%sr%smo(iCv,0:3,0:ns-1)+
-     &          geo%cvVol(iCv)*geo%cvHz(iCv)*art_smo(iCv,0:3,0:ns-1) 
+     &          geo%cvVol(iCv)*geo%cvHz(iCv)*art_smo(iCv,0:3,0:ns-1)
               st%sr%she(iCv,0:3) = st%sr%she(iCv,0:3)+
-     &          geo%cvVol(iCv)*art_she(iCv,0:3) 
+     &          geo%cvVol(iCv)*art_she(iCv,0:3)
               st%sr%shi(iCv,0:3) = st%sr%shi(iCv,0:3)+
-     &          geo%cvVol(iCv)*art_shi(iCv,0:3) 
+     &          geo%cvVol(iCv)*art_shi(iCv,0:3)
               st%sr%sch(iCv,0:3) = st%sr%sch(iCv,0:3)+
-     &          geo%cvVol(iCv)*art_sch(iCv,0:3) 
+     &          geo%cvVol(iCv)*art_sch(iCv,0:3)
             enddo
           endif                                                          !srv 26.02.18 }
 *     ..stabilise the source coefficients
@@ -385,8 +386,8 @@ ctmp.dpc
            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
 #endif
            call b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
-     &       nscxmax, ismain, ismain0, dtim, switch%b2mndt_rxf, switch, 
-     &       geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st%sr, 
+     &       nscxmax, ismain, ismain0, dtim, switch%b2mndt_rxf, switch,
+     &       geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st%sr,
      &       st%srw, st_ext, st%psnc, st%psnl, ier0)
            flush(6)
 #ifdef WG_TODO
@@ -400,19 +401,19 @@ ctmp.dpc
 *!!      (should develop other error handling)
            ierr = ier0
 *      ..re-compute ne, ne2, ni
-           call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne, 
+           call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
      .       st%dv%ne)
-           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, 
+           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2,
      .       st%dv%ne2)
            call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
            call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
 *      ..zero out residuals on special regions
 *        (this in order to avoid their contribution to the norms)
-           call b2mxzr (nCv, ns, mpg, st%dv%resco, st%dv%resmo, 
-     &      st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%reshn, 
+           call b2mxzr (nCv, ns, mpg, st%dv%resco, st%dv%resmo,
+     &      st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%reshn,
      &      st%dv%respo, st%dv%reskt, st%dv%reszt)
 *      ..compute norms of the residuals
-           call b2mxar (nCv, ns, nnreg(0), switch%BoRiS, switch, 
+           call b2mxar (nCv, ns, nnreg(0), switch%BoRiS, switch,
      &      geo, mpg, st%pl, st%dv, st%diag)
            quit_residual=test_residual .and.
      &      ((st%diag%areshe*switch%nstg_areshe).le.
@@ -446,7 +447,7 @@ ctmp.dpc
 #ifdef WG_TODO
 *      ..maybe detailed monitor
            if (domoit) then
-             call b2mwit (nout(5), nx, ny, ns, itim, b2mndt_itcnt, 
+             call b2mwit (nout(5), nx, ny, ns, itim, b2mndt_itcnt,
      &        resco, resmo, resmt, reshe, reshi, respo,
      &        corpa, corua, corut, corte, corti,
      &        corpo)
@@ -456,10 +457,10 @@ ctmp.dpc
            if (ank_tracing.ne.0) then
              if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
                call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
-               call b2filei(1,ns,nnreg)
+               call b2filei(ns,nnreg,switch)
              end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >        call b2filew(istg(2),ns,nnreg)
+     >        call b2filew(istg(2),nnreg)
            endif
 #endif
 *      ..update iteration counter
@@ -469,14 +470,14 @@ ctmp.dpc
            goto 3
          else if (ntim.eq.0) then ! compute derived quantities
 #ifdef WG_TODO
-           if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
+           if(switch%ion_vlct_restrict .ne. 0 ) then                     !iyv 06.02.14
              call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
              call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
              wrk0 = sqrt(pz/rz)*geo%cvBb(:,0)/geo%cvBb(:,3)
              call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk0,co%cssb)
            else
              co%cssb = 0.0_R8
-           endif
+           endif                                                         !iyv 06.02.14
            do is=0,ns-1
 *      ..compute partial pressure
              call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is),
@@ -485,11 +486,11 @@ ctmp.dpc
              call b2tfnb (nx, ny, is, ismain,
      &          guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,    !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
      &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,0,is), 
+     &          pb, ua(-1,-1,is), uadia(-1,-1,0,0,is),
      &          vaecrb(-1,-1,0,0,is), vadia(-1,-1,0,0,is),
      &          wadia(-1,-1,0,0,is), ne, te, ti, bb,
      &          hx, hy, hz, qz, gs, qc, qs, po,                          !srv 19.05.03 08.10.04 04.02.05
-     &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
      &          cdpa(-1,-1,0,0,is),
      &          cddi(-1,-1,0,0,is), cvlahz(-1,-1,0,0,is),
      &          cvmahz(-1,-1,0,0,is), cdnahz(-1,-1,0,0,is),              !srv 09.01.01 15.12.05 13.10.06
@@ -504,11 +505,11 @@ ctmp.dpc
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
-        call b2tfed (nCv, nFc, nVx, switch, geo, mpg, dv%facdrift,
-     &       dv%fac_ExB, dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
+           call b2tfed (nCv, nFc, nVx, switch, geo, mpg, dv%facdrift,
+     &      dv%fac_ExB, dv%ne, pl%te, pl%po, dv%vedia, dv%veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
-     1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, 
+     1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po,
      2      switch%BoRiS, fhm, fhp, fhj, fht)
 *      ..compute ue, electron parallel velocity
            ue=0.0_R8

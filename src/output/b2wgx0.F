@@ -4,6 +4,7 @@
       subroutine b2wgx0 (nx, ny, header, crx, cry)
       use b2mod_types
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -18,12 +19,12 @@
 *
 *  1. purpose
 *
-*     B2WGX0 displays the b2 mesh in a cartesian representation.
+*     B2WGX0 displays the B2 mesh in a cartesian representation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine displays the b2 mesh in a sequence of cartesian
+*     This routine displays the B2 mesh in a sequence of cartesian
 *     representations.
 *
 *
@@ -77,7 +78,7 @@
      &  xlohi(0:1), ylohi(0:1)
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst, pagini, pagend, gsln, gpl_d
+      external xertst, pagini, pagend, gsln, gpl_d
       external b2xgxy
 
 *-----------------------------------------------------------------------
@@ -137,4 +138,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx0
 
-      end
+      end subroutine b2wgx0

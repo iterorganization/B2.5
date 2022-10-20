@@ -7,6 +7,7 @@
       use b2mod_ysmp_sdrv
 !      use b2mod_ma28
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -33,7 +34,7 @@
 *     with the five-point discretisation of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on the Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *
@@ -72,7 +73,7 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min, cpu_time
-      external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
+      external xertst, ipgeti, ipgetr, slv5pt, iluter
 *   ..initialisation
       save ncall, style, acpar, cpu
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
@@ -125,10 +126,10 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
-        write(*,*) 
-     .   'Allocating space for solver for 7-point-stencil matrix'  !srv 11.01.00
+        write(*,*)
+     .   'Allocating space for solver for 7-point stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for iluter
           allocate(aaf(1:n2*5))
           allocate(wrk0(1:n2))
@@ -136,7 +137,7 @@
           allocate(wrk2(1:n2))
           allocate(iwrk(1:1))
         else if (style.eq.1) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for slv5pt
           allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
           allocate(wrk0(1:n2))
@@ -144,9 +145,12 @@
           allocate(wrk2(1:1))
           allocate(iwrk(1:n2))
         else if (style.eq.2) then
+          continue
+        else if (style.eq.3) then
+          continue
         endif
-        write(*,*) 
-     .   'Allocated space for solver for 7-point-stencil matrix'   !srv 11.01.00
+        write(*,*)
+     .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -171,7 +175,7 @@
        else if (style.eq.3) then                                   !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
-     *                 indexes, iasave, jasave, name)
+     *                 indexes, iasave, jasave)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_7: nz = ',nz
@@ -197,14 +201,13 @@
       end subroutine b2ux7p
 
       subroutine storage_7 (nx, ny, aa7, nnz, ip, ja, a, k,          !srv 29.05.02
-     *                      indexes, ipsave, jasave, name)
+     *                      indexes, ipsave, jasave)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *  ..input
       integer nx, ny, nnz
       real (kind=R8) :: aa7(-1:nx,-1:ny,-3:3)
-      character*(*) name
 *  ..output
       integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
      *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)
@@ -311,4 +314,4 @@
        enddo
       endif
 
-      end                                                         !srv 29.05.02
+      end subroutine storage_7                                    !srv 29.05.02

@@ -6,6 +6,7 @@
       use b2mod_geo
       use b2mod_b2cmgs
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny
@@ -17,13 +18,13 @@
 *
 *  1. purpose
 *
-*     B2YGDR is a postprocessor for b2. It reads and displays the
+*     B2YGDR is a postprocessor for B2. It reads and displays the
 *     geometry and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This subroutine displays a b2 geometry and magnetic flux
+*     This subroutine displays a B2 geometry and magnetic flux
 *     functions.
 *
 *     B2 employs a two-dimensional, curvilinear, topologically
@@ -76,8 +77,8 @@
       character lblgm*120, idout*80, id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruin, cfruch, lbfilx
+      external xertst, xerrab, streql, gacwk, gdawk, cfruin, cfruch
+     & , lbfilx
       external b2rugm, b2wfgm, b2wggm
 
 *-----------------------------------------------------------------------
@@ -199,11 +200,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
@@ -293,8 +294,8 @@
 *   ..read geometry
 #ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
 #endif
 
 * ..output

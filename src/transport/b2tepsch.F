@@ -5,6 +5,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -22,7 +23,7 @@
 *  1. purpose
 *
 *     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
-*     heat flux
+*     heat flux.
 *
 *  8. further comments
 *
@@ -45,13 +46,13 @@
       call subini ('b2tepsch')
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')   
-      
+
 *   ..set dummy arrays
       dumm0 = 0.0_R8
 
-      fhePSch   = 0.0e0_R8                                               !srv 13.10.06
-      cone      = 0.0e0_R8                                               !srv 02.01.07
-      floe      = 0.0e0_R8
+      fhePSch = 0.0e0_R8                                                 !srv 13.10.06
+      cone    = 0.0e0_R8                                                 !srv 02.01.07
+      floe    = 0.0e0_R8
       facdriftm = maxval(facdrift)
       if(facdriftm.ne.0.0e0_R8) then
        do is = 0,ns-1                                                    !srv 12.05.11

@@ -7,6 +7,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2uppo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -28,7 +29,7 @@
 
 *   ..local variables
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -57,4 +58,4 @@
 *-----------------------------------------------------------------------
 *.end b2uppo
 
-      end
+      end subroutine b2uppo

@@ -8,6 +8,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -26,7 +27,7 @@
 *  1. purpose
 *
 *     B2NXFV calculates the convective term due to new form of ion  
-*     viscosity term in the momentum correction  equation.
+*     viscosity term in the momentum correction equation.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -34,7 +35,7 @@
 *   ..local variables
       real (kind=R8) ::
      *   ft, dloghz(nFc,0:1)                                            !srv 16.10.17
-      external subini, subend, xertst, b2scopy
+      external xertst, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
 
@@ -78,4 +79,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxfv
 
-      end                                                               !srv 19.01.05 01.07.05 11.09.09 }
+      end subroutine b2nxfv                                           !srv 19.01.05 01.07.05 11.09.09 }

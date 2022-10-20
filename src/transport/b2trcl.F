@@ -27,6 +27,7 @@
      &          ncall_b2trcl, ncall_b2tlnl,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
      &          b2trcl_cutlo, ncall_b2ttia
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, ismain
@@ -108,7 +109,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
-      external subini, subend, xertst, xerrab, sfill, smin, smax
+      external xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
 *   ..initialisation
@@ -239,7 +240,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         if (.not. is_neutral(is)) then
           call my_out_us(70,nFc,1,cvsahz(1,0,is),'b2trcl_cvsahzx'//
      &      chns)
@@ -442,15 +443,15 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       endif
 #ifdef WG_TODO
 #ifdef ASTRA
-      bbaverage2 = 0.0e0_R8                                               !srv 28.07.11 {
+      bbaverage2 = 0.0e0_R8                                              !srv 28.07.11 {
       chci_koeff = 0.0e0_R8
       tt0 = 0.0e0_R8
       tt1 = 0.0e0_R8
       if(integral_modeling.ne.0) then
        do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
-     &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))  
-        do ix=0,nx                                                  
+     &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
           tt1(iy) = tt1(iy) +vol(ix,iy)
@@ -458,34 +459,34 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         enddo
         bbaverage2(iy) = tt0(iy)/tt1(iy)
         tt0(iy) = 0.0e0_R8
-        do ix=0,nx                                                  
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +vol(ix,iy)/bb(ix,iy,3)/bb(ix,iy,3)*
-     &     (1.0_R8-bb(ix,iy,3)*bb(ix,iy,3)/bbaverage2(iy))**2 
+     &     (1.0_R8-bb(ix,iy,3)*bb(ix,iy,3)/bbaverage2(iy))**2
          endif
         enddo
         !wdk For WG, need to add flux limits for hcix_c !!
-        do ix=0,nx                                                  
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
-          chci_koeff(ix, iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
-     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2      !srv 22.04.16
+          chci_koeff(ix,iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
+     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2     !srv 22.04.16
      &     *vol(ix,iy)+(bb(leftix(ix,iy),iy,2)/bb(leftix(ix,iy),iy,3)
-     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2                !srv 22.04.16
-     &     *vol(leftix(ix,iy),iy))*inv_hi_astra(iy) !     chi_N_astra(iy) 
+     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2               !srv 22.04.16
+     &     *vol(leftix(ix,iy),iy))*inv_hi_astra(iy) !     chi_N_astra(iy)
          endif
         enddo
        enddo
 !       do iy = 0, iy_Ratb    ! for the region of overlap with ASTRA
         !wdk For WG, need to add flux limits for hcix_c !!
-       do iy =0,mintopcut-1    
-        do ix=0,nx                                                  
+       do iy=0,mintopcut-1
+        do ix=0,nx
          if(on_closed_surface(ix,iy)) then
-          chci(ix,iy,0,0) = chci_koeff(ix, iy)* 
+          chci(ix,iy,0,0) = chci_koeff(ix, iy)*
      &     0.5_R8*((ti(ix,iy)*na(ix,iy,ismain))**2
      &     +(ti(leftix(ix,iy),iy)*na(leftix(ix,iy),iy,ismain))**2)
          endif
         enddo
-       enddo                                   !srv 28.07.11 }
+       enddo                                                             !srv 28.07.11 }
       endif
 #endif
 #endif
@@ -499,15 +500,15 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if(.not. is_neutral(is)) 
      &  call my_out_us(70,nFc,1,cvsahz(1,0,is),
      &              'b2trcl_luciani_cvsahzx'//chns)
-!        call my_out_us(70,nFc,1,cvsahz(1,1,is),'b2trcl_luciani_cvsahzy'
-!     &              //chns)
+!        call my_out_us(70,nFc,1,cvsahz(1,1,is),
+!     &              'b2trcl_luciani_cvsahzy'//chns)
        enddo
       endif
       if(switch%b2npht_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,chce(1,0),'b2trcl_luciani_chce_th')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_luciani_calf_th')
-        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_alfx_c')       !srv 05.07.17
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_calfy')
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_luciani_chci_th')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_chciy')
@@ -516,21 +517,21 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_luciani_csig_th')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_luciani_csigy')
-        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sig_th_c')              !srv 05.07.17
+        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sig_th_c')     !srv 05.07.17
       endif
 
 *   .. save chce(:,0) after applying Luciani
-      wrk = chce(:,0)                                                   !srv 13.01.1
+      wrk = chce(:,0)                                                    !srv 13.01.17
 
-      if(switch%conductive_limit.ne.0) then                                      !srv 16.06.08 {
+      if(switch%conductive_limit.ne.0) then                              !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)
-*   .. apply the conductive limit of parallel electron heat flux          !srv 03.06.03 {
+*   .. apply the conductive limit of parallel electron heat flux         !srv 03.06.03 {
        if(cflim(0).ne.0.0e0_R8) then
         do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c            if(.not.on_closed_surface(ix,iy)) then                         !lk 06.05.07
+c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.05.07
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
@@ -571,8 +572,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
          endif
         enddo
        endif
-      endif                                                               !srv 16.06.08 }
-*   ..apply flux limit to calf                                            !srv 13.01.17 {
+      endif                                                              !srv 16.06.08 }
+*   ..apply flux limit to calf                                           !srv 13.01.17 {
       if(switch%b2sigp_style.ne.2) then
        if(cflim(0).ne.0.0e0_R8) then
         do iFc = 1, nFc
@@ -581,10 +582,10 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
             t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
-     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
+     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
-            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)            !srv 13.01.17
+            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                    !srv 13.01.17
          endif
         enddo
         !wdk pragmatic approximation for cell center flux limits: based on interpolation 
@@ -609,7 +610,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + 
      &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
-            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                !srv 13.01.17
+            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                         !srv 13.01.17
          endif
         enddo
 *   ..apply flux limit to alfx_c at cell centers
@@ -621,7 +622,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(co%alfx_c(iCv))*abs(gtec(iCv))/
      &         (cflim(3)*jemax + b2trcl_cutlo)
             co%fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
-            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)          !iyv 19.11.13 !srv 08.10.14
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
           endif
         enddo
        endif
@@ -647,12 +648,12 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *   ..save the classical transport coefficients
       csig_cl = csig
       calf_cl = calf
-      cvsa_cl=cvsa
-      cvsahz_cl=cvsahz                                                    !srv 09.01.01
+      cvsa_cl = cvsa
+      cvsahz_cl = cvsahz                                                 !srv 09.01.01
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
-       write (chns,'(i3.3)') is 
+       write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,cvsahz(1,0,is),
      &              'b2trcl_luciani_fllim_cvsahz_th'//chns)
 !        call my_out_us(70,nFc,1,cvsahz(1,1,is),
@@ -667,15 +668,15 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &             'b2trcl_luciani_fllim_calf_th')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_fllim_calfy')
         call my_out_us(70,nCv,0,co%alfx_c,
-     &             'b2trcl_luciani_fllim_alf_th_c')         !srv 05.07.17
+     &             'b2trcl_luciani_fllim_alf_th_c')                      !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),
      &             'b2trcl_luciani_fllim_chci_th')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
-                                         
-      if(switch%b2trcl_iout.ne.0) then                             !srv 17.06.08 {
+
+      if(switch%b2trcl_iout.ne.0) then                                   !srv 17.06.08 {
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsa_th'//chns)
         call my_out_us(70,nFc,1,cvsa(1,1,is),'cl_cvsa_r'//chns)
         call my_out_us(70,nFc,1,cvsahz(1,0,is),'cl_cvsahz_th'//chns)
@@ -689,7 +690,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         call my_out_us(70,nCv,0,cthe(1,is),'cl_cthe'//chns)
         call my_out_us(70,nCv,0,cthi(1,is),'cl_cthi'//chns)
         do is0=0,ns-1
-         write (chns0,'(i3.3)') is0 
+         write (chns0,'(i3.3)') is0
          call my_out_us(70,nFc,1,csigin(1,0,is,is0),'cl_csigin_th'//
      &        chns//'_'//chns0)
          call my_out_us(70,nFc,1,csigin(1,1,is,is0),'cl_csigin_r'//
@@ -708,9 +709,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        call my_out_us(70,nFc,1,csig(1,1),'cl_csig_r')
        call my_out_us(70,nFc,1,calf(1,0),'cl_calf_th')
        call my_out_us(70,nFc,1,calf(1,1),'cl_calf_r')
-       call my_out_us(70,nCv,0,co%sigx_c,'cl_sig_th_c')                      !srv 05.07.17
-       call my_out_us(70,nCv,0,co%alfx_c,'cl_alf_th_c')                      !srv 05.07.17
-      endif                                                          !srv 17.06.08 }
+       call my_out_us(70,nCv,0,co%sigx_c,'cl_sig_th_c')                  !srv 05.07.17
+       call my_out_us(70,nCv,0,co%alfx_c,'cl_alf_th_c')                  !srv 05.07.17
+      endif                                                              !srv 17.06.08 }
 
 * ..return
       ncall_b2trcl = ncall_b2trcl+1
@@ -725,4 +726,4 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *-----------------------------------------------------------------------
 *.end b2trcl
 
-      end
+      end subroutine b2trcl

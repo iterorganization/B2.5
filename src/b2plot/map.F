@@ -177,4 +177,4 @@ c special treatment of limiter tangency X-points
       enddo
 
       return
-      end
+      end subroutine map

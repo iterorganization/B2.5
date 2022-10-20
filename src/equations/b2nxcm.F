@@ -3,6 +3,7 @@
 
       subroutine b2nxcm (nCv, ns, pccm, pcca)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -28,7 +29,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   uxcm
-      external subini, subend, xertst, uxcm
+      external xertst, uxcm
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -54,4 +55,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxcm
 
-      end
+      end subroutine b2nxcm

@@ -22,5 +22,5 @@
      3 (1-ftemp)*fdens*vals(it,in+1)
 c      write(*,*) it,in,rval
       return
-      end
+      end subroutine int2d
 

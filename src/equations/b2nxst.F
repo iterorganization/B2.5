@@ -3,6 +3,7 @@
 
       subroutine b2nxst (nCv, rob, smb, ro, smt)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -26,7 +27,7 @@
 *   ..local variables
       integer iCv
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -47,4 +48,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxst
 
-      end
+      end subroutine b2nxst

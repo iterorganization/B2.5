@@ -1,22 +1,24 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,        !srv 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                 !srv 27.01.00
-     &    sch, respo, corpo, aa11)                                 !srv 27.01.00
+      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,              !srv 27.01.00
+     &    ne, te, conc, avisper, bvisper, cvisper,                       !srv 27.01.00
+     &    sch, respo, corpo, aa11)                                       !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_plasma
      * , only : fac_vis
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1,0:1),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     4   cvisper(-1:nx,-1:ny,0:1),
+     &   avisper(-1:nx,-1:ny,0:1),
+     &   bvisper(-1:nx,-1:ny,0:1),
+     &   cvisper(-1:nx,-1:ny,0:1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
@@ -46,7 +48,7 @@
       save ncall, vis_per                                          !srv 27.01.00
 *   ..procedures
       intrinsic min, abs
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p, b2ux9p                      !srv 11.01.00
 *   ..initialisation
       data ncall/0/, vis_per/0.0e0_R8/                             !srv 27.01.00
@@ -119,19 +121,19 @@ cwdk add 9-point contributions
            aa11(ix,iy, 3) = aa11(ix,iy, 3)+0.25_R8*conc(ix,iy,0,1)
           endif
           if (solvereg(ileft)) then
-           aa11(leftix(ix,iy),leftiy(ix,iy),-3) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy),-3) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy),-3)+0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy),-2) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy),-2) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy),-2)+0.25_R8*conc(ix,iy,0,1)
            aa11(leftix(ix,iy),leftiy(ix,iy), 3) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy), 3)-0.25_R8*conc(ix,iy,0,1)
-           aa11(leftix(ix,iy),leftiy(ix,iy), 4) = 
+           aa11(leftix(ix,iy),leftiy(ix,iy), 4) =
      &      aa11(leftix(ix,iy),leftiy(ix,iy), 4)-0.25_R8*conc(ix,iy,0,1)
           endif
          endif
         endif                                                      !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
-     >   aa11(ix,iy,1) = 0.0_R8                                     !srv 26.11.02
+     >   aa11(ix,iy,1) = 0.0_R8                                    !srv 26.11.02
        enddo
       enddo
       do iy = -1, ny
@@ -142,7 +144,7 @@ cwdk add 9-point contributions
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot)) then
-           aa11(bottomix(ix,iy),bottomiy(ix,iy),3) = 
+           aa11(bottomix(ix,iy),bottomiy(ix,iy),3) =
      &       aa11(bottomix(ix,iy),bottomiy(ix,iy),3)-conc(ix,iy,1,1)
            aa11(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa11(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
@@ -263,9 +265,9 @@ C      enddo
 
 *   ..solve the correction equation
 CWDK tmp: call 9-point solver
-!      call b2ux11p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7_')       !sv 11.01.00
+!     call b2ux11p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7')   !srv 11.01.00
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7_9pt')    !srv 18.05.02
+      call b2ux9p (nx, ny, aa11, itcnt, respo, corpo, 'b2usp7_9pt') !srv 18.05.02
 
       if (iout.ne.0) then                                          !srv 08.07.08 {
         do k=0,3
@@ -296,4 +298,4 @@ CWDK tmp: call 9-point solver
 *-----------------------------------------------------------------------
 *.end b2usp7
 
-      end
+      end subroutine b2usp7

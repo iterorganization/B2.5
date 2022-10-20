@@ -22,4 +22,4 @@ c
       stmp=wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//'/(m^{2})'
       call customise_label(stmp,wall_label(iwwrk))
       return
-      end
+      end subroutine pswa

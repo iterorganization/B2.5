@@ -14,12 +14,19 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine xertst
 
       subroutine b25_mpi_stop
+#ifdef USE_MPI
+#if MPI_MOD > 0
+      use mpi     ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_MOD < 1
       include 'mpif.h'
+#endif
       integer ierr_mpi
 #ifdef B25_EIRENE
       logical ltrigger

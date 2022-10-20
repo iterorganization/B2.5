@@ -10,17 +10,15 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_work
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2YR (main program) is a postprocessor for b2. It reads and
+*     B2YR (main program) is a postprocessor for B2. It reads and
 *     displays a table of atomic rate coefficients. This program calls
 *     the driver routine b2yrdr for the actual computation.
 *
@@ -33,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This program displays a table of atomic rate coefficients that
-*     has been prepared for the b2 code.
+*     has been prepared for the B2 code.
 *
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -70,13 +68,9 @@
 
 *   ..local variables
       integer ninp(0:3), nout(0:1), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, gnopen, gopks, gclks,
-     &  gclwk
+      external prgini, prgend, cfopen, gnopen, gopks, gclks, gclwk
       external b2yrdr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53/
@@ -100,16 +94,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yr_mpi_child'
-      endif
-#endif
       call prgini ('b2yr')
 *   ..open gks
       call gopks (0, 0)
@@ -140,10 +124,6 @@
 
 * ..end of computation
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yr'
 
 *-----------------------------------------------------------------------

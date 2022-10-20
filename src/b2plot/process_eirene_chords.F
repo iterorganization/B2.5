@@ -7,9 +7,12 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
+      use b2mod_subsys
       use eirmod_ctrig
+#endif
       implicit none
       character*(*) filename
+#ifdef B25_EIRENE
       character*80 dataname
       character*256 extralabel,tmpstring,titlestring
       logical open_file,vector
@@ -26,7 +29,7 @@ c
       real (kind=R8) ::
      * chord_tria_integral
       external chord_tria_integral
-      external lnblnk, open_file, xerrab, subini, subend
+      external lnblnk, open_file, xerrab
 
       call subini ('process_eirene_chords')
       do is=0,nedim(2,iewrk)-1
@@ -43,9 +46,9 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_integral(ntrii,nrknot,nx,ny,
+        yvalues(inpts)=chord_tria_integral(ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+     2   xtrian,ytrian,necke,ixtri,iytri,npoints,
      3   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
@@ -168,8 +171,8 @@ c
 
       if(use_compile) then
         call compile_tria_chords(maxchords,maxcompile,
-     &   ntrii,nrknot,nx,ny,
-     &   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     &   ntrii,nrknot,
+     &   xtrian,ytrian,necke,ixtri,iytri,
      1   inpts,indchd,indit,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
@@ -204,24 +207,22 @@ c
       end subroutine process_eirene_camera
 c
       subroutine compile_tria_chords(maxchords,maxcompile,
-     & ntrii,nrknot,nx,ny,
-     & xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     & ntrii,nrknot,
+     & xtrian,ytrian,necke,ixtri,iytri,
      1 inpts,indchd,indit,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
-      integer maxchords,maxcompile,ntrii,nrknot,nx,ny,inpts
+      integer maxchords,maxcompile,ntrii,nrknot,inpts
       integer necke(3,ntrii),ixtri(ntrii),iytri(ntrii)
       integer indchd(maxchords+1),indit(maxcompile)
       real (kind=R8) ::
      * indscl(maxcompile),
      * xtrian(nrknot),
-     * ytrian(nrknot),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     * ytrian(nrknot)
       character*(*) filename,dataname
       integer nxcam,nycam
       real (kind=R8) ::
@@ -229,7 +230,7 @@ c
 
       logical open_file,vector
       integer ind,indold,npoints,lnblnk
-      external lnblnk, subini, subend, xertst
+      external lnblnk, xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
@@ -249,8 +250,8 @@ c
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_tria_compile(npoints,ntrii,nrknot,nx,ny,
-     * xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+      call chord_tria_compile(npoints,ntrii,nrknot,
+     * xtrian,ytrian,necke,ixtri,iytri,
      1 x1,y1,z1,x2,y2,z2,vector,
      1 indchd(inpts),indit(ind),indscl(ind))
       indold=ind
@@ -288,6 +289,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_subsys
       use eirmod_ctrig
       implicit none
 
@@ -308,7 +310,7 @@ c
       integer npoints,lnblnk,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_tria_integral
-      external lnblnk,chord_tria_integral, subini, subend, xerrab
+      external lnblnk,chord_tria_integral,xerrab
 
       call subini ('calculate_tzvalues')
       if(use_compile) then
@@ -333,8 +335,8 @@ c
         inpts=0
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
         inpts=inpts+1
-        zvalues(inpts)=chord_tria_integral(ntrii,nrknot,nx,ny,workarr,
-     1   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,npoints,
+        zvalues(inpts)=chord_tria_integral(ntrii,nrknot,workarr,
+     1   xtrian,ytrian,necke,ixtri,iytri,npoints,
      2   x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'

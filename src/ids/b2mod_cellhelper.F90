@@ -61,9 +61,9 @@ module b2mod_cellhelper
 
     !! Directions for clockwise circle around corner vertex
     !! To circle around cell corner vertex iCorner in clockwise direction,
-    !! do istep = 1, 4; VXCIRCLE_STEPDIR(istep, iCorner, CLOCKWISE)
+    !! do istep = 1, 4, VXCIRCLE_STEPDIR(istep, iCorner, CLOCKWISE)
     !! To circle around cell corner vertex iCorner in counterclockwise direction,
-    !! do istep = 1, 4; VXCIRCLE_CLOCKWISE(istep, iCorner, COUNTERCLOCKWISE)
+    !! do istep = 1, 4, VXCIRCLE_CLOCKWISE(istep, iCorner, COUNTERCLOCKWISE)
     integer, parameter :: VXCIRCLE_STEPDIR(1:4, 0:3, 2) = reshape(  &
       & (/ BOTTOM, LEFT, TOP, RIGHT, &  ! Vertex 0/Lower left, clockwise
       &    RIGHT, BOTTOM, LEFT, TOP, &  !
@@ -102,7 +102,6 @@ module b2mod_cellhelper
 
     !! Value marking a coordinate position to be invalid
     real(R8), parameter :: INVALID_DOUBLE = 9.99999e99_R8
-
 
     !! Distance between two points at which the points are declared to be equal
     real(R8), parameter, private :: geom_match_dist = 1.0e-9_R8

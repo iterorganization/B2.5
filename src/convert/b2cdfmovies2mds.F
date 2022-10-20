@@ -1,6 +1,8 @@
       subroutine b2cdfmovies2mds
+      use b2mod_subsys
 #ifdef MDSPLUS
       use b2mod_types
+      use b2mod_mdsplus
       implicit none
 #     include "mdslib.inc"
 #ifndef NO_CDF
@@ -12,7 +14,7 @@
      1 data2(:,:), data2T(:,:), data3(:,:,:), data3T(:,:,:),
      2 data4(:,:,:,:), data4T(:,:,:,:)
       integer :: i,ivar,idim,iatt,i1,i2,i3,i4
-      integer :: status, 
+      integer :: status,
      1 ncid, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), length,
      3 dimsize(NF_MAX_VAR_DIMS), underscore_pos
@@ -23,7 +25,7 @@
       character*256 filename
       logical exist
 #endif
-      external subini, subend, xerrab
+      external xerrab
 
       call subini ('b2cdfmovies2mds')
       write(*,*) 'b2cdfmovies2mds ...'
@@ -46,9 +48,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtype,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,'(a,a,a,i2,a,i2,a)')
-     *   'variable: ',trim(varname),' has type ',xtype,
-     1   ' and ',ndims,' dimensions'
+        if(ndims.ne.1) then
+          write(*,'(a,a,a,i2,a,i2,a)')
+     *     'variable: ',trim(varname),' has type ',xtype,
+     1     ' and ',ndims,' dimensions'
+        else
+          write(*,'(a,a,a,i2,a,i2,a)')
+     *     'variable: ',trim(varname),' has type ',xtype,
+     1     ' and ',ndims,' dimension'
+        endif
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
@@ -122,16 +130,24 @@ c first deal with the time vector
           write(*,'(a,a,a,a)')
      *     'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+          status=mdsput2(
+     *     trim(mds_signal_name)//char(0),
+     *     'build_with_units($,"s")'//char(0),
+     *     descr2_i1(idtype_double,dimsize(1),0),data1,
+     *     0)
+#else
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
      *     'build_with_units($,"s")'//char(0),
      *     descr2(idtype_double,dimsize(1),0),data1,
      *     0)
+#endif
           write(*,*) 'mdsput2'
           call mds_err_msg(status)
           deallocate(data1)
         elseif(ndims.eq.2) then     ! NOT USED AT THE MOMENT
-          mds_signal_name='\TOP.MOVIES:' // varname
+          mds_signal_name='\TOP.MOVIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=
@@ -152,10 +168,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(1)) //',' //
      *       '\TOP.MOVIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(1),dimsize(2),0),data2,0)
+     *       descr2_i2(idtype_double,dimsize(1),dimsize(2),0),
+     *       data2,0)
+#else
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2(idtype_double,dimsize(1),dimsize(2),0),
+     *       data2,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
@@ -167,17 +192,26 @@ c first deal with the time vector
      *       '"),,\TOP.MOVIES:TIME,' //
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
-     *       descr2(idtype_double,dimsize(2),dimsize(1),0),data2T,0)
+     *       descr2_i2(idtype_double,dimsize(2),dimsize(1),0),
+     *       data2T,0)
+#else
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2(idtype_double,dimsize(2),dimsize(1),0),
+     *       data2T,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data2T)
           endif
           deallocate(data2)
         elseif(ndims.eq.3) then
-          mds_signal_name='\TOP.MOVIES:' // varname
+          mds_signal_name='\TOP.MOVIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=
@@ -198,11 +232,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.MOVIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2_i3(idtype_double,dimsize(1),dimsize(2),
+     1       dimsize(3),0),data3,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(1),dimsize(2),
      1       dimsize(3),0),data3,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
@@ -216,18 +258,26 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2_i3(idtype_double,dimsize(3),dimsize(1),
+     1       dimsize(2),0),data3T,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(3),dimsize(1),
      1       dimsize(2),0),data3T,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data3T)
           endif
           deallocate(data3)
         elseif(ndims.eq.4) then
-          mds_signal_name='\TOP.MOVIES:' // varname
+          mds_signal_name='\TOP.MOVIES:' // trim(varname)
           underscore_pos=index(mds_signal_name,'_')
           do while(underscore_pos.gt.0)
             mds_signal_name(underscore_pos:len(mds_signal_name))=
@@ -249,11 +299,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(3)) // ',' //
      *       '\TOP.MOVIES:TIME)'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2_i4(idtype_double,dimsize(1),dimsize(2),
+     1       dimsize(3),dimsize(4),0),data4,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(1),dimsize(2),
      1       dimsize(3),dimsize(4),0),data4,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
           else
@@ -270,11 +328,19 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(3)) // ')'
             write(*,'(a,a)') 'Using TDI ',trim(tdi)
+#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 )
+            status=mdsput2(
+     *       trim(mds_signal_name)//char(0),
+     *       tdi//char(0),
+     *       descr2_i4(idtype_double,dimsize(4),dimsize(1),
+     1       dimsize(2),dimsize(3),0),data4T,0)
+#else
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
      *       descr2(idtype_double,dimsize(4),dimsize(1),
      1       dimsize(2),dimsize(3),0),data4T,0)
+#endif
             write(*,*) 'mdsput2'
             call mds_err_msg(status)
             deallocate(data4T)
@@ -289,7 +355,7 @@ c first deal with the time vector
       status=nf_close(ncid)
       call check_cdf_status(status)
 #else
-      write(*,*) 
+      write(*,*)
      . 'b2cdfmovies2mds failed because compiled with NO_CDF option'
 #endif
 #else

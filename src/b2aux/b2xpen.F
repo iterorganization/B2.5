@@ -1,6 +1,6 @@
       subroutine b2xpen (nCv, nFc, ns, mpg,
-     1 fna, fna_53, fne_53, fch, fhe, fhi, fhn,
-     2 rpt, te, ti, tn, po, BoRiS, fhm, fhp, fhj, fht)
+     1 fna, fna_53, fne_53, fch, fhe, fhi, fhn, rpt, te, ti, tn, po,
+     2 BoRiS, fhm, fhp, fhj, fht)
       use b2mod_types
       use b2mod_constants
       use b2us_map
@@ -18,7 +18,7 @@
      *  fhm(nFc,0:1,0:ns-1),fhp(nFc,0:1,0:ns-1),
      *  fhj(nFc,0:1),       fht(nFc,0:1)
 *     ------------------------------------------------------------------
-*     B2XPEN computes contributions to the total energy fluxes, 
+*     B2XPEN computes contributions to the total energy fluxes,
 *     as well as the total energy fluxes
 *     The contributions from external species are not included and must
 *     be added explicitly in the calling routine when needed.
@@ -27,7 +27,7 @@
       real (kind=R8) ::
      &  fnt(nFc,0:1)
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xpen')       
+*$$$  call subini ('b2xpen')
 
 c     calculate additional fluxes (fhj, fhp)
 cwdk  note that fhm is now computed in b2urmo
@@ -53,7 +53,7 @@ cwdk  note that fhm is now computed in b2urmo
 c calculate total fluxes (fht)
       fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-BoRiS)
       do is=0,ns-1
-	fht = fht + fhp(:,:,is) + fhm(:,:,is)*(1.0_R8-BoRiS)
+        fht = fht + fhp(:,:,is) + fhm(:,:,is)*(1.0_R8-BoRiS)
       enddo
 *$$$  call subend ()
       return

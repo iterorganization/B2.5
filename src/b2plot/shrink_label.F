@@ -4,7 +4,7 @@
       external lnblnk
       character*(*) label
       lng=lnblnk(label)
-C	write(*,*) ' In: ',label(1:lnblnk(label))
+C     write(*,*) ' In: ',label(1:lnblnk(label))
    10 continue
       do i=1,lng
         if(label(i:i).eq.' ') then
@@ -73,4 +73,4 @@ c xE-0y -> xE-y
       if(label.eq.' ') label(1:1)='0'
 C      write(*,*) 'Out: ',label(1:lnblnk(label))
       return
-      end
+      end subroutine shrink_label

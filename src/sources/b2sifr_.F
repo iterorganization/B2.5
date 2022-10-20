@@ -20,6 +20,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sifr, ncall_b2tlnl
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb
@@ -38,7 +39,6 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   vti32(nCv), gti(nCv), gte(nCv)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -60,13 +60,11 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
-      integer iCv, iFc, is, k                                           !srv 17.06.02
-      integer, save :: iout = 0                                         !srv 17.06.02
+      integer iCv, iFc, is, k                                         !srv 17.06.02
+      integer, save :: iout = 0                                       !srv 17.06.02
       integer, save :: icase = 0
-      character chns*3, chk*1                                           !srv 17.06.02
+      character chns*3, chk*1                                         !srv 17.06.02
       real (kind=R8) ::
      *   ctaup, coef, t0, t1,
      *   wrkv(nVx)
@@ -76,10 +74,10 @@
       intrinsic sqrt
       real (kind=R8) ::
      *   roxa
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
+      external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialisation
-      roxa(iCv,is) = am(is)*mp*na(iCv,is)                               !srv 01.07.05
+      roxa(iCv,is) = am(is)*mp*na(iCv,is)                             !srv 01.07.05
 *-----------------------------------------------------------------------
 *.computation
 
@@ -90,7 +88,7 @@
       if (ncall_b2sifr.eq.0) then
 csw 24sep2013
        call xertst (
-     &   0.le.switch%b2sifr_styl0.and.switch%b2sifr_styl0.lt.9, 
+     &   0.le.switch%b2sifr_styl0.and.switch%b2sifr_styl0.lt.9,
      &   'faulty internal parameter styl0')
        call xertst (
      &  0.0_R8.le.switch%b2sifr_phm0.and.
@@ -103,7 +101,7 @@ csw 24sep2013
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
       endif
 *   ..test nCv, nFc
@@ -166,7 +164,7 @@ csw 24sep2013
             smbch(iCv,3) = smbch(iCv,3)-coef*t0/
      &                     roxa(iCv,isb)
           endif
-          smfrb(iCv) = smfrb(iCv) + 
+          smfrb(iCv) = smfrb(iCv) +
      &      coef*t0*(ua(iCv,is)-ua(iCv,isb))
         enddo
        else
@@ -214,18 +212,18 @@ c     1    write(*,*) iCv,isb,cthi(iCv,isb)
        enddo
       endif
       if (iout.ne.0) then                                           !srv 17.06.02 {
-         write (chns,'(i3.3)') isb    
+         write (chns,'(i3.3)') isb
          call my_out_us(70,nCv,0,ehxp,'b2sifr_ehxp'//chns)
          call my_out_us(70,nCv,0,cthe(1,isb),'b2sifr_cthe'//chns)
          call my_out_us(70,nCv,0,cthi(1,isb),'b2sifr_cthi'//chns)
          do k=0,3
-          write (chk,'(i1)') k  
+          write (chk,'(i1)') k
           call my_out_us(70,nCv,0,smbtf(1,k),
      *                'b2sifr_smotf'//chk//chns)                    !srv 07.02.12
           call my_out_us(70,nCv,0,smbch(1,k),
-     *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
+     *                'b2sifr_smoch'//chk//chns)                    !srv 07.02.12
          enddo
-      endif                                                            !srv 17.06.02 }
+      endif                                                         !srv 17.06.02 }
 
 cdjm Jan2017 Store the linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
@@ -241,4 +239,4 @@ cdjm Jan2017 Store the linearised sources for balance
 *-----------------------------------------------------------------------
 *.end b2sifr_
 
-      end                                                             !srv 01.07.05 }
+      end subroutine b2sifr_                                        !srv 01.07.05 }

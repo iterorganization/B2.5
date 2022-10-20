@@ -5,10 +5,12 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
+      use b2mod_aggs
       use b2mod_version
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2ag_parameters
       use b2mod_interp
@@ -17,6 +19,7 @@
       use b2us_map
       use b2us_prep
       use b2us_io
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, nout_us, io
@@ -29,12 +32,12 @@
 *  1. purpose
 *
 *     B2AGDR computes and writes to an external file the specification
-*     of a b2 geometry and magnetic field.
+*     of a B2 geometry and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This subroutine computes and writes out a specification of a b2
+*     This subroutine computes and writes out a specification of a B2
 *     geometry and magnetic field. Summary information will be written
 *     to unit nout(0), which must be connected to a formatted file.
 *     A complete specification of the geometry and the magnetic field
@@ -109,7 +112,7 @@
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
+      external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs, b2wfgm, b2wugm
 
 *-----------------------------------------------------------------------
@@ -217,11 +220,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
@@ -286,39 +289,31 @@
 *-----------------------------------------------------------------------
 *.computation
 
-! ..preliminaries
-!   ..subprogram start-up calls
+* ..preliminaries
+*   ..subprogram start-up calls
       call subini ('b2agdr')
-!   ..test ninp, nout
+*   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
      &             1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
-!   ..test nx, ny
+*   ..test nx, ny
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
-!   ..test nx1, ny1
+*   ..test nx1, ny1
       call xertst (1.le.nx1.and.1.le.ny1, 'faulty argument nx1, ny1')
-!   ..set output control
+*   ..set output control
       idout = '....'
 
-! ..initialise the geometry
+* ..initialise the geometry
       redef_gmtry = 1 ! Since version 3.0.6, we apply the pbsx correction by default
       call ipgeti ('b2agdr_redef_gmtry', redef_gmtry)
-
-!   ..use parg, obtain isymm and lblgm
+*   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
-
 *!!   Be careful about the use of (nx,ny) in b2agsi: the mesh will also
 *!!   be generated with dimensions (nx1,ny1).
-
-!   ..obtain grid and mhd equilibrium data from file
+*   ..obtain grid and mhd equilibrium data from file
       call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
-     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
-     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
-     3 topix1,topiy1,bottomix1,bottomiy1,
-     4 leftcut1,rightcut1,bottomcut1,topcut1,
-     5 periodic_bc,nncut,nncutmax)
-
+     1 cflags1,lblgm(61:120),periodic_bc,nncut,nncutmax)
       call init_region(nx1,ny1,nncut,nncutmax,
      1 leftcut1,rightcut1,topcut1,bottomcut1,
      2 leftix1,leftiy1,rightix1,rightiy1,
@@ -328,15 +323,15 @@
       write(*,*) 'b2agdr0: Average bb1(:,:,0) ',
      . b2gavg1(nx1,ny1,bb1(-1:nx1,-1:ny1,0))
 
-!   ..echo lblgm
+*   ..echo lblgm
       write (nout(0),'(/2x,a)') 'label for geometry'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
-
-!   ..compute geometry and flux/field functions on auxiliary mesh
+*   ..compute geometry and flux/field functions on auxiliary mesh
 !   ..if not provided already by Carre grid
-      if(istyle.ge.0) call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
-
-!   ..compute metric coefficients on auxiliary mesh
+      if(istyle.ge.0) then
+        call b2agcf (nx1, ny1, crx1, cry1, fpsi1, ffbz1)
+      endif
+*   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
      & hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
      & cell_width1, cell_height1,
@@ -363,8 +358,7 @@
         wbbc1(:,:,3)=
      &     sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
       endif
-
-!   ..project metric coefficients to proper mesh
+*   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
      & vol1, hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
@@ -376,18 +370,15 @@
      & cell_width, cell_height,
      & leftix1, leftiy1, rightix1, rightiy1,
      & topix1, topiy1, bottomix1, bottomiy1,
-     & leftcut1, rightcut1, bottomcut1, topcut1,
-     & cflags1)
-
-!   ..correct pbsx on the proper mesh
+     & leftcut1, rightcut1, bottomcut1, topcut1, cflags1)
+*   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
         call b2agbs (nx, ny, nncutmax,
      1   leftix, rightix, rightiy, region, crx, cry,
      1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
      2   pbs, cell_width, cell_height)
       end if
-
-!   ..establish an isolated region if needed
+*   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
       call ipgeti('b2agdr_nxiso2', nxiso2)
       call ipgeti('b2agdr_nyiso1', nyiso1)
@@ -486,20 +477,15 @@ cdpc-debug
      1   maxval(abs(pbs1-pbs))
       endif
       write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
-
       if(istyle.ge.0) then
-
-!   ..compute geometry and flux/field functions on proper mesh
+*   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
-
-!   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, gs, crx, cry, qz, 
+*   ..compute magnetic field on proper mesh
+        call b2agbb (nx, ny, vol, gs, crx, cry, qz,
      &   fpsi, ffbz, bb)
       endif
-
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')
-
       if (bb(nx,ny,2).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE toroidal magnetic field.'
@@ -532,7 +518,6 @@ cdpc-debug
         write(nout(0),'(/2x,a)')
      .   'This case has ZERO toroidal magnetic field.'
       endif
-
       if (bb(nx,ny,2).ne.0.0_R8) then
         write(*,'(a)')
      .   'If this is not correct, please set :'
@@ -542,7 +527,6 @@ cdpc-debug
      .   'If already set to "1", set to "0" instead.'
       endif
       write(*,'()')
-
       if (bb(nx,ny,0).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE poloidal magnetic field.'
@@ -594,7 +578,6 @@ cdpc-debug
      .   'This is the OPPOSITE convention as for '//
      .   'poloidal quantities.'
       end if
-
       if (bb(nx,ny,0)*bb(nx,ny,2).lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has CO-directed plasma current and '//
@@ -618,32 +601,30 @@ cdpc-debug
      . 'If already set to "-1.0", set to "1.0" instead.'
       write(*,'()')
 
-! ..output
-!   ..write summary of geometry
+* ..output
+*   ..write summary of geometry
 !      call b2wfgm (nout(0), idout, nx, ny)
-!   ..write version number
+*   ..write version number
       call cfverw (nout(1), newversion)
-!   ..save dimensions
+*   ..save dimensions
       idum(0) = nx
       idum(1) = ny
       call cfwuin (nout(1), 2, idum, 'nx,ny')
-!   ..save label
+*   ..save label
       call cfwuch (nout(1), 120, lblgm, 'label')
-!   ..save isymm
+*   ..save isymm
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
-
-!   ..save geometry
+*   ..save geometry
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
      &  vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc, gs, pbs, wbbl,
      &  wbbc, cell_width, cell_height)
-
-!   ..create B2GridMap data structure
+*   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,
-     &     topix, topiy, bottomix, bottomiy, .true., gmap)
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .true.)
       mapInitialized = .true.
-!   ..save parameters
+*   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
 *   ..in 5.1, and SOLPS-ITER we need a fort.30 file early to build triangular grids
@@ -698,8 +679,6 @@ cdpc-debug
       close (nout_us)
       call dealloc_geometry(gm)
       call dealloc_mapping(mpg)
-
-
 
 * ..return
       call subend ()

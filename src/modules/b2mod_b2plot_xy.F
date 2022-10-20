@@ -29,12 +29,14 @@
 
       subroutine read_b2mod_b2plot_xy(nread)
       integer nread
-
+      call xertst (0.lt.nread, 'faulty argument nread')
+      return
       end subroutine read_b2mod_b2plot_xy
 
       subroutine write_b2mod_b2plot_xy(nwrite)
       integer nwrite
-
+      call xertst (0.lt.nwrite, 'faulty argument nwrite')
+      return
       end subroutine write_b2mod_b2plot_xy
 
       end module b2mod_b2plot_xy
