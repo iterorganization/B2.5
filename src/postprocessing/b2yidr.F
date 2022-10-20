@@ -18,6 +18,8 @@
       use b2mod_ppout
       use b2mod_geo_corner
 !      use b2mod_work
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -29,15 +31,15 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a postprocessor for b2. It reads and displays the
+*     B2YIDR is a postprocessor for B2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *
 *
@@ -88,11 +90,11 @@
 *   ..procedures
       intrinsic abs
       logical streql, ltst, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
+      external xertst, xerrab, streql, gacwk,
      &  gdawk, cfruch, lbfilx, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
-      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
+      external ipgeti, b2rfcp, b2rflb, b2xxid
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
@@ -256,8 +258,9 @@
 *   ..read geometry and metric
 #ifdef WG_TODO
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 #endif
 *   ..read plasma state file
       call cfruch (ninp(1), 120, lblmn, 'label')

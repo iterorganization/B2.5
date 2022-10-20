@@ -3,13 +3,13 @@
 
       subroutine b2wgpi_gnuplot (nprt, nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch,
-     &  kinrgy,
-     &  gs,qc,ni)
+     &  kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -20,7 +20,7 @@
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      &  ne(-1:nx,-1:ny),ni(-1:nx,-1:ny,0:1),
      &  kinrgy(-1:nx,-1:ny,0:ns-1),
-     &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny,0:1)
+     &  gs(-1:nx,-1:ny, 0:2), qc(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -35,7 +35,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results
-*     from a b2 calculation. The routine operates as an interface
+*     from a B2 calculation. The routine operates as an interface
 *     to b2wgpj_gnuplot.
 *
 *
@@ -50,7 +50,7 @@
       real (kind=R8) :: 
      *  fne(-1:nx,-1:ny,0:1,0:1)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xpfe, b2wgpj_gnuplot 
 
 *-----------------------------------------------------------------------
@@ -70,8 +70,7 @@
 #endif
 *   ..plot state
       call b2wgpj_gnuplot (nprt, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  fna, fhe, fhi, fch, ne, fne, kinrgy, gs, qc, ni)
 
 * ..return
       call subend ()

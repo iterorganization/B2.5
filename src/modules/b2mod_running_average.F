@@ -1,14 +1,17 @@
       module b2mod_running_average
 
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_version
       use b2mod_constants
-      use b2mod_b2cmpa
       use b2us_plasma
 #ifdef B25_EIRENE
       use eirmod_infcop
 #endif
+      use b2mod_subsys
+      implicit none
 
+      integer, save :: naver, ntotdt
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:), te_mean(:),
      .                             ti_mean(:), ua_mean(:,:),
@@ -29,18 +32,15 @@
      .                             e_she(:),
      .                             e_shi(:)
 
-      integer, save :: naver, ntotdt
 
       character lble*120, lbli*120, check*10
       character*10, save ::
      *   b2faveri_version = '00.000.000'
 
       contains
-     
 
       subroutine running_average (nCv,ns,pl,dv,
      &           sna0_eir, smo0_eir, she0_eir, shi0_eir)
-
       use b2mod_types
       use b2mod_constants
       use b2mod_plasma
@@ -48,7 +48,6 @@
 #ifdef B25_EIRENE
       use eirmod_infcop
 #endif
-
       implicit none
 c input
       integer, intent(in) :: nCv, ns
@@ -62,6 +61,7 @@ c local
       real (kind=R8) ::
      *   sna_tot(nCv,0:ns-1), smo_tot(nCv,0:ns-1), 
      *   she_tot(nCv), shi_tot(nCv)
+      external batch_average, batch_average_sq
 
       call subini ('running_average')
 
@@ -81,7 +81,6 @@ cnh   Calculation of the total sources
      1  she0_eir(:,2)*dv%ne + she0_eir(:,3)*pl%te*dv%ne
       shi_tot = shi0_eir(:,0) + shi0_eir(:,1)*pl%ti +
      1  shi0_eir(:,2)*dv%ni(:,0) + shi0_eir(:,3)*pl%ti*dv%ni(:,0)
-
 
 *  calculate averaged plasma profiles and sources
       call batch_average (nCv*ns, pl%na, na_mean, itp, naver)
@@ -112,13 +111,11 @@ cnh   Calculation of the total sources
       call batch_average_sq (nCv*ns, smo_tot, e_smo, itp, naver)
 
       call subend ()
+
       return
       end subroutine running_average
 
-
-
-      subroutine run_av_init(iav_cont, nCv, ns, lpr, ler)
-
+      subroutine run_av_init (iav_cont, nCv, ns, lpr, ler)
       implicit none
 c input
       integer, intent(in) :: nCv, ns, iav_cont
@@ -127,7 +124,6 @@ c local variables
       integer :: io, iun, idum(0:1), iex
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
-
 
       call subini ('run_av_init')
 
@@ -257,9 +253,9 @@ c local variables
       end if
 
       call subend ()
+
       return
       end subroutine run_av_init
-
 
       subroutine run_av_fin
       implicit none
@@ -299,6 +295,8 @@ c local variables
       character(*) :: savefile
 c local variables
       integer :: idum(0:1), iun
+      external cfwuch, cfwuin, cfwure
+      external b2xxid, b2wuzd
 
       call subini ('run_av_save')
 
@@ -337,16 +335,16 @@ c local variables
          call cfwuin (iun, 1, idum, 'ntotdt')
 
          call cfwure (iun, nCv*ns, na_mean, 'na_mean')
-         call cfwure (iun, nCv, te_mean, 'te_mean')
-         call cfwure (iun, nCv, ti_mean, 'ti_mean')
-         call cfwure (iun, nCv, po_mean, 'po_mean')
+         call cfwure (iun, nCv,    te_mean, 'te_mean')
+         call cfwure (iun, nCv,    ti_mean, 'ti_mean')
+         call cfwure (iun, nCv,    po_mean, 'po_mean')
          call cfwure (iun, nCv*ns, ua_mean, 'ua_mean')
-         call cfwure (iun, nCv, kt_mean, 'kt_mean')
-         call cfwure (iun, nCv, zt_mean, 'zt_mean')
+         call cfwure (iun, nCv,    kt_mean, 'kt_mean')
+         call cfwure (iun, nCv,    zt_mean, 'zt_mean')
 
          call cfwure (iun, nCv*ns, sna_mean, 'sna_mean')
-         call cfwure (iun, nCv, she_mean, 'she_mean')
-         call cfwure (iun, nCv, shi_mean, 'shi_mean')
+         call cfwure (iun, nCv,    she_mean, 'she_mean')
+         call cfwure (iun, nCv,    shi_mean, 'shi_mean')
          call cfwure (iun, nCv*ns, smo_mean, 'smo_mean')
 
       end if
@@ -374,9 +372,9 @@ c local variables
       write (*,*) ' file ',savefile,' written '
 
       call subend ()
+
       return
       end subroutine run_av_save
-
 
       subroutine run_av_get_plasma (na_arg, te_arg, ti_arg, ua_arg, 
      &                          po_arg, kt_arg, zt_arg, nCv, ns)
@@ -397,6 +395,7 @@ c local variables
       zt_arg = zt_mean
 
       call subend ()
+
       return
       end subroutine run_av_get_plasma
 
@@ -426,8 +425,7 @@ c when calling the averaged sources the linearisation must be overwritten (every
 
       call subend ()
 
+      return
       end subroutine run_av_get_sources
 
       end module b2mod_running_average
-
-

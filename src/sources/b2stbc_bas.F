@@ -1,11 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_bas (nx, ny, ns, ismain,                         !xpb
-     1  facdrift, vol, hx, hy, qz, qc, gs,                               !xpb
+      subroutine b2stbc_bas (nx, ny, ns, ismain,                        !xpb
+     1  facdrift, vol, hx, hy, qz, qc, gs,                              !xpb
      1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0,
-     &  wrong_flow, main_call, diagno,     !xpb
+     &  wrong_flow, main_call, diagno,                                  !xpb
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
      &  area_fix, sheath_drift_fix)
@@ -18,18 +18,19 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny), 
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),    !xpb
+     *  facdrift(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),              !xpb
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
      &  qc(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -71,7 +72,7 @@
       real (kind=R8) ::
      *  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
-     2  naf(0:ns-1), udf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
+     2  naf(0:ns-1), udf(0:ns-1), nef, tef, tif, pof, wdiaf,
      3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
      4  prt(-1:nx,-1:ny)
       save ncall
@@ -79,7 +80,7 @@
       intrinsic min, max, abs, sqrt, log
       real (kind=R8) ::
      *  machsfr, hy1, expu2
-      external subini, subend, xertst, machsfr, eseec0
+      external xertst, machsfr, eseec0
       external b2xvsg, b2xvff, b2xvps, expu2
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     (expu2 is the exponential function with underflow set to 0 and
@@ -178,9 +179,6 @@
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        nef = (ne(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        ne(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
-     &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-       nif = (ni(ix,-1,0)*hy1(topix(ix,-1),topiy(ix,-1))+
-     &        ni(topix(ix,-1),topiy(ix,-1),0)*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
        pof = (po(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        po(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
@@ -372,7 +370,7 @@
        sch0(ix,-1,0) = sch0(ix,-1,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,-1)
        sch0(ix,-1,1) = sch0(ix,-1,1)-t0
- 101   continue
+  101  continue
       enddo
 
 * ..compute conditions at north boundary
@@ -408,9 +406,6 @@
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
        nef = (ne(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        ne(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
-     &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-       nif = (ni(ix,ny,0)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     &        ni(bottomix(ix,ny),bottomiy(ix,ny),0)*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
        pof = (po(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        po(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
@@ -562,7 +557,7 @@
        sch0(ix,ny,0) = sch0(ix,ny,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(ix,ny)
        sch0(ix,ny,1) = sch0(ix,ny,1)-t0
- 202   continue
+  202  continue
       enddo
 
 * ..compute conditions at west boundary
@@ -612,9 +607,6 @@ cxpb  only include ExB terms and not diamagnetic contributions
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        nef = (ne(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        ne(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
-     &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-       nif = (ni(-1,iy,0)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &        ni(rightix(-1,iy),rightiy(-1,iy),0)*hx(-1,iy))/
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
        pof = (po(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        po(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
@@ -667,23 +659,23 @@ cxpb  only include ExB terms and not diamagnetic contributions
          endif
 c         fchi=0.0_R8
        endif
-!       if (po(-1,iy).ge.0.0_R8) then                                     !sv
+!       if (po(-1,iy).ge.0.0_R8) then                                    !sv
          fche = 
-     .    sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1*expu2(-qe*pof/tef)       !sv
-!       else                                                              !sv
-!         fche = sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1                   !sv
+     .    sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1*expu2(-qe*pof/tef)      !sv
+!       else                                                             !sv
+!         fche = sqrt(1.0_R8/(2.0_R8*pi))*qe*nef*vte*s1                  !sv
 !       endif
 *    ..loop over species
        do is = 0, ns-1
 *     ..compute csb
         csb = sqrt((zaf(is)*tef+tif)/(am(is)*mp))
 *     .. account for diamagnetic drifts
-        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
-        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
-        if(.not.is_neutral(is)) then                                      !xpb
-          csbm = max(0.0_R8,csbm)                                         !xpb
-          cstm = max(0.0_R8,cstm)                                         !xpb
-        endif                                                             !xpb
+        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))              !xpb
+        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))              !xpb
+        if(.not.is_neutral(is)) then                                     !xpb
+          csbm = max(0.0_R8,csbm)                                        !xpb
+          cstm = max(0.0_R8,cstm)                                        !xpb
+        endif                                                            !xpb
         if(csbm.gt.csb .and. diagno.ge.2)
      >   write(*,*) 'west:iy,is,csb,csbm',iy,is,csb,csbm
         if(cstm.gt.cst .and. diagno.ge.2)
@@ -703,14 +695,14 @@ c         fchi=0.0_R8
      &    max(0.0_R8,-ua(-1,iy,is)*pbs(rightix(-1,iy),rightiy(-1,iy),0))
 *     ..compute parallel momentum source
         smo0(-1,iy,0,is) = smo0(-1,iy,0,is)+cbsmo(0,is,ireg)*s0
-        smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0           !rfs
+        smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(-1,iy,2,is) = smo0(-1,iy,2,is)+
      &    cbsmo(1,is,ireg)*(-csbm)*
-     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                           !xpb
+     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                          !xpb
      &    cbsmo(2,is,ireg)*(-cstm)*
-     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                           !xpb
+     &    pbs(rightix(-1,iy),rightiy(-1,iy),0)+                          !xpb
      &    cbsmo(5,is,ireg)*max(0.0_R8,
-     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is))/na(-1,iy,is)         !sv
+     &     -fna(rightix(-1,iy),rightiy(-1,iy),0,0,is))/na(-1,iy,is)      !sv
         smo0(-1,iy,3,is) = smo0(-1,iy,3,is)+
      &    cbsmo(3,is,ireg)*s0+
      &    cbsmo(4,is,ireg)*s1+
@@ -792,7 +784,7 @@ c         fchi=0.0_R8
        sch0(-1,iy,0) = sch0(-1,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(-1,iy)
        sch0(-1,iy,1) = sch0(-1,iy,1)-t0
- 303   continue
+  303  continue
       enddo
 
 * ..compute conditions at east boundary
@@ -842,9 +834,6 @@ cxpb  only include ExB terms and not diamagnetic contributions
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
        nef = (ne(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        ne(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
-     &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-       nif = (ni(nx,iy,0)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &        ni(leftix(nx,iy),leftiy(nx,iy),0)*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
        pof = (po(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        po(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
@@ -934,7 +923,7 @@ c         fchi=0.0_R8
         smo0(nx,iy,2,is) = smo0(nx,iy,2,is)+
      &    cbsmo(1,is,ireg)*csbm*pbs(nx,iy,0)+                            !xpb
      &    cbsmo(2,is,ireg)*cstm*pbs(nx,iy,0)+                            !xpb
-     &    cbsmo(5,is,ireg)*max(0.0_R8,+fna(nx,iy,0,0,is))/na(nx,iy,is)     !sv
+     &    cbsmo(5,is,ireg)*max(0.0_R8,+fna(nx,iy,0,0,is))/na(nx,iy,is)   !sv
         smo0(nx,iy,3,is) = smo0(nx,iy,3,is)+
      &    cbsmo(3,is,ireg)*s0+
      &    cbsmo(4,is,ireg)*s1+
@@ -1012,7 +1001,7 @@ c         fchi=0.0_R8
        sch0(nx,iy,0) = sch0(nx,iy,0)+
      &  (1.0_R8-seec)*fche-cbsch(6,ireg)*fchi+t0*po(nx,iy)
        sch0(nx,iy,1) = sch0(nx,iy,1)-t0
- 404   continue
+  404  continue
       enddo
 
 * ..return
@@ -1024,4 +1013,3 @@ c         fchi=0.0_R8
 *.end b2stbc_bas
 
       end subroutine b2stbc_bas
-

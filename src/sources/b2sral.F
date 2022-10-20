@@ -50,6 +50,7 @@
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
      &          ncall_b2tfrn, ncall_b2tiner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nxtl, nxtr,
@@ -105,7 +106,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
-      external subini, subend, xertst, sfill, b2saxpy, smin, smax
+      external xertst, sfill, b2saxpy, smin, smax
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
@@ -148,23 +149,23 @@
        call b2xvsg (nFc*2, geo%fcVol, 1, 'vol', '.gt.')
 *    ..test range of cvQgam, fcQgam
        call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
-     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range cvQgam(,1)')
        call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
-     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range cvQgam(,0)')
        call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
-     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range fcQgam(,1)')
        call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
-     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range fcQgam(,0)')
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
        call b2xvsg (nCv*ns, dv%kinrgy, 1, 'kinrgy', '.ge.')
       endif
 *   ..compute fne, fni
-      call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe, 
+      call b2xpfe (nCv, nFc, ns, st_ext%ns, geo, mpg, qe,
      &  rt%rza, st_ext%za, dv%fna, st_ext%fa, dv%fch, dv%fne)
       call b2xpfi (nFc, ns, dv%fna, dv%fni)
 
@@ -176,19 +177,28 @@
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
-          b2sral_elm_count=tim/numerics_time_mod
+          b2sral_elm_count=int(tim/numerics_time_mod)
         else
           b2sral_elm_count=0
         endif
-        catch_up=numerics_time_mod.gt.0.0_R8
+        if(numerics_time_mod.gt.0.0_R8) then
+          catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
+     &      .and.numerics_time_switch.gt.0.0_R8
+        else if (numerics_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.numerics_time_switch
+        else
+          catch_up=.false.
+        end if
         do while(catch_up)
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
-     1     then
-            write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+          write(*,*) 'b2sral: catching up ...'
+          call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
      .        mpg%nnreg,mpg%cvOnClosedSurface)
-            call write_b2mod_numerics_namelist
-            catch_up=numerics_time_mod.gt.0.0_R8
+          call write_b2mod_numerics_namelist
+          if(numerics_time_mod.gt.0.0_R8) then
+            catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
+     &        .and.numerics_time_switch.gt.0.0_R8
+          else if (numerics_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.numerics_time_switch
           else
             catch_up=.false.
           endif
@@ -196,15 +206,27 @@
       else
         if(numerics_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3e12.4,2i6)')
-     .     'ELM: ',tim,mod(tim,numerics_time_mod), numerics_time_switch,
-     .     int(tim/numerics_time_mod),b2sral_elm_count
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
-     1     int(tim/numerics_time_mod).gt.b2sral_elm_count) then
-            b2sral_elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
+     .     'ELM: ',tim,mod(tim,numerics_time_mod),
+     1     numerics_time_switch,int(tim/numerics_time_mod),
+     2     b2sral_elm_count
+          catch_up=
+     1    (mod(tim,numerics_time_mod).ge.numerics_time_switch.and.
+     1     numerics_time_switch.gt.0.0_R8).or.
+     2     int(tim/numerics_time_mod).gt.b2sral_elm_count
+        else if (numerics_time_switch.gt.0.0_R8) then
+          catch_up=tim.ge.numerics_time_switch
+          if(catch_up) write(*,'(a,a)')
+     .     'Switching to next numerics namelist file ',
+     .      trim(numerics_filename)
+        else
+          catch_up=.false.
+        end if
+        if(catch_up) then
+          if(numerics_time_mod.gt.0.0_R8)
+     >     b2sral_elm_count=int(tim/numerics_time_mod)
+          call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
      .        mpg%nnreg,mpg%cvOnClosedSurface)
-            call write_b2mod_numerics_namelist
-          endif
+          call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb
       call xertst (0.0_R8.le.minval(dv%facdrift) .and.
@@ -324,8 +346,6 @@
       write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(1x,1e14.7))'
       if(main_call.or.wrong_flow)                                  !xpb !srv 18.05.09 }
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
-
-
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
      &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
@@ -349,9 +369,6 @@
       call b2saxpy (nCv*4, 1.0_R8, srw%shi0, 1, sr%shi, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%shn0, 1, sr%shn, 1)
       call b2saxpy (nCv*4, 1.0_R8, srw%sch0, 1, sr%sch, 1)
-
-
-
 *   ..compute sources by inputfiles (heating,...)
       if (sources_inputfile.eq.1) then
         call source_input(nx,ny,ns,
@@ -374,7 +391,6 @@
         call b2saxpy (nCv*4, 1.0_R8, srw%sch0, 1, sr%sch, 1)
       endif
 #endif
-
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
@@ -399,15 +415,13 @@
       rcxnareg=0.0_R8
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
-
-
 !WG_TODO      rcxna=0.0_R8
 !WG_TODO      rcxhi=0.0_R8
 !WG_TODO      rcxmo=0.0_R8
 
       if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
-          write(*,*) 'Allocating arrays for cx'
+          write(*,*) 'Allocating arrays for CX'
           allocate (shi0_cx(nCv,0:3))
           allocate (sna0_cx(nCv,0:1,0:ns-1))
           allocate (smo0_cx(nCv,0:3,0:ns-1))
@@ -419,11 +433,11 @@
 
       do k = 0, nscx-1
 *    ..compute charge exchange rate coefficients
-        call b2sqcx (nCv, ns, ev, switch, am(iscx(k)), pl%ti, 
+        call b2sqcx (nCv, ns, ev, switch, am(iscx(k)), pl%ti,
      &   pl%tn, rt%rlcx(1:nCv,0:1,0:ns-1,k), rtw%rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
-        call b2stcx (nCv, nFc, ns, iscx(k), ismain, BoRiS, switch, 
+        call b2stcx (nCv, nFc, ns, iscx(k), ismain, BoRiS, switch,
      &    geo, mpg, pl%na, pl%ua, pl%ti, pl%tn,  dv%ni, rtw%rcx, 
      &    srw%sna0, srw%smq0, srw%shi0, srw%shn0)       !srv 07.07.09
 *   ..zero out contributions in dead cells and core boundary
@@ -447,9 +461,8 @@
         endif                         ! IYS 06.11.2017
       enddo
 
-
       if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
-        write(*,*) 'Writing cx sources'
+        write(*,*) 'Writing CX sources'
         do is = 0,ns-1
           write (chns,'(i3.3)') is
           wrk(:) = sna0_cx(:,0,is)+sna0_cx(:,1,is)*pl%na(:,is)
@@ -462,7 +475,7 @@
      &             smo0_cx(:,1,is)*pl%ua(:,is)+
      &             smo0_cx(:,2,is)*pl%na(:,is)*mp*am(is)+
      &             smo0_cx(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-	  call my_out_us(70,nCv,0,wrk,'b2stcx_smq'//chns)
+          call my_out_us(70,nCv,0,wrk,'b2stcx_smq'//chns)
         enddo
         if (allocated(shi0_cx)) then
           write(*,*) 'Deallocating arrays for cx'

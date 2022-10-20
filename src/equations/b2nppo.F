@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,    !srv 22.05.18 
+      subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,     !srv 22.05.18
      &  itcnt, rxf, switch, geo, mpg, pl, dv, sr, ierr)
       use b2mod_types
       use b2mod_constants
@@ -16,9 +16,10 @@
      & , only : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo,
      &          my_out_folder,
 #ifdef WG_DEBUG
-     &          my_out_sf,                                              !srv 27.06.21
+     &          my_out_sf,                                               !srv 27.06.21
 #endif
      &          ncall_b2ursd
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt
@@ -27,7 +28,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  rxf
-      logical solving, solvereg(0:nregionv)                             !srv 22.05.18
+      logical solving, solvereg(0:nregionv)                              !srv 22.05.18
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -64,7 +65,7 @@
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), wrk0(nCv)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2ursd, b2uspo, b2uppo
 *   ..initialisation
 
@@ -142,4 +143,4 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
 *-----------------------------------------------------------------------
 *.end b2nppo
 
-      end
+      end subroutine b2nppo

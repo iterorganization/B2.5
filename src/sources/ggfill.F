@@ -4,6 +4,7 @@
 
       subroutine ggfill (ph,gg0,np,nv)
       use b2mod_types
+      use b2mod_subsys
       implicit none      
 *   ..input arguments (unchanged on exit)
       integer np, nv
@@ -33,7 +34,7 @@
       integer iv, ipinf, ipsup, ipmed
       real (kind=R8) :: gginf, ggsup
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 *-----------------------------------------------------------------------
 *.computation
 

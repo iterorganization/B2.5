@@ -3,10 +3,11 @@
 
       subroutine b2wgrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
      &  rtn, nn, zn, 
-     &  rtlsa, rtlra, rtlqa, rtlqa_ra, rtlcx, rtlza, rtlz2, rtlpt, 
+     &  rtlsa, rtlra, rtlqa, rtlqa_ra, rtlcx, rtlza, rtlz2, rtlpt,
      &  rtlpi)
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 #     include "emissivity.constants"
 *   ..input arguments (unchanged on exit)
@@ -28,7 +29,7 @@
 *  1. purpose
 *
 *     B2WGRC displays a table of atomic rate coefficients that has been
-*     prepared for b2.
+*     prepared for B2.
 *
 *
 *  3. description
@@ -158,15 +159,14 @@
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   cutll, rydberg, Ei, Ef, t0, zmin, zmax
+     *  cutll, Rydberg, Ef, Eg, t0, zmin, zmax
       real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
       intrinsic nint, int, max, exp, log
       real (kind=R8) ::
      *   machsfr, expu1
       real (kind=R4) small_real_constant
-      external subini, subend, xertst, pagini, pagend, machsfr,
-     &  dashdc, curved_d
+      external xertst, pagini, pagend, machsfr, dashdc, curved_d
       expu1(t0) = exp(max(t0,cutll))+small_real_constant
 *     (expu1 is the exponential function with underflow set to a tiny
 *     positive value.)
@@ -188,12 +188,12 @@
       cutll = log(2.0_R8*machsfr())
       small_real_constant=tiny(small_real_constant)
 *!!   (increase cutll if a floating point error occurs.)
-      rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
+      Rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
 *   ..set izn0
       izn0 = nint(zn(0))
 *   ..compute ionisation potential scale
       Ef = 1.10_R8 * zn(0)**2
-      Ei = 1.12_R8 * zn(0)**2.4_R8
+      Eg = 1.12_R8 * zn(0)**2.4_R8
 *   ..write blank line
       write (nprt,'()')
 
@@ -219,9 +219,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -244,9 +244,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -269,9 +269,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -294,9 +294,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -319,9 +319,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -344,9 +344,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -419,9 +419,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+         call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -444,9 +444,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+         call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -464,7 +464,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -482,7 +482,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo
@@ -500,7 +500,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -518,7 +518,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo
@@ -528,7 +528,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ei*rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Eg*Rydberg+0.5_R8,
      &   'rtt', 'rtpt', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -536,7 +536,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -546,7 +546,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'CUMULATIVE IONISATION POT.  , Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpt', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ei*rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Eg*Rydberg+0.5_R8,
      &   'rtn', 'rtpt', header)
        do k = 0, ns0-1
         do j = 0, nn
@@ -554,7 +554,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo
@@ -564,7 +564,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'EFFECTIVE IONISATION POT.,    Z0 =',izn0,', NE =',rtn(j)
        write (nprt,fmtp) '+rtpi', header
-       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ef*rydberg+0.5_R8,
+       call pagini (2, rtt(0), rtt(nt), -0.5_R8, Ef*Rydberg+0.5_R8,
      &   'rtt', 'rtpi', header)
        do k = 0, ns0-1
         do i = 0, nt
@@ -572,7 +572,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtt, wt, nt+1)
+        call curved_d (rtt, wt, nt+1)
        enddo
        call pagend ()
       enddo
@@ -582,7 +582,7 @@
        write (header,'(a,i2,a,1pe9.2)')
      &   'EFFECTIVE IONISATION POT.,    Z0 =',izn0,', TE =',rtt(i)
        write (nprt,fmtp) '+rtpi', header
-       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ef*rydberg+0.5_R8,
+       call pagini (2, rtn(0), rtn(nn), -0.5_R8, Ef*Rydberg+0.5_R8,
      &   'rtn', 'rtpi', header)
        do k = 0, ns0-1
         do j = 0, nn
@@ -590,7 +590,7 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	call curved_d (rtn, wn, nn+1)
+        call curved_d (rtn, wn, nn+1)
        enddo
        call pagend ()
       enddo

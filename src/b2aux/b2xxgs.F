@@ -20,7 +20,7 @@
 *  1. purpose
 *
 *     B2XXGS sets a mesh function to a constant value on the singular
-*     regions of the b2 geometry.
+*     regions of the B2 geometry.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -68,4 +68,4 @@
 *-----------------------------------------------------------------------
 *.end b2xxgs
 
-      end
+      end subroutine b2xxgs

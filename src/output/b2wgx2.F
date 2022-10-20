@@ -6,6 +6,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc, ncnta, ncntb
@@ -14,7 +15,7 @@
      *  crx(-1:nx,-1:ny,0:3),
      &  cry(-1:nx,-1:ny,0:3), fun(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   scal, fa0, fa1, fb0, fb1
+     *  scal, fa0, fa1, fb0, fb1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -29,7 +30,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a contour plot of some quantity on a
-*     sequence of cartesian representations of the b2 mesh.
+*     sequence of cartesian representations of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -115,7 +116,7 @@
      *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny)
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst
+      external xertst
       external b2wgxp, b2xgxy
 
 *-----------------------------------------------------------------------
@@ -153,4 +154,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx2
 
-      end
+      end subroutine b2wgx2

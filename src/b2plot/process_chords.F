@@ -6,6 +6,7 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
+      use b2mod_subsys
       implicit none
       character*(*) filename
       character*80 dataname
@@ -23,7 +24,7 @@ c
       integer lnblnk
       real (kind=R8) ::
      * chord_integral
-      external lnblnk, chord_integral, open_file, xerrab, subini, subend
+      external lnblnk,chord_integral,open_file,xerrab
 
       call subini ('process_chords')
       do is=0,ndim(3,iwrk)-1
@@ -218,9 +219,9 @@ c
         call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
         ntstep=nint(tstepn(1))
         do itstep=1,ntstep,movie_skip
-          dumarr(1)=htime
           call rwcdf_settime('time',itstep)
           call rwcdf(rw,ncid,'time',imap,dumarr,iret)
+          htime=dumarr(1)
           imap(1)=1
           imap(2)=nx+2
           call rwcdf(rw,ncid,'ahal',imap,work(-1,-1,0,iwrk),iret)
@@ -259,6 +260,7 @@ c
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
       use b2mod_types
+      use b2mod_subsys
       implicit none
 
       integer maxchords,maxcompile,nx,ny,inpts
@@ -275,7 +277,7 @@ c
 
       logical open_file,vector
       integer ind,indold,npoints,lnblnk
-      external lnblnk, subini, subend, xertst
+      external lnblnk, xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
@@ -332,6 +334,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_subsys
       implicit none
 
       integer maxchords,maxcompile,inpts
@@ -351,7 +354,7 @@ c
       integer npoints,lnblnk,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_integral
-      external lnblnk,chord_integral, subini, subend, xerrab
+      external lnblnk, chord_integral, xerrab
 
       call subini ('calculate_zvalues')
       if(use_compile) then

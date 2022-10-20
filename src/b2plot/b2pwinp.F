@@ -8,14 +8,15 @@ c*** MUST be compiled in single precision!!!
 c======================================================================
       use b2mod_types
       use b2mod_b2plot_wall_loading
+      use b2mod_subsys
       implicit none
 #     include "impcon.inc"
       integer lun
       parameter (lun=96)
       integer i
-      logical open_file
-      character*16 ufile
-      external b2pwinm, open_file, subini, subend, xerrab
+      logical open_file, file_ok
+      character*24 ufile
+      external b2pwinm, open_file, xerrab
 c======================================================================
 c*** This routine works once
 c
@@ -32,7 +33,7 @@ c
         lwldstrt(i)=0
       end do
       lppp=0
-      jedge(1:4)=0
+      jedge(1:2*ntrgsx)=0
       add_rad=0.0_R8
       nadsrc=0
       do i=1,ntrgsx
@@ -48,11 +49,19 @@ c
 c
 c*** Set up the input routine
 c
+      lena=8
+      lfin=72
+      jmess=2
       immed=.false.
       mimp=lun
+      keylen=8
+      fixkey=.false.
+      finish = 'finish'
+      promp(1) = repeat(' ',8)
+      promp(2) = repeat(' ',8)
       ufile='param.dg'
-c      open(lun,file=ufile,status='old',err=998)
-      if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
+      call find_file(ufile,file_ok)
+      if(.not.open_file(lun,ufile,'modules/Uinp')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
         call subend ()
@@ -70,8 +79,5 @@ c
 c
       call subend ()
       return
-c======================================================================
- 998  write(*,*) 'Error opening the file ',ufile
-      call xerrab ('Error opening file in b2pwinp')
 c======================================================================
       end subroutine b2pwinp

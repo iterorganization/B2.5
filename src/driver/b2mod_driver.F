@@ -48,6 +48,8 @@
       use b2mod_boundary_namelist
 !WG_RM      use b2mod_external
       use b2mod_mwti
+      use b2mod_file
+      use b2mod_ipmain
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance,!WG_TODO write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
@@ -67,13 +69,16 @@
       use b2mod_par_opt
      & , only : npar_opt, flag_optim, read_b2mod_par_opt,
      & par_opt_phys, x0
+      use b2mod_b2plot
+     , , only : nlimi
+
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
      *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff,
      *          eirene_set_parmmod
       use eirmod_cinit
-     * , only : eirene_init_cinit
+     * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
       use eirmod_clogau
       use eirmod_ctrcei
@@ -84,9 +89,12 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#ifdef NAGFOR
+      use f90_unix_proc ! IGNORE
+#endif
 #else
       use b2mod_braeir
-!WG_RM      use b2mod_eirbra
+      use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
      , ,only: write_b2_to_astra
@@ -96,6 +104,36 @@
 #ifdef USE_IMPGYRO
       use b2mod_impgyro !yamoto
 #endif
+#ifdef IMAS
+      use ids_routines  ! IGNORE
+     , ,only: imas_open_env, ids_deallocate, ids_get
+      use ids_schemas   ! IGNORE
+     , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
+     ,        ids_radiation, ids_dataset_description, ids_equilibrium
+#if IMAS_MINOR_VERSION > 8
+      use ids_schemas   ! IGNORE
+     , ,only: ids_real, ids_real_invalid
+#endif
+#if IMAS_MINOR_VERSION > 21
+      use ids_schemas   ! IGNORE
+     , ,only: ids_summary
+#endif
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34)
+      use ids_schemas   ! IGNORE
+     , ,only: ids_numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+      use ids_schemas   ! IGNORE
+     , ,only: ids_divertors
+#endif
+      use b2mod_ual
+     , ,only: put_ids_edge, new_ids_edge, close_ual,
+     ,        dealloc_ids_edge, dealloc_batch_edge
+      use b2mod_ual_io
+     , ,only: b25_process_ids, b25_av_ids,
+     ,        num_time_slices, num_batch_slices
+#endif
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 #     include "DIMENSIONS.F"
@@ -109,6 +147,7 @@
       integer, save :: b2mndr_redef_pbs = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
+      integer, save :: shot = 0, run = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
       real (kind=R8) ::
@@ -119,7 +158,7 @@
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
      &  ixfb, iyfb, ax, ay
 !WG_TODO      real (kind=R8), allocatable ::
-!WG_TODO     *  !rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
+!WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
 !WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
@@ -128,13 +167,13 @@
       character chns*3                                               !srv 25.01.16
       integer itim, ierr, edition, b2time, coronal,
      *  tally, ismain, ismain0, natmi, no_solve,
-     *  external_species
+     *  external_species, idx, status
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
-      logical lwti, lwav, lrav, lrer
-      character(22) :: batch_name, aver_name, run_av_name 
+      logical lwti, lwav, lrav, lrer, continued
+      character(22) :: batch_name, aver_name, run_av_name
       real (kind=R8) ::
      *  cputarget, cpuincrement,
      1  na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, zt_eps,
@@ -143,6 +182,7 @@
      4  dt_min, dt_max, max_delta
       integer :: ncon, nele_jac
 #ifndef NO_CDF
+#     include <netcdf.inc>
       integer ncid
 #endif
 #ifdef CATALYST
@@ -156,13 +196,42 @@
       integer tran_num
       character*6 tran_file_name
 #endif
+#ifdef IMAS
+      type(ids_equilibrium) :: equilibrium
+      type(ids_edge_profiles) :: edge_profiles
+      type(ids_edge_profiles) :: batch_profiles
+      type(ids_edge_profiles) :: old_edge_profiles
+      type(ids_edge_profiles) :: old_batch_profiles
+      type(ids_edge_sources) :: edge_sources
+      type(ids_edge_sources) :: batch_sources
+      type(ids_edge_transport) :: edge_transport
+      type(ids_radiation) :: radiation
+      type(ids_dataset_description) :: description
+      type(ids_dataset_description) :: old_description
+#if IMAS_MINOR_VERSION > 21
+      type(ids_summary) :: summary
+#endif
+#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 )
+      type(ids_numerics) :: numerics
+#endif
+#if IMAS_MINOR_VERSION > 30
+      type(ids_divertors) :: divertors
+#endif
+      integer :: time_slice_index, batch_index, tmp_run
+      real (IDS_real) :: old_start_time, old_end_time, ids_end_time
+      character username*24, database*24, treename*24, version*24
+      character old_imas_version*132, imas_version*132
+      character systemarg*512
+      logical new_eq_ggd
+#endif
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
       real (kind=R8) ::
      *  delta_plasma_time, save_plasma_time
       real (kind=R8) ::
      *  te_hot, ne_hot_frac
-      logical quitexist, quit, quitexist_, write_save
+      logical quitexist, quit, quitexist_
+      logical write_save
       real (kind=R8) ::
      *  stack_dtim(20)
       integer stack_ntim(20)
@@ -170,8 +239,6 @@
       real (kind=R8) ::
      *  min_areshe, min_areshi, min_aresco, res_quit, res_max
       logical quit_residual, test_residual
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
       real (kind=R8) :: hzconst                                      !srv 30.01.10
 
 *   ..initialisation
@@ -269,17 +336,14 @@
      & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      & rescale_rd, rescale_br
 *   ..procedures
-      logical lnext
       real (kind=R8) :: rratio, smax
       external rratio, smax
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2MNDR is the main driver routine for the b2 code.
+*     B2MNDR is the main driver routine for the B2 code.
 *
 *
 *  3. description (see also routine b2cdca)
@@ -287,7 +351,7 @@
 *     For a detailed description of the equations and the method of
 *     solution, see the references cited in the main program unit.
 *
-*     The routine b2mndr controls the timestepping procedure in a b2
+*     The routine b2mndr controls the timestepping procedure in a B2
 *     calculation. An outline of the procedure follows.
 *     ..initialise files and common
 *     ..do while ()
@@ -615,9 +679,9 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
@@ -629,7 +693,7 @@
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
 *     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays
-*     zamin, zamax and zn used elsewhere in b2.
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are
@@ -654,7 +718,7 @@
 *     logu(rtrra), where rtrra is the recombination rate coefficient at
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
-*     rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
 *     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
 *     at electron temperature rtt(i) and electron density rtn(j) for 
@@ -663,13 +727,13 @@
 *     process contributions. In short, it includes the processes not 
 *     accounted for in EIRENE.
 *     rtqa has dimension eV*m**3/s.
-*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*      rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
 *     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
 *     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     which replaces amjuel when EIRENE is not used. rtqa_ra has
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -919,18 +983,18 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
-       balance_netcdf = 0 ! Default: do not create balance arrays
+       balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
-       call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
-       call ipgeti ('balance_average',balance_average)
+       call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
+       call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
-       call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
-       call ipgeti ('b2mndr_use_mms',use_mms)                           !srv 26.02.18 {
+       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
+       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
        call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0) 
+       if(boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
        call ipgeti ('b2mndr_equation_sources', equation_sources)
-       if(equation_sources.ne.0) 
+       if(equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -1091,9 +1155,9 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.le.dt_max,'faulty internal parameter dt_max')
 * modify rate coefficients for coronal model
 !WG_TODO       allocate(
-!WG_TODO     *  !rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     &  !rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     &  !rbr(-1:nx,-1:ny,0:ns-1),
+!WG_TODO     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+!WG_TODO     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+!WG_TODO     &  rbr(-1:nx,-1:ny,0:ns-1),
 !WG_TODO     *  rza0(nCv,0:ns-1), rz20(nCv,0:ns-1),
 !WG_TODO     *  rpt0(nCv,0:ns-1), rpi0(nCv,0:ns-1))
        call ipgeti ('b2mndr_coronal_model', coronal)
@@ -1190,7 +1254,8 @@ c and hence the reaction rates have to be rescaled here.
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
                 rtlqa_ra(:,:,is+1)=rtlqa_ra(:,:,is+1)+             !mb 22.05.18
      *             log(switch%neutral_sources_rescale)
-                write(*,*) is,zamax(is),rtlqa_ra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)')
+     *             is,zamax(is),rtlqa_ra(0,0,is+1)
              endif
            enddo
          else
@@ -1220,7 +1285,7 @@ cwdk for now, dummy external state is created in b2mod_main
        do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
          call xertst (state%rt%nscx.lt.state%rt%nscxmax,
-     1    'too many neutral hydrogen species')
+     1    'too many neutral hydrogenic species')
          state%rt%iscx(state%rt%nscx) = is
          state%rt%nscx = state%rt%nscx+1
         endif
@@ -1265,6 +1330,7 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
+        IUNOUT=6+IFOFF
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1457,10 +1523,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nCv, ns)
 
-*   initialize and/or read running averages 
+*   initialize and/or read running averages
       if ((iav_run > 0) .or. (ird_aver > 0)) then
         lrer = (ird_aver == 0)
-        call run_av_init (iav_cont, nCv, ns,.true.,lrer) 
+        call run_av_init (iav_cont, nCv, ns, .true., lrer)
       end if
 
 *   get averaged plasma profiles
@@ -1524,13 +1590,13 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        call my_out_us(70,nFc,1,geo%fcEb(1,1),'b2mndr_fcEbY')
        call my_out_us(70,nFc,1,geo%fcEb(1,2),'b2mndr_fcEbZ')
       endif                                                          !srv 25.01.16 }
-      do is = 0,ns-1
+      do is = 0,ns-1                                                 !srv 25.01.16 {
         do iCv=1,nCv
           state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
         enddo
-      enddo
+      enddo                                                          !srv 25.01.16 }
 !      if(use_mms.ne.0) then                                          !srv 26.02.18 {
-*   ..reset initial state using exact solution 
+*   ..reset initial state using exact solution
        call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
 !      endif                                                          !srv 26.02.18 {
 *   ..test plasma state
@@ -1786,13 +1852,9 @@ cxpb for neutral fluxes used in b2stbc_phys
         call init_feedback(nCv, nFc, nVx, ns, natmi, switch, geo, mpg)
       endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
-
+      nlimi = 0
 #ifdef B25_EIRENE
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
-#endif
+      filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
@@ -1821,19 +1883,20 @@ c new CDF movie option (1st frame at t=0)
         endif
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
       endif
-      
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
       call subend()
       return
- 999  call xerrab
+#ifdef USE_MPI
+  999 call xerrab
      . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
+#endif
       end subroutine b2mndr_0
 
       subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state, 
      &  state_ext, J)
       use b2mod_user_namelist
-     & , only: ncf
+     & , only : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_batch_average
@@ -1868,7 +1931,9 @@ c new CDF movie option (1st frame at t=0)
       integer nCv, nFc, nVx
       integer i, is, js, icf
       character*256 filename, fort31name
+#ifdef B25_EIRENE
       character*256 systemarg
+#endif
       character*1 ss
       logical ok, found
 *   ..procedures
@@ -2032,7 +2097,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
         endif
 #endif
-*    ..extra writes of b2fplasmf.xxxx       
+*    ..extra writes of b2fplasmf.xxxx
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
           nwrit_plas = nwrit_plas + 1
@@ -2056,7 +2121,7 @@ csw 09oct2012 set default potential already at this point (BCs)
 !djm Jun2017
 #ifdef WG_TODO
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
-          call update_average_balance(itim,ntim)
+          call update_average_balance(state,itim,ntim)
         endif
 #endif
 #endif
@@ -2067,7 +2132,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           tim = tim+dtim
         endif
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
-     &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
+     &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dtim
 #ifndef FIXED_POINT
         write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps)))
@@ -2130,13 +2195,9 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_02:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
         end do
-*    ..produce time dependent file
+*    ..produce time-dependent file
         if (switch%save_f31.lt.0) then
-#ifndef HPUX
-          write(fort31name,'(a,i8.8)') 'fort.31.', itim
-#else
-          write(fort31name,'(a,i8.8)') 'ftn31.', itim
-#endif
+          write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo, 
@@ -2188,17 +2249,17 @@ c new CDF movie option
      .              switch%BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
-          write (batch_name,'(a18,i4.4)') 
+          write (batch_name,'(a18,i4.4)')
      .           'batch_av/batch_av.',edition_batch
           call batch_av_all_save (batch_name,nCv,ns)
           write(*,*) 'Saved ',batch_name
         end if
         if ((iav_run > 0) .and. (ntim_run > 0)) then
-          lrav = mod(itim,ntim_run) == 0 
+          lrav = mod(itim,ntim_run) == 0
           write (*,*) ' itim,ntim_batch,lrav ', itim,ntim_run,lrav
           if (lrav) then
              edition_run = edition_run + 1
-             write (run_av_name,'(a14,i4.4)') 
+             write (run_av_name,'(a14,i4.4)')
      .              'run_av/run_av.',edition_run
              call run_av_save (run_av_name,nCv,ns,.true.,.false.)
              write(*,*) 'Saved ',run_av_name
@@ -2225,33 +2286,31 @@ c new CDF movie option
      >     call b2trace(70,ns,nxtl,nxtr,ismain,dtim,switch%b2mndr_stim,
      .                  switch%BoRiS,geo,mpg,state)
         endif
-c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
-c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
         call cpu_time(cpuval)
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
      &            min((ntim-itim)*(cpuval-cpustart),
      &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                min((ntim-itim)*(elapsedval-elapsedstart),
      &      max(0.0_R8,b2mndr_elapsed-(elapsedval-elapsedinit)))         !srv 18.05.09
         else if (etim.ne.0.0_R8 .and. etim.gt.switch%b2mndr_stim) then
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 min((ntim-itim)*(elapsedval-elapsedstart),
      &      max(0.0_R8,(etim-tim)/dtim-(elapsedval-elapsedstart)))       !srv 18.05.09
         else
-          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+          write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
@@ -2276,14 +2335,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &    res_max = max(res_max,state%diag%areskt)
         if (any(solvezt).and.switch%solve_keps.eq.2)
      &    res_max = max(res_max,state%diag%areszt)
-        
 #ifndef FIXED_POINT
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
      &        (state%diag%areshe*min_areshe).le.(min_areshe*min_areshe)  !jwk
-     &        .and.(state%diag%areshi*min_areshi).le.(min_areshi*        !jwk
-     &        min_areshi).and.(state%diag%aresco(ismain)*min_aresco)     !jwk
-     &        .le.(min_aresco*min_aresco)                                !jwk
+     &        .and.
+     &        (state%diag%areshi*min_areshi).le.(min_areshi*min_areshi)  !jwk
+     &        .and.
+     &        (state%diag%aresco(ismain)*
+     &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
         endif                                                            !jwk
         quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
@@ -2341,34 +2401,62 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call find_file(filename,found)
           if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
-          if (ank_tracing.ne.0) call b2filef(0,ns,nnreg)
+          if (ank_tracing.ne.0) call b2filef
 #endif
 #ifdef B25_EIRENE
           if (switch%use_eirene.ne.0) then
             call write_f44(savefile(13:16))
-#ifndef HPUX
-            inquire(file='fort.13',exist=found)
+            filename=fort_lc//'13'
+            inquire(file=filename,exist=found)
             if (found) then
-              systemarg='cp fort.13 fort.13.'//savefile(13:16)
-              call system(systemarg)
-            endif
-            inquire(file='fort.15',exist=found)
-            if (found) then
-              systemarg='cp fort.15 fort.15.'//savefile(13:16)
-              call system(systemarg)
-            endif
+#ifdef WINDOWS
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
+     &        ' > nul'
 #else
-            inquire(file='ftn13',exist=found)
-            if (found) then
-              systemarg='cp ftn13 ftn13.'//savefile(13:16)
-              call system(systemarg)
-            endif
-            inquire(file='ftn15',exist=found)
-            if (found) then
-              systemarg='cp ftn15 ftn15.'//savefile(13:16)
-              call system(systemarg)
-            endif
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
 #endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
+              call system(systemarg)
+#endif
+            endif
+            filename=fort_lc//'14'
+            inquire(file=filename,exist=found)
+            if (found) then
+#ifdef WINDOWS
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
+     &        ' > nul'
+#else
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
+              call system(systemarg)
+#endif
+            endif
+            filename=fort_lc//'15'
+            inquire(file=filename,exist=found)
+            if (found) then
+#ifdef WINDOWS
+              systemarg='copy '//trim(filename)//' '//
+     &                           trim(filename)//'.'//savefile(13:16)//
+     &        ' > nul'
+#else
+              systemarg='cp '//trim(filename)//' '//
+     &                         trim(filename)//'.'//savefile(13:16)
+#endif
+#ifdef NAGFOR
+              call system(systemarg, status, ierror)
+#else
+              call system(systemarg)
+#endif
+            endif
           endif
 #endif
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
@@ -2379,18 +2467,11 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
             write (*,*) aver_name,' saved '
           end if
         endif
-
         first_time_step=.false.
 
 #ifdef CATALYST
         if (use_catalyst .eqv. .true.) then
-           call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,ns,itim,tim,
-     &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs, fhe, fhi,
-     &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
-     &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
-     &   na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor, uadia, vadia,
-     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix), 
-     &   float(topiy))
+           call coprocessor(nVx, nFc, nCv, itim, tim, geo, state)
         endif
 #endif
 #endif
@@ -2434,22 +2515,24 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       integer nCv, nFc, nVx, is                                            !srv 29.11.18 
       character*256 filename
       logical found
-      
+
       call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
       if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
-     1 write(*,*) 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
-      if(itim.ge.ntim)
-     1 write(*,*) 'stopping because itim >= ntim: ',itim,ntim
+     1 write(*,'(1x,a,1p,2(e12.5,1x))')
+     . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
+      if(itim.ge.ntim) write(*,'(1x,a,2(i8,1x))')
+     1 'stopping because itim >= ntim: ',itim,ntim
       if(etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.etim.ne.0.0_R8)
-     1 write(*,*) 'stopping because tim >= etim: ',tim,etim
+     1 write(*,'(1x,a,1p,2(e12.5,1x))')
+     . 'stopping because tim >= etim: ',tim,etim
       if(etim.eq.switch%b2mndr_stim.and.switch%b2mndr_stim.gt.0.0_R8)
-     1 write(*,*) 'stopping because etim = stim: ',etim,
-     & switch%b2mndr_stim
+     & write(*,'(1x,a,1p,2(e12.5,1x))')
+     1 'stopping because etim = stim: ',etim,switch%b2mndr_stim
       if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &   b2mndr_elapsed.gt.0.0_R8) write(*,*)
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,'(1x,a,1p,2(e12.5,1x))')
      1 'stopping because elapsed CPU time > limit: ',
      .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)
@@ -2505,7 +2588,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-
 ! csc UNCOMMENT WITH AD
 !    call write_b2fstate_diff (nout(9), nCv, nFc, ns, stated)
 *   ..mms error analysis
@@ -2548,7 +2630,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
         call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
       endif
-*   ..produce last time dependent file if not yet done
+*   ..produce last time-dependent file if not yet done
 #ifdef JET
       if(tim.gt.save_tran_time-delta_tran_time+dtim.and.
      &   delta_tran_time.gt.0.0_R8) then
@@ -2590,7 +2672,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns,switch%BoRiS)
         endif
       endif
-*   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017
+*   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
         call write_balance(nx,ny,ns)
@@ -2607,13 +2689,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 * finalise eirene_mc
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nx,ny,ns,switch%BoRiS)
+         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,pl,dv,
+     &                        kin_frac_hyb, fnn_inc)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
-
-
 #endif
 
       if (iav_run > 0) then
@@ -2676,6 +2757,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call subend ()
       return
       end subroutine b2mndr_2
+
 *-----------------------------------------------------------------------
 *.end b2mndr
 c
@@ -2689,7 +2771,8 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi, rate_qa_ra
+     *             rate_za, rate_z2, rate_pt, rate_pi, rate_qa_ra
+!!    real (R8) :: rate_cx
       integer ite, ine, ise, ixte
 
       write(*,*) 'dpc_mod_rates: ', te_hot, ne_hot_frac

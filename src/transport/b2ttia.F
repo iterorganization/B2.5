@@ -9,6 +9,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2ttia
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -44,12 +45,10 @@
       
 *   ..local variables
       integer iCv, is
-      real (kind=R8) ::
-     *   fki, eta, ctaup, t0, t1
-      parameter (fki=2.253e0_R8, eta=1.357e0_R8)
+      real (kind=R8) :: ctaup, t0, t1
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg
 *   ..initialization
 
@@ -59,9 +58,6 @@
 *     Description of some local variables:
 *
 *     lnlam is the log of the plasma parameter.
-*     fki is the dimensionless parallel atom thermal conductivity.
-*     eta is the dimensionless parallel atom viscosity.
-*     (see table 4.1 of Balescu for fki and eta.)
 *
 *     Description of some local procedures:
 *
@@ -114,4 +110,4 @@
 *-----------------------------------------------------------------------
 *.end b2ttia
 
-      end                                                            !srv 16.06.08 }
+      end subroutine b2ttia                                          !srv 16.06.08 }

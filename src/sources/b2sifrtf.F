@@ -18,6 +18,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sifrtf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb, ismain
@@ -60,8 +61,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..global named constants
-      
 *   ..local variables
       integer iCv, is, k
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
@@ -79,7 +78,7 @@
       intrinsic sqrt
       real (kind=R8) ::
      *  roxa
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialization
       roxa(iCv,is) = am(is)*mp*na(iCv,is)                               !srv 01.07.05
@@ -127,7 +126,7 @@
 * ..compute friction
 *   ..loop over all other species
       do is = 0, ns-1
-       if(isb.ne.is .and. 
+       if(isb.ne.is .and.
      &    .not.is_neutral(isb).and. .not.is_neutral(is)) then
         KabVp=fkabvp(isb,is)
 *     ..contribution from friction between ions
@@ -154,8 +153,8 @@
       enddo
 
 !*   ..compute ue, electron parallel velocity
-!       call b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rza, rz2,
-!     &   alfx_c, sigx_c, fch_pi_c, po, ne, te, na, ua, st_ext, ue)
+!      call b2xpve (nCv, nFc, ns, switch, geo, mpg, qe, rza, rz2,
+!     & alfx_c, sigx_c, fch_pi_c, po, ne, te, na, ua, st_ext, ue)
 *     ..contribution from friction between between electron and ions
       if(.not.is_neutral(isb)) then
        do iCv = 1, mpg%nCi
@@ -184,7 +183,7 @@
       endif
 *   ..contribution from ions thermal force
       do is = 0, ns-1
-       if(isb.ne.is .and. 
+       if(isb.ne.is .and.
      &    .not.is_neutral(isb) .and. .not.is_neutral(is)) then
         Kabtf = fkabtf(isb,is)
         Kbatf = fkabtf(is,isb)
@@ -193,7 +192,7 @@
         KabVp = fkabvp(isb,is)
 
         do iCv = 1, mpg%nCi
-c      .. calculations could be simplified 
+c      .. calculations could be simplified
 c      .. but we did not do it in order to have the same formulae as manual
           calfab = zetap(iCv)/sqrt(mp)*
      &         qe*(na(iCv,isb)+na(iCv,is))*
@@ -239,13 +238,13 @@ c      .. apply flux limit
        wrk = geo%cvVol*geo%cvHz*smbtfial(:,0)
        call my_out_us(70,nCv,0,wrk,'b2sifrtf_smotfia'//chns)
        wrk = geo%cvVol*geo%cvHz*smbtfeal(:,0)
-       call my_out_us(70,nCv,0,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
+       call my_out_us(70,nCv,0,wrk,'b2sifrtf_smotfea'//chns)            !srv 05.07.17 }
        call my_out_us(70,nCv,0,ue,'b2sifrtf_ue')
       endif
 
-      if (iout.gt.1) then                                              !srv 05.07.17
-	 do is = 0,ns-1
-	  write (chis,'(i3.3)') is
+      if (iout.gt.1) then                                               !srv 05.07.17
+        do is = 0,ns-1
+          write (chis,'(i3.3)') is
           call my_out_us(70,nCv,0,fkabvp(isb, is),
      &              'b2sifrtf_kabvp_'//chns//'_'//chis)
           call my_out_us(70,nCv,0,fkabtf(isb, is),
@@ -279,18 +278,18 @@ c      .. apply flux limit
 
       function fkabvp(a, b)
       implicit none
-      integer a, b 
+      integer a, b
       real (kind=R8) :: fkabvp(nCv)
-      if((a.eq.ismain) .and. (b.ne.a) .and. 
+      if((a.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
-      elseif((b.eq.ismain) .and. (a.ne.b) .and. 
+      elseif((b.eq.ismain) .and. (a.ne.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=cimp1
-      elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and. 
+      elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=1.0_R8
-      elseif((a.eq.b) .and. 
+      elseif((a.eq.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabvp=0.0_R8
       else
@@ -301,12 +300,12 @@ c      .. apply flux limit
 
       function fkabtf(a, b)
       implicit none
-      integer a, b 
+      integer a, b
       real (kind=R8) :: fkabtf(nCv)
-      if((b.eq.ismain) .and. (b.ne.a) .and. 
+      if((b.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=cimp2
-      elseif((a.ne.ismain) .and. (b.ne.ismain) .and. 
+      elseif((a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
         fkabtf=0.0_R8
       elseif((a.eq.ismain)) then
@@ -319,7 +318,7 @@ c      .. apply flux limit
 
       function fka(a)
       implicit none
-      integer a 
+      integer a
       real (kind=R8) :: fka(nCv)
       integer r
       fka = 0.0_R8
@@ -334,4 +333,4 @@ c      .. apply flux limit
 *-----------------------------------------------------------------------
 *.end b2sifrtf
 
-      end                                                               !srv 01.07.05 }
+      end subroutine b2sifrtf                                           !srv 01.07.05 }

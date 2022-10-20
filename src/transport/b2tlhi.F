@@ -4,13 +4,14 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
       integer nCv, nFc
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  mp, cflmi, ni(nCv,0:1), nirm(nCv), ni_ext(nCv,0:1), ti(nCv), 
+     *  mp, cflmi, ni(nCv,0:1), nirm(nCv), ni_ext(nCv,0:1), ti(nCv),
      *  tn(nCv), chvimx(nFc)
 *     ------------------------------------------------------------------
 *     B2TLHI computes the all atom heat transport flux limit velocity.
@@ -22,7 +23,7 @@
 *   ..procedures
       real (kind=R8) :: pit
       intrinsic max, sqrt
-      external subini, subend, xertst, b2xvfx
+      external xertst, b2xvfx
       pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
 *     ------------------------------------------------------------------
@@ -47,9 +48,9 @@ c    because now both options are interchangeable
        do iFc = 1, nFc
         t0 = ti(mpg%fcCv(iFc,2))
         t1 = ti(mpg%fcCv(iFc,1))
-cwdk 10.03.16 Divide by ni*ti at cell faces, so chvimx contains the same information 
+cwdk 10.03.16 Divide by ni*ti at cell faces, so chvimx contains the same information
 c           as case b2tqca_model.eq.1
-c           Removes need for different treatment later on in the code (b2tfhi), and 
+c           Removes need for different treatment later on in the code (b2tfhi), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
         chvimx(iFc) = cflmi*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
      &   (nirm(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/mp)*t0 + 

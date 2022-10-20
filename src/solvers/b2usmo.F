@@ -12,8 +12,9 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2usmo
+      use b2mod_subsys
       implicit none
-*   ..input arguments (unchaninvged on exit)
+*   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb, nregionv, itcnt
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -36,7 +37,7 @@
 *
 *  1. purpose
 *
-*     b2usmo computes a correction towards the solution of the
+*     B2USMO computes a correction towards the solution of the
 *     parallel momentum balance equation for one atomic species.
 *
 *
@@ -55,8 +56,7 @@
      *  t11, t22
       logical lnonzero
 *   ..procedures
-      intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr, sfill
+      external xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
 *   ..initialisation
 
@@ -264,4 +264,4 @@
 *-----------------------------------------------------------------------
 *.end b2usmo
 
-      end
+      end subroutine b2usmo

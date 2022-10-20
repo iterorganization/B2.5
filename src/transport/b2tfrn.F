@@ -17,6 +17,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfrn
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -37,7 +38,7 @@
 *  1. purpose
 *
 *     B2TFRN computes the particle and energy fluxes between
-*     neighbouring cells which are to be provided to Eirene
+*     neighbouring cells which are to be provided to Eirene.
 *
 *  3. description (see also routine b2cdca)
 *
@@ -61,15 +62,15 @@
      *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
       real (kind=R8) :: t0,t1,t2
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
-c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0              !srv 06.07.06
-c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
+c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
+c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
+c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr
+      external xertst, ipgeti, ipgetr
       external b2xvsg, b2xvff, intface
-      intrinsic abs, max, min, mod, sqrt
 *   ..initialisation
       scur(:,:) = 0.0_R8
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -131,12 +132,12 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
        if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
         scur(:,0) = 
      &   (dv%fchinert(:,0) + dv%fchvispar(:,0) + 
-     &    switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,0) + 
+     &    switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,0) +
      &    switch%fnb_vis_q*dv%fchvisq(:,0))*switch%b2tfnb_xcur/
      &   (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
         scur(:,1) = 
      &   (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
-     &    switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) + 
+     &    switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) +
      &    switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
      &   (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
         flo_eir   = flo_eir + switch%fnb_drift_hyb*scur
@@ -176,7 +177,7 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
       enddo !is
 
 c Drift terms
-      if((maxval(dv%facdrift).ne.0.0_R8 .or. 
+      if((maxval(dv%facdrift).ne.0.0_R8 .or.
      &    maxval(dv%fac_ExB).ne.0.0_R8)) then
 
 *     ..computation of diamagnetic drift
@@ -198,7 +199,7 @@ cwdk    to be checked: now we use inverse volume weighting in wkr0
        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,dv%ue,wrk0)
 
       if(switch%b2sigp_style.eq.2) then
-        call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext) 
+        call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
         do iCv = 1, nCv
           c071(iCv) = zeff(iCv)*fce2n(zeff(iCv))
         enddo

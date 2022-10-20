@@ -14,6 +14,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2sian_eps
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, isb
@@ -32,7 +33,7 @@
 *  1. purpose
 *
 *     B2SIAN computes contribution to the parallel momentum source due
-*     to the anomalous current
+*     to the anomalous current.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -43,7 +44,7 @@
       real (kind=R8) ::
      *    wrk(nCv), wrkf(nFc)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvff, b2xvsg
 *   ..initialization
 

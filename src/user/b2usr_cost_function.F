@@ -18,6 +18,7 @@
       use b2mod_transport_namelist
      & , only : parm_dna
 #endif
+      use b2mod_subsys
       implicit none
       type(mapping), intent (in)    :: mpg
       type(geometry), intent (in)   :: geo
@@ -37,7 +38,7 @@
       integer :: ij, jj
 #endif
       integer :: isigma
-      external subini, subend, calc_dist
+      external calc_dist
 
       call subini('b2usr_cost_function')
 

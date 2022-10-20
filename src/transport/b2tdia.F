@@ -6,6 +6,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -13,7 +14,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     &  pz(nCv), facdrift(nFc), fna(nFc,0:1,0:ns-1), 
+     &  pz(nCv), facdrift(nFc), fna(nFc,0:1,0:ns-1),
      &  uadia(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -24,7 +25,7 @@
 *  1. purpose
 *
 *     B2TDIA computes the X and Y components of the divergent part of
-*     the diamagnetic current
+*     the diamagnetic current.
 *
 *  8. further comments
 *
@@ -40,7 +41,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation
@@ -56,8 +57,8 @@
       endif
       
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8.and.switch%dia_cur.ne.0.0e0_R8.and.        !srv 16.10.17
-     &    switch%no_current.eq.0) then
+      if (facdriftm.ne.0.0_R8 .and. switch%dia_cur.ne.0.0e0_R8           !srv 16.10.17
+     &                        .and. switch%no_current.eq.0) then
 
 *     ..interpolate to faces
         wght = 1.0_R8

@@ -27,6 +27,7 @@ c      use b2mod_keps
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sikt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -68,8 +69,7 @@ c      use b2mod_keps
       character chk*1
 *   ..procedures
       intrinsic min, max, sqrt
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
-*   ..initialization
+      external xertst, ipgeti, ipgetr, sfill
 
 *-----------------------------------------------------------------------
 *.computation

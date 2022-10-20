@@ -20,6 +20,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2srdt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                                !srv 16.07.10
@@ -59,7 +60,7 @@
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
      &  shetmp(nCv,0:3), shitmp(nCv,0:3), shntmp(nCv,0:3)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
 

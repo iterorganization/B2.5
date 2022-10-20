@@ -9,6 +9,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlmv
+      use b2mod_subsys
       implicit none
       integer nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
@@ -25,8 +26,8 @@
       real (kind=R8) ::
      *   qcl, qfl, tfl, ubv(nVx), dub(nFc)
       intrinsic abs
-      external subini, subend, xertst
-      external  b2xvsg
+      external xertst
+      external b2xvsg
 *   ..initialisation
 *     ------------------------------------------------------------------
       call subini ('b2tlmv')
@@ -62,18 +63,18 @@
        enddo
 csw 18sep2014 TESTING only (SOLPS4 discr), i.e. switch off mom.flux
 c             limit
-c      else if(style.eq.2) then                                    
-c       fl = 1.0_R8 
+c      else if(style.eq.2) then
+c       fl = 1.0_R8
       else                                                           !srv 30.05.08
        do iFc = 1, nFc
-          if(.not.(.not.is_neutral(isb) .and. 
+          if(.not.(.not.is_neutral(isb) .and.
      &              mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &              mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then    !srv 12.04.08
            qcl = -cvsbx(iFc)*dub(iFc)
            qfl = cflmv*abs(geo%fcPbs(iFc))*                          !srv 11.01.13
      &          (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
-     &           nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8  
-           if (qfl.gt.0.0_R8) then 
+     &           nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
+           if (qfl.gt.0.0_R8) then
              tfl = 1.0_R8 + abs(qcl/qfl)
            else
              tfl = 1.0_R8
@@ -89,7 +90,7 @@ c       fl = 1.0_R8
       endif                                                          !srv 30.05.08
 
       if(switch%b2tlmv_iout.ne.0) then                               !srv 12.04.04 {
-       write (charns,'(i3.3)') isb  
+       write (charns,'(i3.3)') isb
        call my_out_us(70,nFc,1,fl,'cflmv-1'//charns)
       endif                                                          !srv 12.04.04 }
 

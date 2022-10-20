@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
-     &       facdrift, fac_ExB, ismain, ismain0, te, po, ti, na, fna, 
+      subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
+     &       facdrift, fac_ExB, ismain, ismain0, te, po, ti, na, fna,
      &       csigin, fchin)                                              !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_constants
@@ -21,7 +21,7 @@
       integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) ::
      & facdrift(nFc), fac_ExB(nFc), te(nCv), po(nCv), ti(nCv),
-     & na(nCv,0:ns-1), fna(nFc,0:1,0:ns-1), 
+     & na(nCv,0:ns-1), fna(nFc,0:1,0:ns-1),
      & csigin(nFc,0:1,0:ns-1,0:ns-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -40,7 +40,7 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-     
+
 *   ..local variables
       integer is, is0, iamain
 #ifdef B25_EIRENE
@@ -154,9 +154,9 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
             call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
 *   ..pre-computation of differences
             wght = 1.0e0_R8
-            wrk  = log(na(:,:,ismain))
+            wrk = log(na(:,:,ismain))
             call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
-            call diff(nx, ny, hx, hy, wght, qs, wrk, 
+            call diff(nx, ny, hx, hy, wght, qs, wrk,
      &        wrk0(-1,-1,0,0,ismain))
             call diff(nx, ny, hx, hy, wght, qs, ti, wrk1)
           else
@@ -168,7 +168,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *   ..pre-computation of differences
             wght = 1.0e0_R8
             call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
-            call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,ismain)*ti, 
+            call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,ismain)*ti,
      &        wrk0(-1,-1,0,0,ismain))
           endif
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
@@ -212,8 +212,8 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
                   fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &              csigin(ix,iy,0,0,ismain,ismain0)*(
      &            ( -dpo(ix,iy,0,0)
-     &              -(wrk1(ix,iy,0,0) + 
-     &                til(ix,iy)*wrk0(ix,iy,0,0,ismain))/
+     &              -(wrk1(ix,iy,0,0)
+     &               +til(ix,iy)*wrk0(ix,iy,0,0,ismain))/
      &                     (qe*rza(ix,iy,ismain)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
      &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,0,ismain0)*
@@ -223,10 +223,10 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
                   fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &              csigin(ix,iy,0,1,ismain,ismain0)*(
      &              -dpo(ix,iy,0,1)
-     &              -(wrk1(ix,iy,0,1) + 
-     &                til(ix,iy)*wrk0(ix,iy,0,1,ismain))/
+     &              -(wrk1(ix,iy,0,1)
+     &               +til(ix,iy)*wrk0(ix,iy,0,1,ismain))/
      &                     (qe*rza(ix,iy,ismain)) )
-     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,ismain0)*
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,3)*fnan(ix,iy,0,1,ismain0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
@@ -251,7 +251,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
      &              -dpo(ix,iy,0,1)
      &              -wrk0(ix,iy,0,1,ismain)/
      &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )
-     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,ismain0)*
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,3)*fnan(ix,iy,0,1,ismain0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -276,7 +276,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
      &            -(wrk1(ix,iy,1,1)+tib(ix,iy)*wrk0(ix,iy,1,1,ismain))/
      &              (qe*rza(ix,iy,ismain))
      &                                                      )
-     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -293,7 +293,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
      &            - wrk0(ix,iy,1,1,ismain)/
      &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
-     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -400,9 +400,10 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
           enddo                                                           !srv 08.07.09 }
         endif
       endif  !
+
 #ifdef B25_EIRENE
 #ifdef WG_TODO
-      if(iout.ne.0) then
+      if(iout.ne.0.and.switch%use_eirene.ne.0) then
        do ia = 1,natm
         write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
@@ -447,4 +448,4 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *-----------------------------------------------------------------------
 *.end b2tinnt
 
-      end
+      end subroutine b2tinnt

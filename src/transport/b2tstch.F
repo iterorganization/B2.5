@@ -12,7 +12,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
+     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
      1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
@@ -24,15 +24,15 @@
 *
 *  1. purpose
 *
-*     B2Tstch computes the y-component of electron current 
-*       associated with stochastization of magnetic field
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
 *
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
@@ -60,10 +60,10 @@
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
         call xertst (0.0_R8.le.sig_stoch,
-     &	 'faulty internal parameter sig_stoch')
+     &   'faulty internal parameter sig_stoch')
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
-     &	 'faulty internal parameter delta_stoch')
+     &   'faulty internal parameter delta_stoch')
         call get_jsep(nx,ny,jxi,jxa,jsep)
         ixref=jxa
         call ipgeti ('b2tqna_ixref', ixref)
@@ -106,7 +106,7 @@
            endif
           enddo
         enddo
-      endif                                                               !lk 31.01.08 }
+      endif                                                             !lk 31.01.08 }
 
 !      call my_out(70,nx,ny,csig_stoch,'b2tstch_csigy_stoch')
 !      call my_out(70,nx,ny,fchstoch,'b2tstch_fchstochy')
@@ -119,4 +119,4 @@
 *-----------------------------------------------------------------------
 *.end b2tstch
 
-      end                                                              !lk 31.01.08 }
+      end subroutine b2tstch                                            !lk 31.01.08 }

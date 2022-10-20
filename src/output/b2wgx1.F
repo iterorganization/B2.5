@@ -4,6 +4,7 @@
       subroutine b2wgx1 (nx, ny, header, crx, cry)
       use b2mod_types
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -18,12 +19,12 @@
 *
 *  1. purpose
 *
-*     B2WGX1 displays the b2 mesh on the physical plane.
+*     B2WGX1 displays the B2 mesh on the physical plane.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine displays the b2 mesh on a sequence of physical
+*     This routine displays the B2 mesh on a sequence of physical
 *     domains.
 *
 *
@@ -72,8 +73,7 @@
       real (kind=R8) ::
      *   xlohi(0:1), ylohi(0:1)
 *   ..procedures
-      external subini, subend, xertst, pagini, pagend, 
-     & gpm_d, gpl_d, gsln
+      external xertst, pagini, pagend, gpm_d, gpl_d, gsln
       external b2wgxb
 
 *-----------------------------------------------------------------------
@@ -171,4 +171,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx1
 
-      end
+      end subroutine b2wgx1

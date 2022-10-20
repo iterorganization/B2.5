@@ -10,6 +10,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlh0, b2tlh0_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -27,7 +28,7 @@
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, c3                                 
+      integer iFc, is, c3
       real (kind=R8), allocatable :: w1(:)                        !srv 13.01.04 {
       character charns*3                                          !srv 13.01.04 }
       real (kind=R8) ::
@@ -36,7 +37,7 @@
 *   ..initialisation
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')
@@ -66,7 +67,7 @@ c        flux_limit_min_tn=flux_limit_min_tn*ev
            dtn = abs(chcb(iFc,0,is)*dtnf(iFc,0))
            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))*
      &       geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
-           t2 = 1.0_R8/(1.0_R8 + 
+           t2 = 1.0_R8/(1.0_R8 +
      .       (dtn/(alpha*vthi*t1*t0 + b2tlh0_cutlo))**gamma)**
      .        (1.0_R8/gamma)
            chcb(iFc,0,is) = chcb(iFc,0,is)*t2
@@ -115,10 +116,10 @@ cwdk    or radial contributions, since neutral transport is isotropic
 
  100  continue
 
-       if (ncall_b2tlh0.lt.100) write(*,'(1x,a,1p,2e10.2)')
+      if (ncall_b2tlh0.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
 
-       if (switch%b2tlh0_iout.ne.0) then
+      if (switch%b2tlh0_iout.ne.0) then
         allocate(w1(nCv))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
@@ -130,11 +131,11 @@ cwdk    or radial contributions, since neutral transport is isotropic
          call my_out_us(70,nFc,1, chcb(1,1,is), 'chci_r'//charns)
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
-       endif
+      endif
 
 *   ..return
       ncall_b2tlh0 = ncall_b2tlh0 + 1
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2tlh0

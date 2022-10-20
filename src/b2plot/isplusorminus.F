@@ -4,4 +4,4 @@ c
       character*1 c
       isplusorminus=c .eq. '+' .or. c .eq. '-'
       return
-      end
+      end function isplusorminus

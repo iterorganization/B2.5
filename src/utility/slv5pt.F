@@ -4,6 +4,7 @@
       subroutine slv5pt (m, n, aa5, rhs, iters, sol, nrmc, k, aafac,
      &  wrk0, iwrk)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer m, n, iters, k
@@ -96,12 +97,9 @@
      *   rxf
       parameter (rxf=1.0_R8)
 *   ..procedures
-      integer indx0, indx1
       real (kind=R8) ::
      *   smin, samax
       external xertst, smin, samax, sfill, sgbtrf, sgbtrs
-      indx0(i,j) = i+m*j
-      indx1(i,j) = n*i+j
 
 *-----------------------------------------------------------------------
 *.computation
@@ -305,5 +303,21 @@
 
 *-----------------------------------------------------------------------
 *.end slv5pt
+
+      contains
+
+      integer function indx0(i,j)
+      implicit none
+      integer, intent(in) :: i, j
+      indx0 = i+m*j
+      return
+      end function indx0
+
+      integer function indx1(i,j)
+      implicit none
+      integer, intent(in) :: i, j
+      indx1 = n*i+j
+      return
+      end function indx1
 
       end subroutine slv5pt

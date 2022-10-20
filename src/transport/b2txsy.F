@@ -2,6 +2,7 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
       integer nCv, nFc
       type (geometry), intent (in) :: geo
@@ -11,11 +12,11 @@
 *     ------------------------------------------------------------------
 *     B2TXSY computes the integrals over cell y-faces of a function
 *     that is provided on the cells.
-*!!   (Re-consider specification and use of this routine for the case
+*!!   (Reconsider specification and use of this routine for the case
 *     of a non-orthogonal grid.)
 *     ------------------------------------------------------------------
       integer iFc
-      external subini, subend, b2xxgs
+      external b2xxgs
 *     ------------------------------------------------------------------
       call subini ('b2txsy')
 *   ..compute funsy
@@ -31,4 +32,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txsy

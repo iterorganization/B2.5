@@ -21,6 +21,8 @@
       use b2mod_b2cmpt
       use b2mod_b2cmwg
       use b2mod_external
+      use b2mod_subsys
+      use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -45,7 +47,7 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-      character cnamip*80, cvalip*80, line*256
+      character cnamip*80, cvalip*80, line*256, ligne*256
 *   ..initialisation
       save BoRiS, ismain, external_species
       data BoRiS/0.0_R8/, ismain/1/, external_species/0/
@@ -54,12 +56,12 @@
       logical ltst, is_comment
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
       external is_comment
-      external subini, subend, xertst, xerrab, cfruch, cfruin
-      external b2rups, b2rugm, b2rucp, b2mds, ipsetc, ipgetr
+      external xertst, xerrab, cfruch, cfruin
+      external b2rups, b2rugm, b2rucp, b2mds, ipgetr
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
       external b2xxid, b2rflb, b2rfcp
 *   ..namelist
-      character :: exp*128, comment*128
+      character :: exp*32, comment*128
       integer :: shot, overwrite_shotnumber
       real (kind=R8) :: time
       logical :: timedep, snapshot, tallies, movies
@@ -91,9 +93,13 @@
     1 continue
        read (ninp(5),'(a80)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -105,8 +111,9 @@
       isymm = idum(0)
 #ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
@@ -180,6 +187,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ns, ev, am(iscx(k)), ti, tn,
      &   rlcx(-1,-1,0,0,k), rcx)
@@ -203,11 +211,7 @@
       tallies=.true.
       movies=.true.
       overwrite_shotnumber=0
-#ifdef USE_MPI
       read(ninp(0),b2md_namelist,err=99)
-#else
-      read(ninp(0),b2md_namelist)
-#endif
       write(nout(0),b2md_namelist)
 
 #ifdef MDSPLUS
@@ -229,6 +233,8 @@
       write(*,*) 'mdsconnect'
       if(status.lt.0) then
         write(*,*) ' return status: ',status
+        call xertst (status.ge.0,
+     .   'Error connecting to the MDSplus server ' // trim(mds_server))
       endif
 
       if(overwrite_shotnumber.le.0) then

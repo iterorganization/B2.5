@@ -41,7 +41,7 @@ c the surface has been found
         end if
       end do
       shift=-1
- 20   return
+   20 return
       end subroutine b2neut_ind
 
 
@@ -100,11 +100,11 @@ c
 c=======================================================================
 cvk power flux delivered to the surface with neutrals
 c
-c  wneut :  (kinetic energy of incident neutrals) -
-c           (kinetic energy of reflected neutrals) +
-c           (energy release from recombination of atoms into molecules)
+c  wneut : (kinetic energy of incident neutrals) -
+c          (kinetic energy of reflected neutrals) +
+c          (energy release from recombination of atoms into molecules)
 c  wnpr  : kinetic energy of reflected neutrals originated from ions
-c         (including sputtered neutrals)
+c          (including sputtered neutrals)
 c  n     : length of arrays wneut and wnpr
 c  shift : data offset in the Eirene arrays
 

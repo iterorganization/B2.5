@@ -24,7 +24,7 @@ c
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
-      end
+      end subroutine psx
 c
       subroutine psxperp()
       use b2mod_types
@@ -42,8 +42,8 @@ c
       do is=0,ndim(3,iwrk)-1
         do iy=-1,ny
           do ix=-1,nx
-	    work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/
-     1	     gs(ix,iy,0)/qc(ix,iy,0)
+            work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/
+     1       gs(ix,iy,0)/qc(ix,iy,0)
             values(9)=min(values(9),work(ix,iy,is,iwrk))
             values(10)=max(values(10),work(ix,iy,is,iwrk))
           enddo
@@ -52,4 +52,4 @@ c
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
-      end
+      end subroutine psxperp

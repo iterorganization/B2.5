@@ -4,6 +4,7 @@
       subroutine b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ixr, iyr
@@ -24,12 +25,12 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine computes cartesian (x,y) coordinates on the b2
+*     This routine computes cartesian (x,y) coordinates on the B2
 *     geometry, by integrating the line element along a pair of
 *     reference lines.
 *     These coordinates may be used as cartesian axes for graphical
 *     or printed output. They have no role in the actual computation
-*     performed in b2.
+*     performed in B2.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -77,7 +78,7 @@
       intrinsic sqrt
       real (kind=R8) ::
      *   dist, disx, disy
-      external subini, subend, xertst
+      external xertst
       dist(ix,iy,i,j) = sqrt (
      &  (crx(ix,iy,j)-crx(ix,iy,i))**2+(cry(ix,iy,j)-cry(ix,iy,i))**2)
       disx(ix,iy) = (dist(bottomix(ix,iy),bottomiy(ix,iy),2,3)+

@@ -1404,6 +1404,7 @@ cwdk move to dv
 
       subroutine read_state (nput, nCv, nFc, ns, st)
       use b2mod_time
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: nput, nCv, nFc, ns
       type(B2State), intent(inout) :: st
@@ -1502,6 +1503,7 @@ cwdk move to dv
 
       subroutine write_state (nput, nCv, nFc, ns, st)
       use b2mod_time
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: nput, nCv, nFc, ns
       type(B2State), intent(in) :: st
@@ -1598,6 +1600,7 @@ cwdk move to dv
 
 
       subroutine read_plasma (ninp, nCv, nFc, ns, st)
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: ninp, nCv, nFc, ns
       type(B2State), intent(inout) :: st
@@ -1770,6 +1773,7 @@ cwdk move to dv
 
       subroutine write_plasma (nout, nCv, nFc, ns, st)
       use b2mod_version
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: nout, ns, nCv, nFc
       type(B2State), intent(in) :: st
@@ -1939,7 +1943,6 @@ cwdk move to dv
       return
 
       end subroutine write_plasma
-
 
       end module b2us_plasma
       

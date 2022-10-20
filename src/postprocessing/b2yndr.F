@@ -16,6 +16,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       use b2mod_ppout
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -27,13 +29,13 @@
 *
 *  1. purpose
 *
-*     B2YNDR is a postprocessor for b2. It displays the progress of
+*     B2YNDR is a postprocessor for B2. It displays the progress of
 *     the inner iterations.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It displays the
+*     This routine is a postprocessor for the B2 code. It displays the
 *     evolution of the corrections and residuals. This routine does not
 *     require any metric information.
 *
@@ -84,8 +86,8 @@
 *   ..procedures
       logical streql, cfendf, ltst, is_comment
       intrinsic abs
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx, ipsetc, ipgeti,
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx, ipgeti,
      &  is_comment
       external b2wgcr, b2ruzd, b2rurc, b2spel, b2sqel, b2rups, b2xvps,
      &  b2rfcp, b2rflb, b2xxid

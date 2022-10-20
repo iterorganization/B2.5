@@ -1,11 +1,12 @@
 #ifdef NO_NAG
       subroutine e01bef (n, x, f, d, ifail)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer n, ifail
       real (kind=R8) ::
      *   x(n), f(n), d(n)
-      external subini, subend, xertst
+      external xertst
 *     ------------------------------------------------------------------
 *     A crude substitute for the NAG routine of the same name, for the
 *     case of an eight-byte real*8 environment.
@@ -27,11 +28,12 @@
       end subroutine e01bef
       subroutine e01bff (n, x, f, d, m, px, pf, ifail)
       use b2mod_types
+      use b2mod_subsys
       implicit none
       integer n, m, ifail
       real (kind=R8) ::
      *   x(n), f(n), d(n), px(m), pf(m)
-      external subini, subend, xertst
+      external xertst
 *     ------------------------------------------------------------------
 *     A crude substitute for the NAG routine of the same name, for the
 *     case of an eight-byte real*8 environment.
@@ -48,9 +50,11 @@
         if (px(j).lt.x(1)) then
           ifail = 4
           pf(j)=f(1)+d(1)*(px(j)-x(1))
-        elseif (px(j).ge.x(n)) then
+        elseif (px(j).gt.x(n)) then
           ifail = 4
           pf(j) = f(n)+d(n-1)*(px(j)-x(n))
+        elseif (px(j).eq.x(n)) then
+          pf(j) = f(n)
         else
           do i = 1, n-1
             if (px(j).ge.x(i) .and. px(j).lt.x(i+1)) then

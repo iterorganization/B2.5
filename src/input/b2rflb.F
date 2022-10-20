@@ -3,6 +3,7 @@
 
       subroutine b2rflb (nrid, lbl1)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid
@@ -15,13 +16,13 @@
 *  1. purpose
 *
 *     B2RFLB reads from a formatted file a label for one run of one
-*     of the programs that make up b2.
+*     of the programs that make up B2.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine reads from unit (nrid) a label to identify the
-*     present run of one of the programs that make up b2. Unit nrid
+*     present run of one of the programs that make up B2. Unit nrid
 *     must be connected to a formatted file.
 *     The input file must be positioned properly: the first record must
 *     begin with '*label  ' or '*LABEL  ' (without the quotes), and the
@@ -44,7 +45,7 @@
       character id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
 
 *-----------------------------------------------------------------------
 *.computation
@@ -73,4 +74,4 @@
 *-----------------------------------------------------------------------
 *.end b2rflb
 
-      end
+      end subroutine b2rflb

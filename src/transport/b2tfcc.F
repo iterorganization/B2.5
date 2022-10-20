@@ -14,6 +14,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfcc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -37,7 +38,7 @@
      *   wght(nFc,2), wrkf(nFc), wrkVx(nVx),
      *   flo(nFc,0:1), con(nFc,0:1), flo0(nFc,0:1), con0(nFc,0:1)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, diff, intface
 *   ..initialisation
 
@@ -238,4 +239,4 @@ c the logic statements could be simplified but for now this is not done to impro
 *-----------------------------------------------------------------------
 *.end b2tfcc
 
-      end
+      end subroutine b2tfcc

@@ -7,7 +7,7 @@
 !      use b2mod_indirect
       use b2mod_constants
       use b2mod_feedback
-!      use b2mod_b2cmpa
+      use b2mod_b2cmpa
 !      use b2mod_b2cmpb
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
@@ -15,6 +15,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, diagno
@@ -50,7 +51,7 @@
      6  vacuum_corr
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvps
 *   ..initialisation
       data ncall/0/
@@ -87,7 +88,7 @@
 #ifdef WG_TODO
 ! this allows for a communication of particle fluxes across vacuum regions
         do ivac=1, vacuum_communication
-          do is=0, ns-1
+          do is = 0, ns-1
 ! this option only applies to neutrals
             if(is_neutral(is)) then
 ! calculate an average pressure and an average temperature
@@ -164,17 +165,18 @@
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
       if(ncall.gt.1 .or. .not.main_call) return
+      call b2stbc_fb_final
+      return
 *-----------------------------------------------------------------------
 *.end b2stbc_fb_post
 
       end subroutine b2stbc_fb_post
 
-
+* ..finalise feedback
       subroutine b2stbc_fb_final
       use b2mod_types
       use b2mod_feedback
       implicit none
-* ..finalise feedback
       feedback_namelist_used = feedback_namelist_used .or.
      .        max(saved_cbshe_core, saved_cbshi_core,
      .            saved_cbsna_core, saved_cbsch_core,
@@ -212,6 +214,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2mod_subsys
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
@@ -251,7 +254,7 @@
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
      &                 isfeedback, nesepm_istra
-      real (kind=R8) :: amtol,
+      real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
      &  dt_prev, sum_e, sum_s,
@@ -294,10 +297,9 @@
       save zeroslope
 *   ..procedures
       intrinsic abs, mod, nint
-      external subini, subend, xertst, ipgetr, ipgeti
+      external xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
-      parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/,
@@ -699,7 +701,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
 
         do ispecies = 0, nspecies-1
 
-          if( na_feedback_choice(ispecies) .gt. 0 .and.
+          if(na_feedback_choice(ispecies) .gt. 0 .and.
      &       na_feedback_option(ispecies) .gt. 0 .and.
      &       na_feedback_actuator(ispecies) .gt.0) then
 
@@ -711,22 +713,22 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
 
             case (0) ! no action
 
-            case (1) ! local density
+            case (1) ! local density of isonuclear sequence
 
               if(ncall.eq.0) then
                 call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_choice=1 not available for extended grids')
-                write(*,*)
+                write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_choice: using ',
      &           'local_density for sequence ',
-     &           ispecies+1
+     &            ispecies+1
               endif
 
               na_feedback_current = 0.0_R8
               vol_feedback = 0.0_R8
               is_start=-1
               is_end=-1
-              do is=0, ns-1
+              do is = 0, ns-1
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   do iy = na_feedback_iy1(ispecies),
@@ -757,14 +759,14 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
      &            'local_electron_density for sequence ',
-     &            ispecies+1
+     &             ispecies+1
               endif
 
               na_feedback_current = 0.0_R8
               vol_feedback = 0.0_R8
               is_start=-1
               is_end=-1
-              do is=0, ns-1
+              do is = 0, ns-1
                  if(b2espcr(is).eq.ispecies+1) then
                    if(is_start.eq.-1) is_start=is
                    is_end=is
@@ -789,21 +791,21 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_choice: using ',
      &           'nesepm_electron_density for sequence ',
-     &           ispecies+1
+     &            ispecies+1
               endif
 
               na_feedback_current = 0.5_R8 *
      *          (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
               is_start=-1
               is_end=-1
-              do is=0, ns-1
+              do is = 0, ns-1
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   is_end=is
                 endif
               enddo
 
-            case (4) ! total particle content for that sequence
+            case (4) ! total particle content for that isonuclear sequence
 
               if(ncall.eq.0) then
                 call xertst(mpg%isClassicalGrid.eq.1,
@@ -811,12 +813,12 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
      &            'total particle content for sequence ',
-     &            ispecies+1
+     &             ispecies+1
               endif
               na_feedback_current = 0.0_R8
               is_start=-1
               is_end=-1
-              do is=0, ns-1
+              do is = 0, ns-1
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   do iy = na_feedback_iy1(ispecies),
@@ -836,7 +838,8 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 endif
               enddo
 
-            case (5) ! total ion content for that sequence (not including neutrals)
+            case (5) ! total ion content for that isonuclear sequence
+                     ! (not including neutrals)
 
               if(ncall.eq.0) then
                 call xertst(mpg%isClassicalGrid.eq.1,
@@ -844,12 +847,12 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
      &            'total ion content for sequence ',
-     &            ispecies+1
+     &             ispecies+1
               endif
               na_feedback_current = 0.0_R8
               is_start=-1
               is_end=-1
-              do is=0, ns-1
+              do is = 0, ns-1
                 if(is_neutral(is)) cycle
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
@@ -878,7 +881,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
      &            'core boundary flux for sequence ',
-     &            ispecies+1
+     &             ispecies+1
               endif
               na_feedback_current = na_feedback_const(ispecies)
               write(*,*) 'WARNING: na_feedback_choice = 6 needs to be'//
@@ -893,9 +896,9 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                     do i=1,nnmoli !{
                       na_feedback_current=na_feedback_current
      .             +mlcmp(j,i)*(wldnm(l,i,0)-wldrm(l,i,0)-wldpm(l,i,0))
-                   end do !}
-                 end if !}
-               end do !}
+                    end do !}
+                  end if !}
+                end do !}
               end do !}
 #else
               call xerrab('na_feedback_choice=6 not yet adapted for'//
@@ -932,7 +935,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_choice: using ',
      &            'average separatrix concentration for sequence ',
-     &            ispecies+1
+     &             ispecies+1
               endif
               na_feedback_current = 0.0_R8
               sum_e = 0.0_R8
@@ -980,7 +983,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               sum_e = 0.0_R8
               is_start=-1
               is_end=-1
-              do is=0, ns-1
+              do is = 0, ns-1
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
@@ -1007,29 +1010,29 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               call xerrab(
      &         'na_feedback_choice=9 not yet coverted in WG')
 #ifdef WG_TODO
-                  if(ncall.eq.0) then
-                     write(*,'(a,a,i3)')
-     &                    'b2stbc_fb_pre_choice: using ',
-     &                    'inner_midplance_electron_density'//
-     &                    'for sequence ',
-     &                    ispecies+1
-                  endif
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'b2stbc_fb_pre_choice: using ',
+     &           'inner_midplance_electron_density'//
+     &           'for sequence ',
+     &            ispecies+1
+              endif
 
-                  na_feedback_current = 0.5_R8 *
-     *                 (ne(jxi,jsep)+
-     *                 ne(topix(jxi,jsep),topiy(jxi,jsep)))
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
-                     if(b2espcr(is).eq.ispecies+1) then
-                        if(is_start.eq.-1) is_start=is
-                        is_end=is
-                     endif
-                  enddo
+              na_feedback_current = 0.5_R8 *
+     *         (ne(jxi,jsep)+
+     *          ne(topix(jxi,jsep),topiy(jxi,jsep)))
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
 #endif
             case default
-               write(*,*) 'na feedback_choice not coded ',
-     &              na_feedback_choice(ispecies)
+              write(*,*) 'na feedback_choice not coded ',
+     &                    na_feedback_choice(ispecies)
 
             end select
 
@@ -1045,13 +1048,13 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &            'b2stbc_fb_pre_option: using ',
      &            'slowed_rescale for sequence ',
-     &            ispecies+1
+     &             ispecies+1
               endif
 
               na_feedback_rescale =
      &             (1.0_R8 + na_feedback_alpha(ispecies) *
-     &             na_feedback_target(ispecies) /
-     &             na_feedback_current) /
+     &              na_feedback_target(ispecies) /
+     &              na_feedback_current) /
      &             (1.0_R8 + na_feedback_alpha(ispecies))
 
             case (2) ! pure rescale
@@ -1060,7 +1063,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
      &           'rescale for sequence ',
-     &           ispecies+1
+     &            ispecies+1
               endif
 
               na_feedback_rescale = na_feedback_target(ispecies) /
@@ -1072,30 +1075,31 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
      &           'tanh_log_rescale for sequence ',
-     &           ispecies+1
+     &            ispecies+1
               endif
 
 ! 2**(tanh(log(x)/b)*log(a)/log(2))
               na_feedback_rescale = 2.0_R8 **
      &             (tanh(log(na_feedback_target(ispecies) /
-     &             na_feedback_current)/
-     &             na_feedback_beta(ispecies))*
-     &             log(na_feedback_alpha(ispecies))/log(2.0_R8))
+     &              na_feedback_current)/
+     &              na_feedback_beta(ispecies))*
+     &              log(na_feedback_alpha(ispecies))/log(2.0_R8))
 
             case (4) ! rescale done according to SOLPS4 formula:
                         ! N = A + B*(time-T)
+
               if(ncall.eq.0) then
                 call xertst(mpg%isClassicalGrid.eq.1,
      &          'na_feedback_option=4 not available for extended grids')
                 write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
      &           'SOLPS4 linear increase for sequence ',
-     &           ispecies+1
+     &            ispecies+1
                 if(na_feedback_const(ispecies).lt.0.0_R8) then
                   na_feedback_const(ispecies) = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                     if(b2espcr(is).eq.ispecies+1) then
                       if(is_start.eq.-1) is_start=is
                       do iy = na_feedback_iy1(ispecies),
@@ -1106,8 +1110,8 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                           if(mpg%cvReg(icv).ne.0 .and.
      &                       icv.le.mpg%nCi) then
                             na_feedback_const(ispecies) =
-     &                        na_feedback_const(ispecies) +
-     &                        pl%na(icv,is) * geo%cvVol(icv)
+     &                       na_feedback_const(ispecies) +
+     &                       pl%na(icv,is) * geo%cvVol(icv)
                           endif
                         enddo
                       enddo
@@ -1115,34 +1119,34 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                     endif
                   enddo
                 endif
-                  na_feedback_prev(ispecies) = na_feedback_current
+                na_feedback_prev(ispecies) = na_feedback_current
               endif
 
               na_feedback_target(ispecies) =
      .          na_feedback_const(ispecies) +
      .          na_feedback_beta(ispecies)*
-     .          (tim-na_feedback_time(ispecies))
+     .         (tim-na_feedback_time(ispecies))
               na_feedback_rescale =
      .          na_feedback_alpha(ispecies) *
-     .          ((na_feedback_target(ispecies) -
+     .        ((na_feedback_target(ispecies) -
      .          na_feedback_current)/dtim +
-     .          (na_feedback_prev(ispecies) -
+     .         (na_feedback_prev(ispecies) -
      .          na_feedback_current)/dt_prev)
               na_feedback_save(ispecies) = na_feedback_current
 
             case (5) ! rescale done according to SOLPS4 formula:
-                        ! Nt = A*exp((time-T)*B)
+                     ! Nt = A*exp((time-T)*B)
 
               if(ncall.eq.0) then
-                write(*,*)
+                write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_option: using ',
      &           'SOLPS4 exponential decay for sequence ',
-     &           ispecies+1
+     &            ispecies+1
                 if(na_feedback_const(ispecies).lt.0.0_R8) then
                   na_feedback_const(ispecies) = 0.0_R8
                   is_start=-1
                   is_end=-1
-                  do is=0, ns-1
+                  do is = 0, ns-1
                     if(b2espcr(is).eq.ispecies+1) then
                       if(is_start.eq.-1) is_start=is
                       do iCv= 1, mpg%nCi
@@ -1162,12 +1166,12 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               na_feedback_target(ispecies) =
      .           na_feedback_const(ispecies) *
      .           exp(na_feedback_beta(ispecies)*
-     .           (tim-na_feedback_time(ispecies)))
+     .          (tim-na_feedback_time(ispecies)))
               na_feedback_rescale =
      .           na_feedback_alpha(ispecies) *
-     .           ((na_feedback_target(ispecies) -
+     .         ((na_feedback_target(ispecies) -
      .           na_feedback_current)/dtim +
-     .           (na_feedback_prev(ispecies) -
+     .          (na_feedback_prev(ispecies) -
      .           na_feedback_current)/dt_prev)
               na_feedback_save(ispecies) = na_feedback_current
 
@@ -1178,12 +1182,12 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
 
             case default
               write(*,*) 'na feedback_option not coded ',
-     &          na_feedback_option(ispecies)
+     &                     na_feedback_option(ispecies)
 
             end select
 
             write(*,'(a,1x,1p,i3,6g15.6)')
-     &        'na_feedback_rescale ', ispecies+1, 
+     &       'na_feedback_rescale ', ispecies+1,
      &        na_feedback_current,
      &        na_feedback_target(ispecies),
      &        na_feedback_rescale,
@@ -1298,10 +1302,10 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             case (3) ! core boundary flux condition
 
               if(ncall.eq.0) then
-                     write(*,'(a,a,i3)')
+                write(*,'(a,a,i3)')
      &           'b2stbc_fb_pre_actuator: using ',
      &           'core boundary flux condition for sequence ',
-     &           ispecies+1
+     &            ispecies+1
               endif
 
               is_start = eb2spcr(ispecies+1)+1
@@ -1344,7 +1348,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
 
             case default
               write(*,*) 'na feedback_choice not coded ',
-     &          na_feedback_choice(ispecies)
+     &                    na_feedback_choice(ispecies)
 
             end select
 
@@ -1360,10 +1364,10 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
 
         enddo
 
-       feedback_namelist_used = feedback_namelist_used .or.
+        feedback_namelist_used = feedback_namelist_used .or.
      &   na_feedback_actuator(ispecies).eq.1 .or.
      &   na_feedback_actuator(ispecies).eq.3
-       dt_prev = dtim
+        dt_prev = dtim
 
       endif
 #ifdef WG_TODO
@@ -1771,7 +1775,7 @@ c new attempt
             nesepm_integral_error =
      1       nesepm_gamma * nesepm_integral_error +
      1       (1-nesepm_gamma)* nesepm_error
-            write(*,'(a,1p,2e15.7)') 
+            write(*,'(a,1p,2e15.7)')
      .       'nesepm_error, nesepm_integral_error= ',
      1        nesepm_error, nesepm_integral_error
             cbsna(0,isfeedback,solregno) =
@@ -2135,4 +2139,3 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 *.end b2stbc_fb_pre
 
       end subroutine b2stbc_fb_pre
-

@@ -3,6 +3,7 @@
 
       subroutine b2aix0 (ninp, nx, ny, ns)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1)
@@ -52,7 +53,7 @@
       character id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
 
 *-----------------------------------------------------------------------
 *.computation
@@ -92,4 +93,4 @@
 *-----------------------------------------------------------------------
 *.end b2aix0
 
-      end
+      end subroutine b2aix0

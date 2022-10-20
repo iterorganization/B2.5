@@ -290,11 +290,11 @@ contains
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
-  integer, intent(in) ::  idir
-  integer, intent(in) ::  nx    !< Specifies the number of interior cells
-                                !< along the first coordinate (poloidal)
-  integer, intent(in) ::  ny    !< Specifies the number of interior cells
-                                !< along the second coordinate (radial)
+  integer, intent(in) :: idir
+  integer, intent(in) :: nx    !< Specifies the number of interior cells
+                               !< along the first coordinate (poloidal)
+  integer, intent(in) :: ny    !< Specifies the number of interior cells
+                               !< along the second coordinate (radial)
   real (kind=R8), intent(in) :: vol(-1:nx,-1:ny,0:4)
   real (kind=R8), intent(in) :: gs(-1:nx,-1:ny,0:2)
   real (kind=R8), intent(in) :: qc(-1:nx,-1:ny,0:1) !< Cosine of the angle
@@ -673,6 +673,7 @@ contains
   !! directed towards the top
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
   use b2mod_geo , only: crx, cry, gs, qz, qc, pbs
+  use b2mod_math
   use b2mod_indirect
 
   implicit none
@@ -690,9 +691,8 @@ contains
 !! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
   real (kind=R8) :: vol(-1:nx,-1:ny,0:4)
 !!   ..procedures
-  intrinsic min, max, sqrt
-  real (kind=R8) :: trim1, norm, sinang
-  norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+  intrinsic min, max
+  real (kind=R8) :: trim1, sinang
   trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
   sinang(p0x,p0y,p1x,p1y) = trim1( &
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
@@ -1078,7 +1078,8 @@ contains
                    &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
                    & ( area_to_top + area_to_left + area_to_right ) )
           else if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_SELF).and. &
-                &  vol(ix,iy,TO_BOTTOM).lt.vol(ix,iy,TO_SELF)) then  !! left and right edges are being shaved in the same direction
+                &  vol(ix,iy,TO_BOTTOM).lt.vol(ix,iy,TO_SELF)) then
+ !! left and right edges are being shaved in the same direction
             if (qz(ix,iy,0).lt.0.0_R8) then  !! the cell is slanted to the right
               centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
@@ -1246,13 +1247,16 @@ contains
   real (kind=R8), intent(out) :: face(-1:nx,-1:ny,0:1)
 !! local variables
   integer ix, iy, cgeo
+  real (kind=R8) :: cxx(0:3), cyy(0:3)
 
   face = 0.0_R8
 
   do iy = -1, ny
     do ix = -1, nx
       if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-      cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+      cxx(0:3) = crx(ix,iy,0:3)
+      cyy(0:3) = cry(ix,iy,0:3)
+      cgeo = cellGeoType( cxx, cyy )
       if (cgeo == CGEO_TRIA_NOLEFT) then
         face(ix,iy,0) = 0.0_R8
       else if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
@@ -1304,7 +1308,7 @@ contains
         if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
         if (density(ix,iy,0,is).eq.0.0_R8) cycle
         if (density(ix,iy,1,is).eq.0.0_R8) cycle
-	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
+        if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
           velocity(ix,iy,0,is) = flow(ix,iy,0,is)/ &
            & (gs(ix,iy,0)*qc(ix,iy,0))/density(ix,iy,0,is)
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
@@ -1337,7 +1341,7 @@ contains
               &   velocity(ix,iy,0,is) + &
               &   flow(ix,iy,1,is)/area_to_bottom/density(ix,iy,1,is)
         end if
-	if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+        if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
           if (pbs(ix,iy,1).eq.0.0_R8) then
             velocity(ix,iy,1,is) = flow(ix,iy,1,is)/gs(ix,iy,1)/ &
                               & density(ix,iy,1,is)
@@ -1476,7 +1480,7 @@ contains
       do ix = -1, nx
         if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 !! poloidal contributions
-  	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) &
+        if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) + &
              & vv(ix,iy,0,is)*den(ix,iy,0,is)*gs(ix,iy,0)*qc(ix,iy,0)
         if ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
@@ -1499,7 +1503,7 @@ contains
              & gs(ix,iy,1)*sqrt(1.0_R8 - qc(ix,iy,1)**2)
 
 !! radial contributions
-  	if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+        if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
           if (pbs(ix,iy,1).eq.0.0_R8) then
             flow(ix,iy,1,is) = flow(ix,iy,1,is) + &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)*gs(ix,iy,1)
@@ -1597,7 +1601,9 @@ contains
     ! internal
     integer :: ix, iy, is, ixx, iyy
     real (kind=R8) :: av, wTot, minVal, maxVal, w, d, centroid(0:1)
-!    intrinsic huge
+
+    ! procedures
+    external xertst
 
     ! For every vertex, find connected cells and average values
     do ix = -1, nx
@@ -1668,7 +1674,6 @@ contains
   real(R8), intent(out) :: side(-1:nx,-1:ny,1:4)
 !! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
   real (kind=R8) :: vol(-1:nx,-1:ny,0:4)
-
 
   integer ix, iy, cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right

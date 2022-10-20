@@ -4,6 +4,7 @@
       subroutine b2xvps_st (nx, ny, ns, ne, na, ua, te, ti, po,     !srv 27.11.18
      &  fna, fhe, fhi, fch)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -46,7 +47,7 @@
 *   ..local variables
       integer n2, is
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 
 *-----------------------------------------------------------------------
@@ -81,6 +82,6 @@
       return
 
 *-----------------------------------------------------------------------
-*.end b2xvps
+*.end b2xvps_st
 
-      end
+      end subroutine b2xvps_st

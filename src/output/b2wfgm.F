@@ -11,6 +11,7 @@
       use b2mod_transport
       use b2mod_indirect
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny
@@ -23,14 +24,14 @@
 *
 *  1. purpose
 *
-*     B2WFGM writes to a formatted file a summary of the b2 geometry
+*     B2WFGM writes to a formatted file a summary of the B2 geometry
 *     and magnetic field.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine writes to a formatted file reduced information on
-*     the b2 geometry and magnetic field. The information includes
+*     the B2 geometry and magnetic field. The information includes
 *     cell volumes, cell diameters, and cell surface areas, all reduced
 *     to a function of one coordinate by summing over the other
 *     coordinate.
@@ -76,7 +77,7 @@
       logical strmas
       real (kind=R8) ::
      *   crxc, cryc
-      external subini, subend, xertst, smin, smax, b2ssum, strmas
+      external xertst, smin, smax, b2ssum, strmas
       external b2xvgm
       intrinsic max
       crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+

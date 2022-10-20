@@ -7,10 +7,8 @@
       use b2mod_geo2
       use b2mod_indirect
       use b2ag_parameters
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -18,7 +16,7 @@
 *  1. purpose
 *
 *     B2AG (main program) prepares a geometry and magnetic field for
-*     b2. This program calls the driver routine b2agdr for the actual
+*     B2. This program calls the driver routine b2agdr for the actual
 *     computation.
 *
 *
@@ -30,7 +28,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ag prepares the geometry and magnetic
-*     field for a b2 calculation.
+*     field for a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2agdr to control the actual computation.
@@ -88,12 +86,9 @@
 
 *   ..local variables
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1, io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen
+      external prgini, prgend, cfopen
       external b2agx0, b2agdr
 *   ..initialise input/output units
       data ninp/50,51/
@@ -128,40 +123,26 @@
 *-----------------------------------------------------------------------
 *.computation
 
-!   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2ag_mpi_child'
-      endif
-#endif
+*   ..program start-up calls
       call prgini ('b2ag')
-
-!   ..open files
+*   ..open files
       call cfopen (ninp(0),'b2ag.dat','old','formatted')
-!$$$  call cfopen (ninp(1),'b2mhdeq','old','formatted')
-!     (b2mhdeq is reserved for numerical mhd equilibrium data)
+*$$$  call cfopen (ninp(1),'b2mhdeq','old','formatted')
+*     (b2mhdeq is reserved for numerical mhd equilibrium data)
       call cfopen (nout(0),'b2ag.prt','new','formatted')
       call cfopen (nout(1),'b2fgmtry','new','un*formatted')
-
-!   ..mark output unit for error messages
+*   ..mark output unit for error messages
       call xerset (0)
-
-!   ..read b2ag.dat file
-      call b2ag_read_parameters(ninp,nout,nx,ny,nx1,ny1)
-
-!   ..call principal driver routine
+*   ..read b2ag.dat file
+      call b2ag_read_parameters (ninp, nout, nx, ny, nx1, ny1)
+*   ..call principal driver routine
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       call alloc_b2mod_geo(nx,ny)
       call alloc_b2mod_geo2(nx1,ny1,nncutmax)
       call b2agdr (ninp, nout, nx, ny, nx1, ny1)
-!   ..close graphics files
-!     (none)
-!   ..close other files
+*   ..close graphics files
+*     (none)
+*   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
          if (file_open) close(ninp(io))
@@ -171,15 +152,11 @@
          if (file_open) close(nout(io))
       enddo
 
-! ..end of computation
+* ..end of computation
       call dealloc_b2mod_geo
       call dealloc_b2mod_geo2
       call dealloc_b2mod_indirect
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2ag'
 
 *-----------------------------------------------------------------------

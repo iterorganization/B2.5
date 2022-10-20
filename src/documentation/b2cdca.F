@@ -9,7 +9,7 @@
 *
 *  1. purpose
 *
-*     B2CDCA provides some general documentation of the b2 code.
+*     B2CDCA provides some general documentation of the B2 code.
 *     No computation is performed in this routine.
 *
 *-----------------------------------------------------------------------
@@ -17,7 +17,7 @@
 *
 *  0. Introduction
 *
-*     The b2 code /1,2/ solves a system of fluid equations that models
+*     The B2 code /1,2/ solves a system of fluid equations that models
 *     a multi-species plasma in a two-dimensional geometry. Its main
 *     application is simulation of the edge plasma in tokamaks.
 *
@@ -69,21 +69,21 @@
 *  4. References
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
-*     /3/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
+*     /3/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /4/ R. A. Hulse, !! (detailed description?).
-*     /5/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET Report R(87)08, 1987.
+*     /5/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET Report R(87)08, 1987.
 *     /6/ K. Behringer, !! (journal article?).
-*     /7/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /7/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *-A1. Notes
 *
@@ -119,7 +119,7 @@
 *     from the main calculation.
 *
 *   ..Concerning 'un*formatted' files.
-*     The programs that make up b2 communicate through external files,
+*     The programs that make up B2 communicate through external files,
 *     which could be unformatted if all programs run on the same
 *     computer system, and otherwise would be formatted. In the latter
 *     case the format is very simple, and not designed for convenience
@@ -129,7 +129,7 @@
 *     and cfwuin for integer variables, and cfrure and cfwure for real
 *     variables.
 *     The un*formatted files could easily be replaced by files written
-*     using 'netCDF' or 'HDF' routines if either one of those packages
+*     using 'NetCDF' or 'HDF' routines if either one of those packages
 *     is desired as a standard interface.
 *
 *   ..Concerning internal documentation.

@@ -3,6 +3,7 @@
 
       subroutine b2sqel (nCv, ns, ismain, switch, ev, te, rt, rtw)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_switches
@@ -10,6 +11,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sqel
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, ismain
@@ -51,10 +53,10 @@
 *   ..local variables
       integer iCv, is
       real (kind=R8) :: tnorm, art_rad
-      real (kind=R8) :: wrk0(1:nCv), expu
+      real (kind=R8) :: wrk0(1:nCv)
 *   ..procedures
-      intrinsic log, exp, min, max
-      external subini, subend, xertst, expu
+      intrinsic log, min
+      external xertst
 *   ..initialisation
 
 *-----------------------------------------------------------------------

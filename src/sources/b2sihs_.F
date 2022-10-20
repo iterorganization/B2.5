@@ -29,6 +29,7 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2sifrtf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain                               !srv 05.07.17
@@ -62,7 +63,7 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer iCv, iFc, is, isb, k
       real (kind=R8), parameter :: eps = 1.0e-60_R8
@@ -97,7 +98,7 @@
      *   fac_ExB_c
 *   ..procedures
       intrinsic min, max, sqrt
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
 *     Note 0: style determines the form of the strange electron-atom
@@ -105,7 +106,7 @@
 *     Note 1: rf0-5 are numerical parameters, see the code. All must
 *     be non-negative and of order unity; larger values are meant to
 *     provide more stabilization. Some or all may be set to zero and
-*     removed eventually. I've had some experience to indicate that
+*     removed eventually. I have had some experience to indicate that
 *     rf0, rf2, rf4 may have a useful function; however, later changes
 *     in the code may have made all these parameters superfluous.
 
@@ -663,4 +664,4 @@
 *-----------------------------------------------------------------------
 *.end b2sihs_
 
-      end
+      end subroutine b2sihs_

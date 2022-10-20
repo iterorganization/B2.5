@@ -4,7 +4,7 @@ C 2002.11.01
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
-      
+
       integer, save ::
      *  nxpp, nypp, nspp,
      *  iyeard
@@ -48,7 +48,7 @@ C 2002.11.01
 
       character*80 adasid
 
-      character*120, save :: labgeo
+      character*132, save :: labgeo
 
 c   ..functions
       integer ixm1, ixp1
@@ -56,6 +56,10 @@ c   ..functions
 
       real (kind=R8) ::
      *  vdot, vlen, thetasepx
+#else
+#ifdef IMAS
+      character*132, save :: labgeo
+#endif
 #endif
 
       contains
@@ -239,7 +243,7 @@ c   ..first row intersecting core (on outer side)
 c   ..first row intersecting core (on inner side)
       jplft = nxpp - leftcut(1) + 1
 
-c   ..number of edge2d mesh points (periodic points in core)
+c   ..number of EDGE2D mesh points (periodic points in core)
       np = ( ( nxpp + 2 ) * ( nypp + 2 ) ) + ( iopen - 1 )
 
 c   ..dominant ion in plasma and its neutral
@@ -540,7 +544,7 @@ c   ..Pitch angle
          enddo
       enddo
 
-c   ..neutral molecular density (currently awaiting eirene module)
+c   ..neutral molecular density (currently awaiting Eirene module)
       do ix = -1 , nxpp
          do iy = -1 , nypp
             dm(ix,iy) = 0.0_R8
@@ -618,7 +622,7 @@ c   ..copy the grid to start extending the grid
          enddo
       enddo
 
-c   ..add a row of extra cells at each target (inner then outer)
+c   ..add a row of extra cells at each target (West then East)
 c     by linear extrapolation
       do it = 1 , 2
 
@@ -657,7 +661,7 @@ c     by linear extrapolation
 
       enddo
 
-c   ..add a further row of extra cells at each target (inner then outer)
+c   ..add a further row of extra cells at each target (West then East)
 c     by extrapolating, parallel to sepx outer boundary, to zmin
       iys = topcut(1)
 
@@ -1255,10 +1259,11 @@ c=======================================================================
       implicit none
 
       integer nwrite
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
+#ifndef USE_PXFGETENV
       integer lenval, ierror
-#else
       intrinsic get_environment_variable
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -1281,8 +1286,20 @@ c     ------------------------------------------------------------------
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)
       CALL PXFGETENV ('LOCSOLPS', 0, locsolps, lenval, ierror)
 #else
-      call get_environment_variable ('GRPSOLPS', grpsolps)
-      call get_environment_variable ('LOCSOLPS', locsolps)
+      call get_environment_variable('GRPSOLPS',
+     .   status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('GRPSOLPS',value=grpsolps)
+      elseif (ierror.eq.1) then
+        grpsolps=' '
+      endif
+      call get_environment_variable('LOCSOLPS',
+     .   status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('LOCSOLPS',value=locsolps)
+      elseif (ierror.eq.1) then
+        locsolps=' '
+      endif
 #endif
 #endif
       version = grpsolps//'_'//locsolps
@@ -1884,10 +1901,10 @@ c   ..initialise
       allocate( nj(1:nc) )
       allocate( kory(1:nc,1:nrow) )
 
-c   ..convert b2 mesh to edge2d mesh (necessary for postprocessor)
+c   ..convert B2 mesh to EDGE2D mesh (necessary for postprocessor)
       call ppre_conv_grid( rdat , rconv , iextrp , nj , kory )
 
-c   ..stagger edge2d mesh (if required)
+c   ..stagger EDGE2D mesh (if required)
       if( istag.ne.0 ) then
           call ppre_stag_grid( rconv, rconv , nj , kory )
       endif
@@ -1927,7 +1944,7 @@ c   ..locals
 c   ..initialise
       allocate( iconv(1:np) )
 
-c   ..convert b2 mesh to edge2d mesh (necessary for postprocessor)
+c   ..convert B2 mesh to EDGE2D mesh (necessary for postprocessor)
       call ppin_conv_grid( idat , iconv )
 
 c   ..process

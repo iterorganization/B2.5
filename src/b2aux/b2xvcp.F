@@ -7,6 +7,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ns
@@ -53,10 +54,11 @@
 
 *   ..local variables
       integer i, ic, is, ireg
+      character*80 message
       logical found
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 
 *-----------------------------------------------------------------------
@@ -74,11 +76,11 @@
       call b2xvsg (ns, zamin, 1, 'zamin', '.ge.')
       call b2xvsg (ns, zamax, 1, 'zamax', '.ge.')
       do is = 0, ns-1
-       call xertst (zn(is).eq.nint(zn(is)),
+       call xertst (zn(is).eq.anint(zn(is)),
      &   'faulty argument zn; not integral')
-       call xertst (zamin(is).eq.nint(zamin(is)),
+       call xertst (zamin(is).eq.anint(zamin(is)),
      &   'faulty argument zamin; not integral')
-       call xertst (zamax(is).eq.nint(zamax(is)),
+       call xertst (zamax(is).eq.anint(zamax(is)),
      &   'faulty argument zamax; not integral')
        call xertst (0.0_R8.le.zamin(is).and.zamin(is).le.zamax(is),
      &   'faulty species range zamin, zamax')
@@ -180,6 +182,12 @@ cwdk  can probably be removed completely?
        call b2xvsg (3, cfdpa(0,is), 1, 'cfdpa', '.ge.')
        call b2xvsg (3, cfvsa(0,is), 1, 'cfvsa', '.ge.')
        call b2xvsg (3, cfhci(0,is), 1, 'cfhci', '.ge.')
+       if (cfdf0(2,is).gt.0.0_R8) then
+         write(message,'(a,i3,a,i3,a)')
+     &    'Need to specify cfdf0(3,',is,') and/or cfdf0(4,',is,')!'
+         call xertst (cfdf0(3,is).gt.0.0_R8.or.cfdf0(4,is).gt.0.0_R8,
+     &    trim(message))
+       end if
       enddo
       call b2xvsg (3, cfhce(0), 1, 'cfhce', '.ge.')
       call b2xvsg (3, cfsig(0), 1, 'cfsig', '.ge.')
@@ -196,4 +204,4 @@ cwdk  can probably be removed completely?
 *-----------------------------------------------------------------------
 *.end b2xvcp
 
-      end
+      end subroutine b2xvcp

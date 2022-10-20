@@ -130,8 +130,7 @@ c*** Additional integrals
 c*** Separatrix data
       if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,BoRiS,iline)
 c*** User-specific data
-      if(filedata(ntrc_usr))
-     > call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
 #endif
 c
       return
@@ -150,8 +149,7 @@ c*** Initialise tracing routines
       if(filedata(ntrc_int)) call b2wrinti(nx,ny,ns,nnreg(0),iline)
       if(filedata(ntrc_srt)) call b2wrsrti(nx,ny,ns,nnreg(0),iline)
       if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,BoRiS,iline)
-      if(filedata(ntrc_usr))
-     > call b2usrtri(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,switch)
 #endif
       tracing_initialised = .true.
       return
@@ -190,7 +188,7 @@ c*** Truncate to match savefile
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_sep)), iline
       end if
       if(filedata(ntrc_usr)) then
-        call b2usrtrcc(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+        call b2usrtrcc(nx,nxtl,nxtr,iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
@@ -207,8 +205,7 @@ c*** - to be called BEFORE each timestep
       if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0),iline)
       if(filedata(ntrc_srt)) call b2wrsrts(nx,ny,ns,nnreg(0),iline)
       if(filedata(ntrc_sep)) call b2wrseps(nx,ny,ns,BoRiS,iline)
-      if(filedata(ntrc_usr))
-     > call b2usrtrs(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      if(filedata(ntrc_usr)) call b2usrtrs
 #endif
       return
 c======================================================================
@@ -224,8 +221,7 @@ c*** Finalization call
       if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0),iline)
       if(filedata(ntrc_srt)) call b2wrsrtf(nx,ny,ns,nnreg(0),iline)
       if(filedata(ntrc_sep)) call b2wrsepf(nx,ny,ns,BoRiS,iline)
-      if(filedata(ntrc_usr))
-     > call b2usrtrf(nx,ny,ns,nxtl,nxtr,BoRiS,iline)
+      if(filedata(ntrc_usr)) call b2usrtrf
 #endif
       tracing_initialised = .false.
       return

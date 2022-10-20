@@ -3005,7 +3005,7 @@
 
       subroutine prep_state (nx, ny, ns, nCv, nCi, nFc, mpg, st)
       !! convert only a limited set of quantities as needed for the 
-      !! creation of the b2fstate-file
+      !! creation of the b2fstate file
       implicit none
       integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
       type(mapping), intent(in) :: mpg

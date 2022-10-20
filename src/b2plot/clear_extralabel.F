@@ -5,4 +5,4 @@
       character*(*) label
       extralabel=label
       return
-      end
+      end subroutine clear_extralabel

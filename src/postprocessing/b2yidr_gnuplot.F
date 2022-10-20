@@ -19,6 +19,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -30,15 +32,15 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a postprocessor for b2. It reads and displays the
+*     B2YIDR_GNUPLOT is a postprocessor for B2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *
 *
@@ -89,9 +91,9 @@
 *   ..procedures
       intrinsic abs
       logical ltst, is_comment
-      external subini, subend, xertst, cfruch, b2rugm, cfruin, b2xvps
+      external xertst, cfruch, b2rugm, cfruin, b2xvps
       external b2rups, b2ruzd, b2wgpi_gnuplot, b2rurc, b2spel, b2sqel
-      external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
+      external ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
@@ -252,8 +254,8 @@
 *   ..read geometry and metric
 #ifdef WG_TODO
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
 #endif
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
@@ -305,8 +307,7 @@
 
 *   ..plot state
       call b2wgpi_gnuplot (nout(0), nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch, kinrgy,
-     &  gs, qc, ni)
+     &  ti, po, fna, fhe, fhi, fch, kinrgy, gs, qc, ni)
 
 * ..return
       call dealloc_b2mod_b2cmrc

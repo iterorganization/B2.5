@@ -12,6 +12,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2xehx
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
@@ -38,14 +39,14 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       real (kind=R8) ::
-     *   dpop(nFc), wrk0(nFc), 
+     *   dpop(nFc), wrk0(nFc),
      *   wrk1(nFc), wrk2(nFc), wrk(nCv),
      *   wrkv(nVx), ones(nFc,2)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialization
 *-----------------------------------------------------------------------
@@ -82,7 +83,7 @@
           call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
 *       ..interpolate ne to faces
           call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ne,wrk1)
-*       ..compute ehx      
+*       ..compute ehx
           ehx = -dpop + wrk0/(qe*wrk1)
         else
           ones = 1.0_R8
@@ -105,4 +106,4 @@
 *-----------------------------------------------------------------------
 *.end b2xehx
 
-      end
+      end subroutine b2xehx

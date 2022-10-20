@@ -1,10 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine ratamjhyd (nrid, nz, rtt, nt, rtn, nn, rtsa, rtra, 
+      subroutine ratamjhyd (nrid, nz, rtt, nt, rtn, nn, rtsa, rtra,
      &  rtqa, rtqa_ra,rtcx, rtrd, rtbr, fix_recomb)
       use b2mod_types
       use b2mod_constants
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid, nz, nt, nn, fix_recomb
@@ -24,11 +25,11 @@
 *
 *     RATAMJHYD uses Amjuel-Hydhel data for the rate coefficients
 *     for ionisation and charge; as function of temperature and density.
-*     The call to ratamjhyd must be preceded by a call to one of the 
+*     The call to ratamjhyd must be preceded by a call to one of the
 *     comprehensive routines.
 *
 *     Maarten Blommaert - June 2017
-* 
+*
 *  3. description
 *
 *     This routine employs ...
@@ -51,7 +52,7 @@
 *
 *     Amjuel-Hydhel is used for hydrogen data only, and only for
 *     the processes of ionisation and charge-exchange for neutral hydrogen
-*     Other rate coefficients must be obtained by a preceding 
+*     Other rate coefficients must be obtained by a preceding
 *     call to one of the comprehensive packages, such as STRAHL or ADPAK.
 *     The call to the present routine will then cause the rate
 *     coefficients for the selected processes to be overwritten.
@@ -105,8 +106,8 @@
 *     For (i,j,k) in (0:nt,0:nn,0:nz), rtqa(i,j,k) specifies the
 *     electron heat loss rate coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k, excluding the contributions coming from potential energy 
-*     of recombination and other recombination process contributions. 
+*     state k, excluding the contributions coming from potential energy
+*     of recombination and other recombination process contributions.
 *     In short, it includes the processes not accounted for in EIRENE.
 *     rtqa has dimension eV*m**3/s.
 *     This subroutine will override rtqa(,,0)???
@@ -116,7 +117,7 @@
 *     electron heat loss rate coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
 *     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     which replaces amjuel when EIRENE is not used. rtqa_ra has
 *     dimension eV*m**3/s.
 *
 *     rtcx - (0:nt,0:nn,0:nz) real*8 array, input/output.
@@ -135,7 +136,7 @@
 *
 *     rtbr - (0:nt,0:nn,0:nz) real*8 array, input/output.
 *     For (i,j,k) in (0:nt,0:nn,0:nz), rtbr(i,j,k) specifies the
-*     bremsstrahlung radiation rate coefficient at electron temperature 
+*     bremsstrahlung radiation rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) emitted from charge
 *     state k. rtbr has dimension eV*m**3/s.
 *     This subroutine will leave rtbr(,,0) unchanged???
@@ -158,7 +159,7 @@
       logical streql
 *   ..initialisation
       data tmin/0.0/, tmax/1E+30/, nmin/0.0/, nmax/1E+30/
-      external subini, subend, xertst, b2xvsg,streql, xerrab
+      external xertst, b2xvsg, streql, xerrab
 
 *-----------------------------------------------------------------------
 *.computation
@@ -195,7 +196,7 @@
         READ (nrid,'(A72)') row
         if (INDEX(row,'Amjuel/Hydhel Hydrogen reaction cards')>0) then
           found = 1
-        end if 
+        end if
       end do
 
 *   ..read heading for Hydrogen ionization
@@ -206,7 +207,6 @@
 *   ..read Ionization reaction card
       READ (nrid,'(A72)') row
       read (row,6666) FILNAM,H123,REAC,CRC
-
 
 *   .. Extract Amjuel/hydhel data for ionization
       call get_amjhyd_rates(filnam,h123,reac,crc,
@@ -257,29 +257,28 @@
 *   .. Extract Amjuel/hydhel data for recombination electron heat loss
       call get_amjhyd_rates(filnam,h123,reac,crc,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
-cmb   In fact, potential energy contribution should still be added like in commented code. 
-c     This will, however lead to negative values in rtra which will give Nans in the 
+cmb   In fact, potential energy contribution should still be added like in commented code.
+c     This will, however lead to negative values in rtra which will give Nans in the
 c     logarithmic representation. Instead, one should add the potential energy contribution afterwards
 c     using the b2stel_fix_recomb_energy switch (put to one)
 c      rtrd(:,:,nz) = rates    !mb Only line radiation in rtrd?
 c      rtqa(:,:,nz) = rates + depot*rtra(:,:,nz)
       if (fix_recomb.ne.0) then
-        rtqa_ra(:,:,nz) = rates 
+        rtqa_ra(:,:,nz) = rates
       else
         rtqa_ra(:,:,nz) = rates + depot*rtra(:,:,nz)
-        call xertst(any(rtqa_ra(:,:,nz)<0.0_R8), 
-     1   'Negative rates present, try turning on b2ardr_fix_recomb')      
+        call xertst(any(rtqa_ra(:,:,nz)<0.0_R8),
+     1   'Negative rates present, try turning on b2ardr_fix_recomb')
       end if
-c     Add Brehmstralung
-      
+
+c     Add Bremsstrahlung
       do i =0,nt
-        do j = 0,nn 
+        do j = 0,nn
           rtbr(i,j,nz) = bremsf * sqrt(rtt(i))
           rtqa(i,j,nz) = rtqa(i,j,nz) + bremsf * sqrt(rtt(i))
         enddo
       enddo
 *    ..TODOs: Provide warning when outside validity range?
-
 
 * ..return
       call subend ()
@@ -325,12 +324,12 @@ c     Local variables
       data duder/2e3_R8/
 
 *  1. purpose
-*     This routine gets the amjuel/hydhel rates based on the reaction card 
-*     information and returns it to B2.5 as a function of density and 
+*     This routine gets the amjuel/hydhel rates based on the reaction card
+*     information and returns it to B2.5 as a function of density and
 *     temperature for usage in fluid neutral models.
 *     The energy-dependence in charge-exchange rates is integrated away
-*     by assuming a maxwellian distribution for the neutrals and a 
-*     momentum-linearized CX-rate coefficient is extracted. It is 
+*     by assuming a maxwellian distribution for the neutrals and a
+*     momentum-linearized CX-rate coefficient is extracted. It is
 *     assumed that the neutral species index is = 0 and that am(is)=2 (D)
 *  3. description
 *     rtt represents temperature or temperature per amu; units are ev.
@@ -338,12 +337,12 @@ c     Local variables
 *  5. parameters
 *     rtt - (0:nt) real*8 array, input.
 *     rtt(0:nt) specifies the sequence of values of the ion temperature
-*     per amu or electrion temperature (not per amu), expressed in eV, 
-*     for which the rate coefficients are evaluated. rtt(0:nt) must be 
+*     per amu or electrion temperature (not per amu), expressed in eV,
+*     for which the rate coefficients are evaluated. rtt(0:nt) must be
 *     positive.
 *
 *     rttt(0:nt) specifies the sequence of values of the temperature
-*     after truncation (and not per a.m.u.), expressed in eV, for which 
+*     after truncation (and not per a.m.u.), expressed in eV, for which
 *     the rate coefficients are
 *     evaluated. rtt(0:nt) must be positive.
 *
@@ -362,7 +361,7 @@ c     Local variables
 *
 *     rates - (0:nt,0:nn) real*8 array, output.
 *     nn specifies the upper dimension bound for the array rtn.
-*     It will hold that 0.le.nn.           
+*     It will hold that 0.le.nn.
 
 *     ..Read Amjuel data
       IR=1
@@ -434,7 +433,7 @@ c     Local variables
        write(*,*) 'Extract energy-dependent cx rates'
 *    -- Extract energy dependent rates
        EEF=LOG(1.0_R8/am*energy/ev)
-       s=0.0_R8 
+       s=0.0_R8
        do I=0,8
          EEI=EEF**I
          s=s+D11(I,0)*EEI
@@ -442,10 +441,10 @@ c     Local variables
 *    --Calculate CX-rate in m**2
        s=exp(s)*1.0d-4
 *    --precalculate product of rate and velocity (slow)
-       sv = s*sqrt(2*energy/mp/am)   
+       sv = s*sqrt(2*energy/mp/am)
        smo = 0.0_R8
        do iu = 0,1
-        write(*,*) 'Calculate momentum source for drift ', 
+        write(*,*) 'Calculate momentum source for drift ',
      1    'velocity index', iu,'of 1'
         do it=0,nt
 *    --Assemble maxwellian distributions and integrate
@@ -458,7 +457,7 @@ c     1    'of', nt
 c         write(*,*) 'Integrate momentum source'
          do i = 1,2*nv
           do j = 1,2*nv
-           do k = 1,2*nv       
+           do k = 1,2*nv
              smo(it,iu) = smo(it,iu)+sv(i,j,k)*mdr(j)*dt(j)*
      1         mdr(k)*dt(k)*t(i)*mpol(i)*dt(i)
            enddo
@@ -466,17 +465,17 @@ c         write(*,*) 'Integrate momentum source'
          enddo
         enddo
        enddo
-       write(*,*) 'linearize momentum source'       
+       write(*,*) 'linearize momentum source'
 c       write(*,*) 'smo(:,0)'
 c       write (*,*) (smo(it,0),it=0,nt)
 c       write(*,*) 'smo(:,1)'
-c       write (*,*) (smo(it,1),it=0,nt)       
+c       write (*,*) (smo(it,1),it=0,nt)
        rates(:,0) =(smo(:,1)-smo(:,0))/duder
 c       write(*,*) 'rates(:,0)'
 c       write (*,*) (rates(it,0),it=0,nt)
-       rates = spread(rates(:,0),2,nn+1)  
+       rates = spread(rates(:,0),2,nn+1)
 
-c       write(*,*) 'CX rate table'       
+c       write(*,*) 'CX rate table'
 c       do it = 0,nt
 c         write (*,*) (rates(it,jn),jn=0,nn)
 c       enddo
@@ -529,7 +528,7 @@ c       enddo
               enddo
             enddo
 c         --Convert from cm**3/s to m**3/s
-            rates(it,jn)=exp(dnnn)*1.0e-6_R8            
+            rates(it,jn)=exp(dnnn)*1.0e-6_R8
           enddo
         enddo
        case default
@@ -562,7 +561,7 @@ c         --Convert from cm**3/s to m**3/s
 *     maxwell1d evaluates a 1D drifting maxwellian on the velocities v
 *     given a particle mass m, temperature T, and drift velocity u
 *
-*  5. parameters    
+*  5. parameters
 *     t - real*8 , input.
 *     t specifies the temperature, expressed in Joule, for which the
 *     drifting Maxwellian has to be evaluated
@@ -571,14 +570,14 @@ c         --Convert from cm**3/s to m**3/s
 *     nv specifies the number of discrete velocities with the same sign
 *     used to evaluate the (drifting) Maxwellian distribution
 *     It will hold that 1.le.nt.
-*     
+*
 *     v - real*8 array, input
-*     v specifies the velocity distribution for which the maxwellian with 
+*     v specifies the velocity distribution for which the maxwellian with
 *     drift velocity u is to be evaluated. v hereby containts both the positive and
 *     negative parts of the velocity distribution.
-*  
-      maxwell1d = sqrt(m/(2.0_R8*pi*T))*exp(-m*(v-u)**2/(2.0_R8*T))    
+*
+      maxwell1d = sqrt(m/(2.0_R8*pi*T))*exp(-m*(v-u)**2/(2.0_R8*T))
       return
-      end function maxwell1d      
+      end function maxwell1d
       end subroutine get_amjhyd_rates
 

@@ -10,6 +10,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tlc0_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -34,17 +35,16 @@
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
      *  pb(nCv), dpbf(nFc,0:1), pbv(nVx)
-      character charns*3                                      
+      character charns*3
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst
+      external xertst
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlc0')
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-
 
       call sfill(nFc*2*ns, 1.0_R8, flc, 1)
       call sfill(2, 1.0_R8, maxfluxlimit, 1)
@@ -58,7 +58,7 @@
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute partial pressure
-         call b2xppb (nCv, rza(1,is), na(1,is), te, ti, tn, is, pb) !! 
+         call b2xppb (nCv, rza(1,is), na(1,is), te, ti, tn, is, pb)
 *    ..compute differences of partial pressure
          call diff (nCv, nFc, nVx, 0, geo, mpg, pb, pbv, dpbf)
          do iFc = 1, nFc
@@ -66,9 +66,9 @@
            t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *    ..poloidal
             dpb = abs(cdpa(iFc,0,is)*dpbf(iFc,0))
-            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
-            t2 = 1.0_R8/(1.0_R8 + 
+            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
+     &            *geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
+            t2 = 1.0_R8/(1.0_R8 +
      &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
@@ -77,9 +77,9 @@
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
 *    ..perpendicular
             dpb = abs(cdpa(iFc,1,is)*dpbf(iFc,1))
-            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &        geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
-            t2 = 1.0_R8/(1.0_R8 + 
+            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
+     &        *geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
+            t2 = 1.0_R8/(1.0_R8 +
      &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,1,is)   = cdpa(iFc,1,is)*t2
@@ -103,11 +103,11 @@ cwdk    or radial contributions, since neutral transport is isotropic
            t1 = (na(mpg%fcCv(iFc,1),is) + na(mpg%fcCv(iFc,2),is))/2.0_R8
 *    ..limit total gradient
             dpb = cdpa0(iFc,is)*sqrt(dpbf(iFc,0)**2 + dpbf(iFc,1)**2)
-            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp))) *
-     &        geo%fcS(iFc)
+            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
+     &           *geo%fcS(iFc)
             t2 = 1.0_R8/(1.0_R8 + 
      &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
-     &                                                 **(1.0_R8/gamma)
+     &                                                  **(1.0_R8/gamma)
 *    ..poloidal
             cdpa(iFc,0,is)   = cdpa(iFc,0,is)*t2
             cdpahz(iFc,0,is) = cdpahz(iFc,0,is)*t2
@@ -142,4 +142,4 @@ cwdk    or radial contributions, since neutral transport is isotropic
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2tlc0

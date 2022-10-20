@@ -1,5 +1,5 @@
-      real xlo,xhi,ylo,yhi,lwidth,xsize,ysize,xpos,ypos,
-     . wwidth,xwidth,zwidth,yheight,lbsz,
+      real (kind=R4) :: xlo,xhi,ylo,yhi,lwidth,xsize,ysize,xpos,ypos,
+     . wwidth,xwidth,zwidth,yheight,glsz,lbsz,
      . wallbar_left,wallbar_right,colorbar_left,colorbar_right,
      . wmin,wmax,trgmin,trgmax,targetbar_left,targetbar_right
       real clval(1000),eclval(1000),wclval(1000),tclval(1000),
@@ -21,7 +21,8 @@
 
       common /graphics_vars/
      r xlo,xhi,ylo,yhi,xsize,ysize,xpos,ypos,wwidth,zwidth,
-     . xwidth,yheight,clval,eclval,wclval,tclval,runtime,lwidth,lbsz,
+     . xwidth,yheight,clval,eclval,wclval,tclval,runtime,
+     . lwidth,glsz,lbsz,
      . wallbar_left,wallbar_right,colorbar_left,colorbar_right,
      . wmin,wmax,trgmin,trgmax,partition_colors,
      . targetbar_left,targetbar_right,

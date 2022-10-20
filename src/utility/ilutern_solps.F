@@ -3,6 +3,7 @@
       use b2mod_types
       use b2mod_ma28
       use b2mod_indirect
+      use b2mod_subsys
       IMPLICIT NONE
       external bd1
 C
@@ -12,7 +13,7 @@ C
       character*(*) name                                             !srv 18.03.10
       REAL (KIND=R8) ::
      *   ASO(N1D,N2), AWE(N1D,N2), ACP(N1D,N2),
-     .      AEA(N1D,N2), ANO(N1D,N2), RHS(N1D,N2)
+     .   AEA(N1D,N2), ANO(N1D,N2), RHS(N1D,N2)
 
 *  -- OUTPUT ARGUMENTS --
       REAL (KIND=R8) ::
@@ -47,9 +48,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.03.10
@@ -74,7 +73,7 @@ c
        call ipgeti ('ma28_ilutern_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
        call ipgeti ('b2swtest', b2swtest)
       endif
-c     write(*,*) 'ncall,nwrite',ncall,nwrite
+      if (nwrite.gt.ncall) write(*,*) 'ncall,nwrite',ncall,nwrite
 
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -178,31 +177,32 @@ c             (maybe necessary in case of multi-fluid?)
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
-          if(ncall.eq.0) then
-            write(*,*) 'Opening 69'
-            open(69,file='b2_matrix')
-          endif
-          write(*,*) 'Writing 69'
-          write(69,*) 'Called from '//trim(name)
-          write(69,*) n,' n'
-          write(69,*) 'ASO AWE ACP AEA ANO RHS'
+          if (ncall.eq.0) then
+            write(*,*) 'Opening 84'
+            open(84,file='b2_matrix')
+          end if
+          write(*,*) 'Writing 84'
+          write(84,*) 'Called from '//trim(name)
+          write(84,*) n,' n'
+          write(84,*) 'ASO AWE ACP AEA ANO RHS'
           do i=1,n
             iy = (i-1)/n1+1
             ix = i-(iy-1)*n1
-            write(69,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
-     .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy), ano(ix,iy),
-     .       rhs(ix,iy)
+            write(84,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
+     .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy),
+     .       ano(ix,iy), rhs(ix,iy)
           enddo
-          write(69,*) nz,' nz'
+          write(84,*) nz,' nz'
           do i=1,nz
-            write(69,'(4(i6,1x),1p,1e15.8)')
+            write(84,'(4(i6,1x),1p,1e15.8)')
      .       IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
           enddo
-        elseif(nwrite.eq.ncall) then
-          write(*,*) 'Closing 69'
-          close(69)
-        endif
-      endif
+          if(ncall+1.eq.nwrite) then
+            write(*,*) 'Closing 84'
+            close(84)
+          end if
+        end if
+      end if
 cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then
@@ -250,7 +250,7 @@ cdpc
       call ma28id
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,1e-10_R8,iflag)
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)') !srv 28.06.16
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)') !srv 28.06.16
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                            !srv 28.06.16 {
@@ -265,7 +265,7 @@ cdpc
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
      1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
-   2    format(' ma28ad for ',a13,': iflag =',i9/,
+    2   format(' ma28ad for ',a13,': iflag =',i9/,
      1   ' minirn =',i9,' solvdim1 =',i9,' minicn =',i9,' solvdim =',i9)
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
@@ -282,7 +282,7 @@ cdpc
         endif
         if(nltrsol.gt.0 .or. iflag.lt.0)
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3    format(' ma28id for ',a13,': iflag =',i9,
+    3    format(' ma28id for ',a13,': iflag =',i9,
      2         ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)
 
       endif                                                          !srv 28.06.16 }
@@ -300,5 +300,5 @@ cdpc
 *=======================================================================
 *//END ILUTERN//
 
-      END
+      END SUBROUTINE ILUTERN
 

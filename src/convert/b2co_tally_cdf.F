@@ -3,42 +3,42 @@
       use b2mod_geo
       use b2mod_tallies
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
       integer nx, ny, ns
       real (kind=R8) :: tim
-      integer :: timedim
-      real (kind=R8), save :: dtim = 1.0_R8
-#ifdef USE_PXFGETENV
+#ifndef NO_CDF
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
 #endif
-#ifndef NO_CDF
+#endif
       integer :: status
-      integer :: idim, ivar, iatt, iret, ib, it, ih, idum,
+      integer :: timedim
+      integer :: idim, ivar, iatt, ib, it, ih,
      1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
-     2 dimids(NF_MAX_VAR_DIMS), len, index, dimsize(NF_MAX_VAR_DIMS),
+     2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
-      character*256 filename, plasmastate
+      character*32 hlp_frm
+      character*256 filename, plasmastate, message
       character*13 :: cdata(0:ns-1)
       logical :: exists
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_tally_cdf')
       write(*,*) 'b2co_tally_cdf ...'
-
-      call ipgetr ('b2mndr_dtim', dtim)
 
 #ifndef NO_CDF
 c access the b2tallies.nc file
@@ -129,7 +129,14 @@ c prepare the b2tallies.nc.xxxx file
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
 #else
-      call get_environment_variable ('PLASMASTATE', plasmastate)
+      call get_environment_variable('PLASMASTATE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        extension=plasmastate(lenval-3:lenval)
+      elseif (ierror.eq.1) then
+        extension='xxxx'
+      endif
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
@@ -151,6 +158,17 @@ c read and rewrite data
           count(idim)=len
           start(idim)=1
         enddo
+        if (ndims.eq.0) then
+          write(message,'(a)') 'Processing '//trim(varname)//' ...'
+        elseif (ndims.eq.1) then
+          write(message,'(a,i6,a)') 'Processing '//trim(varname)//
+     .     ' with size ',len,' ...'
+        else
+          write(hlp_frm,'(a,i1,a)') '(3a,',ndims-1,'(i6,'',''),i6,a1)'
+          write(message,hlp_frm) 'Processing ',trim(varname),
+     .     ' with dimensions (',(count(idim),idim=1,ndims),')'
+        end if
+        write(*,'(a)') trim(message)
         if(varname.eq.'times') then
           if(itim.gt.0) then
             allocate(data1(dimsize(1)))
@@ -178,7 +196,7 @@ c read and rewrite data
               status=nf_put_vara_double(ncid2,ivar,start,count,data3)
             end if
             call check_cdf_status(status)
-            deallocate(data3) 
+            deallocate(data3)
           elseif(ndims.eq.2) then
             allocate(data2(dimsize(1),dimsize(2)))
             status=nf_get_vara_double(ncid,ivar,start,count,data2)

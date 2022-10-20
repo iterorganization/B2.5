@@ -13,6 +13,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2urmo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -39,7 +40,7 @@
 *
 *     This routine computes the residual of the parallel momentum
 *     balance equation for one species, integrated over the cells of
-*     the b2 mesh. The equation has the form
+*     the B2 mesh. The equation has the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
 *       resmb = rhs-div(flux) .
@@ -69,8 +70,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
       real (kind=R8), parameter :: eps = 1.0e-60_R8
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, calcflow, calccoef
 *   ..initialisation
 
@@ -126,7 +126,6 @@ cwdk store effective viscosity, for use in viscous heating
       fkb(:,1) = fkb(:,1)/geo%fcHz
 
 * ..compute residual
-
 *   ..contribution from right hand side
       resmb = smb(:,0) + smb(:,1)*ub + smb(:,2)*rob + smb(:,3)*rob*ub
 

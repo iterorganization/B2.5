@@ -3,8 +3,10 @@
 
       subroutine b2agbb (nx, ny, vol, gs, crx, cry, qz, fpsi, ffbz, bb)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
      , ,only : AverageVertex
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -15,7 +17,7 @@
      &  ffbz(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3)
+     *   bb(-1:nx,-1:ny,0:3)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -73,15 +75,14 @@
 *   ..local variables
       integer ix, iy, i, j
       real (kind=R8) ::
-     *  t0, p0x, p0y
+     *   t0
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
-     *  norm, cornerDist
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+     *  cornerDist
       cornerDist(ix,iy,i,j) = norm (
      &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation

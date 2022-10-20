@@ -4,6 +4,7 @@
       subroutine b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg, 
      &  pl, dv, co, rt, st_ext, balance)                                 !djm Jan2017 !srv 29.01.20
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_constants
       use b2mod_b2cmfs
@@ -20,6 +21,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -29,7 +31,7 @@
       type (B2Plasma), intent (in) :: pl 
       type (B2Rates), intent (in) :: rt 
       type (B2StateExt), intent (in) :: st_ext
-      logical balance                                                   !djm Jan2017
+      logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
       type (B2Coeff), intent (inout) :: co
@@ -85,8 +87,7 @@ c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 0
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
 
@@ -388,7 +389,6 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
      .      max(b2tfhe_cutlo,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
           endif
 
-
 csw 27nov2012 add check for upwind (SOLPS4 style)
           if(b2_upwind .ne. 0) then
              fhe(ix,iy,0,0) =
@@ -653,8 +653,8 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 #ifdef WG_TODO
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
-       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                         !srv 16.09.02 {
+     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
+       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                    !srv 16.09.02 {
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_stry')
        call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
        call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
@@ -662,12 +662,12 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 !       call my_out(70,nx,ny,w5,'b2tfhe__qey5')
        call my_out(70,nx,ny,w5,'b2tfhe__qediay')
        call my_out(70,nx,ny,w6,'b2tfhe__chcey_Pat')
-      endif                                                              !srv 16.09.02 }
+      endif                                                         !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
+     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
        deallocate( w1, w2, w3, w4, w5, w6 )
-      endif                                                              !srv 16.09.02 }
+      endif                                                         !srv 16.09.02 }
 #endif
 
 
@@ -708,12 +708,12 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
-       call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                        !srv 13.01.17
-       call my_out_us(70,nFc,1,ehy,'b2tfhe__eh_r')                        !srv 13.01.17
-      endif                                                              !srv 18.06.08 }
+       call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                  !srv 13.01.17
+       call my_out_us(70,nFc,1,ehy,'b2tfhe__eh_r')                   !srv 13.01.17
+      endif                                                          !srv 18.06.08 }
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                          .or. iout_b2wdat.eq.4) then              !srv 11.09.09 {
+     &                          .or. iout_b2wdat.eq.4) then          !srv 11.09.09 {
        call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2tfhe__fhe_no_mdfx')
        call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2tfhe__fhe_no_mdfy')
 !       call my_out(70,nx,ny,fhe_mdf(-1,-1,0,0),'b2tfhe__fhe_mdfx')
@@ -731,4 +731,4 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 *-----------------------------------------------------------------------
 *.end b2tfhe_
 
-      end
+      end subroutine b2tfhe_

@@ -15,6 +15,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tcpa, ncall_b2xehx
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -43,12 +44,12 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       real (kind=R8) ::
      *   tev(nVx), dtep(nFc)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialization
 *-----------------------------------------------------------------------
@@ -56,7 +57,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2tcpa')                                                              !srv
+      call subini ('b2tcpa')
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
@@ -68,8 +69,8 @@
       endif
 
 * ..compute parallel current
-      if(switch%pot_eq.eq.1 .and. switch%no_current.eq.0) then                !srv 26.07.06 27.02.13
-        call b2xehx (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehx)         !srv 13.01.17 29.01.20
+      if(switch%pot_eq.eq.1 .and. switch%no_current.eq.0) then         !srv 26.07.06 27.02.13
+        call b2xehx (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehx) !srv 13.01.17 29.01.20
 *   ..compute poloidal differences of te
         call diff_p(nCv, nFc, nVx, 0, geo, mpg, te, tev, dtep)
 *   ..compute fch_p
@@ -98,4 +99,4 @@
 *-----------------------------------------------------------------------
 *.end b2tcpa
 
-      end
+      end subroutine b2tcpa

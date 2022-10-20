@@ -14,15 +14,15 @@
   gnmap3
   lbfill
   lefta
-  subsys
-  xerset
+  b2mod_subsys
+  b2mod_xerset
   xerrab
-  b2file
+  b2mod_file
   b2trace
   b2blnc
   b2blne
   b2blnm
-  b2usrtrc
+  b2mod_usrtrc
   b2wrint
   b2wrsep
   b2mod_movies
@@ -34,9 +34,9 @@
   ncardummy
   out_for_plot
   b2wrsrt
-  ipmain
-  lwimai
-  lwmain
+  b2mod_ipmain
+  b2mod_lwimai
+  b2mod_lwmain
   init_page
   pagini
   pagend

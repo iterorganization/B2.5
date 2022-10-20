@@ -25,6 +25,8 @@ contains
   !>         of size (-1:nx, -1:ny)
   !> nx1, ny1: size of input grid which is to be downscaled to nx, ny  
   subroutine b2ag_read_parameters(ninp, nout, nx, ny, nx1, ny1)
+    use b2mod_ipmain
+    implicit none
     integer, intent(in) :: ninp(0:1), nout(0:1)
     integer, intent(out) :: nx, ny, nx1, ny1
 
@@ -34,8 +36,7 @@ contains
     character*256 local_sonnet
     integer :: istyle
 
-    external xertst, ipsetc, xerrab, streql, b2agx0, ipgetc, cfverr, &
-         & open_file
+    external xertst, xerrab, streql, b2agx0, cfverr, open_file
     logical :: streql, open_file
 
     call b2agx0 (ninp(0), nx, ny, nx1, ny1)

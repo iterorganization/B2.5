@@ -3,7 +3,9 @@
 
       subroutine b2wurc (nput, version)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput
@@ -52,14 +54,14 @@
       logical lt0
       integer k, k1, idum(0:9)
       real (kind=R8) ::
-     *   cutlo, t0
+     *   t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
 *   ..procedures
       intrinsic log
       logical lnext
       real (kind=R8) ::
-     *   machsfr, smax
-      external subini, subend, xertst, machsfr, cfverw, cfwure, cfwuin
+     *   smax
+      external xertst, cfverw, cfwure, cfwuin
       external smax
       lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 
@@ -69,8 +71,8 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2wurc')
-*   ..set cutlo
-      cutlo = machsfr()
+*   ..set cutll
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *   ..test nput
       call xertst (1.le.nput, 'faulty argument nput')
 *   ..test /b2cmrc/ dimensions
@@ -95,7 +97,7 @@
        if (lt0) then
 *       (ionisation rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlsa(0,0,k),1)
-        call xertst (t0.lt.log(cutlo), 'faulty entry in rtlsa table')
+        call xertst (t0.lt.cutll, 'faulty entry in rtlsa table')
        endif
       enddo
 *   ..test recombination rate coefficients
@@ -109,7 +111,7 @@
        if (lt0) then
 *       (recombination rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlra(0,0,k),1)
-        call xertst (t0.lt.log(cutlo), 'faulty entry in rtlra table')
+        call xertst (t0.lt.cutll, 'faulty entry in rtlra table')
        endif
       enddo
 *   ..test charge exchange rate coefficients
@@ -123,7 +125,7 @@
        if (lt0) then
 *       (charge exchange rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlcx(0,0,k),1)
-        call xertst (t0.lt.log(cutlo), 'faulty entry in rtlcx table')
+        call xertst (t0.lt.cutll, 'faulty entry in rtlcx table')
        endif
       enddo
 

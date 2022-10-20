@@ -2,12 +2,12 @@
       use b2mod_types
       use b2mod_par_opt
       use b2mod_constants
+      use b2mod_subsys
       implicit none
       real(kind=R8), intent (inout) :: prior
       logical, intent (inout) :: inrange
       integer :: ii, isigma, nn
       intrinsic sqrt, exp
-      external subini, subend
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
       call subini('calc_prior')
 ! sc  Initialize prior

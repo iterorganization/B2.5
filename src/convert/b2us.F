@@ -54,10 +54,9 @@
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_ipmain
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
@@ -82,9 +81,6 @@
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
       integer ix, iy
       integer iflag
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
 #ifndef NAGF95
       integer iargc
 #endif
@@ -120,7 +116,7 @@
       integer lnblnk
       logical is_comment
       external lnblnk, is_comment
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -131,16 +127,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2us_mpi_child'
-      endif
-#endif
       call prgini ('b2us')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -260,7 +246,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
      .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
      .        mpg%nVmxCv, gm, mpg)
       write (*,*) 'Geometry created'
-      
 
       call prep_plasma (nx, ny, ns,
      .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
@@ -488,10 +473,6 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call dealloc_mapping(mpg)
       call destroyB2State(state)
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2us'
 
 *-----------------------------------------------------------------------

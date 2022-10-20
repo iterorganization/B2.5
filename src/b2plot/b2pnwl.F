@@ -9,6 +9,7 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
+      use b2mod_indirect
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -44,6 +45,8 @@ c*** and for the power flux.
       external streql, ipgetr
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
+c*** Input the DG data and prepare the geometry
+c
       call ipgetr ('b2agmt_1d_width', width)
 c*** Set the default values
       npumplis=0
@@ -105,24 +108,33 @@ c*** ... and produce the output file
       end do
       open (lun,file='wlld.dat')
       write (hlp_frm,'(a,i2,a)')
-     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),4(5x,a4,3x),',
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
-     .      '(3x,a4,a4,1x),4(5x,a4,3x))'
-      write(lun,hlp_frm)
+     .      '(a4,a8),2(1x,a8,3x))'
+      if (nmoli.gt.0) then
+        write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
-     ,      'net_','ersn','grs_','ersn'
-c<<<
-c      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
-c      do il=1,nwldprt
-c        write (hlp_frm,'(a,i2,a)') '(1x,',nwldlis(il)+1,'i4)'
-c        print '(1x,2i4)',il,nwldlis(il)
-c        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
-c>>>
+     ,      'net_ersn','grs_ersn'
+      else
+        write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,      'net_ersn','grs_ersn'
+      end if
+#ifdef DBG
+      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
+      do il=1,nwldprt
+        write (hlp_frm,'(a,i3,a)') '(1x,',nwldlis(il)+1,'i4)'
+        print '(1x,2i4,1x,a)',il,nwldlis(il),pltzlbl(il)
+        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
+      end do
+#endif
 c
 c*** Check whether carbon atoms are present in the calculation
 c
@@ -139,7 +151,7 @@ c*** calculate the length of the target segment
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             is=leirlis(i,il)
-            if (is.gt.0) then
+            if (is.gt.0.and.is.le.nlim) then
               dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
               hlpx=hlpx+dist
             end if
@@ -153,7 +165,8 @@ c
             ib=iabs(ia)
             is=leirlis(i,il)
             h=dist
-            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+(pp1(2,ib)-pp2(2,ib))**2)
+            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+
+     .                (pp1(2,ib)-pp2(2,ib))**2)
             if (isymm.eq.0) then
               a=width*dist
             else if (isymm.eq.1 .or. isymm.eq.2) then
@@ -161,10 +174,10 @@ c
             else if (isymm.eq.3 .or. isymm.eq.4) then
               a=pi*(pp1(2,ib)+pp2(2,ib))*dist
             end if
+            aa=1.e-6_R8/a
             dist=0.5e0_R8*dist
             x=x+h+dist
-            if(is .gt. 0) then
-              aa=1.e-6_R8/a
+            if(is.gt.0 .and. is.le.nlim) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa
@@ -277,41 +290,11 @@ c      end if
         write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
      .                                 wldspt(nlim+ltns(2),0)
       end if
-c     if (j_h_at(1).ne.0) then
-c      print 700,'Hydrogen  atom flux',wldna(nlim+ltns(1),j_h_at(1),0),
-c                                      wldna(nlim+ltns(2),j_h_at(1),0)
-c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at(1),0),
-c                                 ewlda(nlim+ltns(2),j_h_at(1),0)
-c     end if
-c     if (j_h_at(2).ne.0) then
-c      print 700,'Deuterium atom flux',wldna(nlim+ltns(1),j_h_at(2),0),
-c                                      wldna(nlim+ltns(2),j_h_at(2),0)
-c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at(2),0),
-c                                 ewlda(nlim+ltns(2),j_h_at(2),0)
-c     end if
-c     if (j_h_at(3).ne.0) then
-c      print 700,'Tritium   atom flux',wldna(nlim+ltns(1),j_h_at(3),0),
-c                                      wldna(nlim+ltns(2),j_h_at(3),0)
-c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at(3),0),
-c                                 ewlda(nlim+ltns(2),j_h_at(3),0)
-c     end if
-c     if (j_he_at.ne.0) then
-c      print 700,'Helium    atom flux',wldna(nlim+ltns(1),j_he_at,0),
-c                                      wldna(nlim+ltns(2),j_he_at,0)
-c      print 700,'Average energy',ewlda(nlim+ltns(1),j_he_at,0),
-c                                 ewlda(nlim+ltns(2),j_he_at,0)
-c     end if
-c     if(j_ne_at.ne.0) then
-c      print 700,'Neon      atom flux',wldna(nlim+ltns(1),j_ne_at,0),
-c     ,                                wldna(nlim+ltns(2),j_ne_at,0)
-c      print 700,'Average energy',ewlda(nlim+ltns(1),j_ne_at,0),
-c                                 ewlda(nlim+ltns(2),j_ne_at,0)
-c     end if
-  700 format(1x,a22,':',1p,2e14.3)
-  710 format(1x,a2,a20,':',1p,2e14.3)
+  700 format(1x,a22,':',1p,4e14.3)
+  710 format(1x,a2,a20,':',1p,4e14.3)
       return
 c----------------------------------------------------------------------
- 999  return 1
+  999 return 1
 c----------------------------------------------------------------------
       end subroutine b2pnwl
 c
@@ -331,6 +314,7 @@ c***  leirlis : the lists themselves (Eirene numbering)
 c
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -352,8 +336,8 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
+      logical goup,placed(DEF_NLIM),found,direction_same
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol, d2etol
       parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
@@ -361,7 +345,12 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      if (nnreg(0).lt.8) then
+c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      else
+c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
+c        print '(a,4i6)','jedgo1, jedgo2, jedgo3, jedgo4 =',jedge(5:8)
+c      end if
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -371,8 +360,6 @@ c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
 c        end do
 c      end do
 cc%%%
-      no_fort44=maxval(p1).eq.0.0_R8 .and. minval(p1).eq.0.0_R8 .and.
-     &          maxval(p2).eq.0.0_R8 .and. minval(p2).eq.0.0_R8
 
       do il=1,nwldprt
         is=lwldstrt(il)
@@ -397,7 +384,7 @@ c*** initialise the chain counter and the chain list
             lwsrtwrk(nwsrtwrk)=is
 c*** both ends of the first element will be checked (goup=.true. here)
             k=2
-            do 100 ii=2,nwldlis(il)
+            do ii=2,nwldlis(il)
 c              print *,'do 100:',ii,is,goup
               do ik=1,k
 c                print *,'do ik:',ik,is,goup
@@ -407,7 +394,7 @@ c                  print *,'do jj:',jj,is,goup,placed(jj)
                     js=lwldlis(jj,il)
 c                    print *,'js:',js,is,goup
                     if(goup) then
-                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and.
      .                   abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
@@ -417,7 +404,7 @@ c                    print *,'js:',js,is,goup
 c                        print *,'2->1:',is,nwsrtwrk
                         go to 100
                       end if
-                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and.
      .                   abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
@@ -428,7 +415,7 @@ c                        print *,'2->2:',is,nwsrtwrk
                         go to 100
                       end if
                     else
-                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and.
      .                   abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
@@ -438,7 +425,7 @@ c                        print *,'2->2:',is,nwsrtwrk
 c                        print *,'1->2:',is,nwsrtwrk
                         go to 100
                       end if
-                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and. 
+                      if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and.
      .                   abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
@@ -457,8 +444,9 @@ c*** Look in the opposite direction
               end do
 c*** No connection found
               go to 50
- 100        k=1
- 50         if(nwsrtwrk .ne. nwldlis(il)) then
+  100         k=1
+            end do
+   50       if(nwsrtwrk .ne. nwldlis(il)) then
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
@@ -467,17 +455,19 @@ c*** No connection found
               if (lskip(j)) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=0
-              else if (no_fort44) then
+              else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4)) then
+     .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
+     .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
+     .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
+     .                 nnreg(0).ge.7)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)
                   if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -488,7 +478,6 @@ c*** No connection found
                   else
      .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
@@ -499,7 +488,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 2
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
@@ -510,7 +498,6 @@ c*** No connection found
                   else
      .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 1
                     direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/

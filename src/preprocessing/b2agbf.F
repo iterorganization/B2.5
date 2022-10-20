@@ -10,6 +10,7 @@
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm, periodic_bc, nncut
@@ -92,7 +93,7 @@
      *                  hzb(-1:nx,-1:ny)     ! hz at the bottom cell face
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst
+      external xertst
       data width /1.0_R8/
       save width
 

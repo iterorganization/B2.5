@@ -9,6 +9,7 @@
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny
@@ -38,15 +39,14 @@
       real (kind=R8) ::
      *   parg(0:99)
 *   ..procedures
-      logical streql
-      external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
+      external xertst, xerrab, cfwuin, cfwuch, cfwure
       external ipgeti, intfaceh1, intfacer1, intfacev1
       external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
-      real (kind=R8), allocatable :: br(:,:,:), bz(:,:,:),qcdiff(:,:),
-     .           vldiff(:,:),sxdiff(:,:),hxdiff(:,:), hydiff(:,:)
-      real (kind=R8) :: pi, s213,r213,s143,r143, t0
+      real (kind=R8), allocatable :: br(:,:,:), bz(:,:,:), qcdiff(:,:),
+     .           vldiff(:,:), sxdiff(:,:), hxdiff(:,:), hydiff(:,:)
+      real (kind=R8) :: pi, s213, r213, s143, r143, t0
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -114,11 +114,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
@@ -206,8 +206,9 @@
       isymm=idum(0)
 #ifdef WG_TOD
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 #endif
       call cfrure (ninp(1), 100, parg, 'parg')
 
@@ -297,11 +298,12 @@
      .     form='formatted')
       do ix=-1,nx
         do iy=-1,ny
-          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy,0) - 1.d0
-          sxdiff(ix,iy) = sxdiff(ix,iy) / (qc(ix,iy,0)*gs(ix,iy,0))-1.d0
-          vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)-1.d0
-          hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy)-1.d0
-          hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy)-1.d0
+          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy,0) - 1.0_R8
+          sxdiff(ix,iy) = sxdiff(ix,iy) /
+     .                       (qc(ix,iy,0)*gs(ix,iy,0))- 1.0_R8
+          vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)- 1.0_R8
+          hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy) - 1.0_R8
+          hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy) - 1.0_R8
           write(4711,'(2i6,5(1x,e13.6))') ix,iy,vldiff(ix,iy), 
      .           qcdiff(ix,iy), sxdiff(ix,iy), hxdiff(ix,iy),
      .           hydiff(ix,iy)
@@ -343,14 +345,6 @@
 * ..return
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.error conditions
-
-   91 call xerrab ('error trying to read heading *param')
-   92 call xerrab ('error trying to read parg')
-   93 call xerrab
-     1 ('error trying to read non-default internal parameters')
 
 *-----------------------------------------------------------------------
 *.end b2fgmtry_moddr

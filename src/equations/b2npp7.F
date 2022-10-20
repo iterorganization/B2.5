@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -57,7 +58,7 @@
      *   aa11(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)              !srv 11.01.00
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2ursd, b2usp7, b2uppo          !srv 06.07.00
 *   ..initialisation
       data ncall/0/
@@ -127,7 +128,7 @@
         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
      &       sch(:,:,3)*ne*po
         call my_out(70,nx,ny,wrk0,'b2npp7_sch')
-      endif                                                       !srv 11.09.09 }
+      endif                                                           !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)
       ierr = 0
@@ -139,4 +140,4 @@
 *-----------------------------------------------------------------------
 *.end b2npp7
 
-      end
+      end subroutine b2npp7

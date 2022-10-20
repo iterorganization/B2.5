@@ -6,6 +6,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2nxdp
+      use b2mod_subsys
       implicit none
       integer nCv, nregionv
       type (mapping), intent (in) :: mpg
@@ -17,7 +18,7 @@
 *     an update to the electron density.
 *     ------------------------------------------------------------------
       integer iCv, ireg
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
 *     ------------------------------------------------------------------
@@ -44,4 +45,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2nxdp

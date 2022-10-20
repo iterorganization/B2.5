@@ -14,6 +14,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tqce, ncall_b2tlnl
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -77,7 +78,7 @@
       intrinsic abs, sqrt, max, log
       real (kind=R8) ::
      *  pitx, fke, fse, fal, fke_Zh
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg
 
       real (kind=R8) c11e, c13e, c15e
@@ -161,7 +162,7 @@
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then
-        ctaue = t0*sqrt(me)						 !xpb
+        ctaue = t0*sqrt(me)                                                !xpb
       else if (switch%b2tqce_model.eq.2) then
         ctaue = 3.5e11_R8             ! lower precision as per SOLPS4.0
       endif
@@ -250,8 +251,8 @@
 
       sig(:,:) = sig(:,:)*switch%prl_cur                                    !srv 15.06.18
       alf(:,:) = alf(:,:)*switch%prl_cur                                    !srv 15.06.18
-      
-      if(switch%b2tqce_iout.ne.0) then                                !srv 16.06.08 {
+
+      if(switch%b2tqce_iout.ne.0) then                                      !srv 16.06.08 {
         call my_out_us(70,nCv,0,tau,'taue')
         call my_out_us(70,nCv,0,hce(1,0),'hce_th')
         call my_out_us(70,nCv,0,hce(1,1),'hce_r')
@@ -282,4 +283,4 @@
 *-----------------------------------------------------------------------
 *.end b2tqce
 
-      end
+      end subroutine b2tqce

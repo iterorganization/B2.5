@@ -21,6 +21,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2stcx
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, is0, ismain
@@ -54,14 +55,10 @@
      *  rg0, t0, t1, t2, du0, du1, tkin, t1n
       real (kind=R8) :: wrk0(nCv)
 *   ..procedures
-      intrinsic abs
-      logical lnext
       real (kind=R8) ::
      *  samax, roxa
-      external subini, subend, xertst, samax, sfill
+      external xertst, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *   ..initialisation
 *-----------------------------------------------------------------------
@@ -315,7 +312,7 @@ ctmp.dpc
 
       write (chcx,'(i3.3)') is0
 !      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-!     &              .or. iout_b2wdat.eq.4) then
+!     &              .or. iout_b2wdat.eq.4 ) then
 !        do is = 0, ns-1
 !          write (chns,'(i3.3)') is
 !!         do k=0,1
@@ -365,7 +362,6 @@ ctmp.dpc
            enddo
         enddo
       endif
-
 
 cdjm Jan2017 Keep linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then

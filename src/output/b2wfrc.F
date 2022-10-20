@@ -3,9 +3,11 @@
 
       subroutine b2wfrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
      &  rtn, nn, zamin, zamax, zn, 
-     &  rtlsa, rtlra, rtlqa, rtlqa_ra, rtlcx, rtlza, rtlz2, rtlpt, 
+     &  rtlsa, rtlra, rtlqa, rtlqa_ra, rtlcx, rtlza, rtlz2, rtlpt,
      &  rtlpi)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, 
@@ -27,7 +29,7 @@
 *  1. purpose
 *
 *     B2WFRC writes to a formatted file a table of atomic rate
-*     coefficients that has been prepared for b2.
+*     coefficients that has been prepared for B2.
 *
 *
 *  3. description
@@ -112,17 +114,17 @@
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
 *     charge state k, excluding the contributions 
-*     coming from potential energy of recombination and other recombination 
-*     process contributions. In short, it includes the processes not 
-*     accounted for in EIRENE. rtqa has dimension ev*m**3/s. 
+*     coming from potential energy of recombination and other recombination
+*     process contributions. In short, it includes the processes not
+*     accounted for in EIRENE. rtqa has dimension eV*m**3/s.
 *
 *     rtlqa_ra - (0:nt,0:nn,0:ns0-1) real*8 array, input.
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqa_ra(i,j,k)) specifies
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
 *     charge state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. 
-*     rtqa_ra has dimension ev*m**3/s. 
+*     which replaces AMJUEL when EIRENE is not used.
+*     rtqa_ra has dimension eV*m**3/s.
 *
 *     rtlcx - (0:nt,0:nn,0:ns0-1) real*8 array, input.
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlcx(i,j,k)) specifies
@@ -160,12 +162,12 @@
 *   ..local variables
       integer i, j, k, ind
       real (kind=R8) ::
-     *   cutll, t0
+     *   t0
 *   ..procedures
       intrinsic max, exp, log
       real (kind=R8) ::
-     *   machsfr, expu1
-      external subini, subend, xertst, machsfr, b2xvsg
+     *   expu1
+      external xertst, b2xvsg
       expu1(t0) = exp(max(t0,cutll))
 *     (expu1 is the exponential function with underflow set to a tiny
 *     positive value.)
@@ -183,7 +185,7 @@
       call b2xvsg (nt+1, rtt, 1, 'rtt', '.gt.')
       call b2xvsg (nn+1, rtn, 1, 'rtn', '.gt.')
 *   ..set cutll
-      cutll = log(machsfr())
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..write summary of table
 *   ..write rtsa as function of rtt for several rtn
@@ -345,4 +347,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfrc
 
-      end
+      end subroutine b2wfrc

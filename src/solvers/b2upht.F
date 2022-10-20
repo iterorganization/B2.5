@@ -7,6 +7,7 @@
      &  corti, cortn, corkt, corzt, pccm0, na, ua, te, ti, tn, kt, zt,
      &  po, ne, ni)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
@@ -18,6 +19,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2upht
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv
@@ -54,14 +56,12 @@
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), dzt(nCv), t0,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  dte1(nCv), dti1(nCv),                                       !lk 26.10.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)      !lk 26.10.17
 *   ..procedures
       intrinsic min, max
-      real (kind=R8) ::
-     *  med
-      external subini, subend, xertst, b2xvsg, xerrab, med
+      external xertst, b2xvsg, xerrab
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -74,7 +74,7 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test rxf, pcm0
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      & 'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 *   ..test sign of na, ni, vol, te, ti, ne
@@ -88,7 +88,7 @@
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
         call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
-      endif 
+      endif
 
 * ..apply the correction
 *   ..adjust te, ti, po
@@ -100,7 +100,7 @@
         ireg = mpg%cvReg(iCv)
 *!!   (stylec is a numerical switch, needs experiments)
         if (switch%stylec.eq.0) then
-         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
           dte(iCv) = rxf*max(-te(iCv),(corte(iCv)+cortt(iCv))/2.0_R8)
           dti(iCv) = rxf*max(-ti(iCv),(corti(iCv)+cortt(iCv))/2.0_R8)
          else
@@ -116,7 +116,7 @@
          endif
         else if (switch%stylec.eq.1) then
 
-         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
           ctt = cortt(iCv) - med(corte(iCv),cortt(iCv),corti(iCv))
           dte(iCv) = rxf*max(-te(iCv),corte(iCv)+ctt)
           dti(iCv) = rxf*max(-ti(iCv),corti(iCv)+ctt)
@@ -171,9 +171,9 @@
         end if
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))  !xpb
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
-        if (switch%solve_keps.gt.0.and.solvkreg(ireg)) 
+        if (switch%solve_keps.gt.0.and.solvkreg(ireg))
      &    kt(iCv) = max(1.0e-5_R8*ev,kt(iCv)+dkt(iCv))
-        if (switch%solve_keps.gt.1.and.solvzreg(ireg)) 
+        if (switch%solve_keps.gt.1.and.solvzreg(ireg))
      &    zt(iCv) = max(1.0e-8_R8*ev,zt(iCv)+dzt(iCv))
       enddo
 *   ..adjust ua

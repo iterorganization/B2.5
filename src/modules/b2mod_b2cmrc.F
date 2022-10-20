@@ -1,7 +1,7 @@
       module b2mod_b2cmrc
       use b2mod_types
 *     (/b2cmrc/ contains atomic rate coefficients)
-      integer, save :: rtnt, rtnn, rtns, fix_recomb = 0
+      integer, save :: rtnt, rtnn, rtns
       integer, save :: rtdumm
 ! old      parameter (rtnt=40, rtnn=16, rtnsmx=75)
       real (kind=R8), allocatable, save ::
@@ -20,7 +20,8 @@
      &  rtlpi(:,:,:)
       integer, allocatable, save ::
      &  rtyr(:)
-      logical, save ::  adpak_used
+      integer, save :: fix_recomb = 0, zmax_recomb = 1
+      logical, save :: adpak_used
 
       contains
 
@@ -80,5 +81,12 @@
       
       return
       end subroutine dealloc_b2mod_b2cmrc
+
+      logical function lrtnext(k,k1)
+      implicit none
+      integer, intent(in) :: k, k1
+      lrtnext = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
+      return
+      end function lrtnext
 
       end module b2mod_b2cmrc
