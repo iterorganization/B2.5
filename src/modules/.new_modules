@@ -2,6 +2,7 @@ modules/b2mod_math.F
 modules/b2mod_eirbra.F
 modules/b2mod_braeir.F
 modules/b2mod_eirdiag.F
+modules/b2mod_running_average.F
 modules/b2mod_transport_nspecies.F
 modules/b2mod_transport_fun.F
 modules/b2mod_heatdiff_common.F

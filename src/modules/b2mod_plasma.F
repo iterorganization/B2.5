@@ -139,7 +139,7 @@
       allocate(nep(-1:nxd,-1:nyd))
       allocate(ni(-1:nxd,-1:nyd,0:1))
       allocate(ni0(-1:nxd,-1:nyd,0:1))
-      allocate(nip(-1:nxd,-1:nyd,0:1))                               !srv 07.07.21
+      allocate(nip(-1:nxd,-1:nyd,0:1))                             !srv 07.07.21
       allocate(pb(-1:nxd,-1:nyd))
       allocate(po(-1:nxd,-1:nyd))
       allocate(po0(-1:nxd,-1:nyd))
