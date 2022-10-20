@@ -3,6 +3,7 @@
 
       subroutine b2wgyq (n0, n1, n0d, fun, scal)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer n0, n1, n0d
@@ -67,7 +68,7 @@
 *   ..procedures
       intrinsic nint, real, mod, log10
       integer nerro
-      external subini, subend, xertst, cpseti, cpsetr_d,
+      external xertst, cpseti, cpsetr_d,
      &  cpsetc, cprect, cpclam, cplbam, cplbdr, cpdrpl, cpcldm, cpcldr,
      &  arinam, arpram, arscam, gncolr, lbfilq, entsr, nerro, errof
 
@@ -114,7 +115,7 @@
       endif
 
 * ..make plot
-      fun4=fun
+      fun4=real(fun,R4)
       call cpsetr_d ('SFS', scal)
       call cprect (fun4, n0d, n0, n1, rwrk, nrwrk, iwrk, niwrk)
 *   ..prepare levels

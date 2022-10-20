@@ -125,7 +125,7 @@ c
               ixr=rightix(ix,iy)
               if(ixl.eq.ix-1)
      1         work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1                           work(ixl,iy,is,iwrk)
+     1                            work(ixl,iy,is,iwrk)
               if(ixr.lt.ix) exit
             enddo
             ixl=ixr
@@ -134,7 +134,7 @@ c
               if(ixr.eq.0 .or. ixr.eq.-1) exit
               if(ixr.eq.ix+1)
      1         work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)+
-     1                           work(ixr,iy,is,iwrk)
+     1                            work(ixr,iy,is,iwrk)
               if(leftix(ix,iy).lt.ix-1) exit
             enddo
           else

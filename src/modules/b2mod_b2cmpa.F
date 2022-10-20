@@ -13,18 +13,20 @@
      &  potmin(0:nsdecl-1), potmax(0:nsdecl-1),
      &  potimin(0:nsdecl-1), potimax(0:nsdecl-1)
       logical is_neutral(0:nsdecl-1)
+      real (kind=R8) :: amtol
+      parameter (amtol=1.0e-2_R8)
 
 c This module contains definitions for bundled stages
 c     zn      : Nuclear charge of bundled stage (is)
 c     am      : Atomic mass of bundled stage (is) (in amu)
-c     zamax   : Highest ionization stage of bundle (is)
-c     zamin   : Lowest ionization stage of bundle (is)
-c     potmin  : Cumulative ionization cost to reach zamin(is) (in eV)
-c     potmax  : Cumulative ionization cost to reach zamax(is) (in eV)
-c     potimin : Ionization cost to reach zamin(is) from zamax(is-1) (in eV)
-c     potimax : Ionization cost to reach zamax(is) from zamin(is-1) (in eV)
+c     zamax   : Highest ionisation stage of bundle (is)
+c     zamin   : Lowest ionisation stage of bundle (is)
+c     potmin  : Cumulative ionisation cost to reach zamin(is) (in eV)
+c     potmax  : Cumulative ionisation cost to reach zamax(is) (in eV)
+c     potimin : Ionisation cost to reach zamin(is) from zamax(is-1) (in eV)
+c     potimax : Ionisation cost to reach zamax(is) from zamin(is-1) (in eV)
 c     is_neutral(is) is true if a stage is a neutral species
-c     partition_number indicates the stage number within its homonuclear sequence
+c     partition_number indicates the stage number within its isonuclear sequence
 c     
 c     It is not allowed to bundle neutral and charged states together.
 
@@ -34,15 +36,11 @@ c     It is not allowed to bundle neutral and charged states together.
       use b2mod_constants
       implicit none
       logical, save :: initialised=.false.
-      real (kind=R8) :: amtol
       real (kind=R8), allocatable :: pdum(:)
-      parameter (amtol=1.0e-2_R8)
-      logical open_file, lnext
+      logical open_file
       integer ns,is,iss,js
       external open_file
       intrinsic nint
-      lnext(is,iss) = zamax(is).lt.zamin(iss).and.zn(is).eq.zn(iss).and.
-     &  abs(am(is)-am(iss)).lt.amtol.and.is.ne.iss
 
       if(.not.initialised) then
         if(open_file(99,'ionization_potentials',
@@ -92,7 +90,7 @@ c     It is not allowed to bundle neutral and charged states together.
                 enddo
                 iss = iss + 1
               enddo
-              is=is+zn(is)
+              is=is+nint(zn(is))
               deallocate(pdum)
             else
               potimin(is)=0.0_R8
@@ -127,5 +125,13 @@ c     It is not allowed to bundle neutral and charged states together.
 
       return
       end subroutine initialise_potentials
+
+      logical function lnext(is,js)
+      implicit none
+      integer, intent(in) :: is, js
+      lnext = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol.and.is.ne.js
+      return
+      end function lnext
 
       end module b2mod_b2cmpa

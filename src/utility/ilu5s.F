@@ -7,7 +7,7 @@
      &  e(0:m*n-1), r(0:m*n-1), x(0:m*n-1)
 *     ------------------------------------------------------------------
 *     ILU5S solves an equation of the form L*U*x=r, where L and U are
-*     the factors in an ILU factorisation of a 2d-5point matrix.
+*     the factors in an ILU factorisation of a 2d 5-point matrix.
 *     ------------------------------------------------------------------
       integer i
       external xertst
@@ -29,4 +29,4 @@
       enddo
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine ilu5s

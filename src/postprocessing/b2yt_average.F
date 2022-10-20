@@ -3,8 +3,8 @@
 
       subroutine b2yt_average (filename,
      &  nx, ny, ns, nx1, ny1, ns1, nncutmax,
-     &  non_commensurate, nnreg, nncut, periodic_bc, jsep, jsep1,
-     &  region, region1,
+     &  non_commensurate,
+     &  nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
      &  hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
@@ -20,6 +20,7 @@
      &  she1_mean, shi1_mean, sch1_mean,
      &  e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       character*256 filename
@@ -122,7 +123,7 @@
       save na_new, na_min
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill, b2saxpy
+      external xertst, ipgetr, sfill, b2saxpy
       external b2xtvc
 
 *-----------------------------------------------------------------------
@@ -130,7 +131,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2xtps')
+      call subini ('b2yt_average')
 *   ..test nx, ny, ns, nx1, ny1, ns1
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -178,14 +179,16 @@
       call b2ruzd (99, b2faveri_version, ns,
      &  zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
-      call cfruin (99, 1, naver, 'naver')
-      call cfruin (99, 1, ntotdt, 'ntotdt')
+      call cfruin (99, 1, idum, 'naver')
+      naver = idum(0)
+      call cfruin (99, 1, idum, 'ntotdt')
+      ntotdt = idum(0)
       call cfrure (99, n2*ns, na_mean, 'na_mean')
       call cfrure (99, n2,    te_mean, 'te_mean')
       call cfrure (99, n2,    ti_mean, 'ti_mean')
       call cfrure (99, n2,    po_mean, 'po_mean')
       call cfrure (99, n2*ns, ua_mean, 'ua_mean')
-      
+
       call cfrure (99, n2*2*ns, sna_mean, 'sna_mean')
       call cfrure (99, n2*2,    sne_mean, 'sne_mean')
       call cfrure (99, n2*4,    she_mean, 'she_mean')

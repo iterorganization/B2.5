@@ -19,6 +19,8 @@
       use b2mod_ppout
       use b2mod_geo_corner
       use b2mod_external
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:2), nx, ny, ns
@@ -30,14 +32,14 @@
 *
 *  1. purpose
 *
-*     B2YPDR is a postprocessor for b2. It displays the plasma state,
+*     B2YPDR is a postprocessor for B2. It displays the plasma state,
 *     making use also of the geometric information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. Special purpose output may also be produced.
 *
 *
@@ -89,8 +91,8 @@
 *   ..procedures
       intrinsic abs
       logical streql, ltst, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, lbfilx, ipsetc, ipgeti, is_comment
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, lbfilx, ipgeti, is_comment
       external b2rugm, b2rups, b2rucp, b2wfgm, b2wfcp, b2wfps, b2xvps,
      &  b2wggm, b2wgps, b2wscp, b2wsps, b2ruzd, b2rurc, b2spel, b2sqel,
      &  b2xvcp, b2rfcp, b2rflb, b2xxid
@@ -460,14 +462,6 @@
 *     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
-*
 *     ne - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ne(ix,iy) specifies
 *     the electron density on the (ix,iy) cell.
@@ -634,8 +628,9 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
 #ifdef WG_TODO
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')

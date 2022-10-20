@@ -6,9 +6,12 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
 #ifdef B25_EIRENE
+      use b2mod_subsys
       use eirmod_ctrig
+#endif
       implicit none
       character*(*) filename
+#ifdef B25_EIRENE
       character*80 dataname
       character*256 extralabel,titlestring,tmpstring
       logical open_file,vector
@@ -18,7 +21,7 @@ c
      *   xvalues(lngarr),yvalues(lngarr),chord_tria_value,
      1   xmin,xmax,ymin,ymax,x1,y1,z1,dx1,dy1,dz1
       integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_tria_value,subini,subend,xerrab
+      external lnblnk,chord_tria_value,xerrab
 
       call subini ('process_chord_slice')
       do is=0,nedim(2,iewrk)-1
@@ -39,9 +42,9 @@ c
           read(99,*,err=30,end=40) x1,y1,z1,xvalues(inpts+1)
         endif
         inpts=inpts+1
-        yvalues(inpts)=chord_tria_value(ntrii,nrknot,nx,ny,
+        yvalues(inpts)=chord_tria_value(ntrii,nrknot,
      1   eirene_stack(1,is,iewrk),
-     2   xtrian,ytrian,necke,ixtri,iytri,crx,cry,bb,
+     2   xtrian,ytrian,necke,ixtri,iytri,
      2   x1,y1,z1,dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab

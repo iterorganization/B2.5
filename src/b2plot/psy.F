@@ -24,4 +24,4 @@ c
       stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
       call customise_label(stmp,graphlabel(iwrk))
       return
-      end
+      end subroutine psy

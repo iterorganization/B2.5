@@ -7,9 +7,10 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nrid, ns
+      integer, intent(in) :: nrid, ns
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -281,7 +282,7 @@
       logical oldversion
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
 
 *-----------------------------------------------------------------------
 *.documentation-internal

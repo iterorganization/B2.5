@@ -35,16 +35,16 @@ C =====================================================================
           zhid=max(zhid,data(i))
         enddo
       endif
-      zlo=zlod
-      rlo=zlod
-      zhi=zhid
-      rhi=zhid
+      zlo=real(zlod,R4)
+      rlo=real(zlod,R4)
+      zhi=real(zhid,R4)
+      rhi=real(zhid,R4)
       if(zlo.eq.zhi) then
-        zlo=min(zlo*0.9,zlo*1.1)
-        zhi=max(zhi*0.9,zhi*1.1)
+        zlo=min(zlo*0.9_R4,zlo*1.1_R4)
+        zhi=max(zhi*0.9_R4,zhi*1.1_R4)
         if(zlo.eq.zhi) then
-          zlo=-1.0
-          zhi=+1.0
+          zlo=-1.0_R4
+          zhi=+1.0_R4
         end if
       end if
       if(b2plot_debug.ge.10) write(*,*) 'pltwall: zlo, zhi = ',zlo,zhi
@@ -70,15 +70,15 @@ C =====================================================================
           ENDDO
         ELSE  ! ==> do log plot <=======================================
           write (*,*) 'STANDARD WALL CONTOURING'
-          if(zhi.le.0.0) then
+          if(zhi.le.0.0_R4) then
             write(*,*) 'zhi <= 0 and logarithmic axes chosen'
-            zhi=1.0
+            zhi=1.0_R4
           endif
-          if(zlo.le.0.0) zlo=10.0**(-ndec)*zhi
-          ZHI=10.0**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
+          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO))
+          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(1)) then
             ncont=ncont*3
@@ -90,14 +90,14 @@ C =====================================================================
 #ifndef PLPLOT
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
-              zval=10.0**((i-1)/3)*zlo
+              zval=10.0_R4**((i-1)/3)*zlo
               if(mod(i-1,3).eq.1) zval=zval*2
               if(mod(i-1,3).eq.2) zval=zval*5
               wclval(i)=zval
             enddo
           else
             do i=1,ncont+1
-              zval=10.0**(i-1)*zlo
+              zval=10.0_R4**(i-1)*zlo
               wclval(i)=zval
             enddo
           endif
@@ -115,11 +115,11 @@ C =====================================================================
         if(nofwcls.eq.0) then ! standard wall contouring
           WRITE (LBLS(I), FMTZ) CLV
         else
-          if(abs(clv).ge.1e3.or.abs(clv).lt.1e-2) then
+          if(abs(clv).ge.1.0e3_R4.or.abs(clv).lt.1.0e-2_R4) then
             write(LBLS(I),'(1p,e10.3)') CLV
-          elseif(abs(clv).ge.1e2) then
+          elseif(abs(clv).ge.1.0e2_R4) then
             write(LBLS(I),'(f8.3)') CLV
-          elseif(abs(clv).ge.1e1) then
+          elseif(abs(clv).ge.1.0e1_R4) then
             write(LBLS(I),'(f8.4)') CLV
           else
             write(LBLS(I),'(f8.5)') CLV
@@ -190,38 +190,38 @@ C =====================================================================
         if (physical) then
           call lined_d(r1(i),z1(i),r2(i),z2(i))
         else if (.not.from_target) then
-          wallx1 = real(imapx(i))
-          wallx2 = real(imapx(i))
-          wally1 = real(imapy(i))
-          wally2 = real(imapy(i))
+          wallx1 = real(imapx(i),R4)
+          wallx2 = real(imapx(i),R4)
+          wally1 = real(imapy(i),R4)
+          wally2 = real(imapy(i),R4)
           if (bottomiy(imapx(i),imapy(i)).eq.-2) then
-            wallx1 = wallx1 - 0.5_R8
-            wallx2 = wallx2 + 0.5_R8
-            wally1 = wally1 - 0.5_R8
-            wally2 = wally2 - 0.5_R8
+            wallx1 = wallx1 - 0.5_R4
+            wallx2 = wallx2 + 0.5_R4
+            wally1 = wally1 - 0.5_R4
+            wally2 = wally2 - 0.5_R4
           else if (topiy(imapx(i),imapy(i)).eq.ny+1) then
-            wallx1 = wallx1 - 0.5_R8
-            wallx2 = wallx2 + 0.5_R8
-            wally1 = wally1 + 0.5_R8
-            wally2 = wally2 + 0.5_R8
+            wallx1 = wallx1 - 0.5_R4
+            wallx2 = wallx2 + 0.5_R4
+            wally1 = wally1 + 0.5_R4
+            wally2 = wally2 + 0.5_R4
           endif
           if (leftix(imapx(i),imapy(i)).eq.-2) then
-            wallx1 = wallx1 - 0.5_R8
-            wallx2 = wallx2 - 0.5_R8
-            wally1 = wally1 - 0.5_R8
-            wally2 = wally2 + 0.5_R8
+            wallx1 = wallx1 - 0.5_R4
+            wallx2 = wallx2 - 0.5_R4
+            wally1 = wally1 - 0.5_R4
+            wally2 = wally2 + 0.5_R4
           elseif (rightix(imapx(i),imapy(i)).eq.nx+1) then
-            wallx1 = wallx1 + 0.5_R8
-            wallx2 = wallx2 + 0.5_R8
-            wally1 = wally1 - 0.5_R8
-            wally2 = wally2 + 0.5_R8
+            wallx1 = wallx1 + 0.5_R4
+            wallx2 = wallx2 + 0.5_R4
+            wally1 = wally1 - 0.5_R4
+            wally2 = wally2 + 0.5_R4
           endif
           call lined_d(wallx1,wally1,wallx2,wally2)
         else if (from_target) then
-          wallx1 = i - 0.5_R8
-          wallx2 = i + 0.5_R8
-          wally1 = 1 - 0.5_R8
-          wally2 = 1 - 0.5_R8
+          wallx1 = i - 0.5_R4
+          wallx2 = i + 0.5_R4
+          wally1 = 1 - 0.5_R4
+          wally2 = 1 - 0.5_R4
           call lined_d(wallx1,wally1,wallx2,wally2)
         endif
       enddo

@@ -29,7 +29,7 @@
           ytmp(j+1)=yhi
         endif
         call clip_line(xtmp(j),ytmp(j),xtmp(j+1),ytmp(j+1),
-     1	 xlo,ylo,xhi,yhi)
+     1   xlo,ylo,xhi,yhi)
         if(xtmp(j).lt.xlo.or.xtmp(j).gt.xhi) then
           if(xtmp(j).lt.xlo) then 
             xtmp(j)=xlo

@@ -1,13 +1,11 @@
 
       subroutine profile_average (laststep,itim,ntim_batch,nx,ny,ns)
-
       use b2mod_types
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_sources
-
       implicit none
 
       integer, intent(in) :: itim, ntim_batch, nx, ny, ns
@@ -65,7 +63,7 @@
          allocate (e_po(-1:nx,-1:ny))
          allocate (e_kt(-1:nx,-1:ny))
 
-ctb: the sources are now stored in linearized form I propose to store the total part only 
+ctb: the sources are now stored in linearized form I propose to store the total part only
 ctb..as the mean of the product does not equal the product of the means etc.
          allocate (sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
          allocate (sne_mean(-1:nx,-1:ny,0:1))
@@ -118,30 +116,29 @@ ctb..as the mean of the product does not equal the product of the means etc.
      &         zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
 
             if (iaver_restart > 0) then
-               call cfruin (iun, 1, idum(0), 'naver')
-               naver = idum(0)
-               call cfruin (iun, 1, idum(0), 'ntotdt')
-               ntotdt = idum(0)
+               call cfruin (iun, 1, idum, 'naver')
+               call cfruin (iun, 1, idum, 'ntotdt')
                naver = 0
+               ntotdt = idum(0)
                close (iun)
             else
-               call cfruin (iun, 1, idum(0), 'naver')
+               call cfruin (iun, 1, idum, 'naver')
                naver = idum(0)
-               call cfruin (iun, 1, idum(0), 'ntotdt')
+               call cfruin (iun, 1, idum, 'ntotdt')
                ntotdt = idum(0)
                call cfrure (iun, n2*ns, na_mean, 'na_mean')
-               call cfrure (iun, n2, te_mean, 'te_mean')
-               call cfrure (iun, n2, ti_mean, 'ti_mean')
-               call cfrure (iun, n2, po_mean, 'po_mean')
+               call cfrure (iun, n2,    te_mean, 'te_mean')
+               call cfrure (iun, n2,    ti_mean, 'ti_mean')
+               call cfrure (iun, n2,    po_mean, 'po_mean')
                call cfrure (iun, n2*ns, ua_mean, 'ua_mean')
                if (b2faveri_version.ge.'03.000.009')
      &           call cfrure (iun, n2, kt_mean, 'kt_mean')
 
                call cfrure (iun, n2*2*ns, sna_mean, 'sna_mean')
-               call cfrure (iun, n2*2, sne_mean, 'sne_mean')
-               call cfrure (iun, n2*4, she_mean, 'she_mean')
-               call cfrure (iun, n2*4, shi_mean, 'shi_mean')
-               call cfrure (iun, n2*4, sch_mean, 'sch_mean')
+               call cfrure (iun, n2*2,    sne_mean, 'sne_mean')
+               call cfrure (iun, n2*4,    she_mean, 'she_mean')
+               call cfrure (iun, n2*4,    shi_mean, 'shi_mean')
+               call cfrure (iun, n2*4,    sch_mean, 'sch_mean')
                call cfrure (iun, n2*4*ns, smo_mean, 'smo_mean')
 
                close (iun)
@@ -270,22 +267,22 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
 *   ..write average state and sources
         idum(0) = naver
-        call cfwuin (iun, 1, idum(0), 'naver')
+        call cfwuin (iun, 1, idum, 'naver')
         idum(0) = ntotdt
-        call cfwuin (iun, 1, idum(0), 'ntotdt')
+        call cfwuin (iun, 1, idum, 'ntotdt')
 
         call cfwure (iun, n2*ns, na_mean, 'na_mean')
-        call cfwure (iun, n2, te_mean, 'te_mean')
-        call cfwure (iun, n2, ti_mean, 'ti_mean')
-        call cfwure (iun, n2, po_mean, 'po_mean')
+        call cfwure (iun, n2,    te_mean, 'te_mean')
+        call cfwure (iun, n2,    ti_mean, 'ti_mean')
+        call cfwure (iun, n2,    po_mean, 'po_mean')
         call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
         call cfwure (iun, n2, kt_mean, 'kt_mean')
 
         call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')
-        call cfwure (iun, n2*2, sne_mean, 'sne_mean')
-        call cfwure (iun, n2*4, she_mean, 'she_mean')
-        call cfwure (iun, n2*4, shi_mean, 'shi_mean')
-        call cfwure (iun, n2*4, sch_mean, 'sch_mean')
+        call cfwure (iun, n2*2,    sne_mean, 'sne_mean')
+        call cfwure (iun, n2*4,    she_mean, 'she_mean')
+        call cfwure (iun, n2*4,    shi_mean, 'shi_mean')
+        call cfwure (iun, n2*4,    sch_mean, 'sch_mean')
         call cfwure (iun, n2*4*ns, smo_mean, 'smo_mean')
 !        write (iun,'(6es24.16)') 
 !     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)

@@ -27,6 +27,7 @@
      &          ncall_b2npht, ncall_b2sikt,  ncall_b2sifrtf,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
      &          ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain                !srv 05.07.17
@@ -36,7 +37,7 @@
       real (kind=R8) ::
      *  rxf, BoRiS
       logical solving(4),
-     *  solvereg(0:nregionv), solvireg(0:nregionv), 
+     *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvnreg(0:nregionv), solvtreg(0:nregionv),                     !srv 22.05.18
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
      *  solvkreg(0:nregionv), solvzreg(0:nregionv)
@@ -78,8 +79,8 @@
 *   ..local variables
       integer iCv, is
       real (kind=R8) ::
-     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
-     1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
+     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                   !srv 02.01.07
+     1 wrkc(nFc,0:1,0:2), cortt(nCv),                                   !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
      4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
@@ -89,9 +90,9 @@
       character chncall*5                                          
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, lwget, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht   !srv 02.01.07
-*   ..initialization
+      external xertst, ipgetr, b2saxpy
+      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht           !srv 02.01.07
+*   ..initialisation
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -198,7 +199,7 @@ cdjm Jan2017 update particle source components for balance
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
-     &     switch%get_residuals.eq.1) then                                     !srv 22.05.18
+     &     switch%get_residuals.eq.1) then                              !srv 22.05.18
         if (switch%mdf_fhe.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
      &     dv%reshe)
@@ -260,7 +261,7 @@ c residuals for separate neutral energy equation
 !        dv%reshi = dv%reshi + shei
 !      endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvereg(0:nregionv)))                     !srv 22.05.18 {
-     &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei                     
+     &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei
       if ((solving(4).and.any(solvireg(0:nregionv)))
      &    .or.switch%get_residuals.eq.1) dv%reshi = dv%reshi + shei
       if (solving(4).and.any(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
@@ -268,7 +269,7 @@ c residuals for separate neutral energy equation
      &   switch%get_residuals.eq.1)
      &   dv%resht = dv%reshe + dv%reshi + dv%reshn                       !srv 22.05.18 }
       
-      if(switch%b2npht_iout .eq. 1 .or. switch%iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
+      if(switch%b2npht_iout .eq. 1 .or. switch%iout_b2wdat .eq. 4) then  !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')
         call my_out_us(70,nCv,0,co%ceqp,'b2npht_ceqp')
 !        do is = 0,ns-1
@@ -317,10 +318,7 @@ c residuals for separate neutral energy equation
         wrk0=szt0(:,0)+szt0(:,1)*pl%zt+
      &       szt0(:,2)*dv%ni(:,1)+szt0(:,3)*pl%zt*dv%ni(:,1)
         call my_out_us(70,nCv,0,wrk0,'b2npht_szt')
-      endif            
-
-
-                                                 !srv 17.07.05 01.11.10 }
+      endif                                                             !srv 17.07.05 01.11.10 }
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv,
@@ -373,6 +371,6 @@ c residuals for separate neutral energy equation
       return
 
 *-----------------------------------------------------------------------
-*.end b2npht                                                            !srv 02.01.07 }
+*.end b2npht
 
-      end
+      end subroutine b2npht

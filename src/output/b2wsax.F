@@ -37,18 +37,18 @@
 *  1. purpose
 *
 *     B2WSAX writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old b2' code.
+*     in the style required for input into the 'old B2' code.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine writes the state of the plasma to an unformatted
-*     file, in the style required for input into the 'old b2' code.
+*     file, in the style required for input into the 'old B2' code.
 *     One difference between the two codes is in the dimensioning
 *     of the arrays: (-1:nx,-1:ny) now versus (0:nx+1,0:ny+1) in the
 *     old code; and for quantities defined on cell faces, in the
 *     new code it is the first column or the first row of the array
-*     that must contain zeros whereas in the old code it is the last
+*     that must contain zeroes whereas in the old code it is the last
 *     column or row.
 *
 *
@@ -222,9 +222,9 @@
      &  ((gs(ix,iy,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
      &  ((pit(ix,iy),ix=-1,nx),iy=-1,ny),
      &  ((crxc(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
+     & (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
      &  ((cryc(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
+     & (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
 *   ..save mi, zamin, zamax
       write (nsav) (mp*am(is),zamin(is),zamax(is),is=0,ns-1)
 *   ..save plasma state

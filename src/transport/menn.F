@@ -18,7 +18,7 @@ c--------------------------------------------------------------------
 
       implicit none
 
-      real (kind=R8) ::  
+      real (kind=R8) ::
      *        ta, tb, ma, mb, mm(3,3), nn(3,3), xab, tab, mab
 
       tab = ta / tb

@@ -29,6 +29,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2stel
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -71,14 +72,10 @@
      &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
      &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
-      intrinsic abs
-      logical lnext
       real (kind=R8) ::
      *   samax, roxa
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
       roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
 
@@ -89,7 +86,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stel')
 *   ..set internal parameters on first call
-*   ..identify impurity homonuclear sequences
+*   ..identify impurity isonuclear sequences
 !WG_TODO       nimp_tmp=0
 !WG_TODO       jimp_tmp=0
 !WG_TODO       do is = 1, nspecies !{
@@ -101,6 +98,8 @@
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     * 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if (ncall_b2stel.lt.3) then
 *    ..test sign of vol
@@ -204,8 +203,6 @@
 !WG_TODO           rsahi(iCv,is) = t1
           endif
         enddo
-
-
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
@@ -327,15 +324,13 @@
      *                         pl%tn(iCv))
            endif
 !WG_TODO           rrahi(iCv,is) = t1
-
-
            rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(switch%fix_recomb_energy.ne.0) then
-c the default treatment is to have the entire ionization potential
+c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
-c this treatment changes this --- the ionization potential difference
+c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
@@ -360,7 +355,7 @@ c accounted for)
            rf0 = switch%b2stel_rg1 +
      &           switch%b2stel_rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 =switch%b2stel_phm0*
+           t0 = switch%b2stel_phm0*
      &              rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*      !srv 05.06.18
      &         pl%na(iCv,is)*geo%cvHz(iCv)                          !srv 09.01.01
 *       ..compute parallel momentum source
@@ -397,7 +392,7 @@ c accounted for)
           rf0 = switch%b2stel_rxm4*max(0.0_R8,rt%rlqa(iCv,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
-*      ..if adpak_used, also contains recombination and CX terms
+*      ..for adpak rates, also contains recombination and CX terms
           t0 = switch%b2stel_phm0*(rtw%rqa(iCv,is)+rtw%rqa_ra(iCv,is))
      &         *geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)    !srv 05.06.18
 *      ..compute electron heat sink
@@ -549,16 +544,6 @@ cdjm Jan2017 Keep linearised sources for balance
       ncall_b2stel = ncall_b2stel+1
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Consider to calculate sna0, she0, shi0 over (-1:nx,-1:ny)
-*     instead of over (0:nx-1,0:ny-1).
-*xpb  Went back to using just (0:nx-1,0:ny-1). Otherwise sources (in
-*xpb  particular recombination sources) in guard cells are not balanced
-*xpb  by anything and this can lead to particle accumulation and
-*xpb  temperature collapse.
 
 *-----------------------------------------------------------------------
 *.end b2stel

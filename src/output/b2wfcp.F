@@ -7,6 +7,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, istyl, ns
@@ -72,7 +73,7 @@
 *     inside a character string it represents four quotes, which in
 *     turn represents one quoted quote in the output format.)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation

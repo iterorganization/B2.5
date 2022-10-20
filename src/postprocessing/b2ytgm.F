@@ -4,8 +4,10 @@
       subroutine b2ytgm (nget, nx1, ny1, nncut, nnreg)
       use b2mod_types
       use b2mod_geo2
+      use b2mod_math
       use b2mod_version
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -24,7 +26,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit (nget) the specification of a b2
+*     This routine reads from unit (nget) the specification of a B2
 *     geometry and magnetic field. Unit nget must be connected to an
 *     un*formatted file.
 *     The data consists of the coordinates of the four corners of all
@@ -104,11 +106,11 @@
 *     It will hold that -1.lt.qz1(,,0).lt.1 and 0.lt.qz1(,,1).le.1.
 *
 *     qc1 - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc1(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc1(,).le.1.
 *
 *     gs1 - (-1:nx1,-1:ny1,0:2) real*8 array, output.
@@ -125,9 +127,9 @@
 *     pbs1 - (-1:nx1,-1:ny1,0:1) real*8 array.
 *     (Let pbsx(,)=pbs1(,,0) and pbsy(,)=pbs1(,,1).)
 *     For (ix,iy) in (-1:nx1,-1:ny1), pbsx(ix,iy) specifies the product
-*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx1/bb1)*sx1 and pbsy(ix,iy) specifies (by1/bb1)*sy1, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs1 for the form of interpolation employed.
 *
 *     (parameters in common:)
@@ -170,16 +172,15 @@
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max, sqrt
+      intrinsic min, max
       real (kind=R8) ::
-     *   trim1, norm, cosang, sinang
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+     *   trim1, cosang, sinang
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       cosang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       sinang(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 
 *-----------------------------------------------------------------------
@@ -237,7 +238,7 @@ cxpb
        if(b2fgmtry_version.ge.'01.001.030') then
          call cfrure_opt (nget, n2, qc1(-1,-1,1), 'qcb')
        end if
-       if (maxval(qc1(:,:,1)).eq.1.0_R8 .and. 
+       if (maxval(qc1(:,:,1)).eq.1.0_R8 .and.
      &     minval(qc1(:,:,1)).eq.1.0_R8) then
         do iy = -1, ny1
          do ix = -1, nx1
@@ -315,9 +316,9 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny1
         do ix = -1, nx1
-          if (leftix1(ix,iy).eq.-2) wbbl1(ix,iy,0:2) = 
+          if (leftix1(ix,iy).eq.-2) wbbl1(ix,iy,0:2) =
      &     bb1(ix,iy,0:2) - (wbbr1(ix,iy,0:2)-bb1(ix,iy,0:2))
-          if (rightix1(ix,iy).eq.nx1+1) wbbr1(ix,iy,0:2) = 
+          if (rightix1(ix,iy).eq.nx1+1) wbbr1(ix,iy,0:2) =
      &     bb1(ix,iy,0:2) - (wbbl1(ix,iy,0:2)-bb1(ix,iy,0:2))
           if (bottomiy1(ix,iy).eq.-2) wbbv1(ix,iy,0:2) = bb1(ix,iy,0:2)
      &     - (wbbv1(topix1(ix,iy),topiy1(ix,iy),0:2)-bb1(ix,iy,0:2))
@@ -362,10 +363,11 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
      &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
       endif
+
 *   ..read extended grid cell flags
       cflags1 = 0
       if(b2fgmtry_version.ge.'01.001.028') then
-	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags1, 'cflags')
+        call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags1, 'cflags')
       endif
       if(maxval(cflags1).eq.0) then
         cflags1(1:nx1-2,1:ny1-2,CELLFLAG_TYPE) = GRID_INTERNAL
@@ -439,6 +441,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
       endif
+
 *   ..test sign of bb
       call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')
       call b2xvsg (n2, wbbl1(-1,-1,3), 1, 'wbbl3', '.gt.')
@@ -448,16 +451,16 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
 *   ..test geometry
       call xertst(maxval(region1(-1:nx1,-1:ny1,1)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,2)).lt.0,
-     $            'X-regions not set, re-run b2ag!')
+     &            'X-regions not set, re-run b2ag!')
       call xertst(maxval(region1(-1:nx1,-1:ny1,2)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,1)).lt.0,
-     $            'Y-regions not set, re-run b2ag!')
+     &            'Y-regions not set, re-run b2ag!')
       call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qs1, gs1, pbs1,
-     . cell_width1, cell_height1, bottomiy1)
+     .     cell_width1, cell_height1, bottomiy1)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,
      &     leftix1,leftiy1,rightix1,rightiy1,
-     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1)
+     &     topix1,topiy1,bottomix1,bottomiy1,.true.,gmap1,.false.)
       map1Initialized = .true.
 
 * ..return

@@ -117,4 +117,5 @@ c
       close (lun)
       deallocate(mz_hlp,hlp_al,hlp_ml,hlp_f,imol)
 c
-      end
+      return
+      end subroutine b2phortn

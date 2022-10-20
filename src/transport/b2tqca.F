@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, 
-     &                   vsa, hci)
+     1 vsa, hci)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -13,6 +13,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tqca, ncall_b2tlnl
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -72,13 +73,13 @@
       character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
-     *  t, t0, t1, tau(nCv), tnp, w                             !srv 11.09.09
+     *  t, t0, t1, tau(nCv), tnp, w                                   !srv 11.09.09
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
 *   ..procedures
-      intrinsic abs, sqrt, log, max
+      intrinsic abs, sqrt
       real (kind=R8) ::
      *  pitx
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg
       pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
@@ -127,7 +128,7 @@
 !xpb vary with space and species or be set by user.
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
-      ctaup = t0*sqrt(mp)						 !xpb
+      ctaup = t0*sqrt(mp)                                          !xpb
 
 *   ..compute the Coulomb logarithm
       call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, 
@@ -172,8 +173,8 @@ c         according to old model.eq.3 treatment
      &            sqrt((am(is)+st_ext%am(js))/2.0_R8)
             enddo
 cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(iCv,is)  ! lower precision as per 4.0
-	    ctaui = 2.1e13_R8 / (dv%lnlam(iCv)*rt%rz2(iCv,is))             !srv 01.07.09
-	    fxi = ci * ctaui / (ev*sqrt(ev*mp))
+            ctaui = 2.1e13_R8 / (dv%lnlam(iCv)*rt%rz2(iCv,is))             !srv 01.07.09
+            fxi = ci * ctaui / (ev*sqrt(ev*mp))
             hci(iCv,0) = hci(iCv,0) + fxi*(pl%na(iCv,is)/w)*
      &       pitx(iCv)**2*(pl%ti(iCv)**2*sqrt(pl%ti(iCv)))
 cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
@@ -189,7 +190,7 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
      &     .or.switch%b2tqca_iout.ne.0.or.switch%iout_b2wdat.eq.4) then
          write (chns,'(i3.3)') is
          call my_out_us(70,nCv,0,tau,'b2tqca_taua'//chns)
-	endif
+        endif
        endif
       enddo
 *   ..compute vsay, hciy

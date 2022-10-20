@@ -12,6 +12,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2nxfc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -43,7 +44,7 @@
       integer iFc, ib
       character charns*3                                            !srv 17.06.02
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr, b2scopy
+      external xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvsg, hbout, intfaceh
 *   ..initialisation
 *!!   (style is a numerical switch; needs experiments)

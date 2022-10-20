@@ -55,9 +55,8 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      4   parm_hce,parm_sig,parm_alf,
      5   transport_filename,transport_time_mod,transport_time_switch,
      6   cflme,cflmi,cflmv,cflal,cflab,
-     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv, write_nml_transp
+     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv,write_nml_transp
 
-      
       contains
 
       subroutine alloc_transport_namelist(nsd)
@@ -140,15 +139,17 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
         cflim(4)=cflab
       else
         write(*,*) 'No ',trim(filename)
-        cflme=-1.0_R8
-        cflmi=-1.0_R8
-        cflmv=-1.0_R8
-        cflal=-1.0_R8
-        cflab=-1.0_R8
+        cflme=0.0_R8
+        cflmi=0.0_R8
+        cflmv=0.0_R8
+        cflal=0.0_R8
+        cflab=0.0_R8
       endif
 
       return
- 999  call xerrab ('Error while reading TRANSPORT namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading TRANSPORT namelist!')
+#endif
       end subroutine read_b2mod_transport_namelist
 
       subroutine write_b2mod_transport_namelist

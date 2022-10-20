@@ -7,6 +7,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, ns
@@ -65,7 +66,7 @@
 *   ..local variables
       integer ireg, idum(0:9)
 *   ..procedures
-      external subini, subend, xertst, cfwuin, cfwure
+      external xertst, cfwuin, cfwure
       external b2xvcp, b2wuzd
 
 *-----------------------------------------------------------------------

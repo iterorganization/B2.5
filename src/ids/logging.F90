@@ -87,7 +87,6 @@ contains
 
 end module logging
 
-
 !!!Local Variables:
 !!! mode: f90
 !!! End:

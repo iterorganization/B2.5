@@ -12,6 +12,7 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
       ! Input variables
       type(geometry), intent(in) :: geo 
@@ -26,7 +27,7 @@
       integer :: iCv
 
       ! External functions
-      external subini, subend, xertst
+      external xertst
 
       ! Intrinsic functions
       intrinsic sqrt

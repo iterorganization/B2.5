@@ -10,6 +10,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nregionv
@@ -49,7 +50,7 @@
       intrinsic sqrt, abs
       real (kind=R8) ::
      *  b2sasum
-      external subini, subend, xertst, b2sasum
+      external xertst, b2sasum
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -174,7 +175,7 @@
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         prvi = prvi+geo%cvVol(iCv)*dv%ne(iCv)*pl%te(iCv)
         do is = 0, ns-1
-         if (.not.is_neutral(is)) 
+         if (.not.is_neutral(is))
      >    prvi = prvi+geo%cvVol(iCv)*pl%na(iCv,is)*pl%ti(iCv)
         enddo
       enddo
@@ -183,9 +184,9 @@
       diag%reshireg = 0.0_R8
       do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
-        diag%reshereg(mpg%cvReg(iCv)) = 
+        diag%reshereg(mpg%cvReg(iCv)) =
      .    diag%reshereg(mpg%cvReg(iCv))+abs(dv%reshe(iCv))
-        diag%reshireg(mpg%cvReg(iCv)) = 
+        diag%reshireg(mpg%cvReg(iCv)) =
      .    diag%reshireg(mpg%cvReg(iCv))+abs(dv%reshi(iCv))
       enddo
       diag%reshereg = diag%reshereg/((1.5_R8+BoRiS)*prvi)

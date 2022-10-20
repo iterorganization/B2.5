@@ -14,8 +14,8 @@
 *$$$  call subini ('b2xzmf')
       zmff = 0.0_R8
       do is = 0, ns-1
-        if(is.ne.ismain) then
-          zmff = zmff + rz2(:,is)*na(:,is)
+       if(is.ne.ismain) then
+         zmff = zmff + rz2(:,is)*na(:,is)
         endif
       enddo
       zmff=zmff/(rz2(:,ismain)*na(:,ismain))

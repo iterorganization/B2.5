@@ -184,10 +184,12 @@ c      if(nidim .ne. 1) call line(1)
         endif 
 #endif
         do ibnd=1,nbnd-1
+          if(wwrk(ibnd+1).lt.values(24)) cycle
+          if(wwrk(ibnd).gt.values(25)) cycle
           call lined_d(
-     1       min(values(25),max(values(24),wwrk(ibnd))),
+     1       wwrk(ibnd),
      2       min(lmax,max(lmin,target_stack(ibnd  ,i,itwrk))),
-     3       min(values(25),max(values(24),wwrk(ibnd+1))),
+     3       wwrk(ibnd+1),
      4       min(lmax,max(lmin,target_stack(ibnd+1,i,itwrk))))
         enddo
         do iseg = 1, nsegments-1
@@ -198,11 +200,16 @@ c      if(nidim .ne. 1) call line(1)
           call dashdc('$',1,0)
 #endif
           if ((wwrk(wall_end(iseg))+wwrk(wall_begin(iseg+1))).gt.0.0_R8
-     &      .or.trglinlog.le.2) call lined_d(
+     &      .or.trglinlog.le.2) then
+            if((wwrk(wall_end(iseg))+wwrk(wall_begin(iseg+1)))/2.0_R8
+     &       .ge.values(24) .and.
+     &       (wwrk(wall_end(iseg))+wwrk(wall_begin(iseg+1)))/2.0_R8
+     &       .le.values(25)) call lined_d(
      .       (wwrk(wall_end(iseg))+wwrk(wall_begin(iseg+1)))/2.0_R8,
      1       lmin,
      1       (wwrk(wall_end(iseg))+wwrk(wall_begin(iseg+1)))/2.0_R8,
      2       lmax)
+          endif
 #ifndef PLPLOT
           call lastd
           if (scol.gt.1 .or. tcol.ne.1) call gsplci(abs(tcol))

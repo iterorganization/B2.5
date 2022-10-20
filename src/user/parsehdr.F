@@ -98,7 +98,7 @@ c*** The file is opened and of right format. Check the header
         line=adjustl(line)
         c=line(1:1)
       end do !}
- 10   if(k.gt.1) then !{
+   10 if(k.gt.1) then !{
         cline=trim(cline)//'/'
         read(cline,*,err=15) mrks,m
         if(m.ne.-huge(l)) iret=iret+4
@@ -117,8 +117,8 @@ c        do while (m.lt.nmrk .and. mrks(m+1).ne.-huge(l)) !{}
         nmrk=0
       end if !}
       go to 20
- 15   nmrk=0
- 20   backspace(lun,err=999)
+   15 nmrk=0
+   20 backspace(lun,err=999)
       backspace(lun,err=999)
       read(lun,'(a)',err=998) cline
       line=cline
@@ -159,9 +159,9 @@ c        do while (m.lt.nmrk .and. mrks(m+1).ne.-huge(l)) !{}
 !xpb      mhdr=k ! This was overwriting a parameter!
       return
 c=======================================================================
- 998  iret=-4
+  998 iret=-4
       return
- 999  iret=-3
+  999 iret=-3
       return
 c=======================================================================
-      end
+      end subroutine parsehdr

@@ -20,6 +20,7 @@
      &          my_out_sf,                                                   !srv 27.06.21
 #endif
      &          ncall_b2ursc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, nregionv, itcnt, isb                            !srv 05.07.08
@@ -37,6 +38,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
 *   ..common blocks
+
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -62,13 +64,13 @@
 *.declarations
 
 *   ..local variables
-      character chns*3                                               !srv 04.07.08
+      character chns*3                                             !srv 04.07.08
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, lwget
+      external xertst, ipgetr
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
-*   ..initialization
+*   ..initialisation
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -132,7 +134,7 @@ cdjm Jan2017 update particle source components for balance
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
         call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,    !srv 13.10.06 26.09.12
-     &   solvcreg, itcnt, switch%b2npco_rxg, pl%na(:,isb), dv%pa(:,isb), 
+     &   solvcreg, itcnt, switch%b2npco_rxg, pl%na(:,isb), dv%pa(:,isb),
      &   sr%sna(:,1,isb), dv%flob, dv%conb,
      &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction
@@ -141,7 +143,7 @@ cdjm Jan2017 update particle source components for balance
      &   dv%pcca(:,0,isb), 
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb)
       endif                                                             !srv 22.05.18
-      if (switch%b2npco_iout.ne.0) then                                               !srv 12.07.02 {
+      if (switch%b2npco_iout.ne.0) then                                 !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
@@ -157,7 +159,7 @@ cdjm Jan2017 update particle source components for balance
      .    'b2npco_fna_mdf_th'//chns)
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
-      elseif (switch%iout_b2wdat.eq.4) then                                  !iys 17.04.17
+      elseif (switch%iout_b2wdat.eq.4) then                             !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
         call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)
@@ -183,4 +185,4 @@ cdjm Jan2017 update particle source components for balance
 *-----------------------------------------------------------------------
 *.end b2npco
 
-      end
+      end subroutine b2npco

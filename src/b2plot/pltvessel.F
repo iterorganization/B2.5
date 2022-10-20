@@ -27,7 +27,7 @@ c
    10     continue
           read(99,*,end=20) r1,z1,r2,z2
           if(r2o .eq. r1 .and. z2o .eq. z1 .and. 
-     1	   dist(r1o,z1o,r2,z2) .lt. 1.0e-2_R8) then
+     1     dist(r1o,z1o,r2,z2) .lt. 1.0e-2_R8) then
             r2o=r2
             z2o=z2
             icnt=icnt+1

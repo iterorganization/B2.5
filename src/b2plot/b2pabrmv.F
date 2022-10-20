@@ -26,7 +26,6 @@ c
       integer ix,iy,is
       integer, allocatable :: mz_hlp(:)
       real (kind=R8) :: vr,vz,vt,u
-      character hlp_frmr*600
       character*2, allocatable :: hlp_al(:)
 c----------------------------------------------------------------------
 c*** Write the header
@@ -38,10 +37,11 @@ c
       end do
 c
       open(lun,file='abramov.dat')
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),4x,10hne (m**-3),4x,
-     ,       7hTe (eV),5x,7hTi (eV),7x,2hvr,10x,2hvz,10x,2hvt,
-     ,       10x,2hnH,10x,3hnH2/)
-      write (lun,710)
+  710 format(a9,5x,a5,7x,a5,4x,a10,4x,
+     ,       a7,5x,a7,7x,a2,10x,a2,10x,a2,
+     ,       10x,a2,10x,a3/)
+      write (lun,710) '   ix  iy','R (m)','Z (m)','ne (m**-3)',
+     ,                'Te (eV)','Ti (eV)','vr','vz','vt','nH','nH2'
 c
       do ix=0,nx-1
         do iy=0,ny-1
@@ -59,4 +59,4 @@ c
       deallocate(mz_hlp,hlp_al)
 c
       return
-      end
+      end subroutine b2pabrmv

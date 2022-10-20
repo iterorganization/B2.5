@@ -3,11 +3,11 @@
 
       subroutine b2wgpj_gnuplot (nprt, nx, ny, ns, 
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, 
-     &  ne, fne, kinrgy,
-     &  gs,qc,ni)
+     &  ne, fne, kinrgy, gs, qc, ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -20,8 +20,8 @@
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
      &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1),ni(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny,0:1)
+     &  kinrgy(-1:nx,-1:ny,0:ns-1), ni(-1:nx,-1:ny,0:1),
+     &  gs(-1:nx,-1:ny, 0:2), qc(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -35,7 +35,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces plots of the plasma state that results from
-*     a b2 calculation. Arrays na, ua, te, ti, and po provide the state
+*     a B2 calculation. Arrays na, ua, te, ti, and po provide the state
 *     of the plasma. Arrays fna, fhe, fhi, and fch provide the particle
 *     flux, electron heat flux, atom heat flux, and the electric
 *     current. This routine does not require any metric information.
@@ -71,7 +71,7 @@
 #ifndef NAGF95
       integer iargc
 #endif
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation
@@ -100,7 +100,7 @@
             islice=min(max(islice,0),ns-1)
          endif
       endif
- 5    continue
+    5 continue
       write(*,'(a,a,i4)') '#',want,islice
       if(want.eq.'te  ') then
          do iy=-1,ny

@@ -12,6 +12,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2xehy
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
@@ -38,14 +39,14 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       real (kind=R8) ::
-     *   dpor(nFc), wrk0(nFc), 
+     *   dpor(nFc), wrk0(nFc),
      *   wrk1(nFc), wrk2(nFc), wrk(nCv),
-     *   wrkv(nVx), ones(nFc,2)
+     *   work(nCv), wrkv(nVx), ones(nFc,2)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialization
 *-----------------------------------------------------------------------
@@ -71,27 +72,30 @@
           ones = 1.0_R8
 *       ..compute radial differences of po and pe
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpor)
-          call diff_r(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
+          work = ne*te
+          call diff_r(nCv, nFc, nVx, 0, geo, mpg, work, wrkv, wrk0)
 *       ..interpolate ne to faces
           call intface(nCv,nFc,mpg%fcCv,ones,ne,wrk1)
-*       ..compute ehy      
+*       ..compute ehy
           ehy = -dpor + wrk0/(qe*wrk1)
         else if (switch%mode_ehy.eq.1) then
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpor)
-          call diff_r(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
+          work = ne*te
+          call diff_r(nCv, nFc, nVx, 0, geo, mpg, work, wrkv, wrk0)
 *       ..interpolate ne to faces
 cwdk small loss of backwards compatibility:
 cwdk now inverse distance weighting based on full distance cell center to face center ("hy")
 cwdk instead of radial distance ("hy1_")
           call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ne,wrk1)
-*       ..compute ehy      
+*       ..compute ehy
           ehy = -dpor + wrk0/(qe*wrk1)
         else
           ones = 1.0_R8
 *       ..compute radial differences of po, te and log(ne) on faces
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpor)
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, wrk0)
-          call diff_r(nCv, nFc, nVx, 0, geo, mpg, log(ne), wrkv, wrk1)
+          work = log(ne)
+          call diff_r(nCv, nFc, nVx, 0, geo, mpg, work, wrkv, wrk1)
 *       ..interpolate te to faces
           call intface(nCv,nFc,mpg%fcCv,ones,ne,wrk1)
 *       ..compute ehy      
@@ -107,4 +111,4 @@ cwdk instead of radial distance ("hy1_")
 *-----------------------------------------------------------------------
 *.end b2xehy
 
-      end
+      end subroutine b2xehy

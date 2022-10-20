@@ -4,6 +4,7 @@
       use b2mod_mwti
       use b2mod_indirect
       use b2mod_cdf
+      use b2mod_subsys
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -17,28 +18,30 @@
      3           timedim, batchdim, nastep, ntstep
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
       real (kind=R8), save :: dtim = 1.0_R8
-#ifdef USE_PXFGETENV
+#ifndef NO_CDF
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
 #endif
-#ifndef NO_CDF
+#endif
       integer :: status
       integer :: idim, ivar, iatt, iret, ib, it, ih,
      1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
-     2 dimids(NF_MAX_VAR_DIMS), len, index, dimsize(NF_MAX_VAR_DIMS),
+     2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
      3 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS)
       real (kind=R8) :: scale
       real (kind=R8), allocatable :: data1(:), data2(:,:), data3(:,:,:)
       character*(NF_MAX_NAME) :: varname, dimname, attname
       character :: units*(24)
       character*4 :: extension
-      character*256 filename, plasmastate
+      character*32 hlp_frm
+      character*256 filename, plasmastate, message
       logical :: exists
       integer :: lnblnk
       external lnblnk
 #endif
-      external subini, subend, ipgeti, ipgetr, xerrab, xertst
+      external ipgeti, ipgetr, xerrab, xertst
 
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
@@ -56,6 +59,7 @@
       call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
       call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,
      .                                        iyrstrt,iyrend,'dsr')
+#ifndef NO_CDF
       if (nnreg(0).eq.8) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.
@@ -83,17 +87,13 @@
       nyi  = iyiend  - iyistrt  + 1
       nc = max(nncut,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
-
-#ifndef NO_CDF
 c access the b2time.nc file
       filename='b2time.nc'
       call find_file(filename,exists)
       status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
-
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)
       call check_cdf_status(status)
-
       itim=0
       ibatch=0
       nastep=0
@@ -210,11 +210,22 @@ c prepare the b2time.nc.xxxx file
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
 #else
-      call get_environment_variable ('PLASMASTATE', plasmastate)
+      call get_environment_variable('PLASMASTATE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        extension=plasmastate(lenval-3:lenval)
+      elseif (ierror.eq.1) then
+        extension='xxxx'
+      endif
 #endif
       extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
       filename='b2time.nc.'//extension
+      message = 'File '//trim(filename)//' already present! '//
+     .          'Please remove first.'
+      call find_file(filename,exists)
+      call xertst(.not.exists,message)
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
@@ -236,6 +247,17 @@ c read and rewrite data
           count(idim)=len
           start(idim)=1
         enddo
+        if (ndims.eq.0) then
+          write(message,'(a)') 'Processing '//trim(varname)//' ...'
+        elseif (ndims.eq.1) then
+          write(message,'(a,i6,a)') 'Processing '//trim(varname)//
+     .     ' with size ',len,' ...'
+        else
+          write(hlp_frm,'(a,i1,a)') '(3a,',ndims-1,'(i6,'',''),i6,a1)'
+          write(message,hlp_frm) 'Processing ',trim(varname),
+     .     ' with dimensions (',(count(idim),idim=1,ndims),')'
+        end if
+        write(*,'(a)') trim(message)
         if(varname.eq.'timesa') then
           if(itim.gt.0) then
             allocate(data1(dimsize(1)))

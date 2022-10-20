@@ -4,12 +4,14 @@
       subroutine b2mxac (nCv, ns, dv, diag)
       use b2mod_types
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
       type (B2Derivatives), intent (in) :: dv
 *   ..output arguments (unspecified on entry)
       type (B2Diagnostic), intent (inout) :: diag
+
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -34,7 +36,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   samax
-      external subini, subend, xertst, samax
+      external xertst, samax
       external b2xvfx
 *   ..initialisation
 
@@ -70,4 +72,4 @@
 *-----------------------------------------------------------------------
 *.end b2mxac
 
-      end
+      end subroutine b2mxac

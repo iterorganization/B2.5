@@ -27,6 +27,15 @@ c*** flxspci: fluxes of plasma ions to the recycling surfaces
 c*** srccrfc: source correction factors (from infcop)
 C
 
+C> Default output file prefix
+#ifndef HPUX
+      CHARACTER(5), PUBLIC, PARAMETER :: FORT    = 'FORT.'
+      CHARACTER(5), PUBLIC, PARAMETER :: FORT_LC = 'fort.'
+#else
+      CHARACTER(3), PUBLIC, PARAMETER :: FORT    = 'FTN'
+      CHARACTER(3), PUBLIC, PARAMETER :: FORT_LC = 'ftn'
+#endif
+
       contains
 
       subroutine alloc_b2mod_eirbra(ncv,nsd,natmd,nplsd,nstrad)
@@ -60,10 +69,23 @@ C
       allocate(volsumei(nstrad))
       allocate(volsumee(nstrad))
       allocate(flxspci(nplsd,nstrad))
-      allocate(srccrfc(natmd,nstrad))
+      allocate(srccrfc(max(1,natmd),nstrad))
+
+      call init_b2mod_eirbra
 
       return
       end subroutine alloc_b2mod_eirbra
+
+      subroutine init_b2mod_eirbra
+      implicit none
+
+      volsumn  = 0.0_R8
+      volsumm  = 0.0_R8
+      volsumei = 0.0_R8
+      volsumee = 0.0_R8
+
+      return
+      end subroutine init_b2mod_eirbra
 
       subroutine dealloc_b2mod_eirbra
       implicit none

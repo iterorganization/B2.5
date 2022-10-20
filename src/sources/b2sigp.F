@@ -15,6 +15,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sigp
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -34,7 +35,6 @@
      * wrk3(nCv), wrk4(nCv),                      !djm Jan2017
      * wrk5(nCv), wrk6(nCv),                       !srv 28.03.17
      * tb(nCv)
-
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -52,9 +52,8 @@
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
-      intrinsic abs
 *   ..initialisation
 
 
@@ -122,12 +121,12 @@
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
               wrk5(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
      &         (wrk0(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
               wrk6(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
      &          wrk2(rightix(ix,iy),rightiy(ix,iy))/
@@ -140,10 +139,9 @@
 !     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
 !                      THIS REGION, USE B2SIGP_STYLE = 1
                 if (ncall_b2sigp.lt.3) then
-                 write(*,'(a,i4,a,i4)')
-     &       'warning, tot. press. balance will not be exact at ix=',
-     &            ix,',iy=',iy
-                 write(*,*) 'Use b2sigp_style.eq.1 or 2'
+                 write(*,'(a,i4,a,i4,a)') 'warning, '//
+     &            'tot. press. balance will not be exact in cell (',
+     &             ix,',',iy,')'
                 end if
                 b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
      &           (vol(ix,iy)/hx(ix,iy))*
@@ -155,12 +153,12 @@
               endif
             elseif(rightix(ix,iy).eq.nx+1) then
               wrk5(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
      &         wrk0(ix,iy)/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
               wrk6(ix,iy) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
      &         wrk1(ix,iy)*wrk2(ix,iy)/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
@@ -215,6 +213,8 @@
             endif
           enddo
         enddo
+        if (balance_netcdf.ne.0.and.ncall_b2sigp.lt.3)
+     >   write(*,*) 'Use b2sigp_style.eq.1 or 2'
 #endif
       elseif(switch%b2sigp_style.eq.1) then                           !srv 02.07.08 {
 *   ..  compute gradients in cell centers
@@ -311,7 +311,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
       endif                                                           !srv 02.07.08 }
 
 cxpb apply restriction to pressure gradient for minority ions
-      if (switch%b2sigp_pressure_restriction .ne. 0) then
+      if (switch%b2sigp_pressure_restriction.ne.0) then
        wrk0 = nb*tb
        call intface(nCv,nFc,mpg%fcCv,geo%fcHc,wrk0,wrkf)
        call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,wrk1)
@@ -332,7 +332,7 @@ cxpb apply restriction to pressure gradient for minority ions
         wrk6 = 0.0_R8       
       endif                                                           !srv 26.06.18 }
       
-      if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then         !srv 17.06.02 {
+      if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then    !srv 17.06.02 {
        write (chns,'(i3.3)') isb
 !      do k=0,3
 !        write (chk,'(i1)') k

@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo_corner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -31,7 +32,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   hy1
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------
@@ -56,7 +57,7 @@
       if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
 
        do is = 0,ns-1                                                   !srv 16.10.17
-        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
           do iy=-1,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).eq.-2)then
@@ -81,8 +82,8 @@
           enddo
           
           avisper(:,:,1) = cvisper(:,:,1)
-          
-        endif                                                           !srv 16.10.17
+
+         endif                                                          !srv 16.10.17
        enddo                                                            !srv 16.10.17
       endif                                                             !srv 22.11.99
       
@@ -91,17 +92,17 @@
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2txvspr_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2txvspr_cvispery')
        do iy=-1,ny
-         do ix=-1,nx
-           wrk0(ix,iy) = hy1(ix,iy)
-         enddo
-       enddo      
+        do ix=-1,nx
+         wrk0(ix,iy) = hy1(ix,iy)
+        enddo
+       enddo
        call my_out(70,nx,ny,wrk0,'b2tvspr_hy1')
        call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvspr_bbv')
        call my_out(70,nx,ny,vol,'b2tvspr_vol')
        do is = 0,ns-1
          write (chns,'(i3.3)') is
          if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
-           call my_out(70,nx,ny,vsa0(-1,-1,is),'b2tvspr_vsa0_'//chns)
+          call my_out(70,nx,ny,vsa0(-1,-1,is),'b2tvspr_vsa0_'//chns)
          endif
        enddo
       endif

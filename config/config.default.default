@@ -19,13 +19,14 @@ CPP =         # where to find CPP
 CPPOPTS =     # options for CPP
 
 FC =          # fortran compiler
-FCOPTS =      # options for fortan compiler for single precision version
+FCOPTS =      # options for fortran compiler for single precision version
 INCMOD =      # option for including modules
 MOD =         # module suffix
 
 BLD =         # program and options for building a library
 
 GRLIBES =     # graphics libraries
+PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
 LD =          # loader

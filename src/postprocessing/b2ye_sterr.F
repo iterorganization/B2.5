@@ -1,6 +1,6 @@
 
       subroutine b2ye_sterr (meanbatch, nn, eps_s, tmax, T1, T2,
-     .                      meansample)
+     .                       meansample)
 
       use b2mod_types
 
@@ -16,7 +16,6 @@
 *
 *     meanbatch(:): input variable, 1-D array with batch means
 *     NN: number of batches
-*     nototdt: total number of iterations for averaging
 *     eps_s: output variable, statistical error
 *     eps_s1: output variable, statistical error
 *     eps_s2: output variable, statistical error

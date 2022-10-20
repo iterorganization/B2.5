@@ -23,34 +23,34 @@ C =====================================================================
 #endif
       real xbox(8),ybox(8),
      1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
-      integer ix,iy,icol,ici,n,i,ic,
+      integer icol,ici,n,i,
      2 no_available_colors,noz,nozm,nfmtz
       real floor,ceil
       external floor,ceil
 
-      zlo=zlod
-      zhi=zhid
-      RLO=work(1)
-      RHI=work(1)
+      zlo=real(zlod,R4)
+      zhi=real(zhid,R4)
+      RLO=real(work(1),R4)
+      RHI=real(work(1),R4)
       do I=1,NTRII
-        RLO=MIN(RLO,REAL(work(I)))
-        RHI=MAX(RHI,REAL(work(I)))
+        RLO=MIN(RLO,REAL(work(I),R4))
+        RHI=MAX(RHI,REAL(work(I),R4))
       end do
       if(ZLO.EQ.ZHI) then
         ZLO=RLO
         ZHI=RHI
       end if
 
-      small = tiny(1.0)
-      if (abs(zlo).lt.small) zlo = 0.0
-      if (abs(zhi).lt.small) zhi = 0.0
+      small = tiny(1.0_R4)
+      if (abs(zlo).lt.small) zlo = 0.0_R4
+      if (abs(zhi).lt.small) zhi = 0.0_R4
 
       if(zlo.eq.zhi) then
-        zlo=min(zlo*0.9,zlo*1.1)
-        zhi=max(zhi*0.9,zhi*1.1)
+        zlo=min(zlo*0.9_R4,zlo*1.1_R4)
+        zhi=max(zhi*0.9_R4,zhi*1.1_R4)
         if(zlo.eq.zhi) then
-          zlo=-1.0
-          zhi=+1.0
+          zlo=-1.0_R4
+          zhi=+1.0_R4
         end if
       end if
 
@@ -76,15 +76,15 @@ C =====================================================================
           ENDDO
         ELSE  ! ==> do log plot <=======================================
           if(b2plot_debug.ge.10) write (*,*) 'STANDARD CONTOURING'
-          if(zhi.le.0.0) then
+          if(zhi.le.0.0_R4) then
             write(*,*) 'zhi <= 0 and logarithmic axes chosen'
-            zhi=1.0
+            zhi=1.0_R4
           endif
-          if(zlo.le.0.0) zlo=10.0**(-ndec)*zhi
-          ZHI=10.0**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
+          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO))
+          NCONT=int(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -96,14 +96,14 @@ C =====================================================================
 #ifndef PLPLOT
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
-              zval=10.0**((i-1)/3)*zlo
+              zval=10.0_R4**((i-1)/3)*zlo
               if(mod(i-1,3).eq.1) zval=zval*2
               if(mod(i-1,3).eq.2) zval=zval*5
               eclval(i)=zval
             enddo
           else
             do i=1,ncont+1
-              zval=10.0**(i-1)*zlo
+              zval=10.0_R4**(i-1)*zlo
               eclval(i)=zval
             enddo
           endif
@@ -121,11 +121,11 @@ C =====================================================================
         if(nofecls.eq.0) then ! standard contouring
           WRITE (LBLS(I), FMTZ) CLV
         else
-          if(abs(clv).ge.1e3.or.abs(clv).lt.1e-2) then
+          if(abs(clv).ge.1.0e3_R4.or.abs(clv).lt.1.0e-2_R4) then
             write(LBLS(I),'(1p,e10.3)') CLV
-          elseif(abs(clv).ge.1e2) then
+          elseif(abs(clv).ge.1.0e2_R4) then
             write(LBLS(I),'(f8.3)') CLV
-          elseif(abs(clv).ge.1e1) then
+          elseif(abs(clv).ge.1.0e1_R4) then
             write(LBLS(I),'(f8.4)') CLV
           else
             write(LBLS(I),'(f8.5)') CLV
@@ -173,12 +173,12 @@ C =====================================================================
 #endif
 
       do i=1,ntrii
-        xbox(1)=xtrian(necke(1,i))
-        ybox(1)=ytrian(necke(1,i))
-        xbox(2)=xtrian(necke(2,i))
-        ybox(2)=ytrian(necke(2,i))
-        xbox(3)=xtrian(necke(3,i))
-        ybox(3)=ytrian(necke(3,i))
+        xbox(1)=real(xtrian(necke(1,i)),R4)
+        ybox(1)=real(ytrian(necke(1,i)),R4)
+        xbox(2)=real(xtrian(necke(2,i)),R4)
+        ybox(2)=real(ytrian(necke(2,i)),R4)
+        xbox(3)=real(xtrian(necke(3,i)),R4)
+        ybox(3)=real(ytrian(necke(3,i)),R4)
         n=3
         call clip_box(xbox,ybox,xlo,ylo,xhi,yhi,n)
         if(n.gt.2) then

@@ -6,6 +6,7 @@
      &   vsa0, hci0, hcn0, hcib, hce0, sig0, alf0, hvi0, hve0, dkt0,
      &   dzt0, dna_ExB, hce_ExB, hci_ExB)
       use b2mod_types
+      use b2mod_math
       use b2mod_transport_namelist
       use b2mod_input_profile
       use b2mod_constants
@@ -32,6 +33,7 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tqna, ncall_transp_keps
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
@@ -116,7 +118,7 @@
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
-     1  dion, vcx, lcx, lion, din, dnn,
+     1  dcx, dion, vcx, lcx, lion, din, dnn,
      1  poloidal_scale_factor
       real (kind=R8) ::
      *  t0, t1,
@@ -126,13 +128,12 @@
       logical catch_up
 *   ..procedures
       intrinsic sqrt, max, exp
-      external subini, subend, xertst, sfill, ipgeti, ipgetr, expu
+      external xertst, sfill, ipgeti, ipgetr
 *   ..initialisation
 *   ..statement functions
       real (kind=R8) ::
-     *  expu, addup
+     *  addup
       addup(t0,t1)=t0+t1
-
 *-----------------------------------------------------------------------
 *.computation
 * ..preliminaries
@@ -250,6 +251,7 @@
       call sfill (nCv, 0.0_R8, hce_ExB, 1)
       call sfill (nCv, 0.0_R8, hci_ExB, 1)
       do is = 0, ns-1
+        k=-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
@@ -273,19 +275,34 @@
             endif
             if(switch%b2tqna_new_df0.eq.1) then
               if(is_neutral(is)) then
+                dcx=0.0_R8
                 vcx=0.0_R8
-                tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
-                do ic = 0, ns-1
-                  vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
-     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
-                enddo
-                lcx=wrk0(iCv)/sqrt(am(is))/vcx
+                lcx=1.0e30_R8
+                if (k.ge.0) then
+                  tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
+                  do ic = 0, ns-1
+                    dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
+     &               rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
+                    vcx = vcx +
+     &               pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
+     &               rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
+                  enddo
+                  lcx=wrk0(iCv)/sqrt(am(is))/vcx
+                end if
                 dion=expu(
      2           rt%rlsa(iCv,0,is)+
      3           rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-                lion=wrk0(iCv)/sqrt(am(is))/dv%ne(iCv)/dion
-                din=(wrk0(iCv)/sqrt(am(is)))**2/
-     1           (vcx+dion*dv%ne(iCv))
+                if (dion.gt.0.0_R8) then
+                  lion=wrk0(iCv)/sqrt(am(is))/dv%ne(iCv)/dion
+                else
+                  lion=1.0e30_R8
+                endif
+                if (vcx.eq.0.0_R8 .and. dion.eq.0.0_R8) then
+                  din=1.0e30_R8
+                else
+                  din=(wrk0(iCv)/sqrt(am(is)))**2/
+     1             (vcx+dion*dv%ne(iCv))
+                endif
 c               if(lcx.gt.lion) then
 c                 din=lion*wrk0(iCv)/sqrt(am(is))
 c               else
@@ -310,8 +327,8 @@ cxpb Corrected for dimensionality
             endif
             min_df0_tmp=min(min_df0_tmp,df0)
             max_df0_tmp=max(max_df0_tmp,df0)
-            df0=max(switch%b2tqna_min_df0,
-     &          min(switch%b2tqna_max_df0,df0))
+            if(is_neutral(is)) df0=max(switch%b2tqna_min_df0,
+     &                             min(switch%b2tqna_max_df0,df0))
 *      ..compute dna0, dpa0, vla0, vma0
             dna0(iCv,is) = cfdna(0,is)+
      &       cfdna(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
@@ -381,7 +398,7 @@ cxpb Corrected for dimensionality
           hci0 = hci0 + hcib(:,is)
          endif
         else
-         if (.not.is_neutral(is).or.zn(is).ne.1)then
+         if (.not.is_neutral(is).or.zn(is).ne.1) then
           hci0 = hci0 + hcib(:,is)
          endif
         endif
@@ -435,7 +452,7 @@ cxpb Corrected for dimensionality
               hci0 = hci0 + hcib(:,is)
             endif
           else
-            if (.not.is_neutral(is).or.zn(is).ne.1)then
+            if (.not.is_neutral(is).or.zn(is).ne.1) then
               hci0 = hci0 + hcib(:,is)
             endif
           endif
@@ -470,15 +487,11 @@ cxpb Corrected for dimensionality
       endif                                                           !srv 10.11.09 }
 
 c User transport options
-
       if (switch%user_transport.eq.0) then
         !! the default transport model calculated above is used. Nothing to do.
       else
         call xerrab('transport model undefined or not yet converted')
       endif
-
-
-
 #ifdef WG_TODO
       if(user_transport.eq.0) then
 c do nothing
@@ -522,7 +535,8 @@ c ank added blobby transport
       elseif(user_transport.eq.9) then
         call set_transport_blob(nx, ny, ns, jsep, jxa, vla0)
       else
-        write(*,*) 'user_transport =',switch%user_transport,' not coded'
+        write(*,*) 'user_transport = ',
+     &       switch%user_transport,' not coded'
         call xerrab ('user_transport value not coded')
       endif
 #endif
@@ -676,6 +690,7 @@ cdpc
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -713,14 +728,27 @@ cdpc
 *   ..subprogram start-up calls
       call subini ('set_transport')
       if (ncall.eq.0) then
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
+        if(nnreg(0).eq.4) then
+          if (LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -799,6 +827,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1073,37 +1102,37 @@ c
 
       contains                          !srv 24.04.02 {
 
-       function barier1(x, x1, level1, x2, level2, x3, level3)
+       function barrier1(x, x1, level1, x2, level2, x3, level3)
         implicit none
         real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
-        real (kind=R8) :: barier1
+        real (kind=R8) :: barrier1
 *   ..   x1 < x2 < x3
          if(x .le. x1) then
-          barier1 = level1
+          barrier1 = level1
          elseif(x .le. x2) then
-          barier1 = level1+(x - x1)*(level2 - level1)/(x2 - x1)
+          barrier1 = level1+(x - x1)*(level2 - level1)/(x2 - x1)
          elseif(x .le. x3) then
-          barier1 = level2
+          barrier1 = level2
          else
-          barier1 = level3
+          barrier1 = level3
          endif
-       end function barier1
+       end function barrier1
 
-       function barier2(x, x1, level1, x2, level2, x3, level3)
+       function barrier2(x, x1, level1, x2, level2, x3, level3)
         implicit none
         real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
-        real (kind=R8) :: barier2
+        real (kind=R8) :: barrier2
 *   ..   x1 > x2 > x3
          if(x .le. x1) then
-          barier2 = level1
+          barrier2 = level1
          elseif(x .le. x2) then
-          barier2 = level2
+          barrier2 = level2
          elseif(x .le. x3) then
-          barier2 = level2+(x - x2)*(level3 - level2)/(x3 - x2)
+          barrier2 = level2+(x - x2)*(level3 - level2)/(x3 - x2)
          else
-          barier2 = level3
+          barrier2 = level3
          endif
-       end function barier2
+       end function barrier2
 
        subroutine defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic) !srv 13.11.02 01.03.07 09.03.17
         implicit none
@@ -1152,18 +1181,18 @@ c
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
 
-               fdnc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+               fdnc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, delta2-step,
      &          alfa2, delta2, alfa3)
-               fvsc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+               fvsc(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, vs_delta2-step,
      &          vs_alfa2, vs_delta2, vs_alfa3)
-               ftic(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+               ftic(ix,iy,is)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, ti_delta2-step,
      &          ti_alfa2, ti_delta2, ti_alfa3)
               endif
              enddo
-             ftec(ix,iy)= barier2(crdy_c_cell(nmdpl,iy),
+             ftec(ix,iy)= barrier2(crdy_c_cell(nmdpl,iy),
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8, te_delta2-step,
      &          te_alfa2, te_delta2, te_alfa3)
             endif
@@ -1172,22 +1201,22 @@ c
 
           step = maxval(hy(nmdpl,-1:mintopcut-1))
           do iy = -1, mintopcut-1   ! for inner surfaces
-           do ix=-1,nx
+           do ix = -1, nx
             if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
+               fdnc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -delta1, 1.0_R8, -delta1+step, alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-               fvsc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
+               fvsc(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -vs_delta1, 1.0_R8, -vs_delta1+step, vs_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-               ftic(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
+               ftic(ix,iy,is)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -ti_delta1, 1.0_R8, -ti_delta1+step, ti_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
               endif
              enddo
-             ftec(ix,iy)= barier1(crdy_c_cell(nmdpl,iy),
+             ftec(ix,iy)= barrier1(crdy_c_cell(nmdpl,iy),
      &          -te_delta1, 1.0_R8, -te_delta1+step, te_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
             endif
@@ -1198,10 +1227,17 @@ c
 *   ..setting of transport coefficients from files
           if(ncall.eq.0) then
            if(nncut.eq.2) then
-            nmdpl = rightcut(nncut)
-            do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-            enddo
+            if(nnreg(0).eq.8) then
+             nmdpl = rightcut(nncut)
+             do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
+              if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+             enddo
+            else
+             nmdpl = leftcut(1)
+             do ix = leftcut(1)+1, rightcut(1)-1
+              if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+             enddo
+            endif
            elseif(nncut.eq.1) then
             nmdpl = leftcut(nncut)
             do ix = leftcut(nncut)+1, rightcut(nncut)-1
@@ -1253,8 +1289,8 @@ c
      2        ' has given '//'negative coefficient')
            enddo
 
-           write(*,"(/' Exchanges of transport coefficients',
-     &               ' have been done'/)")
+           write(*,'(a)')
+     &      ' Exchanges of transport coefficients have been done'
            do is = 0, ns-1
              if(.not.is_neutral(is)) then
                cfdna(2,is)   = 1.0e0_R8
@@ -1307,11 +1343,11 @@ c
             t0 = 0.0e0_R8
             t1 = 0.0e0_R8
             mintopcut=min(topcut(1)-1,topcut(2)-1)
-            do iy = 0,mintopcut    ! for inner surfaces
-             do ix=0,nx
+            do iy = 0, mintopcut    ! for inner surfaces
+             do ix = 0, nx
               if(on_closed_surface(ix,iy)) then
-               t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
-               t1 = t1 +vol(ix,iy)/hy1(ix,iy)
+               t0 = t0 + bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
+               t1 = t1 + vol(ix,iy)/hy1(ix,iy)
               endif
              enddo
             enddo
@@ -1337,10 +1373,10 @@ c
              t1 = 0.0e0_R8
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
-              do ix=0,nx
+              do ix = 0, nx
                if(on_closed_surface(ix,iy)) then
-                t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-                t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+                t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+                t1 = t1 + vol(ix,iy)/hy1(ix,iy)**2
                endif
               enddo
              enddo
@@ -1385,7 +1421,7 @@ c
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
             topdelta2 = mintopcut                 !srv 24.06.03 {
             width = 0.0e0_R8
-            do iy =mintopcut+1,ny
+            do iy = mintopcut,ny                                       !srv 23.01.18
              width = width + hy(nmdpl,iy)
              if(width.ge.delta2) then
               topdelta2 = iy
@@ -1396,13 +1432,15 @@ c
             topdelta2 = ny
            endif                                                       !srv 15.05.09 }
            if(iout.ne.0) then
-            open(70,file= 'Parameters_of_H-regime.dat')
+            open(70,file= 'output/Parameters_of_H-regime.dat')         !srv 23.01.18
             write(70,"(/' Parameters of H-regime')")
             write(70,"(' Number of midplane cell =',i4)") nmdpl
-            write(70,"(' Number of first cell in CORE where transport ',
-     &         ' coefficients are changed',2i5)") bottomdelta1
-            write(70,"(' Number of last  cell in CORE where transport ',
-     &         ' coefficients are changed',2i5)") topdelta2
+            write(70,'(a,2i5)')
+     &        ' Number of first cell in CORE where transport '//
+     &        ' coefficients are changed', bottomdelta1
+            write(70,'(a,2i5)')
+     &        ' Number of last  cell in SOL  where transport '//
+     &        ' coefficients are changed', topdelta2                   !srv 23.01.18
             close(70)
            endif
           endif
@@ -1412,7 +1450,7 @@ c
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-               fdnc(ix,iy,is)  =    alfa3
+               fdnc(ix,iy,is) =    alfa3
                fvsc(ix,iy,is) = vs_alfa3
                ftic(ix,iy,is) = ti_alfa3
                fvlc(ix,iy,1,is) = vl_alfa3                      !srv 19.04.10
@@ -1477,17 +1515,17 @@ c
            t0 = 0.0e0_R8
            t1 = 0.0e0_R8
            do iy = 0, mintopcut-1   ! for inner surfaces
-            do ix=0,nx
+            do ix = 0, nx
              if(on_closed_surface(ix,iy)) then
-              t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-              t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+              t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+              t1 = t1 + vol(ix,iy)/hy1(ix,iy)**2
              endif
             enddo
            enddo
            bbaverage = (t0/t1)**(-1.0e0_R8/alf)
 
            do iy = topdelta2+1, ny                    ! for SOL region
-            do ix = -1,nx
+            do ix = -1, nx
              if(mod(region(ix,iy,0),4).eq.2) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
@@ -1507,7 +1545,7 @@ c
            enddo
 
            do iy = -1, bottomdelta1-1                 ! for inner surfaces
-            do ix = -1,nx
+            do ix = -1, nx
              if(on_closed_surface(ix,iy)) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
@@ -1586,6 +1624,7 @@ c
       use b2mod_constants
       use b2mod_time
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1736,6 +1775,7 @@ c
       use b2mod_transport_models
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1768,14 +1808,27 @@ c
       if (ncall.eq.0) then
         call alloc_b2mod_transport_models(nx, ny, ns)
         call read_b2mod_transport_models(99,'    ',models_found)
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
+        if(nnreg(0).eq.4) then
+          if(LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -1851,6 +1904,7 @@ c
       use b2mod_geo
      & , only : crx
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -1864,7 +1918,7 @@ c
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *   ..local variables
-      integer, save ::  ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
+      integer, save :: ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
       real (kind=R8), save ::
      *  alpha,
      *  wb, seglen, perimeter, L_perp
@@ -1874,9 +1928,9 @@ c
 *   ..procedures
       real (kind=R8) ::
      *  hy1
-      external subini, subend, ipgetr, xertst, xerrab
+      external ipgetr, xertst, xerrab
       external b2xvsg, b2xppe, b2xppb
-      intrinsic sin, log, mod, max, min
+      intrinsic sin, log, max, min
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, alpha/1.0_R8/
@@ -1986,7 +2040,7 @@ cxpb  Compute outer SOL part (coss < 0 by convention)
             coss(rightcut(2):rightcut(1)-1,iy) =
      .       -sin(pi*coss(rightcut(2):rightcut(1)-1,iy)/seglen)
          end do
-      else if (nnreg(0).eq.4) then
+      else if (nnreg(0).eq.4 .or. nnreg(0).eq.7) then
 cxpb  Compute cos(s) factor
          do iy = -1, jsep
             coss(leftcut(1),iy) = 0.5_R8 * hx(leftcut(1),iy)/
@@ -2047,6 +2101,7 @@ c under development
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -2367,6 +2422,7 @@ c MW working end 3
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_transport_namelist
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, jsep, jxa
@@ -2381,7 +2437,7 @@ c MW working end 3
 *   ..procedures
       real (kind=R8) :: hy1
       intrinsic sqrt, max
-      external subini, subend, xerrab
+      external xerrab
 *   ..initialisation
       save ncall, ibegin, iend
       data ncall /0/
@@ -2402,6 +2458,9 @@ c*** determined by two powers: (1-x**n1)**n2.
           ibegin=-1
           iend=nx
         else if (nnreg(0).eq.4) then
+          ibegin=leftcut(1)
+          iend=rightcut(1)-1
+        else if (nnreg(0).eq.7) then
           ibegin=leftcut(1)
           iend=rightcut(1)-1
         else if (nnreg(0).eq.8) then
@@ -2473,6 +2532,7 @@ c*** We only apply this in the outer SOL region
       use b2mod_time
       use b2mod_b2cmpt
       use b2mod_transport_disruption
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -2504,14 +2564,27 @@ c*** We only apply this in the outer SOL region
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call alloc_b2mod_transport_disruption(nx,ny)
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
+        if(nnreg(0).eq.4) then
+          if (LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -2603,6 +2676,7 @@ c*** We only apply this in the outer SOL region
       use b2mod_time
       use b2mod_transpbgr_namelist
       use b2mod_external
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -2684,7 +2758,7 @@ c*** We only apply this in the outer SOL region
 *     3 --- both banana and PS
 *     4 --- all contributions
 *     mind that B2 already calculates the classical transport !
-*     avoid double transport, 0+4 for cross checks only !
+*     avoid double transport, 0+4 for cross-checks only !
       data ic /3/
 
 *   ..subprogram start-up calls
@@ -2692,14 +2766,27 @@ c*** We only apply this in the outer SOL region
       if (ncall.eq.0) then
 *   ..neoclassical transport only valid for single charge states
 *     bundled charge states yet to be implemented
-        if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
+        if(nnreg(0).eq.4) then
+          if (LSN) then
+            ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
+          else
+            ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
+          endif
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.5) then
+          ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
+          iyref=2*topcut(1)/3
+        elseif(nnreg(0).eq.7) then
           ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
           iyref=2*topcut(1)/3
         elseif(nnreg(0).eq.8) then
           ixref=(rightcut(1)+rightcut(2))/2
           iyref=2*min(topcut(1),topcut(2))/3
+        elseif(nnreg(0).eq.2) then
+          ixref=nx/2
+          iyref=2*topcut(1)/3
         else
-          ixref=3*nx/4
+          ixref=nx/2
           iyref=ny/2
         endif
         call ipgeti ('set_transport_ixref', ixref)
@@ -2708,20 +2795,20 @@ c*** We only apply this in the outer SOL region
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-	call ipgeti ('neoclassical_ic', ic)
+        call ipgeti ('neoclassical_ic', ic)
         call xertst(0.le.ic .and. ic.le.4,
      .   'invalid parameter neoclassical_ic')
-	write(*,*) 'NEOART option ', ic, ' has been used'
-	if(ic.eq.0)
-     1	 write(*,*) '  NEOART: classical'
-	if(ic.eq.1)
-     1	 write(*,*) '  NEOART: banana plateau'
-	if(ic.eq.2)
-     1	 write(*,*) '  NEOART: Pfirsch-Schlueter'
-	if(ic.eq.3)
-     1	 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
-	if(ic.eq.4)
-     1	 write(*,*) '  NEOART: all'
+        write(*,*) 'NEOART option ', ic, ' has been used'
+        if(ic.eq.0)
+     1   write(*,*) '  NEOART: classical'
+        if(ic.eq.1)
+     1   write(*,*) '  NEOART: banana plateau'
+        if(ic.eq.2)
+     1   write(*,*) '  NEOART: Pfirsch-Schlueter'
+        if(ic.eq.3)
+     1   write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
+        if(ic.eq.4)
+     1   write(*,*) '  NEOART: all'
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -2995,7 +3082,7 @@ c      enddo
           ilpb=thet
           do ix=-1,nx
            if (on_closed_surface(ix,iy)) then
-            theta(ix,iy)=2._R8*pi*theta(ix,iy)/ilpb
+            theta(ix,iy)=2.0_R8*pi*theta(ix,iy)/ilpb
            endif
           enddo
         enddo
@@ -3378,47 +3465,47 @@ c      close(14)
       endif
 
 
- !       if (mod(ncall,200).eq.0) then
- !         write(*,*) 'temperature output', ncall
- ! c       open(15,file='temp.dat',form='unformatted')
- !         write(15) nx,ny
- !         write(15) nsl
- !         write(15) (ncl(is),is=0,nsl-1)
- !         if (ncall.lt.1) then
- !           write(15) ((0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)
- !      &               +crx(ix,iy,3)),ix=-1,nx),iy=-1,ny)
- !           write(15) ((0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)
- !      &               +cry(ix,iy,3)),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,0),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,1),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,2),ix=-1,nx),iy=-1,ny)
- !           write(15) ((bb(ix,iy,3),ix=-1,nx),iy=-1,ny)
- !           write(15) ((hy(ix,iy),ix=-1,nx),iy=-1,ny)
- !           do ispecies=0, nsl-1
- !             write(15) m(ispecies)
- !             if (ispecies.ne.nsl-1) then
- !               do istate=0, ncl(ispecies)-1
- !                 write(15) ((rza(ix,iy,isort(ispecies,istate)),ix=-1,nx),
- !      &                    iy=-1,ny)
- !               enddo
- !             else
- !               write(15) -1.0_R8
- !             endif
- !           enddo
- !         endif
- !         write(15) tim
- !         write(15) ((te(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
- !         write(15) ((ti(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
- !         do ispecies=0, nsl-2
- !           do istate=0, ncl(ispecies)-1
- !             write(15) ((na(ix,iy,isort(ispecies,istate)),ix=-1,nx),
- !      &                 iy=-1,ny)
- !           enddo
- !         enddo
- !         write(15) ((ne(ix,iy),ix=-1,nx),iy=-1,ny)
- !         write(15) (fc_(iy),iy=-1,ny)
- !       endif
- ! c       close(15)
+!       if (mod(ncall,200).eq.0) then
+!         write(*,*) 'temperature output', ncall
+! c       open(15,file='temp.dat',form='unformatted')
+!         write(15) nx,ny
+!         write(15) nsl
+!         write(15) (ncl(is),is=0,nsl-1)
+!         if (ncall.lt.1) then
+!           write(15) ((0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)
+!      &               +crx(ix,iy,3)),ix=-1,nx),iy=-1,ny)
+!           write(15) ((0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)
+!      &               +cry(ix,iy,3)),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,0),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,1),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,2),ix=-1,nx),iy=-1,ny)
+!           write(15) ((bb(ix,iy,3),ix=-1,nx),iy=-1,ny)
+!           write(15) ((hy(ix,iy),ix=-1,nx),iy=-1,ny)
+!           do ispecies=0, nsl-1
+!             write(15) m(ispecies)
+!             if (ispecies.ne.nsl-1) then
+!               do istate=0, ncl(ispecies)-1
+!                 write(15) ((rza(ix,iy,isort(ispecies,istate)),ix=-1,nx),
+!      &                    iy=-1,ny)
+!               enddo
+!             else
+!               write(15) -1.0_R8
+!             endif
+!           enddo
+!         endif
+!         write(15) tim
+!         write(15) ((te(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
+!         write(15) ((ti(ix,iy)/ev,ix=-1,nx),iy=-1,ny)
+!         do ispecies=0, nsl-2
+!           do istate=0, ncl(ispecies)-1
+!             write(15) ((na(ix,iy,isort(ispecies,istate)),ix=-1,nx),
+!      &                 iy=-1,ny)
+!           enddo
+!         enddo
+!         write(15) ((ne(ix,iy),ix=-1,nx),iy=-1,ny)
+!         write(15) (fc_(iy),iy=-1,ny)
+!       endif
+! c       close(15)
 
 
 *    ..add the neoclassical contribution to the transport coefficients
@@ -3479,11 +3566,6 @@ c      close(14)
       return
 
       end subroutine set_transport_neo
-
-
-
-
-
 
       subroutine set_profile(fnm, n, coord, fun)                        !srv 01.03.07 {
       use b2mod_types
@@ -3556,6 +3638,7 @@ c*******************************************************************************
      &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &   hcn0,hcib)
       use b2mod_types
+      use b2mod_math
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -3566,6 +3649,7 @@ c*******************************************************************************
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 
 *   ..input arguments (unchanged on exit)
@@ -3590,10 +3674,6 @@ c*******************************************************************************
       real (kind=R8) ::
      *  wrk0(nCv), vcx, dion
       integer is, k, ic, iCv
-      intrinsic max, exp
-      external expu
-*   ..statement functions
-      real (kind=R8) :: expu
 
 *   ..subprogram start-up calls
       call subini ('set_transport_afn')
@@ -3672,8 +3752,6 @@ c*******************************************************************************
         endif
       enddo
 
-
-
 *   ..return
       call subend ()
       return
@@ -3696,6 +3774,7 @@ c*******************************************************************************
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tqna_keps_eps, ncall_transp_keps
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain

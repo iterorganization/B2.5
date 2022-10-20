@@ -39,7 +39,7 @@ csw 09jan2014 declare fun to be private
        real (kind=R8), allocatable, save :: R_midpl(:)    ! radial surface coordinates     [m]
        real (kind=R8), allocatable, save :: Z_midpl(:)    ! Z              coordinates     [m]
        real (kind=R8), allocatable, save :: Rc_midpl(:)   ! radial cell centre coordinates [m]
-       real (kind=R8), allocatable, save :: chci_koeff(:,:) ! 
+       real (kind=R8), allocatable, save :: chci_koeff(:,:) !
        real (kind=R8), allocatable, save :: sfna(:,:)     ! integrated partical flux        [1/s]
        real (kind=R8), allocatable, save :: sfna_mdf(:,:) ! integrated modified partical flux    [1/s]
        real (kind=R8), allocatable, save :: sfne(:)       ! integrated electron flux        [1/s]
@@ -70,9 +70,9 @@ csw 09jan2014 declare fun to be private
         R_midpl    = 0.0_R8
         Rc_midpl   = 0.0_R8
         chci_koeff = 0.0_R8
-        write (*,*) 'Allocated space for b2mod_b2_to_astra' 
+        write (*,*) 'Allocated space for b2mod_b2_to_astra'
        end subroutine alloc_b2mod_b2_to_astra
-       
+
        subroutine dealloc_b2mod_b2_to_astra
         deallocate(se)
         deallocate(seh)
@@ -89,16 +89,16 @@ csw 09jan2014 declare fun to be private
         deallocate (sfhi_mdf)
        end subroutine dealloc_b2mod_b2_to_astra
 
-       subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, ismain0, 
+       subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, ismain0,
      &   nwrite)
         use b2mod_anomalous_transport
         use b2mod_indirect
-        use b2mod_geo 
+        use b2mod_geo
         use b2mod_plasma
         use b2mod_constants
         use b2mod_b2cmpa
 csw 09jan2014 use extra little module
-        use b2mod_b2_to_astra_com ! IGNORE
+        use b2mod_b2_to_astra_com
 
         implicit none
         integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa
@@ -130,8 +130,8 @@ csw 09jan2014 add extra allocates
          call ipgeti('write_b2_to_astra_iout', iout)                        !srv 14.03.12
         endif
 
-        do iy = nyd,-1,-1                                            !srv 21.05.12 {
-         if(nncut.eq.2) then 
+        do iy = nyd,-1,-1                                                   !srv 21.05.12 {
+         if(nncut.eq.2) then
           np=-1
           do ix = rightcut(nncut), rightcut(nncut-1)-1
            np=np+1
@@ -155,11 +155,11 @@ csw 09jan2014 add extra allocates
            x(np) = crx(ix,iy,0)
            y(np) = cry(ix,iy,0)
           enddo
-         endif 
+         endif
 !        DO IX=0,NP
 !         WRITE(*,*) p(IX),x(IX)
 !        ENDDO
-      
+
          CALL DSPLINE(np+1, p, x, CB, CC, CD)
 !        DO IX=0,2*np-2
 !         WRITE(*,*) IX/2.0_R8,DSEVAL(np,IX/2.0_R8,p,x,CB,CC,CD)
@@ -170,8 +170,8 @@ csw 09jan2014 add extra allocates
 
          CALL DSPLINE(np+1, p, y, CB, CC, CD)
          Z_midpl(iy)=DSEVAL(np+1,arg,p,y,CB,CC,CD)
-         write (*,"(' arg=',es13.6,' R_midpl=',es13.6,
-     &            ' Z_midpl=',es13.6)") arg, R_midpl(iy), Z_midpl(iy)
+         write (*,'(a5,es13.6,a9,es13.6,a9,es13.6)')
+     &    ' arg=',arg,' R_midpl=',R_midpl(iy),' Z_midpl=',Z_midpl(iy)
         enddo                                                        !srv 21.05.12 }
 
         maxtopcut = nyd                                              !srv 25.02.16 {
@@ -184,7 +184,7 @@ csw 09jan2014 add extra allocates
 !         R_midpl(iy) = crx(nmdpl,iy,1)
          if(R_midpl(iy).le.Ratb) iy_Ratb = iy
         enddo
- 
+
         iy_crb_astra = -1
         do iy = -1,nyd-1 ! was mintopcut-1    ! for inner surfaces
          Rc_midpl(iy) = 0.5_R8*(R_midpl(iy)+R_midpl(iy+1))
@@ -195,11 +195,11 @@ csw 09jan2014 add extra allocates
         write(70,*) ' Number','   Coord. cell face      ',
      &              '   Coord. cell centre    '
 !        iy = -1
-!        write(70,"(i6,1x,2es25.15)")  iy, R_midpl(iy), R_midpl(iy)  
+!        write(70,"(i6,1x,2es25.15)")  iy, R_midpl(iy), R_midpl(iy)
         do iy = -1,mintopcut
-          write(70,"(i6,1x,2es25.15)") iy, R_midpl(iy), Rc_midpl(iy)  
+          write(70,"(i6,1x,2es25.15)") iy, R_midpl(iy), Rc_midpl(iy)
         enddo
-!         write(70,"(i6,1x,2es25.15)") iy, R_midpl(mintopcut+1)  
+!         write(70,"(i6,1x,2es25.15)") iy, R_midpl(mintopcut+1)
         close(70)
 
 !       neb = ne(nmdpl, iy_Ratb)/1.0e19
@@ -219,11 +219,11 @@ csw 09jan2014 add extra allocates
           sfna_mdf(iy,is) = 0.0_R8
           if(nnreg(0).eq.1.and.periodic_bc.eq.0) cycle
           if(.not.is_neutral(is)) then
-           do ix=-1,nxd                                                  
-            if(mod(region(ix,iy,0),4).eq.1 .or. 
+           do ix=-1,nxd
+            if(mod(region(ix,iy,0),4).eq.1 .or.
      &         mod(region(ix,iy,0),4).eq.2) then
-              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is) 
-              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is) 
+              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is)
+              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is)
             endif
            enddo
           endif
@@ -232,16 +232,16 @@ csw 09jan2014 add extra allocates
          do iy = mintopcut+1, maxtopcut  ! for open surfaces of DDN geometry  !srv 20.12.12 {
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
-          do ix=-1,nxd 
-            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
-     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
-     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or. 
+          do ix=-1,nxd
+            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active
+     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or.
+     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or.
      &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
      &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is) 
-               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is) 
+               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is)
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is)
              endif
             endif
           enddo
@@ -250,16 +250,16 @@ csw 09jan2014 add extra allocates
          do iy = maxtopcut+1, nyd        ! for open surfaces
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
-          do ix=-1,nxd 
-           if(nncut.eq.1 .or. 
-     &       (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
+          do ix=-1,nxd
+           if(nncut.eq.1 .or.
+     &       (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.
      &        region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-             sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is) 
-             sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is) 
+             sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is)
+             sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is)
             endif
            endif
-          enddo                                                                   !srv 20.12.12 }
+          enddo                                                          !srv 20.12.12 }
          enddo
 
 #ifdef B25_EIRENE
@@ -268,8 +268,8 @@ csw 09jan2014 add extra allocates
          if (is_neutral(is) .and. isa.gt.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
            if (nnreg(0).eq.1 .and. periodic_bc.eq.0) cycle
-           do ix=-1,nxd                                                  
-            if(mod(region(ix,iy,0),4).eq.1 .or. 
+           do ix=-1,nxd
+            if(mod(region(ix,iy,0),4).eq.1 .or.
      &         mod(region(ix,iy,0),4).eq.2) then
              sfna(iy,is) = sfna(iy,is) +
      &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
@@ -297,10 +297,10 @@ csw 09jan2014 add extra allocates
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) 
      >        then
-               sfna(iy,is) = sfna(iy,is) + 
+               sfna(iy,is) = sfna(iy,is) +
      &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-               sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
-     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+              sfna_mdf(iy,is) = sfna_mdf(iy,is) +
+     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
               do ism = 1,nnmoli
                if (mlcmp(isa,ism).gt.0) then
                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
@@ -315,9 +315,9 @@ csw 09jan2014 add extra allocates
           enddo
 
           do iy = maxtopcut+1, nyd        ! for open surfaces
-           do ix=-1,nxd 
+           do ix=-1,nxd
             if(nncut.eq.1 .or. 
-     &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
+     &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.
      &         region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
               sfna(iy,is) = sfna(iy,is) +
@@ -332,7 +332,7 @@ csw 09jan2014 add extra allocates
             endif
            enddo
           enddo
-         endif                                                                !srv 20.12.12 }
+         endif                                                           !srv 20.12.12 }
 #endif
 #endif
         enddo
@@ -342,10 +342,10 @@ csw 09jan2014 add extra allocates
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
           if (nnreg(0).eq.1.and.periodic_bc.eq.0) cycle
-          do ix=-1,nxd                                                  
-            if(mod(region(ix,iy,0),4).eq.1 .or. 
+          do ix=-1,nxd
+            if(mod(region(ix,iy,0),4).eq.1 .or.
      &         mod(region(ix,iy,0),4).eq.2) then
-             sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1) 
+             sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -363,7 +363,7 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-             sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
+             sfne(iy) = sfne(iy) + fne(ix,iy,1,1)
             endif
           enddo
         enddo
@@ -372,15 +372,15 @@ csw 09jan2014 add extra allocates
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
           sfne(iy) = 0.0_R8
-          do ix=-1,nxd 
-            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
-     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
-     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or. 
+          do ix=-1,nxd
+            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active
+     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or.
+     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or.
      &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
      &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1) 
+              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -398,7 +398,7 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
+              sfne(iy) = sfne(iy) + fne(ix,iy,1,1)
              endif
             endif
           enddo
@@ -408,9 +408,9 @@ csw 09jan2014 add extra allocates
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
           sfne(iy) = 0.0_R8
-          do ix=-1,nxd 
-            if(nncut.eq.1 .or. 
-     &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
+          do ix=-1,nxd
+            if(nncut.eq.1 .or.
+     &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.
      &            region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
               sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1)
@@ -431,13 +431,13 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
+              sfne(iy) = sfne(iy) + fne(ix,iy,1,1)
              endif
             endif
           enddo
-        enddo                                                                   !srv 20.12.12 }
-*   ..the simplest linear interpolation 
-        iy =  iy_crb_astra 
+        enddo                                                            !srv 20.12.12 }
+*   ..the simplest linear interpolation
+        iy =  iy_crb_astra
         neb = (ne(nmdpl,iy)+(crb_astra-Rc_midpl(iy))*
      &        (ne(nmdpl,iy+1)-ne(nmdpl,iy))/
      &        (Rc_midpl(iy+1)-Rc_midpl(iy)))/1.0e19
@@ -458,69 +458,69 @@ csw 09jan2014 add extra allocates
      &  'boundary ion temperature in crb_astra=',crb_astra,'      [keV]'
 
         is = ismain0
-        write(nwrite,"(es25.15, 28x,a,i4,a)") 
+        write(nwrite,"(es25.15, 28x,a,i4,a)")
      &     -(sfna(0,is)+sfna(1,is))*0.5_R8/1.0e19_R8,
      &    '- integrated neutral flux',is,
      &    '  in cell centre for inner surface [1e19/s]'
         iy = 0                  ! it is written value in 0-cell instead of -1 cell
-        write(nwrite,"(i6,1x,5es25.15)") iy-1, se(iy)/svol(iy)/1.0e19_R8     ! electron source    [1e19/s]
+        write(nwrite,"(i6,1x,5es25.15)") iy-1, se(iy)/svol(iy)/1.0e19_R8 ! electron source [1e19/s]
      &   ,(sfna_mdf(iy+1,ismain)-sfna_mdf(iy,ismain))/svol(iy)/1.0e19_R8
      &   ,(sfna_mdf(iy+1,is    )-sfna_mdf(iy,is    ))/svol(iy)/1.0e19_R8
-     &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                               !srv 11.06.13
-        do iy = 0,mintopcut-1                                    ! for Core region
-         write(nwrite,"(i6,1x,5es25.15)") iy, se(iy)/svol(iy)/1.0e19_R8    ! electron source    [1e19/s]
+     &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                            !srv 11.06.13
+        do iy = 0,mintopcut-1                                            ! for Core region
+         write(nwrite,"(i6,1x,5es25.15)") iy, se(iy)/svol(iy)/1.0e19_R8  ! electron source [1e19/s]
      &   ,(sfna_mdf(iy+1,ismain)-sfna_mdf(iy,ismain))/svol(iy)/1.0e19_R8
      &   ,(sfna_mdf(iy+1,is    )-sfna_mdf(iy,is    ))/svol(iy)/1.0e19_R8
-     &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                               !srv 11.06.13
+     &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                            !srv 11.06.13
         enddo
 
-        open(70,file='table_01.dat')                    !srv 19.09.11 {
-        write(70,10) 
+        open(70,file='table_01.dat')                                     !srv 19.09.11 {
+        write(70,10)
    10   format(4x,'Rc(m)',5x,2x,'ne(1/m^3)',3x,3x,'Te(keV)',4x,
      &         3x,'Ti(keV)',4x,3x,'D(m^2/s)',3x,3x,'xe(m^2/s)',2x,
      &         3x,'xi(m^2/s)',2x,3x,'Vy_AN(m/s)',1x,3x,'Se(1/m^3/s)',
      &         3x,'Seh(      )',3x,'Sih(      )')                        !srv 11.06.13
         ix=nmdpl
-        do iy= -1,nyd-1 
-         write(70,"(11es14.6)") 
+        do iy= -1,nyd-1
+         write(70,"(11es14.6)")
      &    Rc_midpl(iy), ne(ix,iy), te(ix,iy)/ev/1.0e3_R8,
      &    ti(ix,iy)/ev/1.0e3_R8, dna0(ix,iy,ismain),
      &    hce0(ix,iy)/ne(ix,iy), hcib(ix,iy,ismain)/na(ix,iy,ismain),
      &    vla0(ix,iy,1,ismain), se(iy)/svol(iy),
      &    seh(iy)/svol(iy), sih(iy)/svol(iy)                             !srv 11.06.13
-      
+
         enddo
 
-        close(70)                                      !srv 19.09.11 }
+        close(70)                                                        !srv 19.09.11 }
 
-        open(70,file='table_02.dat')                   !srv 19.09.11 {
-        write(70,20) 
+        open(70,file='table_02.dat')                                     !srv 19.09.11 {
+        write(70,20)
    20   format(4x,'Rf(m)',5x,4x,'Fle(1/s)',2x,4x,'qe(MW)',5x,
      &         4x,'qi(MW)',5x,3x,'-Fln(1/s)',2x)
         ix=nmdpl
-        do iy= 0,nyd 
-         write(70,"(5es14.6)") 
+        do iy= 0,nyd
+         write(70,"(5es14.6)")
      &    R_midpl(iy), sfna_mdf(iy,ismain), sfhe_mdf(iy)/1.0e6_R8,
-     &    sfhi_mdf(iy)/1.0e6_R8,-sfna(iy,0) 
+     &    sfhi_mdf(iy)/1.0e6_R8,-sfna(iy,0)
         enddo
 
         close(70)
 
         open(70,file='check_inv_hi_astra.dat')
-        write(70,*) ' Number    Coord    inv_hi_astra'  
+        write(70,*) ' Number    Coord    inv_hi_astra'
         do iy=-1,nyd
          write(70,40) iy, Rmaj_astra(iy),inv_hi_astra(iy)
         enddo
    40   format(i6,1x,2e13.5)
         close(70)
 
-        write (*,*) 'Ratb, iy_Ratb', Ratb, iy_Ratb 
+        write (*,*) 'Ratb, iy_Ratb', Ratb, iy_Ratb
         write (*,*) 'data for b2mod_b2_to_astra has been written'
 
 #ifdef B25_EIRENE
 #ifdef WG_TODO
         if(iout.ne.0) then                                         !srv 14.03.12 {
-         do iy = -1,nyd 
+         do iy = -1,nyd
           do ix = -1,nxd
            wrk0(ix,iy) = sy(ix,iy)
           enddo
@@ -598,8 +598,8 @@ csw 09jan2014 add extra allocates
         write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
         close(70)
        endif                                                       !srv 14.03.12 }
-#endif         
-#endif         
+#endif
+#endif
        ncall = ncall +1
 
 csw 09jan2014 remove contains: fun
@@ -616,7 +616,7 @@ csw 09jan2014 add dealloc
 
 csw 09jan2014 add 'fun' function
        function fun(arg)
-       use b2mod_b2_to_astra_com  ! IGNORE
+       use b2mod_b2_to_astra_com
        real(kind=R8) :: fun,arg,DSEVAL
        fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun
@@ -650,7 +650,7 @@ csw 09jan2014 add 'fun' function
           enddo
          enddo
 !         write (*,"(a, i5)") '    svol ncall=', ncall
-!         write (*,"(es15.7)") svol 
+!         write (*,"(es15.7)") svol
        endif
 
        do iy = 0, mintopcut-1
@@ -669,7 +669,7 @@ csw 09jan2014 add 'fun' function
        enddo
 !         write (*,"(a, i5)") '       src         svol      ncall=', ncall
 !         do iy = 0, nyd-1
-!          write (*,"(2es15.7)") src(iy),svol(iy) 
+!          write (*,"(2es15.7)") src(iy),svol(iy)
 !        enddo
 
        ncall = ncall + 1

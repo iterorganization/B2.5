@@ -21,7 +21,7 @@
 *     ------------------------------------------------------------------
 
 *  .. interpolate fch_pi_c(,0) to faces
-      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,fch_pi_c, fch_pi_f)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,fch_pi_c,fch_pi_f)
 
 *  .. multiply with poloidal face area
       fch_pi_f(:,0) = fch_pi_f(:,0)*geo%fcS(:)*geo%fcQalf(:,0)

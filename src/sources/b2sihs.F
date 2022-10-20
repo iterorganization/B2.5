@@ -21,6 +21,7 @@
       use b2mod_external                                                 !srv 05.07.17
       use b2mod_geo
      , , only : hz                                                       !srv 05.07.17
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
@@ -86,10 +87,10 @@
       real (kind=R8) ::
      *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
 *   ..procedures
-      intrinsic min, max, sqrt, log, mod
+      intrinsic min, max, sqrt
       real (kind=R8) ::
      *  uasx, uesx, uasy, hy1                                           !srv 13.01.17
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg, intfacev, intfaceh
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       uasx(ix,iy,is)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
@@ -236,17 +237,17 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy)*(hy(ix,iy)
-     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    *(fchstoch(ix,iy)*(hy1(ix,iy)
+     &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
-     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy1(ix,iy)
+     &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
           endif
         enddo
        enddo
-      endif                                                               !lk 31.01.08 }
-      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                  !srv 17.12.13
+      endif                                                              !lk 31.01.08 }
 *   ..contribution from divergence(ue,ve)
 !xpb !!! The radial derivative terms uesy are non-conservative !!!
 cxpb    t0 = -phm0*((uesx(rightix(ix,iy),rightiy(ix,iy))-uesx(ix,iy))    !xpb
@@ -322,7 +323,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       -(wpoh(rightix(ix,iy),rightiy(ix,iy))-wpoh(ix,iy))*
      &       (1.0_R8/wbbv(topix(ix,iy),topiy(ix,iy),3)**2-
      &        1.0_R8/wbbv(ix,iy,3)**2))
-            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                  	 !xpb
+            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                         !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
@@ -769,6 +770,7 @@ c
       use b2mod_b2cmpa
       use b2mod_balance                                                  !djm Jan2017
      & , only : b2sihs_diaa0to3, b2sihs_diae0to3, balance_netcdf
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -795,7 +797,7 @@ c
 *   ..procedures
       real (kind=R8) ::
      *  hy1
-      external subini, subend, xertst, b2xvsg, ipgetr
+      external xertst, b2xvsg, ipgetr
       intrinsic min, max
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation

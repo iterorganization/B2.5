@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, switch, 
+      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, switch,
      &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
@@ -9,6 +9,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nCv, ns, itim, itcnt
@@ -150,7 +151,7 @@
       intrinsic min, max
       real (kind=R8) ::
      *   smin, b2ssum
-      external subini, subend, xertst, ipgeti, smin, b2ssum, cfwure
+      external xertst, ipgeti, smin, b2ssum, cfwure
 *-----------------------------------------------------------------------
 *.documentation-internal
 *

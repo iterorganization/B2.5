@@ -12,3 +12,6 @@ module tradui_constants
   
 end module tradui_constants
 
+!!!Local Variables:
+!!! mode: f90
+!!! End:

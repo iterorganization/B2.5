@@ -49,6 +49,7 @@
       logical, save :: read_sigma(nncf) = .false.
       real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
       double precision, parameter :: inf_opt = 1.0e30
+
       private :: user
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -101,6 +102,10 @@ c----------------------------------------------------------------------
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
 
+      call xertst(1.le.ns, 'faulty argument ns')
+      call xertst(0.le.nlim, 'faulty argument nlim')
+      call xertst(0.le.nmol, 'faulty argument nmol')
+      call xertst(0.le.ntns, 'faulty argument ntns')
       if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
@@ -109,7 +114,7 @@ c----------------------------------------------------------------------
 #endif
       
 c*** PFR specification - for He enrichment and neutral pressure
-c***  Standard setup:
+c***  Standard set-up:
       lpfrs_pmp=0            ! no pumping
       fusion_power=0.0_R8    ! no helium
       Spmp_He_to_D=1.0_R8    ! same pumping speed for He and D
@@ -178,6 +183,7 @@ c***  Standard setup:
 
       subroutine read_b2mod_user_namelist(ns,ntns,geo,m)
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
       integer, intent(in) :: ns,ntns
       type (geometry), intent (in) :: geo
@@ -193,10 +199,13 @@ c***  Standard setup:
       integer i, j, k, is, im, ndata
       integer, allocatable :: cfReg(:)
       logical old_style, done, ifail, found
+      integer, save :: use_eirene, neutrals_namelist
       logical, save :: hydrogen, helium, neon
-      external subini, subend
+      external ipgeti, find_file, xertst
 
       call subini ('readuser')
+      call ipgeti ('b2mndr_eirene', use_eirene)
+      call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 
 *  -- USER --
       filename=user_filename
@@ -578,23 +587,23 @@ c*** Set default values according to current species list
           end if
         end do
       end do
-#ifdef B25_EIRENE
-      do i = 1,3
-        if (j_h_at(i).eq.0) cycle
-        if (user_namelist_used) then
-          if (maxval(l_h_mol).gt.0) then
-            do is = 1, nnmoli
-              call xertst(l_h_mol(is,i).eq.mlcmp(j_h_at(i),is),
-     .         'faulty inputs l_h_mol, mlcmp')
-            end do
-          else
-            do is = 1, nnmoli
-              l_h_mol(is,i) = mlcmp(j_h_at(i),is)
-            end do
+      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
+        do i = 1,3
+          if (j_h_at(i).eq.0) cycle
+          if (user_namelist_used) then
+            if (maxval(l_h_mol).gt.0) then
+              do is = 1, nnmoli
+                call xertst(l_h_mol(is,i).eq.mlcmp(j_h_at(i),is),
+     .           'faulty inputs l_h_mol, mlcmp')
+              end do
+            else
+              do is = 1, nnmoli
+                l_h_mol(is,i) = mlcmp(j_h_at(i),is)
+              end do
+            end if
           end if
-        end if
-      end do
-#endif
+        end do
+      endif
       if (helium) call xertst(nint(zn(eb2atcr(j_he_at))).eq.2,
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
@@ -652,10 +661,11 @@ c*** Set default values according to current species list
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep
 
-
       call subend ()
       return
- 999  call xerrab ('Error while reading USER namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading USER namelist!')
+#endif
       end subroutine read_b2mod_user_namelist
 
       subroutine write_b2mod_user_namelist(nx,ns)
@@ -667,9 +677,5 @@ c*** Set default values according to current species list
       written = .true.
       return
       end subroutine write_b2mod_user_namelist
-
-
-
-***********************************************************************
 
       end module b2mod_user_namelist

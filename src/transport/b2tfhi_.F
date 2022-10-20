@@ -3,6 +3,7 @@
       subroutine b2tfhi_ (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,   !srv 13.10.06
      &   pl, dv, co, rt, balance)                                                 !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
@@ -18,6 +19,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfhi, b2tfhi_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -77,7 +79,7 @@ c      integer, save :: conductive_limit = 1                             !srv 16
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03 
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialization
 
@@ -122,9 +124,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..set dummy arrays
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
-
-
-      facdriftm  = maxval(dv%facdrift)
+      facdriftm = maxval(dv%facdrift)
       dv%fhiPSch = 0.0e0_R8                                                !srv 13.10.06
       dv%coni    = 0.0e0_R8                                                !srv 02.01.07
       dv%floi    = 0.0e0_R8
@@ -871,4 +871,4 @@ c neutrals
 *-----------------------------------------------------------------------
 *.end b2tfhi_
 
-      end
+      end subroutine b2tfhi_
