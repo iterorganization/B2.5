@@ -9,7 +9,7 @@
 #ifndef SOLPS4_3
       use eirmod_infcop    ! IGNORE
 #else
-      use b2_4to5
+      use b2_4to5          ! IGNORE
      &   , only : newunit
 #endif
 #endif
