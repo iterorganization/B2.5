@@ -2185,6 +2185,7 @@ cdjm Update ion heat sources
       kinrgy_av=avmlt*kinrgy_av+curmlt*state%dv%kinrgy
       fne_av=avmlt*fne_av+curmlt*state%dv%fne
       if (allocated(dab2_av)) then
+#ifndef SOLPS4_3
         dab2_av=avmlt*dab2_av+curmlt*dab2
         dmb2_av=avmlt*dmb2_av+curmlt*dmb2
         tab2_av=avmlt*tab2_av+curmlt*tab2
@@ -2197,6 +2198,24 @@ cdjm Update ion heat sources
         pfluxm_av=avmlt*pfluxm_av+curmlt*pfluxm
         pefluxa_av=avmlt*pefluxa_av+curmlt*pefluxa
         pefluxm_av=avmlt*pefluxm_av+curmlt*pefluxm
+#else
+        dab2_av(:,:,:)=avmlt*dab2_av(:,:,:)+curmlt*dab2(:,:,:,1)
+        dmb2_av(:,:,:)=avmlt*dmb2_av(:,:,:)+curmlt*dmb2(:,:,:,1)
+        tab2_av(:,:,:)=avmlt*tab2_av(:,:,:)+curmlt*tab2(:,:,:,1)
+        tmb2_av(:,:,:)=avmlt*tmb2_av(:,:,:)+curmlt*tmb2(:,:,:,1)
+        rfluxa_av(:,:,:)=avmlt*rfluxa_av(:,:,:)+curmlt*rfluxa(:,:,:,1)
+        rfluxm_av(:,:,:)=avmlt*rfluxm_av(:,:,:)+curmlt*rfluxm(:,:,:,1)
+        refluxa_av(:,:,:)=avmlt*refluxa_av(:,:,:)+
+     .                                         curmlt*refluxa(:,:,:,1)
+        refluxm_av(:,:,:)=avmlt*refluxm_av(:,:,:)+
+     .                                         curmlt*refluxm(:,:,:,1)
+        pfluxa_av(:,:,:)=avmlt*pfluxa_av(:,:,:)+curmlt*pfluxa(:,:,:,1)
+        pfluxm_av(:,:,:)=avmlt*pfluxm_av(:,:,:)+curmlt*pfluxm(:,:,:,1)
+        pefluxa_av(:,:,:)=avmlt*pefluxa_av(:,:,:)+
+     .                                         curmlt*pefluxa(:,:,:,1)
+        pefluxm_av(:,:,:)=avmlt*pefluxm_av(:,:,:)+
+     .                                         curmlt*pefluxm(:,:,:,1)
+#endif
       endif
 
       end subroutine update_average_balance

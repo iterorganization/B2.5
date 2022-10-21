@@ -41,11 +41,15 @@ cank }
 #ifndef SOLPS4_3
       use eirmod_extrab25
       use eirmod_parmmod
-     &    , only: nlim, nsts, nlimps
+     &    , only : nlim, nsts, nlimps
 #else
       use parmmod   ! IGNORE
+     &    , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
       use braeir    ! IGNORE
+     &    , only : itsput_chemical, issput_chemical, igass_chemical,
+     &             chemical_sputter_yield, fchar_chemical
       use eirdiag   ! IGNORE
+     &    , only : nnatmi, nnmoli, nnioni, nnstsi
       use ceirsrt   ! IGNORE
 #endif
       use eirmod_solps
