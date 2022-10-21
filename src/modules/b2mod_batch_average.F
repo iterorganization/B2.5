@@ -6,7 +6,12 @@
       use b2mod_plasma
       use b2mod_sources
 #ifdef B25_EIRENE
-      use eirmod_infcop
+#ifndef SOLPS4_3
+      use eirmod_infcop   ! IGNORE
+#else
+      use b2_4to5         ! IGNORE
+     , , only : newunit
+#endif
 #endif
       implicit none
       real (kind=R8), allocatable, save ::

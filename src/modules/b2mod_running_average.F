@@ -6,7 +6,12 @@
       use b2mod_constants
       use b2us_plasma
 #ifdef B25_EIRENE
-      use eirmod_infcop
+#ifndef SOLPS4_3
+      use eirmod_infcop    ! IGNORE
+#else
+      use b2_4to5
+     &   , only : newunit
+#endif
 #endif
       use b2mod_subsys
       implicit none
@@ -41,13 +46,7 @@
 
       subroutine running_average (nCv,ns,pl,dv,
      &           sna0_eir, smo0_eir, she0_eir, shi0_eir)
-      use b2mod_types
-      use b2mod_constants
       use b2mod_plasma
-      use b2us_plasma
-#ifdef B25_EIRENE
-      use eirmod_infcop
-#endif
       implicit none
 c input
       integer, intent(in) :: nCv, ns

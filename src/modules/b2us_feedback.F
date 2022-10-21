@@ -16,7 +16,11 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & ,only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+     & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
+#endif
       implicit none
       integer, parameter :: nvac=4, nvacreg=4, nMxFbReg = 1000
 #     include "DIMENSIONS.F"
