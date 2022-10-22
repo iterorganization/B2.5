@@ -338,7 +338,7 @@ contains
     !  the face nodeA0->nodeB0 in the original cell    
     subroutine extendValue( oix, oiy, nodeAT, nodeBT, nodeAO, nodeBO, tix, tiy, val)
       integer, intent(in) :: oix, oiy, nodeAT, nodeBT, nodeAO, nodeBO, tix, tiy
-      double precision, intent(inout), dimension(-1:nx,-1:ny,0:3) :: val
+      real(R8), intent(inout), dimension(-1:nx,-1:ny,0:3) :: val
 
       ! internal
       real(R8), parameter :: del = 1.0e-1_R8
