@@ -5,14 +5,6 @@
       use b2mod_version
       use b2mod_constants
       use b2us_plasma
-#ifdef B25_EIRENE
-#ifndef SOLPS4_3
-      use eirmod_infcop    ! IGNORE
-#else
-      use b2_4to5          ! IGNORE
-     &   , only : newunit
-#endif
-#endif
       use b2mod_subsys
       implicit none
 
@@ -123,6 +115,10 @@ c local variables
       integer :: io, iun, idum(0:1), iex
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('run_av_init')
 
@@ -185,13 +181,14 @@ c local variables
          naver = 0
          ntotdt = 0
 
-#ifdef B25_EIRENE
-         iun = newunit()
+#ifdef F2003
+         open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
+     .        form='FORMATTED',status='OLD',iostat=iex)
 #else
-         iun = 99
-#endif
+         iun = newunit()
          open (unit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
+#endif
 
          io = iex
          read (iun,'(A10)',iostat=io) check
@@ -296,19 +293,24 @@ c local variables
       integer :: idum(0:1), iun
       external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('run_av_save')
 
 
 *  write 2d averaged plasma profiles
 
-#ifdef B25_EIRENE
-      iun = newunit()
+#ifdef F2003
+      open (newunit=iun,file=savefile,access='SEQUENTIAL',
+     .          form='FORMATTED',status='REPLACE')
 #else
-      iun = 99
-#endif
+      iun = newunit()
       open (unit=iun,file=savefile,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
+#endif
 
 !     write (*,*) ' iun ',iun
 

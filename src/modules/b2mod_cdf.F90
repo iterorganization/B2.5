@@ -8,12 +8,10 @@ module b2mod_cdf
   character*(maxncnam), save :: timsav, batchsav
   integer, save :: ntsav, nasav
   data timsav /'!!!! INVALID NAME !!!!'/
-#endif
   private
 
 contains
 
-#ifndef NO_CDF
   subroutine b2crtimecdf(filename, &
    nCv, nc, ns, write_2d, &
    ncid, batch_only, iret)

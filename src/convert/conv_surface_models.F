@@ -25,6 +25,10 @@
      .                        istart_eir(:), iend_eir(:), idtrg(:)
       logical :: found,lhelp(60)
       integer :: artificial_slab=0, spatial_hybrid = 0
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
       intrinsic pack
 
       call ipgeti ('artificial_slab', artificial_slab)	
@@ -42,11 +46,19 @@
       
       call find_eirene_numbering(mpg, idim, ipos, istart, iend,
      .                           nd, nsf, ipos_b2)
-
+#ifdef F2003
       open (newunit=ineir,file='input.dat',iostat=ier)
-      if (ier /= 0) 
-     .  call xerrab ('input.dat not found')
+#else
+      ineir = newunit()
+      open (unit=ineir,file='input.dat',iostat=ier)
+#endif
+      call xertst (ier.eq.0, 'input.dat not found')
+#ifdef F2003
       open (newunit=iouteir,file='input.dat.us')
+#else
+      iouteir = newunit()
+      open (unit=iouteir,file='input.dat.us')
+#endif
 
       do
         read (ineir,'(a500)') line
@@ -320,6 +332,10 @@
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:) 
       integer, allocatable :: ipos_b2(:)
       integer :: artificial_slab=0
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call ipgeti ('artificial_slab', artificial_slab)	
 
@@ -415,7 +431,12 @@
 
 !  write nondefault standard surface block for Eirene input
 
+#ifdef F2003
       open (newunit=nblk3,file='eirene_block3.dat')
+#else
+      nblk3 = newunit()
+      open (unit=nblk3,file='eirene_block3.dat')
+#endif
       write (nblk3,'(a)') 
      .  '*** 3A DATA FOR NONDEFAULT STANDARD SURFACES, NSTSI='
       write (nblk3,'(i6)') imodel
@@ -477,7 +498,12 @@
 
 !  write target information for Eirene input block 14
 
+#ifdef F2003
       open (newunit=nblk14,file='eirene_block14.dat')
+#else
+      nblk14 = newunit()
+      open (unit=nblk14,file='eirene_block14.dat')
+#endif
       write (nblk14,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
       write (nblk14,'(i6)') ntarg
       write (nblk14,'(12i6)') (1, i=1,ntarg)

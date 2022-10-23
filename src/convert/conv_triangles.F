@@ -25,10 +25,10 @@
      .           iad, ix, iy, ix_b25, nopen, it, isig, iused, ineir,
      .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
      .           ixl, ixr, iv, icside
-      
+
       real(R8), allocatable :: xc_old(:), yc_old(:)
       real(R8), allocatable :: xc_new(:), yc_new(:)
-      integer, allocatable :: im_old_new(:), elem_new(:,:), 
+      integer, allocatable :: im_old_new(:), elem_new(:,:),
      .                        im_new_old(:)
       integer, allocatable :: neigh(:,:,:), elem_cv(:), trifc(:,:),
      .                        ixtri(:), iytri(:), bndmdl(:,:),
@@ -47,16 +47,24 @@
       end type tri_list
       type(tri_list), allocatable :: trias(:,:)
       type(tri_elem), pointer :: tel
-      
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call ipgeti ('artificial_slab', artificial_slab)	
       call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)	
       call ipgeti ('is_narrow_grid',is_narrow_grid)
 
-!  if input.dat exist check which form of fort.33 is used
+!  if input.dat exists check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
+#ifdef F2003
         open (newunit=ineir,file='input.dat')
+#else
+        ineir = newunit()
+        open (unit=ineir,file='input.dat')
+#endif
         line = repeat(' ',500)
         do while (index(line,'*** 14') == 0)
           read (ineir,'(a500)') line
@@ -67,11 +75,11 @@
       else
         ntrfrm = 0
       endif
-     
+
 !  read coordinates from fort.33
       open (unit=33,access='SEQUENTIAL',form='FORMATTED')
       read (33,*) nco_old
-      
+
       allocate (xc_old(nco_old))
       allocate (yc_old(nco_old))
       allocate (xc_new(nco_old+nncut))
@@ -97,7 +105,7 @@
 !  now find new coordinate indices
 
 
-!  first introduce coordinates from unstructured mesh into  
+!  first introduce coordinates from unstructured mesh into
 !  self-balancing binary search tree
       baum => EIRENE_NewTree()
       NNODES=0
@@ -108,20 +116,20 @@
         inserted=.false.
         xc = gm%vxX(ivx)*100._R8    ! convert to cm
         yc = gm%vxY(ivx)*100._R8    ! convert to cm
-        call EIRENE_insert (baum, xc, yc, 
+        call EIRENE_insert (baum, xc, yc,
      .                      0._R8, 1._R8, ic, inserted)
 !        IF (INSERTED) THEN
           NNODES=NNODES+1
           xc_new(NNODES)=xc
           yc_new(NNODES)=yc
-!        END IF       
+!        END IF
       end do
 
 !  now check coordinates from old fort.33 file for new index
       do ico = 1, nco_old
         IC=NNODES+1
         inserted=.false.
-        call EIRENE_insert (baum, xc_old(ico), yc_old(ico), 
+        call EIRENE_insert (baum, xc_old(ico), yc_old(ico),
      .                      0._R8, 1._R8, ic, inserted)
         IF (INSERTED) THEN
           if (is_narrow_grid.eq.1) then
@@ -142,8 +150,8 @@
         else
           im_old_new(ico) = ic
           im_new_old(ic) = ico
-        END IF       
-        
+        END IF
+
       end do
 
       if (nnodes /= nco_old+nncut) then
@@ -192,7 +200,7 @@
       open (unit=35,access='SEQUENTIAL',form='FORMATTED')
       read (35,*) nel2
 
-      if (nel2 /= nelem) 
+      if (nel2 /= nelem)
      .  call xerrab ('conv_triangles -- '//
      .               'wrong no. of triangles in fort.35')
 
@@ -206,7 +214,7 @@
       end do
       close(35)
 
-!  setup conversion arrays 
+!  setup conversion arrays
 
       allocate (ix_b2_eir(0:nx+1))
       allocate (ix_eir_b25(1:nx+3*nncut))
@@ -236,12 +244,12 @@
 !  convert plasma cell index from (ixtri,iytri) to icv
       allocate (elem_cv(nelem))
       if (artificial_slab > 0) then
-        allocate(trias(-1:nx,-1:ny))     
+        allocate(trias(-1:nx,-1:ny))
       end if
 
       do iel = 1, nelem
         if (ixtri(iel) < 0) then
-          elem_cv(iel) = -1 
+          elem_cv(iel) = -1
         else
 !  ixtri, iytri are in Eirene cell counting
 !  find cell number in B2.5 counting
@@ -310,7 +318,7 @@
                 if (icv == mpg%fcCv(ifc,2)) isig = -1
               end if
               trifc(is,iel) = isig * ifc
-              if (neigh(is,1,iel) /= 0) 
+              if (neigh(is,1,iel) /= 0)
      .          trifc(neigh(is,2,iel),neigh(is,1,iel)) = -isig * ifc
             end if
           end do
@@ -373,7 +381,7 @@
                     icmin = min(cfce(iv,1),cfce(iv,2))
                     icmax = max(cfce(iv,1),cfce(iv,2))
                     if ((ismin == icmin) .and. (ismax == icmax)) then
-                      ifc = cfce(iv,3) 
+                      ifc = cfce(iv,3)
                       if (ifc > 0) then
                         if (icv == mpg%fcCv(ifc,2)) isig = -1
                       end if
@@ -392,18 +400,18 @@
           end do
         end do
       end if
-      
+
 
       allocate (bndmdl(3,nelem))
       bndmdl = 0
 
-!  set recycling boundary model indicators 
+!  set recycling boundary model indicators
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
-        call conv_surface_models (nout, mpg, gm, 
+        call conv_surface_models (nout, mpg, gm,
      .     bndmdl, trifc, elem_cv, nelem)
       else
-        call find_nondef_surfaces (nout, mpg, gm, 
+        call find_nondef_surfaces (nout, mpg, gm,
      .     elem_new, bndmdl, elem_cv, nelem)
       end if
 
@@ -450,7 +458,7 @@
 
       integer, allocatable :: jvx(:)
       integer :: nv, nf, j, jfc, jv1, jv2
-      real(R8) :: px1, py1, px2, py2, vpx, vpy, 
+      real(R8) :: px1, py1, px2, py2, vpx, vpy,
      .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq
 
       nv = mpg%cvVxP(icv,2)
@@ -496,10 +504,10 @@
           det = abs(vfx*vpy - vfy*vpx)
           if (det > 1.D-4) cycle
 !  check that the "new" point lies on interval (x1,y1) -- (x2,y2)
-          if ((iv1 /= jv1) .and. (iv1 /= jv2)) then 
-            d = vfy*px1 - vfx*py1 + (fx2*fy1-fx1*fy2) 
-          else 
-            d = vfy*px2 - vfx*py2 + (fx2*fy1-fx1*fy2) 
+          if ((iv1 /= jv1) .and. (iv1 /= jv2)) then
+            d = vfy*px1 - vfx*py1 + (fx2*fy1-fx1*fy2)
+          else
+            d = vfy*px2 - vfx*py2 + (fx2*fy1-fx1*fy2)
           end if
           dq = d*d
           lq = vfx*vfx + vfy*vfy
@@ -511,7 +519,7 @@
         write (*,*) ' no face found for points ', iv1, iv2
 !        call xerrab ('find_face_number -- no face found ')
       end if
-      
+
       deallocate (jvx)
       return
       end subroutine find_face_number
