@@ -634,8 +634,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) =
-     &    (-shn(iCv,1)-shn(iCv,3)*nn(iCv)+
-     &    +abs(reshn(iCv))/(rxg*tn(iCv)))
+     &    (-shn(iCv,1)-shn(iCv,3)*nn(iCv)
+     &     +abs(reshn(iCv))/(rxg*tn(iCv)))
         endif
       enddo
 ! $AD II-LOOP

@@ -5,14 +5,6 @@
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_sources
-#ifdef B25_EIRENE
-#ifndef SOLPS4_3
-      use eirmod_infcop   ! IGNORE
-#else
-      use b2_4to5         ! IGNORE
-     , , only : newunit
-#endif
-#endif
       implicit none
       real (kind=R8), allocatable, save ::
      .                             na_mean(:,:), te_mean(:),
@@ -175,14 +167,19 @@ ctb..as the mean of the product does not equal the product of the means etc.
       character(*), intent(in) :: batch_name
       integer :: idum(0:1), iun
       character lble*120
-
-#ifdef B25_EIRENE
-      iun = newunit()
-#else
-      iun = 99
+#ifndef F2003
+      integer newunit
+      external newunit
 #endif
+
+#ifdef F2003
+      open (newunit=iun,file=batch_name,access='SEQUENTIAL',
+     .          form='FORMATTED',status='REPLACE')
+#else
+      iun = newunit()
       open (unit=iun,file=batch_name,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
+#endif
 
 *   ..get label
       call b2xxid ('b2mn', lble(1:60))

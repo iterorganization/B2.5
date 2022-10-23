@@ -12,9 +12,6 @@
 #ifndef NO_CDF
       use b2mod_cdf
 #endif
-#ifdef B25_EIRENE
-      use eirmod_infcop
-#endif
 
       implicit none
 
@@ -56,17 +53,22 @@
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
       intrinsic floor
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       naver = 0
       ntotdt = 0
 
-#ifdef B25_EIRENE
-      iun = newunit()
+#ifdef F2003
+      open (newunit=iun,file='b2favere',access='SEQUENTIAL',
+     .        form='FORMATTED',status='OLD',iostat=iex)
 #else
-      iun= 99
-#endif
+      iun = newunit()
       open (unit=iun,file='b2favere',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
+#endif
 
       io = iex
       read (iun,'(A10)',iostat=io) check
@@ -191,12 +193,12 @@
 
 *  write table of statistical errors
 
-#ifdef B25_EIRENE
-      iout = newunit()
+#ifdef F2003
+      open (newunit=iout,file='b2ye.prt')
 #else
-      iout = 99
-#endif
+      iout = newunit()
       open (unit=iout,file='b2ye.prt')
+#endif
       write (iout,'(a16,5a12)') ' variable ','mean value','t',
      .             't1','t2','eps_s'
       if (b2ye_tprf(nemxip_av(:,1),nastep)) then

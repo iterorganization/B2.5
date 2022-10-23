@@ -368,22 +368,23 @@ program test_b2output
 ! Open the file, read the header, and return the file unit specifier.
 ! B2.5 output files can be either binary or text files. We open first as
 ! formatted file, if it does not make sense, then reopen as unformatted.
-#ifdef B25_EIRENE
-   use eirmod_infcop, only : newunit
-#endif
    implicit none
    character(*), intent(in) :: filename
    integer :: my_unit
    character(len=10) :: version_in
    character(len=7) :: label
    integer :: ierr
-   
-#ifdef B25_EIRENE
-   my_unit=newunit()
-#else
-   my_unit=99
+#ifndef F2003
+   integer newunit
+   external newunit
 #endif
+   
+#ifdef F2003
+   open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
+#else
+   my_unit=newunit()
    open(unit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
+#endif
    ! Read the header
    read(my_unit,'(a,a)') label ,version_in
    if (label/='VERSION') then

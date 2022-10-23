@@ -43,14 +43,14 @@ cank }
       use eirmod_parmmod
      &    , only : nlim, nsts, nlimps
 #else
-      use parmmod   ! IGNORE
+      use parmmod        ! IGNORE
      &    , only : nfl, natm, nmol, nion, nlim, nsts, nlimps
-      use braeir    ! IGNORE
+      use braeir         ! IGNORE
      &    , only : itsput_chemical, issput_chemical, igass_chemical,
      &             chemical_sputter_yield, fchar_chemical
-      use eirdiag   ! IGNORE
+      use eirdiag        ! IGNORE
      &    , only : nnatmi, nnmoli, nnioni, nnstsi
-      use ceirsrt   ! IGNORE
+      use ceirsrt        ! IGNORE
 #endif
       use eirmod_solps
 #else
@@ -1262,6 +1262,10 @@ c.. Test consistency with physical edges within the computational domain
       logical, allocatable :: old_style(:)
       character*16 hlp_frm
       character*260 filename
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       filename=neutrals_filename
       neutrals_time_mod = 0.0_R8
@@ -1311,7 +1315,12 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
         call alloc_mapping_rc (m)
         m%rcFcP = 0
         
+#ifdef F2003
         open (newunit=idb,file='debug_neutrals.out')
+#else
+        idb = newunit()
+        open (unit=idb,file='deug_neutrals.out')
+#endif
         instra = 0
         do istra = 1, nstrai
           if (crcstra(istra) == 'A') then
@@ -2107,6 +2116,10 @@ c.. Test consistency with physical edges within the computational domain
       character(1) :: lchar(nstrat)
       type (mapping), intent (inout) :: m
       type (geometry), intent (inout) :: g
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 !      intrinsic huge
 
       m%nRc   = nstrai  ! number of recycling boundaries
@@ -2170,7 +2183,12 @@ cwdk also need to correct for degenerate faces?
       enddo
 
       call alloc_mapping_rc (m)
+#ifdef F2003
       open (newunit=idb,file='recyc.out')
+#else
+      idb = newunit()
+      open (unit=idb,file='recyc.out')
+#endif
 
       minlbl = huge(1)
       maxlbl = -huge(1)
@@ -2279,6 +2297,10 @@ cwdk also need to correct for degenerate faces?
       type(mapping), intent(inout) :: m
       integer :: istra, instra, istrac, ifc, ic1, ic2
       integer :: iout, ian, ien, i
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       m%nRc = nstrai
 !pb   m%mxnRc = sum(nrcfaces(1:nstrai))       ! number of cells with imposed stratum
@@ -2310,8 +2332,12 @@ cwdk also need to correct for degenerate faces?
           end if
         end do
       end do
-
+#ifdef F2003
       open (newunit=iout,file='rc.testout')
+#else
+      iout = newunit()
+      open (unit=iout,file='rc.testout')
+#endif
       write (iout,*) 'nstrat =',m%nRc
       write (iout,'(a,/(10i6))') 'rcCvP(1) ',
      .      (m%rcCvP(istra,1),istra=1,m%nRc)
@@ -2341,8 +2367,17 @@ cwdk also need to correct for degenerate faces?
       integer :: istra, iout, ian, ien, is, i
       character(1) :: ap =''''
       character(10) :: new_neutrals_version = '03.002.000'
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open(newunit=iout,file='b2us.neutrals.parameters')
+#else
+      iout = newunit()
+      open(unit=iout,file='b2us.neutrals.parameters')
+#endif
 
       call cfverw(iout,new_neutrals_version)
 
