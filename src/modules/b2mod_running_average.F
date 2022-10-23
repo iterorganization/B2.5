@@ -113,6 +113,10 @@ c local variables
       character lbli*120
       external b2ruzd, b2xpne, b2xpni
       external cfruch, cfruin, cfrure
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('run_av_init')
 
@@ -177,13 +181,14 @@ c local variables
          naver = 0
          ntotdt = 0
 
-#ifdef B25_EIRENE
-         iun = newunit()
+#ifdef F2003
+         open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
+     .        form='FORMATTED',status='OLD',iostat=iex)
 #else
-         iun = 99
-#endif
+         iun = newunit()
          open (unit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
+#endif
 
          io = iex
          read (iun,'(A10)',iostat=io) check
@@ -363,6 +368,10 @@ c local variables
       integer :: n2, idum(0:2), iun
       external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('run_av_save')
 
@@ -370,13 +379,14 @@ c local variables
 
 *  write 2d averaged plasma profiles
 
-#ifdef B25_EIRENE
-      iun = newunit()
+#ifdef F2003
+      open (newunit=iun,file=savefile,access='SEQUENTIAL',
+     .          form='FORMATTED',status='REPLACE')
 #else
-      iun = 99
-#endif
+      iun = newunit()
       open (unit=iun,file=savefile,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
+#endif
 
 !     write (*,*) ' iun ',iun
 
