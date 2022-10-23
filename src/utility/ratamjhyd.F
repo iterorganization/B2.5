@@ -191,11 +191,11 @@
 6666  FORMAT (A8,A4,A9,A3)
 
 *   .. Get Amjuel/hydhel process options
-      found = 0
-      do while  (.not.found)
+      found = .false.
+      do while (.not.found)
         READ (nrid,'(A72)') row
         if (INDEX(row,'Amjuel/Hydhel Hydrogen reaction cards')>0) then
-          found = 1
+          found = .true.
         end if
       end do
 

@@ -114,6 +114,10 @@
       external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
       external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs, b2wfgm, b2wugm
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -639,7 +643,12 @@ cdpc-debug
      .        mpg%nVmxCv, gm, mpg)
       write (*,*) 'Geometry created'
 !     write unstructured b2fgmtry file
+#ifdef F2003
       open (newunit=nout_us,file='b2fgmtry_us',iostat=io)
+#else
+      nout_us = newunit()
+      open (unit=nout_us,file='b2fgmtry_us',iostat=io)
+#endif
 
 !   ..write headers for output files
       call cfverw (nout_us, newversion)

@@ -983,6 +983,10 @@ c.. Test consistency with region boundaries
       logical file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
       external find_file, xerrab
 
       filename=boundary_filename
@@ -1015,7 +1019,12 @@ c.. Test consistency with region boundaries
         call alloc_mapping_bc (m)
         m%bcFcP = 0
 
+#ifdef F2003
         open (newunit=idb,file='debug_bound.out')
+#else
+        idb=newunit()
+        open (unit=idb,file='debug_bound.out')
+#endif
         inbc = 0
         do ib = 1, nbc
           if (bcchar(ib) == 'A') then
@@ -1632,6 +1641,10 @@ c.. Test consistency with region boundaries
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
       character(1) :: lchar(nbc)
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
       intrinsic huge
 
       m%nBc   = nbc     ! number of boundary conditions
@@ -1688,7 +1701,12 @@ cwdk also need to correct for degenerate faces?
 
 
       call alloc_mapping_bc (m)
+#ifdef F2003
       open (newunit=idb,file='bound.out')
+#else
+      idb = newunit()
+      open (unit=idb,file='bound.out')
+#endif
 
       minlbl = huge(1)
       maxlbl = -huge(1)
@@ -1818,9 +1836,17 @@ cwdk also need to correct for degenerate faces?
       integer :: ib, iout, ian, ien, is, i
       character(1) :: ap =''''
       character(10) :: new_boundary_version = '03.002.000'
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open(newunit=iout,file='b2us.boundary.parameters')
-
+#else
+      iout = newunit()
+      open(unit=iout,file='b2us.boundary.parameters')
+#endif
       call cfverw(iout,new_boundary_version)
 
       write (iout,'(1x,a)') '&boundary'
@@ -1925,6 +1951,10 @@ cwdk also need to correct for degenerate faces?
       type(mapping), intent(inout) :: m
       integer :: ib, inbc, ibc, ifc, ic1, ic2
       integer :: iout, ian, ien, i
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       m%nBc = nbc
 !pb   m%mxnBc = sum(nbcfaces(1:nbc))       ! number of cells with imposed BC
@@ -1955,7 +1985,12 @@ cwdk also need to correct for degenerate faces?
         end do
       end do
 
+#ifdef F2003
       open (newunit=iout,file='bc.testout')
+#else
+      iout = newunit()
+      open (unit=iout,file='bc.testout')
+#endif
       write (iout,*) 'nbc =',m%nBc
       write (iout,'(a,/(10i6))') 'bcCvP(1) ',(m%bcCvP(ib,1),ib=1,m%nBc)
       write (iout,'(a,/(10i6))') 'bcCvP(2) ',(m%bcCvP(ib,2),ib=1,m%nBc)

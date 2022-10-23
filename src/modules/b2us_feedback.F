@@ -2039,9 +2039,17 @@ cxpb size is changed in DIMENSIONS.F
       integer, intent(in) :: ns
       integer :: ifb, iout
       character(10) :: new_feedback_version = '03.002.000'
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open(newunit=iout,file='b2us.feedback_control.parameters')
-
+#else
+      iout = newunit()
+      open(unit=iout,file='b2us.feedback_control.parameters')
+#endif
       call cfverw(iout,new_feedback_version)
 
       write (iout,'(1x,a)') '&feedback_control'
@@ -2088,8 +2096,6 @@ cxpb size is changed in DIMENSIONS.F
   
       write (iout,'(1x,a)') '/'
       close (iout)
-
-      open(newunit=iout,file='b2us.feedback_control.parameters')
 
       return
       end subroutine write_fbparms

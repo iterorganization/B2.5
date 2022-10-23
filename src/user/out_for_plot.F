@@ -4,7 +4,6 @@
       use b2us_map
       use b2us_geo
       use b2us_plasma
-
       implicit none
 
       integer, intent(in) :: ns
@@ -12,16 +11,34 @@
       type(geometry), intent(in) :: gm
       type(B2state), intent(in) :: st
       integer :: iout, igeo, ielm
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open (newunit=iout,file='idl.conf',form='FORMATTED',
      .            ACCESS='SEQUENTIAL')
+#else
+      iout = newunit()
+      open (unit=iout,file='idl.conf',form='FORMATTED',
+     .            ACCESS='SEQUENTIAL')
+#endif
       call out_config(iout, mpg)
       close (iout)
-
+#ifdef F2003
       open (newunit=igeo,file='geometry.npco_char',form='FORMATTED',
      .            ACCESS='SEQUENTIAL')
       open (newunit=ielm,file='geometry.elemente',form='FORMATTED',
      .            ACCESS='SEQUENTIAL')
+#else
+      igeo = newunit()
+      open (unit=igeo,file='geometry.npco_char',form='FORMATTED',
+     .            ACCESS='SEQUENTIAL')
+      ielm = newunit()
+      open (unit=ielm,file='geometry.npco_char',form='FORMATTED',
+     .            ACCESS='SEQUENTIAL')
+#endif
       call out_geometry(igeo, ielm, mpg, gm)
       close (igeo)
       close (ielm)
@@ -43,20 +60,19 @@
       type(mapping), intent(in) :: mpg
       integer :: i1, i2, i3
       character(10) :: CDATE, CTIME
-      character(len=:), allocatable :: cname
+      character(8) :: CNAME
 
       write (iout,'(A)') ' PRODUCING PROGRAM: SOLPS-ITER'
 
       write (iout,'(//A,I6)') ' LEVGEO ',15
 
 !  mesh consisting of n-cornered cells
-      cname = 'geometry'
+      CNAME = 'geometry'
       write (iout,'(A,A)')  ' CASENAME ',CNAME
       write (iout,'(A,I10)') ' NVx     ',mpg%nVx
       write (iout,'(A,I10)') ' NCI     ',mpg%nCi
       write (iout,'(A,I10)') ' NCORNER ',maxval(mpg%cvVxp(1:mpg%nCi,2))
       
-
       write (iout,'(//A)') label
 
       CALL DATE_AND_TIME(CDATE,CTIME)
@@ -88,7 +104,7 @@
       integer, allocatable :: indvx(:)
       real (kind=R8) :: areat, x1, y1, x2, y2, x3, y3, at
       character(6) :: ccell
-      character(len=:), allocatable :: cform
+      character(6) :: cform
 
       AREAT(X1,Y1,X2,Y2,X3,Y3) = 0.5*(X1*(Y2-Y3)+X2*(Y3-Y1)+X3*(Y1-Y2))
 
@@ -167,8 +183,7 @@
         end do
 
 !  write vertex numbers to file
-        cform='(  i9)'
-        write (cform(2:3),'(i2)') nfcl+2
+        write (cform,'(a,i2,a)') '(',nfcl+2,'i9)'
         write (ielm,cform) icv, nfcl, indvx(1:nfcl*2:2)
       end do
 
@@ -246,6 +261,10 @@
       character(*), intent(in) :: txttal, txtspc(0:ns-1), txtunt
       integer :: istr, iout, i, k, is
       CHARACTER(50) :: FNAME, FORMA, FORME, FORME2
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       FORMA=REPEAT(' ',50)
       FORMA='(6X,   A25)'
@@ -263,11 +282,23 @@
       WRITE (FNAME(8:9),'(i0)') ITAL
 
       IF (LFIRST) THEN
+#ifdef F2003
         OPEN (NEWUNIT=IOUT,FILE=FNAME,FORM='FORMATTED',
      .        ACCESS='SEQUENTIAL')
+#else
+        IOUT = newunit()
+        OPEN (UNIT=IOUT,FILE=FNAME,FORM='FORMATTED',
+     .        ACCESS='SEQUENTIAL')
+#endif
       ELSE
+#ifdef F2003
         OPEN (NEWUNIT=IOUT,FILE=FNAME,FORM='FORMATTED',
      .        ACCESS='SEQUENTIAL',POSITION='APPEND')
+#else
+        IOUT = NEWUNIT()
+        OPEN (UNIT=IOUT,FILE=FNAME,FORM='FORMATTED',
+     .        ACCESS='SEQUENTIAL',POSITION='APPEND')
+#endif
       END IF
 
       WRITE (IOUT,'(A)')

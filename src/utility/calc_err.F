@@ -1,4 +1,4 @@
-      subroutine set_exact_solution(nCv, ns, switch, pl, dv)                         !srv 26.02.18 {
+      subroutine set_exact_solution(nCv, ns, switch, pl, dv)             !srv 26.02.18 {
        use b2mod_types
        use b2us_plasma
        use b2mod_switches
@@ -85,7 +85,12 @@
        logical l_exist
        character chns*3, chnCv*6
        character*27 filename
+#ifdef F2003
        intrinsic norm2
+#else
+       real (kind=R8) :: norm2
+       external norm2
+#endif
 
        write (chnCv,'(i6.6)') nCv
        open(71, file='output/'//'errors_'//chnCv//'_us.dat')
@@ -116,13 +121,22 @@
            call my_out_us(70,nCv,0,err,'na'//chns//'_rerr')
          else
            write(71,'(a,a3,a,a3,a,a4)')
-     &      ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                  !srv 09.07.18
+     &      ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                 !srv 09.07.18
          endif
 
+#ifdef F2003
          L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
+#else
+         L2norm=norm2(nCv,exact_na(:,is))
+#endif
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' L2eraNa',chns,'/L2Na',chns,'    =',norm2(era)/L2norm
+     &      ' L2eraNa',chns,'/L2Na',chns,'    =',
+#ifdef F2003
+     &        norm2(era)/L2norm
+#else
+     &        norm2(nCv,era)/L2norm
+#endif
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' C_eraNa',chns,'/C_Na',chns,'    =',
      &        maxval(abs(era))/maxval(abs(exact_na(:,is)))
@@ -136,7 +150,7 @@
          write(71,*)
        enddo
 
-       call calc_err_cc(nCv, 'Te', pl%te, exact_te, qe)               !srv 29.12.18
+       call calc_err_cc(nCv, 'Te', pl%te, exact_te, qe)                 !srv 29.12.18
 
        call calc_err_cc(nCv, 'Ti', pl%ti, exact_ti, qe) 
 
@@ -167,13 +181,22 @@
            call my_out_us(70,nCv,0,err,'ua'//chns//'_rerr')
          else
            write(71,'(a,a3,a,a3,a,a4)')
-     &      ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                   !srv 09.07.18
+     &      ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                 !srv 09.07.18
          endif
 
+#ifdef F2003
          L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
+#else
+         L2norm=norm2(nCv,exact_ua(:,is))
+#endif
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' L2eraUa',chns,'/L2Ua',chns,'    =',norm2(era)/L2norm
+     &      ' L2eraUa',chns,'/L2Ua',chns,'    =',
+#ifdef F2003
+     &        norm2(era)/L2norm
+#else
+     &        norm2(nCv,era)/L2norm
+#endif
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' C_eraUa',chns,'/C_Ua',chns,'    =',
      &        maxval(abs(era))/maxval(abs(exact_ua(:,is)))
@@ -182,7 +205,7 @@
      &      ' L2eraUa',chns,'/L2Ua',chns,'    =',' Inf'
            write(71,'(a,a3,a,a3,a,a4)')
      &      ' C_eraUa',chns,'/C_Ua',chns,'    =',' Inf'
-         endif                                                           !srv 09.07.18 }
+         endif                                                          !srv 09.07.18 }
 
          write(71,*)
        enddo
@@ -227,11 +250,15 @@
        real (kind=R8) ::
      &    var(nCv), exact_var(nCv), scl,
      &    err(nCv), era(nCv), L2norm, Cnorm                             !srv 09.07.18
-
        logical l_exist
        integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass
+#ifdef F2003
        intrinsic norm2
+#else
+       real (kind=R8) :: norm2
+       external norm2
+#endif
 
        pass='exact_'//trim(nmvar)//'_us.dat'
        call find_file(pass,l_exist)
@@ -263,11 +290,19 @@
      &   ' Max|era',trim(nmvar),'/',trim(nmvar),'|     =',' Inf'
        endif
 
+#ifdef F2003
        L2norm=norm2(exact_var)                                          !srv 09.07.18 {
+#else
+       L2norm=norm2(nCv,exact_var)
+#endif
        if(L2norm.ne.0.0_R8) then
         write(71,'(a,a,a,a,a,es10.3)')
      &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',
+#ifdef F2003
      &   norm2(era)/L2norm
+#else
+     &   norm2(nCv,era)/L2norm
+#endif
         write(71,'(a,a,a,a,a,es10.3)')
      &   ' C_era',trim(nmvar),'/C_',trim(nmvar),'        =',
      &   maxval(abs(era))/maxval(abs(exact_var))
@@ -276,8 +311,26 @@
      &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',' Inf'
         write(71,'(a,a,a,a,a,a4)')
      &   ' C_era',trim(nmvar),'/C_',trim(nmvar),'        =',' Inf'
-       endif                                                             !srv 09.07.18 }
+       endif                                                            !srv 09.07.18 }
 
        write(71,*)
 
       end subroutine calc_err_cc                                        !srv 26.02.18 }
+
+#ifndef F2003
+      function norm2(n,vector)
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: norm2
+      integer, intent(in) :: n
+      real (kind=R8), intent(in) :: vector(n)
+      integer i
+
+      norm2 = 0.0_R8
+      do i = 1, n
+        norm2 = norm2 + vector(i)*vector(i)
+      end do
+      norm2 = sqrt(norm2)
+      return
+      end function norm2
+#endif

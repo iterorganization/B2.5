@@ -59,7 +59,7 @@
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
      ,  filedata,user_filename,ncf,cfstart,cfend,
-     ,  cftype, rzomp, rzimp, cfdef, cfweight, 
+     ,  cftype, rzomp, rzimp, cfdef, cfweight,
      ,  prior_type, prior_par, prior_range, scale_sigma, nsigma,
      ,  sigma, cf_reg, cf_regP, mapToOMP, read_sigma
 c----------------------------------------------------------------------
@@ -84,7 +84,7 @@ c*** npfrgrp   :  actual number of surface groups for PFR flows
 c*** lpfrgrp   :  list of surface segments for PFR flows
 c*** [ij]pfrgrp:  first and last positions in this list for each group
 c*** gpfrgrp   :  identifiers for the PFR surface groups
-c*** nntrgrpd  :  max. number of surface groups for neutral data 
+c*** nntrgrpd  :  max. number of surface groups for neutral data
 c*** nntrgrp   :  actual number of surface groups for neutral data
 c*** lntrgrp   :  list of surface segments for neutral data
 c*** [ij]ntrgrp:  first and last positions in this list for each group
@@ -112,7 +112,7 @@ c----------------------------------------------------------------------
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
       allocate(l_h_mol(nmol,3))
 #endif
-      
+
 c*** PFR specification - for He enrichment and neutral pressure
 c***  Standard set-up:
       lpfrs_pmp=0            ! no pumping
@@ -202,6 +202,10 @@ c***  Standard set-up:
       integer, save :: use_eirene, neutrals_namelist
       logical, save :: hydrogen, helium, neon
       external ipgeti, find_file, xertst
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       call subini ('readuser')
       call ipgeti ('b2mndr_eirene', use_eirene)
@@ -232,13 +236,13 @@ c***  Standard set-up:
       call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
-! Here we need to guarantee ordering of CVs. With classical grids the conversion 
-! is done such that CVs are ordered from left to right and bottom to top wrt 
+! Here we need to guarantee ordering of CVs. With classical grids the conversion
+! is done such that CVs are ordered from left to right and bottom to top wrt
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
 ! IDEA: project the cell center onto the segment and order CVs based on distance wrt one of the segment's extremes
 ! SAME FOR IMP
-      call xertst(m%isClassicalGrid.eq.1, 
-     & ' OMP list need to be revised for fully unstructured grids') 
+      call xertst(m%isClassicalGrid.eq.1,
+     & ' OMP list need to be revised for fully unstructured grids')
       do ic=2,nomp
         if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
      & call xerrab('OMP LIST NOT SORTED')
@@ -252,7 +256,7 @@ c***  Standard set-up:
           found = .true.
           icsepomp = ic+1
         endif
-      ic = ic + 1 
+      ic = ic + 1
       end do
 
       call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
@@ -264,8 +268,12 @@ c***  Standard set-up:
         m%cfRegP = 0
         allocate(cfReg(mxnCf))
         cfReg = 0
-
-        open (newunit=idb,file='debug_user.out')        
+#ifdef F2003
+        open (newunit=idb,file='debug_user.out')
+#else
+        idb = newunit()
+        open (unit=idb,file='debug_user.out')
+#endif
         incf = 0
         do icf = 1, ncf
           if (cftype(icf).gt.10) call xerrab ('cftype>10 not coded ')
@@ -282,22 +290,22 @@ c***  Standard set-up:
      &     cfstart(icf).lt.2 .and. cfend(icf).lt.2) call xerrab (
      &     'cost functions type 0/6 requires cfstart/cfend>1')
           if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
-     &        (cftype(icf).ge.7 .and. cftype(icf).le.10)) 
+     &        (cftype(icf).ge.7 .and. cftype(icf).le.10))
      >         cfread(icf) = .true.
           if (cftype(icf).eq.5) m%cfOnCv(icf) = .false.
           if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
-     &      call xerrab('cftype 5 must be defined using faces!')  
+     &      call xerrab('cftype 5 must be defined using faces!')
           if (cfread(icf)) then
             write (str,'(I1)') icf
             cffile = 'cf'//trim(str)//'.dat'
             call find_file(cffile,file_ok)
-            if (.not. file_ok) call xerrab 
+            if (.not. file_ok) call xerrab
      &       ('Cannot find cost function file '//trim(cffile))
             open(unit=99,file=cffile,status='old',action='read')
             write(*,*) 'Reading cost function data from ',trim(cffile)
             ncfdata(icf) = 0
 !csc File is of unknown length, so first count the number of lines
- 5          read(99,*,end=15) str 
+ 5          read(99,*,end=15) str
               ncfdata(icf) = ncfdata(icf) +1
             goto 5
  15         close(99)
@@ -309,15 +317,15 @@ c***  Standard set-up:
 !    first dimension (# of cost functions), second dimension ((r-rsep)-data-sigma), third
 !    dimension (number of records/data points)
               if (read_sigma(icf)) then
-                read(99,*) cfdata(icf,1:3,i) 
+                read(99,*) cfdata(icf,1:3,i)
               else
-                read(99,*) cfdata(icf,1:2,i) 
+                read(99,*) cfdata(icf,1:2,i)
               endif
             enddo
             close(99)
           endif
           if (cftype(icf).eq.0 .or. cftype(icf).eq.6) cycle !no need to specify domain here
-          done  = .false. 
+          done  = .false.
 
 ! FIXME need to add flag for reversing lists?
 
@@ -364,7 +372,7 @@ c***  Standard set-up:
             end do
             if (done) cycle
 ! this domain has not yet been done
-            m%cfRegP(icf,1) = incf +1 
+            m%cfRegP(icf,1) = incf +1
             ncffc = 0
             noss = cfend(icf) - cfstart(icf) + 1
             do iss = 1, noss
@@ -372,9 +380,9 @@ c***  Standard set-up:
               write (*,*) ' Defining cost function ',icf
               write (*,*) ' surface label ',indss
 ! find all faces belonging to surface structure INDSS
-              call find_faces (indss, incf, ncffc, 
+              call find_faces (indss, incf, ncffc,
      >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
-            end do              ! iss	 
+            end do              ! iss	
             m%cfRegP(icf,2) = ncffc
 ! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
             if (m%cfOnCv(icf)) then
@@ -387,7 +395,7 @@ c***  Standard set-up:
                 elseif (ic2 <= m%nCi) then
                   m%cfReg(m%cfRegP(icf,1)+ifc-1) = ic2
                 else
-                  call xerrab('cfdef=2 -- problem with boundary face') 
+                  call xerrab('cfdef=2 -- problem with boundary face')
                 end if
               end do
             endif
@@ -407,7 +415,7 @@ c***  Standard set-up:
             end do
             if (done) cycle
 ! this domain has not yet been done
-            m%cfRegP(icf,1) = incf +1 
+            m%cfRegP(icf,1) = incf +1
             noss = cfend(icf) - cfstart(icf) + 1
             do iss = 1, noss
               indss = cfstart(icf)+iss-1
@@ -431,7 +439,7 @@ c***  Standard set-up:
             m%cfRegP(icf,2) = cf_RegP(icf,2)
             if (any(cf_Reg(cf_RegP(icf,1) : cf_RegP(icf,1) +
      &       cf_RegP(icf,2) - 1) .le. 0)) call xerrab('cf_Reg<=0')
-            m%cfReg(incf +1:incf +1+m%cfRegP(icf,2)-1) = 
+            m%cfReg(incf +1:incf +1+m%cfRegP(icf,2)-1) =
      &        cf_Reg(cf_RegP(icf,1):cf_RegP(icf,1)+cf_RegP(icf,2)-1)
             incf = incf + cf_RegP(icf,2)
 
@@ -463,7 +471,7 @@ c***  Standard set-up:
 !     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
 !     For prior_type = 2, not used?
         do icf = 1, nsigma
-          if (prior_type(icf) .eq. 1) 
+          if (prior_type(icf) .eq. 1)
      &      call xertst(prior_par(icf,2) .gt. 0.0_R8,
      &     'b2mod_user_namelist: sigma prior <=0')
           call xertst(prior_range(icf,1).lt.prior_range(icf,2),
@@ -628,7 +636,7 @@ c*** Set default values according to current species list
           found = .true.
           icsepimp = ic+1
         endif
-      ic = ic + 1 
+      ic = ic + 1
       end do
       if (.not.found) write(*,*) ('Did not find separatrix location. '
      &  // 'Check specification RZOMP in b2.user.paramters.')

@@ -1,4 +1,4 @@
-      subroutine write_triangles (nout,mpg, gm, nx, ny)
+      subroutine write_triangles (nout, mpg, gm, nx, ny)
 
       use b2mod_types
       use b2mod_boundary_namelist
@@ -373,9 +373,19 @@
       integer, intent(in) :: nco
       real(R8), intent(in) :: xco(nco), yco(nco), sclfac
       integer :: iun, i
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open (newunit=iun,file='triangle.coordinates',
      .           access='SEQUENTIAL',form='FORMATTED')
+#else
+      iun = newunit()
+      open (unit=iun,file='triangle.coordinates',
+     .           access='SEQUENTIAL',form='FORMATTED')
+#endif
       write (iun,'(i9)') nco
       do i = 1, nco
         write (iun,'(i9,2es24.16)') i, xco(i)*sclfac, 
@@ -394,9 +404,19 @@
       implicit none
       integer, intent(in) :: nel, elem(3,nel)
       integer :: iun, i, is
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open (newunit=iun,file='triangle.elements',
      .           access='SEQUENTIAL',form='FORMATTED')
+#else
+      iun = newunit()
+      open (unit=iun,file='triangle.elements',
+     .           access='SEQUENTIAL',form='FORMATTED')
+#endif
       write (iun,'(i9)') nel
       do i = 1, nel
         write (iun,'(4i9)') i, (elem(is,i), is = 1,3)
@@ -415,9 +435,19 @@
       integer, intent(in) :: nel, neighbor(3,2,nel),bndmdl(3,nel),
      .                       elem_cv(nel), trifc(3,nel)
       integer :: iun, i, is, js
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open (newunit=iun,file='triangle.neighbors',
      .           access='SEQUENTIAL',form='FORMATTED')
+#else
+      iun = newunit()
+      open (unit=iun,file='triangle.neighbors',
+     .           access='SEQUENTIAL',form='FORMATTED')
+#endif
       write (iun,'(i9)') nel
       do i = 1, nel
         write (iun,'(i9,3x,3(3i9,3x),4i9)') 

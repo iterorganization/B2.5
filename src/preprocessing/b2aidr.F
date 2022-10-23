@@ -109,6 +109,10 @@
       logical oldversion, ex
       character*256 filename
 *   ..procedures
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
       logical streql, is_comment
       logical ltst                                                  !srv 22.12.09
       external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
@@ -821,7 +825,12 @@
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
 
 *   ..read unstructured geometry
+#ifdef F2003
       open (newunit=ninp_us,file='b2fgmtry_us',iostat=io)
+#else
+      ninp_us = newunit()
+      open (unit=ninp_us,file='b2fgmtry_us',iostat=io)
+#endif
       call cfopen (ninp_us,'b2fgmtry_us','old','un*formatted')
       call cfverr (ninp_us, b2fgmtry_version)
       call cfruin (ninp_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
@@ -858,7 +867,12 @@
       call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 
 *   ..write unstructured b2fstati
+#ifdef F2003
       open (newunit=nout_us,file='b2fstati_us',iostat=io)
+#else
+      nout_us = newunit()
+      open (unit=nout_us,file='b2fstati_us',iostat=io)
+#endif
       idum(0) = mpg%nCv
       idum(1) = mpg%nFc
       idum(2) = ns
