@@ -75,3 +75,21 @@
       return
 *     ------------------------------------------------------------------
       end subroutine cfopen
+
+#ifndef F2003
+      integer function newunit ()
+      implicit none
+      logical used
+      external xertst
+
+      newunit = 99
+      used = .true.
+      do while (newunit.gt.0 .and. used)
+        inquire(unit=newunit,opened=used)
+        if (used) newunit = newunit - 1
+      end do
+      call xertst(.not.used,
+     . 'No available free unit numbers for output!')
+      return
+      end function newunit
+#endif
