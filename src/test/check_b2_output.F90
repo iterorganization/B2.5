@@ -397,7 +397,11 @@ program test_b2output
        ! If it does not match, then it should be a binary file
        close(my_unit)
        ! reopen in UNFORMATTED mode
+#ifdef F2003
+       open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+#else
        open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+#endif
        read(my_unit) label ,version_in
        if (label/='VERSION') then
          if (label == '*cf:') then
