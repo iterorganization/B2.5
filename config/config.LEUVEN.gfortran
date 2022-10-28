@@ -14,7 +14,7 @@ endif
 
 DEFINES += -DDOFLUSH
 
-CPP = /lib/cpp -traditional -DNO_IEEE
+CPP = /lib/cpp -traditional
 
 FC = gfortran
 
