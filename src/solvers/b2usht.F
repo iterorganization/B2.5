@@ -78,7 +78,6 @@
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                      !srv 02.01.07
-      integer, save :: last_ion
       integer ireg
       logical lnonzero
       real (kind=R8) ::

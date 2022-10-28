@@ -101,8 +101,7 @@
 *   ..local variables
       integer idum(0:9), ix, iy, geometryType
       integer nxiso1, nxiso2, nyiso1, nyiso2
-      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
-      character line*500
+      character lblgm*120, idout*80
       integer istyle
       type(mapping) :: mpg
       type(geometry) :: gm
@@ -692,14 +691,6 @@ cdpc-debug
 * ..return
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.error conditions
-
-   91 call xerrab ('error trying to read heading *param')
-   92 call xerrab ('error trying to read parg')
-   93 call xerrab
-     1 ('error trying to read non-default internal parameters')
 
 *-----------------------------------------------------------------------
 *.end b2agdr

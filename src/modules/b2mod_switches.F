@@ -1511,7 +1511,7 @@ c b2siav
       call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)                          !srv 28.03.06
 
 c b2trcl
-      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)	                    !iyv 06.12.13
+      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                            !iyv 06.12.13
 
 c b2stbc
         call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
@@ -1665,8 +1665,8 @@ c b2stel
 c b2srdt
         call xertst (0.0_R8.le.s%b2srdt_phm0.and.
      &        0.0_R8.le.s%b2srdt_phm1.and.0.0_R8.le.s%b2srdt_phm3.and.
-     &        0.0_R8.le.s%b2srdt_phm4.and.0.0_R8.le.s%b2srdt_phm5,   !xpb
-     &	 'faulty internal parameter phm0, phm1, phm3, phm4, phm5')   !xpb
+     &        0.0_R8.le.s%b2srdt_phm4.and.0.0_R8.le.s%b2srdt_phm5,    !xpb
+     &    'faulty internal parameter phm0, phm1, phm3, phm4, phm5')   !xpb
 
 c b2stcx
        call xertst (0.0_R8.le.s%b2stcx_rg0,

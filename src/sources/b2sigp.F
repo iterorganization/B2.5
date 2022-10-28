@@ -32,7 +32,9 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      * wrk0(nCv), wrk1(nCv), wrk2(nCv),
-     * wrk3(nCv), wrk4(nCv),                      !djm Jan2017
+#ifdef WG_TODO
+     * wrk3(nCv), wrk4(nCv),                       !djm Jan2017
+#endif
      * wrk5(nCv), wrk6(nCv),                       !srv 28.03.17
      * tb(nCv)
 *-----------------------------------------------------------------------
@@ -47,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, k
+      integer iCv!, k
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0, wrkf(nFc), wrkv(nVx)

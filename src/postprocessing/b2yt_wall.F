@@ -366,7 +366,7 @@ cxpb For mixed materials, if unspecified, use normal material constituents
           layer_nzconstituents(ibnd,1:layer_nconstituents(ibnd))=
      1     matsurf_nzconstituents(ibnd,1:layer_nconstituents(ibnd))
           layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))=
-     1     matsurf_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))
+     1     matsurf_relconstituents(ibnd,1:layer_nconstituents(ibnd))
         else
           layer_model = .true.
         end if
@@ -409,7 +409,7 @@ cxpb the old element with the largest areal contribution
           layer_nzconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
      1     matsurf_nzconstituents(imax,1:layer_nconstituents1(ibnd1))
           layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
-     1     matsurf_nrelconstituents(imax,1:layer_nconstituents1(ibnd1))
+     1     matsurf_relconstituents(imax,1:layer_nconstituents1(ibnd1))
 cxpb  normalise the layer constituents relative concentrations
           sum = 0.0_R8
           do i = 1, layer_nconstituents1(ibnd1)

@@ -432,7 +432,7 @@ c lcore           is this a core element
      *  wrk(ndepth_nml)
       logical lcore, found
 
-      integer is0, is1, is2, is, js, k, iwall, itrack
+      integer is0, is1, is2, is, k, iwall, itrack
       real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf
 
       iwall=xymap(ix,iy)

@@ -321,7 +321,7 @@
       if (strmas(idout,'fhex')) then
        write (header,'(a,t44,a)')
      &   'Y-DIRECTED ELECTRON (ATOM) HEAT FLUX (SO)',
-     1	 'AS FUNCTION OF X'
+     1   'AS FUNCTION OF X'
        write (nprt,fmtp) '+fhex', header
        call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fhex',
      &   header)

@@ -49,14 +49,14 @@
       implicit none
       type (mapping), intent (inout) :: m
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc, ic1, ic2,
+      integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc,
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
      .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, ifs,
-     .           inv, inv1, inv2, invmx, ifcc, icount, n2, ix2o, iy2o,
-     .           nghostcvi, ncorneri, nghostfcxi, nghostfcyi, ifcy,
+     .           ifcc, icount, n2, ix2o, iy2o,
+     .           ncorneri, nghostfcxi, nghostfcyi, ifcy,
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
-     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, idb, ifccy,
-     .           lbix, lbiy, nyreg, ixreg, iyreg, is, nxtl, nxtr,
+     .           ixb, iyb, bix, biy, tix, tiy, rix, riy, ifccy,
+     .           nyreg, ixreg, iyreg, is, nxtl, nxtr,
      .           iunused, nunused, ivxe, nvxe, lbl, ier, nfcxReg,
      .           istrtc, istrtfc, istrtfy, ilbl
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:),
@@ -74,7 +74,7 @@
      .           ftReg(:), nxreg(:), reg(:,:), ixstart(:,:,:), ftLbl(:),
      .           ixend(:,:,:), iystart(:), iyend(:), nseg(:,:)
       real(R8) :: xco(4), yco(4), babs
-      logical lfound, swapped, classical, bound, lkeep, cellError
+      logical lfound, swapped, classical, bound, cellError
       intrinsic pack
 
 !  assume a structured quadrilateral grid
@@ -165,7 +165,7 @@
        do ix = -1, nx
         if (.not.isGhostCell(cflags(ix, iy, CELLFLAG_TYPE))) cycle
         ict = 0
-	! Count inexisting neighbors
+! Count inexisting neighbors
         if (rightix(ix,iy)==nx+1) ict = ict+1
         if (leftix(ix,iy)==-2  )  ict = ict+1
         if (topiy(ix,iy)==ny+1)   ict = ict+1
@@ -240,7 +240,7 @@
             icount=icount+1
             ixghostfcx(icount) = ix
             iyghostfcx(icount) = iy
-          endif	
+          endif
         enddo
       enddo
       nghostfcxi = icount
@@ -262,7 +262,7 @@
             icount=icount+1
             ixghostfcy(icount) = ix
             iyghostfcy(icount) = iy
-          endif	
+          endif
         enddo
       enddo
       nghostfcyi = icount
@@ -1700,7 +1700,7 @@
             m%cvOnClosedSurface(ic) = on_closed_surface(ix,iy)
           endif
         end do
-      end do	
+      end do
 
 ! regions (faces)
 ! x faces
@@ -1858,7 +1858,7 @@
           reg(2,3) = 2
         endif
         do iyreg = 1, nyreg
-    	  do iy = iystart(iyreg), iyend(iyreg)
+          do iy = iystart(iyreg), iyend(iyreg)
             ilbl = ilbl + 1
             do ixreg = 1, nxreg(iyreg)
               istrtc = -1
@@ -1893,7 +1893,7 @@
                         istrtfc = 1
                       else
                         ifcc = ifcc + 1
-     	                m%ftFc(ifcc) = ifc
+                        m%ftFc(ifcc) = ifc
                         ftFcP(ift,2) = ifcc - ftFcP(ift,1) + 1
                       end if
                     endif
@@ -1906,7 +1906,7 @@
                         istrtfy = 1
                       else
                         ifccy = ifccy + 1
-     	                m%fsFc(ifccy) = ifcy
+                        m%fsFc(ifccy) = ifcy
                         fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
                       end if
                     endif
@@ -1932,7 +1932,7 @@
                     istrtfy = 1
                   else
                     ifccy = ifccy + 1
-     	            m%fsFc(ifccy) = ifcy
+                    m%fsFc(ifccy) = ifcy
                     fsFcP(ifs,2) = ifccy - fsFcP(ifs,1) + 1
                   endif
                 endif
@@ -1998,9 +1998,11 @@
       implicit none
       integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
      .                       nVmxCv
-      integer :: ix, iy, ic, ifc, nfx, ivx, i, j, idb, ivx1, ivx2, icv,
-     .           ift
-      real (kind=R8) :: hy1(-1:nx,-1:ny), du, dux, duy
+      integer :: ix, iy, ic, ifc, nfx, ivx, ift
+#ifdef WG_TODO
+      integer :: i, j, idb, ivx1, ivx2
+#endif
+      real (kind=R8) :: hy1(-1:nx,-1:ny)
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 #ifndef F2003
@@ -2127,7 +2129,7 @@
       open (unit=idb,file='debug.out')
 #endif
       do ix = 236, 238
-        do iy=8, 12
+        do iy = 8, 12
           write (idb,'(2i6)') ix, iy
           write (idb,'(2es17.6)') crx(ix,iy,0),cry(ix,iy,0)
           write (idb,'(2es17.6)') crx(ix,iy,1),cry(ix,iy,1)
@@ -2139,7 +2141,7 @@
 
       write (idb,*)
       do ix = 235, 250
-        do iy=5, 12
+        do iy = 5, 12
           ic = mpg%imapcv(ix,iy)
           write (idb,'(a,3i6)') 'ix,iy,ic ',ix,iy,ic
           write (idb,'(a,5i6)') 'cflags ',cflags(ix,iy,:)
@@ -2205,7 +2207,7 @@
       integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
       type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
-      integer :: ix, iy, ic, ifc, nfx
+      integer :: ix, iy, ic, ifc!, nfx
 
       call createB2State (nCv, nFc, ns, st)
       call createB2Diagnostic( nCv, ns, nnreg, st % diag )
@@ -3019,7 +3021,7 @@
       integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
       type(mapping), intent(in) :: mpg
       type(B2State), intent(inout) :: st
-      integer :: ix, iy, ic, ifc, nfx
+      integer :: ix, iy, ic, ifc!, nfx
 
       call createB2Plasma( nCv, ns, st % pl )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
@@ -3253,7 +3255,7 @@
       type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
       integer :: nx, ny, nCi, nCv, nFc
-      integer :: ix, iy, ic, ifc, nfx
+      integer :: ix, iy, ic, ifc!, nfx
       integer :: nout_st, io, idum(0:9)
       character lblst*120, lblps*120
 #ifndef F2003
@@ -4303,7 +4305,6 @@
         implicit none
         integer, intent(in) :: nx, ny, ns, nCi, nCv, nFc
         type(B2StateExt), intent(inout) :: st_ext
-        integer :: ix, iy, ic, ifc
 
         ! For now, only create a dummy external state.
         ! Functionality from b2mod_external to be carried over!

@@ -65,7 +65,7 @@
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                     !srv 13.10.06
       real (kind=R8) ::
-     *   t1, t2, t3, t11, t22, wrk0(nFc), tr
+     *   t1, t2, t3, t11, t22, tr
       character chns*3
       logical lnonzero
 *   ..procedures

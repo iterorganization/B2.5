@@ -71,8 +71,10 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, js, ib, ibc, ib0,
-     &  ibc0, ireg, coreregno, coreregn2,
+      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, ib, ibc, ib0,
+     &  ism, ibc0, k
+#ifdef WG_TODO
+     & ,coreregno, coreregn2, ibw, ireg, isb, isa,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -82,69 +84,85 @@
      1  bc_type21_ref, bc_type21_ix, bc_type21_iy, bc_type21_i,
      2  bc_type21_ixx,
      1  bc_type16_kinetic_energy
-      integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
+      integer       :: num_inner                                        !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
+      integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
+#endif
       integer, save :: bccon_flux_fb_style =0
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
       integer, save :: bcenk_17_style =0
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
-      integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
       real (kind=R8) ::
-     *  vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,                !srv 15.11.07
-     1  t3, t4, totflux, weight, dsh, vt,
-     1  naave, volave, teave, neave, tiave, niave, poave,
-     2  vwest, veast, vbnd, totfluxn, totfluxi, totpar
-     &  ,pzaverage, pzsum, volsum                                       !srv 24.03.99 18.01.02
-     &  ,naua2sum(0:ns-1), naua2average(0:ns-1)
-     &  ,ua2sum, ua2average(0:ns-1)                                     !srv 07.04.00 15.02.02
-     &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
-     &  ,nesum, tisum, tiaverage, tesum                                 !srv 15.12.00 25.01.02
-     &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
-      real (kind=R8) :: bzhzsum, bzhzaverage, bzsum, bzaverage          !lk 20.11.07
+     *  vte, s1, s1hz, fche, fchi, t0, t1, t2,                          !srv 15.11.07
+     1  t3, t4, totflux, dsh, vt,
+     2  vbnd, totpar,
+     &  naua2sum(0:ns-1), naua2average(0:ns-1),
+     &  pzaverage, pzsum, volsum                                        !srv 24.03.99 18.01.02
+#ifdef WG_TODO
+     1  ,weight, volave
+     &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
+     &  ,uasum, uaaverage(0:ns-1), totfluxn, totfluxi                   !srv 15.02.02
+     &  ,nesum, neave, niave, tisum, tiave, tiaverage, tesum, teave     !srv 15.12.00 25.01.02
+     &  ,nasum, naave, naaverage(0:ns-1), poave, bbsum, bbaverage       !srv 22.01.02 18.10.04
+      real (kind=R8) :: bzhzsum, bzhzaverage
+#endif
+      real (kind=R8) :: bzsum, bzaverage                                !lk 20.11.07
       real (kind=R8) ::
-     *  wdia(nCv), wrk0(nCv), wght(nFc,2),
-     *  uu(nFc,0:ns+st_ext%ns-1),
+     *  wdia(nCv), wrk0(nCv),
+#ifdef WG_TODO
+     *  uu(nFc,0:ns+st_ext%ns-1), zarg,
+#endif
      *  ud(nFc,0:ns-1), !sx(-1:nx,-1:ny), 
-     *  pz(nCv), !sxhz(-1:nx,-1:ny),                          !srv 24.08.08
+     *  pz(nCv), !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
      *  gOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)  
-      real (kind=R8), save :: cor9 = 0.0_R8                           !srv 23.09.08
+      real (kind=R8), save :: cor9 = 0.0_R8                             !srv 23.09.08
       character chns*3, chk*1                                           !srv 11.07.05
-      logical decay_length_ok, fedback_species, ishigh
+      logical decay_length_ok, ishigh
+#ifdef WG_TODO
+      logical fedback_species
       logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)                 !srv 20.09.17
+      character*24 hlp_frm
       real (kind=R8) ::
-     *  rz(nCv), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
+     *  upout, uuout, uutest, zbar
+#endif
+      real (kind=R8) ::
+     *  rz(nCv), cs, csb,                                               !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
+      character*26 boundary_location(nbcd)
+#ifdef WG_TODO
       integer isfeedback, fix_fch_in_fhe_sheath, is_kinetic
       integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
-      character*26 boundary_location(nbcd)
-      character*24 hlp_frm
       save coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref,
      2  bc_type21_ref, 
      *  isfeedback, fix_fch_in_fhe_sheath,
      *  is_kinetic
+#endif
 *   ..procedures
       intrinsic abs, sqrt, mod, erf
       real (kind=R8) ::
-     *  bcint, sy, syhz, intvertex_s, intface_s                         !srv 24.08.08
+     *  bcint, sy, intvertex_s                                          !srv 24.08.08
       external xertst, ipgeti, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
 *   ..initialisation
+#ifdef WG_TODO
       data coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      & bc_type16_ref/1/, bc_type20_ref/1/, 
      & isfeedback/0/, 
      & fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type21_ref/1/, is_kinetic/0/
+      integer ibnd
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor, w1,
-     .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
+     .  fyt, gam0, gam1, tlimit, cone0, coni0, flo,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
-      real (kind=R8) :: hybr, harm, pit, upwind
-      integer ibnd, conduction_only, no_hybr_e, no_hybr_i
+#endif
+      real (kind=R8) :: harm, pit, upwind
+      integer conduction_only, no_hybr_e, no_hybr_i
       data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
       save conduction_only, no_hybr_e, no_hybr_i
       external upwind, harm
@@ -388,7 +406,6 @@ cxpb  Following suggestion from Russians, the drift velocity
 cxpb  should only include ExB and not diamagnetic contribution
 cwdk  With redefinition of drifts as being the poloidal projections,
 cwdk  now need to recompute full diamagnetic component for ud
-#ifdef WG_TODO
       if (isymm.eq.2.or.isymm.eq.4) then
         ud(:,:) = 0.0_R8
       else if (sheath_drift_fix.eq.0) then
@@ -400,6 +417,7 @@ cwdk  now need to recompute full diamagnetic component for ud
          ud(:,is) = dv%vaecrb(:,0,is)*geo%cvBb(:,3)/geo%cvBb(:,2)*signmf
         enddo
       endif
+#ifdef WG_TODO
       if (main_call .and. diagno.ge.1) then                           !xpb
         write(*,'(a,1p,(10000e12.4))') 'dna0',
      1   (dna0(nx/2,ny,is),is=0,ns-1)
@@ -839,10 +857,10 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
-	    iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
             sy = geo%fcS(iFc)
 
-	    srw%sna0(iCv1,0,is) = 0.0_R8
+            srw%sna0(iCv1,0,is) = 0.0_R8
             srw%sna0(iCv1,1,is) = -(co%dna0(iCv1,is)+co%dpa0(iCv1,is)*
      &             (rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1)))/
      &             conpar(is,ib,1)*sy

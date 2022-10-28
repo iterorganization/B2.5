@@ -78,10 +78,12 @@
 *   ..common blocks
 *   ..local variables
       integer is, idum(0:9), ismain
-      real (kind=R8) :: t0, t1,
+      real (kind=R8) :: t0, t1
+#ifdef WG_TODO
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
+#endif
       character lblmn*120, lblrc*120, lblgm*120
       character cnamip*80, cvalip*80, line*500
       logical file_open

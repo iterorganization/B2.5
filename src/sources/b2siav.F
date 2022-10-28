@@ -49,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFc, iFt, k
+      integer ic, iCv, iFt, k
       integer, save :: nsmooth = 2
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
@@ -60,7 +60,6 @@
      *     qip1(nCv), qipgen(nCv),                                      !srv 23.07.99 19.01.05
      &     tauia1(nCv), alpha1(nCv), nu1(nCv), s2,                      !lk !iyv 02.12.13
      &     gti(nCv,0:1)
-      integer mintopcut                                                 !lk 23.05.06 05.07.07 }
 *   ..procedures
       intrinsic sqrt
 *-----------------------------------------------------------------------

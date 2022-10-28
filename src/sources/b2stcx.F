@@ -49,11 +49,13 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, js, k
+      integer iCv, is, k
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1, tkin, t1n
+#ifdef ASTRA
       real (kind=R8) :: wrk0(nCv)
+#endif
 *   ..procedures
       real (kind=R8) ::
      *  samax, roxa

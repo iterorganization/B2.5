@@ -13,20 +13,21 @@
       use b2mod_sources
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
-     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
+     & , only :
+#ifdef WG_TODO
+     &          b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
+#endif
      &          balance_netcdf
       use b2mod_transport_fun                                            !srv 05.07.17
       use b2mod_external                                                 !srv 05.07.17
-      use b2mod_geo
-     , , only : hz                                                       !srv 05.07.17
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
       real (kind=R8) ::
-     *  BoRiS, fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
+     *  BoRiS, fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
@@ -35,7 +36,7 @@
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      4  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -64,25 +65,29 @@
       integer, save :: use_eirene = 0
       real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
-      character chns*3                                                  !srv 05.07.17
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
-     &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny), 
+     &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny),
      &  wpov(-1:nx,-1:ny), wpoh(-1:nx,-1:ny),
      *  ehx(-1:nx,-1:ny,0:1), ehy(-1:nx,-1:ny,0:1)                      !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),         !srv 13.01.17 05.07.17 {
      4  ce2(-1:nx,-1:ny), cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
      5  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
-     6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     6  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
+#ifdef WG_TODO
+     &  ne2(-1:nx,-1:ny),
+#endif
      &  shefr(-1:nx,-1:ny,0:3), shifr(-1:nx,-1:ny,0:3),                 !srv 05.07.17
+#ifdef WG_TODO
      &  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),
+#endif
      &  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      &  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),             !srv 13.01.17 05.07.17 }
      &  shest(-1:nx,-1:ny,0:3)                                          !srv 17.12.13
-      save ncall, style, rf0, rf1, rf2, rf3, rf4, 
+      save ncall, style, rf0, rf1, rf2, rf3, rf4,
      &  phm0, phm1, phm2, phm3, phm4, phm5, phm6, phm7, nsmin, nsmax
       real (kind=R8) ::
      *  t0, t1, ctaup, coef, czetap, czetae                             !srv 05.07.17
@@ -145,11 +150,11 @@
        call xertst (1.ge.abs(style), 'faulty internal parameter style')
        call xertst (0.0_R8.le.min(rf0,rf1,rf2,rf3,rf4),
      &   'faulty internal parameter rf0/1/2/3/4')
-       call xertst 
+       call xertst
      .  (0.0_R8.le.min(phm0,phm1,phm2,phm3,phm4,phm5,phm6,phm7),
      &   'faulty internal parameter phm0/1/2/3/4/5/6/7')
        call ipgeti ('b2tlnl_ii', icase)
-       call xertst (0.eq.icase .or. 1.eq.icase, 
+       call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')
        call ipgetr ('b2tfhe_stochastic', fch_stochastic)           !lk 31.01.08
        call ipgeti ('b2sihs_istyle_Joule_heating', istyle_Joule_heating)  !srv 17.01.14
@@ -758,7 +763,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
       end subroutine b2sihs
 c
-      subroutine b2sdia (nx, ny, ns, na, ne, ti, te, 
+      subroutine b2sdia (nx, ny, ns, na, ne, ti, te,
      . bb, vol, hx, hy, qz,
      1 she, shi, facdrift)                                               !xpb
       use b2mod_types
@@ -802,7 +807,7 @@ c
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, facgt/0.0_R8/
- 
+
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sdia')

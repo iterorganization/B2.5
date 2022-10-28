@@ -20,7 +20,7 @@
      *  wrk0(:,:),  wrk1(:,:)
       real (kind=R8), allocatable, save :: 
      &  facdrift_profile(:,:), fac_ExB_profile(:,:), ds(:),
-     1	fac_vis_profile(:,:)
+     1  fac_vis_profile(:,:)
 
       contains
 

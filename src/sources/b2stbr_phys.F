@@ -664,7 +664,7 @@ c Be suppression of chemical sputtering
         endif
 cxpb  Contributions from the bulk
         layer_nrelconstituents(iwall,1:matsurf_nconstituents(iwall))=
-     1    matsurf_nrelconstituents
+     1    matsurf_relconstituents
      .    (iwall,1:matsurf_nconstituents(iwall))*
      2   sput_frac(0)
 cxpb  Contributions from the deposited species

@@ -1421,7 +1421,6 @@ contains
         integer :: GSubsetCount
         integer :: iType
         integer :: nGSubset !< Total number of grid subsets
-        integer :: nInd     !< Size of grid subset element list
         integer :: xIn
         integer :: yIn
         integer :: xOut

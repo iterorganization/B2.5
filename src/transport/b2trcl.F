@@ -48,7 +48,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  chci(nFc,0:1), chvi(nFc,0:1),
      &  csig(nFc,0:1), calf(nFc,0:1),
      &  cdkt(nFc,0:1),
-     &  csigin(nFc,0:1,0:ns-1,0:ns-1),				 !xpb
+     &  csigin(nFc,0:1,0:ns-1,0:ns-1),                           !xpb
      &  cthe(nCv,0:ns-1), cthi(nCv,0:ns-1),
      &  vsaf_cl(nFc,0:1,0:ns-1),
      &  cvsa_cl(nFc,0:1,0:ns-1),
@@ -91,13 +91,18 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *   ..local variables
       integer i, k, is, is0, iCv, iFc, iFt, mode
       character(3) chns, chns0                                        !srv 17.06.08
-      integer mintopcut                                               !lk 19.09.07  
+#ifdef ASTRA
+      integer mintopcut                                               !lk 19.09.07
+#endif
       real (kind=R8) ::
      *  cflmv, jemax                                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx
       real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
-     &    k2(nCv), tt0(mpg%nFt), tt1(mpg%nFt)                         !lk 19.09.07
+     &    k2(nCv)
+#ifdef ASTRA
+     & , tt0(mpg%nFt), tt1(mpg%nFt)                                   !lk 19.09.07
+#endif
       real (kind=R8) :: tau(nCv), nu1(nCv),                           !lk 12.05.11
      &    k1(nCv), t1, t2                                             !lk 12.05.11
       real (kind=R8) ::
@@ -580,9 +585,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
          if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
             flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     & 	                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+     &                              dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
             t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
-     & 	      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
+     &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                    !srv 13.01.17

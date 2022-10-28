@@ -73,7 +73,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, js, i, is0, idum(0:9), ninp_us, nout_us, io
+      integer n2, is, i, is0, idum(0:9), ninp_us, nout_us, io
       integer, save :: read_b2fstate_file = 0                       !srv 22.12.09
       real (kind=R8) :: t0, t1                                      !srv 22.12.09
       type(mapping) :: mpg
