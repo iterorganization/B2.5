@@ -1311,6 +1311,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
       integer ncall, use_eirene, ank_mods
       save ncall, use_eirene, ank_mods
       data ncall/0/, use_eirene/0/, ank_mods/0/
+
       call subini ('b2stbr_neutr_scl')
       if (ncall.eq.0) then
         call xertst(0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

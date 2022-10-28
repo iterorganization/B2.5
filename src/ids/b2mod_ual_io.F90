@@ -95,6 +95,7 @@ module b2mod_ual_io
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
      & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Face, &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
      & , only : b2_IMAS_Fill_Grid_Desc
@@ -599,7 +600,8 @@ contains
     !!          checks for correct use of the routine.
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
-    subroutine B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+    subroutine B25_process_ids( &
+            &   edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
             &   summary, &
