@@ -240,8 +240,6 @@ contains
         integer :: i2    !< Iterator
         integer :: nbix
         integer :: nbiy
-        integer :: nbix2
-        integer :: nbiy2
         integer :: iFace !< Face/edge index
         integer :: iCorner
         integer :: index
@@ -267,7 +265,7 @@ contains
         integer :: VxiReduce( (nx + 2) * (ny + 2) * 4)
         integer :: nsector( (nx + 2) * (ny + 2) * 4)
 
-        logical :: check, cell_done
+        logical :: cell_done
 
         !! list of identified special vertices
         !! vertex indices (ix, iy)

@@ -80,14 +80,13 @@
       integer iCv, is
       real (kind=R8) ::
      * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                   !srv 02.01.07
-     1 wrkc(nFc,0:1,0:2), cortt(nCv),                                   !srv 02.01.07
+     1 wrkc(nFc,0:1,0:2),                                               !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
      4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)                      
       character chns*3                                                  !srv 17.07.05
-      character chncall*5                                          
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
@@ -280,27 +279,27 @@ c residuals for separate neutral energy equation
 !        call my_out_us(70,nCv,0,te,'b2npht_te_input')
 !        call my_out_us(70,nCv,0,ti,'b2npht_ti_input')
 !        call my_out_us(70,nCv,0,po,'b2npht_po_input')
-	call my_out_us(70,nCv,0,dv%reshe,'b2npht_reshe')
-	call my_out_us(70,nFc,1,dv%fhe(1,0),'b2npht_fhe_th')
-	call my_out_us(70,nFc,1,dv%fhe(1,1),'b2npht_fhe_r')
+        call my_out_us(70,nCv,0,dv%reshe,'b2npht_reshe')
+        call my_out_us(70,nFc,1,dv%fhe(1,0),'b2npht_fhe_th')
+        call my_out_us(70,nFc,1,dv%fhe(1,1),'b2npht_fhe_r')
         call my_out_us(70,nCv,0,she0(1,0),'b2npht_she0')
         call my_out_us(70,nCv,0,she0(1,1),'b2npht_she1')
         call my_out_us(70,nCv,0,she0(1,2),'b2npht_she2')
         call my_out_us(70,nCv,0,she0(1,3),'b2npht_she3')
         wrk0=she0(:,0)+she0(:,1)*pl%te+she0(:,2)*dv%ne+
      &       she0(:,3)*pl%te*dv%ne
-	call my_out_us(70,nCv,0,wrk0,'b2npht_she')
-	call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
-	call my_out_us(70,nCv,0,dv%reshn,'b2npht_reshn')
-	call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
-	call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhi_th')
-	call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhi_r')
-	call my_out_us(70,nFc,1,dv%fhn(1,0),'b2npht_fhn_th')
-	call my_out_us(70,nFc,1,dv%fhn(1,1),'b2npht_fhn_r')
-	call my_out_us(70,nFc,1,dv%fkt(1,0),'b2npht_fkt_th')
-	call my_out_us(70,nFc,1,dv%fkt(1,1),'b2npht_fkt_r')
-	call my_out_us(70,nFc,1,dv%fzt(1,0),'b2npht_fzt_th')
-	call my_out_us(70,nFc,1,dv%fzt(1,1),'b2npht_fzt_r')
+        call my_out_us(70,nCv,0,wrk0,'b2npht_she')
+        call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
+        call my_out_us(70,nCv,0,dv%reshn,'b2npht_reshn')
+        call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
+        call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhi_th')
+        call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhi_r')
+        call my_out_us(70,nFc,1,dv%fhn(1,0),'b2npht_fhn_th')
+        call my_out_us(70,nFc,1,dv%fhn(1,1),'b2npht_fhn_r')
+        call my_out_us(70,nFc,1,dv%fkt(1,0),'b2npht_fkt_th')
+        call my_out_us(70,nFc,1,dv%fkt(1,1),'b2npht_fkt_r')
+        call my_out_us(70,nFc,1,dv%fzt(1,0),'b2npht_fzt_th')
+        call my_out_us(70,nFc,1,dv%fzt(1,1),'b2npht_fzt_r')
         call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
         call my_out_us(70,nCv,0,shi0(1,1),'b2npht_shi1')
         call my_out_us(70,nCv,0,shi0(1,2),'b2npht_shi2')

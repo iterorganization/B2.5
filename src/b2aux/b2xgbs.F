@@ -19,9 +19,7 @@
 *     pbs(,,1) will contain the bottom face value.
 *     pbs thus contains the parallel contact area.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy, ncall, area_fix
-      real (kind=R8) ::
-     *   t1, p0x, p0y, p1x, p1y
+      integer n2, ix, iy, ncall
       external xertst, b2xvsg, b2xvff, ipgeti
       save ncall
       data ncall/0/

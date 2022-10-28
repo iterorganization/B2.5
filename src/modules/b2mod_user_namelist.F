@@ -190,17 +190,21 @@ c***  Standard set-up:
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        dx, ic1, ic2, icff, icv, ifc, ifcc, ifc1, ifc2,
+     >        ic1, ic2, icff, icv, ifc, ifcc, ifc1, ifc2,
      >        ii, ifc11, ifc22, jj
 
       logical :: file_ok
       character*260 filename, cffile
       character*1 str
-      integer i, j, k, is, im, ndata
+      integer i, ndata
       integer, allocatable :: cfReg(:)
-      logical old_style, done, ifail, found
+      logical done, ifail, found
       integer, save :: use_eirene, neutrals_namelist
+#ifdef WG_TODO
+      integer j, k, is, im
+      logical old_style
       logical, save :: hydrogen, helium, neon
+#endif
       external ipgeti, find_file, xertst
 #ifndef F2003
       integer newunit

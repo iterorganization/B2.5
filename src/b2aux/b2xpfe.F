@@ -17,7 +17,7 @@
 *       fne(,) = (sum is :: rza(,is)*fna(,,is))-(1/qe)*fch(,) .
 *     A contribution from external species can also be included.
 *     ------------------------------------------------------------------
-      integer iFc, is
+      integer is
       real (kind=R8) :: wrkf(nFc)
       external sfill, b2saxpy
 *     ------------------------------------------------------------------

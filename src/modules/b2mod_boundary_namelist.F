@@ -138,8 +138,11 @@ csw 18feb2014 added for correct implementation of boundary conditions
       integer, intent(in) :: ns
       type (mapping), intent(inout) :: mpg
       real (kind=R8), intent(in) :: tim
+#ifdef WG_TODO
       integer ix, iy, is, ib
-      logical done, catch_up
+      logical done
+#endif
+      logical catch_up
       external xertst
 
 !WG_TODO need to clean up here;
@@ -277,7 +280,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
       implicit none
       integer, intent(in) :: nxd, nyd, nsd, nbcd_in, nnisod_in
-      integer ix, iy
       external ipgeti, xertst
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -966,8 +968,9 @@ c.. Test consistency with region boundaries
      .   'Mismatch (4) with region boundaries (South) !')
       end do
       return
-
- 999  call xerrab ('Error while reading BOUNDARY namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading BOUNDARY namelist!')
+#endif
       end subroutine read_b2mod_boundary_namelist_st
 
       subroutine read_b2mod_boundary_namelist_us(ns, m, dotest)
@@ -975,13 +978,20 @@ c.. Test consistency with region boundaries
       integer, intent(in) :: ns
       type(mapping), intent(inout) :: m
       logical, intent(in) :: dotest
-      integer is, ib, ic, ix, iy, ixx, iyy, noss, iss, indss, idb,
-     >        nbcfc, inbc
+      integer is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
       integer :: ian, ien
+#ifdef WG_OUT
       logical covered, corner, guard_cell, found
+#else
+#ifdef WG_TODO
+      integer ix, iy, ixx, iyy
+      logical found
+      logical, allocatable :: old_style(:)
+#endif
+#endif
 
       logical file_ok, todo, assigned
-      logical, allocatable :: old_style(:), done(:)
+      logical, allocatable :: done(:)
       character*260 filename
 #ifndef F2003
       integer newunit
@@ -1037,7 +1047,7 @@ c.. Test consistency with region boundaries
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, inbc, nbcfc,
      >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
-            end do              ! iss	
+            end do              ! iss
             m%bcFcP(ib,2) = nbcfc
           else
             call xerrab ('BCCHAR /= A ')
@@ -1636,7 +1646,7 @@ c.. Test consistency with region boundaries
       type (mapping), intent (inout) :: m
       type (geometry), intent (inout) :: g
       integer :: ib, ibc, is, inbc, noss, iss, indss,
-     .           i, iFc, iCv, idb, nbfc
+     .           i, iFc, iCv, idb
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
       integer :: minlbl(nbc), maxlbl(nbc)
       integer, allocatable :: ifchit(:)
@@ -1698,7 +1708,6 @@ cwdk also need to correct for degenerate faces?
       m%mxnBc = m%nCg
       if (m%mxnBc .ne. m%nCg )
      >  call xerrab ('conv_bcparms -- wrong mxnBc')
-
 
       call alloc_mapping_bc (m)
 #ifdef F2003
@@ -1763,13 +1772,13 @@ cwdk also need to correct for degenerate faces?
           lchar(ib) = 'A'
           bcl(ib) = 0
           noss = bcend(ib) - bcstart(ib) + 1
-	  do iss = 1, noss
-	    indss = bcstart(ib)+iss-1
+          do iss = 1, noss
+            indss = bcstart(ib)+iss-1
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, inbc, bcl(ib),
      >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
-	  end do  ! iss	
+          end do  ! iss
           m%bcFcP(ib,2) = bcl(ib)
         else
           call xerrab ('conv_bcparms -- wrong BCCHAR')
@@ -1826,14 +1835,13 @@ cwdk also need to correct for degenerate faces?
       return
       end subroutine conv_bcparms
 
-
 ***********************************************************************
 
       subroutine write_bcparms (ns, m)
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
-      integer :: ib, iout, ian, ien, is, i
+      integer :: ib, iout, is
       character(1) :: ap =''''
       character(10) :: new_boundary_version = '03.002.000'
 #ifndef F2003

@@ -54,7 +54,6 @@
 *.declarations
 
 *   ..local variables
-      integer iCv
       real (kind=R8) :: wrkc0(nCv), wrkc1(nCv), wrkv(nVx)
 *   ..procedures
       external xertst

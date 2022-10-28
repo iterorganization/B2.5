@@ -426,7 +426,7 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: idum(0:9), n2, nx
+      integer :: n2, nx
       type (mapping), intent (inout) :: mpg
 
 #ifdef WG_DEBUG

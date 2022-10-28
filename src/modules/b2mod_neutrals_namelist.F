@@ -611,7 +611,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine read_neutrals_namelist_st(nx, ny, ns, dotest)
       use b2mod_wall
-     & , only : track_index, ntrack, track_species, track_chem_sput
+     & , only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
      & , only : is_codes
@@ -1240,7 +1240,7 @@ c.. Test consistency with physical edges within the computational domain
 
       subroutine read_neutrals_namelist_us(ns, m, switch, dotest)
       use b2mod_wall
-     & ,only : track_index, ntrack, track_species, track_chem_sput
+     & ,only : track_index, ntrack, track_species
       use b2mod_indirect
       use b2mod_elements
      & ,only : is_codes
@@ -1253,13 +1253,18 @@ c.. Test consistency with physical edges within the computational domain
       type(switches), intent(in) :: switch
       integer ns
       logical dotest
-      integer is, ist, ic, ix, istra, i, j, k, n, ii(1), itrack,
+      integer is, ist, ix, istra, i, j, k, n, ii(1), itrack,
      >        noss, instra, iss, indss, idb, nrcl
+#ifdef WG_TODO
+      integer ic
       logical found, side
+#endif
       intrinsic mod
       real (kind=R8) hlp
       logical :: file_ok
+#ifdef WG_TODO
       logical, allocatable :: old_style(:)
+#endif
       character*16 hlp_frm
       character*260 filename
 #ifndef F2003
@@ -1333,7 +1338,7 @@ cwdk    conservative estimate: assume that there might be one stratum per fluid
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, instra, nrcl, 
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
-            end do              ! iss	 
+            end do              ! iss
             m%rcFcP(istra,2) = nrcl
          elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
      >      .and. (crcstra(istra) /= 'C')) then      
@@ -2110,7 +2115,7 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_indirect
       implicit none
       integer :: nx, ny, ns, istra, istrac, instra,
-     .           noss, iss, indss, i, idb
+     .           noss, iss, indss, idb
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
@@ -2257,13 +2262,13 @@ cwdk also need to correct for degenerate faces?
           lchar(istra) = 'A'
           rcl(istra) = 0
           noss = rcend(istra) - rcstart(istra) + 1
-	  do iss = 1, noss
-	    indss = rcstart(istra)+iss-1
+          do iss = 1, noss
+            indss = rcstart(istra)+iss-1
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, instra, rcl(istra), 
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
-	  end do  ! iss	 
+          end do  ! iss
           m%rcFcP(istra,2) = rcl(istra) 
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
@@ -2364,7 +2369,7 @@ cwdk also need to correct for degenerate faces?
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
-      integer :: istra, iout, ian, ien, is, i
+      integer :: istra, iout, is, i
       character(1) :: ap =''''
       character(10) :: new_neutrals_version = '03.002.000'
 #ifndef F2003

@@ -247,7 +247,6 @@
 
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
-      integer :: idum(0:9)
       type (geometry), intent (inout) :: gm
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
@@ -297,7 +296,6 @@
 
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
-      integer :: idum(0:9)
       type (geometry), intent (in) :: gm
 
 ! cell volumes 
@@ -341,6 +339,12 @@
       implicit none
       integer, intent(in) :: nCv, nFc, nVx, nFs, nFt
       type (geometry), intent (in) :: gm
+
+      call xertst (nCv.gt.0, 'faulty argument nCv !')
+      call xertst (nFc.gt.0, 'faulty argument nFc !')
+      call xertst (nVx.gt.0, 'faulty argument nVx !')
+      call xertst (nFs.gt.0, 'faulty argument nFs !')
+      call xertst (nFt.gt.0, 'faulty argument nFt !')
 
 *   ..check sign of magnetic field components
       call b2xvsg (nCv, gm % cvBb(:,0), 1, 'cvBb0', '.ge.')
@@ -566,7 +570,7 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nfx, iCv, iCv1, iCv2, iFt, i, j, ic, iFc
+      integer :: nfx, iCv, iCv1, iCv2, iFt, j, ic, iFc
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), Lr, Ll,
      .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)

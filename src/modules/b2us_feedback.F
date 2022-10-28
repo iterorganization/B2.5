@@ -144,8 +144,9 @@
       endif
       found = maxval(saved_fb_actuator).gt. 0.0_R8
       return
-
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
+#endif
       end subroutine read_b2us_feedback
 
       subroutine write_b2us_feedback(nwrite,edition)
@@ -207,8 +208,9 @@ cxpb size is changed in DIMENSIONS.F
         write(6,*) 'No ',trim(filename)
       endif
       return
-
- 999  call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#endif
       end subroutine read_b2us_feedback_control
 
       subroutine write_b2us_feedback_control(nwrite)
@@ -228,7 +230,7 @@ cxpb size is changed in DIMENSIONS.F
       type (mapping), intent (in) :: mpg
       integer :: nCv, nFc, nVx, ns, natmi
       integer ifb, ifbb, istrai, icount
-      integer ifbreg, is, ib, is0, is_start, is_end, is00, iatm
+      integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, done
 
       call subini('init_feedback')
@@ -779,7 +781,7 @@ cxpb size is changed in DIMENSIONS.F
         iatm = b2espcr(fb_species(ifb))
         is0 = eb2spcr(iatm)
         do ifbb = ifb+1, nFb
-          is0 = eb2spcr(b2espcr(fb_species(ifbb)))
+          is00 = eb2spcr(b2espcr(fb_species(ifbb)))
           call xertst(.not.(is0.eq.is00),'init_feedback: cannot '//
      &     'define multiple feedbacks on same atom sequence')
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
@@ -933,7 +935,10 @@ cxpb size is changed in DIMENSIONS.F
       type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
-     & is_end, iss, i, j, k, l
+     & is_end, iss
+#ifdef B25_EIRENE
+      integer :: i, j, k, l
+#endif
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
 
@@ -1978,7 +1983,7 @@ cxpb size is changed in DIMENSIONS.F
       implicit none
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
-      integer :: ifb, is, ix, iy, icv, iss, ifbreg
+      integer :: is, ix, iy, icv, iss, ifbreg
       logical :: done
 
       nFb = nspecies !number of feedback imposed

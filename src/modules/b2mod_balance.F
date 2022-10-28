@@ -1378,8 +1378,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       subroutine update_balance_sources_momentum(nCv,isb,ub,rob) !djm Jan2017
       use b2mod_constants
      & , only : mp
-      use b2mod_b2cmpa
-     & , only : am
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv,isb

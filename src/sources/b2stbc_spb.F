@@ -26,7 +26,7 @@
      *  facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),       !sv 09.07.99
      *  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !sv 09.01.01
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), !sv
-     1	bb(-1:nx,-1:ny,0:3)
+     1  bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -218,12 +218,12 @@
       call b2saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
 
 *  -- INITIALIZE CERTAIN CONSTANTS --
-	 EPSLON = 1.e-10_R8
+         EPSLON = 1.e-10_R8
 *  -- SET NE00, UP00, UBIG, VBIG --
-	 NE00   = 1.0e20_R8
-	 UP00   = SQRT(100*EV/MP)
-	 UBIG   = UP00 / EPSLON
-	 VBIG   = 1.0e-2_R8*UBIG
+         NE00   = 1.0e20_R8
+         UP00   = SQRT(100*EV/MP)
+         UBIG   = UP00 / EPSLON
+         VBIG   = 1.0e-2_R8*UBIG
 
       if(boundary_namelist.eq.0) then
        write(*,*) 'Doing spb B2.5-style bc'
@@ -985,11 +985,11 @@ c         fchi=0.0e0_R8                      !sv was commented
 *     ..compute csb
            csb = sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))   !sv 26.11.02
 *     .. account for diamagnetic drifts
-	     csbm = max(csb,0.1e0_R8*csb-uadia(ix,iy,0,0,is)*            !sv 17.02.04 {
-     1	           bb(ix,iy,2)/bb(ix,iy,0))
-	     cstm = max(cst,0.1e0_R8*cst-uadia(ix,iy,0,0,is)*
-     1	           bb(ix,iy,2)/bb(ix,iy,0))                              !sv 17.02.04 }
-	     if(istyle_cs.eq.0) then                                     !sv 25.04.08 {
+             csbm = max(csb,0.1e0_R8*csb-uadia(ix,iy,0,0,is)*            !sv 17.02.04 {
+     1             bb(ix,iy,2)/bb(ix,iy,0))
+             cstm = max(cst,0.1e0_R8*cst-uadia(ix,iy,0,0,is)*
+     1             bb(ix,iy,2)/bb(ix,iy,0))                              !sv 17.02.04 }
+             if(istyle_cs.eq.0) then                                     !sv 25.04.08 {
             veast = cst*pbshz(ix,iy,0)+                                  !sv 17.02.04 19.02.08 25.04.08 {
      &       hz(ix,iy)*vol(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy)     !*signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
      &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc              !sv 17.02.04 19.02.08

@@ -66,7 +66,7 @@
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
       character chns*3                                                  !srv 02.06.11
       real (kind=R8) ::
-     *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx),
+     *   flf(nFc,0:1), flv(nFc,0:1),
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
       real (kind=R8), parameter :: eps = 1.0e-60_R8
 *   ..procedures

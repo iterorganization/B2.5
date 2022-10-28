@@ -21,7 +21,7 @@
 *     ------------------------------------------------------------------
 *     B2XPVE computes the parallel electron velocity on cell centers.
 *     ------------------------------------------------------------------
-      integer ic, iFc, is
+      integer is
       integer, save :: ncall = 0                                        !srv 03.04.15
       real (kind=R8) ::
      &   wrksig(nFc), wrkalf(nFc), wrksig_c(nCv), wrkalf_c(nCv),

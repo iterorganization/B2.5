@@ -48,13 +48,13 @@
      *   sputter_yield, sputter_yield2
       real (kind=R8), save :: a1t(95), a2t(92), dd(92)
 c
-c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * * 
+c  data table a1t : * * * * * * * * * * * * * * * * * * * * * * * * * *
 c
       data a1t /
 c  z1 = 1 (for Hydrogen, Deuterium and Tritium)
      . 1.0072766_R8,2.0135536_R8,3.1055011_R8,
 c  z1 = 2 (for Helium-3 and Helium-4)
-     . 3.0149325_R8,4.0015059_R8, 
+     . 3.0149325_R8,4.0015059_R8,
 c  z1 = 3-10
      . 6.941_R8,9.01218_R8,10.811_R8,
      . 12.011_R8,14.0067_R8,15.9994_R8,18.998403_R8,20.179_R8,
@@ -85,7 +85,7 @@ c  z1 = 81 - 90
 c  z12 = 91 - 92
      . 231.0_R8,238.0289_R8 /
 c
-c  data table a2t : * * * * * * * * * * * * * * * * * * * * * * * * * * 
+c  data table a2t : * * * * * * * * * * * * * * * * * * * * * * * * * *
 c
       data a2t /
 c  z2 = 1 - 10
@@ -150,6 +150,9 @@ c  z2 = 81 - 90
      . 1.744_R8,1.959_R8,2.115_R8,2.167_R8,2.170_R8,
 c  z2 = 91 - 92
      . 2.084_R8,2.050_R8 /
+
+      private :: f
+
       contains
 
       subroutine alloc_b2mod_sputter(nxd,nyd,nsd)
@@ -1387,7 +1390,7 @@ cxpb Contribution from bulk if species is part of bulk
         vappres = 10.0e0_R8**(A/tp + B)
         flxthev = alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
      .     (layer_nrelconstituents(ibnd,1)/
-     .    matsurf_nrelconstituents(ibnd,1))
+     .    matsurf_relconstituents(ibnd,1))
         if (flxthev.le.0.0_R8) then
 c       write(*,*) 'Thermal evaporation < 0, Surface temp = ',tp
           flxthev = 0.0_R8
@@ -1425,7 +1428,6 @@ c   K(T) = 1/(KA * T + KB)
       integer ibnd
       real (kind=R8) :: qin, qel, Qtot, TL, L, K, KB, KA, Tp, Tc, Td
       logical, save  :: coating
-      real (kind=R8) :: t0
       real (kind=R8) :: machsfr, layer_Kappa
       external machsfr, layer_Kappa
 
@@ -1568,26 +1570,18 @@ c
 
       integer i, n
       integer, save :: icount
-      real (kind=R8) :: th, z1, z2, e, a1, a2, r, r0, as1, as2, sl,
+      real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
      *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
      *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
      *  psiden1, psiden2, psi, sklfact, r0heavy, feps
-      real (kind=R8) :: f, fneps, rne
-      intrinsic sqrt, tan
+      intrinsic sqrt
       data icount/0/
 
-      f(z1,z2) = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
-      fneps(e,z1,a1,z2,a2) = 0.032534_R8 * e / 
-     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
-      rne(th) = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
-     .  ( 2.0_R8 * as2 ) )
- 600  format('  undefined projectile is called  ')
+  600 format('  undefined projectile is called  ')
       n = 1
-      go to 1
 
 c  energy backscattering coefficient of light ions
-
-    1 if (nz1.eq.1) go to 3
+      if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5
     2 write(6,600)
@@ -1711,7 +1705,7 @@ c         write(*,*) 'did theta <> 0 calculation for rnion'
           r0 = r0heavy
           as1 = 7.38_R8 * eps ** 0.359_R8
           as2 = 0.836_R8 /eps ** 0.087_R8
-          rnion = rne(th)
+          rnion = rne(r0, th, as1, as2)
           return
         else
 c         write(*,*) 'did theta = 0 calculation for rnion'
@@ -1725,7 +1719,7 @@ c       write(*,*) 'did light projectile calculation for rnion'
         if (th.eq.0.0_R8) go to 88
         as1 = 7.38_R8 * eps ** 0.359_R8
         as2 = 0.836_R8/ eps ** 0.087_R8
-        rnion = rne(th)
+        rnion = rne(r0, th, as1, as2)
         return
    88   rnion = r0
         return
@@ -1734,40 +1728,36 @@ c       write(*,*) 'did light projectile calculation for rnion'
       end function rnion
 
       function reion(energy,nz1,m1,ibnd,theta)
-      real(kind=R8) :: energy, rnion, reion, theta
+      implicit none
+      real(kind=R8) :: energy, reion, theta
       integer ibnd, nz1, m1
 
       integer i, n
       integer, save :: icount
-      real (kind=R8) :: th, z1, z2, e, a1, a2, r, r0, as1, as2, sl,
+      real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
      *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
      *  zz, eps, sa, sb, w, fi0, tau, beta2, epsb, ch, redengy, psinum,
      *  psiden1, psiden2, psi, sklfact, r0heavy, feps
-      real(kind=R8) :: f, fneps, rne
-      intrinsic sqrt, tan
-      f(z1,z2) = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
-      fneps(e,z1,a1,z2,a2) = 0.032534_R8 * e /
-     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
-      rne(th) = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
-     .  ( 2.0_R8 * as2 ) )
- 600  format('  undefined projectile is called  ')
+      intrinsic sqrt
+      data icount/0/
+  600 format('  undefined projectile is called  ')
 
 c  energy backscattering coefficient of light ions
 
       n = 0
- 1    if (nz1.eq.1) go to 3
+      if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5
- 2    write(6,600)
+    2 write(6,600)
       reion = 0.0_R8
       return
- 3    if (m1.lt.1.or.m1.gt.3) go to 2
+    3 if (m1.lt.1.or.m1.gt.3) go to 2
       a1 = a1t(m1)
       go to 6
- 4    if (m1.lt.3.or.m1.gt.4) go to 2
+    4 if (m1.lt.3.or.m1.gt.4) go to 2
       a1 = a1t( m1+1 )
       go to 6
- 5    a1 = a1t( nz1+3 )
+    5 a1 = a1t( nz1+3 )
 c     write(*,*)'atomic # of projectile > 2'
 c  finding effective a2 :
 cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
@@ -1781,12 +1771,12 @@ cxpb   in mixed materials scenarios, the layer_ arrays may vary over time
       a2 = a2eff / sum
       delta = a1 / a2
 c     write(*,*)'delta = ',delta
-      if (delta.gt.4.5_R8 .and. icount.le.100) then 
+      if (delta.gt.4.5_R8 .and. icount.le.100) then
         icount = icount + 1
-        write(*,'(a,f7.2,a)') 
+        write(*,'(a,f7.2,a)')
      .   'delta projectile/target > 4.5', delta, '. Continuing...'
       endif
- 6    z1 = nz1
+    6 z1 = nz1
       z1p = z1 ** (2.0_R8/3.0_R8)
       z2eff = 0.0_R8
       a2eff = 0.0_R8
@@ -1810,26 +1800,28 @@ c     write(*,*)'delta = ',delta
         w = z1 * zz * aa / z2p
         wi = wi * z1 / w / a2
         saeff = saeff + wi * sa
-        sl = dd(layer_nzconstituents(ibnd,i)) * z1p * 
+        sl = dd(layer_nzconstituents(ibnd,i)) * z1p *
      .   ( aa/zz ) ** 1.5_R8 * sa / sqrt(a1)
-        if ( z2 - 12.9_R8 ) 10 , 10 , 20
- 10     fi0 = 12.0_R8 + 7.0_R8 / z2
-        go to 30
- 20     fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
- 30     tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
+        if ( z2 .le. 12.9_R8) then
+          fi0 = 12.0_R8 + 7.0_R8 / z2
+        else
+          fi0 = 9.76_R8 + 58.5_R8 / z2 ** 1.19_R8
+        end if
+        tau = eps * z2 ** 2.0_R8 * w / a1 / 3.03055e7_R8
         beta2 = tau * ( tau + 2.0_R8 ) / ( tau + 1.0_R8 ) ** 2
         epsb = 1.022e6_R8 * beta2 / z2 / fi0
-        if ( z1 - 2.9_R8 ) 40,40,50
- 40     ch = 100.0_R8 * z1 / z2
-        go to 60
- 50     ch = 5.0_R8
- 60     sb = 61.474_R8 / fmu * w * 
-     .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 ) 
+        if ( z1 .le. 2.9_R8) then
+          ch = 100.0_R8 * z1 / z2
+        else
+          ch = 5.0_R8
+        endif
+        sb = 61.474_R8 / fmu * w *
+     .   ( log ( epsb/(1.0_R8-beta2) + 1.0_R8 + ch/epsb ) - beta2 )
      .   / fi0 / epsb
-        sb = 2.0_R8 * eps / rangen(eps) + sl * sb / (0.25_R8 * sl 
+        sb = 2.0_R8 * eps / rangen(eps) + sl * sb / (0.25_R8 * sl
      .   + sb )
         sbeff = sbeff + wi * sb
- 70   continue
+   70 continue
       z2 = z2eff / sum
       a2 = a2eff / sum
       sa = saeff
@@ -1852,7 +1844,7 @@ c  sbeff is not equal to rho_a nor is saeff equal to rho_t).
         sklfact = z1**(2.0_R8/3.0_R8) * sqrt(a1) * sb/sa *
      @   fmu**2 / (1.0_R8+fmu)**2 / psi
         r0heavy = redengy / sklfact
-        r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285_R8 ) + 0.530_R8 
+        r = 1.0_R8 / ( 1.0_R8 + (eps/0.133_R8 ) ** 0.285_R8 ) + 0.530_R8
      .   / ( 1.0_R8 + (85.0_R8/eps) **1.46_R8 )
         th = theta * pi / 180.0_R8
 c       write(*,*) 'did heavy projectile calculation for delta > 0.5 '
@@ -1865,7 +1857,7 @@ c         write(*,*) 'did theta > 0 calculation for reion'
           r0 = r0heavy * r
           as1 = 17.9_R8 * eps ** 0.453_R8
           as2 = 0.771_R8 / eps ** 0.014_R8
-          reion = rne(th)
+          reion = rne(r0, th, as1, as2)
           go to 79
         endif
       else
@@ -1876,18 +1868,40 @@ c     write(*,*) 'did light projectile calculation delta < 0.5 '
 
       feps = (2.0_R8 * eps - 3.0_R8 ) / ( eps + 1.0_R8 )
       r0 = 0.705_R8 * sa / sb / ( 1.0_R8 + a1/a2 ) ** feps
-      r0 = r0 / (1.0_R8 + (eps/0.047_R8) ** 0.597_R8 + 
+      r0 = r0 / (1.0_R8 + (eps/0.047_R8) ** 0.597_R8 +
      . ( eps / 0.619_R8 ) ** 1.5_R8 )
       th = theta * pi / 180.0_R8
       if (th.eq.0.0_R8) go to 78
       as1 = 17.9_R8 * eps ** 0.453_R8
       as2 = 0.771_R8 / eps ** 0.014_R8
-      reion = rne(th)
+      reion = rne(r0, th, as1, as2)
       go to 79
- 78   reion = r0
- 79   return
+   78 reion = r0
+   79 return
 
       end function reion
+
+      function f(z1,z2)
+      real(kind=R8) :: f, z1, z2
+      f = sqrt ( z1 ** (2.0_R8/3.0_R8) + z2 ** (2.0_R8/3.0_R8) )
+      return
+      end function f
+
+      function fneps(e,z1,a1,z2,a2)
+      real(kind=R8) :: fneps, e, z1, a1, z2, a2
+      fneps = 0.032534_R8 * e /
+     .  (z1 * z2 * ( 1.0_R8 + a1/a2 ) * f(z1,z2))
+      return
+      end function fneps
+
+      function rne(r0, th, as1, as2)
+      real(kind=R8) :: rne, r0, th, as1, as2
+      intrinsic tan
+      rne = r0 + ( 1.0_R8 - r0 ) / ( 1.0_R8 + as1 / tan(th) **
+     .  ( 2.0_R8 * as2 ) )
+      return
+      end function rne
+
 c
       function rangen(epsiln)
 c  reduced range of ions for nuclear stopping only

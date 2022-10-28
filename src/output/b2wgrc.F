@@ -14,7 +14,7 @@
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, jdis(0:njdis-1),
      &  nt, nn
       real (kind=R8) ::
-     *   rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
+     *  rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
      &  rtlsa(0:nt,0:nn,0:ns0-1), rtlra(0:nt,0:nn,0:ns0-1),
      &  rtlqa(0:nt,0:nn,0:ns0-1), rtlcx(0:nt,0:nn,0:ns0-1),
      &  rtlza(0:nt,0:nn,0:ns0-1), rtlz2(0:nt,0:nn,0:ns0-1),
@@ -369,9 +369,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wt(0:nt)),R4).gt.0) then
-	  call curved_d (rtt, wt, nt+1)
-	endif
+        if(real(maxval(wt(0:nt)),R4).gt.0) then
+          call curved_d (rtt, wt, nt+1)
+        endif
        enddo
        call pagend ()
       enddo
@@ -394,9 +394,9 @@
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-	if(real(maxval(wn(0:nn)),R4).gt.0) then
-	  call curved_d (rtn, wn, nn+1)
-	endif
+        if(real(maxval(wn(0:nn)),R4).gt.0) then
+          call curved_d (rtn, wn, nn+1)
+        endif
        enddo
        call pagend ()
       enddo

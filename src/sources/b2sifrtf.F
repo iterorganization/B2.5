@@ -62,9 +62,9 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, k
+      integer iCv, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
-      character chns*3, chk*1, chis*3
+      character chns*3, chis*3
       real (kind=R8) ::
      *  coef, t0, calfab, fllim_al_ab, jabmax
       real (kind=R8) ::

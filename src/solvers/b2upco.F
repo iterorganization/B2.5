@@ -40,10 +40,10 @@
 *.declarations
 
 *   ..local variables
-      integer i, iCv, iFc, iFt, ireg
+      integer i, iCv, iFt, ireg
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  wrk0(nFc), wrk(nCv), wrkv(nVx)
+     *  wrk(nCv), wrkv(nVx)
       real (kind=R8) :: t0,
      *  pb_(nCv), nb_(nCv),                                         !lk 30.06.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt)                    !lk 30.06.17

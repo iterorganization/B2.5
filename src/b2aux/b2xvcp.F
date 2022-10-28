@@ -53,9 +53,12 @@
 *.declarations
 
 *   ..local variables
-      integer i, ic, is, ireg
+      integer i, is, ireg
       character*80 message
+#ifdef WG_TODO
+      integer ic
       logical found
+#endif
 *   ..procedures
       intrinsic nint
       external xertst
