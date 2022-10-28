@@ -22,7 +22,7 @@ module b2mod_ual_io_data
 
     use b2mod_grid_mapping
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION > 14
     use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
