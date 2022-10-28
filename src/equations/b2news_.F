@@ -108,13 +108,16 @@
       real (kind=R8) :: 
      *  rxf0, rxf1, rxf2, rxf3, t0                                       !srv 09.07.99 06.07.00
       real (kind=R8) ::                                                  !xpb
-     &  ue(nCv), lnlam(nCv), zeff(nCv), ehx(nFc),                        !srv 05.07.17 29.01.20
+     &  zeff(nCv),                                                       !srv 05.07.17 29.01.20
      &  rz(nCv),                                                         !iyv 06.02.14
-     &  nep(nCv), wrk0(nCv), wrk1(nCv),
+     &  nep(nCv), wrk0(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
-     &  respo0(nCv), corpo0(nCv), fni0(nFc,0:1)
+     &  fni0(nFc,0:1)
       logical solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
-      logical inverted_ua, new_matrix
+#ifdef WG_TODO
+      logical inverted_ua
+#endif
+      logical new_matrix
 *   ..procedures
       intrinsic mod
       real (kind=R8) ::
@@ -128,7 +131,6 @@
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       integer, save :: no_neutr_scl = 0
-      integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c     ingeger, save :: nstg2 = 0
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99

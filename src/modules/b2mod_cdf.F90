@@ -17,15 +17,20 @@ contains
    ncid, batch_only, iret)
     use b2mod_constants
 #   include <netcdf.inc>
-    integer nCv, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, iret
+    integer nCv, nc, ns, iret
+#ifdef WG_TODO
+    integer nybl, nytl, nytr, nybr, nya, nyi
+#endif
     integer, intent(in) :: write_2d
     logical, intent(in) :: batch_only
     character*256 :: filename
     ! NetCDF id
     integer  ncid
     ! dimension ids
-    integer :: ncvdim, nydim, nsdim, timedim, batchdim, &
-         nybldim, nytldim, nytrdim, nybrdim, nyadim, nyidim, ncdim, idirdim
+    integer :: ncvdim, nsdim, timedim, batchdim, ncdim, idirdim
+#ifdef WG_TODO
+    integer :: nydim, nybldim, nytldim, nytrdim, nybrdim, nyadim, nyidim
+#endif
     ! variable ids
     integer :: ntstepid, timesaid, fnixipid, feexipid, feixipid, &
          fnixapid, feexapid, feixapid, nesepiid, tesepiid, tisepiid, &
@@ -35,32 +40,37 @@ contains
          pwmxipid, pwmxapid, tmneid, tmteid, tmtiid, tmhacoreid, &
          tmhasolid, tmhadivid, fnisipid, feesipid, feisipid, fnisapid, &
          feesapid, feisapid, fnisippid, feesippid, feisippid, fnisappid, &
-         feesappid, feisappid, ne3dlid, te3dlid, ti3dlid, ne3diid, &
-         te3diid, ti3diid, ne3daid, te3daid, ti3daid, ne3drid, te3drid, &
-         ti3drid, an3dlid, mn3dlid, an3diid, mn3diid, an3daid, mn3daid, &
-         an3drid, mn3drid, fn3dlid, fe3dlid, fi3dlid, fn3drid, fe3drid, &
-         fi3drid, ne3dtlid, te3dtlid, ti3dtlid, ne3dtrid, te3dtrid, &
-         ti3dtrid, an3dtlid, mn3dtlid, &
-         an3dtrid, mn3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
-         fe3dtrid, fi3dtrid, fetxipid, fetxapid, fetyipid, fetyapid, &
+         feesappid, feisappid, ne3dlid, te3dlid, ti3dlid, an3dlid, mn3dlid, &
+         ne3diid, te3diid, ti3diid, an3diid, mn3diid, &
+         ne3daid, te3daid, ti3daid, an3daid, mn3daid, &
+         ne3drid, te3drid, ti3drid, an3drid, mn3drid, &
+         fn3dlid, fe3dlid, fi3dlid, fn3drid, fe3drid, fi3drid, &
+         fetxipid, fetxapid, fetyipid, fetyapid, &
          fetsipid, fetsapid, fetsippid, fetsappid
-    integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
+#ifdef WG_TODO
+    integer :: an3dtlid, mn3dtlid, an3dtrid, mn3dtrid, &
+         ne3dtlid, te3dtlid, ti3dtlid, ne3dtrid, te3dtrid, &
+         ti3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
+         fe3dtrid, fi3dtrid, fc3dtlid, fc3dtrid, &
+         fl3dtlid, fl3dtrid, fo3dtlid, fo3dtrid, &
+         ft3dtlid, ft3dtrid, po3dtlid, po3dtrid, &
+         tp3dtlid, tp3dtrid
+     integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
          rsana2did, rrahi2did, rrana2did, rcxhi2did, rcxna2did, rqrad2did, &
          rqahe2did, fch2did, fhe2did, fhi2did, fna2did
+#endif
     integer :: fchxipid, fchxapid, posepiid, posepmid, posepaid, &
          pomxipid, pomxapid, fchyipid, fchyapid, &
          fchsipid, fchsapid, fchsippid, fchsappid, po3dlid, &
          po3diid, po3daid, po3drid, fc3dlid, fc3drid, &
          fl3dlid, fl3drid, fo3dlid, fo3drid, &
-         ft3dlid, ft3drid, po3dtlid, po3dtrid, fc3dtlid, fc3dtrid, &
-         fl3dtlid, fl3dtrid, fo3dtlid, fo3dtrid, &
-         ft3dtlid, ft3dtrid, &
+         ft3dlid, ft3drid, &
          dn3diid, dn3daid, dp3diid, dp3daid, ke3diid, ke3daid, &
          ki3diid, ki3daid, vx3diid, vx3daid, vy3diid, vy3daid, &
          vs3diid, vs3daid, lh3diid, lh3daid, ln3diid, ln3daid, &
          dnsepmid, dpsepmid, kesepmid, kisepmid, &
          vxsepmid, vysepmid, vssepmid, &
-         tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
+         tpmxipid, tpmxapid, tp3drid, tp3dlid, &
          tpsepiid, tpsepaid, &
          ktsepmid, ktsepaid, ktsepiid, &
          nastepid, ntimbatchid, batchsaid, &
@@ -111,6 +121,8 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
       call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
+      call check_cdf_status(iret)
     else
       iret = nf_def_dim(ncid, 'nc', nc, ncdim)
       call check_cdf_status(iret)
@@ -126,8 +138,8 @@ contains
       iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
       call check_cdf_status(iret)
       dvals(1) = 1.0_R8/ev
-#ifdef WG_TODO
       if (write_2d .ge. 1) then
+#ifdef WG_TODO
         iret = nf_def_var(ncid, 'ne2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
@@ -211,9 +223,6 @@ contains
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqahe2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-
-          iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
-          call check_cdf_status(iret)
           iret = nf_def_var(ncid, 'fhe2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhe2did, 'long_name', 18, 'Electron heat flux')
@@ -239,8 +248,8 @@ contains
           iret = nf_put_att_text(ncid, fna2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
         endif
-      endif
 #endif
+      endif
 
       dims(1) = ncdim
       dims(2) = timedim
@@ -1193,7 +1202,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vs3diid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
-
+#ifdef WG_TODO
       ! upper inboard divertor quantities
       if(nytl.gt.0) then
         iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', 40, 'electron density, upper inboard divertor')
@@ -1257,7 +1266,7 @@ contains
         iret = nf_put_att_text(ncid, fc3dtlid, 'units', 2, 'A ')
         call check_cdf_status(iret)
       endif
-
+#endif
       ! outboard midplane quantities
       iret = nf_put_att_text(ncid, ne3daid, 'long_name', 35, 'electron density, outboard midplane')
       call check_cdf_status(iret)
@@ -1385,7 +1394,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fc3drid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-
+#ifdef WG_TODO
       ! upper outboard divertor quantities
       if(nytr.gt.0) then
         iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', 41, 'electron density, upper outboard divertor')
@@ -1464,6 +1473,7 @@ contains
         iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
       endif
+#endif
     else
     !wdk averaged quantities
       iret = nf_put_att_text(ncid, nesepm_avid, 'long_name', 52, 'averaged separatrix electron density, outer midplane')

@@ -141,8 +141,6 @@
       intrinsic min, max
       real (kind=R8) ::
      *   trim1, dist, sinang, cosang
-      real (kind=R8) ::
-     &  sin_t, cos_t, sin_tl, cos_tl, tt
       external xertst, ipgetr, ipgeti
       external b2xvsg
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))

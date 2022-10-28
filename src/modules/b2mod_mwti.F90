@@ -49,7 +49,7 @@ contains
     use b2us_map
     use b2us_plasma
     use b2mod_user_namelist &
-    , only : nomp, omp, icsepomp
+    , only : omp, icsepomp
     use b2mod_switches
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
@@ -125,21 +125,28 @@ contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, jsep, icv, cvtrg, ift
-    integer jxi, jxa, target_offset, ix_off
+    integer icv, cvtrg, ift
+    integer target_offset
+    integer nc
+#ifdef WG_TODO
+    integer jxi, jxa, jsep
+    integer ix, iy, ic, ixtl, ixtr, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend, iyiend, iylend, iyrend, iytlend, iytrend, &
-         nya, nyi, nybl, nybr, nytl, nytr, nc
+         nya, nyi, nybl, nybr, nytl, nytr
+#endif
 
     !   ..procedures
     external xertst, ipgeti, batch_average
+#ifdef WG_TODO
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
+#endif
     integer, save :: write_2d = 0
     integer, save :: ntstep, nastep
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), dims(1), iret
-    integer nvars, natts, ndims, unlimid, nastepid
+    integer imap(maxvdims), iret
+    integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &
          nesepi(nncutmax), tesepi(nncutmax), tisepi(nncutmax), &
@@ -161,10 +168,13 @@ contains
     external rratio
 #endif
     !   ..initialisation
-    save ncall, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
+#ifdef WG_TODO
+    save jxi, jxa, jsep, ixtl, ixtr, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
          nc, nya, nyi, nybl, nybr, nytl, nytr
+#endif
+    save ncall, target_offset
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -181,7 +191,6 @@ contains
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
       !   ..test state
-!      call get_jsep(nx,ny,jxi,jxa,jsep)
       call ipgeti ('b2mwti_2dwrite',write_2d)
       call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')
       call ipgeti ('b2mwti_target_offset',target_offset)
@@ -190,6 +199,7 @@ contains
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
       nc = max(nncutmax,1) !WG_TODO to be fixed
 #ifdef WG_TODO
+      call get_jsep(nx,ny,jxi,jxa,jsep)
       call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
       call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
       call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
@@ -1610,7 +1620,7 @@ contains
     return
   end subroutine output_ds
 
-
+#ifdef WG_TODO
   subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
     use b2mod_plasma   , only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
     use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
@@ -1684,6 +1694,7 @@ contains
     enddo
     if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
   end subroutine calc_fet
+#endif
 
 end module b2mod_mwti
 

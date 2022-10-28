@@ -41,7 +41,7 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, ib
+      integer iFc
       character charns*3                                            !srv 17.06.02
 *   ..procedures
       external xertst, ipgeti, ipgetr, b2scopy

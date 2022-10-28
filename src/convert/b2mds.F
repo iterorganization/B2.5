@@ -111,7 +111,7 @@ c
      7   za(0:nsd_local-1)
 #endif
 c
-      integer nCv, nFc, nVx
+      integer nCv, nFc
       integer ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,

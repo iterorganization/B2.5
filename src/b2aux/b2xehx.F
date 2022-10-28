@@ -43,7 +43,7 @@
 *   ..local variables
       real (kind=R8) ::
      *   dpop(nFc), wrk0(nFc),
-     *   wrk1(nFc), wrk2(nFc), wrk(nCv),
+     *   wrk1(nFc), wrk2(nFc),
      *   wrkv(nVx), ones(nFc,2)
 *   ..procedures
       external xertst

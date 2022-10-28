@@ -50,7 +50,7 @@
 *.declarations
 
 *   ..local variables
-      integer n2, iCv, is
+      integer iCv, is
       real (kind=R8) :: t_av
       real (kind=R8) ::
      *   wrk0(nCv)

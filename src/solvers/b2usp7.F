@@ -7,8 +7,8 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_plasma
-     * , only : fac_vis
+C      use b2mod_plasma
+C     * , only : fac_vis
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
@@ -40,11 +40,13 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
+      integer ncall, n2, ix, iy, k                                 !srv 26.01.00
+C     integer ixb, iyb, ixt, iyt
       integer, save :: iout = 0                                    !srv 08.07.08
       character chark*1                                            !srv 08.07.08
-      integer ireg, ileft, ibot, itop
-      real (kind=R8) :: vis_per, aa11p2, aa11m2                    !srv 27.01.00
+      integer ireg, ileft, ibot
+      real (kind=R8) :: vis_per
+C     real (kind=R8) :: aa11p2, aa11m2                             !srv 27.01.00
       save ncall, vis_per                                          !srv 27.01.00
 *   ..procedures
       intrinsic min, abs

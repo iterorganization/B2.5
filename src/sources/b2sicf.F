@@ -39,9 +39,9 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, k
+      integer iCv, k
       character chns*3, chark*1                                         !srv 17.06.02
-      real (kind=R8) :: wrkf(nFc), wrkv(nVx), wrks(nCv)
+      real (kind=R8) :: wrks(nCv)
 *   ..procedures
       external xertst
       external b2xvff, b2xvsg

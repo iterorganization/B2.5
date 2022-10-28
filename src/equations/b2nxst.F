@@ -24,8 +24,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer iCv
 *   ..procedures
       external xertst
 *   ..initialisation

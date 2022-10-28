@@ -66,16 +66,20 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, regcnt, ixx
+      integer is
+      real (kind=R8) :: praverage(2), testqe, testqi
+#ifdef WG_TODO
+      integer regcnt, ixx
       real (kind=R8) ::
-     *   t0, testqe, testqi,
-     &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
+     *   t0,
+     &   prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2),
      1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol
-!WG_TODO      integer element_done(-1:nx)
+      integer element_done(-1:nx)
+#endif
 *   ..procedures
       intrinsic nint
       real (kind=R8) ::
@@ -84,7 +88,7 @@
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys
 #ifdef WG_TODO
-     &          b2stbc_bas                                              !srv 27.06.21
+     & , b2stbc_bas                                              !srv 27.06.21
 #endif
 *   ..initialisation
 *-----------------------------------------------------------------------

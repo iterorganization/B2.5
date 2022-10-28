@@ -58,7 +58,7 @@
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
-     &  shetmp(nCv,0:3), shitmp(nCv,0:3), shntmp(nCv,0:3)
+     &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -220,16 +220,16 @@ csw 24feb2014 check for guard cell (SOLPS4)
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (switch%b2srdt_phm4/dtim)
-     &               *geo%cvVol(iCv)*qe*time_factor(iCv)		 !xpb
-          sr%sch(iCv,0) = sr%sch(iCv,0)+t0*(ni0(iCv,0)-ne0(iCv))	 !xpb
+     &               *geo%cvVol(iCv)*qe*time_factor(iCv)                 !xpb
+          sr%sch(iCv,0) = sr%sch(iCv,0)+t0*(ni0(iCv,0)-ne0(iCv))         !xpb
 *         schdt(iCv,1) = (unchanged)
 *         schdt(iCv,2) = (unchanged)
-          sr%sch(iCv,3) = sr%sch(iCv,3)-t0				 !xpb
+          sr%sch(iCv,3) = sr%sch(iCv,3)-t0                               !xpb
       enddo
       do iCv = 1, nCv
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
           t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
-     &                                  *time_factor(iCv)		 !xpb
+     &                                  *time_factor(iCv)                !xpb
           sr%sne(iCv,0) = sr%sne(iCv,0)+t0*ne0(iCv)
           sr%sne(iCv,1) = sr%sne(iCv,1)-t0
       enddo

@@ -130,8 +130,9 @@
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,ifb
+      integer ic,ifc,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
 #ifdef WG_RM
+      integer ifb
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra,
 #endif
@@ -196,15 +197,21 @@ c***
 c*** 10.02.2013: If l_neutrad<0, then old (incorrect) treatment of the neutral radiation.
 c*** Otherwise: take the radiation explicitly calculated in EIRENE.
 
-      real (kind=R8) :: s,x1,x2,t00,hlp_st,rec_tol
+      real (kind=R8) :: s,x1,x2,t00,rec_tol
       real (kind=R8), save, allocatable ::
      1 hlp_pi(:),hlp_po(:),hlp_ni(:),
      2 hlp_no(:),hlp_g(:),hlp_s(:),hlp_t(:),
      1 hlp_scl(:),hlp_scp(:,:),
      2 core_flux(:),tflux0(:)
+#ifdef WG_TODO
+      real (kind=R8) :: hlp_st
       real (kind=R8), save :: core_surface
+#endif
+#ifdef WG_RM
+      integer icount
+#endif
       logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_cor
-      integer i,j,k,l,js,ls,kks,n,itmp,icount,ind
+      integer i,j,k,l,js,ls,kks,n,itmp,ind
       integer, save :: l_ddt
       integer, save, allocatable :: ispc_ref(:), ishigh(:)
       integer, save, allocatable :: NPTS_input(:)

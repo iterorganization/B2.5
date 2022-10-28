@@ -275,7 +275,7 @@ c***    surface area,cell interface areas
       real (kind=R8) ::
      *  d, e, s, x
       real (kind=R8) :: pz(-1:nx,-1:ny)
-      integer i, j, k, l, m, n, i0, is, ix, iy, js, irt,
+      integer i, j, k, l, m, n, i0, is, ix, iy, irt, js,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, im, iyp, ls
@@ -1684,7 +1684,7 @@ c
       implicit none
       integer, intent(in) :: nx, nxtl, nxtr
       integer, intent(out) :: iline
-      integer :: i, j, k, l, m, n, i0, irt, js, l_pad_str, mgl3_tmp
+      integer :: i, j, k, l, m, n, i0, irt, l_pad_str, mgl3_tmp
       real (kind=R8) :: tdummy, x
       character hlp_c, hlp_tpl*2, hlp_hb*8, f*(lenfnm), hlp_m*16
       logical ex

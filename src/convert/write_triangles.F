@@ -34,7 +34,7 @@
       integer :: ic, i1, i2, i3, mxCvFc, nelem, ielem, is, ifc, i, jfc, 
      .           j, is1, js, js1, imin, imax, jmin, jmax, jelem, 
      .           ifcmin, ifcmax, it, 
-     .           iun, unused, nopen, ifc1, ifc2, ifc3,
+     .           unused, nopen, ifc1, ifc2, ifc3,
      .           ileft, last(1), isig(3)
       real (kind=R8) :: areat, x1, y1, x2, y2, x3, y3
       integer, allocatable :: ifcused(:), elem(:,:), elem_cv(:),

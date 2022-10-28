@@ -139,7 +139,7 @@
         endif
         dkt(iCv)  = rxf*max(-kt(iCv),corkt(iCv))
         dzt(iCv)  = rxf*max(-zt(iCv),corzt(iCv))
- 	dte1(iCv) = dte(iCv)
+        dte1(iCv) = dte(iCv)
         dti1(iCv) = dti(iCv)
 *   ..smooth the correction for inner flux surfaces                 !lk 26.10.2017{
         if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019

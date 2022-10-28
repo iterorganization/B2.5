@@ -61,7 +61,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, k                                         !srv 17.06.02
+      integer iCv, is, k                                              !srv 17.06.02
       integer, save :: iout = 0                                       !srv 17.06.02
       integer, save :: icase = 0
       character chns*3, chk*1                                         !srv 17.06.02

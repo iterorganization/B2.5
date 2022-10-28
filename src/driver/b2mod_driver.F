@@ -318,15 +318,19 @@
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
-      real (kind=R8) :: wrkf(mpg%nFc)
       real (kind=R8) ::
      1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
-      integer ix, iy, iCv, is, js, k, idum(0:9)
+      integer iCv, is, k, idum(0:9)
+#ifdef WG_TODO
+      integer ix, iy
+#endif
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       integer iflag
+#endif
 #endif
       character*256 filename
       logical ex, found
@@ -1929,7 +1933,7 @@ c new CDF movie option (1st frame at t=0)
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
       integer nCv, nFc, nVx
-      integer i, is, js, icf
+      integer i, is, icf
       character*256 filename, fort31name
 #ifdef B25_EIRENE
       character*256 systemarg
@@ -2512,9 +2516,11 @@ c new CDF movie option
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      integer nCv, nFc, nVx, is                                            !srv 29.11.18 
+      integer nCv, nFc, nVx, is                                            !srv 29.11.18
+#ifdef WG_TODO
       character*256 filename
       logical found
+#endif
 
       call subini ('b2mndr_2')
       if(quitexist)

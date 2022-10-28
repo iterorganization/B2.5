@@ -96,7 +96,7 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, ic, ixl, ixr, iyl, iyr, inseltop, inselbot
+      integer ix, iy, ixl, ixr, iyl, iyr, inseltop, inselbot
       integer Bt_adjust, Bt_reversal
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
@@ -110,12 +110,12 @@
      6     wbbc(-1:nx1+1,-1:ny1+1,0:3)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
-     .  min_pitch, distval,
+     .  min_pitch,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
-      integer ireg,errors
+      integer ireg
       character*1 zone(-1:nx1)
-      logical found, concave
+      logical concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
      .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/

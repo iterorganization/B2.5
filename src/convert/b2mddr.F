@@ -42,10 +42,12 @@
       integer k, is, idum(0:9), nscx, iscx(0:nscxmax-1), ismain
       integer external_species
       real (kind=R8) :: BoRiS, t0, t1
+#ifdef WG_TODO
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
+#endif
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*256, ligne*256
 *   ..initialisation

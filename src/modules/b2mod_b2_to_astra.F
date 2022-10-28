@@ -9,11 +9,12 @@ csw 09jan2014 extra module to define some arrays
       module b2mod_b2_to_astra                          !srv 28.07.11 {
       use b2mod_types
       use b2mod_astra_to_b2
-      use b2mod_neutrals_namelist
-     , ,only: b2eatcr, mlcmp
 #ifdef B25_EIRENE
+      use b2mod_neutrals_namelist
+     , ,only: b2espcr, latmscl, mlcmp
 #ifndef SOLPS4_3
-      use eirmod_extrab25
+      use eirmod_wneutrals  ! IGNORE
+      use eirmod_extrab25   ! IGNORE
 #else
       use eirdiag ! IGNORE
      , ,only: nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
@@ -101,26 +102,25 @@ csw 09jan2014 use extra little module
         use b2mod_b2_to_astra_com
 
         implicit none
-        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa
+        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite
 #ifdef B25_EIRENE
-        integer ism, intrl
+#ifdef WG_TODO
+        integer isa, ism
         character chns*3
         real (kind=R8) :: wrk0(-1:nxd,-1:nyd)
+#endif
 #endif
 
 csw 09jan2014 remove np from declaration here
 c        integer :: mintopcut, ix, iy, is, iout, np
         integer :: mintopcut, ix, iy, is, iout
         integer :: maxtopcut
-        integer, save :: ncall = 0
+        integer, save :: ncall = 0, use_eirene = 0
 
 csw 09jan2014 remove declaration p,x,cb,cc,cd from here
 c        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
 c     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
         real (kind=R8) :: DSEVAL, DFMIN, arg, y(0:nxd-1)
-
-        real (kind=R8) :: sy
-        sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
 
 csw 09jan2014 add extra allocates
         allocate(p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
@@ -128,6 +128,7 @@ csw 09jan2014 add extra allocates
 
         if (ncall.eq.0) then
          call ipgeti('write_b2_to_astra_iout', iout)                        !srv 14.03.12
+         call ipgeti('b2mndr_eirene', use_eirene)
         endif
 
         do iy = nyd,-1,-1                                                   !srv 21.05.12 {
@@ -178,7 +179,14 @@ csw 09jan2014 add extra allocates
         if (nncut > 0) maxtopcut = maxval(topcut(1:nncut))
 
         mintopcut = nyd
-        if (nncut > 0) mintopcut = minval(topcut(1:nncut))           !srv 25.02.16 }
+        if (nncut > 0) then
+          if (nnreg(0).eq.7) then
+            mintopcut=topcut(1)
+          else
+            mintopcut=minval(topcut(1:nncut))
+          endif
+        endif
+
         iy_Ratb = -1
         do iy = -1,nyd ! was mintopcut    ! for inner surfaces + one open surface
 !         R_midpl(iy) = crx(nmdpl,iy,1)
@@ -212,7 +220,6 @@ csw 09jan2014 add extra allocates
 !       write(nwrite,"(es25.15, 28x,a,f6.4,a)") tib,
 !     &   'boundary ion temperature in Ratb=',Ratb,'       [keV]'
 
-        isa = -1
         do is = 0, nsd-1
          do iy = 0,mintopcut   ! for closed surfaces and through separatrix
           sfna(iy,is)     = 0.0_R8
@@ -264,41 +271,16 @@ csw 09jan2014 add extra allocates
 
 #ifdef B25_EIRENE
 #ifdef WG_TODO
-         if (is_neutral(is)) isa = b2eatcr(is)
-         if (is_neutral(is) .and. isa.gt.0) then
-          do iy = 0,mintopcut   ! for closed surfaces and through separatrix
-           if (nnreg(0).eq.1 .and. periodic_bc.eq.0) cycle
-           do ix=-1,nxd
-            if(mod(region(ix,iy,0),4).eq.1 .or.
-     &         mod(region(ix,iy,0),4).eq.2) then
-             sfna(iy,is) = sfna(iy,is) +
-     &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-             sfna_mdf(iy,is) = sfna_mdf(iy,is) +
-     &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-             do ism = 1,nnmoli
-              if (mlcmp(isa,ism).gt.0) then
-               sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
-     &                       rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-               sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
-     &                       rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-              endif
-             enddo
-            endif
-           enddo
-          enddo
-
-          do iy = mintopcut+1, maxtopcut  ! for open surfaces of DDN geometry  !srv 20.12.12 {
-           do ix=-1,nxd 
-            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
-     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
-     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or. 
-     &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
-     &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
-     &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) 
-     >        then
-               sfna(iy,is) = sfna(iy,is) +
-     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+         if (is_neutral(is).and.use_eirene.ne.0) then
+          do isa = 1,nnatmi
+           if (b2espcr(is).ne.latmscl(isa)) cycle
+           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
+            if (nnreg(0).eq.1 .and. periodic_bc.eq.0) cycle
+            do ix=-1,nxd
+             if(mod(region(ix,iy,0),4).eq.1 .or.
+     &          mod(region(ix,iy,0),4).eq.2) then
+              sfna(iy,is) = sfna(iy,is) +
+     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
               sfna_mdf(iy,is) = sfna_mdf(iy,is) +
      &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
               do ism = 1,nnmoli
@@ -310,26 +292,53 @@ csw 09jan2014 add extra allocates
                endif
               enddo
              endif
-            endif
+            enddo
            enddo
-          enddo
 
-          do iy = maxtopcut+1, nyd        ! for open surfaces
-           do ix=-1,nxd
-            if(nncut.eq.1 .or. 
-     &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.
-     &         region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-              sfna(iy,is) = sfna(iy,is) +
-     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              do ism = 1,nnmoli
-               if (mlcmp(isa,ism).gt.0) then
-                sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
-     &                        rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-               endif
-              enddo
+           do iy = mintopcut+1, maxtopcut  ! for open surfaces of DDN geometry  !srv 20.12.12 {
+            do ix=-1,nxd
+             if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active
+     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or.
+     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or.
+     &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
+     &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
+     &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1)
+     >         then
+               sfna(iy,is) = sfna(iy,is) +
+     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) +
+     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+               do ism = 1,nnmoli
+                if (mlcmp(isa,ism).gt.0) then
+                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                         rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+                 sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
+     &                         rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+                endif
+               enddo
+              endif
              endif
-            endif
+            enddo
+           enddo
+
+           do iy = maxtopcut+1, nyd        ! for open surfaces
+            do ix=-1,nxd
+             if(nncut.eq.1 .or.
+     &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.
+     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
+               sfna(iy,is) = sfna(iy,is) +
+     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+               do ism = 1,nnmoli
+                if (mlcmp(isa,ism).gt.0) then
+                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                         rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+                endif
+               enddo
+              endif
+             endif
+            enddo
            enddo
           enddo
          endif                                                           !srv 20.12.12 }
@@ -594,9 +603,6 @@ csw 09jan2014 add extra allocates
 !         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pefluxm'//chns)
         enddo
-        open(70,file='write_b2_to_astra_intrl.dat')
-        write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
-        close(70)
        endif                                                       !srv 14.03.12 }
 #endif
 #endif
@@ -634,7 +640,13 @@ csw 09jan2014 add 'fun' function
 
        if(ncall.eq.0) then
          mintopcut = nyd                                    !srv 25.02.16
-         if (nncut > 0) mintopcut = minval(topcut(1:nncut)) !srv 25.02.16
+         if (nncut > 0) then
+          if (nnreg(0).eq.7) then
+            mintopcut=topcut(1)
+          else
+            mintopcut=minval(topcut(1:nncut))
+          endif
+         endif
          do iy = 0, mintopcut-1    ! closed surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd

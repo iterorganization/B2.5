@@ -6,11 +6,12 @@
       use b2mod_cdf
       use b2mod_subsys
       implicit none
+      integer nx, ny, ns
+      real (kind=R8) :: tim
+#ifdef WG_TODO
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nx, ny, ns
-      real (kind=R8) :: tim
       integer :: jxi, jxa, jsep, ixtl, ixtr
       integer :: iylstrt, iyistrt, iyastrt, iyrstrt, iytlstrt, iytrstrt,
      1           iylend,  iyiend,  iyaend,  iyrend,  iytlend,  iytrend,
@@ -42,6 +43,7 @@
       external lnblnk
 #endif
       external ipgeti, ipgetr, xerrab, xertst
+#endif
 
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'

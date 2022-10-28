@@ -51,11 +51,13 @@
 *.declarations
 
 *   ..local variables
-      integer is, iCv, diagno
+      integer is, diagno
       integer k
       character chns*3, chk*1                                        !srv 11.09.09 }
+#ifdef WG_TODO
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
+#endif
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)

@@ -144,9 +144,13 @@
 *   ..local variables
       integer nfldmx, nfld
       parameter (nfldmx=1000)
-      integer k, icv, is, iicv, il, ix0(-1:5), iy0(-1:5)
+      integer k, is
+#ifdef WG_TODO
+      integer il, ix0(-1:5), iy0(-1:5)
+      real (kind=R8) :: t0, t1, tv
+#endif
       real (kind=R8) ::
-     *   z(0:nfldmx-1), t0, t1, tv
+     *   z(0:nfldmx-1)
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::

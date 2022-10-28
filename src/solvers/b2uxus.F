@@ -62,19 +62,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, itmax, iters, itpar, cpu
+      integer ncall, style, itmax, cpu
       parameter (itmax=100)
       real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
-      real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
-      integer, allocatable, save :: iwrk(:)
-
+     *   acpar, cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
-
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min, cpu_time

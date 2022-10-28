@@ -2433,10 +2433,6 @@ cwdk move to dv
       integer, intent(in) :: nout, ns, nCv, nFc
       type(B2State), intent(in) :: st
 
-* local variables
-      integer idum(0:2)
-
-
 *-----------------------------------------------------------------------
 * This subroutine writes fields describing the complete plasma fields.
 * Intended for b2fplasma file

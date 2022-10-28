@@ -60,9 +60,9 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer iCv, is, js, k
+      integer iCv, is!, k
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
-      character chns*3, chk*1                                           !srv 30.06.08
+      character chns*3!, chk*1                                          !srv 30.06.08
       real (kind=R8) ::
      *  rf0, t0, t1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)

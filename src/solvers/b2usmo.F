@@ -52,7 +52,7 @@
 *   ..local variables
       integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
       real (kind=R8) ::
-     *  t0, t1, t2, t3, t4, flo, dif, flo9, con9, csb, csb1,
+     *  t1, t2, t3, csb, csb1,
      *  t11, t22
       logical lnonzero
 *   ..procedures

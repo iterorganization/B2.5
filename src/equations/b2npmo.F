@@ -87,9 +87,9 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, ireg, k
+      integer iCv, is, ireg, k
       integer :: vcount(0:ns-1)
-      character chns*3, chk*1                                          !srv 04.07.08
+      character chns*3                                                 !srv 04.07.08
       real (kind=R8) ::
      *  t0, t1, czetap, czetae                                         !srv 13.01.17
       real (kind=R8) ::
@@ -350,15 +350,15 @@ cdjm Jan2017 update momentum source components for balance
      &        smbfria(:,1)*pl%ua(:,is)+      !srv 05.07.17 {
      &        smbfria(:,2)*pl%na(:,is)*mp*am(is)+
      &        smbfria(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is))
-	 call my_out_us(70,nCv,0,wrks,'b2npmo_smofria'//chns)
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smofria'//chns)
 
          wrks = geo%cvVol*geo%cvHz*(smbfrea(:,0)+
      &                             smbfrea(:,1)*pl%ua(:,is))
-	 call my_out_us(70,nCv,0,wrks,'b2npmo_smofrea'//chns)
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smofrea'//chns)
          wrks = geo%cvVol*geo%cvHz*smbtfia(:,0)
-	 call my_out_us(70,nCv,0,wrks,'b2npmo_smotfia'//chns)
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smotfia'//chns)
          wrks = geo%cvVol*geo%cvHz*smbtfea(:,0)
-	 call my_out_us(70,nCv,0,wrks,'b2npmo_smotfea'//chns)
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smotfea'//chns)
          call my_out_us(70,nCv,0,dv%ue,'b2npmo_ue')                    !srv 05.07.17 }
          wrks=smban(:,0)+smban(:,1)*pl%ua(:,is)+
      &       smban(:,2)*pl%na(:,is)*mp*am(is)+

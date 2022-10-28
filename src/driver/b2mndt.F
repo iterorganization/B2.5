@@ -55,7 +55,6 @@
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
-      integer, save :: use_eirene = 0
       real (kind=R8) ::
      *  dtim
       type (geometry), intent (in) :: geo
@@ -109,14 +108,16 @@
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
       save ramp_slow                                                     !xpb
-      logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
+      logical domoqt, domoit, wrong_flow                                 !xpb
       logical quit_residual, main_call
-      logical solving(4)
       integer istg(0:2), is, k
+      real (kind=R8) :: nasum, na0sum
+#ifdef WG_TODO
       real (kind=R8) ::
-     *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, acorkt, acorzt, nasum, na0sum,
      &  pz(nCv), rz(nCv)                                                 !iyv 06.02.14
+      logical ramp_call
+      logical solving(4)
+#endif
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb
@@ -359,7 +360,7 @@ ctmp.dpc
 !WG_TODO          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
 !WG_TODO          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
           if(equation_sources.ne.0) then                                 !srv 26.02.18 {
-	    do iCv = 1,nCv
+            do iCv = 1,nCv
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
      &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
               st%sr%smo(iCv,0:3,0:ns-1) = st%sr%smo(iCv,0:3,0:ns-1)+

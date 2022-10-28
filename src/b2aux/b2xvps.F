@@ -36,8 +36,6 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer is
 *   ..procedures
       external xertst
       external b2xvsg

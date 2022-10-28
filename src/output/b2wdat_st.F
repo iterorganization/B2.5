@@ -46,7 +46,9 @@
 
 *   ..common blocks
 *   ..local variables
-      integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
+      integer ncall
+#ifdef WG_TODO
+      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA           !srv 05.10.01 03.04.13 19.04.13
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
@@ -97,14 +99,15 @@
       external ipgeti
 *   ..procedures                                                   !srv
       intrinsic abs                                                !srv
-#ifdef WG_TODO
       real (kind=R8) ::                                            !srv
      *   hy1                                                       !srv
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-#endif
 *   ..initialisation
-      save ncall, iout, use_astra, boundary_namelist
-      data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
+      save iout, use_astra, boundary_namelist
+      data iout/0/, use_astra/0/, boundary_namelist/0/
+#endif
+      save ncall
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal

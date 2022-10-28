@@ -70,21 +70,23 @@
       real (kind=R8) ::
      *  vti32(nCv),
      &  wrkc(nCv), wrkf(nFc,0:1),
-     &  wrkv(nVx),                      !srv 02.06.99
+     &  wrkv(nVx),                                          !srv 02.06.99
      &  wrkc1(nCv),                                         !srv 28.08.02
      &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1)
-      real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)  !lk 31.01.08 }
+#ifdef WG_TODO
+      real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)      !lk 31.01.08 }
+#endif
       real (kind=R8) :: 
-     *  shidu(nCv,0:3), shidd(nCv,0:3),               !srv 11.09.09 {
+     *  shidu(nCv,0:3), shidd(nCv,0:3),                     !srv 11.09.09 {
      *  shiva(nCv,0:3), shivc(nCv,0:3),
      *  shivan(nCv,0:3), shivcn(nCv,0:3),
      *  shifr(nCv,0:3), shedu(nCv,0:3),
      *  shedd(nCv,0:3), shefr(nCv,0:3),
-     *  shest(nCv,0:3),                          !srv 17.12.13
+     *  shest(nCv,0:3),                                     !srv 17.12.13
      *  shidun(nCv,0:3),
-     *  wrks(nCv), ehx(nFc), ehy(nFc)   !srv 13.01.17i
+     *  wrks(nCv), ehx(nFc), ehy(nFc)                       !srv 13.01.17i
       real (kind=R8) ::
-     3  zeff(nCv), zmff(nCv), ce1(nCv),                                 !srv 13.01.17 05.07.17 {
+     3  zeff(nCv), zmff(nCv), ce1(nCv),                     !srv 13.01.17 05.07.17 {
      4  ce2(nCv), cimp1(nCv), cimp2(nCv),
      5  zetap(nCv), zetae(nCv),
      6  gti(nCv), gte(nCv), ne2(nCv),

@@ -112,7 +112,8 @@ cxpb Data file material properties
      *  matsurf_vapprs_B(:),
      *  matsurf_stick_coef(:),
      *  matsurf_vapor_temp(:),
-     *  matsurf_heat_sublim(:)
+     *  matsurf_heat_sublim(:),
+     *  matsurf_relconstituents(:,:)
 
       character*32, allocatable, save :: coating_long_name(:)
       character*32, allocatable, save :: coating_temp_unit(:)
@@ -736,7 +737,7 @@ cxpb  Use explicit writing of non-default elements only
           enddo
           if (found) todo = todo.or.
      .        layer_nrelconstituents(ibnd,i).ne.
-     .        matsurf_nrelconstituents(ibnd,j)
+     .        matsurf_relconstituents(ibnd,j)
         end do
         if (todo) then
           write(nwrite,'(a20,i4,a2,i2,a1)')
@@ -869,8 +870,10 @@ cxpb  Use explicit writing of non-default elements only
       enddo
       allocate(matsurf_nzconstituents(nwall,nmax))
       allocate(matsurf_nrelconstituents(nwall,nmax))
+      allocate(matsurf_relconstituents(nwall,nmax))
       matsurf_nzconstituents=0
       matsurf_nrelconstituents=0
+      matsurf_relconstituents=0.0_R8
 
       ifile = 0
       do ibnd = 1, nbnd
@@ -916,7 +919,7 @@ cxpb Normalise surface constituents
           sum = sum + matsurf_nrelconstituents(ibnd,i)
         end do
         do i = 1, matsurf_nconstituents(ibnd)
-          matsurf_nrelconstituents(ibnd,i) =
+          matsurf_relconstituents(ibnd,i) =
      .     matsurf_nrelconstituents(ibnd,i)/sum
         end do
       end do

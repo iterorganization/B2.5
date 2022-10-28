@@ -256,7 +256,6 @@ contains
     !!          checks for correct use of the routine.
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
-    !> Process B2.5 data and set it to IMAS IDS
     subroutine B25_process_ids( geo, mpg, state, switch, &
             &   edge_profiles, edge_sources, edge_transport, &
             &   radiation, description, equilibrium, &
@@ -449,6 +448,8 @@ contains
           source = "B2"
         end if
 #endif
+
+        ns = size( state%pl%na, 2 )
 
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory

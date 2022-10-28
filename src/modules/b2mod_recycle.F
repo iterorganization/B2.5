@@ -62,7 +62,7 @@ c     Boolean to indicate whether trim data is present for species/material comb
       character*256 filename
       integer istra, isp, is, il,it,itm,ndata
       integer idum(0:9)
-      logical open_file, found
+      logical open_file
 
       character*10::fnn_version
       character lblfnn*120
@@ -263,7 +263,7 @@ c     Internal variables
       real (kind=R8):: vcx,vion,
      2    vtot,fnni_nodrifts,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,t1,
+     4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,
      5    t_av,mfp,c_th,upf
       integer :: ic
 
@@ -506,7 +506,6 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
      &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy,dnndz,cosa, sina
-      real (kind=R8) :: t1, t_av
 c     Output variables
       real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
@@ -657,16 +656,16 @@ c     fmomni: momentum flux of incident neutrals.
       real (kind=R8),intent(out):: fnnrec,fmomrec,nnrec,nnwwnrec,fenerec
 c     Internal variables
       real (kind=R8):: cs,Mj,
-     &    shpottauj,ishpottau,pf,pcorf,pt,vt,
-     &     pit,pit2,mn,nnf,ux,uz,
+     &    shpottauj,pf,pcorf,pt,vt,
+     &    pit,pit2,mn,nnf,ux,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
-     &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,t1,fdni,
+     &    rc1i,rmx1i,rmz1i,rp11i,rp21i,rp31i,re1i,
+     &    fmox,fmoy,fmoz,fmomrecp,fmomrect,pnc,fenec,fdni,
      &    intp_3dtable,intp_3dtable0,intp_3dtable00,
      &    tifev,upf,
      &    fna_mol_rec
       real (kind = R8):: tab(0:nM,0:nT,0:nshpottau),ff(0:1,0:1,0:1)
-      integer :: ic,is,it,ilT,ilM,ilSh,ip1,ip2,ip3
+      integer :: is,it,ilT,ilM,ilSh,ip1,ip2,ip3
       external intp_3dtable, intp_3dtable0, intp_3dtable00
 
       call subini ('CalcRecycledFluxes')
@@ -838,14 +837,14 @@ c     Internal variables
      &    pf,pcorf,pt,vt,vion,vcx,vtot,
      &     pit,pit2,mn,nnf,ux,uy,uz,
      &    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     &    rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
+     &    rc1i,rmx1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &    rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &    fnni,fnni_nodrifts,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
-     &    t1,intp_2dtable,intp_2dtable0,tifev,t_av,
+     &    intp_2dtable,intp_2dtable0,tifev,t_av,
      &    upf, nif,mfp,c_th,
      &    fna_mol_refl
       real (kind = R8):: tab(0:nM,0:nT)
-      integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
+      integer :: ic,is,it,ispt,ilT,ilM,ip1,ip2
       external intp_2dtable,intp_2dtable0
 
       call subini ('CalcReflectedFluxesDiffusion')
@@ -1083,9 +1082,9 @@ c     Output variables:
       real (kind=R8),intent(out):: fnnrefl,fmomrefl,nnrefl,
      &                             nnwwnrefl,fenerefl,fene_el
 c     Internal variables
-      real (kind=R8):: cs,Mj,
-     &    pf,pcorf,pt,vt,vion,vcx,vtot,
-     &    mn,t1,t_av,mfp,c_th,Kn
+      real (kind=R8)::
+     &    vion,vcx,vtot,
+     &    mn,t_av,mfp,c_th,Kn
       integer :: ic
       real (kind = R8):: fnnreflM,fmomreflM,nnreflM,nnwwnreflM,
      &    fenereflM,fene_elM
@@ -1215,7 +1214,7 @@ c     Output variables:
 
       subroutine CalcReflectedFluxesMaxwellian(iCv,nCi,iFc,isign,
      &            isn,istra,iwall,area,recyc0,recycm,fluid_frac_hyb,pl,
-     &            tf,geo, mpg,cosa, sina,
+     &            tf,geo,mpg,cosa,sina,
      &            fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &            fene_el)
 !nh   11.06.18
@@ -1241,13 +1240,13 @@ c     Internal variables
       real (kind=R8):: cs,Mj,pf,pcorf,pt,vt,
      &     pit,pit2,mn,nnf,ux,uz,
      &     i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
-     &     rc1i,rmx1i,rmy1i,rmz1i,rp11i,rp21i,rp31i,re1i,
+     &     rc1i,rmx1i,rmz1i,rp11i,rp21i,rp31i,re1i,
      &     rc2i,rmx2i,rmy2i,rmz2i,rp12i,rp22i,rp32i,re2i,
      &     fnni,fmox,fmoy,fmoz,fmomreflp,fmomreflt,pn,fene,
      &     intp_2dtable,intp_2dtable0,tfev,unf,
      &     fna_mol_refl
       real (kind = R8):: tab(0:nM,0:nT)
-      integer :: ic,is,it,ispt,ispt2(1),ilT,ilM,ip1,ip2
+      integer :: is,it,ispt,ilT,ilM,ip1,ip2
 *   ..statement functions
       external intp_2dtable, intp_2dtable0
 
@@ -1565,7 +1564,7 @@ c     This routine calculates the minimum mean free path for a certain stratum
 c     InOut variables
       real (kind=R8),intent(inout) :: min_Kn(nstrat)
 c     Internal variables
-      real (kind=R8):: vcx,vion,vtot,mn,mfp,c_th,t1,t_av
+      real (kind=R8):: vcx,vion,vtot,mn,mfp,c_th,t_av
       real (kind=R8) :: tn, ti, ne, te, Kn
       integer :: ic
 
@@ -1649,7 +1648,7 @@ c     local variables
      &                 Kn,Kn_ti,Kn_ne,
      &                 Kn_out(nCv),Kn_ti_out(nCv),Kn_ne_out(nCv),
      &                 L_ne_out(nCv),L_ti_out(nCv),
-     &                 dti(nFc,0:1),dne(nFc,0:1), L_ti,L_ne,L
+     &                 dti(nFc,0:1),dne(nFc,0:1),L_ti,L_ne
 
       if (ncall.eq.0) then
         call ipgeti ('b2sihs_style_visc', style_visc)

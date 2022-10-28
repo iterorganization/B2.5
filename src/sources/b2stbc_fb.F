@@ -44,11 +44,14 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, is, ivac, ireg
+      integer ncall
+#ifdef WG_TODO
+      integer ix, iy, is, ivac, ireg
       real (kind=R8) ::
      4  cum_pressure, cum_density, cum_area,
      5  ave_pressure, ave_density, ave_temp,
      6  vacuum_corr
+#endif
       save ncall
 *   ..procedures
       external xertst
@@ -247,18 +250,23 @@
 #ifdef B25_EIRENE
      &        i, j, k, l,
 #endif
-     &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount,
+     &        ib, iss,
      &        ifc, ifc1, ifc2, ic1, ic2
       integer, save :: ncall_old, ncall_gap, n_flux_zero
-      integer, save :: fhiycore_kinetic_energy, ncallfeedback
+#ifdef WG_TODO
+      integer ixl1, ixr1, ixl2, ixr2, icount, istrai
+      integer, save :: jsep, jxa, jxi
+      integer, save :: fhiycore_kinetic_energy, iyped, icped
+#endif
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra
+     &                 isfeedback, nesepm_istra, ncallfeedback
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
-     &  dt_prev, sum_e, sum_s,
-     &  total_flux, flux_old, target_flux,
+     &  dt_prev, sum_e, sum_s, total_flux,
+#ifdef WG_TODO
+     &  flux_old, target_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
      1  fheycore, fheycore_alpha, fheycurr,
      1  fhiycore, fhiycore_alpha, fhiycurr,
@@ -272,16 +280,20 @@
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
      6  cbsnafac, cbsnainc,
      7  private_flux_puff, private_flux_area,
+#endif
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
       real (kind=R8), allocatable :: charge_frac(:)
-      integer, save :: jsep, jxa, jxi, iyped, icped
       integer, save :: b2sral_style = 2
       character*72 message
       logical, save :: consistent
+#ifdef WG_TODO
       logical consistent_core, consistent_sol, consistent_pfr1,
      .        consistent_pfr2, zeroslope
+      save zeroslope
+#endif
       save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save,
+#ifdef WG_TODO
      1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
      3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
@@ -292,9 +304,9 @@
      5  ndes, ndes_sol, den, rcbsna,
      6  cbsnafac,
      7  private_flux_puff, private_flux_area, flux_old,
+#endif
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
-      save zeroslope
 *   ..procedures
       intrinsic abs, mod, nint
       external xertst, ipgetr, ipgeti
@@ -303,6 +315,7 @@
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/,
+#ifdef WG_TODO
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
@@ -319,13 +332,14 @@
      5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
      6  cbsnafac/0.01_R8/,
      7  private_flux_puff/0.0_R8/,
+     l  zeroslope/.false./,
+#endif
      9  save_core_flux_while_overshot/0.0_R8/,
      9  save_gas_puff_while_overshot/0.0_R8/,
      9  save_pfr1_puff_while_overshot/0.0_R8/,
      9  save_pfr2_puff_while_overshot/0.0_R8/,
      i  coreregno/1/, coreregn2/4/, solregno/3/,
-     i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/,
-     l  zeroslope/.false./
+     i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/
 #ifdef COMPLICATED
 #ifndef B25_EIRENE
       integer i
@@ -401,6 +415,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
 *  ..now read data for other feedback schemes given directly in b2mn.dat
+#ifdef WG_TODO
        call ipgetr ('b2stbc_fnaycore', fnaycore)
        call ipgetr ('b2stbc_fnaycore_alpha', fnaycore_alpha)
        call xertst (0.0_R8.le.fnaycore_alpha,
@@ -463,6 +478,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        call xertst (1.0_R8.le.volrec_overshoot.or.
      1  0.0_R8.eq.volrec_overshoot,
      1  'faulty internal parameter volrec_overshoot')
+#endif
        if (nnreg(0).le.2) then
          coreregno = 0
        else
@@ -471,6 +487,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgeti ('b2stbc_coreregno', coreregno)
        call ipgeti ('b2stbc_coreregn2', coreregn2)
        call ipgeti ('b2stbc_solregno', solregno)
+#ifdef WG_TODO
        call ipgetr ('b2stbc_ndes_sol', ndes_sol)
        call xertst (0.0_R8.le.ndes_sol,
      .  'faulty internal parameter ndes_sol')
@@ -525,15 +542,16 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
        call xertst (0.0_R8.le.private_flux_puff,
      1  'faulty internal parameter private_flux_puff')
+#endif
        call ipgeti ('b2stbc_pfrregno1', pfrregno1)
        call ipgeti ('b2stbc_pfrregno2', pfrregno2)
        call ipgeti ('b2stbc_isfeedback', isfeedback)
        call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
      1  'faulty internal parameter isfeedback')
+#ifdef WG_TODO
        if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8.or.
      &     nesepm_pfr.gt.0.0_R8) then
          call xerrab('PFR feedback schemes not yet converted in WG')
-#ifdef WG_TODO
          call xertst (cbirso.le.pfrregno1.and.
      1    pfrregno1.le.cbirso+cbnrso-1,
      2    'faulty internal parameter pfrregno1')
@@ -563,7 +581,6 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      .    (ndes.eq.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
      .     nesepm_pfr.gt.0.0_R8),
      .    'Simultaneous PFR feedback schemes not allowed!')
-#endif
        endif
        call ipgeti ('eirene_nesepm_istra', nesepm_istra)
        if(nesepm_istra.gt.0) then
@@ -613,7 +630,6 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        consistent_pfr2 = consistent_pfr1 .or. pfrregno1.eq.pfrregno2
        consistent_sol = nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8
      &             .and. ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8
-#ifdef WG_TODO
        do ib = 1, nbc
          if (bcchar(ib).eq.'N') then
            if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
@@ -666,13 +682,13 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
            end if
          end if
        end do
-#endif
        consistent = consistent_core .and. consistent_sol .and.
      &              consistent_pfr1 .and. consistent_pfr2
        consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      &  switch%b2stbc_boundary_namelist.lt.1
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
+#endif
       endif ! ncall.eq.0
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')

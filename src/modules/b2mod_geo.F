@@ -37,6 +37,7 @@
       logical, save :: b2mod_geo_allocated = .false.
 
       public :: distc, match
+      public :: sy
 
       contains
 
@@ -2123,5 +2124,14 @@ c conn
      & geom_match_dist
       return
       end function matchBottom
+
+      function sy(ix,iy)
+      use b2mod_indirect
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: sy
+      sy = gs(topix(ix,iy),topiy(ix,iy),1)
+      return
+      end function sy
 
       end module b2mod_geo

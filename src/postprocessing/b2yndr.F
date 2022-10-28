@@ -74,10 +74,13 @@
 *   ..common blocks
 *   ..local variables
       integer n2, is, itim, itcnt, idum(0:9), iftp, ismain
-      real (kind=R8) :: t0, t1,
+      real (kind=R8) :: t0, t1
+#ifdef WG_TODO
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
+#endif
       character lblmn*120, lblrc*120, idout*80, id*8
       character cnamip*80, cvalip*80, line*500
 *   ..initialisation

@@ -505,15 +505,19 @@ cdjm Jan2017 Keep linearised sources for balance
      &  hci0(nCv), hcib(nCv,0:ns-1)
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv)
-      integer :: iy,i,ifail,spec,nspec,iiy,iir,ift,icv,
-     &      nfitanf,ndim,is,nsp(1:ns+1),iloop,ncall,ifa,ndat,
-     &      kind_coeff,kind_data,isc,ic,lbl
-      integer :: ixwidth(nscale), ixmean(nscale)
+      integer :: iy,i,ifail,spec,nspec,iir,ift,icv,
+     &      ndim,is,nsp(1:ns+1),iloop,ncall,ndat,
+     &      kind_coeff,kind_data,ic,lbl
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
-      real (kind=R8) :: poloidal_scale_factor, rsep
-      integer, save :: nlbl, ivar
-      logical, save :: elm_time, elm_region, elm_data, found
+      real (kind=R8) :: poloidal_scale_factor
+      integer, save :: nlbl
+      logical, save :: elm_region, elm_data
+#ifdef WG_TODO
+      integer :: ifa, isc, nfitanf
+      integer :: ixwidth(nscale), ixmean(nscale)
+      logical, save :: elm_time, found
+#endif
       character*26 hlp_frm
       logical catch_up, lpflux, ldiv
       intrinsic sqrt
@@ -604,6 +608,8 @@ cdjm Jan2017 Keep linearised sources for balance
         elm_time=.false.
       endif
       elm_data = maxval(tdata(3,:,:,:)).gt.0.0_R8
+#else
+      elm_data = .false.
 #endif
 !        write (*,*) 'vor loop'
       iloop=0
@@ -850,7 +856,9 @@ cdjm Jan2017 Keep linearised sources for balance
       enddo !kind_coeff
 
       goto 100
+#ifdef WG_TODO
    99 write (*,*) 'Error in reading the dsp file'
+#endif
   100 continue
 
       if (tr_ip_new_files) then
