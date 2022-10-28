@@ -52,7 +52,11 @@ DEFINES += -DITM -DNO_F01AAF -DNAG22
 endif
 
 ifdef IMAS_VERSION
+ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
 GGD_VERSION ?= `pkg-config ggd --modversion`
+else
+GGD_VERSION ?= '0.0.0'
+endif
 LD_UAL += -lstdc++
 else
 UAL_MAJOR_VERSION = 0
