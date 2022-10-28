@@ -91,7 +91,7 @@ module b2mod_ual_io
     !! UAL Access
     use b2mod_ual_io_grid &
      & , only : INCLUDE_GHOST_CELLS
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
      & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
@@ -108,6 +108,13 @@ module b2mod_ual_io
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
         &   IDS_GRID_UNDEFINED => GRID_UNDEFINED
 #endif
+#if GGD_MAJOR_VERSION < 1
+    use b2mod_ual_io_grid &
+     & , only : VEC_ALIGN_RADIAL_ID,   &
+     &          VEC_ALIGN_POLOIDAL_ID, &
+     &          VEC_ALIGN_PARALLEL_ID, &
+     &          VEC_ALIGN_TOROIDAL_ID
+#endif
 #if GGD_MINOR_VERSION < 9
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
@@ -120,6 +127,7 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
+#if GGD_MAJOR_VERSION > 0
 #if GGD_MINOR_VERSION < 10
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -136,6 +144,9 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #endif
+#endif
+    use ids_schemas &     ! IGNORE
+     & , only : ids_string_length
 #if IMAS_MINOR_VERSION > 8
     use ids_schemas &     ! IGNORE
      & , only : ids_real, ids_real_invalid
@@ -2037,7 +2048,7 @@ contains
 #endif
 
         !! Write grid & grid subsets/subgrids
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   edge_profiles%ggd( time_sind )%grid,                        &
@@ -2087,6 +2098,9 @@ contains
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
 #endif
 #endif
+#else
+        write(0,*) 'Code was compiled without a GGD module'
+        write(0,*) 'Most IDS output is diabled !'
 #endif
 
         !! Allocate and set time slice value
@@ -3180,7 +3194,7 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
             call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_process_ids: writing plasma state" )
 
@@ -6463,7 +6477,7 @@ contains
 #endif
 
         !! Write grid & grid subsets/subgrids
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION < 15
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_profiles%ggd( batch_index )%grid,                     &
@@ -6603,7 +6617,7 @@ contains
 
         !! Write plasma state
         if ( B2_WRITE_DATA ) then
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
           call logmsg( LOGDEBUG, &
             &   "b2mod_ual_io.B25_av_ids: writing averaged plasma state" )
             !! Find grid subset base indices out of the available grid subset
@@ -7113,7 +7127,7 @@ contains
 #endif
        &  edgeprof, database, time_slice_value, &
        &  do_summary_data, new_eq_ggd )
-#if IMAS_MINOR_VERSION > 14
+#if IMAS_MINOR_VERSION > 14 && GGD_MAJOR_VERSION > 0
     use b2mod_ual_io_grid &
        & , only: GGD_copy_AoS3Root_to_Dynamic
 #endif
@@ -7373,10 +7387,15 @@ contains
             summary%global_quantities%r0%source = eq_source
           end if
 #endif
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
           new_eq_ggd = .not.associated( equilibrium%grids_ggd )
           if ( .not.new_eq_ggd ) new_eq_ggd = &
             &  .not.associated( equilibrium%grids_ggd( slice_index )%grid )
+#else
+          new_eq_ggd = .false.
+#endif
           if ( new_eq_ggd ) then
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
             if (.not.associated( equilibrium%grids_ggd ) ) &
               &  allocate( equilibrium%grids_ggd( num_time_slices ) )
             allocate( equilibrium%grids_ggd( slice_index )%grid(1) )
@@ -7392,6 +7411,7 @@ contains
             equilibrium%grids_ggd( slice_index )%grid(1) = eq_grid
 #endif
             equilibrium%grids_ggd( slice_index )%time = time_slice_value
+#endif
 #if IMAS_MINOR_VERSION > 33
             if (.not.associated( equilibrium%ids_properties%provenance%node ) ) then
               inode = 0
@@ -7418,6 +7438,7 @@ contains
             & then
             allocate( equilibrium%time_slice( slice_index )%ggd(1) )
           end if
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%r ) ) then
             do iy = -1, ny
@@ -7555,6 +7576,7 @@ contains
                 &         b_field_tor,                                        &
                 &   b2CellData = tmpCv )
           end if
+#endif
           if ( equilibrium%time( slice_index ).eq.0.0_IDS_real ) then
             equilibrium%time( slice_index ) = time_slice_value
           end if
@@ -8020,7 +8042,7 @@ contains
     end subroutine write_ids_midplane
 #endif
 
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
     !! IMAS IDS data tree node.
     subroutine write_quantity( basegrid, val, value )
@@ -8889,6 +8911,7 @@ contains
     return
     end subroutine add_sourced_value
 
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !!$> TODO: add to GGD itself (ids_grid_data)!
     !> Write a scalar data field given as a scalar data representation to a
     !! generic grid vector component IDS data fields.
@@ -9038,6 +9061,7 @@ contains
 
     return
     end subroutine B2grid_Write_Data_Vector_Components
+#endif
 
     !> From the B2 grid, compute the coordinate unit vectors
     !> (poloidal, radial, toroidal)

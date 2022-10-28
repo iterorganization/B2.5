@@ -26,6 +26,7 @@ module b2mod_ual_io_grid
     use ids_schemas  & ! IGNORE
      & , only : IDS_real
 # endif
+# if GGD_MAJOR_VERSION > 0
 # if IMAS_MINOR_VERSION > 11
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
@@ -94,6 +95,7 @@ module b2mod_ual_io_grid
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #  endif
+# endif
 # endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
@@ -209,6 +211,42 @@ module b2mod_ual_io_grid
     integer, parameter :: IDS_CLASS_VOLUME = 4 !< Object class tuple
         !< (IMAS class definition): Volume (3D)
 
+#if GGD_MAJOR_VERSION < 1
+    !! Field aligned vector component definitions
+    !> Default vector component
+    integer, parameter :: VEC_ALIGN_DEFAULT = 1
+    !> Default vector component ID
+    character(len=132), parameter :: VEC_ALIGN_DEFAULT_ID = "DEFAULT"
+    !> Poloidal vector component
+    integer, parameter :: VEC_ALIGN_POLOIDAL = 1001
+    !> Poloidal vector component ID
+    character(len=132), parameter :: VEC_ALIGN_POLOIDAL_ID = "Poloidal"
+    !> Radial vector component
+    integer, parameter :: VEC_ALIGN_RADIAL = 1002
+    !> Radial vector component ID
+    character(len=132), parameter :: VEC_ALIGN_RADIAL_ID = "Radial"
+    !> Parallel vector component
+    integer, parameter :: VEC_ALIGN_PARALLEL = 1003
+    !> Parallel vector component ID
+    character(len=132), parameter :: VEC_ALIGN_PARALLEL_ID = "Parallel"
+    !> Toroidal vector component
+    integer, parameter :: VEC_ALIGN_TOROIDAL = 1004
+    !> Toroidal vector component ID
+    character(len=132), parameter :: VEC_ALIGN_TOROIDAL_ID = "Toroidal"
+    !> Diamagnetic vector component ID
+    integer, parameter :: VEC_ALIGN_DIAMAGNETIC = 1005
+    !> Diamagnetic vector component ID
+    character(len=132), parameter :: VEC_ALIGN_DIAMAGNETIC_ID = "Diamagnetic"
+    !> Major radius aligned vector component
+    integer, parameter :: VEC_ALIGN_R_MAJOR = 1006
+    !> Major radius aligned vector component ID
+    character(len=132), parameter :: VEC_ALIGN_R_MAJOR_ID = "R"
+    !> Vertical vector component
+    integer, parameter :: VEC_ALIGN_Z = 1007
+    !> Vertical vector component ID
+    character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
+#endif
+
     !! Subgrid/Grid subset name constants
 
     integer, parameter :: B2_GENERIC_GSUBSET_COUNT = 6  !< Total number of
@@ -260,14 +298,6 @@ module b2mod_ual_io_grid
     integer, parameter :: GRID_SUBSET_OUTER_TARGET_INACTIVE = 41
     !> y-aligned edges defining the inner inactive target
     integer, parameter :: GRID_SUBSET_INNER_TARGET_INACTIVE = 42
-    !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
-    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
-    !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
-    integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 = 46
-    !> y-aligned edges defining the connection between the outer snowflake entrance and third leg
-    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 = 47
-    !> y-aligned edges defining the connection between the outer snowflake first and second leg
-    integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
     !> Point on active separatrix at outer midplane
     integer, parameter :: GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX = 101
     !> Point on active separatrix at inner midplane
@@ -440,7 +470,7 @@ module b2mod_ual_io_grid
     !> y-aligned edges defining the connection between the outer snowflake first and second leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
 # endif
-# if GGD_MINOR_VERSION < 10
+# if GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION > 0
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_Y_ALIGNED_EDGES = GRID_SUBSET_Y_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_EDGES = GRID_SUBSET_FACES
@@ -492,7 +522,7 @@ contains
 
 #ifdef IMAS
 
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !> Routine that fills in a grid description which is part of a IMAS IDS
     !! using the given grid data and prepared mappings
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &

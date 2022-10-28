@@ -137,6 +137,14 @@ DEFINES += -DMDSPLUS
 endif
 endif
 
+ifdef IMAS_PREFIX
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
+ifeq ($(shell test ${GGD_MAJOR_VERSION} -eq 0; echo $$?),0)
+$(warning Asking for an IMAS build but missing a GGD module: build may be incomplete)
+endif
+endif
+endif
+
 # If compiling with Paraview Catalyst
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
