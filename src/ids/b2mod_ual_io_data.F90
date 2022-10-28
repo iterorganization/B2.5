@@ -22,7 +22,7 @@ module b2mod_ual_io_data
 
     use b2mod_grid_mapping
 #ifdef IMAS
-#if IMAS_MINOR_VERSION > 11
+#if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION > 14
     use ids_schemas &  ! IGNORE
      & , only : ids_generic_grid_aos3_root
@@ -95,7 +95,8 @@ contains
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
         real(IDS_real), intent(in) ::  &
-            &   b2FaceData( 1:gmap%nFcx + gmap%nFcy , 0:1 )   !< Face data given on the 2-D B2 data structure
+            &   b2FaceData( 1:gmap%nFcx + gmap%nFcy , 0:1 )   !< Face data
+            !< given on the 2-D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata !< Array for
             !< handling data field values
 
@@ -148,11 +149,14 @@ contains
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
         real(IDS_real), intent(in), optional :: &
-            &   b2CellData( 1:gmap%nCv )      !< Cell data given on the 2-D B2 data structure
+            &   b2CellData( 1:gmap%nCv )      !< Cell data given
+            !< on the 2-D B2 data structure
         real(IDS_real), intent(in), optional :: &
-            &   b2FaceData( 1:gmap%nFcx + gmap%nFcy, 0:1 ) !< Face data given on the 2-D B2 data structure
+            &   b2FaceData( 1:gmap%nFcx + gmap%nFcy, 0:1 ) !< Face data
+            !< given on the 2-D B2 data structure
         real(IDS_real), intent(in), optional :: &
-            &   b2VertexData( 1:gmap%nVx )    !< Vertex data given on the 2-D B2 data structure
+            &   b2VertexData( 1:gmap%nVx )    !< Vertex data
+            !< given on the 2-D B2 data structure
         real(IDS_real), dimension(:), pointer :: idsdata      !< Array for
             !< handling data field values
 

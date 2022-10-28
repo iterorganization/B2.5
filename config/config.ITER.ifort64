@@ -73,20 +73,42 @@ OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 LDLIBES    = -lz
 
 ifdef IMAS_VERSION
+ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
 GGD_VERSION ?= `pkg-config ggd --modversion`
+else
+GGD_VERSION ?= '0.0.0'
+endif
 UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
 IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
 IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
 GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
 GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 17; echo $$?),0)
+ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
+ifdef AMNS_PREFIX
 LD_UAL    ?= `pkg-config imas-ifort amns ggd --libs`
 INCMODS   += `pkg-config imas-ifort amns ggd --cflags`
 else
+LD_UAL    ?= `pkg-config imas-ifort ggd --libs`
+INCMODS   += `pkg-config imas-ifort ggd --cflags`
+endif
+else
+ifdef AMNS_PREFIX
+LD_UAL    ?= `pkg-config imas-ifort amns --libs`
+INCMODS   += `pkg-config imas-ifort amns --cflags`
+else
+LD_UAL    ?= `pkg-config imas-ifort --libs`
+INCMODS   += `pkg-config imas-ifort --cflags`
+endif
+endif
+else
 ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
 LD_UAL    ?= `pkg-config imas-ifort --libs` -lggd-ifort
+else
+LD_UAL    ?= `pkg-config imas-ifort --libs`
+endif
 INCMODS   += `pkg-config imas-ifort --cflags`
 else
 GGD_MINOR_VERSION ?= 0
@@ -96,7 +118,10 @@ INCMODS   += `pkg-config imas-lowlevel imas-ifort --cflags`
 endif
 endif
 ifndef SOLPS_CPP
-DEFINES   += -DIMAS -DAMNS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
+DEFINES   += -DIMAS -DUAL_MAJOR_VERSION=${UAL_MAJOR_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DGGD_MAJOR_VERSION=${GGD_MAJOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
+ifdef AMNS_PREFIX
+DEFINES   += -DAMNS
+endif
 endif
 IMASLIBS   = ${LD_UAL}
 endif
