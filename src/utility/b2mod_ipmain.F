@@ -170,6 +170,10 @@
         case ('b2npmo_modvis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'
+        case ('b2stel_fix_recomb_energy')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Deprecated, '//
+     &     're-run b2ar using "b2ardr_fix_recomb"'
         case ('b2mndt_style')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'New model is based on b2mndt_style = 1.'

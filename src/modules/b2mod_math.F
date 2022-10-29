@@ -17,6 +17,16 @@
       return
       end function expu
 
+      function expu1(t0)
+*     (expu1 is the exponential function with underflow set to a tiny
+*     positive value)
+      implicit none
+      real(kind=R8) :: expu1, t0
+      if (.not.b2mod_math_initialised) call b2mod_math_init
+      expu1 = exp(max(t0,cutll))
+      return
+      end function expu1
+
       function expu2(t0)
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somewhat arbitrary level.)
@@ -26,6 +36,16 @@
       expu2 = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
       return
       end function expu2
+
+      function expu4(t0)
+*     (expu4 is the exponential function with underflow set to a tiny
+*     single-precision positive value)
+      implicit none
+      real(kind=R8) :: expu4, t0
+      if (.not.b2mod_math_initialised) call b2mod_math_init
+      expu4 = exp(max(t0,cutll))+small_R4_constant
+      return
+      end function expu4
 
       integer function ibase(n,incx)
       implicit none

@@ -57,13 +57,10 @@
      *   t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
 *   ..procedures
-      intrinsic log
-      logical lnext
       real (kind=R8) ::
      *   smax
       external xertst, cfverw, cfwure, cfwuin
       external smax
-      lnext(k,k1) = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -91,7 +88,7 @@
        if (k.eq.rtns-1) then
         lt0 = .true.
        else
-        lt0 = .not.lnext(k,k+1)
+        lt0 = .not.lrtnext(k,k+1)
        endif
 *      (the meaning of lt0 is 'species k cannot ionise to k+1')
        if (lt0) then
@@ -105,7 +102,7 @@
        if (k.eq.0) then
         lt0 = .true.
        else
-        lt0 = .not.lnext(k-1,k)
+        lt0 = .not.lrtnext(k-1,k)
        endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
        if (lt0) then
@@ -119,7 +116,7 @@
        if (k.eq.0) then
         lt0 = .true.
        else
-        lt0 = .not.lnext(k-1,k)
+        lt0 = .not.lrtnext(k-1,k)
        endif
 *      (the meaning of lt0 is 'species k cannot recombine to k-1')
        if (lt0) then
@@ -130,8 +127,6 @@
       enddo
 
 * ..save the table of rate coefficients
-      idum(0) = fix_recomb
-      call cfwuin (nput, 1, idum, 'fix_recomb')
 *   ..save dimensions
       idum(0) = rtnt
       idum(1) = rtnn
@@ -162,8 +157,8 @@
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
-      if (version.ge.'03.000.007') then
-        call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
+      if (version.ge.'03.002.000') then
+        call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlqr, 'rtlqr')
       end if
       call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
       if (version.ge.'01.001.016') then
@@ -177,6 +172,11 @@
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlz2, 'rtlz2')
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlpt, 'rtlpt')
         call cfwure (nput, (rtnt+1)*(rtnn+1)*rtns, rtlpi, 'rtlpi')
+      end if
+      if (version.ge.'03.000.007') then
+        idum(0) = fix_recomb
+        idum(1) = zmax_recomb
+        call cfwuin (nput, 2, idum, 'fix_recomb,zmax_recomb')
       end if
 
 * ..return

@@ -3,8 +3,10 @@ module b2mod_cdf
   use b2mod_subsys
   implicit none
 #ifndef NO_CDF
-  public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
 # include <netcdf.inc>
+#ifndef SOLPS4_3
+  public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
+#endif
   character*(maxncnam), save :: timsav, batchsav
   integer, save :: ntsav, nasav
   data timsav /'!!!! INVALID NAME !!!!'/
@@ -12,6 +14,7 @@ module b2mod_cdf
 
 contains
 
+#ifndef SOLPS4_3
   subroutine b2crtimecdf(filename, &
    nCv, nc, ns, write_2d, &
    ncid, batch_only, iret)
@@ -1608,7 +1611,7 @@ contains
       iret = nf_put_att_text(ncid, posepi_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'long_name', 65, &
-           'variance of separatrix turbulent kinetic energy, inboard divertor')
+           'variance of separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
@@ -1756,6 +1759,7 @@ contains
     call subend ()
     return
   end subroutine rwcdf
+#endif
     !
   subroutine rwcdf_settime(timnam,ntstep)
     implicit none

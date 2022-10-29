@@ -298,7 +298,7 @@
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo, 
+      subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo,
      &  mpg, state, state_ext)
       use b2mod_ad
      & , only : old_erosion, old_deposition
@@ -724,20 +724,20 @@
 *     process k->k-1. rtrra has dimension m**3/s.
 *      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
-*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
-*     at electron temperature rtt(i) and electron density rtn(j) for 
-*     processes starting from charge state k, excluding the contributions 
-*     coming from potential energy of recombination and other recombination 
-*     process contributions. In short, it includes the processes not 
-*     accounted for in EIRENE.
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient
+*     at electron temperature rtt(i) and electron density rtn(j) for
+*     processes starting from charge state k, excluding the contributions
+*     coming from potential energy of recombination and other recombination
+*     process contributions. In short, it includes the processes not
+*     accounted for in Eirene.
 *     rtqa has dimension eV*m**3/s.
-*      rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
-*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
+*      rtlqr - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqr(i,j,k) specifies the
+*     logu(rtrqr), where rtrqr is the electron heat loss rate
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has
+*     state k. rtqr only includes the contribution of recombination
+*     which replaces AMJUEL when Eirene is not used. rtqr has
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -1172,7 +1172,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,is,:)=rtlsa(:,0,:)
              rtlra(:,is,:)=rtlra(:,0,:)
              rtlqa(:,is,:)=rtlqa(:,0,:)
-             rtlqa_ra(:,is,:)=rtlqa_ra(:,0,:)                        !mb 22.05.18
+             rtlqr(:,is,:)=rtlqr(:,0,:)                        !mb 22.05.18
              rtlcx(:,is,:)=rtlcx(:,0,:)
              rtlrd(:,is,:)=rtlrd(:,0,:)
              rtlbr(:,is,:)=rtlbr(:,0,:)
@@ -1219,7 +1219,7 @@ c     &   'faulty internal parameter density_rescale')
              rtlsa(:,:,is)=rtlsa(:,:,is)+log(rescale_sa(is))
              rtlra(:,:,is)=rtlra(:,:,is)+log(rescale_ra(is))
              rtlqa(:,:,is)=rtlqa(:,:,is)+log(rescale_qa(is))
-             rtlqa_ra(:,:,is)=rtlqa_ra(:,:,is)+log(rescale_qa(is))
+             rtlqr(:,:,is)=rtlqr(:,:,is)+log(rescale_qa(is))
              rtlcx(:,:,is)=rtlcx(:,:,is)+log(rescale_cx(is))
              rtlrd(:,:,is)=rtlrd(:,:,is)+log(rescale_rd(is))
              rtlbr(:,:,is)=rtlbr(:,:,is)+log(rescale_br(is))
@@ -1241,25 +1241,25 @@ c     &   'faulty internal parameter density_rescale')
        call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 * change atomic physics for coupling to Eirene    ! DPC 1999.06.28
 cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
-       if(switch%use_eirene.eq.0 .and. 
+       if(switch%use_eirene.eq.0 .and.
      &  .not.(switch%neutral_sources_rescale.eq.1.0_R8)) write (*,*)
      &  ' WARNING! Using fluid neutrals with sources rescale /= 1!'
        if(switch%use_eirene.ne.0) then
-c when using kinetic neutrals, volume recombination is fully handled on the EIRENE side.
+c when using kinetic neutrals, volume recombination is fully handled on the Eirene side.
 c The recombination rate depends on the ion density and not on the neutral density, so the neutral rescaling is not sufficient to turn it off on the B2.5 side
 c and hence the reaction rates have to be rescaled here.
          if (switch%neutral_sources_rescale.ne.1.0_R8) then
            write(*,*) 'Adding ',log(switch%neutral_sources_rescale),
-     *         ' to relevant rtlra and rtlqa_ra'
+     *         ' to relevant rtlra and rtlqr'
            do is=0,ns-2
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(switch%neutral_sources_rescale)
                 write(*,*) is,zamax(is),rtlra(0,0,is+1)
-                rtlqa_ra(:,:,is+1)=rtlqa_ra(:,:,is+1)+             !mb 22.05.18
+                rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+             !mb 22.05.18
      *             log(switch%neutral_sources_rescale)
                 write(*,'(i3,1p,2e16.8)')
-     *             is,zamax(is),rtlqa_ra(0,0,is+1)
+     *             is,zamax(is),rtlqr(0,0,is+1)
              endif
            enddo
          else
@@ -1511,10 +1511,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 #endif
 *   ..read initial state
       call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
-      if (switch%solve_keps.gt.0 .and. 
+      if (switch%solve_keps.gt.0 .and.
      &   .not.smax(nCv,state%pl%kt,1).gt.0.0_R8)
      .  state%pl%kt = state%pl%ti*0.1_R8
-!      if (switch%solve_keps.gt.1 .and. 
+!      if (switch%solve_keps.gt.1 .and.
 !     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
 !     .  state%pl%zt = state%pl%ti*1e5_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
@@ -1535,8 +1535,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 
 *   get averaged plasma profiles
       if (ird_aver > 0)
-     &  call run_av_get_plasma (state%pl%na, state%pl%te, 
-     &             state%pl%ti, state%pl%ua, state%pl%po, 
+     &  call run_av_get_plasma (state%pl%na, state%pl%te,
+     &             state%pl%ti, state%pl%ua, state%pl%po,
      &             state%pl%kt, state%pl%zt, nCv, ns)
 
       write (*,*) 'Starting conversion to unstructured format...'
@@ -1544,7 +1544,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 !WG_TODO: move this back to original location...
       if (switch%b2stbc_boundary_namelist.ge.1) then
         call initialize_b2mod_boundary(ns,mpg,0.0_R8)
-      else 
+      else
         call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
 
@@ -1599,10 +1599,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
           state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
         enddo
       enddo                                                          !srv 25.01.16 }
-!      if(use_mms.ne.0) then                                          !srv 26.02.18 {
+!      if(use_mms.ne.0) then                                         !srv 26.02.18 {
 *   ..reset initial state using exact solution
        call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
-!      endif                                                          !srv 26.02.18 {
+!      endif                                                         !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients
@@ -1610,14 +1610,14 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 *   ..compute electron rate coefficients
       call xertst (0.le.ismain.and.ismain.lt.ns0,
      . 'invalid main plasma species index ismain')
-      call b2sqel (nCv, ns0, ismain, switch, ev, state%pl%te, state%rt, 
+      call b2sqel (nCv, ns0, ismain, switch, ev, state%pl%te, state%rt,
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
        call sfill (nCv*(ns-ns0), na_new, state % pl % na(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
-       call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)        !xpb
-       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%uadia(1,0,ns0), 1)     !xpb
+       call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)  !xpb
+       call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%uadia(1,0,ns0), 1)   !xpb
        call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%vadia(1,0,ns0), 1)
        call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%wadia(1,0,ns0), 1)
        call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%vaecrb(1,0,ns0), 1)
@@ -1640,27 +1640,27 @@ c   --> better way doing this is necessary)
           do is=0,ns-1
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
            state%pl%na(:,is) = state%pl%na(:,is)*(-density_rescale)
-           state%dv%ne(:) = state%dv%ne(:) + 
+           state%dv%ne(:) = state%dv%ne(:) +
      .      state%pl%na(:,is)*state%rt%rza(:,is)*(-density_rescale-1.0)
-           state%dv%fna(:,:,is) = 
+           state%dv%fna(:,:,is) =
      .      state%dv%fna(:,:,is)*(-density_rescale)
-           state%dv%fna_mdf(:,:,is) = 
+           state%dv%fna_mdf(:,:,is) =
      .      state%dv%fna_mdf(:,:,is)*(-density_rescale)
            state%dv%fna_fcor(:,:,is) =
      .      state%dv%fna_fcor(:,:,is)*(-density_rescale)
            state%dv%fna_nodrift(:,:,is) =
      .      state%dv%fna_nodrift(:,:,is)*(-density_rescale)
-           state%dv%fna_he(:,:,is) = 
+           state%dv%fna_he(:,:,is) =
      .      state%dv%fna_he(:,:,is)*(-density_rescale)
-           state%dv%fnaPSch(:,:,is) = 
+           state%dv%fnaPSch(:,:,is) =
      .      state%dv%fnaPSch(:,:,is)*(-density_rescale)
-           state%dv%fna_eir(:,:,is) = 
+           state%dv%fna_eir(:,:,is) =
      .      state%dv%fna_eir(:,:,is)*(-density_rescale)
-           state%dv%fna_32(:,:,is) = 
+           state%dv%fna_32(:,:,is) =
      .      state%dv%fna_32(:,:,is)*(-density_rescale)
-           state%dv%fna_52(:,:,is) = 
+           state%dv%fna_52(:,:,is) =
      .      state%dv%fna_52(:,:,is)*(-density_rescale)
-           state%dv%kinrgy(:,is) = 
+           state%dv%kinrgy(:,is) =
      .      state%dv%kinrgy(:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
@@ -1714,21 +1714,21 @@ c   --> better way doing this is necessary)
             state%pl%na(:,is)=state%pl%na(:,is)*switch%neutral_rescale
             state%dv%fna(:,:,is)=state%dv%fna(:,:,is)*
      .       switch%neutral_rescale
-            state%dv%fna_mdf(:,:,is) = 
+            state%dv%fna_mdf(:,:,is) =
      .       state%dv%fna_mdf(:,:,is)*switch%neutral_rescale
-            state%dv%fna_fcor(:,:,is) = 
+            state%dv%fna_fcor(:,:,is) =
      .       state%dv%fna_fcor(:,:,is)*switch%neutral_rescale
             state%dv%fna_nodrift(:,:,is) =
      .       state%dv%fna_nodrift(:,:,is)*switch%neutral_rescale
-            state%dv%fna_he(:,:,is) = 
+            state%dv%fna_he(:,:,is) =
      .       state%dv%fna_he(:,:,is)*switch%neutral_rescale
-            state%dv%fnaPSch(:,:,is) = 
+            state%dv%fnaPSch(:,:,is) =
      .       state%dv%fnaPSch(:,:,is)*switch%neutral_rescale
-            state%dv%fna_eir(:,:,is) = 
+            state%dv%fna_eir(:,:,is) =
      .       state%dv%fna_eir(:,:,is)*switch%neutral_rescale
-            state%dv%fna_32(:,:,is) = 
+            state%dv%fna_32(:,:,is) =
      .       state%dv%fna_32(:,:,is)*switch%neutral_rescale
-            state%dv%fna_52(:,:,is) = 
+            state%dv%fna_52(:,:,is) =
      .       state%dv%fna_52(:,:,is)*switch%neutral_rescale
             state%dv%kinrgy(:,is)=state%dv%kinrgy(:,is)*
      .       switch%neutral_rescale
@@ -1748,7 +1748,7 @@ c   --> better way doing this is necessary)
             state%rt%rpt(:,is) = (potmin(is)+potmax(is))/2.0_R8
             state%rt%rpi(:,is) = (potimin(is)+potimax(is))/2.0_R8
           enddo
-          call b2xpne (nCv, ns, state % rt % rza, state % pl % na, 
+          call b2xpne (nCv, ns, state % rt % rza, state % pl % na,
      .       state_ext % ne, state % dv % ne)
         endif
         max_delta = 1.0_R8
@@ -1763,9 +1763,9 @@ c   --> better way doing this is necessary)
 *    ..compute log-log electron rate coefficients
           call b2spel (nCv, ns, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
-          call b2sqel (nCv, ns, ismain, switch, ev, state % pl % te, 
+          call b2sqel (nCv, ns, ismain, switch, ev, state % pl % te,
      .      state % rt, state % rtw)
-          call b2xpne (nCv, ns, state % rt % rza, state % pl % na, 
+          call b2xpne (nCv, ns, state % rt % rza, state % pl % na,
      .       state_ext % ne, state % dv % ne)
           max_delta = max(
      1     maxval(abs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
@@ -1834,7 +1834,7 @@ c   --> better way doing this is necessary)
       endif
 !csc  reading transpot input is needed here otherwise when optimization is running it will override the optimized parameters
       if (switch%b2tqna_transport_inputfile .eq. 1) then
-        call read_transport_input(transport_ip_filename) 
+        call read_transport_input(transport_ip_filename)
       endif
       call alloc_b2mod_numerics(nCv,ns,mpg%nnreg, switch)
       allocate(
@@ -1897,7 +1897,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state, 
+      subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
      &  state_ext, J)
       use b2mod_user_namelist
      & , only : ncf
@@ -1910,7 +1910,7 @@ c new CDF movie option (1st frame at t=0)
      &          e_na
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
-     &          int5r, int5l, int1r, int1l, int4r, int4l, uold, mold, 
+     &          int5r, int5l, int1r, int1l, int4r, int4l, uold, mold,
      &          told, fna_mol
       use b2mod_ad
       implicit none
@@ -2065,8 +2065,8 @@ csw 09oct2012 set default potential already at this point (BCs)
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
           call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
-     .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax, 
-     .      state%rt%iscx, itim, dtim, ntim, 
+     .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     .      state%rt%iscx, itim, dtim, ntim,
      .      switch, geo, mpg, state, state_ext, ierr)
 #ifndef FIXED_POINT
           if(ierr.eq.10) then
@@ -2083,7 +2083,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         enddo
 *    ..call cost function
-        call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state, 
+        call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
      &    state_ext, switch%BoRiS, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
@@ -2204,7 +2204,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(fort31name,'(a,i8.8)') fort_lc//'31.', itim
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
-          call copy_background(nCv, nFc, ns, switch, mpg, geo, 
+          call copy_background(nCv, nFc, ns, switch, mpg, geo,
      .                         state%pl, state%dv, switch%BoRiS,
      .                         kin_frac_hyb, fnn_inc) ! FIXME progapage somehow kint_frac_hyb
           call write_f31(mpg)
@@ -2486,7 +2486,7 @@ c new CDF movie option
 *   ..end loop
       end do
 *   ..call cost function
-      call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state, 
+      call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
      &    state_ext, switch%BoRiS, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
@@ -2546,7 +2546,7 @@ c new CDF movie option
       if(quit_residual)                                                  !jwk
      1 write(*,*) 'stopping because min_residual criteria satisfied'     !jwk
 #ifdef FIXED_POINT
-      if(res_max.le.res_quit)  
+      if(res_max.le.res_quit)
      1 write(*,*) 'stopping because res_quit criteria satisfied'
 #endif
 
@@ -2600,9 +2600,9 @@ c new CDF movie option
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
         call calc_err(nCv, ns, state % pl, state % dv)
       endif                                                              !srv 26.02.18 }
-      if(iout.ne.0) then 
+      if(iout.ne.0) then
         if(use_mms.eq.0) then                                              !srv 29.11.18 {
-         do is = 0,ns-1                                                 
+         do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
      &      'b2mndr_na'//chns//'out')
@@ -2613,10 +2613,10 @@ c new CDF movie option
          call my_out_us(70,nCv,0,state%pl%te/ev,'b2mndr_te_eV_out')
          call my_out_us(70,nCv,0,state%pl%ti,'b2mndr_ti_out')
          call my_out_us(70,nCv,0,state%pl%ti/ev,'b2mndr_ti_eV_out')
-         call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')      
-       endif          
+         call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')
+       endif
       endif                                                              !srv 29.11.18 }
-      call b2wdat (nCv, nFc, nVx, ns, ismain, ismain0, 
+      call b2wdat (nCv, nFc, nVx, ns, ismain, ismain0,
      .                   mpg, geo, state, state_ext, switch%BoRiS)       !srv 05.10.01
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
@@ -2715,7 +2715,7 @@ c new CDF movie option
 
 * ..return
       ncall = ncall+1
-      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) 
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1))
      &  deallocate(par_opt_phys)
       deallocate(old_erosion, old_deposition)
 !WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
@@ -2777,7 +2777,7 @@ c
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
       real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
-     *             rate_za, rate_z2, rate_pt, rate_pi, rate_qa_ra
+     *             rate_za, rate_z2, rate_pt, rate_pi, rate_qr
 !!    real (R8) :: rate_cx
       integer ite, ine, ise, ixte
 
@@ -2813,8 +2813,8 @@ c
      1     fxte*rtlra(ixte+1,ine,ise)) * ne_hot_frac
           rate_qa = exp((1.0_R8-fxte)*rtlqa(ixte,ine,ise) +
      1     fxte*rtlqa(ixte+1,ine,ise)) * ne_hot_frac
-          rate_qa_ra = exp((1.0_R8-fxte)*rtlqa_ra(ixte,ine,ise) +
-     1     fxte*rtlqa_ra(ixte+1,ine,ise)) * ne_hot_frac
+          rate_qr = exp((1.0_R8-fxte)*rtlqr(ixte,ine,ise) +
+     1     fxte*rtlqr(ixte+1,ine,ise)) * ne_hot_frac
           rate_rd = exp((1.0_R8-fxte)*rtlrd(ixte,ine,ise) +
      1     fxte*rtlrd(ixte+1,ine,ise)) * ne_hot_frac
           rate_br = exp((1.0_R8-fxte)*rtlbr(ixte,ine,ise) +
@@ -2836,9 +2836,8 @@ c
      1       log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
             rtlqa(ite,ine,ise) =
      1       log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
-            rtlqa_ra(ite,ine,ise) =
-     1       log(exp(rtlqa_ra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+
-     2       rate_qa_ra)
+            rtlqr(ite,ine,ise) =
+     1       log(exp(rtlqr(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qr)
             rtlrd(ite,ine,ise) =
      1       log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
             rtlbr(ite,ine,ise) =

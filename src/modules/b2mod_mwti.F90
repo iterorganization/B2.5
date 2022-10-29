@@ -4,29 +4,33 @@ module b2mod_mwti
   use b2mod_subsys
   implicit none
   private
-  public :: b2mwti, output_ds, dealloc_b2mod_mwti
-  real (kind=R8), allocatable, save :: &
+  public :: output_ds
+#ifndef SOLPS4_3
+  public :: b2mwti, dealloc_b2mod_mwti
+#endif
+  real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
          nesepa_av(:), tesepa_av(:), tisepa_av(:), &
          posepi_av(:), posepm_av(:), posepa_av(:), &
          ktsepi_av(:), ktsepm_av(:), ktsepa_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_av(:), temxip_av(:), timxip_av(:), &
          nemxap_av(:), temxap_av(:), timxap_av(:), &
          pomxip_av(:), pomxap_av(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nesepi_std(:), tesepi_std(:), tisepi_std(:), &
          nesepm_std(:), tesepm_std(:), tisepm_std(:), &
          nesepa_std(:), tesepa_std(:), tisepa_std(:), &
          posepi_std(:), posepm_std(:), posepa_std(:), &
          ktsepi_std(:), ktsepm_std(:), ktsepa_std(:)
-  real (kind=R8), allocatable, save :: &
+  real (kind=R8), allocatable, save, public :: &
          nemxip_std(:), temxip_std(:), timxip_std(:), &
          nemxap_std(:), temxap_std(:), timxap_std(:), &
          pomxip_std(:), pomxap_std(:)
 contains
 
+#ifndef SOLPS4_3
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
                      nCv, ns, geo, mpg, switch, pl ,dv, co, &
                      ismain, ismain0, BoRiS, lwti, lwav, luav)
@@ -1558,6 +1562,7 @@ contains
 
   return
   end subroutine dealloc_b2mod_mwti
+#endif
 !
   subroutine output_ds(crx,cry,nx,ny,iref,target_offset, &
        jsep,iystart,iyend,filename)
