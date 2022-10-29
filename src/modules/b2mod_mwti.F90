@@ -3,7 +3,10 @@ module b2mod_mwti
   use b2mod_subsys
   implicit none
   private
-  public :: b2mwti, output_ds, dealloc_b2mod_mwti
+  public :: output_ds
+#ifndef SOLPS4_3
+  public :: b2mwti, dealloc_b2mod_mwti
+#endif
   real (kind=R8), allocatable, save, public :: &
          nesepi_av(:), tesepi_av(:), tisepi_av(:), &
          nesepm_av(:), tesepm_av(:), tisepm_av(:), &
@@ -25,7 +28,9 @@ module b2mod_mwti
 
 #ifndef NO_CDF
 # include <netcdf.inc>
+#ifndef SOLPS4_3
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
+#endif
   character*(maxncnam), save :: timsav, batchsav
   integer, save :: ntsav, nasav
   data timsav /'!!!! INVALID NAME !!!!'/
@@ -33,6 +38,7 @@ module b2mod_mwti
 
 contains
 
+#ifndef SOLPS4_3
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
                      nx, ny, ns, ismain, ismain0, BoRiS, &
                      lwti, lwav, luav)
@@ -51,10 +57,8 @@ contains
     use b2mod_wall
     use b2mod_b2cmpa
     use b2mod_external
-#ifndef SOLPS4_3
 #ifdef B25_EIRENE
     use eirmod_wneutrals
-#endif
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
@@ -3143,6 +3147,7 @@ contains
     call subend ()
     return
   end subroutine rwcdf
+#endif
     !
   subroutine rwcdf_settime(timnam,ntstep)
     implicit none
