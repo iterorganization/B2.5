@@ -10,7 +10,7 @@
      &  rtlsa(:,:,:),
      &  rtlra(:,:,:),
      &  rtlqa(:,:,:),
-     &  rtlqa_ra(:,:,:),
+     &  rtlqr(:,:,:),
      &  rtlrd(:,:,:),
      &  rtlbr(:,:,:),
      &  rtlcx(:,:,:),
@@ -20,7 +20,7 @@
      &  rtlpi(:,:,:)
       integer, allocatable, save ::
      &  rtyr(:)
-      integer, save :: fix_recomb = 0, zmax_recomb = 1
+      integer, save :: fix_recomb, zmax_recomb
       logical, save :: adpak_used
 
       contains
@@ -43,7 +43,7 @@
       allocate(rtlsa(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlra(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlqa(0:rtnt,0:rtnn,0:rtns-1))
-      allocate(rtlqa_ra(0:rtnt,0:rtnn,0:rtns-1))
+      allocate(rtlqr(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlrd(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlbr(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlcx(0:rtnt,0:rtnn,0:rtns-1))
@@ -69,7 +69,7 @@
       deallocate(rtlsa)
       deallocate(rtlra)
       deallocate(rtlqa)
-      deallocate(rtlqa_ra)
+      deallocate(rtlqr)
       deallocate(rtlrd)
       deallocate(rtlbr)
       deallocate(rtlcx)

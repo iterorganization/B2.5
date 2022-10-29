@@ -90,8 +90,8 @@
 *      ..compute heat loss rate coefficient
          rtw%rqa(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlqa(iCv,0,is)+rt%rlqa(iCv,1,is)*wrk0(iCv))
-         rtw%rqa_ra(iCv,is) = switch%b2sqel_phm2*
-     &     ev*expu(rt%rlqa_ra(iCv,0,is)+rt%rlqa_ra(iCv,1,is)*wrk0(iCv))
+         rtw%rqr(iCv,is) = switch%b2sqel_phm2*
+     &     ev*expu(rt%rlqr(iCv,0,is)+rt%rlqr(iCv,1,is)*wrk0(iCv))
 *      ..compute line radiation rate coefficient
          rtw%rrd(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlrd(iCv,0,is)+rt%rlrd(iCv,1,is)*wrk0(iCv))

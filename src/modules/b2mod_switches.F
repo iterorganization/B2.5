@@ -388,9 +388,6 @@ c b2tqna
 c b2tanml
       real (kind=R8) :: fch_anomalous
 
-c b2stel
-      integer :: fix_recomb_energy
-
 c b2stbm
       integer :: b2stbm_impgyro_mod
       integer :: b2stbm_internal_energy_sources
@@ -882,9 +879,6 @@ c b2tqna
 
 c fch_anomalous
       s % fch_anomalous = 1.0e0_R8
-
-c b2stel
-      s % fix_recomb_energy = 0
 
 c b2stbm
       s % b2stbm_impgyro_mod = 0
@@ -1404,10 +1398,6 @@ c fch anomalous
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
        if (s%fch_anomalous.eq.1.0_R8)
      &  call ipgetr ('b2tanml_anomalous', s%fch_anomalous) ! for backward compatibility
-
-c b2stel
-      call ipgeti ('b2stel_fix_recomb_energy',
-     & s%fix_recomb_energy)
 
 c b2stbm
       call ipgetr ('b2stbm_linearisation', s % b2stbm_linearisation)
@@ -1972,8 +1962,6 @@ c med
 ***********************************************************************
 
       subroutine check_consistency_switches (s)
-      use b2mod_b2cmrc
-     & , only : adpak_used
 c      use b2mod_boundary_namelist
 c     & , only : nbc
 c check the inter-consistency of different switches (e.g. certain combinations of swithces may not (yet) be allowed or developed)
@@ -2042,14 +2030,6 @@ c k-enstrophy model
         write(*,*) 'WARNING! b2mndr_solve_keps = ',
      &    s%solve_keps,' and b2tqna_transport_keps =',
      &    s%transport_keps,' should go together'
-      endif
-
-c b2stel
-      call xertst(.not.(adpak_used.and.s%fix_recomb_energy.ne.0),
-     &   'fix_recomb_energy should not be used with ADPAK rates!')
-      if(s%fix_recomb_energy.ne.0) then
-         write(*,*)
-     &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!'
       endif
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint

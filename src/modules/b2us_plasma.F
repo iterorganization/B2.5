@@ -190,7 +190,7 @@ cwdk move to dv
         real(R8), allocatable, dimension(:,:,:) :: rlqa, rlrd, rlbr,
      .                                             rlra, rlsa, rlza,
      .                                             rlz2, rlpt, rlpi,
-     .                                             rlqa_ra
+     .                                             rlqr
         ! nCv, is
         real(R8), allocatable, dimension(:,:) :: rza, rz2, rpt, rpi
       end type B2Rates
@@ -198,7 +198,7 @@ cwdk move to dv
 ! Type for data transfer in b2sral
       type B2RatesWork
         real(R8), allocatable :: rsa(:,:), rra(:,:), rqa(:,:), rrd(:,:),
-     .                           rbr(:,:), rcx(:,:) , rqa_ra(:,:)
+     .                           rbr(:,:), rcx(:,:) , rqr(:,:)
       end type B2RatesWork
 
 ! A plasma state snapshot for timestepping. Includes a combination of quantities from above types
@@ -1530,7 +1530,7 @@ cwdk move to dv
       allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rt%rlqa_ra( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rt%rlqr( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( rt%rza( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rt%rz2( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -1550,7 +1550,7 @@ cwdk move to dv
       allocate( rt%rlz2( nCv, 0:1, 0:ns-1 ) )
       allocate( rt%rlpt( nCv, 0:1, 0:ns-1 ) )
       allocate( rt%rlpi( nCv, 0:1, 0:ns-1 ) )
-      allocate( rt%rlqa_ra( nCv, 0:1, 0:ns-1 ) )
+      allocate( rt%rlqr( nCv, 0:1, 0:ns-1 ) )
 
       allocate( rt%rza( nCv, 0:ns-1 ) )
       allocate( rt%rz2( nCv, 0:ns-1 ) )
@@ -1570,7 +1570,7 @@ cwdk move to dv
       rt%rlz2 = 0._R8
       rt%rlpt = 0._R8
       rt%rlpi = 0._R8
-      rt%rlqa_ra = 0._R8
+      rt%rlqr = 0._R8
 
       rt%rza = 0._R8
       rt%rz2 = 0._R8
@@ -1589,6 +1589,7 @@ cwdk move to dv
       deallocate (rt%iscx )
       deallocate( rt%rlcx )
       deallocate( rt%rlqa )
+      deallocate( rt%rlqr )
       deallocate( rt%rlrd )
       deallocate( rt%rlbr )
       deallocate( rt%rlra )
@@ -1601,7 +1602,6 @@ cwdk move to dv
       deallocate( rt%rz2 )
       deallocate( rt%rpt )
       deallocate( rt%rpi )
-      deallocate( rt%rlqa_ra )
 
       return
       end subroutine destroyB2Rates
@@ -1619,7 +1619,7 @@ cwdk move to dv
       allocate( rtw%rrd( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw%rbr( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw%rcx( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( rtw%rqa_ra( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( rtw%rqr( nCv, 0:ns-1 ), SOURCE=0._R8 )
 #else
       allocate( rtw%rsa( nCv, 0:ns-1 ) )
       allocate( rtw%rra( nCv, 0:ns-1 ) )
@@ -1627,7 +1627,7 @@ cwdk move to dv
       allocate( rtw%rrd( nCv, 0:ns-1 ) )
       allocate( rtw%rbr( nCv, 0:ns-1 ) )
       allocate( rtw%rcx( nCv, 0:ns-1 ) )
-      allocate( rtw%rqa_ra( nCv, 0:ns-1 ) )
+      allocate( rtw%rqr( nCv, 0:ns-1 ) )
 
       rtw%rsa = 0._R8
       rtw%rra = 0._R8
@@ -1635,7 +1635,7 @@ cwdk move to dv
       rtw%rrd = 0._R8
       rtw%rbr = 0._R8
       rtw%rcx = 0._R8
-      rtw%rqa_ra = 0._R8
+      rtw%rqr = 0._R8
 #endif
 
       return
@@ -1651,7 +1651,7 @@ cwdk move to dv
       if ( allocated( rtw%rrd ) ) deallocate( rtw%rrd )
       if ( allocated( rtw%rbr ) ) deallocate( rtw%rbr )
       if ( allocated( rtw%rcx ) ) deallocate( rtw%rcx )
-      if ( allocated( rtw%rqa_ra ) ) deallocate( rtw%rqa_ra )
+      if ( allocated( rtw%rqr ) ) deallocate( rtw%rqr )
       return
       end subroutine destroyB2RatesWork
 
