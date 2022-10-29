@@ -24,7 +24,7 @@
 *  1. purpose
 *
 *     B2SPEL computes on all cells of the mesh a log-log representation
-*     of the rate coefficients for ionisation, recombination, radiation 
+*     of the rate coefficients for ionisation, recombination, radiation
 *     and electron heat loss.
 *
 *
@@ -33,7 +33,7 @@
 *     This routine uses table interpolation to compute on each cell
 *     and for each atomic species a local representation of the rate
 *     coefficients for ionisation, recombination, electron heat
-*     loss and radiation. The representation is linear in the log of 
+*     loss and radiation. The representation is linear in the log of
 *     the rate coefficient versus the log of the temperature.
 *     The tables store the log of the rate coefficients as a function
 *     of log(te/ev) and log(ne). Linear interpolation is used.
@@ -148,7 +148,7 @@
          else
           rt%rlsa(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlsa(iCv,0,is) = 
+         rt%rlsa(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlsa(iCv,1,is)*rlte
 *      ..compute recombination rate coefficient
          t0 = (1.0_R8-fxne)*rtlra(ite,ine,is)+
@@ -161,7 +161,7 @@
          else
           rt%rlra(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlra(iCv,0,is) =  
+         rt%rlra(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlra(iCv,1,is)*rlte
 *      ..compute heat loss rate coefficient
          t0 = (1.0_R8-fxne)*rtlqa(ite,ine,is)+
@@ -174,20 +174,20 @@
          else
           rt%rlqa(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlqa(iCv,0,is) =  
-     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqa(iCv,1,is)*rlte 
-         t0 = (1.0_R8-fxne)*rtlqa_ra(ite,ine,is)+
-     &        fxne*rtlqa_ra(ite,ine+1,is)
-         t1 = (1.0_R8-fxne)*rtlqa_ra(ite+1,ine,is)+
-     &        fxne*rtlqa_ra(ite+1,ine+1,is)
+         rt%rlqa(iCv,0,is) =
+     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqa(iCv,1,is)*rlte
+         t0 = (1.0_R8-fxne)*rtlqr(ite,ine,is)+
+     &        fxne*rtlqr(ite,ine+1,is)
+         t1 = (1.0_R8-fxne)*rtlqr(ite+1,ine,is)+
+     &        fxne*rtlqr(ite+1,ine+1,is)
          tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
          if (ltst0) then
-          rt%rlqa_ra(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
+          rt%rlqr(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          else
-          rt%rlqa_ra(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
+          rt%rlqr(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlqa_ra(iCv,0,is) =  
-     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqa_ra(iCv,1,is)*rlte
+         rt%rlqr(iCv,0,is) =
+     .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlqr(iCv,1,is)*rlte
 *      ..compute line radiation rate coefficient
          t0 = (1.0_R8-fxne)*rtlrd(ite,ine,is)+
      &        fxne*rtlrd(ite,ine+1,is)
@@ -199,7 +199,7 @@
          else
           rt%rlrd(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlrd(iCv,0,is) =  
+         rt%rlrd(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlrd(iCv,1,is)*rlte
 *      ..compute bremsstrahlung radiation rate coefficient
          t0 = (1.0_R8-fxne)*rtlbr(ite,ine,is)+
@@ -212,7 +212,7 @@
          else
           rt%rlbr(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlbr(iCv,0,is) =  
+         rt%rlbr(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlbr(iCv,1,is)*rlte
 *      ..compute effective charge state
          t0 = (1.0_R8-fxne)*rtlza(ite,ine,is)+
@@ -225,7 +225,7 @@
          else
           rt%rlza(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlza(iCv,0,is) =  
+         rt%rlza(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlza(iCv,1,is)*rlte
 *      ..compute effective square charge
          t0 = (1.0_R8-fxne)*rtlz2(ite,ine,is)+
@@ -238,7 +238,7 @@
          else
           rt%rlz2(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlz2(iCv,0,is) =  
+         rt%rlz2(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlz2(iCv,1,is)*rlte
 *      ..compute cumulative ionisation potential
          t0 = (1.0_R8-fxne)*rtlpt(ite,ine,is)+
@@ -251,7 +251,7 @@
          else
           rt%rlpt(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlpt(iCv,0,is) =  
+         rt%rlpt(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlpt(iCv,1,is)*rlte
 *      ..compute effective ionisation potential
          t0 = (1.0_R8-fxne)*rtlpi(ite,ine,is)+
@@ -264,7 +264,7 @@
          else
           rt%rlpi(iCv,1,is) = trimg(-20.0_R8,20.0_R8,tt)
          endif
-         rt%rlpi(iCv,0,is) =  
+         rt%rlpi(iCv,0,is) =
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlpi(iCv,1,is)*rlte
         enddo
       enddo

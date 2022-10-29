@@ -193,6 +193,7 @@ c     ionisation potentials
       rtbr=0.0_R8
       rtzz=-1.0_R8
       rtz2=-1.0_R8
+      rtpt=-1.0_R8
       rtpi=-1.0_R8
       if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
         write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb,
@@ -1015,7 +1016,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
                 endif
 c there should also be an electron heating term corresponding to
 c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and
-c so is included explicitly in b2stel if 'b2stel_fix_recomb_energy' is nonzero
+c so is included explicitly in b2stel if fix_recomb is nonzero
               else
                 rtqa(cT,cD,ic)=0.0_R8
               endif
@@ -1424,6 +1425,7 @@ cxpb Zero masses are required for older AMNS versions
       rtbr=0.0_R8
       rtzz=-1.0_R8
       rtz2=-1.0_R8
+      rtpt=-1.0_R8
       rtpi=-1.0_R8
       if(fix_recomb.ne.0.and.zmax_recomb.gt.0) then
         write(*,*) 'RATAMNS: FIX_RECOMB <> 0 : ',fix_recomb,

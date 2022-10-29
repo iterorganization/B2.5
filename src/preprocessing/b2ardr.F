@@ -144,7 +144,7 @@
      &  rtrd(:,:,:), rtbr(:,:,:),
      &  rtz2(:,:,:), rtpt(:,:,:),
      &  rtzz(:,:,:), rtpi(:,:,:),
-     &  wrk(:,:,:), rtqa_ra(:,:,:)
+     &  rtqr(:,:,:), wrk(:,:,:)
 #ifdef IMAS
 #ifdef AMNS
       type (amns_handle_type), save :: amns
@@ -460,7 +460,7 @@
       allocate(rtsa(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtra(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtqa(0:rtnt_in,0:rtnn_in,0:nzmax))
-      allocate(rtqa_ra(0:rtnt_in,0:rtnn_in,0:nzmax))
+      allocate(rtqr(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtcx(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtrd(0:rtnt_in,0:rtnn_in,0:nzmax))
       allocate(rtbr(0:rtnt_in,0:rtnn_in,0:nzmax))
@@ -623,11 +623,10 @@ cxpb  We must account for the case when the user does not want all bundles
          rewind (ninp(2))
          call ratwei (ninp(2), nz(inuc), rtt, rtnt, rtn, rtnn,
      &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr)
-         rtqa_ra = 0.0_R8
-c**************************************************************************************
-c*****************     New option to use Amjuel-Hydhel for H neutrals *****************
-c**************************************************************************************
-
+         rtqr = 0.0_R8
+c****************************************************************************
+c****     New option to use Amjuel-Hydhel for H neutrals         ************
+c****************************************************************************
         elseif (amjhydhel.eq.1) then
          write(*,*)
      1    'Hydrogen rates were taken from Amjuel-Hydhel'
@@ -638,10 +637,11 @@ c*******************************************************************************
          write(nout(0),*)
      1    'No Weisheit correction of the hydrogen rates was performed'
          rewind (ninp(0))
-         call ratamjhyd (ninp(0), nz(inuc), rtt, rtnt, rtn, rtnn,
-     &    rtsa, rtra, rtqa,rtqa_ra, rtcx, rtrd, rtbr, fix_recomb)
+         call ratamjhyd (ninp(0), nz(inuc), am1, rtt, rtnt, rtn, rtnn,
+     &    rtsa, rtra, rtqa, rtqr, rtcx, rtrd, rtbr,
+     &    fix_recomb, zmax_recomb)
 
-c**************************************************************************************        
+c****************************************************************************
         else
          write(*,*)
      1    'No Weisheit correction of the hydrogen rates was performed'
@@ -752,8 +752,8 @@ c*******************************************************************************
        call ratprt (nout(0), nz(inuc), npart(inuc), 
      &   nidis, idis, njdis, jdis,
      &   rtt, rtnt, rtn, rtnn, 
-     &   rtsa, rtra, rtqa, rtqa_ra, rtcx, rtrd, rtbr, rtzz, rtz2,
-     &   rtpt, rtpi)
+     &   rtsa, rtra, rtqa, rtqr, rtcx, rtrd, rtbr,
+     &   rtzz, rtz2, rtpt, rtpi)
 *    ..enter table into /b2cmrc/
        do k = kstart, kend
         do j = 0, rtnn
@@ -774,10 +774,10 @@ c*******************************************************************************
           else
            rtlqa(i,j,is) = lnzero
           endif
-          if (rtqa_ra(i,j,k).ne.0.0_R8) then
-           rtlqa_ra(i,j,is) = log(rtqa_ra(i,j,k))
+          if (rtqr(i,j,k).ne.0.0_R8) then
+           rtlqr(i,j,is) = log(rtqr(i,j,k))
           else
-           rtlqa_ra(i,j,is) = lnzero
+           rtlqr(i,j,is) = lnzero
           endif
           if (rtrd(i,j,k).ne.0.0_R8) then
            rtlrd(i,j,is) = log(rtrd(i,j,k))
@@ -840,7 +840,7 @@ c*******************************************************************************
       deallocate(rtsa)
       deallocate(rtra)
       deallocate(rtqa)
-      deallocate(rtqa_ra)
+      deallocate(rtqr)
       deallocate(rtcx)
       deallocate(rtrd)
       deallocate(rtbr)

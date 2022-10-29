@@ -99,14 +99,14 @@
 *     rtn(j), for processes starting from charge state k, excluding the contributions
 *     coming from potential energy of recombination and other
 *     recombination process contributions. In short, it includes the
-*     processes not accounted for in EIRENE. rtrqa has dimension eV*m**3/s.
-*      rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies
-*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate
+*     processes not accounted for in Eirene. rtrqa has dimension eV*m**3/s.
+*      rtlqr - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqr(i,j,k) specifies
+*     logu(rtrqr), where rtrqr is the electron heat loss rate
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces AMJUEL when EIRENE is not used. rtrqa_ra has
+*     state k. rtqr only includes the contribution of recombination
+*     which replaces AMJUEL when Eirene is not used. rtrqr has
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -162,10 +162,10 @@
       real (kind=R8), allocatable :: rtza(:), rtza2(:)
       parameter (lnzero=-1.0e30_R8)
 *   ..procedures
-      intrinsic log
       real (kind=R8) ::
      *   smax
-      external xertst, smax, cfrure, cfruin, cfverr
+      external xertst, smax,
+     *   cfrure, cfrure_dep, cfruin, cfruin_opt, cfruin_dep, cfverr
 
 *-----------------------------------------------------------------------
 *.computation
@@ -180,10 +180,15 @@
 
 * ..read rate coefficients
       if (version.ge.'03.000.007') then
-        call cfruin (nget, 1, idum(0), 'fix_recomb')
+        idum(0) = -1
+        call cfruin_dep (nget, 1, idum, 'fix_recomb')
+      end if
+      if (idum(0).ge.0) then
+        write(*,*) 'You are using a deprecated b2frates file format!'
+        write(*,*) 'Re-run b2ar to correct'
+        write(0,*) 'You are using a deprecated b2frates file format!'
+        write(0,*) 'Re-run b2ar to correct'
         fix_recomb = idum(0)
-      else
-        fix_recomb = -1
       end if
 *   ..read dimensions
       call cfruin (nget, 3, idum, 'rtnt,rtnn,rtns')
@@ -211,10 +216,14 @@
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlsa, 'rtlsa')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlra, 'rtlra')
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa, 'rtlqa')
-      if (version.ge.'03.001.000') then
-        call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqa_ra, 'rtlqa_ra')
+      if (version.ge.'03.002.000') then
+        rtlqr = 0.0_R8
+        call cfrure_dep (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqr,
+     .                                                'rtlqa_ra')
+        if (maxval(rtlqr).eq.0.0_R8.and.minval(rtlqr).eq.0.0_R8)
+     >   call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlqr, 'rtlqr')
       else
-        rtlqa_ra = lnzero
+        rtlqr = lnzero
       end if
       call cfrure (nget, (rtnt+1)*(rtnn+1)*rtns, rtlcx, 'rtlcx')
       if(version.ge.'01.001.016') then
@@ -240,6 +249,13 @@
           rtlpt(0:rtnt,0:rtnn,k)=(potmin(k)+potmax(k))/2.0_R8
           rtlpi(0:rtnt,0:rtnn,k)=(potimin(k)+potimax(k))/2.0_R8
         enddo
+      endif
+      fix_recomb = 0 ! corresponding to the default pre-3.0.7 version
+      zmax_recomb = 1
+      if (version.ge.'03.000.007') then
+        call cfruin_opt (nget, 2, idum, 'fix_recomb,zmax_recomb')
+        fix_recomb = idum(0)
+        zmax_recomb = idum(1)
       endif
 
 * ..test rate coefficients

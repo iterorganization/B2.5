@@ -225,7 +225,7 @@ c     filling array and computing rate
      1       h123.eq.'H.2'.or.
      1       h123.eq.'H.5'.or.
      1       h123.eq.'H.8'.or.
-     1       h123.eq.'H.11') then
+     1       h123.eq.'H.11') then ! single polynomial fit
               DNNN=DNNN+D11(I,0)*TEI
             elseif(
      1       h123.eq.'H.3'.or.
@@ -273,6 +273,29 @@ C  output
 c    iswr  : Eirene flag for type of process  (1,2,...7)
 c    creac : Eirene storage array for a&m data CREAC(9,0:9,IR)
 c    modcol: see below
+C    IFTFLG=IFTFLG(IH): flag for type of fitting expression ("fit-flag=...")
+C    IH  internally derived from ISW, for different types of data:
+C          0 for interaction potential, or differential cross-sections (ISW=0)
+C          1 for cross-section, (ISW=1)
+C          2 for rate coeff, (ISW=2,3,4)
+C          3 for mom-weighted rate coeff. (ISW=5,6,7)
+C          4 for energy-weighted rate coeff. (ISW=8,9,10)
+C          5 for other quantities, population densities, etc.. (ISW=11,12)
+C
+C       IFTFLG(IH) DEFAULTS:
+C
+C           CASE IH=0  (H.0):
+C       IFTFLG(0)   =2,  FOR INTERACTION POTENTIAL (GEN. MORSE)
+C
+C           CASE  IH=1  (H.1):
+C       IFTFLG(1)   =0,  CROSS-SECTION (9-POLYNOMIAL)
+C                   =3,  cross-section (ionisation/excitation cross-section
+C                           formula (METHANE,...)
+C           CASE  IH=2,3....,10 (H.2, H.3,....H.10)
+C       IFTFLG(...  =0,  FOR RATE COEFFICIENTS (9-POLYNOMIAL, 9X9-DOUBLE POLYNOMIAL)
+C                   =10, FOR RATE COEFFICIENTS (CONSTANT)
+C                   =100 FOR RATE, not rate coefficient,
+C                   =110 FOR RATE, not rate coefficient, (CONSTANT)
 C
       IMPLICIT NONE
 C  READ A&M DATA FROM THE FILES INTO EIRENE ARRAY CREAC
@@ -314,14 +337,17 @@ C                   N           =0  ELSE
 C
 #     include <eir_reac.F>
       real(kind=R8) :: CONST
-      integer IR,I0,ISW,J,IND,I,K,IH,IREAC,INDFF
+      integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IREAC,INDFF,IFLG
+      integer IFTFLG(0:5)
       CHARACTER*80 ZEILE, LAST_TEX
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       CHARACTER*1 BACK
       CHARACTER*8 SECTION
+      CHARACTER*9 FITFLAG
       CHARACTER*4 CHR
-      CHARACTER*3 CHRL,CHRR
-      LOGICAL LCONST,LGEMIN,LGEMAX
+      CHARACTER*3 CHRL, CHRR
+      LOGICAL LCONST
+      LOGICAL :: LGEMIN,LGEMAX
       logical open_file
       external open_file, xerrab, xertst
 C
@@ -338,11 +364,17 @@ C
       CONST=0.
       CHR=' l0 '
       I0=0
+! header of dataset (optional)
+      FITFLAG='fit-flag '
+C     Defaults: no asymptotics
+      CHRL='ll0'
+      CHRR='lr0'
 C
-      IF (INDEX(CRC,'EI').NE.0) ISWR(IR)=1
-      IF (INDEX(CRC,'DS').NE.0) ISWR(IR)=2
+      IF (INDEX(CRC,'EI').NE.0.OR.
+     .    INDEX(CRC,'DS').NE.0) ISWR(IR)=1
       IF (INDEX(CRC,'CX').NE.0) ISWR(IR)=3
-      IF (INDEX(CRC,'II').NE.0) ISWR(IR)=4
+      IF (INDEX(CRC,'II').NE.0.OR.
+     .    INDEX(CRC,'PI').NE.0) ISWR(IR)=4
       IF (INDEX(CRC,'EL').NE.0) ISWR(IR)=5
       IF (INDEX(CRC,'RC').NE.0) ISWR(IR)=6
       IF (INDEX(CRC,'OT').NE.0) ISWR(IR)=7
@@ -377,48 +409,104 @@ C
       IREAC=INDEX(REAC,' ')-1
       IF (IREAC.LT.0) IREAC=LEN(REAC)
 C
-      IF (ISW.EQ.1) THEN
+      IF (ISW.EQ.0) THEN
+        CHR=' p0 '
+        I0=-1
+        MODCLF(IR)=MODCLF(IR)+1
+        IFLG=0
+        IFTFLG(IFLG)=2
+      ELSEIF (ISW.EQ.1) THEN
         CHR=' a0 '
         CHRL='al0'
         CHRR='ar0'
         I0=0
-        MODCLF(IR)=MODCLF(IR)+1
+        MODCLF(IR)=MODCLF(IR)+10
+        IFLG=1
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.2) THEN
         CHR=' b0 '
         CHRL='bl0'
         CHRR='br0'
         I0=1
-        MODCLF(IR)=MODCLF(IR)+10
+        MODCLF(IR)=MODCLF(IR)+100
+        IFLG=2
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.3) THEN
-        MODCLF(IR)=MODCLF(IR)+20
+        CHR=' c0 '
+        CHRL='cl0'
+        CHRR='cr0'
+        I0=1
+        MODCLF(IR)=MODCLF(IR)+200
+        IFLG=2
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.4) THEN
-        MODCLF(IR)=MODCLF(IR)+30
+        CHR=' d0 '
+        CHRL='dl0'
+        CHRR='dr0'
+        I0=1
+        MODCLF(IR)=MODCLF(IR)+300
+        IFLG=2
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.5) THEN
         CHR=' e0 '
         CHRL='el0'
         CHRR='er0'
         I0=1
-        MODCLF(IR)=MODCLF(IR)+100
+        MODCLF(IR)=MODCLF(IR)+1000
       ELSEIF (ISW.EQ.6) THEN
-        MODCLF(IR)=MODCLF(IR)+200
+        CHR=' f0 '
+        CHRL='fl0'
+        CHRR='fr0'
+        I0=1
+        MODCLF(IR)=MODCLF(IR)+2000
+        IFLG=3
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.7) THEN
-        MODCLF(IR)=MODCLF(IR)+300
+        CHR=' g0 '
+        CHRL='gl0'
+        CHRR='gr0'
+        I0=1
+        MODCLF(IR)=MODCLF(IR)+3000
+        IFLG=3
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.8) THEN
         CHR=' h0 '
         CHRL='hl0'
         CHRR='hr0'
         I0=1
-        MODCLF(IR)=MODCLF(IR)+1000
+        MODCLF(IR)=MODCLF(IR)+10000
+        IFLG=4
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.9) THEN
-        MODCLF(IR)=MODCLF(IR)+2000
+        CHR=' i0 '
+        CHRL='il0'
+        CHRR='ir0'
+        I0=1
+        MODCLF(IR)=MODCLF(IR)+20000
+        IFLG=4
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.10) THEN
-        MODCLF(IR)=MODCLF(IR)+3000
+        CHR=' j0 '
+        CHRL='jl0'
+        CHRR='jr0'
+        I0=1
+        MODCLF(IR)=MODCLF(IR)+30000
+        IFLG=4
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.11) THEN
         CHR=' k0 '
         CHRL='kl0'
         CHRR='kr0'
         I0=1
+        IFLG=5
+        IFTFLG(IFLG)=0
       ELSEIF (ISW.EQ.12) THEN
+        CHR=' l0 '
+        CHRL='ll0'
+        CHRR='lr0'
+        I0=1
+        IFLG=5
+        IFTFLG(IFLG)=0
       ENDIF
 C
       IF (.NOT.LCONST) THEN
@@ -443,19 +531,40 @@ C
       ENDIF
 C
 C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
-      IF (ISW.EQ.1.OR.ISW.EQ.2.OR.ISW.EQ.5.OR.ISW.EQ.8.OR.
+      IF (ISW.EQ.0.OR.ISW.EQ.1.OR.ISW.EQ.2.OR.ISW.EQ.5.OR.ISW.EQ.8.OR.
      .    ISW.EQ.11) THEN
         IF (.NOT.LCONST) THEN
     3     READ (29,'(A80)',END=990) ZEILE
-          IF (INDEX(ZEILE,CHR).EQ.0) GOTO 3
-         DO 9 J=0,2
-            IND=0
-            DO 4 I=1,3
-              IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
-              READ (ZEILE((IND+2):80),'(E20.12)') CREAC(J*3+I,I0,IR)
-    4       CONTINUE
-            READ (29,'(A80)',END=990) ZEILE
-    9     CONTINUE
+          INDFF=INDEX(ZEILE,FITFLAG)
+c  skip empty lines in header
+          IF (INDEX(ZEILE,CHR)+INDFF.EQ.0) GOTO 3
+c  input line found which either contains fit-flag FITFLAG,
+c       or the reaction identifier a0,b0,...k0
+          IF (INDFF > 0) THEN
+            READ (ZEILE(INDFF+8:80),*) IFTFLG(IFLG)
+            GOTO 3
+          ENDIF
+
+C  read only one constant: (FIT-FLAG = 10, 110, ....)
+          IF (MOD(IFTFLG(IFLG),100) == 10) THEN
+            IND=INDEX(ZEILE,CHR(2:2)) ! position of a,b,...k
+            READ (ZEILE((IND+2):80),'(E20.12)') CREAC(1,1,IR)
+C  READ 9 FIT COEFFICIENTS, SEPARATED BY 'CHR' FIXED FORMAT E20.12
+C  THREE LINES WITH THREE DATA PER LINE
+c  READ ONLY THE NON-ZERO PARAMETERS
+          ELSE
+            DO J=0,2
+              IND=0
+              DO I=1,3
+                INDADD=INDEX(ZEILE((IND+1):80),CHR(2:2))
+                IF (INDADD.EQ.0) GOTO 9
+                IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
+                READ (ZEILE((IND+2):80),'(E20.12)') CREAC(J*3+I,I0,IR)
+              ENDDO
+              READ (29,'(A80)',END=990) ZEILE
+            ENDDO
+    9       CONTINUE
+          ENDIF
           IF (INDEX(ZEILE,CHRL).NE.0) THEN
             IND=0
             DO 5 I=1,3
@@ -502,17 +611,32 @@ C
     6     CONTINUE
         ENDIF
 C
-      ELSE
+      ELSEIF (ISW.EQ.3.OR.ISW.EQ.4.OR.ISW.EQ.6.OR.ISW.EQ.7.OR.
+     .        ISW.EQ.9.OR.ISW.EQ.10.OR.ISW.EQ.12) THEN
 C  TWO PARAM. FIT, ISW=3,4,6,7,9,10,12
 
         DO 11 J=0,2
    16     READ (29,'(A80)',END=990) ZEILE
+          INDFF=INDEX(ZEILE,FITFLAG)
+          IF (INDEX(ZEILE,'Index')+INDFF.EQ.0) GOTO 16
+          IF (INDFF > 0) THEN
+c  read parameter for type of fitting expression from data file
+            READ (ZEILE((INDFF+8):80),*) IFTFLG(IFLG)
+            GOTO 16
+          ENDIF
           READ (29,'(1X)')
-          DO 17 I=1,9
-            READ (29,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
-cdr         write (6,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
-   17     CONTINUE
+          IF (MOD(IFTFLG(IFLG),100) == 10) THEN
+C  IFTFLG = 10, 110,  210,....ETC: READ ONLY ONE CONSTANT PARAMETER
+            READ (29,*) IH,CREAC(1,1,IR)
+            EXIT
+          ELSE
+            DO 17 I=1,9
+              READ (29,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
+cdr           write (6,*) IH,(CREAC(I,K,IR),K=J*3+1,J*3+3)
+   17       CONTINUE
+          END IF
    11   CONTINUE
+        READ (29,'(A80)',END=990) ZEILE
 C
       ENDIF
 C

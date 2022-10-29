@@ -2379,16 +2379,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stel_fix_recomb_energy</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If changed to 1, then the recombination energy (rpi) is added to the electron energy for each recombination. This should only be used if the is--&gt;is-1 energy terms have been included in the electron cooling rates (as done by setting the switch 'b2ardr_fix_recomb' in b2ar.dat to a non-zero value and recalculating b2frates).
-					See 'Atomic Physics' section.
-					*** Use with caution! ***
-				</description>
-			</switch>
-			<switch>
 				<name>b2mndr_atomic_physics_rescale</name>
 				<default>0</default>
 				<type>integer</type>
@@ -4226,7 +4216,18 @@
 				<type>integer</type>
 				<description>
 					When set to 1, disables the correction of the hydrogen atomic rate data with the Weisheit data using ratwei.
+					Must be set to 1 when using b2ardr_amjhydhel.
 					*** Use with caution! ***
+				</description>
+			</switch>
+			<switch>
+				<name>b2ardr_amjhydhel</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When not set to 0, reads reaction cards from the AMJUEL/HYDHEL database files to overwrite rates for neutral hydrogenic species.
+					The list of reaction cards to be used should be given in the b2ar.dat file.
+					Cannot be used in conjunction with no_weisheit.eq.0.
 				</description>
 			</switch>
 			<switch>
@@ -4237,18 +4238,26 @@
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
 			</switch>
-			<switch>
-				<name>b2ardr_fix_recomb</name>
-				<default>0</default>
-				<type>integer</type>
+			<switchgroup>
+				<name>b2ardr_*_recomb</name>
 				<description>
-					When changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
+					When fix_recomb is changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
 					This term includes the bremsstrahlung.
-					The default option ('0') only contains the bremsstrahlung for the is--&gt;is-1 process.
-					This option should be used with the 'b2stel_fix_recomb_energy' option b2mn.dat set to '1'. See 'Physics' section.
-					*** Use with caution! ***
+					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
+					The correction is only applied for isonuclear sequences with nuclear charge up to zmax_recomb, inclusive.
+					Use of this option is still experimental!
 				</description>
-			</switch>
+				<switch>
+				  <name>b2ardr_fix_recomb</name>
+				  <default>0</default>
+				  <type>integer</type>
+				</switch>
+				<switch>
+				  <name>b2ardr_zmax_recomb</name>
+				  <default>1</default>
+				  <type>integer</type>
+				</switch>
+			</switchgroup>
 			<switchgroup>
 				<name>b2ardr_rtn.</name>
 				<description>
@@ -4282,6 +4291,38 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+			  <name>b2ardr_t_min</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Lower temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2ardr_t_max</name>
+			  <default>1.0e30</default>
+			  <type>real</type>
+			  <description>
+				Upper temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2ardr_nn_min</name>
+			  <default>0.0</default>
+			  <type>real</type>
+			  <description>
+				Lower density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+			  </description>
+			</switch>
+			<switch>
+			  <name>b2ardr_nn_max</name>
+			  <default>1.0e30</default>
+			  <type>real</type>
+			  <description>
+				Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+			  </description>
+			</switch>
 		</category>
 	</module>
 	<module name="b2.parameters" type="namelist">
@@ -4636,7 +4677,7 @@
 				<default>0</default>
 				<type>integer array of size (NION)</type>
 				<description>
-					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled.
+					Contains the index of the Eirene atomic species with which the Eirene test ion species (IION) should be scaled. If not provided, LIONSCL will map to LMOLSCL for molecular ions that match an existing declared molecule, or to the first species listed in the name of the molecular ion as declared in the Eirene input file if no matching molecule is found.
 				</description>
 			</switch>
 			<switch>
@@ -6662,7 +6703,7 @@
 				</switch>
 				<switch>
 					<name>CFLMV</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
 						Multiplier to the viscous heat flux limit.
@@ -6670,7 +6711,7 @@
 				</switch>
 				<switch>
 					<name>CFLAL</name>
-					<default>Default inherited from b2mn.dat</default>
+					<default>value inherited from b2ah.dat (or b2mn.dat if specified in b2cmpt block)</default>
 					<type>real*8</type>
 					<description>
 						Multiplier to the thermo-electric coefficient flux limit.

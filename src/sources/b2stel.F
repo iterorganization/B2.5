@@ -140,8 +140,6 @@
       call sfill (nCv*4, 0.0_R8, shi0_rec, 1)
       call sfill (nCv*4, 0.0_R8, shn0_ion, 1)
       call sfill (nCv*4, 0.0_R8, shn0_rec, 1)
-
-
 *   ..compute sources due to ionisation
       rsanareg=0.0_R8
       rsahireg=0.0_R8
@@ -326,7 +324,7 @@
 !WG_TODO           rrahi(iCv,is) = t1
            rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(switch%fix_recomb_energy.ne.0) then
+           if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
 c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
@@ -346,8 +344,6 @@ c accounted for)
            endif
          endif
         enddo
-
-
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
@@ -393,7 +389,7 @@ c accounted for)
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
 *      ..for adpak rates, also contains recombination and CX terms
-          t0 = switch%b2stel_phm0*(rtw%rqa(iCv,is)+rtw%rqa_ra(iCv,is))
+          t0 = switch%b2stel_phm0*(rtw%rqa(iCv,is)+rtw%rqr(iCv,is))
      &         *geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)    !srv 05.06.18
 *      ..compute electron heat sink
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0

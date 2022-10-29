@@ -174,15 +174,15 @@
 *     processes starting from charge state k, excluding the contributions
 *     coming from potential energy of recombination and other recombination
 *     process contributions. In short, it includes the processes not
-*     accounted for in EIRENE.
+*     accounted for in Eirene.
 *     rtqa has dimension eV*m**3/s.
-*      rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
-*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate
+*      rtlqr - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqr(i,j,k) specifies the
+*     logu(rtrqr), where rtrqr is the electron heat loss rate
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has
+*     state k. rtqr only includes the contribution of recombination
+*     which replaces AMJUEL when Eirene is not used. rtqr has
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -371,12 +371,13 @@
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
      &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is),
-     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqa_ra(0,0,is),
+     &   fix_recomb, zmax_recomb,
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqr(0,0,is),
      &   rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzn(is),
-     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqa_ra(0,0,is),
+     &   rtnt, rtn, rtnn, rtzn(is), fix_recomb, zmax_recomb,
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqr(0,0,is),
      &   rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop
