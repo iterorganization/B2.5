@@ -3222,7 +3222,6 @@ contains
     call subend ()
     return
   end subroutine rwcdf
-#endif
     !
   subroutine rwcdf_settime(timnam,ntstep)
     implicit none
@@ -3245,6 +3244,7 @@ contains
     nasav=nastep
     return
   end subroutine rwcdf_setbatch
+#endif
 #endif
 !
   subroutine output_ds(ny,iref,target_offset,jsep,iystart,iyend,filename)
