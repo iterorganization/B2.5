@@ -97,7 +97,6 @@
       character*32 hlp_frm                                         !srv 03.04.13
       character(7), save :: folder                                 !srv 26.09.17
 #ifdef B25_EIRENE
-      integer js
       real (kind=R8), save :: hlp_neu_peak
       character chns*3
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09

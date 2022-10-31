@@ -69,7 +69,9 @@
 
 *   ..local variables
       integer iCv
+#ifdef WG_TODO
       character(23) hlp_frm                                             !srv 11.03.13
+#endif
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
@@ -175,7 +177,7 @@
       if(switch%b2tqce_style_guard_cells.eq.0) then
        do iCv = 1, nCv
          t0 = pl%te(iCv)/ev
-         tau(iCv) = (ctaue/dv%lnlam(iCv))*t0*sqrt(t0)/dv%ne2(iCv)	   !xpb !srv 01.07.09
+         tau(iCv) = (ctaue/dv%lnlam(iCv))*t0*sqrt(t0)/dv%ne2(iCv)          !xpb !srv 01.07.09
          tnp = tau(iCv)*dv%ne(iCv)*pitx(iCv)**2
          z = dv%ne2(iCv)/dv%ne(iCv)
          if (switch%b2tqce_model.eq.1) then  ! SOLPS5.0 model : Balescu fit

@@ -120,10 +120,10 @@
       call gnopen (nout(1),'b2yn.plt')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers    					 !xpb
-      call cfverr (ninp(1), b2ftrack_version)				 !xpb
-      call cfverr (ninp(2), b2frates_version)				 !xpb
-      call cfverr (ninp(3), b2fstate_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2ftrack_version)                            !xpb
+      call cfverr (ninp(2), b2frates_version)                            !xpb
+      call cfverr (ninp(3), b2fstate_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')
       nx = idum(0)

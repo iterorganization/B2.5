@@ -36,19 +36,18 @@ c======================================================================
 #include <DIMENSIONS.F>
       real (kind=R8) ::
      *   d,x
-      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,ks,
-     ,        kkb,kke,kks,n_atg,n_targ,
-     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),l_atg(ntrgsx),
+      integer i,j,k,l,n,i1,i2,ii,il,is,ix,iy,jj,kb,ke,kk,kn,
+     ,        kkb,kke,
+     ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical lim_cnf,checked
+      logical lim_cnf
       integer :: nwldlis_old, itmp
 c
-      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
+      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,
      ,                  distmin1
       integer, allocatable :: lwldlis_old(:)
       logical, allocatable :: istarget(:)
-      integer, allocatable :: ind(:)
-      real, allocatable :: lis_ind(:)
+      integer, allocatable :: lis_ind(:)
       data width /1.0_R8/
       save width
 c*** wsrttol : a tolerance parameter for defining coinciding segments

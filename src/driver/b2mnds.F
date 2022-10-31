@@ -96,7 +96,7 @@
 *   ..local variables
       integer is, idum(0:9)
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
-     &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80, lblpsd*120
+     &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80!, lblpsd*120
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4), t0, t1
 *   ..procedures

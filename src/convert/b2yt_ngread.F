@@ -60,6 +60,7 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       INTEGER NNX, NNY, IX, IY, jvft44, istra, istra1
       integer i, j, k, ncl, jvftnew, nstra1, n2
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
@@ -96,6 +97,7 @@ c
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
       character*8, allocatable :: eirtxt1(:)
       character*3 stnum
+#endif
       character*256 filename
       logical ex
 

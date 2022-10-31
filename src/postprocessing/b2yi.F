@@ -125,10 +125,10 @@
       call gnopen (nout(1),'b2yi.plt')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fstate_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fstate_version)                            !xpb
       call cfverr (ninp(2), b2frates_version)
-      call cfverr (ninp(3), b2fgmtry_version)				 !xpb
+      call cfverr (ninp(3), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(3), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -145,7 +145,7 @@
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
       call b2yidr (ninp, nout, nx, ny, ns)
 *   ..close graphics files

@@ -38,7 +38,6 @@
 *   ..global named constants
 
 *   ..local variables
-      integer iCv, iFc
       integer, save :: guard_flows
       real (kind=R8) :: dpo(nFc,0:1),
      *  wght(nCv), pov(mpg%nVx)

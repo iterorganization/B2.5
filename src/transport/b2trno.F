@@ -83,14 +83,17 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, mode
+      integer iFc, is, mode
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
       real (kind=R8) ::
-     &  csig_stoch(nFc), fchstoch(nFc),                               !lk 31.01.08
+     &  csig_stoch(nFc),
+#ifdef WG_TODO
+     &  fchstoch(nFc),                                                !lk 31.01.08
+#endif
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv),
+     *  wrk(nFc), wrk1(nFc,2), wrkc(nCv),
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),

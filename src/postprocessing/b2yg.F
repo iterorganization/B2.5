@@ -102,8 +102,8 @@
       call gnopen (nout(1),'b2yg.plt')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -111,7 +111,7 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty input nx, ny')
 *   ..call principal driver routine
       call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call b2ygdr (ninp, nout, nx, ny)
 *   ..close graphics files
       call gclwk (nout(1))

@@ -37,7 +37,7 @@ c
 c
       integer lun, ltrc
       parameter (ltrc=ntrc_bln)
-      integer i, j, k, l, m, n, ic, ii, is, ix, iy, js, ks, ls, lv,
+      integer i, j, k, l, m, ic, ii, is, js, ks, ls, lv,
      ,        nc, nv, kks, np_tmp, iCv, ilks, ifc
       logical first, ex, hlp_lw, hlp_lt
 c<<<
@@ -143,7 +143,7 @@ c*** Column headers:
 c
       data first / .true. /
 c----------------------------------------------------------------------
-      save lun, i, j, k, l, m, n, ic, is, ix, iy,
+      save lun, i, j, k, l, m, ic, is,
      1 js, ks, ls, nc, nv, kks, use_recyceir,
      2 first, ex, hlp_lw, hlp_lt, hlp_tt,
      3 hlpit_l,hlpit_r,hlpit_lp,hlpit_rp,hlpit_pl,
@@ -798,6 +798,5 @@ c
       return
 c======================================================================
   700 format('#   ',3i8/'#  ',a)
-  710 format(a1,3x,3i8/3x,a)
 c======================================================================
       end subroutine b2blnc

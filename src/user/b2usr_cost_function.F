@@ -26,7 +26,7 @@
       type(B2StateExt), intent (in) :: st_ext
       real(kind=R8) :: BoRiS, J(nncf)
       integer :: nCv, nFc, nVx, ns
-      integer :: icf, ic1, ic2, iCv, ncall, n1, n2, ii,
+      integer :: icf, ic1, ic2, iCv, n1, n2,
      &           ifc, is, iicf
       logical, save :: first_call=.true.
       logical :: inrange
@@ -35,7 +35,7 @@
 #ifdef TEST_MAP
       integer, parameter :: nn=50
       real (kind=R8), save :: xx(nn), dd(nn), ff(nn)
-      integer :: ij, jj
+      integer :: ii, ij, jj
 #endif
       integer :: isigma
       external calc_dist

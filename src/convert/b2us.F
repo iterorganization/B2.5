@@ -45,8 +45,6 @@
       use eirmod_braeir
       use eirmod_cinit
      , , only: eirene_init_cinit
-      use eirmod_comprt
-     , , only: iunout
       use eirmod_eirbra
      & , smo_eir => smo
 #else
@@ -64,8 +62,8 @@
 *
 *  1. purpose
 *
-*     B2US reads in structured geometry and plasmastate files, 
-*     converts the data to unstructured format and writes 
+*     B2US reads in structured geometry and plasmastate files,
+*     converts the data to unstructured format and writes
 *     unstructured geometry and plasmastate files
 *
 *
@@ -79,39 +77,31 @@
       integer lenval, ierror
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
-      integer ix, iy
-      integer iflag
-#ifndef NAGF95
-      integer iargc
-#endif
-      integer :: b2time = 1, ntim_batch = 500
-      integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
+      integer :: ismain = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: boundary_namelist=0, neutrals_namelist = 0
-      real (kind=R8) :: BoRiS = 0.0_R8
-      real (kind=R8) :: dtim = 1.0_R8
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
-      real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4), t0, t1
-      character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120,
+      real (kind=R8) :: zpdum(0:nsdecl-1,4)
+      character savefile*256, lblgm*120, lblmn*120, lblcp*120,
      *          lblps*120
       character filename*256
-      character extension*4
       character cnamip*80, cvalip*80, line*500
       character bcp_filename*260
 #ifdef B25_EIRENE
-      character*72 zeile
+      logical linq_33, linq_34, linq_35, lcheck
 #endif
-      logical file_open, file_exists, ex, 
-     .        linq_33, linq_34, linq_35, lcheck, file_exist
+      logical file_open, file_exists
 
       type(mapping), save :: mpg
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
       type(switches), save :: switch
-      integer :: ntm, is, io_33, io_34, io_35, ico, iel, iel2, natm_loc
+      integer :: ntm, is, natm_loc
+#ifdef B25_EIRENE
+      integer :: ico, io_33, io_34, io_35, iel, iel2
+#endif
 *   ..procedures
       integer lnblnk
       logical is_comment
@@ -203,7 +193,7 @@
      &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
       call get_nxt(nx, nxtl, nxtr)
 
-      call ipgeti ('b2mndr_eirene', use_eirene)	
+      call ipgeti ('b2mndr_eirene', use_eirene)
       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
       call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
      &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
@@ -218,7 +208,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
 *   ..read initial state
       call cfruch (ninp(3), 120, lblps, 'label')
-      call b2ruzd (ninp(3), b2fstati_version, ns0, 
+      call b2ruzd (ninp(3), b2fstati_version, ns0,
      & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,   !xpb
      &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
@@ -241,7 +231,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call calc_mapping (nx, ny, mpg)
 
       write (*,*) 'Mapping created'
-      
+
       call prep_geometry (nx, ny,
      .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
      .        mpg%nVmxCv, gm, mpg)
@@ -346,7 +336,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       endif
       goto 7000
  6999 continue
-      file_exist=.false.
+      file_exists=.false.
  7000 continue
       if (.not.file_exists) then
         nstra=DEF_NSTRA
@@ -360,7 +350,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         nlimps=nlim+nsts
 !        call xerrab (' b2us -- no Eirene input available')
       endif
-#endif 
+#endif
 
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         bcp_filename=repeat(' ',260)
@@ -378,7 +368,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call conv_rcparms (nx, ny, ns, mpg, gm)
           call write_rcparms(ns,mpg)
         else
-          call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns, 
+          call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns,
      .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(ns, mpg, switch, .false.)
         end if

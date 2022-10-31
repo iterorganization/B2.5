@@ -18,11 +18,14 @@
 #endif
       implicit none
       type (mapping), intent(in) :: mpg
+      integer ibnd
+      integer, save :: debug_init_wall
+#ifdef WG_TODO
       integer nCv, ns
       real (kind=R8) :: BoRiS
 
       integer ix, iy, is, ixn, iyn, idir, ireg
-      integer ibnd, ibndm, i, j, ik, itrack, icoat, ikink, ikink0
+      integer ibndm, i, j, ik, itrack, icoat, ikink, ikink0
       integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:)
       integer, allocatable, save :: xymap_tmp(:,:)
       integer, save :: debug_init_wall
@@ -42,6 +45,7 @@
       data hd_linlog/1/, hd_ratio/100.0_R8/, output/0/
       data sput_frac_flag/0/, sput_phys_col/3/,
      *  sput_phys_model/1/, refl_model/1/, width/1.0_R8/
+#endif
 #ifdef DBG
       data debug_init_wall/1/
 #else
