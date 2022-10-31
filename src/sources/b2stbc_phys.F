@@ -410,11 +410,11 @@ cwdk  now need to recompute full diamagnetic component for ud
         ud(:,:) = 0.0_R8
       else if (sheath_drift_fix.eq.0) then
         do is = 0,ns-1
-         ud(:,is) = dv%uadia(:,0,is)*geo%cvBb(:,3)/geo%cvBb(:,2)*signmf
+         ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
         enddo
       else
         do is=0,ns-1
-         ud(:,is) = dv%vaecrb(:,0,is)*geo%cvBb(:,3)/geo%cvBb(:,2)*signmf
+         ud(:,is) = dv%vaecrb(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
         enddo
       endif
 #ifdef WG_TODO
