@@ -58,7 +58,7 @@ contains
     use b2mod_b2cmpa
     use b2mod_external
 #ifdef B25_EIRENE
-    use eirmod_wneutrals
+    use eirmod_wneutrals  ! IGNORE
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)

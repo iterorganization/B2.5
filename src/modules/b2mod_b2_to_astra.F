@@ -13,10 +13,10 @@ csw 09jan2014 extra module to define some arrays
       use b2mod_neutrals_namelist
      , ,only: b2espcr, latmscl, mlcmp
 #ifndef SOLPS4_3
-      use eirmod_wneutrals
-      use eirmod_extrab25
+      use eirmod_wneutrals ! IGNORE
+      use eirmod_extrab25  ! IGNORE
 #else
-      use eirdiag ! IGNORE
+      use eirdiag          ! IGNORE
      , ,only: nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
 #endif
 #else
