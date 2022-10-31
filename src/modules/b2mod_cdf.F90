@@ -1759,7 +1759,6 @@ contains
     call subend ()
     return
   end subroutine rwcdf
-#endif
     !
   subroutine rwcdf_settime(timnam,ntstep)
     implicit none
@@ -1782,6 +1781,7 @@ contains
     nasav=nastep
     return
   end subroutine rwcdf_setbatch
+#endif
 #endif
 
 end module b2mod_cdf
