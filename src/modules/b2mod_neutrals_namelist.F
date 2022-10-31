@@ -675,9 +675,9 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
                 ! Automatic creation of boundary condition list from structures
               old_style(is) = .false.      
               call build_boundary_list( rcstart(is), rcend(is),
-     $               rc_list_size(is),
-     $               rc_list_x(:,is), rc_list_y(:,is),
-     $               rc_list_char(:,is))
+     &               rc_list_size(is),
+     &               rc_list_x(:,is), rc_list_y(:,is),
+     &               rc_list_char(:,is))
             else
               old_style(is) = .true.
               rc_list_size(is) = rcend(is) - rcstart(is) + 1
