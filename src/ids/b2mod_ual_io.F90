@@ -8193,7 +8193,7 @@ contains
 #endif
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                &
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, IDSmap, tmpFace )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )

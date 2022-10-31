@@ -14,7 +14,7 @@
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, jdis(0:njdis-1),
      &  nt, nn, fix_recomb, zmax_recomb
       real (kind=R8) ::
-     *   rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
+     *  rtt(0:nt), rtn(0:nn), zn(0:ns0-1),
      &  rtlsa(0:nt,0:nn,0:ns0-1), rtlra(0:nt,0:nn,0:ns0-1),
      &  rtlqa(0:nt,0:nn,0:ns0-1), rtlcx(0:nt,0:nn,0:ns0-1),
      &  rtlza(0:nt,0:nn,0:ns0-1), rtlz2(0:nt,0:nn,0:ns0-1),
@@ -105,7 +105,7 @@
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqa(i,j,k)) specifies
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
-*     charge state k. rtqa has dimension ev*m**3/s.
+*     charge state k. rtqa has dimension eV*m**3/s.
 *
 *     rtlcx - (0:nt,0:nn,0:ns0-1) real*8 array, input.
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlcx(i,j,k)) specifies

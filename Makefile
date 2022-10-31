@@ -586,14 +586,14 @@ ${OBJDIR}/eirmod_mpi.${MOD}:
 ${OBJDIR}/eirmod_octree.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_octree.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_refusr.${MOD}:
-	ln -sf ${EIRDIR}/eirmod_refusr.${MOD} ${OBJDIR}
-
 ${OBJDIR}/eirmod_parmmod.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_parmmod.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
+
+${OBJDIR}/eirmod_refusr.${MOD}:
+	ln -sf ${EIRDIR}/eirmod_refusr.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_solps.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_solps.${MOD} ${OBJDIR}
@@ -773,14 +773,14 @@ ${OBJDIR}/eirmod_mpi.o:
 ${OBJDIR}/eirmod_octree.o:
 	ln -sf ${EIRDIR}/eirmod_octree.o ${OBJDIR}
 
-${OBJDIR}/eirmod_refusr.o:
-	ln -sf ${EIRDIR}/eirmod_refusr.o ${OBJDIR}
-
 ${OBJDIR}/eirmod_parmmod.o:
 	ln -sf ${EIRDIR}/eirmod_parmmod.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_precision.o:
 	ln -sf ${EIRDIR}/eirmod_precision.o ${OBJDIR}
+
+${OBJDIR}/eirmod_refusr.o:
+	ln -sf ${EIRDIR}/eirmod_refusr.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_solps.o:
 	ln -sf ${EIRDIR}/eirmod_solps.o ${OBJDIR}
@@ -845,14 +845,14 @@ ${OBJDIR}/eirmod_mpi.${MOD}:
 ${OBJDIR}/eirmod_parmmod.${MOD}:
 	touch ${OBJDIR}/eirmod_parmmod.${MOD}
 
+${OBJDIR}/eirmod_precision.${MOD}:
+	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
+
 ${OBJDIR}/eirmod_refusr.${MOD}:
 	touch ${OBJDIR}/eirmod_refusr.${MOD}
 
 ${OBJDIR}/eirmod_solps.${MOD}:
 	touch ${OBJDIR}/eirmod_solps.${MOD}
-
-${OBJDIR}/eirmod_precision.${MOD}:
-	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
 
 ${OBJDIR}/eirmod_wneutrals.${MOD}:
 	touch ${OBJDIR}/eirmod_wneutrals.${MOD}
