@@ -7,8 +7,10 @@
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
+#ifdef WG_TODO
       use eirmod_parmmod
      .   , only : nmol
+#endif
       use eirmod_extrab25
 #endif
       use b2us_map
@@ -27,11 +29,14 @@ c----------------------------------------------------------------------
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: geo
       type(B2state), intent(in) :: st
-      integer nput, ns, nxtl, nxtr, ismain, lun
-      real (kind=R8) :: dtim, tim, BoRiS, stim
-      integer ix, iy, is, istra, iline
-      integer, save :: use_recyceir
+      integer nput, ns, nxtl, nxtr, ismain
+      real (kind=R8) :: dtim, BoRiS, stim
+      integer iline
+#ifdef B25_EIRENE
+      integer ix, iy, is, istra
       real (kind=R8) :: recyctmp
+#endif
+      integer, save :: use_recyceir
       logical, save :: tracing_initialised
       data tracing_initialised /.false./
       data use_recyceir /1/

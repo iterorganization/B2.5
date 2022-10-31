@@ -37,7 +37,10 @@
       type (B2Coeff), intent (inout) :: co
       type (B2Derivatives), intent (inout) :: dv
 *   ..local variables
-      real (kind=R8) :: upfac, hybfac, harm !djm Jan2017
+      real (kind=R8) :: harm !djm Jan2017
+#ifdef WG_TODO
+      real (kind=R8) :: upfac, hybfac
+#endif
       external harm
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -64,21 +67,26 @@
 *   ..local variables
       integer iCv, is
 csw 10oct2012
-      character(3) :: charns, charns0
+      character(3) :: charns
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
       real (kind=R8) ::
-     *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1), flomx,
+     *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1),
+#ifdef WG_TODO
+     &  flomx,
+#endif
      &  alfe0(nFc), floe0_mdf(nFc,0:1)                                   !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
-     *    wrk(nFc,0:1), wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
+     *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
      *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
+#ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
+#endif
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: b2_upwind = 0
 c      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0

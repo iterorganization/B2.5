@@ -27,27 +27,19 @@
       real (kind=R8), allocatable, save ::
      *      nemxip_av(:,:),  temxip_av(:,:),  timxip_av(:,:),
      *      nemxap_av(:,:),  temxap_av(:,:),  timxap_av(:,:),
-     *      pomxip_av(:,:),  pomxap_av(:,:),
-     *      nemxip_std(:,:), temxip_std(:,:), timxip_std(:,:),
-     *      nemxap_std(:,:), temxap_std(:,:), timxap_std(:,:),
-     *      pomxip_std(:,:), pomxap_std(:,:)
+     *      pomxip_av(:,:),  pomxap_av(:,:)
       real (kind=R8), allocatable, save ::
      *      nesepi_av(:,:),  tesepi_av(:,:),  tisepi_av(:,:),
      *      nesepm_av(:,:),  tesepm_av(:,:),  tisepm_av(:,:),
      *      nesepa_av(:,:),  tesepa_av(:,:),  tisepa_av(:,:),
      *      posepi_av(:,:),  posepm_av(:,:),  posepa_av(:,:),
-     *      ktsepi_av(:,:),  ktsepm_av(:,:),  ktsepa_av(:,:),
-     *      nesepi_std(:,:), tesepi_std(:,:), tisepi_std(:,:),
-     *      nesepm_std(:,:), tesepm_std(:,:), tisepm_std(:,:),
-     *      nesepa_std(:,:), tesepa_std(:,:), tisepa_std(:,:),
-     *      posepi_std(:,:), posepm_std(:,:), posepa_std(:,:),
-     *      ktsepi_std(:,:), ktsepm_std(:,:), ktsepa_std(:,:)
+     *      ktsepi_av(:,:),  ktsepm_av(:,:),  ktsepa_av(:,:)
       real (kind=R8), allocatable :: dum(:)
       real (kind=R8) :: tstepn(1), eps_s, tmax, meansample, t1, t2
       logical b2ye_tprf, ex
       character(5) :: rw
       integer :: io, iex, iun, idum(2), ns, varid, nbatch
-      character lble*120, lbli*120, check*10
+      character lbli*120, check*10
       character*10, save ::
      *   b2faveri_version = '00.000.000'
       real (kind=R8) ::

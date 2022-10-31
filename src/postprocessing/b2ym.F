@@ -113,8 +113,8 @@
       call gnopen (nout(1),'b2ym.plt')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !xpb
-      call cfverr (ninp(1), b2fmovie_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fmovie_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')
       nx = idum(0)

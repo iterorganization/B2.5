@@ -78,10 +78,9 @@
        integer is, iCv, ind                                             !srv 09.07.18
        real (kind=R8) ::
      &    exact_na(nCv,0:ns-1), exact_ua(nCv,0:ns-1),
-     &    exact_ua_st(nCv,0:ns-1),
      &    exact_te(nCv), exact_ti(nCv),
      &    exact_po(nCv), err(nCv), era(nCv),
-     &    uacf(nCv), L2norm, Cnorm                                      !srv 09.07.18
+     &    L2norm                                                        !srv 09.07.18
        logical l_exist
        character chns*3, chnCv*6
        character*27 filename
@@ -224,7 +223,6 @@
        implicit none
        integer nFc, ns
 
-       integer is, iFc
        real (kind=R8) ::
      &    exact_cdna(nFc,0:1,0:ns-1),
      &    exact_cdpa(nFc,0:1,0:ns-1),
@@ -249,7 +247,7 @@
 
        real (kind=R8) ::
      &    var(nCv), exact_var(nCv), scl,
-     &    err(nCv), era(nCv), L2norm, Cnorm                             !srv 09.07.18
+     &    err(nCv), era(nCv), L2norm                                    !srv 09.07.18
        logical l_exist
        integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass

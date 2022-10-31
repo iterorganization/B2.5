@@ -39,9 +39,9 @@
 !      type(switches), save   :: switch
 
 *   ..local variables
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, is, idum(0:9), io
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, idum(0:9), io
       logical file_open
-      character lblgm*120, lblcp*120, lblps*120
+      character lblgm*120, lblps*120
 *   ..procedures
       external prgini, prgend, xertst, cfopen, cfruin
 *   ..initialise input/output unit numbers

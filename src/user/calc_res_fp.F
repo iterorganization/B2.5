@@ -7,7 +7,7 @@
       type(b2state), intent(in) :: state0
       real(kind=r8), intent (inout) :: res
       real(kind=r8) :: t0
-      integer :: icv, is
+      integer :: is
 
       res = 0.0_R8
       

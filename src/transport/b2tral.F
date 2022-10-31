@@ -83,13 +83,13 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, is0
+      integer iFc, is, is0
       character(3) chns, chns0                                          !srv 17.06.08
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
      4  chce0(nFc,0:1), chve0(nFc,0:1), cdkt0(nFc,0:1),
-     1	ft,                                                             !srv 16.10.17
+     1  ft,                                                             !srv 16.10.17
      *  wrkc(nCv), wrkf(nFc), wrkmin, wght(nFc,2)
       character*72 message
 *   ..procedures

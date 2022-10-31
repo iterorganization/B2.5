@@ -86,8 +86,6 @@ c
       logical ratio
       common /t_ratio/ ratio
 
-      integer ::
-     *   nntria(0:nxd-1,0:nyd-1)
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
@@ -157,12 +155,10 @@ c
       real (kind=R8), allocatable :: mach(:,:,:)
 #ifdef B25_EIRENE
       real (kind=R8), allocatable :: emach(:,:)
-      real (kind=R8), allocatable :: eavg(:)
 #endif
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
-     2   stick_coef, plate_kb, plate_ka, volsum,
-     *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4,
+     2   stick_coef, plate_kb, plate_ka,
      3   q, sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
@@ -3552,13 +3548,13 @@ c
      1           log(ne(ix,iy)/1.0e20_R8)/2.0_R8+
      2           1.5_R8*log(ti(ix,iy)/ev/1000.0_R8))
               elseif (lambda.eq.-4.0_R8) then                !srv 09.02.11 {
-	        if(te(ix,iy)/ev .le. 50.0_R8) then
+                if(te(ix,iy)/ev .le. 50.0_R8) then
                   lnlam=23.4_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) +
      *                            3.45_R8*log10(te(ix,iy)/ev)
-	        else
+                else
                   lnlam=25.3_R8 - 1.15_R8*log10(ne(ix,iy)/1.0e6_R8) + 
      *                            2.30_R8*log10(te(ix,iy)/ev)
-	        endif                                         !srv 09.02.11 }
+                endif                                         !srv 09.02.11 }
               else
                 lnlam = lambda
               endif
@@ -7975,7 +7971,6 @@ cdpc still in testing phase
       END SELECT EFVALUE
 c
       goto 4900
- 1028 format()
 
  4049 continue
       stack_req=(/0,0,0,0,1,0,0/)

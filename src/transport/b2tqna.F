@@ -113,8 +113,10 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, ic, k,
-     2  jsep, jxi, jxa
+      integer iCv, is, ic, k
+#ifdef WG_TODO
+     * , jsep, jxi, jxa
+#endif
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
@@ -123,8 +125,10 @@
       real (kind=R8) ::
      *  t0, t1,
      *  min_df0_tmp, max_df0_tmp, tav
-      integer elm_count, ivar
+      integer elm_count
+#ifdef WG_TODO
       save jxi, jxa, jsep
+#endif
       logical catch_up
 *   ..procedures
       intrinsic sqrt, max, exp
@@ -148,18 +152,27 @@
         if(switch%b2tqna_transport_namelist.eq.1) then
           call write_b2mod_transport_namelist
           if(transport_time_mod.gt.0.0_R8) then
-            elm_count=tim/transport_time_mod
+            elm_count=int(tim/transport_time_mod)
           else
             elm_count=0
           endif
-          catch_up=transport_time_mod.gt.0.0_R8
+          if(transport_time_mod.gt.0.0_R8) then
+            catch_up=transport_time_switch.gt.0.0_R8.and.
+     .       mod(tim,transport_time_mod).ge.transport_time_switch
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
+          else
+            catch_up=.false.
+          end if
           do while(catch_up)
-            if(mod(tim,transport_time_mod).gt.transport_time_switch)
-     1       then
-              write(*,*) 'b2tqna: catching up ...'
-              call read_b2mod_transport_namelist
-              call write_b2mod_transport_namelist
-              catch_up=transport_time_mod.gt.0.0_R8
+            write(*,*) 'b2tqna: catching up ...'
+            call read_b2mod_transport_namelist
+            call write_b2mod_transport_namelist
+            if(transport_time_mod.gt.0.0_R8) then
+              catch_up=transport_time_switch.gt.0.0_R8.and.
+     1         mod(tim,transport_time_mod).ge.transport_time_switch
+            else if (transport_time_switch.gt.0.0_R8) then
+              catch_up=tim.ge.transport_time_switch
             else
               catch_up=.false.
             endif
@@ -171,13 +184,25 @@
           write(*,*) 'b2tqna: bb_ref set to ',switch%b2tqna_bb_ref
         endif
       else
-        if(switch%b2tqna_transport_namelist.eq.1.and.
-     1   transport_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
-     1     transport_time_switch,int(tim/transport_time_mod),elm_count
-          if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
-     1     int(tim/transport_time_mod).gt.elm_count) then
-            elm_count=tim/transport_time_mod
+        if(switch%b2tqna_transport_namelist.eq.1) then
+          if(transport_time_mod.gt.0.0_R8) then
+            write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
+     1       transport_time_switch,int(tim/transport_time_mod),elm_count
+            catch_up=
+     1      (mod(tim,transport_time_mod).ge.transport_time_switch.and.
+     1       transport_time_switch.gt.0.0_R8).or.
+     2       int(tim/transport_time_mod).gt.elm_count
+          else if (transport_time_switch.gt.0.0_R8) then
+            catch_up=tim.ge.transport_time_switch
+            if(catch_up) write(*,'(a,a)')
+     .       'Switching to next transport namelist file ',
+     .        trim(transport_filename)
+          else
+            catch_up=.false.
+          end if
+          if(catch_up) then
+            if(transport_time_mod.gt.0.0_R8)
+     >       elm_count=int(tim/transport_time_mod)
             call read_b2mod_transport_namelist
             call write_b2mod_transport_namelist
           endif
@@ -3661,7 +3686,7 @@ c*******************************************************************************
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) :: t0, t_av, df0
+      real (kind=R8) :: t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
@@ -3793,7 +3818,7 @@ c*******************************************************************************
      &   dna_ExB(nCv), hce_ExB(nCv),
      &   hci_ExB(nCv), rhol(nCv)
 *   ..local variables
-      integer :: is, ic, ivar
+      integer :: is
       real(kind=R8) ::
      1   wrkf(nFc), wrkc(nCv), shear(nCv)
 

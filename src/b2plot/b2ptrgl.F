@@ -23,7 +23,7 @@ c======================================================================
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     .   , only : natm, nmol
+     .   , only : natm
       use eirmod_extrab25
       use eirmod_ccona
       use eirmod_cinit
@@ -49,7 +49,7 @@ c
       integer m_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
       real (kind=R8) ::
-     *  h,ha,hb,t,u,a,b,d,p,wo,wt,mion,t1(2),
+     *  h,ha,hb,u,a,b,d,p,wo,wt,mion,t1(2),
      ,  z_hlp(ntrgsx),xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
      ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),wi(ntrgsx),
      ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),
@@ -62,7 +62,7 @@ c
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
-     ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwhx_tt(ntrgsx),hwxt_tt(ntrgsx),
+     ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwxt_tt(ntrgsx),
      ,  hwxm_tt(ntrgsx),lcnnt(0:ny-1,ntrgsx),lcnnx(0:ny-1,ntrgsx)
 c
 c*** Arrays for particle fluxes and erosion
@@ -116,11 +116,13 @@ c***                     (PRFAML+PRFPML)*H_EDISS
      ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
      ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx), sptmass,
-     ,   sb_t,ss_t,sn_t,sg_t, spt_out(2), mol_out(2*DEF_NMOL)
+     ,   sn_t, spt_out(2), mol_out(2*DEF_NMOL)
+#ifdef B25_EIRENE
       integer eb2atm(nspecies)
+#endif
       character*11 spt_str(2,ntrgsx), fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
-      character*10 ssmol, ssion
+      character*16 ssmol, ssion
       real (kind=R8) ::
      *   ers_factor, nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.2425_R8)
@@ -226,7 +228,7 @@ c*** Target geometry
           z_hlp(j)=z_hlp(j)+0.5_R8*h
           xtg_hlp(iy,j)=z_hlp(j)
         end do !}
-        xtg_hlp(ny,i)=xtg_hlp(ny-1,i)+0.5_R8*h
+        xtg_hlp(ny,j)=xtg_hlp(ny-1,j)+0.5_R8*h
       end do !}
 #ifdef DBG
       print *

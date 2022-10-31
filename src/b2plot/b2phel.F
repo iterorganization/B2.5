@@ -24,7 +24,10 @@ c*** Local variables
 c
       integer i,j,k,m,n,is
       real (kind=R8) ::
-     . hlp,hlp_tot,hlp_he,hlp_a,hlp_m,hlp_s,hlp_si,hlp_so
+     . hlp,hlp_tot,hlp_he,hlp_s,hlp_si,hlp_so
+#ifdef WG_TODO
+     .,hlp_a,hlp_m
+#endif
       real (kind=R8) ::
      . hlp_p(0:DEF_NATM+DEF_NMOL),
      . hlp_pi(0:DEF_NATM+DEF_NMOL), hlp_po(0:DEF_NATM+DEF_NMOL)

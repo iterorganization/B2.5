@@ -101,12 +101,13 @@ c*** Local variables of general use
       integer lun, ltrc
       parameter (ltrc=ntrc_srt)
       real (kind=R8) :: tdummy
-      real (kind=R8) ::
-     *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm, imol ! IYS 29.09.2017
+      integer iatm
+#ifdef B25_EIRENE
+      integer imol
+#endif
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hr / 'totenre_' /
@@ -128,7 +129,6 @@ c
      +  hlp_ha,
      +  nfl_tmp,
      +  lun,
-     +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
      +  i, j, k, is, ix, nv,
      +  ex, warn_tmp,
      +  tab, hlp_c, f, hlp_frm, hlp_frf
@@ -430,6 +430,5 @@ c
       return
 c=======================================================================
   700 format('#   ',7i8/'#  ',a)
-  701 format(a1,3x,7i8)
 c=======================================================================
       end subroutine b2wrsrt

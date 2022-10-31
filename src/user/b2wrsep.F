@@ -225,8 +225,6 @@ c          v=vol(ix,iy)
         end if !}
       end do !}
 
- 10   continue
-
       do i=2,nnreg(0) !{
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
@@ -600,6 +598,5 @@ c     Finalization step
       return
 c======================================================================
   700 format('#   ',6i8)
-  701 format(a1,3x,6i8)
 c======================================================================
       end subroutine b2wrsep

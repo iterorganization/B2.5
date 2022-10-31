@@ -222,12 +222,14 @@ c     -------------------------------------------------------------------------
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,is,iss
+      integer ix,iy,iss
 
       real (kind=R8) ::
      *   ssum,gsum
       real (kind=R8) ::
-     *   neco(-1:nx,-1:ny), rcra(-1:nx,-1:ny,0:ns-1),
+     *   neco(-1:nx,-1:ny)
+#ifdef WG_TODO
+     * , rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -238,6 +240,8 @@ c     -------------------------------------------------------------------------
      &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
+      integer is
+#endif
 
       external b2spel, b2sqel
 
@@ -263,6 +267,7 @@ c     initialise array on stack for coronal radiation
         textwk(iss,iwrk)=textsp(iss)
       enddo
       work(:,:,:,iwrk)=0.0_R8
+#ifdef WG_TODO
       do is=0,ns-1
         iss = b2espcr(is)-1
         do ix=-1,nx
@@ -273,7 +278,7 @@ c     initialise array on stack for coronal radiation
           enddo
         enddo
       enddo
-
+#endif
       gsum=0.0_R8
       do iss=0,nspecies-1
         ssum=0.0_R8
@@ -309,17 +314,11 @@ c     -------------------------------------------------------------------------
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,is,is0,isstart,isend
+      integer ix,iy,is
       real (kind=R8) ::
-     *   sum(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   n(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   prod(-1:nx,-1:ny),divid(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *   ntot(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   neco(-1:nx,-1:ny), rcra(-1:nx,-1:ny,0:ns-1),
+     *   neco(-1:nx,-1:ny)
+#ifdef WG_TODO
+     * , rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -330,7 +329,16 @@ c     -------------------------------------------------------------------------
      &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
-      integer co1,co2
+      real (kind=R8) ::
+     *   prod(-1:nx,-1:ny),divid(-1:nx,-1:ny)
+      real (kind=R8) ::
+     *   ntot(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) ::
+     *   n(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) ::
+     *   sum(-1:nx,-1:ny,0:ns-1)
+      integer is0,isstart,isend,co1,co2
+#endif
 
       external b2spel, b2sqel
 
@@ -363,7 +371,7 @@ c     initialise array on stack for coronal radiation
             enddo
          enddo
       enddo
-
+#ifdef WG_TODO
       is0 = 0
       do while (is0.lt.ns)
         is = is0
@@ -400,7 +408,7 @@ c     coronal equilibrium
 c Move on to next isonuclear sequence
         is0 = is 
       enddo
-
+#endif
       call subend()
       return
       end subroutine setcoroni

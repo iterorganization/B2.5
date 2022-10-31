@@ -52,14 +52,17 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, ib, meth
+      integer iFc, is, meth
       real (kind=R8) ::
-     *   floi0(nFc,0:1), flomx, coni0(nFc,0:1),
+     *   floi0(nFc,0:1), coni0(nFc,0:1),
+#ifdef WG_TODO
+     &   flomx,
+#endif
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), flokt0(nFc,0:1), flozt0(nFc,0:1),
      *   flo0_ExB(nFc,0:1)
-cpax      
+cpax
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
      *   tif(nFc), tnf(nFc),
@@ -68,8 +71,9 @@ cpax
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
+      real (kind=R8) :: upfac, hybfac
 #endif
-      real (kind=R8) :: upfac, hybfac, scur(nFc,0:1) !djm Jan2017
+      real (kind=R8) :: scur(nFc,0:1) !djm Jan2017
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
 c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
