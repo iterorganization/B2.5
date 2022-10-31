@@ -131,9 +131,13 @@ c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, m, n, ic, is, ix, iy,
-     .        ixr, iyr, ixf, iyf, js, nv
-      real (kind=R8) :: hlp_h, hlp_p, hlp
+      integer i, j, k, l, n, ic, is, ix, iy,
+     .        ixr, iyr, ixf, iyf, nv
+      real (kind=R8) :: hlp_h, hlp_p
+#ifdef B25_EIRENE
+      integer js, m
+      real (kind=R8) :: hlp
+#endif
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
       logical ex, warn_tmp
       character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
@@ -189,8 +193,11 @@ c
      +  indt_hlp, nsrf_hlp,
      +  ltarg_hlp,
      +  lun,
-     +  i, j, k, l, m, ic, is, ix, iy, js, nv,
-     +  hlp_h, hlp_p, hlp,
+     +  i, j, k, l, ic, is, ix, iy, nv,
+     +  hlp_h, hlp_p,
+#ifdef B25_EIRENE
+     +  m, js, hlp,
+#endif
      +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp, ex, warn_tmp,
      +  f, hlp_c, hlp_frm, tab, hlp_frf
 c=======================================================================
@@ -828,6 +835,5 @@ c
       return
 c=======================================================================
   700 format('#   ',6i8/'#  ',a)
-  701 format(a1,3x,6i8)
 c=======================================================================
       end subroutine b2blne

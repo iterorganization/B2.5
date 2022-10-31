@@ -10,7 +10,7 @@
 #endif
       IMPLICIT NONE
       INTEGER KARD,NDIMX,NRDX,
-     & LIM,IX,IY,III
+     & LIM,IX,III
       real (kind=R8) ::
      * DUMMY(NDIMX)
 

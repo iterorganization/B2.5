@@ -16,7 +16,10 @@ c======================================================================
       implicit none
 #     include "DIMENSIONS.F"
 #     include "rdload.inc"
-      integer i,j,k,l,m,is,ix,iy,n_hlperr,iatm,
+#ifdef WG_TODO
+      integer iatm
+#endif
+      integer i,j,k,l,m,is,ix,iy,n_hlperr,
      ,        l_errt(nsgmx),l_errs(nsgmx)
       real (kind=R8) ::
      *   u

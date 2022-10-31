@@ -12,7 +12,7 @@
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     .   , only : natm, nmol
+     .   , only : natm
       use eirmod_extrab25
       use eirmod_ccona
       use eirmod_cinit
@@ -102,8 +102,8 @@ c***  iznt    : plot zone of the last done target
 c***  zz      : reference distance
 c***  i_ersmtr: index of eroded material for the wall segments
 
-      integer i,j,k,l,m,n,i1,i2,i3,ib,is,iss,iy,im,jj,js,kk,ils,itg,jcf,
-     ,  jci,itrg,izns,iznt,nclm_ld,nclm_er,nclm_pk,nx_hlp,m_hlp(ntrgsx),
+      integer i,j,k,l,m,n,i1,i2,ib,is,iss,iy,im,js,kk,ils,itg,
+     ,  itrg,izns,iznt,
      ,  i_ersmtr(nsgmx),l_ersmtr(0:nsgmx),
      ,  iatm,imol,ia,ims,ind,IAS,shift,
      ,  l_srfmtr(0:nsgmx),
@@ -140,7 +140,7 @@ c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion [mm/y]
 c***  spttrg  : sputtering [g/y]
 
-      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
+      real (kind=R8) :: h,p,u,wo,wwo,eni_hlp(ntrgsx),mion,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:NYD-1,ntrgsx),xmp_hlp(0:NYD-1,ntrgsx),xtrg(0:NYD-1,ntrgsx),
      ,  netrg(0:NYD-1,ntrgsx),  tetrg(0:NYD-1,ntrgsx),
@@ -164,6 +164,7 @@ c***  spttrg  : sputtering [g/y]
      ,  erntrg(0:NYD-1,ntrgsx), spttrg(0:NYD-1,ntrgsx),
      ,  sjs(0:NYD-1,ntrgsx), sjs_t(ntrgsx),
      ,  sjs_w(0:ntrgsx), sptmass, sptflx(DEF_NLIM+DEF_NSTS)
+c     real (kind=R8) :: zz
 
 c*** Recap of fluxes from Eirene
 c***    wldnek  :   net kinetic energy deposited by neutrals. Evaluated as
@@ -231,7 +232,7 @@ c***  sfpr_m    : list of active materials
       integer n_line_x, n_sfpr_sp, n_sfpr_er
       integer do_spt_wll(DEF_NLIM+DEF_NSTS)
       real (kind=R8), allocatable :: w_line(:)
-      real (kind=R8) :: s_hlp, nsecyr
+      real (kind=R8) :: nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.2425_R8)
       logical :: first,do_trg,match_found,do_spt
       character*(m_hdpr) tab*1,hdpr_c(n_hdpr_c),hdpr_t(n_hdpr_t),
@@ -240,7 +241,7 @@ c***  sfpr_m    : list of active materials
      ,  sfpr_m(nsptmx)*(lnwlmtrl),hdr_line*(m_hdln),frmt_hlp*24,
      ,  hdpr_ml(n_hdpr_ml), hdpr_er(n_hdpr_er),
      ,  sfpr_sp(DEF_NATM+DEF_NMOL)*3
-      character*10 ssmol,ssion
+      character*16 ssmol,ssion
       data hdpr_c /'x', 'Wtot','Wrad','Wpart','Wpls',
      2  'Wneu','Wheat','Wpot', 'Whtpl', 'Wptpl' /
       data hdpr_t /'ne', 'Te','Ti','xMP'/
@@ -261,7 +262,7 @@ c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
 c***  wllersf   : ratio of erosion to sputtering for different meterials
-      integer eb2atm(DEF_NATM),spt_atm
+      integer eb2atm(DEF_NATM)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2

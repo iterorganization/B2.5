@@ -33,14 +33,10 @@
 *.declarations
 
 *   ..local variables
-      integer iFc
       integer, save :: ncall = 0
       real (kind=R8) ::
      &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1), pzf(nFc)
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   smin, smax
       external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------

@@ -24,8 +24,10 @@
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
-      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 
-     & dummy3(-1:nx, -1:ny, 1:ns)
+      real (kind=R8) :: time(1), dummy(-1:nx, -1:ny)
+#ifdef WG_TODO
+     & , dummy3(-1:nx, -1:ny, 1:ns)
+#endif
       integer ix, iy, is
       integer ncall
       integer status, ndims, nvars, natts, unlimid

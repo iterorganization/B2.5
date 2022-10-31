@@ -52,7 +52,7 @@
 
 *   ..local variables
       logical lt0
-      integer k, k1, idum(0:9)
+      integer k, idum(0:9)
       real (kind=R8) ::
      *   t0
       real (kind=R8), allocatable :: rtza(:), rtza2(:)

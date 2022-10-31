@@ -34,8 +34,10 @@
       use eirmod_braeir
       use eirmod_cinit
      , , only: eirene_init_cinit, fort_lc
+#ifdef WG_TODO
       use eirmod_comprt
      , , only: iunout
+#endif
       use eirmod_eirbra
      & , smo_eir => smo
 #else
@@ -76,27 +78,32 @@
 #endif
 #endif
       integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
-      integer iflag
 #ifndef NAGF95
 #ifndef NAGFOR
       integer iargc
 #endif
 #endif
+#ifdef WG_TODO
+      integer iflag
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: boundary_namelist, neutrals_namelist = 0
       real (kind=R8) :: BoRiS = 0.0_R8
       real (kind=R8) :: dtim = 1.0_R8
+#endif
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
-      character filename*256
 #ifdef B25_EIRENE
+#ifdef WG_TODO
+      character filename*256
       character extension*4
+      logical file_exists
+#endif
       integer lnblnk
       external lnblnk
 #endif
       character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists
+      logical file_open
 *   ..procedures
       logical is_comment, streql
       external is_comment, streql

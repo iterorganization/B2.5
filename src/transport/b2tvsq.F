@@ -27,7 +27,7 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFc, iFt, is, k
+      integer ic, iCv, iFt, is, k
       integer, save :: nsmooth = 2
       integer, save :: ncall = 0
       real (kind=R8) ::

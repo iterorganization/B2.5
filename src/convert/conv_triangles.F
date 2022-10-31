@@ -6,11 +6,9 @@
       use b2us_geo
       use b2us_plasma
       use b2us_prep
-
 #ifdef B25_EIRENE
       use eirmod_module_avltree
 #endif
-
       implicit none
 
       integer, intent(in) :: nout, nx, ny
@@ -22,7 +20,7 @@
       logical :: inserted
       integer :: nco_old, ic, nnodes, ico, ivx, nelem, iel, i1, i2, i3,
      .           idum, i, nel2, is, jdum, is1, ifc, icv, icut, ixt, iyt,
-     .           iad, ix, iy, ix_b25, nopen, it, isig, iused, ineir,
+     .           iad, ix, iy, isig, iused, ineir,
      .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
      .           ixl, ixr, iv, icside
 
@@ -52,8 +50,8 @@
       external newunit
 #endif
 
-      call ipgeti ('artificial_slab', artificial_slab)	
-      call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)	
+      call ipgeti ('artificial_slab', artificial_slab)
+      call ipgeti ('overwrite_ntrfrm', overwrite_ntrfrm)
       call ipgeti ('is_narrow_grid',is_narrow_grid)
 
 !  if input.dat exists check which form of fort.33 is used

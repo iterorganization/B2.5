@@ -387,7 +387,9 @@ contains
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
 #ifdef B25_EIRENE
+#ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
+#endif
 #endif
  !< Type of IDS data structure, designed for handling grid geometry data
 #if IMAS_MINOR_VERSION < 15

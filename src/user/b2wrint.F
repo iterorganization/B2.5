@@ -202,10 +202,10 @@ c*** Local variables of general use
       real (kind=R8) :: tdummy
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm,imol ! IYS 29.09.2017
-c#ifdef SCL_IMP_RCI
-c     integer iy
-c#endif
+      integer iatm
+#ifdef B25_EIRENE
+      integer imol
+#endif
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg / ! These are headers for 12 global parameters
@@ -758,12 +758,6 @@ c-----------------------------------------------------------------------
 c
       return
 c=======================================================================
-c#ifndef SCL_IMP_RCI
   700 format('#   ',10i8/'#  ',a)
-  701 format(a1,3x,10i8)
-c#else
-c  700 format('#   ',11i8/'#  ',a)
-c  701 format(a1,3x,11i8)
-c#endif
 c=======================================================================
       end subroutine b2wrint

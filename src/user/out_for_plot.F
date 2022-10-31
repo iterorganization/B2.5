@@ -259,7 +259,7 @@
       real(R8), intent(in) :: qu(nCi,0:ns-1)
       logical, intent(inout) :: lfirst
       character(*), intent(in) :: txttal, txtspc(0:ns-1), txtunt
-      integer :: istr, iout, i, k, is
+      integer :: iout, i, k
       CHARACTER(50) :: FNAME, FORMA, FORME, FORME2
 #ifndef F2003
       integer newunit

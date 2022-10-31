@@ -279,7 +279,7 @@ c***    surface area,cell interface areas
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, im, iyp, ls
-      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
+      real (kind=R8) :: a, g, v, hlp_h, hlp_p, hlp_tot, hlpnw
 c     real (kind=R8) :: e0
 #endif
 c*** radial position of the separatrix and poloidal positions of

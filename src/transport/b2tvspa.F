@@ -39,7 +39,7 @@
 *   ..global named constants
 
 *   ..local variables
-      integer ib, is
+      integer is
       real (kind=R8) ::
      *   dvpar(nFc),
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrkVx(nVx), gOnedBsq(nFc,0:1)
@@ -73,8 +73,8 @@
             wrk = ua(:,is)*sqrt(geo%cvBb(:,3))
             call grad_p(nCv, nFc, nVx, 0, geo, mpg, wrk, wrkVx, wrk1)
             dvpar = dvpar + wrk0*vsaf_cl(:,0,is)*wrk1
-	  endif                                                          !srv 24.06.99
-	enddo                                                            !srv 24.06.99
+          endif                                                          !srv 24.06.99
+        enddo                                                            !srv 24.06.99
 *     ..components of the viscosity parallel current
         fchvispar(:,0) =
      &   -switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,1)

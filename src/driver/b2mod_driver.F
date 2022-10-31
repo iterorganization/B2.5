@@ -1915,9 +1915,12 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_ad
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ny, ns, idum(0:9)
+      integer nout(0:11), nx, ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ny, ns, idum(0:9)
+      integer nout(0:10), nx, ns, idum(0:9)
+#endif
+#ifdef WG_TODO
+      integer ny
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult

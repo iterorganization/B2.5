@@ -47,7 +47,7 @@ c 2002-09-11: logic revised
      , ,only: nx, ny, ns, wklng,
      ,        ixref, iyref,
      ,        jsep, jxa, jxi, nxtl, nxtr,
-     ,        nlimi, natmi, nmoli, nioni,
+     ,        natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
       use b2mod_work
@@ -76,7 +76,7 @@ c 2002-09-11: logic revised
       use eirmod_solps
       use eirmod_clogau
       use b2mod_b2plot
-     , ,only : nstsi
+     , ,only : nlimi, nstsi
 #else
       use b2mod_braeir
 #endif
@@ -289,7 +289,9 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
+#ifdef WG_TODO
       integer, allocatable :: l_h_mol1(:,:)
+#endif
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
@@ -325,9 +327,12 @@ c 2002-09-11: logic revised
       integer NCHORI, NCHENI, NCHOR1
       integer LNTSPEC, LNTSPUT, NMCSPUT, NLSTADDS, MTREADDS, NGWTIES
       integer NSNVI, NSNV1, NPWIN, NSPTAL
-      integer jatm, jmol, jion, jpls, jphot, kint, kmod, iside
+      integer jatm, jmol, jion, jpls, jphot, kint, kmod
+#ifdef WG_TODO
+      integer iside
+#endif
       integer isbegin, isend, is1begin, is1end
-      integer NTL, NFR
+      integer NTL
       integer IPOS0, IPOS1, IPOS2
       integer NPRCSF, IPRCSF
       integer NTARG1, ISTEP
@@ -335,7 +340,9 @@ c 2002-09-11: logic revised
       integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
+#ifdef WG_TODO
       integer iplsbeginrange, iplsendrange
+#endif
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:), IREAC2(:)
@@ -445,8 +452,8 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: zemin1(:), zemax1(:)
 #else
       integer jatm, jmol
-#endif
       integer :: nCv, nFc
+#endif
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,

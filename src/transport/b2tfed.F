@@ -36,7 +36,7 @@
 
 *   ..local variables
       real (kind=R8) ::
-     * pof(nFc), pov(nVx), dpo(nFc,0:1), dOnedBsq(nFc,0:1), nef(nFc),
+     * pov(nVx), dpo(nFc,0:1), dOnedBsq(nFc,0:1), nef(nFc),
      * wrk(nCv), wrk0(nFc), wght(nFc,2)
 *   ..procedures
       intrinsic min

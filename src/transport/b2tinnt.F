@@ -42,10 +42,13 @@
 *.declarations
 
 *   ..local variables
-      integer is, is0, iamain
+      integer is, is0
+#ifdef WG_TODO
+      integer iamain
 #ifdef B25_EIRENE
       integer ia, im
       character chns*3
+#endif
 #endif
       integer, save :: ncall = 0
       real (kind=R8), parameter :: eps = 1.0e-60_R8
@@ -56,9 +59,10 @@
      *   wrk(nCv), wrk0(nFc,0:1,0:ns-1), wrk1(nFc,0:1), wrk2(nFc),
      *   wrkVx(nVx)
       real (kind=R8) ::
-     &   sec(nCv), sigia(nCv), 
-     &   csigia(nFc,0:1),                                                 !srv 15.02.11
-     &   sigi(nCv), facdriftm, fac_ExBm                                   !srv 20.10.17
+#ifdef WG_TODO
+     &   sigia(nCv), sec(nCv), csigia(nFc,0:1), sigi(nCv),                !srv 15.02.11
+#endif
+     &   facdriftm, fac_ExBm                                   !srv 20.10.17
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: mode = 1
 c      integer, save :: iout = 0

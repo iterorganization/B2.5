@@ -31,7 +31,7 @@
 
 *   ..local variables
       integer is
-      integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
+      integer, save :: ncall = 0                                         !srv 06.12.17
       real (kind=R8) :: fac_vism
       real (kind=R8) :: va(nCv), dva(nCv), gpo(nFc), gpa(nFc),
      &  wrkc(nCv), wrkf(nFc), wrkv(nVx)

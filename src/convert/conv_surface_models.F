@@ -1,4 +1,4 @@
-      subroutine conv_surface_models (nout, mpg, gm, 
+      subroutine conv_surface_models (nout, mpg, gm,
      .           bndmdl, trifc, elem_cv, nelem)
 
       use b2mod_types
@@ -21,7 +21,7 @@
      .           itrg, ix, iy, ic, nt, it, is
       integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: ipos_b2(:), indelm(:), tris(:)
-      integer, allocatable :: idim_eir(:), ipos_eir(:), 
+      integer, allocatable :: idim_eir(:), ipos_eir(:),
      .                        istart_eir(:), iend_eir(:), idtrg(:)
       logical :: found,lhelp(60)
       integer :: artificial_slab=0, spatial_hybrid = 0
@@ -31,8 +31,8 @@
 #endif
       intrinsic pack
 
-      call ipgeti ('artificial_slab', artificial_slab)	
-      call ipgeti ('b2mn_spatial_hybrid', spatial_hybrid)	
+      call ipgeti ('artificial_slab', artificial_slab)
+      call ipgeti ('b2mn_spatial_hybrid', spatial_hybrid)
 
       nd = mpg%nRc + mpg%nBc
       if (artificial_slab > 0) nd = nd + 4*nncut
@@ -43,7 +43,7 @@
       allocate (iend(nd))
       allocate (idtrg(nd))
       idtrg = 0
-      
+
       call find_eirene_numbering(mpg, idim, ipos, istart, iend,
      .                           nd, nsf, ipos_b2)
 #ifdef F2003
@@ -65,11 +65,11 @@
         write (iouteir,'(a)') trim(line)
         if (index(line,'*** 2') > 0) exit
       end do
-!  input block 2 found  
-!  indgrd      
+!  input block 2 found
+!  indgrd
       read (ineir,'(a500)') line
       write (iouteir,'(a)') trim(line)
-!  nlrad      
+!  nlrad
       read (ineir,'(a500)') line
       write (iouteir,'(a)') trim(line)
 
@@ -86,7 +86,7 @@
         if (index(line,'*** 3') > 0) exit
       end do
 
-!  input block 3 found        
+!  input block 3 found
 !      write (iouteir,'(a)') trim(line)
       read (ineir,'(i6)') nstsi
       write (iouteir,'(i6)') nstsi
@@ -100,7 +100,7 @@
         do
           read (ineir,'(a500)') line
           write (iouteir,'(a)') trim(line)
-          if (line(1:1) /= '*') exit 
+          if (line(1:1) /= '*') exit
         end do
         ists = ists + 1
         read (line,'(12i6)') i,idim_eir(ists),ipos_eir(ists),
@@ -110,7 +110,7 @@
           write (iouteir,'(a)') trim(line)
           if (line(1:1) == '*') exit
         end do
-        if (line(1:3) == '***') exit         
+        if (line(1:3) == '***') exit
       end do
 
 !  finshed reading input block 3
@@ -123,7 +123,7 @@
       ntrg = 0
       do ists = 1, nstsi
         found = .false.
-        
+
 !  check neutral source regions and boundary surfaces for matching definitions
         do isf = 1, nsf
           if (idim(isf) < 0) cycle
@@ -133,11 +133,11 @@
      .          (iend_eir(ists) == iend(isf))) then
 !  matching surfaces identified
               if ( isf <= mpg%nRc) then
-!  neutral source  
+!  neutral source
                 found = .true.
                 do i = 1, mpg%rcFcP(isf,2)
                   j = mpg%rcFcP(isf,1)+i-1
-                  ifc = mpg%rcFc(j) ! face on neutral source 
+                  ifc = mpg%rcFc(j) ! face on neutral source
                   where (abs(trifc) == ifc)
                     bndmdl = -ists
                   end where
@@ -208,10 +208,10 @@
       write (iouteir,'(a)') trim(line)
 
 !  nfla ntrfrm ...
-!  ntrfrm=1 
+!  ntrfrm=1
       read (ineir,'(12i6)') ihelp
       write (iouteir,'(12i6)') ihelp(1),1,ihelp(5:12)
-      
+
 !  iflb ...
       do
         read (ineir,'(a500)') line
@@ -230,15 +230,15 @@
       do i = 1, ntrg
         if (index('EWSN',crcstra(i)) > 0) itrg = itrg + 1
       end do
-      
+
       if (spatial_hybrid.eq.0) then !! default, no spatially hybrid
-        if (ihelp(1) /= itrg) 
+        if (ihelp(1) /= itrg)
      .      call xerrab ('number of targets mismatch')
       else !! spatially hybrid neutrals are used
         !! SH_TODO
       endif
       write (iouteir,'(12i6)') itrg
-!  number of target parts  
+!  number of target parts
       isum = 0
       do i = 1, ntrg, 12
         ihelp = 0
@@ -252,10 +252,10 @@
         if (i <= ntrg) then
           write (iouteir,'(12i6)') ihelp(1), idtrg(i), ihelp(8:12)
         else
-!  nothing to be done 
+!  nothing to be done
         end if
       end do
-        
+
 !  copy input file until block 15 or end of file
       do
         read (ineir,'(a500)',end=99) line
@@ -308,7 +308,7 @@
 
       end subroutine conv_surface_models
 
-      subroutine find_nondef_surfaces (nout, mpg, gm, 
+      subroutine find_nondef_surfaces (nout, mpg, gm,
      .           elem, bndmdl, elem_cv,nelem)
 
       use b2mod_types
@@ -327,9 +327,9 @@
       integer, intent(inout) :: bndmdl(3,nelem)
       integer, allocatable :: indelm(:), tris(:), jsts(:)
       integer :: istra, imodel, i, j, ifc, ifcmin, ifcmax, ic, nt, it,
-     .           jt, is, is1, itmin, itmax, ibold, ib, icol,
-     .           ntarg, nblk3, nblk14, icut, nd, nsf, istb
-      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:) 
+     .           jt, is, is1, itmin, itmax, ibold, ib,
+     .           ntarg, nblk3, nblk14, nd, nsf, istb
+      integer, allocatable :: idim(:), ipos(:), istart(:), iend(:)
       integer, allocatable :: ipos_b2(:)
       integer :: artificial_slab=0
 #ifndef F2003
@@ -337,9 +337,9 @@
       external newunit
 #endif
 
-      call ipgeti ('artificial_slab', artificial_slab)	
+      call ipgeti ('artificial_slab', artificial_slab)
 
-!  set recycling boundary model indicators 
+!  set recycling boundary model indicators
       bndmdl = 0
 
       allocate (indelm(nelem))
@@ -347,20 +347,20 @@
 
       imodel = 0
       do istra = 1, mpg%nRc
-!  skip neutral sources without associated faces 
+!  skip neutral sources without associated faces
 !  CRCSTRA = 'V','C','T'
-        if (mpg%rcFcP(istra,2) == 0) cycle 
+        if (mpg%rcFcP(istra,2) == 0) cycle
         imodel = imodel + 1
-        write (nout,'(a15,i6,a,i6)') 'recyc. surface ',istra, 
-     .   ' is associated with nondefault standard surface ',imodel 
+        write (nout,'(a15,i6,a,i6)') 'recyc. surface ',istra,
+     .   ' is associated with nondefault standard surface ',imodel
         do i = 1, mpg%rcFcP(istra,2)
           j = mpg%rcFcP(istra,1)+i-1
-          ifc = mpg%rcFc(j) ! face on neutral source 
+          ifc = mpg%rcFc(j) ! face on neutral source
           ifcmin = min(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
           ifcmax = max(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
           ic = mpg%rcCv(j,2) ! cell inside plasma
 !  identify triangle side that represents the face ifc
-!  therefore check all triangles of former cell ic 
+!  therefore check all triangles of former cell ic
           nt = count(elem_cv == ic)
           if (nt > 0) then
             allocate(tris(nt))
@@ -396,7 +396,7 @@
           ifcmax = max(mpg%fcVx(ifc,1),mpg%fcVx(ifc,2))
           ic = mpg%bcCv(j,2) ! cell inside plasma
 !  identify triangle side that represents the face ifc
-!  therefore check all triangles of former cell ic 
+!  therefore check all triangles of former cell ic
           nt = count(elem_cv == ic)
           if (nt > 0) then
             allocate(tris(nt))
@@ -413,8 +413,8 @@
                     if (ib /= ibold) then
                       imodel = imodel + 1
                       ibold = ib
-                      write (nout,'(a15,i6,a,i6)') 'bound. surface ',ib, 
-     .   ' is associated with nondefault standard surface ',imodel 
+                      write (nout,'(a15,i6,a,i6)') 'bound. surface ',ib,
+     .   ' is associated with nondefault standard surface ',imodel
                    end if
                     bndmdl(is,jt) = -imodel
                   end if
@@ -437,7 +437,7 @@
       nblk3 = newunit()
       open (unit=nblk3,file='eirene_block3.dat')
 #endif
-      write (nblk3,'(a)') 
+      write (nblk3,'(a)')
      .  '*** 3A DATA FOR NONDEFAULT STANDARD SURFACES, NSTSI='
       write (nblk3,'(i6)') imodel
 
@@ -448,7 +448,7 @@
       allocate (ipos_b2(nd))
       allocate (istart(nd))
       allocate (iend(nd))
-      
+
       call find_eirene_numbering(mpg, idim, ipos, istart, iend,
      .                           nd, nsf, ipos_b2)
 
@@ -461,7 +461,7 @@
         if (idim(istra) < 0) cycle
         imodel = imodel + 1
         jsts(imodel) = -imodel
- 
+
         write (nblk3,'(a1,i3,a2,a)')
      .    '*',imodel,crcstra(istra),' surface from B2.5'
         write (nblk3,'(5i6)')
@@ -482,7 +482,7 @@
      .        (bcend(ib) >= rcend(istra))) cycle bound
         end do
 
-        imodel = imodel + 1 
+        imodel = imodel + 1
         istb = istb + 1
         write (nblk3,'(a1,i3,a2,a)')
      .    '*',imodel,bcchar(ib),' boundary from B2.5'
@@ -493,7 +493,7 @@
         write (nblk3,'(6es12.4)') 1206., 2., 0., 0., 0., 2.8
         write (nblk3,'(6es12.4)') 1., 1., 1., 1., 0.5, 1.
       end do bound
-        
+
       close (nblk3)
 
 !  write target information for Eirene input block 14
@@ -511,7 +511,7 @@
         write (nblk14,'(12i6)') i, jsts(i), 0, 0, 1, 1
       end do
       close (nblk14)
-      
+
       deallocate(jsts)
       deallocate (idim)
       deallocate (ipos)
@@ -556,19 +556,19 @@
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
-            if (rcstart(istra) >= leftcut(icut)) 
+            if (rcstart(istra) >= leftcut(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (rcstart(istra) >= rightcut(icut)) 
+            if (rcstart(istra) >= rightcut(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (rcend(istra) >= leftcut(icut)) 
+            if (rcend(istra) >= leftcut(icut))
      .        iend(nsf) = iend(nsf) + 1
-            if (rcend(istra) >= rightcut(icut)) 
+            if (rcend(istra) >= rightcut(icut))
      .        iend(nsf) = iend(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (rcstart(istra) >= mpg%ictcntrl(icut)) 
+            if (rcstart(istra) >= mpg%ictcntrl(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (rcend(istra) >= mpg%ictcntrl(icut)) 
+            if (rcend(istra) >= mpg%ictcntrl(icut))
      .        iend(nsf) = iend(nsf) + 1
           end do
         case ('N')
@@ -578,19 +578,19 @@
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
-            if (rcstart(istra) >= leftcut(icut)) 
-     .        istart(nsf) = istart(nsf) + 1 
-            if (rcstart(istra) >= rightcut(icut)) 
+            if (rcstart(istra) >= leftcut(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (rcend(istra) >= leftcut(icut)) 
+            if (rcstart(istra) >= rightcut(icut))
+     .        istart(nsf) = istart(nsf) + 1
+            if (rcend(istra) >= leftcut(icut))
      .        iend(nsf) = iend(nsf) + 1
-            if (rcend(istra) >= rightcut(icut)) 
+            if (rcend(istra) >= rightcut(icut))
      .        iend(nsf) = iend(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (rcstart(istra) >= mpg%ictcntrl(icut)) 
+            if (rcstart(istra) >= mpg%ictcntrl(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (rcend(istra) >= mpg%ictcntrl(icut)) 
+            if (rcend(istra) >= mpg%ictcntrl(icut))
      .        iend(nsf) = iend(nsf) + 1
           end do
         case ('W')
@@ -600,13 +600,13 @@
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
-            if (rcpos(istra) > leftcut(icut)) 
+            if (rcpos(istra) > leftcut(icut))
      .        ipos(nsf) = ipos(nsf) + 1
-            if (rcpos(istra) >= rightcut(icut)) 
+            if (rcpos(istra) >= rightcut(icut))
      .        ipos(nsf) = ipos(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (rcpos(istra) >= mpg%ictcntrl(icut)) 
+            if (rcpos(istra) >= mpg%ictcntrl(icut))
      .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('E')
@@ -616,13 +616,13 @@
           istart(nsf) = rcstart(istra) + 1
           iend(nsf) = rcend(istra) + 2
           do icut = 1, nncut
-            if (rcpos(istra) > leftcut(icut)) 
+            if (rcpos(istra) > leftcut(icut))
      .        ipos(nsf) = ipos(nsf) + 1
-            if (rcpos(istra) >= rightcut(icut)) 
+            if (rcpos(istra) >= rightcut(icut))
      .        ipos(nsf) = ipos(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (rcpos(istra) >= mpg%ictcntrl(icut)) 
+            if (rcpos(istra) >= mpg%ictcntrl(icut))
      .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('A')
@@ -648,17 +648,17 @@
           istart(nsf) = bcstart(ib) + 1
           iend(nsf) = bcend(ib) + 2
           do icut = 1, nncut
-            if (bcstart(ib) >= leftcut(icut)) 
+            if (bcstart(ib) >= leftcut(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (bcstart(ib) >= rightcut(icut)) 
+            if (bcstart(ib) >= rightcut(icut))
      .        istart(nsf) = istart(nsf) + 1
             if (bcend(ib) >= leftcut(icut)) iend(nsf) = iend(nsf) + 1
             if (bcend(ib) >= rightcut(icut)) iend(nsf) = iend(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (bcstart(ib) >= mpg%ictcntrl(icut)) 
+            if (bcstart(ib) >= mpg%ictcntrl(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (bcend(ib) >= mpg%ictcntrl(icut)) 
+            if (bcend(ib) >= mpg%ictcntrl(icut))
      .        iend(nsf) = iend(nsf) + 1
           end do
         case ('N')
@@ -668,17 +668,17 @@
           istart(nsf) = bcstart(ib) + 1
           iend(nsf) = bcend(ib) + 2
           do icut = 1, nncut
-            if (bcstart(ib) >= leftcut(icut)) 
+            if (bcstart(ib) >= leftcut(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (bcstart(ib) >= rightcut(icut)) 
+            if (bcstart(ib) >= rightcut(icut))
      .        istart(nsf) = istart(nsf) + 1
             if (bcend(ib) >= leftcut(icut)) iend(nsf) = iend(nsf) + 1
             if (bcend(ib) >= rightcut(icut)) iend(nsf) = iend(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (bcstart(ib) >= mpg%ictcntrl(icut)) 
+            if (bcstart(ib) >= mpg%ictcntrl(icut))
      .        istart(nsf) = istart(nsf) + 1
-            if (bcend(ib) >= mpg%ictcntrl(icut)) 
+            if (bcend(ib) >= mpg%ictcntrl(icut))
      .        iend(nsf) = iend(nsf) + 1
           end do
         case ('W')
@@ -692,7 +692,7 @@
             if (bcpos(ib) >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (bcpos(ib) >= mpg%ictcntrl(icut)) 
+            if (bcpos(ib) >= mpg%ictcntrl(icut))
      .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('E')
@@ -706,7 +706,7 @@
             if (bcpos(ib) >= rightcut(icut)) ipos(nsf) = ipos(nsf) + 1
           end do
           do icut = 1, mpg%nctcnt
-            if (bcpos(ib) >= mpg%ictcntrl(icut)) 
+            if (bcpos(ib) >= mpg%ictcntrl(icut))
      .        ipos(nsf) = ipos(nsf) + 1
           end do
         case ('A')
@@ -722,7 +722,7 @@
 
 !     ... from cuts in case of artificial_slab
       call ipgeti ('artificial_slab', artificial_slab)
-      
+
       if (artificial_slab > 0) then
         do ib = 1, nncut
 !  right face of cell left of left cut
@@ -775,7 +775,7 @@
           end do
         end do
       end if
-      
+
       return
       end subroutine find_eirene_numbering
 

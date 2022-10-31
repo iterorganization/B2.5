@@ -43,7 +43,6 @@
 
 *   ..local variables
       integer is
-      integer, save :: guard_flows
       real (kind=R8) :: wght(nFc,2), gOnedBsq(nFc,0:1),
      &  wrk(nCv), wrk0(nFc), wrk1(nFc)
 *   ..procedures

@@ -651,9 +651,6 @@ C
       CLOSE (UNIT=29)
       call subend ()
       RETURN
-991   WRITE (6,*) ' INVALID CONSTANT IN SLREAC. CONST= ',CONST
-      WRITE (6,*) ' CHECK "REACTION CARDS" FOR REACTION NO. ',IR
-      CALL XERRAB ('Invalid constant in reaction card')
       END SUBROUTINE SLREAC_b2plot
 
       subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,lambda,

@@ -48,19 +48,18 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, isb, ib, meth
+      integer iCv, iFc, is, isb, meth
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) ::
      *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),   !srv 14.07.10
      &   floe_eir(nFc,0:1), floi_eir(nFc,0:1)
       real (kind=R8) :: 
-     &   nef(nFc), nbf(nFc), pbf(nFc), dpb(nFc,0:1), dpbc(nCv),
-     &   dnete(nFc,0:1), ve(nFc), weight(nFc,2)
+     &   nbf(nFc), pbf(nFc), dpb(nFc,0:1), dpbc(nCv),
+     &   dnete(nFc,0:1), weight(nFc,2)
       real (kind=R8) ::
-     *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
+     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
      *   wrk00(nFc,2), wrk11(nFc,2),
      *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
-      real (kind=R8) :: t0,t1,t2
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06

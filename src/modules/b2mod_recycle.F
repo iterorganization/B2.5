@@ -375,7 +375,6 @@ c     calculate parallel momentum boundary flux
 c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
 
-
 c if incident flux is negative (this can happen if the diffusion approximation is used where it is not valid), use one-sided maxwellian anyway
       if (fnni.lt.0.0_R8 .and. safeguard.eq.1) then
         call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
@@ -412,7 +411,7 @@ c     It will decide which one to use based on the Knudsen number (Kn) of the ne
       real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
      &    pof,nef,isign,dnndy,dnndz,cosa, sina,
      &    Kn_b1, Kn_b2,L
-      real (kind=R8) :: t1, t_av
+      real (kind=R8) :: t_av
 c     Output variables
       real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
      &                             feneni
@@ -558,7 +557,6 @@ c     Internal variables
       real (kind=R8):: pit,pit2,mn,nnf,ux,uy,uz,
      1    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      2    fmox,fmoy,fmoz,pn,fmomnip,fmomnit,unf
-      integer :: ic
 
       call subini ('CalcIncidentFluxesMaxwellian')
 c     Initialize/calculate some variables
@@ -613,11 +611,6 @@ c     Convert energy flux densities in net energy flux contributions
       call subend ()
       return
       end subroutine CalcIncidentFluxesMaxwellian
-
-
-
-
-
 
       subroutine CalcRecycledFluxes(iCv,nCi,iFc,
      &             isign,

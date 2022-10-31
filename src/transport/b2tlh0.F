@@ -22,17 +22,17 @@
      1  chcib(nFc,0:ns-1), chcb(nFc,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &	fllim0fhi(nFc,0:1,0:ns-1)
+     &  fllim0fhi(nFc,0:1,0:ns-1)
 *   ..common blocks
 *     ------------------------------------------------------------------
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iFc, is, c3
+      integer iFc, is
       real (kind=R8), allocatable :: w1(:)                        !srv 13.01.04 {
       character charns*3                                          !srv 13.01.04 }
       real (kind=R8) ::
-     *  alpha, gamma, t0, t1, t2, t3, dtn, vthi, maxfluxlimit(0:1),
+     *  alpha, gamma, t0, t1, t2, dtn, vthi, maxfluxlimit(0:1),
      *  tnv(nVx), dtnf(nFc,0:1)
 *   ..initialisation
 *   ..procedures
@@ -113,8 +113,6 @@ cwdk    or radial contributions, since neutral transport is isotropic
         end do
        endif
       endif
-
- 100  continue
 
       if (ncall_b2tlh0.lt.100) write(*,'(1x,a,1p,2e10.2)')
      .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
