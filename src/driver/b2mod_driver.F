@@ -49,7 +49,13 @@
 !WG_RM      use b2mod_external
       use b2mod_mwti
       use b2mod_file
+      use b2mod_batch_average
+     & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
+      use b2mod_trace
       use b2mod_ipmain
+      use b2mod_running_average
+     & , only : run_av_init, run_av_get_plasma, run_av_save,
+     & run_av_fin
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance,!WG_TODO write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
@@ -61,11 +67,6 @@
       use b2us_geo
       use b2us_plasma
       use b2us_io
-      use b2mod_running_average
-     & , only : run_av_init, run_av_get_plasma, run_av_save,
-     & run_av_fin
-      use b2mod_batch_average
-     & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
       use b2mod_par_opt
      & , only : npar_opt, flag_optim, read_b2mod_par_opt,
      & par_opt_phys, x0
@@ -87,6 +88,8 @@
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
+      use eirmod_wneutrals
+      use b2mod_eirene
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #ifdef NAGFOR
@@ -1848,7 +1851,7 @@ c   --> better way doing this is necessary)
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,switch)
 cxpb initialize the data necessary for boundary conditions
-      call b2stbr_init (ns, switch, mpg, switch%BoRiS)
+      call b2stbr_init (ns, switch, mpg)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       call read_neutrals_namelist(ns, mpg, switch, .true.)
@@ -2051,7 +2054,7 @@ cwdk  set some integers
         state%psnc%fkt = state%dv%fkt
         state%psnl%fzt = state%psnc%fzt
         state%psnc%fzt = state%dv%fzt
-!WG_TODO        call b2trcs(70, nx, ny, ns, nxtl, nxtr, ismain, dtim, switch%BoRiS)
+        call b2trcs(ns,geo,mpg,switch)
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
           state%pl%po   =0.0e0_R8
@@ -2208,8 +2211,8 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     .                         state%pl, state%dv, switch%BoRiS,
-     .                         kin_frac_hyb, fnn_inc) ! FIXME progapage somehow kint_frac_hyb
+     .                         state%pl, state%dv,
+     .                         kin_frac_hyb, fnn_inc)
           call write_f31(mpg)
           close(31)
         end if
@@ -2284,14 +2287,13 @@ c new CDF movie option
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
      .                           switch)
-          call b2trci(70,ns,nxtl,nxtr,ismain,dtim,switch%b2mndr_stim,
-     .                switch%BoRiS,geo,mpg,state)
-          if (write_nml_user) call write_b2mod_user_namelist(nx,ns)
+          call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+          if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(70,ns,nxtl,nxtr,ismain,dtim,switch%b2mndr_stim,
-     .                  switch%BoRiS,geo,mpg,state)
+     >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
+     .                  geo,mpg,state,switch)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
@@ -2620,7 +2622,7 @@ c new CDF movie option
        endif
       endif                                                              !srv 29.11.18 }
       call b2wdat (nCv, nFc, nVx, ns, ismain, ismain0,
-     .                   mpg, geo, state, state_ext, switch%BoRiS)       !srv 05.10.01
+     .             mpg, geo, state, state_ext, switch%BoRiS)             !srv 05.10.01
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
@@ -2631,7 +2633,8 @@ c new CDF movie option
       if (switch%use_eirene.eq.0) then
        if (switch%save_f30.ne.0) call write_f30(nx, ny)
        if (switch%save_f31.ne.0) then
-        call copy_background(nx, ny, ns, switch%BoRiS)
+        call copy_background(nCv, nFc, ns, switch, mpg, gm,
+     &                       pl, dv, kin_frac_hyb, fnn_inc)
         call write_f31(nx, ny)
        end if
       end if
@@ -2698,8 +2701,8 @@ c new CDF movie option
 * finalise eirene_mc
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,pl,dv,
-     &                        kin_frac_hyb, fnn_inc)
+         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,
+     &                        kin_frac_hyb,fnn_inc)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
@@ -2714,7 +2717,7 @@ c new CDF movie option
       if (ibatch_av_all > 0) call batch_av_all_fin
 
 *  .. finalize tracing routines
-      call b2trcf(70,nx,ny,ns,nxtl,nxtr,ismain,dtim,switch%BoRiS)
+      call b2trcf(ns,geo,mpg,switch)
 
 * ..return
       ncall = ncall+1

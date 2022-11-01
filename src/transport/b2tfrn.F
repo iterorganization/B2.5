@@ -28,7 +28,6 @@
       type(B2Rates), intent (in) :: rt
       type(B2Coeff), intent (in) :: co
       type(B2StateExt), intent (in) :: st_ext
-      logical balance                                                   !djm Jan2017
 *   ..input/output arguments
       type(B2Derivatives), intent (inout) :: dv
 *   ..common blocks
@@ -58,7 +57,7 @@
      &   dnete(nFc,0:1), weight(nFc,2)
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
-     *   wrk00(nFc,2), wrk11(nFc,2),
+     *   wrk00(nFc,2), wrk11(nFc,2), wrkCv(nCv),
      *   zeff(nCv), c071(nCv), c071f(nFc)                                !srv 13.01.17
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
@@ -183,7 +182,8 @@ c Drift terms
 cwdk    Note: use implementation consistent with vedia (b2tfed) and
 cwdk          wadia (b2tfnb)
 cwdk          (original code: cell center approach)
-        call grad(nCv, nFc, nVx, 0, geo, mpg, dv%ne*pl%te, wrkVx, dnete)
+        wrkCv = dv%ne*pl%te
+        call grad(nCv, nFc, nVx, 0, geo, mpg, wrkCv, wrkVx, dnete)
         wrk0 = geo%fcBb(:,2)/geo%fcBb(:,3)**2
 cwdk    to be checked: now we use inverse volume weighting in wkr0
         call intvertex(nCv,nVx,mpg,geo%vxVol,dv%ne,wrkVx)

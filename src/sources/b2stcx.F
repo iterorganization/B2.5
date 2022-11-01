@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, switch, geo,   !srv 09.01.01
+      subroutine b2stcx (nCv, nFc, ns, is0, ismain, switch, geo,     !srv 09.01.01
      &  mpg, na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
       use b2mod_types
       use b2mod_constants
@@ -29,8 +29,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  BoRiS, na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), tn(nCv),
-     *   ni(nCv,0:1), rcx(nCv,0:ns-1)
+     *  na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), tn(nCv),
+     *  ni(nCv,0:1), rcx(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3),
@@ -151,7 +151,7 @@ ctmp.dpc
             t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
-     &        (1.0_R8-BoRiS)
+     &        (1.0_R8-switch%BoRiS)
              shi0(iCv,0) = shi0(iCv,0)+t1
            elseif (switch%tn_style.eq.1) then
              if(is_neutral(is-1)) then ! CX with singly-charged ion
@@ -195,7 +195,7 @@ ctmp.dpc
                t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
-     &          (1.0_R8-BoRiS)
+     &          (1.0_R8-switch%BoRiS)
                t1n = 0.0_R8
              endif
              shi0(iCv,0) = shi0(iCv,0)+t1
@@ -313,7 +313,7 @@ ctmp.dpc
 #endif
 
       write (chcx,'(i3.3)') is0
-!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+!      if (iout.eq.1 .or. iout_b2npco.eq.1
 !     &              .or. iout_b2wdat.eq.4 ) then
 !        do is = 0, ns-1
 !          write (chns,'(i3.3)') is

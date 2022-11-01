@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
+      subroutine b2srdt (nCv, ns, dtim, switch, geo, mpg,
      &  na0, ua0, te0, ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0,
      &  na, ua, te, ti, tn, ne, ni, nn, kinrgy, kt, zt,                 !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
@@ -29,7 +29,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  dtim, BoRiS, na0(nCv,0:ns-1),
+     *  dtim, na0(nCv,0:ns-1),
      &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
      &  ne0(nCv), ni0(nCv,0:1), nn0(nCv),
      &  kinrgy0(nCv,0:ns-1), kt0(nCv), zt0(nCv),
@@ -165,7 +165,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
           ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
 
-          if (BoRiS.eq.1.0_R8.and.switch%tn_style.ne.0) then
+          if (switch%BoRiS.eq.1.0_R8.and.switch%tn_style.ne.0) then
               call xerrab('BoRiS only with default energy eq.')
           endif
 
@@ -173,7 +173,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             sr%shi(iCv,0) = sr%shi(iCv,0)+
      &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
 
-            if (BoRiS.eq.1.0_R8) then
+            if (switch%BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 sr%shi(iCv,0) = sr%shi(iCv,0)+t0*
      &           kinrgy0(iCv,is)*na0(iCv,is)

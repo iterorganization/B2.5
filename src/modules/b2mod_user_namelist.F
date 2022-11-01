@@ -642,8 +642,9 @@ c*** Set default values according to current species list
         endif
       ic = ic + 1
       end do
-      if (.not.found) write(*,*) ('Did not find separatrix location. '
-     &  // 'Check specification RZOMP in b2.user.paramters.')
+      if (.not.found) write(*,'(a/a)')
+     &  'Did not find separatrix location. ',
+     &  'Check specification RZOMP in b2.user.parameters.'
       ifssep = 0 !flux surface of separatrix
       ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
       ic2 = omp(icsepomp) !cv of flux tube just outside sep
@@ -680,9 +681,8 @@ c*** Set default values according to current species list
 #endif
       end subroutine read_b2mod_user_namelist
 
-      subroutine write_b2mod_user_namelist(nx,ns)
+      subroutine write_b2mod_user_namelist
       implicit none
-      integer nx, ns
 
       if (written) return
       if (user_namelist_used.and.write_nml_user) write(*,user)

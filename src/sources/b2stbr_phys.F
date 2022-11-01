@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  dtim, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  neutral_sources_rescale, core_sources_rescale,
@@ -39,23 +39,6 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
-      integer sput_src, sput_chem_model, boundary_namelist,
-     *     reflection_on, sputter_energy_on, output,
-     *     sput_frac_flag, potential_at_guard_cell,
-     *     temperature_at_guard_cell
-      logical main_call, new_sputter_namelist
-      real (kind=R8) :: dtim, BoRiS,
-     &  f_redep(nCv,0:ns-1)
-      real (kind=R8) ::
-     *  neutral_sources_rescale, core_sources_rescale,
-     &  sput_chem_alpha, sput_phys_alpha, alpha,
-     &  therm_evap, sput_res,
-     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
-     1  sput_mixed_alpha, sput_mixed_beta,
-     2  recycled_neutrals_contr
-      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc),
-     &            kin_frac_hyb(nFc), fnn_inc(nFc,0:ns-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -65,6 +48,23 @@
       type (B2Rates), intent (in) :: rt
       type (B2RatesWork), intent (in) :: rtw
       type (B2StateExt), intent (in) :: st_ext
+      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
+      integer sput_src, sput_chem_model, boundary_namelist,
+     *     reflection_on, sputter_energy_on, output,
+     *     sput_frac_flag, potential_at_guard_cell,
+     *     temperature_at_guard_cell
+      logical main_call, new_sputter_namelist
+      real (kind=R8) :: dtim,
+     &  f_redep(nCv,0:ns-1)
+      real (kind=R8) ::
+     *  neutral_sources_rescale, core_sources_rescale,
+     &  sput_chem_alpha, sput_phys_alpha, alpha,
+     &  therm_evap, sput_res,
+     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
+     1  sput_mixed_alpha, sput_mixed_beta,
+     2  recycled_neutrals_contr
+      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc),
+     &            kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
@@ -365,7 +365,7 @@ c     initialize debugging/analysis arrays
      &         rc_list_y(1:rc_list_size(istra),istra),dtim,-1,
      &         flux_x(1:rc_list_size(istra)),
      &         flux_y(1:rc_list_size(istra)),1,
-     &         area(1:rc_list_size(istra)),BoRiS)
+     &         area(1:rc_list_size(istra)),switch%BoRiS)
               deallocate(flux_x,flux_y,area)
             endif
 #endif
@@ -743,7 +743,7 @@ c and this strata should be ignored here
      &  st_ext%fhi(iFc,0) + st_ext%fhi(iFc,1)))/geo%fcS(iFc)
       do is=0,ns-1
         qin = qin+max(0.0_R8,isign*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is)))*
-     &    ((dv%kinrgy(iCv,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/
+     &    ((dv%kinrgy(iCv,is)+tif)*(1.0_R8-switch%BoRiS) + rpf(is)*ev)/
      &     geo%fcS(iFc)
       enddo
       do is=0,st_ext%ns-1
@@ -758,11 +758,12 @@ c and this strata should be ignored here
         qin = qin + max(0.0_R8,isign*(st_ext%fa(iFc,0,is) +
      &                            st_ext%fa(iFc,1,is)))
      &        *((0.5_R8*st_ext%am(is)*mp*st_ext%ua(iCv,is)**2+taf)*
-     &          (1.0_R8-BoRiS)
+     &          (1.0_R8-switch%BoRiS)
      &          + ptf*ev)/geo%fcS(iFc)
       enddo
       qel = max(0.0_R8,isign*(dv%fhe(iFc,0)+dv%fhe(iFc,1)+
-     &  (dv%fne(iFc,0)+dv%fne(iFc,1))*tef*(1.0_R8-BoRiS)))/geo%fcS(iFc)
+     &  (dv%fne(iFc,0)+dv%fne(iFc,1))*tef*(1.0_R8-switch%BoRiS)))/
+     &   geo%fcS(iFc)
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -852,20 +853,21 @@ c     (toroidal piece only, because poloidal piece of parallel velocity flips si
      &      geo%cvBb(iCv,3)**2*b2recyc(is,istra)*t0*geo%cvHz(iCv)
          if (switch%lin_shi0.eq.1) then
            srw%shi0(iCv,1) = srw%shi0(iCv,1)+recycled_neutrals_contr*
-     &        max(erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
-     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0/
-     &        pl%ti(iCv)
+     &        max(erecyc(is,istra)*(1.5_R8+switch%BoRiS)*Einc*ev,
+     &        (1.5_R8+switch%BoRiS)*surface_temp*KBolt)*
+     &        b2recyc(is,istra)*t0/pl%ti(iCv)
          else
            srw%shi0(iCv,0) = srw%shi0(iCv,0)+recycled_neutrals_contr*
-     &        max(erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
-     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
+     &        max(erecyc(is,istra)*(1.5_R8+switch%BoRiS)*Einc*ev,
+     &        (1.5_R8+switch%BoRiS)*surface_temp*KBolt)*
+     &        b2recyc(is,istra)*t0
          endif
          if (is2.ne.-1) shi0_ff(iCv,is2) = shi0_ff(iCv,is2)+
      &        recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Einc*ev,
-     &        (1.5_R8+BoRiS)*surface_temp*KBolt)*b2recyc(is,istra)*t0
+     &        erecyc(is,istra)*(1.5_R8+switch%BoRiS)*Einc*ev,
+     &        (1.5_R8+switch%BoRiS)*surface_temp*KBolt)*
+     &        b2recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
-
 
          else !! use advanced fluid neutral boundary conditions by N. Horsten et. al
 c lvn1
@@ -998,10 +1000,8 @@ c          while B2.5 uses internal energy equations.
              srw%sna0(iCv,0,is0) = srw%sna0(iCv,0,is0) -
      &         fnni*neutral_sources_rescale
 
-
 !! save the incident fluid neutral flux
              fnn_inc(iFc,is0) = fnni*isign
-
 
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
@@ -1160,7 +1160,7 @@ c chemical sputtering
                   t1=(sputter_yield(ix,iy,is,1)+sput_chem_alpha*t1)/
      *                 (1+sput_chem_alpha)
                endif
-               t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
+               t2=t1*(1.5_R8+switch%BoRiS)*surface_temp*KBolt
                sputter_yield(ix,iy,is,1)=t1
                tchem(is)=tchem(is)+t1
                if (sput_dst_bulk.ne.-1) then
@@ -1491,7 +1491,7 @@ c thermal evaporation     ! no fix for mixed materials yet
                call thermev(iwall, is, surface_temp, GammaEvap, t2)
                thermal_evaporation(iwall,is) = GammaEvap
                t1=GammaEvap*area*therm_evap
-               t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
+               t2=t1*(1.5_R8+switch%BoRiS)*surface_temp*KBolt
                sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
 cxpb  Erosion from the bulk material if thermally evaporated
                if(itrack.gt.0.and.itrack.le.ntrack.and.
@@ -1570,7 +1570,7 @@ cxpb  with mixed materials model
                      enddo
                   endif
                endif
-               t2=t1*(1.5_R8+BoRiS)*surface_temp*KBolt
+               t2=t1*(1.5_R8+switch%BoRiS)*surface_temp*KBolt
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
                if (is2.ne.-1)
      >           shi0_ff(ix,iy,is2)=shi0_ff(ix,iy,is2)+t2
@@ -1660,8 +1660,8 @@ c     (at core, cell faces will be aligned with flux surfaces)
      .           mrecyc(is,istra)*am(is)*mp*pl%ua(iCv,is)*
      .           b2recyc(is,istra)*t0*geo%cvHz(iCv)
                srw%shi0(iCv,0) = srw%shi0(iCv,0)+erecyc(is,istra)*
-     .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*b2recyc(is,istra)*t0
-     &          *recycled_neutrals_contr  !srv
+     .          (1.5_R8+switch%BoRiS)*(zaf(is)*tef+tif)*
+     &           b2recyc(is,istra)*t0*recycled_neutrals_contr            !srv
             endif
          enddo      ! do is = nsmax, nsmin, -1
       endif

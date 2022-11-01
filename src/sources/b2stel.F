@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
+      subroutine b2stel (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
 !      use b2mod_diag
@@ -33,8 +33,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
-      real (kind=R8) ::
-     *  BoRiS
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -170,7 +168,7 @@
            rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+           t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
      &        ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
            if (switch%tn_style.eq.0.or.zn(is).ne.1
@@ -294,7 +292,7 @@
 *       ..compute atom heat source
            if (switch%tn_style.eq.0.or.zn(is).ne.1
      &                             .or..not.is_neutral(is-1)) then      !! combined ion-neutral, and/or non-hydrogenic (default)
-             t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+             t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &         ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
      &         ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
@@ -303,7 +301,7 @@
            elseif (switch%tn_style.eq.1) then !! pure ion
              !! case of hydrogenic atoms
              t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))*
-     *         (1.0_R8-BoRiS)
+     *         (1.0_R8-switch%BoRiS)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))

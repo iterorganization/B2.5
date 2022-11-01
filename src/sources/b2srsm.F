@@ -337,7 +337,7 @@ cdjm Store the total change in linearised sources for balance
 !     &        'b2srsm_smosm'//chns)
         enddo
       endif
-      if (switch%b2npc9_iout.eq.1 .or. switch%b2npco_iout.eq.1) then
+      if (switch%b2npco_iout.eq.1) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
 !        call my_out(70,nCv,sr%sna(:,:,0,is)+                       !srv 07.10.09

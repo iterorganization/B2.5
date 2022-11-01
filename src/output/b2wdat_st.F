@@ -1,4 +1,4 @@
-      subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
+      subroutine b2wdat_st (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_geo
@@ -38,8 +38,8 @@
 *
 *  1. purpose
 *
-*     B2WDAT is an output routine that writes out B2 arrays into ASCII
-*     data files.
+*     B2WDAT_ST is an output routine that writes out structured B2 arrays
+*     into ASCII data files.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -114,7 +114,7 @@
 *
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2wdat')
+      call subini ('b2wdat_st')
 *   ..initialise files and common
 
 #ifdef WG_TODO
@@ -1494,7 +1494,7 @@
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
            CALL XERRAB
-     1         ('B2WDAT: INVALID OPTION')
+     1         ('B2WDAT_ST: INVALID OPTION')
          ENDIF
          if (bcpos(ib).eq.-2) then
            write(boundary_location(ib),'(a23,i2)')
@@ -1580,7 +1580,7 @@
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
-           CALL XERRAB('B2WDAT: INVALID BOUNDARY OPTION')
+           CALL XERRAB('B2WDAT_ST: INVALID BOUNDARY OPTION')
          ENDIF
          WRITE(70,"(a,a,a,es15.7)") BCCHAR(IB),
      2         boundary_location(ib),
@@ -1670,6 +1670,6 @@ c     calculate coordinates of cell centre
       return
 
 *-----------------------------------------------------------------------
-*.end b2wdat
+*.end b2wdat_st
 
-      end subroutine b2wdat
+      end subroutine b2wdat_st
