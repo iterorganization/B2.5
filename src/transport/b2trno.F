@@ -361,14 +361,22 @@ c the logic statements below could be simplfied but for now we go for readabilit
       enddo 
 
 *   ..test sign of chce, chci
-      call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0), 1, 'chce', '.ge.')
-      call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1), 1, 'chce', '.ge.')
-      call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0), 1, 'chci', '.ge.')
-      call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1), 1, 'chci', '.ge.')
-      call b2xvsg (nFc, co%chcn(:,0)*geo%fcQalf(:,0), 1, 'chcn', '.ge.')
-      call b2xvsg (nFc, co%chcn(:,1)*geo%fcQalf(:,1), 1, 'chcn', '.ge.')
-      call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0), 1, 'cdkt', '.ge.')
-      call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1), 1, 'cdkt', '.ge.')
+      wrk(:) = co%chce(:,0)*geo%fcQalf(:,0)
+      call b2xvsg (nFc, wrk, 1, 'chce', '.ge.')
+      wrk(:) = co%chce(:,1)*geo%fcQalf(:,1)
+      call b2xvsg (nFc, wrk, 1, 'chce', '.ge.')
+      wrk(:) = co%chci(:,0)*geo%fcQalf(:,0)
+      call b2xvsg (nFc, wrk, 1, 'chci', '.ge.')
+      wrk(:) = co%chci(:,1)*geo%fcQalf(:,1)
+      call b2xvsg (nFc, wrk, 1, 'chci', '.ge.')
+      wrk(:) = co%chcn(:,0)*geo%fcQalf(:,0)
+      call b2xvsg (nFc, wrk, 1, 'chcn', '.ge.')
+      wrk(:) = co%chcn(:,1)*geo%fcQalf(:,1)
+      call b2xvsg (nFc, wrk, 1, 'chcn', '.ge.')
+      wrk(:) = co%cdkt(:,0)*geo%fcQalf(:,0)
+      call b2xvsg (nFc, wrk, 1, 'cdkt', '.ge.')
+      wrk(:) = co%cdkt(:,1)*geo%fcQalf(:,1)
+      call b2xvsg (nFc, wrk, 1, 'cdkt', '.ge.')
 
       if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then                  !srv 19.05.10 {
        do is = 0, ns-1

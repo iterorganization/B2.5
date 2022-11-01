@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
+      subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
@@ -36,8 +36,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
-      real (kind=R8) ::
-     *  BoRiS
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -68,6 +66,7 @@
 *   ..local variables
       integer is
       real (kind=R8) :: praverage(2), testqe, testqi
+      real (kind=R8) :: wrk(nFc)
 #ifdef WG_TODO
       integer regcnt, ixx
       real (kind=R8) ::
@@ -125,10 +124,14 @@
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
 *    ..test sign of chce, chci
-       call b2xvsg (nCv,co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nCv,co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
-       call b2xvsg (nCv,co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
-       call b2xvsg (nCv,co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
+       wrk(:) = co%chce(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc,wrk,1,'chce0','.ge.')
+       wrk(:) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc,wrk,1,'chce1','.ge.')
+       wrk(:) = co%chci(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc,wrk,1,'chci0','.ge.')
+       wrk(:) = co%chci(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc,wrk,1,'chci1','.ge.')
       endif
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(dv%facdrift) .and.
@@ -336,12 +339,9 @@
      &     main_call, switch%b2stbc_diagno)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
-        call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
+        call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0,
      &   switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &   wrong_flow, main_call, switch%b2stbc_diagno,
-     &   switch%b2stbc_fchy_dia, switch%b2stbc_neoclassical, praverage,
-     &   switch%b2stbc_fchy_dia_coreonly,
-     &   switch%secmodel, switch%sheath_drift_fix)
+     &   wrong_flow, main_call, praverage)
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
 #ifdef WG_TODO
@@ -377,9 +377,8 @@
       endif
 
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain, BoRiS,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call, 
-!WG_RM     &    switch%b2stbc_diagno)
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
+!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
 
 * ..compute conditions on the cuts
 *     (no flow)

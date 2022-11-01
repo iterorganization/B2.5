@@ -67,10 +67,12 @@ c  Tp = Target surface temperature (K).
       common /location/ iwall, ns
 
       integer, save :: npde, nw, niw
-      integer :: itask, itrace, ind, ifail
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
+#ifndef NO_NAG
+      integer :: itask, itrace, ind, ifail
       real (kind=R8) :: acc
+#endif
       external xertst
 
       call subini('heatdiff1D')

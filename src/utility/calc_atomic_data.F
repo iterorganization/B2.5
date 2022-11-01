@@ -6,12 +6,11 @@ c  version : 08.08.2000 11:35
       use b2mod_constants
       implicit none
 #     include <eir_reac.F>
-      integer iarg,iostat,nden,iden,iz1
+      integer iarg,iostat,nden,iden
       integer ir,i_k,i_l,i_m,i_n,i,j
-      real (kind=R8) :: D11(0:8,0:8),density(101),csx(101),FP(6)
+      real (kind=R8) :: D11(0:8,0:8),density(101),csx(101)
       real (kind=R8) :: t1, t2, te, tei, tef, de, dej, def, tfac, dnnn
-      real (kind=R8) :: rcmin, rcmax
-      CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3,ELNAME*2
+      CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       character arg*256
 #ifdef NAGFOR
       integer lenval, ierror
@@ -67,12 +66,6 @@ c  version : 08.08.2000 11:35
         nden=1
         density(1)=1.0e14_R8
       endif
-
-      RCMIN=0.0_R8
-      RCMAX=0.0_R8
-      FP=0.0_R8
-      ELNAME=' '
-      IZ1=1
 
       if(iarg.ge.3) then
         IR=1

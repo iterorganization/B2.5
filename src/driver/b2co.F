@@ -365,14 +365,12 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
           nnmoli = 0
         end if
       end if
-#ifdef WG_TODO
       if (ank_tracing.ne.0) then
-        call b2trci(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-        call b2trcc(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+        call b2trcc(nout(1),nxtl,nxtr,geo,mpg,switch)
         call b2filei(0,ns,nnreg(0))
         call b2filec(0,ns,nnreg(0))
       end if
-#endif
 *   ..rewrite NetCDF files
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)

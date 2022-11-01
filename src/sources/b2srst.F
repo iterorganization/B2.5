@@ -102,7 +102,7 @@
        enddo
 !WG_TODO       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
 !WG_TODO     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
-!WG_TODO*     The corner cell value is defined by interpolation in b2npco and b2npc9
+!WG_TODO*     The corner cell value is defined by interpolation in b2npco
 !WG_TODO*   ..There is some problem for 9-point stencil case.
 !WG_TODO        do iy=-1, ny, ny+1                                           !srv 27.06.08 {
 !WG_TODO          do ix = -1, nx
@@ -243,7 +243,7 @@ cdjm Jan2017 Store for balance
 !         call my_out_us(70,nCv,0,wrk0,'b2srst_smost'//chns)
 !       enddo
 !      endif
-!      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+!      if (iout_b2npco.eq.1) then
 !       do is = 0, ns-1
 !         write (chns,'(i3.3)') is
 !         wrk0=snast(:,0,is)+              !srv 07.10.09

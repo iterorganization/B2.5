@@ -1,6 +1,5 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                           pl, dv, BoRiS, kin_frac_hyb,
-     &                           fnn_inc)
+     &                           pl, dv, kin_frac_hyb, fnn_inc)
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -40,7 +39,6 @@
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       integer nCv, nFc, ns
-      real (kind=R8) :: BoRiS
       type (switches), intent(in) :: switch
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
@@ -53,7 +51,6 @@
       integer ix,iy,is,ncall,in
       external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
-     * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
      * na_min_val, na_max_val, ua_min_val, ua_max_val,
      * ne_min_val, ne_max_val, ne_min, ne_max
@@ -61,7 +58,7 @@
       real (kind=R8) :: kintmp(nFc,0:ns-1)
       real (kind=R8) ::
      &  vaecrbc(nCv,0:1,0:ns-1), wadiac(nCv,0:1,0:ns-1),
-     &  vadiac(nCv,0:1,0:ns-1), wrk(nCv)
+     &  vadiac(nCv,0:1,0:ns-1)
       real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:1,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
       integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
@@ -71,7 +68,8 @@
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
      1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic
       real (kind=R8) :: wght(nFc,2)
-      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
+      real (kind=R8), intent(in) ::
+     &  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
@@ -184,7 +182,7 @@ c Initialization
         feib(ifc) = dv%fhi(ifc,0) + dv%fhi(ifc,1)
         feeb(ifc) = dv%fhe(ifc,0) + dv%fhe(ifc,1)
         do is = 0, ns-1
-          feib(ifc) = feib(ifc) + kintmp(ifc,is)*(1.0_R8-BoRiS)
+          feib(ifc) = feib(ifc) + kintmp(ifc,is)*(1.0_R8-switch%BoRiS)
      .                *(dv%fna(ifc,0,is) + dv%fna(ifc,1,is))
         end do
       end do
@@ -535,8 +533,7 @@ c
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       type(mapping), intent(in) :: mpg
-      real*8, allocatable :: dummy(:,:,:)
-      integer :: i, ic, iFc, ifl, ntrgdat, istra
+      integer :: i, ic, ifl, ntrgdat, istra
 
 !  .. use approach to generalized user interface
 

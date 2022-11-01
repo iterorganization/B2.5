@@ -8,7 +8,7 @@ c consistency checks for combinations of different switches (check_consistency_s
 
       use b2mod_types
       use b2mod_constants
-     & , only : ev
+     & , only : ev, c
       implicit none
 
       private
@@ -139,7 +139,6 @@ c iout switches
       integer :: b2stbr_output
       integer :: b2npht_iout
       integer :: b2npmo_iout
-!      integer :: b2npc9_iout       ! No longer needed for unstructured grids
       integer :: b2npco_iout
       integer :: b2npp7_iout
       integer :: b2nppo_iout
@@ -636,7 +635,6 @@ c Advanced fluid neutral models
       s % b2stbr_output = 0
       s % b2npht_iout = 0
       s % b2npmo_iout = 0
-!      s % b2npc9_iout = 0
       s % b2npco_iout = 0
       s % b2npp7_iout = 0
       s % b2nppo_iout = 0
@@ -816,8 +814,8 @@ c eirene coupling
       s % eir_na_max = 1.0e30_R8
       s % eir_ne_min = 0.0e0_R8
       s % eir_ne_max = 1.0e30_R8
-      s % eir_ua_min = -1.0e30_R8
-      s % eir_ua_max = 1.0e30_R8
+      s % eir_ua_min = -c
+      s % eir_ua_max = c
       s % neutral_sources_rescale = 1.0_R8
 
 c k-enstrophy model
@@ -1134,7 +1132,6 @@ c iout switches
       call ipgeti ('b2stbr_output', s % b2stbr_output)
       call ipgeti ('b2npht_iout', s % b2npht_iout)
       call ipgeti ('b2npmo_iout', s % b2npmo_iout)
-!      call ipgeti ('b2npc9_iout', s % b2npc9_iout)
       call ipgeti ('b2npco_iout', s % b2npco_iout)
       call ipgeti ('b2npp7_iout', s % b2npp7_iout)
       call ipgeti ('b2nppo_iout', s % b2nppo_iout)

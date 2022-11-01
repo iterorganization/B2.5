@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
+      subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, pcm0, cortt, corte,
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, cortt, corte,
      &  corti, cortn, corkt, corzt, pccm0, na, ua, te, ti, tn, kt, zt,
      &  po, ne, ni)
       use b2mod_types
@@ -22,18 +22,18 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nregionv
+      integer nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxf, pcm0, cortt(nCv), corte(nCv),
+     *  rxf, cortt(nCv), corte(nCv),
      &  corti(nCv), cortn(nCv), corkt(nCv), corzt(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
-     &  solvereg(0:nregionv), solvireg(0:nregionv),
-     &  solvnreg(0:nregionv), solvtreg(0:nregionv),                             !srv 22.05.18
-     &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
-     &  solvkreg(0:nregionv), solvzreg(0:nregionv)
+     &  solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(0)),
+     &  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),                             !srv 22.05.18
+     &  solvpreg(0:mpg%nnreg(0)), solvmreg(0:ns-1,0:mpg%nnreg(0)),
+     &  solvkreg(0:mpg%nnreg(0)), solvzreg(0:mpg%nnreg(0))
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
@@ -76,7 +76,7 @@
 *   ..test rxf, pcm0
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      & 'faulty argument rxf')
-      call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
+      call xertst (0.0_R8.le.switch%b2npht_pcm0, 'faulty argument pcm0')
 *   ..test sign of na, ni, vol, te, ti, ne
       if(ncall_b2upht.lt.3) then
         call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
@@ -182,7 +182,7 @@
       if (ua_solve) then
        do iCv = 1, mpg%nCi
         ireg = mpg%cvReg(iCv)
-        t0 = pcm0*pccm0(iCv)*wrk(iCv)
+        t0 = switch%b2npht_pcm0*pccm0(iCv)*wrk(iCv)
         do is = 0, ns-1
          if (solvmreg(is,ireg)) ua(iCv,is) = ua(iCv,is)-t0
         enddo

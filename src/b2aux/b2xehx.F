@@ -44,7 +44,7 @@
       real (kind=R8) ::
      *   dpop(nFc), wrk0(nFc),
      *   wrk1(nFc), wrk2(nFc),
-     *   wrkv(nVx), ones(nFc,2)
+     *   wrkv(nVx), nete(nVx), ones(nFc,2)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -70,17 +70,19 @@
       else
         if(switch%mode_ehx.eq.0) then
           ones = 1.0_R8
+          nete = ne*te
 *       ..compute poloidal differences of po and pe
           call diff_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpop)
-          call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
+          call diff_p(nCv, nFc, nVx, 0, geo, mpg, nete, wrkv, wrk0)
 *       ..interpolate ne to faces
           call intface(nCv,nFc,mpg%fcCv,ones,ne,wrk1)
 *       ..compute ehx      
           ehx = -dpop + wrk0/(qe*wrk1)
         else if (switch%mode_ehx.eq.1) then
+          nete = ne*te
 *       ..compute poloidal differences of po and pe
           call diff_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpop)
-          call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
+          call diff_p(nCv, nFc, nVx, 0, geo, mpg, nete, wrkv, wrk0)
 *       ..interpolate ne to faces
           call intface(nCv,nFc,mpg%fcCv,geo%fcHc,ne,wrk1)
 *       ..compute ehx
