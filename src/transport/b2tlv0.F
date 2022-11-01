@@ -83,7 +83,7 @@
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
             maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
-	  enddo
+           enddo
          endif
         enddo
        else
@@ -111,7 +111,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
             maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
-	  enddo
+          enddo
          endif
         enddo
        endif

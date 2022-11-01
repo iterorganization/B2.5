@@ -1,10 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
+      subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &  wrong_flow, main_call, diagno,
-     &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &  b2stbc_fchy_dia_coreonly, secmodel, sheath_drift_fix)
+     &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
       use b2mod_feedback
@@ -38,9 +36,8 @@
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0, diagno
-      real (kind=R8) ::
-     *  BoRiS, b2stbc_fchy_dia, b2stbc_neoclassical, praverage(2)
+      integer nCv, nFc, nVx, ns, ismain, ismain0
+      real (kind=R8) :: praverage(2)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -53,7 +50,6 @@
       logical main_call                                              !xpb
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
-      integer b2stbc_fchy_dia_coreonly, secmodel, sheath_drift_fix
       logical wrong_flow                                             !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -111,7 +107,7 @@
 #endif
       real (kind=R8) :: bzsum, bzaverage                                !lk 20.11.07
       real (kind=R8) ::
-     *  wdia(nCv), wrk0(nCv),
+     *  wdia(nCv), wrk0(nCv), wrkf(nFc),
 #ifdef WG_TODO
      *  uu(nFc,0:ns+st_ext%ns-1), zarg,
 #endif
@@ -233,10 +229,14 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
 *    ..test sign of chce, chci
-       call b2xvsg (nCv,co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nCv,co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
-       call b2xvsg (nCv,co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
-       call b2xvsg (nCv,co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
+       wrkf(:) = co%chce(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc,wrkf,1,'chce0','.ge.')
+       wrkf(:) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc,wrkf,1,'chce1','.ge.')
+       wrkf(:) = co%chci(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc,wrkf,1,'chci0','.ge.')
+       wrkf(:) = co%chci(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc,wrkf,1,'chci1','.ge.')
       endif
 *   ..set cutll, cutlo
       if (.not.b2mod_math_initialised) call b2mod_math_init
@@ -408,7 +408,7 @@ cwdk  With redefinition of drifts as being the poloidal projections,
 cwdk  now need to recompute full diamagnetic component for ud
       if (isymm.eq.2.or.isymm.eq.4) then
         ud(:,:) = 0.0_R8
-      else if (sheath_drift_fix.eq.0) then
+      else if (switch%sheath_drift_fix.eq.0) then
         do is = 0,ns-1
          ud(:,is) = dv%uadia(:,0,is)*geo%fcBb(:,3)/geo%fcBb(:,2)*signmf
         enddo
@@ -418,7 +418,7 @@ cwdk  now need to recompute full diamagnetic component for ud
         enddo
       endif
 #ifdef WG_TODO
-      if (main_call .and. diagno.ge.1) then                           !xpb
+      if (main_call .and. switch%b2stbc_diagno.ge.1) then             !xpb
         write(*,'(a,1p,(10000e12.4))') 'dna0',
      1   (dna0(nx/2,ny,is),is=0,ns-1)
         write(*,'(a,1p,(10000e12.4))') 'dpa0',
@@ -516,6 +516,11 @@ cwdk  now need to recompute full diamagnetic component for ud
               write(*,*) 'Zero density B.C. no longer allowed!'
               write(*,*) 'Changed to na_min.'
             endif
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCCON = 1 : constant density ',CONPAR(IS,IB,1),' on ',
+     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
+     1       'BCCON = 1, CONPAR(,,1) !> 0')
             icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
             if (mpg%cvOnClosedSurface(icv)) then
              if(is.eq.ismain.and.switch%use_astra.ne.0) then
@@ -524,17 +529,12 @@ cwdk  now need to recompute full diamagnetic component for ud
              if (ishigh) call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 1')
             ENDIF
-            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'BCCON = 1 : constant density ',CONPAR(IS,IB,1),' on ',
-     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
-            call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
-     1       'BCCON = 1, CONPAR(,,1) !> 0')
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%sna0(iCv1,0,is) =
-     .        VBIG*geo%fcS(iFc)*conpar(is,iB,1)
+     .        VBIG*geo%fcS(iFc)*conpar(is,ib,1)
             srw%sna0(iCv1,1,is) =
      .       -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
@@ -597,8 +597,12 @@ cwdk  now need to recompute full diamagnetic component for ud
 
         case (4)
           call xerrab ('b2stbc_phys -- BCCON = 4 not adapted for WG')
-#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
+            if (CONPAR(IS,IB,1).eq.0.0_R8) then
+              CONPAR(IS,IB,1) = switch%b2mndr_na_min
+              write(*,*) 'Zero density B.C. no longer allowed!'
+              write(*,*) 'Changed to na_min.'
+            endif
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'BCCON = 4 : weak density ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -611,55 +615,17 @@ cwdk  now need to recompute full diamagnetic component for ud
      .       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 4')
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .          CONPAR(IS,IB,2)
-     .         *CONPAR(IS,IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     1         -CONPAR(IS,IB,2)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         CONPAR(IS,IB,2)*
-     .         CONPAR(IS,IB,1)*
-     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     .         -CONPAR(IS,IB,2)*
-     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .          CONPAR(IS,IB,2)
-     .         *CONPAR(IS,IB,1)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     1         -CONPAR(IS,IB,2)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .          CONPAR(IS,IB,2)*
-     .         CONPAR(IS,IB,1)*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     .         -CONPAR(IS,IB,2)*
-     .         SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .            LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            end do
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCCON=4, NOT YET AVAILABLE')
-          END IF
-          DO IX = 1, BC_LIST_SIZE(IB)
-            SNA0_NO_MDF(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)=
-     .       SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,IS)
-          ENDDO                                                     !srv 23.09.08 }
-#endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%sna0(iCv1,0,is) =
+     .        conpar(is,ib,2)*geo%fcS(iFc)*conpar(is,ib,1)
+            srw%sna0(iCv1,1,is) =
+     .       -conpar(is,ib,2)*geo%fcS(iFc)
+            sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
+            sna0_no_mdf(iCv1,1,is) = srw%sna0(iCv1,1,is)
+          enddo
+
 * -- BCCON=5 -- PRESCRIBE THE PARTICLE FLUX PER UNIT AREA
 
         case (5)
@@ -2910,7 +2876,7 @@ c   (ionising_core option)
         case (2)
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'parallel velocity gradient ',MOMPAR(IS,IB,1),
+     .       'BCMOM = 2 : parallel velocity gradient ',MOMPAR(IS,IB,1),
      1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -3094,7 +3060,6 @@ cxpb  and max(,,) statement for stability
 
         case (4)
           call xerrab ('b2stbc_phys -- BCMOM = 4 not adapted for WG')
-#ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'BCMOM = 4 : weak velocity ',MOMPAR(IS,IB,1),' on ',
@@ -3102,52 +3067,16 @@ cxpb  and max(,,) statement for stability
             call xertst(MOMPAR(IS,IB,2).gt.0.0_R8,
      1       'BCMOM = 4, MOMPAR(,,2) !> 0')
           endif
-          IF(BCCHAR(IB).EQ.'S') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         MOMPAR(IS,IB,2)
-     .         *MOMPAR(IS,IB,1)*SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     .        -MOMPAR(IS,IB,2)
-     .         *SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         MOMPAR(IS,IB,2)*
-     .         MOMPAR(IS,IB,1)*
-     .         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
-     .        -MOMPAR(IS,IB,2)*
-     1         SYHZ(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .              BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         MOMPAR(IS,IB,2)
-     .         *MOMPAR(IS,IB,1)*SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     1         -MOMPAR(IS,IB,2)*SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            end do
-          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IY = 1, BC_LIST_SIZE(IB)
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
-     .         MOMPAR(IS,IB,2)*
-     .         MOMPAR(IS,IB,1)*
-     .         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     .        -MOMPAR(IS,IB,2)*
-     .         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            end do
-          ELSE
-            CALL XERRAB
-     1       ('B2STBC -- BCMOM=4, OPTION NOT AVAILABLE')
-          ENDIF
-#endif
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            srw%smo0(iCv1,0,is)=
+     .         MOMPAR(IS,IB,2)*mompar(is,ib,1)*geo%fcS(iFc)*
+     .         geo%fcHz(iFc)
+            srw%smo0(iCv1,1,is)=
+     .        -MOMPAR(IS,IB,2)*geo%fcS(iFc)*geo%fcHz(iFc)
+          enddo
+
 * -- BCMOM=5 -- PRESCRIBE THE PARALLEL MOMENTUM FLUX PER UNIT AREA
 
         case (5)
@@ -3181,7 +3110,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 
         case (7)
           if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
-            write(*,'(4a,i3)') 'specified parallel velocity on ',
+            write(*,'(4a,i3)')
+     .      'BCMOM = 7 : specified parallel velocity on ',
      .       BCCHAR(IB), boundary_location(ib), ' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -3691,8 +3621,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (18)
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'specified parallel velocity ',MOMPAR(IS,IB,1),
-     1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
+     .       'BCMOM = 18 : specified parallel velocity ',
+     .        MOMPAR(IS,IB,1),' on ',BCCHAR(IB),boundary_location(ib),
+     1       ' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
@@ -3729,7 +3660,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           call xertst(ENEPAR(IB,1).gt.0.0_R8,
      1     'BCENE = 1, ENEPAR(,1) !> 0')
         endif
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%she0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*enepar(iB,1)*EV
@@ -4007,7 +3938,6 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 
       case (4)
         call xerrab ('b2stbc_phys -- BCENE = 4 not adapted for WG')
-#ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCENE = 4 : weak electron temperature ',ENEPAR(IB,1),
@@ -4017,46 +3947,13 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           call xertst(ENEPAR(IB,2).gt.0.0_R8,
      1     'BCENE = 4, ENEPAR(,2) !> 0')
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
-     .       ENEPAR(IB,2)*ENEPAR(IB,1)*
-     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
-     .       -ENEPAR(IB,2)/EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
-     .       ENEPAR(IB,2)*ENEPAR(IB,1)*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-ENEPAR(IB,2)/EV*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
-     .       ENEPAR(IB,2)*ENEPAR(IB,1)*
-     1       SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=
-     .       -ENEPAR(IB,2)/EV*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'E') THEN
-           DO IY = 1, BC_LIST_SIZE(IB)
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)=
-     .       ENEPAR(IB,2)*ENEPAR(IB,1)*
-     1       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-ENEPAR(IB,2)/EV*
-     2       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-          end do
-        ELSE
-          CALL XERRAB ('B2STBC -- BCENE=4, NOT YET AVAILABLE')
-        END IF
-#endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%she0(iCv1,0) =  ENEPAR(IB,2)*geo%fcS(iFc)*enepar(ib,1)
+          srw%she0(iCv1,1) = -ENEPAR(IB,2)/EV*geo%fcS(iFc)
+        enddo
+
 * -- BCENE=5 -- PRESCRIBE THE ELECTRON ENERGY FLUX PER UNIT AREA
 
       case (5)
@@ -4114,7 +4011,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             Tguess=Tguess+TE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           ENDDO
           Tguess=Tguess/BC_LIST_SIZE(IB)
-          if(diagno.ge.2) write(*,*) 'Initial Tguess:',Tguess/ev
+          if(switch%b2stbc_diagno.ge.2)
+     >     write(*,*) 'Initial Tguess:',Tguess/ev
           T0=Tguess*0.95_R8
           T1=Tguess*1.01_R8
           Tlimit=Tguess*0.0001_R8
@@ -4159,7 +4057,7 @@ cxpb code segment analog to b2tfhe
      .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
               flo_veecrb=prefactor*
      .         veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
-              flo = (1.5_R8+BoRiS)*
+              flo = (1.5_R8+switch%BoRiS)*
      .         fne_32(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
      1         2.5_R8*fne_52(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
      &       chve(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)*
@@ -4211,7 +4109,7 @@ cxpb code segment analog to b2tfhe
             endif
             fyt=fyt + fy
           ENDDO
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      >     write(*,'(a,i4,f15.6,1pe14.6)') 'ibnd,Tg,fyt(e):',
      .     ibnd,Tguess/ev,fyt
           if (ibnd.eq.0) then
@@ -4225,14 +4123,16 @@ cxpb code segment analog to b2tfhe
             GAM0 = GAM1 - ENEPAR(IB,1)
             T1 = Tguess
             GAM1 = fyt
-            if(diagno.ge.2) write(*,*) 'GAM0, GAM1 = ',GAM0,GAM1
-            if(diagno.ge.2) write(*,*) 'fyt,t1,t0 = ',fyt,t1/ev,t0/ev
+            if(switch%b2stbc_diagno.ge.2)
+     >       write(*,*) 'GAM0, GAM1 = ',GAM0,GAM1
+            if(switch%b2stbc_diagno.ge.2)
+     >       write(*,*) 'fyt,t1,t0 = ',fyt,t1/ev,t0/ev
             if (ibnd .gt. 100)
      >       call xerrab ('B2STBC -- BCENE=6, NOT CONVERGING')
             if (abs(t1-t0).gt.Tlimit .and.
      &          abs(fyt-ENEPAR(IB,1)).gt.fylimt) goto 20610
           endif
-          if(diagno.ge.1)
+          if(switch%b2stbc_diagno.ge.1)
      >     write(*,'(a,f15.6,i4,1pe14.6)') ' tebound:',T1/ev,ibnd,fyt
           DO IX = 1, BC_LIST_SIZE(IB)
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*T1*
@@ -4248,7 +4148,8 @@ cxpb code segment analog to b2tfhe
             Tguess=Tguess+TE(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           ENDDO
           Tguess=Tguess/BC_LIST_SIZE(IB)
-          if(diagno.ge.2) write(*,*) 'Initial Tguess:',Tguess/ev
+          if(switch%b2stbc_diagno.ge.2)
+     >     write(*,*) 'Initial Tguess:',Tguess/ev
           T0=Tguess*0.95_R8
           T1=Tguess*1.01_R8
           Tlimit=Tguess*0.0001_R8
@@ -4293,7 +4194,7 @@ cxpb code segment analog to b2tfhe
      .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
               flo_veecrb=prefactor*
      .         veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)
-              flo = (1.5_R8+BoRiS)*
+              flo = (1.5_R8+switch%BoRiS)*
      .         fne_32(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)+
      1         2.5_R8*fne_52(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -4349,7 +4250,7 @@ cxpb code segment analog to b2tfhe
             endif
             fyt=fyt + fy
           ENDDO
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      >     write(*,'(a,i4,f15.6,1pe14.6)') 'ibnd,Tg,fyt(e):',
      .     ibnd,Tguess/ev,fyt
           if (ibnd.eq.0) then
@@ -4368,7 +4269,7 @@ cxpb code segment analog to b2tfhe
             if (abs(t1-t0).gt.Tlimit .and.
      &          abs(fyt-ENEPAR(IB,1)).gt.fylimt) goto 20620
           endif
-          if(diagno.ge.1)
+          if(switch%b2stbc_diagno.ge.1)
      >     write(*,'(a,f15.6,i4,1pe14.6)') ' tebound:',T1/ev,ibnd,fyt
           DO IX = 1, BC_LIST_SIZE(IB)
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
@@ -5176,14 +5077,14 @@ cwdk    Todo: corrections for BCCON.ne.14
      .       fhi_ext(bc_type16_ix,bc_type16_iy,1,1)
             if (bc_type16_kinetic_energy.eq.1) then
               do is = 0, ns-1
-                totflux=totflux+(1.0_R8-BoRiS)*
+                totflux=totflux+(1.0_R8-switch%BoRiS)*
      .           fna(bc_type16_ix,bc_type16_iy,1,1,is)*0.5_R8*
      .           (kinrgy(bc_type16_ix,bc_type16_iy,is)+
      .            kinrgy(bottomix(bc_type16_ix,bc_type16_iy),
      .                   bottomiy(bc_type16_ix,bc_type16_iy),is))
               enddo
               do is = 0, ns_ext-1
-                totflux=totflux+(1.0_R8-BoRiS)*
+                totflux=totflux+(1.0_R8-switch%BoRiS)*
      .           fa_ext(bc_type16_ix,bc_type16_iy,1,1,is)*0.5_R8*
      .           0.5_R8*am_ext(is)*mp*
      .           (ua_ext(bc_type16_ix,bc_type16_iy,is)**2+
@@ -5205,7 +5106,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      .        ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0)
           ENDDO
           t0 = t0 / weight
-          if(diagno.ge.2) write(*,*) 'Totflux :',totflux
+          if(switch%b2stbc_diagno.ge.2) write(*,*) 'Totflux :',totflux
           T1 = (1.0_R8 -
      .     enepar(ib,2)*
      1       (totflux*enepar(ib,1)/(enepar(ib,1)+enipar(ib,1))-
@@ -5214,7 +5115,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      1       (totflux*enipar(ib,1)/(enepar(ib,1)+enipar(ib,1))-
      2         enipar(ib,1))/enipar(ib,1)
      .     ) * t0
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      1     write(*,*) 'Old/New shared temp :',t0/qe, t1/qe
           DO IX = 1, BC_LIST_SIZE(IB)
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
@@ -5428,10 +5329,10 @@ cwdk    Todo: corrections for BCCON.ne.14
           ENDDO
           t0 = t0 / weight
           teave=teave/neave
-          if(diagno.ge.2) write(*,*) 'Totflux :',totflux
+          if(switch%b2stbc_diagno.ge.2) write(*,*) 'Totflux :',totflux
           T1 = (1.0_R8 -
      .     enepar(ib,2)*(totflux-enepar(ib,1))/enepar(ib,1)) * t0
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      1     write(*,*) 'Old/New electron temp :',t0/qe, t1/qe
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type20_ix=bc_list_x(ix,ib)
@@ -5944,7 +5845,6 @@ cwdk     * need to correct this BC for hybrid scheme
 
       case (4)
         call xerrab ('b2stbc_phys -- BCENI = 4 not adapted for WG')
-#ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCENI = 4 : weak ion temperature ',ENIPAR(IB,1),' on ',
@@ -5954,44 +5854,14 @@ cwdk     * need to correct this BC for hybrid scheme
           call xertst(ENIPAR(IB,2).gt.0.0_R8,                !srv 02.02.11
      1     'BCENI = 4, ENIPAR(,2) !> 0')
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= ENIPAR(IB,2)
-     .       *ENIPAR(IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-ENIPAR(IB,2)
-     .       /EV*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= ENIPAR(IB,2)*
-     .       ENIPAR(IB,1)*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-ENIPAR(IB,2)/EV*
-     .       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= ENIPAR(IB,2)*
-     1       ENIPAR(IB,1)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-ENIPAR(IB,2)/EV*
-     .       SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= ENIPAR(IB,2)*
-     .       ENIPAR(IB,1)*
-     1       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-ENIPAR(IB,2)/EV*
-     1       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-          end do
-        ELSE
-          CALL XERRAB ('B2STBC -- BCENI=4, NOT YET AVAILABLE')
-        END IF
-#endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%shi0(iCv1,0) =  ENIPAR(IB,2)*geo%fcS(iFc)*
+     .                        ENIPAR(IB,1)
+          srw%shi0(iCv1,1) = -ENIPAR(IB,2)/EV*geo%fcS(iFc)
+        enddo
+
 * -- BCENI=5 -- PRESCRIBE THE ION ENERGY FLUX PER UNIT AREA
 
       case (5)
@@ -6049,7 +5919,8 @@ cwdk     * need to correct this BC for hybrid scheme
             Tguess=Tguess+TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           ENDDO
           Tguess=Tguess/BC_LIST_SIZE(IB)
-          if(diagno.ge.2) write(*,*) 'Initial Tguess:',Tguess/ev
+          if(switch%b2stbc_diagno.ge.2)
+     >     write(*,*) 'Initial Tguess:',Tguess/ev
           T0=Tguess*0.95_R8
           T1=Tguess*1.01_R8
           Tlimit=Tguess*0.0001_R8
@@ -6087,7 +5958,7 @@ cxpb code segment analog to b2tfhi
                 cum_flo_vaecrb=cum_flo_vaecrb+prefactor*
      1           vaecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is)
               enddo
-              flo = (1.5_R8+BoRiS)*
+              flo = (1.5_R8+switch%BoRiS)*
      .         fni_32(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
      1         2.5_R8*fni_52(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)+
      &         chvi(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1)*
@@ -6101,7 +5972,7 @@ cxpb code segment analog to b2tfhi
               endif
             endif
             w1 = 0.0_R8
-            if (BoRiS.eq.1.0_R8) then
+            if (switch%BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 t2 = dim ( coni0,
      .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -6159,7 +6030,7 @@ cxpb code segment analog to b2tfhi
             endif
             fyt=fyt + fy
           ENDDO
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      >     write(*,'(a,i4,1pe15.6,1pe14.6)') 'ibnd,Tg,fyt(i):',
      .     ibnd,Tguess/ev,fyt
           if (ibnd.eq.0) then
@@ -6178,7 +6049,7 @@ cxpb code segment analog to b2tfhi
             if (abs(t1-t0).gt.Tlimit .and.
      &          abs(fyt-ENIPAR(IB,1)).gt.fylimt) goto 30610
           endif
-          if(diagno.ge.1)
+          if(switch%b2stbc_diagno.ge.1)
      >     write(*,'(a,f15.6,i4,1pe14.6)') ' tibound:',T1/ev,ibnd,fyt
           DO IX = 1, BC_LIST_SIZE(IB)
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*T1*
@@ -6194,7 +6065,8 @@ cxpb code segment analog to b2tfhi
             Tguess=Tguess+TI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
           ENDDO
           Tguess=Tguess/BC_LIST_SIZE(IB)
-          if(diagno.ge.2) write(*,*) 'Initial Tguess:',Tguess/ev
+          if(switch%b2stbc_diagno.ge.2)
+     >     write(*,*) 'Initial Tguess:',Tguess/ev
           T0=Tguess*0.95_R8
           T1=Tguess*1.01_R8
           Tlimit=Tguess*0.0001_R8
@@ -6233,7 +6105,7 @@ cxpb code segment analog to b2tfhi
                cum_flo_vaecrb=cum_flo_vaecrb+
      1        prefactor*vaecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1,1,is)
              enddo
-             flo = (1.5_R8+BoRiS)*
+             flo = (1.5_R8+switch%BoRiS)*
      1         fni_32(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,1)+
      1         2.5_R8*fni_52(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -6250,7 +6122,7 @@ cxpb code segment analog to b2tfhi
               endif
             endif
             w1 = 0.0_R8
-            if (BoRiS.eq.1.0_R8) then
+            if (switch%BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 t2 = dim ( coni0,
      .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
@@ -6312,7 +6184,7 @@ cxpb code segment analog to b2tfhi
             endif
             fyt=fyt + fy
           ENDDO
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      >     write(*,'(a,i4,f15.6,1pe14.6)') 'ibnd,Tg,fyt(i):',
      .     ibnd,Tguess/ev,fyt
           if (ibnd.eq.0) then
@@ -6331,7 +6203,7 @@ cxpb code segment analog to b2tfhi
             if (abs(t1-t0).gt.Tlimit .and.
      &          abs(fyt-ENIPAR(ib,1)).gt.fylimt) goto 30620
           endif
-          if(diagno.ge.1)
+          if(switch%b2stbc_diagno.ge.1)
      >     write(*,'(a,f15.6,i4,1pe14.6)') ' tibound:',T1/ev,ibnd,fyt
 
           DO IX = 1, BC_LIST_SIZE(IB)
@@ -7300,10 +7172,10 @@ c see label 2980
           ENDDO
           t0 = t0 / weight
           tiave=tiave/niave
-          if(diagno.ge.2) write(*,*) 'Totflux :',totflux
+          if(switch%b2stbc_diagno.ge.2) write(*,*) 'Totflux :',totflux
           T1 = (1.0_R8 -
      .     enipar(ib,2)*(totflux-enipar(ib,1))/enipar(ib,1)) * t0
-          if(diagno.ge.2)
+          if(switch%b2stbc_diagno.ge.2)
      1     write(*,*) 'Old/New ion temp :',t0/qe, t1/qe
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type20_ix=bc_list_x(ix,ib)
@@ -8286,7 +8158,7 @@ cwdk     * need to correct this BC for hybrid scheme
      .       bottomiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.-2 .and.
      &       topiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.ny+1) then
               wrong_flow = .true.                                     !xpb
-              if(diagno.ge.0) then
+              if(switch%b2stbc_diagno.ge.0) then
                 write(*,'(a,2i4,1x,1p,g14.7)') 'b2stbc_west:ix,iy,fchi',
      1           bc_list_x(iy,ib),bc_list_y(iy,ib),fchi
                 write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(g14.7,1x))'
@@ -8311,7 +8183,7 @@ c              fchi=0.0_R8
             fche = sqrt(1/(2*pi))*qe*bcint(ne,nx,ny,iy,ib)*vte*s1*
      &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
      .       bcint(te,nx,ny,iy,ib))
-            if (secmodel.eq.1) then
+            if (switch%secmodel.eq.1) then
               if (ne(bc_list_x(iy,ib),bc_list_y(iy,ib))/
      .           (rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)*
      .            na(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain))
@@ -8325,7 +8197,7 @@ c              fchi=0.0_R8
      .         wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
      &         wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3),0,
      .         bc_list_x(iy,ib),bc_list_y(iy,ib),
-     &         nx,ny,ns,ismain,seec,diagno)                           !cfs
+     &         nx,ny,ns,ismain,seec,switch%b2stbc_diagno)               !cfs
             else
               seec = gammae
             endif
@@ -8366,7 +8238,7 @@ c              fchi=0.0_R8
      .       bottomiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.-2 .and.
      &       topiy(bc_list_x(iy,ib),bc_list_y(iy,ib)).ne.ny+1) then
               wrong_flow = .true.                                     !xpb
-              if(diagno.ge.0) then
+              if(switch%b2stbc_diagno.ge.0) then
                 write(*,'(a,2i4,1x,1p,g14.7)') 'b2stbc_east:ix,iy,fchi',
      1           bc_list_x(iy,ib),bc_list_y(iy,ib),fchi
                 write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(g14.7,1x))'
@@ -8386,7 +8258,7 @@ c              fchi=0.0_R8
             fche = sqrt(1/(2*pi))*qe*bcint(ne,nx,ny,iy,ib)*vte*s1*
      &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
      .       bcint(te,nx,ny,iy,ib))
-            if (secmodel.eq.1) then
+            if (switch%secmodel.eq.1) then
               if (ne(bc_list_x(iy,ib),bc_list_y(iy,ib))/
      .           (rza(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain)*
      .            na(bc_list_x(iy,ib),bc_list_y(iy,ib),ismain))
@@ -8400,7 +8272,7 @@ c              fchi=0.0_R8
      .         wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0),
      &         wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3),0,
      .         bc_list_x(iy,ib),bc_list_y(iy,ib),
-     &         nx,ny,ns,ismain,seec,diagno)                           !cfs
+     &         nx,ny,ns,ismain,seec,switch%b2stbc_diagno)               !cfs
             else
               seec = gammae
             endif
@@ -8431,7 +8303,6 @@ c              fchi=0.0_R8
 
       case (4)
         call xerrab ('b2stbc_phys -- BCPOT = 4 not adapted for WG')
-#ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCPOT = 4 : weak potential ',POTPAR(IB,1),' on ',BCCHAR(IB),
@@ -8439,45 +8310,13 @@ c              fchi=0.0_R8
           call xertst(POTPAR(IB,2).gt.0.0_R8,
      1     'BCPOT = 4, POTPAR(,2) !> 0')
         endif
-        IF(BCCHAR(IB).EQ.'S') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= POTPAR(IB,2)*
-     .       POTPAR(IB,1)*
-     1       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-POTPAR(IB,2)*
-     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'N') THEN
-          DO IX = 1, BC_LIST_SIZE(IB)
-            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= POTPAR(IB,2)*
-     .       POTPAR(IB,1)*
-     1       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            sch0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-POTPAR(IB,2)*
-     1       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'W') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= POTPAR(IB,2)*
-     .       POTPAR(IB,1)*
-     1       SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-POTPAR(IB,2)*
-     .       SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
-          end do
-        ELSEIF(BCCHAR(IB).EQ.'E') THEN
-          DO IY = 1, BC_LIST_SIZE(IB)
-            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)= POTPAR(IB,2)*
-     1       POTPAR(IB,1)*SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .                       LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)=-POTPAR(IB,2)*
-     1       SX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     .          LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-          end do
-        ELSE
-          CALL XERRAB ('B2STBC -- BCPOT=4, NOT YET AVAILABLE')
-        END IF
-#endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          srw%sch0(iCv1,0) =  POTPAR(IB,2)*geo%fcS(iFc)*potpar(iB,1)
+          srw%sch0(iCv1,1) = -POTPAR(IB,2)*geo%fcS(iFc)
+        enddo
+
 * -- BCPOT=5 -- PRESCRIBE THE CURRENT FLUX DENSITY PER UNIT AREA
 
       case (5)
@@ -9304,7 +9143,7 @@ c end of implementation
      .             bc_list_x(ix,ib)+1 .or. nncut.eq.0) then
                   fchy_dia = -praverage(1)*
      .             facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
-     &             *b2stbc_fchy_dia                                   !sv 01.07.99
+     &             *switch%b2stbc_fchy_dia                               !sv 01.07.99
      &             *(OnedBsqc(rightix(topix(bc_list_x(ix,ib),
      .                                      bc_list_y(ix,ib)),
      1                                topiy(bc_list_x(ix,ib),
@@ -9321,7 +9160,7 @@ c end of implementation
      .              bc_list_x(ix,ib),bc_list_y(ix,ib)
                   fchy_dia = -praverage(1)
      .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
-     &             *b2stbc_fchy_dia  !sv 01.07.99
+     &             *switch%b2stbc_fchy_dia  !sv 01.07.99
      &             *2.0_R8*(1.0_R8/
      1              wbbv(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**2
@@ -9347,8 +9186,8 @@ c end of implementation
      .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
      .             -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
-     .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))*
-     .              b2stbc_fchy_dia
+     .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
+     .             *switch%b2stbc_fchy_dia
                 else
                   if (ncall_b2stbc_phys.eq.0) write(*,*)
      .             'b2stbc: special treatment for cell ix,iy = ',
@@ -9364,12 +9203,12 @@ c end of implementation
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**2
      .     -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
-     .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))*
-     .              b2stbc_fchy_dia
+     .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
+     .             *switch%b2stbc_fchy_dia
                 endif
               endif
             else
-              if(b2stbc_neoclassical .ne. 0.0_R8 .and.
+              if(switch%b2stbc_neoclassical .ne. 0.0_R8 .and.
      &           on_closed_surface(bc_list_x(ix,ib),
      .                             bc_list_y(ix,ib))) then
                 if(periodic_bc.ne.1 .or. nncut.eq.0 .or.
@@ -9384,14 +9223,14 @@ c end of implementation
      .                       topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
      .              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
-     .              *b2stbc_neoclassical
+     .              *switch%b2stbc_neoclassical
                 else
                   fchy_dia = -praverage(1)*2.0_R8*
      .     *(1.0_R8/wbbv(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**2
      .              -OnedBsqc(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                        topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
-     .              *b2stbc_neoclassical
+     .              *switch%b2stbc_neoclassical
                 endif
               else
                 fchy_dia = 0.0_R8
@@ -9399,7 +9238,7 @@ c end of implementation
             endif
             if(.not.on_closed_surface(bc_list_x(ix,ib),
      .                                bc_list_y(ix,ib)) .and.
-     &         b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
+     &         switch%b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
             sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
      .      sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) + fchy_dia
           END DO
@@ -9410,7 +9249,7 @@ c end of implementation
      .                             bc_list_y(ix,ib))) then
                 fchy_dia = -praverage(2)
      .           *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
-     &           *b2stbc_fchy_dia     !sv 01.07.99
+     &           *switch%b2stbc_fchy_dia     !sv 01.07.99
      &           *(OnedBsqc(rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                      rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-
      1             OnedBsqc(bc_list_x(ix,ib),bc_list_y(ix,ib)))   !sv
@@ -9426,24 +9265,24 @@ c end of implementation
      .                      rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      .            -OnedBsqc(bc_list_x(ix,ib),bc_list_y(ix,ib)))*
      .             facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))
-     &            *b2stbc_fchy_dia
+     &            *switch%b2stbc_fchy_dia
               endif
             else
-              if(b2stbc_neoclassical .ne. 0.0_R8 .and.
+              if(switch%b2stbc_neoclassical .ne. 0.0_R8 .and.
      &           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      >         then
                 fchy_dia = -praverage(2)
      .           *(OnedBsqc(rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                      rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      .            -OnedBsqc(bc_list_x(ix,ib),bc_list_y(ix,ib)))
-     .           *b2stbc_neoclassical
+     .           *switch%b2stbc_neoclassical
               else
                 fchy_dia = 0.0_R8
               endif
             endif
             if(.not.on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
      .                      .and.
-     &         b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
+     &         switch%b2stbc_fchy_dia_coreonly.eq.1) fchy_dia = 0.0_R8
             sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) =
      .      sch0(bc_list_x(ix,ib),bc_list_y(ix,ib),0) - fchy_dia
           END DO

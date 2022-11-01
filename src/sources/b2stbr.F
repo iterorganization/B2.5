@@ -2,9 +2,8 @@
 *.specification
 
       subroutine b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
-     &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &  main_call)
+     &  nscx, nscxmax, iscx, ismain, dtim,
+     &  switch, geo, mpg, st, st_ext, main_call)
       use b2mod_types
 !WG_TODO      use b2mod_wall
       use b2mod_diag
@@ -66,22 +65,16 @@
      &          ncall_b2stbr,
      &          ncall_b2stbr_phys
       implicit none
-*   ..input arguments (unchanged on exit)
+*   ..input arguments
       integer nCv, nFc, nVx, ns, nxtl, nxtr
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
-      real (kind=R8) :: dtim, BoRiS
+      real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
-      type (B2Coeff), intent (inout) :: co
+      type (B2State), intent (inout) :: st
       type (B2StateExt), intent (in) :: st_ext
       logical main_call
-*   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       real (kind=R8) ::
 #ifdef WG_TODO
@@ -91,7 +84,7 @@
      &                  shitmp(nCv,0:3),
 #endif
      &                  fluid_frac_hyb(nFc),
-     &                  kin_frac_hyb(nFc), fnn_inc(nFc,ns-1)
+     &                  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -318,20 +311,20 @@
      &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, ni, ne, te, ti
-       call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
-       call b2xvsg (nCv*2, dv%ni, 1, 'ni', '.gt.')
-       call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
-       call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
-       call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv*ns, st%pl%na, 1, 'na', '.gt.')
+       call b2xvsg (nCv*2, st%dv%ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv, st%dv%ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, st%pl%te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, st%pl%ti, 1, 'ti', '.gt.')
       endif
 *   ..initialize sources to 0
-      call sfill (nCv*2*ns, 0.0_R8, srw%sna0, 1)
-      call sfill (nCv*4*ns, 0.0_R8, srw%smo0, 1)
-      call sfill (nCv*2, 0.0_R8, srw%sne0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%she0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%shi0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%shn0, 1)
-      call sfill (nCv*4, 0.0_R8, srw%sch0, 1)
+      call sfill (nCv*2*ns, 0.0_R8, st%srw%sna0, 1)
+      call sfill (nCv*4*ns, 0.0_R8, st%srw%smo0, 1)
+      call sfill (nCv*2, 0.0_R8, st%srw%sne0, 1)
+      call sfill (nCv*4, 0.0_R8, st%srw%she0, 1)
+      call sfill (nCv*4, 0.0_R8, st%srw%shi0, 1)
+      call sfill (nCv*4, 0.0_R8, st%srw%shn0, 1)
+      call sfill (nCv*4, 0.0_R8, st%srw%sch0, 1)
       call sfill (nCv*nscx, 0.0_R8, shi0_ff, 1)
       call sfill (nCv*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {
       call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
@@ -399,8 +392,9 @@ c   --> better solution wanted here..
         endif
 #endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, BoRiS, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext,
-     &  srw, tchem, tchee, tphys, tphye,
+     &  dtim, switch, geo, mpg,
+     &  st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
+     &  tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
      &  switch%b2stbc_boundary_namelist,
      &  switch%neutral_sources_rescale,
@@ -436,7 +430,7 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
+        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
      &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -599,9 +593,9 @@ c   --> better solution wanted here..
 
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim, BoRiS,   !srv 29.04.10 {
+        call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim,      !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call, switch, geo, mpg, pl, dv, rt,
+     &                 main_call, switch, geo, mpg, st,
      &                 kin_frac_hyb,fnn_inc)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
@@ -610,7 +604,7 @@ c   --> better solution wanted here..
           write (ch3 ,'(i3.3)') ncall_b2stbr
           if(.not.is_neutral(is)) then
            wrk0=sna0_eir(:,0,is)+
-     &          sna0_eir(:,1,is)*pl%na(:,is)
+     &          sna0_eir(:,1,is)*st%pl%na(:,is)
            call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns//
      &                    '_'//ch3)
           endif
@@ -618,8 +612,8 @@ c   --> better solution wanted here..
         endif
 
 *   add eirene sources to running average when averaging
-        if (switch%iav_run > 0) call running_average (nCv,ns,pl,dv,
-     &      sna0_eir, smo0_eir, she0_eir, shi0_eir)
+        if (switch%iav_run > 0) call running_average (nCv, ns,
+     &      st%pl, st%dv, sna0_eir, smo0_eir, she0_eir, shi0_eir)
 
 *   get averaged sources
         if (switch%ird_aver > 0) then
@@ -629,10 +623,10 @@ c   --> better solution wanted here..
 
         endif
 
-        srw%sna0 = srw%sna0 + sna0_eir
-        srw%smo0 = srw%smo0 + smo0_eir
-        srw%she0 = srw%she0 + she0_eir
-        srw%shi0 = srw%shi0 + shi0_eir
+        st%srw%sna0 = st%srw%sna0 + sna0_eir
+        st%srw%smo0 = st%srw%smo0 + smo0_eir
+        st%srw%she0 = st%srw%she0 + she0_eir
+        st%srw%shi0 = st%srw%shi0 + shi0_eir
 
 
 
@@ -641,17 +635,17 @@ c   --> better solution wanted here..
           do is = 0, ns-1                                                !srv 28.07.11 20.02.12 {
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,0,is)+
-     &             sna0_eir(:,1,is)*pl%na(:,is)
+     &             sna0_eir(:,1,is)*st%pl%na(:,is)
               call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
             endif
           enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
-     &     she0_eir(:,:,1)*te(:,:)+she0_eir(:,:,2)*ne+
-     &     she0_eir(:,:,3)*ne*te
+     &     she0_eir(:,:,1)*st%pl%te(:,:)+she0_eir(:,:,2)*st%dv%ne+
+     &     she0_eir(:,:,3)*st%dv%ne*st%pl%te
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
-     &     shi0_eir(:,:,1)*ti+shi0_eir(:,:,2)*ni(:,:,0)+
-     &     shi0_eir(:,:,3)*ni(:,:,0)*ti
+     &     shi0_eir(:,:,1)*st%pl%ti+shi0_eir(:,:,2)*st%dv%ni(:,:,0)+
+     &     shi0_eir(:,:,3)*st%dv%ni(:,:,0)*st%pl%ti
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
@@ -889,9 +883,9 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !     *              'b2stbr_smo_eir'//chk//chns)
 !          enddo
           wrk0=smo0_eir(:,0,is)+
-     &         smo0_eir(:,1,is)*pl%ua(:,is)+
-     &         smo0_eir(:,2,is)*pl%na(:,is)*mp*am(is)+
-     &         smo0_eir(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+     &         smo0_eir(:,1,is)*st%pl%ua(:,is)+
+     &         smo0_eir(:,2,is)*st%pl%na(:,is)*mp*am(is)+
+     &         smo0_eir(:,3,is)*st%pl%ua(:,is)*st%pl%na(:,is)*mp*am(is)
           call my_out_us(70,nCv,0,wrk0,'b2stbr_smo_eir'//chns)
          endif
         else
@@ -919,7 +913,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
      *               'b2stbr_sna_eir'//chk//chns)
            enddo
           endif
-          wrk0=sna0_eir(:,0,is)+sna0_eir(:,1,is)*pl%na(:,is)
+          wrk0=sna0_eir(:,0,is)+sna0_eir(:,1,is)*st%pl%na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2stbr_sna_eir'//chns)
          endif
         else
@@ -977,11 +971,12 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
           call my_out_us(70,nCv,0,shi0_eir(1,k),'b2stbr_shi_eir'//chk)
          enddo
         endif
-        wrk0=she0_eir(:,0)+she0_eir(:,1)*pl%te+
-     &       she0_eir(:,2)*dv%ne+she0_eir(:,3)*pl%te*dv%ne
+        wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+
+     &       she0_eir(:,2)*st%dv%ne+she0_eir(:,3)*st%pl%te*st%dv%ne
         call my_out_us(70,nCv,0,wrk0,'b2stbr_she_eir')
-        wrk0=shi0_eir(:,0)+shi0_eir(:,1)*pl%ti+
-     &       shi0_eir(:,2)*dv%ni(:,0)+shi0_eir(:,3)*pl%ti*dv%ni(:,0)
+        wrk0=shi0_eir(:,0)+shi0_eir(:,1)*st%pl%ti+
+     &       shi0_eir(:,2)*st%dv%ni(:,0)+
+     &       shi0_eir(:,3)*st%pl%ti*st%dv%ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2stbr_shi_eir')
        endif
 !      do k=0,3
@@ -1059,7 +1054,7 @@ c        write(*,*) 'Called neutr_scl'
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_init (ns, switch, mpg, BoRiS)
+      subroutine b2stbr_init (ns, switch, mpg)
       use b2mod_types
       use b2mod_time
       use b2mod_wall
@@ -1079,7 +1074,6 @@ c        write(*,*) 'Called neutr_scl'
       integer, intent(in) :: ns
       type (switches), intent (in) :: switch
       type (mapping), intent(inout) :: mpg
-      real (kind=R8), intent(in) :: BoRiS
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -1260,7 +1254,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 #ifdef WG_TODO
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .   'Inconsistent values of ndepth_nml and plate_model')
-      call get_wall_data (nx,ny,ns,BoRiS,wall_namelist_used)
+      call get_wall_data (nx,ny,ns,switch%BoRiS,wall_namelist_used)
 #ifdef ALLOCATE_AND_NAMELIST
       nCg_tmp = mpg%nCg
       ns_tmp = ns

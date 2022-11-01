@@ -106,14 +106,14 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nCv, pl % na(:,isb), 1, 'nb', '.gt.')
        call b2xvsg (nCv, dv % ne       , 1, 'ne', '.gt.')
        call b2xvsg (nCv, dv % pa(:,isb), 1, 'pb', '.gt.')
-       call b2xvsg (nFc, co%cdna(:,0,isb)*geo%fcQalf(:,0), 1,
-     &   'cdna0','.ge.')
-       call b2xvsg (nFc, co%cdna(:,1,isb)*geo%fcQalf(:,1), 1,
-     &   'cdna1','.ge.')
-       call b2xvsg (nFc, co%cdpa(:,0,isb)*geo%fcQalf(:,0), 1,
-     &   'cdpa0','.ge.')
-       call b2xvsg (nFc, co%cdpa(:,1,isb)*geo%fcQalf(:,1), 1,
-     &   'cdna1','.ge.')
+       wrk0(:) = co%cdna(:,0,isb)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk0, 1, 'cdna0','.ge.')
+       wrk1(:) = co%cdna(:,1,isb)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
+       wrk0(:) = co%cdpa(:,0,isb)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk0, 1, 'cdpa0','.ge.')
+       wrk1(:) = co%cdpa(:,1,isb)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
@@ -222,7 +222,7 @@ cwdk                   (original code: simple averaging)
 *     ..computation of grad-B drift
 cwdk    use (na*Ti)_f/na_f for consistency with fchdia
 cwdk    check treatment of rza for consistency with other drifts
-        wrk  = pl%na(:,isb)*pl%ti/(qe*rt%rza(:,isb))
+        wrk = pl%na(:,isb)*pl%ti/(qe*rt%rza(:,isb))
         call intface(nCv,nFc,mpg%fcCv,weight,wrk,wrk1)
 cwdk    to be checked: interpolation of geometric factors (hy1)
 cwdk                   now consistent between x and y faces

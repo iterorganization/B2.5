@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, BoRiS, 
+      subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
      &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
      &  rza, rz2, st_ext, she0, shi0, shn0)
@@ -37,7 +37,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) :: BoRiS,
+      real (kind=R8) ::
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
@@ -205,7 +205,7 @@
 !WG_TODO      b2divue=0.0_R8
 !WG_TODO      b2sihs_divue=0.0_R8
       do iCv = 1, mpg%nCi
-         t0 = -switch%b2sihs_phm0*(1.0_R8-BoRiS)*wrkc(iCv)
+         t0 = -switch%b2sihs_phm0*(1.0_R8-switch%BoRiS)*wrkc(iCv)
          shedu(iCv,0) = shedu(iCv,0)+
      &    (max(0.0e0_R8,t0)+switch%b2sihs__rf0*abs(t0))*ne(iCv)*te(iCv)
          shedu(iCv,3) = shedu(iCv,3)+min(0.0e0_R8,t0)-
@@ -231,7 +231,7 @@
         call div0(nCv, nFc, mpg, wrkf(:,0), wrkc)
         do iCv = 1, mpg%nCi
           t0 = -switch%b2sihs_phm1*(na(iCv,is)/ni(iCv,0))
-     &                                      *(1.0_R8-BoRiS)*wrkc(iCv)  !srv 21.07.05 {
+     &                            *(1.0_R8-switch%BoRiS)*wrkc(iCv)     !srv 21.07.05 {
           if (switch%tn_style.eq.0) then
             shidu(iCv,0) = shidu(iCv,0)+
      &        (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
@@ -354,8 +354,8 @@
          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
         endif
         do iCv = 1, mpg%nCi
-          t0 = switch%b2sihs_phm2*(1.0_R8-BoRiS)*visc(iCv,0)
-          t1 = switch%b2sihs_phm8*(1.0_R8-BoRiS)*visc(iCv,1)
+          t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
+          t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
             shivc(iCv,0) = shivc(iCv,0)+
      &                     (1.0e0_R8+switch%b2sihs__rf2)*t0
@@ -486,8 +486,8 @@
      &      (ne(iCv)*te(iCv))
 !WG_TODO           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
 !WG_TODO           b2sihs_joule(iCv)=t0
-           t0 = -switch%b2sihs_phm4*(1.0_R8-BoRiS)*geo%cvVol(iCv)*
-     &           shifr(iCv,0)
+           t0 = -switch%b2sihs_phm4*(1.0_R8-switch%BoRiS)*geo%cvVol(iCv)
+     &          *shifr(iCv,0)
 !          shifr(iCv,0) = t0
 !           shifr(iCv,0) = (2.5e0_R8+switch%b2sihs__rf4)*t0
 !           shifr(iCv,3) = -(1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
@@ -543,7 +543,7 @@
 !WG_TODO      endif
       call b2saxpy (nCv*4, 1.0e0_R8, shefr, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from atom-atom friction
-      if(switch%b2sigp_style.ne.2) then                                      !srv 05.07.17
+      if(switch%b2sigp_style.ne.2) then                           !srv 05.07.17
 !WG_TODO       b2fraa=0.0_R8
 !WG_TODO       b2sihs_fraa=0.0_R8
        do isb = 0, ns-1
@@ -556,7 +556,7 @@
      &      sqrt(am(isb)*am(is)/(am(isb)+am(is)))  !srv 01.07.09 11.01.12
           do iCv = 1,mpg%nCi
             t0 = rz2(iCv,isb)*rz2(iCv,is)*
-     &          (coef*lnlam(iCv)/4.0_R8)*(1.0_R8-BoRiS)*            !srv 11.01.12
+     &          (coef*lnlam(iCv)/4.0_R8)*(1.0_R8-switch%BoRiS)*   !srv 11.01.12
      &           na(iCv,is)*na(iCv,isb)*vti32(iCv)*
      &           ((ua(iCv,is)-ua(iCv,isb))**2)                    !srv 22.07.05
             shifr(iCv,0) = shifr(iCv,0)+

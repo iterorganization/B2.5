@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_post (nCv, nFc, nVx, ns, ismain, BoRiS,
-     &  switch, geo, mpg, pl, dv, srw, main_call, diagno)
+      subroutine b2stbc_fb_post (nCv, nFc, nVx, ns, ismain,
+     &  switch, geo, mpg, pl, dv, srw, main_call)
       use b2mod_types
 !      use b2mod_rates
 !      use b2mod_indirect
@@ -18,8 +18,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, diagno
-      real (kind=R8) :: BoRiS
+      integer nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg

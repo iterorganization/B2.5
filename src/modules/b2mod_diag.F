@@ -118,7 +118,7 @@ c
       allocate(IZ(nCv))
       allocate(RESHLP(nCv))
       allocate(rad_imp(1:nspecies))
-      allocate(rdneureg(nregionv),
+      allocate(rdneureg(0:nregionv),
      2  b2radirreg(nregionv),b2radlrreg(nregionv),
      3  recycereg(nregionv), recycireg(nregionv),
      4  sseereg(nregionv), sseireg(nregionv),
