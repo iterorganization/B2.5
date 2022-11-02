@@ -3,6 +3,7 @@
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_indirect
+      use b2mod_subsys
       IMPLICIT NONE
       external bd1copy3                                            !srv 26.12.17
 C

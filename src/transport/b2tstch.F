@@ -8,6 +8,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -43,7 +44,7 @@
       intrinsic max, abs
       real (kind=R8) ::
      *   hy1                                                            !srv 07.07.14
-      external subini, subend, ipgetr, ipgeti, xertst, xerrab
+      external ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
