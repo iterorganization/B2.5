@@ -44,7 +44,7 @@
       real (kind=R8) ::
      *   dpop(nFc), wrk0(nFc),
      *   wrk1(nFc), wrk2(nFc),
-     *   wrkv(nVx), nete(nVx), ones(nFc,2)
+     *   wrkv(nVx), nete(nCv), ones(nFc,2)
 *   ..procedures
       external xertst
       external b2xvsg
