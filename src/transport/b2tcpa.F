@@ -47,7 +47,7 @@
 
 *   ..local variables
       real (kind=R8) ::
-     *   tev(nVx), dtep(nFc)
+     *   tev(nVx), dtep(nFc), wrk(nFc,0:1)
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff
@@ -65,7 +65,8 @@
 *    ..test sign of ne, te, csig, calf
        call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
-       call b2xvsg (nFc*2, csig*geo%fcQalf, 1, 'csig', '.ge.')
+       wrk = csig*geo%fcQalf
+       call b2xvsg (nFc*2, wrk, 1, 'csig', '.ge.')
       endif
 
 * ..compute parallel current

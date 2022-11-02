@@ -31,12 +31,12 @@
      *   smbgp(nCv,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     * wrk0(nCv), wrk1(nCv), wrk2(nCv),
+     * wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv),
 #ifdef WG_TODO
-     * wrk3(nCv), wrk4(nCv),                       !djm Jan2017
+     * wrk4(nCv),                                  !djm Jan2017
 #endif
      * wrk5(nCv), wrk6(nCv),                       !srv 28.03.17
-     * tb(nCv)
+     * tb(nCv), nete(nCv)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -220,8 +220,10 @@
 #endif
       elseif(switch%b2sigp_style.eq.1) then                           !srv 02.07.08 {
 *   ..  compute gradients in cell centers
-        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*tb, wrkv, wrk0)
-        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk1)
+        wrk3 = nb*tb
+        nete = ne*te
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk3, wrkv, wrk0)
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nete, wrkv, wrk1)
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
         wrk5  = 0.0e0_R8

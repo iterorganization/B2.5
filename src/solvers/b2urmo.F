@@ -89,8 +89,10 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nCv, smb(1,1), 1, 'smb1', '.le.')
        call b2xvsg (nCv, smb(1,3), 1, 'smb3', '.le.')
 *    ..test sign of cvsb
-       call b2xvsg (nFc, cvsb(:,0)*geo%fcQalf(:,0), 1, 'cvsb0', '.ge.')
-       call b2xvsg (nFc, cvsb(:,1)*geo%fcQalf(:,1), 1, 'cvsb1', '.ge.')
+       wrkf(:,0) = cvsb(:,0)*geo%fcQalf(:,0)
+       wrkf(:,1) = cvsb(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'cvsb0', '.ge.')
+       call b2xvsg (nFc, wrkf(:,1), 1, 'cvsb1', '.ge.')
       endif
 
 * ..compute flux

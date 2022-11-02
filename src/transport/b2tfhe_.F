@@ -80,9 +80,9 @@ csw 10oct2012
      &    zeff(nCv)                                                      !srv 13.01.17
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
-     *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
+     *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc), wrkf(nFc,0:1),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
-     *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
+     *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1), pe(nCv)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
@@ -122,8 +122,10 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 *    ..test sign of ne, te, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
-       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
+       wrkf(:,0) = co%chce(:,0)*geo%fcQalf(:,0)
+       wrkf(:,1) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'chce0', '.ge.')
+       call b2xvsg (nFc, wrkf(:,1), 1, 'chce1', '.ge.')
       endif
 
       wght = 1.0_R8
@@ -179,9 +181,10 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       call intface(nCv,nFc,mpg%fcCv,wght,pl%te,tef)
 
 *   ..compute differences of te, po, and pe
+      pe = pl%te*dv%ne
       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkv, dpo)
-      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%te*dv%ne, wrkv, dpe)
+      call diff(nCv, nFc, nVx, 0, geo, mpg, pe, wrkv, dpe)
 
 * ..compute fluxes and linearization
        floe0(:,0) = 1.5e0_R8*dv%fne_he(:,0) +
