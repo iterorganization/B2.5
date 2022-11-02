@@ -6782,6 +6782,17 @@
 				</description>
 			</introduction>
 			<switch>
+				<name>RZOMP</name>
+				<default>0.0</default>
+				<type>real*8 array of size (2,2)</type>
+				<description>
+					Coordinates defining a segment. All control volumes intersected by this segment will be part of the outer midplane.
+					rzomp(1,1:2) holds the R-coordinates of the first and second point of the segment.
+					rzomp(2,1:2) holds the Z-coordinates of the first and second point of the segment.
+					Warning! This variable needs always be defined for SOLPS-ITER version 3.2.0 or younger!
+				</description>
+			</switch>
+			<switch>
 				<name>LHETRGTS</name>
 				<default>Eirene recycling target surfaces defined in the LTNS array</default>
 				<type>integer array of size (NLIM)</type>

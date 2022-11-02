@@ -19,10 +19,18 @@
       integer l_h_mol(DEF_NMOL,3)
 #endif
       integer, parameter :: nromp=DEF_NYD*4
+! omp is a list of CVs beloning to the OMP, defined through the segment rzomp
+! it should be built as an ordered list from core to SOL. icsepomp stores the location
+! of the separatrix position in the omp list. nomp holds the number of CVs in the omp list
+! A similar argument holds for imp, icsepimp and nimp
       integer, save :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp),
      ,  icsepimp, nimp
       real (kind=R8) ::
-     ,  fusion_power, Spmp_He_to_D, Spmp_nom, rzomp(2,2), rzimp(2,2)
+     ,  fusion_power, Spmp_He_to_D, Spmp_nom
+! rzomp/imp hold the R-Z coordinates of a segment whose intersection with the
+! plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordiantes of first 
+! and second point of the segment, rzomp(2,1:2) holds Z-coordinates
+      real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
@@ -237,6 +245,7 @@ c***  Standard set-up:
 
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
+! Define OMP list by finding CVs which are intersected by the rzomp segment
       call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
@@ -252,6 +261,7 @@ c***  Standard set-up:
      & call xerrab('OMP LIST NOT SORTED')
       end do
 *   ..Definition of separatrix position in OMP list (to be improved for DN)
+! Separatrix is defined by checking when cvReg changes value inside the OMP list
       icsepomp = 0
       ic = 1
       found = .false.
@@ -624,6 +634,7 @@ c*** Set default values according to current species list
 *   ..Create list of IMP control volumes
       nimp = 0
       imp = 0
+! Same logic as OMP list, find CVs intersected by rzimp segment
       call cv_intersections (m%nCv, geo, m, rzimp, imp, nimp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
@@ -631,7 +642,7 @@ c*** Set default values according to current species list
         if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
      & call xerrab('IMP LIST NOT SORTED')
       end do
-
+! Find position of separatrix in IMP list (same as for OMP)
       icsepimp = 0
       ic = 1
       found = .false.
@@ -643,8 +654,9 @@ c*** Set default values according to current species list
       ic = ic + 1
       end do
       if (.not.found) write(*,'(a/a)')
-     &  'Did not find separatrix location. ',
-     &  'Check specification RZOMP in b2.user.parameters.'
+     &  'Warning: did not find separatrix location in IMP definition, '\
+     &  '         check specification of RZIMP in b2.user.parameters'\
+     &  '         if IMP is needed.'
       ifssep = 0 !flux surface of separatrix
       ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
       ic2 = omp(icsepomp) !cv of flux tube just outside sep
