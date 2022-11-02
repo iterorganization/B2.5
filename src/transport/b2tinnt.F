@@ -57,7 +57,7 @@
      *   vntrf(nFc,0:1), tif(nFc), naf(nFc,0:ns-1), dpo(nFc,0:1),
      *   fnan(nFc,0:1,0:ns-1),!WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
      *   wrk(nCv), wrk0(nFc,0:1,0:ns-1), wrk1(nFc,0:1), wrk2(nFc),
-     *   wrkVx(nVx)
+     *   wrkVx(nVx), wrk3(nFc,0:1), wrkv(nVx)
       real (kind=R8) ::
 #ifdef WG_TODO
      &   sigia(nCv), sec(nCv), csigia(nFc,0:1), sigi(nCv),                !srv 15.02.11
@@ -324,10 +324,10 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *    ..test sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
-                call b2xvsg (nFc, csigin(:,0,is,is0)*geo%fcQalf(:,0), 1,
-     .            'csigin0', '.ge.')
-                call b2xvsg (nFc, csigin(:,1,is,is0)*geo%fcQalf(:,1), 1,
-     .            'csigin1', '.ge.')
+                wrk3(:,0) = csigin(:,0,is,is0)*geo%fcQalf(:,0)
+                wrk3(:,1) = csigin(:,1,is,is0)*geo%fcQalf(:,1)
+                call b2xvsg (nFc, wrk3(:,0), 1, 'csigin0', '.ge.')
+                call b2xvsg (nFc, wrk3(:,1), 1, 'csigin1', '.ge.')
               enddo
             enddo
           endif
@@ -348,7 +348,8 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               call intface(nCv, nFc, mpg%fcCv, geo%fcVol, na(:,is),
      &          naf(:,is))
 *   ..pre-computation of differences
-              call diff(nCv, nFc, nVx, 0, geo, mpg, na(:,is)*ti, wrkVx,
+              wrkv(:) = na(:,is)*ti(:)
+              call diff(nCv, nFc, nVx, 0, geo, mpg, wrkv, wrkVx,
      &          wrk0(:,:,is))
             enddo
             call diff(nCv, nFc, nVx, 0, geo, mpg, po, wrkVx, dpo)

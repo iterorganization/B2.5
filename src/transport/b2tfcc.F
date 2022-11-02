@@ -55,10 +55,10 @@
       if (ncall_b2tfcc.lt.3) then
 *    ..test sign of cdpa
        do is = 0, ns-1
-        call b2xvsg (nFc, co%cdpa(:,0,is)*geo%fcQalf(:,0),1,'cdpa0',
-     .    '.ge.')
-        call b2xvsg (nFc, co%cdpa(:,1,is)*geo%fcQalf(:,1),1,'cdpa1',
-     .    '.ge.')
+        wrkf(:) = co%cdpa(:,0,is)*geo%fcQalf(:,0)
+        call b2xvsg (nFc, wrkf, 1, 'cdpa0', '.ge.')
+        wrkf(:) = co%cdpa(:,1,is)*geo%fcQalf(:,1)
+        call b2xvsg (nFc, wrkf, 1, 'cdpa1', '.ge.')
        enddo
       endif
 
