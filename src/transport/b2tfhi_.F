@@ -65,7 +65,7 @@
 cpax
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
-     *   tif(nFc), tnf(nFc),
+     *   tif(nFc), tnf(nFc), wrkf(nFc,0:1),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
      *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1), cdzt0(nFc,0:1)
 #ifdef WG_TODO
@@ -115,12 +115,18 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
        call b2xvsg (nCv, dv%ni, 1, 'ni', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%kt, 1, 'kt', '.ge.')
-       call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
-       call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
-       call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0),1,'cdkt0','.ge.')
-       call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1),1,'cdkt1','.ge.')
-       call b2xvsg (nFc, co%cdzt(:,0)*geo%fcQalf(:,0),1,'cdzt0','.ge.')
-       call b2xvsg (nFc, co%cdzt(:,1)*geo%fcQalf(:,1),1,'cdzt1','.ge.')
+       wrkf(:,0) = co%chci(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'chci0', '.ge.')
+       wrkf(:,1) = co%chci(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,1), 1, 'chci1', '.ge.')
+       wrkf(:,0) = co%cdkt(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'cdkt0', '.ge.')
+       wrkf(:,1) = co%cdkt(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,1), 1, 'cdkt1', '.ge.')
+       wrkf(:,0) = co%cdzt(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'cdzt0', '.ge.')
+       wrkf(:,1) = co%cdzt(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,1), 1, 'cdzt1', '.ge.')
       endif
 
       meth = switch%b2tfhi_discr_meth

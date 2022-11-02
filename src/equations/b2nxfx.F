@@ -15,10 +15,10 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   qe, ne(nCv), te(nCv), po(nCv), wrk0(nFc), wrk1(nFc)
+     *   qe, ne(nCv), te(nCv), po(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   ehxp(nCv)
+     *   ehxp(nCv), wrk0(nFc), wrk1(nFc)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -54,7 +54,7 @@
 *.declarations
 
 *   ..local variables
-      real (kind=R8) :: wrkc0(nCv), wrkc1(nCv), wrkv(nVx)
+      real (kind=R8) :: wrkc0(nCv), wrkc1(nCv), wrkv(nVx), nete(nCv)
 *   ..procedures
       external xertst
 *   ..initialisation
@@ -73,8 +73,9 @@
        call xerrab ('b2nxfx -- style 0 not supported for WG')
 #ifdef WG_TODO
 *   ..compute wrk0 and wrk1
-       call diff_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrk0)
-       call diff_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrk1)
+       nete = ne*te
+       call diff_p(nCv, nFc, nVx, 0, geo, mpg, nete, wrkv, wrk0)
+       call diff_p(nCv, nFc, nVx, 0, geo, mpg, po  , wrkv, wrk1)
 *   ..compute ehxp
        do iy = -1, ny
         do ix = -1, nx
@@ -109,9 +110,10 @@
        enddo
 #endif
       else ! style                                                   !srv 26.10.08 {
-*   ..compute wrk0 and wrk1
-       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ne*te, wrkv, wrkc0)
-       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po   , wrkv, wrkc1)
+*   ..compute wrkc0 and wrkc1
+       nete = ne*te
+       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nete, wrkv, wrkc0)
+       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po  , wrkv, wrkc1)
 *   ..compute ehxp
        ehxp = (wrkc0-wrkc1*qe*ne)*geo%cvBb(:,0)/geo%cvBb(:,3)*geo%cvVol
 *   ..zero out guard cells

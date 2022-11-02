@@ -166,10 +166,10 @@
        call b2xvsg (nCv, pl%tn, 1, 'tn', '.gt.')
 *    ..test sign of cvsa
        do is = 0, ns-1
-        call b2xvsg (nFc,co%cvsa(:,0,is)*geo%fcQalf(:,0),1,
-     .    'cvsa0','.ge.')
-        call b2xvsg (nFc,co%cvsa(:,1,is)*geo%fcQalf(:,1),1,
-     .    'cvsa1','.ge.')
+        wrkf0(:) = co%cvsa(:,0,is)*geo%fcQalf(:,0)
+        wrkf1(:) = co%cvsa(:,1,is)*geo%fcQalf(:,1)
+        call b2xvsg (nFc, wrkf0, 1, 'cvsa0', '.ge.')
+        call b2xvsg (nFc, wrkf1, 1, 'cvsa1', '.ge.')
        enddo
 *    ..test sign of smo, smq
        do is = 0, ns-1

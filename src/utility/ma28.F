@@ -2384,6 +2384,7 @@ c ltend is the end of row i in the off-diagonal blocks.
         ltend = lt + lenoff(i) - 1
         do 20 jj=lt,ltend
           j = icn(jj)
+          if (j.eq.0) cycle
 #ifdef DBG
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
@@ -2404,6 +2405,7 @@ c iend is the end of the l part of row i in the lu decomposition.
         iend = iblock + lenrl(i) - 1
         do 40 jj=iblock,iend
           j = icn(jj)
+          if (j.eq.0) cycle
 #ifdef DBG
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
@@ -2452,6 +2454,7 @@ c jump if row ii of u has no nonzeros.
           wii = w(ii)
           do 80 jj=jpivp1,j2
             j = icn(jj)
+            if (j.eq.0) cycle
 #ifdef DBG
             if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &         (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then

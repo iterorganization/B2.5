@@ -82,10 +82,14 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 *    ..test sign of ne, te, csig, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
-       call b2xvsg (nFc, co%csig(:,0)*geo%fcQalf(:,0),1,'csig0','.ge.')
-       call b2xvsg (nFc, co%csig(:,1)*geo%fcQalf(:,1),1,'csig1','.ge.')
-       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
+       wrk(:,0) = co%csig(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk(:,0), 1, 'csig0', '.ge.')
+       wrk(:,1) = co%csig(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk(:,1), 1, 'csig1', '.ge.')
+       wrk(:,0) = co%chce(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk(:,0), 1, 'chce0', '.ge.')
+       wrk(:,1) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk(:,1), 1, 'chce1', '.ge.')
       endif
 
       facdriftm = maxval(dv%facdrift)
