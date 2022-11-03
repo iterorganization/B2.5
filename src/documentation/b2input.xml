@@ -2315,7 +2315,7 @@
 			</switch>
 			<switch>
 				<name>eirene_lhalpha</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If 0 then no calculation of halpha in wneutral, otherwise halpha is calculated
