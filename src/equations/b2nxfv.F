@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv (nCv, nFc, nVx, isb, switch, geo, mpg,        !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
+      subroutine b2nxfv (nCv, nFc, nVx, isb, switch, geo, mpg,          !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
      &  cvsbhz_cl, cvsbhz, flubv)
       use b2mod_types
       use b2mod_b2cmpa
@@ -60,7 +60,7 @@
         logCvHz = log(geo%cvHz)
         logVxHz = log(geo%vxHz)
         call diff_p(nCv,nFc,nVx,1,geo,mpg,logCvHz,logVxHz,dloghz(1,0))
-        flubv(:,0) = switch%b2nxfv_phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)                 !srv 06.12.18
+        flubv(:,0) = switch%b2nxfv_phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)   !srv 06.12.18
         flubv(:,1) = 0.0_R8
       elseif (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.0) then
         logCvHz = log(geo%cvHz)
@@ -81,4 +81,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxfv
 
-      end subroutine b2nxfv                                           !srv 19.01.05 01.07.05 11.09.09 }
+      end subroutine b2nxfv                                             !srv 19.01.05 01.07.05 11.09.09 }
