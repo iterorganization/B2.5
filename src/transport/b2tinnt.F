@@ -57,7 +57,7 @@
      *   vntrf(nFc,0:1), tif(nFc), naf(nFc,0:ns-1), dpo(nFc,0:1),
      *   fnan(nFc,0:1,0:ns-1),!WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
      *   wrk(nCv), wrk0(nFc,0:1,0:ns-1), wrk1(nFc,0:1), wrk2(nFc),
-     *   wrkVx(nVx), wrk3(nFc,0:1), wrkv(nVx)
+     *   wrkVx(nVx), wrk3(nFc,0:1), wrkv(nCv)
       real (kind=R8) ::
 #ifdef WG_TODO
      &   sigia(nCv), sec(nCv), csigia(nFc,0:1), sigi(nCv),                !srv 15.02.11

@@ -33,6 +33,7 @@
 *.declarations
 
 *   ..local variables
+      integer iVx
       real (kind=R8) ::
      *   ft, dloghz(nFc,0:1), logCvHz(nCv), logVxHz(nVx)                !srv 16.10.17
       external xertst, b2scopy
@@ -58,13 +59,25 @@
 *   ..compute flubvx
       if (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then          !srv 26.10.08
         logCvHz = log(geo%cvHz)
-        logVxHz = log(geo%vxHz)
+        do iVx = 1, nVx
+          if (geo%vxHz(iVx).gt.0.0_R8) then
+            logVxHz(iVx) = log(geo%vxHz(iVx))
+          else
+            logVxHz(iVx) = 0.0_R8
+          end if
+        end do
         call diff_p(nCv,nFc,nVx,1,geo,mpg,logCvHz,logVxHz,dloghz(1,0))
         flubv(:,0) = switch%b2nxfv_phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)   !srv 06.12.18
         flubv(:,1) = 0.0_R8
       elseif (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.0) then
         logCvHz = log(geo%cvHz)
-        logVxHz = log(geo%vxHz)
+        do iVx = 1, nVx
+          if (geo%vxHz(iVx).gt.0.0_R8) then
+            logVxHz(iVx) = log(geo%vxHz(iVx))
+          else
+            logVxHz(iVx) = 0.0_R8
+          end if
+        end do
         call diff(nCv,nFc,nVx,1,geo,mpg,logCvHz,logVxHz,dloghz)
         flubv(:,0) = switch%b2nxfv_phm0*switch%b2nxfv_phm1
      &                                      *cvsbhz(:,0)*dloghz(:,0)
