@@ -7,8 +7,8 @@
      & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
       implicit none
 #     include "DIMENSIONS.F"
-      integer npfrgrpd, nntrgrpd, mxnCf
-      parameter (npfrgrpd=6, nntrgrpd=16, mxnCf=1000)
+      integer npfrgrpd, nntrgrpd
+      parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable :: lhetrgts(:),lpfrgrp(:),lntrgrp(:)
@@ -18,31 +18,54 @@
       integer lhetrgts(nhetrgtx),lpfrgrp(DEF_NLIM),lntrgrp(DEF_NLIM)
       integer l_h_mol(DEF_NMOL,3)
 #endif
+! VARIABLES RELATED TO DEFINITION OF MIDPLANES AND SEPARATRIX
+! - [oi]mp: list of CVs beloning to the [OI]MP, defined through the segment rz[oi]mp
+!           it should be built as an ordered list from core to SOL. 
+! - nromp: pre-defined maximum size for these lists
+! - icsep[oi]mp: location of the separatrix position in the [oi]omp list
+! - n[oi]mp: number of CVs in the [oi]mp list
+! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
+!             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordiantes 
+!             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
       integer, parameter :: nromp=DEF_NYD*4
-! omp is a list of CVs beloning to the OMP, defined through the segment rzomp
-! it should be built as an ordered list from core to SOL. icsepomp stores the location
-! of the separatrix position in the omp list. nomp holds the number of CVs in the omp list
-! A similar argument holds for imp, icsepimp and nimp
       integer, save :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp),
      ,  icsepimp, nimp
+      real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
-! rzomp/imp hold the R-Z coordinates of a segment whose intersection with the
-! plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordiantes of first 
-! and second point of the segment, rzomp(2,1:2) holds Z-coordinates
-      real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
-     ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd),
-     ,  cfstart(nncf),cfend(nncf),cftype(nncf)
-      character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
-      character*80 user_filename
-      logical scale_He, print_isat
-      logical, save :: user_namelist_used = .true.
-      logical, save :: written = .false.
-      logical, save :: write_nml_user = .false.
-      logical, save :: user_initialised = .false.
+     ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
+! VARIABLES RELATED TO COST FUNCTION DEFINITION
+! - mxnCf: maximum number of cost functions allowed
+! - ncf: actual number of cost functions
+! - cftype: type of cost function, 0-9 possible options
+! - cfdef: defines how the cost function domain is defined 1-4 possible options
+! - cfstart/cfend: starting and ending element for the cost function
+! - cf_reg: Listing for each cost function the corresponding domain CVs or FCs
+! - cf_regP: Points for each cost function to the first index in the CF_REG list, and its number of items.
+! - cfReg and cfRegP: same as above, but allocatable and used to pass CF data into mapping structure
+! - cfweight: multiplier to the cost function
+! - cfread: according to cftype, decide if reading experimental data from file for cost function
+! - ncfdata: number of experimental data points read from file for each cost function
+! - cfdata(nncf,3,DEF_NLIM): stores the experimental data points for each cost function
+!   column 1 stores the curvilinear spatial coordinate (e.g. along OMP or target)
+!   column 2 stores the experimental data value
+!   column 3 stores the uncertianty
+! - nvmx: maximum number of variables that can be used for optimization
+! - nsigmx: maximum number of sigma values used in the Bayesian MAP cost function
+! - nsigma: actual number of sigmas read and used for Bayesian MAP
+! - prior_type: type of prior for each design parameter optimized in the MAP estimation
+! - prior_par: parameters related to the type of prior (e.g. standard deviation for gaussian prior)
+! - prior_range: range of validity of the prior, outside this interval the MAP cost function returns NaN
+! - scale_sigma: tells of the sigma in the MAP cost function is intended as relative (true) or absolute (false)
+! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP 
+! - read_sigma: tells to read or not the experimental data uncertainty
+! - sigma: stores the values of the standard deviation in  the MAP cost function
+! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
+      integer, parameter :: mxnCf=1000
+      integer cfstart(nncf),cfend(nncf),cftype(nncf)
       logical, save :: cfread(nncf) = .false.
       integer, save :: cfdef(nncf)
       integer, save :: ncfdata(nncf), ncf, cf_reg(mxnCf),
@@ -57,7 +80,13 @@
       logical, save :: read_sigma(nncf) = .false.
       real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
       double precision, parameter :: inf_opt = 1.0e30
-
+      character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
+      character*80 user_filename
+      logical scale_He, print_isat
+      logical, save :: user_namelist_used = .true.
+      logical, save :: written = .false.
+      logical, save :: write_nml_user = .false.
+      logical, save :: user_initialised = .false.
       private :: user
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -470,7 +499,6 @@ c***  Standard set-up:
         if (allocated(cfReg)) deallocate(cfReg)
       end if
 
-! now allocate vector that will be used to interpolate solps onto data grid in loglikelihood for Bayesian MAP
       if (any(cftype.eq.6)) then
         call xertst(nsigma.gt.0.and.nsigma.le.nsigmx,
      &   'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
@@ -492,6 +520,7 @@ c***  Standard set-up:
      &     'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
         end do
       endif
+! now allocate vector that will be used to interpolate solps onto data grid
       if (any(cfread)) then
         ndata = maxval(ncfdata(1:ncf),1)
         allocate(b2volOnCf(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
@@ -632,9 +661,9 @@ c*** Set default values according to current species list
      . 'faulty input j_ne_at')
 #endif
 *   ..Create list of IMP control volumes
+! Same logic as OMP list, find CVs intersected by rzimp segment
       nimp = 0
       imp = 0
-! Same logic as OMP list, find CVs intersected by rzimp segment
       call cv_intersections (m%nCv, geo, m, rzimp, imp, nimp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
