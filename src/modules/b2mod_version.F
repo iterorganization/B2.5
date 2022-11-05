@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.002.000'
+      character*10, save :: newversion ='03.002.000'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -14,7 +14,63 @@
      6 b2fparam_version = '00.000.000',
      7 boundary_version = '00.000.000',
      8 neutrals_version = '00.000.000',
-     9 grid_version = '00.000.000'
+     9 b2faveri_version = '00.000.000',
+     * grid_version = '00.000.000'
+
+      contains
+
+      subroutine cfverr(nget, readversion)
+      implicit none
+      integer, intent(in) :: nget
+      character*10 version_in, readversion
+      character*12 chf
+      character*7 label
+      logical streql
+      external streql, xerrab
+
+      inquire (nget,form=chf,err=10)
+      if (streql(chf,'formatted')) then
+        read(nget,'(a,a)',err=10,end=20) label,version_in
+      else
+        read(nget,err=10,end=20) label,version_in
+      endif
+      if(label.eq.'VERSION') then
+        readversion=version_in
+        write(*,'(a,a)') 'VERSION set to: ',readversion
+        return
+      endif
+   10 continue
+      rewind(nget)
+      write(*,'(a,a)') 'VERSION defaulted to : ',newversion
+      readversion=newversion
+      return
+   20 continue
+      call xerrab
+     . ('Found empty file when attempting to read version number!')
+      return
+      end subroutine cfverr
+
+      subroutine cfverw(nput, writeversion)
+      implicit none
+      integer, intent(in) :: nput
+      character*10, intent(in) :: writeversion
+      character*12 chf
+      character*32 get_B25_hash
+      logical streql
+      external streql, get_B25_hash
+
+      inquire (nput,form=chf,err=20)
+      if (streql(chf,'formatted')) then
+        write(nput,'(a,a,1x,a)') 'VERSION',
+     .                          writeversion,get_B25_hash()
+      else
+        write(nput) 'VERSION',writeversion,' ',get_B25_hash()
+      endif
+      write(*,'(4a)') 'VERSION: ',writeversion,
+     .                ' GIT hash: ',get_B25_hash()
+   20 continue
+      return
+      end subroutine cfverw
 
       end module b2mod_version
 cxpb Version 1.1 corresponds to adding a version number and the UADIA array

@@ -1,6 +1,7 @@
       module b2us_map
 
       use b2mod_types
+      use b2mod_version
       implicit none
       
       private

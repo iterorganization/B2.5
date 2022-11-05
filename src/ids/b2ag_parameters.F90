@@ -36,7 +36,7 @@ contains
     character*256 local_sonnet
     integer :: istyle
 
-    external xertst, xerrab, streql, b2agx0, cfverr, open_file
+    external xertst, xerrab, streql, b2agx0, open_file
     logical :: streql, open_file
 
     call b2agx0 (ninp(0), nx, ny, nx1, ny1)

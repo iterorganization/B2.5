@@ -31,8 +31,6 @@
 
 
       character lble*120, lbli*120, check*10
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
 
       contains
 
@@ -399,7 +397,6 @@ c local variables
 
       return
       end subroutine run_av_get_plasma
-
 
       subroutine run_av_get_sources (sna_out, smo_out, she_out, shi_out,
      &                          nCv, ns)

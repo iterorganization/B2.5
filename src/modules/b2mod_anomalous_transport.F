@@ -116,13 +116,13 @@
         calf_an(:,:,1,1) = cloc(:,:,1)
       endif
       if(b2fplasma_version.ge.'03.000.009') then
-        call cfrure (nread, size(dkt0), dkt0, 'dkt0')
+        call cfrure_opt (nread, size(dkt0), dkt0, 'dkt0')
         if(b2fplasma_version.ge.'03.002.000') then
           call cfrure (nread, size(dzt0), dzt0, 'dzt0')
         endif
-        call cfrure (nread, size(dna_ExB), dna_ExB, 'dna_ExB')
-        call cfrure (nread, size(hce_ExB), hce_ExB, 'hce_ExB')
-        call cfrure (nread, size(hci_ExB), hci_ExB, 'hci_ExB')
+        call cfrure_opt (nread, size(dna_ExB), dna_ExB, 'dna_ExB')
+        call cfrure_opt (nread, size(hce_ExB), hce_ExB, 'hce_ExB')
+        call cfrure_opt (nread, size(hci_ExB), hci_ExB, 'hci_ExB')
       endif
 
       return
@@ -149,11 +149,9 @@
       if(newversion.ge.'01.001.029') then
         call cfwure (nwrite, size(calf_an), calf_an, 'calf_an')
       endif
-      if(newversion.ge.'03.000.009') then
+      if(newversion.ge.'03.002.000') then
         call cfwure (nwrite, size(dkt0), dkt0, 'dkt0')
-        if(newversion.ge.'03.002.000') then
-          call cfwure (nwrite, size(dzt0), dzt0, 'dzt0')
-        endif
+        call cfwure (nwrite, size(dzt0), dzt0, 'dzt0')
         call cfwure (nwrite, size(dna_ExB), dna_ExB, 'dna_ExB')
         call cfwure (nwrite, size(hce_ExB), hce_ExB, 'hce_ExB')
         call cfwure (nwrite, size(hci_ExB), hci_ExB, 'hci_ExB')

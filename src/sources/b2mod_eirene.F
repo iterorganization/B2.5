@@ -587,7 +587,7 @@ c for generalized spatially hybrid
 c adapt NPTS (number of MC histories) if a stratum is treated partially fluid and partially kinetic
 c first save the original NPTS provided by the Eirene input files.
       if (ncall.eq.1) then!! npts not allocated yet on ncall = 0...
-        NPTS_input(:) = NPTS(:)
+        NPTS_input(1:NSTRAI) = NPTS(1:NSTRAI)
       endif
 #endif
 

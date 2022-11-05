@@ -555,7 +555,7 @@ c 2002-09-11: logic revised
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment,
      &  convert_position
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
-      external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
+      external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
       external E01BEF, E01BFF
       intrinsic nint, mod, index, sqrt
 *   ..initialisation
@@ -1207,8 +1207,7 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1,
-     &    bundle_frac, bottomiy1, naver, ntotdt,
+     &    bundle_frac, naver, ntotdt,
      &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
      &    e_na, e_te, e_ti, e_ua, e_po,
      &    sna_mean, sne_mean, smo_mean,
