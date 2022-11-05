@@ -165,7 +165,7 @@
       real (kind=R8) ::
      *   smax
       external xertst, smax,
-     *   cfrure, cfrure_dep, cfruin, cfruin_opt, cfruin_dep, cfverr
+     *   cfrure, cfrure_dep, cfruin, cfruin_opt, cfruin_dep
 
 *-----------------------------------------------------------------------
 *.computation

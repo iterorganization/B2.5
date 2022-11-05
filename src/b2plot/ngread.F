@@ -28,12 +28,13 @@ c
 #ifdef B25_EIRENE
       use b2mod_neutrals_namelist
       use eirmod_parmmod
-     .   , only : natm, nmol, nion, nstra, nlmpgs, nspz, ndx, ndy
+     .   , only : natm, nmol, nion, nstra, nlmpgs, nspz
+#ifdef WG_TODO
+     ,          , ndx, ndy
+#endif
       use eirmod_extrab25
       use eirmod_clogau
       use eirmod_cinit
-      use eirmod_braeir
-     .   , only : pux, puy, pvx, pvy
 #endif
       implicit none
 

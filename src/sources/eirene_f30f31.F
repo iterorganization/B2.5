@@ -48,25 +48,23 @@
       character chns*3                                                 !srv 16.09.02
       character(2) :: ccall
       integer, save :: icall = 0                                       !srv 21.06.08
-      integer ix,iy,is,ncall,in
+      integer is,ncall
       external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
      * na_min_val, na_max_val, ua_min_val, ua_max_val,
-     * ne_min_val, ne_max_val, ne_min, ne_max
+     * ne_min_val, ne_max_val
       data ncall/0/
       real (kind=R8) :: kintmp(nFc,0:ns-1)
       real (kind=R8) ::
      &  vaecrbc(nCv,0:1,0:ns-1), wadiac(nCv,0:1,0:ns-1),
      &  vadiac(nCv,0:1,0:ns-1)
-      real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:1,0:ns-1),
+      real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
       integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
      &           iv1, iv2, icp
-      integer, save :: check_target=1
-      real (kind=R8) :: intface_s
-      real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
-     1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic
+      real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww,
+     1 pvxs, pvys, puxs, puys
       real (kind=R8) :: wght(nFc,2)
       real (kind=R8), intent(in) ::
      &  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
@@ -200,46 +198,44 @@ c Initialization
      .                           naf(1:nFc,is)+1.E-30_R8
         end do
         if (switch%eirene_background.eq.0) then
-          fna_tmp(1:nFc,0,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
-     .                              nafsqalf(1:nFc,0,0:ns-1)
+          fna_tmp(1:nFc,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
+     .                            nafsqalf(1:nFc,0,0:ns-1)
         else
-          fna_tmp(1:nFc,0,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
-     .                              nafsqalf(1:nFc,0,0:ns-1)
+          fna_tmp(1:nFc,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
+     .                            nafsqalf(1:nFc,0,0:ns-1)
         endif
-        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellP,
-     .                fna_tmp(:,0,:),uuc)
+        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellP,fna_tmp,uuc)
       end if
 
       do is = 0,ns-1
         nafsqalf(1:nFc,1,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*
      .                         naf(1:nFc,is)+1.E-30_R8
         if (switch%eirene_background.eq.0) then
-          fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
-     .                          nafsqalf(1:nFc,1,is)
+          fna_tmp(1:nFc,is) = dv%fna(1:nFc,1,is)/
+     .                        nafsqalf(1:nFc,1,is)
           do ic = mpg%nCi+1, nCv   ! loop over all guard cells
             iFc = mpg%cvFc(mpg%cvFcP(ic,1))
             icp = mpg%fcCv(ifc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
-            fna_tmp(iFc,1,is) = dv%fna(iFc,1,is)/
-     .                         (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
-     .                          pl%na(ic,is)+1.E-30_R8)
+            fna_tmp(iFc,is) = dv%fna(iFc,1,is)/
+     .                       (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
+     .                        pl%na(ic,is)+1.E-30_R8)
           end do
         else
-          fna_tmp(1:nFc,1,is) = dv%fna_eir(1:nFc,1,is)/
-     .                            nafsqalf(1:nFc,1,is)
+          fna_tmp(1:nFc,is) = dv%fna_eir(1:nFc,1,is)/
+     .                        nafsqalf(1:nFc,1,is)
         endif
       end do
-      call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,
-     .              fna_tmp(:,1,:),vvc)
+      call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,fna_tmp,vvc)
 
 c for neutrals (needed on Eirene side in case of spatially hybrid neutrals),
 c always use fna instead of fna_eir, regardless of eirene_background switch
       if (switch%spatial_hybrid.ne.0) then
         do is=0,ns-1
           if (is_neutral(is)) then
-            fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
-     .                            nafsqalf(1:nFc,1,is)
+            fna_tmp(1:nFc,is) = dv%fna(1:nFc,1,is)/
+     .                          nafsqalf(1:nFc,1,is)
             call intcell(nFc,nCv,mpg,mpg%intcellR,
-     .              fna_tmp(1:nFc,1,is),vvc(1:nFc,is))
+     .              fna_tmp(1:nFc,is),vvc(1:nFc,is))
           endif
         enddo
       endif
@@ -604,7 +600,7 @@ c
      .      i,trgt(istra)%faces(i),trgt(istra)%fcori(i),
      .        trgt(istra)%tet(i),
      .        trgt(istra)%fe(i),trgt(istra)%fsh(i),
-     .        trgt(istra)%fe(i),trgt(istra)%flength(i)
+     .        trgt(istra)%flength(i)
         end do
 
         do ifl = 1, nflai
@@ -633,6 +629,7 @@ c
           end do
         end do ! ifl
       end do   ! istra
+      flush(31)
 #endif
       return
       end subroutine write_f31
