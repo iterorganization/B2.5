@@ -61,7 +61,7 @@
       integer idum(0:9)
       character lblcp*120
 *   ..procedures
-      external xertst, cfwuin, cfwuch, cfverw
+      external xertst, cfwuin, cfwuch
       external b2xxid, b2rflb, b2rfcp, b2wfcp, b2wucp, b2xvcp, b2xvps
 
 *-----------------------------------------------------------------------

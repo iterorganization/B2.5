@@ -415,7 +415,7 @@
       endif
       if(b2fplasma_version.ge.'01.001.026')
      >  call cfrure_opt (nread, size(ext_sne), ext_sne, 'ext_sne')
-      if(b2fplasma_version.ge.'03.000.009') then
+      if(b2fplasma_version.ge.'03.002.000') then
         call cfrure (nread, size(skt), skt, 'skt')
         call cfrure (nread, size(skt_prod), skt_prod, 'skt_prod')
         call cfrure (nread, size(skt_diss), skt_diss, 'skt_diss')
@@ -546,7 +546,7 @@
       endif
       if(newversion.ge.'01.001.026')
      >  call cfwure (nwrite, size(ext_sne), ext_sne, 'ext_sne')
-      if(newversion.ge.'03.000.009') then
+      if(newversion.ge.'03.002.000') then
         call cfwure (nwrite, size(skt), skt, 'skt')
         call cfwure (nwrite, size(skt_prod), skt_prod, 'skt_prod')
         call cfwure (nwrite, size(skt_diss), skt_diss, 'skt_diss')

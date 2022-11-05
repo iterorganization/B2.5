@@ -25,8 +25,6 @@
      .                             e_she(:),
      .                             e_shi(:)
       integer, save :: naver, ntotdt
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
       contains
 
       subroutine batch_av_all (itim,ntim_batch,nCv,ns)
@@ -204,7 +202,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, nCv, ti_mean, 'ti_mean')
       call cfwure (iun, nCv, po_mean, 'po_mean')
       call cfwure (iun, nCv*ns, ua_mean, 'ua_mean')
-      if (newversion.ge.'03.000.009')
+      if (newversion.ge.'03.002.000')
      &  call cfwure (iun, nCv, kt_mean, 'kt_mean')
       
       call cfwure (iun, nCv*ns, sna_mean, 'sna_mean')
@@ -217,7 +215,7 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwure (iun, nCv,    e_ti, 'e_ti')
       call cfwure (iun, nCv,    e_po, 'e_po')
       call cfwure (iun, nCv*ns, e_ua, 'e_ua')
-      if (newversion.ge.'03.000.009')
+      if (newversion.ge.'03.002.000')
      &  call cfwure (iun, nCv,    e_kt, 'e_kt')
       
       call cfwure (iun, nCv*ns, e_sna, 'e_sna')

@@ -96,7 +96,7 @@
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
       external b2xvgm, b2xvps_st, b2xvsg
-      external cfverw, cfwuin, cfwuch
+      external cfwuin, cfwuch
       external intfaceh1, intfacer1, intfacev1
 #endif
       external prgini, prgend, cfopen
