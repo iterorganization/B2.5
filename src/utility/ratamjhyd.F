@@ -589,5 +589,6 @@ c         --Convert from cm**3/s to m**3/s
       maxwell1d = sqrt(m/(2.0_R8*pi*T))*exp(-m*(v-u)**2/(2.0_R8*T))
       return
       end function maxwell1d
+
       end subroutine get_amjhyd_rates
 
