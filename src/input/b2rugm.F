@@ -524,7 +524,7 @@ cxpb-end
       call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl3', '.ge.')
       call b2xvsg (n2, wbbr(-1,-1,3), 1, 'wbbr3', '.ge.')
       call b2xvsg (n2, wbbv(-1,-1,3), 1, 'wbbv3', '.ge.')
-      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.gt.')
+      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.ge.')
 *   ..test geometry
       call xertst(maxval(region(-1:nx,-1:ny,1)).gt.0 .or.
      &            minval(region(-1:nx,-1:ny,2)).lt.0,

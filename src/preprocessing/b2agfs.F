@@ -509,7 +509,7 @@ cxpb  if just below the top corner, make the corner cell follow
       endif
 
 *   ..test sign of bb3
-      call b2xvsg((nx1+2)*(ny1+2), bb1(-1,-1,3), 1, 'bb3', '.gt.')
+      call b2xvsg1(nx1, ny1, bb1(-1,-1,3), 1, 'bb3', '.gt.')
 
       write(*,*) 'X regions (from rightix<>ix+1)'
       do iy=ny1,-1,-1
