@@ -831,6 +831,7 @@
       ninp_us = newunit()
       open (unit=ninp_us,file='b2fgmtry_us',iostat=io)
 #endif
+      if (io.eq.0) then
       call cfopen (ninp_us,'b2fgmtry_us','old','un*formatted')
       call cfverr (ninp_us, b2fgmtry_version)
       call cfruin (ninp_us,7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
@@ -888,6 +889,9 @@
       call dealloc_geometry(geo)
       call dealloc_mapping(mpg)
       call destroyB2State(state)
+      else
+        write(*,*) 'b2fgmtry_us not found. Not creating b2fstati_us.'
+      endif
 
 * ..return
       call subend ()
