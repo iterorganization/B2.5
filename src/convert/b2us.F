@@ -303,11 +303,15 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         bcp_filename(1:22) = 'b2.boundary.parameters'
         call get_version(bcp_filename,boundary_version)
         if (boundary_version.lt.'03.002.000') then
+          write (*,*) 'Found b2.boundary.parameters in structured '//
+     &                'format. '
           call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
           call conv_bcparms (nx, ny, ns, mpg, gm)
           call write_bcparms(ns,mpg)
         else
+          write (*,*) 'Found b2.boundary.parameters in unstructured '//
+     &                'format. '
           call alloc_b2mod_boundary(mpg%nCi/2,mpg%nCi/2,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(ns, mpg, .false.)
         end if

@@ -142,7 +142,7 @@
       real (kind=R8) ::
      *   trim1, dist, sinang, cosang
       external xertst, ipgetr, ipgeti
-      external b2xvsg
+      external b2xvsg1
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       dist(ix,iy,i,j) = norm (
      &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
@@ -823,9 +823,9 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in
 *     this code.)
-      call b2xvsg((nx+2)*(ny+2), qz(-1,-1,1), 1, 'qz1', '.gt.')
-      call b2xvsg((nx+2)*(ny+2), qc(-1,-1,0), 1, 'qc', '.gt.')
-      call b2xvsg((nx+2)*(ny+2), qc(-1,-1,1), 1, 'qc', '.gt.')
+      call b2xvsg1(nx, ny, qz(-1,-1,1), 1, 'qz1', '.gt.')
+      call b2xvsg1(nx, ny, qc(-1,-1,0), 1, 'qc', '.gt.')
+      call b2xvsg1(nx, ny, qc(-1,-1,1), 1, 'qc', '.gt.')
 *   ..compute vol, gs
       vol = INVALID_DOUBLE
       gs(:,:,0) = 0.0_R8
@@ -924,10 +924,10 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
       enddo
 
 *   ..test sign of vol, gs
-      call b2xvsg((nx+2)*(ny+2), vol(-1,-1),  1, 'vol', '.gt.')
-!      call b2xvsg((nx+2)*(ny+2), ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
-!      call b2xvsg((nx+2)*(ny+2), gs(-1,-1,1), 1, 'gsy', '.gt.')
-      call b2xvsg((nx+2)*(ny+2), gs(-1,-1,2), 1, 'gsz', '.gt.')
+      call b2xvsg1(nx, ny, vol(-1,-1),  1, 'vol', '.gt.')
+!      call b2xvsg1(nx, ny, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
+!      call b2xvsg1(nx, ny, gs(-1,-1,1), 1, 'gsy', '.gt.')
+      call b2xvsg1(nx, ny, gs(-1,-1,2), 1, 'gsz', '.gt.')
 
 * ..return
       call subend ()
