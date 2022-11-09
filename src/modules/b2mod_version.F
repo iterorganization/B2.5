@@ -15,7 +15,7 @@
      6 b2fparam_version = default_version,
      7 boundary_version = default_version,
      8 neutrals_version = default_version,
-     9 b2faveri_version = default_version
+     9 b2faveri_version = default_version,
      * grid_version = default_version
 
       contains
