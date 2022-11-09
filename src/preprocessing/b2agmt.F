@@ -120,7 +120,8 @@
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, fvec(0:1), dg, fcPsi, ec1fc(0:1), efcc2(0:1),
      *   econf(0:1), fn(0:1), tol_angles, tol_aligned, cvFpsi(1:m%nCv),
-     *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc), bcBb(0:1)
+     *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc), bcBb(0:1), 
+     *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1)
       logical classical
       integer, save :: style = 0
 *   ..procedures
@@ -546,9 +547,17 @@
           if (t0.ge.0.0_R8) then ! econf in same direction as fcEb
               econf(0) = g%fcEb(iFc,0)
               econf(1) = g%fcEb(iFc,1)
+              ec1fc(0) = g%fcEb(iFc,0)
+              ec1fc(1) = g%fcEb(iFc,1)
+              efcc2(0) = g%fcEb(iFc,0)
+              efcc2(1) = g%fcEb(iFc,1)              
           else 
               econf(0) = -g%fcEb(iFc,0)
               econf(1) = -g%fcEb(iFc,1)
+              ec1fc(0) = -g%fcEb(iFc,0)
+              ec1fc(1) = -g%fcEb(iFc,1)
+              efcc2(0) = -g%fcEb(iFc,0)
+              efcc2(1) = -g%fcEb(iFc,1)              
           endif
 
        !
@@ -614,8 +623,30 @@
        
 *    .. compute angles
        !gamma - angle between cell connector (on face) and the face normal
-       g%fcQgam(iFc,0) = cosin(econf(0), econf(1),fn(0), fn(1) )
-       g%fcQgam(iFc,1) = sinin(econf(0), econf(1),fn(0), fn(1) )
+       ! NEW IMPLEMENTATION 28/10: to mitigate numerical error on gamma due to 
+       ! cell connector approximation (inverse distance averaging)
+       ! gamma is also computed with distance averaging between 
+       ! gamma1 and gamma2 which are gamma's calculated between on the 
+       ! unapproximated connector between cell center and face center.
+       ! With this method, numerical error on the 5-point contribution on 
+       ! gradient calculation is significantly reduced for general grids
+
+       fcQgam1(iFc,0) = cosin(ec1fc(0),ec1fc(1),fn(0),fn(1))
+       fcQgam1(iFc,1) = sinin(ec1fc(0),ec1fc(1),fn(0),fn(1))
+
+       fcQgam2(iFc,0) = cosin(efcc2(0),efcc2(1),fn(0),fn(1))
+       fcQgam2(iFc,1) = sinin(efcc2(0),efcc2(1),fn(0),fn(1))
+
+       g%fcQgam(iFc,0) = ( fcQgam1(iFc,0)*g%fcHc(iFc,1) + 
+     &    fcQgam2(iFc,0)*g%fcHc(iFc,2)) /
+     &    (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+       g%fcQgam(iFc,1) = ( fcQgam1(iFc,1)*g%fcHc(iFc,1) + 
+     &    fcQgam2(iFc,1)*g%fcHc(iFc,2)) /
+     &    (g%fcHc(iFc,1) + g%fcHc(iFc,2))      
+
+       !OLD METHOD to compute gamma
+       !g%fcQgam(iFc,0) = cosin(econf(0), econf(1),fn(0), fn(1) )
+       !g%fcQgam(iFc,1) = sinin(econf(0), econf(1),fn(0), fn(1) )
        
 
        g%fcQalf(iFc,0) =
