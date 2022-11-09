@@ -373,10 +373,12 @@
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
+      integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv, i1, i2 
       real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width,
-     .  sbf
-      intrinsic maxval
+     .  sbf, cvPsi(mpg%nCv), count_up, count_down, dpsi(mpg%nCv),
+     .  dpsi_max_down, dpsi_max_up
+      integer, allocatable :: verts(:)
+      intrinsic maxval, maxloc, minloc, abs, sqrt
       data width /1.0_R8/
       save width
 
@@ -452,7 +454,266 @@
       elseif (switch%vxVol_style.eq.3) then
        ! equal weight for each cell around the vertex
        gm%vxVol = 1.0_R8
-      else
+      elseif (switch%vxVol_style.eq.4) then
+       ! try-out: 
+       ! assign 1/4, except guard cells
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         if (iCv.le.mpg%nCi) then
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+         else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+         endif
+        enddo
+        if (mpg%vxCvP(iVx,2).eq.3) then
+          do inCv = 1, mpg%vxCvP(iVx,2)
+           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+           if (iCv.le.mpg%nCi) then
+            if (mpg%cvVxP(iCv,2) .eq. 5) then
+             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.125_R8
+            else
+             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8            
+            endif
+           else
+            ! Make sure guard cells dominate in the interpolation
+            ! to vertices => use volume
+            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+           endif
+        enddo        
+        endif
+       enddo
+      elseif (switch%vxVol_style.eq.5) then     
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &         1.0_R8/gm%cvVol(iCv)
+        enddo
+       enddo   
+      elseif (switch%vxVol_style.eq.6) then 
+       ! try-out: 
+       ! assign 1/4, except guard cells
+       ! 1/8 for pent at common vertex
+       ! 1/2 for pent at flux surface verts
+       do iVx = 1, nVx
+
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         if (iCv.le.mpg%nCi) then
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+         else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+         endif
+        enddo
+
+        if (mpg%vxCvP(iVx,2).eq.3) then
+          do inCv = 1, mpg%vxCvP(iVx,2)
+           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+           if (iCv.le.mpg%nCi) then
+            if (mpg%cvVxP(iCv,2) .eq. 5) then
+             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.125_R8
+            else
+             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8            
+            endif
+           else
+            ! Make sure guard cells dominate in the interpolation
+            ! to vertices => use volume
+            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+           endif
+          enddo
+
+        elseif (mpg%vxCvP(iVx,2).eq.4) then
+         do inCv = 1, mpg%vxCvP(iVx,2)   
+           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+           if (iCv.le.mpg%nCi) then
+             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &            gm%cvVol(iCv)
+           else
+            ! Make sure guard cells dominate in the interpolation
+            ! to vertices => use volume
+            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &           gm%cvVol(iCv) / 1e2_R8       
+           endif
+         enddo
+                       
+        endif
+
+       enddo
+
+      elseif (switch%vxVol_style .eq. 7) then 
+         !calculate cvPsi
+         do iCv = 1, nCv
+            allocate(verts(1:mpg%cvVxP(iCv,2)))
+            verts = mpg%cvVx(mpg%cvVxP(iCv,1):mpg%cvVxP(iCv,1)+
+     &         mpg%cvVxP(iCv,2))
+            cvPsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
+            i1 = minloc(gm%vxFpsi(verts),1) -1
+            i2 = maxloc(gm%vxFpsi(verts),1) -1
+            dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) - 
+     1                gm%vxFpsi(verts(i1)) )
+            deallocate(verts)
+         enddo
+         !count cells per vertex with higher and lower Psi
+         do iVx = 1, nVx
+            count_down    = 0.0_R8
+            count_up      = 0.0_R8
+            do inCv = 1, mpg%vxCvP(iVx,2)
+               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+               if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+                  count_up = count_up + 1.0e0_R8
+               elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+                  count_down = count_down + 1.0e0_R8
+               endif 
+            enddo
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+              if (iCv.le.mpg%nCi) then
+               if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
+     &               count_up / mpg%vxCvP(iVx,2)               
+               elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
+     &                count_down / mpg%vxCvP(iVx,2)                  
+               endif
+              else 
+                 ! Make guards cells dominate and account for 
+                 ! length difference via distance to vertex
+                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )            
+              endif 
+            enddo
+            !Special case for pentagon splitting
+            if (mpg%vxCvP(iVx,2).eq.3) then
+              do inCv = 1, mpg%vxCvP(iVx,2)
+               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+               if (iCv .le. mpg%nCi) then
+                  if (mpg%cvVxP(iCv,2).eq.5) then
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.125_R8
+                  else
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25_R8  
+                  endif 
+               else
+                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )                 
+               endif
+
+              enddo
+
+            endif
+
+         enddo
+      elseif (switch%vxVol_style .eq. 8) then
+      !Same as style 2 but with weighting for boundary vertices
+       ! assign 1/4, except guard cells
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         if (iCv.le.mpg%nCi) then
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+         else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  ) 
+         endif
+        enddo
+       enddo 
+
+      elseif (switch%vxVol_style .eq. 9) then 
+         !calculate cvPsi
+         do iCv = 1, nCv
+            allocate(verts(1:mpg%cvVxP(iCv,2)))
+            verts = mpg%cvVx(mpg%cvVxP(iCv,1):mpg%cvVxP(iCv,1)+
+     &         mpg%cvVxP(iCv,2))
+            cvPsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
+            i1 = minloc(gm%vxFpsi(verts),1) -1
+            i2 = maxloc(gm%vxFpsi(verts),1) -1
+            dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) - 
+     1                gm%vxFpsi(verts(i1)) )
+            deallocate(verts)
+         enddo
+         !count cells per vertex with higher and lower Psi
+         do iVx = 1, nVx
+            count_down    = 0.0_R8
+            count_up      = 0.0_R8
+            dpsi_max_down = 0.0_R8
+            dpsi_max_up   = 0.0_R8
+            do inCv = 1, mpg%vxCvP(iVx,2)
+               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+               if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+                  count_up = count_up + 1.0e0_R8
+                  if ( dpsi(iCv) .gt. dpsi_max_up) then
+                     dpsi_max_up = dpsi(iCv)
+                  endif
+               elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+                  count_down = count_down + 1.0e0_R8
+                  if ( dpsi(iCv) .gt. dpsi_max_down) then
+                     dpsi_max_down = dpsi(iCv)
+                  endif
+               endif 
+            enddo
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+              if (iCv.le.mpg%nCi) then
+               if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+                 if (mpg%cvVxP(iCv,2) .eq. 3) then
+                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
+     &               count_up / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)* 
+     &                sqrt(dpsi_max_up/dpsi(iCv)))               
+                 else
+                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
+     &               count_up / mpg%vxCvP(iVx,2)
+                 endif 
+               elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+                  if (mpg%cvVxP(iCv,2) .eq. 3) then
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
+     &                count_down / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
+     &                   sqrt(dpsi_max_up/dpsi(iCv)))                  
+                  else
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
+     &                count_down / mpg%vxCvP(iVx,2)
+                  endif
+               endif
+              else 
+                 ! Make guards cells dominate and account for 
+                 ! length difference via distance to vertex
+                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )            
+              endif 
+            enddo
+            !Special case for pentagon splitting
+            if (mpg%vxCvP(iVx,2).eq.3) then
+              do inCv = 1, mpg%vxCvP(iVx,2)
+               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+               if (iCv .le. mpg%nCi) then
+                  if (mpg%cvVxP(iCv,2).eq.5) then
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.125_R8
+                  else
+                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25_R8  
+                  endif 
+               else
+                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )                 
+               endif
+
+              enddo
+
+            endif
+
+         enddo
+
+
+      else   
         call xerrab ('wrong value of b2mndr_vxVol_style')
       endif
 

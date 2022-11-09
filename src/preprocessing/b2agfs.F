@@ -90,7 +90,8 @@
 
 *   ..local variables
       integer ix, iy, i, ic, inseltop, inselbot, iCv, iVx
-      integer Bt_adjust, Bt_reversal, periodic_bc, artificial_slab
+      integer Bt_adjust, Bt_reversal, periodic_bc, artificial_slab,
+     .  intcellP_new 
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
       real (kind=R8) ::
@@ -104,7 +105,7 @@
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
      .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
      .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/, 
-     .  geom_match_dist/1.0e-6_R8/
+     .  geom_match_dist/1.0e-6_R8/, intcellP_new/0/
 
 *   ..procedures
       external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
@@ -149,13 +150,16 @@
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
       call xertst (geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
+      call ipgeti ('b2agfs_intcellP_new' , intcellP_new)
+      call xertst (intcellP_new.eq.0 .or. intcellP_new.eq.1,
+     &  'faulty argument intcellP_new')      
       !Look for guard cell rescale
 
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
       call b2gxdr_dummy(local_sonnet,istyle,
-     &     isymm,g,m,cvBp,cvBt,artificial_slab)
+     &     isymm,g,m,cvBp,cvBt,artificial_slab,intcellP_new)
 
 
       ! Set up magnetic field and shift coordinates
@@ -519,7 +523,7 @@ cxpb  if just below the top corner, make the corner cell follow
       end subroutine b2agfs
 
       subroutine b2gxdr_dummy(local_sonnet,istyle,
-     &  isymm,g,m,cvBp,cvBt,artificial_slab)
+     &  isymm,g,m,cvBp,cvBt,artificial_slab,intcellP_new)
       use b2mod_types
       use b2mod_version
       use b2ag_parameters
@@ -541,7 +545,7 @@ cxpb  if just below the top corner, make the corner cell follow
       !nCv, nFc, nVx: dimension of the grid as used by B2
       integer nnCv, nnFc, nnVx, nnFs, nnFt,
      1 iCv, iFc, iVx, i, j, lun, line_length, iostat, idum(0:5),
-     2 artificial_slab
+     2 artificial_slab, intcellP_new
 #ifdef USE_PXFGETENV
       integer lenval, ierror     
 #else
@@ -624,13 +628,12 @@ cxpb  if just below the top corner, make the corner cell follow
 
 !     .. Order the vertices and faces as rightturning
 !     .. and consequently check convexity
-         !Only if it is no artificial slab
          call order_vertices(g,m)
          call check_convexity(g,m)
 
 
 !     .. Construct intcellP and intcellR
-           call calc_intcell(g,m)     
+           call calc_intcell(g,m,intcellP_new)     
 
           
 !     Compute magnetic field with the same recipe as carre...
@@ -1106,7 +1109,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
 *-----------------------------------------------------------------------
    
-      subroutine calc_intcell(g,m)
+      subroutine calc_intcell(g,m,intcellP_new)
 
       use b2mod_types
       use b2us_cellhelper
@@ -1119,23 +1122,76 @@ cxpb  if just below the top corner, make the corner cell follow
 
       !internal 
       integer :: iCv, faces4(0:3), i1, i2, i, verts3(0:2), f3(0:2),
-     &    v3(0:2) , f5(0:4) , v5(0:4), counter, faces3(0:2)
-      real (kind=R8) :: dpsi4(0:3), dpsi_max, dpsi3(0:2)   
+     &    v3(0:2) , f5(0:4) , v5(0:4), counter, faces3(0:2), v4(0:3),
+     &    v1, v2, intcellP_new
+      real (kind=R8) :: dpsi4(0:3), dpsi_max, dpsi3(0:2), intP, 
+     &   max_length, fcS5(0:4)
+      intrinsic sqrt
 
       do iCv = 1, m%nCv
 
          if (m%cvFcP(iCv,2) == 4) then !quad
 
-             faces4 = m%cvFc(m%cvFcP(iCv,1):
-     &            m%cvFcP(iCv,1)+m%cvFcP(iCv,2)-1)
+            faces4 = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+3)
 
-         !find the most aligned face
+            if (intcellP_new.eq.1) then
+              !NEW METHOD to account for trapezoids
+              v4 = m%cvVx(m%cvVxP(iCv,1): m%cvVxP(iCv,1)+3)
+
+              i1 = minloc(g%vxFpsi(v4),1) -1
+              i2 = maxloc(g%vxFpsi(v4),1) -1
+              dpsi_max = g%vxFpsi(v4(i2)) - g%vxFpsi(v4(i1)) 
+
+              do i = 0,3
+               intP = 
+     &         abs( g%vxFpsi(m%fcVx(faces4(i),1)) - 
+     &             g%vxFpsi(m%fcVx(faces4(i),2)) ) /  dpsi_max 
+               if (intP .gt. 0.95_R8) then
+                m%intcellP(m%cvFcP(iCv,1) + i) = 1.0_R8
+                m%intcellR(m%cvFcP(iCv,1) + i) = 0.0_R8
+               elseif (intP .lt. 0.05_R8) then
+                m%intcellP(m%cvFcP(iCv,1) + i) = 0.0_R8
+                m%intcellR(m%cvFcP(iCv,1) + i) = 1.0_R8
+               else
+                m%intcellP(m%cvFcP(iCv,1)+i) = intP
+                !no possible to assign intR value based on intP
+               endif 
+         
+              enddo
+
+              ! To find correct intR
+              !find the most aligned face
+               dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) - 
+     &         g%vxFpsi(m%fcVx(faces4,2)))
+               i1 = minloc(dpsi4(0:3),1)-1
+               !find the opposite face index of the most aligned faces
+               !as faces are right turned ordered
+               i2 = i1 + 2
+               if (i2 .gt. 3) then
+                 i2 = i2 - 4
+               endif 
+  
+
+               do i = 0,3
+                 if ((i .eq. i1) .or. (i .eq. i2)) then 
+                     ! aligned face or face with span in radial direction
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
+                 else 
+                     ! not aligned faces => poloidal faces
+                     m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
+                 endif
+               enddo
+           
+            elseif (intcellP_new.eq.0) then
+
+             !OLD-METHOD - not correct for trapezoids
+             !find the most aligned face
              dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) - 
      &        g%vxFpsi(m%fcVx(faces4,2)))
              i1 = minloc(dpsi4(0:3),1)-1
-         !find the opposite face index of the most aligned faces
-         ! as faces are right turned ordered
-         ! find the second most aligned face
+             !find the opposite face index of the most aligned faces
+             ! as faces are right turned ordered
+             ! find the second most aligned face
              counter = -1
              do i = 0,3
                if (i.ne.i1) then
@@ -1164,7 +1220,8 @@ cxpb  if just below the top corner, make the corner cell follow
                      m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
                  endif
              enddo
-             
+
+            endif 
 
          elseif (m%cvFcP(iCv,2) == 3) then !tria
              v3 = m%cvVx(m%cvVxP(iCv,1):
@@ -1194,6 +1251,20 @@ cxpb  if just below the top corner, make the corner cell follow
              i1 = minloc(g%vxFpsi(v5),1) -1
              i2 = maxloc(g%vxFpsi(v5),1) -1
              dpsi_max = g%vxFpsi(v5(i2)) - g%vxFpsi(v5(i1)) 
+             max_length = 0.0_R8
+             
+
+             do i = 0,4
+                v1 = m%fcVx(f5(i),1)
+                v2 = m%fcVx(f5(i),2) 
+                fcS5(i) =  sqrt( (g%vxX(v1) - g%vxX(v2) )**2  + 
+     &                    (g%vxY(v1) - g%vxY(v2) )**2 )  
+                if ( ( isAligned(f5(i),m,g,1.0e-4_R8)).and.
+     &            (fcS5(i).gt.max_length) ) then
+                   max_length = fcS5(i)
+                endif
+                 
+             enddo
              do i = 0,4
                m%intcellP(m%cvFcP(iCv,1) + i) = 
      &        abs( g%vxFpsi(m%fcVx(f5(i),1)) - 
@@ -1201,7 +1272,8 @@ cxpb  if just below the top corner, make the corner cell follow
               if (m%intcellP(m%cvFcP(iCv,1) + i) .gt. 1.0e-1) then
                  m%intcellR(m%cvFcP(iCv,1) + i) = 0.0_R8
               else 
-                 m%intcellR(m%cvFcP(iCv,1) + i) = 1.0_R8
+                 m%intcellR(m%cvFcP(iCv,1) + i) = 
+     &            1.0_R8* fcS5(i)/max_length
               endif
       
              enddo          
@@ -1220,7 +1292,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
       enddo
       
-
+   
 
       end subroutine calc_intcell
 
