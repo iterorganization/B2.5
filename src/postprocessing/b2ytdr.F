@@ -10373,8 +10373,14 @@ C  HERE: EIRENE SURFACE TALLIES
                   WRITE(IUNOT,6666) idum(2:3)
                 END IF
               ELSE IF (IGEOUSR == 1) THEN   ! default format
-                READ (IUNIN,6666) idum(0:1)  ! limpos(i), onetwo(i)
+                READ (IUNIN,'(A72)') ZEILE
+                call fix_integer_input(zeile,3)
+                READ (ZEILE,6666,err=151) idum(0:2)  ! limpos(i), onetwo(i), icoor(i)
+                WRITE(IUNOT,6666) idum(0:2)  ! limpos(i), onetwo(i), icoor(i)
+                goto 152
+ 151            READ (ZEILE,6666) idum(0:1)  ! limpos(i), onetwo(i)
                 WRITE(IUNOT,6666) idum(0:1)  ! limpos(i), onetwo(i)
+ 152            CONTINUE
                 IF (idum(1).lt.0) THEN
                   READ (IUNIN,6666) idum(2:3)   ! xpolpos(i), ypolpos(i)
                   WRITE(IUNOT,6666) idum(2:3)
