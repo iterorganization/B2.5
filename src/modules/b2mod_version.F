@@ -1,19 +1,20 @@
       module b2mod_version
       character*10, save :: newversion ='03.001.000'
+      character*10, parameter :: default_version = '00.000.000'
 
       character*10, save ::
-     1 b2fstati_version = '00.000.000',
-     2 b2fstate_version = '00.000.000',
-     2 b2frates_version = '00.000.000',
-     3 b2fmovie_version = '00.000.000',
-     3 b2ftrack_version = '00.000.000',
-     4 plasmastate_version = '00.000.000',
-     4 b2fplasma_version = '00.000.000',
-     5 b2fgmtry_version = '00.000.000',
-     6 b2fparam_version = '00.000.000',
-     7 boundary_version = '00.000.000',
-     8 neutrals_version = '00.000.000',
-     9 b2faveri_version = '00.000.000'
+     1 b2fstati_version = default_version,
+     2 b2fstate_version = default_version,
+     2 b2frates_version = default_version,
+     3 b2fmovie_version = default_version,
+     3 b2ftrack_version = default_version,
+     4 plasmastate_version = default_version,
+     4 b2fplasma_version = default_version,
+     5 b2fgmtry_version = default_version,
+     6 b2fparam_version = default_version,
+     7 boundary_version = default_version,
+     8 neutrals_version = default_version,
+     9 b2faveri_version = default_version
 
       contains
 
@@ -39,8 +40,8 @@
       endif
    10 continue
       rewind(nget)
-      write(*,'(a,a)') 'VERSION defaulted to : ',newversion
-      readversion=newversion
+      write(*,'(a,a)') 'VERSION defaulted to : ',default_version
+      readversion=default_version
       return
    20 continue
       call xerrab
