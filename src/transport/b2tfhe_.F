@@ -74,7 +74,7 @@ csw 10oct2012
       real (kind=R8) ::
      *    wrk(nFc,0:1), wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
-     *    fhe0_mdf(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1)
+     *    fhe0_mdf(nFc,0:1), fhe_32(nFc,0:1), fhe_52(nFc,0:1)
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -191,7 +191,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
      &  geo,mpg,pl%te,floe0_mdf,
-     &  co%chce,fhe0_mdf,dumm0,dumm1)
+     &  co%chce,fhe0_mdf,fhe_32,fhe_52)
 
 *   ..compute fluxes
       alfe0 = co%calf(:,0)
@@ -706,11 +706,27 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_r')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
+       call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
+       call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
+       call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
+       call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
        call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                        !srv 13.01.17
        call my_out_us(70,nFc,1,ehy,'b2tfhe__eh_r')                        !srv 13.01.17
-      endif                                                              !srv 18.06.08 }
+      endif   
+      
+      if(switch%iout_b2wdat.eq.4) then              
+       call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
+       call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
+       call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
+       call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
+       call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
+       call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
+       call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
+      endif
+      
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                          .or. iout_b2wdat.eq.4) then              !srv 11.09.09 {
