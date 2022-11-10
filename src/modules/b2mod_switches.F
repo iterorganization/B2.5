@@ -1966,11 +1966,6 @@ c check the inter-consistency of different switches (e.g. certain combinations o
       implicit none
       type(switches), intent(in out) :: s
 
-      if (s % tn_style.ne.0.and.s % mdf_fhi.eq.1) then
-        call xerrab('mdf_fhi not yet available for'//
-     &               'non-default energy equation')
-      endif
-
       if (s%pot_eq.ne.1.and.s%no_current.ne.1) then
         call xerrab ('If b2news_poteq.ne.1,'//
      &                  'then b2tfhe_no_current must be 1!')
