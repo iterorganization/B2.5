@@ -1526,7 +1526,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
 #else
-      call alloc_b2mod_braeir(nx,ny,ns-natm)
+      call alloc_b2mod_braeir(nx,ny,ns-nspecies)
       call alloc_b2mod_eirbra(nx,ny,ns,natm,nmol,nion,npls,nstra)
 #endif
 
