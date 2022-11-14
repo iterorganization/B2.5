@@ -1976,6 +1976,12 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
+! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
+! and save only the final converged primal state instead of all the intermediate states. The AD pragma
+! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
+! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are 
+! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
       state0 = state
 ! $AD FP-LOOP "state"
       do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
