@@ -1010,7 +1010,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Timestep index after which the feedback in b2stbc is activated.
+					Timestep index after which the feedback in b2stbc is activated. NOT YET CONVERTED IN WG CODE
 				</description>
 			</switch>
 			<switch>
@@ -1303,19 +1303,25 @@
 			<switchgroup>
 				<name>b2stbc_*</name>
 				<description>
-					The 20 switches above are all feedback switches and require that b2stbc_feedback.ne.0 (See Run section for details) or that lfeedback=.true. in b2.boundary.parameters. The feedback is done as a boundary condition and is under-relaxed using the b2stbc_...._alpha switches (See Numerics section for details).
-					fheycore is the radial electron heat flow entering the core boundary.
-					fhiycore is the radial ion heat flow entering the core boundary.
-					fchycore is the radial current entering the core boundary. fnaycore is the radial flux of species "isfeedback" entering the core boundary.
+					The 20 switches above are all feedback switches and require that b2stbc_feedback.ne.0 (See Run section for details) or that lfeedback=.true. in b2.boundary.parameters. Feedback schemes are now all applied in the same way in a dedicated module b2us_feedback (see FEEDBACK_CONTROL namelist). Switches in b2mn.dat are still available and will override whatever is specified in b2.feedback_control.parameters, but it is recommended to not use switches anymore. This will allow more flexibility in applying such schemes.
+					The feedback is done as a boundary condition and is under-relaxed using the b2stbc_...._alpha switches (See Numerics section for details).
+					fheycore is the radial electron heat flow entering the core boundary.  Will apply fb_type=11, fb_rescale=1, fb_actuator=4 on region defined by coreregno.
+					fhiycore is the radial ion heat flow entering the core boundary. Will apply fb_type=12, fb_rescale=1, fb_actuator=5 on region defined by coreregno.
+					fchycore is the radial current entering the core boundary. Will apply fb_type=13, fb_rescale=1, fb_actuator=4 on region defined by coreregno.
+					fnaycore is the radial flux of species "isfeedback" entering the core boundary. Will apply fb_type=10, fb_rescale=1, fb_actuator=3 on region defined by coreregno.
 					If fhiycore_kinetic_energy.eq.1, the parallel kinetic energy flux is counted as part of the ion energy flux.
-					For double-null cases, the f..ycore variables contain the total flow through both core boundaries taken together. The core boundaries are identified by the coreregno and coreregn2 switches (see Geometry section).
-					The other seven switches are density feedback switches: nesepm is the outer midplane separatrix electron density. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is controlled through particle input of main plasma species isfeedback through the core boundary (See Geometry section for the core boundary indices coreregno and coreregn2).
-					nesepm_sol is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the SOL region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the SOL North boundary (See Geometry section for the SOL North boundary index solregno). If nesepm_overshoot.gt.1.0, the gas puff is turned off when the midplane separatrix density reaches nesepm*nesepm_overshoot. Minimum and maximum values of the feedback gas puff can be set using b2stbc_nesepm_minpuff and b2stbc_nesepm_maxpuff
-					nepedm_sol is similar to nesepm_sol but the feedback is exerted on the electron density at the top of the pedestal, along the outer midplane, at radial position b2stbc_iyped. ndes_sol is the total particle content from the isonuclear sequence of species 'isfeedback' over the entire simulation domain.
-					It is governed, like nesepm_sol, by nesepm_overshoot and nesepm_alpha and corresponds to a SOL boundary feedback. volrec_sol is the total particle source due to volume recombination coming from Eirene. Its feedback is governed by volrec_overshoot and volrec_alpha and volrec_beta parameters (See Numerics section for the latter two). nesepm_pfr is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the PFR region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the PFR South boundary indices pfrregno1 and pfrregno2).
-					ndes is the total particle (neutrals + ions) content of the species whose neutral species has index isfeedback. This is controlled through particle input of neutrals species isfeedback through the
-					private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2). private_flux_puff is the particle flow of species isfeedback through the private flux region boundary. This is controlled through particle input of neutrals species isfeedback through the private flux boundaris (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2).
+					For double-null cases, the f..ycore variables contain the total flow through both core boundaries taken together (to be checked for WG code!).
+					The core boundaries are identified by the coreregno and coreregn2 switches (see Geometry section). These switches need to be manually adjusted for WG cases as now they indicate the boundary where the feedback is applied. For switches like b2stbc_xxxycore or private_gas\_puff the user has to specify in b2.feedback_control.parameters} where the feedback is calculated (see b2us.regions.parameters produced at conversion), while coreregno still indicates where it is applied. pfrregno and solregno lose meaning in kinetic cases if the actuator is the gas puff. Coreregn2 and pfrregno2 are not yet converted/used.
+					The other seven switches are density feedback switches: nesepm is the outer midplane separatrix electron density. (See rzomp switch in b2.user.parameters for setting of midplane position). This is controlled through particle input of main plasma species isfeedback through the core boundary (See Geometry section for the core boundary indices coreregno and coreregn2).
+					nesepm_sol is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the SOL region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the SOL North boundary (See Geometry section for the SOL North boundary index solregno). If nesepm_overshoot.gt.1.0, the gas puff is turned off when the midplane separatrix density reaches nesepm*nesepm_overshoot. Minimum and maximum values of the feedback gas puff can be set using b2stbc_nesepm_minpuff and b2stbc_nesepm_maxpuff. It will apply fb_type=3, fb_rescale=1, fb_actuator=1 on region defined by solregno.
+					nepedm_sol is similar to nesepm_sol but the feedback is exerted on the electron density at the top of the pedestal, along the outer midplane, at radial position b2stbc_iyped. It will apply fb_type=16, fb_rescale=1, fb_actuator=1 on region defined by solregno
+					ndes_sol is the total particle content from the isonuclear sequence of species 'isfeedback' over the entire simulation domain. It is governed, like nesepm_sol, by nesepm_overshoot and nesepm_alpha and corresponds to a SOL boundary feedback. Will apply fb_type=14, fb_rescale=1, fb_actuator=1 on region defined by solregno. WARNING: in the structured code this switch was asking for BCCON=12, so density BC for fluid neutrals feedback but then it switches to gas  puff for kinetic neutrals. Now it is ONLY gaspuff.
+					volrec_sol is the total particle source due to volume recombination coming from Eirene. Its feedback is governed by volrec_overshoot and volrec_alpha and volrec_beta parameters (See Numerics section for the latter two). Will apply fb_type=15, fb_rescale=1, fb_actuator=1 on region defined by pfrregno1. WARNING: not available yet for fluid neutrals.
+					nesepm_pfr is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the PFR region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the PFR South boundary indices pfrregno1 and pfrregno2). will apply fb_type=3, fb_rescale=1, fb_actuator=1 on region defined pfrregno1
+					ndes is the total particle (neutrals + ions) content of the species whose neutral species has index isfeedback. This is controlled through particle input of neutrals species isfeedback through the	private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2). will apply fb_type=14, fb_rescale=1, fb_actuator=1 on region defined by pfrregno1. WARNING: in the structured code this switch was asking for BCCON=12, so density BC for fluid neutrals feedback but then it switches to gas puff for kinetic neutrals. Now it is ONLY gas puff.
+					private_flux_puff NOT YET CONVERTED TO WG CODE! is the particle flow of species isfeedback through the private flux region boundary. This is controlled through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2).
 					All but the first of these feedback schemes ("nesepm") can also be run though an Eirene neutral gas puff. In that case, one should set an appropriate gas puffing stratum in the Eirene input file input.dat, as well as in the b2.neutrals.parameters file. The code will assume, unless told otherwise through the use of "eirene_nesepm_istra", that the first stratum of type 'C' found in b2.neutrals.parameters is the stratum used for the feedback. If "eirene_nesepm_istra" is set to a positive number, the code will consider the feedback stratum to be the stratum in the "eirene_nesepm_istra"-th position in b2.neutrals.parameters.
+					b2stbc_iyped is the index in the OMP CV list (defined with rzomp in b2.user.parameters) of the pedestal cell (defaults to icsepomp/2)
 				</description>
 				<switch>
 					<name>b2stbc_fheycore</name>
@@ -3543,7 +3549,7 @@
 					Feedback relaxation parameters. See Physics section for individual feedback quantities.
 				</description>
 				<switch>
-					<name>b2stbc_cbsnafac</name>
+					<name>b2stbc_cbsnafac NOT YET CONVERTED IN WG CODE</name>
 					<default>0.01</default>
 					<type>real</type>
 				</switch>
@@ -3578,7 +3584,7 @@
 					<type>real</type>
 				</switch>
 				<switch>
-					<name>b2stbc_nesepm_gamma</name>
+					<name>b2stbc_nesepm_gamma NOT YET CONVERTED IN WG CODE</name>
 					<default>0.99</default>
 					<type>real</type>
 				</switch>
@@ -5462,8 +5468,8 @@
 						 8 : prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>
 						 9 : prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in metres (should use type 15 instead when drifts are turned on)
 						10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>
-						11 : particle flux feedback boundary condition, CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG). For feedback schemes not specified via b2.feedback_control.parameters, the species used must be declared using the 'b2stbc_isfeedback' switch.
-						12 : particle density feedback boundary condition, as above, CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG). The species used must be declared using the 'b2stbc_isfeedback' switch.
+						11 : should not be used for feedbacks anymore, not converted to WG code.
+						12 : should not be used for feedbacks anymore, not converted to WG code.
 						13 : particle density to achieve specified total flux,
 							CONPAR(,,1) is the specified flux crossing the flux surface 'b2stbc_type13_ref' steps away from the boundary,
 							CONPAR(,,2) is the strength of the feedback,
@@ -5526,7 +5532,7 @@
 						 7 : prescribe the electron temperature profile from the bv_te.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total electron heat flux with constant flux density, ENEPAR(,1) specifies the energy flux in W
 						 9 : prescribe the decay length for the electron temperature, ENEPAR(,1) specifies the decay length in m (can also use type [19] instead)
-						10 : feedback option for core, ENEPAR(,1) not used, derived from cbshe(0,coreregno)
+						10 : should not be used for feedbacks anymore, not converted to WG code.
 						11 : not used
 						12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>
 						13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
@@ -5559,7 +5565,7 @@
 						 7 : prescribe the ion temperature profile from the bv_ti.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total ion heat flux with constant flux density, ENIPAR(,1) specifies the energy flux in W
 						 9 : prescribe the decay length for the ion temperature, ENIPAR(,1) specifies the decay length in m (can also use type [19] instead)
-						10 : feedback option for core, ENIPAR(,1) not used, derived from cbshi(0,ISMAIN,coreregno)
+						10 : should not be used for feedbacks anymore, not converted to WG code.
 						11 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> n<sub>a</sub> C<sub>s,a</sub>
 						12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>
 						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
@@ -5596,7 +5602,7 @@
 						 7 : prescribe the given profile of potential from the bv_po.dat file (requires b2mndr_boundary_sources.eq.1)
 						 8 : prescribe the total electric current with constant flux density, POTPAR(,1) specifies the electric current in A
 						 9 : prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m
-						10 : feedback option for core [not yet tested!!!!!!!!!] (based on using cbsch(0,coreregno))
+						10 : should not be used for feedbacks anymore, not converted to WG code.
 						11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
 						12 : Imposes the currents due to drifts for the South core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
@@ -5765,59 +5771,11 @@
 				</description>
 			</introduction>
 			<switch>
-				<name>SAVED_CBSHE_CORE</name>
+				<name>SAVED_FB_ACTUATOR</name>
 				<default>0.0</default>
-				<type>real*8</type>
+				<type>real*8 array of size (NFB)</type>
 				<description>
-					Last value used for the core electron energy radial flux feedback.
-				</description>
-			</switch>
-			<switch>
-				<name>SAVED_CBSHI_CORE</name>
-				<default>0.0</default>
-				<type>real*8</type>
-				<description>
-					Last value used for the core ion energy radial flux feedback.
-				</description>
-			</switch>
-			<switch>
-				<name>SAVED_CBSNA_CORE</name>
-				<default>0.0</default>
-				<type>real*8</type>
-				<description>
-					Last value used for the core particle radial flux feedback. Corresponds to 'isfeedback' B2.5 species.
-				</description>
-			</switch>
-			<switch>
-				<name>SAVED_CBSCH_CORE</name>
-				<default>0.0</default>
-				<type>real*8</type>
-				<description>
-					Last value used for the core radial electric current feedback.
-				</description>
-			</switch>
-			<switch>
-				<name>SAVED_CBSNA_PFR1</name>
-				<default>0.0</default>
-				<type>real*8</type>
-				<description>
-					Last value used for the radial inner PFR boundary flux feedback. Corresponds to 'isfeedback' B2.5 species.
-				</description>
-			</switch>
-			<switch>
-				<name>SAVED_CBSNA_PFR2</name>
-				<default>0.0</default>
-				<type>real*8</type>
-				<description>
-					Last value used for the radial outer PFR boundary flux feedback. Corresponds to 'isfeedback' B2.5 species.
-				</description>
-			</switch>
-			<switch>
-				<name>SAVED_CBSNA_SOL</name>
-				<default>0.0</default>
-				<type>real*8</type>
-				<description>
-					Last value used for the radial particle flux feedback in the SOL. Corresponds to 'isfeedback' B2.5 species.
+					Last value used for the feedback actuator for each feedback.
 				</description>
 			</switch>
 		</category>
@@ -5898,45 +5856,46 @@
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_TARGET</name>
-				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
-				<description>
-					Sets the target value of the quantity associated with species (ISPECIES) for the feedback scheme defined by NA_FEEDBACK_CHOICE(ISPECIES).
-				</description>
-			</switch>
-			<switch>
-				<name>NA_FEEDBACK_TIME</name>
-				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
-				<description>
-					Sets the time of reference (in s) for the feedback of species (ISPECIES).
-				</description>
-			</switch>
-			<switch>
-				<name>NA_FEEDBACK_CHOICE</name>
+				<name>NFB</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer</type>
+				<description>
+			 		Number of feedback schemes applied.
+				</description>
+			</switch>
+			<switch>
+				<name>FB_TYPE</name>
+				<default>0</default>
+				<type>integer array of size (NFB)</type>
 				<description>
 					Choice of quantity on which the feedback is computed:
 						0: no action
-						1: local species density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]). Summed over all charge states of that species.
-						2: local electron density (averaged over the rectangle of cells[IX1:IX2,IY1:IY2]).
+						1: local species density (averaged over cells/faces defined with fb_reg or fb_reg_par). Summed over all charge states of that species.
+						2: local electron density (averaged over cells/faces defined with fb_reg or fb_reg_par).
 						3: outer midplane separatrix electron density.
-						4: total particle content for that species.
-						5: total ion content for that species (not including neutrals).
-						6: neutral particle flux through the core boundary.
+						4: total particle content for that species over cells/faces defined with fb_reg or fb_reg_par.
+						5: total ion content for that species (not including neutrals) over cells/faces defined with fb_reg or fb_reg_par.
+						6: neutral particle flux through the core boundary (for now only for kinetic neutral cases).
 						7: relative average concentration of this species at the separatrix.
+						8: relative average concentration of this species over cells/faces defined with fb_reg or fb_reg_par.
+						9: inner midplane separatrix electron density.
+						10: boundary fna (similar to 'b2stbc_fnaycore' but for any boundary)
+						11: boundary fhe (similar to 'b2stbc_fheycore' but for any boundary)
+						12: boundary fhi (similar to 'b2stbc_fhiycore' but for any boundary)
+						13: boundary fch (similar to 'b2stbc_fchycore' but for any boundary)
+						14: total particle content of that species on the entire domain (similar to 'b2stbc_ndes' and 'b2stbc_ndes_sol' but actuator applied to any boundary)
+						15: Volumetric recombination (only for kinetic neutral cases) (similar to 'b2stbc_volrec_sol' but actuator applied to any boundary)
+						16: Pedestal electron density (similar to 'b2stbc_nepedm_sol' but actuator applied to any boundary)
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_OPTION</name>
+				<name>FB_RESCALE</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (NFB)</type>
 				<description>
 					Option for computing the new fedback quantity.
 						0: no action
-						1: rescale slowed by na_feedback_alpha
+						1: rescale slowed by fb_alpha
 						2: pure rescale
 						3: rescaling slowed by tanh_log
 						4: rescale done according to SOLPS4 formula
@@ -5945,111 +5904,141 @@
 						   and the current puffing rate S is adjusted
 						   S --&gt; max(0, min(X,S + D)), where D = F*((N - &lt;N&gt;)/dt + (&lt;N&gt;_prev - &lt;N&gt;)/dt_prev)
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
-						6: rescale slowed by na_feedback_alpha (SOLPS4 style)
+						6: rescale slowed by fb_alpha (SOLPS4 style)
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_ACTUATOR</name>
+				<name>FB_ACTUATOR</name>
 				<default>0</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>integer array of size (NFB)</type>
 				<description>
 					Choice for the actuator used for the feedback.
 					0: no action
 					1: gas puff via boundary condition
 					2: rescale na [[Experimental!! Does not guarantee stable code runs]]
-					3: core boundary flux condition
+					3: charged species particle flux BC
+					4: electron heat flux BC
+					5: ion heat flux BC
+					6: current BC
+					7: density BC
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_ALPHA</name>
+				<name>FB_TARGET</name>
+				<default>0.0</default>
+				<type>Real*8 array of size (NFB)</type>
+				<description>
+					Sets the target value of the quantity associated with feedback (IFB) for the feedback scheme defined by FB_TYPE(IFB).
+				</description>
+			</switch>
+			<switch>
+				<name>FB_SPECIES</name>
+				<default>0</default>
+				<type>Integer array of size (NFB)</type>
+				<description>
+					Specifies the species used to calculate the controlled variable and to which he actuator is applied. It follows the B2.5 plasma species enumeration. In general, controlled quantities are calculated on the whole isonuclear sequence to which fb_species(ifb) belongs to. Then if fb_actuator = 1, it is applied to neutral species through gas puff, if fb_actuator=2 it is applied to the ionized species only, if actuator=3 it is applied only to fb_species. For fb_type=6 and actuator=3 then it is also applied to all ionized species (as old feedback treatment). Overridden by switch 'b2stbc_isfeedback'
+				</description>
+			</switch>
+			<switch>
+				<name>FB_TIME</name>
+				<default>0.0</default>
+				<type>Real*8 array of size (NFB)</type>
+				<description>
+					Sets the time of reference (in s) for the feedback (IFB).
+				</description>
+			</switch>
+			<switch>
+				<name>FB_ALPHA</name>
 				<default>0.001</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>Real*8 array of size (NFB)</type>
 				<description>
 					Factor by which the rescaling is slowed. Rescaling factor is :
 					Option 1: (1 + alpha*target/current) / (1 + alpha)
 					Option 3: 2**(tanh(log(x)/beta)*log(alpha)/log(2))
 					Options 4 and 5: Corresponds to parameter F
+					Can be overridden by switches 'b2stbc_nesepm_alpha', 'b2stbc_fnaycore_alpha', 'b2stbc_fheycore_alpha', 'b2stbc_fhiycore_alpha', 'b2stbc_fchycore_alpha', 'b2stbc_volrec_alpha'
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_BETA</name>
+				<name>FB_BETA</name>
 				<default>1.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>Real*8 array of size (NFB)</type>
 				<description>
-					Factor by which the rescaling is slowed. See above. Options 4 and 5: Corresponds to parameter V (ffb_rtvn)
+					Factor by which the rescaling is slowed. See above. Options 4 and 5: Corresponds to parameter V (ffb_rtvn). Cna be overridden by 'b2stbc_volrec_beta'
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_CONST</name>
+				<name>FB_CONST</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>Real*8 array of size (NFB)</type>
 				<description>
-					Options 4 and 5: Corresponds to parameter C. If negative, C is
-						computed as the initial total particle content of the sequence.
+					Options 4 and 5: Corresponds to parameter C. If negative, C is	computed as the initial total particle content of the sequence.
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_IX1</name>
-				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
-				<description>
-					Lower poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
-				</description>
-			</switch>
-			<switch>
-				<name>NA_FEEDBACK_IX2</name>
-				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
-				<description>
-					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
-				</description>
-			</switch>
-			<switch>
-				<name>NA_FEEDBACK_IY1</name>
-				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
-				<description>
-					Lower radial bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
-				</description>
-			</switch>
-			<switch>
-				<name>NA_FEEDBACK_IY2</name>
-				<default>-2</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
-				<description>
-					Upper poloidal bound for the region over which the quantity used for the feedback of species (ISPECIES) is computed, if applicable.
-				</description>
-			</switch>
-			<switch>
-				<name>NA_FEEDBACK_IB</name>
+				<name>FB_IB</name>
 				<default>-1</default>
-				<type>Integer array of size (0:NSPECIES-1)</type>
+				<type>Integer array of size (NFB)</type>
 				<description>
 					Index of boundary condition through which the feedback is being applied.
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_PUFF_MIN</name>
-				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<name>FB_ISTRA</name>
+				<default>0</default>
+				<type>Integer array of size (NFB)</type>
 				<description>
-					Minimum gas puff being applied.
+					Eirene strata where the gas puff feedback is applied. Overridden by switch 'eirene_nesepm_istra'
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_PUFF_MAX</name>
+				<name>FB_PUFF_MIN</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>Real*8 array of size (NFB)</type>
 				<description>
-					Maximum gas puff being applied.
+					Minimum gas puff being applied. Can be overrdidden by switch 'b2stbc_nesepm_minpuff'
 				</description>
 			</switch>
 			<switch>
-				<name>NA_FEEDBACK_OVERSHOOT</name>
+				<name>FB_PUFF_MAX</name>
 				<default>0.0</default>
-				<type>Real*8 array of size (0:NSPECIES-1)</type>
+				<type>Real*8 array of size (NFB)</type>
 				<description>
-					If the density is larger than target*overshoot, the gas puff is turned off.
+					Maximum gas puff being applied. Can be overrdidden by switch 'b2stbc_nesepm_maxpuff'
+				</description>
+			</switch>
+			<switch>
+				<name>FB_OVERSHOOT</name>
+				<default>0.0</default>
+				<type>Real*8 array of size (NFB)</type>
+				<description>
+					If the density is larger than target*overshoot, the gas puff is turned off. Can be overridden by switch 'b2stbc_nesepm_overshoot', 'b2stbc_volrec_overshoot'
+				</description>
+			</switch>
+			<switch>
+				<name>FB_REGP</name>
+				<default>0</default>
+				<type>Integer array of size (NFB,2)</type>
+				<description>
+					Pointing for each feedback to the first index in FB_REG, and its number of CVs or faces
+				</description>
+			</switch>
+			<switch>
+				<name>FB_REG</name>
+				<default>0</default>
+				<type>Integer array of size (nMxFbReg)</type>
+				<description>
+					Listing for each feedback the cells or faces where controlled quantity is calculated. If different feedbacks use the same domain then this can be defined only ones and simply point to it twice with fb_regP. nMxFbReg is a maximum length set in b2us_feedback
+				</description>
+			</switch>
+			<switch>
+				<name>FB_REG_PAR</name>
+				<default>0</default>
+				<type>Integer array of size (NFB,2)</type>
+				<description>
+					If the two FB_REG and FB_REGP are not defined, then the code will look for this array.
+					For fb_type 6-10-11-12-13, fb_reg_par(ifb,:) indicates the starting (iFb,1) and ending (iFb,2) face region label over which the controlled quantity is calculated.
+					For fb_type 1-2-4-5-8, fb_reg_par(ifb,:) indicates the starting (ifB,1) and ending (iFb,2) volume region label over which the controlled quantity is calculated.
 				</description>
 			</switch>
 		</category>
@@ -6782,6 +6771,132 @@
 				</description>
 			</introduction>
 			<switch>
+				<name>RZOMP</name>
+				<default>0.0</default>
+				<type>real*8 array of size (2,2)</type>
+				<description>
+					Coordinates defining a segment. All control volumes intersected by this segment will be part of the outer midplane.
+					rzomp(1,1:2) holds the R-coordinates of the first and second point of the segment.
+					rzomp(2,1:2) holds the Z-coordinates of the first and second point of the segment.
+					Warning! This variable needs always be defined for SOLPS-ITER version 3.2.0 or younger!
+				</description>
+			</switch>
+			<switch>
+				<name>NCF</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of cost functions (icf = 1, NCF).
+				</description>
+			</switch>
+			<switch>
+				<name>CFTYPE</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					Specifies the type of cost function for index icf. Valid options are:
+					0 - Sum of weighted least squares cost functions. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9)
+					1 - Difference, on the desired CVs, of calculated electron density and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-3})
+					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV)
+					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV)
+					4 - Maximum electron temperature on the desired CVs (output in eV)
+					5 - Maximum heat flux on the desired FCs (output in W)
+					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9)
+					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4})
+					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m)
+					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m)
+				</description>
+			</switch>
+			<switch>
+				<name>CFDEF</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					 Indicates how the domain of cost function ifc is specified. Valid options are:
+					 1 - The cost function is defined on the OMP, using the rzomp array. In this case CFSTART,CFEND are not necessary and ignored.
+					 2 - The cost function is defined using the FC labels specified in CFSTART,CFEND. Cost functions requiring CVs or FCs can both be defined in this way.
+					 3 - The cost function is defined using the CV labels specified in CFSTART,CFEND. Only cost functions requiring CVs can be defined in this way.
+					 4 - The cost function is defined using the CF_REG and CF_REGP arrays. Cost functions requiring CVs or FCs can both be defined in this way.
+				</description>
+			</switch>
+			<switch>
+				<name>CFSTART, CFEND</name>
+				<default>0</default>
+				<type>integer arrays of size (NCF)</type>
+				<description>
+					Specify the starting/ending, face (FC) label fcLbl or control volume (CV) label cvLbl where the cost function icf will be evaluated. For CFTYPE = 0 and CFTYPE = 6 they instead identify which cost functions will be summed together.
+				</description>
+			</switch>
+			<switch>
+				<name>CF_REG</name>
+				<default>0</default>
+				<type>integer array of size (mxnCf)</type>
+				<description>
+					Listing for each cost function the corresponding domain CVs or FCs. WARNING! No attempt is made to check if these CVs or FCs are connected, sorted or even available in the current geometry: it is up to the user to make sure the list is correct. mxnCf is a hard coded maximum length defined in b2mod_user_namelist
+				</description>
+			</switch>
+			<switch>
+				<name>CFWEIGHT</name>
+				<default>1.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Multipliers to re-scale each cost function separately.
+				</description>
+			</switch>
+			<switch>
+				<name>NSIGMA</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of standard deviation variables used for Bayesian MAP cost function (normally this should be equal to the number of cost functions summed for CFTYPE = 6, i.e. one for each variable on each domain) (isigma = 1, NSIGMA}).
+				</description>
+			</switch>
+			<switch>
+				<name>SIGMA</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NSIGMA)</type>
+				<description>
+					Value of the standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
+				</description>
+			</switch>
+			<switch>
+				<name>SCALE_SIGMA</name>
+				<default>TRUE</default>
+				<type>logical array of size (NSIGMA)</type>
+				<description>
+					Indicates if SIGMA(isigma)} is intended as relative standard deviation (SCALE_SIGMA(isigma)=.TRUE.) or absolute (SCALE_SIGMA(isigma)=.FALSE.).
+				</description>
+			</switch>
+			<switch>
+				<name>PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NVMX)</type>
+				<description>
+					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are
+					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
+					1 - Uninformative Gaussian prior.
+					NVMX is a hard coded maximum length defined in b2mod_user_namelist
+				</description>
+			</switch>
+			<switch>
+				<name>PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NVMX,2)</type>
+				<description>
+					Indicates parameters for the prior distributions.
+					For PRIOR_TYPE=0, not used
+					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution
+				</description>
+			</switch>
+			<switch>
+				<name>PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NVMX,2)</type>
+				<description>
+					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30)
+				</description>
+			</switch>
+			<switch>
 				<name>LHETRGTS</name>
 				<default>Eirene recycling target surfaces defined in the LTNS array</default>
 				<type>integer array of size (NLIM)</type>
@@ -7096,4 +7211,3 @@
 	To install adaptive-wrap do: M-x package-install RET adaptive-wrap RET
 	eval: (visual-line-mode t)
 -->
-
