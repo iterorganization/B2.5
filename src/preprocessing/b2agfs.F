@@ -1096,7 +1096,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
               if (sin.gt.1.0e-7_R8) then
                 write(*,*) "b2agfs: cell no convex", iCv
-                call xerrab('Check convexity: cell is not convex') 
+                !call xerrab('Check convexity: cell is not convex') 
               endif           
            enddo
            deallocate(vx)
