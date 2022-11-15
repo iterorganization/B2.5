@@ -37,9 +37,8 @@
 *     will be written to unit nout(1), which must be connected to an
 *     un*formatted file.
 *
-*     B2 employs a two-dimensional, curvilinear, topologically
-*     rectangular mesh. The coordinates of the mesh are labelled 'x'
-*     and 'y'. 
+*     B2 employs a two-dimensional, curvilinea, mesh. The coordinates 
+*     of the mesh are labelled 'x'and 'y'. 
 *
 *     The primary data describing the mesh are the coordinates of the
 *     four vertices of all the cells of the mesh. These data are stored
@@ -73,7 +72,6 @@
 *     m - type, input.
 *     m specifies the mapping type as described module b2us_map
 *
-*     (parameters in common:)
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -134,53 +132,41 @@
 *
 *     Description of some local variables (including arrays in w(0:*):
 *
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-*     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-*     coordinates (in the physical plane) of the four corners of the
-*     (ix,iy) cell, mapped as follows:
-*     (,,0): lower left corner,  (,,1): lower right corner,
-*     (,,2): upper left corner,  (,,3): upper right corner.
-*     One expects the following identities to hold away from the
-*     boundaries:
-*     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-*     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-*     However, there may be cuts in the geometry, in which case these
-*     identities need not hold.
+*     vxX, vxY - (1:nVx) real*8 array.
+*     vxX(iVx) specify the horizontal coordinates and vxY(iVx) 
+*     specify the vertical coordinates (in the physical plane) of 
+*     the vertex with number iVx.
 *
-*     fpsi - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i) specifies the
-*     potential for the magnetic field components (bx,by) at the
-*     (ix,iy,i) position.
+*     vxFpsi - (1:nVx) real*8 array.
+*     vxFpsi(iVx) specifies the potential for the magnetic field 
+*      components (bx,by) of the vertex with number iVx.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
 *     where R is the distance to the axis of symmetry.)
 *
-*     ffbz - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), ffbz(ix,iy,i) specifies the
-*     field function for the magnetic field component bz at the
-*     (ix,iy,i) position.
+*     vxFfbz - (1:nVx) real*8 array.
+*     vxFfbz(iVx) specifies the field function for the magnetic 
+*     field component bz of the vertex with number iVx.
 *     (In the case of straight symmetry, bz=ffbz. In the case of
 *     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
 *     the distance to the axis of symmetry.)
 *
-*     bb - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-*     magnetic field at the center of the (ix,iy) cell.
-*     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
-*     the absolute magnetic field strength.
-*     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-*     It will hold that 0.lt.bb(,,3).
+*     cvBb - (1:nCv,0:3) real*8 array.
+*     cvBb(iCv,0:3) specifies the magnetic field at the center of 
+*     the cell iCv. cvBb(iCv,0:2) are the (x,y,z)-components and 
+*     cvBb(iVx,3) is the absolute magnetic field strength.
+*     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,2)**2.)
+*     It will hold that 0.lt.cvBb(,3).
 *
-*     vol - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-*     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-*     includes a factor 2*pi*crx, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cry.)
-*     It will hold that 0.lt.vol(,).
+*     cvVol - (1:nCv) real*8 array.
+*     cvVol(iCv) specifies the volume of the cell iCv. (In the 
+*     case of toroidal symmetry this volume
+*     includes a factor 2*pi*cvX, while in the case of cylindrical
+*     symmetry it includes a factor 2*pi*cvY.)
+*     It will hold that 0.lt.cvVol(,).
 *
-*     hx, hy - (-1:nx,-1:ny) real*8 array.
+*     cvHx, hy - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
@@ -199,7 +185,7 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
+*     fcQgam - (1:nFc,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
 *     t is the complementary angle between the x-direction of the 
 *     (ix,iy) cell and its left face.
@@ -207,7 +193,7 @@
 *     geometry. 
 *     It will hold that 0.lt.qc(,).le.1.
 *
-*     gs - (-1:nx,-1:ny,0:2) real*8 array.
+*     fcQalf - (-1:nx,-1:ny,0:2) real*8 array.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
 *     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
 *     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
@@ -218,17 +204,13 @@
 *     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
 *     (ix,iy) cell normal to the third (ignorable) coordinate.
 *
-*     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
+*     fcPbs - (1:nFc) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
 *     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
 *     field pitch)*(surface area), namely the parallel contact area, 
 *     on the (ix,iy) cell left and bottom faces respectively.  
 *     See routine b2xgbs for the form of interpolation employed.
 *
-*     crx1, cry1, fpsi1, ffbz1, vol1, 
-*     hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 arrays.
-*     These arrays characterise the geometry on the auxiliary mesh.
 *
 *     lblgm - character*120.
 *     lblgm identifies the instance of the program employed to prepare
@@ -245,8 +227,8 @@
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
 *     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
+*     symmetry about the cvX=0 axis, and isymm.eq.3.or.isymm.eq.4 
+*     indicate rotational symmetry about the cvY=0 axis. 
 *     Other values are not allowed. 
 *     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
 *     with a toroidal (out-of-plane) magnetic field component.
