@@ -272,17 +272,25 @@
         write (iouteir,'(a)') trim(line)
       end do
 
-      if (spatial_hybrid.eq.0) then !! default, no spatially hybrid neutrals
-        if (count(mpg%icornVx > 0) /= nasmod)
-     .    call xerrab('conv_surface_models -- nasmod')
-      else !! spatially hybrid neutrals
-        !! SH_TODO
+      if (nasmod /= 0) then
+        if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
+          !! limiter or linear case: only NW and NE corners
+          read (ineir,'(2i6)') ihelp(1), ihelp(2)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(3)
+          read (ineir,'(2i6)') ihelp(1), ihelp(2)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(4)
+        elseif (count(mpg%icornVx > 0) == nasmod) then
+          !! SN of DN case: 4 or 8 corners
+          do i = 1, nasmod
+            read (ineir,'(2i6)') ihelp(1), ihelp(2)
+            write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(i)
+          end do
+        else
+         call xerrab('conv_surface_models -- nasmod')
+        endif
+      else
+         write (*,*) "Warning: found NASMOD = 0 in input block 15"
       endif
-
-      do i = 1, nasmod
-        read (ineir,'(2i6)') ihelp(1), ihelp(2)
-        write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(i)
-      end do
 
 !  copy input file until end of file
       do
