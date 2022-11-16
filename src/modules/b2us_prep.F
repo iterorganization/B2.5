@@ -993,7 +993,7 @@
       m%nVx = (nx+2)*(ny+2) - nghostvxi
 
 ! no. of flux surfaces (conservative estimate)
-      m%nFs = max(1,(1 + 2*nncut)*ny)
+      m%nFs = max(1,(1 + 1*nncut)*(ny + 2))
       m%nFt = m%nFs
 
 ! max. no. of entries in cvVx (vertex list of each cell)
@@ -1765,7 +1765,20 @@
         ifcc = 0
         ifccy = 0
         ilbl = 0
-        if (nncut.le.1) then
+        if (nncut.eq.0) then
+          !Linear case
+          nyreg = 1
+          allocate(nxreg(nyreg),reg(1,nyreg),nseg(1,nyreg))
+          allocate(ixstart(1,nyreg,1),ixend(1,nyreg,1))
+          allocate(iystart(nyreg),iyend(nyreg))
+          iystart(1) = -1
+          iyend(1) = ny
+          nxreg(1) = 1
+          nseg(1,1) = 1 !
+          ixstart(1,1,1) = -1
+          ixend  (1,1,1) = nx
+          reg(1,1) = 1
+        else if (nncut.eq.1) then
           nyreg = 2
           allocate(nxreg(nyreg),reg(2,nyreg),nseg(2,nyreg))
           allocate(ixstart(2,nyreg,2),ixend(2,nyreg,2))
