@@ -276,7 +276,7 @@
         if (nasmod.eq.2 .and. count(mpg%icornVx > 0) == 4) then
           !! limiter or linear case: only NW and NE corners
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
-          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(3)
+          write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(2)
           read (ineir,'(2i6)') ihelp(1), ihelp(2)
           write (iouteir,'(3i6)') ihelp(1), ihelp(2), mpg%icornVx(4)
         elseif (count(mpg%icornVx > 0) == nasmod) then
