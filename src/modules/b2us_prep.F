@@ -1865,10 +1865,10 @@
           nxreg(2) = 2 !both DDN & DDNU
           nxreg(3) = 2
           iystart(1) = -1
-          iyend(1) = topcut(2)-1
-          iystart(2) = topcut(2)
-          iyend(2) = topcut(1)-1
-          iystart(3) = topcut(1)
+          iyend(1) = min(topcut(1),topcut(2))-1
+          iystart(2) = min(topcut(1),topcut(2))
+          iyend(2) = max(topcut(1),topcut(2))-1
+          iystart(3) = max(topcut(1),topcut(2))
           iyend(3) = ny
           nseg(:,1) = 2 !segments for pfr1/core/pfr2
           nseg(:,2) = 2 !segments for sol1/pfr2
