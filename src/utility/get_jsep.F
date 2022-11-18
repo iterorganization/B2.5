@@ -91,15 +91,32 @@ cxpb  Compute position of additional targets in DN configuration
       nxtr = nx+1
       if (nnreg(0).eq.8) then
         nxtl = 0
-        do while (rightix(nxtl,max(topcut(1),topcut(2))).ne.nx+1
-     &   .and.nxtl.lt.nx)
+        nxtr = 1
+        !wdk First pass: for target/vessel mode grids, these rows of
+        !    'additional targets' appear as 2 subsequent columns of 
+        !    undefined cells
+        do while (.not.(
+     &    cflags(nxtl,max(topcut(1),topcut(2)),1).eq.GRID_UNDEFINED.and.
+     &    cflags(nxtl+1,max(topcut(1),topcut(2)),1).eq.GRID_UNDEFINED)
+     &    .and.nxtl.lt.nx-1)
           nxtl=nxtl+1
-        enddo
-        nxtr = nxtl
-        do while (leftix(nxtr,max(topcut(1),topcut(2))).ne.-2 .and.
-     &            nxtr.lt.nx)
           nxtr=nxtr+1
         enddo
+
+        !wdk if nxtl = nx-1, did not find the additional targets
+        !    => assume standard mode, and use original algorithm
+        if (nxtl == nx-1) then
+          nxtl = 0
+          do while (rightix(nxtl,max(topcut(1),topcut(2))).ne.nx+1
+     &     .and.nxtl.lt.nx)
+            nxtl=nxtl+1
+          enddo
+          nxtr = nxtl
+          do while (leftix(nxtr,max(topcut(1),topcut(2))).ne.-2 .and.
+     &              nxtr.lt.nx)
+            nxtr=nxtr+1
+          enddo
+        endif
         write(*,*) 'nxtl, nxtr : ', nxtl, nxtr
       endif
 
