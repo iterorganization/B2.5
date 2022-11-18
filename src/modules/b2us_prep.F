@@ -321,11 +321,21 @@
                 ix2  = ix + 1
                 iy2  = iy
                 do while ((ighostvx(ix2,iy2) == 0) .or.
-     .              .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+     .           .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                   ix2 = ix2 + 1
                   if (ix2 == nx+1) then
-                    write (*,*) 'ix, iy = ', ix, iy
-                    call xerrab ('No suitable unused cell found (0).')
+                    ix2 = ix2-1
+                    do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                .not.isUnusedCell
+     .                   (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                      ix2 = ix2 - 1
+                      if (ix2 == 0) then
+                        write (*,*) 'ix,  iy  = ', ix, iy
+                        write (*,*) 'ix2, iy2 = ', ix2, iy2
+                        call xerrab 
+     .                    ('No suitable unused cell found (0).')
+                      endif
+                    enddo
                   endif
                 enddo
                 ! Create vertex, assign relevant data
@@ -421,11 +431,21 @@
                   ix2  = ix + 1
                   iy2  = iy
                   do while ((ighostvx(ix2,iy2) == 0) .or.
-     .                .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+     .             .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                     ix2 = ix2 + 1
                     if (ix2 == nx+1) then
-                      write (*,*) 'ix, iy = ', ix, iy
-                      call xerrab ('No suitable unused cell found (1).')
+                      ix2 = ix2-1
+                      do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                  .not.isUnusedCell
+     .                     (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                        ix2 = ix2 - 1
+                        if (ix2 == 0) then
+                          write (*,*) 'ix,  iy  = ', ix, iy
+                          write (*,*) 'ix2, iy2 = ', ix2, iy2
+                          call xerrab 
+     .                      ('No suitable unused cell found (1).')
+                        endif
+                      enddo
                     endif
                   enddo
                   ! Create vertex, assign relevant data
@@ -521,11 +541,21 @@
                   ix2  = ix
                   iy2  = iy + 1
                   do while ((ighostvx(ix2,iy2) == 0) .or.
-     .                .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
+     .             .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                     iy2 = iy2 + 1
                     if (iy2 == ny+1) then
-                      write (*,*) 'ix, iy = ', ix, iy
-                      call xerrab ('No suitable unused cell found (2).')
+                      iy2 = iy2-1
+                      do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                  .not.isUnusedCell
+     .                      (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                        iy2 = iy2 - 1
+                        if (iy2 == 0) then
+                          write (*,*) 'ix,  iy  = ', ix, iy
+                          write (*,*) 'ix2, iy2 = ', ix2, iy2
+                          call xerrab 
+     .                      ('No suitable unused cell found (3).')
+                        endif
+                      enddo
                     endif
                   enddo
                   ! Create vertex, assign relevant data
@@ -595,6 +625,7 @@
                 ! If not, add external vertex
                 if (rightix(tix,tiy)==nx+1) then
                     ! Check whether an external vertex has already been created here
+                    lfound = .false.
                     ivxe   = 0
                     do while (.not.lfound .and. ixvxe(ivxe+1) /= -2)
                       ivxe = ivxe + 1
@@ -612,8 +643,18 @@
      .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                         iy2 = iy2 + 1
                         if (iy2 == ny+1) then
-                          write (*,*) 'ix, iy = ', ix, iy
-                      call xerrab ('No suitable unused cell found (3).')
+                          iy2 = iy2-1
+                          do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                      .not.isUnusedCell
+     .                          (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                            iy2 = iy2 - 1
+                            if (iy2 == 0) then
+                              write (*,*) 'ix,  iy  = ', ix, iy
+                              write (*,*) 'ix2, iy2 = ', ix2, iy2
+                              call xerrab 
+     .                          ('No suitable unused cell found (3).')
+                            endif
+                          enddo
                         endif
                       enddo
                       ! Create vertex, assign relevant data
@@ -759,8 +800,18 @@
      .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                         iy2 = iy2 + 1
                         if (iy2 == ny+1) then
-                          write (*,*) 'ix, iy = ', ix, iy
-                      call xerrab ('No suitable unused cell found (3).')
+                          iy2 = iy2-1
+                          do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                      .not.isUnusedCell
+     .                          (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                            iy2 = iy2 - 1
+                            if (iy2 == 0) then
+                              write (*,*) 'ix,  iy  = ', ix, iy
+                              write (*,*) 'ix2, iy2 = ', ix2, iy2
+                              call xerrab 
+     .                          ('No suitable unused cell found (4).')
+                            endif
+                          enddo
                         endif
                       enddo
                       ! Create vertex, assign relevant data
@@ -1611,6 +1662,7 @@
         do ivx = m%cvVxP(ic,1),m%cvVxP(ic,1)+m%cvVxP(ic,2)-1
           if(m%cvVx(ivx) == 0) then
             write (*,*) 'ic, ivx = ', ic, ivx
+            write (*,*) 'ix, iy = ', findloc(m%imapCv,ic) 
             call xerrab ('Problem with mapping: undefined face')
            endif
         enddo
