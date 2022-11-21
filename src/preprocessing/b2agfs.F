@@ -610,6 +610,7 @@ c
      6 wbbc(0:nx+2,0:ny+2,0:3)
       character*(*) local_sonnet
 
+      logical no_flux_data            ! IYS 21.02.2020
       ! nnx, nny: dimension of the grid as read from the file
       ! nx, ny: dimension of the grid as used by B2
       ! NOTE: the nx, ny here corresponds to nx1, ny1 in b2agfs
@@ -639,6 +640,7 @@ c
       character*16 usrnam
       external xertst, open_file, usrnam
       intrinsic index, sqrt
+      real (kind=R8) :: t0
 
       data new_format/1/
       data format_string/
@@ -913,7 +915,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             call xerrab
      .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
-          fpsi=0.0_R8
+          psi=0.0_R8
           ffbz=0.0_R8
 
 !          write(*,*) "Somebody has filled ffbz with zeroes"
@@ -934,12 +936,14 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             endif
           else
             backspace (lun)
-            do iy=0,ny+1
-              do ix=0,nx+1
-                read(lun,*,err=10) ixd,iyd,
-     1         (fpsi(ix,iy,i),i=0,3),(ffbz(ix,iy,i),i=0,3)
-              end do
-            end do
+            do iy=0,nny-1
+              do ix=0,nnx-1
+                read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1                  crxs(ix,iy,0),crys(ix,iy,0),
+     1                  (psi(ix,iy,i,0),i=1,4),
+     $                  (ffbz(ix,iy,i),i=0,3)
+              enddo
+            enddo
           endif
           close(lun)
 ! IYS 21.02.2020
