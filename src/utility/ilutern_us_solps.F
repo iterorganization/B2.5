@@ -38,9 +38,7 @@ c
 
 *  -- PROCEDURES --
       INTRINSIC MOD, cpu_time
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.05.02

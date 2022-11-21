@@ -12,8 +12,6 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-DEFINES += -DDOFLUSH
-
 CPP = /lib/cpp -traditional
 
 DDBLOPTION = -Ad # ???
@@ -35,7 +33,7 @@ LD_MSCL ?= -L${MSCL_ROOT} -lmscl
 LD_NAG ?= -L${NAG_LIB} -lnag_nag -lnag_mkl -lstdc++
 LD_MPI ?= -L${MPDIR}/lib64 -lmpi -lmpigf
 
-DEFINES += -DDOFLUSH -DNO_OPT
+DEFINES += -DNO_OPT
 
 CPP = /lib/cpp -traditional
 

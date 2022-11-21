@@ -12,9 +12,9 @@ LD_NETCDF ?= `pkg-config netcdf-fortran --libs` -Wl,-rpath,/cineca/prod/opt/libr
 LD_NCARG ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 LD_MSCL ?= -L${MSCL_ROOT}/lib -lmscl
 LD_NAG ?= -L${NAG_LIB} -lnag_nag -lnag_mkl -lstdc++
-LD_MPI ?= -L${MPDIR}/lib64 -lmpi -lmpigf
+LD_MPI ?= -L${MPDIR}/lib64 -lmpi
 
-DEFINES += -DDOFLUSH -DNO_OPT
+DEFINES += -DNO_OPT
 
 CPP = /lib/cpp -traditional
 
