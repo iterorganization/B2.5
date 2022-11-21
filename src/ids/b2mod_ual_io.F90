@@ -275,11 +275,10 @@ module b2mod_ual_io
   character*32, save :: ADAS_git_version
   logical, save :: IDSmapInitialized = .false.
   logical, save :: eq_found
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
   integer lenval, ierror
-#else
-#ifdef NAGFOR
-  integer lenval, ierror
+#ifndef USE_PXFGETENV
+  intrinsic get_environment_variable
 #endif
 #endif
   type(B2GridMap), save :: IDSmap
@@ -303,18 +302,21 @@ contains
     if (IDS_initialized) return
     call ipgeti ('b2mndr_eirene', use_eirene)
     username = usrnam()
-#ifdef NAGFOR
-    call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
-    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
-    call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
-    if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
+#ifdef NO_GETENV
+    write(imas_version,'(i1,a1,i2,a2)')  IMAS_MAJOR_VERSION,'.', &
+                                      &  IMAS_MINOR_VERSION,'.0'
+    write(ual_version,'(i1,a1,i2,a1,i1)') UAL_MAJOR_VERSION,'.', &
+                                      &   UAL_MINOR_VERSION,'.', &
+                                      &   UAL_MICRO_VERSION
 #else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
     CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
 #else
-    call getenv ('IMAS_VERSION', imas_version)
-    call getenv ('UAL_VERSION', ual_version)
+    call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
+    if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
+    call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
+    if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
 #endif
 #endif
     call date_and_time (date, ctime, zone, tvalues)
@@ -7049,7 +7051,15 @@ contains
       & nlibs = nlibs + 1
 
     mscl_version='0.0.0'
-#ifdef NAGFOR
+#ifdef NO_GETENV
+    write(ggd_version,'(i1,a1,i2,a1,i1)') GGD_MAJOR_VERSION,'.', &
+                                        & GGD_MINOR_VERSION,'.', &
+                                        & GGD_MICRO_VERSION
+#else
+#ifdef USE_PXFGETENV
+    CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
+    CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
+#else
     call get_environment_variable('GGD_VERSION', &
         &  status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('GGD_VERSION', &
@@ -7058,13 +7068,6 @@ contains
         &  status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL', &
         &  value=mscl_version)
-#else
-#ifdef USE_PXFGETENV
-    CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
-    CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
-#else
-    call getenv ('GGD_VERSION', ggd_version)
-    call getenv ('EBVERSIONMSCL', mscl_version)
 #endif
 #endif
     if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1

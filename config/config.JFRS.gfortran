@@ -20,7 +20,7 @@ LD_NAG      ?= `pkg-config sci --libs`
 endif
 endif
 
-DEFINES += -DDOFLUSH -DNO_OPT
+DEFINES += -DNO_OPT
 
 CPP = /lib/cpp -traditional
 

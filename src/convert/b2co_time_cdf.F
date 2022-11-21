@@ -17,11 +17,10 @@
      1           iylend,  iyiend,  iyaend,  iyrend
       integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
 #ifndef NO_CDF
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
       integer :: status
@@ -40,8 +39,6 @@
       character*32 hlp_frm
       character*256 filename, plasmastate, message
       logical :: exists
-      integer :: lnblnk
-      external lnblnk
 #endif
       external ipgeti, ipgetr, xerrab, xertst
 
@@ -202,25 +199,18 @@ c find the time and batch vector sizes
       end do
 
 c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
-#ifdef NO_GETENV
       extension='xxxx'
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
+      if (ierror.eq.0) extension=plasmastate(lenval-3:lenval)
 #else
-#ifdef NAGFOR
       call get_environment_variable('PLASMASTATE',
      . status=ierror, length=lenval)
       if (ierror.eq.0) then
-        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        call get_environment_variable('PLASMASTATE', value=plasmastate)
         extension=plasmastate(lenval-3:lenval)
-      elseif (ierror.eq.1) then
-        extension='xxxx'
       endif
-#else
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
-#else
-      call getenv ('PLASMASTATE', plasmastate)
-#endif
-      extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
 #endif
       filename=trim(filename)//'.'//extension

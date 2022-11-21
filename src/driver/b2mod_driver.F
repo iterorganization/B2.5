@@ -329,15 +329,12 @@
       character*256 filename
       logical ex, found
 #ifdef IMAS
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
-#endif
-#endif
-#ifndef NO_GETENV
       character(len=24) :: device_env
+#ifndef NO_GETENV
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
 #endif
 #endif
 *   ..initialisation
@@ -1428,9 +1425,16 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          database = 'solps-iter'
          treename = 'ids'
          write(version,'(i1)') IMAS_MAJOR_VERSION
-#ifndef NO_GETENV
+#ifdef NO_GETENV
          device_env = ' '
-#ifdef NAGFOR
+         write(imas_version,'(i1,a1,i2,a2)') IMAS_MAJOR_VERSION,'.',
+     .                                       IMAS_MINOR_VERSION,'.0'
+#else
+#ifdef USE_PXFGETENV
+         CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+         CALL PXFGETENV ('IMAS_VERSION', 0,
+     .                              imas_version, lenval, ierror)
+#else
          call get_environment_variable('DEVICE', status=ierror,
      .                                           length=lenval)
          if (ierror.eq.0) call get_environment_variable('DEVICE',
@@ -1439,15 +1443,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .                                           length=lenval)
          if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',
      .                                           value=imas_version)
-#else
-#ifdef USE_PXFGETENV
-         CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
-         CALL PXFGETENV ('IMAS_VERSION', 0,
-     .                              imas_version, lenval, ierror)
-#else
-         call getenv ('DEVICE', device_env)
-         call getenv ('IMAS_VERSION', imas_version)
-#endif
 #endif
          if (.not.streql(device_env,' ')) database = device_env
          if (streql(database,'iter')) database = 'ITER'

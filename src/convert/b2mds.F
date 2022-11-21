@@ -107,11 +107,10 @@ c
       save ismain, refl_model, sput_phys_model,
      2     sput_phys_col, neutrals_namelist, use_eirene
 
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -192,23 +191,15 @@ c
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
-#ifdef NO_GETENV
       solpstop=' '
-#else
-#ifdef NAGFOR
-      call get_environment_variable('SOLPSTOP',
-     .   status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('SOLPSTOP',value=solpstop)
-      elseif (ierror.eq.1) then
-        solpstop=' '
-      endif
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-      call getenv ('SOLPSTOP', solpstop)
-#endif
+      call get_environment_variable('SOLPSTOP',
+     .   status=ierror, length=lenval)
+      if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     .   value=solpstop)
 #endif
 #endif
 #ifdef MDSPLUS

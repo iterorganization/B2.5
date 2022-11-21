@@ -14,11 +14,10 @@ c     the zoom common
 
       character*256 devenv
       integer iw
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -35,27 +34,15 @@ c      call plinit()
 #else
       ncol=12
 #ifdef NCAR4
-#ifdef NO_GETENV
-      devenv='x11 ps'
-#else
-#ifdef NAGFOR
-      call get_environment_variable('B2PLOT_DEV',
-     . status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('B2PLOT_DEV',value=devenv)
-      elseif (ierror.eq.1) then
-        devenv='x11 ps '
-      endif
-#else
+      devenv = 'x11 ps'
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('B2PLOT_DEV', 0, devenv, lenval, ierror)
 #else
-#ifdef WINDOWS
-      devenv = 'x11 ps'                           !srv 17.12.07
-#else
-      call getenv ('B2PLOT_DEV', devenv)
-#endif
-#endif
+      call get_environment_variable('B2PLOT_DEV',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) call get_environment_variable('B2PLOT_DEV',
+     . value=devenv)
 #endif
 #endif
       if(b2plot_debug.ge.8) write(*,*) 'devenv: ',trim(devenv)

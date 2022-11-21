@@ -1041,17 +1041,14 @@ c
 
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
-#endif
-#endif
 #ifndef NO_GETENV
       character*12 device_env
       logical streql
       external streql
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
@@ -1093,17 +1090,13 @@ c
 #endif
 #ifndef NO_GETENV
       device_env = ' '
-#ifdef NAGFOR
-      call get_environment_variable('DEVICE',
-     . status=ierror, length=lenval)
-      if (ierror.eq.0)
-     > call get_environment_variable('DEVICE',value=device_env)
-#else
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
-      call getenv ('DEVICE', device_env)
-#endif
+      call get_environment_variable('DEVICE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0)
+     > call get_environment_variable('DEVICE', value=device_env)
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
