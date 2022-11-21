@@ -253,7 +253,12 @@ module b2mod_ual_io
   character*8, save :: imas_version, ual_version, adas_version
   character*32, save :: B25_git_version
   logical, save :: IDSmapInitialized = .false.
+#ifndef NO_GETENV
   integer lenval, ierror
+#ifndef USE_PXFGETENV
+  intrinsic get_environment_variable
+#endif
+#endif
   type(B2GridMap), save :: IDSmap
 
 contains
@@ -2140,6 +2145,11 @@ contains
       & nlibs = nlibs + 1
 
     mscl_version='0.0.0'
+#ifdef NO_GETENV
+    write(ggd_version,'(i1,a1,i2,a1,i1)') GGD_MAJOR_VERSION,'.', &
+                                        & GGD_MINOR_VERSION,'.', &
+                                        & GGD_MICRO_VERSION
+#else
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('GGD_VERSION', 0, ggd_version, lenval, ierror)
     CALL PXFGETENV ('EBVERSIONMSCL', 0, mscl_version, lenval, ierror)
@@ -2152,6 +2162,7 @@ contains
         &  status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('EBVERSIONMSCL', &
         &  value=mscl_version)
+#endif
 #endif
     if (.not.streql(mscl_version,'0.0.0')) nlibs = nlibs + 1
 

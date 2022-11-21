@@ -143,15 +143,17 @@ program b2_ual_write
     call ipgetc('b2mndr_user', username )
     database = 'solps-iter'
 #ifdef NO_GETENV
-    device_env = ' '
+    write(imas_version,'(i1,a1,i2,a2)') IMAS_MAJOR_VERSION,'.', &
+                                      & IMAS_MINOR_VERSION,'.0'
 #else
+    device_env = ' '
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
-    call get_environment_variable ('DEVICE', status=ierror, length=lenval)
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
-    call get_environment_variable ('IMAS_VERSION', status=ierror, length=lenval)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
     if (.not.streql(device_env,' ')) database = device_env

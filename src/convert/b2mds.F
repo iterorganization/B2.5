@@ -202,19 +202,15 @@ c
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
-#ifdef NO_GETENV
       solpstop=' '
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
       call get_environment_variable('SOLPSTOP',
      .   status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('SOLPSTOP',value=solpstop)
-      elseif (ierror.eq.1) then
-        solpstop=' '
-      endif
+      if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     .   value=solpstop)
 #endif
 #endif
       cr=0.25_R8*sum(crx,3)

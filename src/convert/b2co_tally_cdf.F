@@ -32,8 +32,6 @@
       character*256 filename, plasmastate, message
       character*13 :: cdata(0:ns-1)
       logical :: exists
-      integer :: lnblnk
-      external lnblnk
 #endif
       external ipgeti, ipgetr, xerrab, xertst
 
@@ -123,22 +121,19 @@ c first deal with the time vector
       end do
 
 c prepare the b2tallies.nc.xxxx file
-#ifdef NO_GETENV
       extension='xxxx'
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
+      if (ierror.eq.0) extension=plasmastate(lenval-3:lenval)
 #else
       call get_environment_variable('PLASMASTATE',
      . status=ierror, length=lenval)
       if (ierror.eq.0) then
-        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        call get_environment_variable('PLASMASTATE', value=plasmastate)
         extension=plasmastate(lenval-3:lenval)
-      elseif (ierror.eq.1) then
-        extension='xxxx'
       endif
 #endif
-      extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
       filename='b2tallies.nc.'//extension
       call define_cdf_b2mod_tallies(filename,ncid2,nnreg,ns)

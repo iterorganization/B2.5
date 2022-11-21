@@ -117,9 +117,8 @@
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log
       real (kind=R8) ::
-     *   machsfr, b2ssum, expu2, hy1, sdot
-      external xertst, machsfr, sfill, b2ssum, b2saxpy,
-     1 sdot
+     *   machsfr, b2ssum, expu2, hy1
+      external xertst, machsfr, sfill, b2ssum, b2saxpy
       external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz, expu2                 !sv 18.01.02
 *     (expu2 is the exponential function with underflow set to 0 and
 *     large values limited at a somehwat arbitrary level.)
