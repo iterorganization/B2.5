@@ -31,22 +31,18 @@ c
       data first /.true./
 c
       if(first) then
-#ifdef NO_GETENV
         solpstop=' '
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
         call get_environment_variable('SOLPSTOP',
      .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('SOLPSTOP',value=solpstop)
-        elseif (ierror.eq.1) then
-          solpstop=' '
-        endif
+        if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     .   value=solpstop)
 #endif
 #endif
-        if(solpstop.eq.' ') then
+        if(streql(solpstop,' ')) then
           write(*,'(a)') 'open_file: no SOLPSTOP set '
         else
           write(*,'(a,a)') 'open_file: SOLPSTOP = : ',
@@ -138,19 +134,15 @@ c
       data first /.true./
 c
       if(first) then
-#ifdef NO_GETENV
         solpstop=' '
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
         call get_environment_variable('SOLPSTOP',
      .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('SOLPSTOP',value=solpstop)
-        elseif (ierror.eq.1) then
-          solpstop=' '
-        endif
+        if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     .   value=solpstop)
 #endif
 #endif
         first=.false.
