@@ -2201,11 +2201,10 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       SAVE       ADASID
 C-----------------------------------------------------------------------
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -2214,23 +2213,15 @@ C-----------------------------------------------------------------------
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 CA GET THE VALUE OF ADASCENT WHICH SETS UP TOPLEVEL DATA DIRECTORY.
-#ifdef NO_GETENV
       env=' '
-#else
-#ifdef NAGFOR
-        call get_environment_variable('ADASCENT',
-     .   status=ierror, length=lenval)
-        if (ierror.eq.0) then
-          call get_environment_variable('ADASCENT',value=env)
-        elseif (ierror.eq.1) then
-          env=' '
-        endif
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('ADASCENT', 0, ENV, lenval, ierror)
 #else
-      call getenv ('ADASCENT', ENV)
-#endif
+      call get_environment_variable('ADASCENT',
+     .   status=ierror, length=lenval)
+      if (ierror.eq.0)
+     . call get_environment_variable('ADASCENT', value=env)
 #endif
 #endif
       DEFUID = ENV

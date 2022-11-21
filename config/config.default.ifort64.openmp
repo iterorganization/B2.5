@@ -12,8 +12,8 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
-DEFINES += -DGRREAL=4 -DDOFLUSH # -DNO_CDF
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+# DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
 ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)

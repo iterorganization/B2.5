@@ -113,7 +113,7 @@ IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
 endif
 endif
 
-DEFINES += `pkg-config netcdf-fortran --cflags`
+INCMODS += `pkg-config netcdf-fortran --cflags`
 
 LD_UAL += -lxml2 -lstdc++
 

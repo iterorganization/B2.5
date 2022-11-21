@@ -242,11 +242,10 @@ c
      5     sput_frac_flag, use_eirene, ismain0, drift_style
 
 c
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -331,23 +330,15 @@ c
      1 natm,nmol,nion,nlimps)
       allocate(mach(-1:nxd,-1:nyd,
      *     0:max(1,nsd_local,ns_ext,natm,nmol,nion)-1))
-#ifdef NO_GETENV
       solpstop=' '
-#else
-#ifdef NAGFOR
-      call get_environment_variable('SOLPSTOP',
-     . status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('SOLPSTOP',value=solpstop)
-      elseif (ierror.eq.1) then
-        solpstop=' '
-      endif
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-      call getenv ('SOLPSTOP', solpstop)
-#endif
+      call get_environment_variable('SOLPSTOP',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) call get_environment_variable('SOLPSTOP',
+     . value=solpstop)
 #endif
 #endif
       textan=''

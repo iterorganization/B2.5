@@ -7,11 +7,10 @@
       use f90_unix           ! IGNORE
 #endif
       implicit none
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
       character*256 solpstop, save_solpstop
@@ -23,21 +22,17 @@
 #ifdef NO_GETENV
         save_solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps/solps-iter'
 #else
-#ifdef NAGFOR
+#ifdef USE_PXFGETENV
+        CALL PXFGETENV ('SOLPSTOP', 0, save_solpstop, lenval, ierror)
+#else
         call get_environment_variable('SOLPSTOP',
      .   status=ierror, length=lenval)
         if (ierror.eq.0) then
-          call get_environment_variable('SOLPSTOP',value=save_solpstop)
+          call get_environment_variable('SOLPSTOP', value=save_solpstop)
         elseif (ierror.eq.1) then
           save_solpstop=
      .     '/afs/ipp-garching.mpg.de/u/dpc/solps/solps-iter'
         endif
-#else
-#ifdef USE_PXFGETENV
-        CALL PXFGETENV ('SOLPSTOP', 0, save_solpstop, lenval, ierror)
-#else
-        call getenv ('SOLPSTOP', save_solpstop)
-#endif
 #endif
 #endif
         write(*,*) 'SOLPSTOP = : ',trim(save_solpstop)

@@ -68,11 +68,10 @@
 *   ..common blocks
 
 *   ..local variables
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
       integer ninp(0:5), nout(0:7), ns0, idum(0:9), io
@@ -387,7 +386,10 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 #ifdef NO_GETENV
       todo=.true.
 #else
-#ifdef NAGFOR
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
+      if (ierror.ne.0) b2fstate_only='no'
+#else
       call get_environment_variable('B2FSTATE_ONLY',
      . status=ierror, length=lenval)
       if (ierror.eq.0) then
@@ -396,12 +398,6 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
       elseif (ierror.eq.1) then
         b2fstate_only='no'
       endif
-#else
-#ifdef USE_PXFGETENV
-      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
-#else
-      call getenv ('B2FSTATE_ONLY', b2fstate_only)
-#endif
 #endif
       todo=.not.streql(b2fstate_only,'yes')
 #endif
