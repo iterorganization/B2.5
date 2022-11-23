@@ -5,7 +5,7 @@ MSCL_ROOT ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/mscl
 GLI_HOME ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR ?= ${NAG_HOME}
 NCDIR ?= /cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary
-MPDIR ?= ${INTELMPI_HOME}
+MPDIR ?= ${OPENMPI_HOME}
 
 LD_MDSPLUS ?= -L${MDSPLUS_DIR}/lib -lMdsLib_client
 LD_NETCDF ?= `pkg-config netcdf-fortran --libs` -Wl,-rpath,/cineca/prod/opt/libraries/netcdff/4.4.4/intel--pe-xe-2017--binary/lib
@@ -19,7 +19,7 @@ DEFINES += -DNO_OPT
 CPP = /lib/cpp -traditional
 
 ifdef USE_MPI
-FC = mpif90
+FC = mpifort
 else
 FC = gfortran
 endif
