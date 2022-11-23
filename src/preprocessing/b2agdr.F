@@ -133,16 +133,16 @@
 *     Description of some local variables (including arrays in w(0:*):
 *
 *     vxX, vxY - (1:nVx) real*8 array.
-*     vxX(iVx) specify the horizontal coordinates and vxY(iVx) 
+*     vxX(iVx) specify the horizontal coordinate and vxY(iVx) 
 *     specify the vertical coordinates (in the physical plane) of 
 *     the vertex with number iVx.
 *
 *     vxFpsi - (1:nVx) real*8 array.
 *     vxFpsi(iVx) specifies the potential for the magnetic field 
-*      components (bx,by) of the vertex with number iVx.
+*     components (bx,by) of the vertex with number iVx.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
-*       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
+*     bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
 *     where R is the distance to the axis of symmetry.)
 *
 *     vxFfbz - (1:nVx) real*8 array.
@@ -151,6 +151,10 @@
 *     (In the case of straight symmetry, bz=ffbz. In the case of
 *     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
 *     the distance to the axis of symmetry.)
+*
+*     cvX, cvY - (1:nCv) real*8 array.
+*     cvX(iCv) specifies the x-coordinate and cvY(iCv) specifies
+*     the y-coordinate in the physical plane of the cell iCv.
 *
 *     cvBb - (1:nCv,0:3) real*8 array.
 *     cvBb(iCv,0:3) specifies the magnetic field at the center of 
@@ -166,43 +170,21 @@
 *     symmetry it includes a factor 2*pi*cvY.)
 *     It will hold that 0.lt.cvVol(,).
 *
-*     cvHx, hy - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-*     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
-*
-*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
-*     specify the average width and height, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
-*
-*     qz - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-*     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-*     between the x-direction and the y-direction on the (ix,iy) cell.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-*     vectors.)
-*     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
-*
 *     fcQgam - (1:nFc,0:1) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
-*     It will hold that 0.lt.qc(,).le.1.
+*     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and 
+*     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+*     between the the cell-connector vector and the normal vector
+*     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 *
-*     fcQalf - (-1:nx,-1:ny,0:2) real*8 array.
-*     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-*     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-*     gsx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-*     gsy(-1:nx,iy) will hold 0.
-*     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-*     (ix,iy) cell normal to the third (ignorable) coordinate.
+*     fcQalf - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+*     fcQalf(iFc,1) specifies sin(t), where t is the include angle
+*     between the magnetic field vector and the face normal.
+*
+*     fcQbet - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+*     fcQbet(iFc,1) specifies sin(t), where t is the include angle
+*     between the cell-connector and the magnetic field vector.
 *
 *     fcPbs - (1:nFc) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
@@ -210,7 +192,6 @@
 *     field pitch)*(surface area), namely the parallel contact area, 
 *     on the (ix,iy) cell left and bottom faces respectively.  
 *     See routine b2xgbs for the form of interpolation employed.
-*
 *
 *     lblgm - character*120.
 *     lblgm identifies the instance of the program employed to prepare
@@ -286,7 +267,6 @@
 
 *   ..for artificial_slab, correct the connectivity for the cuts
        if (artificial_slab.eq.1) then
-        !set_connectivity_us
         call set_connectivity_us(g,m)
        endif
 

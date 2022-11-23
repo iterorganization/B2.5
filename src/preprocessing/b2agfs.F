@@ -153,7 +153,6 @@
       call ipgeti ('b2agfs_intcellP_new' , intcellP_new)
       call xertst (intcellP_new.eq.0 .or. intcellP_new.eq.1,
      &  'faulty argument intcellP_new')      
-      !Look for guard cell rescale
 
 
       ! Read in grid input file (as typically produced by traduit)
@@ -619,11 +618,11 @@ cxpb  if just below the top corner, make the corner cell follow
            call read_traduitoutb2us(lun,nnCv,nnFc,nnVx,nnFs,nnFt,g,m,
      1      cvBp,cvBt,cvFpsi)
 
-
+!      .. Create the guard cells
            call create_guard_cells
      1         (nnCv,nnFc,nnVx,g,m)
 
-!     .. Construct additional connectivity data 
+!     .. Construct additional connectivity data (fcCv, vxCv, vxFc)
            call calc_add_connectivity(g,m)
 
 !     .. Order the vertices and faces as rightturning
