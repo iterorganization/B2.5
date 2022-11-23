@@ -102,7 +102,8 @@
         type(mapping) :: m
         type(geometry) :: g
         integer :: iFc, cells(1:2), faces3(0:2), faces4_1(0:3), 
-     &             faces4_2(0:3), i1, i2, i, faces5(0:4)
+     &             faces4_2(0:3), i1, i2, i, faces5(0:4),
+     &             faces3_1(0:2), faces3_2(0:2)
         real(kind=R8) :: tol, cvFpsi(m%nCv)
 
 
@@ -240,7 +241,26 @@
                enddo
                if (i2.eq.1) then
                  isPoloidal = 1
-               endif 
+               endif
+            ! two trias   
+            elseif  ((m%cvFcP(cells(1),2).eq.3) .and.
+     &           (m%cvFcP(cells(2),2).eq.3)) then
+                  faces3_1 = 
+     &         m%cvFc(m%cvFcP(cells(1),1):m%cvFcP(cells(1),1)+3-1)
+                  faces3_2 = 
+     &         m%cvFc(m%cvFcP(cells(2),1):m%cvFcP(cells(2),1)+3-1)
+               do i = 0,2
+                 if (isAligned(faces3_1(i),m,g,tol)) then
+                    i1 = i1 + 1
+                 endif   
+                 if (isAligned(faces3_2(i),m,g,tol)) then
+                    i2 = i2 + 1
+                 endif               
+               enddo
+               if ((i1.eq.1).and.(i2.eq.1)) then
+                 isPoloidal = 1
+               endif
+             
             !pent + quad   
             !elseif ((m%cvFcP(cells(1),2).eq.4) .and.
             !&           (m%cvFcP(cells(2),2).eq.5)) then 
