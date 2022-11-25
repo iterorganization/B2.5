@@ -31,7 +31,8 @@
       public :: calc_mapping,
      .          prep_geometry,
      .          prep_plasma, prep_plasma_ext, prep_state,
-     .          to_struct_plasma
+     .          to_struct_plasma,
+     .          conv_regions, conv_midplane                             !srv 16.11.22
 
       contains
 
@@ -2026,7 +2027,8 @@
      .              ' for non-structured grids'
       endif
 
-
+!     Create b2.user.parameters file with definition outer/inner midplanes
+      call conv_midplane(nx,ny)
 
       deallocate (icorner)
       deallocate (ighostcv)
@@ -4412,6 +4414,136 @@
         close (iout)
 
       end subroutine conv_regions
+
+
+******************************************************************************
+
+      
+      subroutine conv_midplane(nx,ny)                                   !srv 16.11.22 {
+        integer :: nx, ny
+        real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
+        real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
+        integer :: ix, iout, n_omp, n_imp
+        
+        ! This subroutine calculates arrays rzomp and rzimp with the R-Z coordinates  
+        ! of two points laying on the straight line going throudh all
+        ! radial outer and inner midlane cells
+        ! Writes the coordinates into b2.user.parameters
+        
+*   ..find the poloidal number of outer midplane cell as a number of cell with min Bz
+        
+        if(nncut.eq.2) then
+          n_omp = rightcut(nncut)
+          do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
+            if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
+          enddo
+        elseif(nncut.eq.1) then
+          n_omp = leftcut(nncut)
+          do ix = leftcut(nncut)+1, rightcut(nncut)-1
+            if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
+          enddo
+        else
+          write(*,*) ' conv_midplane: nncut = ', nncut
+          n_omp = (nx+2)/2
+          do ix = -1, nx
+            if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
+          enddo
+        endif
+        ro(1)=0.25_R8*(crx(n_omp,-1,0)+crx(n_omp,-1,1)+ ! R-coordinate of center of [n_omp,-1] cell
+     &                 crx(n_omp,-1,2)+crx(n_omp,-1,3))
+        zo(1)=0.25_R8*(cry(n_omp,-1,0)+cry(n_omp,-1,1)+ ! Z-coordinate of center of [n_omp,-1] cell
+     &                 cry(n_omp,-1,2)+cry(n_omp,-1,3))
+        ro(2)=0.25_R8*(crx(n_omp,ny,0)+crx(n_omp,ny,1)+ ! R-coordinate of center of [n_omp,ny] cell
+     &                 crx(n_omp,ny,2)+crx(n_omp,ny,3))
+        zo(2)=0.25_R8*(cry(n_omp,ny,0)+cry(n_omp,ny,1)+ ! Z-coordinate of center of [n_omp,ny] cell
+     &                 cry(n_omp,ny,2)+cry(n_omp,ny,3))
+        if(ro(2).ne.ro(1)) then
+         rzomp(1,1)=ro(1)*0.9_R8                                         ! take the coordinate lefter than ro(1) 
+         rzomp(2,1)=zo(1)+(rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1)) ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
+                                                                         ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+         rzomp(1,2)=ro(2)*1.1_R8                                         ! take the coordinate righter than ro(2)
+         rzomp(2,2)=zo(1)+(rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1)) ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
+                                                                         ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+        else
+          call xerrab('conv_midplane: unexpected coordinates for rzomp')
+        endif
+
+*   ..find the poloidal number of inner midplane cell as a number of cell with max Bz
+        
+        if(nncut.eq.2) then
+          n_imp = leftcut(nncut)
+          do ix = leftcut(nncut-1)+1, leftcut(nncut)-1
+            if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
+          enddo
+        elseif(nncut.eq.1) then
+          n_imp = leftcut(nncut)
+          do ix = leftcut(nncut)+1, rightcut(nncut)-1
+            if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
+          enddo
+        else
+          write(*,*) ' conv_midplane: nncut = ', nncut
+          n_imp = (nx+2)/2
+          do ix = -1, nx
+            if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
+          enddo
+        endif
+        
+        ri(1)=0.25_R8*(crx(n_imp,ny,0)+crx(n_imp,ny,1)+ ! R-coordinate of center of [n_imp,ny] cell
+     &                 crx(n_imp,ny,2)+crx(n_imp,ny,3))
+        zi(1)=0.25_R8*(cry(n_imp,ny,0)+cry(n_imp,ny,1)+ ! Z-coordinate of center of [n_imp,ny] cell
+     &                 cry(n_imp,ny,2)+cry(n_imp,ny,3))
+        ri(2)=0.25_R8*(crx(n_imp,-1,0)+crx(n_imp,-1,1)+ ! R-coordinate of center of [n_imp,-1] cell
+     &                 crx(n_imp,-1,2)+crx(n_imp,-1,3))
+        zi(2)=0.25_R8*(cry(n_imp,-1,0)+cry(n_imp,-1,1)+ ! Z-coordinate of center of [n_imp,-1] cell
+     &                 cry(n_imp,-1,2)+cry(n_imp,-1,3))
+        
+        if(ri(2).ne.ri(1)) then
+         rzimp(1,1)=ri(1)*0.9_R8                                         ! take the coordinate lefter than ri(1) 
+         rzimp(2,1)=zi(1)+(rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1)) ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
+                                                                         ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+         rzimp(1,2)=ri(2)*1.1_R8                                         ! take the coordinate righter than ri(2)
+         rzimp(2,2)=zi(1)+(rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1)) ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
+                                                                         ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+        else
+          call xerrab('conv_midplane: unexpected coordinates for rzinn')
+        endif
+
+        iout = 70
+        
+#ifdef F2003
+        open(newunit=iout,file='info.dat')
+#else
+        open(unit=iout,file='info.dat')
+#endif
+        write(iout,"(' Number of outer midplane cell =',i4)") n_omp
+        write(iout,"(' Ro1 = ',f6.2,' Zo1 = ',f6.2)") ro(1), zo(1)
+        write(iout,"(' Ro2 = ',f6.2,' Zo2 = ',f6.2)") ro(2), zo(2)
+        write(iout,"(' Number of inner midplane cell =',i4)") n_imp
+        write(iout,"(' Ri1 = ',f6.2,' Zi1 = ',f6.2)") ri(1), zi(1)
+        write(iout,"(' Ri2 = ',f6.2,' Zi2 = ',f6.2)") ri(2), zi(2)
+        close(iout)
+#ifdef F2003
+        open(newunit=iout,file='b2us.user.parameters')
+#else
+        open(unit=iout,file='b2us.user.parameters')
+#endif
+        write(iout,"(a)") '&user'      
+        write(iout,"('rzomp(1,1) = ',f8.2,',')") rzomp(1,1)
+        write(iout,"('rzomp(2,1) = ',f8.2,',')") rzomp(2,1)
+        write(iout,"('rzomp(1,2) = ',f8.2,',')") rzomp(1,2)
+        write(iout,"('rzomp(2,2) = ',f8.2,',')") rzomp(2,2)
+        write(iout,"('rzimp(1,1) = ',f8.2,',')") rzimp(1,1)
+        write(iout,"('rzimp(2,1) = ',f8.2,',')") rzimp(2,1)
+        write(iout,"('rzimp(1,2) = ',f8.2,',')") rzimp(1,2)
+        write(iout,"('rzimp(2,2) = ',f8.2,',')") rzimp(2,2)
+        write(iout,"(a)") '/'      
+        close (iout)
+        
+      
+      end subroutine conv_midplane                                       !srv 16.11.22 }
+
+******************************************************************************
+
 
       end module b2us_prep
 
