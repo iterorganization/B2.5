@@ -18,6 +18,8 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_user_namelist
+     , , only : nomp, omp, icsepomp, nimp, imp, icsepimp
 #ifdef WG_DEBUG
       use b2us_debug
 #endif
@@ -161,6 +163,7 @@
         iout_iout_ASTRA = 0
       endif
 
+#ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then
 
 *      ..find the number of the last closed surface in CORE
@@ -211,7 +214,7 @@
           endif
          enddo
       endif
-
+#endif
 
       if (iout.eq.1) then                                          !srv begin if for iout
 *    .. iout = 1 for outputting plasma state files
@@ -310,26 +313,13 @@
           ! sort faces into continuous surface
           call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
-!        write (*,*) 'Inner target faces, nRFc = ', nRFc, 
-!     &   ', indices = ', regFaces(1:nRFC)
+!          write (*,*) 'Inner target faces, nRFc = ', nRFc, 
+!     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along inner target
-          iRFc = 1
-          iFcp = regFaces(iRFc)
-          clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
-          do iRFc = 2, nRFc
-           iFc = regFaces(iRFc)
-           clength_s(iRFc) = clength_s(iRFc-1) +
-     &        0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
-           iFcp = iFc
-          enddo 
-      
-          shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
-        
-!        shift =(clength_r(ilast_closed_surface+2)+         ! shift +2 because of numbering which was from -1 to ny
-!     &          clength_r(ilast_closed_surface+3))/2.0_R8  ! to shift coordinate
+          call calc_dist_f(mpg,geo,regFaces,nRFc,0,clength_s)
 
-        ! write properties along inner target
+         ! write properties along inner target
           do iRFc = 1, nRFc
            iFc  = regFaces(iRFc)
            iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
@@ -349,8 +339,8 @@
 
           ! identify face region number of outer target
           iReg = 0
-          if (maxval(mpg%cvReg).eq.1) iReg = 2 ! limiter case
-          if (maxval(mpg%cvReg).gt.1) iReg = 4 ! SN case
+          if (maxval(mpg%cvReg).eq.2) iReg = 2 ! limiter case
+          if (maxval(mpg%cvReg).gt.2) iReg = 4 ! SN case
           if (maxval(mpg%cvReg).gt.5) iReg = 8 ! DN case
           if (iReg.eq.0) call xerrab('Problem identifying outer target')
 
@@ -363,23 +353,11 @@
           ! sort faces into continuous surface
           call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
-!        write (*,*) 'Outer target faces, nRFc = ', nRFc, 
-!     &   ', indices = ', regFaces(1:nRFC)
+!          write (*,*) 'Outer target faces, nRFc = ', nRFc, 
+!     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along outer target
-          iRFc = 1
-          iFcp = regFaces(iRFc)
-          clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
-          do iRFc = 2, nRFc
-           iFc = regFaces(iRFc)
-           clength_s(iRFc) = clength_s(iRFc-1) +
-     &        0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
-           iFcp = iFc
-          enddo 
-      
-          shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
-!        shift =(clength_r(ilast_closed_surface+2)+         ! shift +2 because of numbering which was from -1 to ny
-!     &          clength_r(ilast_closed_surface+3))/2.0_R8  ! to shift coordinate
+          call calc_dist_f(mpg,geo,regFaces,nRFc,0,clength_s)
 
           ! write properties along outer target
           do iRFc = 1, nRFc
@@ -396,51 +374,36 @@
           deallocate (regFaces)
           close(70)
 
+          !! OUTER MIPLANE
           open(70,file=trim(folder)//'midpln.dat')
-          ix = nmdpl
-          ncells = 0
-          do iy = -1, ny
-           if(mpg%imapCv(ix,iy) /= 0) then
-              ncells = ncells + 1
-           endif
-          enddo
-
-          allocate (clength_r(1:ncells))
-          first = .true.
-          icell = 1
-          do iy = -1, ny
-           if(mpg%imapCv(ix,iy) /= 0) then
-            if (first) then
-              clength_r(icell) = 0.0_R8
-              iCvp = mpg%imapCv(ix,iy)
-              first = .false.
-              icell = icell + 1
-            else
-              iCv = mpg%imapCv(ix,iy)
-              clength_r(icell)=clength_r(icell-1) +
-     &         sqrt((geo%cvX(iCv)-geo%cvX(iCvp))**2 +
-     &              (geo%cvY(iCv)-geo%cvY(iCvp))**2)
-              icell = icell + 1
-              iCvp  = iCv
-            endif  
-           endif
-          enddo
-      
-          shift =(clength_r(n_closed_surface) +
-     &          clength_r(n_closed_surface+1))/2.0_R8  ! to shift coordinate
+          allocate (clength_r(1:nomp))
+          call calc_dist(mpg,geo,omp,nomp,icsepomp,clength_r)
 
           icell = 1
-          do iy = -1, ny
-           if(mpg%imapCv(ix,iy) /= 0) then
-            iCv1=mpg%imapCv(ix,iy)
+          do icell = 1, nomp
+            iCv = omp(icell)
             write(70,"(4es14.6)") clength_r(icell)-shift,
-     &            state%dv%ne(iCv1), state%pl%te(iCv1)/ev, 
-     &            state%pl%ti(iCv1)/ev
-            icell = icell + 1
-           endif
+     &            state%dv%ne(iCv), state%pl%te(iCv)/ev, 
+     &            state%pl%ti(iCv)/ev
           enddo
           deallocate (clength_r)
           close(70)
+
+          !! INNER MIPLANE
+          open(70,file=trim(folder)//'midpln_i.dat')
+          allocate (clength_r(1:nimp))
+          call calc_dist(mpg,geo,imp,nimp,icsepimp,clength_r)
+
+          icell = 1
+          do icell = 1, nimp
+            iCv = imp(icell)
+            write(70,"(4es14.6)") clength_r(icell)-shift,
+     &            state%dv%ne(iCv), state%pl%te(iCv)/ev, 
+     &            state%pl%ti(iCv)/ev
+          enddo
+          deallocate (clength_r)
+          close(70)
+
         endif   
       endif                                                             !srv   end for iout=2   
       
