@@ -23,9 +23,7 @@ c
 
 *  -- PROCEDURES --
       INTRINSIC MOD, cpu_time
-      real (kind=R8) ::
-     *   b2sasum
-      EXTERNAL XERRAB, b2sasum
+      EXTERNAL XERRAB
 
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
       integer       ::  path                                          !sv 29.05.02

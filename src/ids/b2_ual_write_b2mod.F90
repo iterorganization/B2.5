@@ -284,8 +284,11 @@ program b2_ual_write_b2mod
 
     implicit none
 #ifndef NO_GETENV
-    integer lenval, ierror
     character(len=24) :: device_env
+    integer lenval, ierror
+#ifndef USE_PXFGETENV
+    intrinsic get_environment_variable
+#endif
 #endif
 
     !! Local variables
@@ -321,19 +324,22 @@ program b2_ual_write_b2mod
     !! Set default value for IMAS major version and number of steps
     num_step = -1
     status = 0
-    version = "3"
+    write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
     username = usrnam()
     database = 'solps-iter'
-#ifndef NO_GETENV
+#ifdef NO_GETENV
+    write(imas_version,'(i1,a1,i2,a2)') IMAS_MAJOR_VERSION,'.', &
+                                      & IMAS_MINOR_VERSION,'.0'
+#else
     device_env = ' '
 #ifdef USE_PXFGETENV
     CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
 #else
-    call get_environment_variable ('DEVICE', status=ierror, length=lenval)
+    call get_environment_variable('DEVICE', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('DEVICE', value=device_env)
-    call get_environment_variable ('IMAS_VERSION', status=ierror, length=lenval)
+    call get_environment_variable('IMAS_VERSION', status=ierror, length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
     if (.not.streql(device_env,' ')) database = device_env

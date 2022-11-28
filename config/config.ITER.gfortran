@@ -8,7 +8,7 @@ LD_NAG    ?= `pkg-config openblas --libs`
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 
-DEFINES += -DDOFLUSH -DNO_OPT
+DEFINES += -DNO_OPT
 ifndef SOLPS_CPP
 DEFINES += -DNO_NAG -DNO_21
 endif
