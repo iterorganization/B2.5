@@ -48,9 +48,7 @@
      *  navi, movi, mtvi, nevi, prvi, prvn, t0, t1, t2, t3, t4
 *   ..procedures
       intrinsic sqrt, abs
-      real (kind=R8) ::
-     *  b2sasum
-      external xertst, b2sasum
+      external xertst
 *   ..initialisation
 
 *-----------------------------------------------------------------------

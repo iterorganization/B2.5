@@ -36,7 +36,7 @@
       integer iVx
       real (kind=R8) ::
      *   ft, dloghz(nFc,0:1), logCvHz(nCv), logVxHz(nVx)                !srv 16.10.17
-      external xertst, b2scopy
+      external xertst
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
 

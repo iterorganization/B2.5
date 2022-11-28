@@ -46,8 +46,7 @@ endif
   FCOPTS = -i4 -O
  endif
  ifeq ($(realkind),8)
-  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal \
-   -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+  EQUIVS = -Dsdot=ddot -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
   FCOPTS = -i4 -O
  endif
  FC = f77

@@ -70,11 +70,10 @@
 !      type(switches), save   :: switch
 
 *   ..local variables
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
-#ifdef NAGFOR
-      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
 #endif
 #endif
       integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
@@ -93,12 +92,13 @@
       real (kind=R8) :: dtim = 1.0_R8
 #endif
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
-#ifdef B25_EIRENE
 #ifdef WG_TODO
       character filename*256
+      character b2fstate_only*256
+#ifdef B25_EIRENE
       character extension*4
-      logical file_exists
 #endif
+      logical file_exists, todo
       integer lnblnk
       external lnblnk
 #endif
@@ -372,9 +372,27 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call b2filec(0,ns,nnreg(0))
       end if
 *   ..rewrite NetCDF files
+#ifdef NO_GETENV
+      todo=.true.
+#else
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
+      if (ierror.ne.0) b2fstate_only='no'
+#else
+      call get_environment_variable('B2FSTATE_ONLY',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('B2FSTATE_ONLY',
+     .                           value=b2fstate_only)
+      elseif (ierror.eq.1) then
+        b2fstate_only='no'
+      endif
+#endif
+      todo=.not.streql(b2fstate_only,'yes')
+#endif
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (b2time.gt.0 .or. ntim_batch.gt.0) then
+      if (todo.and.b2time.gt.0) then
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -386,8 +404,20 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
      .               'no b2time.nc file found'
         end if
       end if
+      if (todo.and.ntim_batch.gt.0) then
+        filename='b2batch.nc'
+        call find_file(filename,file_exists)
+        if(file_exists) then
+          write(*,*) 'Truncating ', trim(filename)
+          call b2co_time_cdf(nx, ny, ns, tim)
+          write(*,*) 'Returned from b2co_time_cdf'
+        else
+          write(*,*) 'Skipped calling b2co_time_cdf because '//
+     .               'no b2batch.nc file found'
+        end if
+      end if
       call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
-      if (b2wall_netcdf.gt.0) then
+      if (todo.and.b2wall_netcdf.gt.0) then
         filename='b2wall.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -400,7 +430,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       call ipgeti ('b2mndr_tally', tally)
-      if (tally.gt.0) then
+      if (todo.and.tally.gt.0) then
         filename='b2tallies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -413,7 +443,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       call ipgeti ('b2mndr_mvnum', mvnum)
-      if (mvnum.gt.0) then
+      if (todo.and.mvnum.gt.0) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
