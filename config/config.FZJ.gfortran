@@ -12,8 +12,6 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-DEFINES += -DDOFLUSH
-
 CPP = /lib/cpp -traditional -ffreestanding
 
 FC = gfortran

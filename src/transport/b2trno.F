@@ -101,7 +101,7 @@
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
-      external xertst, sfill, smin, smax, b2scopy
+      external xertst, sfill, smin, smax
       external ipgetr, ipgeti
       external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
 *   ..initialisation

@@ -610,6 +610,7 @@ c
      6 wbbc(0:nx+2,0:ny+2,0:3)
       character*(*) local_sonnet
 
+      logical no_flux_data            ! IYS 21.02.2020
       ! nnx, nny: dimension of the grid as read from the file
       ! nx, ny: dimension of the grid as used by B2
       ! NOTE: the nx, ny here corresponds to nx1, ny1 in b2agfs
@@ -617,13 +618,13 @@ c
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
 #ifndef NO_GETENV
-#ifndef USE_PXFGETENV
-      integer lenval, ierror
-      intrinsic get_environment_variable
-#endif
       character*12 device_env
       logical streql
       external streql
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
@@ -639,6 +640,7 @@ c
       character*16 usrnam
       external xertst, open_file, usrnam
       intrinsic index, sqrt
+      real (kind=R8) :: t0
 
       data new_format/1/
       data format_string/
@@ -671,7 +673,7 @@ c
       call get_environment_variable('DEVICE',
      . status=ierror, length=lenval)
       if (ierror.eq.0)
-     > call get_environment_variable('DEVICE',value=device_env)
+     > call get_environment_variable('DEVICE', value=device_env)
 #endif
       if (.not.streql(device_env,' ')) device = device_env
 #endif
@@ -751,6 +753,24 @@ c
 
           end if
           close(lun)
+! If the toroidal flux function is not provided, compute it
+          if (maxval(ffbz).eq.0.0_R8 .and. minval(ffbz).eq.0.0_R8) then
+            if (isymm.eq.1 .or. isymm.eq.3) then
+              write(*,*) 'Toroidal flux function missing!'
+              write(*,*) 'Trying to fix this automatically'
+            end if
+            t0 = 0.0_R8
+            do iy=0,ny+1
+              do ix=0,nx+1
+                if (isymm.eq.1) then
+                  t0 = t0 + bt(ix,iy) * crxs(ix,iy,4)
+                else if (isymm.eq.3) then
+                  t0 = t0 + bt(ix,iy) * crys(ix,iy,4)
+                end if
+              end do
+            end do
+            ffbz = 2.0_R8 * pi * t0 / (nx + 2) / (ny + 2)
+          endif
         else
           call xerrab('Error in reading geometry file')
         endif
@@ -895,7 +915,38 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             call xerrab
      .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
+          psi=0.0_R8
+          ffbz=0.0_R8
+
+!          write(*,*) "Somebody has filled ffbz with zeroes"
+!          write(*,*) " ... and is going to read it from some file again"
+
+! IYS 21.02.2020
+! I could not find a solution without 'GOTO' here
+! Sorry for that ...
+          read(lun,'(a)',end=210,err=210) uline
+          no_flux_data = .FALSE.
+          GOTO 211    ! Wenn es meine Wille gaebe...
+  210     no_flux_data = .TRUE.
+  211     if (no_flux_data) then
+            if (isymm.eq.1.or.isymm.eq.3) then
+              ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+              write(*,*) "No flux data is found the 'old' format file"
+              write(*,*) "Trying to recover ffbz using Rtor*Btor"
+            endif
+          else
+            backspace (lun)
+            do iy=0,nny-1
+              do ix=0,nnx-1
+                read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1                  crxs(ix,iy,0),crys(ix,iy,0),
+     1                  (psi(ix,iy,i,0),i=1,4),
+     $                  (ffbz(ix,iy,i),i=0,3)
+              enddo
+            enddo
+          endif
           close(lun)
+! IYS 21.02.2020
         else
           call xerrab('Error in reading geometry file')
         endif

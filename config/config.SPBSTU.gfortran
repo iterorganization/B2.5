@@ -27,7 +27,7 @@ LD_MSCL ?= -L${MSCL_ROOT} -lmscl
 LD_NAG ?= -L${NAG_LIB} -lnag_nag -lnag_mkl
 LD_MPI ?= -L${MPDIR}/lib64 -lmpi -lmpigf
 
-DEFINES += -DDOFLUSH -DNO_OPT
+DEFINES += -DNO_OPT
 
 CPP = /lib/cpp -traditional
 
