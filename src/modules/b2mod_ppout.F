@@ -1260,8 +1260,8 @@ c=======================================================================
 
       integer nwrite
 #ifndef NO_GETENV
-#ifndef USE_PXFGETENV
       integer lenval, ierror
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
 #endif
 #endif
@@ -1277,32 +1277,32 @@ c     ------------------------------------------------------------------
 
       character*7  grpsolps,locsolps
       character*16 version
+      logical streql
+      external streql
 
-#ifdef NO_GETENV
       grpsolps=' '
       locsolps=' '
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('GRPSOLPS', 0, grpsolps, lenval, ierror)
       CALL PXFGETENV ('LOCSOLPS', 0, locsolps, lenval, ierror)
 #else
       call get_environment_variable('GRPSOLPS',
      .   status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('GRPSOLPS',value=grpsolps)
-      elseif (ierror.eq.1) then
-        grpsolps=' '
-      endif
+      if (ierror.eq.0) call get_environment_variable('GRPSOLPS',
+     .   value=grpsolps)
       call get_environment_variable('LOCSOLPS',
      .   status=ierror, length=lenval)
-      if (ierror.eq.0) then
-        call get_environment_variable('LOCSOLPS',value=locsolps)
-      elseif (ierror.eq.1) then
-        locsolps=' '
+      if (ierror.eq.0) call get_environment_variable('LOCSOLPS',
+     .   value=locsolps)
+#endif
+#endif
+      if (.not.streql(grpsolps,' ').and.
+     &    .not.streql(locsolps,' ')) then
+        version = grpsolps//'_'//locsolps
+      else
+        version = ' '
       endif
-#endif
-#endif
-      version = grpsolps//'_'//locsolps
 c
       call ppcstr(nwrite,'*')
       call ppcstr(nwrite,'*CODE VERSION')

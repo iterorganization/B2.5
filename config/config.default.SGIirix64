@@ -50,8 +50,7 @@ endif
   FCOPTS = -64 -O -r10000 -OPT:roundoff=2
  endif
  ifeq ($(realkind),8)
-  EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal \
-   -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+  EQUIVS = -Dsdot=ddot -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
   FCOPTS = -64 -i4 -O -r10000 -OPT:roundoff=2
  endif
  FC = f77
