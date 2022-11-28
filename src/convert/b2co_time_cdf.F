@@ -39,8 +39,6 @@
       character*32 hlp_frm
       character*256 filename, plasmastate, message
       logical :: exists
-      integer :: lnblnk
-      external lnblnk
 #endif
       external ipgeti, ipgetr, xerrab, xertst
 #endif
@@ -62,7 +60,7 @@
       call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,
      .                                        iyrstrt,iyrend,'dsr')
 #ifndef NO_CDF
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.
      .            ixtl.lt.nx)
@@ -89,8 +87,9 @@
       nyi  = iyiend  - iyistrt  + 1
       nc = max(nncut,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
-c access the b2time.nc file
+c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
+      if (batch_only) filename='b2batch.nc'
       call find_file(filename,exists)
       status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
@@ -205,25 +204,22 @@ c find the time and batch vector sizes
         end if
       end do
 
-c prepare the b2time.nc.xxxx file
-#ifdef NO_GETENV
+c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       extension='xxxx'
-#else
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('PLASMASTATE', 0, plasmastate, lenval, ierror)
+      if (ierror.eq.0) extension=plasmastate(lenval-3:lenval)
 #else
       call get_environment_variable('PLASMASTATE',
      . status=ierror, length=lenval)
       if (ierror.eq.0) then
-        call get_environment_variable('PLASMASTATE',value=plasmastate)
+        call get_environment_variable('PLASMASTATE', value=plasmastate)
         extension=plasmastate(lenval-3:lenval)
-      elseif (ierror.eq.1) then
-        extension='xxxx'
       endif
 #endif
-      extension=plasmastate(lnblnk(plasmastate)-3:lnblnk(plasmastate))
 #endif
-      filename='b2time.nc.'//extension
+      filename=trim(filename)//'.'//extension
       message = 'File '//trim(filename)//' already present! '//
      .          'Please remove first.'
       call find_file(filename,exists)
@@ -232,7 +228,7 @@ c prepare the b2time.nc.xxxx file
       call check_cdf_status(status)
       call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
      .                 nya, nyi, nc, ns, nbatch, write_2d, ncid2,
-     .                 .false., iret)
+     .                 batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 
