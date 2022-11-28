@@ -8,8 +8,8 @@
 #endif
       implicit none
 #ifndef NO_GETENV
-#ifndef USE_PXFGETENV
       integer lenval, ierror
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
 #endif
 #endif
@@ -28,7 +28,7 @@
         call get_environment_variable('SOLPSTOP',
      .   status=ierror, length=lenval)
         if (ierror.eq.0) then
-          call get_environment_variable('SOLPSTOP',value=save_solpstop)
+          call get_environment_variable('SOLPSTOP', value=save_solpstop)
         elseif (ierror.eq.1) then
           save_solpstop=
      .     '/afs/ipp-garching.mpg.de/u/dpc/solps/solps-iter'

@@ -44,7 +44,7 @@
       integer iFc
       character charns*3                                            !srv 17.06.02
 *   ..procedures
-      external xertst, ipgeti, ipgetr, b2scopy
+      external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg, hbout, intfaceh
 *   ..initialisation
 *!!   (style is a numerical switch; needs experiments)

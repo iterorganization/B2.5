@@ -34,16 +34,17 @@ c      call plinit()
 #else
       ncol=12
 #ifdef NCAR4
-      devenv='x11 ps'
+      devenv = 'x11 ps'
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
       CALL PXFGETENV ('B2PLOT_DEV', 0, devenv, lenval, ierror)
 #else
       call get_environment_variable('B2PLOT_DEV',
      . status=ierror, length=lenval)
-      if (ierror.eq.0)
-     > call get_environment_variable('B2PLOT_DEV',value=devenv)
+      if (ierror.eq.0) call get_environment_variable('B2PLOT_DEV',
+     . value=devenv)
 #endif
-      if (ierror.ne.0) devenv='x11 ps'
+#endif
       if(b2plot_debug.ge.8) write(*,*) 'devenv: ',trim(devenv)
       nwork=0
       call gopks(6,0)
