@@ -1329,7 +1329,6 @@
       imapVx  = m%imapVx
 #endif
 
-
 ! no. of faces and vertices to be considered for this cell; only consider all internal and boundary cells are either quadrilateral or triangle
       m%cvFcP(m%nCi+1:m%nCv,2) = 1
       m%cvVxP(m%nCi+1:m%nCv,2) = 2
@@ -1340,7 +1339,7 @@
      .        (m%imapCv(ix,iy) .le. m%nCi)) then
             xco = crx(ix,iy,0:3)
             yco = cry(ix,iy,0:3)
-            if(cellGeoType(xco,yco) == CGEO_QUAD)then
+            if(cellGeoType(xco,yco) == CGEO_QUAD) then
               m%cvFcP(m%imapCv(ix,iy),2) = 4
               m%cvVxP(m%imapCv(ix,iy),2) = 4
             else
@@ -1663,8 +1662,7 @@
         do ivx = m%cvVxP(ic,1),m%cvVxP(ic,1)+m%cvVxP(ic,2)-1
           if(m%cvVx(ivx) == 0) then
             write (*,*) 'ic, ivx = ', ic, ivx
-            write (*,*) 'ix, iy = ', findloc(m%imapCv,ic)
-            call xerrab ('Problem with mapping: undefined face')
+            call xerrab ('Problem with mapping: undefined vertex')
            endif
         enddo
       enddo
