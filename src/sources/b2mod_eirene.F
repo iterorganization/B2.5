@@ -431,22 +431,6 @@ csw 26feb2013
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
         if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
-        if(lhalpha) then
-          itmp=1
-        else
-          itmp=0
-        endif
-        call ipgeti('eirene_lhalpha',itmp)
-        lhalpha=itmp.ne.0
-        write(*,*) 'lhalpha = ',lhalpha
-        if(lvib) then
-          itmp=1
-        else
-          itmp=0
-        endif
-        call ipgeti('eirene_lvib',itmp)
-        lvib=itmp.ne.0
-        write(*,*) 'lvib = ',lvib
         call xertst(ank_mods.eq.0.or.switch%ionising_core.le.0,
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1

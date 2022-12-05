@@ -70,7 +70,6 @@ C
       integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi
       integer, allocatable :: isrftype(:)
       integer, allocatable :: lkindp(:), lkindm(:), lkindi(:)
-      logical lhalpha,lvib
 c
 c*** Volume data:
 c***	srcml	:   power loss due to molecules, including
