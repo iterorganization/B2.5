@@ -5,7 +5,7 @@
       use b2mod_plasma
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
 #endif

@@ -14,7 +14,7 @@
       use b2mod_external
       use b2mod_switches
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 
 c

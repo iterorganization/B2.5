@@ -41,7 +41,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff, 
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -191,9 +191,10 @@ c
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(nCv,nFc,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #else

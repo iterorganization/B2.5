@@ -18,7 +18,7 @@
       use b2mod_user_namelist
      & , only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
 #endif
       implicit none

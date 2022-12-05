@@ -315,11 +315,12 @@ c
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nxd,nyd,nsd_local,nstra)
 !pb  quick and dirty, to be cleaned up 

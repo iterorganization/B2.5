@@ -24,7 +24,7 @@ c
       use b2mod_neutrals_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cestim
       use eirmod_cinit
@@ -32,8 +32,6 @@ c
      , , only: eirene_alloc_comusr
       use eirmod_coutau
      , , only: eirene_alloc_coutau
-      use eirmod_braeir
-     .   , only : pux, puy, pvx, pvy
 #endif
       use b2mod_subsys
       implicit none

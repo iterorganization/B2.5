@@ -13,7 +13,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      .   , only : natm
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ccona
       use eirmod_cinit
 #else

@@ -31,12 +31,10 @@ c
 #ifdef B25_EIRENE
       use eirmod_parmmod
      *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_ctrig
       use eirmod_cinit
       use eirmod_cestim
-      use eirmod_braeir
-     :   , only : pux, puy, pvx, pvy
 #endif
       use b2mod_subsys
       implicit none

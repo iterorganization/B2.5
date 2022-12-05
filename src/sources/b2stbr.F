@@ -29,7 +29,7 @@
 #ifdef B25_EIRENE
       use b2mod_eirene
      ,  , only : eirene_mc
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
