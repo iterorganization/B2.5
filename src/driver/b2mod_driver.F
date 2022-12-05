@@ -76,7 +76,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff,
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -1337,7 +1337,7 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        IUNOUT=6+IFOFF
+        IUNOUT=6
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1378,10 +1378,11 @@ csw 09oct2012
       endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       call createB2SourceEir( nCv, ns, nstra, state % sr_eir )
@@ -1864,7 +1865,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #ifdef WG_TODO
       if (ex) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,

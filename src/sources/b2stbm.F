@@ -22,7 +22,7 @@
      1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
      2          b2stbm_shi0to3, balance_netcdf
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2mod_switches
       use b2us_geo
