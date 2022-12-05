@@ -22,6 +22,7 @@
       use eirmod_extrab25
       use b2mod_neutrals_namelist
      & , only: crcstra, rcfe, rcfi, mol
+      use eirmod_wneutrals
 #else
       use parmmod   ! IGNORE
      .   , ncv_eir => ncv
@@ -517,6 +518,7 @@ c
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE

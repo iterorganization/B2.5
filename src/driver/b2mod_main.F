@@ -20,8 +20,6 @@
       use b2mod_xerset
 #ifdef B25_EIRENE
 #ifdef USE_MPI
-      use eirmod_parmmod
-     , , only : ifoff
       use eirmod_cpes
      , , only : my_pe
 #endif
@@ -200,7 +198,6 @@ csw 28feb2011 mpi
       if(rank_mpi .ne. 0) then
 #ifdef B25_EIRENE
         my_pe=rank_mpi
-        iunout=7+ifoff
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,

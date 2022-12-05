@@ -148,6 +148,9 @@ c=======================================================================
       use b2mod_b2plot_ank
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
       implicit none
 c
       integer ig, ih(3)

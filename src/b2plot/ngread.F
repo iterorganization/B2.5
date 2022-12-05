@@ -29,10 +29,10 @@ c
       use b2mod_neutrals_namelist
       use eirmod_parmmod
      .   , only : natm, nmol, nion, nstra, nlmpgs, nspz
+      use eirmod_wneutrals
 #ifdef WG_TODO
      ,          , ndx, ndy
 #endif
-      use eirmod_extrab25
       use eirmod_clogau
       use eirmod_cinit
 #endif
