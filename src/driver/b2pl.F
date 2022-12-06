@@ -125,11 +125,11 @@
       call cfopen (ninp(6),'b2ftrack','old','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstate_version)				 !xpb
-      call cfverr (ninp(6), b2ftrack_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstate_version)                            !xpb
+      call cfverr (ninp(6), b2ftrack_version)                            !xpb
       write(6,*) 'Running with VERSION ',newversion,' ', get_B25_hash()
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
