@@ -249,6 +249,7 @@ c     output for analysis/debugging
 #endif
 
 c pre-computations for KUL fluid neutrals
+      dnn = 0.0_R8      
       if (switch%recycle_afn.ne.0) then
 
 c     initialize debugging/analysis arrays
