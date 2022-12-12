@@ -299,13 +299,16 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           connf = 0.0_R8
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
            iFt = mpg%cvFt(mpg%fcCv(iFc,1))
-           connf =connf + geo%ftConn(iFt)
+           connf = connf + geo%ftConn(iFt)
           endif
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
            iFt = mpg%cvFt(mpg%fcCv(iFc,2))
            connf = connf + geo%ftConn(iFt)
           endif
-          connf = 0.5*connf
+          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &        mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+           connf = 0.5*connf
+          endif
           ! compute flux limits
           co%f_luc_ke(iFc) = 1.0_R8/(1.0_R8 +
      &      7.5e16_R8*(tef(iFc)/ev)**2/(connf*ne2f(iFc)))
@@ -434,8 +437,11 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
            connf = connf + geo%ftConn(iFt)
            epsf  = epsf  + geo%ftEps(iFt)
           endif
-          connf = 0.5*connf
-          epsf  = 0.5*epsf
+          if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &        mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+            connf = 0.5*connf
+            epsf  = 0.5*epsf
+          endif
           ! compute flux limits
           co%f_luc_ke(iFc) = 1.0_R8/k1f(iFc)*0.58e0_R8*
      .      sqrt(epsf**3)
