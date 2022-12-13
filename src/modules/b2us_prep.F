@@ -1216,7 +1216,7 @@
 
       write (*,*) 'face labels set ',count(m%fcLbl /= 0)
 
-      write (*,*) 'face lables '
+      write (*,*) 'face labels '
       do iFc = 1, m%nFc
         if (m%fcLbl(iFc) /= 0) write (*,*) iFc, m%fcLbl(iFc)
       end do
