@@ -946,6 +946,9 @@ ${OBJDIR}/eirmod_clogau.${MOD}:
 ${OBJDIR}/eirmod_comprt.${MOD}:
 	touch ${OBJDIR}/eirmod_comprt.${MOD}
 
+${OBJDIR}/eirmod_comsou.${MOD}:
+	touch ${OBJDIR}/eirmod_comsou.${MOD}
+
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 
@@ -972,6 +975,9 @@ ${OBJDIR}/eirmod_extrab25.${MOD}:
 
 ${OBJDIR}/eirmod_infcop.${MOD}:
 	touch ${OBJDIR}/eirmod_infcop.${MOD}
+
+${OBJDIR}/eirmod_module_avltree.${MOD}:
+	touch ${OBJDIR}/eirmod_module_avltree.${MOD}
 
 ${OBJDIR}/eirmod_mpi.${MOD}:
 	touch ${OBJDIR}/eirmod_mpi.${MOD}
