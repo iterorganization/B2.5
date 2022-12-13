@@ -35,6 +35,8 @@ c
       use eirmod_ctrig
       use eirmod_cinit
       use eirmod_cestim
+      use eirmod_braeir
+     :   , only : pux, puy, pvx, pvy
 #endif
       use b2mod_subsys
       implicit none

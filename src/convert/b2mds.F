@@ -51,7 +51,7 @@
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -196,7 +196,7 @@ c
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
       call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)

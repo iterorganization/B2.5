@@ -71,6 +71,7 @@ module b2mod_ual_io
 #ifdef B25_EIRENE
     use eirmod_ctrig
     use eirmod_cestim
+    use eirmod_wneutrals
 #ifdef IMAS
     use eirmod_cinit &
      & , only : fort_lc
