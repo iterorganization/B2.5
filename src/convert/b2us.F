@@ -86,7 +86,7 @@
       character savefile*256, lblgm*120, lblmn*120, lblcp*120,
      *          lblps*120
       character filename*256
-      character cnamip*80, cvalip*80, line*500
+      character cnamip*80, cvalip*80, line*500, ligne*500
       character bcp_filename*260
 #ifdef B25_EIRENE
       logical linq_33, linq_34, linq_35, lcheck
