@@ -131,7 +131,7 @@
      .                      0._R8, 1._R8, ic, inserted)
         IF (INSERTED) THEN
           if (is_narrow_grid.eq.1) then
-            !! if we have a narrow grid, this should not happen because every node of the eirene triangle grid should be in th plasma grid.
+            !! if we have a narrow grid, this should not happen because every node of the eirene triangle grid should be in the plasma grid.
             !! therefore this has to do with round-off error of faulty input files. Therefore these cells are printend.
             write(*,*) '------------'
             write(*,*) 'faulty node', ico
