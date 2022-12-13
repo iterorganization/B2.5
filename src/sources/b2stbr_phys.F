@@ -262,7 +262,6 @@ c     initialize debugging/analysis arrays
         fnni_out     = 0.0_R8
         fna_mol      = 0.0_R8  !nh 30.03.21
 
-        dnn = 0.0_R8
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       endif !! end pre-computations KUL fluid neutrals

@@ -1999,6 +1999,12 @@ c check the inter-consistency of different switches (e.g. certain combinations o
      *             'No radial current terms!')
       endif
 
+c AFN neutral model
+      if(s%AFN_out.ne.0.and.s%recycle_afn.eq.0) then
+        call xerrab('b2stbr_recycle_afn should be 1 when writing '//
+     &   'AFN output')
+      endif
+
 c spatially hybrid neutrals
       if(s%spatial_hybrid.ne.0.and.s%use_eirene.eq.0) then
         call xerrab('spatial hybrid neutrals must be with eirene')
