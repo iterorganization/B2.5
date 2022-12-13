@@ -322,7 +322,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       CALL EIRENE_ALLOC_CTRCEI(1)
       CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nx,ny,ns,nstra)
 !PB      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
