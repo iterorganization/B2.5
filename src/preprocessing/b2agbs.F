@@ -1,5 +1,5 @@
       subroutine b2agbs (nx, ny, nncutmax,
-     1 leftix, rightix, rightiy, region, crx, cry,
+     1 leftix, leftiy, rightix, rightiy, region, crx, cry,
      1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
      1 pbs, cell_width, cell_height)
       use b2mod_types
@@ -9,7 +9,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nncutmax
-      integer leftix(-1:nx,-1:ny)
+      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny)
       integer rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny)
       integer region(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
@@ -23,7 +23,7 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      *  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..local variables
-      integer i, ix, iy, ixl, ixr, jxi, jxa, jsep
+      integer i, ix, iy, ixl, ixr, iyl, iyr, jxi, jxa, jsep
       integer ntubes(-1:ny), ixref(nncutmax,-1:ny), iseg(-1:nx,-1:ny),
      *  ixleft(nncutmax,-1:ny), ixright(nncutmax,-1:ny),
      *  isnum(nncutmax,-1:ny)
@@ -75,6 +75,8 @@
         do ix = -1, nx
           if (region(ix,iy,0).eq.0) cycle
           if (iseg(ix,iy).ne.0) cycle
+          if (rightiy(ix,iy).ne.iy) cycle
+          if (leftiy(ix,iy).ne.iy) cycle
           ntubes(iy) = ntubes(iy) + 1
           call xertst (ntubes(iy).le.nncutmax,
      .     'Too many flux tube segments. Increase DEF_NCUT!')
@@ -85,30 +87,36 @@
           ixr = ix
           ixright(iseg(ix,iy),iy) = ix
    20     continue
-          if (leftix(ixl,iy).ne.-2) then
+          if (leftix(ixl,iy).ne.-2.and.leftiy(ixl,iy).eq.iy) then
             ixl = leftix(ixl,iy)
-            if (iseg(ixl,iy).ne.0) then
+            iyl = leftiy(ixl,iy)
+            if (iseg(ixl,iy).ne.0.and.iyl.eq.iy) then
               call xertst(iseg(ixl,iy).eq.iseg(ix,iy),
      .         'Mismatched segments (left)!')
               goto 30
-            else
+            else if (iyl.eq.iy) then
               iseg(ixl,iy) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
               if (leftix(ixl,iy).eq.-2) ixleft(iseg(ix,iy),iy) = ixl
+            else if (iyl.ne.iy) then
+              goto 30
             end if
             goto 20
           end if
    30     continue
-          if (rightix(ixr,iy).ne.nx+1) then
+          if (rightix(ixr,iy).ne.nx+1.and.rightiy(ixr,iy).eq.iy) then
             ixr = rightix(ixr,iy)
-            if (iseg(ixr,iy).ne.0) then
+            iyr = rightiy(ixr,iy)
+            if (iseg(ixr,iy).ne.0.and.iyr.eq.iy) then
               call xertst(iseg(ixr,iy).eq.iseg(ix,iy),
      .         'Mismatched segments (right)!')
               goto 40
-            else
-              iseg(ixr,iy) = iseg(ix,iy)
+            else if (iyr.eq.iy) then
+              iseg(ixr,iyr) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
               if (rightix(ixr,iy).eq.nx+1) ixright(iseg(ix,iy),iy) = ixr
+            else
+              goto 40
             end if
             goto 30
           end if
