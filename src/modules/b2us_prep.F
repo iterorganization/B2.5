@@ -545,7 +545,7 @@
      .             .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                     iy2 = iy2 + 1
                     if (iy2 == ny+1) then
-                      iy2 = iy2-1
+                      iy2 = iy2 - 1
                       do while ((ighostvx(ix2,iy2) == 0) .or.
      .                  .not.isUnusedCell
      .                      (cflags(ix2,iy2,CELLFLAG_TYPE)))
@@ -644,16 +644,25 @@
      .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                         iy2 = iy2 + 1
                         if (iy2 == ny+1) then
-                          iy2 = iy2-1
+                          iy2 = iy2 - 1
                           do while ((ighostvx(ix2,iy2) == 0) .or.
      .                      .not.isUnusedCell
      .                          (cflags(ix2,iy2,CELLFLAG_TYPE)))
                             iy2 = iy2 - 1
                             if (iy2 == 0) then
-                              write (*,*) 'ix,  iy  = ', ix, iy
-                              write (*,*) 'ix2, iy2 = ', ix2, iy2
-                              call xerrab
+                              ix2 = tix + 1
+                              iy2 = tiy
+                              do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                          .not.isUnusedCell
+     .                              (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                                ix2 = ix2 + 1
+                                if (ix2 == nx+1) then
+                                  write (*,*) 'ix,  iy  = ', ix, iy
+                                  write (*,*) 'ix2, iy2 = ', ix2, iy2
+                                  call xerrab
      .                          ('No suitable unused cell found (3).')
+                                endif
+                              enddo
                             endif
                           enddo
                         endif
@@ -801,16 +810,25 @@
      .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                         iy2 = iy2 + 1
                         if (iy2 == ny+1) then
-                          iy2 = iy2-1
+                          iy2 = iy2 - 1
                           do while ((ighostvx(ix2,iy2) == 0) .or.
      .                      .not.isUnusedCell
      .                          (cflags(ix2,iy2,CELLFLAG_TYPE)))
                             iy2 = iy2 - 1
                             if (iy2 == 0) then
-                              write (*,*) 'ix,  iy  = ', ix, iy
-                              write (*,*) 'ix2, iy2 = ', ix2, iy2
-                              call xerrab
+                              ix2 = ix
+                              iy2 = iy + 1
+                              do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                         .not.isUnusedCell
+     .                             (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                                ix2 = ix2 + 1
+                                if (ix2 == nx+1) then
+                                  write (*,*) 'ix,  iy  = ', ix, iy
+                                  write (*,*) 'ix2, iy2 = ', ix2, iy2
+                                  call xerrab
      .                          ('No suitable unused cell found (4).')
+                                endif
+                              enddo
                             endif
                           enddo
                         endif
@@ -4438,20 +4456,24 @@
         if(nnreg(0).eq.8) then
           n_omp = rightcut(2)
           do ix = rightcut(2)+1, rightcut(1)-1
+            if(bb(n_omp,ny,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
           enddo
         elseif(nnreg(0).ge.4) then
           n_omp = leftcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
+            if(bb(n_omp,ny,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
           enddo
         else
           write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
           n_omp = (nx+2)/2
           do ix = -1, nx
+            if(bb(n_omp,ny,2).eq.0.0_R8) n_omp=ix
             if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
           enddo
         endif
+        write(*,*) ' Found OMP location at ix = ' , n_omp
         ro(1)=0.25_R8*(crx(n_omp,-1,0)+crx(n_omp,-1,1)+ ! R-coordinate of center of [n_omp,-1] cell
      &                 crx(n_omp,-1,2)+crx(n_omp,-1,3))
         zo(1)=0.25_R8*(cry(n_omp,-1,0)+cry(n_omp,-1,1)+ ! Z-coordinate of center of [n_omp,-1] cell
@@ -4461,13 +4483,15 @@
         zo(2)=0.25_R8*(cry(n_omp,ny,0)+cry(n_omp,ny,1)+ ! Z-coordinate of center of [n_omp,ny] cell
      &                 cry(n_omp,ny,2)+cry(n_omp,ny,3))
         if(ro(2).gt.ro(1)) then
-         rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
-         rzomp(2,1)=zo(1)+(rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1)) ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
-         rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
-         rzomp(2,2)=zo(1)+(rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1)) ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+          rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
+          rzomp(2,1)=zo(1)+                                               ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
+     &              (rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+          rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
+          rzomp(2,2)=zo(1)+                                               ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
+     &              (rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
         else
+          write(*,*) ' ro(1:2) :', ro(1), ro(2)
+          write(*,*) ' zo(1:2) :', zo(1), zo(2)
           call xerrab('conv_midplane: unexpected coordinates for rzomp')
         endif
 
@@ -4476,20 +4500,24 @@
         if(nnreg(0).eq.8) then
           n_imp = leftcut(2)
           do ix = leftcut(1)+1, leftcut(2)-1
+            if(bb(n_imp,ny,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
           enddo
         elseif(nnreg(0).ge.4) then
           n_imp = leftcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
+            if(bb(n_imp,ny,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
           enddo
         else
           write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
           n_imp = (nx+2)/4
           do ix = -1, nx
+            if(bb(n_imp,ny,2).eq.0.0_R8) n_imp=ix
             if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
           enddo
         endif
+        write(*,*) ' Found IMP location at ix = ' , n_imp
 
         ri(1)=0.25_R8*(crx(n_imp,ny,0)+crx(n_imp,ny,1)+ ! R-coordinate of center of [n_imp,ny] cell
      &                 crx(n_imp,ny,2)+crx(n_imp,ny,3))
@@ -4501,13 +4529,15 @@
      &                 cry(n_imp,-1,2)+cry(n_imp,-1,3))
 
         if(ri(2).gt.ri(1)) then
-         rzimp(1,1)=ri(1)*0.9_R8                                         ! take a coordinate to the left of ri(1)
-         rzimp(2,1)=zi(1)+(rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1)) ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
-         rzimp(1,2)=ri(2)*1.1_R8                                         ! take a coordinate to the right of ri(2)
-         rzimp(2,2)=zi(1)+(rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1)) ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+          rzimp(1,1)=ri(1)*0.9_R8                                         ! take a coordinate to the left of ri(1)
+          rzimp(2,1)=zi(1)+                                               ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
+     &              (rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))        ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+          rzimp(1,2)=ri(2)*1.1_R8                                         ! take a coordinate to the right of ri(2)
+          rzimp(2,2)=zi(1)+                                               ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
+     &              (rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))        ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
         else
+          write(*,*) ' ri(1:2) :', ri(1), ri(2)
+          write(*,*) ' zi(1:2) :', zi(1), zi(2)
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
 
