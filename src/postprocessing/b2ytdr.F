@@ -523,7 +523,9 @@ c 2002-09-11: logic revised
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary, flip
       logical chemsp1(nstraid), savestratum(0:nstraid)
-      logical time_dep_puff1(nstraid)
+      logical :: time_dep_puff1(nstraid),time_dep_puff_func1(nstraid)
+      integer :: time_dep_puff_case1(nstraid)
+      real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:), solvtmp(:,:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
@@ -10775,6 +10777,9 @@ cxpb  Convert fort.46 file if needed
           volrecstart1(ib1)=volrecstart(ib)
           userfluxparm1(ib1,1:2)=userfluxparm(ib,1:2)
           time_dep_puff1(ib1) = time_dep_puff(ib)
+          time_dep_puff_param1(:,ib1) = time_dep_puff_param(:,ib)
+          time_dep_puff_func1(ib1) = time_dep_puff_func(ib)
+          time_dep_puff_case1(ib1) = time_dep_puff_case(ib)
           ngpdata1(ib1) = ngpdata(ib)
           gpdata1(:,:,ib1) = gpdata(:,:,ib)
          endif
@@ -10919,6 +10924,22 @@ cxpb as they no longer necessarily point to the same species
         enddo
         if (todo) write(99,hlp_frm)
      .   'TIME_DEP_PUFF=',time_dep_puff1(1:nstrat1),','
+        todo = .false.
+        do ib = 1, nstrat1
+           todo = todo .or. time_dep_puff_func1(ib)
+        enddo
+        if (todo) then
+           write(99,hlp_frm)
+     .          'TIME_DEP_PUFF_FUNC=',time_dep_puff_func1(1:nstrat1),','
+           write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'i4,a)'
+           write(99,hlp_frm)
+     .          'TIME_DEP_PUFF_CASE=',time_dep_puff_case1(1:nstrat1),','
+           do ib = 1, nstrat1
+              write(99,'(1x,a,i3,a,g10.3)')
+     .             'TIME_DEP_PUFF_PARAM(1:10,',ib,')=',
+     .             time_dep_puff_param1(1:10,ib)
+           enddo
+        endif 
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'(1x,i4,'',''))'
         if (maxval(ngpdata1).gt.0) then
           write(99, hlp_frm)
