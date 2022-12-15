@@ -76,7 +76,7 @@ cank }
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
-     1   gpfc(:,:), gpdata(:,:,:),
+     1   gpfc(:,:), gpdata(:,:,:), time_dep_puff_param(:,:),
      2   RC_FACE_ORI(:,:)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
@@ -102,7 +102,7 @@ cank }
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
      *   lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:),
+     2   ngpdata(:), time_dep_puff_case(:),
      *   accel_ion(:),
      *   maxw(:),                                 !nh 11.07.18
      *   maxw_eff(:),
@@ -110,7 +110,7 @@ cank }
       real (kind=R8), allocatable, save ::
      *   RCFE(:), RCFI(:), e_fc
       logical, allocatable, save ::
-     *   CHEMSP(:), TIME_DEP_PUFF(:)
+     *   CHEMSP(:), TIME_DEP_PUFF(:), time_dep_puff_func(:)
       character*1, allocatable, save ::
      *   CRCSTRA(:),
      *   ARCSTRA(:),
@@ -136,6 +136,7 @@ cank }
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
+      real (kind=R8), save :: time_dep_puff_param(10,NSTRAID)
       real (kind=R8), save :: RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID)
       character*16, save ::
      *   textan(0:DEF_NATM-1),
@@ -161,6 +162,8 @@ cank }
       integer, save :: TARGSP(NSTRAID,ntrack)
       logical, save :: CHEMSP(NSTRAID)
       logical, save :: TIME_DEP_PUFF(NSTRAID)
+      logical, save :: time_dep_puff_func(NSTRAID)
+      integer, save :: time_dep_puff_case(NSTRAID)
       integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
       integer, save :: b2species_start(NSTRAID), b2species_end(NSTRAID)
@@ -247,6 +250,7 @@ csw 21feb2012
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
+     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case,
      .  e_fc,      !mb Franck-Condon energy contribution 
      . accel_ion   !mb flag for ion acceleration through sheath potential
 
@@ -305,6 +309,9 @@ csw 21feb2012
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
       allocate(TIME_DEP_PUFF(NSTRAID))
+      allocate(time_dep_puff_func(NSTRAID))
+      allocate(time_dep_puff_case(NSTRAID))
+      allocate(time_dep_puff_param(10,NSTRAID))
       allocate(NGPDATA(NSTRAID))
       allocate(GPDATA(100,2,NSTRAID))
       allocate(CRCSTRA(NSTRAID))
@@ -377,6 +384,9 @@ csw 21feb2012
       TARGSP(:,1)=sput_dst
       CHEMSP=.false.
       TIME_DEP_PUFF=.false.
+      time_dep_puff_func=.false.
+      time_dep_puff_case=-1
+      time_dep_puff_param=0.0_R8
       N_SPCSRF=0
       L_SPCSRF=0
       I_SPCSRF=0
@@ -563,6 +573,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(TARGSP)
       deallocate(CHEMSP)
       deallocate(TIME_DEP_PUFF)
+      deallocate(time_dep_puff_func)
+      deallocate(time_dep_puff_case)
+      deallocate(time_dep_puff_param)
       deallocate(NGPDATA)
       deallocate(GPDATA)
       deallocate(CRCSTRA)
@@ -906,6 +919,10 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
             call xertst(gpdata(ix,2,istra).ge.0.0_R8,
      .       'Negative gas puff strength declared!')
           end do
+          if (time_dep_puff_func(istra)) then
+             call xertst(crcstra(istra).eq.'C',
+     .     'time_dep_puff_func set for a non-puff stratum')
+          endif
         endif
       enddo
       do is = 0, ns-1
