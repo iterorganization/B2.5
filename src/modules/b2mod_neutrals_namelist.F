@@ -68,7 +68,7 @@ cank }
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
-     1   gpfc(:,:), gpdata(:,:,:)
+     1   gpfc(:,:), gpdata(:,:,:), time_dep_puff_param(:,:)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
       real (kind=R8), allocatable, save ::
@@ -88,9 +88,9 @@ cank }
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
      *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
-     2   ngpdata(:)
+     2   ngpdata(:), time_dep_puff_case(:)
       logical, allocatable, save ::
-     *   CHEMSP(:), TIME_DEP_PUFF(:)
+     *   CHEMSP(:), TIME_DEP_PUFF(:), time_dep_puff_func(:)
       character*1, allocatable, save ::
      *   CRCSTRA(:)
       character*16, allocatable, save ::
@@ -109,6 +109,7 @@ cank }
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
+      real (kind=R8), save :: time_dep_puff_param(10,NSTRAID)
       character*16, save ::
      *   textan(0:DEF_NATM-1),
      *   textmn(0:DEF_NMOL-1),
@@ -128,6 +129,8 @@ cank }
       integer, save :: TARGSP(NSTRAID,ntrack)
       logical, save :: CHEMSP(NSTRAID)
       logical, save :: TIME_DEP_PUFF(NSTRAID)
+      logical, save :: time_dep_puff_func(NSTRAID)
+      integer, save :: time_dep_puff_case(NSTRAID)
       integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
       integer, save :: b2eatcr(0:nsdmax-1)
@@ -203,7 +206,8 @@ csw 21feb2012
      6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf,
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN
+     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata, MAXPOIN,
+     .  time_dep_puff_param, time_dep_puff_func, time_dep_puff_case
 
       contains
 
@@ -245,6 +249,9 @@ csw 21feb2012
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
       allocate(TIME_DEP_PUFF(NSTRAID))
+      allocate(time_dep_puff_func(NSTRAID))
+      allocate(time_dep_puff_case(NSTRAID))
+      allocate(time_dep_puff_param(10,NSTRAID))
       allocate(NGPDATA(NSTRAID))
       allocate(GPDATA(100,2,NSTRAID))
       allocate(CRCSTRA(NSTRAID))
@@ -299,6 +306,9 @@ csw 21feb2012
       TARGSP(:,1)=sput_dst
       CHEMSP=.false.
       TIME_DEP_PUFF=.false.
+      time_dep_puff_func=.false.
+      time_dep_puff_case=-1
+      time_dep_puff_param=0.0_R8
       N_SPCSRF=0
       L_SPCSRF=0
       I_SPCSRF=0
@@ -464,6 +474,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(TARGSP)
       deallocate(CHEMSP)
       deallocate(TIME_DEP_PUFF)
+      deallocate(time_dep_puff_func)
+      deallocate(time_dep_puff_case)
+      deallocate(time_dep_puff_param)
       deallocate(NGPDATA)
       deallocate(GPDATA)
       deallocate(CRCSTRA)
@@ -768,6 +781,10 @@ c
             call xertst(gpdata(ix,2,istra).ge.0.0_R8,
      .       'Negative gas puff strength declared!')
           end do
+          if (time_dep_puff_func(istra)) then
+             call xertst(crcstra(istra).eq.'C',
+     .     'time_dep_puff_func set for a non-puff stratum')
+          endif
         endif
       enddo
       do is = 0, ns-1
