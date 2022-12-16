@@ -135,7 +135,8 @@
       logical classical
       real (kind=R8) ::
      *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
-     *   isx(0:1), isy(0:1)
+     *   isx(0:1), isy(0:1),
+     *   Xvertices(0:3), Yvertices(0:3)
       integer, save :: style = 0
 *   ..procedures
       intrinsic min, max
@@ -203,12 +204,14 @@
         ! ecc(:,:,0:3,0:1): unit vectors of the centroid-face connections
         ! ebc(:,:,0:2): unit vector magnetic field field in cell center
 
-        cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(ix,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
         select case (cgeo)
         case(CGEO_BROKEN)
           write(*,*) 'Problem in b2agmt: broken cell', ix,iy
-          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,4f12.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
           call xerrab('Broken cell geometry')
         case(CGEO_QUAD)
           ! For quadrangular cells: assume cell center = geometric mean
@@ -426,9 +429,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (leftix(ix,iy).eq.-2 .or. 
      &      leftix(ix,iy).eq.NO_CONNECTIVITY) cycle
-        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-        cgeon = cellGeoType( crx(leftix(ix,iy),leftiy(ix,iy),:),
-     &                       cry(leftix(ix,iy),leftiy(ix,iy),:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(iy,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
+        Xvertices(:) = crx(leftix(ix,iy),leftiy(ix,iy),:)
+        Yvertices(:) = cry(leftix(ix,iy),leftiy(ix,iy),:)
+        cgeon = cellGeoType(Xvertices, Yvertices)
 
         ! unit vectors at left faces (not re-normalized)
         if (classical.and.(style.eq.0)) then 
@@ -621,9 +627,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (bottomiy(ix,iy).eq.-2 .or. 
      &      bottomiy(ix,iy).eq.NO_CONNECTIVITY) cycle
-        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-        cgeon = cellGeoType( crx(bottomix(ix,iy),bottomiy(ix,iy),:),
-     &                       cry(bottomix(ix,iy),bottomiy(ix,iy),:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(iy,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
+        Xvertices(:) = crx(bottomix(ix,iy),bottomiy(ix,iy),:)
+        Yvertices(:) = cry(bottomix(ix,iy),bottomiy(ix,iy),:)
+        cgeon = cellGeoType(Xvertices, Yvertices)
 
         ! unit vectors at bottom faces (not re-normalized)
         if (classical.and.(style.eq.0)) then
