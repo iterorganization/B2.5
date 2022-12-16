@@ -1,10 +1,13 @@
       subroutine b2agbs (nx, ny, nncutmax,
      1 leftix, leftiy, rightix, rightiy, region, crx, cry,
      1 ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
-     1 pbs, cell_width, cell_height)
+     1 pbs, cell_width, cell_height, cflags)
       use b2mod_types
       use b2mod_b2cmfs
       use b2mod_constants
+      use carre_constants
+      use tradui_constants
+      use b2mod_connectivity
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -12,6 +15,7 @@
       integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny)
       integer rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny)
       integer region(-1:nx,-1:ny,0:2)
+      integer cflags(-1:nx,-1:ny,GRID_N_CELLFLAGS)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      *  ffbz(-1:nx,-1:ny,0:3),
@@ -68,15 +72,16 @@
 *   ..identify flux tubes
       iseg = 0
       isnum = 0
+      ntubes = 0
       ixleft = -2
       ixright = -2
       do iy = -1, ny
-        ntubes(iy) = 0
         do ix = -1, nx
           if (region(ix,iy,0).eq.0) cycle
           if (iseg(ix,iy).ne.0) cycle
           if (rightiy(ix,iy).ne.iy) cycle
           if (leftiy(ix,iy).ne.iy) cycle
+          if (isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
           ntubes(iy) = ntubes(iy) + 1
           call xertst (ntubes(iy).le.nncutmax,
      .     'Too many flux tube segments. Increase DEF_NCUT!')
