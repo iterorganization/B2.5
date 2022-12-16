@@ -721,7 +721,8 @@ c
      1                  (crxs(ix,iy,i),crys(ix,iy,i),
      $                   psi(ix,iy,i,0),psi(ix,iy,i,1),
      $                   psi(ix,iy,i,2),ffbz(ix,iy,i-1),i=1,4),
-     3                  bp(ix,iy),bt(ix,iy),cflag(ix,iy,:)
+     3                  bp(ix,iy),bt(ix,iy),
+     4                  (cflag(ix,iy,i),i=1,GRID_N_CELLFLAGS)
                 enddo
              enddo
 

@@ -101,6 +101,7 @@
 *   ..local variables
       integer idum(0:9), ix, iy, geometryType
       integer nxiso1, nxiso2, nyiso1, nyiso2
+      real(kind=R8) :: bp_ave, bt_ave
       character lblgm*120, idout*80
       integer istyle
       type(mapping) :: mpg
@@ -379,7 +380,7 @@
         call b2agbs (nx, ny, nncutmax,
      1   leftix, leftiy, rightix, rightiy, region, crx, cry,
      1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
-     2   pbs, cell_width, cell_height)
+     2   pbs, cell_width, cell_height, cflags1)
       end if
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
@@ -479,7 +480,8 @@ cdpc-debug
         write(*,*) 'b2agdr sanity check: pbs ',
      1   maxval(abs(pbs1-pbs))
       endif
-      write(*,*) 'b2agdr1: bb(nx,ny,0) ',bb(nx,ny,0)
+      bp_ave = sum(bb(:,:,0))/((nx+2)*(ny+2))
+      write(*,*) 'b2agdr1: bp_ave ', bp_ave
       if(istyle.ge.0) then
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
@@ -487,9 +489,10 @@ cdpc-debug
         call b2agbb (nx, ny, vol, gs, crx, cry, qz,
      &   fpsi, ffbz, bb)
       endif
-      write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
+      bt_ave = sum(bb(:,:,2))/((nx+2)*(ny+2))
+      write(*,*) 'b2agdr2: bt_ave ', bt_ave
       write(*,'()')
-      if (bb(nx,ny,2).gt.0.0_R8) then
+      if (bt_ave.gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
@@ -502,7 +505,7 @@ cdpc-debug
      .   'This means that the Bx(grad B) direction points DOWN.'
         write(nout(0),'(2x,a)')
      .   'Bz is out of the page towards you.'
-      else if (bb(nx,ny,2).lt.0.0_R8) then
+      else if (bt_ave.lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
         if (isymm.ne.0) write(*,'(a)')
@@ -521,7 +524,7 @@ cdpc-debug
         write(nout(0),'(/2x,a)')
      .   'This case has ZERO toroidal magnetic field.'
       endif
-      if (bb(nx,ny,2).ne.0.0_R8) then
+      if (bt_ave.ne.0.0_R8) then
         write(*,'(a)')
      .   'If this is not correct, please set :'
         write(*,'(a)')
@@ -530,7 +533,7 @@ cdpc-debug
      .   'If already set to "1", set to "0" instead.'
       endif
       write(*,'()')
-      if (bb(nx,ny,0).gt.0.0_R8) then
+      if (bp_ave.gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE poloidal magnetic field.'
         write(*,'(a)')
@@ -581,14 +584,14 @@ cdpc-debug
      .   'This is the OPPOSITE convention as for '//
      .   'poloidal quantities.'
       end if
-      if (bb(nx,ny,0)*bb(nx,ny,2).lt.0.0_R8) then
+      if (bp_ave*bt_ave.lt.0.0_R8) then
         write(*,'(a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
         write(nout(0),'(2x,a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
-      else if (bb(nx,ny,0)*bb(nx,ny,2).gt.0.0_R8) then
+      else if (bp_ave*bt_ave.gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has COUNTER-directed plasma current and '//
      .   'toroidal field.'
