@@ -89,6 +89,11 @@
        logical l_exist
        character chns*3, chnx*4, chny*4
        character*24 filename
+#if defined(G95)
+       integer n2
+       real (kind=R8) :: norm2
+       external norm2
+#endif
 
        write (chnx,'(i4.4)') nx
        write (chny,'(i4.4)') ny
@@ -123,10 +128,20 @@
      &      ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                  !srv 09.07.18
          endif
 
+#if defined(G95)
+         n2 = (nx+2)*(ny+2)
+         L2norm=norm2(exact_na(:,:,is),n2)
+#else
          L2norm=norm2(exact_na(:,:,is))                                  !srv 09.07.18 {
+#endif
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' L2eraNa',chns,'/L2Na',chns,'    =',norm2(era)/L2norm
+     &      ' L2eraNa',chns,'/L2Na',chns,'    =',
+#if defined(G95)
+     &          norm2(era,n2)/L2norm
+#else
+     &             norm2(era)/L2norm
+#endif
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' C_eraNa',chns,'/C_Na',chns,'    =',
      &        maxval(abs(era))/maxval(abs(exact_na(:,:,is)))
@@ -173,10 +188,19 @@
      &      ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                   !srv 09.07.18
          endif
 
+#if defined(G95)
+         L2norm=norm2(exact_ua(:,:,is),n2)
+#else
          L2norm=norm2(exact_ua(:,:,is))                                   !srv 09.07.18 {
+#endif
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
-     &      ' L2eraUa',chns,'/L2Ua',chns,'    =',norm2(era)/L2norm
+     &      ' L2eraUa',chns,'/L2Ua',chns,'    =',
+#if defined(G95)
+     &          norm2(era,n2)/L2norm
+#else
+     &             norm2(era)/L2norm
+#endif
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' C_eraUa',chns,'/C_Ua',chns,'    =',
      &        maxval(abs(era))/maxval(abs(exact_ua(:,:,is)))
@@ -222,6 +246,11 @@
        logical l_exist
        integer ix, iy, ind(2)                                          !srv 09.07.18
        character(32) :: pass
+#if defined(G95)
+       integer n2
+       real (kind=R8) :: norm2
+       external norm2
+#endif
 
        pass='exact_'//trim(nmvar)//'.dat'
        call find_file(pass,l_exist)
@@ -253,11 +282,20 @@
      &   ' Max|era',trim(nmvar),'/',trim(nmvar),'|     =',' Inf'
        endif
 
+#if defined(G95)
+       n2 = (nx+2)*(ny+2)
+       L2norm=norm2(exact_var,n2)
+#else
        L2norm=norm2(exact_var)                                          !srv 09.07.18 {
+#endif
        if(L2norm.ne.0.0_R8) then
         write(71,'(a,a,a,a,a,es10.3)')
      &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',
+#if defined(G95)
+     &   norm2(era,n2)/L2norm
+#else
      &   norm2(era)/L2norm
+#endif
         write(71,'(a,a,a,a,a,es10.3)')
      &   ' C_era',trim(nmvar),'/C_',trim(nmvar),'        =',
      &   maxval(abs(era))/maxval(abs(exact_var))
@@ -271,3 +309,22 @@
        write(71,*)
 
       end subroutine calc_err_cc                                        !srv 26.02.18 }
+
+#if defined(G95)
+      function norm2(x,n)
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: norm2
+      integer, intent(in) :: n
+      real (kind=R8), intent(in) :: x(n)
+      integer i
+
+      norm2 = 0.0_R8
+      do i = 1, n
+        norm2 = norm2 + x(i)**2
+      end do
+      norm2 = sqrt(norm2)
+
+      return
+      end function norm2
+#endif
