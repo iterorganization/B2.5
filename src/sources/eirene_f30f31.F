@@ -492,6 +492,7 @@ c we derive the guard cell value from its neighbouring interior cell
             trgt(istra)%vpart(i,ifl) = 0.0_R8
             trgt(istra)%mach(i,ifl) = 1.0_R8
             trgt(istra)%usr(i,ifl) = 0.0_R8
+            trgt(istra)%zit(i,ifl) = zab(ifl)
           end do
         end do
       end do
@@ -612,22 +613,22 @@ c
      .                             ' TARGET DATA #',istra
           write (31,'(a)') '*'
 
-          write (31,'(a1,a6,11a15)') '*','Index','Flux','Ti','ni',
-     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr'
-          write (31,'(a1,a6,11a15)') '*',' ',' ','(eV)','(1/m^3)',
-     .      'm/s','m/s','m/s',' ',' ',' ',' '
+          write (31,'(a1,a6,12a15)') '*','Index','Flux','Ti','ni',
+     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr','Zi'
+          write (31,'(a1,a6,12a15)') '*',' ',' ','(eV)','(1/m^3)',
+     .      'm/s','m/s','m/s',' ',' ',' ',' ',' '
 
           write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
           write (31,'(i6)') ntrgdat
 
           do i = 1, ntrgdat
-            write (31,'(i7,11es15.7)')
+            write (31,'(i7,12es15.7)')
      .        i,trgt(istra)%flux(i,ifl),trgt(istra)%tit(i),
      .          trgt(istra)%dnit(i,ifl),trgt(istra)%vxt(i,ifl),
      .          trgt(istra)%vyt(i,ifl),trgt(istra)%vzt(i,ifl),
      .          trgt(istra)%fi(i,ifl),trgt(istra)%fel(i,ifl),
      .          trgt(istra)%vpart(i,ifl),trgt(istra)%mach(i,ifl),
-     .          trgt(istra)%usr(i,ifl)
+     .          trgt(istra)%usr(i,ifl),trgt(istra)%zit(i,ifl)
           end do
         end do ! ifl
       end do   ! istra
