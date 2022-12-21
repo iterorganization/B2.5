@@ -39,7 +39,9 @@
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces 
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
+        integer, allocatable :: fcAligned(:)           ! Integer to indicate whether a face is aligned with the magnetic field
         logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
+        
 
         integer, allocatable :: bcCvP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
@@ -117,7 +119,9 @@
       allocate (m%fcReg(m%nFc))
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
+      allocate (m%fcAligned(m%nFc))      
       allocate (m%cvOnClosedSurface(m%nCv))
+
       
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
@@ -198,7 +202,9 @@
       m%fcReg = 0
       m%cvReg = 0
       m%ftReg = 0
+      m%fcAligned = 0      
       m%cvOnClosedSurface = .false.
+
       
 !      m%intfaceV = 0._R8
 !      m%intvertexV = 0._R8
@@ -267,7 +273,9 @@
       deallocate (m%fcReg)
       deallocate (m%cvReg)
       deallocate (m%ftReg)
+      deallocate (m%fcAligned)      
       deallocate (m%cvOnClosedSurface)
+
 
 !      deallocate (m%intfaceV) 
 !      deallocate (m%intvertexV) 

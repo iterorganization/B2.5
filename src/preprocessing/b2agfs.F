@@ -790,9 +790,10 @@ cxpb  if just below the top corner, make the corner cell follow
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('fc',id)) then
            do iFc = 1, nnFc
-           ! fc fcVx(:,1) fcVx(:,1) fcLbl(:) fcReg
+           ! fc fcVx(:,1) fcVx(:,1) fcLbl(:) fcReg fcAligned
               read(nrid,*,err=91) if(iFc), m%fcVx(iFc,1), 
-     &      m%fcVx(iFc,2), m%fcLbl(iFc), m%fcReg(iFc)
+     &      m%fcVx(iFc,2), m%fcLbl(iFc), m%fcReg(iFc), 
+     &      m%fcAligned(iFc)
            enddo
         endif
 
@@ -1258,7 +1259,7 @@ cxpb  if just below the top corner, make the corner cell follow
                 v2 = m%fcVx(f5(i),2) 
                 fcS5(i) =  sqrt( (g%vxX(v1) - g%vxX(v2) )**2  + 
      &                    (g%vxY(v1) - g%vxY(v2) )**2 )  
-                if ( ( isAligned(f5(i),m,g,1.0e-4_R8)).and.
+                if ( ( isAligned(f5(i),m)).and.
      &            (fcS5(i).gt.max_length) ) then
                    max_length = fcS5(i)
                 endif

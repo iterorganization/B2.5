@@ -830,7 +830,7 @@ cnv   but now for quads
       !tol = 1.0e-4_R8
 
       do iFc = 1,m%nFc
-          if (isAligned(iFc,m,g,tol)) then
+          if (isAligned(iFc,m)) then
              fcType(iFc) = 1
           elseif (isPoloidal(iFc,m,g,cvFpsi,tol)) then
              fcType(iFc) = 2
