@@ -99,7 +99,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, geometryType
+      integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
       real(kind=R8) :: bp_ave, bt_ave
       character lblgm*120, idout*80
@@ -109,9 +109,8 @@
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
-      logical streql, is_comment
-      external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
-      external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
+      external xertst, xerrab, cfwuin, cfwuch, cfwure
+      external ipgeti, intfaceh1, intfacer1, intfacev1
       external b2xxid, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs, b2wfgm, b2wugm
 #ifndef F2003
@@ -251,7 +250,7 @@
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     crx1, cry1, fpsi1, ffbz1, vol1, 
-*     hx1, hy1, qz1, qc1, gs1, pbs1 - real*8 arrays.
+*     hxx, hyy, qz1, qc1, gs1, pbs1 - real*8 arrays.
 *     These arrays characterise the geometry on the auxiliary mesh.
 *
 *     lblgm - character*120.
@@ -337,7 +336,7 @@
       endif
 *   ..compute metric coefficients on auxiliary mesh
       call b2agmt (nx1, ny1, isymm, crx1, cry1, fpsi1, bb1, vol1,
-     & hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
+     & hxx, hyy, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1, gs1,
      & cell_width1, cell_height1,
      & leftix1, leftiy1, bottomix1, bottomiy1, 
      & rightix1, rightiy1, topix1, topiy1, cflags1)
@@ -349,7 +348,6 @@
      & topix1, topiy1, cflags1)
 
 !    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
-      geometryType = geometryId(nnreg, periodic_bc, topcut1)
       call b2xgbs (nx1, ny1, wbbl1, wbbv1, gs1, qac1, pbs1,
      &  leftix1, leftiy1, bottomix1, bottomiy1, cflags1)
 
@@ -364,7 +362,7 @@
       endif
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
+     & vol1, hxx, hyy, hz1, hc1, ht1, qz1, qc1, qs1, qac1, qas1, ebc1,
      & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1,
      & wbbl1, wbbr1, wbbv1, wbbc1,
      & cell_width1, cell_height1,
@@ -460,9 +458,9 @@ cdpc-debug
         write(*,*) 'b2agdr sanity check: vol ',
      1   maxval(abs(vol1-vol))
         write(*,*) 'b2agdr sanity check: hx  ',
-     1   maxval(abs(hx1-hx))
+     1   maxval(abs(hxx-hx))
         write(*,*) 'b2agdr sanity check: hy  ',
-     1   maxval(abs(hy1-hy))
+     1   maxval(abs(hyy-hy))
         write(*,*) 'b2agdr sanity check: qz  ',
      1   maxval(abs(qz1-qz))
         write(*,*) 'b2agdr sanity check: qc  ',
@@ -486,8 +484,7 @@ cdpc-debug
 *   ..compute geometry and flux/field functions on proper mesh
         call b2agcf (nx, ny, crx, cry, fpsi, ffbz)
 *   ..compute magnetic field on proper mesh
-        call b2agbb (nx, ny, vol, gs, crx, cry, qz,
-     &   fpsi, ffbz, bb)
+        call b2agbb (nx, ny)
       endif
       bt_ave = sum(bb(:,:,2))/((nx+2)*(ny+2))
       write(*,*) 'b2agdr2: bt_ave ', bt_ave
@@ -622,9 +619,7 @@ cdpc-debug
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc, gs, pbs, wbbl,
-     &  wbbc, cell_width, cell_height)
+      call b2wugm (nout(1), nx, ny)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx, ny, crx, cry, cflags,
      &     leftix, leftiy, rightix, rightiy,

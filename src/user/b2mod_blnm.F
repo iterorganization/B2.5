@@ -1,33 +1,15 @@
-      subroutine b2blnm(nx,ny,ns,iline,switch)
+      module b2mod_blnm
       use b2mod_types
-      use b2mod_geo
-      use b2mod_time
       use b2mod_diag
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_external
-      use b2mod_b2cmpa
-      use b2mod_numerics_namelist
-      use b2mod_switches
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
-c
-c  version : 03.03.2001 00:37
-c
+      use b2mod_time
+      implicit none
+
 c======================================================================
 c*** Computes the parallel momentum balance (forces) in the plasma in
 c*** the inner and outer divertors (only lower divertors for
 c*** double-null case)
 c----------------------------------------------------------------------
-      implicit none
-c
-c
-      integer nx, ny, ns, iline
-      type (switches), intent (in) :: switch
+
 c
 c*** lv    :  version number to appear in the file
 c*** lvm   :  version number corresponding to the last major change
@@ -35,6 +17,7 @@ c
       integer lv, lvm
       parameter (lv=970911)
       parameter (lvm=970909)
+
 c
 c----------------------------------------------------------------------
 c*** Parallel momentum balance in the plasma:
@@ -57,12 +40,50 @@ c***     rel_fneu rlfnu   friction with neutrals (relative)
 c***     rel_fmag rlfmf   pressure taken by magnetic field (relative)
 c***     rel_resf rlres   resulting force onto divertor leg (relative)
 c----------------------------------------------------------------------
-c
+
+      integer lun, ltrc
+      parameter (ltrc=ntrc_blm)
 c*** Values by divertors. Here nqudiv is the number of values,
 c*** ndivx is the maximum, and ndiv the actual, number
 c*** of divertor legs (at present, the same)
       integer ndivx, ndiv, nqudiv, nd_tmp, ndv_tmp
       parameter (nqudiv=13, ndivx=2)
+
+      character hlp_frm*80, hlp_frf*160
+      character hlp_div(ndivx)*2, hlp_hdv(nqudiv)*8
+c
+      data hlp_div / 'il', 'ol' /
+c----------------------------------------------------------------------
+c*** Column headers:
+      data hlp_hdv /
+     1      'prs_xpnt','prs_trgt','mfl_xpnt','mfl_trgt','fric_neu',
+     2      'prs_magn','res_frce','rel_prtg','rel_flxp','rel_fltg',
+     3      'rel_fneu','rel_fmag','rel_resf'/
+c----------------------------------------------------------------------
+
+      save lun, ndiv, nd_tmp, ndv_tmp,
+     & hlp_frm, hlp_frf, hlp_div, hlp_hdv
+
+      contains
+
+      subroutine b2blnm(nx,ny,ns)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_sources
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_external
+      use b2mod_b2cmpa
+      use b2mod_numerics_namelist
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+#endif
+      implicit none
+c
+c
+      integer nx, ny, ns
+c
       real (kind=R8) ::
      *     equdiv(ndivx,nqudiv)
       real (kind=R8) ::
@@ -78,54 +99,25 @@ c*** of divertor legs (at present, the same)
      ,            (equdiv(1,9), rlmup), (equdiv(1,10), rlmtg),
      ,            (equdiv(1,11), rlfnu), (equdiv(1,12), rlfmf),
      ,            (equdiv(1,13), rlres)
-      character hlp_div(ndivx)*2, hlp_hdv(nqudiv)*8
 c----------------------------------------------------------------------
 c
-      integer lun, ltrc
-      parameter (ltrc=ntrc_blm)
-      integer i, j, ic, is, ix, iy, nv
+      integer i, j, ic, is, ix, iy
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(-1:nx, -1:ny)
-      real (kind=R8) :: tdummy
-      logical ex,warn_tmp
-      character hlp_c, tab, f*(lenfnm), hlp_frm*80, hlp_frf*160
-c----------------------------------------------------------------------
-      real (kind=R8) ::
-     *     sx, pit      
-csw 29sep2014: xpb fix on sx calculation
-      sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy,0)+
-     .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     .  qc(rightix(ix,iy),rightiy(ix,iy),0))
-      pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))
-c*** to be moved to init.F:
-c
-      data hlp_div / 'il', 'ol' /
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
-c----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_hdv /
-     1      'prs_xpnt','prs_trgt','mfl_xpnt','mfl_trgt','fric_neu',
-     2      'prs_magn','res_frce','rel_prtg','rel_flxp','rel_fltg',
-     3      'rel_fneu','rel_fmag','rel_resf'/
-c----------------------------------------------------------------------
 c
       save
-     +  ndiv, nd_tmp, ndv_tmp,
      +  equdiv,
      +  prsup, prstg, flmup,
      ,  flmtg, prsnu, prsmf,
      ,  rsfrc, rlptg, rlmup,
      ,  rlmtg, rlfnu, rlfmf,
      ,  rlres,
-     +  hlp_div, hlp_hdv,
-     +  lun,
-     +  i, j, ic, is, ix, iy, nv,
-     +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf, 
-     +  ex,warn_tmp,
-     +  hlp_c, tab, f, hlp_frm, hlp_frf
+     +  i, j, ic, is, ix, iy,
+     +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf
 c======================================================================
 
       do i=1,ndivx
@@ -205,7 +197,7 @@ c
           end if
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
-              if (.not.is_neutral(is)) 
+              if (.not.is_neutral(is))
      >         hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+
@@ -229,7 +221,7 @@ c
         do ix=rightcut(1),nx-1
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
-              if (.not.is_neutral(is)) 
+              if (.not.is_neutral(is))
      >         hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+
@@ -267,20 +259,41 @@ c
 c*** ... or just print out the data - if not a limiter configuration
 c
         write(*,*) 'Parallel momentum balance in divertors:'
-        write(*,hlp_frf) (hlp_hdv(i),i=1,nqudiv)
+        write(*,hlp_frf) 'div',(hlp_hdv(i),i=1,nqudiv)
         write(*,hlp_frm) (hlp_div(i),(equdiv(i,j),j=1,nqudiv),i=1,ndiv)
       end if !}
       return
+
+      contains
+c----------------------------------------------------------------------
+      function sx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real (kind=R8) ::
+     *     sx
+csw 29sep2014: xpb fix on sx calculation
+      sx=0.5_R8*(gs(ix,iy,0)*qc(ix,iy,0)+
+     .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
+     .  qc(rightix(ix,iy),rightiy(ix,iy),0))
+      return
+      end function sx
+
+      end subroutine b2blnm
 c======================================================================
 c
-      entry b2blnmi(nx,ny,ns,iline)
+      subroutine b2blnmi(switch)
+      use b2mod_switches
+      implicit none
+      type (switches), intent (in) :: switch
+      integer i, j, nv
+      character f*(lenfnm), hlp_c
+      logical :: ex, warn_tmp
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_blm)=.true.
 c----------------------------------------------------------------------
 c
       ndiv=ndivx
-      tab=char(9)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -289,6 +302,11 @@ c*** f     :  the associated file name
 c
       call find_file(f,ex)
       open(lun,file=f,err=90)
+      rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
       rewind(lun)
       if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,nv,nd_tmp,ndv_tmp
@@ -302,7 +320,7 @@ c
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv .lt. lvm) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             go to 98
@@ -327,46 +345,53 @@ c*** It was a major change of the file format - impossible to continue
         end if
 c
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           go to 98
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         nd_tmp=nqudiv
         ndv_tmp=ndiv
         write(lun,700) lv,nd_tmp,ndv_tmp,label
-        hlp_frf='(9h(5h#time,,i3,16h(1h'//tab//',a8,1h_,a2)))'
-        write(hlp_frm,hlp_frf) nd_tmp*ndv_tmp
-        write(lun,hlp_frm)
-     -                 ((hlp_hdv(i),hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
+        write(hlp_frf,'(a,i3,a)')
+     ,   '(a6,12x,',nd_tmp*ndv_tmp,'(2x,a11,1x))'
+        write(lun,hlp_frf) '# time',
+     -   ((hlp_hdv(i)//'_'//hlp_div(j),i=1,nd_tmp),j=1,ndv_tmp)
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                                   nd_tmp*ndv_tmp
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',nd_tmp*ndv_tmp,'(2x,e12.3))'
       return
 c======================================================================
- 90   write(*,*) 'b2blnm: cannot open file ',trim(f)
+   90 write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c
- 92   write(*,*) 'b2blnm: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blnm: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       go to 98
 c
 c*** Prepare the formats for the printout
- 98   write(hlp_frf,710) nqudiv
+   98 write(hlp_frf,710) nqudiv
       write(hlp_frm,720) nqudiv
       return
-  710 format('(1x,3hdiv,',i3,'(2x,a8,1x))')
+  710 format('(1x,a3,',i3,'(2x,a8,1x))')
   720 format('(1p,1x,a2,1x,',i3,'e11.3)')
 c======================================================================
+      end subroutine b2blnmi
 c
-      entry b2blnmc(nx,ny,ns,iline)
+      subroutine b2blnmc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character f*(lenfnm)
+      character hlp_c
+      logical ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -378,39 +403,42 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
 c======================================================================
- 190  write(*,*) 'b2blnm: cannot open file ',trim(f)
+  190 write(*,*) 'b2blnm: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2blnmc
 c======================================================================
 c
-      entry b2blnms(nx,ny,ns,iline)
+      subroutine b2blnms
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blnms
 c======================================================================
 c
-      entry b2blnmf(nx,ny,ns,iline)
+      subroutine b2blnmf
 c----------------------------------------------------------------------
 c*** - Finalization step
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2blnmf
 c======================================================================
-      end subroutine b2blnm
+      end module b2mod_blnm

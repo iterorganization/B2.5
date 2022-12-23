@@ -77,11 +77,8 @@
       parameter (fki=2.253_R8, eta=0.96_R8, ci = 3.9e0_R8)
 *   ..procedures
       intrinsic abs, sqrt
-      real (kind=R8) ::
-     *  pitx
       external xertst, sfill
       external b2xvsg
-      pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -231,5 +228,17 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
 
 *-----------------------------------------------------------------------
 *.end b2tqca
+
+      contains
+
+      function pitx(iCv)
+      implicit none
+      real (kind=R8) :: pitx
+      integer, intent(in) :: iCv
+
+      pitx = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+
+      return
+      end function pitx
 
       end subroutine b2tqca

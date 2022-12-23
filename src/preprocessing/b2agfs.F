@@ -122,7 +122,7 @@
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
-      intrinsic abs, cos, sin, min, max, sign, acos
+      intrinsic abs, cos, sin, sign, acos
 
 *-----------------------------------------------------------------------
 *.computation

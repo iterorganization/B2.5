@@ -1,38 +1,41 @@
-      subroutine b2blne(nx,ny,ns,BoRiS,iline,switch)
-      use b2mod_types
-      use b2mod_geo
-      use b2mod_time
-      use b2mod_diag
-      use b2mod_rates
-      use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_boundary_namelist
-      use b2mod_neutrals_namelist
-      use b2mod_numerics_namelist
-      use b2mod_external
-      use b2mod_switches
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-#endif
-
-c
-c  version : 29.07.2000 23:52
-c
+      module b2mod_blne
 c=======================================================================
 c*** Computes the global energy flows across the boundaries and the
 c*** sources in B2-Eirene, and the global energy balance in B2
 c-----------------------------------------------------------------------
+      use b2mod_types
+      use b2mod_diag
+      use b2mod_time
+      use b2mod_b2cmpa
+      use b2mod_boundary_namelist
       implicit none
-      integer nx,ny,ns,iline
-      real (kind=R8) :: BoRiS
-      type (switches), intent (in) :: switch
+
+c-----------------------------------------------------------------------
+c*** Values by surface. Here ntrg_tmp is the number of values,
+c*** and ntrgs_tmp is the maximum number of different surfaces.
+c*** At present, there can be up to 5 surfaces: 4 targets and side wall
+c*** (to be generalised later)
+c*** ntrgf_tmp is the actual number of surfaces for the geometry used
+c*** nz_tmp is the number of surfaces read and to be written
+c*** nt_tmp is the number of values read and to be written
+
+      integer ntrg_tmp, ntrgs_tmp, nglb_tmp, nimp_tmp, nspc_tmp
+      integer ntrgf_tmp
+
+      parameter (nspc_tmp=1)
+      parameter (ntrg_tmp=5, ntrgs_tmp=5)
+      parameter (nglb_tmp=19)
+
+      integer ni_tmp, nz_tmp
+      integer nt_tmp, ng_tmp
+      integer, allocatable :: limp_tmp(:)
 c
 c*** lv    :  version number to appear in the file
 c
       integer lv
       parameter (lv=20000704)
+      integer lun, ltrc
+      parameter (ltrc=ntrc_ble)
 c
 c-----------------------------------------------------------------------
 c*** Power balance:
@@ -66,11 +69,75 @@ c***     pwr_plsm pwtpl   plasma to the target
 c***     pwr_neut pwtnu   neutrals to the target
 c***     pwr_ionz pwtio   ionisation energy to the target
 c***     pwr_diss pwtds   dissociation energy to the target
-c***   suffices: il, ol, iu, ou, wl for inner an outer targets and wall
+c***   suffices: il, ol, iu, ou, wl for inner and outer targets and wall
+
+      character hlp_frm*80
+      character hlp_trg(ntrgs_tmp)*2, hlp_ht(ntrg_tmp)*8,
+     ,          hlp_trgs(ntrgs_tmp,2)*2
+      character*8 hlp_hs(nspc_tmp)
+      character*8 hlp_hg(nglb_tmp)
+      character*2, allocatable :: hlp_spc(:)
+
+      integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
+      real (kind=R8), allocatable :: radim_tmp(:)
+
+c*** Local lists:
+c***  ltgs      Eirene surfaces corresponding to the target surfaces
+c***  indt_hlp  B2 boundaries corresponding to the target surfaces
+c***
+c*** Taken from the common blocks:
+c***
+c*** lcbs: boundary segments representing the core boundary in B2
+c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
+c*** ltns: 'non-default surfaces' for the targets (Eirene)
+c*** lsns: list of Eirene surfaces comprising the recycling sources
+c*** msns: msns(1,k): index of first surface in lsns list for Eirene
+c***                  recycling source k
+c***       msns(2,k): number of surfaces for Eirene recycling source k
+c-----------------------------------------------------------------------
+      integer, save :: ntgs(ntrgs_tmp)
+      data ntgs / ntrgs_tmp*1 /
+      integer, allocatable :: ltgs(:,:)
+c*** Identification suffices:
+      data hlp_trgs / 'il','ol','wl','  ','  ',
+     ,                'il','iu','ou','ol','wl'/
+c*** Column headers:
+      data hlp_hg /
+     1          'pwr_totl','pwr_tscl','tot_core','tot_targ','tot_wall',
+     2          'tot_rad ','heat_cor','ptnt_cor','ntrl_cor','plsm_trg',
+     3          'ntrl_trg','plsm_wll','ntrl_wll','brms_rad','ntrl_rad',
+     4          'imp_rad ','tot_enrg','tot_enre','tot_enri'/
+      data hlp_hs / 'imp_rad_' /
+      data hlp_ht /
+     1          'pwr_totl','pwr_plsm','pwr_neut','pwr_ionz','pwr_diss'/
+c-----------------------------------------------------------------------
+
+      save lun, limp_tmp, nimp_tmp, ni_tmp, ng_tmp, nt_tmp, nz_tmp,
+     & indt_hlp, nsrf_hlp, ntrgf_tmp,
+     & ltgs, radim_tmp,
+     & hlp_frm, hlp_trg, hlp_trgs, hlp_hg, hlp_hs, hlp_ht, hlp_spc
+
+      contains
+
+      subroutine b2blne(nx,ny,ns,BoRiS)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_external
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+#endif
+
+      implicit none
+      integer nx,ny,ns
+      real (kind=R8) :: BoRiS
+
 c-----------------------------------------------------------------------
 c*** Global values
-      integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=19)
       real (kind=R8) ::
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
@@ -89,27 +156,9 @@ c*** Global values
      ,     (equg_tmp(15), radnu_tmp), (equg_tmp(16), rdtim_tmp),
      ,     (equg_tmp(17), enrtt_tmp), (equg_tmp(18), enrti_tmp),
      ,     (equg_tmp(19), enrte_tmp)
-      character hlp_hg(nglb_tmp)*8
 c-----------------------------------------------------------------------
 c*** Values by species
-      integer nspc_tmp, nimp_tmp, ni_tmp, ns_tmp
-      integer, allocatable :: limp_tmp(:)
-      parameter (nspc_tmp=1)
-      real (kind=R8), allocatable :: radim_tmp(:)
-      character*2, allocatable :: hlp_spc(:)
-      character*2 hlp_hs(nspc_tmp)*8
-      real (kind=R8) :: tdummy
-c-----------------------------------------------------------------------
-c*** Values by surface. Here ntrg_tmp is the number of values,
-c*** and ntrgs_tmp is the maximum number of different surfaces.
-c*** At present, there can be up to 5 surfaces: 4 targets and side wall
-c*** (to be generalised later)
-c*** ntrgf_tmp is the actual number of surfaces for the geometry used
-c*** nz_tmp is the number of surfaces read and to be written
-c*** nt_tmp is the number of values read and to be written
 
-      integer ntrg_tmp, ntrgs_tmp, nt_tmp, nz_tmp, ntrgf_tmp
-      parameter (ntrg_tmp=5, ntrgs_tmp=5)
       real (kind=R8) ::
      *     equt_tmp(ntrgs_tmp,ntrg_tmp)
       real (kind=R8) ::
@@ -120,86 +169,33 @@ c*** nt_tmp is the number of values read and to be written
      ,     (equt_tmp(1,1), pwttt_tmp), (equt_tmp(1,2), pwtpl_tmp),
      ,     (equt_tmp(1,3), pwtnu_tmp), (equt_tmp(1,4), pwtio_tmp),
      ,     (equt_tmp(1,5), pwtds_tmp)
-      character hlp_trg(ntrgs_tmp)*2, hlp_ht(ntrg_tmp)*8,
-     ,          hlp_trgs(ntrgs_tmp,2)*2
-      integer ntgs(ntrgs_tmp)
-      integer, allocatable :: ltgs(:,:)
-      data ntgs / ntrgs_tmp*1 /
-      integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
       logical ltarg_hlp(ntrgs_tmp)
 c-----------------------------------------------------------------------
 
-      integer lun, ltrc
-      parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, n, ic, is, ix, iy,
-     .        ixr, iyr, ixf, iyf, nv
+      integer i, j, k, n, ic, is, ix, iy,
+     .        ixr, iyr, ixf, iyf
       real (kind=R8) :: hlp_h, hlp_p
-#ifdef B25_EIRENE
-      integer js, m
-      real (kind=R8) :: hlp
-#endif
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
-      logical ex, warn_tmp
-      character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
-c-----------------------------------------------------------------------
-c*** Local lists:
-c***  ltgs      Eirene surfaces corresponding to the target surfaces
-c***  indt_hlp  B2 boundaries corresponding to the target surfaces
-c***
-c*** Taken from the common blocks:
-c***
-c*** lcbs: boundary segments representing the core boundary in B2
-c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
-c*** ltns: 'non-default surfaces' for the targets (Eirene)
-c*** lsns: list of Eirene surfaces comprising the recycling sources
-c*** msns: msns(1,k): index of first surface in lsns list for Eirene
-c***                  recycling source k
-c***       msns(2,k): number of surfaces for Eirene recycling source k
-c-----------------------------------------------------------------------
-c*** Identification suffices:
-      data hlp_trgs / 'il','ol','wl','  ','  ',
-     ,                'il','iu','ou','ol','wl'/
-c*** Column headers:
-      data hlp_hg /
-     1          'pwr_totl','pwr_tscl','tot_core','tot_targ','tot_wall',
-     2          'tot_rad ','heat_cor','ptnt_cor','ntrl_cor','plsm_trg',
-     3          'ntrl_trg','plsm_wll','ntrl_wll','brms_rad','ntrl_rad',
-     4          'imp_rad ','tot_enrg','tot_enre','tot_enri'/
-      data hlp_hs / 'imp_rad_' /
-      data hlp_ht /
-     1          'pwr_totl','pwr_plsm','pwr_neut','pwr_ionz','pwr_diss'/
+#ifdef B25_EIRENE
+      integer, save :: l, m, js
+      real (kind=R8), save :: hlp
+#endif
 c-----------------------------------------------------------------------
 c
       save
-     +  ng_tmp,
      +  equg_tmp,
      +  pwtot_tmp, pwttr_tmp, pwcrt_tmp, pwtgt_tmp, pwwlt_tmp,
      ,     pwrdt_tmp, pwcrh_tmp, pwcrp_tmp, pwcrn_tmp, pwtgp_tmp,
      ,     pwtgn_tmp, pwwlp_tmp, pwwln_tmp, radbr_tmp, radnu_tmp,
      ,     rdtim_tmp, enrtt_tmp, enrti_tmp, enrte_tmp,
-     +  hlp_hg,
-     +  nimp_tmp, ni_tmp, ns_tmp, limp_tmp, ntrgf_tmp,
-     +  radim_tmp,
-     +  hlp_spc, hlp_hs,
-     +  nt_tmp, nz_tmp,
      +  equt_tmp,
      +  pwttt_tmp, pwtpl_tmp,
      ,     pwtnu_tmp, pwtio_tmp,
      ,     pwtds_tmp,
-     +  hlp_trg, hlp_ht,
-     +  ltgs, ntgs,
-     +  indt_hlp, nsrf_hlp,
      +  ltarg_hlp,
-     +  lun,
-     +  i, j, k, l, ic, is, ix, iy, nv,
+     +  i, j, k, ic, is, ix, iy,
      +  hlp_h, hlp_p,
-#ifdef B25_EIRENE
-     +  m, js, hlp,
-#endif
-     +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp, ex, warn_tmp,
-     +  f, hlp_c, hlp_frm, tab, hlp_frf
+     +  lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
 c=======================================================================
 
 c*** Initialisation
@@ -245,7 +241,7 @@ c*** Does it belong to the core boundary?
           end if !}
         end do !}
 c
- 10     do 100 j = 1,ntrgf_tmp !{
+   10   do 100 j = 1,ntrgf_tmp !{
 c*** Belongs to the target j?
           ltarg_hlp(j)=.false.
           do k = 1,nsrf_hlp(j) !{
@@ -254,7 +250,7 @@ c*** Belongs to the target j?
               go to 100
             end if !}
           end do !}
- 100    continue !}
+  100   continue !}
 c
 c*** Across or along the field?
         lcross_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N'
@@ -286,87 +282,55 @@ c
             iyf= iyr
           endif
           if (lcross_hlp) then !{
-            hlp_h=fhe(ixf,iyf,1,1)+fhi(ixf,iyf,1,1)+fhi_ext(ixf,iyf,1,1)
+            hlp_h=fht(ixf,iyf,1,1)-fhj(ixf,iyf,1,1)+fhi_ext(ixf,iyf,1,1)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
-              hlp_p=hlp_p+fna(ixf,iyf,1,1,is)*ev*
-     .         (rpt(ix,iy,is)*hy1(ixr,iyr)+rpt(ixr,iyr,is)*hy1(ix,iy))/
-     .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+fna(ixf,iyf,1,1,is)*(1.0_R8-BoRiS)*
-     .         (kinrgy(ix,iy,is)*hy1(ixr,iyr)+
-     .          kinrgy(ixr,iyr,is)*hy1(ix,iy))/
-     .         (hy1(ixr,iyr)+hy1(ix,iy))
-csw 03jan2017 re-implemeted fix to allow 3/2*flux*T --> 5/2*flux*T
-c             was fixed already on 04mar2013
-c             (possible caveat: viscous part missing?)
-              hlp_h=hlp_h+fna(ixf,iyf,1,1,is)*
-     .         (ti(ix,iy)*hy1(ixr,iyr)+ti(ixr,iyr)*hy1(ix,iy))/
-     .         (hy1(ix,iy)+hy1(ixr,iyr))
-c
+              hlp_h=hlp_h-fhp(ixf,iyf,1,1,is)
+              hlp_p=hlp_p+fhp(ixf,iyf,1,1,is)
             end do !}
             do is=0,ns_ext-1 !{
               hlp_p=hlp_p+fa_ext(ixf,iyf,1,1,is)*ev*
      .         (pt_ext(ix,iy,is)*hy1(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,1,1,is)*(1.0_R8-BoRiS)*
-     .          0.5_R8*am_ext(is)*mp*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,1,1,is)*
+     .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hy1(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
-csw c.f. above
-              hlp_h=hlp_h+fa_ext(ixf,iyf,1,1,is)*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,1,1,is)*
      .         (ta_ext(ix,iy,is)*hy1(ixr,iyr)+
      .          ta_ext(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ix,iy)+hy1(ixr,iyr))
 c
             end do !}
-csw 03jan2017 c.f. above, adding electron part (fne includes fa_ext part, c.f. b2xpfe.f)
-            hlp_h=hlp_h+fne(ixf,iyf,1,1)*
-     .       (te(ix,iy)*hy1(ixr,iyr)+te(ixr,iyr)*hy1(ix,iy))/
-     .       (hy1(ix,iy)+hy1(ixr,iyr))
-c
           else if (lbound_hlp) then !}{
-            hlp_h=fhe(ixf,iyf,0,0)+fhi(ixf,iyf,0,0)+fhi_ext(ixf,iyf,0,0)
+            hlp_h=fht(ixf,iyf,0,0)-fhj(ixf,iyf,0,0)+fhi_ext(ixf,iyf,0,0)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
-              hlp_p=hlp_p+fna(ixf,iyf,0,0,is)*ev*
-     .         (rpt(ix,iy,is)*hx(ixr,iyr)+rpt(ixr,iyr,is)*hx(ix,iy))/
-     .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fna(ixf,iyf,0,0,is)*(1.0_R8-BoRiS)*
-     .         (kinrgy(ix,iy,is)*hx(ixr,iyr)+
-     .          kinrgy(ixr,iyr,is)*hx(ix,iy))/
-     .         (hx(ix,iy)+hx(ixr,iyr))
-csw 03jan2017 re-implemeted fix to allow 3/2*flux*T --> 5/2*flux*T
-c             was fixed already on 04mar2013
-c             (possible caveat: viscous part missing?)
-              hlp_h=hlp_h+fna(ixf,iyf,0,0,is)*
-     .         (ti(ix,iy)*hx(ixr,iyr)+ti(ixr,iyr)*hx(ix,iy))/
-     .         (hx(ix,iy)+hx(ixr,iyr))
-c
+              hlp_h=hlp_h-fhp(ixf,iyf,0,0,is)
+              hlp_p=hlp_p+fhp(ixf,iyf,0,0,is)
             end do !}
             do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+fa_ext(ixf,iyf,0,0,is)*ev*
+              hlp_p=hlp_p+
+     .          fa_ext(ixf,iyf,0,0,is)*ev*
      .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,0,is)*(1.0_R8-BoRiS)*
-     .          0.5_R8*am_ext(is)*mp*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,0,0,is)*
+     .         (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-csw 03jan2017 c.f. above
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,0,is)*
+              hlp_h=hlp_h+
+     .          fa_ext(ixf,iyf,0,0,is)*
      .         (ta_ext(ix,iy,is)*hx(ixr,iyr)+
      .          ta_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
 c
             end do !}
-csw 03jan2017 c.f. above, adding electron part (fne includes fa_ext part, c.f. b2xpfe.f)
-            hlp_h=hlp_h+fne(ixf,iyf,0,0)*
-     .       (te(ix,iy)*hx(ixr,iyr)+te(ixr,iyr)*hx(ix,iy))/
-     .       (hx(ix,iy)+hx(ixr,iyr))
-c
           end if !}
           if (lminus_hlp) then !{
             hlp_h=-hlp_h
@@ -410,7 +374,7 @@ c>>>
 #ifdef B25_EIRENE
       do ic=1,nstrat !{
         if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W' .or.
-     .               crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
+     .     crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
           l=msns(1,ic)
           m=msns(2,ic)
           hlp=0.0_R8
@@ -422,7 +386,7 @@ c>>>
           k=0
           if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W') then !{
             do i=1,nbc !{
-              if(bcchar(i).eq.crcstra(ic) .and. 
+              if(bcchar(i).eq.crcstra(ic) .and.
      &           bc_list_x(1,i).eq.rc_list_x(1,ic)) k=i
             end do !}
           end if !}
@@ -508,7 +472,7 @@ c
             enrte_tmp=enrte_tmp+ne(ix,iy)*te(ix,iy)*vol(ix,iy)
             enrti_tmp=enrti_tmp+ni(ix,iy,1)*ti(ix,iy)*vol(ix,iy)
             do is =0,ns_ext-1 !{
-              enrti_tmp = enrti_tmp + 
+              enrti_tmp = enrti_tmp +
      .         na_ext(ix,iy,is)*ta_ext(ix,iy,is)*vol(ix,iy)
             end do !}
           end if !}
@@ -564,9 +528,18 @@ c
      ,                                     (radim_tmp(i),i=1,n)
       end if !}
       return
+      end subroutine b2blne
 c=======================================================================
 c
-      entry b2blnei(nx,ny,ns,BoRiS,iline)
+      subroutine b2blnei(ny, switch)
+      use b2mod_switches
+      implicit none
+      integer, intent(in) :: ny
+      type (switches), intent (in) :: switch
+      integer :: i, j, k, l, n, is, nv, ns_tmp
+      character hlp_c
+      character f*(lenfnm)
+      logical :: ex, warn_tmp
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
@@ -577,7 +550,6 @@ c
       allocate(radim_tmp(nspecies))
       allocate(hlp_spc(nspecies))
 c
-      tab=char(9)
       nimp_tmp=0
       do is = 1, nspecies !{
         if(nfluids(is).gt.1) then !{
@@ -596,7 +568,7 @@ c*** First, targets in B2
       k=0
       do j=1,nbc !{
         if(bcchar(j).eq.'W' .or. bcchar(j).eq.'E') then !{
-          if(minval(bc_list_y(1:bc_list_size(j),j)).le.0 .and. 
+          if(minval(bc_list_y(1:bc_list_size(j),j)).le.0 .and.
      &       maxval(bc_list_y(1:bc_list_size(j),j)).ge.ny-1) then !{
             k=k+1
             if(k.le.ntrgs_tmp) then !{
@@ -615,7 +587,7 @@ c*** First, targets in B2
 c*** Sort the targets
       do l=1,k !{
         do i=l+1,k !{
-          if(bc_list_x(1,indt_hlp(1,l)).gt.bc_list_x(1,indt_hlp(1,i))) 
+          if(bc_list_x(1,indt_hlp(1,l)).gt.bc_list_x(1,indt_hlp(1,i)))
      >     then !{
             j=indt_hlp(1,l)
             indt_hlp(1,l)=indt_hlp(1,i)
@@ -687,6 +659,11 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then !{
         read(lun,*,err=92) hlp_c,nv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp
         lv_trc(ltrc)=nv
@@ -698,7 +675,7 @@ c
      ,     ' differs from that in the file ',trim(f),' : ',nv
           if(nv.lt.960825 .or. (nv.le.961229 .and. ni_tmp.eq.0)) then !{
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -749,15 +726,15 @@ c*** It was a major change of the file format - impossible to continue
           end if !}
         end if !}
         if(.not.filedata(ltrc)) then !{
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if !}
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else !}{
 c*** New file
         ng_tmp=nglb_tmp
@@ -767,32 +744,40 @@ c*** New file
         n=max(ni_tmp,1)
         ns_tmp=nspc_tmp
         write(lun,700) lv,ng_tmp,nt_tmp,nz_tmp,ni_tmp,ns_tmp,label
-        hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,' //
-     /                       'i3,12h(1h'//tab//',a8,a2),,' //
-     /                       'i3,16h(1h'//tab//',a8,1h_,a2)))'
-        write(hlp_frm,hlp_frf) ng_tmp,ns_tmp*n,nt_tmp*nz_tmp
-        write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+        write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
+     ,   '(a6,9x,',ng_tmp,'(6x,a8),',n*ns_tmp,'(4x,a8,a2),2x,',
+     ,                          nt_tmp*nz_tmp,'(3x,a11))'
+        write(lun,hlp_frm) '# time',(hlp_hg(i),i=1,ng_tmp),
      ,                  ((hlp_hs(i),hlp_spc(j),i=1,ns_tmp),j=1,n),
-     ,                  ((hlp_ht(i),hlp_trg(j),i=1,nt_tmp),j=1,nz_tmp)
+     ,            ((hlp_ht(i)//'_'//hlp_trg(j),i=1,nt_tmp),j=1,nz_tmp)
       end if !}
       n=max(ni_tmp,1)
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.3)))')
-     -                                    ng_tmp+ns_tmp*n+nt_tmp*nz_tmp
+      write(hlp_frm,'(a,i3,a)')
+     , '(1p,e16.7,',ng_tmp+n*ns_tmp+nt_tmp*nz_tmp,'(2x,e12.3))'
       return
 c=======================================================================
- 90   write(*,*) 'b2blne: cannot open file ',trim(f)
+   90 write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2blne: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2blne: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
-c======================================================================
+c=======================================================================
+  700 format('#   ',6i8/'#  ',a)
+c=======================================================================
+      end subroutine b2blnei
 c
-      entry b2blnec(nx,ny,ns,BoRiS,iline)
-c----------------------------------------------------------------------
+      subroutine b2blnec(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character hlp_c
+      character f*(lenfnm)
+      logical :: ex
+c-----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
-c----------------------------------------------------------------------
+c-----------------------------------------------------------------------
 c
       if(.not.filedata(ntrc_ble)) return
       lun=ntrc(ltrc)
@@ -801,39 +786,45 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
       return
-c======================================================================
- 190  write(*,*) 'b2blne: cannot open file ',trim(f)
+c=======================================================================
+  190 write(*,*) 'b2blne: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2blnec
 c=======================================================================
-      entry b2blnes(nx,ny,ns,BoRiS,iline)
+      subroutine b2blnes
 c-----------------------------------------------------------------------
 c*** Save the values of the plasma fluxes across the boundaries
 c-----------------------------------------------------------------------
 c
       return
+      end subroutine b2blnes
 c=======================================================================
-      entry b2blnef(nx,ny,ns,BoRiS,iline)
+      subroutine b2blnef
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      if (.not.allocated(limp_tmp)) return
+      deallocate(limp_tmp)
+      deallocate(ltgs)
+      deallocate(radim_tmp)
+      deallocate(hlp_spc)
       return
+      end subroutine b2blnef
 c=======================================================================
-  700 format('#   ',6i8/'#  ',a)
-c=======================================================================
-      end subroutine b2blne
+      end module b2mod_blne

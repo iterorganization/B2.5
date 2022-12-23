@@ -19,10 +19,8 @@ C
       real (kind=R8) :: cpu_start,cpu_end
       integer iflag
 
-c
-
 *  -- PROCEDURES --
-      INTRINSIC MOD, cpu_time
+      INTRINSIC cpu_time
       EXTERNAL XERRAB
 
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02

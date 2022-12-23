@@ -3,6 +3,7 @@
 
       subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
       use b2mod_types
+      use b2mod_math
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmfs
@@ -98,17 +99,14 @@
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
      &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80!, lblpsd*120
       real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4), t0, t1
+     *   zpdum(0:nsdecl-1,4)
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
+      logical is_comment
       external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
-! csc UNCOMMENT WITH AD
-!      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -316,8 +314,6 @@ c check the values of the switches
       call check_switches(switch,ns)
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
-
 
 ! csc UNCOMMENT WITH AD
 !  call cfverw (nout(9), newversion)

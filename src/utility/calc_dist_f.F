@@ -27,9 +27,6 @@
       ! External functions
       external xertst
 
-      ! Intrinsic functions
-      intrinsic sqrt
-    
       ! Main program
       !=============
       ! Call subini

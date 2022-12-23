@@ -1,11 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wsax (nsav, nx, ny, ns, lblgm, 
-     &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
+      subroutine b2wsax (nsav, nx, ny, ns, lblgm,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_cellhelper
@@ -14,12 +13,6 @@
 *   ..input arguments (unchanged on exit)
       integer nsav, nx, ny, ns
       character lblgm*120
-      real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),  
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
-     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -87,11 +80,9 @@
      *   zeff(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
-     *   b2ssum, pit, hy1, uax, uay, uaz, crxc, cryc
+     *   b2ssum, uax, uay
       external subini, subend, xertst, b2ssum
-      external b2xvsg, b2xvgm, b2xvps, b2xgxy
-      pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      external b2xvsg, b2xvgm, b2xvps_st, b2xgxy
       uax(ix,iy,is) = fna(ix,iy,0,0,is)*
      &  (hx(ix,iy)/na(leftix(ix,iy),leftiy(ix,iy),is)+
      1   hx(leftix(ix,iy),leftiy(ix,iy))/na(ix,iy,is))/
@@ -100,11 +91,6 @@
      &  (hy1(ix,iy)/na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1   hy1(bottomix(ix,iy),bottomiy(ix,iy))/na(ix,iy,is))/
      &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
-      uaz(ix,iy,is) = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
-      crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+
-     &  crx(ix,iy,3))/4
-      cryc(ix,iy) = (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+
-     &  cry(ix,iy,3))/4
 
 *-----------------------------------------------------------------------
 *.computation
@@ -126,15 +112,13 @@
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &  cell_width, cell_height)
 *   ..test plasma state
-#ifdef WG_TODO
-      call b2xvps (nx, ny, ns, 
+      call b2xvps_st (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
-#endif
+      call b2xzef_st (nx, ny, ns, rz2, na, ne, zeff)
 
 * ..compute zxx and zyy
 *   ..compute zxx(1:2) and zyy(1:2)
-      call b2xgxy (nx, ny, crx, cry, 0, 0, zxx(-1,1), zxx(-1,2),
+      call b2xgxy (nx, ny, 0, 0, zxx(-1,1), zxx(-1,2),
      &  zyy(-1,1), zyy(-1,2))
 *   ..compute zxx(3:6)
       do ix = -1, nx
@@ -221,9 +205,9 @@
      &  ((gs(ix,iy,0),ix=0,nx),0.0_R8,iy=-1,ny),
      &  ((gs(ix,iy,1),ix=-1,nx),iy=0,ny),(0.0_R8,ix=-1,nx),
      &  ((pit(ix,iy),ix=-1,nx),iy=-1,ny),
-     &  ((crxc(ix,iy),ix=-1,nx),iy=-1,ny),
+     &  ((cr(ix,iy),ix=-1,nx),iy=-1,ny),
      & (((crx(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3),
-     &  ((cryc(ix,iy),ix=-1,nx),iy=-1,ny),
+     &  ((cz(ix,iy),ix=-1,nx),iy=-1,ny),
      & (((cry(ix,iy,i),ix=-1,nx),iy=-1,ny),i=0,3)
 *   ..save mi, zamin, zamax
       write (nsav) (mp*am(is),zamin(is),zamax(is),is=0,ns-1)
@@ -270,5 +254,15 @@
 
 *-----------------------------------------------------------------------
 *.end b2wsax
+
+      contains
+
+      function uaz(ix,iy,is)
+      implicit none
+      integer, intent(in) :: ix, iy, is
+      real(kind=R8) :: uaz
+      uaz = uac(ix,iy,is)*abs(bb(ix,iy,2))/bb(ix,iy,3)
+      return
+      end function uaz
 
       end subroutine b2wsax

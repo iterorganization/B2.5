@@ -1,5 +1,6 @@
       subroutine sbias (n, sa, sx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n, incx
       real (kind=R8) ::
@@ -12,9 +13,6 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-      intrinsic max
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
        call xerrab ('sbias--error, incx.eq.0')

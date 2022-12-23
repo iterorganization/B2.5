@@ -297,7 +297,7 @@ contains
       integer, intent(in) :: oix, oiy, nodeA1, nodeB1, tix, tiy, nodeA2, nodeB2
 
       ! internal
-      real(R8), parameter :: del = 1.0e-1_R8
+      ! real(R8), parameter :: del = 1.0e-1_R8
       integer :: nodeAO, nodeBO
 
       ! Copy face endpoint to new face startpoint
@@ -308,8 +308,8 @@ contains
       if (points_match(&
            & crx(ix, iy, nodeA1+1), cry(oix, oiy, nodeA1+1), &
            & crx(oix, oiy, nodeB1+1), cry(oix, oiy, nodeB1+1))) then
-          ! Face connecting nodeA1 and nodeB1 in original cell has zero length. Use alternate face 
-          ! connecting node nodeA2, nodeB2 for extrapolation.
+          ! Face connecting nodeA1 and nodeB1 in original cell has zero length.
+          ! Use alternate face connecting node nodeA2, nodeB2 for extrapolation.
 
           ! crx(tix, tiy, nodeB1) = crx(oix, oiy, nodeB1) + ( crx(oix, oiy, nodeB2) - crx(oix, oiy, nodeA2) ) * del
           ! cry(tix, tiy, nodeB1) = cry(oix, oiy, nodeB1) + ( cry(oix, oiy, nodeB2) - cry(oix, oiy, nodeA2) ) * del

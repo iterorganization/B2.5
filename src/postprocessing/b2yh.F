@@ -132,9 +132,7 @@
       call cfruch (ninp(2), 120, lblgm, 'label')
       call cfruin (ninp(2), 1, idum, 'isymm')
 #ifdef WG_TODO
-      call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(2), nx, ny, isymm)
 #endif
 *   ..call principal driver routine
       call b2yhdr (ninp, nout, nx, ns)

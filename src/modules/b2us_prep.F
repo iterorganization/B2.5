@@ -52,7 +52,7 @@
       integer, intent(in) :: nx, ny
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc,
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
-     .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, ifs,
+     .           ivx, ivx1, ivx2, mxreg, ift, icv, ifs,
      .           ifcc, icount, n2, ix2o, iy2o,
      .           ncorneri, nghostfcxi, nghostfcyi, ifcy,
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
@@ -1379,7 +1379,6 @@
 
 ! list of cell faces and vertices for cells
 ! interpolation coefficients for interpolation to cell centers
-      nfx = (nx+1)*ny
       do iy = 0, ny+1
         do ix = 0, nx+1
           if ((m%imapCv(ix-1,iy-1) /= 0).and.
@@ -2081,21 +2080,16 @@
       implicit none
       integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
      .                       nVmxCv
-      integer :: ix, iy, ic, ifc, nfx, ivx, ift
+      integer :: ix, iy, ic, ifc, ivx, ift
 #ifdef WG_TODO
       integer :: i, j, idb, ivx1, ivx2
 #endif
-      real (kind=R8) :: hy1(-1:nx,-1:ny)
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 #ifndef F2003
       integer newunit
       external newunit
 #endif
-
-      hy1 = hy*qz(:,:,1)
-
-      nfx = (nx+1)*ny
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -2436,7 +2430,6 @@
           st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
           st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
 
-
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
 
@@ -2531,7 +2524,6 @@
           st % co % hci_ExB(ic) = hci_ExB(ix,iy)
           st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
           st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
-
 
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2790,8 +2782,6 @@
         end if
       end do
 
-
-
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
@@ -2933,10 +2923,7 @@
         end do
       end do
 
-
-
 ! y faces
-
       do ix = 0, nx-1
         do iy = 0, ny
 !          ifc = nfx + iy+1 + ix*(ny+1)
@@ -3031,7 +3018,6 @@
           st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
           st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
 
-
 ! derived quantities
           st % dv % uadia(ifc,0:1,0:ns-1) =
      .              uadia(ix,iy,1,0:1,0:ns-1)
@@ -3064,7 +3050,6 @@
           st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
           st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
 
-
 ! B2PlasmaSnapshot
 !          st % psnl % fch(ifc,0:1) = fch(ix,iy,1,0:1)
 !          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
@@ -3093,8 +3078,6 @@
 
       end subroutine prep_plasma
 
-
-
 **********************************************************************
 
       subroutine prep_state (nx, ny, ns, nCv, nCi, nFc, mpg, st)
@@ -3108,6 +3091,8 @@
 
       call createB2Plasma( nCv, ns, st % pl )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
+
+!      nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -3224,10 +3209,7 @@
         end do
       end do
 
-
-
 ! y faces
-
       do ix = 0, nx-1
         do iy = 0, ny
 !          ifc = nfx + iy+1 + ix*(ny+1)
@@ -3291,7 +3273,6 @@
           st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
           st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
 
-
 ! derived quantities
           st % dv % uadia(ifc,0:1,0:ns-1) =
      .              uadia(ix,iy,1,0:1,0:ns-1)
@@ -3317,17 +3298,11 @@
           st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
           st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
 
-
           end if
         end do
       end do
 
-
-
       end subroutine prep_state
-
-
-
 
 **********************************************************************
 
@@ -3338,7 +3313,7 @@
       type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
       integer :: nx, ny, nCi, nCv, nFc
-      integer :: ix, iy, ic, ifc!, nfx
+      integer :: ix, iy, ic, ifc
       integer :: nout_st, io, idum(0:9)
       character lblst*120, lblps*120
 #ifndef F2003
@@ -3366,8 +3341,6 @@
       if (.not.allocated(resco)) call alloc_b2mod_residuals(nx,ny,ns)
       if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
       if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
-
-!      nfx = (nx+1)*ny
 
 ! cell volumes
       do iy = 0, ny-1
@@ -4022,7 +3995,6 @@
         enddo                                                         !srv 27.06.08 }
 #endif
 
-
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
@@ -4157,10 +4129,7 @@
         end do
       end do
 
-
-
 ! y faces
-
       do ix = 0, nx-1
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
@@ -4257,7 +4226,6 @@
           fhit(ix,iy,1,0:1)    = st % dv % fhit(ifc,0:1)
           fhi_eir(ix,iy,1,0:1) = st % dv % fhi_eir(ifc,0:1)
 
-
 ! derived quantities
           uadia(ix,iy,1,0:1,0:ns-1) =
      .          st % dv % uadia(ifc,0:1,0:ns-1)
@@ -4296,15 +4264,12 @@
 !      aresco(0:ns-1) = st % diag % aresco(0:ns-1)
 !      aresmo(0:ns-1) = st % diag % aresmo(0:ns-1)
 
-
-
 !      rescoreg(0:nnreg(0),0:ns-1) =
 !     .         st % diag % rescoreg(0:nnreg(0),0:ns-1)
 !      resmoreg(0:nnreg(0),0:ns-1)
 !     .         st % diag % resmoreg(0:nnreg(0),0:ns-1)
 !      reshereg(0:nnreg(0)) = st % diag % reshereg(0:nnreg(0))
 !      reshireg(0:nnreg(0)) = st % diag % reshireg(0:nnreg(0))
-
 
 *   ..write b2fstate_st in structured format
 #ifdef F2003
@@ -4364,7 +4329,6 @@
 
       close(nout_st)
 
-
 *   ..deallocate modules for structured grid
       call dealloc_b2mod_plasma
       call dealloc_b2mod_transport
@@ -4374,13 +4338,10 @@
       call dealloc_b2mod_rates
       call dealloc_b2mod_sources
 
-
       return
       end subroutine to_struct_plasma
 
-
 ******************************************************************************
-
 
       subroutine prep_plasma_ext (nx, ny, ns, nCv, nCi, nFc, st_ext)
 
@@ -4394,9 +4355,7 @@
 
       end subroutine prep_plasma_ext
 
-
 ******************************************************************************
-
 
       subroutine conv_regions (nnreg)
         implicit none
@@ -4432,9 +4391,7 @@
       return
       end subroutine conv_regions
 
-
 ******************************************************************************
-
 
       subroutine conv_midplane(nx,ny)                                   !srv 16.11.22 {
         integer :: nx, ny
@@ -4587,7 +4544,6 @@
       end subroutine conv_midplane                                       !srv 16.11.22 }
 
 ******************************************************************************
-
 
       end module b2us_prep
 

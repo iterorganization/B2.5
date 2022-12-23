@@ -82,7 +82,6 @@ c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03 
 *   ..procedures
-      intrinsic max, abs
       external xertst
       external b2xvsg, b2xvff
 *   ..initialization

@@ -104,7 +104,7 @@ module b2mod_cellhelper
     real(R8), parameter :: INVALID_DOUBLE = 9.99999e99_R8
 
     !! Distance between two points at which the points are declared to be equal
-    real(R8), parameter, private :: geom_match_dist = 1.0e-9_R8
+    real(R8), parameter, private :: point_match_dist = 1.0e-9_R8
 
     !! Cell geometry types for cellGeoType and isTriangle
     integer, parameter :: CGEO_BROKEN = 0
@@ -129,7 +129,7 @@ contains
     end function points_dist
 
     !> Check whether to points coincide
-    !! It tests whether their distance is closer than geom_match_dist.
+    !! It tests whether their distance is closer than point_match_dist.
     !! @param[in]   x1 - First coordinate of the first point
     !! @param[in]   y1 - Second coordinate of the first point
     !! @param[in]   x2 - First coordinate of the second point
@@ -138,7 +138,7 @@ contains
         !! Internal variables
         real(R8), intent(in) :: x1, y1, x2, y2
 
-        points_match = points_dist( x1, y1, x2, y2 ).lt.geom_match_dist
+        points_match = points_dist( x1, y1, x2, y2 ).lt.point_match_dist
     end function points_match
 
 

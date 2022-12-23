@@ -12,7 +12,7 @@
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
      *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
-     *          cr, cz, natmi, nmoli, nioni, nlimi, wklng,
+     *          natmi, nmoli, nioni, nlimi, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
@@ -78,10 +78,7 @@
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) ::
-     3   hy1(-1:nxd,-1:nyd),
-     3   pr(-1:nxd,-1:nyd)
-
+      real (kind=R8) :: pr(-1:nxd,-1:nyd)
       integer ispecies(0:nsd_local-1)
 
       integer is,iss,isp,nfla
@@ -111,7 +108,7 @@ c
      7   za(0:nsd_local-1)
 #endif
 c
-      integer nCv, nFc
+      integer n2, nCv, nFc
       integer ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
@@ -213,8 +210,6 @@ c
      .   value=solpstop)
 #endif
 #endif
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
 #ifdef MDSPLUS
       cr_x=0.0_R8
       cz_x=0.0_R8
@@ -276,10 +271,9 @@ c
 
 cxpb  This call is moved up from 'f31' so that we use the original cell-faced
 cxpb  quantities before their mapping to cell centers
-#ifdef WG_TODO
-      call b2xpni (nx, ny, ns, na, ni)
-      call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-#endif
+      n2 = (nx+2)*(ny+2)
+      call b2xpni (n2, ns, na, ni)
+      call b2xppr_st (nx, ny, ns, ne, na, te, ti, pr)
       nfla=0
       do is=0,ns-1
         if(.not.is_neutral(is)) nfla=nfla+1
@@ -468,31 +462,41 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       tdi='build_with_units($,"m")'
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cr(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),cr,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cr,0)
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ'
+      do iy=-1,ny
+        do ix=-1,nx
+          temp(ix,iy)=cz(ix,iy)
+        end do
+      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),cz,0)
+     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),cz,0)
+     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
@@ -593,7 +597,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      hy1(-1:nx,-1:ny)=hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
       do ix=-1,nx
         dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
         do iy=jsep+2,ny
@@ -849,7 +852,12 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,hy1,'')
+      do iy=-1,ny
+       do ix=-1,nx
+        temp(ix,iy)=hy1(ix,iy)
+       end do
+      end do
+      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
      1 nx+2,ny+2,fllime,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',
