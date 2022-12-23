@@ -111,13 +111,13 @@
 
       contains
 
-      subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim,
+      subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0,
      & main_call, switch, geo, mpg, st,
      & kin_frac_hyb, fnn_inc)
       use b2mod_subsys
       implicit none
-      integer nCv,nFc,ns,nxtl,nxtr,ismain
+      integer nCv, nFc, ns
       real (kind=R8) ::
      * dtim,
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
@@ -314,7 +314,7 @@ c not sure this is the right place
         allocate(NPTS_input(NSTRAI))
         allocate(tflux0(NSTRAI))
         if (balance_netcdf.ne.0) then !djm Jan2017
-         call alloc_b2mod_eirene_sources(nCv,nFc,ns,nstrat)
+         call alloc_b2mod_eirene_sources(nCv,ns,nstrat)
         endif
 
         write(*,*) 'Calling test_couple'
@@ -957,8 +957,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'in b2mod_eirene: main_call = ', main_call
       end if
       if (ncall.eq.0) then
-        if (main_call)
-     .   call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+!WG_TODO        if (main_call) call b2trci(nx,ny,ns,nnreg(0),switch)
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0

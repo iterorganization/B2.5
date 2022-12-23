@@ -511,7 +511,6 @@ cdjm Jan2017 Keep linearised sources for balance
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
       real (kind=R8) :: poloidal_scale_factor
-      integer, save :: nlbl
       logical, save :: elm_region, elm_data
 #ifdef WG_TODO
       integer :: ifa, isc, nfitanf
@@ -559,7 +558,6 @@ cdjm Jan2017 Keep linearised sources for balance
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
         call xertst(icsepomp.gt.0,
      &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
-        nlbl = max(1,maxval(mpg%ftLbl))
         if (any(poloidal_scaling))
      .    call xerrab('Poloidal scaling not yet coded for WG')
       else
@@ -956,8 +954,7 @@ c*** Clear data to forget previous profiles
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-        call output_ds(crx,cry,nx,ny,ixref,0,
-     1   iyref,iyastrt,iyaend,'dsp')
+        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 

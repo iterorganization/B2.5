@@ -13,6 +13,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_lbfill
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -73,7 +74,7 @@
 *   ..procedures
       logical streql, cfendf
       external xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx
+     &  gdawk, cfruch, cfruin, cfrure, cfendf
       external b2wgdt, b2ruzd
 
 *-----------------------------------------------------------------------

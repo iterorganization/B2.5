@@ -172,8 +172,7 @@
       if(switch%fch_stochastic.ne.0.0e0_R8) then                      !lk 31.01.08 { !srv 17.12.13
        call xerrab ('b2sihs_: fch_stochastic not yet available for WG')
 #ifdef WG_TODO
-       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
-     &      fchstoch)
+       call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then

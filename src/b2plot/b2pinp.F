@@ -1,6 +1,7 @@
-      subroutine b2pinp(*)
+      subroutine b2pinp(iret)
       use b2mod_types
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 c
 c  version : 11.11.97 21:29
@@ -18,6 +19,7 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
 c*** Set up the input routine
 c
+      iret=0
       lena=8
       jmess=2
       lfin=72
@@ -41,7 +43,8 @@ c*** ... and read the data from dg
       return
 c----------------------------------------------------------------------
   998 print *,'Error opening the file ',ufile
-      return 1
+      iret=1
+      return
 c----------------------------------------------------------------------
       end subroutine b2pinp
 c

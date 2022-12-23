@@ -121,9 +121,7 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)                       !srv 25.11.02
 *   ..read geometry and metric
 #ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
 #endif
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)

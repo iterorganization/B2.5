@@ -12,7 +12,7 @@
       real(kind=R8), intent (inout) :: lll !loglikelihood
       integer :: ii
       real(kind=R8) :: zz(nn), RR(nn), invC_z(nn)
-      intrinsic sqrt, exp, log
+      intrinsic sqrt, log
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
       call subini('calc_loglikelihood')
 ! sc  TO BE DONE: proper covariance matrix should be built here

@@ -49,17 +49,20 @@
 *   ..common blocks
 *   ..local variables
       integer iCv, iCv1, iCv2, iFc, ibc, iReg
-      integer ncall, iout, is, ic, ix, iy, ib, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
+      integer ncall, iout, is, ic, ib, iout_iout_ASTRA             !srv 05.10.01 03.04.13 19.04.13
       integer nx, ny, n2                                           !srv 12.07.10
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       integer, save :: use_mms = 0                                 !srv 26.02.18
 
-      integer nmdpl, nmdpl_i, ilast_closed_surface, iCvp, ncells,
-     *  n_closed_surface, ifirst_open_surface,
-     *  iFcp, iRFc, nRFc, icell
+      integer iRFc, nRFc, icell
+#ifdef WG_DEBUG
+      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy,
+     ,        ilast_closed_surface, ifirst_open_surface
       logical first
+      logical found
+#endif
       integer, allocatable :: regFaces(:)
       real (kind=R8) :: shift                                      !srv
       real (kind=R8), allocatable :: fun_st(:,:), clength_r(:),
@@ -68,8 +71,6 @@
 !                to the cell center of i-th cell in "radial direction"
 !   clength_s(i) is the length along a boundary from the face center of 1st face
 !                to the face center of i-th face
-
-      logical found
 
 #ifdef WG_TODO
       real (kind=R8) ::                                            !srv
@@ -104,12 +105,7 @@
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 #endif
 *   ..procedures
-      external machsfr
       external ipgeti
-*   ..procedures                                                   !srv
-      intrinsic abs                                                !srv
-      real (kind=R8) ::                                            !srv
-     *   machsfr                                       !srv
 *   ..initialisation
       save ncall, iout, use_astra, boundary_namelist
       data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/

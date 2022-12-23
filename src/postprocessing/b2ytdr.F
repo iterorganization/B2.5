@@ -219,21 +219,21 @@ c 2002-09-11: logic revised
      . ua_mean(:,:,:), po_mean(:,:),
      . e_na(:,:,:), e_te(:,:), e_ti(:,:),
      . e_ua(:,:,:), e_po(:,:),
-     . sna_mean(:,:,:,:), sne_mean(:,:,:),
-     . smo_mean(:,:,:,:), she_mean(:,:,:),
-     . shi_mean(:,:,:), sch_mean(:,:,:),
-     . e_sna(:,:,:,:), e_sne(:,:,:), e_smo(:,:,:,:),
-     . e_she(:,:,:), e_shi(:,:,:), e_sch(:,:,:)
+     . sna_mean(:,:,:), sne_mean(:,:),
+     . smo_mean(:,:,:), she_mean(:,:),
+     . shi_mean(:,:), sch_mean(:,:),
+     . e_sna(:,:,:), e_sne(:,:), e_smo(:,:,:),
+     . e_she(:,:), e_shi(:,:), e_sch(:,:)
       real (kind=R8), allocatable ::
      . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
      . ua1_mean(:,:,:), po1_mean(:,:),
      . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
      . e_ua1(:,:,:), e_po1(:,:),
-     . sna1_mean(:,:,:,:), sne1_mean(:,:,:),
-     . smo1_mean(:,:,:,:), she1_mean(:,:,:),
-     . shi1_mean(:,:,:), sch1_mean(:,:,:),
-     . e_sna1(:,:,:,:), e_sne1(:,:,:), e_smo1(:,:,:,:),
-     . e_she1(:,:,:), e_shi1(:,:,:), e_sch1(:,:,:)
+     . sna1_mean(:,:,:), sne1_mean(:,:),
+     . smo1_mean(:,:,:), she1_mean(:,:),
+     . shi1_mean(:,:), sch1_mean(:,:),
+     . e_sna1(:,:,:), e_sne1(:,:), e_smo1(:,:,:),
+     . e_she1(:,:), e_shi1(:,:), e_sch1(:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:,:), fna1(:,:,:,:,:), ua1(:,:,:), na1(:,:,:),
@@ -508,6 +508,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: is_neutral1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
+      logical LMULPL
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLRAY(:)
@@ -524,11 +525,12 @@ c 2002-09-11: logic revised
       logical, allocatable :: done(:)
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac,
-     .        cpath_written, new_path
+     .        no_sputtering, cpath_written, new_path,
+     .        adas_correct
 #endif
       logical todo, wait
       logical same_bundling, same_atoms, same_grid, non_default
-      logical averaging
+      logical averaging, hydrogen
       logical ismain_done, ismain0_done, ycur_done
       logical first_pass, do_scale
       logical wall_namelist_used
@@ -536,7 +538,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits, trace_convert
+      integer lnblnk, len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
       logical isaletter, silent_open
@@ -548,14 +550,13 @@ c 2002-09-11: logic revised
       intrinsic iabs, min0
 #endif
       integer conformal_convert
-      real (kind=R8) :: cr, cz, cr1, cz1, rratio
+      real (kind=R8) :: rratio
       logical open_file, streql
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin,
      &  cfwuch, cfwure, ipgeti, lnblnk, len_of_digits, only_comments,
      &  open_file, get_jsep, conformal_convert, end_comment,
-     &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment,
-     &  convert_position
+     &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm
       external E01BEF, E01BFF
@@ -592,14 +593,6 @@ c 2002-09-11: logic revised
       namelist /atomic_physics_rescale/
      1 rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      3 rescale_rd, rescale_br
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-      cr1(ix,iy)=0.25_R8*
-     1 (crx1(ix,iy,0)+crx1(ix,iy,1)+crx1(ix,iy,2)+crx1(ix,iy,3))
-      cz1(ix,iy)=0.25_R8*
-     1 (cry1(ix,iy,0)+cry1(ix,iy,1)+cry1(ix,iy,2)+cry1(ix,iy,3))
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -919,9 +912,7 @@ c 2002-09-11: logic revised
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
 #ifdef WG_TODO
-        call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+        call b2rugm (70, nx, ny, isymm)
 #endif
         call get_jsep(nx,ny,jxi,jxa,jsep)
         if (non_commensurate.eq.1) then
@@ -948,9 +939,7 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
 #ifdef WG_TODO
-        call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &   wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+        call b2rugm (ninp(3), nx, ny, isymm)
 #endif
         call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
@@ -987,9 +976,7 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
 #ifdef WG_TODO
-        call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &   vol, hx, hy, qz, qc, qs, gs, pbs, wbbc,
-     &   cell_width, cell_height)
+        call b2wugm (nout(6), nx, ny)
 #endif
         close(nout(6))
       endif
@@ -1043,18 +1030,18 @@ c 2002-09-11: logic revised
       allocate(e_te(-1:nx,-1:ny))
       allocate(e_ti(-1:nx,-1:ny))
       allocate(e_po(-1:nx,-1:ny))
-      allocate(sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
-      allocate(sne_mean(-1:nx,-1:ny,0:1))
-      allocate(smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
-      allocate(she_mean(-1:nx,-1:ny,0:3))
-      allocate(shi_mean(-1:nx,-1:ny,0:3))
-      allocate(sch_mean(-1:nx,-1:ny,0:3))
-      allocate(e_sna(-1:nx,-1:ny,0:1,0:ns-1))
-      allocate(e_sne(-1:nx,-1:ny,0:1))
-      allocate(e_smo(-1:nx,-1:ny,0:3,0:ns-1))
-      allocate(e_she(-1:nx,-1:ny,0:3))
-      allocate(e_shi(-1:nx,-1:ny,0:3))
-      allocate(e_sch(-1:nx,-1:ny,0:3))
+      allocate(sna_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(sne_mean(-1:nx,-1:ny))
+      allocate(smo_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(she_mean(-1:nx,-1:ny))
+      allocate(shi_mean(-1:nx,-1:ny))
+      allocate(sch_mean(-1:nx,-1:ny))
+      allocate(e_sna(-1:nx,-1:ny,0:ns-1))
+      allocate(e_sne(-1:nx,-1:ny))
+      allocate(e_smo(-1:nx,-1:ny,0:ns-1))
+      allocate(e_she(-1:nx,-1:ny))
+      allocate(e_shi(-1:nx,-1:ny))
+      allocate(e_sch(-1:nx,-1:ny))
       allocate(na1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(ua1_mean(-1:nx1,-1:ny1,0:ns1-1))
       allocate(te1_mean(-1:nx1,-1:ny1))
@@ -1065,18 +1052,18 @@ c 2002-09-11: logic revised
       allocate(e_te1(-1:nx1,-1:ny1))
       allocate(e_ti1(-1:nx1,-1:ny1))
       allocate(e_po1(-1:nx1,-1:ny1))
-      allocate(sna1_mean(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(sne1_mean(-1:nx1,-1:ny1,0:1))
-      allocate(smo1_mean(-1:nx1,-1:ny1,0:3,0:ns1-1))
-      allocate(she1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(shi1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(sch1_mean(-1:nx1,-1:ny1,0:3))
-      allocate(e_sna1(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(e_sne1(-1:nx1,-1:ny1,0:1))
-      allocate(e_smo1(-1:nx1,-1:ny1,0:3,0:ns1-1))
-      allocate(e_she1(-1:nx1,-1:ny1,0:3))
-      allocate(e_shi1(-1:nx1,-1:ny1,0:3))
-      allocate(e_sch1(-1:nx1,-1:ny1,0:3))
+      allocate(sna1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(sne1_mean(-1:nx1,-1:ny1))
+      allocate(smo1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(she1_mean(-1:nx1,-1:ny1))
+      allocate(shi1_mean(-1:nx1,-1:ny1))
+      allocate(sch1_mean(-1:nx1,-1:ny1))
+      allocate(e_sna1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_sne1(-1:nx1,-1:ny1))
+      allocate(e_smo1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_she1(-1:nx1,-1:ny1))
+      allocate(e_shi1(-1:nx1,-1:ny1))
+      allocate(e_sch1(-1:nx1,-1:ny1))
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
@@ -1174,13 +1161,17 @@ c 2002-09-11: logic revised
       eb2spcr1=-1
       b2espcr1=-1
       b2eatcr1=-1
+      hydrogen = .false.
+      do ib = 0, ns1-1
+        hydrogen = hydrogen .or. nint(zn1(ib)).eq.1
+      end do
 *   ..compute new state
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
      &    non_commensurate,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc(-1,-1,0), hx1, hy1, qc1(-1,-1,0),
+     &    hx, hy, qc(-1,-1,0), hxx, hyy, qc1(-1,-1,0),
      &    bundle_frac, bottomiy1,
      &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
@@ -1239,8 +1230,8 @@ c 2002-09-11: logic revised
             na1(:,:,is)=na1(:,:,is)*neutral_rescale
             na1_mean(:,:,is)=na1_mean(:,:,is)*neutral_rescale
             e_na1(:,:,is)=e_na1(:,:,is)*neutral_rescale**2
-            sna1_mean(:,:,:,is)=sna1_mean(:,:,:,is)*neutral_rescale
-            e_sna1(:,:,:,is)=e_sna1(:,:,:,is)*neutral_rescale**2
+            sna1_mean(:,:,is)=sna1_mean(:,:,is)*neutral_rescale
+            e_sna1(:,:,is)=e_sna1(:,:,is)*neutral_rescale**2
             fna1(:,:,:,:,is)=fna1(:,:,:,:,is)*neutral_rescale
             fna_mdf1(:,:,:,:,is)=fna_mdf1(:,:,:,:,is)*neutral_rescale
             fna_fcor1(:,:,:,:,is)=fna_fcor1(:,:,:,:,is)*neutral_rescale
@@ -1254,10 +1245,8 @@ c 2002-09-11: logic revised
             fna_521(:,:,:,:,is)=fna_521(:,:,:,:,is)*neutral_rescale
           endif
         enddo
-#ifdef WG_TODO
-        call b2xpfi (nx, ny, ns, fna_321, fni_321)
-        call b2xpfi (nx, ny, ns, fna_521, fni_521)
-#endif
+        call b2xpfi_st (nx, ny, ns, fna_321, fni_321)
+        call b2xpfi_st (nx, ny, ns, fna_521, fni_521)
       endif
 
 *   ..write header for transformed state
@@ -1390,7 +1379,9 @@ c 2002-09-11: logic revised
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
       call ipgetr ('b2tfnb_ycur', ycur)
+      if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
+      if (.not.hydrogen) fch_ion_neutral = 0.0_R8
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1767,7 +1758,7 @@ c 2002-09-11: logic revised
           todo = .false.
           wait = .true.
         case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
-     &       'b2npp7_style' ,
+     &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
      &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs')
           todo = .false.
           wait = .true.
@@ -3272,7 +3263,7 @@ cxpb This will need to be checked !!!
                           pxa(-1) = 0.0_R8
                           l_conn(-1) = 0.0_R8
                           do i = 0, nx1-1
-                            l_conn(i) = hx1(i,iyref1)/
+                            l_conn(i) = hxx(i,iyref1)/
      1                       (sqrt(bb1(i,iyref1,0)**2+
      2                             bb1(i,iyref1,1)**2)/bb1(i,iyref1,3))
                             pxa(i) =
@@ -3722,8 +3713,28 @@ cxpb start by identifying the correspondence with the new run species
           end if
         end do
         nmol1 = iss
+        no_sputtering = .true.
+        do jatm = 1, natmi
+          if (iatm1(jatm).eq.0) cycle
+          select case (is_codes(eb2atcr(jatm)))
+          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+            continue
+          case default
+            no_sputtering = .false.
+          end select
+        end do
+        adas_correct = .true.
+        do jatm = 1, natmi
+          if (iatm1(jatm).eq.0) cycle
+          select case (is_codes(eb2atcr(jatm)))
+          case ('H','D','T','He','C','Ne','Ar','N','Be')
+            continue
+          case default
+            adas_correct = b2fstate_version.gt.'03.000.007'
+          end select
+        end do
         if (streql(eirene_format,'iter') .and.
-     .      same_bundling .and. same_grid) then
+     .      same_bundling .and. same_grid .and. adas_correct) then
           write(nout(5),'(a)') 'input.dat'
           write(*,*) 'No changes needed in input.dat'
           goto 8688  ! no need to convert input.dat file
@@ -3757,7 +3768,7 @@ cxpb  Start reading input.dat file
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           filename=fort_lc//'13'
           inquire(file=filename,exist=ex)
-          if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+          if (ex) idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
           filename=fort_lc//'15'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
@@ -4168,6 +4179,7 @@ C  OLD INPUT VERSION BEGIN
           ELSE
             READ (ZEILE,6666) idum(0:4) ! ILREF(NLJ),ILSPT(NLJ),ISRS(1,NLJ),
                                         ! ISRC(1,NLJ),LCHSPNWL(1,NLJ)
+            IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
             IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >        idum(2) = iatm1(idum(2))
             IF (idum(3).gt.0 .and. idum(3).le.NATMI) THEN
@@ -4343,6 +4355,7 @@ C READ LOCAL SURFACE INTERACTION MODEL FOR SURFACE NO. I
           ELSE
             READ (ZEILE,6666) idum(0:4) ! ILREF(I),ILSPT(I),ISRS(1,I),ISRC(1,I),
                                         ! LCHSPNWL(1,I)
+            IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
             IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >       idum(2) = iatm1(idum(2))
             IF (idum(3).gt.0 .and. idum(3).le.NATMI) THEN
@@ -4824,6 +4837,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEA(JATM,K),IESTMA(JATM,K),
      .                          IBGKA(JATM,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKA(JATM,K) /= 0)
             READ (IUNIN,6664) EELECA(JATM,K),EBULKA(JATM,K),
      .                        ESCD1A(JATM,K),ESCD2A(JATM,K),
      .                        FREACA(JATM,K),FLDLMA(JATM,K)
@@ -4977,6 +4991,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEM(JMOL,K),IESTMM(JMOL,K),
      .                          IBGKM(JMOL,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKM(JMOL,K) /= 0)
             READ (IUNIN,6664) EELECM(JMOL,K),EBULKM(JMOL,K),
      .                        ESCD1M(JMOL,K),ESCD2M(JMOL,K),
      .                        FREACM(JMOL,K)
@@ -5122,6 +5137,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEI(JION,K),IESTMI(JION,K),
      .                          IBGKI(JION,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKI(JION,K) /= 0)
             READ (IUNIN,6664) EELECI(JION,K),EBULKI(JION,K),
      .                        ESCD1I(JION,K),ESCD2I(JION,K),
      .                        FREACI(JION,K)
@@ -5245,6 +5261,7 @@ Cxpb then rewrite the entire block
      .                          ISCDEPH(JPHOT,K),IESTMPH(JPHOT,K),
      .                          IBGKPH(JPHOT,K)
             ENDIF
+            LMULPL = LMULPL .OR. (IBGKPH(JPHOT,K) /= 0)
             READ (IUNIN,6664) EELECPH(JPHOT,K),EBULKPH(JPHOT,K),
      .                        ESCD1PH(JPHOT,K),ESCD2PH(JPHOT,K),
      .                        FREACPH(JPHOT,K),FLDLMPH(JPHOT,K)
@@ -7720,6 +7737,7 @@ cxpb Rescaling for when the extent of the nuclear sequence has changed
           READ (IUNIN,6666) idum(0:4) ! REFCUR%JLREF,REFCUR%JLSPT,
                                       ! REFCUR%JSRS,REFCUR%JSRC,
                                       ! REFCUR%JLCHSPNWL
+          IF (idum(1).ne.0 .and. no_sputtering) idum(1)=0
           IF (idum(2).gt.0 .and. idum(2).le.NATMI)
      >      idum(2) = iatm1(idum(2))
           IF (idum(3).gt.0 .and. idum(3).le.NATMI) THEN
@@ -8802,7 +8820,11 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,'(A80)') ZEILE
         END IF
  1110   READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        call fix_logical_input(zeile,35)
+        READ (ZEILE,6665) ldum(1:35)
+! Merge usage of TRCDBGG and TRCGRD
+        ldum(6) = ldum(6).or.ldum(33)
+        WRITE(IUNOT,6665) ldum(1:35)
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
         allocate(TRCSR1(0:NSTRA1+1))
         DO I = 0, NSTRA, 60
@@ -9705,10 +9727,10 @@ cxpb  Convert fort.44 file if needed
           call b2yt_ngread(solps_version, eirene_format,
      &     nx1, ny1, natmi1, iatm1, nmol1, imol1, nion1, iion1,
      &     ns1-nspecies1, ipls1, npls,
-     &     savestratum, non_commensurate,
+     &     no_sputtering, savestratum, non_commensurate,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc(-1,-1,0), hx1, hy1, qc1(-1,-1,0))
+     &     hx, hy, qc(-1,-1,0), hxx, hyy, qc1(-1,-1,0))
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
@@ -9727,7 +9749,7 @@ cxpb  Convert fort.46 file if needed
           write(*,*) 'No changes needed in '//fort_lc//'46'
         endif
         if (.not.(streql(solps_version,'iter').and.
-     &            same_bundling.and.same_grid)) then
+     &            same_bundling.and.same_grid.and.adas_correct)) then
           deallocate(e_bundle_start)
           deallocate(e_bundle_end)
           deallocate(e_bundle_contr)
@@ -10626,7 +10648,7 @@ cxpb as they no longer necessarily point to the same species
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
 *  ..convert some wall arrays
         if(wall_namelist_used) then
-          call b2yt_wall(nx1,ny1,ns,ns1,
+          call b2yt_wall(ns,ns1,
      .     natm,natm1,nmol,nmol1,nion,nion1,
      .     is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)

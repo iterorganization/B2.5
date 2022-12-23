@@ -102,11 +102,9 @@
       type(geometry), intent(in) :: gm
       integer :: icv, ivx, mxfc, nfcl, ifc, jfc, ihelp, ilast, iv, ichk
       integer, allocatable :: indvx(:)
-      real (kind=R8) :: areat, x1, y1, x2, y2, x3, y3, at
+      real (kind=R8) :: at
       character(6) :: ccell
       character(6) :: cform
-
-      AREAT(X1,Y1,X2,Y2,X3,Y3) = 0.5*(X1*(Y2-Y3)+X2*(Y3-Y1)+X3*(Y1-Y2))
 
 !  write vertices onto file
 
@@ -188,9 +186,16 @@
       end do
 
       return
+
+      contains
+
+      function areat(x1, y1, x2, y2, x3, y3)
+      real (kind=R8) :: areat
+      real (kind=R8), intent(in) :: x1, y1, x2, y2, x3, y3
+        areat = 0.5_R8*(x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2))
+      end function areat
+
       end subroutine out_geometry
-
-
 
       subroutine out_quantities(ns, mpg, gm, st)
       use b2mod_types

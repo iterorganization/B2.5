@@ -37,17 +37,26 @@ c======================================================================
       integer lun
       parameter (lun=96)
       integer, save :: use_eirene = 0
-#ifndef B25_EIRENE
+#ifdef B25_EIRENE
+      integer eb2atm(nspecies)
+#else
+#ifdef WG_TODO
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
+#endif
       character*8 TEXTA(DEF_NATM)
 #endif
 c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is,ix,ik,ind,ims,ias,nclm_na,nclm_nm
+      integer kval, kflx
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
+c*  s:        area of target segments cut by the grid
+c*  wid_par:  ideal parallel power flux at the targets
+c*  wid_trg:  ideal power on the targets
+c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
      *  h,ha,hb,u,a,b,d,p,wo,wt,mion,t1(2),
      ,  z_hlp(ntrgsx),xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
@@ -78,8 +87,8 @@ c
 c*** Recap of fluxes from Eirene
 c***    wldnek  :   net kinergy energy deposited by neutrals. Evaluated as
 c***                    EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
-c***    wldnep  :   potential energy released by neutrals. Evaluated as
-c***                    diss_pot_H2*PRFAML
+c***    wldnep  :   energy released by recombination into molecules. Evaluated as
+c***                    diss_pot_H2*(PRFAML+PRFPML)
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
 c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
@@ -115,11 +124,8 @@ c***                     (PRFAML+PRFPML)*H_EDISS
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
      ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
-     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx), sptmass,
+     ,   sjs_s(0:ntrgsx), sjs_t(ntrgsx), sjs_w(ntrgsx), sptmass,
      ,   sn_t, spt_out(2), mol_out(2*DEF_NMOL)
-#ifdef B25_EIRENE
-      integer eb2atm(nspecies)
-#endif
       character*11 spt_str(2,ntrgsx), fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
       character*16 ssmol, ssion
@@ -137,15 +143,13 @@ c***                     (PRFAML+PRFPML)*H_EDISS
 c*** Data for erosion calculations
 c***  n_srfs_m  : number of possible target materials
 c***  srfs_m    : list of possible target materials
-c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible target materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
-      character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
+      character srfs_m(n_srfs_m)*4
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
-      data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo' ,'W'/
       data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
      .              56.0_R8, 96.0_R8,184.0_R8/
       data srfs_d /  1.8_R8,  2.0_R8,  2.0_R8,  7.8_R8,
@@ -311,56 +315,58 @@ c
       u=-1.0_R8
       do j=1,ntrgts !{
         k=ltrgpos(j)
+        kval=k+l
+        kflx=k+1-l
         ISS=ltns(j)
         IND=eirdiag_nds_ind(ISS)
         IAS=IND+1
         do iy=lytg,ny-1 !{
           wnutrg(iy,j)=0.0_R8
-          wo=fhe(k+1-l,iy,0,0)+fhi(k+1-l,iy,0,0)+fhi_ext(k+1-l,iy,0,0)
+          wo=fhe(kflx,iy,0,0)+fhi(kflx,iy,0,0)+fhi_ext(kflx,iy,0,0)
           do is=0,ns-1 !{
             if (ft44) then
-              wo=wo+fna(k+1-l,iy,0,0,is)*(rpt(k+l,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
+              wo=wo+fna(kflx,iy,0,0,is)*(rpt(kval,iy,is)*ev
+     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(kval,iy)))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
             else
               if (is_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,0,is)
-     .           *(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy))
+                wnutrg(iy,j)=wnutrg(iy,j)+fna(kflx,iy,0,0,is)
+     .           *(1.0_R8-BoRiS)*(kinrgy(kval,iy,is)+ti(kval,iy))
               else
-                wo=wo+fna(k+1-l,iy,0,0,is)*(rpt(k+l,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
+                wo=wo+fna(kflx,iy,0,0,is)*(rpt(kval,iy,is)*ev
+     .           +(1.0_R8-BoRiS)*(kinrgy(kval,iy,is)+ti(kval,iy)))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               endif
             endif
           end do !}
           do is=0,ns_ext-1 !{
             if (ft44) then
-              wo=wo+fa_ext(k+1-l,iy,0,0,is)*(pt_ext(k+l,iy,is)*ev
+              wo=wo+fa_ext(kflx,iy,0,0,is)*(pt_ext(kval,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
+     .             ua_ext(kval,iy,is)**2+ta_ext(kval,iy,is)))
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
             else
               if (is_ext_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,0,is)
+                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(kflx,iy,0,0,is)
      .           *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is))
+     .             ua_ext(kval,iy,is)**2+ta_ext(kval,iy,is))
               else
-                wo=wo+fa_ext(k+1-l,iy,0,0,is)*(pt_ext(k+l,iy,is)*ev
+                wo=wo+fa_ext(kflx,iy,0,0,is)*(pt_ext(kval,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
+     .             ua_ext(kval,iy,is)**2+ta_ext(kval,iy,is)))
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               endif
             end if
           end do !}
-          wo=wo+(1.0_R8-BoRiS)*fne(k+1-l,iy,0,0)*te(k+l,iy)
+          wo=wo+(1.0_R8-BoRiS)*fne(kflx,iy,0,0)*te(kval,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
-c        wo=-1.0e-6_R8*wo/s(iy,1)
+c        wo=-1.0e-6_R8*wo/s(iy,j)
           wo= wo/s(iy,j)
           wpltrg(iy,j)=wo*u
           if(.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
-          netrg(iy,j)=ne(k+l,iy)
-          tetrg(iy,j)=te(k+l,iy)/ev
-          titrg(iy,j)=ti(k+l,iy)/ev
+          netrg(iy,j)=ne(kval,iy)
+          tetrg(iy,j)=te(kval,iy)/ev
+          titrg(iy,j)=ti(kval,iy)/ev
           if (ft44) then
             do is=1,natmi
 c             carlis Using values directly calculated from Eirene
@@ -395,12 +401,12 @@ c             carlis Using values directly calculated from Eirene
                 imol=imol+1
               enddo
 #ifdef WG_TODO
-              t=tib2(k+l+1,iy+1,is,1)/ev
+              t=tib2(kval+1,iy+1,is,1)/ev
               if (mion.gt.0.0_R8)
      >         wnutrg(iy,j)=wnutrg(iy,j)+
-     .          s(iy,j)*dib2(k+l+1,iy+1,is,1)*
+     .          s(iy,j)*dib2(kval+1,iy+1,is,1)*
      *          sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .          (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+     .          (2.0_R8*tib2(kval+1,iy+1,is,1)+EionH2*ev)
 #endif
             enddo
           endif
@@ -528,13 +534,15 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
         write(lun,740) 'Lcnnx',tab,
      .   'connection length from x-point to target [m]'
         if(lrdlsp) then !{
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
+     ,            'Wrad','Wpls','Wneut',
+     ,            'xMP','Rclfc','Zclfc',
      ,            'Lcnnt','Lcnnx',
      ,            ('rad_'//textan(is)(2:3),is=0,nclm_na-1)
         else !}{
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
+     ,            'Wrad','Wpls','Wneut',
+     ,            'xMP','Rclfc','Zclfc',
      ,            'Lcnnt','Lcnnx'
         end if !}
         write(fmt_peak,720) nclm_ld
@@ -545,16 +553,22 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
         end if !}
         do i=lytg,ny-1 !{
           if(lrdlsp) then !{
-            write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
-     ,              titrg(i,j),wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),
-     ,              wpltrg(i,j),wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),
-     ,              zctrg(i,j),lcnnt(i,j),lcnnx(i,j),
-     ,              (wrdtrg(i,j,is),is=1,nclm_na)
+            write(lun,fmt_peak) xtrg(i,j),
+     ,              netrg(i,j),tetrg(i,j),titrg(i,j),
+     ,              wtttrg(i,j),wpttrg(i,j),
+     ,              wrdtrg(i,j,0),wpltrg(i,j),
+     ,              wnutrg(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              lcnnt(i,j),lcnnx(i,j),
+     ,             (wrdtrg(i,j,is),is=1,nclm_na)
           else !}{
-            write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
-     ,              titrg(i,j),wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),
-     ,              wpltrg(i,j),wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),
-     ,              zctrg(i,j),lcnnt(i,j),lcnnx(i,j)
+            write(lun,fmt_peak) xtrg(i,j),
+     ,              netrg(i,j),tetrg(i,j),titrg(i,j),
+     ,              wtttrg(i,j),wpttrg(i,j),
+     ,              wrdtrg(i,j,0),wpltrg(i,j),
+     ,              wnutrg(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              lcnnt(i,j),lcnnx(i,j)
           end if !}
         end do !}
         close (lun)
@@ -616,15 +630,27 @@ c
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
-          write(lun,'(a6,a1,20(a1,2a))') '# time',tab,
-     -     tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
-     ,     tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
-     ,     tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
-     ,     tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
-     ,     tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
-     ,     tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
-     ,     tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
-     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+          if (i1.ne.i2) then
+           write(lun,'(a6,a1,20(a1,2a))') '# time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+          else
+           write(lun,'(a6,a1,13(a1,2a))') '# time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl
+          end if
           write(lun,fmt_peak) tim,
      ,     (tab, wpk_tt(i),i=i1,i2,i3), tab, wpk_tt(0),
      ,     (tab, wlc_tt(i),i=i1,i2,i3),
@@ -645,6 +671,12 @@ c-----------------------------------------------------------------------
 c*** Calculate the integral loads onto the targets and power load widths
 c*** and write them down to a summary file
 
+      ia=-2
+      ib=-2
+      ic=-2
+      ha=0.0_R8
+      hb=0.0_R8
+      hc=0.0_R8
       do j=1,ntrgts !{
         hlp_trg(j)=trg_short(j)
         pwr_tt(j)=0.0_R8
@@ -711,13 +743,16 @@ c*** Total power outside the strike point position and power half-width
         wo=0.0_R8
         do i=lseppos(j)+1,ny-1 !{
           if(xtg_hlp(i,j).ge.hwxt_tt(j)) then !{
-            h=(hwxt_tt(j)-h)/(xtg_hlp(i,j)-xtg_hlp(i-1,j))
-            hwxm_tt(j)=wo*(1.0_R8-h)+xmc_hlp(i,j)*h
+            h=(hwxt_tt(j)-xtg_hlp(i-1,j))/
+     .       (xtg_hlp(i,j)-xtg_hlp(i-1,j))
+            hwxm_tt(j)=
+     .        xmc_hlp(i-1,j)*(1.0_R8-h)+xmc_hlp(i,j)*h
             ic=i  !###
+            hc=h  !###
             exit
           end if !}
-          h=xtg_hlp(i,j)
-          wo=xmc_hlp(i,j)
+c*          h=xtg_hlp(i,j)
+c*          wo=xmc_hlp(i,j)
         end do !}
 !###{
         if(fwht_tt(j).lt.0.0_R8 .or.
@@ -736,8 +771,9 @@ c*** Total power outside the strike point position and power half-width
           print *,'m_hlp,wtttrg:',m_hlp(j)
           print '(1x,i3,1p,10e10.2/(4x,10e10.2))',lseppos(j)+1,
      ,                                          (wtttrg(i,j),i=0,ny-1)
-          print '(5a4,a7,2a12)','j','imx','ia','ib','ic','a','b','d'
-          print '(5i4,1p,3e12.4)',j,m_hlp(j),ia,ib,ic,a,b,d
+          print '(5a4,a7,5a12)','j','imx','ia','ib','ic','a','b','d',
+     ,      'ha','hb','hc'
+          print '(5i4,1p,6e12.4)',j,m_hlp(j),ia,ib,ic,a,b,d,ha,hb,hc
         end if !}
 !###}
       end do !}
@@ -827,6 +863,7 @@ c      print *,'Particle fluxes...' !###
         ersn_l(j)=0.0_R8
         sjs_w(j)=0.0_R8
         sjs_t(j)=0.0_R8
+        sjs_s(j)=0.0_R8
         do ia=1,nclm_na
           sja_w(j,ia)=0.0_R8
           sja_t(j,ia)=0.0_R8
@@ -1014,8 +1051,7 @@ c        Temporary solution for this routine is to use the bulk track_species
               end do
           end do
 
-          if(ntns.eq.2 .or. ntns.eq.4 .and.
-     .       sptlis(j).ne.0) then
+          if(sptlis(j).ne.0) then
               js=ltns(j)+nlim
               if (sptlis(j).le.natmi) then
                 sjs_w(j)=sjs_w(j)+
@@ -1056,7 +1092,7 @@ c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/
 c carlis The emitted amount in g/y is evaluated using the sputtered atom or molecule
 c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
               sjs(iy,j)=sjs(iy,j)*sptmass*nsecyr/avogr
-              sjs_w(j)=sjs_w(j)+sjs(iy,j)
+              sjs_s(j)=sjs_s(j)+sjs(iy,j)
             end do !}
             if (sptlis(j).le.natmi) then
               ssmol=texta(sptlis(j))
@@ -1073,7 +1109,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           else ! no sputtering
             print *,'b2ptrgl, zero sputtering flux for target j=',
      ,                                                        j
-            sjs_w(j)=0.0_R8
+            sjs_s(j)=0.0_R8
           end if
         end do !loop on targets
       else
@@ -1207,7 +1243,7 @@ c
       do imol=1,nmoli
         sjm_w(0,imol)=0.0_R8
       end do
-      sjs_w(0)=0.0_R8
+      sjs_s(0)=0.0_R8
       do j=1,ntrgts
         do ia=1,nclm_na
           sja_w(0,ia)=sja_w(0,ia)+sja_w(j,ia)
@@ -1221,6 +1257,7 @@ c
         end do
       end do !}
       k=1
+      if(ntrgts.eq.1) k=ntrgsx
       if(ntrgts.eq.2) k=ntrgsx-1
       open(lun,file=fsumm(2))
       write(lun,'(2a)') 'Target erosion summary: ',trim(label)
@@ -1259,15 +1296,15 @@ c
       if (ntargsp.gt.0.and.ft44) then
         k=0
         do j=1,ntrgts
-          sjs_w(0)=sjs_w(0)+sjs_w(j)
+          sjs_s(0)=sjs_s(0)+sjs_s(j)
           if(k.eq.0.and..not.streql(mtrtrgsg(j),' ')) k=j
         end do
         if (k.ne.0) then
           write(lun,*)
           write(lun,*) 'Total sputtering [g/y]'
           write(lun,fmt_peak) trim(mtrtrgsg(k)),
-     ,                       (tab,sjs_w(i),i=1,ntrgts),
-     ,                        tab,sjs_w(0)
+     ,                       (tab,sjs_s(i),i=1,ntrgts),
+     ,                        tab,sjs_s(0)
         end if
         write(lun,*)
         write(lun,*) 'Erosion [mm/y]'

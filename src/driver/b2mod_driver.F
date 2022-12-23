@@ -337,6 +337,15 @@
 #endif
       character*256 filename
       logical ex, found
+#ifdef IMAS
+      character(len=24) :: device_env
+#ifndef NO_GETENV
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
+#endif
+#endif
 *   ..initialisation
       data atomic_physics_rescale_flag/0/
       namelist /atomic_physics_rescale/
@@ -1918,12 +1927,12 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_ad
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ns, idum(0:9)
+      integer nout(0:11), ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ns, idum(0:9)
+      integer nout(0:10), ns, idum(0:9)
 #endif
 #ifdef WG_TODO
-      integer ny
+      integer nx, ny
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -1943,6 +1952,9 @@ c new CDF movie option (1st frame at t=0)
       character*256 filename, fort31name
 #ifdef B25_EIRENE
       character*256 systemarg
+#ifdef NAGFOR
+      integer ierror
+#endif
 #endif
       character*1 ss
       logical ok, found
@@ -2060,7 +2072,7 @@ cwdk  set some integers
         state%psnc%fkt = state%dv%fkt
         state%psnl%fzt = state%psnc%fzt
         state%psnc%fzt = state%dv%fzt
-        call b2trcs(ns,geo,mpg,switch)
+        call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
           state%pl%po   =0.0e0_R8
@@ -2262,7 +2274,7 @@ c new CDF movie option
         endif
         call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
      .              switch,state%pl,state%dv,state%co,ismain,ismain0,
-     .              switch%BoRiS,lwti,lwav,.true.)
+     .              lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2293,7 +2305,7 @@ c new CDF movie option
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
      .                           switch)
-          call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+!WG_TODO          call b2trci(nx,ny,ns,nnreg(0),switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
@@ -2518,9 +2530,12 @@ c new CDF movie option
      & , only : old_erosion, old_deposition
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ny, ns, idum(0:9)
+      integer nout(0:11), ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ny, ns, idum(0:9)
+      integer nout(0:10), ns, idum(0:9)
+#endif
+#ifdef WG_TODO
+      integer nx, ny
 #endif
       type (switches), intent (in) :: switch
       type(mapping), intent (inout)    :: mpg
@@ -2680,7 +2695,7 @@ c new CDF movie option
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
           call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
      *                switch,state%pl,state%dv,state%co,ismain,ismain0,
-     *                switch%BoRiS,.true.,.false.,.false.)
+     *                .true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif
@@ -2723,7 +2738,7 @@ c new CDF movie option
       if (ibatch_av_all > 0) call batch_av_all_fin
 
 *  .. finalize tracing routines
-      call b2trcf(ns,geo,mpg,switch)
+      call b2trcf
 
 * ..return
       ncall = ncall+1

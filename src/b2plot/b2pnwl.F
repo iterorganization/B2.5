@@ -1,4 +1,4 @@
-      subroutine b2pnwl(*)
+      subroutine b2pnwl(iret)
 c
 c  version : 11.11.97 20:52
 c
@@ -20,6 +20,7 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
+      integer iret
 c*** Local variables
 c
       integer lun
@@ -35,7 +36,7 @@ c*** and for the power flux.
       integer il,is,i,ii,ia,ib,k,ic
       character*74 hlp_frm
       real (kind=R8) ::
-     *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
+     *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
       real (kind=R8) :: width
       data width /1.0_R8/
@@ -52,7 +53,9 @@ c*** Set the default values
       npumplis=0
       nwldprt=0
 c*** Read the data from dg files
-      call b2pinp(*999)
+      iret=0
+      call b2pinp(iret)
+      if (iret.eq.1) goto 999
 c
 c*** Convert the input wall coordinates into double precision
 c*** and scale them to meters.
@@ -86,7 +89,8 @@ c*** The shadowing structure must be closed, therefore it starts from
 c*** an arbitrary point.
 
       lwldstrt(1)=iabs(lwldlis(1,1))
-      call b2pwsrt(*999)
+      call b2pwsrt(iret)
+      if (iret.ne.0) goto 999
 cc<<<
 c      print *,'After b2pwsrt',nwldprt
 c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
@@ -130,9 +134,8 @@ c*** ... and produce the output file
 #ifdef DBG
       print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
       do il=1,nwldprt
-        write (hlp_frm,'(a,i3,a)') '(1x,',nwldlis(il)+1,'i4)'
         print '(1x,2i4,1x,a)',il,nwldlis(il),pltzlbl(il)
-        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
+        write (6,'(1x,20i4)') (lwldlis(i,il),i=1,nwldlis(il))
       end do
 #endif
 c
@@ -152,31 +155,32 @@ c*** calculate the length of the target segment
             ia=lwldlis(i,il)
             is=leirlis(i,il)
             if (is.gt.0.and.is.le.nlim) then
-              dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
-              hlpx=hlpx+dist
+              distance=sqrt((p1(1,is)-p2(1,is))**2+
+     .                      (p1(2,is)-p2(2,is))**2)
+              hlpx=hlpx+distance
             end if
           end do
 c
           x=0.e0_R8
-          dist=0.e0_R8
+          distance=0.e0_R8
           hlpw=0.e0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             ib=iabs(ia)
             is=leirlis(i,il)
-            h=dist
-            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+
-     .                (pp1(2,ib)-pp2(2,ib))**2)
+            h=distance
+            distance=sqrt((pp1(1,ib)-pp2(1,ib))**2+
+     .                    (pp1(2,ib)-pp2(2,ib))**2)
             if (isymm.eq.0) then
-              a=width*dist
+              a=width*distance
             else if (isymm.eq.1 .or. isymm.eq.2) then
-              a=pi*(pp1(1,ib)+pp2(1,ib))*dist
+              a=pi*(pp1(1,ib)+pp2(1,ib))*distance
             else if (isymm.eq.3 .or. isymm.eq.4) then
-              a=pi*(pp1(2,ib)+pp2(2,ib))*dist
+              a=pi*(pp1(2,ib)+pp2(2,ib))*distance
             end if
             aa=1.e-6_R8/a
-            dist=0.5e0_R8*dist
-            x=x+h+dist
+            distance=0.5e0_R8*distance
+            x=x+h+distance
             if(is.gt.0 .and. is.le.nlim) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
@@ -294,13 +298,13 @@ c      end if
   710 format(1x,a2,a20,':',1p,4e14.3)
       return
 c----------------------------------------------------------------------
-  999 return 1
+  999 return
 c----------------------------------------------------------------------
       end subroutine b2pnwl
 c
 c
 c======================================================================
-      subroutine b2pwsrt(*)
+      subroutine b2pwsrt(iret)
 c
 c*** sort the lists of target sections to simply connected chains
 c----------------------------------------------------------------------
@@ -323,6 +327,7 @@ c
       use b2mod_eirdiag
 #endif
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -345,7 +350,7 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      if (nnreg(0).lt.8) then
+c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -360,7 +365,7 @@ c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
 c        end do
 c      end do
 cc%%%
-
+      iret=0
       do il=1,nwldprt
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then

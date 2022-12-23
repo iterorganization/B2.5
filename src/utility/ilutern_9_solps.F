@@ -38,7 +38,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD, cpu_time
+      INTRINSIC cpu_time
       EXTERNAL XERRAB
 
       integer ncall, nwrite

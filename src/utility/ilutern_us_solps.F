@@ -14,7 +14,7 @@ C
      *   SOL(NCV)
 
 *  -- LOCAL SCALARS --
-      INTEGER N, I, J, K
+      INTEGER N, I
       real (kind=R8) :: cpu_start, cpu_end
       integer iflag
 
@@ -37,7 +37,7 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD, cpu_time
+      INTRINSIC cpu_time
       EXTERNAL XERRAB
 
       integer ncall, nwrite

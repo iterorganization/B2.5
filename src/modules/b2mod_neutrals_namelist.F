@@ -1276,7 +1276,6 @@ c.. Test consistency with physical edges within the computational domain
       integer ic
       logical found, side
 #endif
-      intrinsic mod
       real (kind=R8) hlp
       logical :: file_ok
 #ifdef WG_TODO

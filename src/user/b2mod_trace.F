@@ -2,6 +2,12 @@
       use b2mod_types
       use b2mod_diag
       use b2mod_blnc
+      use b2mod_blne
+      use b2mod_blnm
+      use b2mod_wrint
+      use b2mod_wrsep
+      use b2mod_wrsrt
+      use b2mod_usrtrc
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_user_namelist
@@ -137,12 +143,12 @@ c*** Particle balance in old style by Andrei Kukushkin
       if(filedata(ntrc_bln)) call b2blnc(ns,geo,mpg,st,switch,dtim)
 #ifdef WG_TODO
 c*** Power balance
-      if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS,iline)
+      if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS)
 c*** Parallel momentum balance
-      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns,iline)
+      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns)
 c*** Additional integrals
-      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_srt)) call b2wrsrt(nx,ny,ns,nnreg(0),iline)
+      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_srt)) call b2wrsrt(nx,ny,ns)
 c*** Separatrix data
       if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,switch%BoRiS,iline)
 c*** User-specific data
@@ -153,37 +159,32 @@ c
       return
       end subroutine b2trace
 c======================================================================
-      subroutine b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+      subroutine b2trci(nx,ny,ns,nregionv,switch)
       implicit none
-      type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: geo
       type(switches), intent(in) :: switch
-      integer, intent(in) :: ns, nxtl, nxtr
+      integer, intent(in) :: nx, ny, ns, nregionv
 c*** Initialisation call
       if (tracing_initialised) return
-!wg_todo     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+!WG_TODO     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blnci(switch)
 #ifdef WG_TODO
-      if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,switch%BoRiS,iline)
-      if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns,iline)
-      if(filedata(ntrc_int)) call b2wrinti(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_srt)) call b2wrsrti(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,switch%BoRiS,iline)
+      if(filedata(ntrc_ble)) call b2blnei(ny,switch)
+      if(filedata(ntrc_blm)) call b2blnmi(switch)
+      if(filedata(ntrc_int)) call b2wrinti(nnreg(0),switch)
+      if(filedata(ntrc_srt)) call b2wrsrti(nnreg(0),switch)
+      if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,switch)
       if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,switch)
 #endif
       tracing_initialised = .true.
       return
       end subroutine b2trci
 c======================================================================
-      subroutine b2trcc(nput,nxtl,nxtr,geo,mpg,switch)
+      subroutine b2trcc(nput,nx,nxtl,nxtr)
       implicit none
-      type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: geo
-      type(switches), intent(in) :: switch
-      integer, intent(in) :: nput, nxtl, nxtr
+      integer, intent(in) :: nput, nx, nxtl, nxtr
       integer iline
 c*** Truncate to match savefile
       if(filedata(ntrc_bln)) then
@@ -191,29 +192,28 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >   write(nput,'(a,i8)') trim(fn_ntrc(ntrc_bln)), iline
       end if
-#ifdef WG_TODO
       if(filedata(ntrc_ble)) then
-        call b2blnec(nx,ny,ns,switch%BoRiS,iline)
+        call b2blnec(iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_ble)), iline
       end if
       if(filedata(ntrc_blm)) then
-        call b2blnmc(nx,ny,ns,iline)
+        call b2blnmc(iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_blm)), iline
       end if
       if(filedata(ntrc_int)) then
-        call b2wrintc(nx,ny,ns,nnreg(0),iline)
+        call b2wrintc(iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_int)), iline
       end if
       if(filedata(ntrc_srt)) then
-        call b2wrsrtc(nx,ny,ns,nnreg(0),iline)
+        call b2wrsrtc(iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_srt)), iline
       end if
       if(filedata(ntrc_sep)) then
-        call b2wrsepc(nx,ny,ns,switch%BoRiS,iline)
+        call b2wrsepc(iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_sep)), iline
       end if
@@ -222,49 +222,36 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
-#endif
       return
       end subroutine b2trcc
 c======================================================================
-      subroutine b2trcs(ns,geo,mpg,switch)
+      subroutine b2trcs
       implicit none
-      type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: geo
-      type(switches), intent(in) :: switch
-      integer, intent(in) :: ns
 c*** - to be called BEFORE each timestep
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blncs
-#ifdef WG_TODO
-      if(filedata(ntrc_ble)) call b2blnes(nx,ny,ns,switch%BoRiS,iline)
-      if(filedata(ntrc_blm)) call b2blnms(nx,ny,ns,iline)
-      if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_srt)) call b2wrsrts(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_sep)) call b2wrseps(nx,ny,ns,switch%BoRiS,iline)
+      if(filedata(ntrc_ble)) call b2blnes
+      if(filedata(ntrc_blm)) call b2blnms
+      if(filedata(ntrc_int)) call b2wrints
+      if(filedata(ntrc_srt)) call b2wrsrts
+      if(filedata(ntrc_sep)) call b2wrseps
       if(filedata(ntrc_usr)) call b2usrtrs
-#endif
       return
       end subroutine b2trcs
 c======================================================================
-      subroutine b2trcf(ns,geo,mpg,switch)
+      subroutine b2trcf
       implicit none
-      type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: geo
-      type(switches), intent(in) :: switch
-      integer, intent(in) :: ns
 c*** Finalization call
       if (.not.tracing_initialised) return
       call dealloc_b2mod_user
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blncf
-#ifdef WG_TODO
-      if(filedata(ntrc_ble)) call b2blnef(nx,ny,ns,switch%BoRiS,iline)
-      if(filedata(ntrc_blm)) call b2blnmf(nx,ny,ns,iline)
-      if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_srt)) call b2wrsrtf(nx,ny,ns,nnreg(0),iline)
-      if(filedata(ntrc_sep)) call b2wrsepf(nx,ny,ns,switch%BoRiS,iline)
+      if(filedata(ntrc_ble)) call b2blnef
+      if(filedata(ntrc_blm)) call b2blnmf
+      if(filedata(ntrc_int)) call b2wrintf
+      if(filedata(ntrc_srt)) call b2wrsrtf
+      if(filedata(ntrc_sep)) call b2wrsepf
       if(filedata(ntrc_usr)) call b2usrtrf
-#endif
       tracing_initialised = .false.
       return
       end subroutine b2trcf

@@ -672,7 +672,7 @@ contains
   !! For a positive slant value, a positive poloidal flux in a slanted face is
   !! directed towards the top
   subroutine interp_from_face(isflux,isparallel,nx,ny,flux,centre)
-  use b2mod_geo , only: crx, cry, gs, qz, qc, pbs
+  use b2mod_geo , only: crx, cry, gs, qz, qc, pbs, vol
   use b2mod_math
   use b2mod_indirect
 
@@ -682,25 +682,20 @@ contains
   real (kind=R8), intent(in) :: flux(-1:nx,-1:ny,0:1)
   real (kind=R8), intent(out) :: centre(-1:nx,-1:ny,0:1)
 
-  integer ix, iy
+  integer i, ix, iy
   integer cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   real (kind=R8) :: face(-1:nx,-1:ny,0:1,0:1), slant
   real (kind=R8) :: Xvertices(0:3), Yvertices(0:3)
-  real (kind=R8) :: p0x, p0y, p1x, p1y
   logical classical
-!! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
-  real (kind=R8) :: vol(-1:nx,-1:ny,0:4)
-!!   ..procedures
-  intrinsic min, max
-  real (kind=R8) :: trim1, sinang
-  trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-  sinang(p0x,p0y,p1x,p1y) = trim1( &
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+  real (kind=R8) :: weight(-1:nx,-1:ny,TO_SELF:TO_TOP)
 
   classical = isClassicalGrid(cflags)
 !! If isparallel is .true., then the background flow is in the parallel direction
 !! face has dimensions (ix,iy,iFace,iDir)
+  do i = TO_SELF, TO_TOP
+    weight(:,:,i) = vol(:,:)
+  end do
   face = 0.0_R8
   do ix = -1, nx
     do iy = -1, ny
@@ -1066,22 +1061,22 @@ contains
         elseif (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
  !! both left and right sides are misaligned
-          if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM) .and. &
-           &  vol(ix,iy,TO_TOP).eq.vol(ix,iy,TO_SELF)) then  !! the cell is keystone-shaped
+          if (weight(ix,iy,TO_TOP).gt.weight(ix,iy,TO_BOTTOM) .and. &
+           &  weight(ix,iy,TO_TOP).eq.weight(ix,iy,TO_SELF)) then  !! the cell is keystone-shaped
             centre(ix,iy,1) = 0.5_R8 * ( face(topix(ix,iy),topiy(ix,iy),1,1) + &
                    & ( face(ix,iy,1,1)*area_to_bottom + &
                    &   face(ix,iy,0,1)*area_to_left + &
                    &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
                    & ( area_to_bottom + area_to_left + area_to_right ) )
-          else if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM) .and. &
-              &    vol(ix,iy,TO_BOTTOM).eq.vol(ix,iy,TO_SELF)) then  !! the cell is an inverted keystone
+          else if (weight(ix,iy,TO_TOP).lt.weight(ix,iy,TO_BOTTOM) .and. &
+              &    weight(ix,iy,TO_BOTTOM).eq.weight(ix,iy,TO_SELF)) then  !! the cell is an inverted keystone
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                    & ( face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top + &
                    &   face(ix,iy,0,1)*area_to_left + &
                    &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
                    & ( area_to_top + area_to_left + area_to_right ) )
-          else if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_SELF).and. &
-                &  vol(ix,iy,TO_BOTTOM).lt.vol(ix,iy,TO_SELF)) then
+          else if (weight(ix,iy,TO_TOP).lt.weight(ix,iy,TO_SELF).and. &
+                &  weight(ix,iy,TO_BOTTOM).lt.weight(ix,iy,TO_SELF)) then
  !! left and right edges are being shaved in the same direction
             if (qz(ix,iy,0).lt.0.0_R8) then  !! the cell is slanted to the right
               centre(ix,iy,1) = 0.5_R8 * ( &
@@ -1110,12 +1105,12 @@ contains
         elseif (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_RIGHTFACE) == GRID_UNDEFINED) then
 !! the left side is misaligned
-          if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going up
+          if (weight(ix,iy,TO_TOP).lt.weight(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going up
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      & ( face(ix,iy,0,1)*area_to_left + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top ) / &
                      & ( area_to_top + area_to_left ) )
-          else if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going down
+          else if (weight(ix,iy,TO_TOP).gt.weight(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going down
             centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
                      &   face(ix,iy,0,1)*area_to_left ) / &
@@ -1128,12 +1123,12 @@ contains
         elseif (cflags(ix,iy,CELLFLAG_LEFTFACE) == GRID_UNDEFINED .and. &
               & cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
  !! the right side is misaligned
-          if (vol(ix,iy,TO_TOP).lt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going up
+          if (weight(ix,iy,TO_TOP).lt.weight(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going up
             centre(ix,iy,1) = 0.5_R8 * ( face(ix,iy,1,1) + &
                      & ( face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right + &
                      &   face(topix(ix,iy),topiy(ix,iy),1,1)*area_to_top ) / &
                      & ( area_to_top + area_to_right ) )
-          else if (vol(ix,iy,TO_TOP).gt.vol(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going down
+          else if (weight(ix,iy,TO_TOP).gt.weight(ix,iy,TO_BOTTOM)) then  !! the cell is being shaved going down
             centre(ix,iy,1) = 0.5_R8 * ( &
                      & ( face(ix,iy,1,1)*area_to_bottom + &
                      &   face(rightix(ix,iy),rightiy(ix,iy),0,1)*area_to_right ) / &
@@ -1468,14 +1463,18 @@ contains
 !! local variables
   integer ix, iy, is, cgeo
   real (kind=R8) :: den(-1:nx,-1:ny,0:1,0:ns-1), vv(-1:nx,-1:ny,0:1,0:ns-1)
+  real (kind=R8) :: weight(-1:nx,-1:ny,TO_SELF:TO_TOP)
 !! procedures
   intrinsic sqrt
   real (kind=R8) :: b2sign
   external b2sign
 
   flow = 0.0_R8
+  do is = TO_SELF, TO_TOP
+    weight(:,:,is) = vol(:,:)
+  end do
 
-  call value_on_faces1(nx,ny,ns,vol,density,den)
+  call value_on_faces1(nx,ny,ns,weight,density,den)
   do is = 0, ns-1
     call interp_volume(TO_LEFT,nx,ny,vol,gs,qc,velocity(-1,-1,0,is),vv(-1,-1,0,is))
     call interp_volume(TO_BOTTOM,nx,ny,vol,gs,qc,velocity(-1,-1,1,is),vv(-1,-1,1,is))
@@ -1667,7 +1666,7 @@ contains
   !> The projected values will be stored in side(,,TO_LEFT:TO_TOP).
   !> The interpolation to the sides is weighted by the 'weight' function.
   subroutine value_to_side(nx, ny, weight, centre, side)
-  use b2mod_geo , only: crx, cry, gs, qc, pbs
+  use b2mod_geo , only: crx, cry, gs, qc, pbs, vol
   use b2mod_indirect
   use b2mod_cellhelper
   implicit none
@@ -1675,10 +1674,9 @@ contains
   real(R8), intent(in) :: centre(-1:nx,-1:ny)
   real(R8), intent(in) :: weight(-1:nx,-1:ny,0:4)
   real(R8), intent(out) :: side(-1:nx,-1:ny,1:4)
-!! FIXME: To remove later once qcb and vol are redefined in b2mod_geo
-  real (kind=R8) :: vol(-1:nx,-1:ny,0:4)
+  real (kind=R8) :: vol1(-1:nx,-1:ny,0:4)
 
-  integer ix, iy, cgeo
+  integer i, ix, iy, cgeo
   real (kind=R8) :: area_to_top, area_to_bottom, area_to_left, area_to_right
   logical classical, rectangular
   intrinsic sqrt
@@ -1687,6 +1685,9 @@ contains
 
   classical = isClassicalGrid(cflags)
 
+  do i = TO_SELF, TO_TOP
+    vol1(:,:,i) = vol(:,:)
+  end do
   do ix = -1, nx
     do iy = -1, ny
       if (isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
@@ -1774,7 +1775,7 @@ contains
              &  (weight(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP) + &
              &   weight(ix,iy,TO_BOTTOM))
           end if
-        else if (vol(ix,iy,TO_LEFT).eq.vol(ix,iy,TO_SELF)) then
+        else if (vol1(ix,iy,TO_LEFT).eq.vol1(ix,iy,TO_SELF)) then
 !! Other triangles and trapezoids with a full left side
           side(ix,iy,TO_LEFT) = &
            & (centre(ix,iy)*weight(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT)+ &
@@ -1870,7 +1871,7 @@ contains
              &  (weight(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT) + &
              &   weight(ix,iy,TO_LEFT))
           end if
-        else if (vol(ix,iy,TO_BOTTOM).eq.vol(ix,iy,TO_SELF)) then
+        else if (vol1(ix,iy,TO_BOTTOM).eq.vol1(ix,iy,TO_SELF)) then
 !! Other triangles and trapezoids with a full bottom side
           side(ix,iy,TO_BOTTOM) = &
            & (centre(ix,iy)*weight(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP)+ &
@@ -1965,7 +1966,7 @@ contains
              &  (weight(bottomix(ix,iy),bottomiy(ix,iy),TO_TOP) + &
              &   weight(ix,iy,TO_BOTTOM))
           end if
-        else if (vol(ix,iy,TO_RIGHT).eq.vol(ix,iy,TO_SELF)) then
+        else if (vol1(ix,iy,TO_RIGHT).eq.vol1(ix,iy,TO_SELF)) then
 !! Other triangles and trapezoids with a full right side
           side(ix,iy,TO_RIGHT) = &
            & (centre(ix,iy)*weight(rightix(ix,iy),rightiy(ix,iy),TO_LEFT)+ &
@@ -2063,7 +2064,7 @@ contains
              &  (weight(leftix(ix,iy),leftiy(ix,iy),TO_RIGHT) + &
              &   weight(ix,iy,TO_LEFT))
           end if
-        else if (vol(ix,iy,TO_TOP).eq.vol(ix,iy,TO_SELF)) then
+        else if (vol1(ix,iy,TO_TOP).eq.vol1(ix,iy,TO_SELF)) then
 !! Other triangles and trapezoids with a full top side
           side(ix,iy,TO_TOP) = &
            & (centre(ix,iy)*weight(topix(ix,iy),topiy(ix,iy),TO_BOTTOM)+ &
