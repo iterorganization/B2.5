@@ -20,7 +20,7 @@ c======================================================================
 c======================================================================
 c*** This routine works once
 c
-      if(l2pwinp) return
+      if(l2pwinp.or..not.shadow) return
 c======================================================================
       call subini ('b2pwinp')
       l2pwinp=.true.
@@ -63,6 +63,7 @@ c
       call find_file(ufile,file_ok)
       if(.not.open_file(lun,ufile,'modules/Uinp')) then
         l2pwinp=.false.
+        shadow=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
         call subend ()
         return

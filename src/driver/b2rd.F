@@ -83,17 +83,7 @@
      *     rfn2(:,:,:,:)
       real (kind=R8), allocatable :: za(:)
       logical file_open
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *   trim1, cosang, dist
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
       external b2xvgm, b2xvps_st, b2xvsg
       external cfwuin, cfwuch
@@ -1431,9 +1421,7 @@
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
       call cfwuin (nout(2), 1, idum, 'isymm')
-      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, ebc, gs, pbs, wbbl,
-     &  wbbc, cell_width, cell_height)
+      call b2wugm (nout(2), nx, ny)
 
       open(91,file='core_boundary.txt')
       iy=-1

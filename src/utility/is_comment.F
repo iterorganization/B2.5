@@ -13,8 +13,6 @@ c
       logical function end_comment(line,ind)
       character*(*), intent(in) :: line
       integer, intent(out) :: ind
-      logical streql
-      external streql
       integer i, j, k, l
 
       i = index(line,'''')

@@ -120,7 +120,6 @@
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                             !srv 13.01.17 05.07.17
       logical new_matrix, main_lightest
 *   ..procedures
-      intrinsic min, max
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,

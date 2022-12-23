@@ -76,12 +76,9 @@
      *  smbtfial(nCv,0:3), smbtfeal(nCv,0:3)                            !srv 13.01.17 }
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *  roxa
       external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-*   ..initialization
-      roxa(iCv,is) = am(is)*mp*na(iCv,is)                               !srv 01.07.05
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -329,6 +326,15 @@ c      .. apply flux limit
       fka = fka*rz2(:,a)
       return
       end function fka
+
+      function roxa(iCv, is)
+      implicit none
+      integer, intent(in) :: iCv, is
+      real (kind=R8) :: roxa
+
+      roxa = am(is)*mp*na(iCv,is)
+      return
+      end function roxa
 
 *-----------------------------------------------------------------------
 *.end b2sifrtf

@@ -115,7 +115,7 @@ c     output for analysis/debugging
      &                  fenerefl_out(nCv), fenerec_out(nCv),
      &                  fnni_out(nCv)
 *   ..procedures
-      intrinsic abs, exp
+      intrinsic abs
       external xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) ::

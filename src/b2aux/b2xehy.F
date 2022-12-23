@@ -97,7 +97,7 @@ cwdk instead of radial distance ("hy1_")
           work = log(ne)
           call diff_r(nCv, nFc, nVx, 0, geo, mpg, work, wrkv, wrk1)
 *       ..interpolate te to faces
-          call intface(nCv,nFc,mpg%fcCv,ones,ne,wrk1)
+          call intface(nCv,nFc,mpg%fcCv,ones,te,wrk2)
 *       ..compute ehy      
           ehy = -dpor + (wrk0 + wrk1*wrk2)/qe
         endif

@@ -43,7 +43,7 @@ c======================================================================
       logical lim_cnf
       integer :: nwldlis_old, itmp
 c
-      real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,
+      real (kind=R8) :: width,distance,distmin,xx1,xx2,yy1,yy2,
      ,                  distmin1
       integer, allocatable :: lwldlis_old(:)
       logical, allocatable :: istarget(:)
@@ -71,7 +71,7 @@ c<<<
       tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
-c      if(nnreg(0).lt.8) then
+c      if(nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -129,6 +129,7 @@ c
         write(*,*) 'b2pwlprp: no shadowing structure in the data!'
         call walloff
         l2pwinp=.false.
+        shadow=.false.
         call subend ()
         return
       end if
@@ -169,10 +170,6 @@ c        write(lun_w,*)
 c      end do
 c      close(lun_w)
 c>>>
-
-c*** Store original plot zones to be used for substituting proper elements inside targets
-      allocate(istarget(nwldprt))
-      istarget=.false.
 
 c*** Check the topology of the grid and the list of target edges
 
@@ -283,6 +280,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp2(1,k),pp2(2,k)
           call walloff
           l2pwinp=.false.
+          shadow=.false.
           call subend ()
           return
         end if
@@ -295,6 +293,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp1(1,k),pp1(2,k)
           call walloff
           l2pwinp=.false.
+          shadow=.false.
           call subend ()
           return
         end if
@@ -357,7 +356,7 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-c      if (nnreg(0).lt.8) then
+c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
 c        print '((2(1x,a3,1p,4e12.4)))',
 c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
@@ -523,6 +522,8 @@ c      end do !}
 c      close(lun_w)
 c>>>
 c
+      allocate(istarget(nwldprt))
+      istarget=.false.
 c*** Correct the segment lists for the refined targets
 c*** All the segments between the target edges - or between a target
 c*** edge and the end of the list - are replaced with the segments
@@ -798,9 +799,9 @@ ccc*** Order elements of original plot zone in CCW direction
             k2=abs(lwldlis(i1,1))
             xx2=pp1(1,k2)
             yy2=pp1(2,k2)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin) then !{
-              distmin=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin) then !{
+              distmin=distance
               flagmin=i1
             end if !}
           end do
@@ -849,18 +850,18 @@ ccc*** Substitute B2 cells only when overlapping original plot zone target eleme
             ksel=lwldlis(i,1)
             xx2=pp1(1,ksel)
             yy2=pp1(2,ksel)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin) then !{
-              distmin=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin) then !{
+              distmin=distance
               flagmin=i
             end if !}
             xx1=pp2(1,k2)
             yy1=pp2(2,k2)
             xx2=pp2(1,ksel)
             yy2=pp2(2,ksel)
-            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-            if (dist<distmin1) then !{
-              distmin1=dist
+            distance=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (distance<distmin1) then !{
+              distmin1=distance
               flagmin1=i
             end if !}
           end do !}

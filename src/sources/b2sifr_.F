@@ -72,12 +72,9 @@
      1 delti, delte, zlamii, zlamee, dtiapr, dteapr
 *   ..procedures
       intrinsic sqrt
-      real (kind=R8) ::
-     *   roxa
       external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
-*   ..initialisation
-      roxa(iCv,is) = am(is)*mp*na(iCv,is)                             !srv 01.07.05
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -238,5 +235,16 @@ cdjm Jan2017 Store the linearised sources for balance
 
 *-----------------------------------------------------------------------
 *.end b2sifr_
+
+      contains
+
+      function roxa(iCv, is)
+      implicit none
+      integer, intent(in) :: iCv, is
+      real (kind=R8) :: roxa
+
+      roxa = am(is)*mp*na(iCv,is)
+      return
+      end function roxa
 
       end subroutine b2sifr_                                        !srv 01.07.05 }

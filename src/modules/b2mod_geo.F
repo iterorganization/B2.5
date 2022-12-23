@@ -36,8 +36,8 @@
 
       logical, save :: b2mod_geo_allocated = .false.
 
-      public :: distc, match
-      public :: sy
+      public :: abs_diff, dist, disx, disy, distc, match
+      public :: cr, cz, hy1, pit, sy
 
       contains
 
@@ -122,17 +122,7 @@
       implicit none
       integer nread, nx, ny, n2
       integer ix, iy
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *   trim1, cosang, sinang
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external cfrure, cfrure_opt, xerrab
 
       n2 = (nx+2)*(ny+2)
@@ -2102,6 +2092,37 @@ c conn
       return
       end subroutine init_region_extended
 
+      function abs_diff(p1,p2)
+      implicit none
+      real(kind=R8) :: abs_diff, p1, p2
+      abs_diff = abs(p1-p2)
+      return
+      end function abs_diff
+
+      function cr(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr
+      cr = 0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
+      return
+      end function cr
+
+      function cz(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz
+      cz = 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+      return
+      end function cz
+
+      function dist(ix,iy,i,j)
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
+
       function distc(ix1,iy1,ip1,ix2,iy2,ip2)
       implicit none
       integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
@@ -2110,6 +2131,32 @@ c conn
      .             cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))
       return
       end function distc
+
+      function disx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: disx
+      disx = (dist(bottomix(ix,iy),bottomiy(ix,iy),2,3)+
+     1        dist(ix,iy,0,1))/2.0_R8
+      return
+      end function disx
+
+      function disy(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: disy
+      disy = (dist(leftix(ix,iy),leftiy(ix,iy),1,3)+
+     1        dist(ix,iy,0,2))/2.0_R8
+      return
+      end function disy
+
+      function hy1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: hy1
+      hy1 = hy(ix,iy)*qz(ix,iy,1)
+      return
+      end function hy1
 
       logical function match(ix1,iy1,ix2,iy2)
       implicit none
@@ -2139,6 +2186,14 @@ c conn
      & geom_match_dist
       return
       end function matchBottom
+
+      function pit(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: pit
+      pit = sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
+      return
+      end function pit
 
       function sy(ix,iy)
       use b2mod_indirect

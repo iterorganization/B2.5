@@ -4,6 +4,7 @@
       subroutine b2yidr_gnuplot (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -77,9 +78,10 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, idum(0:9), ismain
-      real (kind=R8) :: t0, t1
+      integer is, idum(0:9)
 #ifdef WG_TODO
+      integer ismain
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
@@ -87,16 +89,16 @@
       character lblmn*120, lblrc*120, lblgm*120
       character cnamip*80, cvalip*80, line*500
       logical file_open
+#ifdef WG_TODO
 *   ..initialisation
       save ismain
       data ismain/1/
+#endif
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
+      logical is_comment
       external xertst, cfruch, b2rugm, cfruin, b2xvps
       external b2rups, b2ruzd, b2wgpi_gnuplot, b2rurc, b2spel, b2sqel
       external ipgeti, b2rfcp, b2rflb, b2xxid, is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -255,9 +257,7 @@
       isymm = idum(0)
 *   ..read geometry and metric
 #ifdef WG_TODO
-      call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(3), nx, ny, isymm)
 #endif
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,
