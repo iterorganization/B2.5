@@ -432,6 +432,7 @@ contains
 
     if (error) stop "test_connectivity: error(s) found"
 
+  return
   end subroutine test_connectivity
 
 
