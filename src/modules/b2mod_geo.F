@@ -500,6 +500,7 @@ c conn
       integer ixbreak
       integer lefttargetindex(2), righttargetindex(2)
       logical CellToTest
+      real(kind=R8) :: Xvertices(0:3), Yvertices(0:3)
     !
 #ifndef BUILDING_CARRE
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -531,7 +532,9 @@ c conn
               ix = -1
               ix1 = -2
               do while (ix1.eq.-2 .and. ix.lt.nx)
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 CellToTest =
      &            cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
      &           (cflag(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
@@ -547,7 +550,9 @@ c conn
               ix = nx
               ix2 = -2
               do while (ix2.eq.-2 .and. ix.gt.-2)
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 CellToTest =
      &            cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
      &           (cflag(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
@@ -737,7 +742,9 @@ c conn
       do ix=-1,nx
         do iy=-1,ny
           if ( cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY ) cycle
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
 
           if ( cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
      &        .and. geoType /= CGEO_TRIA_NOLEFT )
@@ -783,7 +790,9 @@ c conn
             if (cflag(ix, iy, iFace) == BOUNDARY_NOSTRUCTURE) then
               offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
               cflag(ix, iy, iFace) = offset - region(ix, iy, 0)
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (iFace == CELLFLAG_LEFTFACE .and.
      &            geoType /= CGEO_TRIA_NOLEFT) then
                 cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_RIGHTFACE) =
@@ -813,7 +822,9 @@ c conn
         lefttargetindex(1)=GRID_UNDEFINED
         do while (ix.ge.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (geoType /= CGEO_TRIA_NOLEFT .and.
      &          cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
               lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
@@ -850,7 +861,9 @@ c conn
         righttargetindex(1)=GRID_UNDEFINED
         do while (ix.le.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (geoType /= CGEO_TRIA_NORIGHT .and.
      &       cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
               righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
@@ -888,7 +901,9 @@ c conn
           do while (ix.lt.nx
      &     .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1)
      &            .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=1
               if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(1)

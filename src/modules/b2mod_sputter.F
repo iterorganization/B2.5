@@ -1562,7 +1562,7 @@ c       dd       = table of correction factors for the low energy
 c               electronic stopping cross-section.
 c
       implicit none
-      real (kind=R8) :: energy, rnion, reion, theta
+      real (kind=R8) :: energy, rnion, theta
       integer ibnd, nz1, m1
 
       integer i, n
@@ -1582,7 +1582,7 @@ c  energy backscattering coefficient of light ions
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5
     2 write(6,600)
-      reion = 0.0_R8
+      rnion = 0.0_R8
       return
     3 if (m1.lt.1.or.m1.gt.3) go to 2
       a1 = a1t(m1)
@@ -1730,7 +1730,7 @@ c       write(*,*) 'did light projectile calculation for rnion'
       real(kind=R8) :: energy, reion, theta
       integer ibnd, nz1, m1
 
-      integer i, n
+      integer i
       integer, save :: icount
       real (kind=R8) :: th, z1, z2, a1, a2, r, r0, as1, as2, sl,
      *  a2eff, sum, delta, z1p, z2p, z2eff, saeff, sbeff, wi, fmu, aa,
@@ -1742,7 +1742,6 @@ c       write(*,*) 'did light projectile calculation for rnion'
 
 c  energy backscattering coefficient of light ions
 
-      n = 0
       if (nz1.eq.1) go to 3
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5

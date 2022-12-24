@@ -4058,12 +4058,12 @@ cxpb  Start reading input.dat file
           filename=fort_lc//'13'
           inquire(file=filename,exist=ex)
           if (ex .or. nfl.lt.nplsi)
-     >     idum(3) = (idum(3)/1000)*1000 + 300 + mod(idum(3),100)
+     >     idum(3) = (idum(3)/1000)*1000 + 800 + mod(idum(3),100)
           filename=fort_lc//'15'
           inquire(file=filename,exist=ex)
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
           nfilel = b2idez(idum(3),3,5)
-          if (nfilel.gt.5) idum(3) = idum(3) - 500  ! remove XDR option
+          if (nfilel.ne.0.and.nfilel.lt.5) idum(3) = idum(3) + 500  ! ensure "short" fort.13 format
           WRITE(IUNOT,6666) idum(0:8)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
