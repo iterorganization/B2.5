@@ -308,7 +308,7 @@ csw 21feb2012
       TIME_DEP_PUFF=.false.
       time_dep_puff_func=.false.
       time_dep_puff_case=-1
-      time_dep_puff_param=0._R8
+      time_dep_puff_param=0.0_R8
       N_SPCSRF=0
       L_SPCSRF=0
       I_SPCSRF=0

@@ -5493,7 +5493,7 @@
 				<description>
 					Used to set the parameters for the functional form of the time-dependent gas puff function. For use with TIME_DEP_PUFF_FUNC and TIME_DEP_PUFF_CASE.
 				</description>
-			</switch>			
+			</switch>
 			<switch>
 				<name>NGPDATA</name>
 				<default>0</default>

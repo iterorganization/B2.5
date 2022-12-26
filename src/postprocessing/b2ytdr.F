@@ -523,7 +523,7 @@ c 2002-09-11: logic revised
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary, flip
       logical chemsp1(nstraid), savestratum(0:nstraid)
-      logical :: time_dep_puff1(nstraid),time_dep_puff_func1(nstraid)
+      logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
       integer :: time_dep_puff_case1(nstraid)
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:), solvtmp(:,:)
@@ -10926,19 +10926,19 @@ cxpb as they no longer necessarily point to the same species
      .   'TIME_DEP_PUFF=',time_dep_puff1(1:nstrat1),','
         todo = .false.
         do ib = 1, nstrat1
-           todo = todo .or. time_dep_puff_func1(ib)
+          todo = todo .or. time_dep_puff_func1(ib)
         enddo
         if (todo) then
-           write(99,hlp_frm)
+          write(99,hlp_frm)
      .          'TIME_DEP_PUFF_FUNC=',time_dep_puff_func1(1:nstrat1),','
-           write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'i4,a)'
-           write(99,hlp_frm)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'i4,a)'
+          write(99,hlp_frm)
      .          'TIME_DEP_PUFF_CASE=',time_dep_puff_case1(1:nstrat1),','
-           do ib = 1, nstrat1
-              write(99,'(1x,a,i3,a,g10.3)')
-     .             'TIME_DEP_PUFF_PARAM(1:10,',ib,')=',
-     .             time_dep_puff_param1(1:10,ib)
-           enddo
+          do ib = 1, nstrat1
+            write(99,'(1x,a,i3,a,g10.3)')
+     .          'TIME_DEP_PUFF_PARAM(1:10,',ib,')=',
+     .           time_dep_puff_param1(1:10,ib)
+          enddo
         endif 
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nstrat1,'(1x,i4,'',''))'
         if (maxval(ngpdata1).gt.0) then
