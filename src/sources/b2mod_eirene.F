@@ -709,12 +709,12 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
              call xertst(time_dep_puff_case(istrai).ge.0
      1               .and.time_dep_puff_case(istrai).le.5,
      1         'bad value for time_dep_puff_case')
-             if (time_dep_puff_case(istrai) .eq. 0) then ! sinusoidal 
+             if (time_dep_puff_case(istrai) .eq. 0) then ! sinusoidal
                tflux(istrai) = time_dep_puff_param(1,istrai)
      &               +time_dep_puff_param(2,istrai)*(sin(2.d0*pi
      &               *time_dep_puff_param(3,istrai)*tim
      &               +time_dep_puff_param(4,istrai)))
-             elseif (time_dep_puff_case(istrai) .eq. 1) then  ! stair+ramp 
+             elseif (time_dep_puff_case(istrai) .eq. 1) then  ! stair+ramp
                if ((tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
      &            *2.*time_dep_puff_param(3,istrai)).ge.0. .and.
      &             (tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
@@ -733,20 +733,20 @@ cwdk ingoing fluxes will be cut off on the EIRENE side
      &                 *time_dep_puff_param(2,istrai)
      &                 /time_dep_puff_param(3,istrai)
                endif
-             elseif (time_dep_puff_case(istrai) .eq. 2) then  ! stair+ramp 
+             elseif (time_dep_puff_case(istrai) .eq. 2) then  ! stair+ramp
                tflux(istrai) = time_dep_puff_param(1,istrai)
      &               +tim*time_dep_puff_param(2,istrai)
-             elseif (time_dep_puff_case(istrai) .eq. 3) then  ! linear + sinusoidal 
+             elseif (time_dep_puff_case(istrai) .eq. 3) then  ! linear + sinusoidal
                tflux(istrai) = time_dep_puff_param(1,istrai)
      &               + time_dep_puff_param(2,istrai)*(sin(2.d0*3.14159
      &               *time_dep_puff_param(3,istrai)*tim
      &               +time_dep_puff_param(4,istrai)))
      &               +tim*time_dep_puff_param(5,istrai)
-             elseif (time_dep_puff_case(istrai) .eq. 4) then  ! step function 
+             elseif (time_dep_puff_case(istrai) .eq. 4) then  ! step function
                  tflux(istrai) = time_dep_puff_param(1,istrai)
      &                 +INT(tim/time_dep_puff_param(3,istrai))
      &                 *time_dep_puff_param(2,istrai)
-             elseif (time_dep_puff_case(istrai) .eq. 5) then  ! triangle wave 
+             elseif (time_dep_puff_case(istrai) .eq. 5) then  ! triangle wave
                  tflux(istrai) = (time_dep_puff_param(1,istrai)
      &                 -time_dep_puff_param(2,istrai))
      &                 +(4.d0*time_dep_puff_param(2,istrai)

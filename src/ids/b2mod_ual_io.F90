@@ -142,7 +142,8 @@ module b2mod_ual_io
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2, &
+     &          VEC_ALIGN_R_MAJOR_ID, VEC_ALIGN_Z_ID
 #endif
 #endif
     use ids_schemas &     ! IGNORE

@@ -237,6 +237,10 @@ module b2mod_ual_io_grid
     integer, parameter :: VEC_ALIGN_DIAMAGNETIC = 1005
     !> Diamagnetic vector component ID
     character(len=132), parameter :: VEC_ALIGN_DIAMAGNETIC_ID = "Diamagnetic"
+#endif
+#if GGD_MAJOR_VERSION < 2
+#if GGD_MINOR_VERSION < 11
+#if GGD_MICRO_VERSION < 3
     !> Major radius aligned vector component
     integer, parameter :: VEC_ALIGN_R_MAJOR = 1006
     !> Major radius aligned vector component ID
@@ -245,6 +249,8 @@ module b2mod_ual_io_grid
     integer, parameter :: VEC_ALIGN_Z = 1007
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
+#endif
+#endif
 #endif
 
     !! Subgrid/Grid subset name constants
