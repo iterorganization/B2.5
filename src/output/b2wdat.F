@@ -64,7 +64,7 @@
       logical found
 #endif
       integer, allocatable :: regFaces(:)
-      real (kind=R8) :: shift                                      !srv
+      real (kind=R8), save :: shift = 0.0_R8                       !srv
       real (kind=R8), allocatable :: fun_st(:,:), clength_r(:),
      *  clength_s(:)
 !   clength_r(i) is the length from the cell center of 1th cell 
