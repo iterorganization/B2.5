@@ -3232,7 +3232,7 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
-#if IMAS_MINOR_VERSION > 37
+#if IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 )
     case( VEC_ALIGN_R_MAJOR_ID )
       !! Writing major radius aligned quantity
       !! Make sure the data field is properly allocated
