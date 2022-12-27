@@ -1427,8 +1427,9 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifdef NO_GETENV
          device_env = ' '
-         write(imas_version,'(i1,a1,i2,a2)') IMAS_MAJOR_VERSION,'.',
-     .                                       IMAS_MINOR_VERSION,'.0'
+         write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.',
+     .                                          IMAS_MINOR_VERSION,'.',
+     .                                          IMAS_MICRO_VERSION
 #else
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)

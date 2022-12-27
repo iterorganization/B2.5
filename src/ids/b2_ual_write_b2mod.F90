@@ -320,8 +320,9 @@ program b2_ual_write_b2mod
     username = usrnam()
     database = 'solps-iter'
 #ifdef NO_GETENV
-    write(imas_version,'(i1,a1,i2,a2)') IMAS_MAJOR_VERSION,'.', &
-                                      & IMAS_MINOR_VERSION,'.0'
+    write(imas_version,'(i1,a1,i2,a1,i1)') IMAS_MAJOR_VERSION,'.', &
+                                         & IMAS_MINOR_VERSION,'.', &
+                                         & IMAS_MICRO_VERSION
 #else
     device_env = ' '
 #ifdef USE_PXFGETENV
