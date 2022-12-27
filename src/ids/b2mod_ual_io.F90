@@ -304,8 +304,9 @@ contains
     call ipgeti ('b2mndr_eirene', use_eirene)
     username = usrnam()
 #ifdef NO_GETENV
-    write(imas_version,'(i1,a1,i2,a2)')  IMAS_MAJOR_VERSION,'.', &
-                                      &  IMAS_MINOR_VERSION,'.0'
+    write(imas_version,'(i1,a1,i2,a1,i1)')  IMAS_MAJOR_VERSION,'.', &
+                                      &     IMAS_MINOR_VERSION,'.', &
+                                      &     IMAS_MICRO_VERSION
     write(ual_version,'(i1,a1,i2,a1,i1)') UAL_MAJOR_VERSION,'.', &
                                       &   UAL_MINOR_VERSION,'.', &
                                       &   UAL_MICRO_VERSION
@@ -9029,7 +9030,7 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
-#if IMAS_MINOR_VERSION > 37
+#if IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 )
     case( VEC_ALIGN_R_MAJOR_ID )
       !! Writing major radius aligned quantity
       !! Make sure the data field is properly allocated
