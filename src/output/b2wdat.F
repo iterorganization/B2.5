@@ -50,7 +50,7 @@
 *   ..local variables
       integer iCv, iCv1, iCv2, iFc, ibc, iReg
       integer ncall, iout, is, ic, ib, iout_iout_ASTRA             !srv 05.10.01 03.04.13 19.04.13
-      integer nx, ny, n2                                           !srv 12.07.10
+      integer nx, ny                                               !srv 12.07.10
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
@@ -141,10 +141,9 @@
       ! originally structured
       if (mpg%isClassicalGrid.eq.1) then
 
-*    ..set nx, ny, n2
+*    ..set nx, ny
        nx = mpg%nx
        ny = mpg%ny
-       n2 = (mpg%nx+2)*(mpg%ny+2)
 
 *    ..allocate and initialize some arrays for structured format
        allocate(fun_st(-1:nx,-1:ny))
