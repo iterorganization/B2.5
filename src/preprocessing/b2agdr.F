@@ -707,6 +707,8 @@
           endif
       enddo
 
+      if (ncvl.ne.0) then
+
         !Cut the arrays
         cvl = cvl(1:ncvl)
         cvr = cvr(1:ncvr)
@@ -817,5 +819,7 @@
        !m%fcVx(pack(1:m%nFc, m%fcVx(:,2) == vr2(ncvl)),2) = vl2(ncvl)
 
        call calc_add_connectivity(g,m)
+       
+      endif 
 
       end subroutine set_connectivity_us
