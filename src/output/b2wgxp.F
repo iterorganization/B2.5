@@ -5,6 +5,7 @@
      &  scal, fa0, fa1, ncnta, fb0, fb1, ncntb)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_gnmap2
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc, ncnta, ncntb
@@ -89,7 +90,7 @@
       integer ix0, iy0, ix1, iy1, ixb, iyb
       character headr2*120
 *   ..procedures
-      external xertst, pagini, pagend, cpseti, gndfm2
+      external xertst, pagini, pagend, cpseti
       external b2xxmm, b2wgyp
 
 *-----------------------------------------------------------------------
