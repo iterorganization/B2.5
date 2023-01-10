@@ -85,14 +85,14 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx,
+      integer i, j, iCv, iFc, iF, face, gc, bc, v1, v2, iVx,
      * artificial_slab 
       integer verts3(0:2), faces3(0:2), cells(1:2),
      * fcType(m%nFc), c1, c2,  verts2(0:1), intersectF(0:1), 
      * faces4_1(0:3), faces4_2(0:3)
       integer, allocatable :: verts(:)
       integer i1, i2, ii, i1_1, i1_2, i2_1, i2_2, nv
-      integer volhmk, cgeo, cgeon, psi_flag
+      integer volhmk, psi_flag
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
@@ -116,7 +116,7 @@
       sinin(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
-      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-2_R8/,
+      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-1_R8/,
      &  tol_aligned /1.0e-4_R8/
       save volhmk, width, guard_rescale, tol_aligned
 
@@ -126,12 +126,8 @@
 *
 *     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
 *     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     sinang(p0x,p0y,p1x,p1y) is sin(t), and cosang(p0x,p0y,p1x,p1y)
-*     is cos(t), where t is the complementary angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*     Cosin and sinin calculate respectively the cosine and sine of the
-*     inclosed angle.
+*     sinin(p0x,p0y,p1x,p1y) is sin(t), and cosin(p0x,p0y,p1x,p1y)
+*     is cos(t), where t is the inclosed angle between p0 and p1.
 *
 *-----------------------------------------------------------------------
 *.computation
