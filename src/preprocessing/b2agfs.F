@@ -550,9 +550,7 @@ cxpb  if just below the top corner, make the corner cell follow
 #else
       intrinsic get_environment_variable
 #endif
-      real (kind=R8) ::
-     * ubr, ubt, ubp, upsi
-      real(kind=R8) :: bb_tmp_Vx(m%nVx) ! lengte onder voorbehoud
+
       real(kind=R8) :: cvBp(m%nCv), cvBt(m%nCv), cvFpsi(m%nCv)
       parameter (line_length=256)
       character*256 meshpath
@@ -675,7 +673,8 @@ cxpb  if just below the top corner, make the corner cell follow
                 g%fcBb(:,2) = cvBt(1)
                 g%fcBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
             endif        
-
+           else
+             call xerrab('Grid version not equal to 03.002.00')
            endif  ! if of the grid_version
 
         else

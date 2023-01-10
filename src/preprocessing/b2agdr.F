@@ -49,8 +49,6 @@
 *     functions vxFpsi and vxFfbz at the cell vertices. The magnetic 
 *     field components at cell centers are derived from vxFpsi and vxFfbz.
 *
-*     Singular regions in the geometry are specified by the data in the
-*     commmon block /b2cmgs/.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -78,14 +76,13 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, redef_gmtry
-      integer nxiso1, nxiso2, nyiso1, nyiso2, artificial_slab
-      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
+      integer idum(0:9), redef_gmtry
+      integer artificial_slab
+      character lblgm*120, idout*80, id*8
       character line*500
       integer istyle
 *   ..initialisation
-      data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/, 
-     . artificial_slab/0/
+      data artificial_slab/0/
 *   ..procedures
       logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
@@ -96,41 +93,6 @@
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
-*     The workspace array w is used as a stack for storage of dynamic
-*     real*8 arrays. An array 'name' in w(0:*) will be stored starting at
-*     location w(l'name').
-*
-*     The following common blocks have their outermost declaration in
-*     this routine; they need not be preserved between calls.
-*
-*     /b2cmfs/ is reserved for numerical mhd equilibrium data.
-*     (Presently empty--to be used in conjunction with grid generation
-*     based on a numerical mhd equilibrium.)
-*
-*     /b2cmgs/ specifies the singular regions in the geometry.
-*      nlrmx - integer constant.
-*     nlrmx is an upper bound for nlreg, and is used in dimension
-*     specifications.
-*      nlreg - integer.
-*     nlreg specifies the number of singular regions. It will hold that
-*     0.le.nlreg.le.nlrmx.
-*      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-*     the bounds of the i-th singular region. Mesh locations (ix,iy)
-*     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-*     will be included in (-1:nx,-1:ny).
-*     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-*     are unspecified.
-*      nlloc - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-*     which the i-th region is special, as follows:
-*       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-*       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-*       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-*       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-*     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-*
-*     Description of some local variables (including arrays in w(0:*):
 *
 *     vxX, vxY - (1:nVx) real*8 array.
 *     vxX(iVx) specify the horizontal coordinate and vxY(iVx) 
@@ -187,11 +149,9 @@
 *     between the cell-connector and the magnetic field vector.
 *
 *     fcPbs - (1:nFc) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
-*     See routine b2xgbs for the form of interpolation employed.
+*     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+*     (fcBx/fcBb)*sx  or (magnetic field pitch)*(surface area), 
+*     namely the parallel contact area.
 *
 *     lblgm - character*120.
 *     lblgm identifies the instance of the program employed to prepare
