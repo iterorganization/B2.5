@@ -1530,9 +1530,6 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
 !     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
 !     .  state%pl%zt = state%pl%ti*1e5_R8
       call createB2Diagnostic( nCv, ns, mpg%nnreg, state % diag )
-! csc UNCOMMENT WITH AD
-!    call read_b2fstate_diff (ninp(6), mpg%nCv, mpg%nFc, ns, stated)
-!    call createB2Diagnostic ( nCv, ns, mpg%nnreg, stated % diag )
 !WG_TODO      call init_state(mpg, geo, state)
 
 
@@ -2113,12 +2110,6 @@ csw 09oct2012 set default potential already at this point (BCs)
           write (ss,'(I1)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
-! csc UNCOMMENT WITH AD
-!      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
-!      DO ICF=1, NCF
-!        write (ss,'(I1)') icf
-!        write(*,*) 'Cost function gradient '//ss//': ',Jd(icf)
-!      END DO
 *    ..produce data for movie
 #ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
@@ -2620,8 +2611,6 @@ c new CDF movie option
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-! csc UNCOMMENT WITH AD
-!    call write_b2fstate_diff (nout(9), nCv, nFc, ns, stated)
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
         call calc_err(nCv, ns, state % pl, state % dv)
