@@ -682,10 +682,11 @@ c*** Set default values according to current species list
         endif
       ic = ic + 1
       end do
-      if (.not.found) write(*,'(a/a)')
-     &  'Warning: did not find separatrix location in IMP definition, '\
-     &  '         check specification of RZIMP in b2.user.parameters'\
-     &  '         if IMP is needed.'
+      if (.not.found) then 
+       write(*,*) 'Warning: did not find separatrix in IMP definition'
+       write(*,*) 'check specification of RZIMP in b2.user.parameters'
+       write(*,*) 'if IMP is needed.'
+      endif
       ifssep = 0 !flux surface of separatrix
       ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
       ic2 = omp(icsepomp) !cv of flux tube just outside sep
