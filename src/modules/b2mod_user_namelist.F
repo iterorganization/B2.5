@@ -687,7 +687,8 @@ c*** Set default values according to current species list
        write(*,*) 'check specification of RZIMP in b2.user.parameters'
        write(*,*) 'if IMP is needed.'
       endif
-      ifssep = 0 !flux surface of separatrix
+      ifssep = 1 !flux surface of separatrix
+      found = .false.
       ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
       ic2 = omp(icsepomp) !cv of flux tube just outside sep
       ifc1 = m%cvFcP(ic1,1)
@@ -708,10 +709,15 @@ c*** Set default values according to current species list
       end do
       ! find ii in fsFcP(ifs,1):fsFcP(ifs,1)+fsFcP(ifs,2)
       do ifs = 1, size(m%fsFcP,1)
-        ifc1 = m%fsFcP(ifssep,1)
-        ifc2 = ifc1 + m%fsFcP(ifssep,2) - 1
-        if (ii.ge.ifc1 .and. ii.le.ifc2) exit
+        ifc1 = m%fsFcP(ifs,1)
+        ifc2 = ifc1 + m%fsFcP(ifs,2) - 1
+        if (ii.ge.ifc1 .and. ii.le.ifc2) then
+          found = .true.
+          exit
+        endif
       enddo
+      if (.not. found) 
+     &  call xerrab('No flux surface found for separatrix!')
       ifssep = ifs
       if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(ifssep,2).gt.0,
      & 'No separatrix faces!')

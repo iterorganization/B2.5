@@ -180,9 +180,9 @@ contains
     save jxi, jxa, jsep, ixtl, ixtr, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nc, nya, nyi, nybl, nybr, nytl, nytr
+         nya, nyi, nybl, nybr, nytl, nytr
 #endif
-    save ncall, target_offset
+    save ncall, target_offset, nc
     data ncall/0/, target_offset/1/
 
     !-----------------------------------------------------------------------
