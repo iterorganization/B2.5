@@ -84,11 +84,9 @@
 *   ..initialisation
       data artificial_slab/0/
 *   ..procedures
-      logical streql, is_comment
-      external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
-      external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
-      external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
-     &  b2xgbs1, b2wfgm, b2wugm
+      external xertst, xerrab, cfwuin, cfwuch
+      external ipgeti
+      external b2xxid, b2agsi, b2agfs, b2agmt
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -227,7 +225,7 @@
 
 *   ..for artificial_slab, correct the connectivity for the cuts
        if (artificial_slab.eq.1) then
-        call set_connectivity_us(g,m)
+        call set_connectivity_artificial_slab(g,m)
        endif
 
       write(*,*) 'b2agdr1: g%cvBb(m%nCv,0) ',g%cvBb(m%nCv,0)
@@ -581,7 +579,7 @@
 
       end subroutine b2agdr
 
-      subroutine set_connectivity_us(g,m)
+      subroutine set_connectivity_artificial_slab(g,m)
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -701,7 +699,8 @@
         elseif (m%fcVx(frl(i),2).eq.vl1(i)) then
            m%fcVx(frl(i),2) = vr1(i)
         else
-          call xerrab('set_connectivity_us: verts of radial face')           
+          call xerrab
+     &     ('set_connectivity_artificial_slab: verts of radial face')           
         endif
 
         !Cell left of right cut
@@ -718,7 +717,8 @@
         elseif (m%fcVx(frr(i),2) .eq. vr1(i)) then
            m%fcVx(frr(i),2) = vl1(i)
         else
-          call xerrab('set_connectivity_us: verts of radial face')
+          call xerrab
+     &     ('set_connectivity_artificial_slab: verts of radial face')
         endif
         
         
@@ -732,7 +732,8 @@
        elseif((cvs(2) .ne. cvl(1)) .and. (cvs(1) .eq. cvl(1))) then
          iCgl = cvs(2)
        else
-         call xerrab('set_connectivity_us: no icgl found')
+         call xerrab
+     &    ('set_connectivity_artificial_slab: no icgl found')
        endif
       !right cut
        cvs = m%fcCv(frr(1),:)
@@ -741,7 +742,8 @@
        elseif ((cvs(2) .ne. cvr(1)) .and. (cvs(1) .eq. cvr(1))) then
          iCgr = cvs(2)
        else
-         call xerrab('set_connectivity_us: no icgr found')
+         call xerrab
+     &    ('set_connectivity_artificial_slab: no icgr found')
        endif  
     
        !vertex replacement for guard cells
@@ -750,18 +752,20 @@
        elseif (m%cvVx(m%cvVxP(iCgl,1)+1) .eq. vl1(1)) then
          m%cvVx(m%cvVxP(iCgl,1)+1) = vr1(1)
        else
-         call xerrab('set_connectivity_us: vl1(1) not in guard')
+         call xerrab
+     &    ('set_connectivity_artificial_slab: vl1(1) not in guard')
        endif
        if (m%cvVx(m%cvVxP(iCgr,1)) .eq. vr1(1)) then
          m%cvVx(m%cvVxP(iCgr,1)) = vl1(1)
        elseif (m%cvVx(m%cvVxP(iCgr,1)+1) .eq. vr1(1)) then
          m%cvVx(m%cvVxP(iCgr,1)+1) = vl1(1)
        else
-         call xerrab('set_connectivity_us: vr1(1) not in guard')
+         call xerrab
+     &    ('set_connectivity_artificial_slab: vr1(1) not in guard')
        endif       
 
 
-       !Correction at X-point
+       ! Correction at X-point
        do i = 1,m%cvVxP(m%nCv,1)+m%cvVxP(m%nCv,2)-1
            if (m%cvVx(i) .eq. vr2(ncvl)) then
               m%cvVx(i) = vl2(ncvl) 
@@ -774,12 +778,9 @@
               m%fcVx(i,2) = vl2(ncvl)
           endif
        enddo
-       !m%cvVx(pack(1:m%nCmVx, m%cvVx == vr2(ncvl))) = vl2(ncvl)
-       !m%fcVx(pack(1:m%nFc, m%fcVx(:,1) == vr2(ncvl)),1) = vl2(ncvl)
-       !m%fcVx(pack(1:m%nFc, m%fcVx(:,2) == vr2(ncvl)),2) = vl2(ncvl)
 
        call calc_add_connectivity(g,m)
        
       endif 
 
-      end subroutine set_connectivity_us
+      end subroutine set_connectivity_artificial_slab
