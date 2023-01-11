@@ -397,96 +397,17 @@
 
   !> Area of quadrangle given by vertex coordinates
   !> The vertices must be in sequence! (=> structured)
-      function quadArea_st( x0, y0, x1, y1, x2, y2, x3, y3 )
+      function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
       implicit none
-      real (kind=R8) :: quadArea_st
+      real (kind=R8) :: quadArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
       intrinsic abs
 
-      quadArea_st = TriangleArea(x0, y0, x1, y1, x2, y2) +
+      quadArea = TriangleArea(x0, y0, x1, y1, x2, y2) +
      .           TriangleArea(x2, y2, x3, y3, x0, y0)
 
-      end function quadArea_st
-      
-  !> Area of quadrangle given by vertex coordinates
-  !> The vertices can be in random sequence
-  !> Method not 100% waterproof for very sqeeuzed and distorted cell
-      function quadArea (x0, y0, x1, y1, x2, y2, x3, y3 )
-      implicit none
-      real (kind=R8) :: A1, A2, A3, A4, quadArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-      intrinsic abs
-
-      A1 = quadArea_sub(x0,y0,x1,y1,x2,y2,x3,y3)
-      A2 = quadArea_sub(x1,y1,x2,y2,x3,y3,x0,y0)
-      A3 = quadArea_sub(x2,y2,x3,y3,x0,y0,x1,y1)
-      A4 = quadArea_sub(x3,y3,x0,y0,x1,y1,x2,y2)
-         
-      !Determine which two A's are equal, these are the correct ones
-      if ((abs(A1 - A2)/A1 .lt. 1e-7) .or.
-     &    (abs(A1 - A3)/A1 .lt. 1e-7) .or.
-     &    (abs(A1 - A4)/A1 .lt. 1e-7)) then
-               quadArea = A1;
-      elseif ((abs(A2 - A3)/A2 .lt. 1e-7) .or.
-     &    (abs(A2 - A4)/A2 .lt. 1e-7)) then
-               quadArea = A2;
-      elseif (abs(A3 - A4)/A3 .lt. 1e-7) then
-               quadArea = A3;
-      endif
-        
-      end function quadArea 
-
-
-      function quadArea_sub (x0, y0, x1, y1, x2, y2, x3, y3 )
-      implicit none
-      real (kind=R8) :: quadArea_sub, Area1, Area2
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-      real (kind=R8) :: fcx01, fcy01, fcx12, fcy12, fcx02, fcy02, 
-     &    cvX, cvY
-      real (kind=R8) :: dist01, dist12, dist02, min_dist
-      intrinsic abs, min, sqrt
-
-      Area1 = TriangleArea(x0, y0, x1, y1, x2, y2)
-      
-      cvX = 0.25_R8*(x0+x1+x2+x3)
-      cvY = 0.25_R8*(y0+y1+y2+y3)
-      ! Determine points of second triangle
-      fcx01 = 0.5_R8 * (x0 + x1) 
-      fcy01 = 0.5_R8 * (y0 + y1)
-
-      fcx12 = 0.5_R8 * (x1 + x2)
-      fcy12 = 0.5_R8 * (y1 + y2)
-
-      fcx02 = 0.5_R8 * (x0 + x2)
-      fcy02 = 0.5_R8 * (y0 + y2)
-
-      dist01 = sqrt( (fcx01- x3)**2 + (fcy01- y3)**2 ) + 
-     &      sqrt( (fcx01 - cvX)**2 + (fcy01 - cvY)**2 )
-      dist12 = sqrt( (fcx12- x3)**2 + (fcy12- y3)**2 ) + 
-     &      sqrt( (fcx12 - cvX)**2 + (fcy12 - cvY)**2 )     
-      dist02 = sqrt( (fcx02- x3)**2 + (fcy02- y3)**2 ) + 
-     &      sqrt( (fcx02 - cvX)**2 + (fcy02 - cvY)**2 )      
-
-      min_dist = min(dist01,dist12,dist02)
-
-      if (abs(min_dist - dist01)/min_dist .lt. 1e-7) then
-         Area2 = TriangleArea(x0, y0, x1, y1, x3, y3)
-         
-      elseif (abs(min_dist - dist12)/min_dist .lt. 1e-7) then
-         Area2 = TriangleArea(x1, y1, x2, y2, x3, y3)
-
-      elseif (abs(min_dist - dist02)/min_dist .lt. 1e-7) then
-         Area2 = TriangleArea(x0, y0, x2, y2, x3, y3)
-
-      endif
-
-
-      quadArea_sub = Area1 + Area2
-
-      end function quadArea_sub
-
-
-
+      end function quadArea
+   
   !> Coordinates of centroid of a triangle given by vertex coordinates
       function triangleCentroid( x0, y0, x1, y1, x2, y2 )
       implicit none
