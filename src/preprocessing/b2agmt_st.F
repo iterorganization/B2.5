@@ -11,7 +11,7 @@
       use b2mod_connectivity
       use b2mod_cellhelper
       use b2mod_indirect
-     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea_st
+     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
@@ -836,7 +836,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
        do iy = -1, ny
         do ix = -1, nx
          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-         gs(ix,iy,2) = quadArea_st(  ! the vertices must be in sequence
+         gs(ix,iy,2) = quadArea(  ! the vertices must be in sequence
      &     crx(ix,iy,0), cry(ix,iy,0), crx(ix,iy,1), cry(ix,iy,1),
      &     crx(ix,iy,3), cry(ix,iy,3), crx(ix,iy,2), cry(ix,iy,2))
          vol(ix,iy) = gs(ix,iy,2)*width
@@ -856,7 +856,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
        do iy = -1, ny
         do ix = -1, nx
          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-         gs(ix,iy,2) = quadArea_st(  ! the vertices must be in sequence
+         gs(ix,iy,2) = quadArea(  ! the vertices must be in sequence
      &     crx(ix,iy,0), cry(ix,iy,0), crx(ix,iy,1), cry(ix,iy,1),
      &     crx(ix,iy,3), cry(ix,iy,3), crx(ix,iy,2), cry(ix,iy,2))
          if (volhmk.eq.0) then
@@ -887,7 +887,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
        do iy = -1, ny
         do ix = -1, nx
          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-         gs(ix,iy,2) = quadArea_st(  ! the vertices must be in sequence
+         gs(ix,iy,2) = quadArea(  ! the vertices must be in sequence
      &     crx(ix,iy,0), cry(ix,iy,0), crx(ix,iy,1), cry(ix,iy,1),
      &     crx(ix,iy,3), cry(ix,iy,3), crx(ix,iy,2), cry(ix,iy,2))
          if (volhmk.eq.0) then
