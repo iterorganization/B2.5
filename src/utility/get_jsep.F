@@ -90,10 +90,10 @@
 
       call subini ('get_nxt')
 
-cxpb  Compute position of additional targets in DN configuration
+cxpb  Compute position of additional targets in DN and Snowflake configurations
       nxtl = -2
       nxtr = nx+1
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         nxtl = 0
         do while (rightix(nxtl,max(topcut(1),topcut(2))).ne.nx+1
      &   .and.nxtl.lt.nx)

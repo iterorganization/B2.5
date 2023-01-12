@@ -6279,7 +6279,7 @@ cxpb code segment analog to b2tfhe
 
           if(new_boundary_files) then
             if(.not.once_bcene) then                                  !srv 05.08.22
-              write(*,*) 'BCENE = 16 (style = 1) : '//
+              write(*,'(a)') 'BCENE = 16 (style = 1) : '//
      .         'Given integrated electron heat flux with constant Te '
 !            write all boundaries with this type of boundary condition
               DO IBW=IB,NBC
@@ -8862,8 +8862,8 @@ cxpb Careful here because of BC number clash
       case (24)
 !IYS 04.03.2013 {
         if(new_boundary_files.and.(.not.once_bceni)) then             !srv 05.08.22
-          write(*,*) 'BCENI = 24 : Given integrated ion heat flux',
-     &               ' with constant Ti '
+          write(*,'(a)') 'BCENI = 24 : Given integrated ion heat flux',
+     &                   ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
             if (core_boundary(ibw).and.BCENI(IBW).EQ.BCENI(IB)) THEN
@@ -10786,7 +10786,7 @@ c              fchi=0.0_R8
 !xpb  Special attention is paid to the case where there is a discontinuity in B
 !xpb
         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (new_boundary_files) write(*,'(a,i2,a,i2)')
+          if (new_boundary_files) write(*,'(1x,a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential is imposed by BCPOT =',BCPOT(IB)
         ELSE IF(BCCHAR(IB).EQ.'S') THEN

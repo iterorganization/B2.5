@@ -247,7 +247,11 @@ c*** Prepare the list of grid indices for the target flux faces
       if (itrg(1).eq.1) then
         ltrgpos(1)=-1
         lseppos(1)=topcut(1)-1
-        lpfrpos(1)=leftcut(1)-1
+        if (nncut.ge.1) then
+          lpfrpos(1)=leftcut(1)-1
+        else
+          lpfrpos(1)=0
+        end if
       else if (itrg(1).eq.2) then
         ltrgpos(1)=nx-1
         lseppos(1)=jsep
@@ -266,7 +270,11 @@ c*** Prepare the list of grid indices for the target flux faces
       if (itrg(k).eq.ntrgts) then
         ltrgpos(k)=nx-1
         lseppos(k)=topcut(1)-1
-        lpfrpos(k)=rightcut(1)
+        if (nncut.ge.1) then
+          lpfrpos(k)=rightcut(1)
+        else
+          lpfrpos(k)=nx-1
+        end if
       else if (itrg(k).eq.1) then
         ltrgpos(k)=-1
         lseppos(k)=jsep
@@ -292,18 +300,18 @@ c*** segment input from DG does not coincide with the corresponding
 c*** segment saved by Eirene, its number becomes negative, and no
 c*** neutral-related data will be plotted for it.
 
-c#ifdef DBG
-c      print *,'After sorting. nwldprt =',nwldprt
-c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,i5/(5x,15i5))','leirlis :',il,
-c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
-c      end do
-c#endif
+#ifdef DBG
+      print *,'After sorting. nwldprt =',nwldprt
+      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
+      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
+      do il=1,nwldprt
+        print '(a,i5,1x,a/(5x,15i5))','lwldlis :',il,pltzlbl(il),
+     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+        print '(a,i5/(5x,15i5))','leirlis :',il,
+     ,                                  (leirlis(i,il),i=1,nwldlis(il))
+      end do
+#endif
       call b2pwltrg
 c======================================================================
       call subend ()
@@ -454,14 +462,20 @@ c*** Modify the target edges for continuity with B2 grid edges
 c
 c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
-c        print '((2(1x,a3,1p,4e12.4)))',
+c        if (lim_cnf) then
+c          print '(1x,a3,1p,4e12.4)',
+c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
+c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2)
+c        else
+c          print '(2(1x,a3,1p,4e12.4))',
 c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
 c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
 c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
 c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2)
+c        endif
 c      else
 c        print '(a,8i6)','Before modification: ', (ltrgedge(1:2,j),j=1,4)
-c        print '((2(1x,a3,1p,4e12.4)))',
+c        print '(2(1x,a3,1p,4e12.4))',
 c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
 c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
 c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
