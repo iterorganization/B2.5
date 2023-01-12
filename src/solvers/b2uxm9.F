@@ -14,7 +14,7 @@
      *   conb(-1:nx,-1:ny,0:1,0:1,0:1)
       logical solvereg(0:nregionv)
       character*(*) name
-*   ..output arguments (unspecified on entry)
+*   ..input/output arguments
       real (kind=R8) ::
      *   aa9(-1:nx,-1:ny,-6:6)
 
@@ -137,8 +137,9 @@
          else
           ixb = bottomix(ix,iy)
           iyb = bottomiy(ix,iy)
-          aaf(ix,iy,-2) = -conb(ixb,iyb,1,1,0) +
-     &                     conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,1)
+          if (rightix(ixb,iyb).ne.nx+1)
+     >     aaf(ix,iy,-2) = -conb(ixb,iyb,1,1,0) +
+     &      conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,1)
          endif
 *       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
@@ -183,7 +184,7 @@
      &               - conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,0,1)
      &               + conb(leftix(ixb,iyb),leftiy(ixb,iyb),1,1,0)
                aa9(ix,iy,-6) = 0.0e0_R8
-            else
+            else if (leftix(ixb,iyb).ne.-2) then
                aa9(ix,iy,-4) = aa9(ix,iy,-4)                          !sv 28.05.08
      &              - conb(bottomix(ixl,iyl),bottomiy(ixl,iyl),0,0,1)
                aa9(ix,iy,-6) = aa9(ix,iy,-6) +                        !sv 28.05.08
@@ -193,8 +194,8 @@
 *       Case (ix-1,iy+1)
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-          aa9(ix,iy,2) = 0.0e0_R8
-          aa9(ix,iy,5) = 0.0e0_R8
+            aa9(ix,iy,2) = 0.0e0_R8
+            aa9(ix,iy,5) = 0.0e0_R8
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -216,20 +217,20 @@
 *       Case (ix+1,iy-1)
          if(rightix(ix,iy).eq.nx+1 .or. bottomiy(ix,iy).eq.-2 .or.
      &      .not.solvereg(ireg)) then
-          aa9(ix,iy,-2) = 0.0e0_R8
-          aa9(ix,iy,-5) = 0.0e0_R8
+            aa9(ix,iy,-2) = 0.0e0_R8
+            aa9(ix,iy,-5) = 0.0e0_R8
          else
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixb = bottomix(ix,iy)
             iyb = bottomiy(ix,iy)
             if(bottomix(ixr,iyr) .eq. rightix(ixb,iyb) .and.
-     &       bottomiy(ixr,iyr) .eq. rightiy(ixb,iyb)) then
+     &         bottomiy(ixr,iyr) .eq. rightiy(ixb,iyb)) then
               aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
      &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,0,1)
      &                 - conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1,0)
               aa9(ix,iy,-5) = 0.0e0_R8
-            else
+            else if (rightix(ixb,iyb).ne.nx+1) then
               aa9(ix,iy,-2) = aa9(ix,iy,-2) +                         !sv 28.05.08
      &                   conb(bottomix(ixr,iyr),bottomiy(ixr,iyr),0,0,1)
               aa9(ix,iy,-5) = aa9(ix,iy,-5) -                         !sv 28.05.08
@@ -239,15 +240,15 @@
 *       Case (ix+1,iy+1)
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
      &      .not.solvereg(ireg)) then
-           aa9(ix,iy,4) = 0.0e0_R8
-           aa9(ix,iy,6) = 0.0e0_R8
+            aa9(ix,iy,4) = 0.0e0_R8
+            aa9(ix,iy,6) = 0.0e0_R8
          else
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixt = topix(ix,iy)
             iyt = topiy(ix,iy)
             if(topix(ixr,iyr) .eq. rightix(ixt,iyt) .and.
-     &       topiy(ixr,iyr) .eq. rightiy(ixt,iyt)) then
+     &         topiy(ixr,iyr) .eq. rightiy(ixt,iyt)) then
               aa9(ix,iy,4) = aa9(ix,iy,4) -                           !sv 28.05.08
      &                    conb(topix(ixr,iyr),topiy(ixr,iyr),0,0,0)+
      &                    conb(rightix(ixt,iyt),rightiy(ixt,iyt),1,1,1)
