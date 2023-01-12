@@ -215,7 +215,11 @@ c*** Prepare the list of grid indices for the target flux faces
 
       ltrgpos(1)=-1
       lseppos(1)=topcut(1)-1
-      lpfrpos(1)=leftcut(1)-1
+      if (nncut.ge.1) then
+        lpfrpos(1)=leftcut(1)-1
+      else
+        lpfrpos(1)=0
+      end if
       k=2
       if(ntrgts.eq.4) then
         ltrgpos(2)=nxtl-1
@@ -228,7 +232,11 @@ c*** Prepare the list of grid indices for the target flux faces
       end if !}
       ltrgpos(k)=nx-1 !csc
       lseppos(k)=topcut(1)-1
-      lpfrpos(k)=rightcut(1)
+      if (nncut.ge.1) then
+        lpfrpos(k)=rightcut(1)
+      else
+        lpfrpos(k)=nx-1
+      end if
 #ifdef DBG
       print '(a,8i6)','ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
       print '(a,8i6)','mtrgedge: ',((mtrgedge(i,j),i=1,2),j=1,ntrgts) !###
@@ -358,14 +366,20 @@ c*** Modify the target edges for continuity with B2 grid edges
 c
 c      if (nnreg(0).lt.7) then
 c        print '(a,4i6)','Before modification: ', (ltrgedge(1:2,j),j=1,2)
-c        print '((2(1x,a3,1p,4e12.4)))',
+c        if (lim_cnf) then
+c          print '(1x,a3,1p,4e12.4)',
+c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
+c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2)
+c        else
+c          print '(2(1x,a3,1p,4e12.4))',
 c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
 c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
 c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
 c     ,          'o2',(pp1(j,ltrgedge(2,2)),pp2(j,ltrgedge(2,2)),j=1,2)
+c        endif
 c      else
 c        print '(a,8i6)','Before modification: ', (ltrgedge(1:2,j),j=1,4)
-c        print '((2(1x,a3,1p,4e12.4)))',
+c        print '(2(1x,a3,1p,4e12.4))',
 c     ,          'i1',(pp1(j,ltrgedge(1,1)),pp2(j,ltrgedge(1,1)),j=1,2),
 c     ,          'o1',(pp1(j,ltrgedge(2,1)),pp2(j,ltrgedge(2,1)),j=1,2),
 c     ,          'i2',(pp1(j,ltrgedge(1,2)),pp2(j,ltrgedge(1,2)),j=1,2),
