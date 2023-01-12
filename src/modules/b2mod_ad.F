@@ -16,6 +16,7 @@
 #ifdef WG_DEBUG
       character(16), save :: my_out_sf(0:1)
 #endif
+      character*256, save :: filename_b2w
 
       integer, save :: ntstep_b2wall = 0 
       real (kind=R8), allocatable, save ::
@@ -81,6 +82,7 @@
      & ncall_b2stbc = 0, ncall_b2stbc_phys = 0, ncall_b2stbr = 0,
      & ncall_b2stbr_phys = 0, ncall_b2stcx = 0, ncall_b2stel = 0,
      & ncall_b2sicf = 0, ncall_b2sifr = 0, ncall_b2sifrtf = 0,
+     & ncall_b2stbr_neutr_scl = 0,
 ! ncall variables from equation routines
      & ncall_b2npco = 0, ncall_b2news_ = 0, ncall_b2npht = 0,
      & ncall_b2npmo = 0, ncall_b2nppo = 0, ncall_b2nxdp = 0,

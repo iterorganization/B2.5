@@ -32,6 +32,8 @@
 #endif
      &          ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
