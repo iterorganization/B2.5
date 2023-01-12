@@ -1921,6 +1921,8 @@ c new CDF movie option (1st frame at t=0)
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, uold, mold,
      &          told, fna_mol
+      use b2mod_math
+     & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_ad
       implicit none
 #ifdef JET
