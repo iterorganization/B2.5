@@ -11,6 +11,7 @@
       use b2us_geo_diff
       use b2us_map_diff
       use b2us_plasma_diff
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nregionv
@@ -42,7 +43,7 @@
       save ncall
 *   ..procedures
       intrinsic sqrt, abs
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
       data ncall/0/
 

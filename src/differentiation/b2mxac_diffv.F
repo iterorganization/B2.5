@@ -4,6 +4,7 @@
       subroutine b2mxac_diffv (nCv, ns, dv, diag)
       use b2mod_types
       use b2us_plasma_diffv
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -24,7 +25,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   samax
-      external subini, subend, xertst, samax
+      external xertst, samax
       external b2xvfx
 *   ..initialisation
       data ncall/0/

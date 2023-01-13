@@ -330,6 +330,9 @@
             isigma = isigma + 1
           endif
         enddo
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
+! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+! the forward problem over unnecessary directions
         call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,
      &   statediff, state_ext, state_extdiff, j, jdiff)
       endif

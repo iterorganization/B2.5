@@ -1,5 +1,5 @@
   ratamjhyd.F
-  eirene_mc
+  b2mod_eirene
   tallies
   slv5pt_dv
   slv5pt_d
@@ -18,13 +18,7 @@
   b2mod_xerset
   xerrab
   b2mod_file
-  b2trace
-  b2blnc
-  b2blne
-  b2blnm
   b2mod_usrtrc
-  b2wrint
-  b2wrsep
   b2mod_movies
   b2mod_cdf
   b2mod_connectivity
@@ -33,7 +27,6 @@
   b2wgrc
   ncardummy
   out_for_plot
-  b2wrsrt
   b2mod_ipmain
   b2mod_lwimai
   b2mod_lwmain
@@ -59,3 +52,18 @@
   ma28copy
   ma28copy3
   machsfr
+  b2mod_blnc
+  b2mod_blne
+  b2mod_blnm
+  b2mod_trace
+  b2mod_wrint
+  b2mod_wrsep
+  b2mod_wrsrt
+  b2mod_lbfill
+  b2mod_mwti
+  b2ag_parameters
+  open_file
+  is_comment
+  streql
+  parsehdr
+  prgini

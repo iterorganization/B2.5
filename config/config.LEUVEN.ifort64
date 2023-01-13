@@ -92,6 +92,13 @@ endif
 INCMODS += -I${IMAS_PREFIX}/include/ifort
 IMASLIBS = ${LD_UAL}
 endif
+ifdef TAO
+LIBOPT = ${PETSC_LIB}
+endif
+ifdef IPOPT
+LIBOPT = -L${IPOPTDIR}/lib/ -lipopt
+MODINCLUDE += -I${IPOPTDIR}/include/coin-or
+endif
 
 #!!!Local Variables:
 #!!! mode: Makefile

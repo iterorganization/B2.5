@@ -5,6 +5,7 @@
      .  resfund, corfun, corfund, name, nbdirs)
       use b2mod_types
       use b2us_map_diffv
+      use b2mod_subsys
       use diffsizes
       implicit none
 *   ..input arguments (unchanged on exit)

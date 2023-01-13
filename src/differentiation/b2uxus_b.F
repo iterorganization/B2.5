@@ -7,6 +7,7 @@
       use b2mod_ma28_for_us
       use b2us_map_diff
       use b2mod_lwmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, itcnt
@@ -65,7 +66,7 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min, cpu_time
-      external subini, subend, xertst, ipgeti, ipgetr,
+      external xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
