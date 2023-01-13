@@ -173,7 +173,7 @@
       use b2us_io_diff &
       , only : write_b2fstate
       use b2mod_version &
-      , only : newversion
+      , only : newversion, cfverw
       use b2mod_b2cmpa_diff
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
@@ -215,6 +215,9 @@
           isigma = isigma + 1
         endif
       end do
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
+! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+! the forward problem over unnecessary directions
       call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
      &   statediff, state_ext, state_extdiff, j, jdiff)
       F = j(1)
@@ -296,7 +299,7 @@
       use b2us_io_diff &
       , only : write_b2fstate
       use b2mod_version &
-      , only : newversion
+      , only : newversion, cfverw
       use b2mod_b2cmpa_diff
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
@@ -332,6 +335,9 @@
           isigma = isigma + 1
         endif
       end do
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
+! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+! the forward problem over unnecessary directions
       call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
      &   statediff, state_ext, state_extdiff, j, jdiff)
 #ifdef TGT
