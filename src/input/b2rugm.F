@@ -550,7 +550,8 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
      &           (gs(ix,iy,0) * qc(ix,iy,0) +
      &            gs(bottomix(ix,iy),bottomiy(ix,iy),0) *
      &            qc(bottomix(ix,iy),bottomiy(ix,iy),0) )
-              else
+              else if (rightix(bottomix(ix,iy),bottomiy(ix,iy)).lt.nx+1)
+     &         then
                wbbc(ix,iy,0) =
      &         (wbbl(ix,iy,0) *
      &            gs(rightix(ix,iy),rightiy(ix,iy),0) *
