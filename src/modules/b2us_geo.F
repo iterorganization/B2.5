@@ -373,7 +373,8 @@
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv, i1, i2 
+      integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv, i1, i2,
+     . inv_dist(mpg%nVx) 
       real (kind=R8) :: hzconst, fac_hz = 0.0_R8, dux, duy, du, width,
      .  sbf, cvPsi(mpg%nCv), count_up, count_down, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
@@ -712,8 +713,67 @@
 
          enddo
 
-
-      else   
+      elseif (switch%vxVol_style .eq. 10) then
+       do iVx = 1, nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         if (iCv.le.mpg%nCi) then
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )     
+         else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  ) 
+         endif
+        enddo
+       enddo
+      elseif (switch%vxVol_style .eq. 11) then
+       ! Check which type to interpolation type to use 
+       inv_dist(:) = 0
+       do iVx = 1,nVx
+        do inCv = 1, mpg%vxCvP(iVx,2)
+         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+         if (mpg%cvVxP(iCv,2).ne.4) then
+           inv_dist(iVx) = 1
+         endif
+        enddo         
+       enddo
+       
+       ! Compute the interpolation weights
+       do iVx = 1,nVx
+        if (inv_dist(iVx).eq.1) then
+         do inCv = 1, mpg%vxCvP(iVx,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+          if (iCv.le.mpg%nCi) then
+           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )     
+          else
+           ! Make sure guard cells dominate in the interpolation
+           ! to vertices => use volume
+           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  ) 
+          endif           
+         enddo   
+        else
+         do inCv = 1, mpg%vxCvP(iVx,2)
+          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+          if (iCv.le.mpg%nCi) then
+           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+          else
+          ! Make sure guard cells dominate in the interpolation
+          ! to vertices => use volume
+           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+          endif
+         enddo         
+        endif    
+       enddo
+     
+      else
         call xerrab ('wrong value of b2mndr_vxVol_style')
       endif
 
