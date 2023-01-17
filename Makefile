@@ -87,51 +87,22 @@ endif
 ifdef DIFF_D
 EXT_DIFF = .diff_d
 DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D1
-EXT_DIFF = .diff_d1
-DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D2
-EXT_DIFF = .diff_d2
-DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D3
-EXT_DIFF = .diff_d3
-DIFF = yes
-TGT = yes
-endif
-ifdef DIFF_D4
-EXT_DIFF = .diff_d4
-DIFF = yes
-TGT = yes
+DIFFDIR = builds/differentiated_files${EXT_DIFF}
 endif
 ifdef DIFF_B
 EXT_DIFF = .diff_b
 DIFF = yes
+DIFFDIR = builds/differentiated_files${EXT_DIFF}
 endif
-ifdef DIFF_B1
-EXT_DIFF = .diff_b1
+ifdef TGT
+EXT_DIFF = .tgt
 DIFF = yes
-ADJ = yes
+DIFFDIR = src/differentiation/tangent
 endif
-ifdef DIFF_B2
-EXT_DIFF = .diff_b2
+ifdef ADJ
+EXT_DIFF = .adj
 DIFF = yes
-ADJ = yes
-endif
-ifdef DIFF_B3
-EXT_DIFF = .diff_b3
-DIFF = yes
-ADJ = yes
-endif
-ifdef DIFF_B4
-EXT_DIFF = .diff_b4
-DIFF = yes
-ADJ = yes
+DIFFDIR = src/differentiation/adjoint
 endif
 # Directory where objectcode/binaries will be created
 OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
@@ -232,10 +203,10 @@ SOLPSINCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml ${DOCDIR}/*.py
 ifdef DIFF
-SOLPSINCLUDE += -I${SRCB2}/builds/differentiated_files${EXT_DIFF}
-SOLPSINCLUDE += -I${SRCDIR}/differentiated_files${EXT_DIFF}
-TAGSLIST += ${SRCB2}/builds/differentiated_files${EXT_DIFF}/*.F*
-TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
+SOLPSINCLUDE += -I${SRCB2}/${DIFFDIR}
+##SOLPSINCLUDE += -I${SRCDIR}/differentiated_files${EXT_DIFF}
+TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
+#TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
 endif
 ifdef TAO
 include ${PETSC_DIR}/lib/petsc/conf/variables
@@ -265,6 +236,12 @@ DEFINES += -DDBG
 endif
 ifdef FIXED_POINT
 DEFINES += -DFIXED_POINT
+endif
+ifdef DIFF_D
+DEFINES += -DTGT
+endif
+ifdef DIFF_B
+DEFINES += -DADJ
 endif
 ifdef TGT
 DEFINES += -DTGT
@@ -330,10 +307,10 @@ FFPATH += :${SRCDIR}/modules
 FFPATH += :${SRCDIR}/user
 DIFFPATH =
 ifdef DIFF
-DIFFPATH += ${SRCB2}/builds/differentiated_files${EXT_DIFF}
-VPATH=:${SRCB2}/builds/differentiated_files${EXT_DIFF}
-FPATH := ${SRCB2}/builds/differentiated_files${EXT_DIFF}
-FFPATH = :${SRCB2}/builds/differentiated_files${EXT_DIFF}
+DIFFPATH += ${SRCB2}/${DIFFDIR}
+VPATH=:${SRCB2}/${DIFFDIR}
+FPATH := ${SRCB2}/${DIFFDIR}
+FFPATH = :${SRCB2}/${DIFFDIR}
 endif
 
 MODLIST =
@@ -398,20 +375,14 @@ OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
-ADEXTRA = ${CONTEXTAD}
+ADEXTRA = 
+ifdef DIFF_D
+ADEXTRA += ${CONTEXTAD}
+endif
 ifdef DIFF_B
 ADEXTRA += ${STACKAD}
 endif
-ifdef DIFF_B1
-ADEXTRA += ${STACKAD}
-endif
-ifdef DIFF_B2
-ADEXTRA += ${STACKAD}
-endif
-ifdef DIFF_B3
-ADEXTRA += ${STACKAD}
-endif
-ifdef DIFF_B4
+ifdef ADJ
 ADEXTRA += ${STACKAD}
 endif
 ifdef AD_DEBUG
@@ -441,21 +412,15 @@ CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text DIFF_B1 DIFF_B2 DIFF_B3 DIFF_B4 DIFF_D1 DIFF_D2 DIFF_D3 DIFF_D4
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT ADJOINT DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D1: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D2: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D3: VERSION ${MNDEXE} ${OPTEXE}
-DIFF_D4: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B1: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B2: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B3: VERSION ${MNBEXE} ${OPTEXE}
-DIFF_B4: VERSION ${MNBEXE} ${OPTEXE}
+TANGENT: VERSION ${MNDEXE} ${OPTEXE}
+ADJOINT: VERSION ${MNBEXE} ${OPTEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
