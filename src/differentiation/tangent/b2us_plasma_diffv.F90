@@ -5554,7 +5554,7 @@ CONTAINS
       ALLOCATE(state_ext%text(0:ns_ext-1))
       ALLOCATE(state_extd%is_neutral(nbdirsmax, 0:ns_ext-1))
       DO nd=1,nbdirsmax
-        state_extd%is_neutral(nd, 0:ns_ext-1) = 0.D0
+        state_extd%is_neutral(nd, 0:ns_ext-1) = .true.
       END DO
       ALLOCATE(state_ext%is_neutral(0:ns_ext-1))
       ALLOCATE(state_extd%zn(nbdirsmax, 0:ns_ext-1))

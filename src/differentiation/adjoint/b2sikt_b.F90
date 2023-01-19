@@ -268,25 +268,25 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !     ..sources
     DO ic=1,mpg%nci
       IF (MOD(mpg%cvreg(ic), 4) .EQ. 1) THEN
-        CALL PUSHREAL8ARRAY(fac_sheath, r8/8)
+        CALL PUSHREAL8(fac_sheath, r8/8)
         fac_sheath = switch%b2sikt_fac_sheath_core
-        CALL PUSHREAL8ARRAY(fac_diss, r8/8)
+        CALL PUSHREAL8(fac_diss, r8/8)
         fac_diss = switch%b2sikt_fac_diss_core
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(fac_sheath, r8/8)
+        CALL PUSHREAL8(fac_sheath, r8/8)
         fac_sheath = switch%b2sikt_fac_sheath
-        CALL PUSHREAL8ARRAY(fac_diss, r8/8)
+        CALL PUSHREAL8(fac_diss, r8/8)
         fac_diss = switch%b2sikt_fac_diss
         CALL PUSHCONTROL1B(1)
       END IF
       t0 = wrk0(ic)
       t1 = wrk1(ic)
-      CALL PUSHREAL8ARRAY(t2, r8/8)
+      CALL PUSHREAL8(t2, r8/8)
       t2 = fac_sheath*wrk2(ic)
-      CALL PUSHREAL8ARRAY(t3, r8/8)
+      CALL PUSHREAL8(t3, r8/8)
       t3 = fac_diss*wrk3(ic)
-      CALL PUSHREAL8ARRAY(t4, r8/8)
+      CALL PUSHREAL8(t4, r8/8)
       t4 = wrks(ic)
       IF (switch%b2sikt_min_source .EQ. 1 .AND. t0 + t1 - pl%kt(ic)*t2 -&
 &         t3 .LT. 0.0_R8) THEN
@@ -299,42 +299,42 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       ELSE
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(she0(ic, 0), r8/8)
+      CALL PUSHREAL8(she0(ic, 0), r8/8)
       she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
-      CALL PUSHREAL8ARRAY(shi0(ic, 0), r8/8)
+      CALL PUSHREAL8(shi0(ic, 0), r8/8)
       shi0(ic, 0) = -t0
       IF (switch%b2sikt_kt_source_stab .EQ. 0) THEN
-        CALL PUSHREAL8ARRAY(skt0(ic, 0), r8/8)
+        CALL PUSHREAL8(skt0(ic, 0), r8/8)
         skt0(ic, 0) = t0 + t1 - t3 - t4
-        CALL PUSHREAL8ARRAY(skt0(ic, 1), r8/8)
+        CALL PUSHREAL8(skt0(ic, 1), r8/8)
         skt0(ic, 1) = -t2
         CALL PUSHCONTROL1B(0)
       ELSE
         IF (t0 + t1 .LT. 0.0_R8) THEN
-          CALL PUSHREAL8ARRAY(skt0(ic, 0), r8/8)
+          CALL PUSHREAL8(skt0(ic, 0), r8/8)
           skt0(ic, 0) = 0.0_R8
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(skt0(ic, 0), r8/8)
+          CALL PUSHREAL8(skt0(ic, 0), r8/8)
           skt0(ic, 0) = t0 + t1
           CALL PUSHCONTROL1B(1)
         END IF
         IF (t0 + t1 .GT. 0.0_R8) THEN
-          CALL PUSHREAL8ARRAY(min1, r8/8)
+          CALL PUSHREAL8(min1, r8/8)
           min1 = 0.0_R8
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(min1, r8/8)
+          CALL PUSHREAL8(min1, r8/8)
           min1 = t0 + t1
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(skt0(ic, 1), r8/8)
+        CALL PUSHREAL8(skt0(ic, 1), r8/8)
         skt0(ic, 1) = (min1-t3-t4)/(1.0e-8_R8*ev+pl%kt(ic)) - t2
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(skt_prod(ic), r8/8)
+      CALL PUSHREAL8(skt_prod(ic), r8/8)
       skt_prod(ic) = t0 + t1
-      CALL PUSHREAL8ARRAY(skt_diss(ic), r8/8)
+      CALL PUSHREAL8(skt_diss(ic), r8/8)
       skt_diss(ic) = t2*pl%kt(ic) + t3 + t4
     END DO
     CALL PUSHCONTROL1B(0)
@@ -441,21 +441,21 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     wrk2b = 0.D0
     wrk3b = 0.D0
     DO ic=mpg%nci,1,-1
-      CALL POPREAL8ARRAY(skt_diss(ic), r8/8)
-      CALL POPREAL8ARRAY(skt_prod(ic), r8/8)
+      CALL POPREAL8(skt_diss(ic), r8/8)
+      CALL POPREAL8(skt_prod(ic), r8/8)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(skt0(ic, 1), r8/8)
+        CALL POPREAL8(skt0(ic, 1), r8/8)
         t2b = -skt0b(ic, 1)
         skt0b(ic, 1) = 0.D0
-        CALL POPREAL8ARRAY(skt0(ic, 0), r8/8)
+        CALL POPREAL8(skt0(ic, 0), r8/8)
         t0b = skt0b(ic, 0)
         t1b = skt0b(ic, 0)
         t3b = -skt0b(ic, 0)
         t4b = -skt0b(ic, 0)
         skt0b(ic, 0) = 0.D0
       ELSE
-        CALL POPREAL8ARRAY(skt0(ic, 1), r8/8)
+        CALL POPREAL8(skt0(ic, 1), r8/8)
         temp = 1.0e-8_R8*ev + pl%kt(ic)
         tempb8 = skt0b(ic, 1)/temp
         t2b = -skt0b(ic, 1)
@@ -466,29 +466,29 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         plb%kt(ic) = plb%kt(ic) - (min1-t3-t4)*tempb8/temp
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min1, r8/8)
+          CALL POPREAL8(min1, r8/8)
           t0b = 0.D0
           t1b = 0.D0
         ELSE
-          CALL POPREAL8ARRAY(min1, r8/8)
+          CALL POPREAL8(min1, r8/8)
           t0b = min1b
           t1b = min1b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(skt0(ic, 0), r8/8)
+          CALL POPREAL8(skt0(ic, 0), r8/8)
           skt0b(ic, 0) = 0.D0
         ELSE
-          CALL POPREAL8ARRAY(skt0(ic, 0), r8/8)
+          CALL POPREAL8(skt0(ic, 0), r8/8)
           t0b = t0b + skt0b(ic, 0)
           t1b = t1b + skt0b(ic, 0)
           skt0b(ic, 0) = 0.D0
         END IF
       END IF
-      CALL POPREAL8ARRAY(shi0(ic, 0), r8/8)
+      CALL POPREAL8(shi0(ic, 0), r8/8)
       t0b = t0b - shi0b(ic, 0)
       shi0b(ic, 0) = 0.D0
-      CALL POPREAL8ARRAY(she0(ic, 0), r8/8)
+      CALL POPREAL8(she0(ic, 0), r8/8)
       t2b = t2b + pl%kt(ic)*she0b(ic, 0)
       plb%kt(ic) = plb%kt(ic) + t2*she0b(ic, 0)
       t1b = t1b - she0b(ic, 0)
@@ -501,28 +501,28 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         t2b = 0.D0
         t3b = 0.D0
       END IF
-      CALL POPREAL8ARRAY(t4, r8/8)
+      CALL POPREAL8(t4, r8/8)
       wrksb(ic) = wrksb(ic) + t4b
-      CALL POPREAL8ARRAY(t3, r8/8)
+      CALL POPREAL8(t3, r8/8)
       fac_dissb = wrk3(ic)*t3b
       wrk3b(ic) = wrk3b(ic) + fac_diss*t3b
-      CALL POPREAL8ARRAY(t2, r8/8)
+      CALL POPREAL8(t2, r8/8)
       fac_sheathb = wrk2(ic)*t2b
       wrk2b(ic) = wrk2b(ic) + fac_sheath*t2b
       wrk1b(ic) = wrk1b(ic) + t1b
       wrk0b(ic) = wrk0b(ic) + t0b
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(fac_diss, r8/8)
+        CALL POPREAL8(fac_diss, r8/8)
         switchb%b2sikt_fac_diss_core = switchb%b2sikt_fac_diss_core + &
 &         fac_dissb
-        CALL POPREAL8ARRAY(fac_sheath, r8/8)
+        CALL POPREAL8(fac_sheath, r8/8)
         switchb%b2sikt_fac_sheath_core = switchb%b2sikt_fac_sheath_core &
 &         + fac_sheathb
       ELSE
-        CALL POPREAL8ARRAY(fac_diss, r8/8)
+        CALL POPREAL8(fac_diss, r8/8)
         switchb%b2sikt_fac_diss = switchb%b2sikt_fac_diss + fac_dissb
-        CALL POPREAL8ARRAY(fac_sheath, r8/8)
+        CALL POPREAL8(fac_sheath, r8/8)
         switchb%b2sikt_fac_sheath = switchb%b2sikt_fac_sheath + &
 &         fac_sheathb
       END IF

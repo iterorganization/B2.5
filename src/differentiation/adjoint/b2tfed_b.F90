@@ -88,9 +88,9 @@ SUBROUTINE B2TFED_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
 ! Drift terms
 !xpb
 !xpb
-  CALL PUSHREAL8ARRAY(result1, r8/8)
+  CALL PUSHREAL8(result1, r8/8)
   result1 = MAXVAL(facdrift)
-  CALL PUSHREAL8ARRAY(result2, r8/8)
+  CALL PUSHREAL8(result2, r8/8)
   result2 = MAXVAL(fac_exb)
   IF (result1 .NE. 0.0_R8 .OR. result2 .NE. 0.0_R8) THEN
 !xpb
@@ -136,8 +136,8 @@ SUBROUTINE B2TFED_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, &
     CALL GRAD_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, po, pob, pov, &
 &         povb, dpo, dpob)
   END IF
-  CALL POPREAL8ARRAY(result2, r8/8)
-  CALL POPREAL8ARRAY(result1, r8/8)
+  CALL POPREAL8(result2, r8/8)
+  CALL POPREAL8(result1, r8/8)
 END SUBROUTINE B2TFED_B
 
 !

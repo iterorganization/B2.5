@@ -863,7 +863,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             max1 = 0.0_R8
           END IF
 !       ..compute damping coefficient
-          CALL PUSHREAL8ARRAY(rf0, r8/8)
+          CALL PUSHREAL8(rf0, r8/8)
           rf0 = switch%b2stel_rxm0*max1
 !       ..compute rate for is->is+1
 !srv 05.06.18
@@ -874,7 +874,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 !srv 11.09.09 }
 !WG_TODO           rsana(iCv,is) = t0*pl%na(iCv,is)
 !       ..compute atom heat source
-          CALL PUSHREAL8ARRAY(t1, r8/8)
+          CALL PUSHREAL8(t1, r8/8)
           t1 = t0*pl%na(icv, is)*(1.0_R8-switch%boris)*((am(is)+am(is+1)&
 &           )/2.0_R8)*(mp/2.0_R8)*(pl%ua(icv, is)-pl%ua(icv, is+1))**2
           IF ((switch%tn_style .EQ. 0 .OR. zn(is) .NE. 1) .OR. (.NOT.&
@@ -883,13 +883,13 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           ELSE IF (switch%tn_style .EQ. 1) THEN
 !! pure ion energy eq.
 !! case of hydrogenic atoms
-            CALL PUSHREAL8ARRAY(t1i, r8/8)
+            CALL PUSHREAL8(t1i, r8/8)
             t1i = t1 + t0*pl%na(icv, is)*1.5_R8*pl%tn(icv)
             CALL PUSHCONTROL2B(2)
           ELSE
 !! separate energy eq. for hydrogenic atoms
 !! case of hydrogenic atoms
-            CALL PUSHREAL8ARRAY(t1i, r8/8)
+            CALL PUSHREAL8(t1i, r8/8)
             t1i = t1 + t0*pl%na(icv, is)*1.5_R8*pl%tn(icv)
             CALL PUSHCONTROL2B(1)
           END IF
@@ -910,7 +910,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             max2 = 0.0_R8
           END IF
 !       ..compute damping coefficient
-          CALL PUSHREAL8ARRAY(rf0, r8/8)
+          CALL PUSHREAL8(rf0, r8/8)
           rf0 = switch%b2stel_rg0 + switch%b2stel_rxm1*max2
 !       ..compute rate for is->is+1
 !srv 05.06.18
@@ -918,7 +918,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           t0 = switch%b2stel_phm0*rtw%rsa(icv, is)*geo%cvvol(icv)*dv%ne(&
 &           icv)*pl%na(icv, is)*geo%cvhz(icv)
 !       ..compute parallel momentum source
-          CALL PUSHREAL8ARRAY(t1, r8/8)
+          CALL PUSHREAL8(t1, r8/8)
           t1 = (am(is)+am(is+1))/2.0_R8*mp*t0
           IF (switch%b2stel_styl0 .EQ. 0) THEN
             CALL PUSHCONTROL3B(1)
@@ -926,30 +926,30 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 !       ..compute parallel momentum source
             CALL PUSHINTEGER4(arg1)
             arg1 = is + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
             arg1 = is + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
             CALL PUSHCONTROL3B(2)
           ELSE IF (switch%b2stel_styl0 .EQ. 2) THEN
             CALL PUSHINTEGER4(arg1)
             arg1 = is + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
             CALL PUSHCONTROL3B(3)
           ELSE IF (switch%b2stel_styl0 .EQ. 3) THEN
             CALL PUSHINTEGER4(arg1)
             arg1 = is + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
             CALL PUSHCONTROL3B(4)
           ELSE
@@ -982,11 +982,11 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             max3 = 0.0_R8
           END IF
 !       ..compute damping coefficient
-          CALL PUSHREAL8ARRAY(rf0, r8/8)
+          CALL PUSHREAL8(rf0, r8/8)
           rf0 = switch%b2stel_rxm2*max3
 !       ..compute rate for is->is-1
 !srv 05.06.18
-          CALL PUSHREAL8ARRAY(t0, r8/8)
+          CALL PUSHREAL8(t0, r8/8)
           t0 = switch%b2stel_phm0*rtw%rra(icv, is)*geo%cvvol(icv)*dv%ne(&
 &           icv)
 !       ..compute particle source
@@ -997,7 +997,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           IF ((switch%tn_style .EQ. 0 .OR. zn(is) .NE. 1) .OR. (.NOT.&
 &             is_neutral(is-1))) THEN
 !! combined ion-neutral, and/or non-hydrogenic (default)
-            CALL PUSHREAL8ARRAY(t1, r8/8)
+            CALL PUSHREAL8(t1, r8/8)
             t1 = t0*pl%na(icv, is)*(1.0_R8-switch%boris)*((am(is)+am(is-&
 &             1))/2.0_R8)*(mp/2.0_R8)*(pl%ua(icv, is)-pl%ua(icv, is-1))&
 &             **2
@@ -1005,15 +1005,15 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           ELSE IF (switch%tn_style .EQ. 1) THEN
 !! pure ion
 !! case of hydrogenic atoms
-            CALL PUSHREAL8ARRAY(t1i, r8/8)
+            CALL PUSHREAL8(t1i, r8/8)
             CALL PUSHCONTROL2B(1)
           ELSE
 !! separate energy eq. for hydrogenic atoms
 !! case of hydrogenic atoms
-            CALL PUSHREAL8ARRAY(tkin, r8/8)
+            CALL PUSHREAL8(tkin, r8/8)
             tkin = (am(is)+am(is-1))/2.0_R8*(mp/2.0_R8)*(pl%ua(icv, is)-&
 &             pl%ua(icv, is-1))**2
-            CALL PUSHREAL8ARRAY(t1i, r8/8)
+            CALL PUSHREAL8(t1i, r8/8)
             CALL PUSHCONTROL2B(2)
           END IF
 !WG_TODO           rrahi(iCv,is) = t1
@@ -1040,16 +1040,16 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             max4 = 0.0_R8
           END IF
 !       ..compute damping coefficient
-          CALL PUSHREAL8ARRAY(rf0, r8/8)
+          CALL PUSHREAL8(rf0, r8/8)
           rf0 = switch%b2stel_rg1 + switch%b2stel_rxm3*max4
 !       ..compute rate for is->is-1
 !srv 05.06.18
 !srv 09.01.01
-          CALL PUSHREAL8ARRAY(t0, r8/8)
+          CALL PUSHREAL8(t0, r8/8)
           t0 = switch%b2stel_phm0*rtw%rra(icv, is)*geo%cvvol(icv)*dv%ne(&
 &           icv)*pl%na(icv, is)*geo%cvhz(icv)
 !       ..compute parallel momentum source
-          CALL PUSHREAL8ARRAY(t1, r8/8)
+          CALL PUSHREAL8(t1, r8/8)
           t1 = (am(is)+am(is-1))/2.0_R8*mp*t0
 !WG_TODO           rramo(iCv,is) = rramo(iCv,is)+t1*pl%ua(iCv,is)
 !WG_TODO           rramo(iCv,is-1) = rramo(iCv,is-1)+t1*pl%ua(iCv,is)
@@ -1078,13 +1078,13 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           max5 = 0.0_R8
         END IF
 !      ..compute damping coefficient
-        CALL PUSHREAL8ARRAY(rf0, r8/8)
+        CALL PUSHREAL8(rf0, r8/8)
         rf0 = switch%b2stel_rxm4*max5
 !      ..compute electron cooling rate for is->any
 !      ..includes line radiation, bremsstrahlung and ionisation contributions
 !      ..for adpak rates, also contains recombination and CX terms
 !srv 05.06.18
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = switch%b2stel_phm0*(rtw%rqa(icv, is)+rtw%rqr(icv, is))*geo%&
 &         cvvol(icv)*dv%ne(icv)*pl%na(icv, is)
 !      ..compute electron heat sink
@@ -1140,7 +1140,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
         tempb2 = -((rf0+1.0_R8)*t0*tempb0/temp2)
         dvb%ne(icv) = dvb%ne(icv) + pl%te(icv)*tempb2
         plb%te(icv) = plb%te(icv) + dv%ne(icv)*tempb2
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         tempb2 = switch%b2stel_phm0*geo%cvvol(icv)*t0b
         tempb1 = dv%ne(icv)*pl%na(icv, is)*tempb2
         tempb = (rtw%rqa(icv, is)+rtw%rqr(icv, is))*tempb2
@@ -1148,7 +1148,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
         plb%na(icv, is) = plb%na(icv, is) + dv%ne(icv)*tempb
         rtwb%rqa(icv, is) = rtwb%rqa(icv, is) + tempb1
         rtwb%rqr(icv, is) = rtwb%rqr(icv, is) + tempb1
-        CALL POPREAL8ARRAY(rf0, r8/8)
+        CALL POPREAL8(rf0, r8/8)
         max5b = switch%b2stel_rxm4*rf0b
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) rtb%rlqa(icv, 1, is) = rtb%rlqa(icv, 1, is) +&
@@ -1172,16 +1172,16 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 &           1.0_R8)*smq0_recb(icv, 1, is)
           plb%ua(icv, is) = plb%ua(icv, is) + tempb2 + rf0*t1*smq0_recb(&
 &           icv, 0, is)
-          CALL POPREAL8ARRAY(t1, r8/8)
+          CALL POPREAL8(t1, r8/8)
           t0b = mp*(am(is)+am(is-1))*t1b/2.0_R8
-          CALL POPREAL8ARRAY(t0, r8/8)
+          CALL POPREAL8(t0, r8/8)
           tempb2 = switch%b2stel_phm0*geo%cvvol(icv)*geo%cvhz(icv)*t0b
           tempb1 = pl%na(icv, is)*tempb2
           plb%na(icv, is) = plb%na(icv, is) + rtw%rra(icv, is)*dv%ne(icv&
 &           )*tempb2
           rtwb%rra(icv, is) = rtwb%rra(icv, is) + dv%ne(icv)*tempb1
           dvb%ne(icv) = dvb%ne(icv) + rtw%rra(icv, is)*tempb1
-          CALL POPREAL8ARRAY(rf0, r8/8)
+          CALL POPREAL8(rf0, r8/8)
           max4b = switch%b2stel_rxm3*rf0b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) rtb%rlra(icv, 1, is) = rtb%rlra(icv, 1, is)&
@@ -1225,7 +1225,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             tempb2 = -(rf0*t1*tempb0/temp2)
             dvb%ni(icv, 0) = dvb%ni(icv, 0) + pl%ti(icv)*tempb2
             plb%ti(icv) = plb%ti(icv) + dv%ni(icv, 0)*tempb2
-            CALL POPREAL8ARRAY(t1, r8/8)
+            CALL POPREAL8(t1, r8/8)
             temp0 = t0/(2.0_R8*2.0_R8)
             temp1 = pl%ua(icv, is) - pl%ua(icv, is-1)
             tempb2 = (1.0_R8-switch%boris)*mp*(am(is)+am(is-1))*t1b
@@ -1245,7 +1245,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             tempb2 = -(rf0*t1i*tempb0/temp2)
             dvb%ni(icv, 0) = dvb%ni(icv, 0) + pl%ti(icv)*tempb2
             plb%ti(icv) = plb%ti(icv) + dv%ni(icv, 0)*tempb2
-            CALL POPREAL8ARRAY(t1i, r8/8)
+            CALL POPREAL8(t1i, r8/8)
             tempb2 = -((1.0_R8-switch%boris)*1.5_R8*t1ib)
             plb%na(icv, is) = plb%na(icv, is) + t0*pl%ti(icv)*tempb2
             tempb0 = pl%na(icv, is)*tempb2
@@ -1278,11 +1278,11 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             t0b = t0b + pl%na(icv, is)*tempb0
             plb%na(icv, is) = plb%na(icv, is) + t0*tempb0 - t0*pl%ti(icv&
 &             )*1.5_R8*t1ib
-            CALL POPREAL8ARRAY(t1i, r8/8)
+            CALL POPREAL8(t1i, r8/8)
             tempb0 = -(pl%na(icv, is)*1.5_R8*t1ib)
             plb%ti(icv) = plb%ti(icv) + 1.5_R8*tempb2 + t0*tempb0
             t0b = t0b + pl%ti(icv)*tempb0
-            CALL POPREAL8ARRAY(tkin, r8/8)
+            CALL POPREAL8(tkin, r8/8)
             tempb2 = 2*(pl%ua(icv, is)-pl%ua(icv, is-1))*(am(is)+am(is-1&
 &             ))*mp*tkinb/2.0_R8**2
             plb%ua(icv, is) = plb%ua(icv, is) + tempb2
@@ -1303,11 +1303,11 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           tempb0 = pl%na(icv, is)*sna0_recb(icv, 0, is)
           rf0b = rf0b + t0*tempb0 - t0*sna0_recb(icv, 1, is)
           t0b = t0b + rf0*tempb0 - (rf0+1.0_R8)*sna0_recb(icv, 1, is)
-          CALL POPREAL8ARRAY(t0, r8/8)
+          CALL POPREAL8(t0, r8/8)
           tempb2 = switch%b2stel_phm0*geo%cvvol(icv)*t0b
           rtwb%rra(icv, is) = rtwb%rra(icv, is) + dv%ne(icv)*tempb2
           dvb%ne(icv) = dvb%ne(icv) + rtw%rra(icv, is)*tempb2
-          CALL POPREAL8ARRAY(rf0, r8/8)
+          CALL POPREAL8(rf0, r8/8)
           max3b = switch%b2stel_rxm2*rf0b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) rtb%rlra(icv, 1, is) = rtb%rlra(icv, 1, is)&
@@ -1340,20 +1340,20 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             tempb0 = -((rf0+1.0_R8)*smq0_ionb(icv, 3, is)/result10)
             t1b = tempb0
             result10b = -(t1*tempb0/result10)
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, is, result10b)
             temp0 = rf0*t1/result10
             tempb0 = pl%ua(icv, is)*smq0_ionb(icv, 2, is)/result10
             rf0b = rf0b + t1*tempb0
             t1b = t1b + rf0*tempb0
             result10b = -(temp0*tempb0)
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, is, result10b)
             tempb0 = -(smq0_ionb(icv, 3, is+1)/result10)
             t1b = t1b + rf0*tempb0
             result10b = -(rf0*t1*tempb0/result10)
             arg1 = is + 1
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, arg1, result10b)
             tempb2 = t1*smq0_ionb(icv, 2, is+1)/result10
             plb%ua(icv, is) = plb%ua(icv, is) + temp0*smq0_ionb(icv, 2, &
@@ -1365,7 +1365,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             result10b = -(t1*tempb0/result10)
             plb%ua(icv, is+1) = plb%ua(icv, is+1) + rf0*tempb2
             arg1 = is + 1
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, arg1, result10b)
             CALL POPINTEGER4(arg1)
           END IF
@@ -1376,7 +1376,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           result10b = -(t1*tempb0/result10)
           tempb0 = pl%ua(icv, is)*smq0_ionb(icv, 0, is)
           rf0b = t1*tempb0 - t1*smq0_ionb(icv, 3, is)/result10
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, is, result10b)
           plb%ua(icv, is) = plb%ua(icv, is) + rf0*t1*smq0_ionb(icv, 0, &
 &           is) + tempb2
@@ -1387,14 +1387,14 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 &           *smq0_ionb(icv, 0, is+1)
           result10b = -(rf0*t1*tempb0/result10)
           arg1 = is + 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           CALL POPINTEGER4(arg1)
           plb%ua(icv, is+1) = plb%ua(icv, is+1) + rf0*tempb2
         ELSE IF (branch .EQ. 4) THEN
           temp0 = rf0*t1/result10
           tempb0 = pl%ua(icv, is)*smq0_ionb(icv, 2, is)/result10
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           tempb2 = t1*smq0_ionb(icv, 2, is+1)/result10
           rf0b = t1*tempb0 - t1*smq0_ionb(icv, 1, is) + pl%ua(icv, is+1)&
 &           *tempb2 - t1*smq0_ionb(icv, 1, is+1)
@@ -1409,14 +1409,14 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           result10b = -(t1*tempb0/result10)
           plb%ua(icv, is+1) = plb%ua(icv, is+1) + rf0*tempb2
           arg1 = is + 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           CALL POPINTEGER4(arg1)
         ELSE
           t1b = 0.D0
           rf0b = 0.D0
         END IF
-        CALL POPREAL8ARRAY(t1, r8/8)
+        CALL POPREAL8(t1, r8/8)
         t0b = mp*(am(is)+am(is+1))*t1b/2.0_R8
         tempb2 = switch%b2stel_phm0*geo%cvvol(icv)*geo%cvhz(icv)*t0b
         tempb1 = pl%na(icv, is)*tempb2
@@ -1424,7 +1424,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 &         tempb2
         rtwb%rsa(icv, is) = rtwb%rsa(icv, is) + dv%ne(icv)*tempb1
         dvb%ne(icv) = dvb%ne(icv) + rtw%rsa(icv, is)*tempb1
-        CALL POPREAL8ARRAY(rf0, r8/8)
+        CALL POPREAL8(rf0, r8/8)
         max2b = switch%b2stel_rxm1*rf0b
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) rtb%rlsa(icv, 1, is) = rtb%rlsa(icv, 1, is) +&
@@ -1459,7 +1459,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             tempb0 = -(pl%na(icv, is)*1.5_R8*t1nb)
             t0b = pl%tn(icv)*tempb0
             plb%tn(icv) = plb%tn(icv) + t0*tempb0
-            CALL POPREAL8ARRAY(t1i, r8/8)
+            CALL POPREAL8(t1i, r8/8)
             t1b = t1ib
             tempb0 = pl%na(icv, is)*1.5_R8*t1ib
             t0b = t0b + pl%tn(icv)*tempb0
@@ -1475,7 +1475,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           plb%ti(icv) = plb%ti(icv) + dv%ni(icv, 0)*tempb2
           t0 = switch%b2stel_phm0*rtw%rsa(icv, is)*geo%cvvol(icv)*dv%ne(&
 &           icv)
-          CALL POPREAL8ARRAY(t1i, r8/8)
+          CALL POPREAL8(t1i, r8/8)
           t1b = t1ib
           plb%na(icv, is) = plb%na(icv, is) + t0*pl%tn(icv)*1.5_R8*t1ib
           tempb0 = pl%na(icv, is)*1.5_R8*t1ib
@@ -1494,7 +1494,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
           t0b = 0.D0
         END IF
         tempb0 = pl%na(icv, is)*sna0_ionb(icv, 0, is)
-        CALL POPREAL8ARRAY(t1, r8/8)
+        CALL POPREAL8(t1, r8/8)
         temp0 = t0/(2.0_R8*2.0_R8)
         temp1 = pl%ua(icv, is) - pl%ua(icv, is+1)
         tempb = (1.0_R8-switch%boris)*mp*(am(is)+am(is+1))*t1b
@@ -1521,7 +1521,7 @@ SUBROUTINE B2STEL_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
         tempb = switch%b2stel_phm0*geo%cvvol(icv)*t0b
         rtwb%rsa(icv, is) = rtwb%rsa(icv, is) + dv%ne(icv)*tempb
         dvb%ne(icv) = dvb%ne(icv) + rtw%rsa(icv, is)*tempb
-        CALL POPREAL8ARRAY(rf0, r8/8)
+        CALL POPREAL8(rf0, r8/8)
         max1b = switch%b2stel_rxm0*rf0b
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) rtb%rlsa(icv, 1, is) = rtb%rlsa(icv, 1, is) +&

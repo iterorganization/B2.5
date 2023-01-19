@@ -126,7 +126,7 @@ SUBROUTINE B2NXFC_B(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robb, ub&
     CALL INTFACE_FWD(ncv, nfc, mpg%fccv, geo%fcvol, ub, wrkf)
 !     ..compute flcbx, cvcbx        
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(flcb(ifc, 0), r8/8)
+      CALL PUSHREAL8(flcb(ifc, 0), r8/8)
       flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*wrkf(ifc)*(rob(mpg%&
 &       fccv(ifc, 1))+rob(mpg%fccv(ifc, 2)))*0.5e0_R8
     END DO
@@ -186,7 +186,7 @@ SUBROUTINE B2NXFC_B(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robb, ub&
     cvsbb(:, 0) = cvsbb(:, 0) + cvcbb(:, 0)
     cvcbb(:, 0) = 0.D0
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(flcb(ifc, 0), r8/8)
+      CALL POPREAL8(flcb(ifc, 0), r8/8)
       flubb(ifc, 0) = flubb(ifc, 0) + flcbb(ifc, 0)
       tempb = geo%fcpbshz(ifc)*0.5e0_R8*flcbb(ifc, 0)
       flcbb(ifc, 0) = 0.D0

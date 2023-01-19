@@ -48,12 +48,12 @@ SUBROUTINE B2TXCX_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, conx)
       t0 = fcvol(ifc, 1)*kapx(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)**2
       t1 = fcvol(ifc, 2)*kapx(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2)**2
       IF (t0*t1 .GT. 0.0_R8) THEN
-        CALL PUSHREAL8ARRAY(conx(ifc), r8/8)
+        CALL PUSHREAL8(conx(ifc), r8/8)
         conx(ifc) = t0*t1/(t0+t1)*geo%fcqalf(ifc, 0)/geo%fcqgam(ifc, 0)&
 &         **2
         CALL PUSHCONTROL1B(1)
       ELSE
-        CALL PUSHREAL8ARRAY(conx(ifc), r8/8)
+        CALL PUSHREAL8(conx(ifc), r8/8)
         conx(ifc) = 0.0_R8
         CALL PUSHCONTROL1B(0)
       END IF
@@ -65,24 +65,24 @@ SUBROUTINE B2TXCX_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, conx)
       y1 = fcvol(ifc, 1)*kapx(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)*(fcvol(&
 &       ifc, 2)*kapx(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2))
       IF (0.0_R8 .LT. y1) THEN
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = y1
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = 0.0_R8
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(conx(ifc), r8/8)
+      CALL PUSHREAL8(conx(ifc), r8/8)
       conx(ifc) = geo%fcqalf(ifc, 0)/geo%fcqgam(ifc, 0)**2*SQRT(max1)/(&
 &       geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
     END DO
-    CALL PUSHREAL8ARRAY(max1, r8/8)
+    CALL PUSHREAL8(max1, r8/8)
     CALL PUSHCONTROL3B(1)
   ELSE IF (mode .EQ. 1) THEN
 !    ..use arithmetic averaging (SOLPS5.0 formulation)
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(conx(ifc), r8/8)
+      CALL PUSHREAL8(conx(ifc), r8/8)
       conx(ifc) = geo%fcqalf(ifc, 0)/geo%fcqgam(ifc, 0)**2*(fcvol(ifc, 1&
 &       )*kapx(mpg%fccv(ifc, 1))+fcvol(ifc, 2)*kapx(mpg%fccv(ifc, 2)))/(&
 &       geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2
@@ -91,7 +91,7 @@ SUBROUTINE B2TXCX_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, conx)
   ELSE IF (mode .EQ. 2) THEN
 !    ..use arithmetic averaging (SOLPS4.0 formulation)
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(conx(ifc), r8/8)
+      CALL PUSHREAL8(conx(ifc), r8/8)
       conx(ifc) = fcs(ifc)*geo%fcqalf(ifc, 0)/geo%fcqgam(ifc, 0)*(geo%&
 &       fchc(ifc, 1)*kapx(mpg%fccv(ifc, 1))+geo%fchc(ifc, 2)*kapx(mpg%&
 &       fccv(ifc, 2)))/(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2
@@ -100,7 +100,7 @@ SUBROUTINE B2TXCX_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, conx)
   ELSE IF (mode .EQ. 3) THEN
 !    ..use arithmetic averaging (drift formulation)
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(conx(ifc), r8/8)
+      CALL PUSHREAL8(conx(ifc), r8/8)
       conx(ifc) = fcs(ifc)*geo%fcqalf(ifc, 0)/(geo%fcqgam(ifc, 0)*(geo%&
 &       fchc(ifc, 1)+geo%fchc(ifc, 2)))*(geo%fcvol(ifc, 1)*kapx(mpg%fccv&
 &       (ifc, 1))+geo%fcvol(ifc, 2)*kapx(mpg%fccv(ifc, 2)))/(geo%fcvol(&
@@ -159,14 +159,14 @@ SUBROUTINE B2TXCX_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, kapxb&
       DO ifc=nfc,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(conx(ifc), r8/8)
+          CALL POPREAL8(conx(ifc), r8/8)
           conxb(ifc) = 0.D0
           t0b = 0.D0
           t1b = 0.D0
         ELSE
           t0 = fcvol(ifc, 1)*kapx(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)**2
           t1 = fcvol(ifc, 2)*kapx(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2)**2
-          CALL POPREAL8ARRAY(conx(ifc), r8/8)
+          CALL POPREAL8(conx(ifc), r8/8)
           temp = geo%fcqgam(ifc, 0)*geo%fcqgam(ifc, 0)
           tempb = geo%fcqalf(ifc, 0)*conxb(ifc)/(temp*(t0+t1))
           conxb(ifc) = 0.D0
@@ -180,9 +180,9 @@ SUBROUTINE B2TXCX_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, kapxb&
 &         )*t0b/geo%fchc(ifc, 1)**2
       END DO
     ELSE IF (branch .EQ. 1) THEN
-      CALL POPREAL8ARRAY(max1, r8/8)
+      CALL POPREAL8(max1, r8/8)
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(conx(ifc), r8/8)
+        CALL POPREAL8(conx(ifc), r8/8)
         IF (max1 .EQ. 0.D0) THEN
           max1b = 0.D0
         ELSE
@@ -192,10 +192,10 @@ SUBROUTINE B2TXCX_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, kapxb&
         conxb(ifc) = 0.D0
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(max1, r8/8)
+          CALL POPREAL8(max1, r8/8)
           y1b = max1b
         ELSE
-          CALL POPREAL8ARRAY(max1, r8/8)
+          CALL POPREAL8(max1, r8/8)
           y1b = 0.D0
         END IF
         tempb0 = fcvol(ifc, 1)*fcvol(ifc, 2)*y1b/(geo%fchc(ifc, 1)*geo%&
@@ -207,7 +207,7 @@ SUBROUTINE B2TXCX_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, kapxb&
       END DO
     ELSE
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(conx(ifc), r8/8)
+        CALL POPREAL8(conx(ifc), r8/8)
         tempb0 = geo%fcqalf(ifc, 0)*conxb(ifc)/(geo%fcqgam(ifc, 0)**2*(&
 &         geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2)
         conxb(ifc) = 0.D0
@@ -219,7 +219,7 @@ SUBROUTINE B2TXCX_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, kapxb&
     END IF
   ELSE IF (branch .EQ. 3) THEN
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(conx(ifc), r8/8)
+      CALL POPREAL8(conx(ifc), r8/8)
       tempb0 = fcs(ifc)*geo%fcqalf(ifc, 0)*conxb(ifc)/(geo%fcqgam(ifc, 0&
 &       )*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2)
       conxb(ifc) = 0.D0
@@ -230,7 +230,7 @@ SUBROUTINE B2TXCX_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapx, kapxb&
     END DO
   ELSE IF (branch .EQ. 4) THEN
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(conx(ifc), r8/8)
+      CALL POPREAL8(conx(ifc), r8/8)
       tempb0 = fcs(ifc)*geo%fcqalf(ifc, 0)*conxb(ifc)/(geo%fcqgam(ifc, 0&
 &       )*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))*(geo%fcvol(ifc, 1)+geo%&
 &       fcvol(ifc, 2)))

@@ -72,6 +72,7 @@ SUBROUTINE GRADC_R_B(ncv, nfc, nvx, mode, geo, geob, mpg, mpgb, fun, &
 !   ..compute gradients on faces
 !
 !   ..interpolate to centers
+  gfunrf = 1.0_R8 !csc added this here for safety in gfortran
   CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellr, gfunrf, gfunr)
 !
 !   ..return

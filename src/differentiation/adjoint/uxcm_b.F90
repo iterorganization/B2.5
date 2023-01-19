@@ -48,7 +48,7 @@ FUNCTION UXCM_FWD(t0, t1) RESULT (uxcm)
 !
   uxcm = SIGN(max1, t0 + t1)
 !
-  CALL PUSHREAL8ARRAY(max1, r8/8)
+  CALL PUSHREAL8(max1, r8/8)
 END FUNCTION UXCM_FWD
 
 !  Differentiation of uxcm in reverse (adjoint) mode, backward sweep (with options context noISIZE r8):
@@ -79,7 +79,7 @@ SUBROUTINE UXCM_BWD(t0, t0b, t1, t1b, uxcmb)
   INTEGER :: branch
   REAL(kind=r8) :: x1
   REAL(kind=r8) :: y1
-  CALL POPREAL8ARRAY(max1, r8/8)
+  CALL POPREAL8(max1, r8/8)
   max1b = SIGN(1.d0, max1*(t0+t1))*uxcmb
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN

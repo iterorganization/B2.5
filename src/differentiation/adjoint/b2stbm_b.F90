@@ -159,7 +159,7 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
       END IF
       IF (is0 .NE. 0) THEN
         DO icv=1,ncv
-          CALL PUSHREAL8ARRAY(n0_tmp, r8/8)
+          CALL PUSHREAL8(n0_tmp, r8/8)
           n0_tmp = 0.0_R8
           nr_tmp = 0.0_R8
           p0_tmp = 0.0_R8
@@ -176,23 +176,23 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
             END IF
           END DO
           IF (n0_tmp .GT. 0.0_R8 .AND. nr_tmp .GT. 0.0_R8) THEN
-            CALL PUSHREAL8ARRAY(ua_tmp, r8/8)
+            CALL PUSHREAL8(ua_tmp, r8/8)
             ua_tmp = (p0_tmp/n0_tmp+pr_tmp/nr_tmp)/2.0_R8
             CALL PUSHCONTROL2B(0)
           ELSE IF (n0_tmp .GT. 0.0_R8) THEN
-            CALL PUSHREAL8ARRAY(ua_tmp, r8/8)
+            CALL PUSHREAL8(ua_tmp, r8/8)
             ua_tmp = p0_tmp/n0_tmp
             CALL PUSHCONTROL2B(1)
           ELSE IF (nr_tmp .GT. 0.0_R8) THEN
-            CALL PUSHREAL8ARRAY(ua_tmp, r8/8)
+            CALL PUSHREAL8(ua_tmp, r8/8)
             ua_tmp = pr_tmp/nr_tmp
             CALL PUSHCONTROL2B(2)
           ELSE
-            CALL PUSHREAL8ARRAY(ua_tmp, r8/8)
+            CALL PUSHREAL8(ua_tmp, r8/8)
             ua_tmp = 0.0_R8
             CALL PUSHCONTROL2B(3)
           END IF
-          CALL PUSHREAL8ARRAY(na0(icv, is), r8/8)
+          CALL PUSHREAL8(na0(icv, is), r8/8)
           na0(icv, is) = pl%na(icv, is) + n0_tmp
           ua0(icv, is) = (pl%ua(icv, is)*pl%na(icv, is)*SIGN(1.0_R8, geo&
 &           %cvbb(icv, 0))+ua_tmp*n0_tmp)/na0(icv, is)
@@ -240,34 +240,34 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
             CALL PUSHCONTROL1B(0)
           END IF
           IF (t0 .GE. 0.) THEN
-            CALL PUSHREAL8ARRAY(abs3, r8/8)
+            CALL PUSHREAL8(abs3, r8/8)
             abs3 = t0
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(abs3, r8/8)
+            CALL PUSHREAL8(abs3, r8/8)
             abs3 = -t0
             CALL PUSHCONTROL1B(1)
           END IF
 !  ...parallel momentum sources
-          CALL PUSHREAL8ARRAY(vthe, r8/8)
+          CALL PUSHREAL8(vthe, r8/8)
           vthe = SQRT(pl%te(icv)/me)
           vthe = vthe/SQRT(am(is)*mp/me)
           t0 = st_ext%smo(icv, is)*SIGN(1.0_R8, geo%cvbb(icv, 0))
           IF (t0 .GE. 0.) THEN
-            CALL PUSHREAL8ARRAY(abs4, r8/8)
+            CALL PUSHREAL8(abs4, r8/8)
             abs4 = t0
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(abs4, r8/8)
+            CALL PUSHREAL8(abs4, r8/8)
             abs4 = -t0
             CALL PUSHCONTROL1B(1)
           END IF
           IF (t0 .GE. 0.) THEN
-            CALL PUSHREAL8ARRAY(abs5, r8/8)
+            CALL PUSHREAL8(abs5, r8/8)
             abs5 = t0
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(abs5, r8/8)
+            CALL PUSHREAL8(abs5, r8/8)
             abs5 = -t0
             CALL PUSHCONTROL1B(1)
           END IF
@@ -280,11 +280,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs7, r8/8)
+          CALL PUSHREAL8(abs7, r8/8)
           abs7 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs7, r8/8)
+          CALL PUSHREAL8(abs7, r8/8)
           abs7 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
@@ -296,11 +296,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 &               ) .EQ. 0.0_R8) THEN
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL8ARRAY(ua_tmp, r8/8)
+              CALL PUSHREAL8(ua_tmp, r8/8)
               ua_tmp = (ua0(icv, is)*na0(icv, is)+st_ext%smo(icv, is)*&
 &               dtim*dtmo(is, ireg)/(am(is)*mp))/(na0(icv, is)+st_ext%&
 &               sna(icv, is)*dtim*dtco(is, ireg))
-              CALL PUSHREAL8ARRAY(dua, r8/8)
+              CALL PUSHREAL8(dua, r8/8)
               dua = ua_tmp - ua0(icv, is)
               t0 = t0 - ua0(icv, is)*st_ext%smo(icv, is) + 0.5_R8*(am(is&
 &               )*mp)*ua0(icv, is)**2*st_ext%sna(icv, is) - (na0(icv, is&
@@ -324,16 +324,16 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           CALL PUSHCONTROL1B(1)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs9, r8/8)
+          CALL PUSHREAL8(abs9, r8/8)
           abs9 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs9, r8/8)
+          CALL PUSHREAL8(abs9, r8/8)
           abs9 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
 !  ...electric charge source
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = st_ext%sch(icv)
         IF (t0 .GE. 0.0_R8) THEN
           CALL PUSHCONTROL1B(1)
@@ -341,11 +341,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs11, r8/8)
+          CALL PUSHREAL8(abs11, r8/8)
           abs11 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs11, r8/8)
+          CALL PUSHREAL8(abs11, r8/8)
           abs11 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
@@ -357,11 +357,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 &             .EQ. 0.0_R8) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(ua_tmp, r8/8)
+            CALL PUSHREAL8(ua_tmp, r8/8)
             ua_tmp = (ua0(icv, is)*na0(icv, is)+st_ext%smo(icv, is)*dtim&
 &             *dtmo(is, ireg)/(am(is)*mp))/(na0(icv, is)+st_ext%sna(icv&
 &             , is)*dtim*dtco(is, ireg))
-            CALL PUSHREAL8ARRAY(dua, r8/8)
+            CALL PUSHREAL8(dua, r8/8)
             dua = ua_tmp - ua0(icv, is)
             CALL PUSHCONTROL1B(1)
           END IF
@@ -394,8 +394,8 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 &               ireg)) + (ua0(icv, is)-(dtim*dtmo(is, ireg)*(st_ext%smo(&
 &               icv, is)/(am(is)*mp))+ua0(icv, is)*na0(icv, is))/temp)*&
 &               tempb
-              CALL POPREAL8ARRAY(dua, r8/8)
-              CALL POPREAL8ARRAY(ua_tmp, r8/8)
+              CALL POPREAL8(dua, r8/8)
+              CALL POPREAL8(ua_tmp, r8/8)
             END IF
           END DO
         ELSE
@@ -404,9 +404,9 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           t0 = st_ext%sch(icv)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs11, r8/8)
+            CALL POPREAL8(abs11, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(abs11, r8/8)
+            CALL POPREAL8(abs11, r8/8)
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
@@ -416,17 +416,17 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           ELSE
             srwb%sch0(icv, 0) = 0.D0
           END IF
-          CALL POPREAL8ARRAY(t0, r8/8)
+          CALL POPREAL8(t0, r8/8)
           tempb = -(switch%b2stbm_linearisation*srwb%shi0(icv, 1)/pl%ti(&
 &           icv))
           abs9b = tempb
           plb%ti(icv) = plb%ti(icv) - abs9*tempb/pl%ti(icv)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs9, r8/8)
+            CALL POPREAL8(abs9, r8/8)
             t0b = abs9b
           ELSE
-            CALL POPREAL8ARRAY(abs9, r8/8)
+            CALL POPREAL8(abs9, r8/8)
             t0b = -abs9b
           END IF
           abs8b = switch%b2stbm_linearisation*srwb%shi0(icv, 0)
@@ -466,8 +466,8 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 &                 (ireg)) + (ua0(icv, is)-(dtim*dtmo(is, ireg)*(st_ext%&
 &                 smo(icv, is)/(am(is)*mp))+ua0(icv, is)*na0(icv, is))/&
 &                 temp)*tempb
-                CALL POPREAL8ARRAY(dua, r8/8)
-                CALL POPREAL8ARRAY(ua_tmp, r8/8)
+                CALL POPREAL8(dua, r8/8)
+                CALL POPREAL8(ua_tmp, r8/8)
               END IF
             END DO
           END IF
@@ -476,9 +476,9 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           t0 = st_ext%she(icv)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs7, r8/8)
+            CALL POPREAL8(abs7, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(abs7, r8/8)
+            CALL POPREAL8(abs7, r8/8)
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
@@ -493,9 +493,9 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 &             is)/vthe**2
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL8ARRAY(abs5, r8/8)
+              CALL POPREAL8(abs5, r8/8)
             ELSE
-              CALL POPREAL8ARRAY(abs5, r8/8)
+              CALL POPREAL8(abs5, r8/8)
             END IF
             tempb0 = switch%b2stbm_linearisation*abs4*srwb%smo0(icv, 0, &
 &             is)/vthe
@@ -503,12 +503,12 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
             vtheb = vtheb - pl%ua(icv, is)*tempb0/vthe
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL8ARRAY(abs4, r8/8)
+              CALL POPREAL8(abs4, r8/8)
             ELSE
-              CALL POPREAL8ARRAY(abs4, r8/8)
+              CALL POPREAL8(abs4, r8/8)
             END IF
             vtheb = vtheb/SQRT(am(is)*(mp/me))
-            CALL POPREAL8ARRAY(vthe, r8/8)
+            CALL POPREAL8(vthe, r8/8)
             IF (.NOT.pl%te(icv)/me .EQ. 0.D0) plb%te(icv) = plb%te(icv) &
 &               + vtheb/(me*2.0*SQRT(pl%te(icv)/me))
             plb%na(icv, is) = plb%na(icv, is) + switch%&
@@ -517,9 +517,9 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
             t0 = st_ext%sna(icv, is)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL8ARRAY(abs3, r8/8)
+              CALL POPREAL8(abs3, r8/8)
             ELSE
-              CALL POPREAL8ARRAY(abs3, r8/8)
+              CALL POPREAL8(abs3, r8/8)
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
@@ -559,24 +559,24 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 &           , is)*pl%na(icv, is)))*tempb/na0(icv, is)
           plb%na(icv, is) = plb%na(icv, is) + pl%ua(icv, is)*temp*tempb &
 &           + na0b(icv, is)
-          CALL POPREAL8ARRAY(na0(icv, is), r8/8)
+          CALL POPREAL8(na0(icv, is), r8/8)
           na0b(icv, is) = 0.D0
           CALL POPCONTROL2B(branch)
           IF (branch .LT. 2) THEN
             IF (branch .EQ. 0) THEN
-              CALL POPREAL8ARRAY(ua_tmp, r8/8)
+              CALL POPREAL8(ua_tmp, r8/8)
             ELSE
-              CALL POPREAL8ARRAY(ua_tmp, r8/8)
+              CALL POPREAL8(ua_tmp, r8/8)
             END IF
           ELSE IF (branch .EQ. 2) THEN
-            CALL POPREAL8ARRAY(ua_tmp, r8/8)
+            CALL POPREAL8(ua_tmp, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(ua_tmp, r8/8)
+            CALL POPREAL8(ua_tmp, r8/8)
           END IF
           DO ia=nnatmi,1,-1
             CALL POPCONTROL1B(branch)
           END DO
-          CALL POPREAL8ARRAY(n0_tmp, r8/8)
+          CALL POPREAL8(n0_tmp, r8/8)
         END DO
       END IF
     END DO

@@ -40,8 +40,8 @@ FUNCTION UPWIND_FWD(fl, t0, t1) RESULT (upwind)
 !
   upwind = max1*t0 + min1*t1
 !
-  CALL PUSHREAL8ARRAY(min1, r8/8)
-  CALL PUSHREAL8ARRAY(max1, r8/8)
+  CALL PUSHREAL8(min1, r8/8)
+  CALL PUSHREAL8(max1, r8/8)
 END FUNCTION UPWIND_FWD
 
 !  Differentiation of upwind in reverse (adjoint) mode, backward sweep (with options context noISIZE r8):
@@ -70,8 +70,8 @@ SUBROUTINE UPWIND_BWD(fl, flb, t0, t0b, t1, t1b, upwindb)
   REAL(kind=r8) :: min1
   REAL(kind=r8) :: min1b
   INTEGER :: branch
-  CALL POPREAL8ARRAY(max1, r8/8)
-  CALL POPREAL8ARRAY(min1, r8/8)
+  CALL POPREAL8(max1, r8/8)
+  CALL POPREAL8(min1, r8/8)
   max1b = t0*upwindb
   t0b = t0b + max1*upwindb
   min1b = t1*upwindb

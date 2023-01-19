@@ -51,12 +51,12 @@ SUBROUTINE B2TXCY_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, cony)
       t0 = fcvol(ifc, 1)*kapy(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)**2
       t1 = fcvol(ifc, 2)*kapy(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2)**2
       IF (t0*t1 .GT. 0.0_R8) THEN
-        CALL PUSHREAL8ARRAY(cony(ifc), r8/8)
+        CALL PUSHREAL8(cony(ifc), r8/8)
         cony(ifc) = t0*t1/(t0+t1)*geo%fcqalf(ifc, 1)/geo%fcqgam(ifc, 0)&
 &         **2
         CALL PUSHCONTROL1B(1)
       ELSE
-        CALL PUSHREAL8ARRAY(cony(ifc), r8/8)
+        CALL PUSHREAL8(cony(ifc), r8/8)
         cony(ifc) = 0.0_R8
         CALL PUSHCONTROL1B(0)
       END IF
@@ -68,24 +68,24 @@ SUBROUTINE B2TXCY_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, cony)
       y1 = fcvol(ifc, 1)*kapy(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)*(fcvol(&
 &       ifc, 2)*kapy(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2))
       IF (0.0_R8 .LT. y1) THEN
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = y1
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = 0.0_R8
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(cony(ifc), r8/8)
+      CALL PUSHREAL8(cony(ifc), r8/8)
       cony(ifc) = geo%fcqalf(ifc, 1)/geo%fcqgam(ifc, 0)**2*SQRT(max1)/(&
 &       geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
     END DO
-    CALL PUSHREAL8ARRAY(max1, r8/8)
+    CALL PUSHREAL8(max1, r8/8)
     CALL PUSHCONTROL3B(1)
   ELSE IF (mode .EQ. 1) THEN
 !    ..use arithmetic averaging (SOLPS5.0 formulation)
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(cony(ifc), r8/8)
+      CALL PUSHREAL8(cony(ifc), r8/8)
       cony(ifc) = geo%fcqalf(ifc, 1)/geo%fcqgam(ifc, 0)**2*(fcvol(ifc, 1&
 &       )*kapy(mpg%fccv(ifc, 1))+fcvol(ifc, 2)*kapy(mpg%fccv(ifc, 2)))/(&
 &       geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2
@@ -94,7 +94,7 @@ SUBROUTINE B2TXCY_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, cony)
   ELSE IF (mode .EQ. 2) THEN
 !    ..use arithmetic averaging (SOLPS4.0 formulation)
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(cony(ifc), r8/8)
+      CALL PUSHREAL8(cony(ifc), r8/8)
       cony(ifc) = fcs(ifc)*geo%fcqalf(ifc, 1)/geo%fcqgam(ifc, 0)*(geo%&
 &       fchc(ifc, 1)*kapy(mpg%fccv(ifc, 1))+geo%fchc(ifc, 2)*kapy(mpg%&
 &       fccv(ifc, 2)))/(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2
@@ -103,7 +103,7 @@ SUBROUTINE B2TXCY_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, cony)
   ELSE IF (mode .EQ. 3) THEN
 !    ..use arithmetic averaging (drift formulation)
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(cony(ifc), r8/8)
+      CALL PUSHREAL8(cony(ifc), r8/8)
       cony(ifc) = fcs(ifc)*geo%fcqalf(ifc, 1)/(geo%fcqgam(ifc, 0)*(geo%&
 &       fchc(ifc, 1)+geo%fchc(ifc, 2)))*(geo%fcvol(ifc, 1)*kapy(mpg%fccv&
 &       (ifc, 1))+geo%fcvol(ifc, 2)*kapy(mpg%fccv(ifc, 2)))/(geo%fcvol(&
@@ -162,14 +162,14 @@ SUBROUTINE B2TXCY_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyb&
       DO ifc=nfc,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(cony(ifc), r8/8)
+          CALL POPREAL8(cony(ifc), r8/8)
           conyb(ifc) = 0.D0
           t0b = 0.D0
           t1b = 0.D0
         ELSE
           t0 = fcvol(ifc, 1)*kapy(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)**2
           t1 = fcvol(ifc, 2)*kapy(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2)**2
-          CALL POPREAL8ARRAY(cony(ifc), r8/8)
+          CALL POPREAL8(cony(ifc), r8/8)
           temp = geo%fcqgam(ifc, 0)*geo%fcqgam(ifc, 0)
           tempb = geo%fcqalf(ifc, 1)*conyb(ifc)/(temp*(t0+t1))
           conyb(ifc) = 0.D0
@@ -183,9 +183,9 @@ SUBROUTINE B2TXCY_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyb&
 &         )*t0b/geo%fchc(ifc, 1)**2
       END DO
     ELSE IF (branch .EQ. 1) THEN
-      CALL POPREAL8ARRAY(max1, r8/8)
+      CALL POPREAL8(max1, r8/8)
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(cony(ifc), r8/8)
+        CALL POPREAL8(cony(ifc), r8/8)
         IF (max1 .EQ. 0.D0) THEN
           max1b = 0.D0
         ELSE
@@ -195,10 +195,10 @@ SUBROUTINE B2TXCY_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyb&
         conyb(ifc) = 0.D0
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(max1, r8/8)
+          CALL POPREAL8(max1, r8/8)
           y1b = max1b
         ELSE
-          CALL POPREAL8ARRAY(max1, r8/8)
+          CALL POPREAL8(max1, r8/8)
           y1b = 0.D0
         END IF
         tempb0 = fcvol(ifc, 1)*fcvol(ifc, 2)*y1b/(geo%fchc(ifc, 1)*geo%&
@@ -210,7 +210,7 @@ SUBROUTINE B2TXCY_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyb&
       END DO
     ELSE
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(cony(ifc), r8/8)
+        CALL POPREAL8(cony(ifc), r8/8)
         tempb0 = geo%fcqalf(ifc, 1)*conyb(ifc)/(geo%fcqgam(ifc, 0)**2*(&
 &         geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2)
         conyb(ifc) = 0.D0
@@ -222,7 +222,7 @@ SUBROUTINE B2TXCY_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyb&
     END IF
   ELSE IF (branch .EQ. 3) THEN
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(cony(ifc), r8/8)
+      CALL POPREAL8(cony(ifc), r8/8)
       tempb0 = fcs(ifc)*geo%fcqalf(ifc, 1)*conyb(ifc)/(geo%fcqgam(ifc, 0&
 &       )*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))**2)
       conyb(ifc) = 0.D0
@@ -233,7 +233,7 @@ SUBROUTINE B2TXCY_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyb&
     END DO
   ELSE IF (branch .EQ. 4) THEN
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(cony(ifc), r8/8)
+      CALL POPREAL8(cony(ifc), r8/8)
       tempb0 = fcs(ifc)*geo%fcqalf(ifc, 1)*conyb(ifc)/(geo%fcqgam(ifc, 0&
 &       )*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))*(geo%fcvol(ifc, 1)+geo%&
 &       fcvol(ifc, 2)))

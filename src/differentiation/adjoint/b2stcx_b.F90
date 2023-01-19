@@ -561,11 +561,11 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
           ELSE IF (switch%tn_style .EQ. 1) THEN
             IF (is_neutral(is-1)) THEN
 ! CX with singly-charged ion
-              CALL PUSHREAL8ARRAY(tkin, r8/8)
+              CALL PUSHREAL8(tkin, r8/8)
               CALL PUSHCONTROL1B(0)
             ELSE
 ! CX with multiply-charged ion
-              CALL PUSHREAL8ARRAY(tkin, r8/8)
+              CALL PUSHREAL8(tkin, r8/8)
               tkin = mp/2.0_R8*((am(is)+am(is-1))/2.0_R8*du0**2+(am(is0)&
 &               +am(is0+1))/2.0_R8*du1**2)
               CALL PUSHCONTROL1B(1)
@@ -575,17 +575,17 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
 !tn_style=2
             IF (zn(is) .EQ. 1 .AND. zn(is0) .EQ. 1) THEN
 ! CX between hydrogenic species
-              CALL PUSHREAL8ARRAY(tkin, r8/8)
+              CALL PUSHREAL8(tkin, r8/8)
               CALL PUSHCONTROL2B(0)
             ELSE IF (zn(is0) .EQ. 1) THEN
 ! only is0/is0+1 hydrogenic
-              CALL PUSHREAL8ARRAY(tkin, r8/8)
+              CALL PUSHREAL8(tkin, r8/8)
               tkin = mp/2.0_R8*((am(is)+am(is-1))/2.0_R8*du0**2+(am(is0)&
 &               +am(is0+1))/2.0_R8*du1**2)
               CALL PUSHCONTROL2B(1)
             ELSE IF (zn(is) .EQ. 1) THEN
 ! only is/is-1 hydrogenic
-              CALL PUSHREAL8ARRAY(tkin, r8/8)
+              CALL PUSHREAL8(tkin, r8/8)
               CALL PUSHCONTROL2B(2)
             ELSE
               CALL PUSHCONTROL2B(3)
@@ -599,7 +599,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
 !WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
 !     ..parallel momentum source
-      CALL PUSHREAL8ARRAY(rg0, r8/8)
+      CALL PUSHREAL8(rg0, r8/8)
       rg0 = switch%b2stcx_rg0
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
       DO icv=1,mpg%nci
@@ -608,59 +608,59 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
 !srv 09.01.01
           t0 = rcx(icv, is)*geo%cvvol(icv)*na(icv, is0)*na(icv, is)*geo%&
 &           cvhz(icv)
-          CALL PUSHREAL8ARRAY(t1, r8/8)
+          CALL PUSHREAL8(t1, r8/8)
           t1 = (am(is)+am(is-1))/2.0_R8*mp*t0
-          CALL PUSHREAL8ARRAY(t2, r8/8)
+          CALL PUSHREAL8(t2, r8/8)
           t2 = (am(is0)+am(is0+1))/2.0_R8*mp*t0
           IF (switch%b2stcx_styl0 .EQ. 0) THEN
             CALL PUSHCONTROL3B(5)
           ELSE IF (switch%b2stcx_styl0 .EQ. 1) THEN
 !       ..compute parallel momentum source
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
             arg1 = is - 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
             arg1 = is - 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is0)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is0)
             CALL PUSHCONTROL3B(4)
           ELSE IF (switch%b2stcx_styl0 .EQ. 2) THEN
 !       ..compute parallel momentum source
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
             arg1 = is - 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is0)
             CALL PUSHCONTROL3B(3)
           ELSE IF (switch%b2stcx_styl0 .EQ. 3) THEN
 !       ..compute parallel momentum source
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is)
             arg1 = is - 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8ARRAY(result10, r8/8)
+            CALL PUSHREAL8(result10, r8/8)
             result10 = ROXA(icv, is0)
             CALL PUSHCONTROL3B(2)
           ELSE
@@ -692,7 +692,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
             uab(icv, is0) = uab(icv, is0) + t2*rg0*smq0b(icv, 2, is0)/&
 &             result10
             result10b = -(t2*tempb2/result10)
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, is0, result10b)
             temp1 = t2/result10
             uab(icv, is0) = uab(icv, is0) + temp1*smq0b(icv, 2, is0+1)
@@ -703,7 +703,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
             t2b = t2b + tempb2 - rg0*smq0b(icv, 1, is0+1)
             result10b = -(temp1*tempb2)
             arg1 = is0 + 1
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, arg1, result10b)
             temp1 = t1/result10
             uab(icv, is-1) = uab(icv, is-1) + rg0*temp1*smq0b(icv, 2, is&
@@ -713,21 +713,21 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
             t1b = tempb2 - rg0*smq0b(icv, 1, is-1)
             result10b = -(temp1*tempb2)
             arg1 = is - 1
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             uab(icv, is) = uab(icv, is) + temp1*smq0b(icv, 2, is-1) + t1&
 &             *rg0*smq0b(icv, 2, is)/result10
             CALL ROXA_B(icv, arg1, result10b)
             tempb2 = ua(icv, is)*rg0*smq0b(icv, 2, is)/result10
             t1b = t1b + tempb2 - (rg0+1.0_R8)*smq0b(icv, 1, is)
             result10b = -(t1*tempb2/result10)
-            CALL POPREAL8ARRAY(result10, r8/8)
+            CALL POPREAL8(result10, r8/8)
             CALL ROXA_B(icv, is, result10b)
           END IF
         ELSE IF (branch .EQ. 3) THEN
           tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is0)/result10)
           t2b = tempb2
           result10b = -(t2*tempb2/result10)
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, is0, result10b)
           uab(icv, is0) = uab(icv, is0) + t2*rg0*smq0b(icv, 0, is0) + t2&
 &           *smq0b(icv, 0, is0+1)
@@ -736,7 +736,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
 &           (icv, is0)+rg0*ua(icv, is0+1))*smq0b(icv, 0, is0+1)
           result10b = -(t2*tempb2/result10)
           arg1 = is0 + 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           uab(icv, is0+1) = uab(icv, is0+1) + rg0*t2*smq0b(icv, 0, is0+1&
 &           )
@@ -744,7 +744,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
           t1b = tempb2
           result10b = -(t1*tempb2/result10)
           arg1 = is - 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           uab(icv, is) = uab(icv, is) + t1*smq0b(icv, 0, is-1) + t1*rg0*&
 &           smq0b(icv, 0, is)
@@ -753,26 +753,26 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
           t1b = t1b + (ua(icv, is)+rg0*ua(icv, is-1))*smq0b(icv, 0, is-1&
 &           ) + tempb2 + ua(icv, is)*rg0*smq0b(icv, 0, is)
           result10b = -(t1*tempb2/result10)
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, is, result10b)
         ELSE IF (branch .EQ. 4) THEN
           tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is0)/result10)
           t2b = tempb2
           result10b = -(t2*tempb2/result10)
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, is0, result10b)
           uab(icv, is0) = uab(icv, is0) + t2*rg0*smq0b(icv, 2, is0)/&
 &           result10
           tempb2 = ua(icv, is0)*rg0*smq0b(icv, 2, is0)/result10
           t2b = t2b + tempb2
           result10b = -(t2*tempb2/result10)
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, is0, result10b)
           tempb2 = -(rg0*smq0b(icv, 3, is0+1)/result10)
           t2b = t2b + tempb2
           result10b = -(t2*tempb2/result10)
           arg1 = is0 + 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           temp1 = t2/result10
           uab(icv, is0) = uab(icv, is0) + temp1*smq0b(icv, 2, is0+1)
@@ -783,13 +783,13 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
           t2b = t2b + tempb2
           result10b = -(temp1*tempb2)
           arg1 = is0 + 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           tempb2 = -(rg0*smq0b(icv, 3, is-1)/result10)
           t1b = tempb2
           result10b = -(t1*tempb2/result10)
           arg1 = is - 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           temp1 = t1/result10
           uab(icv, is-1) = uab(icv, is-1) + rg0*temp1*smq0b(icv, 2, is-1&
@@ -799,19 +799,19 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
           t1b = t1b + tempb2
           result10b = -(temp1*tempb2)
           arg1 = is - 1
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, arg1, result10b)
           tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is)/result10)
           t1b = t1b + tempb2
           result10b = -(t1*tempb2/result10)
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           uab(icv, is) = uab(icv, is) + temp1*smq0b(icv, 2, is-1) + t1*&
 &           rg0*smq0b(icv, 2, is)/result10
           CALL ROXA_B(icv, is, result10b)
           tempb2 = ua(icv, is)*rg0*smq0b(icv, 2, is)/result10
           t1b = t1b + tempb2
           result10b = -(t1*tempb2/result10)
-          CALL POPREAL8ARRAY(result10, r8/8)
+          CALL POPREAL8(result10, r8/8)
           CALL ROXA_B(icv, is, result10b)
         ELSE
           t2b = ua(icv, is0)*rg0*smq0b(icv, 0, is0) - (rg0+1.0_R8)*smq0b&
@@ -828,17 +828,17 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
 &           smq0b(icv, 0, is)
           uab(icv, is-1) = uab(icv, is-1) + rg0*t1*smq0b(icv, 0, is-1)
         END IF
-        CALL POPREAL8ARRAY(t2, r8/8)
+        CALL POPREAL8(t2, r8/8)
         t0b = mp*(am(is0)+am(is0+1))*t2b/2.0_R8 + mp*(am(is)+am(is-1))*&
 &         t1b/2.0_R8
-        CALL POPREAL8ARRAY(t1, r8/8)
+        CALL POPREAL8(t1, r8/8)
         tempb2 = geo%cvvol(icv)*geo%cvhz(icv)*t0b
         tempb1 = na(icv, is)*tempb2
         nab(icv, is) = nab(icv, is) + rcx(icv, is)*na(icv, is0)*tempb2
         rcxb(icv, is) = rcxb(icv, is) + na(icv, is0)*tempb1
         nab(icv, is0) = nab(icv, is0) + rcx(icv, is)*tempb1
  100  CONTINUE
-      CALL POPREAL8ARRAY(rg0, r8/8)
+      CALL POPREAL8(rg0, r8/8)
       DO 110 icv=mpg%nci,1,-1
         CALL POPCONTROL2B(branch)
         IF (branch .LT. 2) THEN
@@ -876,7 +876,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
                 nab(icv, is) = nab(icv, is) + temp0*tempb2
                 t0b = t0b + na(icv, is0)*tempb1
                 nab(icv, is0) = nab(icv, is0) + t0*tempb1
-                CALL POPREAL8ARRAY(tkin, r8/8)
+                CALL POPREAL8(tkin, r8/8)
                 du1b = 2*du1*mp*(am(is0)+am(is0+1))*tkinb/2.0_R8**2
               ELSE
                 t0 = rcx(icv, is)*geo%cvvol(icv)
@@ -896,7 +896,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
                 nab(icv, is0) = nab(icv, is0) + t0*tempb1
                 du0 = ua(icv, is) - ua(icv, is-1)
                 du1 = ua(icv, is0) - ua(icv, is0+1)
-                CALL POPREAL8ARRAY(tkin, r8/8)
+                CALL POPREAL8(tkin, r8/8)
                 tempb2 = mp*tkinb/2.0_R8
                 du0b = 2*du0*(am(is)+am(is-1))*tempb2/2.0_R8
                 du1b = 2*du1*(am(is0)+am(is0+1))*tempb2/2.0_R8
@@ -924,7 +924,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
               tib(icv) = tib(icv) + 1.5_R8*tempb3 - 1.5_R8*tempb2
               tkinb = tempb2
               nab(icv, is0) = nab(icv, is0) + t0*tempb1
-              CALL POPREAL8ARRAY(tkin, r8/8)
+              CALL POPREAL8(tkin, r8/8)
               du1b = 2*du1*mp*(am(is0)+am(is0+1))*tkinb/2.0_R8**2
             ELSE
               t0 = rcx(icv, is)*geo%cvvol(icv)
@@ -956,7 +956,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
             tkinb = t0*tempb1
             nab(icv, is0) = nab(icv, is0) + na(icv, is)*tempb2
             nab(icv, is) = nab(icv, is) + na(icv, is0)*tempb2
-            CALL POPREAL8ARRAY(tkin, r8/8)
+            CALL POPREAL8(tkin, r8/8)
             du1b = 2*du1*mp*(am(is0)+am(is0+1))*tkinb/2.0_R8**2
             du0b = 0.D0
           ELSE
@@ -972,7 +972,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
             nab(icv, is0) = nab(icv, is0) + t0*tempb1
             du0 = ua(icv, is) - ua(icv, is-1)
             du1 = ua(icv, is0) - ua(icv, is0+1)
-            CALL POPREAL8ARRAY(tkin, r8/8)
+            CALL POPREAL8(tkin, r8/8)
             tempb2 = mp*tkinb/2.0_R8
             du0b = 2*du0*(am(is)+am(is-1))*tempb2/2.0_R8
             du1b = 2*du1*(am(is0)+am(is0+1))*tempb2/2.0_R8

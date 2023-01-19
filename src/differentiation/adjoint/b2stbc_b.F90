@@ -242,13 +242,13 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
 !
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) THEN
-      CALL PUSHREAL8ARRAY(dt_prev, r8/8)
+      CALL PUSHREAL8(dt_prev, r8/8)
       CALL PUSHBOOLEAN(feedback_namelist_used)
       CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
       CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
       CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
       CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
-      CALL PUSHREAL8ARRAY(cum_volrec, r8/8)
+      CALL PUSHREAL8(cum_volrec, r8/8)
       CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
       CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
       CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
@@ -298,10 +298,10 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
     CALL PUSHREAL8ARRAY(enepar, r8*nbcd*2/8)
     CALL PUSHCHARACTERARRAY(my_out_folder, 7)
     CALL PUSHINTEGER4(ncall_b2stbc_phys)
-    CALL PUSHREAL8ARRAY(cutlo, r8/8)
-    CALL PUSHREAL8ARRAY(cutll, r8/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8ARRAY(srw%sch0, r8*SIZE(srw%sch0, 1)*SIZE(srw%sch0, 2)&
 &                 /8)
     CALL PUSHREAL8ARRAY(srw%she0, r8*SIZE(srw%she0, 1)*SIZE(srw%she0, 2)&
@@ -337,10 +337,10 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
 &                8)
     CALL POPREAL8ARRAY(srw%sch0, r8*SIZE(srw%sch0, 1)*SIZE(srw%sch0, 2)/&
 &                8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL POPINTEGER4(ncall_b2stbc_phys)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPREAL8ARRAY(enepar, r8*nbcd*2/8)
@@ -387,13 +387,13 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
       CALL POPREAL8ARRAY(fb_target, r8*6/8)
       CALL POPREAL8ARRAY(fb_prev, r8*6/8)
       CALL POPREAL8ARRAY(fb_current, r8*6/8)
-      CALL POPREAL8ARRAY(cum_volrec, r8/8)
+      CALL POPREAL8(cum_volrec, r8/8)
       CALL POPREAL8ARRAY(fb_const, r8*6/8)
       CALL POPREAL8ARRAY(charge_frac, r8*42/8)
       CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
       CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
       CALL POPBOOLEAN(feedback_namelist_used)
-      CALL POPREAL8ARRAY(dt_prev, r8/8)
+      CALL POPREAL8(dt_prev, r8/8)
       CALL COMPUTE_FEEDBACK_B(ncv, nfc, nvx, ns, ismain, switch, geo, &
 &                       mpg, pl, plb, dv, dvb, rt, rtb, srw, psnc, psncb&
 &                       , psnl, psnlb, main_call, switch%b2stbc_diagno)

@@ -45,7 +45,7 @@ SUBROUTINE INTVERTEX_FWD(ncv, nvx, mpg, vxvol, centre, vertex)
   CALL PUSHREAL8ARRAY(vertex, r8*nvx/8)
   vertex = 0.0_R8
   DO ivx=1,nvx
-    CALL PUSHREAL8ARRAY(volsum, r8/8)
+    CALL PUSHREAL8(volsum, r8/8)
     volsum = 0.0_R8
     DO icv=1,mpg%vxcvp(ivx, 2)
       volsum = volsum + 1._R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
@@ -55,7 +55,7 @@ SUBROUTINE INTVERTEX_FWD(ncv, nvx, mpg, vxvol, centre, vertex)
     CALL PUSHINTEGER4(icv - 1)
     vertex(ivx) = vertex(ivx)/(volsum+1.0e-30_R8)
   END DO
-  CALL PUSHREAL8ARRAY(volsum, r8/8)
+  CALL PUSHREAL8(volsum, r8/8)
 END SUBROUTINE INTVERTEX_FWD
 
 !  Differentiation of intvertex in reverse (adjoint) mode, backward sweep (with options context noISIZE r8):
@@ -74,7 +74,7 @@ SUBROUTINE INTVERTEX_BWD(ncv, nvx, mpg, vxvol, centre, centreb, vertex, &
   INTEGER :: ivx, icv
   REAL(kind=r8) :: volsum
   INTEGER :: ad_to
-  CALL POPREAL8ARRAY(volsum, r8/8)
+  CALL POPREAL8(volsum, r8/8)
   DO ivx=nvx,1,-1
     vertexb(ivx) = vertexb(ivx)/(volsum+1.0e-30_R8)
     CALL POPINTEGER4(ad_to)
@@ -83,7 +83,7 @@ SUBROUTINE INTVERTEX_BWD(ncv, nvx, mpg, vxvol, centre, centreb, vertex, &
 &       vxcvp(ivx, 1)+icv-1)) + vertexb(ivx)/vxvol(mpg%vxcvp(ivx, 1)+icv&
 &       -1)
     END DO
-    CALL POPREAL8ARRAY(volsum, r8/8)
+    CALL POPREAL8(volsum, r8/8)
   END DO
   CALL POPREAL8ARRAY(vertex, r8*nvx/8)
 END SUBROUTINE INTVERTEX_BWD

@@ -735,12 +735,12 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
             arg17 = dv%corua(icv, is) + dv%corut(icv)
             result1 = MED_FWD(dv%corua(icv, is), dvb%corua(icv, is), dv%&
 &             corut(icv), dvb%corut(icv), arg17, arg17b)
-            CALL PUSHREAL8ARRAY(pl%ua(icv, is), r8/8)
+            CALL PUSHREAL8(pl%ua(icv, is), r8/8)
             pl%ua(icv, is) = pl%ua(icv, is) + rxf*result1
             CALL PUSHCONTROL2B(2)
           ELSE
 !srv 22.05.18 {
-            CALL PUSHREAL8ARRAY(pl%ua(icv, is), r8/8)
+            CALL PUSHREAL8(pl%ua(icv, is), r8/8)
             pl%ua(icv, is) = pl%ua(icv, is) + rxf*dv%corua(icv, is)
             CALL PUSHCONTROL2B(1)
           END IF
@@ -752,7 +752,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
       DO icv=mpg%nci+1,ncv
         ireg = mpg%cvreg(icv)
         IF (solvemo(is, ireg)) THEN
-          CALL PUSHREAL8ARRAY(pl%ua(icv, is), r8/8)
+          CALL PUSHREAL8(pl%ua(icv, is), r8/8)
           pl%ua(icv, is) = pl%ua(icv, is) + rxf*dv%corua(icv, is)
           CALL PUSHCONTROL1B(1)
         ELSE
@@ -772,7 +772,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
       IF (.NOT.is_neutral(is)) THEN
         DO icv=1,ncv
 !iyv 03.02.14
-          CALL PUSHREAL8ARRAY(cst, r8/8)
+          CALL PUSHREAL8(cst, r8/8)
           cst = SQRT(pz(icv)/rz(icv))
           IF (pl%ua(icv, is) .GE. 0.) THEN
             abs0 = pl%ua(icv, is)
@@ -790,7 +790,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
 &             ion_vlct_restrict_m*cst, ' Ua:', pl%ua(icv, is)
             END IF
 !iyv 03.02.14
-            CALL PUSHREAL8ARRAY(pl%ua(icv, is), r8/8)
+            CALL PUSHREAL8(pl%ua(icv, is), r8/8)
             pl%ua(icv, is) = SIGN(switch%ion_vlct_restrict_m*cst, pl%ua(&
 &             icv, is))
             CALL PUSHCONTROL1B(1)
@@ -868,12 +868,12 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
         IF (branch .EQ. 0) THEN
           cstb = 0.D0
         ELSE
-          CALL POPREAL8ARRAY(pl%ua(icv, is), r8/8)
+          CALL POPREAL8(pl%ua(icv, is), r8/8)
           cstb = switch%ion_vlct_restrict_m*SIGN(1.d0, switch%&
 &           ion_vlct_restrict_m*cst*pl%ua(icv, is))*plb%ua(icv, is)
           plb%ua(icv, is) = 0.D0
         END IF
-        CALL POPREAL8ARRAY(cst, r8/8)
+        CALL POPREAL8(cst, r8/8)
         temp2 = pz(icv)/rz(icv)
         IF (temp2 .EQ. 0.D0) THEN
           tempb0 = 0.D0
@@ -891,7 +891,7 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
       DO icv=ncv,mpg%nci+1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
-          CALL POPREAL8ARRAY(pl%ua(icv, is), r8/8)
+          CALL POPREAL8(pl%ua(icv, is), r8/8)
           dvb%corua(icv, is) = dvb%corua(icv, is) + rxf*plb%ua(icv, is)
         END IF
       END DO
@@ -899,11 +899,11 @@ SUBROUTINE B2NPMO_B(ncv, nfc, nvx, ns, ismain, switch, geo, geob, mpg, &
         CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
           IF (branch .EQ. 1) THEN
-            CALL POPREAL8ARRAY(pl%ua(icv, is), r8/8)
+            CALL POPREAL8(pl%ua(icv, is), r8/8)
             dvb%corua(icv, is) = dvb%corua(icv, is) + rxf*plb%ua(icv, is&
 &             )
           ELSE
-            CALL POPREAL8ARRAY(pl%ua(icv, is), r8/8)
+            CALL POPREAL8(pl%ua(icv, is), r8/8)
             result1b = rxf*plb%ua(icv, is)
             arg17b = 0.D0
             CALL MED_BWD(dv%corua(icv, is), dvb%corua(icv, is), dv%corut&

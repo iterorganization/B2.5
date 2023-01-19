@@ -71,7 +71,7 @@ SUBROUTINE GRAD_P_FWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funv, &
 !
 !   ..compute poloidal gradients at faces
   DO ifc=1,nfc
-    CALL PUSHREAL8ARRAY(gfunp(ifc), r8/8)
+    CALL PUSHREAL8(gfunp(ifc), r8/8)
     gfunp(ifc) = (fun(mpg%fccv(ifc, 2))-fun(mpg%fccv(ifc, 1)))*geo%&
 &     fcqalf(ifc, 0)/(geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc&
 &     , 2))) + (funv(mpg%fcvx(ifc, 2))-funv(mpg%fcvx(ifc, 1)))*geo%&
@@ -120,7 +120,7 @@ SUBROUTINE GRAD_P_BWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funb, &
   REAL(kind=r8) :: tempb0
   INTEGER :: branch
   DO ifc=nfc,1,-1
-    CALL POPREAL8ARRAY(gfunp(ifc), r8/8)
+    CALL POPREAL8(gfunp(ifc), r8/8)
     tempb = geo%fcqalf(ifc, 0)*gfunpb(ifc)/(geo%fcqgam(ifc, 0)*(geo%fchc&
 &     (ifc, 1)+geo%fchc(ifc, 2)))
     tempb0 = geo%fcqbet(ifc, 1)*gfunpb(ifc)/(geo%fcqgam(ifc, 0)*geo%fcht&

@@ -137,11 +137,11 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
       CALL PUSHCONTROL1B(1)
     END IF
     IF (rtlt(0) .LT. y1) THEN
-      CALL PUSHREAL8ARRAY(rlt0, r8/8)
+      CALL PUSHREAL8(rlt0, r8/8)
       rlt0 = y1
       CALL PUSHCONTROL1B(0)
     ELSE
-      CALL PUSHREAL8ARRAY(rlt0, r8/8)
+      CALL PUSHREAL8(rlt0, r8/8)
       rlt0 = rtlt(0)
       CALL PUSHCONTROL1B(1)
     END IF
@@ -198,7 +198,7 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
  120 CALL PUSHCONTROL1B(0)
     CALL PUSHINTEGER4(ad_count0)
 !     ..compute coefficient for linear interpolation
- 130 CALL PUSHREAL8ARRAY(fxt0, r8/8)
+ 130 CALL PUSHREAL8(fxt0, r8/8)
     fxt0 = (rlt0-rtlt(it0))/(rtlt(it0+1)-rtlt(it0))
     ad_count1 = 1
 !     ..find in0
@@ -238,18 +238,18 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
  160 CALL PUSHCONTROL1B(0)
     CALL PUSHINTEGER4(ad_count2)
 !     ..compute coefficient for linear interpolation
- 170 CALL PUSHREAL8ARRAY(fxn0, r8/8)
+ 170 CALL PUSHREAL8(fxn0, r8/8)
     fxn0 = (rln0-rtln(in0))/(rtln(in0+1)-rtln(in0))
 !     ..compute log-log rate coefficients
     DO is=0,ns-1
 !      ..compute charge exchange rate coefficient
       t0 = (1-fxn0)*rtlcx(it0, in0, is) + fxn0*rtlcx(it0, in0+1, is)
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1-fxn0)*rtlcx(it0+1, in0, is) + fxn0*rtlcx(it0+1, in0+1, is)
       tt = (t1-t0)/(rtlt(it0+1)-rtlt(it0))
-      CALL PUSHREAL8ARRAY(rlcx0(icv, 1, is), r8/8)
+      CALL PUSHREAL8(rlcx0(icv, 1, is), r8/8)
       rlcx0(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
-      CALL PUSHREAL8ARRAY(rlcx0(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rlcx0(icv, 0, is), r8/8)
       rlcx0(icv, 0, is) = (1-fxt0)*t0 + fxt0*t1 - rlcx0(icv, 1, is)*rlt0
     END DO
   END DO
@@ -259,18 +259,18 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
     fxn0b = 0.D0
     DO is=ns-1,0,-1
       t0 = (1-fxn0)*rtlcx(it0, in0, is) + fxn0*rtlcx(it0, in0+1, is)
-      CALL POPREAL8ARRAY(rlcx0(icv, 0, is), r8/8)
+      CALL POPREAL8(rlcx0(icv, 0, is), r8/8)
       fxt0b = fxt0b + (t1-t0)*rlcx0b(icv, 0, is)
       rlcx0b(icv, 1, is) = rlcx0b(icv, 1, is) - rlt0*rlcx0b(icv, 0, is)
       rlt0b = rlt0b - rlcx0(icv, 1, is)*rlcx0b(icv, 0, is)
       CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rlcx0b(icv, 1, is))
       rlcx0b(icv, 1, is) = 0.D0
-      CALL POPREAL8ARRAY(rlcx0(icv, 1, is), r8/8)
+      CALL POPREAL8(rlcx0(icv, 1, is), r8/8)
       tempb = ttb/(rtlt(it0+1)-rtlt(it0))
       t0b = (1-fxt0)*rlcx0b(icv, 0, is) - tempb
       t1b = fxt0*rlcx0b(icv, 0, is) + tempb
       rlcx0b(icv, 0, is) = 0.D0
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxn0b = fxn0b + (rtlcx(it0+1, in0+1, is)-rtlcx(it0+1, in0, is))*&
 &       t1b + (rtlcx(it0, in0+1, is)-rtlcx(it0, in0, is))*t0b
       rtlcxb(it0+1, in0, is) = rtlcxb(it0+1, in0, is) + (1-fxn0)*t1b
@@ -278,7 +278,7 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
       rtlcxb(it0, in0, is) = rtlcxb(it0, in0, is) + (1-fxn0)*t0b
       rtlcxb(it0, in0+1, is) = rtlcxb(it0, in0+1, is) + fxn0*t0b
     END DO
-    CALL POPREAL8ARRAY(fxn0, r8/8)
+    CALL POPREAL8(fxn0, r8/8)
     rln0b = fxn0b/(rtln(in0+1)-rtln(in0))
     CALL POPINTEGER4(ad_count2)
     DO i2=1,ad_count2
@@ -296,7 +296,7 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
         CALL POPINTEGER4(in0)
       END IF
     END DO
-    CALL POPREAL8ARRAY(fxt0, r8/8)
+    CALL POPREAL8(fxt0, r8/8)
     rlt0b = rlt0b + fxt0b/(rtlt(it0+1)-rtlt(it0))
     CALL POPINTEGER4(ad_count0)
     DO i0=1,ad_count0
@@ -329,10 +329,10 @@ SUBROUTINE B2SPCX_B(ncv, ns, ev, amh0, th0, th0b, ne, neb, rlcx0, rlcx0b&
     neb(icv) = neb(icv) + y4b/ne(icv)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(rlt0, r8/8)
+      CALL POPREAL8(rlt0, r8/8)
       y1b = rlt0b
     ELSE
-      CALL POPREAL8ARRAY(rlt0, r8/8)
+      CALL POPREAL8(rlt0, r8/8)
       y1b = 0.D0
     END IF
     CALL POPCONTROL1B(branch)

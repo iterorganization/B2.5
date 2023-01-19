@@ -579,33 +579,33 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       kabvp = FKABVP(isb, is)
 !     ..contribution from friction between ions
       DO icv=1,mpg%nci
-        CALL PUSHREAL8ARRAY(coef, r8/8)
+        CALL PUSHREAL8(coef, r8/8)
         coef = switch%b2sifr_phm0*rz2(icv, isb)*rz2(icv, is)*mp*SQRT(am(&
 &         isb)*am(is)/(am(isb)+am(is)))/zetap(icv)*kabvp(icv)
         t0 = na(icv, isb)*na(icv, is)
         IF (switch%b2sifr_styl0 .EQ. 0) THEN
-          CALL PUSHREAL8ARRAY(smbfrial(icv, 0), r8/8)
+          CALL PUSHREAL8(smbfrial(icv, 0), r8/8)
           smbfrial(icv, 0) = smbfrial(icv, 0) + coef*t0*ua(icv, is)
-          CALL PUSHREAL8ARRAY(smbfrial(icv, 1), r8/8)
+          CALL PUSHREAL8(smbfrial(icv, 1), r8/8)
           smbfrial(icv, 1) = smbfrial(icv, 1) - coef*t0
           CALL PUSHCONTROL2B(3)
         ELSE IF (switch%b2sifr_styl0 .EQ. 1) THEN
-          CALL PUSHREAL8ARRAY(smbfrial(icv, 0), r8/8)
+          CALL PUSHREAL8(smbfrial(icv, 0), r8/8)
           smbfrial(icv, 0) = smbfrial(icv, 0) + coef*t0*ua(icv, is)
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
-          CALL PUSHREAL8ARRAY(smbfrial(icv, 3), r8/8)
+          CALL PUSHREAL8(smbfrial(icv, 3), r8/8)
           smbfrial(icv, 3) = smbfrial(icv, 3) - coef*t0/result1
           CALL PUSHCONTROL2B(2)
         ELSE IF (switch%b2sifr_styl0 .EQ. 2) THEN
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
-          CALL PUSHREAL8ARRAY(smbfrial(icv, 2), r8/8)
+          CALL PUSHREAL8(smbfrial(icv, 2), r8/8)
           smbfrial(icv, 2) = smbfrial(icv, 2) + coef*t0*ua(icv, is)/&
 &           result1
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
-          CALL PUSHREAL8ARRAY(smbfrial(icv, 3), r8/8)
+          CALL PUSHREAL8(smbfrial(icv, 3), r8/8)
           smbfrial(icv, 3) = smbfrial(icv, 3) - coef*t0/result1
           CALL PUSHCONTROL2B(1)
         ELSE
@@ -624,13 +624,13 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 !     ..contribution from friction between between electron and ions
   IF (.NOT.is_neutral(isb)) THEN
     DO icv=1,mpg%nci
-      CALL PUSHREAL8ARRAY(coef, r8/8)
+      CALL PUSHREAL8(coef, r8/8)
       coef = switch%b2sifr_phm1*(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))**2*&
 &       rz2(icv, isb)*qe**2/(sigx_c(icv)*zeff(icv))
       t0 = na(icv, isb)*ne(icv)
-      CALL PUSHREAL8ARRAY(smbfreal(icv, 0), r8/8)
+      CALL PUSHREAL8(smbfreal(icv, 0), r8/8)
       smbfreal(icv, 0) = smbfreal(icv, 0) + coef*t0*ue(icv)
-      CALL PUSHREAL8ARRAY(smbfreal(icv, 1), r8/8)
+      CALL PUSHREAL8(smbfreal(icv, 1), r8/8)
       smbfreal(icv, 1) = smbfreal(icv, 1) - coef*t0
     END DO
     CALL PUSHCONTROL1B(0)
@@ -646,11 +646,11 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 !wdk interpolate f_luc_sg to cell center
     CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
     DO icv=1,mpg%nci
-      CALL PUSHREAL8ARRAY(coef, r8/8)
+      CALL PUSHREAL8(coef, r8/8)
       coef = -(switch%b2sifr_phm2*alfx_c(icv)*ce1(icv)*rz2(icv, isb)*(me&
 &       /qe)/zetae(icv)/(geo%cvbb(icv, 0)/geo%cvbb(icv, 3))/wrk(icv))
       t0 = na(icv, isb)*gte(icv)
-      CALL PUSHREAL8ARRAY(smbtfeal(icv, 0), r8/8)
+      CALL PUSHREAL8(smbtfeal(icv, 0), r8/8)
       smbtfeal(icv, 0) = smbtfeal(icv, 0) + coef*t0
     END DO
     CALL PUSHCONTROL1B(1)
@@ -675,43 +675,43 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       DO icv=1,mpg%nci
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
-        CALL PUSHREAL8ARRAY(calfab, r8/8)
+        CALL PUSHREAL8(calfab, r8/8)
         calfab = zetap(icv)/SQRT(mp)*qe*(na(icv, isb)+na(icv, is))*SQRT(&
 &         am(isb)*am(is)/(am(isb)+am(is)))*(kabtf(icv)/kb(icv)-kbatf(icv&
 &         )/ka(icv))*geo%cvbb(icv, 0)/geo%cvbb(icv, 3)
-        CALL PUSHREAL8ARRAY(coef, r8/8)
+        CALL PUSHREAL8(coef, r8/8)
         coef = switch%b2sifr_phm3*rz2(icv, isb)*rz2(icv, is)*calfab*mp/(&
 &         zetap(icv)*qe)
 !      .. apply flux limit
         IF (cflim(4) .NE. 0.0_R8 .AND. (.NOT.mpg%cvonclosedsurface(icv))&
 &       ) THEN
-          CALL PUSHREAL8ARRAY(jabmax, r8/8)
+          CALL PUSHREAL8(jabmax, r8/8)
           jabmax = qe*kabvp(icv)*SQRT(ti(icv)/mp)*(na(icv, isb)+na(icv, &
 &           is))
           IF (calfab*gti(icv) .GE. 0.) THEN
-            CALL PUSHREAL8ARRAY(abs0, r8/8)
+            CALL PUSHREAL8(abs0, r8/8)
             abs0 = calfab*gti(icv)
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(abs0, r8/8)
+            CALL PUSHREAL8(abs0, r8/8)
             abs0 = -(calfab*gti(icv))
             CALL PUSHCONTROL1B(1)
           END IF
-          CALL PUSHREAL8ARRAY(t0, r8/8)
+          CALL PUSHREAL8(t0, r8/8)
           t0 = abs0/(cflim(4)*jabmax)
-          CALL PUSHREAL8ARRAY(fllim_al_ab, r8/8)
+          CALL PUSHREAL8(fllim_al_ab, r8/8)
           fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(fllim_al_ab, r8/8)
+          CALL PUSHREAL8(fllim_al_ab, r8/8)
           fllim_al_ab = 1.0_R8
           CALL PUSHCONTROL1B(1)
         END IF
 !
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = na(icv, isb)*na(icv, is)/(na(icv, isb)+na(icv, is))*gti(icv&
 &         )
-        CALL PUSHREAL8ARRAY(smbtfial(icv, 0), r8/8)
+        CALL PUSHREAL8(smbtfial(icv, 0), r8/8)
         smbtfial(icv, 0) = smbtfial(icv, 0) + fllim_al_ab*coef*t0
       END DO
       CALL PUSHCONTROL1B(1)
@@ -805,11 +805,11 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
       kabtfb = 0.D0
       kbatfb = 0.D0
       DO icv=mpg%nci,1,-1
-        CALL POPREAL8ARRAY(smbtfial(icv, 0), r8/8)
+        CALL POPREAL8(smbtfial(icv, 0), r8/8)
         fllim_al_abb = coef*t0*smbtfialb(icv, 0)
         coefb = fllim_al_ab*t0*smbtfialb(icv, 0)
         t0b = fllim_al_ab*coef*smbtfialb(icv, 0)
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         temp4 = na(icv, isb) + na(icv, is)
         temp3 = na(icv, is)/temp4
         nab(icv, isb) = nab(icv, isb) + gti(icv)*temp3*t0b
@@ -821,23 +821,23 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         nab(icv, is) = nab(icv, is) + tempb4
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(fllim_al_ab, r8/8)
+          CALL POPREAL8(fllim_al_ab, r8/8)
           t0b = -(fllim_al_abb/(t0+1.0e0_R8)**2)
-          CALL POPREAL8ARRAY(t0, r8/8)
+          CALL POPREAL8(t0, r8/8)
           tempb4 = t0b/(cflim(4)*jabmax)
           abs0b = tempb4
           jabmaxb = -(abs0*tempb4/jabmax)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs0, r8/8)
+            CALL POPREAL8(abs0, r8/8)
             calfabb = gti(icv)*abs0b
             gtib(icv) = gtib(icv) + calfab*abs0b
           ELSE
-            CALL POPREAL8ARRAY(abs0, r8/8)
+            CALL POPREAL8(abs0, r8/8)
             calfabb = -(gti(icv)*abs0b)
             gtib(icv) = gtib(icv) - calfab*abs0b
           END IF
-          CALL POPREAL8ARRAY(jabmax, r8/8)
+          CALL POPREAL8(jabmax, r8/8)
           temp4 = na(icv, isb) + na(icv, is)
           temp3 = ti(icv)/mp
           temp2 = SQRT(temp3)
@@ -848,10 +848,10 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
           nab(icv, isb) = nab(icv, isb) + kabvp(icv)*tempb1
           nab(icv, is) = nab(icv, is) + kabvp(icv)*tempb1
         ELSE
-          CALL POPREAL8ARRAY(fllim_al_ab, r8/8)
+          CALL POPREAL8(fllim_al_ab, r8/8)
           calfabb = 0.D0
         END IF
-        CALL POPREAL8ARRAY(coef, r8/8)
+        CALL POPREAL8(coef, r8/8)
         temp3 = rz2(icv, is)/(qe*zetap(icv))
         tempb4 = switch%b2sifr_phm3*mp*coefb
         rz2b(icv, isb) = rz2b(icv, isb) + calfab*temp3*tempb4
@@ -859,7 +859,7 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         tempb3 = rz2(icv, isb)*calfab*tempb4/(qe*zetap(icv))
         rz2b(icv, is) = rz2b(icv, is) + tempb3
         zetapb(icv) = zetapb(icv) - qe*temp3*tempb3
-        CALL POPREAL8ARRAY(calfab, r8/8)
+        CALL POPREAL8(calfab, r8/8)
         temp2 = kbatf(icv)/ka(icv)
         temp1 = kabtf(icv)/kb(icv)
         temp = na(icv, isb) + na(icv, is)
@@ -894,12 +894,12 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
     wrkb = 0.D0
     DO icv=mpg%nci,1,-1
       t0 = na(icv, isb)*gte(icv)
-      CALL POPREAL8ARRAY(smbtfeal(icv, 0), r8/8)
+      CALL POPREAL8(smbtfeal(icv, 0), r8/8)
       coefb = t0*smbtfealb(icv, 0)
       t0b = coef*smbtfealb(icv, 0)
       nab(icv, isb) = nab(icv, isb) + gte(icv)*t0b
       gteb(icv) = gteb(icv) + na(icv, isb)*t0b
-      CALL POPREAL8ARRAY(coef, r8/8)
+      CALL POPREAL8(coef, r8/8)
       temp2 = qe*geo%cvbb(icv, 0)
       temp1 = temp2*zetae(icv)*wrk(icv)
       temp = alfx_c(icv)*ce1(icv)
@@ -921,14 +921,14 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   IF (branch .EQ. 0) THEN
     DO icv=mpg%nci,1,-1
       t0 = na(icv, isb)*ne(icv)
-      CALL POPREAL8ARRAY(smbfreal(icv, 1), r8/8)
+      CALL POPREAL8(smbfreal(icv, 1), r8/8)
       coefb = t0*ue(icv)*smbfrealb(icv, 0) - t0*smbfrealb(icv, 1)
       t0b = coef*ue(icv)*smbfrealb(icv, 0) - coef*smbfrealb(icv, 1)
-      CALL POPREAL8ARRAY(smbfreal(icv, 0), r8/8)
+      CALL POPREAL8(smbfreal(icv, 0), r8/8)
       ueb(icv) = ueb(icv) + coef*t0*smbfrealb(icv, 0)
       nab(icv, isb) = nab(icv, isb) + ne(icv)*t0b
       neb(icv) = neb(icv) + na(icv, isb)*t0b
-      CALL POPREAL8ARRAY(coef, r8/8)
+      CALL POPREAL8(coef, r8/8)
       temp0 = geo%cvbb(icv, 3)*geo%cvbb(icv, 3)
       temp = temp0*sigx_c(icv)*zeff(icv)
       tempb1 = geo%cvbb(icv, 0)**2*switch%b2sifr_phm1*qe**2*coefb/temp
@@ -950,31 +950,31 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
             t0b = 0.D0
           ELSE
             t0 = na(icv, isb)*na(icv, is)
-            CALL POPREAL8ARRAY(smbfrial(icv, 3), r8/8)
+            CALL POPREAL8(smbfrial(icv, 3), r8/8)
             tempb0 = -(smbfrialb(icv, 3)/result1)
             result1b = -(coef*t0*tempb0/result1)
-            CALL POPREAL8ARRAY(result1, r8/8)
+            CALL POPREAL8(result1, r8/8)
             CALL ROXA_B(icv, isb, result1b)
-            CALL POPREAL8ARRAY(smbfrial(icv, 2), r8/8)
+            CALL POPREAL8(smbfrial(icv, 2), r8/8)
             temp0 = ua(icv, is)/result1
             coefb = t0*tempb0 + t0*temp0*smbfrialb(icv, 2)
             t0b = coef*tempb0 + coef*temp0*smbfrialb(icv, 2)
             tempb0 = coef*t0*smbfrialb(icv, 2)/result1
             uab(icv, is) = uab(icv, is) + tempb0
             result1b = -(temp0*tempb0)
-            CALL POPREAL8ARRAY(result1, r8/8)
+            CALL POPREAL8(result1, r8/8)
             CALL ROXA_B(icv, isb, result1b)
           END IF
         ELSE IF (branch .EQ. 2) THEN
           t0 = na(icv, isb)*na(icv, is)
-          CALL POPREAL8ARRAY(smbfrial(icv, 3), r8/8)
+          CALL POPREAL8(smbfrial(icv, 3), r8/8)
           tempb0 = -(smbfrialb(icv, 3)/result1)
           coefb = t0*tempb0
           t0b = coef*tempb0
           result1b = -(coef*t0*tempb0/result1)
-          CALL POPREAL8ARRAY(result1, r8/8)
+          CALL POPREAL8(result1, r8/8)
           CALL ROXA_B(icv, isb, result1b)
-          CALL POPREAL8ARRAY(smbfrial(icv, 0), r8/8)
+          CALL POPREAL8(smbfrial(icv, 0), r8/8)
           tempb0 = ua(icv, is)*smbfrialb(icv, 0)
           uab(icv, is) = uab(icv, is) + coef*t0*smbfrialb(icv, 0)
           coefb = coefb + t0*tempb0
@@ -982,15 +982,15 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         ELSE
           tempb0 = ua(icv, is)*smbfrialb(icv, 0)
           t0 = na(icv, isb)*na(icv, is)
-          CALL POPREAL8ARRAY(smbfrial(icv, 1), r8/8)
+          CALL POPREAL8(smbfrial(icv, 1), r8/8)
           coefb = t0*tempb0 - t0*smbfrialb(icv, 1)
           t0b = coef*tempb0 - coef*smbfrialb(icv, 1)
-          CALL POPREAL8ARRAY(smbfrial(icv, 0), r8/8)
+          CALL POPREAL8(smbfrial(icv, 0), r8/8)
           uab(icv, is) = uab(icv, is) + coef*t0*smbfrialb(icv, 0)
         END IF
         nab(icv, isb) = nab(icv, isb) + na(icv, is)*t0b
         nab(icv, is) = nab(icv, is) + na(icv, isb)*t0b
-        CALL POPREAL8ARRAY(coef, r8/8)
+        CALL POPREAL8(coef, r8/8)
         temp0 = kabvp(icv)/zetap(icv)
         tempb = switch%b2sifr_phm0*mp*SQRT(am(isb)*am(is)/(am(isb)+am(is&
 &         )))*coefb
