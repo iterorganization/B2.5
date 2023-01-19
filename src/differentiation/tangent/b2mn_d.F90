@@ -296,6 +296,7 @@ PROGRAM B2MN_DV
   tdatad = 0.0_R8
   b2recycd = 0.0_R8
 ! default case, valid for any species mix
+! the first dimension of these variables refers to the number of directions "nbdirs"
   parm_hcid(3,1) = 1.0_R8
   parm_hced(2) = 1.0_R8
   parm_dnad(1,1) = 1.0_R8
