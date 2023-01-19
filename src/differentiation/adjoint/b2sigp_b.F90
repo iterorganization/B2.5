@@ -187,15 +187,15 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
       DO icv=1,mpg%nci
         IF (nb(icv)/ne(icv) .LT. 0.1e0_R8) THEN
           IF (1.0e0_R8 .GT. wrk0(icv)/wrk1(icv)) THEN
-            CALL PUSHREAL8ARRAY(min1, r8/8)
+            CALL PUSHREAL8(min1, r8/8)
             min1 = wrk0(icv)/wrk1(icv)
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(min1, r8/8)
+            CALL PUSHREAL8(min1, r8/8)
             min1 = 1.0e0_R8
             CALL PUSHCONTROL1B(1)
           END IF
-          CALL PUSHREAL8ARRAY(smbgp(icv, 0), r8/8)
+          CALL PUSHREAL8(smbgp(icv, 0), r8/8)
           smbgp(icv, 0) = smbgp(icv, 0)*min1
           CALL PUSHCONTROL1B(1)
         ELSE
@@ -243,17 +243,17 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
     DO icv=mpg%nci,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        CALL POPREAL8ARRAY(smbgp(icv, 0), r8/8)
+        CALL POPREAL8(smbgp(icv, 0), r8/8)
         min1b = smbgp(icv, 0)*smbgpb(icv, 0)
         smbgpb(icv, 0) = min1*smbgpb(icv, 0)
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min1, r8/8)
+          CALL POPREAL8(min1, r8/8)
           tempb0 = min1b/wrk1(icv)
           wrk0b(icv) = wrk0b(icv) + tempb0
           wrk1b(icv) = wrk1b(icv) - wrk0(icv)*tempb0/wrk1(icv)
         ELSE
-          CALL POPREAL8ARRAY(min1, r8/8)
+          CALL POPREAL8(min1, r8/8)
         END IF
       END IF
     END DO

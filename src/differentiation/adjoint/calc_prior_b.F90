@@ -37,7 +37,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
   INTEGER :: branch
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
 ! sc  Initialize prior
-  CALL PUSHREAL8ARRAY(prior, r8/8)
+  CALL PUSHREAL8(prior, r8/8)
   prior = 1.0_R8
 ! sc  Loop on number of plasma parameters (no sigma)
   nn = nsigma
@@ -50,7 +50,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
       prior = prior*1.0_R8
     CASE (1) 
 !Uninformative, proper, Gaussian prior. Factor two because only positive parameters are allowed.
-      CALL PUSHREAL8ARRAY(prior, r8/8)
+      CALL PUSHREAL8(prior, r8/8)
       prior = prior*2.0_R8/(prior_par(ii, 2)*SQRT(2.0_R8*pi))*EXP(-(&
 &       0.5_R8*((par_opt_phys(ii)-prior_par(ii, 1))/prior_par(ii, 2))**2&
 &       ))
@@ -79,14 +79,14 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
       prior = prior*1.0_R8
     CASE (1) 
 !Uninformative, proper, Gaussian prior. Factor two because only positive parameters are allowed.
-      CALL PUSHREAL8ARRAY(prior, r8/8)
+      CALL PUSHREAL8(prior, r8/8)
       prior = prior*2.0_R8/(prior_par(ii+isigma, 2)*SQRT(2.0_R8*pi))*EXP&
 &       (-(0.5_R8*((sigma(ii)-prior_par(ii+isigma, 1))/prior_par(ii+&
 &       isigma, 2))**2))
       CALL PUSHCONTROL2B(0)
     CASE (2) 
 !Jeffrey's 1/sigma
-      CALL PUSHREAL8ARRAY(prior, r8/8)
+      CALL PUSHREAL8(prior, r8/8)
       prior = prior/sigma(ii)
       CALL PUSHCONTROL2B(1)
     CASE DEFAULT
@@ -105,7 +105,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
     IF (branch .NE. 0) priorb = 0.D0
     CALL POPCONTROL2B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(prior, r8/8)
+      CALL POPREAL8(prior, r8/8)
       temp0 = prior_par(ii+isigma, 2)*SQRT(2.0_R8*pi)
       temp = prior_par(ii+isigma, 2)*prior_par(ii+isigma, 2)
       temp2 = sigma(ii) - prior_par(ii+isigma, 1)
@@ -114,7 +114,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
 &       priorb/(temp*temp0)
       priorb = EXP(temp1)*2.0_R8*priorb/temp0
     ELSE IF (branch .EQ. 1) THEN
-      CALL POPREAL8ARRAY(prior, r8/8)
+      CALL POPREAL8(prior, r8/8)
       tempb = priorb/sigma(ii)
       priorb = tempb
       sigmab(ii) = sigmab(ii) - prior*tempb/sigma(ii)
@@ -125,7 +125,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
     IF (branch .NE. 0) priorb = 0.D0
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(prior, r8/8)
+      CALL POPREAL8(prior, r8/8)
       temp = prior_par(ii, 2)*SQRT(2.0_R8*pi)
       temp0 = par_opt_phys(ii) - prior_par(ii, 1)
       temp1 = -(0.5_R8*(temp0*temp0)/(prior_par(ii, 2)*prior_par(ii, 2))&
@@ -135,7 +135,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
       priorb = EXP(temp1)*2.0_R8*priorb/temp
     END IF
   END DO
-  CALL POPREAL8ARRAY(prior, r8/8)
+  CALL POPREAL8(prior, r8/8)
 END SUBROUTINE CALC_PRIOR_B
 
 !

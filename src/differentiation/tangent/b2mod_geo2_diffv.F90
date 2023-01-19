@@ -200,7 +200,7 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(kind=r8) :: result1
-    LOGICAL :: result10
+    INTEGER :: result10
     INTEGER :: no_connectivity
 !
     nncut = 0
@@ -710,7 +710,6 @@ CONTAINS
     INTEGER :: ix, iy, is, ixx, iyy
 ! For every vertex, find connected cells and average values
     REAL(kind=r8) :: av, wtot, minval, maxval, w, d, centroid(0:1)
-    INTRINSIC HUGE
     INTRINSIC SQRT
     INTRINSIC MIN
     INTRINSIC MAX

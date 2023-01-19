@@ -103,11 +103,11 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
 !   ..compute new pb and nb
   DO icv=1,ncv
     IF (0.0_R8 .LE. corpb(icv)) THEN
-      CALL PUSHREAL8ARRAY(t0, r8/8)
+      CALL PUSHREAL8(t0, r8/8)
       t0 = 1.0_R8 + rxf*corpb(icv)/pb(icv)
       CALL PUSHCONTROL1B(0)
     ELSE
-      CALL PUSHREAL8ARRAY(t0, r8/8)
+      CALL PUSHREAL8(t0, r8/8)
       t0 = 1.0_R8/(1.0_R8-rxf*corpb(icv)/pb(icv))
       CALL PUSHCONTROL1B(1)
     END IF
@@ -148,13 +148,13 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
         IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
 ! IYS 19.12.2017
-          CALL PUSHREAL8ARRAY(t0, r8/8)
+          CALL PUSHREAL8(t0, r8/8)
           t0 = pb(icv) + tt2(ift)/tt0(ift) + corr_core_dn(isb)*(pb_(icv)&
 &           -pb(icv)-tt2(ift)/tt0(ift))
           IF (t0 .LT. pb(icv)*switch%b2mndr_na_min/nb(icv)) THEN
             GOTO 100
           ELSE
-            CALL PUSHREAL8ARRAY(pb(icv), r8/8)
+            CALL PUSHREAL8(pb(icv), r8/8)
             pb(icv) = t0
 ! IYS 19.12.2017
             t0 = nb(icv) + tt1(ift)/tt0(ift) + corr_core_dn(isb)*(nb_(&
@@ -162,17 +162,17 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
             IF (t0 .LT. switch%b2mndr_na_min) THEN
               GOTO 110
             ELSE
-              CALL PUSHREAL8ARRAY(nb(icv), r8/8)
+              CALL PUSHREAL8(nb(icv), r8/8)
               nb(icv) = t0
               CALL PUSHCONTROL1B(1)
             END IF
           END IF
         ELSE
 !srv 25.07.17 {
-          CALL PUSHREAL8ARRAY(nb(icv), r8/8)
+          CALL PUSHREAL8(nb(icv), r8/8)
           nb(icv) = nb_(icv)
 !srv 25.07.17 }
-          CALL PUSHREAL8ARRAY(pb(icv), r8/8)
+          CALL PUSHREAL8(pb(icv), r8/8)
           pb(icv) = pb_(icv)
           CALL PUSHCONTROL1B(0)
         END IF
@@ -197,10 +197,10 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
         DO i=ad_from,mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
           CALL PUSHINTEGER4(icv)
           icv = mpg%ftcv(i)
-          CALL PUSHREAL8ARRAY(nb(icv), r8/8)
+          CALL PUSHREAL8(nb(icv), r8/8)
           nb(icv) = nb_(icv)
 !srv 25.07.17 }
-          CALL PUSHREAL8ARRAY(pb(icv), r8/8)
+          CALL PUSHREAL8(pb(icv), r8/8)
           pb(icv) = pb_(icv)
         END DO
         CALL PUSHINTEGER4(i - 1)
@@ -253,10 +253,10 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
         CALL POPINTEGER4(ad_to)
         DO i=ad_to,ad_from,-1
           icv = mpg%ftcv(i)
-          CALL POPREAL8ARRAY(pb(icv), r8/8)
+          CALL POPREAL8(pb(icv), r8/8)
           pb_b(icv) = pb_b(icv) + pbb(icv)
           pbb(icv) = 0.D0
-          CALL POPREAL8ARRAY(nb(icv), r8/8)
+          CALL POPREAL8(nb(icv), r8/8)
           nb_b(icv) = nb_b(icv) + nbb(icv)
           nbb(icv) = 0.D0
           CALL POPINTEGER4(icv)
@@ -278,15 +278,15 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
         ELSE
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(pb(icv), r8/8)
+            CALL POPREAL8(pb(icv), r8/8)
             pb_b(icv) = pb_b(icv) + pbb(icv)
             pbb(icv) = 0.D0
-            CALL POPREAL8ARRAY(nb(icv), r8/8)
+            CALL POPREAL8(nb(icv), r8/8)
             nb_b(icv) = nb_b(icv) + nbb(icv)
             nbb(icv) = 0.D0
             GOTO 140
           ELSE
-            CALL POPREAL8ARRAY(nb(icv), r8/8)
+            CALL POPREAL8(nb(icv), r8/8)
             t0b = nbb(icv)
             nbb(icv) = 0.D0
           END IF
@@ -295,11 +295,11 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
         nbb(icv) = nbb(icv) + t0b - tempb
         tt1b(ift) = tt1b(ift) + t0b/tt0(ift) - tempb/tt0(ift)
         nb_b(icv) = nb_b(icv) + tempb
-        CALL POPREAL8ARRAY(pb(icv), r8/8)
+        CALL POPREAL8(pb(icv), r8/8)
         t0b = pbb(icv)
         pbb(icv) = 0.D0
  130    tempb = corr_core_dn(isb)*t0b
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         pbb(icv) = pbb(icv) + t0b - tempb
         tt2b(ift) = tt2b(ift) + t0b/tt0(ift) - tempb/tt0(ift)
         pb_b(icv) = pb_b(icv) + tempb
@@ -335,12 +335,12 @@ SUBROUTINE B2UPCO_B(ncv, nfc, nvx, geo, geob, mpg, mpgb, switch, &
     nb_b(icv) = 0.D0
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(t0, r8/8)
+      CALL POPREAL8(t0, r8/8)
       tempb = rxf*t0b/pb(icv)
       corpbb(icv) = corpbb(icv) + tempb
       pbb(icv) = pbb(icv) - corpb(icv)*tempb/pb(icv)
     ELSE
-      CALL POPREAL8ARRAY(t0, r8/8)
+      CALL POPREAL8(t0, r8/8)
       temp = corpb(icv)/pb(icv)
       tempb = rxf*t0b/(pb(icv)*(1.0_R8-rxf*temp)**2)
       corpbb(icv) = corpbb(icv) + tempb

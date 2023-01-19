@@ -82,6 +82,7 @@ SUBROUTINE B2SIAN_B(ncv, nfc, isb, switch, geo, mpg, mpgb, fchanml, &
 !   ..test nCv, nFc
   IF (NINT(zn(isb)) .EQ. 1 .AND. NINT(zamax(isb)) .EQ. 1) THEN
 !   ..  compute smban
+    wrkf = 1.0_R8 !csc added this here for safety in gfortran
     CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellr, wrkf, wrk)
     wrkb = 0.D0
     DO icv=mpg%nci,1,-1

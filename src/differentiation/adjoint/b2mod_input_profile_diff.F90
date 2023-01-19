@@ -296,12 +296,12 @@ CONTAINS
               END IF
             END DO
             DO i=1,ndat
-              CALL PUSHREAL8ARRAY(r(i), r8/8)
+              CALL PUSHREAL8(r(i), r8/8)
               r(i) = tdata(1, i, kind_coeff, spec)
-              CALL PUSHREAL8ARRAY(f(i), r8/8)
+              CALL PUSHREAL8(f(i), r8/8)
               f(i) = tdata(2, i, kind_coeff, spec)
               IF (elm_data) THEN
-                CALL PUSHREAL8ARRAY(felm(i), r8/8)
+                CALL PUSHREAL8(felm(i), r8/8)
                 felm(i) = tdata(3, i, kind_coeff, spec)
                 CALL PUSHCONTROL1B(1)
               ELSE
@@ -701,16 +701,16 @@ CONTAINS
             DO i=ad_to,1,-1
               CALL POPCONTROL1B(branch)
               IF (branch .NE. 0) THEN
-                CALL POPREAL8ARRAY(felm(i), r8/8)
+                CALL POPREAL8(felm(i), r8/8)
                 tdatab(3, i, kind_coeff, spec) = tdatab(3, i, kind_coeff&
 &                 , spec) + felmb(i)
                 felmb(i) = 0.D0
               END IF
-              CALL POPREAL8ARRAY(f(i), r8/8)
+              CALL POPREAL8(f(i), r8/8)
               tdatab(2, i, kind_coeff, spec) = tdatab(2, i, kind_coeff, &
 &               spec) + fb(i)
               fb(i) = 0.D0
-              CALL POPREAL8ARRAY(r(i), r8/8)
+              CALL POPREAL8(r(i), r8/8)
               tdatab(1, i, kind_coeff, spec) = tdatab(1, i, kind_coeff, &
 &               spec) + rb(i)
               rb(i) = 0.D0

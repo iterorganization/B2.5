@@ -413,7 +413,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       END IF
     END DO
     CALL PUSHINTEGER4(icv2)
-    CALL PUSHREAL8ARRAY(t3, r8/8)
+    CALL PUSHREAL8(t3, r8/8)
 !$FWD-OF II-LOOP 
     DO ifc=1,nfc
 ! cell number of c1
@@ -546,7 +546,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       END IF
     END DO
     CALL PUSHINTEGER4(icv2)
-    CALL PUSHREAL8ARRAY(t3, r8/8)
+    CALL PUSHREAL8(t3, r8/8)
 !$FWD-OF II-LOOP 
     DO ifc=1,nfc
 ! cell number of c1
@@ -679,7 +679,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
         END IF
       END DO
       CALL PUSHINTEGER4(icv2)
-      CALL PUSHREAL8ARRAY(t3, r8/8)
+      CALL PUSHREAL8(t3, r8/8)
 !$FWD-OF II-LOOP 
       DO ifc=1,nfc
 ! cell number of c1
@@ -818,7 +818,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       END IF
     END DO
     CALL PUSHINTEGER4(icv2)
-    CALL PUSHREAL8ARRAY(t3, r8/8)
+    CALL PUSHREAL8(t3, r8/8)
 !$FWD-OF II-LOOP 
     DO ifc=1,nfc
 ! cell number of c1
@@ -950,7 +950,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       END IF
     END DO
     CALL PUSHINTEGER4(icv2)
-    CALL PUSHREAL8ARRAY(t3, r8/8)
+    CALL PUSHREAL8(t3, r8/8)
 !$FWD-OF II-LOOP 
     DO ifc=1,nfc
 ! cell number of c1
@@ -1193,7 +1193,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       flo0b(ifc, 0) = flo0b(ifc, 0) + 0.5_R8*t2b - 0.5_R8*t1b
       con0b(ifc, 0, 0) = con0b(ifc, 0, 0) - t2b - t1b
     END DO
-    CALL POPREAL8ARRAY(t3, r8/8)
+    CALL POPREAL8(t3, r8/8)
     CALL POPINTEGER4(icv2)
     CALL POPREAL8ARRAY(reszt, r8*ncv/8)
 !$BWD-OF II-LOOP 
@@ -1370,7 +1370,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       flo0b(ifc, 0) = flo0b(ifc, 0) + 0.5_R8*t2b - 0.5_R8*t1b
       con0b(ifc, 0, 0) = con0b(ifc, 0, 0) - t2b - t1b
     END DO
-    CALL POPREAL8ARRAY(t3, r8/8)
+    CALL POPREAL8(t3, r8/8)
     CALL POPINTEGER4(icv2)
     sktb = 0.D0
     CALL POPREAL8ARRAY(reskt, r8*ncv/8)
@@ -1550,7 +1550,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       flo0b(ifc, 0) = flo0b(ifc, 0) + 0.5_R8*t2b - 0.5_R8*t1b
       con0b(ifc, 0, 0) = con0b(ifc, 0, 0) - t2b - t1b
     END DO
-    CALL POPREAL8ARRAY(t3, r8/8)
+    CALL POPREAL8(t3, r8/8)
     CALL POPINTEGER4(icv2)
     shnb = 0.D0
     CALL POPREAL8ARRAY(reshn, r8*ncv/8)
@@ -1731,7 +1731,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       flo0b(ifc, 0) = flo0b(ifc, 0) + 0.5_R8*t2b - 0.5_R8*t1b
       con0b(ifc, 0, 0) = con0b(ifc, 0, 0) - t2b - t1b
     END DO
-    CALL POPREAL8ARRAY(t3, r8/8)
+    CALL POPREAL8(t3, r8/8)
     CALL POPINTEGER4(icv2)
     shib = 0.D0
     CALL POPREAL8ARRAY(reshi, r8*ncv/8)
@@ -1923,7 +1923,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       flo0b(ifc, 0) = flo0b(ifc, 0) + 0.5_R8*t2b - 0.5_R8*t1b
       con0b(ifc, 0, 0) = con0b(ifc, 0, 0) - t2b - t1b
     END DO
-    CALL POPREAL8ARRAY(t3, r8/8)
+    CALL POPREAL8(t3, r8/8)
     CALL POPINTEGER4(icv2)
     sheb = 0.D0
     CALL POPREAL8ARRAY(reshe, r8*ncv/8)

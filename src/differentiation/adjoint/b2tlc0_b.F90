@@ -106,62 +106,62 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
             t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
 &             2.0_R8
             IF (cdpa(ifc, 0, is)*dpbf(ifc, 0) .GE. 0.) THEN
-              CALL PUSHREAL8ARRAY(dpb, r8/8)
+              CALL PUSHREAL8(dpb, r8/8)
               dpb = cdpa(ifc, 0, is)*dpbf(ifc, 0)
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL8ARRAY(dpb, r8/8)
+              CALL PUSHREAL8(dpb, r8/8)
               dpb = -(cdpa(ifc, 0, is)*dpbf(ifc, 0))
               CALL PUSHCONTROL1B(1)
             END IF
             IF (geo%fcqalf(ifc, 0) .GE. 0.) THEN
-              CALL PUSHREAL8ARRAY(abs0, r8/8)
+              CALL PUSHREAL8(abs0, r8/8)
               abs0 = geo%fcqalf(ifc, 0)
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL8ARRAY(abs0, r8/8)
+              CALL PUSHREAL8(abs0, r8/8)
               abs0 = -geo%fcqalf(ifc, 0)
               CALL PUSHCONTROL1B(1)
             END IF
-            CALL PUSHREAL8ARRAY(vbar, r8/8)
+            CALL PUSHREAL8(vbar, r8/8)
             vbar = SQRT(8.0_R8*t0/(pi*(am(is)*mp)))*geo%fcs(ifc)*abs0
-            CALL PUSHREAL8ARRAY(t2, r8/8)
+            CALL PUSHREAL8(t2, r8/8)
             t2 = 1.0_R8/(1.0_R8+(dpb/(alpha*vbar/4.0e0_R8*t1+&
 &             b2tlc0_cutlo))**gamma)**(1.0_R8/gamma)
-            CALL PUSHREAL8ARRAY(cdpa(ifc, 0, is), r8/8)
+            CALL PUSHREAL8(cdpa(ifc, 0, is), r8/8)
             cdpa(ifc, 0, is) = cdpa(ifc, 0, is)*t2
-            CALL PUSHREAL8ARRAY(cdpahz(ifc, 0, is), r8/8)
+            CALL PUSHREAL8(cdpahz(ifc, 0, is), r8/8)
             cdpahz(ifc, 0, is) = cdpahz(ifc, 0, is)*t2
-            CALL PUSHREAL8ARRAY(flc(ifc, 0, is), r8/8)
+            CALL PUSHREAL8(flc(ifc, 0, is), r8/8)
             flc(ifc, 0, is) = t2
             IF (cdpa(ifc, 1, is)*dpbf(ifc, 1) .GE. 0.) THEN
-              CALL PUSHREAL8ARRAY(dpb, r8/8)
+              CALL PUSHREAL8(dpb, r8/8)
               dpb = cdpa(ifc, 1, is)*dpbf(ifc, 1)
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL8ARRAY(dpb, r8/8)
+              CALL PUSHREAL8(dpb, r8/8)
               dpb = -(cdpa(ifc, 1, is)*dpbf(ifc, 1))
               CALL PUSHCONTROL1B(1)
             END IF
             IF (geo%fcqalf(ifc, 1) .GE. 0.) THEN
-              CALL PUSHREAL8ARRAY(abs1, r8/8)
+              CALL PUSHREAL8(abs1, r8/8)
               abs1 = geo%fcqalf(ifc, 1)
               CALL PUSHCONTROL1B(0)
             ELSE
-              CALL PUSHREAL8ARRAY(abs1, r8/8)
+              CALL PUSHREAL8(abs1, r8/8)
               abs1 = -geo%fcqalf(ifc, 1)
               CALL PUSHCONTROL1B(1)
             END IF
-            CALL PUSHREAL8ARRAY(vbar, r8/8)
+            CALL PUSHREAL8(vbar, r8/8)
             vbar = SQRT(8.0_R8*t0/(pi*(am(is)*mp)))*geo%fcs(ifc)*abs1
-            CALL PUSHREAL8ARRAY(t2, r8/8)
+            CALL PUSHREAL8(t2, r8/8)
             t2 = 1.0_R8/(1.0_R8+(dpb/(alpha*vbar/4.0e0_R8*t1+&
 &             b2tlc0_cutlo))**gamma)**(1.0_R8/gamma)
-            CALL PUSHREAL8ARRAY(cdpa(ifc, 1, is), r8/8)
+            CALL PUSHREAL8(cdpa(ifc, 1, is), r8/8)
             cdpa(ifc, 1, is) = cdpa(ifc, 1, is)*t2
-            CALL PUSHREAL8ARRAY(cdpahz(ifc, 1, is), r8/8)
+            CALL PUSHREAL8(cdpahz(ifc, 1, is), r8/8)
             cdpahz(ifc, 1, is) = cdpahz(ifc, 1, is)*t2
-            CALL PUSHREAL8ARRAY(flc(ifc, 1, is), r8/8)
+            CALL PUSHREAL8(flc(ifc, 1, is), r8/8)
             flc(ifc, 1, is) = t2
           END DO
           CALL PUSHCONTROL1B(1)
@@ -186,26 +186,26 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
             t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
 &             2.0_R8
 !    ..limit total gradient
-            CALL PUSHREAL8ARRAY(dpb, r8/8)
+            CALL PUSHREAL8(dpb, r8/8)
             dpb = cdpa0(ifc, is)*SQRT(dpbf(ifc, 0)**2+dpbf(ifc, 1)**2)
-            CALL PUSHREAL8ARRAY(vbar, r8/8)
+            CALL PUSHREAL8(vbar, r8/8)
             vbar = SQRT(8.0_R8*t0/(pi*(am(is)*mp)))*geo%fcs(ifc)
-            CALL PUSHREAL8ARRAY(t2, r8/8)
+            CALL PUSHREAL8(t2, r8/8)
             t2 = 1.0_R8/(1.0_R8+(dpb/(alpha*vbar/4.0e0_R8*t1+&
 &             b2tlc0_cutlo))**gamma)**(1.0_R8/gamma)
 !    ..poloidal
-            CALL PUSHREAL8ARRAY(cdpa(ifc, 0, is), r8/8)
+            CALL PUSHREAL8(cdpa(ifc, 0, is), r8/8)
             cdpa(ifc, 0, is) = cdpa(ifc, 0, is)*t2
-            CALL PUSHREAL8ARRAY(cdpahz(ifc, 0, is), r8/8)
+            CALL PUSHREAL8(cdpahz(ifc, 0, is), r8/8)
             cdpahz(ifc, 0, is) = cdpahz(ifc, 0, is)*t2
-            CALL PUSHREAL8ARRAY(flc(ifc, 0, is), r8/8)
+            CALL PUSHREAL8(flc(ifc, 0, is), r8/8)
             flc(ifc, 0, is) = t2
 !    ..radial
-            CALL PUSHREAL8ARRAY(cdpa(ifc, 1, is), r8/8)
+            CALL PUSHREAL8(cdpa(ifc, 1, is), r8/8)
             cdpa(ifc, 1, is) = cdpa(ifc, 1, is)*t2
-            CALL PUSHREAL8ARRAY(cdpahz(ifc, 1, is), r8/8)
+            CALL PUSHREAL8(cdpahz(ifc, 1, is), r8/8)
             cdpahz(ifc, 1, is) = cdpahz(ifc, 1, is)*t2
-            CALL PUSHREAL8ARRAY(flc(ifc, 1, is), r8/8)
+            CALL PUSHREAL8(flc(ifc, 1, is), r8/8)
             flc(ifc, 1, is) = t2
           END DO
           CALL PUSHCONTROL1B(1)
@@ -246,16 +246,16 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         DO ifc=nfc,1,-1
-          CALL POPREAL8ARRAY(flc(ifc, 1, is), r8/8)
-          CALL POPREAL8ARRAY(cdpahz(ifc, 1, is), r8/8)
-          CALL POPREAL8ARRAY(cdpa(ifc, 1, is), r8/8)
+          CALL POPREAL8(flc(ifc, 1, is), r8/8)
+          CALL POPREAL8(cdpahz(ifc, 1, is), r8/8)
+          CALL POPREAL8(cdpa(ifc, 1, is), r8/8)
           t2b = cdpahz(ifc, 1, is)*cdpahzb(ifc, 1, is) + cdpa(ifc, 1, is&
 &           )*cdpab(ifc, 1, is)
           cdpahzb(ifc, 1, is) = t2*cdpahzb(ifc, 1, is)
           cdpab(ifc, 1, is) = t2*cdpab(ifc, 1, is)
           t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
 &           2.0_R8
-          CALL POPREAL8ARRAY(t2, r8/8)
+          CALL POPREAL8(t2, r8/8)
           temp4 = 1.0/gamma
           temp3 = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
           temp2 = dpb/temp3
@@ -274,7 +274,7 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
           vbarb = t1*tempb2/4.0e0_R8
           t1b = vbar*tempb2/4.0e0_R8
           t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-          CALL POPREAL8ARRAY(vbar, r8/8)
+          CALL POPREAL8(vbar, r8/8)
           temp4 = am(is)*pi*mp
           IF (8.0_R8*(t0/temp4) .EQ. 0.D0) THEN
             t0b = 0.D0
@@ -284,28 +284,28 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs1, r8/8)
+            CALL POPREAL8(abs1, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(abs1, r8/8)
+            CALL POPREAL8(abs1, r8/8)
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(dpb, r8/8)
+            CALL POPREAL8(dpb, r8/8)
             cdpab(ifc, 1, is) = cdpab(ifc, 1, is) + dpbf(ifc, 1)*dpbb
             dpbfb(ifc, 1) = dpbfb(ifc, 1) + cdpa(ifc, 1, is)*dpbb
           ELSE
-            CALL POPREAL8ARRAY(dpb, r8/8)
+            CALL POPREAL8(dpb, r8/8)
             cdpab(ifc, 1, is) = cdpab(ifc, 1, is) - dpbf(ifc, 1)*dpbb
             dpbfb(ifc, 1) = dpbfb(ifc, 1) - cdpa(ifc, 1, is)*dpbb
           END IF
-          CALL POPREAL8ARRAY(flc(ifc, 0, is), r8/8)
-          CALL POPREAL8ARRAY(cdpahz(ifc, 0, is), r8/8)
-          CALL POPREAL8ARRAY(cdpa(ifc, 0, is), r8/8)
+          CALL POPREAL8(flc(ifc, 0, is), r8/8)
+          CALL POPREAL8(cdpahz(ifc, 0, is), r8/8)
+          CALL POPREAL8(cdpa(ifc, 0, is), r8/8)
           t2b = cdpahz(ifc, 0, is)*cdpahzb(ifc, 0, is) + cdpa(ifc, 0, is&
 &           )*cdpab(ifc, 0, is)
           cdpahzb(ifc, 0, is) = t2*cdpahzb(ifc, 0, is)
           cdpab(ifc, 0, is) = t2*cdpab(ifc, 0, is)
-          CALL POPREAL8ARRAY(t2, r8/8)
+          CALL POPREAL8(t2, r8/8)
           temp = 1.0/gamma
           temp0 = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
           temp1 = dpb/temp0
@@ -323,23 +323,23 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
           tempb0 = -(alpha*temp1*tempb)
           vbarb = t1*tempb0/4.0e0_R8
           t1b = t1b + vbar*tempb0/4.0e0_R8
-          CALL POPREAL8ARRAY(vbar, r8/8)
+          CALL POPREAL8(vbar, r8/8)
           temp = am(is)*pi*mp
           IF (.NOT.8.0_R8*(t0/temp) .EQ. 0.D0) t0b = t0b + 8.0_R8*geo%&
 &             fcs(ifc)*abs0*vbarb/(temp*2.0*SQRT(8.0_R8*(t0/temp)))
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs0, r8/8)
+            CALL POPREAL8(abs0, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(abs0, r8/8)
+            CALL POPREAL8(abs0, r8/8)
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(dpb, r8/8)
+            CALL POPREAL8(dpb, r8/8)
             cdpab(ifc, 0, is) = cdpab(ifc, 0, is) + dpbf(ifc, 0)*dpbb
             dpbfb(ifc, 0) = dpbfb(ifc, 0) + cdpa(ifc, 0, is)*dpbb
           ELSE
-            CALL POPREAL8ARRAY(dpb, r8/8)
+            CALL POPREAL8(dpb, r8/8)
             cdpab(ifc, 0, is) = cdpab(ifc, 0, is) - dpbf(ifc, 0)*dpbb
             dpbfb(ifc, 0) = dpbfb(ifc, 0) - cdpa(ifc, 0, is)*dpbb
           END IF
@@ -366,23 +366,23 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         DO ifc=nfc,1,-1
-          CALL POPREAL8ARRAY(flc(ifc, 1, is), r8/8)
-          CALL POPREAL8ARRAY(cdpahz(ifc, 1, is), r8/8)
-          CALL POPREAL8ARRAY(cdpa(ifc, 1, is), r8/8)
+          CALL POPREAL8(flc(ifc, 1, is), r8/8)
+          CALL POPREAL8(cdpahz(ifc, 1, is), r8/8)
+          CALL POPREAL8(cdpa(ifc, 1, is), r8/8)
           t2b = cdpahz(ifc, 1, is)*cdpahzb(ifc, 1, is) + cdpa(ifc, 1, is&
 &           )*cdpab(ifc, 1, is)
           cdpahzb(ifc, 1, is) = t2*cdpahzb(ifc, 1, is)
           cdpab(ifc, 1, is) = t2*cdpab(ifc, 1, is)
-          CALL POPREAL8ARRAY(flc(ifc, 0, is), r8/8)
-          CALL POPREAL8ARRAY(cdpahz(ifc, 0, is), r8/8)
-          CALL POPREAL8ARRAY(cdpa(ifc, 0, is), r8/8)
+          CALL POPREAL8(flc(ifc, 0, is), r8/8)
+          CALL POPREAL8(cdpahz(ifc, 0, is), r8/8)
+          CALL POPREAL8(cdpa(ifc, 0, is), r8/8)
           t2b = t2b + cdpahz(ifc, 0, is)*cdpahzb(ifc, 0, is) + cdpa(ifc&
 &           , 0, is)*cdpab(ifc, 0, is)
           cdpahzb(ifc, 0, is) = t2*cdpahzb(ifc, 0, is)
           cdpab(ifc, 0, is) = t2*cdpab(ifc, 0, is)
           t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
 &           2.0_R8
-          CALL POPREAL8ARRAY(t2, r8/8)
+          CALL POPREAL8(t2, r8/8)
           temp4 = 1.0/gamma
           temp3 = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
           temp2 = dpb/temp3
@@ -401,7 +401,7 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
           vbarb = t1*tempb2/4.0e0_R8
           t1b = vbar*tempb2/4.0e0_R8
           t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-          CALL POPREAL8ARRAY(vbar, r8/8)
+          CALL POPREAL8(vbar, r8/8)
           temp4 = am(is)*pi*mp
           IF (8.0_R8*(t0/temp4) .EQ. 0.D0) THEN
             t0b = 0.D0
@@ -409,7 +409,7 @@ SUBROUTINE B2TLC0_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
             t0b = 8.0_R8*geo%fcs(ifc)*vbarb/(temp4*2.0*SQRT(8.0_R8*(t0/&
 &             temp4)))
           END IF
-          CALL POPREAL8ARRAY(dpb, r8/8)
+          CALL POPREAL8(dpb, r8/8)
           temp4 = dpbf(ifc, 0)*dpbf(ifc, 0) + dpbf(ifc, 1)*dpbf(ifc, 1)
           temp3 = SQRT(temp4)
           cdpa0b(ifc, is) = cdpa0b(ifc, is) + temp3*dpbb

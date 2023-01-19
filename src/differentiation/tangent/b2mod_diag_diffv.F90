@@ -92,7 +92,7 @@ MODULE B2MOD_DIAG_DIFFV
   CHARACTER(len=2), ALLOCATABLE :: species_list(:)
   INTEGER, ALLOCATABLE :: ions_list(:), fluids_list(:)
   CHARACTER(len=120) :: label
-  INTEGER, SAVE :: ank_tracing=0
+  INTEGER :: ank_tracing=0
 !
   SAVE 
 

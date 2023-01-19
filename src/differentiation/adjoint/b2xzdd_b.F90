@@ -35,14 +35,14 @@ SUBROUTINE B2XZDD_FWD(ncv, nd, switch, mpg, src)
     IF (mpg%cvreg(icv) .EQ. 0 .AND. switch%zero_dead_and_core .GE. 1) &
 &   THEN
       DO id=0,nd
-        CALL PUSHREAL8ARRAY(src(icv, id), r8/8)
+        CALL PUSHREAL8(src(icv, id), r8/8)
         src(icv, id) = 0.0_R8
       END DO
       CALL PUSHCONTROL2B(2)
     ELSE IF (icv .GT. mpg%nci .AND. mpg%cvonclosedsurface(icv) .AND. &
 &       switch%zero_dead_and_core .GE. 2) THEN
       DO id=0,nd
-        CALL PUSHREAL8ARRAY(src(icv, id), r8/8)
+        CALL PUSHREAL8(src(icv, id), r8/8)
         src(icv, id) = 0.0_R8
       END DO
       CALL PUSHCONTROL2B(1)
@@ -84,12 +84,12 @@ SUBROUTINE B2XZDD_BWD(ncv, nd, switch, mpg, src, srcb)
     IF (branch .NE. 0) THEN
       IF (branch .EQ. 1) THEN
         DO id=nd,0,-1
-          CALL POPREAL8ARRAY(src(icv, id), r8/8)
+          CALL POPREAL8(src(icv, id), r8/8)
           srcb(icv, id) = 0.D0
         END DO
       ELSE
         DO id=nd,0,-1
-          CALL POPREAL8ARRAY(src(icv, id), r8/8)
+          CALL POPREAL8(src(icv, id), r8/8)
           srcb(icv, id) = 0.D0
         END DO
       END IF

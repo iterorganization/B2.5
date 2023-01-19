@@ -212,7 +212,7 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
   IF (switch%b2sigp_style .EQ. 2) THEN
     CALL B2XZEF_NODIFF(ncv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
     DO icv=1,ncv
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = FCE2N(zeff(icv))
       c071c(icv) = zeff(icv)*result1
     END DO
@@ -434,7 +434,7 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
       zeffb(icv) = zeffb(icv) + result1*c071cb(icv)
       result1b = zeff(icv)*c071cb(icv)
       c071cb(icv) = 0.D0
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       CALL FCE2N_B(zeff(icv), zeffb(icv), result1b)
     END DO
     CALL B2XZEF_B(ncv, ns, rt%rz2, rtb%rz2, pl%na, plb%na, dv%ne, dvb%ne&

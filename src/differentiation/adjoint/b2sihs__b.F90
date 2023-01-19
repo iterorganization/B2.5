@@ -344,24 +344,24 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
   DO icv=1,mpg%nci
     t0 = -(switch%b2sihs_phm0*(1.0_R8-switch%boris)*wrkc(icv))
     IF (0.0e0_R8 .LT. t0) THEN
-      CALL PUSHREAL8ARRAY(max1, r8/8)
+      CALL PUSHREAL8(max1, r8/8)
       max1 = t0
       CALL PUSHCONTROL1B(1)
     ELSE
-      CALL PUSHREAL8ARRAY(max1, r8/8)
+      CALL PUSHREAL8(max1, r8/8)
       max1 = 0.0e0_R8
       CALL PUSHCONTROL1B(0)
     END IF
     IF (t0 .GE. 0.) THEN
-      CALL PUSHREAL8ARRAY(abs0, r8/8)
+      CALL PUSHREAL8(abs0, r8/8)
       abs0 = t0
       CALL PUSHCONTROL1B(0)
     ELSE
-      CALL PUSHREAL8ARRAY(abs0, r8/8)
+      CALL PUSHREAL8(abs0, r8/8)
       abs0 = -t0
       CALL PUSHCONTROL1B(1)
     END IF
-    CALL PUSHREAL8ARRAY(shedu(icv, 0), r8/8)
+    CALL PUSHREAL8(shedu(icv, 0), r8/8)
     shedu(icv, 0) = shedu(icv, 0) + (max1+switch%b2sihs__rf0*abs0)*ne(&
 &     icv)*te(icv)
     IF (0.0e0_R8 .GT. t0) THEN
@@ -378,7 +378,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
       abs1 = -t0
       CALL PUSHCONTROL1B(1)
     END IF
-    CALL PUSHREAL8ARRAY(shedu(icv, 3), r8/8)
+    CALL PUSHREAL8(shedu(icv, 3), r8/8)
     shedu(icv, 3) = shedu(icv, 3) + min1 - switch%b2sihs__rf0*abs1
   END DO
 !WG_TODO         b2divue(mpg%cvReg(iCv))=b2divue(mpg%cvReg(iCv))+
@@ -413,24 +413,24 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 &       boris)*wrkc(icv))
       IF (switch%tn_style .EQ. 0) THEN
         IF (0.0e0_R8 .LT. t0) THEN
-          CALL PUSHREAL8ARRAY(max2, r8/8)
+          CALL PUSHREAL8(max2, r8/8)
           max2 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(max2, r8/8)
+          CALL PUSHREAL8(max2, r8/8)
           max2 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs2, r8/8)
+          CALL PUSHREAL8(abs2, r8/8)
           abs2 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs2, r8/8)
+          CALL PUSHREAL8(abs2, r8/8)
           abs2 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shidu(icv, 0), r8/8)
+        CALL PUSHREAL8(shidu(icv, 0), r8/8)
         shidu(icv, 0) = shidu(icv, 0) + (max2+switch%b2sihs__rf1*abs2)*&
 &         ni(icv, 0)*ti(icv)
         IF (0.0e0_R8 .GT. t0) THEN
@@ -447,30 +447,30 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           abs3 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shidu(icv, 3), r8/8)
+        CALL PUSHREAL8(shidu(icv, 3), r8/8)
         shidu(icv, 3) = shidu(icv, 3) + min2 - switch%b2sihs__rf1*abs3
         CALL PUSHCONTROL3B(4)
       ELSE IF (switch%tn_style .EQ. 1) THEN
         IF (.NOT.is_neutral(is)) THEN
           IF (0.0e0_R8 .LT. t0) THEN
-            CALL PUSHREAL8ARRAY(max3, r8/8)
+            CALL PUSHREAL8(max3, r8/8)
             max3 = t0
             CALL PUSHCONTROL1B(1)
           ELSE
-            CALL PUSHREAL8ARRAY(max3, r8/8)
+            CALL PUSHREAL8(max3, r8/8)
             max3 = 0.0e0_R8
             CALL PUSHCONTROL1B(0)
           END IF
           IF (t0 .GE. 0.) THEN
-            CALL PUSHREAL8ARRAY(abs4, r8/8)
+            CALL PUSHREAL8(abs4, r8/8)
             abs4 = t0
             CALL PUSHCONTROL1B(0)
           ELSE
-            CALL PUSHREAL8ARRAY(abs4, r8/8)
+            CALL PUSHREAL8(abs4, r8/8)
             abs4 = -t0
             CALL PUSHCONTROL1B(1)
           END IF
-          CALL PUSHREAL8ARRAY(shidu(icv, 0), r8/8)
+          CALL PUSHREAL8(shidu(icv, 0), r8/8)
           shidu(icv, 0) = shidu(icv, 0) + (max3+switch%b2sihs__rf1*abs4)&
 &           *ni(icv, 0)*ti(icv)
           IF (0.0e0_R8 .GT. t0) THEN
@@ -487,7 +487,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
             abs5 = -t0
             CALL PUSHCONTROL1B(1)
           END IF
-          CALL PUSHREAL8ARRAY(shidu(icv, 3), r8/8)
+          CALL PUSHREAL8(shidu(icv, 3), r8/8)
           shidu(icv, 3) = shidu(icv, 3) + min3 - switch%b2sihs__rf1*abs5
           CALL PUSHCONTROL3B(3)
         ELSE
@@ -495,24 +495,24 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         END IF
       ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
         IF (0.0e0_R8 .LT. t0) THEN
-          CALL PUSHREAL8ARRAY(max4, r8/8)
+          CALL PUSHREAL8(max4, r8/8)
           max4 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(max4, r8/8)
+          CALL PUSHREAL8(max4, r8/8)
           max4 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs6, r8/8)
+          CALL PUSHREAL8(abs6, r8/8)
           abs6 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs6, r8/8)
+          CALL PUSHREAL8(abs6, r8/8)
           abs6 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shidu(icv, 0), r8/8)
+        CALL PUSHREAL8(shidu(icv, 0), r8/8)
         shidu(icv, 0) = shidu(icv, 0) + (max4+switch%b2sihs__rf1*abs6)*&
 &         ni(icv, 0)*ti(icv)
         IF (0.0e0_R8 .GT. t0) THEN
@@ -529,27 +529,27 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           abs7 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shidu(icv, 3), r8/8)
+        CALL PUSHREAL8(shidu(icv, 3), r8/8)
         shidu(icv, 3) = shidu(icv, 3) + min4 - switch%b2sihs__rf1*abs7
         CALL PUSHCONTROL3B(1)
       ELSE
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = t0*ni(icv, 0)/nn(icv)
         IF (0.0e0_R8 .LT. t0) THEN
-          CALL PUSHREAL8ARRAY(max5, r8/8)
+          CALL PUSHREAL8(max5, r8/8)
           max5 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(max5, r8/8)
+          CALL PUSHREAL8(max5, r8/8)
           max5 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs8, r8/8)
+          CALL PUSHREAL8(abs8, r8/8)
           abs8 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs8, r8/8)
+          CALL PUSHREAL8(abs8, r8/8)
           abs8 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
@@ -598,29 +598,29 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !WG_TODO      b2sihs_exbe=0.0_R8
   DO icv=1,mpg%nci
 !WG_TODO need better solution here...
-    CALL PUSHREAL8ARRAY(fac_exb_c, r8/8)
+    CALL PUSHREAL8(fac_exb_c, r8/8)
     fac_exb_c = fac_exb(mpg%cvfc(mpg%cvfcp(icv, 1)))
 !srv 07.06.00 02.06.99
     t0 = switch%b2sihs_phm5*fac_exb_c*wrkc(icv)
     IF (0.0e0_R8 .LT. t0) THEN
-      CALL PUSHREAL8ARRAY(max6, r8/8)
+      CALL PUSHREAL8(max6, r8/8)
       max6 = t0
       CALL PUSHCONTROL1B(1)
     ELSE
-      CALL PUSHREAL8ARRAY(max6, r8/8)
+      CALL PUSHREAL8(max6, r8/8)
       max6 = 0.0e0_R8
       CALL PUSHCONTROL1B(0)
     END IF
     IF (t0 .GE. 0.) THEN
-      CALL PUSHREAL8ARRAY(abs10, r8/8)
+      CALL PUSHREAL8(abs10, r8/8)
       abs10 = t0
       CALL PUSHCONTROL1B(0)
     ELSE
-      CALL PUSHREAL8ARRAY(abs10, r8/8)
+      CALL PUSHREAL8(abs10, r8/8)
       abs10 = -t0
       CALL PUSHCONTROL1B(1)
     END IF
-    CALL PUSHREAL8ARRAY(shedd(icv, 0), r8/8)
+    CALL PUSHREAL8(shedd(icv, 0), r8/8)
     shedd(icv, 0) = shedd(icv, 0) + (max6+switch%b2sihs__rf0*abs10)*ne(&
 &     icv)*te(icv)
     IF (0.0e0_R8 .GT. t0) THEN
@@ -637,7 +637,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
       abs11 = -t0
       CALL PUSHCONTROL1B(1)
     END IF
-    CALL PUSHREAL8ARRAY(shedd(icv, 3), r8/8)
+    CALL PUSHREAL8(shedd(icv, 3), r8/8)
     shedd(icv, 3) = shedd(icv, 3) + min6 - switch%b2sihs__rf0*abs11
   END DO
 !WG_TODO        b2exbe(mpg%cvReg(iCv))=b2exbe(mpg%cvReg(iCv))+
@@ -657,30 +657,30 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     IF (.NOT.is_neutral(is)) THEN
       DO icv=1,mpg%nci
 !WG_TODO need better solution here...
-        CALL PUSHREAL8ARRAY(fac_exb_c, r8/8)
+        CALL PUSHREAL8(fac_exb_c, r8/8)
         fac_exb_c = fac_exb(mpg%cvfc(mpg%cvfcp(icv, 1)))
 !srv 07.06.00 02.06.99
         t0 = switch%b2sihs_phm6*fac_exb_c*(na(icv, is)/ni(icv, 0))*wrkc(&
 &         icv)
         IF (0.0e0_R8 .LT. t0) THEN
-          CALL PUSHREAL8ARRAY(max7, r8/8)
+          CALL PUSHREAL8(max7, r8/8)
           max7 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(max7, r8/8)
+          CALL PUSHREAL8(max7, r8/8)
           max7 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs12, r8/8)
+          CALL PUSHREAL8(abs12, r8/8)
           abs12 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs12, r8/8)
+          CALL PUSHREAL8(abs12, r8/8)
           abs12 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shidd(icv, 0), r8/8)
+        CALL PUSHREAL8(shidd(icv, 0), r8/8)
         shidd(icv, 0) = shidd(icv, 0) + (max7+switch%b2sihs__rf1*abs12)*&
 &         ni(icv, 0)*ti(icv)
         IF (0.0e0_R8 .GT. t0) THEN
@@ -699,7 +699,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         END IF
 !          shi0(iCv,0) = shi0(iCv,0)+
 !     &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*ti(iCv)
-        CALL PUSHREAL8ARRAY(shidd(icv, 3), r8/8)
+        CALL PUSHREAL8(shidd(icv, 3), r8/8)
         shidd(icv, 3) = shidd(icv, 3) + min7 - switch%b2sihs__rf1*abs13
       END DO
       CALL PUSHCONTROL1B(1)
@@ -753,36 +753,36 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         CALL PUSHCONTROL1B(0)
       END IF
       DO icv=1,mpg%nci
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = switch%b2sihs_phm2*(1.0_R8-switch%boris)*visc(icv, 0)
-        CALL PUSHREAL8ARRAY(t1, r8/8)
+        CALL PUSHREAL8(t1, r8/8)
         t1 = switch%b2sihs_phm8*(1.0_R8-switch%boris)*visc(icv, 1)
         IF (switch%tn_style .EQ. 0) THEN
-          CALL PUSHREAL8ARRAY(shivc(icv, 0), r8/8)
+          CALL PUSHREAL8(shivc(icv, 0), r8/8)
           shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
 &           t0
-          CALL PUSHREAL8ARRAY(shivc(icv, 3), r8/8)
+          CALL PUSHREAL8(shivc(icv, 3), r8/8)
           shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*t0/(ni(icv&
 &           , 0)*ti(icv))
-          CALL PUSHREAL8ARRAY(shiva(icv, 0), r8/8)
+          CALL PUSHREAL8(shiva(icv, 0), r8/8)
           shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
 &           t1
-          CALL PUSHREAL8ARRAY(shiva(icv, 3), r8/8)
+          CALL PUSHREAL8(shiva(icv, 3), r8/8)
           shiva(icv, 3) = shiva(icv, 3) - switch%b2sihs__rf2*t1/(ni(icv&
 &           , 0)*ti(icv))
           CALL PUSHCONTROL3B(4)
         ELSE IF (switch%tn_style .EQ. 1) THEN
           IF (.NOT.is_neutral(is)) THEN
-            CALL PUSHREAL8ARRAY(shivc(icv, 0), r8/8)
+            CALL PUSHREAL8(shivc(icv, 0), r8/8)
             shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
 &             )*t0
-            CALL PUSHREAL8ARRAY(shivc(icv, 3), r8/8)
+            CALL PUSHREAL8(shivc(icv, 3), r8/8)
             shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*t0/(ni(&
 &             icv, 0)*ti(icv))
-            CALL PUSHREAL8ARRAY(shiva(icv, 0), r8/8)
+            CALL PUSHREAL8(shiva(icv, 0), r8/8)
             shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
 &             )*t1
-            CALL PUSHREAL8ARRAY(shiva(icv, 3), r8/8)
+            CALL PUSHREAL8(shiva(icv, 3), r8/8)
             shiva(icv, 3) = shiva(icv, 3) - switch%b2sihs__rf2*t1/(ni(&
 &             icv, 0)*ti(icv))
             CALL PUSHCONTROL3B(3)
@@ -790,30 +790,30 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
             CALL PUSHCONTROL3B(2)
           END IF
         ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
-          CALL PUSHREAL8ARRAY(shivc(icv, 0), r8/8)
+          CALL PUSHREAL8(shivc(icv, 0), r8/8)
           shivc(icv, 0) = shivc(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
 &           t0
-          CALL PUSHREAL8ARRAY(shivc(icv, 3), r8/8)
+          CALL PUSHREAL8(shivc(icv, 3), r8/8)
           shivc(icv, 3) = shivc(icv, 3) - switch%b2sihs__rf2*t0/(ni(icv&
 &           , 0)*ti(icv))
-          CALL PUSHREAL8ARRAY(shiva(icv, 0), r8/8)
+          CALL PUSHREAL8(shiva(icv, 0), r8/8)
           shiva(icv, 0) = shiva(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2)*&
 &           t1
-          CALL PUSHREAL8ARRAY(shiva(icv, 3), r8/8)
+          CALL PUSHREAL8(shiva(icv, 3), r8/8)
           shiva(icv, 3) = shiva(icv, 3) - switch%b2sihs__rf2*t1/(ni(icv&
 &           , 0)*ti(icv))
           CALL PUSHCONTROL3B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(shivcn(icv, 0), r8/8)
+          CALL PUSHREAL8(shivcn(icv, 0), r8/8)
           shivcn(icv, 0) = shivcn(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
 &           )*t0
-          CALL PUSHREAL8ARRAY(shivcn(icv, 3), r8/8)
+          CALL PUSHREAL8(shivcn(icv, 3), r8/8)
           shivcn(icv, 3) = shivcn(icv, 3) - switch%b2sihs__rf2*t0/(nn(&
 &           icv)*tn(icv))
-          CALL PUSHREAL8ARRAY(shivan(icv, 0), r8/8)
+          CALL PUSHREAL8(shivan(icv, 0), r8/8)
           shivan(icv, 0) = shivan(icv, 0) + (1.0e0_R8+switch%b2sihs__rf2&
 &           )*t1
-          CALL PUSHREAL8ARRAY(shivan(icv, 3), r8/8)
+          CALL PUSHREAL8(shivan(icv, 3), r8/8)
           shivan(icv, 3) = shivan(icv, 3) - switch%b2sihs__rf2*t1/(nn(&
 &           icv)*tn(icv))
           CALL PUSHCONTROL3B(0)
@@ -868,9 +868,9 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !   ..compute the Coulomb logarithm
     CALL B2TLNL_NODIFF(ncv, switch, switch%icase_ii, te, ti, ne, lnlam)
 !   ..compute zetap and zetae
-    CALL PUSHREAL8ARRAY(t1, r8/8)
+    CALL PUSHREAL8(t1, r8/8)
     t1 = 4.0_R8*pi*eps0/qe/qe
-    CALL PUSHREAL8ARRAY(t0, r8/8)
+    CALL PUSHREAL8(t0, r8/8)
     t0 = 3.0_R8/(4.0_R8*SQRT(2.0_R8*pi))*t1*(t1*ev*SQRT(ev))
     czetap = t0*SQRT(mp)
     czetae = t0*SQRT(me)
@@ -939,27 +939,27 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           CALL PUSHCONTROL1B(1)
         END IF
 !          shefr(iCv,0) = t0
-        CALL PUSHREAL8ARRAY(shefr(icv, 0), r8/8)
+        CALL PUSHREAL8(shefr(icv, 0), r8/8)
         shefr(icv, 0) = max8 + switch%b2sihs__rf3*abs14
         IF (0.0e0_R8 .GT. t0) THEN
-          CALL PUSHREAL8ARRAY(min8, r8/8)
+          CALL PUSHREAL8(min8, r8/8)
           min8 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(min8, r8/8)
+          CALL PUSHREAL8(min8, r8/8)
           min8 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs15, r8/8)
+          CALL PUSHREAL8(abs15, r8/8)
           abs15 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs15, r8/8)
+          CALL PUSHREAL8(abs15, r8/8)
           abs15 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shefr(icv, 3), r8/8)
+        CALL PUSHREAL8(shefr(icv, 3), r8/8)
         shefr(icv, 3) = (min8-switch%b2sihs__rf3*abs15)/(ne(icv)*te(icv)&
 &         )
 !WG_TODO           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
@@ -985,20 +985,20 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !           shifr(iCv,3) = -(1.5e0_R8+switch%b2sihs__rf4)*t0/(ni(iCv,0)*ti(iCv))
         shifr(icv, 0) = max9 + switch%b2sihs__rf4*abs16
         IF (0.0e0_R8 .GT. t0) THEN
-          CALL PUSHREAL8ARRAY(min9, r8/8)
+          CALL PUSHREAL8(min9, r8/8)
           min9 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(min9, r8/8)
+          CALL PUSHREAL8(min9, r8/8)
           min9 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs17, r8/8)
+          CALL PUSHREAL8(abs17, r8/8)
           abs17 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs17, r8/8)
+          CALL PUSHREAL8(abs17, r8/8)
           abs17 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
@@ -1035,7 +1035,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !WG_TODO       b2joule=0.0_R8
 !WG_TODO       b2sihs_joule=0.0_R8
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(wrkf(ifc, 0), r8/8)
+      CALL PUSHREAL8(wrkf(ifc, 0), r8/8)
       wrkf(ifc, 0) = fch(ifc, 0)*ehx(ifc)/((geo%fcs(ifc)*geo%fcqalf(ifc&
 &       , 0)+eps)*(geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)&
 &       )))
@@ -1043,7 +1043,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     CALL INTCELL_FWD(nfc, ncv, mpg, mpg%intcellp, wrkf(:, 0), wrkc)
     IF (switch%istyle_joule_heating .EQ. 0) THEN
       DO ifc=1,nfc
-        CALL PUSHREAL8ARRAY(wrkf(ifc, 1), r8/8)
+        CALL PUSHREAL8(wrkf(ifc, 1), r8/8)
         wrkf(ifc, 1) = fch(ifc, 1)*ehy(ifc)/((geo%fcs(ifc)*geo%fcqalf(&
 &         ifc, 1)+eps)*(geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(&
 &         ifc, 2))))
@@ -1057,7 +1057,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     DO icv=1,mpg%nci
 !srv 26.11.02
       IF (mpg%cvreg(icv) .NE. 0) THEN
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = switch%b2sihs_phm3*geo%cvvol(icv)*wrkc(icv)
         IF (0.0e0_R8 .LT. t0) THEN
           max10 = t0
@@ -1073,27 +1073,27 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           abs18 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shefr(icv, 0), r8/8)
+        CALL PUSHREAL8(shefr(icv, 0), r8/8)
         shefr(icv, 0) = shefr(icv, 0) + max10 + switch%b2sihs__rf3*abs18
         IF (0.0e0_R8 .GT. t0) THEN
-          CALL PUSHREAL8ARRAY(min10, r8/8)
+          CALL PUSHREAL8(min10, r8/8)
           min10 = t0
           CALL PUSHCONTROL1B(1)
         ELSE
-          CALL PUSHREAL8ARRAY(min10, r8/8)
+          CALL PUSHREAL8(min10, r8/8)
           min10 = 0.0e0_R8
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
-          CALL PUSHREAL8ARRAY(abs19, r8/8)
+          CALL PUSHREAL8(abs19, r8/8)
           abs19 = t0
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(abs19, r8/8)
+          CALL PUSHREAL8(abs19, r8/8)
           abs19 = -t0
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(shefr(icv, 3), r8/8)
+        CALL PUSHREAL8(shefr(icv, 3), r8/8)
         shefr(icv, 3) = shefr(icv, 3) + (min10-switch%b2sihs__rf3*abs19)&
 &         /(ne(icv)*te(icv))
 !WG_TODO          b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
@@ -1127,20 +1127,20 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 !      ..contribution from friction between charged species in case of small impurity amount;
 !       in case of arbitrary impurity amount see above for b2sigp_style.eq.2
 !srv 01.07.09 11.01.12
-          CALL PUSHREAL8ARRAY(coef, r8/8)
+          CALL PUSHREAL8(coef, r8/8)
           coef = switch%b2sihs_phm4/ctaup*mp*SQRT(am(isb)*am(is)/(am(isb&
 &           )+am(is)))
           DO icv=1,mpg%nci
 !srv 11.01.12
 !srv 22.07.05
-            CALL PUSHREAL8ARRAY(t0, r8/8)
+            CALL PUSHREAL8(t0, r8/8)
             t0 = rz2(icv, isb)*rz2(icv, is)*(coef*lnlam(icv)/4.0_R8)*(&
 &             1.0_R8-switch%boris)*na(icv, is)*na(icv, isb)*vti32(icv)*(&
 &             ua(icv, is)-ua(icv, isb))**2
-            CALL PUSHREAL8ARRAY(shifr(icv, 0), r8/8)
+            CALL PUSHREAL8(shifr(icv, 0), r8/8)
             shifr(icv, 0) = shifr(icv, 0) + (2.5e0_R8+switch%b2sihs__rf4&
 &             )*t0
-            CALL PUSHREAL8ARRAY(shifr(icv, 3), r8/8)
+            CALL PUSHREAL8(shifr(icv, 3), r8/8)
             shifr(icv, 3) = shifr(icv, 3) - (1.5e0_R8+switch%b2sihs__rf4&
 &             )*t0/(ni(icv, 0)*ti(icv))
           END DO
@@ -1265,7 +1265,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
           DO icv=mpg%nci,1,-1
-            CALL POPREAL8ARRAY(shifr(icv, 3), r8/8)
+            CALL POPREAL8(shifr(icv, 3), r8/8)
             temp7 = ni(icv, 0)*ti(icv)
             tempb10 = -((switch%b2sihs__rf4+1.5e0_R8)*shifrb(icv, 3)/&
 &             temp7)
@@ -1273,8 +1273,8 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
             tempb9 = -(t0*tempb10/temp7)
             nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb9
             tib(icv) = tib(icv) + ni(icv, 0)*tempb9
-            CALL POPREAL8ARRAY(shifr(icv, 0), r8/8)
-            CALL POPREAL8ARRAY(t0, r8/8)
+            CALL POPREAL8(shifr(icv, 0), r8/8)
+            CALL POPREAL8(t0, r8/8)
             temp0 = rz2(icv, is)*na(icv, is)
             temp = rz2(icv, isb)*vti32(icv)
             temp4 = ua(icv, is) - ua(icv, isb)
@@ -1294,7 +1294,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
             lnlamb(icv) = lnlamb(icv) + na(icv, isb)*tempb7/4.0_R8
             nab(icv, isb) = nab(icv, isb) + temp6*tempb7
           END DO
-          CALL POPREAL8ARRAY(coef, r8/8)
+          CALL POPREAL8(coef, r8/8)
         END IF
       END DO
     END DO
@@ -1310,7 +1310,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     DO icv=mpg%nci,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        CALL POPREAL8ARRAY(shefr(icv, 3), r8/8)
+        CALL POPREAL8(shefr(icv, 3), r8/8)
         temp1 = ne(icv)*te(icv)
         tempb0 = shefrb(icv, 3)/temp1
         min10b = tempb0
@@ -1320,20 +1320,20 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         teb(icv) = teb(icv) + ne(icv)*tempb
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(abs19, r8/8)
+          CALL POPREAL8(abs19, r8/8)
           t0b = abs19b
         ELSE
-          CALL POPREAL8ARRAY(abs19, r8/8)
+          CALL POPREAL8(abs19, r8/8)
           t0b = -abs19b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min10, r8/8)
+          CALL POPREAL8(min10, r8/8)
         ELSE
-          CALL POPREAL8ARRAY(min10, r8/8)
+          CALL POPREAL8(min10, r8/8)
           t0b = t0b + min10b
         END IF
-        CALL POPREAL8ARRAY(shefr(icv, 0), r8/8)
+        CALL POPREAL8(shefr(icv, 0), r8/8)
         max10b = shefrb(icv, 0)
         abs18b = switch%b2sihs__rf3*shefrb(icv, 0)
         CALL POPCONTROL1B(branch)
@@ -1344,7 +1344,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) t0b = t0b + max10b
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         wrkcb(icv) = wrkcb(icv) + switch%b2sihs_phm3*geo%cvvol(icv)*t0b
       END IF
     END DO
@@ -1360,7 +1360,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 &                , 1), wrkc1, wrkc1b)
       ehyb = 0.D0
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(wrkf(ifc, 1), r8/8)
+        CALL POPREAL8(wrkf(ifc, 1), r8/8)
         tempb = wrkfb(ifc, 1)/((geo%fcs(ifc)*geo%fcqalf(ifc, 1)+eps)*geo&
 &         %fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
         wrkfb(ifc, 1) = 0.D0
@@ -1372,7 +1372,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 &              ), wrkc, wrkcb)
     ehxb = 0.D0
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(wrkf(ifc, 0), r8/8)
+      CALL POPREAL8(wrkf(ifc, 0), r8/8)
       tempb = wrkfb(ifc, 0)/((geo%fcs(ifc)*geo%fcqalf(ifc, 0)+eps)*geo%&
 &       fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
       wrkfb(ifc, 0) = 0.D0
@@ -1403,17 +1403,17 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         tib(icv) = tib(icv) + ni(icv, 0)*tempb
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(abs17, r8/8)
+          CALL POPREAL8(abs17, r8/8)
           t0b = abs17b
         ELSE
-          CALL POPREAL8ARRAY(abs17, r8/8)
+          CALL POPREAL8(abs17, r8/8)
           t0b = -abs17b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min9, r8/8)
+          CALL POPREAL8(min9, r8/8)
         ELSE
-          CALL POPREAL8ARRAY(min9, r8/8)
+          CALL POPREAL8(min9, r8/8)
           t0b = t0b + min9b
         END IF
         max9b = shifrb(icv, 0)
@@ -1429,7 +1429,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         IF (branch .NE. 0) t0b = t0b + max9b
         shifrb(icv, 0) = shifrb(icv, 0) - geo%cvvol(icv)*switch%&
 &         b2sihs_phm4*(1.0_R8-switch%boris)*t0b
-        CALL POPREAL8ARRAY(shefr(icv, 3), r8/8)
+        CALL POPREAL8(shefr(icv, 3), r8/8)
         temp1 = ne(icv)*te(icv)
         tempb0 = shefrb(icv, 3)/temp1
         shefrb(icv, 3) = 0.D0
@@ -1440,20 +1440,20 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         teb(icv) = teb(icv) + ne(icv)*tempb
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(abs15, r8/8)
+          CALL POPREAL8(abs15, r8/8)
           t0b = abs15b
         ELSE
-          CALL POPREAL8ARRAY(abs15, r8/8)
+          CALL POPREAL8(abs15, r8/8)
           t0b = -abs15b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min8, r8/8)
+          CALL POPREAL8(min8, r8/8)
         ELSE
-          CALL POPREAL8ARRAY(min8, r8/8)
+          CALL POPREAL8(min8, r8/8)
           t0b = t0b + min8b
         END IF
-        CALL POPREAL8ARRAY(shefr(icv, 0), r8/8)
+        CALL POPREAL8(shefr(icv, 0), r8/8)
         max8b = shefrb(icv, 0)
         abs14b = switch%b2sihs__rf3*shefrb(icv, 0)
         shefrb(icv, 0) = 0.D0
@@ -1575,8 +1575,8 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
       tib = tib + temp2*czetap*zetapb/(ev*2.0*temp3) + tempb2
     END WHERE
     lnlamb = lnlamb - ev*temp2*tempb2
-    CALL POPREAL8ARRAY(t0, r8/8)
-    CALL POPREAL8ARRAY(t1, r8/8)
+    CALL POPREAL8(t0, r8/8)
+    CALL POPREAL8(t1, r8/8)
     CALL B2TLNL_B(ncv, switch, switch%icase_ii, te, teb, ti, tib, ne, &
 &           neb, lnlam, lnlamb)
     zmffb = 0.D0
@@ -1631,82 +1631,82 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(shivan(icv, 3), r8/8)
+            CALL POPREAL8(shivan(icv, 3), r8/8)
             temp1 = nn(icv)*tn(icv)
             tempb1 = -(switch%b2sihs__rf2*shivanb(icv, 3)/temp1)
             t1b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivanb(icv, 0)
             tempb = -(t1*tempb1/temp1)
             nnb(icv) = nnb(icv) + tn(icv)*tempb
             tnb(icv) = tnb(icv) + nn(icv)*tempb
-            CALL POPREAL8ARRAY(shivan(icv, 0), r8/8)
-            CALL POPREAL8ARRAY(shivcn(icv, 3), r8/8)
+            CALL POPREAL8(shivan(icv, 0), r8/8)
+            CALL POPREAL8(shivcn(icv, 3), r8/8)
             temp1 = nn(icv)*tn(icv)
             tempb1 = -(switch%b2sihs__rf2*shivcnb(icv, 3)/temp1)
             t0b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivcnb(icv, 0)
             tempb = -(t0*tempb1/temp1)
             nnb(icv) = nnb(icv) + tn(icv)*tempb
             tnb(icv) = tnb(icv) + nn(icv)*tempb
-            CALL POPREAL8ARRAY(shivcn(icv, 0), r8/8)
+            CALL POPREAL8(shivcn(icv, 0), r8/8)
           ELSE
-            CALL POPREAL8ARRAY(shiva(icv, 3), r8/8)
+            CALL POPREAL8(shiva(icv, 3), r8/8)
             temp1 = ni(icv, 0)*ti(icv)
             tempb1 = -(switch%b2sihs__rf2*shivab(icv, 3)/temp1)
             t1b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivab(icv, 0)
             tempb = -(t1*tempb1/temp1)
             nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
             tib(icv) = tib(icv) + ni(icv, 0)*tempb
-            CALL POPREAL8ARRAY(shiva(icv, 0), r8/8)
-            CALL POPREAL8ARRAY(shivc(icv, 3), r8/8)
+            CALL POPREAL8(shiva(icv, 0), r8/8)
+            CALL POPREAL8(shivc(icv, 3), r8/8)
             temp1 = ni(icv, 0)*ti(icv)
             tempb1 = -(switch%b2sihs__rf2*shivcb(icv, 3)/temp1)
             t0b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivcb(icv, 0)
             tempb = -(t0*tempb1/temp1)
             nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
             tib(icv) = tib(icv) + ni(icv, 0)*tempb
-            CALL POPREAL8ARRAY(shivc(icv, 0), r8/8)
+            CALL POPREAL8(shivc(icv, 0), r8/8)
           END IF
         ELSE IF (branch .EQ. 2) THEN
           t0b = 0.D0
           t1b = 0.D0
         ELSE IF (branch .EQ. 3) THEN
-          CALL POPREAL8ARRAY(shiva(icv, 3), r8/8)
+          CALL POPREAL8(shiva(icv, 3), r8/8)
           temp1 = ni(icv, 0)*ti(icv)
           tempb1 = -(switch%b2sihs__rf2*shivab(icv, 3)/temp1)
           t1b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivab(icv, 0)
           tempb = -(t1*tempb1/temp1)
           nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
           tib(icv) = tib(icv) + ni(icv, 0)*tempb
-          CALL POPREAL8ARRAY(shiva(icv, 0), r8/8)
-          CALL POPREAL8ARRAY(shivc(icv, 3), r8/8)
+          CALL POPREAL8(shiva(icv, 0), r8/8)
+          CALL POPREAL8(shivc(icv, 3), r8/8)
           temp1 = ni(icv, 0)*ti(icv)
           tempb1 = -(switch%b2sihs__rf2*shivcb(icv, 3)/temp1)
           t0b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivcb(icv, 0)
           tempb = -(t0*tempb1/temp1)
           nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
           tib(icv) = tib(icv) + ni(icv, 0)*tempb
-          CALL POPREAL8ARRAY(shivc(icv, 0), r8/8)
+          CALL POPREAL8(shivc(icv, 0), r8/8)
         ELSE
-          CALL POPREAL8ARRAY(shiva(icv, 3), r8/8)
+          CALL POPREAL8(shiva(icv, 3), r8/8)
           temp1 = ni(icv, 0)*ti(icv)
           tempb1 = -(switch%b2sihs__rf2*shivab(icv, 3)/temp1)
           t1b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivab(icv, 0)
           tempb = -(t1*tempb1/temp1)
           nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
           tib(icv) = tib(icv) + ni(icv, 0)*tempb
-          CALL POPREAL8ARRAY(shiva(icv, 0), r8/8)
-          CALL POPREAL8ARRAY(shivc(icv, 3), r8/8)
+          CALL POPREAL8(shiva(icv, 0), r8/8)
+          CALL POPREAL8(shivc(icv, 3), r8/8)
           temp1 = ni(icv, 0)*ti(icv)
           tempb1 = -(switch%b2sihs__rf2*shivcb(icv, 3)/temp1)
           t0b = tempb1 + (switch%b2sihs__rf2+1.0e0_R8)*shivcb(icv, 0)
           tempb = -(t0*tempb1/temp1)
           nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
           tib(icv) = tib(icv) + ni(icv, 0)*tempb
-          CALL POPREAL8ARRAY(shivc(icv, 0), r8/8)
+          CALL POPREAL8(shivc(icv, 0), r8/8)
         END IF
-        CALL POPREAL8ARRAY(t1, r8/8)
+        CALL POPREAL8(t1, r8/8)
         viscb(icv, 1) = viscb(icv, 1) + switch%b2sihs_phm8*(1.0_R8-&
 &         switch%boris)*t1b
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         viscb(icv, 0) = viscb(icv, 0) + switch%b2sihs_phm2*(1.0_R8-&
 &         switch%boris)*t0b
       END DO
@@ -1752,7 +1752,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
       DO icv=mpg%nci,1,-1
-        CALL POPREAL8ARRAY(shidd(icv, 3), r8/8)
+        CALL POPREAL8(shidd(icv, 3), r8/8)
         min7b = shiddb(icv, 3)
         abs13b = -(switch%b2sihs__rf1*shiddb(icv, 3))
         CALL POPCONTROL1B(branch)
@@ -1763,7 +1763,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) t0b = t0b + min7b
-        CALL POPREAL8ARRAY(shidd(icv, 0), r8/8)
+        CALL POPREAL8(shidd(icv, 0), r8/8)
         tempb0 = ni(icv, 0)*ti(icv)*shiddb(icv, 0)
         tempb = (max7+switch%b2sihs__rf1*abs12)*shiddb(icv, 0)
         nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
@@ -1772,17 +1772,17 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         abs12b = switch%b2sihs__rf1*tempb0
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(abs12, r8/8)
+          CALL POPREAL8(abs12, r8/8)
           t0b = t0b + abs12b
         ELSE
-          CALL POPREAL8ARRAY(abs12, r8/8)
+          CALL POPREAL8(abs12, r8/8)
           t0b = t0b - abs12b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(max7, r8/8)
+          CALL POPREAL8(max7, r8/8)
         ELSE
-          CALL POPREAL8ARRAY(max7, r8/8)
+          CALL POPREAL8(max7, r8/8)
           t0b = t0b + max7b
         END IF
         temp0 = wrkc(icv)/ni(icv, 0)
@@ -1791,7 +1791,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         tempb1 = na(icv, is)*tempb/ni(icv, 0)
         wrkcb(icv) = wrkcb(icv) + tempb1
         nib(icv, 0) = nib(icv, 0) - temp0*tempb1
-        CALL POPREAL8ARRAY(fac_exb_c, r8/8)
+        CALL POPREAL8(fac_exb_c, r8/8)
       END DO
     END IF
   END DO
@@ -1799,7 +1799,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
   sheddb = 0.D0
   CALL B2SAXPY_BWD(arg1, 1.0e0_R8, shedd, sheddb, 1, she0, she0b, 1)
   DO icv=mpg%nci,1,-1
-    CALL POPREAL8ARRAY(shedd(icv, 3), r8/8)
+    CALL POPREAL8(shedd(icv, 3), r8/8)
     min6b = sheddb(icv, 3)
     abs11b = -(switch%b2sihs__rf0*sheddb(icv, 3))
     CALL POPCONTROL1B(branch)
@@ -1810,7 +1810,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) t0b = t0b + min6b
-    CALL POPREAL8ARRAY(shedd(icv, 0), r8/8)
+    CALL POPREAL8(shedd(icv, 0), r8/8)
     tempb0 = ne(icv)*te(icv)*sheddb(icv, 0)
     tempb = (max6+switch%b2sihs__rf0*abs10)*sheddb(icv, 0)
     neb(icv) = neb(icv) + te(icv)*tempb
@@ -1819,21 +1819,21 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     abs10b = switch%b2sihs__rf0*tempb0
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(abs10, r8/8)
+      CALL POPREAL8(abs10, r8/8)
       t0b = t0b + abs10b
     ELSE
-      CALL POPREAL8ARRAY(abs10, r8/8)
+      CALL POPREAL8(abs10, r8/8)
       t0b = t0b - abs10b
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(max6, r8/8)
+      CALL POPREAL8(max6, r8/8)
     ELSE
-      CALL POPREAL8ARRAY(max6, r8/8)
+      CALL POPREAL8(max6, r8/8)
       t0b = t0b + max6b
     END IF
     wrkcb(icv) = wrkcb(icv) + switch%b2sihs_phm5*fac_exb_c*t0b
-    CALL POPREAL8ARRAY(fac_exb_c, r8/8)
+    CALL POPREAL8(fac_exb_c, r8/8)
   END DO
   dpocb = 0.D0
   CALL POPREAL8ARRAY(wrkc, r8*ncv/8)
@@ -1880,27 +1880,27 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           abs8b = switch%b2sihs__rf1*tempb0
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs8, r8/8)
+            CALL POPREAL8(abs8, r8/8)
             t0b = t0b + abs8b
           ELSE
-            CALL POPREAL8ARRAY(abs8, r8/8)
+            CALL POPREAL8(abs8, r8/8)
             t0b = t0b - abs8b
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(max5, r8/8)
+            CALL POPREAL8(max5, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(max5, r8/8)
+            CALL POPREAL8(max5, r8/8)
             t0b = t0b + max5b
           END IF
-          CALL POPREAL8ARRAY(t0, r8/8)
+          CALL POPREAL8(t0, r8/8)
           temp1 = t0/nn(icv)
           nib(icv, 0) = nib(icv, 0) + temp1*t0b
           tempb = ni(icv, 0)*t0b/nn(icv)
           t0b = tempb
           nnb(icv) = nnb(icv) - temp1*tempb
         ELSE
-          CALL POPREAL8ARRAY(shidu(icv, 3), r8/8)
+          CALL POPREAL8(shidu(icv, 3), r8/8)
           min4b = shidub(icv, 3)
           abs7b = -(switch%b2sihs__rf1*shidub(icv, 3))
           CALL POPCONTROL1B(branch)
@@ -1911,7 +1911,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) t0b = t0b + min4b
-          CALL POPREAL8ARRAY(shidu(icv, 0), r8/8)
+          CALL POPREAL8(shidu(icv, 0), r8/8)
           tempb0 = ni(icv, 0)*ti(icv)*shidub(icv, 0)
           tempb = (max4+switch%b2sihs__rf1*abs6)*shidub(icv, 0)
           nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
@@ -1920,24 +1920,24 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
           abs6b = switch%b2sihs__rf1*tempb0
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(abs6, r8/8)
+            CALL POPREAL8(abs6, r8/8)
             t0b = t0b + abs6b
           ELSE
-            CALL POPREAL8ARRAY(abs6, r8/8)
+            CALL POPREAL8(abs6, r8/8)
             t0b = t0b - abs6b
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL8ARRAY(max4, r8/8)
+            CALL POPREAL8(max4, r8/8)
           ELSE
-            CALL POPREAL8ARRAY(max4, r8/8)
+            CALL POPREAL8(max4, r8/8)
             t0b = t0b + max4b
           END IF
         END IF
       ELSE IF (branch .EQ. 2) THEN
         t0b = 0.D0
       ELSE IF (branch .EQ. 3) THEN
-        CALL POPREAL8ARRAY(shidu(icv, 3), r8/8)
+        CALL POPREAL8(shidu(icv, 3), r8/8)
         min3b = shidub(icv, 3)
         abs5b = -(switch%b2sihs__rf1*shidub(icv, 3))
         CALL POPCONTROL1B(branch)
@@ -1948,7 +1948,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) t0b = t0b + min3b
-        CALL POPREAL8ARRAY(shidu(icv, 0), r8/8)
+        CALL POPREAL8(shidu(icv, 0), r8/8)
         tempb0 = ni(icv, 0)*ti(icv)*shidub(icv, 0)
         tempb = (max3+switch%b2sihs__rf1*abs4)*shidub(icv, 0)
         nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
@@ -1957,21 +1957,21 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         abs4b = switch%b2sihs__rf1*tempb0
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(abs4, r8/8)
+          CALL POPREAL8(abs4, r8/8)
           t0b = t0b + abs4b
         ELSE
-          CALL POPREAL8ARRAY(abs4, r8/8)
+          CALL POPREAL8(abs4, r8/8)
           t0b = t0b - abs4b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(max3, r8/8)
+          CALL POPREAL8(max3, r8/8)
         ELSE
-          CALL POPREAL8ARRAY(max3, r8/8)
+          CALL POPREAL8(max3, r8/8)
           t0b = t0b + max3b
         END IF
       ELSE
-        CALL POPREAL8ARRAY(shidu(icv, 3), r8/8)
+        CALL POPREAL8(shidu(icv, 3), r8/8)
         min2b = shidub(icv, 3)
         abs3b = -(switch%b2sihs__rf1*shidub(icv, 3))
         CALL POPCONTROL1B(branch)
@@ -1982,7 +1982,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) t0b = t0b + min2b
-        CALL POPREAL8ARRAY(shidu(icv, 0), r8/8)
+        CALL POPREAL8(shidu(icv, 0), r8/8)
         tempb0 = ni(icv, 0)*ti(icv)*shidub(icv, 0)
         tempb = (max2+switch%b2sihs__rf1*abs2)*shidub(icv, 0)
         nib(icv, 0) = nib(icv, 0) + ti(icv)*tempb
@@ -1991,17 +1991,17 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
         abs2b = switch%b2sihs__rf1*tempb0
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(abs2, r8/8)
+          CALL POPREAL8(abs2, r8/8)
           t0b = t0b + abs2b
         ELSE
-          CALL POPREAL8ARRAY(abs2, r8/8)
+          CALL POPREAL8(abs2, r8/8)
           t0b = t0b - abs2b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(max2, r8/8)
+          CALL POPREAL8(max2, r8/8)
         ELSE
-          CALL POPREAL8ARRAY(max2, r8/8)
+          CALL POPREAL8(max2, r8/8)
           t0b = t0b + max2b
         END IF
       END IF
@@ -2030,7 +2030,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
   CALL B2SAXPY_BWD(arg1, 1.0e0_R8, shedu, shedub, 1, she0, she0b, 1)
   wrkcb = 0.D0
   DO icv=mpg%nci,1,-1
-    CALL POPREAL8ARRAY(shedu(icv, 3), r8/8)
+    CALL POPREAL8(shedu(icv, 3), r8/8)
     min1b = shedub(icv, 3)
     abs1b = -(switch%b2sihs__rf0*shedub(icv, 3))
     CALL POPCONTROL1B(branch)
@@ -2041,7 +2041,7 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) t0b = t0b + min1b
-    CALL POPREAL8ARRAY(shedu(icv, 0), r8/8)
+    CALL POPREAL8(shedu(icv, 0), r8/8)
     tempb0 = ne(icv)*te(icv)*shedub(icv, 0)
     tempb = (max1+switch%b2sihs__rf0*abs0)*shedub(icv, 0)
     neb(icv) = neb(icv) + te(icv)*tempb
@@ -2050,17 +2050,17 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
     abs0b = switch%b2sihs__rf0*tempb0
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(abs0, r8/8)
+      CALL POPREAL8(abs0, r8/8)
       t0b = t0b + abs0b
     ELSE
-      CALL POPREAL8ARRAY(abs0, r8/8)
+      CALL POPREAL8(abs0, r8/8)
       t0b = t0b - abs0b
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(max1, r8/8)
+      CALL POPREAL8(max1, r8/8)
     ELSE
-      CALL POPREAL8ARRAY(max1, r8/8)
+      CALL POPREAL8(max1, r8/8)
       t0b = t0b + max1b
     END IF
     wrkcb(icv) = wrkcb(icv) - switch%b2sihs_phm0*(1.0_R8-switch%boris)*&

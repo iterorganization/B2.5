@@ -662,8 +662,6 @@ FUNCTION QRAD_NODIFF(ibnd, ts, top_layer) RESULT (qrad)
 !     03/06/19 xpb : source CODATA 2018 (http://www.nist.gov/)
 !     -------------------------------------------------------------------------
 !
-  REAL(kind=r8) :: const_h
-  PARAMETER (const_h=6.62607015e-34_R8)
   REAL(kind=r8) :: ts, tw, sbconst, qrad
   LOGICAL :: top_layer
   PARAMETER (sbconst=pi**5*(4.0_R8/15.0_R8)*(kbolt/const_h)**3*kbolt/c**&

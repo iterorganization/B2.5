@@ -324,7 +324,7 @@ CONTAINS
       ALLOCATE(m%ftreg(m%nft))
       ALLOCATE(md0%cvonclosedsurface(nbdirsmax, m%ncv))
       DO nd=1,nbdirsmax
-        md0%cvonclosedsurface(nd, 1:m%ncv) = 0.D0
+        md0%cvonclosedsurface(nd, 1:m%ncv) = .true.
       END DO
       ALLOCATE(m%cvonclosedsurface(m%ncv))
 !      allocate (m%intfaceV(m%nFc,2))
@@ -1113,7 +1113,7 @@ CONTAINS
       ALLOCATE(m%cfreg(m%mxncf))
       ALLOCATE(md0%cfoncv(nbdirsmax, m%ncf))
       DO nd=1,nbdirsmax
-        md0%cfoncv(nd, 1:m%ncf) = 0.D0
+        md0%cfoncv(nd, 1:m%ncf) = .true.
       END DO
       ALLOCATE(m%cfoncv(m%ncf))
       ALLOCATE(md0%cffcor(nbdirsmax, m%mxncf))

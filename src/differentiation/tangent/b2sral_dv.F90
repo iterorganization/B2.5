@@ -237,7 +237,6 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
 & dummyzerodiffd
   INTEGER :: nd
-  TYPE(B2PLASMASNAPSHOT_DIFFV) :: dummyzerodiffd0
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd1
   INTEGER :: nbdirs
 !   ..initialisation
@@ -410,29 +409,29 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !srv 28.07.08 03.11.17
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
-    dummyzerodiffd0%na = 0.0_R8
-    dummyzerodiffd0%ua = 0.0_R8
-    dummyzerodiffd0%po = 0.0_R8
-    dummyzerodiffd0%te = 0.0_R8
-    dummyzerodiffd0%ti = 0.0_R8
-    dummyzerodiffd0%tn = 0.0_R8
-    dummyzerodiffd0%kt = 0.0_R8
-    dummyzerodiffd0%zt = 0.0_R8
-    dummyzerodiffd0%ne = 0.0_R8
-    dummyzerodiffd0%ni = 0.0_R8
-    dummyzerodiffd0%nn = 0.0_R8
-    dummyzerodiffd0%fch = 0.0_R8
-    dummyzerodiffd0%fna = 0.0_R8
-    dummyzerodiffd0%fhi = 0.0_R8
-    dummyzerodiffd0%fhe = 0.0_R8
-    dummyzerodiffd0%fhn = 0.0_R8
-    dummyzerodiffd0%fkt = 0.0_R8
-    dummyzerodiffd0%fzt = 0.0_R8
-    dummyzerodiffd0%kinrgy = 0.0_R8
+    std%psnl%na = 0.0_R8
+    std%psnl%ua = 0.0_R8
+    std%psnl%po = 0.0_R8
+    std%psnl%te = 0.0_R8
+    std%psnl%ti = 0.0_R8
+    std%psnl%tn = 0.0_R8
+    std%psnl%kt = 0.0_R8
+    std%psnl%zt = 0.0_R8
+    std%psnl%ne = 0.0_R8
+    std%psnl%ni = 0.0_R8
+    std%psnl%nn = 0.0_R8
+    std%psnl%fch = 0.0_R8
+    std%psnl%fna = 0.0_R8
+    std%psnl%fhi = 0.0_R8
+    std%psnl%fhe = 0.0_R8
+    std%psnl%fhn = 0.0_R8
+    std%psnl%fkt = 0.0_R8
+    std%psnl%fzt = 0.0_R8
+    std%psnl%kinrgy = 0.0_R8
     CALL B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd, &
 &            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
 &            std%co, st%rt, std%rt, st%rtw, st_ext, st_extd, st%srw, std&
-&            %srw, st%psnc, std%psnc, st%psnl, dummyzerodiffd0, &
+&            %srw, st%psnc, std%psnc, st%psnl, std%psnl, &
 &            wrong_flow, main_call, nbdirs)
     DO nd=1,nbdirs
 !   .. store contributions from BCs

@@ -65,7 +65,6 @@ SUBROUTINE FIX_USER(data, chdr, nhdr, mrks, nmrk, first)
   INTRINSIC INDEX
   INTRINSIC LEN_TRIM
   INTRINSIC TRIM
-  INTRINSIC MAX
   DATA lv /0/
 !=======================================================================
 !*** prior to 20060402: fix the neutral pressure and pumping speed at

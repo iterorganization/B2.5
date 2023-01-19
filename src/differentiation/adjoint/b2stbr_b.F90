@@ -1999,7 +1999,7 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     CALL IPGETI('b2stbr_reflection_on', reflection_on)
     CALL IPGETI('b2stbr_sputter_energy_on', sputter_energy_on)
     IF (switch%use_eirene .EQ. 0) THEN
-      CALL PUSHREAL8ARRAY(switch%neutral_sources_rescale, r8/8)
+      CALL PUSHREAL8(switch%neutral_sources_rescale, r8/8)
       switch%neutral_sources_rescale = 1.0_R8
       CALL PUSHCONTROL2B(0)
     ELSE
@@ -2053,16 +2053,16 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     IF (switch%b2stbr_neutrals_namelist .EQ. 1 .OR. switch%use_eirene &
 &       .NE. 0) THEN
       IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
-      CALL PUSHREAL8ARRAY(int0r, r8/8)
-      CALL PUSHREAL8ARRAY(int0l, r8/8)
-      CALL PUSHREAL8ARRAY(int3r, r8/8)
-      CALL PUSHREAL8ARRAY(int3l, r8/8)
-      CALL PUSHREAL8ARRAY(int6r, r8/8)
-      CALL PUSHREAL8ARRAY(int6l, r8/8)
-      CALL PUSHREAL8ARRAY(int2r, r8/8)
-      CALL PUSHREAL8ARRAY(int2l, r8/8)
-      CALL PUSHREAL8ARRAY(int5r, r8/8)
-      CALL PUSHREAL8ARRAY(int5l, r8/8)
+      CALL PUSHREAL8(int0r, r8/8)
+      CALL PUSHREAL8(int0l, r8/8)
+      CALL PUSHREAL8(int3r, r8/8)
+      CALL PUSHREAL8(int3l, r8/8)
+      CALL PUSHREAL8(int6r, r8/8)
+      CALL PUSHREAL8(int6l, r8/8)
+      CALL PUSHREAL8(int2r, r8/8)
+      CALL PUSHREAL8(int2l, r8/8)
+      CALL PUSHREAL8(int5r, r8/8)
+      CALL PUSHREAL8(int5l, r8/8)
       IF (ALLOCATED(fna_mol)) THEN
         CALL PUSHREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)*SIZE(fna_mol, 2&
 &                     )/8)
@@ -2070,17 +2070,17 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
       ELSE
         CALL PUSHCONTROL1B(0)
       END IF
-      CALL PUSHREAL8ARRAY(int1r, r8/8)
-      CALL PUSHREAL8ARRAY(int1l, r8/8)
-      CALL PUSHREAL8ARRAY(int4r, r8/8)
-      CALL PUSHREAL8ARRAY(int4l, r8/8)
+      CALL PUSHREAL8(int1r, r8/8)
+      CALL PUSHREAL8(int1l, r8/8)
+      CALL PUSHREAL8(int4r, r8/8)
+      CALL PUSHREAL8(int4l, r8/8)
       CALL PUSHINTEGER4ARRAY(maxw_eff, nstraid)
       CALL PUSHINTEGER4(ncall_b2stbr_phys)
       CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8ARRAY(kin_frac_hyb, r8*mpg%nfc/8)
       CALL PUSHREAL8ARRAY(fluid_frac_hyb, r8*nfc/8)
       CALL PUSHREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
@@ -2301,30 +2301,30 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
     CALL POPREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
     CALL POPREAL8ARRAY(fluid_frac_hyb, r8*nfc/8)
     CALL POPREAL8ARRAY(kin_frac_hyb, r8*mpg%nfc/8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPINTEGER4(ncall_b2stbr_phys)
     CALL POPINTEGER4ARRAY(maxw_eff, nstraid)
-    CALL POPREAL8ARRAY(int4l, r8/8)
-    CALL POPREAL8ARRAY(int4r, r8/8)
-    CALL POPREAL8ARRAY(int1l, r8/8)
-    CALL POPREAL8ARRAY(int1r, r8/8)
+    CALL POPREAL8(int4l, r8/8)
+    CALL POPREAL8(int4r, r8/8)
+    CALL POPREAL8(int1l, r8/8)
+    CALL POPREAL8(int1r, r8/8)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)*&
 &                                   SIZE(fna_mol, 2)/8)
-    CALL POPREAL8ARRAY(int5l, r8/8)
-    CALL POPREAL8ARRAY(int5r, r8/8)
-    CALL POPREAL8ARRAY(int2l, r8/8)
-    CALL POPREAL8ARRAY(int2r, r8/8)
-    CALL POPREAL8ARRAY(int6l, r8/8)
-    CALL POPREAL8ARRAY(int6r, r8/8)
-    CALL POPREAL8ARRAY(int3l, r8/8)
-    CALL POPREAL8ARRAY(int3r, r8/8)
-    CALL POPREAL8ARRAY(int0l, r8/8)
-    CALL POPREAL8ARRAY(int0r, r8/8)
+    CALL POPREAL8(int5l, r8/8)
+    CALL POPREAL8(int5r, r8/8)
+    CALL POPREAL8(int2l, r8/8)
+    CALL POPREAL8(int2r, r8/8)
+    CALL POPREAL8(int6l, r8/8)
+    CALL POPREAL8(int6r, r8/8)
+    CALL POPREAL8(int3l, r8/8)
+    CALL POPREAL8(int3r, r8/8)
+    CALL POPREAL8(int0l, r8/8)
+    CALL POPREAL8(int0r, r8/8)
     CALL B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 &                switch, geo, geob, mpg, mpgb, st%pl, stb%pl, st%dv, stb&
 &                %dv, st%co, st%rt, stb%rt, st%rtw, st_ext, st%srw, stb%&
@@ -2369,7 +2369,7 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
   arg1 = ncv*2*ns
   CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb, st%srw%sna0, stb%srw%sna0, 1)
   CALL POPCONTROL2B(branch)
-  IF (branch .EQ. 0) CALL POPREAL8ARRAY(switch%neutral_sources_rescale, &
+  IF (branch .EQ. 0) CALL POPREAL8(switch%neutral_sources_rescale, &
 &                                 r8/8)
 END SUBROUTINE B2STBR_B
 

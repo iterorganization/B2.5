@@ -70,9 +70,12 @@ MODULE B2MOD_WALL_DIFF
 & res_sputtering(nwall, 0:42-1+6+3+3), thermal_evaporation(nwall, 0:42-1&
 & +6+3+3), backscattering(nwall, 0:42-1+6+3+3), backscattering_energy(&
 & nwall, 0:42-1+6+3+3)
-  REAL(kind=r8), SAVE :: depositionb(nwall, ntrack),depositionb0(nwall, ntrack),plate_areab0(nwall), &
-& monolayer_depositionb(nwall, ntrack),monolayer_depositionb0(nwall, ntrack), erosionb(nwall, ntrack), &
-& monolayer_erosionb(nwall, ntrack),monolayer_erosionb0(nwall, ntrack),erosionb0(nwall, ntrack), plate_timeb(nwall),plate_timeb0(nwall), plate_areab(&
+  REAL(kind=r8), SAVE :: depositionb0(nwall, ntrack), &
+  monolayer_depositionb0(nwall, ntrack), erosionb0(nwall, ntrack), &
+  & monolayer_erosionb0(nwall, ntrack), plate_timeb0(nwall), plate_areab0(nwall)
+  REAL(kind=r8), SAVE :: depositionb(nwall, ntrack), &
+& monolayer_depositionb(nwall, ntrack), erosionb(nwall, ntrack), &
+& monolayer_erosionb(nwall, ntrack), plate_timeb(nwall), plate_areab(&
 & nwall)
 !
   CHARACTER(len=6), SAVE :: surface_material_name(nwall)

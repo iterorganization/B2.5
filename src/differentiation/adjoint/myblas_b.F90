@@ -320,7 +320,7 @@ SUBROUTINE B2SCOPY_FWD(n, sx, sxb, incx, sy, incy)
     CALL PUSHCONTROL2B(0)
   ELSE IF (incx .EQ. 1 .AND. incy .EQ. 1) THEN
     DO i=0,n-1
-      CALL PUSHREAL8ARRAY(sy(i), r8/8)
+      CALL PUSHREAL8(sy(i), r8/8)
       sy(i) = sx(i)
     END DO
     CALL PUSHCONTROL2B(1)
@@ -328,7 +328,7 @@ SUBROUTINE B2SCOPY_FWD(n, sx, sxb, incx, sy, incy)
     ix = IBASE(n, incx)
     iy = IBASE(n, incy)
     DO i=0,n-1
-      CALL PUSHREAL8ARRAY(sy(iy), r8/8)
+      CALL PUSHREAL8(sy(iy), r8/8)
       sy(iy) = sx(ix)
       CALL PUSHINTEGER4(ix)
       ix = ix + incx
@@ -357,7 +357,7 @@ SUBROUTINE B2SCOPY_BWD(n, sx, sxb, incx, sy, syb, incy)
   IF (branch .NE. 0) THEN
     IF (branch .EQ. 1) THEN
       DO i=n-1,0,-1
-        CALL POPREAL8ARRAY(sy(i), r8/8)
+        CALL POPREAL8(sy(i), r8/8)
         sxb(i) = sxb(i) + syb(i)
         syb(i) = 0.D0
       END DO
@@ -365,7 +365,7 @@ SUBROUTINE B2SCOPY_BWD(n, sx, sxb, incx, sy, syb, incy)
       DO i=n-1,0,-1
         CALL POPINTEGER4(iy)
         CALL POPINTEGER4(ix)
-        CALL POPREAL8ARRAY(sy(iy), r8/8)
+        CALL POPREAL8(sy(iy), r8/8)
         sxb(ix) = sxb(ix) + syb(iy)
         syb(iy) = 0.D0
       END DO
@@ -434,7 +434,7 @@ SUBROUTINE B2SAXPY_FWD(n, sa, sx, incx, sy, syb, incy)
     CALL PUSHCONTROL2B(1)
   ELSE IF (incx .EQ. 1 .AND. incy .EQ. 1) THEN
     DO i=0,n-1
-      CALL PUSHREAL8ARRAY(sy(i), r8/8)
+      CALL PUSHREAL8(sy(i), r8/8)
       sy(i) = sy(i) + sa*sx(i)
     END DO
     CALL PUSHCONTROL2B(2)
@@ -442,7 +442,7 @@ SUBROUTINE B2SAXPY_FWD(n, sa, sx, incx, sy, syb, incy)
     ix = IBASE(n, incx)
     iy = IBASE(n, incy)
     DO i=0,n-1
-      CALL PUSHREAL8ARRAY(sy(iy), r8/8)
+      CALL PUSHREAL8(sy(iy), r8/8)
       sy(iy) = sy(iy) + sa*sx(ix)
       CALL PUSHINTEGER4(ix)
       ix = ix + incx
@@ -471,14 +471,14 @@ SUBROUTINE B2SAXPY_BWD(n, sa, sx, sxb, incx, sy, syb, incy)
   IF (branch .GE. 2) THEN
     IF (branch .EQ. 2) THEN
       DO i=n-1,0,-1
-        CALL POPREAL8ARRAY(sy(i), r8/8)
+        CALL POPREAL8(sy(i), r8/8)
         sxb(i) = sxb(i) + sa*syb(i)
       END DO
     ELSE
       DO i=n-1,0,-1
         CALL POPINTEGER4(iy)
         CALL POPINTEGER4(ix)
-        CALL POPREAL8ARRAY(sy(iy), r8/8)
+        CALL POPREAL8(sy(iy), r8/8)
         sxb(ix) = sxb(ix) + sa*syb(iy)
       END DO
     END IF

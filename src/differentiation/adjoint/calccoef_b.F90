@@ -89,16 +89,16 @@ SUBROUTINE CALCCOEF_FWD(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0, &
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)
 !    ..convective contributions to flob0, conb0
-      CALL PUSHREAL8ARRAY(flo0(ifc, 0), r8/8)
+      CALL PUSHREAL8(flo0(ifc, 0), r8/8)
       flo0(ifc, 0) = flo(ifc, 0) + flo(ifc, 1)
-      CALL PUSHREAL8ARRAY(flo0(ifc, 1), r8/8)
+      CALL PUSHREAL8(flo0(ifc, 1), r8/8)
       flo0(ifc, 1) = 0.0_R8
 !        flo0(iFc,0) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !        flo0(iFc,1) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !    ..conductive contributions to flob0, conb0
-      CALL PUSHREAL8ARRAY(con0(ifc, 0), r8/8)
+      CALL PUSHREAL8(con0(ifc, 0), r8/8)
       con0(ifc, 0) = con(ifc, 0)*t00 + con(ifc, 1)*t10
-      CALL PUSHREAL8ARRAY(con0(ifc, 1), r8/8)
+      CALL PUSHREAL8(con0(ifc, 1), r8/8)
       con0(ifc, 1) = con(ifc, 0)*t01 + con(ifc, 1)*t11
     END DO
     CALL PUSHCONTROL2B(0)
@@ -116,9 +116,9 @@ SUBROUTINE CALCCOEF_FWD(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0, &
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)
 !    ..convective contributions to flob0, conb0
-      CALL PUSHREAL8ARRAY(flo0(ifc, 0), r8/8)
+      CALL PUSHREAL8(flo0(ifc, 0), r8/8)
       flo0(ifc, 0) = flo(ifc, 0) + flo(ifc, 1)
-      CALL PUSHREAL8ARRAY(flo0(ifc, 1), r8/8)
+      CALL PUSHREAL8(flo0(ifc, 1), r8/8)
       flo0(ifc, 1) = 0.0_R8
       IF (flo(ifc, 0) .GE. 0.) THEN
         abs0 = flo(ifc, 0)
@@ -137,10 +137,10 @@ SUBROUTINE CALCCOEF_FWD(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0, &
 !        flo0(iFc,0) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !        flo0(iFc,1) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !    ..conductive contributions to flob0, conb0
-      CALL PUSHREAL8ARRAY(con0(ifc, 0), r8/8)
+      CALL PUSHREAL8(con0(ifc, 0), r8/8)
       con0(ifc, 0) = con(ifc, 0)*t00 + con(ifc, 1)*t10 + 0.5_R8*(abs0+&
 &       abs4)
-      CALL PUSHREAL8ARRAY(con0(ifc, 1), r8/8)
+      CALL PUSHREAL8(con0(ifc, 1), r8/8)
       con0(ifc, 1) = con(ifc, 0)*t01 + con(ifc, 1)*t11
     END DO
     CALL PUSHCONTROL2B(1)
@@ -173,17 +173,17 @@ SUBROUTINE CALCCOEF_FWD(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0, &
 !    ..compute geometric factors for cell and vertex contributions
 !      to differences of cell faces (consistent with diff_p, diff_r)
 !        t00 = geo%fcQalf(iFc,0)
-      CALL PUSHREAL8ARRAY(t01, r8/8)
+      CALL PUSHREAL8(t01, r8/8)
       t01 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 1)/(geo%fcqalf(ifc, 0)+eps)
 !        t10 = geo%fcQalf(iFc,1) 
-      CALL PUSHREAL8ARRAY(t11, r8/8)
+      CALL PUSHREAL8(t11, r8/8)
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)/(geo%fcqalf(ifc, 1)+eps)
 !    ..convective contributions to flob0, conb0
-      CALL PUSHREAL8ARRAY(flo0(ifc, 0), r8/8)
+      CALL PUSHREAL8(flo0(ifc, 0), r8/8)
       flo0(ifc, 0) = flo(ifc, 0) + flo(ifc, 1)
-      CALL PUSHREAL8ARRAY(flo0(ifc, 1), r8/8)
+      CALL PUSHREAL8(flo0(ifc, 1), r8/8)
       flo0(ifc, 1) = 0.0_R8
       IF (flo(ifc, 0) .GE. 0.) THEN
         abs3 = flo(ifc, 0)
@@ -202,13 +202,13 @@ SUBROUTINE CALCCOEF_FWD(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0, &
 !        flo0(iFc,0) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !        flo0(iFc,1) = 0.5_R8*(flo(iFc,0) + flo(iFc,1))
 !    ..conductive contributions to flob0, conb0
-      CALL PUSHREAL8ARRAY(con0(ifc, 0), r8/8)
+      CALL PUSHREAL8(con0(ifc, 0), r8/8)
       con0(ifc, 0) = t0 + 0.5_R8*abs3 + t1 + 0.5_R8*abs5
-      CALL PUSHREAL8ARRAY(con0(ifc, 1), r8/8)
+      CALL PUSHREAL8(con0(ifc, 1), r8/8)
       con0(ifc, 1) = t0*t01 + t1*t11
     END DO
-    CALL PUSHREAL8ARRAY(t11, r8/8)
-    CALL PUSHREAL8ARRAY(t01, r8/8)
+    CALL PUSHREAL8(t11, r8/8)
+    CALL PUSHREAL8(t01, r8/8)
     CALL PUSHCONTROL2B(2)
   ELSE
     CALL PUSHCONTROL2B(3)
@@ -286,17 +286,17 @@ SUBROUTINE CALCCOEF_BWD(ncv, nfc, nvx, meth, geo, mpg, flo, flob, con, &
 &         fcqbet(ifc, 1)
         t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &         fcqbet(ifc, 0)
-        CALL POPREAL8ARRAY(con0(ifc, 1), r8/8)
+        CALL POPREAL8(con0(ifc, 1), r8/8)
         conb(ifc, 0) = conb(ifc, 0) + t01*con0b(ifc, 1) + t00*con0b(ifc&
 &         , 0)
         conb(ifc, 1) = conb(ifc, 1) + t11*con0b(ifc, 1) + t10*con0b(ifc&
 &         , 0)
         con0b(ifc, 1) = 0.D0
-        CALL POPREAL8ARRAY(con0(ifc, 0), r8/8)
+        CALL POPREAL8(con0(ifc, 0), r8/8)
         con0b(ifc, 0) = 0.D0
-        CALL POPREAL8ARRAY(flo0(ifc, 1), r8/8)
+        CALL POPREAL8(flo0(ifc, 1), r8/8)
         flo0b(ifc, 1) = 0.D0
-        CALL POPREAL8ARRAY(flo0(ifc, 0), r8/8)
+        CALL POPREAL8(flo0(ifc, 0), r8/8)
         flob(ifc, 0) = flob(ifc, 0) + flo0b(ifc, 0)
         flob(ifc, 1) = flob(ifc, 1) + flo0b(ifc, 0)
         flo0b(ifc, 0) = 0.D0
@@ -309,13 +309,13 @@ SUBROUTINE CALCCOEF_BWD(ncv, nfc, nvx, meth, geo, mpg, flo, flob, con, &
 &         fcqbet(ifc, 1)
         t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%&
 &         fcqbet(ifc, 0)
-        CALL POPREAL8ARRAY(con0(ifc, 1), r8/8)
+        CALL POPREAL8(con0(ifc, 1), r8/8)
         conb(ifc, 0) = conb(ifc, 0) + t01*con0b(ifc, 1) + t00*con0b(ifc&
 &         , 0)
         conb(ifc, 1) = conb(ifc, 1) + t11*con0b(ifc, 1) + t10*con0b(ifc&
 &         , 0)
         con0b(ifc, 1) = 0.D0
-        CALL POPREAL8ARRAY(con0(ifc, 0), r8/8)
+        CALL POPREAL8(con0(ifc, 0), r8/8)
         abs0b = 0.5_R8*con0b(ifc, 0)
         abs4b = 0.5_R8*con0b(ifc, 0)
         con0b(ifc, 0) = 0.D0
@@ -331,23 +331,23 @@ SUBROUTINE CALCCOEF_BWD(ncv, nfc, nvx, meth, geo, mpg, flo, flob, con, &
         ELSE
           flob(ifc, 0) = flob(ifc, 0) + abs0b
         END IF
-        CALL POPREAL8ARRAY(flo0(ifc, 1), r8/8)
+        CALL POPREAL8(flo0(ifc, 1), r8/8)
         flo0b(ifc, 1) = 0.D0
-        CALL POPREAL8ARRAY(flo0(ifc, 0), r8/8)
+        CALL POPREAL8(flo0(ifc, 0), r8/8)
         flob(ifc, 0) = flob(ifc, 0) + flo0b(ifc, 0)
         flob(ifc, 1) = flob(ifc, 1) + flo0b(ifc, 0)
         flo0b(ifc, 0) = 0.D0
       END DO
     END IF
   ELSE IF (branch .EQ. 2) THEN
-    CALL POPREAL8ARRAY(t01, r8/8)
-    CALL POPREAL8ARRAY(t11, r8/8)
+    CALL POPREAL8(t01, r8/8)
+    CALL POPREAL8(t11, r8/8)
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(con0(ifc, 1), r8/8)
+      CALL POPREAL8(con0(ifc, 1), r8/8)
       t0b = t01*con0b(ifc, 1) + con0b(ifc, 0)
       t1b = t11*con0b(ifc, 1) + con0b(ifc, 0)
       con0b(ifc, 1) = 0.D0
-      CALL POPREAL8ARRAY(con0(ifc, 0), r8/8)
+      CALL POPREAL8(con0(ifc, 0), r8/8)
       abs3b = 0.5_R8*con0b(ifc, 0)
       abs5b = 0.5_R8*con0b(ifc, 0)
       con0b(ifc, 0) = 0.D0
@@ -363,14 +363,14 @@ SUBROUTINE CALCCOEF_BWD(ncv, nfc, nvx, meth, geo, mpg, flo, flob, con, &
       ELSE
         flob(ifc, 0) = flob(ifc, 0) + abs3b
       END IF
-      CALL POPREAL8ARRAY(flo0(ifc, 1), r8/8)
+      CALL POPREAL8(flo0(ifc, 1), r8/8)
       flo0b(ifc, 1) = 0.D0
-      CALL POPREAL8ARRAY(flo0(ifc, 0), r8/8)
+      CALL POPREAL8(flo0(ifc, 0), r8/8)
       flob(ifc, 0) = flob(ifc, 0) + flo0b(ifc, 0)
       flob(ifc, 1) = flob(ifc, 1) + flo0b(ifc, 0)
       flo0b(ifc, 0) = 0.D0
-      CALL POPREAL8ARRAY(t11, r8/8)
-      CALL POPREAL8ARRAY(t01, r8/8)
+      CALL POPREAL8(t11, r8/8)
+      CALL POPREAL8(t01, r8/8)
       result1b = t1b
       abs2b = -(0.5_R8*t1b)
       arg1 = con(ifc, 1)*geo%fcqalf(ifc, 1)

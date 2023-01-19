@@ -483,7 +483,7 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
 !     ..contribution from friction between charged species
       DO icv=1,mpg%nci
 !srv 01.07.09
-        CALL PUSHREAL8ARRAY(coef, r8/8)
+        CALL PUSHREAL8(coef, r8/8)
         coef = switch%b2sifr_phm0*(lnlam(icv)/ctaup)*rz2(icv, isb)*rz2(&
 &         icv, is)*mp*SQRT(am(isb)*am(is)/(am(isb)+am(is)))
         t0 = na(icv, isb)*na(icv, is)*vti32(icv)
@@ -493,15 +493,15 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
           CALL PUSHCONTROL2B(0)
         ELSE IF (switch%b2sifr_styl0 .EQ. 1) THEN
           smbch(icv, 0) = smbch(icv, 0) + coef*t0*ua(icv, is)
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
           smbch(icv, 3) = smbch(icv, 3) - coef*t0/result1
           CALL PUSHCONTROL2B(1)
         ELSE IF (switch%b2sifr_styl0 .EQ. 2) THEN
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
           smbch(icv, 2) = smbch(icv, 2) + coef*t0*ua(icv, is)/result1
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = ROXA(icv, isb)
           smbch(icv, 3) = smbch(icv, 3) - coef*t0/result1
           CALL PUSHCONTROL2B(2)
@@ -521,13 +521,13 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
 !   ..compute thermal force
   IF (.NOT.is_neutral(isb)) THEN
     DO icv=1,mpg%nci
-      CALL PUSHREAL8ARRAY(t0, r8/8)
+      CALL PUSHREAL8(t0, r8/8)
       t0 = na(icv, isb)*(rza(icv, isb)/(ne(icv)-st_ext%ne(icv))-rz2(icv&
 &       , isb)/(ne2(icv)-st_ext%ne2(icv)))
-      CALL PUSHREAL8ARRAY(delte, r8/8)
+      CALL PUSHREAL8(delte, r8/8)
       delte = gte(icv)
       IF (switch%b2sifr_limthee .GT. 0.0_R8) THEN
-        CALL PUSHREAL8ARRAY(zlamee, r8/8)
+        CALL PUSHREAL8(zlamee, r8/8)
         zlamee = 1.5e16_R8*(te(icv)/ev)**2/ne(icv)
 !srv 12.04.10 11.01.13
         dteapr = switch%b2sifr_limthee/zlamee*te(icv)/geo%cvbb(icv, 0)*&
@@ -540,24 +540,24 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
           CALL PUSHCONTROL1B(1)
         END IF
         IF (x1 .GT. dteapr) THEN
-          CALL PUSHREAL8ARRAY(min1, r8/8)
+          CALL PUSHREAL8(min1, r8/8)
           min1 = dteapr
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(min1, r8/8)
+          CALL PUSHREAL8(min1, r8/8)
           min1 = x1
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(delte, r8/8)
+        CALL PUSHREAL8(delte, r8/8)
         delte = SIGN(min1, delte)
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(delti, r8/8)
+      CALL PUSHREAL8(delti, r8/8)
       delti = gti(icv)
       IF (switch%b2sifr_limthii .GT. 0.0_R8) THEN
-        CALL PUSHREAL8ARRAY(zlamii, r8/8)
+        CALL PUSHREAL8(zlamii, r8/8)
         zlamii = 1.5e16_R8*(ti(icv)/ev)**2/ne2(icv)
 !srv 12.04.10 11.01.13
         dtiapr = switch%b2sifr_limthii/zlamii*ti(icv)/geo%cvbb(icv, 0)*&
@@ -570,15 +570,15 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
           CALL PUSHCONTROL1B(1)
         END IF
         IF (x2 .GT. dtiapr) THEN
-          CALL PUSHREAL8ARRAY(min2, r8/8)
+          CALL PUSHREAL8(min2, r8/8)
           min2 = dtiapr
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8ARRAY(min2, r8/8)
+          CALL PUSHREAL8(min2, r8/8)
           min2 = x2
           CALL PUSHCONTROL1B(1)
         END IF
-        CALL PUSHREAL8ARRAY(delti, r8/8)
+        CALL PUSHREAL8(delti, r8/8)
         delti = SIGN(min2, delti)
         CALL PUSHCONTROL1B(0)
       ELSE
@@ -632,15 +632,15 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
       deltib = (ne(icv)-st_ext%ne(icv))*temp3*tempb0
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(delti, r8/8)
+        CALL POPREAL8(delti, r8/8)
         min2b = SIGN(1.d0, min2*delti)*deltib
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min2, r8/8)
+          CALL POPREAL8(min2, r8/8)
           dtiaprb = min2b
           x2b = 0.D0
         ELSE
-          CALL POPREAL8ARRAY(min2, r8/8)
+          CALL POPREAL8(min2, r8/8)
           x2b = min2b
           dtiaprb = 0.D0
         END IF
@@ -654,25 +654,25 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
         tempb3 = switch%b2sifr_limthii*geo%cvbb(icv, 3)*dtiaprb/temp4
         tib(icv) = tib(icv) + tempb3
         zlamiib = -(geo%cvbb(icv, 0)*ti(icv)*tempb3/temp4)
-        CALL POPREAL8ARRAY(zlamii, r8/8)
+        CALL POPREAL8(zlamii, r8/8)
         temp4 = ev*ev*ne2(icv)
         tempb3 = 1.5e16_R8*zlamiib/temp4
         tib(icv) = tib(icv) + 2*ti(icv)*tempb3
         ne2b(icv) = ne2b(icv) - ev**2*ti(icv)**2*tempb3/temp4
       END IF
-      CALL POPREAL8ARRAY(delti, r8/8)
+      CALL POPREAL8(delti, r8/8)
       gtib(icv) = gtib(icv) + deltib
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(delte, r8/8)
+        CALL POPREAL8(delte, r8/8)
         min1b = SIGN(1.d0, min1*delte)*delteb
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(min1, r8/8)
+          CALL POPREAL8(min1, r8/8)
           dteaprb = min1b
           x1b = 0.D0
         ELSE
-          CALL POPREAL8ARRAY(min1, r8/8)
+          CALL POPREAL8(min1, r8/8)
           x1b = min1b
           dteaprb = 0.D0
         END IF
@@ -686,15 +686,15 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
         tempb3 = switch%b2sifr_limthee*geo%cvbb(icv, 3)*dteaprb/temp4
         teb(icv) = teb(icv) + tempb3
         zlameeb = -(geo%cvbb(icv, 0)*te(icv)*tempb3/temp4)
-        CALL POPREAL8ARRAY(zlamee, r8/8)
+        CALL POPREAL8(zlamee, r8/8)
         temp4 = ev*ev*ne(icv)
         tempb3 = 1.5e16_R8*zlameeb/temp4
         teb(icv) = teb(icv) + 2*te(icv)*tempb3
         neb(icv) = neb(icv) - ev**2*te(icv)**2*tempb3/temp4
       END IF
-      CALL POPREAL8ARRAY(delte, r8/8)
+      CALL POPREAL8(delte, r8/8)
       gteb(icv) = gteb(icv) + delteb
-      CALL POPREAL8ARRAY(t0, r8/8)
+      CALL POPREAL8(t0, r8/8)
       temp1 = ne2(icv) - st_ext%ne2(icv)
       temp0 = rz2(icv, isb)/temp1
       temp2 = ne(icv) - st_ext%ne(icv)
@@ -725,7 +725,7 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
             coefb = t0*tempb1
             t0b = coef*tempb1
             result1b = -(coef*t0*tempb1/result1)
-            CALL POPREAL8ARRAY(result1, r8/8)
+            CALL POPREAL8(result1, r8/8)
             CALL ROXA_B(icv, isb, result1b)
             tempb1 = ua(icv, is)*smbchb(icv, 0)
             uab(icv, is) = uab(icv, is) + coef*t0*smbchb(icv, 0)
@@ -736,7 +736,7 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
           t0 = na(icv, isb)*na(icv, is)*vti32(icv)
           tempb1 = -(smbchb(icv, 3)/result1)
           result1b = -(coef*t0*tempb1/result1)
-          CALL POPREAL8ARRAY(result1, r8/8)
+          CALL POPREAL8(result1, r8/8)
           CALL ROXA_B(icv, isb, result1b)
           temp1 = ua(icv, is)/result1
           coefb = t0*tempb1 + t0*temp1*smbchb(icv, 2)
@@ -744,7 +744,7 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
           tempb1 = coef*t0*smbchb(icv, 2)/result1
           uab(icv, is) = uab(icv, is) + tempb1
           result1b = -(temp1*tempb1)
-          CALL POPREAL8ARRAY(result1, r8/8)
+          CALL POPREAL8(result1, r8/8)
           CALL ROXA_B(icv, isb, result1b)
         ELSE
           coefb = 0.D0
@@ -754,7 +754,7 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, &
         nab(icv, is) = nab(icv, is) + na(icv, isb)*vti32(icv)*t0b
         nab(icv, isb) = nab(icv, isb) + vti32(icv)*tempb1
         vti32b(icv) = vti32b(icv) + na(icv, isb)*tempb1
-        CALL POPREAL8ARRAY(coef, r8/8)
+        CALL POPREAL8(coef, r8/8)
         tempb0 = switch%b2sifr_phm0*mp*SQRT(am(isb)*am(is)/(am(isb)+am(&
 &         is)))*coefb
         lnlamb(icv) = lnlamb(icv) + rz2(icv, isb)*rz2(icv, is)*tempb0/&

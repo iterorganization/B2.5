@@ -43,7 +43,7 @@ SUBROUTINE INTCELL_FWD(nfc, ncv, mpg, wght, face, centre)
   CALL PUSHREAL8ARRAY(centre, r8*ncv/8)
   centre = 0.0_R8
   DO icv=1,ncv
-    CALL PUSHREAL8ARRAY(wghtsum, r8/8)
+    CALL PUSHREAL8(wghtsum, r8/8)
     wghtsum = 0.0_R8
     DO ifc=1,mpg%cvfcp(icv, 2)
       wghtsum = wghtsum + wght(mpg%cvfcp(icv, 1)+ifc-1)
@@ -53,7 +53,7 @@ SUBROUTINE INTCELL_FWD(nfc, ncv, mpg, wght, face, centre)
     CALL PUSHINTEGER4(ifc - 1)
     centre(icv) = centre(icv)/wghtsum
   END DO
-  CALL PUSHREAL8ARRAY(wghtsum, r8/8)
+  CALL PUSHREAL8(wghtsum, r8/8)
 END SUBROUTINE INTCELL_FWD
 
 !  Differentiation of intcell in reverse (adjoint) mode, backward sweep (with options context noISIZE r8):
@@ -72,7 +72,7 @@ SUBROUTINE INTCELL_BWD(nfc, ncv, mpg, wght, face, faceb, centre, centreb&
   INTEGER :: ifc, icv
   REAL(kind=r8) :: wghtsum
   INTEGER :: ad_to
-  CALL POPREAL8ARRAY(wghtsum, r8/8)
+  CALL POPREAL8(wghtsum, r8/8)
   DO icv=ncv,1,-1
     centreb(icv) = centreb(icv)/wghtsum
     CALL POPINTEGER4(ad_to)
@@ -81,7 +81,7 @@ SUBROUTINE INTCELL_BWD(nfc, ncv, mpg, wght, face, faceb, centre, centreb&
 &       cvfcp(icv, 1)+ifc-1)) + wght(mpg%cvfcp(icv, 1)+ifc-1)*centreb(&
 &       icv)
     END DO
-    CALL POPREAL8ARRAY(wghtsum, r8/8)
+    CALL POPREAL8(wghtsum, r8/8)
   END DO
   CALL POPREAL8ARRAY(centre, r8*ncv/8)
 END SUBROUTINE INTCELL_BWD
@@ -110,4 +110,3 @@ SUBROUTINE INTCELL_NODIFF(nfc, ncv, mpg, wght, face, centre)
 !
   RETURN
 END SUBROUTINE INTCELL_NODIFF
-

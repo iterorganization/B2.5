@@ -110,10 +110,10 @@ SUBROUTINE B2SQCX_B(ncv, ns, ev, switch, amh0, th0, th0b, thn0, thn0b, &
       DO icv=1,ncv
 !      ..compute charge exchange rate coefficient
         arg1 = rlcx0(icv, 0, is) + rlcx0(icv, 1, is)*wrk0(icv)
-        CALL PUSHREAL8ARRAY(cutlo, r8/8)
-        CALL PUSHREAL8ARRAY(cutll, r8/8)
+        CALL PUSHREAL8(cutlo, r8/8)
+        CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+        CALL PUSHREAL4(small_r4_constant, r4/8)
         res = EXPU(arg1)
       END DO
       CALL PUSHCONTROL1B(1)
@@ -132,10 +132,10 @@ SUBROUTINE B2SQCX_B(ncv, ns, ev, switch, amh0, th0, th0b, thn0, thn0b, &
         rcxb(icv, is) = 0.D0
         arg1 = rlcx0(icv, 0, is) + rlcx0(icv, 1, is)*wrk0(icv)
         resb = result1b
-        CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+        CALL POPREAL4(small_r4_constant, r4/8)
         CALL POPBOOLEAN(b2mod_math_initialised)
-        CALL POPREAL8ARRAY(cutll, r8/8)
-        CALL POPREAL8ARRAY(cutlo, r8/8)
+        CALL POPREAL8(cutll, r8/8)
+        CALL POPREAL8(cutlo, r8/8)
         CALL EXPU_B(arg1, arg1b, resb)
         rlcx0b(icv, 0, is) = rlcx0b(icv, 0, is) + arg1b
         rlcx0b(icv, 1, is) = rlcx0b(icv, 1, is) + wrk0(icv)*arg1b

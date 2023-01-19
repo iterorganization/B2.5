@@ -42,7 +42,9 @@ LDOPTS  += -g -C
 else
 #FCOPTS += -O2
 #FCOPTS += -fast
+ifndef ADJ
 FCOPTS  += -fast -Mvect=nofuse
+endif
 endif
 ifdef USE_OPENMP
 FCOPTS += -mp=nonuma

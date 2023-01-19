@@ -4511,7 +4511,7 @@ CONTAINS
       END DO
       ALLOCATE(state_ext%text(0:ns_ext-1))
       ALLOCATE(state_extb%is_neutral(0:ns_ext-1))
-      state_extb%is_neutral = 0.D0
+      state_extb%is_neutral = .true.
       ALLOCATE(state_ext%is_neutral(0:ns_ext-1))
       ALLOCATE(state_extb%zn(0:ns_ext-1))
       state_extb%zn = 0.D0

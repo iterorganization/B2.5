@@ -81,8 +81,8 @@
         t0 = t0+abs(dv%resco(1,iCv,is))
         t1 = t1+abs(dv%resmo(1,iCv,is))
        enddo
-       diag%aresco(1,is) = abs(t0/navi)
-       diag%aresmo(1,is) = abs(t1/movi)
+       if (navi .gt. 0.0_R8) diag%aresco(1,is) = abs(t0/navi)
+       if (movi .gt. 0.0_R8) diag%aresmo(1,is) = abs(t1/movi)
       enddo
 *   ..compute aresmt
       t0 = 0.0_R8
@@ -153,8 +153,10 @@
         diag%resmoreg(1,mpg%cvReg(iCv),is)=
      .     diag%resmoreg(1,mpg%cvReg(iCv),is)+abs(dv%resmo(1,iCv,is))
        enddo
-       diag%rescoreg(1,:,is) = abs(diag%rescoreg(1,:,is)/navi)
-       diag%resmoreg(1,:,is) = abs(diag%resmoreg(1,:,is)/movi)
+       if (navi .gt. 0.0_R8)
+     .   diag%rescoreg(1,:,is) = abs(diag%rescoreg(1,:,is)/navi)
+       if (movi .gt. 0.0_R8)
+     .   diag%resmoreg(1,:,is) = abs(diag%resmoreg(1,:,is)/movi)
       enddo
 *   ..compute prvi
       prvi = 0.0_R8

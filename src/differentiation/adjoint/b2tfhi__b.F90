@@ -232,11 +232,11 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         CALL CALCCOEF_FWD(ncv, nfc, nvx, 0, geo, mpg, dumm0, cddi, floi0&
 &                   , coni0)
         DO ifc=1,nfc
-          CALL PUSHREAL8ARRAY(dv%floi(ifc, 0), r8/8)
+          CALL PUSHREAL8(dv%floi(ifc, 0), r8/8)
           dv%floi(ifc, 0) = dv%floi(ifc, 0) + 0.5_R8*floi0(ifc, 0)*(nati&
 &           (mpg%fccv(ifc, 1))+nati(mpg%fccv(ifc, 2))) - coni0(ifc, 0)*(&
 &           nati(mpg%fccv(ifc, 2))-nati(mpg%fccv(ifc, 1)))
-          CALL PUSHREAL8ARRAY(dv%floi(ifc, 1), r8/8)
+          CALL PUSHREAL8(dv%floi(ifc, 1), r8/8)
           dv%floi(ifc, 1) = dv%floi(ifc, 1) + 0.5_R8*floi0(ifc, 1)*(&
 &           nativ(mpg%fcvx(ifc, 1))+nativ(mpg%fcvx(ifc, 2))) - coni0(ifc&
 &           , 1)*(nativ(mpg%fcvx(ifc, 2))-nativ(mpg%fcvx(ifc, 1)))
@@ -245,12 +245,12 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !wdk      Might need to move back to dv%coni(,,1) and dedicated treatment
 !wdk      in b2ux9p if we decide to move away from inverse volume weighting
 !wdk      to compute vertex values of drifts!
-          CALL PUSHREAL8ARRAY(dv%coni(ifc, 0, 0), r8/8)
+          CALL PUSHREAL8(dv%coni(ifc, 0, 0), r8/8)
           dv%coni(ifc, 0, 0) = dv%coni(ifc, 0, 0) + 0.5_R8*coni0(ifc, 0)&
 &           *(nati(mpg%fccv(ifc, 1))+nati(mpg%fccv(ifc, 2))) - 0.25_R8*&
 &           floi0(ifc, 0)*(nati(mpg%fccv(ifc, 2))-nati(mpg%fccv(ifc, 1))&
 &           )
-          CALL PUSHREAL8ARRAY(dv%coni(ifc, 1, 0), r8/8)
+          CALL PUSHREAL8(dv%coni(ifc, 1, 0), r8/8)
           dv%coni(ifc, 1, 0) = dv%coni(ifc, 1, 0) + 0.5_R8*coni0(ifc, 1)&
 &           *(nativ(mpg%fcvx(ifc, 1))+nativ(mpg%fcvx(ifc, 2))) - 0.25_R8&
 &           *floi0(ifc, 1)*(nativ(mpg%fcvx(ifc, 2))-nativ(mpg%fcvx(ifc, &
@@ -718,7 +718,7 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         natib = 0.D0
         nativb = 0.D0
         DO ifc=nfc,1,-1
-          CALL POPREAL8ARRAY(dv%coni(ifc, 1, 0), r8/8)
+          CALL POPREAL8(dv%coni(ifc, 1, 0), r8/8)
           coni0b(ifc, 1) = coni0b(ifc, 1) + (nativ(mpg%fcvx(ifc, 1))+&
 &           nativ(mpg%fcvx(ifc, 2)))*0.5_R8*dvb%coni(ifc, 1, 0) - (nativ&
 &           (mpg%fcvx(ifc, 2))-nativ(mpg%fcvx(ifc, 1)))*dvb%floi(ifc, 1)
@@ -728,7 +728,7 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
           nativb(mpg%fcvx(ifc, 1)) = nativb(mpg%fcvx(ifc, 1)) + tempb1 -&
 &           tempb0
           nativb(mpg%fcvx(ifc, 2)) = nativb(mpg%fcvx(ifc, 2)) + tempb1
-          CALL POPREAL8ARRAY(dv%coni(ifc, 0, 0), r8/8)
+          CALL POPREAL8(dv%coni(ifc, 0, 0), r8/8)
           coni0b(ifc, 0) = coni0b(ifc, 0) + (nati(mpg%fccv(ifc, 1))+nati&
 &           (mpg%fccv(ifc, 2)))*0.5_R8*dvb%coni(ifc, 0, 0) - (nati(mpg%&
 &           fccv(ifc, 2))-nati(mpg%fccv(ifc, 1)))*dvb%floi(ifc, 0)
@@ -738,14 +738,14 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
           natib(mpg%fccv(ifc, 1)) = natib(mpg%fccv(ifc, 1)) + tempb1 - &
 &           tempb0
           natib(mpg%fccv(ifc, 2)) = natib(mpg%fccv(ifc, 2)) + tempb1
-          CALL POPREAL8ARRAY(dv%floi(ifc, 1), r8/8)
+          CALL POPREAL8(dv%floi(ifc, 1), r8/8)
           tempb1 = floi0(ifc, 1)*0.5_R8*dvb%floi(ifc, 1)
           tempb0 = -(coni0(ifc, 1)*dvb%floi(ifc, 1))
           nativb(mpg%fcvx(ifc, 2)) = nativb(mpg%fcvx(ifc, 2)) + tempb0
           nativb(mpg%fcvx(ifc, 1)) = nativb(mpg%fcvx(ifc, 1)) + tempb1 -&
 &           tempb0
           nativb(mpg%fcvx(ifc, 2)) = nativb(mpg%fcvx(ifc, 2)) + tempb1
-          CALL POPREAL8ARRAY(dv%floi(ifc, 0), r8/8)
+          CALL POPREAL8(dv%floi(ifc, 0), r8/8)
           tempb0 = floi0(ifc, 0)*0.5_R8*dvb%floi(ifc, 0)
           tempb1 = -(coni0(ifc, 0)*dvb%floi(ifc, 0))
           natib(mpg%fccv(ifc, 2)) = natib(mpg%fccv(ifc, 2)) + tempb1

@@ -470,9 +470,11 @@ else
 # MNEXTRA=${EIRDIR}/eirmod_balanced_strategy.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_calstr_buffered.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_mpi.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_solps.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
+ifndef DIFF
 ifdef LD_CATALYST
 VPATH += :${SRCDIR}/catalyst
 FFPATH += :${SRCDIR}/catalyst
+endif
 endif
 
 IDSMODS = ${PROG_ID:%.exe=${OBJDIR}/%.${MOD}}
@@ -1077,14 +1079,14 @@ else
 endif
 
 ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${MNBEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ifdef OPT
 ${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
 endif
 
 ${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h

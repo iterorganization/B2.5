@@ -14,7 +14,7 @@ SUBROUTINE INTFACE_FWD(ncv, nfc, fccv, fcvol, centre, face)
   REAL(kind=r8) :: fcvol(nfc, 2), centre(ncv), face(nfc)
   INTEGER :: ifc
   DO ifc=1,nfc
-    CALL PUSHREAL8ARRAY(face(ifc), r8/8)
+    CALL PUSHREAL8(face(ifc), r8/8)
     face(ifc) = (fcvol(ifc, 1)*centre(fccv(ifc, 2))+fcvol(ifc, 2)*centre&
 &     (fccv(ifc, 1)))/(fcvol(ifc, 1)+fcvol(ifc, 2))
   END DO
@@ -35,7 +35,7 @@ SUBROUTINE INTFACE_BWD(ncv, nfc, fccv, fcvol, centre, centreb, face, &
   INTEGER :: ifc
   REAL(kind=r8) :: tempb
   DO ifc=nfc,1,-1
-    CALL POPREAL8ARRAY(face(ifc), r8/8)
+    CALL POPREAL8(face(ifc), r8/8)
     tempb = faceb(ifc)/(fcvol(ifc, 1)+fcvol(ifc, 2))
     faceb(ifc) = 0.D0
     centreb(fccv(ifc, 2)) = centreb(fccv(ifc, 2)) + fcvol(ifc, 1)*tempb

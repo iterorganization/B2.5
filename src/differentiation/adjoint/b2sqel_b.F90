@@ -133,30 +133,30 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
     DO icv=1,ncv
 !      ..compute ionisation rate coefficient
       arg1 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*wrk0(icv)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       res = EXPU(arg1)
 !      ..compute recombination rate coefficient
       arg1 = rt%rlra(icv, 0, is) + rt%rlra(icv, 1, is)*wrk0(icv)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       res0 = EXPU(arg1)
 !      ..compute heat loss rate coefficient
       arg1 = rt%rlqa(icv, 0, is) + rt%rlqa(icv, 1, is)*wrk0(icv)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       res1 = EXPU(arg1)
       arg1 = rt%rlqr(icv, 0, is) + rt%rlqr(icv, 1, is)*wrk0(icv)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       res2 = EXPU(arg1)
 !      ..compute line radiation rate coefficient
       arg1 = rt%rlrd(icv, 0, is) + rt%rlrd(icv, 1, is)*wrk0(icv)
@@ -209,11 +209,11 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
     is = ismain
     DO icv=1,ncv
       IF (0.000001_R8 .LT. te(icv)/(15.0_R8*ev)) THEN
-        CALL PUSHREAL8ARRAY(tnorm, r8/8)
+        CALL PUSHREAL8(tnorm, r8/8)
         tnorm = te(icv)/(15.0_R8*ev)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(tnorm, r8/8)
+        CALL PUSHREAL8(tnorm, r8/8)
         tnorm = 0.000001_R8
         CALL PUSHCONTROL1B(1)
       END IF
@@ -225,10 +225,10 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
       tnormb = (1.5_R8*tnorm**0.5-3*tnorm**2/temp**2)*tempb
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(tnorm, r8/8)
+        CALL POPREAL8(tnorm, r8/8)
         teb(icv) = teb(icv) + tnormb/(15.0_R8*ev)
       ELSE
-        CALL POPREAL8ARRAY(tnorm, r8/8)
+        CALL POPREAL8(tnorm, r8/8)
       END IF
     END DO
     CALL POPCONTROL1B(branch)
@@ -278,10 +278,10 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
       rtwb%rqr(icv, is) = 0.D0
       arg1 = rt%rlqr(icv, 0, is) + rt%rlqr(icv, 1, is)*wrk0(icv)
       resb2 = result1b
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, resb2)
       rtb%rlqr(icv, 0, is) = rtb%rlqr(icv, 0, is) + arg1b
       rtb%rlqr(icv, 1, is) = rtb%rlqr(icv, 1, is) + wrk0(icv)*arg1b
@@ -290,10 +290,10 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
       rtwb%rqa(icv, is) = 0.D0
       arg1 = rt%rlqa(icv, 0, is) + rt%rlqa(icv, 1, is)*wrk0(icv)
       resb1 = result1b
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, resb1)
       rtb%rlqa(icv, 0, is) = rtb%rlqa(icv, 0, is) + arg1b
       rtb%rlqa(icv, 1, is) = rtb%rlqa(icv, 1, is) + wrk0(icv)*arg1b
@@ -302,10 +302,10 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
       rtwb%rra(icv, is) = 0.D0
       arg1 = rt%rlra(icv, 0, is) + rt%rlra(icv, 1, is)*wrk0(icv)
       resb0 = result1b
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, resb0)
       rtb%rlra(icv, 0, is) = rtb%rlra(icv, 0, is) + arg1b
       rtb%rlra(icv, 1, is) = rtb%rlra(icv, 1, is) + wrk0(icv)*arg1b
@@ -314,10 +314,10 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, ev, te, teb, rt, rtb, rtw, &
       rtwb%rsa(icv, is) = 0.D0
       arg1 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*wrk0(icv)
       resb = result1b
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, resb)
       rtb%rlsa(icv, 0, is) = rtb%rlsa(icv, 0, is) + arg1b
       rtb%rlsa(icv, 1, is) = rtb%rlsa(icv, 1, is) + wrk0(icv)*arg1b

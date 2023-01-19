@@ -248,9 +248,9 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHINTEGER4ARRAY(addspec, nss*nkind_coeff*(nss+1))
   CALL PUSHBOOLEAN(no_div)
   CALL PUSHINTEGER4(tr_ip_elm_count)
-  CALL PUSHREAL8ARRAY(transport_ip_time_mod, r8/8)
+  CALL PUSHREAL8(transport_ip_time_mod, r8/8)
   CALL PUSHREAL8ARRAY(tdata, r8*3*nrr*nkind_coeff*(nss+1)/8)
-  CALL PUSHREAL8ARRAY(transport_ip_time_switch, r8/8)
+  CALL PUSHREAL8(transport_ip_time_switch, r8/8)
   CALL PUSHBOOLEANARRAY(region_flags, cvregmax*nkind_coeff)
   CALL PUSHBOOLEAN(tr_ip_new_files)
   CALL PUSHBOOLEAN(no_pflux)
@@ -268,10 +268,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
   CALL PUSHINTEGER4(ncall_b2tqna)
   CALL PUSHINTEGER4(ncall_b2tlh0)
-  CALL PUSHREAL8ARRAY(cutlo, r8/8)
-  CALL PUSHREAL8ARRAY(cutll, r8/8)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHREAL8ARRAY(co%csig, r8*SIZE(co%csig, 1)*SIZE(co%csig, 2)/8)
   CALL PUSHREAL8ARRAY(co%calf, r8*SIZE(co%calf, 1)*SIZE(co%calf, 2)/8)
   CALL PUSHREAL8ARRAY(co%csig_an, r8*SIZE(co%csig_an, 1)*SIZE(co%csig_an&
@@ -325,8 +325,8 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &               (co%vla0, 3)/8)
   CALL PUSHREAL8ARRAY(co%vma0, r8*SIZE(co%vma0, 1)*SIZE(co%vma0, 2)*SIZE&
 &               (co%vma0, 3)/8)
-  CALL PUSHREAL8ARRAY(switch%keps_fac, r8/8)
-  CALL PUSHREAL8ARRAY(switch%b2tqna_bb_ref, r8/8)
+  CALL PUSHREAL8(switch%keps_fac, r8/8)
+  CALL PUSHREAL8(switch%b2tqna_bb_ref, r8/8)
   CALL B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              switch, geo, mpg, pl, dv, rt, st_ext, co)
 !   ..compute classical terms
@@ -340,10 +340,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHINTEGER4(ncall_b2tqce)
   CALL PUSHINTEGER4(ncall_b2tqca)
   CALL PUSHINTEGER4(ncall_b2tqin)
-  CALL PUSHREAL8ARRAY(cutlo, r8/8)
-  CALL PUSHREAL8ARRAY(cutll, r8/8)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHREAL8ARRAY(co%fllimvisc, r8*SIZE(co%fllimvisc, 1)*SIZE(co%&
 &               fllimvisc, 2)/8)
   CALL PUSHREAL8ARRAY(co%vsaf_cl, r8*SIZE(co%vsaf_cl, 1)*SIZE(co%vsaf_cl&
@@ -430,10 +430,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL PUSHREAL8ARRAY(wrkf, r8*nfc/8)
       wrkf = wrkf*geo%fcbzb
       DO ifc=1,nfc
-        CALL PUSHREAL8ARRAY(co%cddi(ifc, 0, is), r8/8)
+        CALL PUSHREAL8(co%cddi(ifc, 0, is), r8/8)
         co%cddi(ifc, 0, is) = wrkf(ifc)*geo%fcs(ifc)*geo%fcqalf(ifc, 0)/&
 &         (geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
-        CALL PUSHREAL8ARRAY(co%cddi(ifc, 1, is), r8/8)
+        CALL PUSHREAL8(co%cddi(ifc, 1, is), r8/8)
         co%cddi(ifc, 1, is) = wrkf(ifc)*geo%fcs(ifc)*geo%fcqalf(ifc, 1)/&
 &         (geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
       END DO
@@ -661,12 +661,12 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       cob%cddi(:, :, is) = 0.D0
     ELSE
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(co%cddi(ifc, 1, is), r8/8)
+        CALL POPREAL8(co%cddi(ifc, 1, is), r8/8)
         wrkfb(ifc) = wrkfb(ifc) + geo%fcs(ifc)*geo%fcqalf(ifc, 1)*cob%&
 &         cddi(ifc, 1, is)/(geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%&
 &         fchc(ifc, 2)))
         cob%cddi(ifc, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(co%cddi(ifc, 0, is), r8/8)
+        CALL POPREAL8(co%cddi(ifc, 0, is), r8/8)
         wrkfb(ifc) = wrkfb(ifc) + geo%fcs(ifc)*geo%fcqalf(ifc, 0)*cob%&
 &         cddi(ifc, 0, is)/(geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%&
 &         fchc(ifc, 2)))
@@ -751,10 +751,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              , 2)*SIZE(co%vsaf_cl, 3)/8)
   CALL POPREAL8ARRAY(co%fllimvisc, r8*SIZE(co%fllimvisc, 1)*SIZE(co%&
 &              fllimvisc, 2)/8)
-  CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+  CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL POPREAL8ARRAY(cutll, r8/8)
-  CALL POPREAL8ARRAY(cutlo, r8/8)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
   CALL POPINTEGER4(ncall_b2tqin)
   CALL POPINTEGER4(ncall_b2tqca)
   CALL POPINTEGER4(ncall_b2tqce)
@@ -774,8 +774,8 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &         cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
   cob%cvsa_cl = 0.D0
   cob%cvsahz_cl = 0.D0
-  CALL POPREAL8ARRAY(switch%b2tqna_bb_ref, r8/8)
-  CALL POPREAL8ARRAY(switch%keps_fac, r8/8)
+  CALL POPREAL8(switch%b2tqna_bb_ref, r8/8)
+  CALL POPREAL8(switch%keps_fac, r8/8)
   CALL POPREAL8ARRAY(co%vma0, r8*SIZE(co%vma0, 1)*SIZE(co%vma0, 2)*SIZE(&
 &              co%vma0, 3)/8)
   CALL POPREAL8ARRAY(co%vla0, r8*SIZE(co%vla0, 1)*SIZE(co%vla0, 2)*SIZE(&
@@ -829,10 +829,10 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              , 2)/8)
   CALL POPREAL8ARRAY(co%calf, r8*SIZE(co%calf, 1)*SIZE(co%calf, 2)/8)
   CALL POPREAL8ARRAY(co%csig, r8*SIZE(co%csig, 1)*SIZE(co%csig, 2)/8)
-  CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+  CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL POPREAL8ARRAY(cutll, r8/8)
-  CALL POPREAL8ARRAY(cutlo, r8/8)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
   CALL POPINTEGER4(ncall_b2tlh0)
   CALL POPINTEGER4(ncall_b2tqna)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
@@ -850,9 +850,9 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPBOOLEAN(no_pflux)
   CALL POPBOOLEAN(tr_ip_new_files)
   CALL POPBOOLEANARRAY(region_flags, cvregmax*nkind_coeff)
-  CALL POPREAL8ARRAY(transport_ip_time_switch, r8/8)
+  CALL POPREAL8(transport_ip_time_switch, r8/8)
   CALL POPREAL8ARRAY(tdata, r8*3*nrr*nkind_coeff*(nss+1)/8)
-  CALL POPREAL8ARRAY(transport_ip_time_mod, r8/8)
+  CALL POPREAL8(transport_ip_time_mod, r8/8)
   CALL POPINTEGER4(tr_ip_elm_count)
   CALL POPBOOLEAN(no_div)
   CALL POPINTEGER4ARRAY(addspec, nss*nkind_coeff*(nss+1))

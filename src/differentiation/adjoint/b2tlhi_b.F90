@@ -190,20 +190,20 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nib, nirm&
 ! SOLPS5.0 treatments
     DO ifc=1,nfc
       IF (ti(mpg%fccv(ifc, 1)) .LT. ti(mpg%fccv(ifc, 2))) THEN
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = ti(mpg%fccv(ifc, 2))
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(t0, r8/8)
+        CALL PUSHREAL8(t0, r8/8)
         t0 = ti(mpg%fccv(ifc, 1))
         CALL PUSHCONTROL1B(1)
       END IF
       IF (geo%fcpbs(ifc) .GE. 0.) THEN
-        CALL PUSHREAL8ARRAY(abs0, r8/8)
+        CALL PUSHREAL8(abs0, r8/8)
         abs0 = geo%fcpbs(ifc)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(abs0, r8/8)
+        CALL PUSHREAL8(abs0, r8/8)
         abs0 = -geo%fcpbs(ifc)
         CALL PUSHCONTROL1B(1)
       END IF
@@ -228,16 +228,16 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nib, nirm&
       nib(mpg%fccv(ifc, 2), 0) = nib(mpg%fccv(ifc, 2), 0) + tempb0
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(abs0, r8/8)
+        CALL POPREAL8(abs0, r8/8)
       ELSE
-        CALL POPREAL8ARRAY(abs0, r8/8)
+        CALL POPREAL8(abs0, r8/8)
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         tib(mpg%fccv(ifc, 2)) = tib(mpg%fccv(ifc, 2)) + t0b
       ELSE
-        CALL POPREAL8ARRAY(t0, r8/8)
+        CALL POPREAL8(t0, r8/8)
         tib(mpg%fccv(ifc, 1)) = tib(mpg%fccv(ifc, 1)) + t0b
       END IF
     END DO
@@ -247,20 +247,20 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nib, nirm&
       t0 = ti(mpg%fccv(ifc, 2))
       t1 = ti(mpg%fccv(ifc, 1))
       IF (geo%fcqalf(ifc, 0) .GE. 0.) THEN
-        CALL PUSHREAL8ARRAY(abs1, r8/8)
+        CALL PUSHREAL8(abs1, r8/8)
         abs1 = geo%fcqalf(ifc, 0)
         CALL PUSHCONTROL1B(1)
       ELSE
-        CALL PUSHREAL8ARRAY(abs1, r8/8)
+        CALL PUSHREAL8(abs1, r8/8)
         abs1 = -geo%fcqalf(ifc, 0)
         CALL PUSHCONTROL1B(0)
       END IF
       IF (t0 .LT. t1) THEN
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = t1
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = t0
         CALL PUSHCONTROL1B(1)
       END IF
@@ -268,9 +268,9 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nib, nirm&
 !           as case b2tqca_model.eq.1
 !           Removes need for different treatment later on in the code (b2tfhi), and
 !           ensures consistency with b2trcl_conductive_limit .ne. 0
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = PIT(mpg%fccv(ifc, 2))
-      CALL PUSHREAL8ARRAY(result2, r8/8)
+      CALL PUSHREAL8(result2, r8/8)
       result2 = PIT(mpg%fccv(ifc, 1))
     END DO
     nirmb = 0.D0
@@ -305,21 +305,21 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nib, nirm&
       ELSE
         t0b = (temp2*temp+temp2*t0/(mp*2.0*temp))*tempb
       END IF
-      CALL POPREAL8ARRAY(result2, r8/8)
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result2, r8/8)
+      CALL POPREAL8(result1, r8/8)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(max1, r8/8)
+        CALL POPREAL8(max1, r8/8)
         t1b = t1b + max1b
       ELSE
-        CALL POPREAL8ARRAY(max1, r8/8)
+        CALL POPREAL8(max1, r8/8)
         t0b = t0b + max1b
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        CALL POPREAL8ARRAY(abs1, r8/8)
+        CALL POPREAL8(abs1, r8/8)
       ELSE
-        CALL POPREAL8ARRAY(abs1, r8/8)
+        CALL POPREAL8(abs1, r8/8)
       END IF
       tib(mpg%fccv(ifc, 1)) = tib(mpg%fccv(ifc, 1)) + t1b
       tib(mpg%fccv(ifc, 2)) = tib(mpg%fccv(ifc, 2)) + t0b

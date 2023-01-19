@@ -470,29 +470,29 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
       DO icv=1,ncv
         t0 = pl%ti(icv)/ev
 !xpb !srv 01.07.09
-        CALL PUSHREAL8ARRAY(tau(icv), r8/8)
+        CALL PUSHREAL8(tau(icv), r8/8)
         tau(icv) = ctaup/dv%lnlam(icv)*SQRT(am(is))*t0*SQRT(t0)/(rt%rz2(&
 &         icv, is)*dv%ne2(icv))
-        CALL PUSHREAL8ARRAY(result1, r8/8)
+        CALL PUSHREAL8(result1, r8/8)
         result1 = PITX(icv)
         tnp = tau(icv)*pl%na(icv, is)*result1**2
         IF (switch%b2tqca_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu 29-moment result
-          CALL PUSHREAL8ARRAY(hci(icv, 0), r8/8)
+          CALL PUSHREAL8(hci(icv, 0), r8/8)
           hci(icv, 0) = hci(icv, 0) + 2.5_R8*(pl%ti(icv)/(mp*am(is)))*&
 &           fki*tnp
 ! DPC/XPB changed to 4/3*  at the strong recommendation of Rozhansky
 ! WDK/SRV 21.07.2016 factor 4/3 removed from vsa, but added explicitly to cvsahz (not cvsa),
 !         according to old model.eq.3 treatment
-          CALL PUSHREAL8ARRAY(vsa(icv, 0, is), r8/8)
+          CALL PUSHREAL8(vsa(icv, 0, is), r8/8)
           vsa(icv, 0, is) = switch%b2tqca_phm0*eta*SQRT(2.0_R8)*pl%ti(&
 &           icv)*tnp
           CALL PUSHCONTROL2B(2)
         ELSE IF (switch%b2tqca_model .EQ. 2) THEN
 ! old SOLPS4.0 model : Braginskii
-          CALL PUSHREAL8ARRAY(w, r8/8)
+          CALL PUSHREAL8(w, r8/8)
           w = 0.0_R8
-          CALL PUSHREAL8ARRAY(t, r8/8)
+          CALL PUSHREAL8(t, r8/8)
           t = 0.0_R8
           DO js=0,ns-1
             w = w + rt%rz2(icv, js)*pl%na(icv, js)*SQRT(2.0_R8*mp*am(is)&
@@ -509,17 +509,17 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
 !xpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(iCv,is)  ! lower precision as per 4.0
 !srv 01.07.09
           ctaui = 2.1e13_R8/(dv%lnlam(icv)*rt%rz2(icv, is))
-          CALL PUSHREAL8ARRAY(fxi, r8/8)
+          CALL PUSHREAL8(fxi, r8/8)
           fxi = ci*ctaui/(ev*SQRT(ev*mp))
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = PITX(icv)
-          CALL PUSHREAL8ARRAY(hci(icv, 0), r8/8)
+          CALL PUSHREAL8(hci(icv, 0), r8/8)
           hci(icv, 0) = hci(icv, 0) + fxi*(pl%na(icv, is)/w)*result1**2*&
 &           (pl%ti(icv)**2*SQRT(pl%ti(icv)))
 !wdk      no factor 4/3 here, for consistent treatment with model.eq.1
-          CALL PUSHREAL8ARRAY(result1, r8/8)
+          CALL PUSHREAL8(result1, r8/8)
           result1 = PITX(icv)
-          CALL PUSHREAL8ARRAY(vsa(icv, 0, is), r8/8)
+          CALL PUSHREAL8(vsa(icv, 0, is), r8/8)
           vsa(icv, 0, is) = switch%b2tqca_phm0*eta*ctaui/(ev*SQRT(ev))*(&
 &           pl%na(icv, is)/t)*result1**2*(pl%ti(icv)**2*SQRT(pl%ti(icv))&
 &           )
@@ -595,7 +595,7 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
       IF (branch .NE. 0) THEN
         IF (branch .EQ. 1) THEN
           ctaui = 2.1e13_R8/(dv%lnlam(icv)*rt%rz2(icv, is))
-          CALL POPREAL8ARRAY(vsa(icv, 0, is), r8/8)
+          CALL POPREAL8(vsa(icv, 0, is), r8/8)
           temp1 = ev*SQRT(ev)
           temp4 = SQRT(pl%ti(icv))
           temp5 = ctaui*pl%na(icv, is)
@@ -611,8 +611,8 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
 &             (2.0*temp4))*tempb
           END IF
           tb = -(temp6*temp4*tempb/t)
-          CALL POPREAL8ARRAY(result1, r8/8)
-          CALL POPREAL8ARRAY(hci(icv, 0), r8/8)
+          CALL POPREAL8(result1, r8/8)
+          CALL POPREAL8(hci(icv, 0), r8/8)
           temp1 = fxi/w
           temp0 = pl%na(icv, is)*temp1
           temp = pl%ti(icv)*pl%ti(icv)
@@ -631,8 +631,8 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
           fxib = tempb1
           ctauib = pl%na(icv, is)*tempb3 + ci*fxib/(ev*SQRT(ev*mp))
           wb = -(temp1*tempb1)
-          CALL POPREAL8ARRAY(result1, r8/8)
-          CALL POPREAL8ARRAY(fxi, r8/8)
+          CALL POPREAL8(result1, r8/8)
+          CALL POPREAL8(fxi, r8/8)
           temp2 = dv%lnlam(icv)*rt%rz2(icv, is)
           tempb0 = -(2.1e13_R8*ctauib/temp2**2)
           dvb%lnlam(icv) = dvb%lnlam(icv) + rt%rz2(icv, is)*tempb0
@@ -645,16 +645,16 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
             rtb%rz2(icv, js) = rtb%rz2(icv, js) + pl%na(icv, js)*tempb0
             plb%na(icv, js) = plb%na(icv, js) + rt%rz2(icv, js)*tempb0
           END DO
-          CALL POPREAL8ARRAY(t, r8/8)
-          CALL POPREAL8ARRAY(w, r8/8)
+          CALL POPREAL8(t, r8/8)
+          CALL POPREAL8(w, r8/8)
         ELSE
           tnp = tau(icv)*pl%na(icv, is)*result1**2
-          CALL POPREAL8ARRAY(vsa(icv, 0, is), r8/8)
+          CALL POPREAL8(vsa(icv, 0, is), r8/8)
           tempb0 = switch%b2tqca_phm0*eta*SQRT(2.0_R8)*vsab(icv, 0, is)
           vsab(icv, 0, is) = 0.D0
           plb%ti(icv) = plb%ti(icv) + tnp*tempb0
           tnpb = pl%ti(icv)*tempb0
-          CALL POPREAL8ARRAY(hci(icv, 0), r8/8)
+          CALL POPREAL8(hci(icv, 0), r8/8)
           tempb0 = fki*2.5_R8*hcib(icv, 0)/(mp*am(is))
           plb%ti(icv) = plb%ti(icv) + tnp*tempb0
           tnpb = tnpb + pl%ti(icv)*tempb0
@@ -665,9 +665,9 @@ SUBROUTINE B2TQCA_B(ncv, ns, switch, switchb, geo, geob, pl, plb, dv, &
  100  tempb1 = result1**2*tnpb
       taub(icv) = taub(icv) + pl%na(icv, is)*tempb1
       plb%na(icv, is) = plb%na(icv, is) + tau(icv)*tempb1
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       t0 = pl%ti(icv)/ev
-      CALL POPREAL8ARRAY(tau(icv), r8/8)
+      CALL POPREAL8(tau(icv), r8/8)
       temp = dv%lnlam(icv)*dv%ne2(icv)
       temp0 = rt%rz2(icv, is)
       temp1 = SQRT(t0)

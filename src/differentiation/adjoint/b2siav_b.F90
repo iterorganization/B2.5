@@ -202,7 +202,7 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, mpgb&
             ad_from0 = mpg%ftcvp(ift, 1)
             DO ic=ad_from0,mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
               icv = mpg%ftcv(ic)
-              CALL PUSHREAL8ARRAY(qip0(icv), r8/8)
+              CALL PUSHREAL8(qip0(icv), r8/8)
               qip0(icv) = -(hcix_c(icv)*gti(icv, 0)*geo%cvbb(icv, 3)/geo&
 &               %cvbb(icv, 0)) - 2.5e0_R8*geo%cvbb(icv, 2)/(geo%cvbb(icv&
 &               , 0)*geo%cvbb(icv, 3))*(ni(icv)*ti(icv)/qe)*gti(icv, 1)
@@ -245,7 +245,7 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, mpgb&
               tauia1(icv) = tauia(icv, isb)
               CALL PUSHCONTROL2B(2)
             END IF
-            CALL PUSHREAL8ARRAY(nu1(icv), r8/8)
+            CALL PUSHREAL8(nu1(icv), r8/8)
             nu1(icv) = geo%ftconn(ift)/(tauia(icv, isb)*SQRT(ti(icv)/(mp&
 &             *am(isb)))*2.0e0_R8*pi*SQRT(geo%fteps(ift)**3))
 !lk 20.11.07 }
@@ -464,7 +464,7 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, mpgb&
             nu1b(icv) = nu1b(icv) + 2*nu1(icv)*2.7e0_R8*temp1*tempb3 + (&
 &             0.7e0_R8/(2.0*temp3)+2*nu1(icv)*temp5)*tempb6
           END IF
-          CALL POPREAL8ARRAY(nu1(icv), r8/8)
+          CALL POPREAL8(nu1(icv), r8/8)
           temp5 = ti(icv)/(mp*am(isb))
           temp3 = SQRT(temp5)
           temp4 = 2.0e0_R8*pi*SQRT(geo%fteps(ift)*geo%fteps(ift)*geo%&
@@ -521,7 +521,7 @@ SUBROUTINE B2SIAV_B(ncv, nfc, nvx, ns, isb, switch, geo, geob, mpg, mpgb&
           CALL POPINTEGER4(ad_to0)
           DO ic=ad_to0,ad_from0,-1
             icv = mpg%ftcv(ic)
-            CALL POPREAL8ARRAY(qip0(icv), r8/8)
+            CALL POPREAL8(qip0(icv), r8/8)
             tempb0 = -(geo%cvbb(icv, 3)*qip0b(icv)/geo%cvbb(icv, 0))
             tempb = -(geo%cvbb(icv, 2)*2.5e0_R8*qip0b(icv)/(geo%cvbb(icv&
 &             , 0)*qe*geo%cvbb(icv, 3)))

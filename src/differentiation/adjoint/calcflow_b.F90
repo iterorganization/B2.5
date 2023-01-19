@@ -88,11 +88,11 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 !    ..convective piece
     DO ifc=1,nfc
 !    ..poloidal
-      CALL PUSHREAL8ARRAY(flowf(ifc, 0), r8/8)
+      CALL PUSHREAL8(flowf(ifc, 0), r8/8)
       flowf(ifc, 0) = 0.5_R8*flo(ifc, 0)*(fun(mpg%fccv(ifc, 1))+fun(mpg%&
 &       fccv(ifc, 2)))
 !    ..radial
-      CALL PUSHREAL8ARRAY(flowf(ifc, 1), r8/8)
+      CALL PUSHREAL8(flowf(ifc, 1), r8/8)
       flowf(ifc, 1) = 0.5_R8*flo(ifc, 1)*(fun(mpg%fccv(ifc, 1))+fun(mpg%&
 &       fccv(ifc, 2)))
     END DO
@@ -112,11 +112,11 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 !    ..convective piece
     DO ifc=1,nfc
 !    ..poloidal
-      CALL PUSHREAL8ARRAY(flowf(ifc, 0), r8/8)
+      CALL PUSHREAL8(flowf(ifc, 0), r8/8)
       flowf(ifc, 0) = UPWIND_FWD(flo(ifc, 0), fun(mpg%fccv(ifc, 1)), fun&
 &       (mpg%fccv(ifc, 2)))
 !    ..radial
-      CALL PUSHREAL8ARRAY(flowf(ifc, 1), r8/8)
+      CALL PUSHREAL8(flowf(ifc, 1), r8/8)
       flowf(ifc, 1) = UPWIND_FWD(flo(ifc, 1), fun(mpg%fccv(ifc, 1)), fun&
 &       (mpg%fccv(ifc, 2)))
     END DO
@@ -146,13 +146,13 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 !! 
       arg1 = con(ifc, 0)*geo%fcqalf(ifc, 0)
       result1 = HYBR_FWD(flo(ifc, 0), arg1)
-      CALL PUSHREAL8ARRAY(t0, r8/8)
+      CALL PUSHREAL8(t0, r8/8)
       t0 = (result1-0.5_R8*abs0)/(geo%fcqalf(ifc, 0)+eps)
 !
-      CALL PUSHREAL8ARRAY(flowf(ifc, 0), r8/8)
+      CALL PUSHREAL8(flowf(ifc, 0), r8/8)
       flowf(ifc, 0) = UPWIND_FWD(flo(ifc, 0), fun(mpg%fccv(ifc, 1)), fun&
 &       (mpg%fccv(ifc, 2)))
-      CALL PUSHREAL8ARRAY(flow(ifc, 0), r8/8)
+      CALL PUSHREAL8(flow(ifc, 0), r8/8)
       flow(ifc, 0) = flowf(ifc, 0) - t0*dfun(ifc, 0)
       IF (flo(ifc, 1) .GE. 0.) THEN
         abs1 = flo(ifc, 1)
@@ -165,12 +165,12 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 !    ..radial flow
       arg1 = con(ifc, 1)*geo%fcqalf(ifc, 1)
       result1 = HYBR_FWD(flo(ifc, 1), arg1)
-      CALL PUSHREAL8ARRAY(t0, r8/8)
+      CALL PUSHREAL8(t0, r8/8)
       t0 = (result1-0.5_R8*abs1)/(geo%fcqalf(ifc, 1)+eps)
-      CALL PUSHREAL8ARRAY(flowf(ifc, 1), r8/8)
+      CALL PUSHREAL8(flowf(ifc, 1), r8/8)
       flowf(ifc, 1) = UPWIND_FWD(flo(ifc, 1), fun(mpg%fccv(ifc, 1)), fun&
 &       (mpg%fccv(ifc, 2)))
-      CALL PUSHREAL8ARRAY(flow(ifc, 1), r8/8)
+      CALL PUSHREAL8(flow(ifc, 1), r8/8)
       flow(ifc, 1) = flowf(ifc, 1) - t0*dfun(ifc, 1)
     END DO
     CALL PUSHCONTROL2B(2)
@@ -185,7 +185,7 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 !   ..return
   CALL PUSHREAL8ARRAY(dfun, r8*nfc*2/8)
   CALL PUSHREAL8ARRAY(funv, r8*nvx/8)
-  CALL PUSHREAL8ARRAY(t0, r8/8)
+  CALL PUSHREAL8(t0, r8/8)
 END SUBROUTINE CALCFLOW_FWD
 !
 !
@@ -249,7 +249,7 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
   REAL(kind=r8) :: result1b
   REAL(kind=r8) :: tempb
   INTEGER :: branch
-  CALL POPREAL8ARRAY(t0, r8/8)
+  CALL POPREAL8(t0, r8/8)
   CALL POPREAL8ARRAY(funv, r8*nvx/8)
   CALL POPREAL8ARRAY(dfun, r8*nfc*2/8)
   CALL POPREAL8ARRAY(flowc, r8*nfc*2/8)
@@ -264,14 +264,14 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
       conb = conb - dfun*flowb
       dfunb = -(con*flowb)
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(flowf(ifc, 1), r8/8)
+        CALL POPREAL8(flowf(ifc, 1), r8/8)
         flob(ifc, 1) = flob(ifc, 1) + (fun(mpg%fccv(ifc, 1))+fun(mpg%&
 &         fccv(ifc, 2)))*0.5_R8*flowfb(ifc, 1)
         tempb = flo(ifc, 1)*0.5_R8*flowfb(ifc, 1)
         flowfb(ifc, 1) = 0.D0
         funb(mpg%fccv(ifc, 1)) = funb(mpg%fccv(ifc, 1)) + tempb
         funb(mpg%fccv(ifc, 2)) = funb(mpg%fccv(ifc, 2)) + tempb
-        CALL POPREAL8ARRAY(flowf(ifc, 0), r8/8)
+        CALL POPREAL8(flowf(ifc, 0), r8/8)
         flob(ifc, 0) = flob(ifc, 0) + (fun(mpg%fccv(ifc, 1))+fun(mpg%&
 &         fccv(ifc, 2)))*0.5_R8*flowfb(ifc, 0)
         tempb = flo(ifc, 0)*0.5_R8*flowfb(ifc, 0)
@@ -294,12 +294,12 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 &                 , funb(mpg%fccv(ifc, 1)), fun(mpg%fccv(ifc, 2)), funb(&
 &                 mpg%fccv(ifc, 2)), flowfb(ifc, 1))
         flowfb(ifc, 1) = 0.D0
-        CALL POPREAL8ARRAY(flowf(ifc, 1), r8/8)
+        CALL POPREAL8(flowf(ifc, 1), r8/8)
         CALL UPWIND_BWD(flo(ifc, 0), flob(ifc, 0), fun(mpg%fccv(ifc, 1))&
 &                 , funb(mpg%fccv(ifc, 1)), fun(mpg%fccv(ifc, 2)), funb(&
 &                 mpg%fccv(ifc, 2)), flowfb(ifc, 0))
         flowfb(ifc, 0) = 0.D0
-        CALL POPREAL8ARRAY(flowf(ifc, 0), r8/8)
+        CALL POPREAL8(flowf(ifc, 0), r8/8)
       END DO
       funvb = 0.D0
       CALL DIFF_BWD(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, fun, funb, &
@@ -309,7 +309,7 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
   ELSE IF (branch .EQ. 2) THEN
     dfunb = 0.D0
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(flow(ifc, 1), r8/8)
+      CALL POPREAL8(flow(ifc, 1), r8/8)
       flowfb(ifc, 1) = flowfb(ifc, 1) + flowb(ifc, 1)
       t0b = -(dfun(ifc, 1)*flowb(ifc, 1))
       dfunb(ifc, 1) = dfunb(ifc, 1) - t0*flowb(ifc, 1)
@@ -318,8 +318,8 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 &               funb(mpg%fccv(ifc, 1)), fun(mpg%fccv(ifc, 2)), funb(mpg%&
 &               fccv(ifc, 2)), flowfb(ifc, 1))
       flowfb(ifc, 1) = 0.D0
-      CALL POPREAL8ARRAY(flowf(ifc, 1), r8/8)
-      CALL POPREAL8ARRAY(t0, r8/8)
+      CALL POPREAL8(flowf(ifc, 1), r8/8)
+      CALL POPREAL8(t0, r8/8)
       tempb = t0b/(geo%fcqalf(ifc, 1)+eps)
       result1b = tempb
       abs1b = -(0.5_R8*tempb)
@@ -332,7 +332,7 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
       ELSE
         flob(ifc, 1) = flob(ifc, 1) - abs1b
       END IF
-      CALL POPREAL8ARRAY(flow(ifc, 0), r8/8)
+      CALL POPREAL8(flow(ifc, 0), r8/8)
       flowfb(ifc, 0) = flowfb(ifc, 0) + flowb(ifc, 0)
       t0b = -(dfun(ifc, 0)*flowb(ifc, 0))
       dfunb(ifc, 0) = dfunb(ifc, 0) - t0*flowb(ifc, 0)
@@ -341,8 +341,8 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
 &               funb(mpg%fccv(ifc, 1)), fun(mpg%fccv(ifc, 2)), funb(mpg%&
 &               fccv(ifc, 2)), flowfb(ifc, 0))
       flowfb(ifc, 0) = 0.D0
-      CALL POPREAL8ARRAY(flowf(ifc, 0), r8/8)
-      CALL POPREAL8ARRAY(t0, r8/8)
+      CALL POPREAL8(flowf(ifc, 0), r8/8)
+      CALL POPREAL8(t0, r8/8)
       tempb = t0b/(geo%fcqalf(ifc, 0)+eps)
       result1b = tempb
       abs0b = -(0.5_R8*tempb)

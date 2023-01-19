@@ -67,9 +67,9 @@ SUBROUTINE B2NXCM_B(ncv, ns, pccm, pccmb, pcca, pccab)
 !   ..update pcca
   DO is=0,ns-1
     DO icv=1,ncv
-      CALL PUSHREAL8ARRAY(tmp, r8/8)
+      CALL PUSHREAL8(tmp, r8/8)
       tmp = UXCM_FWD(pccm(icv, 0), pcca(icv, 0, is))
-      CALL PUSHREAL8ARRAY(pcca(icv, 0, is), r8/8)
+      CALL PUSHREAL8(pcca(icv, 0, is), r8/8)
       pcca(icv, 0, is) = tmp
       res = UXCM_FWD(pccm(icv, 1), pcca(icv, 1, is))
     END DO
@@ -80,12 +80,12 @@ SUBROUTINE B2NXCM_B(ncv, ns, pccm, pccmb, pcca, pccab)
       pccab(icv, 1, is) = 0.D0
       CALL UXCM_BWD(pccm(icv, 1), pccmb(icv, 1), pcca(icv, 1, is), pccab&
 &             (icv, 1, is), resb)
-      CALL POPREAL8ARRAY(pcca(icv, 0, is), r8/8)
+      CALL POPREAL8(pcca(icv, 0, is), r8/8)
       tmpb = pccab(icv, 0, is)
       pccab(icv, 0, is) = 0.D0
       CALL UXCM_BWD(pccm(icv, 0), pccmb(icv, 0), pcca(icv, 0, is), pccab&
 &             (icv, 0, is), tmpb)
-      CALL POPREAL8ARRAY(tmp, r8/8)
+      CALL POPREAL8(tmp, r8/8)
     END DO
   END DO
 END SUBROUTINE B2NXCM_B

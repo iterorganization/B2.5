@@ -216,7 +216,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
   CALL INTFACE_FWD(ncv, nfc, mpg%fccv, wght, dv%ne, nwf)
 !
   DO ifc=1,nfc
-    CALL PUSHREAL8ARRAY(con(ifc, 0), r8/8)
+    CALL PUSHREAL8(con(ifc, 0), r8/8)
     con(ifc, 0) = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*(dv%pccm(mpg&
 &     %fccv(ifc, 1), 1)*dv%ne(mpg%fccv(ifc, 1))*pl%te(mpg%fccv(ifc, 1))+&
 &     dv%pccm(mpg%fccv(ifc, 2), 1)*dv%ne(mpg%fccv(ifc, 2))*pl%te(mpg%&
@@ -253,7 +253,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
 !
     IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
       DO ifc=1,nfc
-        CALL PUSHREAL8ARRAY(con(ifc, 0), r8/8)
+        CALL PUSHREAL8(con(ifc, 0), r8/8)
         con(ifc, 0) = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*(dv%pccm&
 &         (mpg%fccv(ifc, 1), 1)*pl%na(mpg%fccv(ifc, 1), is)*pl%ti(mpg%&
 &         fccv(ifc, 1))+dv%pccm(mpg%fccv(ifc, 2), 1)*pl%na(mpg%fccv(ifc&
@@ -263,7 +263,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
       CALL PUSHCONTROL1B(0)
     ELSE
       DO ifc=1,nfc
-        CALL PUSHREAL8ARRAY(con(ifc, 0), r8/8)
+        CALL PUSHREAL8(con(ifc, 0), r8/8)
         con(ifc, 0) = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*(dv%pccm&
 &         (mpg%fccv(ifc, 1), 1)*pl%na(mpg%fccv(ifc, 1), is)*pl%tn(mpg%&
 &         fccv(ifc, 1))+dv%pccm(mpg%fccv(ifc, 2), 1)*pl%na(mpg%fccv(ifc&
@@ -353,7 +353,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(con(ifc, 0), r8/8)
+        CALL POPREAL8(con(ifc, 0), r8/8)
         temp = dv%pccm(mpg%fccv(ifc, 1), 1)
         temp1 = dv%pccm(mpg%fccv(ifc, 2), 1)
         tempb3 = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*conb(ifc, 0)/&
@@ -376,7 +376,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
       END DO
     ELSE
       DO ifc=nfc,1,-1
-        CALL POPREAL8ARRAY(con(ifc, 0), r8/8)
+        CALL POPREAL8(con(ifc, 0), r8/8)
         temp0 = dv%pccm(mpg%fccv(ifc, 1), 1)
         temp = dv%pccm(mpg%fccv(ifc, 2), 1)
         tempb5 = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*conb(ifc, 0)/&
@@ -417,7 +417,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
   dnwb(:, 0) = dnwb(:, 0) - con(:, 0)*flob(:, 0)
   flob(:, 0) = 0.D0
   DO ifc=nfc,1,-1
-    CALL POPREAL8ARRAY(con(ifc, 0), r8/8)
+    CALL POPREAL8(con(ifc, 0), r8/8)
     tempb1 = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*conb(ifc, 0)/(geo&
 &     %fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
     conb(ifc, 0) = 0.D0
