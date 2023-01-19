@@ -62,18 +62,18 @@ SUBROUTINE B2TXCC_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, con)
       y1 = fcvol(ifc, 1)*kap(mpg%fccv(ifc, 1))/geo%fchc(ifc, 1)*(fcvol(&
 &       ifc, 2)*kap(mpg%fccv(ifc, 2))/geo%fchc(ifc, 2))
       IF (0.0_R8 .LT. y1) THEN
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = y1
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(max1, r8/8)
+        CALL PUSHREAL8(max1, r8/8)
         max1 = 0.0_R8
         CALL PUSHCONTROL1B(1)
       END IF
       con(ifc) = 1.0_R8/geo%fcqgam(ifc, 0)**2*SQRT(max1)/(geo%fchc(ifc, &
 &       1)+geo%fchc(ifc, 2))
     END DO
-    CALL PUSHREAL8ARRAY(max1, r8/8)
+    CALL PUSHREAL8(max1, r8/8)
     CALL PUSHCONTROL3B(1)
   ELSE IF (mode .EQ. 1) THEN
 !    ..use arithmetic averaging (SOLPS5.0 formulation)
@@ -173,7 +173,7 @@ SUBROUTINE B2TXCC_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapb, &
 &         t0b/geo%fchc(ifc, 1)**2
       END DO
     ELSE IF (branch .EQ. 1) THEN
-      CALL POPREAL8ARRAY(max1, r8/8)
+      CALL POPREAL8(max1, r8/8)
       DO ifc=nfc,1,-1
         IF (max1 .EQ. 0.D0) THEN
           max1b = 0.D0
@@ -184,10 +184,10 @@ SUBROUTINE B2TXCC_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapb, &
         conb(ifc) = 0.D0
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8ARRAY(max1, r8/8)
+          CALL POPREAL8(max1, r8/8)
           y1b = max1b
         ELSE
-          CALL POPREAL8ARRAY(max1, r8/8)
+          CALL POPREAL8(max1, r8/8)
           y1b = 0.D0
         END IF
         tempb0 = fcvol(ifc, 1)*fcvol(ifc, 2)*y1b/(geo%fchc(ifc, 1)*geo%&

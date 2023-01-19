@@ -37,14 +37,14 @@ SUBROUTINE SFILL_FWD(n, sa, sx, sxb, incx)
     CALL PUSHCONTROL2B(0)
   ELSE IF (incx .EQ. 1) THEN
     DO i=0,n-1
-      CALL PUSHREAL8ARRAY(sx(i), r8/8)
+      CALL PUSHREAL8(sx(i), r8/8)
       sx(i) = sa
     END DO
     CALL PUSHCONTROL2B(1)
   ELSE
     ix = IBASE(n, incx)
     DO i=0,n-1
-      CALL PUSHREAL8ARRAY(sx(ix), r8/8)
+      CALL PUSHREAL8(sx(ix), r8/8)
       sx(ix) = sa
       CALL PUSHINTEGER4(ix)
       ix = ix + incx
@@ -82,13 +82,13 @@ SUBROUTINE SFILL_BWD(n, sa, sab, sx, sxb, incx)
   IF (branch .NE. 0) THEN
     IF (branch .EQ. 1) THEN
       DO i=n-1,0,-1
-        CALL POPREAL8ARRAY(sx(i), r8/8)
+        CALL POPREAL8(sx(i), r8/8)
         sxb(i) = 0.D0
       END DO
     ELSE
       DO i=n-1,0,-1
         CALL POPINTEGER4(ix)
-        CALL POPREAL8ARRAY(sx(ix), r8/8)
+        CALL POPREAL8(sx(ix), r8/8)
         sxb(ix) = 0.D0
       END DO
     END IF

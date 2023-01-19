@@ -262,153 +262,153 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
 !      ..compute ionisation rate coefficient
       t0 = (1.0_R8-fxne)*rtlsa(ite, ine, is) + fxne*rtlsa(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlsa(ite+1, ine, is) + fxne*rtlsa(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlsa(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlsa(icv, 1, is), r8/8)
         rt%rlsa(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlsa(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlsa(icv, 1, is), r8/8)
         rt%rlsa(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlsa(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlsa(icv, 0, is), r8/8)
       rt%rlsa(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlsa(icv, 1&
 &       , is)*rlte
 !      ..compute recombination rate coefficient
       t0 = (1.0_R8-fxne)*rtlra(ite, ine, is) + fxne*rtlra(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlra(ite+1, ine, is) + fxne*rtlra(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlra(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlra(icv, 1, is), r8/8)
         rt%rlra(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlra(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlra(icv, 1, is), r8/8)
         rt%rlra(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlra(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlra(icv, 0, is), r8/8)
       rt%rlra(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlra(icv, 1&
 &       , is)*rlte
 !      ..compute heat loss rate coefficient
       t0 = (1.0_R8-fxne)*rtlqa(ite, ine, is) + fxne*rtlqa(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlqa(ite+1, ine, is) + fxne*rtlqa(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlqa(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlqa(icv, 1, is), r8/8)
         rt%rlqa(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlqa(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlqa(icv, 1, is), r8/8)
         rt%rlqa(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlqa(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlqa(icv, 0, is), r8/8)
       rt%rlqa(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlqa(icv, 1&
 &       , is)*rlte
       t0 = (1.0_R8-fxne)*rtlqr(ite, ine, is) + fxne*rtlqr(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlqr(ite+1, ine, is) + fxne*rtlqr(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlqr(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlqr(icv, 1, is), r8/8)
         rt%rlqr(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlqr(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlqr(icv, 1, is), r8/8)
         rt%rlqr(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlqr(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlqr(icv, 0, is), r8/8)
       rt%rlqr(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlqr(icv, 1&
 &       , is)*rlte
 !      ..compute line radiation rate coefficient
 !      ..compute effective charge state
       t0 = (1.0_R8-fxne)*rtlza(ite, ine, is) + fxne*rtlza(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlza(ite+1, ine, is) + fxne*rtlza(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlza(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlza(icv, 1, is), r8/8)
         rt%rlza(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlza(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlza(icv, 1, is), r8/8)
         rt%rlza(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlza(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlza(icv, 0, is), r8/8)
       rt%rlza(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlza(icv, 1&
 &       , is)*rlte
 !      ..compute effective square charge
       t0 = (1.0_R8-fxne)*rtlz2(ite, ine, is) + fxne*rtlz2(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlz2(ite+1, ine, is) + fxne*rtlz2(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlz2(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlz2(icv, 1, is), r8/8)
         rt%rlz2(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlz2(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlz2(icv, 1, is), r8/8)
         rt%rlz2(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlz2(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlz2(icv, 0, is), r8/8)
       rt%rlz2(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlz2(icv, 1&
 &       , is)*rlte
 !      ..compute cumulative ionisation potential
       t0 = (1.0_R8-fxne)*rtlpt(ite, ine, is) + fxne*rtlpt(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlpt(ite+1, ine, is) + fxne*rtlpt(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlpt(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlpt(icv, 1, is), r8/8)
         rt%rlpt(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlpt(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlpt(icv, 1, is), r8/8)
         rt%rlpt(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlpt(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlpt(icv, 0, is), r8/8)
       rt%rlpt(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlpt(icv, 1&
 &       , is)*rlte
 !      ..compute effective ionisation potential
       t0 = (1.0_R8-fxne)*rtlpi(ite, ine, is) + fxne*rtlpi(ite, ine+1, is&
 &       )
-      CALL PUSHREAL8ARRAY(t1, r8/8)
+      CALL PUSHREAL8(t1, r8/8)
       t1 = (1.0_R8-fxne)*rtlpi(ite+1, ine, is) + fxne*rtlpi(ite+1, ine+1&
 &       , is)
       tt = (t1-t0)/(rtlt(ite+1)-rtlt(ite))
       IF (ltst0) THEN
-        CALL PUSHREAL8ARRAY(rt%rlpi(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlpi(icv, 1, is), r8/8)
         rt%rlpi(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(0)
       ELSE
-        CALL PUSHREAL8ARRAY(rt%rlpi(icv, 1, is), r8/8)
+        CALL PUSHREAL8(rt%rlpi(icv, 1, is), r8/8)
         rt%rlpi(icv, 1, is) = TRIMG_FWD(-20.0_R8, 20.0_R8, tt)
         CALL PUSHCONTROL1B(1)
       END IF
-      CALL PUSHREAL8ARRAY(rt%rlpi(icv, 0, is), r8/8)
+      CALL PUSHREAL8(rt%rlpi(icv, 0, is), r8/8)
       rt%rlpi(icv, 0, is) = (1.0_R8-fxte)*t0 + fxte*t1 - rt%rlpi(icv, 1&
 &       , is)*rlte
     END DO
@@ -418,7 +418,7 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
     DO is=ns-1,0,-1
       t0 = (1.0_R8-fxne)*rtlpi(ite, ine, is) + fxne*rtlpi(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlpi(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlpi(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlpi(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlpi(icv, 0, is)
       t1b = fxte*rtb%rlpi(icv, 0, is)
@@ -430,21 +430,21 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlpi(icv, 1, is))
         rtb%rlpi(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlpi(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlpi(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlpi(icv, 1, is))
         rtb%rlpi(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlpi(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlpi(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlpi(ite+1, ine+1, is)-rtlpi(ite+1, ine, is))*&
 &       t1b + (rtlpi(ite, ine+1, is)-rtlpi(ite, ine, is))*t0b
       t0 = (1.0_R8-fxne)*rtlpt(ite, ine, is) + fxne*rtlpt(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlpt(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlpt(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlpt(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlpt(icv, 0, is)
       t1b = fxte*rtb%rlpt(icv, 0, is)
@@ -456,21 +456,21 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlpt(icv, 1, is))
         rtb%rlpt(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlpt(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlpt(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlpt(icv, 1, is))
         rtb%rlpt(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlpt(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlpt(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlpt(ite+1, ine+1, is)-rtlpt(ite+1, ine, is))*&
 &       t1b + (rtlpt(ite, ine+1, is)-rtlpt(ite, ine, is))*t0b
       t0 = (1.0_R8-fxne)*rtlz2(ite, ine, is) + fxne*rtlz2(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlz2(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlz2(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlz2(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlz2(icv, 0, is)
       t1b = fxte*rtb%rlz2(icv, 0, is)
@@ -482,21 +482,21 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlz2(icv, 1, is))
         rtb%rlz2(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlz2(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlz2(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlz2(icv, 1, is))
         rtb%rlz2(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlz2(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlz2(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlz2(ite+1, ine+1, is)-rtlz2(ite+1, ine, is))*&
 &       t1b + (rtlz2(ite, ine+1, is)-rtlz2(ite, ine, is))*t0b
       t0 = (1.0_R8-fxne)*rtlza(ite, ine, is) + fxne*rtlza(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlza(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlza(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlza(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlza(icv, 0, is)
       t1b = fxte*rtb%rlza(icv, 0, is)
@@ -508,21 +508,21 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlza(icv, 1, is))
         rtb%rlza(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlza(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlza(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlza(icv, 1, is))
         rtb%rlza(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlza(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlza(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlza(ite+1, ine+1, is)-rtlza(ite+1, ine, is))*&
 &       t1b + (rtlza(ite, ine+1, is)-rtlza(ite, ine, is))*t0b
       t0 = (1.0_R8-fxne)*rtlqr(ite, ine, is) + fxne*rtlqr(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlqr(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlqr(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlqr(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlqr(icv, 0, is)
       t1b = fxte*rtb%rlqr(icv, 0, is)
@@ -534,21 +534,21 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlqr(icv, 1, is))
         rtb%rlqr(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlqr(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlqr(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlqr(icv, 1, is))
         rtb%rlqr(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlqr(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlqr(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlqr(ite+1, ine+1, is)-rtlqr(ite+1, ine, is))*&
 &       t1b + (rtlqr(ite, ine+1, is)-rtlqr(ite, ine, is))*t0b
       t0 = (1.0_R8-fxne)*rtlqa(ite, ine, is) + fxne*rtlqa(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlqa(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlqa(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlqa(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlqa(icv, 0, is)
       t1b = fxte*rtb%rlqa(icv, 0, is)
@@ -560,16 +560,16 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlqa(icv, 1, is))
         rtb%rlqa(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlqa(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlqa(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlqa(icv, 1, is))
         rtb%rlqa(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlqa(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlqa(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlqa(ite+1, ine+1, is)-rtlqa(ite+1, ine, is))*&
 &       t1b + (rtlqa(ite, ine+1, is)-rtlqa(ite, ine, is))*t0b
       rtlqab(ite+1, ine, is) = rtlqab(ite+1, ine, is) + (1.0_R8-fxne)*&
@@ -579,7 +579,7 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       rtlqab(ite, ine+1, is) = rtlqab(ite, ine+1, is) + fxne*t0b
       t0 = (1.0_R8-fxne)*rtlra(ite, ine, is) + fxne*rtlra(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlra(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlra(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlra(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlra(icv, 0, is)
       t1b = fxte*rtb%rlra(icv, 0, is)
@@ -591,16 +591,16 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlra(icv, 1, is))
         rtb%rlra(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlra(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlra(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlra(icv, 1, is))
         rtb%rlra(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlra(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlra(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlra(ite+1, ine+1, is)-rtlra(ite+1, ine, is))*&
 &       t1b + (rtlra(ite, ine+1, is)-rtlra(ite, ine, is))*t0b
       rtlrab(ite+1, ine, is) = rtlrab(ite+1, ine, is) + (1.0_R8-fxne)*&
@@ -610,7 +610,7 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       rtlrab(ite, ine+1, is) = rtlrab(ite, ine+1, is) + fxne*t0b
       t0 = (1.0_R8-fxne)*rtlsa(ite, ine, is) + fxne*rtlsa(ite, ine+1, is&
 &       )
-      CALL POPREAL8ARRAY(rt%rlsa(icv, 0, is), r8/8)
+      CALL POPREAL8(rt%rlsa(icv, 0, is), r8/8)
       fxteb = fxteb + (t1-t0)*rtb%rlsa(icv, 0, is)
       t0b = (1.0_R8-fxte)*rtb%rlsa(icv, 0, is)
       t1b = fxte*rtb%rlsa(icv, 0, is)
@@ -622,16 +622,16 @@ SUBROUTINE B2SPEL_B(ncv, ns, ev, te, teb, ne, neb, rt, rtb)
       IF (branch .EQ. 0) THEN
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlsa(icv, 1, is))
         rtb%rlsa(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlsa(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlsa(icv, 1, is), r8/8)
       ELSE
         CALL TRIMG_BWD(-20.0_R8, 20.0_R8, tt, ttb, rtb%rlsa(icv, 1, is))
         rtb%rlsa(icv, 1, is) = 0.D0
-        CALL POPREAL8ARRAY(rt%rlsa(icv, 1, is), r8/8)
+        CALL POPREAL8(rt%rlsa(icv, 1, is), r8/8)
       END IF
       tempb = ttb/(rtlt(ite+1)-rtlt(ite))
       t1b = t1b + tempb
       t0b = t0b - tempb
-      CALL POPREAL8ARRAY(t1, r8/8)
+      CALL POPREAL8(t1, r8/8)
       fxneb = fxneb + (rtlsa(ite+1, ine+1, is)-rtlsa(ite+1, ine, is))*&
 &       t1b + (rtlsa(ite, ine+1, is)-rtlsa(ite, ine, is))*t0b
       rtlsab(ite+1, ine, is) = rtlsab(ite+1, ine, is) + (1.0_R8-fxne)*&

@@ -232,12 +232,12 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
 !
 !   ..add Rhie-Chow term
     DO ifc=1,nfc
-      CALL PUSHREAL8ARRAY(wrk1(ifc), r8/8)
+      CALL PUSHREAL8(wrk1(ifc), r8/8)
       wrk1(ifc) = switch%b2npco_pcm1*0.5_R8*geo%fcpbs(ifc)*(dv%pcca(mpg%&
 &       fccv(ifc, 1), 1, is)*pl%na(mpg%fccv(ifc, 1), is)+dv%pcca(mpg%&
 &       fccv(ifc, 2), 1, is)*pl%na(mpg%fccv(ifc, 2), is))/(geo%fcqgam(&
 &       ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
-      CALL PUSHREAL8ARRAY(wrk2(ifc), r8/8)
+      CALL PUSHREAL8(wrk2(ifc), r8/8)
       wrk2(ifc) = 0.5_R8*geo%fcqgam(ifc, 0)*(dpbc(mpg%fccv(ifc, 1))+dpbc&
 &       (mpg%fccv(ifc, 2)))*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
     END DO
@@ -438,13 +438,13 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
     wrk2b = wrk2b + wrk1*dvb%fna_eir(:, 0, is)
     dpbcb = 0.D0
     DO ifc=nfc,1,-1
-      CALL POPREAL8ARRAY(wrk2(ifc), r8/8)
+      CALL POPREAL8(wrk2(ifc), r8/8)
       tempb4 = geo%fcqgam(ifc, 0)*0.5_R8*(geo%fchc(ifc, 1)+geo%fchc(ifc&
 &       , 2))*wrk2b(ifc)
       wrk2b(ifc) = 0.D0
       dpbcb(mpg%fccv(ifc, 1)) = dpbcb(mpg%fccv(ifc, 1)) + tempb4
       dpbcb(mpg%fccv(ifc, 2)) = dpbcb(mpg%fccv(ifc, 2)) + tempb4
-      CALL POPREAL8ARRAY(wrk1(ifc), r8/8)
+      CALL POPREAL8(wrk1(ifc), r8/8)
       tempb3 = switch%b2npco_pcm1*0.5_R8*geo%fcpbs(ifc)*wrk1b(ifc)/(geo%&
 &       fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)))
       wrk1b(ifc) = 0.D0

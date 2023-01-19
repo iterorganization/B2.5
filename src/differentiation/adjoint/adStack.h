@@ -1,77 +1,79 @@
-#ifndef ADSTACK_LOADED
-#define ADSTACK_LOADED 1
+#ifndef ADSTACK_INCLUDED
+#define ADSTACK_INCLUDED
 
-/** Push of int (4 bytes int) array */
-extern void pushInteger4Array(int *x, int n) ;
+#include "complex.h"
 
-/** Pop of int (4 bytes int) array */
-extern void popInteger4Array(int *x, int n) ;
+void adStack_startRepeat() ;
+void adStack_resetRepeat() ;
+void adStack_endRepeat() ;
 
-/** Push of long (8 bytes int) array */
-extern void pushInteger8Array(long *x, int n) ;
+/* char* pushBlock() ; */
+/* char* popBlock() ; */
+/* void pushNArray(char *x, int nbChars) ; */
+/* void popNArray(char *x, int nbChars) ; */
 
-/** Pop of long (8 bytes int) array */
-extern void popInteger8Array(long *x, int n) ;
+void pushInteger4Array(int *x, int n) ;
+void popInteger4Array(int *x, int n) ;
+void pushInteger8Array(long *x, int n) ;
+void popInteger8Array(long *x, int n) ;
+void pushReal4Array(float *x, int n) ;
+void popReal4Array(float *x, int n) ;
+void pushReal8Array(double *x, int n) ;
+void popReal8Array(double *x, int n) ;
+/* Commented out because sizeof(complex) == sizeof(double complex) == 16 */
+/* void pushComplex8Array(complex *x, int n) ; */
+/* void popComplex8Array(complex *x, int n) ; */
+void pushComplex16Array(double complex *x, int n) ;
+void popComplex16Array(double complex *x, int n) ;
+void pushCharacterArray(char *x, int n) ;
+void popCharacterArray(char *x, int n) ;
 
-/** Push of float (4 bytes real) array */
-extern void pushReal4Array(float *x, int n) ;
+void pushCharacter(char val) ;
+void popCharacter(char* val) ;
+void pushReal4(float val) ;
+void popReal4(float* val) ;
+void pushReal8(double val) ;
+void popReal8(double* val) ;
+void pushInteger4(int val) ;
+void popInteger4(int* val) ;
+void pushInteger8(long val) ;
+void popInteger8(long* val) ;
+/* Commented out because sizeof(complex) == sizeof(double complex) == 16 */
+/* void pushComplex8(complex val) ; */
+/* void popComplex8(complex *val) ; */
+void pushComplex16(double complex val) ;
+void popComplex16(double complex *val) ;
+void pushPointer4(void* val) ;
+void popPointer4(void** val) ;
+void pushPointer8(void* val) ;
+void popPointer8(void** val) ;
+void pushBoolean(int x) ;
+void popBoolean(int *x) ;
 
-/** Pop of float (4 bytes real) array */
-extern void popReal4Array(float *x, int n) ;
+void pushBit(int x) ;
+int popBit() ;
 
-/** Push of double (8 bytes real) array */
-extern void pushReal8Array(double *x, int n) ;
+void pushControl1b(int cc) ;
+void popControl1b(int *cc) ;
+void pushControl2b(int cc) ;
+void popControl2b(int *cc) ;
+void pushControl3b(int cc) ;
+void popControl3b(int *cc) ;
+void pushControl4b(int cc) ;
+void popControl4b(int *cc) ;
+void pushControl5b(int cc) ;
+void popControl5b(int *cc) ;
+void pushControl6b(int cc) ;
+void popControl6b(int *cc) ;
+void pushControl7b(int cc) ;
+void popControl7b(int *cc) ;
+void pushControl8b(int cc) ;
+void popControl8b(int *cc) ;
 
-/** Pop of double (8 bytes real) array */
-extern void popReal8Array(double *x, int n) ;
+void adStack_showPeakSize() ;
+void adStack_showTotalTraffic() ;
+void adStack_showStackSize(int label) ;
+void adStack_showStack(char *locationName) ;
 
-/** Push of char (byte) array */
-extern void pushCharacterArray(char *x, int n) ;
-
-/** Pop of char (byte) array */
-extern void popCharacterArray(char *x, int n) ;
-
-/*** There is no primitive complex type in C ***/
-/* extern void pushComplex8Array(ccmplx *x, int n) ; */
-/* extern void popComplex8Array(ccmplx *x, int n) ; */
-/* extern void pushComplex16Array(cdcmplx *x, int n) ; */
-/* extern void popComplex16Array(cdcmplx *x, int n) ; */
-
-/** Utility for adBuffer.c (mostly)
- * Push an array of any type onto the main stack */
-extern void pushNArray(char *x, unsigned int nbChars, int checkReadOnly) ;
-
-/** Utility for adBuffer.c (mostly)
- * Pop an array of any type from the main stack */
-extern void popNArray(char *x, unsigned int nbChars, int checkReadOnly) ;
-
-/** Display the maximum size reached by the main AD stack */
-extern void adStack_showPeakSize() ;
-
-/** Utility for adBuffer.c (mostly)
- * Display the total amount of memory pushed */
-extern void showTotalTraffic(unsigned long long int localtraffic) ;
-
-/** Utility for adBuffer.c (mostly)
- * Display in detail the contents of the AD stack */
-extern void showStack() ;
-
-/** Utility for adBuffer.c */
-extern void showStackSize(int i4i, int i8i, int r4i, int r8i, int c8i, int c16i, int s1i, int biti, int ptri, int pos) ;
-
-/** Utility for adBuffer.c */
-extern void startStackRepeat1() ;
-
-/** Utility for adBuffer.c */
-extern void startStackRepeat2() ;
-
-/** Utility for adBuffer.c */
-extern void resetStackRepeat1() ;
-
-/** Utility for adBuffer.c */
-extern void resetStackRepeat2() ;
-
-/** Utility for adBuffer.c */
-extern void endStackRepeat() ;
-
+int stackIsThreadSafe() ;
 #endif

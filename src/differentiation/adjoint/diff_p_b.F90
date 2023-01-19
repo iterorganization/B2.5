@@ -71,7 +71,7 @@ SUBROUTINE DIFF_P_FWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funv, &
 !
 !   ..compute poloidal difference at faces
   DO ifc=1,nfc
-    CALL PUSHREAL8ARRAY(dfunp(ifc), r8/8)
+    CALL PUSHREAL8(dfunp(ifc), r8/8)
     dfunp(ifc) = (fun(mpg%fccv(ifc, 2))-fun(mpg%fccv(ifc, 1)))*geo%&
 &     fcqalf(ifc, 0) + (funv(mpg%fcvx(ifc, 2))-funv(mpg%fcvx(ifc, 1)))*(&
 &     geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet(ifc, 1&
@@ -120,7 +120,7 @@ SUBROUTINE DIFF_P_BWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funb, &
   REAL(kind=r8) :: tempb0
   INTEGER :: branch
   DO ifc=nfc,1,-1
-    CALL POPREAL8ARRAY(dfunp(ifc), r8/8)
+    CALL POPREAL8(dfunp(ifc), r8/8)
     tempb = geo%fcqalf(ifc, 0)*dfunpb(ifc)
     tempb0 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))*geo%fcqbet(ifc, 1)*&
 &     dfunpb(ifc)/geo%fcht(ifc)

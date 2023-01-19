@@ -99,6 +99,7 @@ SUBROUTINE B2TINER_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
     wght = 1.0_R8
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
+        wrk = 1.0_R8 !csc added this here for safety in gfortran
         CALL INTFACE_FWD(ncv, nfc, mpg%fccv, wght, wrk, wrk1)
         CALL PUSHCONTROL1B(1)
       ELSE

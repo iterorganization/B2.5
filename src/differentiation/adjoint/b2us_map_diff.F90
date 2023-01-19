@@ -273,7 +273,7 @@ CONTAINS
       mb%ftreg = 0
       ALLOCATE(m%ftreg(m%nft))
       ALLOCATE(mb%cvonclosedsurface(m%ncv))
-      mb%cvonclosedsurface = 0.D0
+      mb%cvonclosedsurface = .true.
       ALLOCATE(m%cvonclosedsurface(m%ncv))
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
@@ -974,7 +974,7 @@ CONTAINS
       mb%cfreg = 0
       ALLOCATE(m%cfreg(m%mxncf))
       ALLOCATE(mb%cfoncv(m%ncf))
-      mb%cfoncv = 0.D0
+      mb%cfoncv = .true.
       ALLOCATE(m%cfoncv(m%ncf))
       ALLOCATE(mb%cffcor(m%mxncf))
       mb%cffcor = 0.D0

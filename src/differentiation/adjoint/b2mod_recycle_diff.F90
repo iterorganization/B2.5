@@ -369,24 +369,24 @@ CONTAINS
     vcx = 0.0_R8
     DO ic=0,pl%ns-1
       t_av = (tif+tnf)/2.0_R8
-      CALL PUSHREAL8ARRAY(arg1, r8/8)
+      CALL PUSHREAL8(arg1, r8/8)
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = EXPU(arg1)
       vcx = vcx + pl%na(icv, ic)*result1
     END DO
-    CALL PUSHREAL8ARRAY(arg1, r8/8)
+    CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
-    CALL PUSHREAL8ARRAY(cutlo, r8/8)
-    CALL PUSHREAL8ARRAY(cutll, r8/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-    CALL PUSHREAL8ARRAY(result1, r8/8)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
+    CALL PUSHREAL8(result1, r8/8)
     result1 = EXPU(arg1)
     vion = result1*nef
     vtot = vion + vcx
@@ -411,9 +411,9 @@ CONTAINS
 !     equations to reduce the dimensionality of the pre-evaluates integrals
 !     of TRIM tables. Only toroidal drift remains!
     IF (use_uy_uz_1 .EQ. 0) THEN
-      CALL PUSHREAL8ARRAY(uy, r8/8)
+      CALL PUSHREAL8(uy, r8/8)
       uy = 0.0_R8
-      CALL PUSHREAL8ARRAY(uz, r8/8)
+      CALL PUSHREAL8(uz, r8/8)
       uz = 0.0_R8
       CALL PUSHCONTROL1B(0)
     ELSE
@@ -421,8 +421,8 @@ CONTAINS
     END IF
 !
 !     Calculate the moments of a truncated drifting Maxwellian distribution
-    CALL PUSHREAL8ARRAY(i2l, r8/8)
-    CALL PUSHREAL8ARRAY(i1l, r8/8)
+    CALL PUSHREAL8(i2l, r8/8)
+    CALL PUSHREAL8(i1l, r8/8)
     CALL CALCMOMENTSMAXWELLIAN(uz, tif, mn, i0l, i0r, i1l, i1r, i2l, i2r&
 &                        , i3l, i3r, i4l, i4r, i5l, i5r, i6l, i6r)
 !
@@ -569,16 +569,16 @@ CONTAINS
     dnndzb = dnndzb + ux*i2l*tempb
     i2lb = i2lb + dnndz*ux*tempb
     uyb = uyb + i1l*tempb0
-    CALL POPREAL8ARRAY(i1l, r8/8)
-    CALL POPREAL8ARRAY(i2l, r8/8)
+    CALL POPREAL8(i1l, r8/8)
+    CALL POPREAL8(i2l, r8/8)
     uzb = 0.D0
     CALL CALCMOMENTSMAXWELLIAN_B(uz, uzb, tif, tifb, mn, i0l, i0lb, i0r&
 &                          , i1l, i1lb, i1r, i2l, i2lb, i2r, i3l, i3lb, &
 &                          i3r, i4l, i4lb, i4r, i5l, i5r, i6l, i6r)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL POPREAL8ARRAY(uz, r8/8)
-      CALL POPREAL8ARRAY(uy, r8/8)
+      CALL POPREAL8(uz, r8/8)
+      CALL POPREAL8(uy, r8/8)
       uyb = 0.D0
       uzb = 0.D0
     END IF
@@ -610,27 +610,27 @@ CONTAINS
     vcxb = vcxb + vtotb
     result1b = nef*vionb
     nefb = nefb + result1*vionb
-    CALL POPREAL8ARRAY(result1, r8/8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL8(result1, r8/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL EXPU_B(arg1, arg1b, result1b)
-    CALL POPREAL8ARRAY(arg1, r8/8)
+    CALL POPREAL8(arg1, r8/8)
     rtb%rlsa(icv, 0, isn) = rtb%rlsa(icv, 0, isn) + arg1b
     rtb%rlsa(icv, 1, isn) = rtb%rlsa(icv, 1, isn) + LOG(tef/ev)*arg1b
     tefb = tefb + rt%rlsa(icv, 1, isn)*arg1b/tef
     DO ic=pl%ns-1,0,-1
       plb%na(icv, ic) = plb%na(icv, ic) + result1*vcxb
       result1b = pl%na(icv, ic)*vcxb
-      CALL POPREAL8ARRAY(result1, r8/8)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL8(result1, r8/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
-      CALL POPREAL8ARRAY(arg1, r8/8)
+      CALL POPREAL8(arg1, r8/8)
       temp = t_av/(am(isn)*ev)
       rtb%rlcx(icv, 0, ic, iscx0) = rtb%rlcx(icv, 0, ic, iscx0) + arg1b
       rtb%rlcx(icv, 1, ic, iscx0) = rtb%rlcx(icv, 1, ic, iscx0) + LOG(&
@@ -851,24 +851,24 @@ CONTAINS
     vcx = 0.0_R8
     DO ic=0,pl%ns-1
       t_av = (tif+tnf)/2.0_R8
-      CALL PUSHREAL8ARRAY(arg1, r8/8)
+      CALL PUSHREAL8(arg1, r8/8)
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = EXPU(arg1)
       vcx = vcx + pl%na(icv, ic)*result1
     END DO
-    CALL PUSHREAL8ARRAY(arg1, r8/8)
+    CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
-    CALL PUSHREAL8ARRAY(cutlo, r8/8)
-    CALL PUSHREAL8ARRAY(cutll, r8/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-    CALL PUSHREAL8ARRAY(result1, r8/8)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
+    CALL PUSHREAL8(result1, r8/8)
     result1 = EXPU(arg1)
     vion = result1*nef
     vtot = vion + vcx
@@ -899,42 +899,42 @@ CONTAINS
 &                                   , fenenib)
       knb = 0.D0
     ELSE
-      CALL PUSHREAL8ARRAY(int0r, r8/8)
-      CALL PUSHREAL8ARRAY(int0l, r8/8)
-      CALL PUSHREAL8ARRAY(int3r, r8/8)
-      CALL PUSHREAL8ARRAY(int3l, r8/8)
-      CALL PUSHREAL8ARRAY(int6r, r8/8)
-      CALL PUSHREAL8ARRAY(int6l, r8/8)
-      CALL PUSHREAL8ARRAY(int2r, r8/8)
-      CALL PUSHREAL8ARRAY(int2l, r8/8)
-      CALL PUSHREAL8ARRAY(int5r, r8/8)
-      CALL PUSHREAL8ARRAY(int5l, r8/8)
-      CALL PUSHREAL8ARRAY(int1r, r8/8)
-      CALL PUSHREAL8ARRAY(int1l, r8/8)
-      CALL PUSHREAL8ARRAY(int4r, r8/8)
-      CALL PUSHREAL8ARRAY(int4l, r8/8)
+      CALL PUSHREAL8(int0r, r8/8)
+      CALL PUSHREAL8(int0l, r8/8)
+      CALL PUSHREAL8(int3r, r8/8)
+      CALL PUSHREAL8(int3l, r8/8)
+      CALL PUSHREAL8(int6r, r8/8)
+      CALL PUSHREAL8(int6l, r8/8)
+      CALL PUSHREAL8(int2r, r8/8)
+      CALL PUSHREAL8(int2l, r8/8)
+      CALL PUSHREAL8(int5r, r8/8)
+      CALL PUSHREAL8(int5l, r8/8)
+      CALL PUSHREAL8(int1r, r8/8)
+      CALL PUSHREAL8(int1l, r8/8)
+      CALL PUSHREAL8(int4r, r8/8)
+      CALL PUSHREAL8(int4l, r8/8)
       CALL CALCINCIDENTFLUXESMAXWELLIAN(icv, ifc, isn, isign, istra, &
 &                                 area, pl, tnf, geo, cosa, sina, fnnim&
 &                                 , fmomnim, nnim, nnwwnim, fenenim)
 !! <- '1': = safeguard for diffusion BCs
-      CALL PUSHREAL8ARRAY(int0r, r8/8)
-      CALL PUSHREAL8ARRAY(int0l, r8/8)
-      CALL PUSHREAL8ARRAY(int3r, r8/8)
-      CALL PUSHREAL8ARRAY(int3l, r8/8)
-      CALL PUSHREAL8ARRAY(int6r, r8/8)
-      CALL PUSHREAL8ARRAY(int6l, r8/8)
-      CALL PUSHREAL8ARRAY(int2r, r8/8)
-      CALL PUSHREAL8ARRAY(int2l, r8/8)
-      CALL PUSHREAL8ARRAY(int5r, r8/8)
-      CALL PUSHREAL8ARRAY(int5l, r8/8)
-      CALL PUSHREAL8ARRAY(int1r, r8/8)
-      CALL PUSHREAL8ARRAY(int1l, r8/8)
-      CALL PUSHREAL8ARRAY(int4r, r8/8)
-      CALL PUSHREAL8ARRAY(int4l, r8/8)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(int0r, r8/8)
+      CALL PUSHREAL8(int0l, r8/8)
+      CALL PUSHREAL8(int3r, r8/8)
+      CALL PUSHREAL8(int3l, r8/8)
+      CALL PUSHREAL8(int6r, r8/8)
+      CALL PUSHREAL8(int6l, r8/8)
+      CALL PUSHREAL8(int2r, r8/8)
+      CALL PUSHREAL8(int2l, r8/8)
+      CALL PUSHREAL8(int5r, r8/8)
+      CALL PUSHREAL8(int5l, r8/8)
+      CALL PUSHREAL8(int1r, r8/8)
+      CALL PUSHREAL8(int1l, r8/8)
+      CALL PUSHREAL8(int4r, r8/8)
+      CALL PUSHREAL8(int4l, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL CALCINCIDENTFLUXESDIFFUSION(icv, icn, ifc, isign, isn, iscx0&
 &                                , isi, istra, phi_app, area, pl, tif, &
 &                                tnf, tef, pof, nef, geo, rt, dnndy, &
@@ -952,24 +952,24 @@ CONTAINS
 &                  fmomnim, fmomnimb, fmomni, fmomnib)
       CALL CALCLINCOMB_B(kn, knb, kn_b1, kn_b2, fnnid, fnnidb, fnnim, &
 &                  fnnimb, fnni, fnnib)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
-      CALL POPREAL8ARRAY(int4l, r8/8)
-      CALL POPREAL8ARRAY(int4r, r8/8)
-      CALL POPREAL8ARRAY(int1l, r8/8)
-      CALL POPREAL8ARRAY(int1r, r8/8)
-      CALL POPREAL8ARRAY(int5l, r8/8)
-      CALL POPREAL8ARRAY(int5r, r8/8)
-      CALL POPREAL8ARRAY(int2l, r8/8)
-      CALL POPREAL8ARRAY(int2r, r8/8)
-      CALL POPREAL8ARRAY(int6l, r8/8)
-      CALL POPREAL8ARRAY(int6r, r8/8)
-      CALL POPREAL8ARRAY(int3l, r8/8)
-      CALL POPREAL8ARRAY(int3r, r8/8)
-      CALL POPREAL8ARRAY(int0l, r8/8)
-      CALL POPREAL8ARRAY(int0r, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
+      CALL POPREAL8(int4l, r8/8)
+      CALL POPREAL8(int4r, r8/8)
+      CALL POPREAL8(int1l, r8/8)
+      CALL POPREAL8(int1r, r8/8)
+      CALL POPREAL8(int5l, r8/8)
+      CALL POPREAL8(int5r, r8/8)
+      CALL POPREAL8(int2l, r8/8)
+      CALL POPREAL8(int2r, r8/8)
+      CALL POPREAL8(int6l, r8/8)
+      CALL POPREAL8(int6r, r8/8)
+      CALL POPREAL8(int3l, r8/8)
+      CALL POPREAL8(int3r, r8/8)
+      CALL POPREAL8(int0l, r8/8)
+      CALL POPREAL8(int0r, r8/8)
       CALL CALCINCIDENTFLUXESDIFFUSION_B(icv, icn, ifc, isign, isn, &
 &                                  iscx0, isi, istra, phi_app, area, pl&
 &                                  , plb, tif, tifb, tnf, tnfb, tef, &
@@ -979,20 +979,20 @@ CONTAINS
 &                                  , 1, fnnid, fnnidb, fmomnid, fmomnidb&
 &                                  , nnid, nnidb, nnwwnid, nnwwnidb, &
 &                                  fenenid, fenenidb)
-      CALL POPREAL8ARRAY(int4l, r8/8)
-      CALL POPREAL8ARRAY(int4r, r8/8)
-      CALL POPREAL8ARRAY(int1l, r8/8)
-      CALL POPREAL8ARRAY(int1r, r8/8)
-      CALL POPREAL8ARRAY(int5l, r8/8)
-      CALL POPREAL8ARRAY(int5r, r8/8)
-      CALL POPREAL8ARRAY(int2l, r8/8)
-      CALL POPREAL8ARRAY(int2r, r8/8)
-      CALL POPREAL8ARRAY(int6l, r8/8)
-      CALL POPREAL8ARRAY(int6r, r8/8)
-      CALL POPREAL8ARRAY(int3l, r8/8)
-      CALL POPREAL8ARRAY(int3r, r8/8)
-      CALL POPREAL8ARRAY(int0l, r8/8)
-      CALL POPREAL8ARRAY(int0r, r8/8)
+      CALL POPREAL8(int4l, r8/8)
+      CALL POPREAL8(int4r, r8/8)
+      CALL POPREAL8(int1l, r8/8)
+      CALL POPREAL8(int1r, r8/8)
+      CALL POPREAL8(int5l, r8/8)
+      CALL POPREAL8(int5r, r8/8)
+      CALL POPREAL8(int2l, r8/8)
+      CALL POPREAL8(int2r, r8/8)
+      CALL POPREAL8(int6l, r8/8)
+      CALL POPREAL8(int6r, r8/8)
+      CALL POPREAL8(int3l, r8/8)
+      CALL POPREAL8(int3r, r8/8)
+      CALL POPREAL8(int0l, r8/8)
+      CALL POPREAL8(int0r, r8/8)
       CALL CALCINCIDENTFLUXESMAXWELLIAN_B(icv, ifc, isn, isign, istra, &
 &                                   area, pl, plb, tnf, tnfb, geo, cosa&
 &                                   , sina, fnnim, fnnimb, fmomnim, &
@@ -1007,27 +1007,27 @@ CONTAINS
     vcxb = vtotb
     result1b = nef*vionb
     nefb = nefb + result1*vionb
-    CALL POPREAL8ARRAY(result1, r8/8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL8(result1, r8/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL EXPU_B(arg1, arg1b, result1b)
-    CALL POPREAL8ARRAY(arg1, r8/8)
+    CALL POPREAL8(arg1, r8/8)
     rtb%rlsa(icv, 0, isn) = rtb%rlsa(icv, 0, isn) + arg1b
     rtb%rlsa(icv, 1, isn) = rtb%rlsa(icv, 1, isn) + LOG(tef/ev)*arg1b
     tefb = tefb + rt%rlsa(icv, 1, isn)*arg1b/tef
     DO ic=pl%ns-1,0,-1
       plb%na(icv, ic) = plb%na(icv, ic) + result1*vcxb
       result1b = pl%na(icv, ic)*vcxb
-      CALL POPREAL8ARRAY(result1, r8/8)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL8(result1, r8/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
-      CALL POPREAL8ARRAY(arg1, r8/8)
+      CALL POPREAL8(arg1, r8/8)
       temp = t_av/(am(isn)*ev)
       rtb%rlcx(icv, 0, ic, iscx0) = rtb%rlcx(icv, 0, ic, iscx0) + arg1b
       rtb%rlcx(icv, 1, ic, iscx0) = rtb%rlcx(icv, 1, ic, iscx0) + LOG(&
@@ -1327,7 +1327,7 @@ CONTAINS
 !     Pressure of incident neutrals
 !
 !     Density of incident neutrals
-    CALL PUSHREAL8ARRAY(nni, r8/8)
+    CALL PUSHREAL8(nni, r8/8)
     nni = nnf*i0l
 !
 !
@@ -1366,7 +1366,7 @@ CONTAINS
     uyb = 2*uy*tempb3 + 2*uy*tempb1 + nnf*i1l*tempb
     tempb = -(mn*fmoxb)
     uxb = 2*ux*tempb3 + nni*nnwwnib + 2*ux*tempb1 + nnf*i1l*tempb
-    CALL POPREAL8ARRAY(nni, r8/8)
+    CALL POPREAL8(nni, r8/8)
     nnfb = nnfb + ux*i1l*tempb - i1l*fnnib
     i1lb = i1lb + nnf*ux*tempb - nnf*fnnib
     uzb = 0.D0
@@ -2239,24 +2239,24 @@ CONTAINS
     vcx = 0.0_R8
     DO ic=0,pl%ns-1
       t_av = (tif+tnf)/2.0_R8
-      CALL PUSHREAL8ARRAY(arg1, r8/8)
+      CALL PUSHREAL8(arg1, r8/8)
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = EXPU(arg1)
       vcx = vcx + pl%na(icv, ic)*result1
     END DO
-    CALL PUSHREAL8ARRAY(arg1, r8/8)
+    CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
-    CALL PUSHREAL8ARRAY(cutlo, r8/8)
-    CALL PUSHREAL8ARRAY(cutll, r8/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-    CALL PUSHREAL8ARRAY(result1, r8/8)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
+    CALL PUSHREAL8(result1, r8/8)
     result1 = EXPU(arg1)
     vion = result1*nef
     vtot = vion + vcx
@@ -2280,7 +2280,7 @@ CONTAINS
 !     equations to reduce the dimensionality of the pre-evaluates integrals
 !     of TRIM tables. Only toroidal drift remains!
     IF (use_uy_uz_1 .EQ. 0) THEN
-      CALL PUSHREAL8ARRAY(uz, r8/8)
+      CALL PUSHREAL8(uz, r8/8)
       uz = 0.0_R8
       CALL PUSHCONTROL1B(1)
     ELSE
@@ -2288,8 +2288,8 @@ CONTAINS
     END IF
 !
 !     Calculate the moments of a truncated drifting Maxwellian distribution
-    CALL PUSHREAL8ARRAY(i2l, r8/8)
-    CALL PUSHREAL8ARRAY(i1l, r8/8)
+    CALL PUSHREAL8(i2l, r8/8)
+    CALL PUSHREAL8(i1l, r8/8)
     CALL CALCMOMENTSMAXWELLIAN(uz, tif, mn, i0l, i0r, i1l, i1r, i2l, i2r&
 &                        , i3l, i3r, i4l, i4r, i5l, i5r, i6l, i6r)
 !
@@ -2814,8 +2814,8 @@ CONTAINS
     END IF
     IF (.NOT.2.0_R8*(tif/mn) .EQ. 0.D0) tifb = tifb + 2.0_R8*csb/(mn*2.0&
 &       *SQRT(2.0_R8*(tif/mn)))
-    CALL POPREAL8ARRAY(i1l, r8/8)
-    CALL POPREAL8ARRAY(i2l, r8/8)
+    CALL POPREAL8(i1l, r8/8)
+    CALL POPREAL8(i2l, r8/8)
     uzb = 0.D0
     i0lb = 0.D0
     i3lb = 0.D0
@@ -2825,7 +2825,7 @@ CONTAINS
 &                          i3r, i4l, i4lb, i4r, i5l, i5r, i6l, i6r)
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
-      CALL POPREAL8ARRAY(uz, r8/8)
+      CALL POPREAL8(uz, r8/8)
       uzb = 0.D0
     END IF
     temp0 = (dnndz*i2l+dnndy*uy*i1l)/vtot
@@ -2855,27 +2855,27 @@ CONTAINS
     vcxb = vcxb + vtotb
     result1b = nef*vionb
     nefb = nefb + result1*vionb
-    CALL POPREAL8ARRAY(result1, r8/8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL8(result1, r8/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL EXPU_B(arg1, arg1b, result1b)
-    CALL POPREAL8ARRAY(arg1, r8/8)
+    CALL POPREAL8(arg1, r8/8)
     rtb%rlsa(icv, 0, isn) = rtb%rlsa(icv, 0, isn) + arg1b
     rtb%rlsa(icv, 1, isn) = rtb%rlsa(icv, 1, isn) + LOG(tef/ev)*arg1b
     tefb = tefb + rt%rlsa(icv, 1, isn)*arg1b/tef
     DO ic=pl%ns-1,0,-1
       plb%na(icv, ic) = plb%na(icv, ic) + result1*vcxb
       result1b = pl%na(icv, ic)*vcxb
-      CALL POPREAL8ARRAY(result1, r8/8)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL8(result1, r8/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
-      CALL POPREAL8ARRAY(arg1, r8/8)
+      CALL POPREAL8(arg1, r8/8)
       temp = t_av/(am(isn)*ev)
       rtb%rlcx(icv, 0, ic, iscx0) = rtb%rlcx(icv, 0, ic, iscx0) + arg1b
       rtb%rlcx(icv, 1, ic, iscx0) = rtb%rlcx(icv, 1, ic, iscx0) + LOG(&
@@ -3300,24 +3300,24 @@ CONTAINS
     vcx = 0.0_R8
     DO ic=0,pl%ns-1
       t_av = (tif+tnf)/2.0_R8
-      CALL PUSHREAL8ARRAY(arg1, r8/8)
+      CALL PUSHREAL8(arg1, r8/8)
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = EXPU(arg1)
       vcx = vcx + pl%na(icv, ic)*result1
     END DO
-    CALL PUSHREAL8ARRAY(arg1, r8/8)
+    CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
-    CALL PUSHREAL8ARRAY(cutlo, r8/8)
-    CALL PUSHREAL8ARRAY(cutll, r8/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-    CALL PUSHREAL8ARRAY(result1, r8/8)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
+    CALL PUSHREAL8(result1, r8/8)
     result1 = EXPU(arg1)
     vion = result1*nef
     vtot = vion + vcx
@@ -3353,20 +3353,20 @@ CONTAINS
 &                                    fene_el, fene_elb)
       knb = 0.D0
     ELSE
-      CALL PUSHREAL8ARRAY(int0r, r8/8)
-      CALL PUSHREAL8ARRAY(int0l, r8/8)
-      CALL PUSHREAL8ARRAY(int3r, r8/8)
-      CALL PUSHREAL8ARRAY(int3l, r8/8)
-      CALL PUSHREAL8ARRAY(int6r, r8/8)
-      CALL PUSHREAL8ARRAY(int6l, r8/8)
-      CALL PUSHREAL8ARRAY(int2r, r8/8)
-      CALL PUSHREAL8ARRAY(int2l, r8/8)
-      CALL PUSHREAL8ARRAY(int5r, r8/8)
-      CALL PUSHREAL8ARRAY(int5l, r8/8)
-      CALL PUSHREAL8ARRAY(int1r, r8/8)
-      CALL PUSHREAL8ARRAY(int1l, r8/8)
-      CALL PUSHREAL8ARRAY(int4r, r8/8)
-      CALL PUSHREAL8ARRAY(int4l, r8/8)
+      CALL PUSHREAL8(int0r, r8/8)
+      CALL PUSHREAL8(int0l, r8/8)
+      CALL PUSHREAL8(int3r, r8/8)
+      CALL PUSHREAL8(int3l, r8/8)
+      CALL PUSHREAL8(int6r, r8/8)
+      CALL PUSHREAL8(int6l, r8/8)
+      CALL PUSHREAL8(int2r, r8/8)
+      CALL PUSHREAL8(int2l, r8/8)
+      CALL PUSHREAL8(int5r, r8/8)
+      CALL PUSHREAL8(int5l, r8/8)
+      CALL PUSHREAL8(int1r, r8/8)
+      CALL PUSHREAL8(int1l, r8/8)
+      CALL PUSHREAL8(int4r, r8/8)
+      CALL PUSHREAL8(int4l, r8/8)
       CALL CALCREFLECTEDFLUXESMAXWELLIAN(icv, nci, ifc, isign, isn, &
 &                                  istra, iwall, area, recyc0, recycm, &
 &                                  fluid_frac_hyb, pl, tnf, geo, mpg, &
@@ -3375,24 +3375,24 @@ CONTAINS
 &                                  fene_elm)
 !
 !! <- '1': = safeguard for diffusion BCs
-      CALL PUSHREAL8ARRAY(int0r, r8/8)
-      CALL PUSHREAL8ARRAY(int0l, r8/8)
-      CALL PUSHREAL8ARRAY(int3r, r8/8)
-      CALL PUSHREAL8ARRAY(int3l, r8/8)
-      CALL PUSHREAL8ARRAY(int6r, r8/8)
-      CALL PUSHREAL8ARRAY(int6l, r8/8)
-      CALL PUSHREAL8ARRAY(int2r, r8/8)
-      CALL PUSHREAL8ARRAY(int2l, r8/8)
-      CALL PUSHREAL8ARRAY(int5r, r8/8)
-      CALL PUSHREAL8ARRAY(int5l, r8/8)
-      CALL PUSHREAL8ARRAY(int1r, r8/8)
-      CALL PUSHREAL8ARRAY(int1l, r8/8)
-      CALL PUSHREAL8ARRAY(int4r, r8/8)
-      CALL PUSHREAL8ARRAY(int4l, r8/8)
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(int0r, r8/8)
+      CALL PUSHREAL8(int0l, r8/8)
+      CALL PUSHREAL8(int3r, r8/8)
+      CALL PUSHREAL8(int3l, r8/8)
+      CALL PUSHREAL8(int6r, r8/8)
+      CALL PUSHREAL8(int6l, r8/8)
+      CALL PUSHREAL8(int2r, r8/8)
+      CALL PUSHREAL8(int2l, r8/8)
+      CALL PUSHREAL8(int5r, r8/8)
+      CALL PUSHREAL8(int5l, r8/8)
+      CALL PUSHREAL8(int1r, r8/8)
+      CALL PUSHREAL8(int1l, r8/8)
+      CALL PUSHREAL8(int4r, r8/8)
+      CALL PUSHREAL8(int4l, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL CALCREFLECTEDFLUXESDIFFUSION(icv, icn, nci, ifc, isign, isn, &
 &                                 iscx0, isi, istra, iwall, phi_app, &
 &                                 area, recyc0, recycm, fluid_frac_hyb, &
@@ -3414,24 +3414,24 @@ CONTAINS
 &                  fmomreflm, fmomreflmb, fmomrefl, fmomreflb)
       CALL CALCLINCOMB_B(kn, knb, kn_b1, kn_b2, fnnrefld, fnnrefldb, &
 &                  fnnreflm, fnnreflmb, fnnrefl, fnnreflb)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
-      CALL POPREAL8ARRAY(int4l, r8/8)
-      CALL POPREAL8ARRAY(int4r, r8/8)
-      CALL POPREAL8ARRAY(int1l, r8/8)
-      CALL POPREAL8ARRAY(int1r, r8/8)
-      CALL POPREAL8ARRAY(int5l, r8/8)
-      CALL POPREAL8ARRAY(int5r, r8/8)
-      CALL POPREAL8ARRAY(int2l, r8/8)
-      CALL POPREAL8ARRAY(int2r, r8/8)
-      CALL POPREAL8ARRAY(int6l, r8/8)
-      CALL POPREAL8ARRAY(int6r, r8/8)
-      CALL POPREAL8ARRAY(int3l, r8/8)
-      CALL POPREAL8ARRAY(int3r, r8/8)
-      CALL POPREAL8ARRAY(int0l, r8/8)
-      CALL POPREAL8ARRAY(int0r, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
+      CALL POPREAL8(int4l, r8/8)
+      CALL POPREAL8(int4r, r8/8)
+      CALL POPREAL8(int1l, r8/8)
+      CALL POPREAL8(int1r, r8/8)
+      CALL POPREAL8(int5l, r8/8)
+      CALL POPREAL8(int5r, r8/8)
+      CALL POPREAL8(int2l, r8/8)
+      CALL POPREAL8(int2r, r8/8)
+      CALL POPREAL8(int6l, r8/8)
+      CALL POPREAL8(int6r, r8/8)
+      CALL POPREAL8(int3l, r8/8)
+      CALL POPREAL8(int3r, r8/8)
+      CALL POPREAL8(int0l, r8/8)
+      CALL POPREAL8(int0r, r8/8)
       CALL CALCREFLECTEDFLUXESDIFFUSION_B(icv, icn, nci, ifc, isign, isn&
 &                                   , iscx0, isi, istra, iwall, phi_app&
 &                                   , area, recyc0, recyc0b, recycm, &
@@ -3445,20 +3445,20 @@ CONTAINS
 &                                   nnrefldb, nnwwnrefld, nnwwnrefldb, &
 &                                   fenerefld, fenerefldb, fene_eld, &
 &                                   fene_eldb)
-      CALL POPREAL8ARRAY(int4l, r8/8)
-      CALL POPREAL8ARRAY(int4r, r8/8)
-      CALL POPREAL8ARRAY(int1l, r8/8)
-      CALL POPREAL8ARRAY(int1r, r8/8)
-      CALL POPREAL8ARRAY(int5l, r8/8)
-      CALL POPREAL8ARRAY(int5r, r8/8)
-      CALL POPREAL8ARRAY(int2l, r8/8)
-      CALL POPREAL8ARRAY(int2r, r8/8)
-      CALL POPREAL8ARRAY(int6l, r8/8)
-      CALL POPREAL8ARRAY(int6r, r8/8)
-      CALL POPREAL8ARRAY(int3l, r8/8)
-      CALL POPREAL8ARRAY(int3r, r8/8)
-      CALL POPREAL8ARRAY(int0l, r8/8)
-      CALL POPREAL8ARRAY(int0r, r8/8)
+      CALL POPREAL8(int4l, r8/8)
+      CALL POPREAL8(int4r, r8/8)
+      CALL POPREAL8(int1l, r8/8)
+      CALL POPREAL8(int1r, r8/8)
+      CALL POPREAL8(int5l, r8/8)
+      CALL POPREAL8(int5r, r8/8)
+      CALL POPREAL8(int2l, r8/8)
+      CALL POPREAL8(int2r, r8/8)
+      CALL POPREAL8(int6l, r8/8)
+      CALL POPREAL8(int6r, r8/8)
+      CALL POPREAL8(int3l, r8/8)
+      CALL POPREAL8(int3r, r8/8)
+      CALL POPREAL8(int0l, r8/8)
+      CALL POPREAL8(int0r, r8/8)
       CALL CALCREFLECTEDFLUXESMAXWELLIAN_B(icv, nci, ifc, isign, isn, &
 &                                    istra, iwall, area, recyc0, recyc0b&
 &                                    , recycm, fluid_frac_hyb, &
@@ -3477,27 +3477,27 @@ CONTAINS
     vcxb = vtotb
     result1b = nef*vionb
     nefb = nefb + result1*vionb
-    CALL POPREAL8ARRAY(result1, r8/8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL8(result1, r8/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL EXPU_B(arg1, arg1b, result1b)
-    CALL POPREAL8ARRAY(arg1, r8/8)
+    CALL POPREAL8(arg1, r8/8)
     rtb%rlsa(icv, 0, isn) = rtb%rlsa(icv, 0, isn) + arg1b
     rtb%rlsa(icv, 1, isn) = rtb%rlsa(icv, 1, isn) + LOG(tef/ev)*arg1b
     tefb = tefb + rt%rlsa(icv, 1, isn)*arg1b/tef
     DO ic=pl%ns-1,0,-1
       plb%na(icv, ic) = plb%na(icv, ic) + result1*vcxb
       result1b = pl%na(icv, ic)*vcxb
-      CALL POPREAL8ARRAY(result1, r8/8)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL8(result1, r8/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
-      CALL POPREAL8ARRAY(arg1, r8/8)
+      CALL POPREAL8(arg1, r8/8)
       temp = t_av/(am(isn)*ev)
       rtb%rlcx(icv, 0, ic, iscx0) = rtb%rlcx(icv, 0, ic, iscx0) + arg1b
       rtb%rlcx(icv, 1, ic, iscx0) = rtb%rlcx(icv, 1, ic, iscx0) + LOG(&
@@ -4459,20 +4459,20 @@ CONTAINS
 !     int1r = int_{0}^{inf} v M(v) dv
 !
 !     int2l = int_{-inf}^{0} v^{2} M(v) dv
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = ERF(arg)
 !
 !     int2r = int_{0}^{inf} v^{2} M(v) dv
 !
 ! Implementation as optional arguments gave segmentation errors...
 !     int3l = int_{-inf}^{0} v^{3} M(v) dv
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = ERF(arg)
 !
 !     int3r = int_{0}^{inf} v^{3} M(v) dv
 !
 !     int4l = int_{-inf}^{0} v^{4} M(v) dv
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = ERF(arg)
 !
 !     int4r = int_{0}^{inf} v^{4} M(v) dv
@@ -4498,7 +4498,7 @@ CONTAINS
       tempb1 = -(EXP(arg**2)*int4lb/temp0)
       argb = -(2*arg*EXP(arg**2)*(1.25_R8*(temp*u)+0.5_R8*(vth*temp1))*&
 &       int4lb/temp0)
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       ub = ub + (temp*1.25_R8+3*u**2*vth*0.5_R8)*tempb1 + (2*u*t*3.0_R8/&
 &       m+4*u**3/2.0_R8)*tempb0 + 3*u**2*0.5_R8*(result1+1.0_R8)*int3lb
       CALL ERF_B(arg, argb, result1b)
@@ -4507,7 +4507,7 @@ CONTAINS
       result1b = (1.5_R8*(t*u/m)+0.5_R8*u**3)*int3lb
       argb = argb - 2*arg*EXP(arg**2)*(0.5_R8*vth**3+0.5_R8*(vth*u**2))*&
 &       int3lb/temp
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       tb = tb + (2*t*1.5_R8/m**2+u**2*3.0_R8/m)*tempb0 + u*tempb + &
 &       0.5_R8*(result1+1.0_R8)*int2lb/m
       tempb0 = -(EXP(arg**2)*int3lb/temp)
@@ -4518,7 +4518,7 @@ CONTAINS
       result1b = (0.5_R8*(t/m)+0.5_R8*u**2)*int2lb
       argb = argb - 2*arg*EXP(arg**2)*vth*u*0.5_R8*int2lb/temp
       tempb = -(EXP(arg**2)*0.5_R8*int2lb/temp)
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       CALL ERF_B(arg, argb, result1b)
       temp = SQRT(pi)
       result1b = u*0.5_R8*int1lb
@@ -4778,24 +4778,24 @@ CONTAINS
     vcx = 0.0_R8
     DO ic=0,pl%ns-1
       t_av = (ti+tn)/2.0_R8
-      CALL PUSHREAL8ARRAY(arg1, r8/8)
+      CALL PUSHREAL8(arg1, r8/8)
       arg1 = rt%rlcx(icv, 0, ic, isn) + rt%rlcx(icv, 1, ic, isn)*LOG(&
 &       t_av/(am(isn)*ev))
-      CALL PUSHREAL8ARRAY(cutlo, r8/8)
-      CALL PUSHREAL8ARRAY(cutll, r8/8)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL4(small_r4_constant, r4/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = EXPU(arg1)
       vcx = vcx + pl%na(icv, ic)*result1
     END DO
-    CALL PUSHREAL8ARRAY(arg1, r8/8)
+    CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(te/ev)
-    CALL PUSHREAL8ARRAY(cutlo, r8/8)
-    CALL PUSHREAL8ARRAY(cutll, r8/8)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
-    CALL PUSHREAL8ARRAY(result1, r8/8)
+    CALL PUSHREAL4(small_r4_constant, r4/8)
+    CALL PUSHREAL8(result1, r8/8)
     result1 = EXPU(arg1)
     vion = result1*ne
     vtot = vion + vcx
@@ -4811,13 +4811,13 @@ CONTAINS
     vcxb = vtotb
     result1b = ne*vionb
     neb = result1*vionb
-    CALL POPREAL8ARRAY(result1, r8/8)
-    CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+    CALL POPREAL8(result1, r8/8)
+    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPREAL8ARRAY(cutll, r8/8)
-    CALL POPREAL8ARRAY(cutlo, r8/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
     CALL EXPU_B(arg1, arg1b, result1b)
-    CALL POPREAL8ARRAY(arg1, r8/8)
+    CALL POPREAL8(arg1, r8/8)
     rtb%rlsa(icv, 0, isn) = rtb%rlsa(icv, 0, isn) + arg1b
     rtb%rlsa(icv, 1, isn) = rtb%rlsa(icv, 1, isn) + LOG(te/ev)*arg1b
     teb = rt%rlsa(icv, 1, isn)*arg1b/te
@@ -4825,14 +4825,14 @@ CONTAINS
     DO ic=pl%ns-1,0,-1
       plb%na(icv, ic) = plb%na(icv, ic) + result1*vcxb
       result1b = pl%na(icv, ic)*vcxb
-      CALL POPREAL8ARRAY(result1, r8/8)
-      CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+      CALL POPREAL8(result1, r8/8)
+      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
-      CALL POPREAL8ARRAY(cutll, r8/8)
-      CALL POPREAL8ARRAY(cutlo, r8/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (ti+tn)/2.0_R8
-      CALL POPREAL8ARRAY(arg1, r8/8)
+      CALL POPREAL8(arg1, r8/8)
       temp = t_av/(am(isn)*ev)
       rtb%rlcx(icv, 0, ic, isn) = rtb%rlcx(icv, 0, ic, isn) + arg1b
       rtb%rlcx(icv, 1, ic, isn) = rtb%rlcx(icv, 1, ic, isn) + LOG(temp)*&
@@ -5018,10 +5018,10 @@ CONTAINS
 ! the guard cell
         irc1 = mpg%rccv(mpg%rccvp(istra, 1)+i-1, 1)
 ! the guard face
-        CALL PUSHREAL8ARRAY(cutlo, r8/8)
-        CALL PUSHREAL8ARRAY(cutll, r8/8)
+        CALL PUSHREAL8(cutlo, r8/8)
+        CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL8ARRAY(small_r4_constant, r4/8)
+        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL CALCMINKN(irc1, isn, istra, pl, dv, rt, switch%l_macro_afn&
 &                , min_kn, kn, mfp)
 !
@@ -5084,10 +5084,10 @@ CONTAINS
           knb = 0.D0
         END IF
         mfpb = knb/switch%l_macro_afn
-        CALL POPREAL8ARRAY(small_r4_constant, r4/8)
+        CALL POPREAL4(small_r4_constant, r4/8)
         CALL POPBOOLEAN(b2mod_math_initialised)
-        CALL POPREAL8ARRAY(cutll, r8/8)
-        CALL POPREAL8ARRAY(cutlo, r8/8)
+        CALL POPREAL8(cutll, r8/8)
+        CALL POPREAL8(cutlo, r8/8)
         CALL CALCMINKN_B(irc1, isn, istra, pl, plb, dv, dvb, rt, rtb, &
 &                  switch%l_macro_afn, min_kn, kn, mfp, mfpb)
       END DO

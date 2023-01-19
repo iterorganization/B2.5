@@ -64,7 +64,6 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   INTEGER :: isigma
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
-  INTRINSIC MAX
   INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB
@@ -272,7 +271,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         CALL PUSHCONTROL4B(7)
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
-        CALL PUSHREAL8ARRAY(prior, r8/8)
+        CALL PUSHREAL8(prior, r8/8)
         CALL CALC_PRIOR_NODIFF(prior, inrange)
         lll_cum = 0.0_R8
         isigma = 1
@@ -836,7 +835,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         END IF
         CALL POPINTEGER4(ic1)
       END DO
-      CALL POPREAL8ARRAY(prior, r8/8)
+      CALL POPREAL8(prior, r8/8)
       CALL CALC_PRIOR_B(prior, priorb, inrange)
  100  CALL POPINTEGER4(n1)
       CALL POPINTEGER4(ic1)
@@ -912,7 +911,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   INTEGER :: isigma
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
-  INTRINSIC MAX
   INTRINSIC MIN
   INTRINSIC SQRT
   EXTERNAL XERRAB

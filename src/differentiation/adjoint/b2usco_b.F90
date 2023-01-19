@@ -456,7 +456,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
       aa(mpg%cvnvp(icv, 1)) = RSCAL(pb(icv))
     END IF
   END DO
-  CALL PUSHREAL8ARRAY(result1, r8/8)
+  CALL PUSHREAL8(result1, r8/8)
 !$FWD-OF II-LOOP 
   DO ifc=1,nfc
 ! cell number of c1
@@ -571,7 +571,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
 !
 !   ..solve the correction equation
   CALL B2UXUS(ncv, mpg, aa, itcnt, rescb, corpb, name)
-  CALL PUSHREAL8ARRAY(result1, r8/8)
+  CALL PUSHREAL8(result1, r8/8)
 !$BWD-OF II-LOOP 
   DO icv=1,ncv
     result1 = RSCAL(pb(icv))
@@ -579,7 +579,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
     corpbb(icv) = result1*corpbb(icv)
     CALL RSCAL_B(pb(icv), pbb(icv), result1b)
   END DO
-  CALL POPREAL8ARRAY(result1, r8/8)
+  CALL POPREAL8(result1, r8/8)
   aab = 0.0_R8
   CALL B2UXUS_B(ncv, mpg, aa, aab, itcnt, rescb, rescbb, corpb, corpbb, &
 &         name)
@@ -618,18 +618,18 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
       result1 = RSCAL(pb(icv1))
       mask(1:mpg%cvnvp(icv1, 2)) = mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%cvnvp&
 &       (icv1, 1)+mpg%cvnvp(icv1, 2)-1) .EQ. icv2
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = RSCAL(pb(icv2))
       CALL PUSHCONTROL1B(0)
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
     IF (solvereg(mpg%cvreg(icv2))) THEN
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = RSCAL(pb(icv2))
       mask0(1:mpg%cvnvp(icv2, 2)) = mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%&
 &       cvnvp(icv2, 1)+mpg%cvnvp(icv2, 2)-1) .EQ. icv1
-      CALL PUSHREAL8ARRAY(result1, r8/8)
+      CALL PUSHREAL8(result1, r8/8)
       result1 = RSCAL(pb(icv1))
       CALL PUSHCONTROL1B(0)
     ELSE
@@ -640,9 +640,9 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
     ivx1 = mpg%fcvx(ifc, 1)
 ! number of v2
     ivx2 = mpg%fcvx(ifc, 2)
-    CALL PUSHREAL8ARRAY(t1, r8/8)
+    CALL PUSHREAL8(t1, r8/8)
     t1 = -(0.5_R8*flob(ifc, 1)) - conb(ifc, 1, 0) - conb(ifc, 1, 2)
-    CALL PUSHREAL8ARRAY(t2, r8/8)
+    CALL PUSHREAL8(t2, r8/8)
     t2 = 0.5_R8*flob(ifc, 1) - conb(ifc, 1, 0) - conb(ifc, 1, 1)
     t11 = 0.0_R8
     DO incv=1,mpg%vxcvp(ivx1, 2)
@@ -661,7 +661,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         CALL PUSHBOOLEANARRAY(mask1, mpg%cvnvp(icv1, 2))
         mask1(1:mpg%cvnvp(icv1, 2)) = mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%&
 &         cvnvp(icv1, 1)+mpg%cvnvp(icv1, 2)-1) .EQ. icv
-        CALL PUSHREAL8ARRAY(result1, r8/8)
+        CALL PUSHREAL8(result1, r8/8)
         result1 = RSCAL(pb(icv))
       END DO
 ! contribution from iVx2
@@ -670,7 +670,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         CALL PUSHBOOLEANARRAY(mask2, mpg%cvnvp(icv1, 2))
         mask2(1:mpg%cvnvp(icv1, 2)) = mpg%cvnv(mpg%cvnvp(icv1, 1):mpg%&
 &         cvnvp(icv1, 1)+mpg%cvnvp(icv1, 2)-1) .EQ. icv
-        CALL PUSHREAL8ARRAY(result1, r8/8)
+        CALL PUSHREAL8(result1, r8/8)
         result1 = RSCAL(pb(icv))
       END DO
       CALL PUSHCONTROL1B(0)
@@ -684,7 +684,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         CALL PUSHBOOLEANARRAY(mask3, mpg%cvnvp(icv2, 2))
         mask3(1:mpg%cvnvp(icv2, 2)) = mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%&
 &         cvnvp(icv2, 1)+mpg%cvnvp(icv2, 2)-1) .EQ. icv
-        CALL PUSHREAL8ARRAY(result1, r8/8)
+        CALL PUSHREAL8(result1, r8/8)
         result1 = RSCAL(pb(icv))
       END DO
 ! contribution from iVx2
@@ -693,7 +693,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         CALL PUSHBOOLEANARRAY(mask4, mpg%cvnvp(icv2, 2))
         mask4(1:mpg%cvnvp(icv2, 2)) = mpg%cvnv(mpg%cvnvp(icv2, 1):mpg%&
 &         cvnvp(icv2, 1)+mpg%cvnvp(icv2, 2)-1) .EQ. icv
-        CALL PUSHREAL8ARRAY(result1, r8/8)
+        CALL PUSHREAL8(result1, r8/8)
         result1 = RSCAL(pb(icv))
       END DO
       t2b = 0.D0
@@ -704,7 +704,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         t2b = t2b + result1*tempb0
         result1b = t2*tempb0
         icv = mpg%vxcv(mpg%vxcvp(ivx2, 1)+incv-1)
-        CALL POPREAL8ARRAY(result1, r8/8)
+        CALL POPREAL8(result1, r8/8)
         CALL RSCAL_B(pb(icv), pbb(icv), result1b)
         CALL POPBOOLEANARRAY(mask4, mpg%cvnvp(icv2, 2))
       END DO
@@ -716,7 +716,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         t1b = t1b + result1*tempb0
         result1b = t1*tempb0
         icv = mpg%vxcv(mpg%vxcvp(ivx1, 1)+incv-1)
-        CALL POPREAL8ARRAY(result1, r8/8)
+        CALL POPREAL8(result1, r8/8)
         CALL RSCAL_B(pb(icv), pbb(icv), result1b)
         CALL POPBOOLEANARRAY(mask3, mpg%cvnvp(icv2, 2))
       END DO
@@ -733,7 +733,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         t2b = t2b + result1*tempb0
         result1b = t2*tempb0
         icv = mpg%vxcv(mpg%vxcvp(ivx2, 1)+incv-1)
-        CALL POPREAL8ARRAY(result1, r8/8)
+        CALL POPREAL8(result1, r8/8)
         CALL RSCAL_B(pb(icv), pbb(icv), result1b)
         CALL POPBOOLEANARRAY(mask2, mpg%cvnvp(icv1, 2))
       END DO
@@ -744,16 +744,16 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
         t1b = t1b + result1*tempb0
         result1b = t1*tempb0
         icv = mpg%vxcv(mpg%vxcvp(ivx1, 1)+incv-1)
-        CALL POPREAL8ARRAY(result1, r8/8)
+        CALL POPREAL8(result1, r8/8)
         CALL RSCAL_B(pb(icv), pbb(icv), result1b)
         CALL POPBOOLEANARRAY(mask1, mpg%cvnvp(icv1, 2))
       END DO
     END IF
-    CALL POPREAL8ARRAY(t2, r8/8)
+    CALL POPREAL8(t2, r8/8)
     flobb(ifc, 1) = flobb(ifc, 1) + 0.5_R8*t2b - 0.5_R8*t1b
     conbb(ifc, 1, 0) = conbb(ifc, 1, 0) - t2b - t1b
     conbb(ifc, 1, 1) = conbb(ifc, 1, 1) - t2b
-    CALL POPREAL8ARRAY(t1, r8/8)
+    CALL POPREAL8(t1, r8/8)
     conbb(ifc, 1, 2) = conbb(ifc, 1, 2) - t1b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
@@ -762,12 +762,12 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
 &       icv2, 2)-1), MASK=mask0(1:mpg%cvnvp(icv2, 2)))
       t1b = result1*tempb0
       result1b = t1*tempb0
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       CALL RSCAL_B(pb(icv1), pbb(icv1), result1b)
       t2 = 0.5_R8*flob(ifc, 0) - conb(ifc, 0, 0) - conb(ifc, 0, 1)
       t2b = -(result1*aab(mpg%cvnvp(icv2, 1)))
       result1b = -(t2*aab(mpg%cvnvp(icv2, 1)))
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       CALL RSCAL_B(pb(icv2), pbb(icv2), result1b)
     ELSE
       t1b = 0.D0
@@ -779,7 +779,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
 &       icv1, 2)-1), MASK=mask(1:mpg%cvnvp(icv1, 2)))
       t2b = t2b + result1*tempb0
       result1b = t2*tempb0
-      CALL POPREAL8ARRAY(result1, r8/8)
+      CALL POPREAL8(result1, r8/8)
       CALL RSCAL_B(pb(icv2), pbb(icv2), result1b)
       t1b = t1b - result1*aab(mpg%cvnvp(icv1, 1))
       result1b = -(t1*aab(mpg%cvnvp(icv1, 1)))
@@ -790,7 +790,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
     conbb(ifc, 0, 1) = conbb(ifc, 0, 1) - t2b
     conbb(ifc, 0, 2) = conbb(ifc, 0, 2) - t1b
   END DO
-  CALL POPREAL8ARRAY(result1, r8/8)
+  CALL POPREAL8(result1, r8/8)
   CALL POPREAL8ARRAY(rescb, r8*ncv/8)
 !$BWD-OF II-LOOP 
   DO icv=1,ncv
