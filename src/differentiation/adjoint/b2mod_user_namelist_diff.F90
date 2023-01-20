@@ -225,7 +225,7 @@ CONTAINS
       cfstart = 0
       cfend = 0
       cfdef = 0
-      cftype = 0
+      cftype = -1
       cfdata = 0.0_R8
       ncfdata = 0
       read_sigma = .false.
@@ -330,7 +330,7 @@ CONTAINS
       cfstart = 0
       cfend = 0
       cfdef = 0
-      cftype = 0
+      cftype = -1
       cfdata = 0.0_R8
       ncfdata = 0
       read_sigma = .false.

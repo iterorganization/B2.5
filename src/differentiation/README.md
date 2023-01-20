@@ -64,7 +64,7 @@ At each iteration however it will print out in run.log only the derivative of:
  - enipar(1,1): ion heat BC at boundary 1
  - b2recyc(1,2): recycling coefficient for species 1 at stratum 2
 
-At the end of the run it will eventually print the gradient of all the default parameters. If more printout is needed during or at the end of the run then b2mod_driver_diff.F90 and b2mod_main_diff.F90 need to be modified accordingly.
+At the end of the run it will eventually print the gradient of all the default parameters for species [0-1], boundaries [1-6], and strata [1-5]. If more printout is needed during or at the end of the run then b2mod_driver_diff.F90 and b2mod_main_diff.F90 need to be modified accordingly.
 
 To compile and run the optimization version, for example with PETCs/TAO optimization library:
 
