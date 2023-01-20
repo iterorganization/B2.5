@@ -85,7 +85,7 @@
 
 ***********************************************************************
 
-      logical function isPoloidal(iFc,m,g,cvFpsi,tol)
+      logical function isPoloidal(iFc,m,g,cvFpsi)
       
         type(mapping) :: m
         type(geometry) :: g
@@ -102,6 +102,8 @@
 
         if (.not.isAligned(iFc,m) ) then ! not aligned - skips aligned radial faces
             cells = m%fcCv(iFc,:)
+            tol = 1e-1_R8*abs( g%vxFpsi(m%fcVx(iFc,1)) - 
+     &             g%vxFpsi(m%fcVx(iFc,2)))
             !all combinations of cells
 
             !two quads
