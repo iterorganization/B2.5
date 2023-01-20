@@ -736,7 +736,8 @@
        do iVx = 1,nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (mpg%cvVxP(iCv,2).ne.4) then
+         if ((mpg%cvVxP(iCv,2).eq.3) .or.
+     &      (mpg%cvVxP(iCv,2).gt.4)) then
            inv_dist(iVx) = 1
          endif
         enddo         
@@ -747,17 +748,10 @@
         if (inv_dist(iVx).eq.1) then
          do inCv = 1, mpg%vxCvP(iVx,2)
           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-          if (iCv.le.mpg%nCi) then
            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
      &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
      &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )     
-          else
-           ! Make sure guard cells dominate in the interpolation
-           ! to vertices => use volume
-           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  ) 
-          endif           
+          
          enddo   
         else
          do inCv = 1, mpg%vxCvP(iVx,2)
