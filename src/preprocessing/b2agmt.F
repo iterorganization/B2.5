@@ -97,7 +97,7 @@
      *   p0x, p0y, p1x, p1y, width, centroid(m%nCv,0:1), bcFpsi,
      *   t0, t1, psic, dx, dy, cf(0:1), isx(0:1), isy(0:1),
      *   guard_rescale, fvec(0:1), dg, fcPsi, ec1fc(0:1), efcc2(0:1),
-     *   econf(0:1), fn(0:1), tol_angles, tol_aligned, cvFpsi(1:m%nCv),
+     *   econf(0:1), fn(0:1), tol_angles, cvFpsi(1:m%nCv),
      *   fcH, fcW, fcX(1:m%nFc), fcY(1:m%nFc), bcBb(0:1), 
      *   fcQgam1(1:m%nFc,0:1), fcQgam2(1:m%nFc,0:1)
       logical classical
@@ -116,9 +116,8 @@
       sinin(p0x,p0y,p1x,p1y) = trim1(
      &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
 *   ..initialisation
-      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-1_R8/,
-     &  tol_aligned /1.0e-4_R8/
-      save volhmk, width, guard_rescale, tol_aligned
+      data volhmk/1/, width /1.0_R8/, guard_rescale /1.0e-1_R8/
+      save volhmk, width, guard_rescale
 
 
 *-----------------------------------------------------------------------
@@ -140,12 +139,9 @@
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_style', style)
       call ipgetr ('b2agmt_guard_rescale',guard_rescale)
-      call ipgetr ('b2agmt_tol_aligned',tol_aligned)
       call xertst (0.0_R8.lt.width, 'faulty input width')
       call xertst (0.0_R8.lt.guard_rescale, 
      &   'faulty input guard rescale')
-      call xertst (0.0_R8.lt.tol_aligned,
-     &   'faulty input tol_algined' )
 *   ..test nx, ny, isymm
       call xertst (0.le.m%nCv.and.0.le.m%nFc.and.0.le.m%nVx,
      &  'faulty argument nCv, nFc, nVx')
@@ -301,7 +297,8 @@
           ! If it is possible to put the cell center of the guard cell on the same psi
           ! as the boundary cell, this is done. Otherwise the cell center is placed
           ! in the extension of the vector from the boundary cell center and the face center.
-          if (abs(fcPsi - bcFpsi) .lt. tol_aligned) then !get the guard cell on the same fpsi
+          if (abs(fcPsi - bcFpsi)/abs((g%vxFpsi(v2)-g%vxFpsi(v1)))
+     &       .lt. 1e-1_R8) then !get the guard cell on the same fpsi
             !Calculate intersection point - find point on face where psi = fcPsi
             t0 = (bcFpsi - g%vxFpsi(v1))/(g%vxFpsi(v2)-g%vxFpsi(v1))      
             isx(1) =  g%vxX(v1) + t0 *(g%vxX(v2)- g%vxX(v1))
@@ -434,7 +431,7 @@
 *  fcType.EQ.2 indicates a poloidal face. A face is a poloidal face when it is not aligned
 *  with the magnetic field and when the cell centers of its cells lay on the same psi.      
 
-      call build_fcType(g,m,fcType,cvFpsi,tol_aligned)
+      call build_fcType(g,m,fcType,cvFpsi)
 
 ! loop over faces 
       !pre compute face centers
@@ -815,7 +812,7 @@ cnv   but now for quads
 
 *-----------------------------------------------------------------------
 
-      subroutine build_fcType(g,m,fcType,cvFpsi,tol)
+      subroutine build_fcType(g,m,fcType,cvFpsi)
       use b2mod_types
       use b2us_map
       use b2us_geo
@@ -825,14 +822,12 @@ cnv   but now for quads
       type(mapping) :: m
       type(geometry) :: g  
       integer :: fcType(m%nFc), iFc
-      real(kind=R8) :: tol, cvFpsi(m%nCv)
-
-      !tol = 1.0e-4_R8
+      real(kind=R8) :: cvFpsi(m%nCv)
 
       do iFc = 1,m%nFc
           if (isAligned(iFc,m)) then
              fcType(iFc) = 1
-          elseif (isPoloidal(iFc,m,g,cvFpsi,tol)) then
+          elseif (isPoloidal(iFc,m,g,cvFpsi)) then
              fcType(iFc) = 2
           else 
              fcType(iFc) = 0
