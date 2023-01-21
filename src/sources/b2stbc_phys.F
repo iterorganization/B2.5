@@ -10941,7 +10941,7 @@ c              fchi=0.0_R8
       elseif(istyle_cur_contr_on_S_and_N.eq.1) then                   !srv 01.02.09 { 27.03.14
 
         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (new_boundary_files) write(*,'(a,i2,a,i2)')
+          if (new_boundary_files) write(*,'(1x,a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential there is imposed by BCPOT=',
      &          BCPOT(IB)
