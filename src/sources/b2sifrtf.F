@@ -101,9 +101,7 @@
      *  smbtfial_nofl(-1:nx,-1:ny,0:3),                                 !som 06.03.21
      *  smbtfial_test_nofl(-1:nx,-1:ny,0:3)                             !som 06.03.21
       real (kind=R8) :: temp
-#ifdef WITH_FTIMINGS
       logical :: do_parallel
-#endif
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -163,9 +161,7 @@
        call xertst (0.eq.icase .or. 1.eq.icase,
      &              'faulty input b2tlnl_ii')
       endif
-#ifdef WITH_FTIMINGS
       do_parallel = .not. in_parallel()
-#endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -197,7 +193,7 @@
       if (do_parallel) call timer%start("parallel")
 #endif
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (.not. OMP_IN_PARALLEL())
+!$OMP PARALLEL DO IF (do_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
@@ -353,7 +349,7 @@
       if (do_parallel) call timer%start("parallel")
 #endif
 #ifndef NO_OPENMP_B2SIFRTF
-!$OMP PARALLEL DO IF (.not.OMP_IN_PARALLEL())
+!$OMP PARALLEL DO IF (do_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, ka, kb, is, ix, iy, coef, t0)
 !$OMP& PRIVATE(calfab, delti, jabmax, fllim_al_ab)

@@ -475,6 +475,7 @@
 !$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
+!$OMP& PRIVATE(smbvi, smbvtemp)
 !$OMP& PRIVATE(chns, wrks, new_matrix)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
@@ -529,9 +530,12 @@
 !$OMP& SHARED(b2sicf_smo_bal, b2sicf_smo0to3)
 !$OMP& SHARED(b2sian_smo_bal, b2sian_smo0to3)
 !$OMP& SHARED(b2nxdv_smo_bal, b2nxdv_smo0to3)
-!$OMP& SHARED(fmo_tot)
+!$OMP& SHARED(fmo_tot, fchanml_a)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi)
-!$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim)
+!$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
+!$OMP& SHARED(Zhdanov_closure, Zhdanov_test, Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al, chci_a)
+!$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 #ifndef GFORTRAN
 #ifndef PGF90
 #ifndef CRAY
