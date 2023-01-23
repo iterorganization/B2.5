@@ -9,11 +9,12 @@ LD_NAG    ?= -L${NAGDIR}/lib -lnag_nag
 else
 LD_NAG    ?= `pkg-config openblas --libs`
 endif
-ifeq ($(shell `pkg-config --exists netCDF-Fortran`; echo $$?),0)
+ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
+INCMODS   += `pkg-config netcdf-fortran --cflags`
 endif
 else
 ifndef SOLPS_CPP
