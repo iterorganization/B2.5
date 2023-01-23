@@ -65,7 +65,6 @@
      &         b2sigp_pstate_bal, b2sigp_pstate0to3,
      *         b2siav_smovh_bal, b2siav_smovh0to3,
      1         b2siav_smovv_bal, b2siav_smovv0to3,
-     x         b2siav_smovi_bal, b2siav_smovi0to3,                      !som 13.08.21
      2         b2sicf_smo_bal, b2sicf_smo0to3,
      3         b2sian_smo_bal, b2sian_smo0to3,
      4         b2nxdv_smo_bal, b2nxdv_smo0to3
