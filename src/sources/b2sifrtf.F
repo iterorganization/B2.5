@@ -293,18 +293,18 @@ c      .. apply flux limit
       real (kind=R8) :: fkabvp
       if((a.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp(iCv)=cimp1(iCv)
+        fkabvp=cimp1(iCv)
       elseif((b.eq.ismain) .and. (a.ne.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp(iCv)=cimp1(iCv)
+        fkabvp=cimp1(iCv)
       elseif((a.ne.b .and. a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp(iCv)=1.0_R8
+        fkabvp=1.0_R8
       elseif((a.eq.b) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabvp(iCv)=0.0_R8
+        fkabvp=0.0_R8
       else
-        fkabvp(iCv)=0.0_R8
+        fkabvp=0.0_R8
       endif
       return
       end function fkabvp
@@ -315,14 +315,14 @@ c      .. apply flux limit
       real (kind=R8) :: fkabtf
       if((b.eq.ismain) .and. (b.ne.a) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabtf(iCv)=cimp2(iCv)
+        fkabtf=cimp2(iCv)
       elseif((a.ne.ismain) .and. (b.ne.ismain) .and.
      &  (.not.is_neutral(a)).and.(.not.is_neutral(b))) then
-        fkabtf(iCv)=0.0_R8
+        fkabtf=0.0_R8
       elseif((a.eq.ismain)) then
-        fkabtf(iCv)=0.0_R8
+        fkabtf=0.0_R8
       else
-        fkabtf(iCv)=0.0_R8
+        fkabtf=0.0_R8
       endif
       return
       end function fkabtf
@@ -332,12 +332,12 @@ c      .. apply flux limit
       integer, intent(in) :: iCv, a
       real (kind=R8) :: fka
       integer r
-      fka(iCv) = 0.0_R8
+      fka = 0.0_R8
       do r = 0, ns-1
-        fka(iCv) = fka(iCv) + rz2(iCv,r)*na(iCv,r)*sqrt(mp)*
+        fka = fka + rz2(iCv,r)*na(iCv,r)*sqrt(mp)*
      &          sqrt(am(a)*am(r)/(am(a)+am(r)))
       enddo
-      fka(iCv) = fka(iCv)*rz2(iCv,a)
+      fka = fka*rz2(iCv,a)
       return
       end function fka
 
