@@ -6,7 +6,7 @@ ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
 GLI_HOME  ?= ${EBROOTGLI}
 endif
-ifeq ($(shell `pkg-config --exists netCDF-Fortran`; echo $$?),0)
+ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
 ifndef SOLPS_CPP
