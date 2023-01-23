@@ -201,8 +201,8 @@
 
        centroid(iCv,:) = quadCentroid_us(g%vxX(verts(0)), 
      &      g%vxY(verts(0)),g%vxX(verts(1)), g%vxY(verts(1)), 
-     &      g%vxX(verts(2)),g%vxY(verts(2)), g%vxX(verts(3)),
-     &      g%vxY(verts(3)))
+     &      g%vxX(verts(3)),g%vxY(verts(3)), g%vxX(verts(2)),
+     &      g%vxY(verts(2)))
 
       elseif (nv.eq.5) then
        g%cvSz(iCv) = pentArea(g%vxX(verts(0)), g%vxY(verts(0)),  
