@@ -158,6 +158,11 @@ MODULE B2US_PLASMA_DIFF
 &     fllim_al, fllim_al_c, fllim_ki_c, f_luc_ke, f_luc_ki, f_luc_et, &
 &     f_luc_sg, f_luc_al
       REAL(r8), DIMENSION(:), ALLOCATABLE :: cssb
+! csc the following three have been manually added to enable saving
+! the sensitivity of transport coefficients for each cell
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: hce0save
+      REAL(r8), DIMENSION(:), ALLOCATABLE :: hci0save
+      REAL(r8), DIMENSION(:, :), ALLOCATABLE :: dna0save
   END TYPE B2COEFF
 !
   TYPE B2SOURCE
@@ -1072,6 +1077,15 @@ CONTAINS
       ALLOCATE(coeffb%cssb(nfc), source=0._R8)
       coeffb%cssb = 0.D0
       ALLOCATE(coeff%cssb(nfc), source=0._R8)
+! csc the following three have been manually added to enable saving
+! the sensitivity of transport coefficients for each cell
+      ALLOCATE(coeffb%hce0save(ncv), source=0._R8)
+      coeffb%hce0save = 0.D0
+      ALLOCATE(coeffb%hci0save(ncv), source=0._R8)
+      coeffb%hce0save = 0.D0
+      ALLOCATE(coeffb%dna0save(ncv, 0:ns-1), source=0._R8)
+      coeffb%dna0save = 0.D0
+!
       RETURN
     END IF
   END SUBROUTINE CREATEB2COEFF_B
@@ -1520,7 +1534,18 @@ CONTAINS
         DEALLOCATE(coeffb%cssb)
       END IF
       DEALLOCATE(coeff%cssb)
-!
+! csc the following three have been manually added to enable saving
+! the sensitivity of transport coefficients for each cell
+    IF (ALLOCATED(coeffb%dna0save)) THEN
+      DEALLOCATE(coeffb%dna0save)
+    END IF
+    IF (ALLOCATED(coeffb%hce0save)) THEN
+      DEALLOCATE(coeffb%hce0save)
+    END IF
+    IF (ALLOCATED(coeffb%hci0save)) THEN
+      DEALLOCATE(coeffb%hci0save)
+    END IF
+
       RETURN
     END IF
   END SUBROUTINE DESTROYB2COEFF_B

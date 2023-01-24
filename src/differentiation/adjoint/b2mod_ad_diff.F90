@@ -64,6 +64,7 @@ MODULE B2MOD_AD_DIFF
 !
 !srv 06.07.00
   LOGICAL, SAVE :: b2news_solving(4)=.true.
+  LOGICAL, SAVE :: last_call_transp=.false.
 !
   REAL(kind=r8), SAVE :: cfnorm(nncf), vold(nncf)
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2data(:), b2dataoncf(:)
