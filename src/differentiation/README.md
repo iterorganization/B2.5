@@ -1,8 +1,9 @@
 B2.5 Algorithmic Differentiation documentation
 ======================
 
-The source files contained in this folder are not compiled with any B2.5(-EIRENE) executable.
+The source files contained in this folder are not compiled with any standard B2.5(-EIRENE) executable.
 They are only needed as additional subroutines when a new version of the differentiated code is created.
+The source files in tangent and adjoint folders are instead used to compile the tangent and adjoint AD codes respectively. They have been put in these subdirectories otherwise the Make file would try to use them for compilaton of standalone B2.5 or coupled B2.5-EIRENE executables.
 
 The files with name "files_to_*.txt" are needed when differentiating the code, to tell Tapenade which source files
 to keep/exclude from the differentiation. The splitting between files_to_exclude and files_to_ignore is needed by the automatic postprocessing of the differentiated files.
