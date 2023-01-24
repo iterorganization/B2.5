@@ -358,7 +358,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 !electron density radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%dv%ne, funv, &
 &                     gradr)
-        gradr = gradr/1.0e19_R8
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
           CALL PUSHCONTROL1B(1)
@@ -366,7 +366,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         CALL PUSHINTEGER4(icv)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
@@ -379,7 +379,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 !electron temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%te, funv, &
 &                     gradr)
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
           CALL PUSHCONTROL1B(1)
@@ -387,7 +387,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         CALL PUSHINTEGER4(icv)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
@@ -400,7 +400,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 !ion temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%ti, funv, &
 &                     gradr)
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         IF (ALLOCATED(b2dataoncf)) THEN
           CALL PUSHREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
           CALL PUSHCONTROL1B(1)
@@ -408,7 +408,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
           CALL PUSHCONTROL1B(0)
         END IF
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         CALL PUSHINTEGER4(icv)
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
@@ -535,17 +535,19 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                 -cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
               END DO
               CALL POPINTEGER4(icv)
-              ic1 = mpg%cfregp(icf, 1)
-              ic2 = ic1 + mpg%cfregp(icf, 2) - 1
               n1 = mpg%cfregp(icf, 2)
               CALL POPCONTROL1B(branch)
               IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8&
 &                                             *n2/8)
-              gradrb = 0.D0
               CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:&
-&                       n2), gradr(mpg%cfreg(ic1:ic2)), gradrb(mpg%cfreg&
-&                       (ic1:ic2)), b2dataoncf(1:n2), b2dataoncfb(1:n2))
-              gradrb = gradrb/ev
+&                       n2), b2data(1:n1), b2datab(1:n1), b2dataoncf(1:&
+&                       n2), b2dataoncfb(1:n2))
+              ic1 = mpg%cfregp(icf, 1)
+              ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+              gradrb = 0.D0
+              gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
+&               b2datab(1:n1)/ev
+              b2datab(1:n1) = 0.D0
               CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%&
 &                      pl%ti, stb%pl%ti, funv, funvb, gradr, gradrb)
             END IF
@@ -561,17 +563,19 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &             cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
           END DO
           CALL POPINTEGER4(icv)
-          ic1 = mpg%cfregp(icf, 1)
-          ic2 = ic1 + mpg%cfregp(icf, 2) - 1
           n1 = mpg%cfregp(icf, 2)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*n2/&
 &                                         8)
-          gradrb = 0.D0
           CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2)&
-&                   , gradr(mpg%cfreg(ic1:ic2)), gradrb(mpg%cfreg(ic1:&
-&                   ic2)), b2dataoncf(1:n2), b2dataoncfb(1:n2))
-          gradrb = gradrb/ev
+&                   , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
+&                   b2dataoncfb(1:n2))
+          ic1 = mpg%cfregp(icf, 1)
+          ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+          gradrb = 0.D0
+          gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
+&           b2datab(1:n1)/ev
+          b2datab(1:n1) = 0.D0
           CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%pl%&
 &                  te, stb%pl%te, funv, funvb, gradr, gradrb)
           GOTO 100
@@ -585,17 +589,19 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &             cfdata(icf, 2, icv))*b2voloncf(icf, icv)*jb(icf)
           END DO
           CALL POPINTEGER4(icv)
-          ic1 = mpg%cfregp(icf, 1)
-          ic2 = ic1 + mpg%cfregp(icf, 2) - 1
           n1 = mpg%cfregp(icf, 2)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*n2/&
 &                                         8)
-          gradrb = 0.D0
           CALL INTERP1D_B(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2)&
-&                   , gradr(mpg%cfreg(ic1:ic2)), gradrb(mpg%cfreg(ic1:&
-&                   ic2)), b2dataoncf(1:n2), b2dataoncfb(1:n2))
-          gradrb = gradrb/1.0e19_R8
+&                   , b2data(1:n1), b2datab(1:n1), b2dataoncf(1:n2), &
+&                   b2dataoncfb(1:n2))
+          ic1 = mpg%cfregp(icf, 1)
+          ic2 = ic1 + mpg%cfregp(icf, 2) - 1
+          gradrb = 0.D0
+          gradrb(mpg%cfreg(ic1:ic2)) = gradrb(mpg%cfreg(ic1:ic2)) + &
+&           b2datab(1:n1)/1.0e19_R8
+          b2datab(1:n1) = 0.D0
           CALL GRADC_R_B(ncv, nfc, nvx, 0, geo, geob, mpg, mpgb, st%dv%&
 &                  ne, stb%dv%ne, funv, funvb, gradr, gradrb)
           GOTO 100
@@ -1122,9 +1128,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron density radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%dv%ne, funv, &
 &                     gradr)
-        gradr = gradr/1.0e19_R8
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -1134,9 +1140,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%te, funv, &
 &                     gradr)
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -1146,9 +1152,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !ion temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%ti, funv, &
 &                     gradr)
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
