@@ -236,9 +236,9 @@
           case (7) !electron density radial gradient
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%dv%ne, 
      &        funv, gradr)
-            gradr = gradr/1.0e19_R8
+            b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/1.0e19_R8
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        gradr(mpg%cfReg(ic1:ic2)),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -248,9 +248,9 @@
           case (8) !electron temperature radial gradient
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%te, 
      &        funv, gradr)
-            gradr = gradr/ev
+            b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        gradr(mpg%cfReg(ic1:ic2)),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
@@ -260,9 +260,9 @@
           case (9) !ion temperature radial gradient
             call gradc_r(nCv, nFc, nVx, 0, geo, mpg, st%pl%ti, 
      &        funv, gradr)
-            gradr = gradr/ev
+            b2data(1:n1) = gradr(mpg%cfReg(ic1:ic2))/ev
             call interp1d(n1,n2,b2rr(icf,1:n1),cfdata(icf,1,1:n2),
-     &        gradr(mpg%cfReg(ic1:ic2)),b2dataOnCf(1:n2))
+     &        b2data(1:n1),b2dataOnCf(1:n2))
             do iCv = 1, n2
               J(icf) = J(icf) + b2volOnCf(icf,iCv)*
      &        (b2dataOnCf(iCv)-cfdata(icf,2,iCv))**2
