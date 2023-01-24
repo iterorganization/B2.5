@@ -3637,7 +3637,7 @@ CONTAINS
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
       CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg%nbc)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
-      DO nd=1,nbdirsmax
+      DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.D0
         par_opt_physd(nd, nd) = 1.0_R8
       END DO
@@ -5308,6 +5308,7 @@ CONTAINS
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
+    INTEGER :: nndirs
 !! incident fluid neutral flux
     REAL(kind=r8) :: j(nncf), kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0:&
 &   ns-1)
@@ -6202,9 +6203,14 @@ CONTAINS
         END IF
       END DO
 !    ..call cost function
+      if (flag_optim) then
+        nndirs = nbdirs+nsigma_opt
+      else
+        nndirs = nbdirs
+      endif
       CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &                           mpgd, state, stated, state_ext, state_extd, &
-&                           switch%boris, j, jd, nbdirs+nsigma_opt)
+&                           switch%boris, j, jd, nndirs)
       if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
       DO ICF=1, NCF
       DO nd=1,nbdirs
