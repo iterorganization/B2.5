@@ -8,6 +8,11 @@
       use b2mod_neutrals_namelist_diffv
       implicit none
       type(switches), intent(inout) :: switch
+*-----------------------------------------------------------------------
+*     set_parameters is added to the diff'ed version of b2mn_step
+*     to assign the optimization parameters obtained from optimization
+*     to the input variables actually used by B2.5.
+*-----------------------------------------------------------------------
       integer :: idir, ii, ip
 
       if (.not.flag_optim) return
