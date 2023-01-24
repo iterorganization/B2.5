@@ -920,6 +920,11 @@
 					<default>0</default>
 					<type>integer</type>
 				</switch>
+				<switch>
+					<name>b2optim_namelist</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
 			</switchgroup>
 			<switch>
 				<name>b2sral_inputfile</name>
@@ -2931,6 +2936,14 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2mndr_res_quit</name>
+				<default>1.0e-7</default>
+				<type>real</type>
+				<description>
+					Threshold of the maximum residual among the equations solved below which the run is stopped. Only meaningful when compiled with FIXED_POINT and with adjoint AD code
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndt_nstg_ares*</name>
 				<description>
@@ -6806,6 +6819,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>RZIMP</name>
+				<default>0.0</default>
+				<type>real*8 array of size (2,2)</type>
+				<description>
+					Coordinates defining a segment. All control volumes intersected by this segment will be part of the inner midplane.
+					rzimp(1,1:2) holds the R-coordinates of the first and second point of the segment.
+					rzimp(2,1:2) holds the Z-coordinates of the first and second point of the segment.
+				</description>
+			</switch>
+			<switch>
 				<name>NCF</name>
 				<default>0</default>
 				<type>integer</type>
@@ -6815,7 +6838,7 @@
 			</switch>
 			<switch>
 				<name>CFTYPE</name>
-				<default>0</default>
+				<default>-1</default>
 				<type>integer array of size (NCF)</type>
 				<description>
 					Specifies the type of cost function for index icf. Valid options are:
@@ -6860,11 +6883,29 @@
 				</description>
 			</switch>
 			<switch>
+				<name>CF_REGP</name>
+				<default>0</default>
+				<type>integer array of size (NCF, 2)</type>
+				<description>
+					CF_REGP(icf, 1) points, for cost function icf, to the first index in the CF_REG list
+					CF_REGP(icf, 2) number of items in CF_REG list for cost function icf.
+				</description>
+			</switch>
+			<switch>
 				<name>CFWEIGHT</name>
 				<default>1.0</default>
 				<type>real*8 array of size (NCF)</type>
 				<description>
 					Multipliers to re-scale each cost function separately.
+				</description>
+			</switch>
+			<switch>
+				<name>MapToOMP</name>
+				<default>FALSE</default>
+				<type>logical array of size (NCF)</type>
+				<description>
+					Indicates if cost function icf is to be re-mapped to the OMP, according to CFTYPE.
+					Warning! The mapping is a rigid traslation of the data to the OMP and is safe to work only for non-extended grids and for cost functions defined on the same number of elements as the OMP list.
 				</description>
 			</switch>
 			<switch>
@@ -6888,24 +6929,32 @@
 				<default>TRUE</default>
 				<type>logical array of size (NSIGMA)</type>
 				<description>
-					Indicates if SIGMA(isigma)} is intended as relative standard deviation (SCALE_SIGMA(isigma)=.TRUE.) or absolute (SCALE_SIGMA(isigma)=.FALSE.).
+					Indicates if SIGMA(isigma) is intended as relative standard deviation (SCALE_SIGMA(isigma)=.TRUE.) or absolute (SCALE_SIGMA(isigma)=.FALSE.).
+				</description>
+			</switch>
+			<switch>
+				<name>READ_SIGMA</name>
+				<default>FALSE</default>
+				<type>logical array of size (NSIGMA)</type>
+				<description>
+					(Experimental! Do not use!) Specifies if sigma can be read from the experimental data files cfi.dat.
 				</description>
 			</switch>
 			<switch>
 				<name>PRIOR_TYPE</name>
 				<default>-1</default>
-				<type>integer array of size (NVMX)</type>
+				<type>integer array of size (NNVAR)</type>
 				<description>
 					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are
 					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
 					1 - Uninformative Gaussian prior.
-					NVMX is a hard coded maximum length defined in b2mod_user_namelist
+					NNVAR refers to the optimization namelist
 				</description>
 			</switch>
 			<switch>
 				<name>PRIOR_PAR</name>
 				<default>-1.0</default>
-				<type>real*8 array of size (NVMX,2)</type>
+				<type>real*8 array of size (NNVAR,2)</type>
 				<description>
 					Indicates parameters for the prior distributions.
 					For PRIOR_TYPE=0, not used
@@ -6915,7 +6964,7 @@
 			<switch>
 				<name>PRIOR_RANGE</name>
 				<default>10*p_infty</default>
-				<type>real*8 array of size (NVMX,2)</type>
+				<type>real*8 array of size (NNVAR,2)</type>
 				<description>
 					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30)
 				</description>
@@ -7110,6 +7159,240 @@
 				<type>character*80</type>
 				<description>
 					Filename where /USER/ namelist is stored.
+				</description>
+			</switch>
+		</category>
+		<category name="b2.optimization.parameters">
+			<introduction>
+				<namelist>OPTIMIZATION</namelist>
+				<description>
+					Read if 'b2optim_namelist' is set to 1.
+					Necessary for optimization runs or for standard B2.5(-EIRENE) runs when MAP cost function is used.
+				</description>
+			</introduction>
+			<switch>
+				<name>NNVAR</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of optimization parameters (radially varying transport coefficients count as 1)
+				</description>
+			</switch>
+			<switch>
+				<name>PARTYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NNVAR)</type>
+				<description>
+					 Indicates the type of optimization parameter. Valid options are:
+					 0 - sigma, standard deviation in liklelihood function for Bayesian inference (one for each plasma quantity and location used). These must ALWAYS be the last parameters in the vector!
+					 1 - parm_dna or tdata(:,:,1,:)
+					 2 - parm_dpa or tdata(:,:,2,:)
+					 3 - parm_hci or tdata(:,:,3,:)
+					 4 - parm_hce or tdata(:,:,4,:)
+					 5 - parm_vla or tdata(:,:,5,:) (not yet tested!)
+					 6 - nothing yet (presumably y-component of vla?)
+					 7 - parm_vsa or tdata(:,:,7,:)
+					 8 - parm_sig or tdata(:,:,8,:)
+					 9 - parm_alf or tdata(:,:,9,:)
+					10 - enepar
+					11 - enipar
+					12 - conpar
+					13 - mompar
+					14 - potpar
+					15 - enkpar
+					16 - b2recyc
+					17 - b2tqna_ballooning
+					18 - b2tqna_ballooning_rescale
+					19 - keps_cd
+					20 - keps_heat
+					21 - keps_heat_i
+					22 - keps_sig
+					23 - keps_alf
+					24 - keps_visc
+					25 - keps_dkt
+					26 - keps_dzt
+					27 - b2sikt_fac_diss
+					28 - b2sikt_fac_diss_core
+					29 - b2sikt_fac_sheath
+					30 - b2sikt_fac_sheath_core
+					31 - keps_shear
+					32 - b2tfhi_fsigkt
+					33 - b2sikt_fac_vis_RS
+					34 - b2tfhi_fflokt
+					35 - b2tfhi_fconkt
+					36 - b2tfhi_fflozt
+					37 - b2tfhi_fconzt
+					38 - b2tfhi_fkt_hie
+					39 - b2tfhe_vis_kt
+				</description>
+			</switch>
+			<switch>
+				<name>SIGMA_OPT</name>
+				<default>.true.</default>
+				<type>logical array of size (NSIGMA)</type>
+				<description>
+					For each sigma, spcifies whether it is optimized or fixed
+				</description>
+			</switch>
+			<switch>
+				<name>SPATIAL_DEP</name>
+				<default>.false.</default>
+				<type>logical array of size (NNVAR)</type>
+				<description>
+					For each optimization variables, specifies if radially varying coefficients are optimized.
+					Meaningful only for partype = 1 to 9
+				</description>
+			</switch>
+			<switch>
+				<name>SPATIAL_POINTS</name>
+				<default>0</default>
+				<type>integer array of size (NNVAR)</type>
+				<description>
+					Number of spatial points optimized (should be the same as ndata in b2.transport.inputfile). The actual number of optimized variables (NPAR_OPT) is then equal to the total number of spatial points + any other additional parameter
+				</description>
+			</switch>
+			<switch>
+				<name>PARIS</name>
+				<default>0</default>
+				<type>integer array of size (NNVAR)</type>
+				<description>
+					Specifies the species of the optimization parameter. Only meaningful for partype = [1-3,5,7,12,13,16]
+				</description>
+			</switch>
+			<switch>
+				<name>PARIB</name>
+				<default>0</default>
+				<type>integer array of size (NNVAR)</type>
+				<description>
+					Specifies the boundary/strata of the optimization parameter. Only meaningful for partype = [10-16]
+				</description>
+			</switch>
+			<switch>
+				<name>PAR_RESCALE</name>
+				<default>1.0</default>
+				<type>real*8 array of size (NPAR_OPT)</type>
+				<description>
+					Coefficient to rescale optimization parameters (and their gradient). Note dimension is NPAR_OPT, so need to specify it also for each point in case of spatially varying coefficients
+				</description>
+			</switch>
+			<switch>
+				<name>X0</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NPAR_OPT)</type>
+				<description>
+					Initial guess for each optimization parameter. (p_infty is a parameter currently set to 1e30)
+				</description>
+			</switch>
+			<switch>
+				<name>XL</name>
+				<default>-10*p_infty</default>
+				<type>real*8 array of size (NPAR_OPT)</type>
+				<description>
+					Lower bound for each optimization parameter.
+				</description>
+			</switch>
+			<switch>
+				<name>XU</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NPAR_OPT)</type>
+				<description>
+					Upper bound for each optimization parameter.
+				</description>
+			</switch>
+			<switch>
+				<name>MAXITER</name>
+				<default>100</default>
+				<type>integer</type>
+				<description>
+					Maximum number of optimization iterations. Can overridden with PETCs/Tao by using command line options for the optimization
+				</description>
+			</switch>
+			<switch>
+				<name>CPU_OPT</name>
+				<default>0.0</default>
+				<type>real*8</type>
+				<description>
+					Maximum amount of CPU time in seconds after which the optimization is stopped.
+				</description>
+			</switch>
+			<switch>
+				<name>TOL_OPT</name>
+				<default>1.0e-7</default>
+				<type>real*8</type>
+				<description>
+					Tolerance below which optimization is stopped. For PETCs/Tao it is used for the absolute gradient norm, the relative gradient norm, and the gradient reduction stopping criteria. Can be overridden with PETCs/Tao by using command line options for the optimization.
+				</description>
+			</switch>
+			<switch>
+				<name>HESSIAN_APPROXIMATION</name>
+				<default>'limited-memory'</default>
+				<type>character*256</type>
+				<description>
+					Type of Hessian approximation employed. Depends on optimization library. Possible values are currently: 'limited-memory' and 'exact'. When using the 'exact' option the steepest descent algorithm is used.
+				</description>
+			</switch>
+			<switch>
+				<name>LIMITED_MEMORY_UPDATE_TYPE</name>
+				<default>'bfgs'</default>
+				<type>character*256</type>
+				<description>
+					Specifies which kind of Hessian approximation is employed if HESSIAN_APPROXIMATION is set to 'limited-memory'. Can overridden with PETCs/Tao by using command line options for the optimization
+				</description>
+			</switch>
+			<switch>
+				<name>NNCON</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of nonlinear constraints to impose. (not used for the moment)
+				</description>
+			</switch>
+			<switch>
+				<name>GL</name>
+				<default>-10*p_infty</default>
+				<type>real*8 array of size (NNCON)</type>
+				<description>
+					Lower bound for each nonlinear constraints. (not used for the moment)
+				</description>
+			</switch>
+			<switch>
+				<name>GU</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NNCON)</type>
+				<description>
+					Upper bound for each nonlinear constraints. (not used for the moment)
+				</description>
+			</switch>
+			<switch>
+				<name>NNJAC</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of non-zeros in Jacobian for the non-linear constraints. (not used for the moment)
+				</description>
+			</switch>
+			<switch>
+				<name>JCOL</name>
+				<default>0</default>
+				<type>integer array of size (NNJAC)</type>
+				<description>
+					Contains the column index of the non-zero element of the Jacobian for the non-linear constraints. (not used for the moment)
+				</description>
+			</switch>
+			<switch>
+				<name>JROW</name>
+				<default>0</default>
+				<type>integer array of size (NNJAC)</type>
+				<description>
+					Contains the row index of the non-zero element of the Jacobian for the non-linear constraints. (not used for the moment)
+				</description>
+			</switch>
+			<switch>
+				<name>JJ</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NNJAC)</type>
+				<description>
+					Contains the value of the non-zero element of the Jacobian for the non-linear constraints. (not used for the moment)
 				</description>
 			</switch>
 		</category>
