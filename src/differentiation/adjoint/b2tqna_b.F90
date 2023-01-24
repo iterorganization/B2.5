@@ -49,7 +49,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & st_ext, st_extb, dna0, dna0b, dpa0, dpa0b, vla0, vla0b, vma0, vma0b, &
 & vsa0, vsa0b, hci0, hci0b, hcn0, hcn0b, hcib, hcibb, hce0, hce0b, sig0&
 & , sig0b, alf0, alf0b, hvi0, hvi0b, hve0, hve0b, dkt0, dkt0b, dzt0, &
-& dzt0b, dna_exb, dna_exbb, hce_exb, hce_exbb, hci_exb, hci_exbb)
+& dzt0b, dna_exb, dna_exbb, hce_exb, hce_exbb, hci_exb, hci_exbb, dna0bsave, hce0bsave, hci0bsave)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_TRANSPORT_NAMELIST_DIFF
@@ -72,7 +72,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : my_out_folder, ncall_b2tqna, &
-& ncall_transp_keps
+& ncall_transp_keps, last_call_transp
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !
@@ -109,6 +109,9 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   REAL(kind=r8) :: hce0b(ncv), sig0b(ncv), alf0b(ncv), hvi0b(ncv, 0:1), &
 & hve0b(ncv, 0:1), dkt0b(ncv), dzt0b(ncv), dna_exbb(ncv), hce_exbb(ncv)&
 & , hci_exbb(ncv)
+! csc these additional variables are added manually and are used to save
+! the sensitivity of the transport coefficient for each cell
+  REAL(kind=r8) :: dna0bsave(ncv, 0:ns-1), hci0bsave(ncv), hce0bsave(ncv)
 !   ..workspace arguments (unspecified on entry and on exit)
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: wrk0b(ncv)
@@ -1256,6 +1259,14 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     hci0b = 0.D0
     hcn0b = 0.D0
   END IF
+! csc added manually to save sensitivities of transport coefficients
+! for each point of the domain, before they are reset to zero
+  if (last_call_transp) then
+    dna0bsave = dna0b
+    hce0bsave = dv%ne*hce0b
+    hci0bsave = pl%na(:, 1)*(hcibb(:,1) + hci0b)
+    last_call_transp = .false.
+  endif
   DO icv=ncv,1,-1
     CALL POPREAL8(alf0(icv), r8/8)
     temp3 = qe/pl%te(icv)

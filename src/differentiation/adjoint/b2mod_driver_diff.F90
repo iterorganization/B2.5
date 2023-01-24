@@ -8697,6 +8697,10 @@ CONTAINS
       switchb%keps_cd = 0.D0
       switchb%keps_heat = 0.D0
       switchb%keps_heat_i = 0.D0
+! csc the next enables to save the sensitivity of transport coefficients 
+! for each point of the domain but only for the call to b2tqna within 
+! the next call to b2mndt
+    last_call_transp = .true. 
     CALL B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0, &
 &           state%rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, &
 &           ntim, switch, switchb, geo, geob, mpg, mpgb, state, stateb1&

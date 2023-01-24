@@ -976,6 +976,9 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPINTEGER4ARRAY(addspec, nss*nkind_coeff*(nss+1))
   CALL POPBOOLEANARRAY(poloidal_scaling, nscale)
   dummyzerodiffb = 0.D0
+! csc the last three arguments of the b2tqna_b call have been added 
+! manually to save the sensitivity of transport coefficients in each
+! cell of the domain
   CALL B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch, &
 &         switchb, geo, geob, mpg, mpgb, pl, plb, dv, dvb, rt, rtb, &
 &         st_ext, st_extb, co%dna0, cob%dna0, co%dpa0, cob%dpa0, co%vla0&
@@ -984,7 +987,7 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &         , cob%hce0, co%sig0, cob%sig0, co%alf0, cob%alf0, hvi0, hvi0b&
 &         , hve0, hve0b, co%dkt0, cob%dkt0, co%dzt0, cob%dzt0, co%&
 &         dna_exb, cob%dna_exb, co%hce_exb, cob%hce_exb, co%hci_exb, cob&
-&         %hci_exb)
+&         %hci_exb, cob%dna0save, cob%hce0save, cob%hci0save)
 END SUBROUTINE B2TRNO_B
 !
 
