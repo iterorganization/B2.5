@@ -760,6 +760,27 @@ CONTAINS
           write(*,*) 'GRADIENT par_opt_phys',par_opt_physb(ii)
         end do
       endif
+
+    if (.not. flag_optim) then
+      ! csc writing in output the saved transport coefficients
+      open(99, file = './dna0b.dat', status = 'new')  
+      do ii=1,mpg%nCv  
+        write(99,*) stateb%co%dna0save(ii,1)   
+      end do  
+      close(99)
+  
+      open(99, file = './hce0b.dat', status = 'new')  
+      do ii=1,mpg%nCv  
+        write(99,*) stateb%co%hce0save(ii)   
+      end do  
+      close(99)
+
+      open(99, file = './hci0b.dat', status = 'new')  
+      do ii=1,mpg%nCv  
+        write(99,*) stateb%co%hci0save(ii)   
+      end do  
+      close(99)
+    endif
 !
     RETURN
   END SUBROUTINE B2MN_STEP_B
