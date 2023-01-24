@@ -8,6 +8,11 @@
       use b2mod_switches_diffv
       implicit none
       type(switches_diffv), intent(inout) :: switchdiff
+*-----------------------------------------------------------------------
+*     set_tgt_perturbation is used in b2optim_tao and b2optim_ipopt
+*     to correctly set and pass the input perturbation to tangent AD
+*     coming from the optimization routines
+*-----------------------------------------------------------------------
       integer :: idir, ii, ip, isigma
 !     FIXME initialization to 0.0_R8 should be done elsewhere?
 !     FIXME if not differentiated wrt certain variables, then their derivative here will not exist and such the lines should be manually commented-out
