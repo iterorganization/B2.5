@@ -89,7 +89,7 @@
       do iCv = 1, mpg%nCi
        t0 = t0+abs(dv%resmt(1,iCv))
       enddo
-      diag%aresmt(1) = abs(t0/mtvi)
+      if (mtvi .gt. 0.0_R8) diag%aresmt(1) = abs(t0/mtvi)
 *   ..compute nevi, prvi
       nevi = 0.0_R8
       prvi = 0.0_R8
@@ -126,11 +126,11 @@
        t3 = t3+abs(dv%reshn(1,iCv))
        t4 = t4+abs(dv%reskt(1,iCv))
       enddo
-      diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
-      diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
-      diag%arespo = abs(t2/(qe*nevi))
-      diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
-      diag%areskt = abs(t4/(prvi))
+      if (prvi .gt. 0.0_R8) diag%areshe = abs(t0/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%areshi = abs(t1/((1.5_R8+BoRiS)*prvi))
+      if (nevi .gt. 0.0_R8) diag%arespo = abs(t2/(qe*nevi))
+      if (prvn .gt. 0.0_R8) diag%areshn = abs(t3/((1.5_R8+BoRiS)*prvn))
+      if (prvi .gt. 0.0_R8) diag%areskt = abs(t4/(prvi))
 
 * ..compute regional scaled sums
       diag%rescoreg = 0.0_R8
@@ -178,8 +178,10 @@
         diag%reshireg(1,mpg%cvReg(iCv)) = 
      .    diag%reshireg(1,mpg%cvReg(iCv))+abs(dv%reshi(1,iCv))
       enddo
-      diag%reshereg(1,:) = abs(diag%reshereg(1,:)/((1.5_R8+BoRiS)*prvi))
-      diag%reshireg(1,:) = abs(diag%reshireg(1,:)/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%reshereg(1,:) = 
+     .  abs(diag%reshereg(1,:)/((1.5_R8+BoRiS)*prvi))
+      if (prvi .gt. 0.0_R8) diag%reshireg(1,:) = 
+     .  abs(diag%reshireg(1,:)/((1.5_R8+BoRiS)*prvi))
 
 * ..return
       ncall = ncall+1
