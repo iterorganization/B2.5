@@ -4,7 +4,7 @@
 '96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'he'
 '96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'li'
 '96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'be'
-'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'b '
+'95  ' '95  ' '89  ' '95  ' '95  ' '89  ' '89  ' 'b '
 '96  ' '96  ' '96  ' '96  ' '96  ' '96  ' '96  ' 'c '
 '96  ' '96  ' '96  ' '96  ' '96  ' '96  ' '96  ' 'n '
 '96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'o '
@@ -78,28 +78,29 @@
  acd    scd    ccd    prb    plt    zcd    ecd            [directories in adas]
 
 Change log:
+        2023.01.25      XPB     Changed B acd, scd, prb, plt to '95 (intermediate dataset before '96)
         2018.10.09      XPB     Changed ccd to '96 for N
         2018.09.20      XPB     Changed plt to '42 for Ar, Fe, Kr, W, Xe
-        2018.07.09	XPB	Changed W acd, scd, prb to '50
-				Changed plt to '41 for Ar, Fe, Kr, W, Xe
-        2013.07.01	DPC	Changed H acd, scd, prb, plt to '12
-        2014.04.29	DPC	Changed Si from '89 to '96 except for CCD (= '89)
-	2012.03.21	DPC	Changed Li from none to '96 except for CCD (= '89)
-				Changed Be from '93 to  '96 except for CCD (= '89)
-				Changed Ne from '89 to  '96 except for CCD (= '89)	
-				Changed Al from none to '89
-				Changed Cr from none to '89
-				Changed Fe from none to '89
-				Changed Ni from none to '89
-				Changed Cu from none to '89
-				Changed Ge from none to '89
-				Changed Kr from none to '89
-				Changed Mo from none to '89
-				Changed He CCD from '96 to '89 (zero in '96)
-	2012.03.20      DPC     '96 data for O seems to be missing CCD --- use '89 data
-	2011.11.18      DPC     '96 data for N seems to be missing CCD --- use '89 data
-	2008.02.04	XPB	Added elements 'Cs' to 'W ' (55 to 74)
-	2003.01.23	XPB	Added elements 'Sb' to 'Xe' (51 to 54)
-	2000.07.10	DPC	Changed h, he, c, n, o from 89 to 96
-				Changed be to 93
-				Recommended by Behringer and Horton
+        2018.07.09      XPB     Changed W acd, scd, prb to '50
+                                Changed plt to '41 for Ar, Fe, Kr, W, Xe
+        2013.07.01      DPC     Changed H acd, scd, prb, plt to '12
+        2014.04.29      DPC     Changed Si from '89 to '96 except for CCD (= '89)
+        2012.03.21      DPC     Changed Li from none to '96 except for CCD (= '89)
+                                Changed Be from '93 to  '96 except for CCD (= '89)
+                                Changed Ne from '89 to  '96 except for CCD (= '89)
+                                Changed Al from none to '89
+                                Changed Cr from none to '89
+                                Changed Fe from none to '89
+                                Changed Ni from none to '89
+                                Changed Cu from none to '89
+                                Changed Ge from none to '89
+                                Changed Kr from none to '89
+                                Changed Mo from none to '89
+                                Changed He CCD from '96 to '89 (zero in '96)
+        2012.03.20      DPC     '96 data for O seems to be missing CCD --- use '89 data
+        2011.11.18      DPC     '96 data for N seems to be missing CCD --- use '89 data
+        2008.02.04      XPB     Added elements 'Cs' to 'W ' (55 to 74)
+        2003.01.23      XPB     Added elements 'Sb' to 'Xe' (51 to 54)
+        2000.07.10      DPC     Changed h, he, c, n, o from 89 to 96
+                                Changed be to 93
+                                Recommended by Behringer and Horton
