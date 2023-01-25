@@ -776,6 +776,7 @@ contains
         real(IDS_real), save :: BoRiS = 0.0_IDS_real
         character*132 radiation_commit
         character*256 filename
+        character*5 hlp_frm
         logical match_found, streql, exists, wrong_flow
 #ifdef B25_EIRENE
         character(len=132) :: mol_label !< Molecule species label (e.g. D2)
@@ -1229,8 +1230,11 @@ contains
 #endif
 
         i=index(B25_git_version,'-')
-        allocate( summary%tag%name(1) )
-        summary%tag%name = B25_git_version(1:i-1)
+        if (i.gt.0) then
+          allocate( summary%tag%name(1) )
+          write(hlp_frm,'(a,i2.2,a)') '(a',i-1,')'
+          write(summary%tag%name,hlp_frm) B25_git_version(1:i-1)
+        endif
 
 #if IMAS_MINOR_VERSION > 32
         call write_ids_midplane( divertors%midplane, midplane_id )
@@ -6388,6 +6392,7 @@ contains
         real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         character(len=13) :: spclabel         !< Species label
+        character(len=5) :: hlp_frm
  !< Type of IDS data structure, designed for handling grid geometry data
 #if IMAS_MINOR_VERSION < 15
         type(ids_generic_grid_dynamic) :: batch_grid, sources_grid
@@ -6508,8 +6513,11 @@ contains
           description%simulation%workflow = source
 
           i=index(B25_git_version,'-')
-          allocate( summary%tag%name(1) )
-          summary%tag%name = B25_git_version(1:i-1)
+          if (i.gt.0) then
+            allocate( summary%tag%name(1) )
+            write(hlp_frm,'(a,i2.2,a)') '(a',i-1,')'
+            write(summary%tag%name,hlp_frm) B25_git_version(1:i-1)
+          end if
         end if
 #endif
 
