@@ -439,7 +439,7 @@ csw 01oct2012 initialize potential if necessary
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
 !$OMP& SHARED(zn, zamax)
-!$OMP& SHARED(is_neutral, uadia, ncall, resmo, corua)
+!$OMP& SHARED(is_neutral, use_9pt_stencil, uadia, ncall, resmo, corua)
 !$OMP& SHARED(guard_flows, facdrift, fac_ExB, fac_vis, vol, pbs, pbshz)
 !$OMP& SHARED(cssb, vaecrb, vadia)
 !$OMP& SHARED(wadia, bb, hx, hy, hz, qz, gs, qc, qs, po)

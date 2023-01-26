@@ -471,7 +471,7 @@
 !!FR all other variables are shared
 !$OMP PARALLEL DO DEFAULT(none)
 !$OMP& PRIVATE(rob, pb, wrk0, flub, flcb, cvcb)
-!$OMP& PRIVATE(wrkf, aa5, wrk1, smb, solvedum, ix, iy)
+!$OMP& PRIVATE(wrkf, aa5, aa9, wrk1, smb, solvedum, ix, iy)
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
 !$OMP& PRIVATE(smbvi, smbvtemp)
@@ -480,7 +480,8 @@
 !$OMP& LASTPRIVATE(kt_neo)
 !$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
-!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn)
+!$OMP& SHARED(hy, qs, qz)
+!$OMP& SHARED(ua, ue, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn)
 !$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, resmo)
 !$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
 !$OMP& SHARED(b2npmo_smav, fmo, solving, get_residuals, ro, solvemo)
@@ -488,8 +489,9 @@
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
-!$OMP& SHARED(is_neutral, ue, zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$OMP& SHARED(cimp2, zeff, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(is_neutral, use_9pt_stencil, zetap, zetae, gti, gte)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
+!$OMP& SHARED(fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(rz2, ne_ext)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
 !$OMP& SHARED(bottomix, bottomiy, topix, topiy)
@@ -538,15 +540,15 @@
 #ifndef GFORTRAN
 #ifndef PGF90
 #ifndef CRAY
-!$OMP& COPYIN(last_solve_5)
+!$OMP& COPYIN(last_solve_5, last_solve_9)
 #else
-!$OMP& PRIVATE(last_solve_5)
+!$OMP& PRIVATE(last_solve_5, last_solve_9)
 #endif
 #else
-!$OMP& PRIVATE(last_solve_5)
+!$OMP& PRIVATE(last_solve_5, last_solve_9)
 #endif
 #else
-!$OMP& PRIVATE(last_solve_5)
+!$OMP& PRIVATE(last_solve_5, last_solve_9)
 #endif
 #endif
 

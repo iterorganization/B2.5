@@ -581,7 +581,7 @@ cxpb
 #endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
-!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, i, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 #ifndef GFORTRAN
