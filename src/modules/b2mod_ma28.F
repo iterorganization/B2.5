@@ -35,6 +35,7 @@
       !$OMP THREADPRIVATE (icnhkeep, ikeep, iw28, irnh_save, icnh_save)
       !$OMP THREADPRIVATE (nc0, nltrsol, nnd, n_nonzeros)
       !$OMP THREADPRIVATE (solvdim, solvdim1)
+      !$OMP THREADPRIVATE (lfirst_ilu)
 
       contains
 
