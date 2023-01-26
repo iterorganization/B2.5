@@ -284,7 +284,7 @@
         isigma = npar - nsigma_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
             write(str,"(I1)") isigma
             if (ipar.ge.10) write(str,"(I2)") isigma
             write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
@@ -323,7 +323,7 @@
         isigma = npar - nsigma_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(ipar)
+            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
             write(str,"(I1)") isigma
             if (ipar.ge.10) write(str,"(I2)") isigma
             write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
@@ -350,6 +350,7 @@
         write (*,*) 'IPOPT GRAD:', grad(ipar)
       end do
 #endif
+      write (*,*) 'IPOPT GRADIENT NORM:', norm2(grad(1:npar))
 
       IER = 0
       return
