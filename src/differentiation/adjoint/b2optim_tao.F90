@@ -110,6 +110,10 @@
       contains
 
       subroutine InitializeProblem(npar,ierr)
+      use b2mod_user_namelist_diff &
+     , only : sigma
+      use b2mod_par_opt_diff &
+     , only : x0, xl, xu, par_rescale
       implicit none
       PetscReal zero
       PetscErrorCode ierr
@@ -175,6 +179,10 @@
       use b2mod_version_diff &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
+      use b2mod_user_namelist_diff &
+      , only : sigma
+      use b2mod_par_opt_diff &
+     , only : par_rescale
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2)
@@ -187,20 +195,13 @@
       Vec XX,grad
       Tao tao
       PetscScalar F
-      PetscScalar x_v(0:npar_opt-1),g_v(0:npar_opt-1)
-      PetscOffset x_i,g_i
+      PetscReal, pointer :: x_v(:), g_v(:)
 
+      call VecGetArrayReadF90(XX,x_v,ierr);CHKERRQ(ierr)
+      call VecGetArrayF90(grad,g_v,ierr);CHKERRQ(ierr)
 
-      call VecGetArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
-      call VecGetArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
-!     f=(x1-2)^2 + (x2-2)^2 -2*x1-2*x2
-!     f=(x_v(x_i)-2.0)*(x_v(x_i)-2.0)+(x_v(x_i+1)-2.0)*(x_v(x_i+1)-2.0)-2.0*(x_v(x_i)+x_v(x_i+1))
-!     gx1=2*(x1-2) -2
-!     g_v(g_i) = 2.0*(x_v(x_i)-2.0) - 2.0
-!     gx2=2*(x2-2) -2
-!     g_v(g_i+1) = 2.0*(x_v(x_i+1)-2.0) - 2.0
       do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(x_i+ipar-1)*par_rescale(ipar)
+        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
@@ -208,7 +209,7 @@
       isigma = npar_opt - nsigma_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(x_i+isigma-1)*par_rescale(ipar)
+          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
           write(str,"(I1)") isigma
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', sigma(ipar)
@@ -223,19 +224,20 @@
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
+        g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(ipar)
       end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchb)
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
+        g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(ipar)
       end do
 #endif
-      call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
-      call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
+      write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
+      call VecRestoreArrayReadF90(XX,x_v,ierr);CHKERRQ(ierr)
+      call VecRestoreArrayF90(grad,g_v,ierr);CHKERRQ(ierr)
 ! Experimental: write intermediate state file?
       if (iter .gt. 0) then
         write(*,*) 'Saving intermediate optimization state'
@@ -257,6 +259,8 @@
       end subroutine FormFunctionGradient
 
       subroutine FormFunction(tao, XX, F, dummy, ierr)
+      use b2mod_user_namelist_diff &
+      , only : sigma
       implicit none
       real(kind=r8) j(nncf)
       integer ipar, isigma
@@ -266,14 +270,12 @@
       Vec XX
       Tao tao
       PetscScalar F
-      PetscScalar x_v(0:npar_opt-1)
-      PetscOffset x_i
+      PetscReal, pointer :: x_v(:)
 
-
-      call VecGetArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
+      call VecGetArrayReadF90(XX,x_v,ierr);CHKERRQ(ierr)
 
       do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(x_i+ipar-1)*par_rescale(ipar)
+        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
@@ -281,7 +283,7 @@
       isigma = npar_opt - nsigma_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(x_i+isigma-1)*par_rescale(ipar)
+          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
           write(str,"(I1)") isigma
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
@@ -291,7 +293,7 @@
       call b2mn_step(switch, geo, mpg, state, state_ext, j)
       F = j(1)
 
-      call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
+      call VecRestoreArrayReadF90(XX,x_v,ierr);CHKERRQ(ierr)
       ierr = 0
       end subroutine FormFunction
 
@@ -301,6 +303,8 @@
       use b2mod_version_diff &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
+      use b2mod_user_namelist_diff &
+      , only : sigma
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2)
@@ -312,15 +316,14 @@
       PetscInt dummy
       Vec XX,grad
       Tao tao
-      PetscScalar x_v(0:npar_opt-1),g_v(0:npar_opt-1)
-      PetscOffset x_i,g_i
+      PetscReal, pointer :: x_v(:), g_v(:)
 
 
-      call VecGetArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
-      call VecGetArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
+      call VecGetArrayReadF90(XX,x_v,ierr);CHKERRQ(ierr)
+      call VecGetArrayF90(grad,g_v,ierr);CHKERRQ(ierr)
 
       do ipar = 1, npar_opt - nsigma_opt
-        par_opt_phys(ipar) = x_v(x_i+ipar-1)*par_rescale(ipar)
+        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
@@ -328,7 +331,7 @@
       isigma = npar_opt - nsigma_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
-          sigma(ipar) = x_v(x_i+isigma-1)*par_rescale(ipar)
+          sigma(ipar) = x_v(isigma)*par_rescale(isigma)
           write(str,"(I1)") isigma
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', sigma(ipar)
@@ -342,17 +345,18 @@
      &   stateb, state_ext, state_extb, j)
 #ifdef TGT
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
+        g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(ipar)
       end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchb)
       do ipar = 1, npar_opt
-        g_v(g_i+ipar-1) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(g_i+ipar-1)
+        g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
+        write (*,*) 'TAO GRAD:', g_v(ipar)
       end do
 #endif
+      write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
 ! Experimental: write intermediate state file?
       if (iter .gt. 0) then
         write(*,*) 'Saving intermediate optimization state'
@@ -370,8 +374,8 @@
         close(99)
       endif
       iter = iter + 1
-      call VecRestoreArrayRead(XX,x_v,x_i,ierr);CHKERRQ(ierr)
-      call VecRestoreArray(grad,g_v,g_i,ierr);CHKERRQ(ierr)
+      call VecRestoreArrayReadF90(XX,x_v,ierr);CHKERRQ(ierr)
+      call VecRestoreArrayF90(grad,g_v,ierr);CHKERRQ(ierr)
       ierr = 0
       end subroutine FormGradient
 
