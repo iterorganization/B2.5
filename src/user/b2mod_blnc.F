@@ -79,7 +79,10 @@ c*** from 960808 on
      , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
      , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
      , flxid_tmp,flxbl_tmp,flxbr_tmp,
-     , flxrl_tmp
+     , flxrl_tmp 
+     
+      logical file_open
+
 
 c*** Column headers:
       data hlp_h /
@@ -823,6 +826,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2blnc: cannot open file ',trim(f)
@@ -837,6 +841,10 @@ c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
 c
+        lun=ntrc(ltrc)
+        inquire(unit=lun,opened=file_open)
+        if (file_open) close(lun)
+        
       return
       end subroutine b2blncs
 c======================================================================

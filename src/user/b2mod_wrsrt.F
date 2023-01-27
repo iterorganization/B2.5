@@ -59,6 +59,7 @@ c-----------------------------------------------------------------------
       character, save :: hlp_ha(nsar_tmp)*8
 
       character, save :: f*(lenfnm), hlp_frm*256
+      logical file_open
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hr / 'totenre_','totamom_' /
@@ -417,6 +418,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2wrsrt: cannot open file ',trim(f)
@@ -438,6 +440,9 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
       return
       end subroutine b2wrsrtf
 c=======================================================================

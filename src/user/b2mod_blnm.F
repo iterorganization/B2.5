@@ -51,6 +51,7 @@ c*** of divertor legs (at present, the same)
 
       character hlp_frm*80, hlp_frf*160
       character hlp_div(ndivx)*2, hlp_hdv(nqudiv)*8
+      logical file_open
 c
       data hlp_div / 'il', 'ol' /
 c----------------------------------------------------------------------
@@ -412,6 +413,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2blnm: cannot open file ',trim(f)
@@ -435,6 +437,10 @@ c----------------------------------------------------------------------
 c*** - Finalization step
 c----------------------------------------------------------------------
 c
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       return
       end subroutine b2blnmf
 c======================================================================

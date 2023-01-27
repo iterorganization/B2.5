@@ -127,6 +127,7 @@ c***    number of PFR interfaces and of tallies
       character, save :: hlp_hr(npft_tmp), hlp_hs(npfi_tmp)
 c-----------------------------------------------------------------------
       integer, save :: itg_tmp(4)
+      logical file_open
       data itg_tmp / 4*-2 /
       real (kind=R8), save :: hlp_ksdts(nntrgrpd,DEF_NATM+DEF_NMOL)
 c*** Column headers:
@@ -1931,6 +1932,7 @@ c*** Limiter case
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
    92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
@@ -1955,8 +1957,14 @@ c=======================================================================
 c=======================================================================
       subroutine b2usrtrf
 c     Finalization step
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       deallocate(hlp_hdr)
       deallocate(hlp_out)
+      
       return
       end subroutine b2usrtrf
 c=======================================================================

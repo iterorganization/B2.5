@@ -15,6 +15,7 @@
       integer, save :: ndigits = 6
 #endif
       character(7), save :: folder                        !srv 26.09.17
+      logical file_opened
       !$OMP CRITICAL(synch_my_out)
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
@@ -22,17 +23,29 @@
         call xertst(0.le.ndigits, 'invalid ndigits value')
         ncall = 1
 *    ..try to create a file in optional output folder
-        open(70,file='output/__1__.dat',err=10)
+        inquire(unit=nwrite,opened=file_opened)
+        if (file_opened) then
+         write(*,
+     & fmt="('Error in my_out: unit ',i3,' is already opened')"), nwrite
+         return
+        endif
+        open(nwrite,file='output/__1__.dat',err=10)
 *    ..folder exists: future output will be done in folder
         folder='output/'
-        write(70,*) 'Test file to check on output folder'
-        close(70)
+        write(nwrite,*) 'Test file to check on output folder'
+        close(nwrite)
         go to 20
 *    ..folder does not exist: future output will be done in current folder
    10   folder=''
    20   continue
       end if
       filename = trim(folder)//trim(first_name)//'.dat'   !srv 26.09.17
+      inquire(unit=nwrite,opened=file_opened)
+      if (file_opened) then
+        write(*,
+     & fmt="('Error in my_out: unit ',i3,' is already opened')"), nwrite
+        return
+      endif
       if (iappend.eq.0) then
         open (nwrite,file=filename)
       else

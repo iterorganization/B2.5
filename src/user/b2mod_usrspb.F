@@ -58,6 +58,7 @@ c----------------------------------------------------------------------
       integer, allocatable, save :: ix_pneut_beg(:), ix_pneut_end(:)  ! range of cells to average neutral pressure over
       character*12, allocatable, save :: headers(:)
       character*9, save :: header_tmpl(N_Q_target)
+      logical file_open
 c*** Column headers:
       data header_tmpl /
      1    '   Te_max', ' det_wdth', '    q_max',
@@ -578,6 +579,7 @@ c----------------------------------------------------------------------
       end do
 
   155 continue
+!      close(lun)
       return
 c----------------------------------------------------------------------
   190 write(*,*) 'b2mod_usrspb: cannot open file ',trim(f)
@@ -605,6 +607,10 @@ c======================================================================
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
 
       if (allocated(Q_pneut_trg))
      &  deallocate(

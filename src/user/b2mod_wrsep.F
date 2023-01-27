@@ -80,6 +80,7 @@ c*** Values by ion charge states
      *     equi_tmp(:,:)
       real (kind=R8), allocatable ::
      *     nisi_tmp(:), gisi_tmp(:)
+      logical file_open
 
 c----------------------------------------------------------------------
 c*** Column headers:
@@ -602,6 +603,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2wrsep: cannot open file ',trim(f)
@@ -620,6 +622,10 @@ c======================================================================
       implicit none
 c----------------------------------------------------------------------
 c     Finalization step
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       deallocate(equs_tmp)
       deallocate(nisp_tmp)
       deallocate(zisp_tmp)

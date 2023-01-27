@@ -85,6 +85,7 @@ C*** from 20190627 on
      ,     flxex(:)
 
       character hlp_h(np_tmp)*12
+      logical file_open
 c*** Column headers:
       data hlp_h /
      1    '    ion_core','    ntr_core','    ion_targ','ntr_targ_tot',
@@ -1027,6 +1028,7 @@ c
         read(lun,*,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2blns: cannot open file ',trim(f)
@@ -1051,6 +1053,10 @@ c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       if (allocated(flxic))
      &  deallocate(
      &    flxic, flxnc, flxit,
