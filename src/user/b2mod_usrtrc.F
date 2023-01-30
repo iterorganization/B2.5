@@ -127,7 +127,6 @@ c***    number of PFR interfaces and of tallies
       character, save :: hlp_hr(npft_tmp), hlp_hs(npfi_tmp)
 c-----------------------------------------------------------------------
       integer, save :: itg_tmp(4)
-      logical file_open
       data itg_tmp / 4*-2 /
       real (kind=R8), save :: hlp_ksdts(nntrgrpd,DEF_NATM+DEF_NMOL)
 c*** Column headers:
@@ -1957,6 +1956,7 @@ c=======================================================================
 c=======================================================================
       subroutine b2usrtrf
 c     Finalization step
+      logical file_open
 
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)

@@ -58,7 +58,6 @@ c----------------------------------------------------------------------
       integer, allocatable, save :: ix_pneut_beg(:), ix_pneut_end(:)  ! range of cells to average neutral pressure over
       character*12, allocatable, save :: headers(:)
       character*9, save :: header_tmpl(N_Q_target)
-      logical file_open
 c*** Column headers:
       data header_tmpl /
      1    '   Te_max', ' det_wdth', '    q_max',
@@ -607,6 +606,7 @@ c======================================================================
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
+      logical file_open
 
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)

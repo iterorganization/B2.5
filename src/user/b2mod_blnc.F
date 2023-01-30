@@ -80,9 +80,6 @@ c*** from 960808 on
      , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
      , flxid_tmp,flxbl_tmp,flxbr_tmp,
      , flxrl_tmp 
-     
-      logical file_open
-
 
 c*** Column headers:
       data hlp_h /
@@ -841,10 +838,6 @@ c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
 c
-        lun=ntrc(ltrc)
-        inquire(unit=lun,opened=file_open)
-        if (file_open) close(lun)
-        
       return
       end subroutine b2blncs
 c======================================================================
@@ -853,7 +846,13 @@ c
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
-c
+c     
+      logical file_open
+
+        lun=ntrc(ltrc)
+        inquire(unit=lun,opened=file_open)
+        if (file_open) close(lun)
+        
       return
       end subroutine b2blncf
 c======================================================================

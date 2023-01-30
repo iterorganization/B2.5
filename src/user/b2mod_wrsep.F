@@ -80,8 +80,6 @@ c*** Values by ion charge states
      *     equi_tmp(:,:)
       real (kind=R8), allocatable ::
      *     nisi_tmp(:), gisi_tmp(:)
-      logical file_open
-
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
@@ -622,6 +620,8 @@ c======================================================================
       implicit none
 c----------------------------------------------------------------------
 c     Finalization step
+      logical file_open
+
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)

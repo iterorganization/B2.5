@@ -25,8 +25,8 @@
 *    ..try to create a file in optional output folder
         inquire(unit=nwrite,opened=file_opened)
         if (file_opened) then
-         write(*,
-     & fmt="('Error in my_out: unit ',i3,' is already opened')"), nwrite
+         write(*,fmt="(a22,i3,a20)"),
+     & 'Error in my_out: unit ',nwrite,' is already opened'
          return
         endif
         open(nwrite,file='output/__1__.dat',err=10)
@@ -42,8 +42,8 @@
       filename = trim(folder)//trim(first_name)//'.dat'   !srv 26.09.17
       inquire(unit=nwrite,opened=file_opened)
       if (file_opened) then
-        write(*,
-     & fmt="('Error in my_out: unit ',i3,' is already opened')"), nwrite
+         write(*,fmt="(a22,i3,a20)"),
+     & 'Error in my_out: unit ',nwrite,' is already opened'
         return
       endif
       if (iappend.eq.0) then

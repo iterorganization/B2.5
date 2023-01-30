@@ -85,7 +85,6 @@ C*** from 20190627 on
      ,     flxex(:)
 
       character hlp_h(np_tmp)*12
-      logical file_open
 c*** Column headers:
       data hlp_h /
      1    '    ion_core','    ntr_core','    ion_targ','ntr_targ_tot',
@@ -1053,6 +1052,8 @@ c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
+      logical file_open
+
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)

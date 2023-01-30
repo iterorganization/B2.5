@@ -59,7 +59,6 @@ c-----------------------------------------------------------------------
       character, save :: hlp_ha(nsar_tmp)*8
 
       character, save :: f*(lenfnm), hlp_frm*256
-      logical file_open
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hr / 'totenre_','totamom_' /
@@ -440,6 +439,8 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)

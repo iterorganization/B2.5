@@ -99,8 +99,6 @@ c-----------------------------------------------------------------------
       data ntgs / ntrgs_tmp*0 /
       integer, allocatable :: ltgs(:,:)
       
-      logical file_open
-      
 c*** Identification suffices:
       data hlp_trgs / 'il','ol','wl','  ','  ',
      ,                'il','iu','ou','ol','wl'/
@@ -829,6 +827,8 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+      
       lun=ntrc(ltrc)
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)
