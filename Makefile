@@ -209,7 +209,6 @@ TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
 #TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
 endif
 ifdef TAO
-include ${PETSC_DIR}/lib/petsc/conf/variables
 SOLPSINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
 MODINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
 endif
