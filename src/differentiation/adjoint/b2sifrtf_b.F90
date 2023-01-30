@@ -99,7 +99,6 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   CHARACTER(len=16) :: arg10
-  REAL(kind=r8), DIMENSION(ncv) :: result10
   CHARACTER(len=15) :: arg11
   CHARACTER(len=12) :: arg12
   CHARACTER(len=11) :: arg13
@@ -161,9 +160,9 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      kabvp = FKABVP(isb, is)
 !     ..contribution from friction between ions
       DO icv=1,mpg%nci
+        kabvp(icv) = FKABVP(icv, isb, is)
         coef = switch%b2sifr_phm0*rz2(icv, isb)*rz2(icv, is)*mp*SQRT(am(&
 &         isb)*am(is)/(am(isb)+am(is)))/zetap(icv)*kabvp(icv)
         t0 = na(icv, isb)*na(icv, is)
@@ -218,13 +217,12 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      kabtf = FKABTF(isb, is)
-      kbatf = FKABTF(is, isb)
-      ka = FKA(isb)
-      kb = FKA(is)
-      kabvp = FKABVP(isb, is)
-!
       DO icv=1,mpg%nci
+        kabtf(icv) = FKABTF(icv, isb, is)
+        kbatf(icv) = FKABTF(icv, is, isb)
+        ka(icv) = FKA(icv, isb)
+        kb(icv) = FKA(icv, is)
+        kabvp(icv) = FKABVP(icv, isb, is)
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
         calfab = zetap(icv)/SQRT(mp)*qe*(na(icv, isb)+na(icv, is))*SQRT(&
@@ -289,21 +287,31 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !srv 05.07.17
     DO is=0,ns-1
       WRITE(chis, '(i3.3)') is
-      result10 = FKABVP(isb, is)
+      DO icv=1,ncv
+        wrk(icv) = FKABVP(icv, isb, is)
+      END DO
       arg11(:) = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg11(:))
-      result10 = FKABTF(isb, is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
+      DO icv=1,ncv
+        wrk(icv) = FKABTF(icv, isb, is)
+      END DO
       arg11(:) = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg11(:))
-      result10 = FKABTF(is, isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
+      DO icv=1,ncv
+        wrk(icv) = FKABTF(icv, is, isb)
+      END DO
       arg11(:) = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg11(:))
-      result10 = FKA(isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
+      DO icv=1,ncv
+        wrk(icv) = FKA(icv, isb)
+      END DO
       arg12(:) = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKA(is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKA(icv, is)
+      END DO
       arg12(:) = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
     END DO
 !
     CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
@@ -329,16 +337,16 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 CONTAINS
 !
 !
-  FUNCTION FKABVP(a, b)
+  FUNCTION FKABVP(icv, a, b)
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabvp(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabvp
     IF (a .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (b .EQ. ismain .AND. a .NE. b .AND. (.NOT.is_neutral(a)) &
 &       .AND. (.NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (a .NE. b .AND. a .NE. ismain .AND. b .NE. ismain .AND. (&
 &       .NOT.is_neutral(a)) .AND. (.NOT.is_neutral(b))) THEN
       fkabvp = 1.0_R8
@@ -352,13 +360,13 @@ CONTAINS
   END FUNCTION FKABVP
 
 !
-  FUNCTION FKABTF(a, b)
+  FUNCTION FKABTF(icv, a, b)
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabtf(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabtf
     IF (b .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabtf = cimp2
+      fkabtf = cimp2(icv)
     ELSE IF (a .NE. ismain .AND. b .NE. ismain .AND. (.NOT.is_neutral(a)&
 &       ) .AND. (.NOT.is_neutral(b))) THEN
       fkabtf = 0.0_R8
@@ -371,18 +379,18 @@ CONTAINS
   END FUNCTION FKABTF
 
 !
-  FUNCTION FKA(a)
+  FUNCTION FKA(icv, a)
     IMPLICIT NONE
-    INTEGER :: a
-    REAL(kind=r8) :: fka(ncv)
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka
     INTEGER :: r
     INTRINSIC SQRT
     fka = 0.0_R8
     DO r=0,ns-1
-      fka = fka + rz2(:, r)*na(:, r)*SQRT(mp)*SQRT(am(a)*am(r)/(am(a)+am&
-&       (r)))
+      fka = fka + rz2(icv, r)*na(icv, r)*SQRT(mp)*SQRT(am(a)*am(r)/(am(a&
+&       )+am(r)))
     END DO
-    fka = fka*rz2(:, a)
+    fka = fka*rz2(icv, a)
     RETURN
   END FUNCTION FKA
 
@@ -525,7 +533,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result1b
   CHARACTER(len=16) :: arg10
-  REAL(kind=r8), DIMENSION(ncv) :: result10
   CHARACTER(len=15) :: arg11
   CHARACTER(len=12) :: arg12
   CHARACTER(len=11) :: arg13
@@ -575,10 +582,10 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      CALL PUSHREAL8ARRAY(kabvp, r8*ncv/8)
-      kabvp = FKABVP(isb, is)
 !     ..contribution from friction between ions
       DO icv=1,mpg%nci
+        CALL PUSHREAL8(kabvp(icv), r8/8)
+        kabvp(icv) = FKABVP(icv, isb, is)
         CALL PUSHREAL8(coef, r8/8)
         coef = switch%b2sifr_phm0*rz2(icv, isb)*rz2(icv, is)*mp*SQRT(am(&
 &         isb)*am(is)/(am(isb)+am(is)))/zetap(icv)*kabvp(icv)
@@ -661,18 +668,17 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      CALL PUSHREAL8ARRAY(kabtf, r8*ncv/8)
-      kabtf = FKABTF(isb, is)
-      CALL PUSHREAL8ARRAY(kbatf, r8*ncv/8)
-      kbatf = FKABTF(is, isb)
-      CALL PUSHREAL8ARRAY(ka, r8*ncv/8)
-      ka = FKA(isb)
-      CALL PUSHREAL8ARRAY(kb, r8*ncv/8)
-      kb = FKA(is)
-      CALL PUSHREAL8ARRAY(kabvp, r8*ncv/8)
-      kabvp = FKABVP(isb, is)
-!
       DO icv=1,mpg%nci
+        CALL PUSHREAL8(kabtf(icv), r8/8)
+        kabtf(icv) = FKABTF(icv, isb, is)
+        CALL PUSHREAL8(kbatf(icv), r8/8)
+        kbatf(icv) = FKABTF(icv, is, isb)
+        CALL PUSHREAL8(ka(icv), r8/8)
+        ka(icv) = FKA(icv, isb)
+        CALL PUSHREAL8(kb(icv), r8/8)
+        kb(icv) = FKA(icv, is)
+        CALL PUSHREAL8(kabvp(icv), r8/8)
+        kabvp(icv) = FKABVP(icv, isb, is)
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
         CALL PUSHREAL8(calfab, r8/8)
@@ -755,21 +761,36 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 !srv 05.07.17
     DO is=0,ns-1
       WRITE(chis, '(i3.3)') is
-      result10 = FKABVP(isb, is)
+      DO icv=1,ncv
+        CALL PUSHREAL8(wrk(icv), r8/8)
+        wrk(icv) = FKABVP(icv, isb, is)
+      END DO
       arg11(:) = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg11(:))
-      result10 = FKABTF(isb, is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
+      DO icv=1,ncv
+        CALL PUSHREAL8(wrk(icv), r8/8)
+        wrk(icv) = FKABTF(icv, isb, is)
+      END DO
       arg11(:) = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg11(:))
-      result10 = FKABTF(is, isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
+      DO icv=1,ncv
+        CALL PUSHREAL8(wrk(icv), r8/8)
+        wrk(icv) = FKABTF(icv, is, isb)
+      END DO
       arg11(:) = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg11(:))
-      result10 = FKA(isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg11(:))
+      DO icv=1,ncv
+        CALL PUSHREAL8(wrk(icv), r8/8)
+        wrk(icv) = FKA(icv, isb)
+      END DO
       arg12(:) = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKA(is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        CALL PUSHREAL8(wrk(icv), r8/8)
+        wrk(icv) = FKA(icv, is)
+      END DO
       arg12(:) = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
     END DO
 !
     CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
@@ -784,6 +805,23 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
 !
     arg13(:) = 'b2sifrtf_ua'//chns
     CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg13(:))
+    DO is=ns-1,0,-1
+      DO icv=ncv,1,-1
+        CALL POPREAL8(wrk(icv), r8/8)
+      END DO
+      DO icv=ncv,1,-1
+        CALL POPREAL8(wrk(icv), r8/8)
+      END DO
+      DO icv=ncv,1,-1
+        CALL POPREAL8(wrk(icv), r8/8)
+      END DO
+      DO icv=ncv,1,-1
+        CALL POPREAL8(wrk(icv), r8/8)
+      END DO
+      DO icv=ncv,1,-1
+        CALL POPREAL8(wrk(icv), r8/8)
+      END DO
+    END DO
   END IF
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) CALL POPREAL8ARRAY(wrk, r8*ncv/8)
@@ -796,14 +834,14 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   smbfrialb = 0.D0
   CALL POPREAL8ARRAY(smbfria, r8*ncv*4/8)
   smbfrialb = smbfriab
+  kab = 0.D0
+  kbb = 0.D0
+  kabvpb = 0.D0
+  kabtfb = 0.D0
+  kbatfb = 0.D0
   DO is=ns-1,0,-1
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
-      kab = 0.D0
-      kbb = 0.D0
-      kabvpb = 0.D0
-      kabtfb = 0.D0
-      kbatfb = 0.D0
       DO icv=mpg%nci,1,-1
         CALL POPREAL8(smbtfial(icv, 0), r8/8)
         fllim_al_abb = coef*t0*smbtfialb(icv, 0)
@@ -876,17 +914,22 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         zetapb(icv) = zetapb(icv) + temp*tempb0
         nab(icv, isb) = nab(icv, isb) + zetap(icv)*tempb0
         nab(icv, is) = nab(icv, is) + zetap(icv)*tempb0
+        CALL POPREAL8(kabvp(icv), r8/8)
+        CALL FKABVP_B(icv, isb, is, kabvpb(icv))
+        kabvpb(icv) = 0.D0
+        CALL POPREAL8(kb(icv), r8/8)
+        CALL FKA_B(icv, is, kbb(icv))
+        kbb(icv) = 0.D0
+        CALL POPREAL8(ka(icv), r8/8)
+        CALL FKA_B(icv, isb, kab(icv))
+        kab(icv) = 0.D0
+        CALL POPREAL8(kbatf(icv), r8/8)
+        CALL FKABTF_B(icv, is, isb, kbatfb(icv))
+        kbatfb(icv) = 0.D0
+        CALL POPREAL8(kabtf(icv), r8/8)
+        CALL FKABTF_B(icv, isb, is, kabtfb(icv))
+        kabtfb(icv) = 0.D0
       END DO
-      CALL POPREAL8ARRAY(kabvp, r8*ncv/8)
-      CALL FKABVP_B(isb, is, kabvpb)
-      CALL POPREAL8ARRAY(kb, r8*ncv/8)
-      CALL FKA_B(is, kbb)
-      CALL POPREAL8ARRAY(ka, r8*ncv/8)
-      CALL FKA_B(isb, kab)
-      CALL POPREAL8ARRAY(kbatf, r8*ncv/8)
-      CALL FKABTF_B(is, isb, kbatfb)
-      CALL POPREAL8ARRAY(kabtf, r8*ncv/8)
-      CALL FKABTF_B(isb, is, kabtfb)
     END IF
   END DO
   CALL POPCONTROL1B(branch)
@@ -941,7 +984,6 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
   DO is=ns-1,0,-1
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
-      kabvpb = 0.D0
       DO icv=mpg%nci,1,-1
         CALL POPCONTROL2B(branch)
         IF (branch .LT. 2) THEN
@@ -999,9 +1041,10 @@ SUBROUTINE B2SIFRTF_B(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geob&
         tempb0 = rz2(icv, isb)*rz2(icv, is)*tempb/zetap(icv)
         kabvpb(icv) = kabvpb(icv) + tempb0
         zetapb(icv) = zetapb(icv) - temp0*tempb0
+        CALL POPREAL8(kabvp(icv), r8/8)
+        CALL FKABVP_B(icv, isb, is, kabvpb(icv))
+        kabvpb(icv) = 0.D0
       END DO
-      CALL POPREAL8ARRAY(kabvp, r8*ncv/8)
-      CALL FKABVP_B(isb, is, kabvpb)
     END IF
   END DO
   arg1 = ncv*4
@@ -1015,32 +1058,32 @@ CONTAINS
 !   with respect to varying inputs: cimp1
 !
 !
-  SUBROUTINE FKABVP_B(a, b, fkabvpb)
+  SUBROUTINE FKABVP_B(icv, a, b, fkabvpb)
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabvp(ncv)
-    REAL(kind=r8) :: fkabvpb(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabvp
+    REAL(kind=r8) :: fkabvpb
     IF (a .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      cimp1b = cimp1b + fkabvpb
+      cimp1b(icv) = cimp1b(icv) + fkabvpb
     ELSE IF (b .EQ. ismain .AND. a .NE. b .AND. (.NOT.is_neutral(a)) &
 &       .AND. (.NOT.is_neutral(b))) THEN
-      cimp1b = cimp1b + fkabvpb
+      cimp1b(icv) = cimp1b(icv) + fkabvpb
     END IF
   END SUBROUTINE FKABVP_B
 
 !
 !
-  FUNCTION FKABVP(a, b)
+  FUNCTION FKABVP(icv, a, b)
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabvp(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabvp
     IF (a .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (b .EQ. ismain .AND. a .NE. b .AND. (.NOT.is_neutral(a)) &
 &       .AND. (.NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (a .NE. b .AND. a .NE. ismain .AND. b .NE. ismain .AND. (&
 &       .NOT.is_neutral(a)) .AND. (.NOT.is_neutral(b))) THEN
       fkabvp = 1.0_R8
@@ -1057,23 +1100,23 @@ CONTAINS
 !   gradient     of useful results: cimp2 fkabtf
 !   with respect to varying inputs: cimp2
 !
-  SUBROUTINE FKABTF_B(a, b, fkabtfb)
+  SUBROUTINE FKABTF_B(icv, a, b, fkabtfb)
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabtf(ncv)
-    REAL(kind=r8) :: fkabtfb(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabtf
+    REAL(kind=r8) :: fkabtfb
     IF (b .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
-&       .NOT.is_neutral(b))) cimp2b = cimp2b + fkabtfb
+&       .NOT.is_neutral(b))) cimp2b(icv) = cimp2b(icv) + fkabtfb
   END SUBROUTINE FKABTF_B
 
 !
-  FUNCTION FKABTF(a, b)
+  FUNCTION FKABTF(icv, a, b)
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabtf(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabtf
     IF (b .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabtf = cimp2
+      fkabtf = cimp2(icv)
     ELSE IF (a .NE. ismain .AND. b .NE. ismain .AND. (.NOT.is_neutral(a)&
 &       ) .AND. (.NOT.is_neutral(b))) THEN
       fkabtf = 0.0_R8
@@ -1089,41 +1132,41 @@ CONTAINS
 !   gradient     of useful results: na rz2 fka
 !   with respect to varying inputs: na rz2
 !
-  SUBROUTINE FKA_B(a, fkab)
+  SUBROUTINE FKA_B(icv, a, fkab)
     IMPLICIT NONE
-    INTEGER :: a
-    REAL(kind=r8) :: fka(ncv)
-    REAL(kind=r8) :: fkab(ncv)
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka
+    REAL(kind=r8) :: fkab
     INTEGER :: r
     INTRINSIC SQRT
-    REAL(kind=r8), DIMENSION(ncv) :: tempb
+    REAL(kind=r8) :: tempb
     fka = 0.0_R8
     DO r=0,ns-1
-      fka = fka + rz2(:, r)*na(:, r)*SQRT(mp)*SQRT(am(a)*am(r)/(am(a)+am&
-&       (r)))
+      fka = fka + rz2(icv, r)*na(icv, r)*SQRT(mp)*SQRT(am(a)*am(r)/(am(a&
+&       )+am(r)))
     END DO
-    rz2b(:, a) = rz2b(:, a) + fka*fkab
-    fkab = rz2(:, a)*fkab
+    rz2b(icv, a) = rz2b(icv, a) + fka*fkab
+    fkab = rz2(icv, a)*fkab
     DO r=ns-1,0,-1
       tempb = SQRT(mp)*SQRT(am(a)*am(r)/(am(a)+am(r)))*fkab
-      rz2b(:, r) = rz2b(:, r) + na(:, r)*tempb
-      nab(:, r) = nab(:, r) + rz2(:, r)*tempb
+      rz2b(icv, r) = rz2b(icv, r) + na(icv, r)*tempb
+      nab(icv, r) = nab(icv, r) + rz2(icv, r)*tempb
     END DO
   END SUBROUTINE FKA_B
 
 !
-  FUNCTION FKA(a)
+  FUNCTION FKA(icv, a)
     IMPLICIT NONE
-    INTEGER :: a
-    REAL(kind=r8) :: fka(ncv)
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka
     INTEGER :: r
     INTRINSIC SQRT
     fka = 0.0_R8
     DO r=0,ns-1
-      fka = fka + rz2(:, r)*na(:, r)*SQRT(mp)*SQRT(am(a)*am(r)/(am(a)+am&
-&       (r)))
+      fka = fka + rz2(icv, r)*na(icv, r)*SQRT(mp)*SQRT(am(a)*am(r)/(am(a&
+&       )+am(r)))
     END DO
-    fka = fka*rz2(:, a)
+    fka = fka*rz2(icv, a)
     RETURN
   END FUNCTION FKA
 

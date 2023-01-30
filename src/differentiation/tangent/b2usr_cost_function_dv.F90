@@ -449,13 +449,12 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%dv%ne&
 &                 , std%dv%ne, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
-          gradrd(nd, :) = gradrd(nd, :)/1.0e19_R8
+          b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/1.0e19_R8
         END DO
-        gradr = gradr/1.0e19_R8
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&                  gradr(mpg%cfreg(ic1:ic2)), gradrd(:, mpg%cfreg(ic1:&
-&                  ic2)), b2dataoncf(1:n2), b2dataoncfd(:, 1:n2), nbdirs&
-&                 )
+&                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
+&                  b2dataoncfd(:, 1:n2), nbdirs)
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -479,13 +478,12 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%pl%te&
 &                 , std%pl%te, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
-          gradrd(nd, :) = gradrd(nd, :)/ev
+          b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
         END DO
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&                  gradr(mpg%cfreg(ic1:ic2)), gradrd(:, mpg%cfreg(ic1:&
-&                  ic2)), b2dataoncf(1:n2), b2dataoncfd(:, 1:n2), nbdirs&
-&                 )
+&                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
+&                  b2dataoncfd(:, 1:n2), nbdirs)
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))
@@ -509,13 +507,12 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         CALL GRADC_R_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, st%pl%ti&
 &                 , std%pl%ti, funv, funvd, gradr, gradrd, nbdirs)
         DO nd=1,nbdirs
-          gradrd(nd, :) = gradrd(nd, :)/ev
+          b2datad(nd, 1:n1) = gradrd(nd, mpg%cfreg(ic1:ic2))/ev
         END DO
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D_DV(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&                  gradr(mpg%cfreg(ic1:ic2)), gradrd(:, mpg%cfreg(ic1:&
-&                  ic2)), b2dataoncf(1:n2), b2dataoncfd(:, 1:n2), nbdirs&
-&                 )
+&                  b2data(1:n1), b2datad(:, 1:n1), b2dataoncf(1:n2), &
+&                  b2dataoncfd(:, 1:n2), nbdirs)
         DO icv=1,n2
           temp = (b2dataoncf(icv)-cfdata(icf, 2, icv))*(b2dataoncf(icv)-&
 &           cfdata(icf, 2, icv))

@@ -20,6 +20,23 @@ MODULE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
+! VARIABLES RELATED TO OPTIMIZATION
+! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
+! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
+! - par_opt_phys: array containing the values of the optimization parameters used to pass them to the
+!                 optimization libraries through b2optim_tao/b2optim_ipopt, and to the routine for
+!                 calculating the prior (if needed)
+! - nsigma_opt stores only the number of sigmas that are actually optimized (which can be .le. nsigma).
+!   similarly sigma_opt stores only such sigmas that are optimized. This differentiation is needed to
+!   correctly pass the optimization variables to the optimization libraries
+! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
+!        number of spatial points!)
+! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
+! - nncon: number of nonlinear constriants (not used for now)
+! - gl/gu: lowr/upper bound of such nonlinear constraints (not used for now)
+! - nnjac: number of non-zeros in the jacobian of the nonlinear constraints (not used for now)
+! - jcol/jrow: column/row indicex for each non-zero element of the jacobian
+! - jj: value of the jacobian at jcol-jrow
   INTEGER, SAVE :: npar_opt=0
   REAL(kind=r8), ALLOCATABLE, SAVE :: par_opt0(:), par_opt(:), &
 & par_opt_phys(:)
@@ -27,7 +44,8 @@ MODULE B2MOD_PAR_OPT_DIFFV
   LOGICAL, SAVE :: flag_optim=.false.
   INTEGER :: nnvar, nncon, nnjac
   DOUBLE PRECISION :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx), gu(nvmx), &
-& jcol(nvmx*nvmx), jrow(nvmx*nvmx), jj(nvmx*nvmx), par_rescale(nvmx)
+& jj(nvmx*nvmx), par_rescale(nvmx)
+  INTEGER :: jcol(nvmx*nvmx), jrow(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
   CHARACTER(len=256), SAVE :: filename, limited_memory_update_type, &
 & hessian_approximation
@@ -65,7 +83,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC MAXVAL
     INTRINSIC DBLE
-    DOUBLE PRECISION :: result1
+    REAL :: result1
 !
     filename = 'b2.optimization.parameters'
     WRITE(*, *) 'OPTIM: max number of readable parameters '//&
