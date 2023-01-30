@@ -744,11 +744,11 @@ FUNCTION QEVAP_NODIFF(ibnd, ns, ts) RESULT (qevap)
 !
   CALL SUBINI('qevap')
   IF (lfirst) THEN
-!$OMP CRITICAL (heatdiff1D)
+!$OMP CRITICAL (qevap_heatdiff1D)
     CALL IPGETR('b2stbr_therm_evap', therm_evap)
     CALL XERTST(0.0_R8 .LE. therm_evap .AND. 1.0_R8 .GE. therm_evap, &
 &         'faulty parameter therm_evap')
-!$OMP END CRITICAL (heatdiff1D)
+!$OMP END CRITICAL (qevap_heatdiff1D)
     lfirst = .false.
   END IF
 !
