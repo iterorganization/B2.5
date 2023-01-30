@@ -54,6 +54,7 @@ INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 ifdef TAO
+include ${PETSC_DIR}/lib/petsc/conf/variables
 LIBOPT = ${PETSC_LIB}
 endif
 ifdef IPOPT
