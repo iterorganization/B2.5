@@ -102,7 +102,6 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   CHARACTER(len=16) :: arg11
-  REAL(kind=r8), DIMENSION(ncv) :: result10
   CHARACTER(len=15) :: arg12
   CHARACTER(len=12) :: arg13
   CHARACTER(len=11) :: arg14
@@ -164,9 +163,9 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      kabvp = FKABVP(isb, is)
 !     ..contribution from friction between ions
       DO icv=1,mpg%nci
+        kabvp(icv) = FKABVP(icv, isb, is)
         arg10 = am(isb)*am(is)/(am(isb)+am(is))
         result1 = SQRT(arg10)
         coef = switch%b2sifr_phm0*rz2(icv, isb)*rz2(icv, is)*mp*result1/&
@@ -223,13 +222,12 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      kabtf = FKABTF(isb, is)
-      kbatf = FKABTF(is, isb)
-      ka = FKA(isb)
-      kb = FKA(is)
-      kabvp = FKABVP(isb, is)
-!
       DO icv=1,mpg%nci
+        kabtf(icv) = FKABTF(icv, isb, is)
+        kbatf(icv) = FKABTF(icv, is, isb)
+        ka(icv) = FKA(icv, isb)
+        kb(icv) = FKA(icv, is)
+        kabvp(icv) = FKABVP(icv, isb, is)
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
         result1 = SQRT(mp)
@@ -298,21 +296,31 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 !srv 05.07.17
     DO is=0,ns-1
       WRITE(chis, '(i3.3)') is
-      result10 = FKABVP(isb, is)
+      DO icv=1,ncv
+        wrk(icv) = FKABVP(icv, isb, is)
+      END DO
       arg12(:) = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKABTF(isb, is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKABTF(icv, isb, is)
+      END DO
       arg12(:) = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKABTF(is, isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKABTF(icv, is, isb)
+      END DO
       arg12(:) = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKA(isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKA(icv, isb)
+      END DO
       arg13(:) = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, result10, arg13(:))
-      result10 = FKA(is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg13(:))
+      DO icv=1,ncv
+        wrk(icv) = FKA(icv, is)
+      END DO
       arg13(:) = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg13(:))
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg13(:))
     END DO
 !
     CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
@@ -338,17 +346,17 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
 CONTAINS
 !
 !
-  FUNCTION FKABVP(a, b)
+  FUNCTION FKABVP(icv, a, b)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabvp(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabvp
     IF (a .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (b .EQ. ismain .AND. a .NE. b .AND. (.NOT.is_neutral(a)) &
 &       .AND. (.NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (a .NE. b .AND. a .NE. ismain .AND. b .NE. ismain .AND. (&
 &       .NOT.is_neutral(a)) .AND. (.NOT.is_neutral(b))) THEN
       fkabvp = 1.0_R8
@@ -362,14 +370,14 @@ CONTAINS
   END FUNCTION FKABVP
 
 !
-  FUNCTION FKABTF(a, b)
+  FUNCTION FKABTF(icv, a, b)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabtf(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabtf
     IF (b .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabtf = cimp2
+      fkabtf = cimp2(icv)
     ELSE IF (a .NE. ismain .AND. b .NE. ismain .AND. (.NOT.is_neutral(a)&
 &       ) .AND. (.NOT.is_neutral(b))) THEN
       fkabtf = 0.0_R8
@@ -382,24 +390,24 @@ CONTAINS
   END FUNCTION FKABTF
 
 !
-  FUNCTION FKA(a)
+  FUNCTION FKA(icv, a)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: a
-    REAL(kind=r8) :: fka(ncv)
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka
     INTEGER :: r
     INTRINSIC SQRT
-    REAL(kind=r8) :: result11
+    REAL(kind=r8) :: result10
     REAL(kind=r8) :: arg15
     REAL(kind=r8) :: result20
     fka = 0.0_R8
     DO r=0,ns-1
-      result11 = SQRT(mp)
+      result10 = SQRT(mp)
       arg15 = am(a)*am(r)/(am(a)+am(r))
       result20 = SQRT(arg15)
-      fka = fka + rz2(:, r)*na(:, r)*result11*result20
+      fka = fka + rz2(icv, r)*na(icv, r)*result10*result20
     END DO
-    fka = fka*rz2(:, a)
+    fka = fka*rz2(icv, a)
     RETURN
   END FUNCTION FKA
 
@@ -555,7 +563,6 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
   REAL(kind=r8) :: result2
   CHARACTER(len=16) :: arg11
-  REAL(kind=r8), DIMENSION(ncv) :: result10
   CHARACTER(len=15) :: arg12
   CHARACTER(len=12) :: arg13
   CHARACTER(len=11) :: arg14
@@ -621,6 +628,9 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0e0_R8, smbtfeal, 1)
   DO nd=1,nbdirsmax
+    kabvpd(nd, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
     smbfriald(nd, :, :) = 0.D0
   END DO
 !srv 13.01.17 }
@@ -629,9 +639,9 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      CALL FKABVP_DV(isb, is, kabvp, kabvpd, nbdirs)
 !     ..contribution from friction between ions
       DO icv=1,mpg%nci
+        CALL FKABVP_DV(icv, isb, is, kabvp(icv), kabvpd(:, icv), nbdirs)
         arg10 = am(isb)*am(is)/(am(isb)+am(is))
         result1 = SQRT(arg10)
         temp = switch%b2sifr_phm0*mp*result1
@@ -756,27 +766,50 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
       smbtfeal(icv, 0) = smbtfeal(icv, 0) + coef*t0
     END DO
     DO nd=1,nbdirsmax
+      kad(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      kbd(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      kabtfd(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       smbtfiald(nd, :, :) = 0.D0
     END DO
+    DO nd=1,nbdirsmax
+      kbatfd(nd, :) = 0.D0
+    END DO
   ELSE
+    DO nd=1,nbdirsmax
+      kad(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      kbd(nd, :) = 0.D0
+    END DO
     DO nd=1,nbdirsmax
       smbtfeald(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      kabtfd(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       smbtfiald(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      kbatfd(nd, :) = 0.D0
     END DO
   END IF
 !   ..contribution from ions thermal force
   DO is=0,ns-1
     IF (isb .NE. is .AND. (.NOT.is_neutral(isb)) .AND. (.NOT.is_neutral(&
 &       is))) THEN
-      CALL FKABTF_DV(isb, is, kabtf, kabtfd, nbdirs)
-      CALL FKABTF_DV(is, isb, kbatf, kbatfd, nbdirs)
-      CALL FKA_DV(isb, ka, kad, nbdirs)
-      CALL FKA_DV(is, kb, kbd, nbdirs)
-      CALL FKABVP_DV(isb, is, kabvp, kabvpd, nbdirs)
-!
       DO icv=1,mpg%nci
+        CALL FKABTF_DV(icv, isb, is, kabtf(icv), kabtfd(:, icv), nbdirs)
+        CALL FKABTF_DV(icv, is, isb, kbatf(icv), kbatfd(:, icv), nbdirs)
+        CALL FKA_DV(icv, isb, ka(icv), kad(:, icv), nbdirs)
+        CALL FKA_DV(icv, is, kb(icv), kbd(:, icv), nbdirs)
+        CALL FKABVP_DV(icv, isb, is, kabvp(icv), kabvpd(:, icv), nbdirs)
 !      .. calculations could be simplified
 !      .. but we did not do it in order to have the same formulae as manual
         result1 = SQRT(mp)
@@ -909,21 +942,31 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
 !srv 05.07.17
     DO is=0,ns-1
       WRITE(chis, '(i3.3)') is
-      result10 = FKABVP(isb, is)
+      DO icv=1,ncv
+        wrk(icv) = FKABVP(icv, isb, is)
+      END DO
       arg12(:) = 'b2sifrtf_kabvp_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKABTF(isb, is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKABTF(icv, isb, is)
+      END DO
       arg12(:) = 'b2sifrtf_kabtf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKABTF(is, isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKABTF(icv, is, isb)
+      END DO
       arg12(:) = 'b2sifrtf_kbatf_'//chns//'_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg12(:))
-      result10 = FKA(isb)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg12(:))
+      DO icv=1,ncv
+        wrk(icv) = FKA(icv, isb)
+      END DO
       arg13(:) = 'b2sifrtf_ka_'//chns
-      CALL MY_OUT_US(70, ncv, 0, result10, arg13(:))
-      result10 = FKA(is)
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg13(:))
+      DO icv=1,ncv
+        wrk(icv) = FKA(icv, is)
+      END DO
       arg13(:) = 'b2sifrtf_kb_'//chis
-      CALL MY_OUT_US(70, ncv, 0, result10, arg13(:))
+      CALL MY_OUT_US(70, ncv, 0, wrk, arg13(:))
     END DO
 !
     CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, f_luc_sg, wrk)
@@ -952,43 +995,43 @@ CONTAINS
 !   with respect to varying inputs: cimp1
 !
 !
-  SUBROUTINE FKABVP_DV(a, b, fkabvp, fkabvpd, nbdirs)
+  SUBROUTINE FKABVP_DV(icv, a, b, fkabvp, fkabvpd, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabvp(ncv)
-    REAL(kind=r8) :: fkabvpd(nbdirsmax, ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabvp
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: fkabvpd
     INTEGER :: nd
     INTEGER :: nbdirs
     IF (a .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
       DO nd=1,nbdirs
-        fkabvpd(nd, :) = cimp1d(nd, :)
+        fkabvpd(nd) = cimp1d(nd, icv)
       END DO
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (b .EQ. ismain .AND. a .NE. b .AND. (.NOT.is_neutral(a)) &
 &       .AND. (.NOT.is_neutral(b))) THEN
       DO nd=1,nbdirs
-        fkabvpd(nd, :) = cimp1d(nd, :)
+        fkabvpd(nd) = cimp1d(nd, icv)
       END DO
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (a .NE. b .AND. a .NE. ismain .AND. b .NE. ismain .AND. (&
 &       .NOT.is_neutral(a)) .AND. (.NOT.is_neutral(b))) THEN
       fkabvp = 1.0_R8
       DO nd=1,nbdirsmax
-        fkabvpd(nd, :) = 0.D0
+        fkabvpd(nd) = 0.D0
       END DO
     ELSE IF (a .EQ. b .AND. (.NOT.is_neutral(a)) .AND. (.NOT.is_neutral(&
 &       b))) THEN
       fkabvp = 0.0_R8
       DO nd=1,nbdirsmax
-        fkabvpd(nd, :) = 0.D0
+        fkabvpd(nd) = 0.D0
       END DO
     ELSE
       fkabvp = 0.0_R8
       DO nd=1,nbdirsmax
-        fkabvpd(nd, :) = 0.D0
+        fkabvpd(nd) = 0.D0
       END DO
     END IF
     RETURN
@@ -996,17 +1039,17 @@ CONTAINS
 
 !
 !
-  FUNCTION FKABVP(a, b)
+  FUNCTION FKABVP(icv, a, b)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabvp(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabvp
     IF (a .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (b .EQ. ismain .AND. a .NE. b .AND. (.NOT.is_neutral(a)) &
 &       .AND. (.NOT.is_neutral(b))) THEN
-      fkabvp = cimp1
+      fkabvp = cimp1(icv)
     ELSE IF (a .NE. b .AND. a .NE. ismain .AND. b .NE. ismain .AND. (&
 &       .NOT.is_neutral(a)) .AND. (.NOT.is_neutral(b))) THEN
       fkabvp = 1.0_R8
@@ -1023,50 +1066,50 @@ CONTAINS
 !   variations   of useful results: fkabtf
 !   with respect to varying inputs: cimp2
 !
-  SUBROUTINE FKABTF_DV(a, b, fkabtf, fkabtfd, nbdirs)
+  SUBROUTINE FKABTF_DV(icv, a, b, fkabtf, fkabtfd, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabtf(ncv)
-    REAL(kind=r8) :: fkabtfd(nbdirsmax, ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabtf
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: fkabtfd
     INTEGER :: nd
     INTEGER :: nbdirs
     IF (b .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
       DO nd=1,nbdirs
-        fkabtfd(nd, :) = cimp2d(nd, :)
+        fkabtfd(nd) = cimp2d(nd, icv)
       END DO
-      fkabtf = cimp2
+      fkabtf = cimp2(icv)
     ELSE IF (a .NE. ismain .AND. b .NE. ismain .AND. (.NOT.is_neutral(a)&
 &       ) .AND. (.NOT.is_neutral(b))) THEN
       fkabtf = 0.0_R8
       DO nd=1,nbdirsmax
-        fkabtfd(nd, :) = 0.D0
+        fkabtfd(nd) = 0.D0
       END DO
     ELSE IF (a .EQ. ismain) THEN
       fkabtf = 0.0_R8
       DO nd=1,nbdirsmax
-        fkabtfd(nd, :) = 0.D0
+        fkabtfd(nd) = 0.D0
       END DO
     ELSE
       fkabtf = 0.0_R8
       DO nd=1,nbdirsmax
-        fkabtfd(nd, :) = 0.D0
+        fkabtfd(nd) = 0.D0
       END DO
     END IF
     RETURN
   END SUBROUTINE FKABTF_DV
 
 !
-  FUNCTION FKABTF(a, b)
+  FUNCTION FKABTF(icv, a, b)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: a, b
-    REAL(kind=r8) :: fkabtf(ncv)
+    INTEGER, INTENT(IN) :: icv, a, b
+    REAL(kind=r8) :: fkabtf
     IF (b .EQ. ismain .AND. b .NE. a .AND. (.NOT.is_neutral(a)) .AND. (&
 &       .NOT.is_neutral(b))) THEN
-      fkabtf = cimp2
+      fkabtf = cimp2(icv)
     ELSE IF (a .NE. ismain .AND. b .NE. ismain .AND. (.NOT.is_neutral(a)&
 &       ) .AND. (.NOT.is_neutral(b))) THEN
       fkabtf = 0.0_R8
@@ -1082,60 +1125,59 @@ CONTAINS
 !   variations   of useful results: fka
 !   with respect to varying inputs: na rz2
 !
-  SUBROUTINE FKA_DV(a, fka, fkad, nbdirs)
+  SUBROUTINE FKA_DV(icv, a, fka, fkad, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
-    INTEGER :: a
-    REAL(kind=r8) :: fka(ncv)
-    REAL(kind=r8) :: fkad(nbdirsmax, ncv)
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: fkad
     INTEGER :: r
     INTRINSIC SQRT
-    REAL(kind=r8) :: result11
+    REAL(kind=r8) :: result10
     REAL(kind=r8) :: arg15
     REAL(kind=r8) :: result20
     INTEGER :: nd
     INTEGER :: nbdirs
     fka = 0.0_R8
     DO nd=1,nbdirsmax
-      fkad(nd, :) = 0.D0
+      fkad(nd) = 0.D0
     END DO
     DO r=0,ns-1
-      result11 = SQRT(mp)
+      result10 = SQRT(mp)
       arg15 = am(a)*am(r)/(am(a)+am(r))
       result20 = SQRT(arg15)
       DO nd=1,nbdirs
-        fkad(nd, :) = fkad(nd, :) + result11*result20*(na(:, r)*rz2d(nd&
-&         , :, r)+rz2(:, r)*nad(nd, :, r))
+        fkad(nd) = fkad(nd) + result10*result20*(na(icv, r)*rz2d(nd, icv&
+&         , r)+rz2(icv, r)*nad(nd, icv, r))
       END DO
-      fka = fka + rz2(:, r)*na(:, r)*result11*result20
+      fka = fka + rz2(icv, r)*na(icv, r)*result10*result20
     END DO
     DO nd=1,nbdirs
-      fkad(nd, :) = rz2(:, a)*fkad(nd, :) + fka*rz2d(nd, :, a)
+      fkad(nd) = rz2(icv, a)*fkad(nd) + fka*rz2d(nd, icv, a)
     END DO
-    fka = fka*rz2(:, a)
+    fka = fka*rz2(icv, a)
     RETURN
   END SUBROUTINE FKA_DV
 
 !
-  FUNCTION FKA(a)
-  USE B2MOD_DIFFSIZES
+  FUNCTION FKA(icv, a)
     IMPLICIT NONE
-    INTEGER :: a
-    REAL(kind=r8) :: fka(ncv)
+    INTEGER, INTENT(IN) :: icv, a
+    REAL(kind=r8) :: fka
     INTEGER :: r
     INTRINSIC SQRT
-    REAL(kind=r8) :: result11
+    REAL(kind=r8) :: result10
     REAL(kind=r8) :: arg15
     REAL(kind=r8) :: result20
     fka = 0.0_R8
     DO r=0,ns-1
-      result11 = SQRT(mp)
+      result10 = SQRT(mp)
       arg15 = am(a)*am(r)/(am(a)+am(r))
       result20 = SQRT(arg15)
-      fka = fka + rz2(:, r)*na(:, r)*result11*result20
+      fka = fka + rz2(icv, r)*na(icv, r)*result10*result20
     END DO
-    fka = fka*rz2(:, a)
+    fka = fka*rz2(icv, a)
     RETURN
   END FUNCTION FKA
 

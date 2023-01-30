@@ -22,6 +22,13 @@ SUBROUTINE CALC_RES_FP_NODIFF(ncv, ns, state, state0, res)
   TYPE(B2STATE), INTENT(IN) :: state
   TYPE(B2STATE), INTENT(IN) :: state0
   REAL(kind=r8), INTENT(INOUT) :: res
+!-----------------------------------------------------------------------
+!     calc_res_fp calculates a maximum residual for the fixed point 
+!     form of the B2.5 time iteration scheme (while-loop instad of
+!     for-loop). This is evaluated as the maximum among value of
+!     t0 = sqrt(sum((q-q0)**2))/sqrt(sum(q**2)), where q is a plasma
+!     state variable at time t and q0 the same variable at t-dt.
+!-----------------------------------------------------------------------
   REAL(kind=r8) :: t0
   INTEGER :: is
   INTRINSIC SUM
