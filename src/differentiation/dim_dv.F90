@@ -1,6 +1,6 @@
 SUBROUTINE DIM_DV(x, xd, y, yd, res, resd, nbdirs)
   USE B2MOD_TYPES
-  USE DIFFSIZES
+  USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
   REAL(kind=r8) :: res, x, y
