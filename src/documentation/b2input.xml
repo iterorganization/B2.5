@@ -824,7 +824,7 @@
 				<default>3600.0</default>
 				<type>real</type>
 				<description>
-					CPU time interval after which save files plasmastate.xxxx are written.
+					If savecpu.gt.0.0, CPU time interval after which save files plasmastate.xxxx are written. Other additional options for writing of the checkpointing files are available by means of the b2mndt_ntim_save and/or b2mndr_plasmatim switches.
 					These can be used, in conjunction with the b2co.exe instruction, to recover a crashed run.
 				</description>
 			</switch>
@@ -2805,7 +2805,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Give the real-time interval between movie frames.
+					Another option for movie output. Gives the real-time interval between movie frames.
 				</description>
 			</switch>
 			<switch>
@@ -2813,7 +2813,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte Carlo averaging scheme.
+					Another option for plasma state file output. If greater than 0, gives the number of B2.5 full interations between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_plasmatim). Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte Carlo averaging scheme.
 				</description>
 			</switch>
 			<switch>
@@ -2862,7 +2862,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for plasma state file output. Give the real-time interval between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals.
+					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save).
 				</description>
 			</switch>
 			<switch>
