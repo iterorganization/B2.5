@@ -1,10 +1,10 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section b2uw_ualio_data_desc Description
+!>      @section b2uw_ual_io_data_desc Description
 !!      Module providing routines to transform variables stored in the B2
 !!      data structure into the form expected by CPO/IDS data structure.
 !!
-!!      @subsection b2uw_ualio_data_syx     Exceptional syntax explanation
+!!      @subsection b2uw_ual_io_data_syx     Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
