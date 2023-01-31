@@ -1,6 +1,6 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section b2uw_ualio_grid_desc Description
+!>      @section b2uw_ual_io_grid_desc Description
 !!      Module providing routines to set the B2 grid geometry, including grid
 !!      subsets (subgrids), to ITM CPO or IMAS IDS grid description data
 !!      structure.
@@ -10,7 +10,7 @@
 !!            and edge_transport IDSs)
 !!          - b2ITMFillGridDescription (for ITM edge CPO)
 !!
-!!      @subsection b2uw_ualio_grid_syx     Exceptional syntax explanation
+!!      @subsection b2uw_ual_io_grid_syx     Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code

@@ -33,7 +33,7 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
-      integer il,is,i,ii,ia,ib,k,ic
+      integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,iss
       character*74 hlp_frm
       real (kind=R8) ::
      *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
@@ -110,26 +110,56 @@ c*** ... and produce the output file
       do i=1,nmoli
         text_mn(i)=textmn(i-1)(2:8)
       end do
+c*** Check whether carbon atoms are present in the calculation
+      ic=0
+      do i=1,natmi
+        if(streql(text_an(i),'C')) ic=i
+      end do
+c
       open (lun,file='wlld.dat')
-      write (hlp_frm,'(a,i2,a)')
+      if (ic.eq.0) then
+        write (hlp_frm,'(a,i2,a)')
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
+     .      2*natmi+2*nmoli,
+     .      '(a4,a8))'
+      else
+        write (hlp_frm,'(a,i2,a)')
      .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),1x,4(5x,a4,3x),3x,',
      .      2*natmi+2*nmoli,
      .      '(a4,a8),2(1x,a8,3x))'
-      if (nmoli.gt.0) then
-        write(lun,hlp_frm)
+      end if
+      if (ic.eq.0) then
+        if (nmoli.gt.0) then
+          write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
+     ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli)
+        else
+          write(lun,hlp_frm)
+     -     'zone','DG#','EIR#',
+     ,     'R1','Z1','R2','Z2',' X','Xr',
+     ,     'area','Wtot','Wkin','Wpot',
+     ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi)
+        end if
+      else
+        if (nmoli.gt.0) then
+          write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,     ('flx_',text_mn(i),'Eav_',text_mn(i),i=1,nmoli),
      ,      'net_ersn','grs_ersn'
-      else
-        write(lun,hlp_frm)
+        else
+          write(lun,hlp_frm)
      -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
      ,      'net_ersn','grs_ersn'
+        end if
       end if
 #ifdef DBG
       print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
@@ -139,31 +169,20 @@ c*** ... and produce the output file
       end do
 #endif
 c
-c*** Check whether carbon atoms are present in the calculation
-c
-      ic=0
-      do i=1,natmi
-        if(streql(text_an(i),'C')) ic=i
-      end do
-c
-      do il=2,nwldprt
+      do il=1,nwldprt
         if(nwldlis(il) .gt. 0) then
           write(lun,*)
 c*** calculate the length of the target segment
-          hlpx=0.e0_R8
+          hlpx=0.0_R8
           do i=1,nwldlis(il)
-            ia=lwldlis(i,il)
-            is=leirlis(i,il)
-            if (is.gt.0.and.is.le.nlim) then
-              distance=sqrt((p1(1,is)-p2(1,is))**2+
-     .                      (p1(2,is)-p2(2,is))**2)
-              hlpx=hlpx+distance
-            end if
+            ib=iabs(lwldlis(i,il))
+            hlpx=hlpx+sqrt((pp1(1,ib)-pp2(1,ib))**2+
+     .                     (pp1(2,ib)-pp2(2,ib))**2)
           end do
 c
-          x=0.e0_R8
-          distance=0.e0_R8
-          hlpw=0.e0_R8
+          x=0.0_R8
+          distance=0.0_R8
+          hlpw=0.0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             ib=iabs(ia)
@@ -181,7 +200,7 @@ c
             aa=1.e-6_R8/a
             distance=0.5e0_R8*distance
             x=x+h+distance
-            if(is.gt.0 .and. is.le.nlim) then
+            if(is.gt.0 .and. is.le.nlimi) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa
               wwp=wldnep(is,0)*aa
@@ -213,6 +232,61 @@ c*** Calculate the net and gross erosion
                 wwyn=flxctff
                 wwyg=flxctff
               end if
+            else if (ib.gt.lppp) then
+              j=(ib-lppp-1)/nytg+1
+              js=(ib-lppp)-(j-1)*nytg
+              ias=0
+              do iss=1,nsts
+                if (eirdiag_nds_typ(iss).ne.2) cycle
+                if (eirdiag_nds_srf(iss).ne.ltrgpos(j)+1) cycle
+                if (mod(j,2).eq.1) then
+                  idir = -1
+                else
+                  idir = 1
+                end if
+                if (idir.eq.1) then
+                  ias=eirdiag_nds_ind(iss)+js
+                else
+                  ias=eirdiag_nds_ind(iss)+(nytg-js+1)
+                end if
+              end do
+              write(*,*) 'j,js,ias : ' , j,js,ias
+              wwk=0.0_R8
+              wwp=0.0_R8
+              k=0
+              do ii=1,natmi
+                k=k+1
+                if (ias.eq.0) cycle
+                wwk=wwk+(ewlda_res(ii,ias)-ewldea_res(ii,ias))
+                wwj(k)=max(wldna_res(ii,ias),flxctff)/a
+                wwe(k)=max(ewlda_res(ii,ias),enrctff)
+              end do
+              do ii=1,nmoli
+                k=k+1
+                if (ias.eq.0) cycle
+                wwk=wwk+(ewldm_res(ii,ias)-ewldem_res(ii,ias))
+                wwp=wwp+ewldmr_res(ii,ias)
+                wwj(k)=max(wldnm_res(ii,ias),flxctff)/a
+                wwe(k)=max(ewldm_res(ii,ias),enrctff)
+              end do
+              if(ic.gt.0.and.ias.gt.0) then
+                wwyg=wldspta_res(ic,ias)/a
+                wwyn=(wldspta_res(ic,ias)-wldna_res(ic,ias)-
+     >                                    wlpump_res(ic,ias))/a
+                do ii=1,nmoli
+                  if (mlcmp(ic,ii).gt.0)
+     >             wwyn=wwyn+mlcmp(ic,ii)*
+     .              (wldsptm_res(ii,ias)-wldnm_res(ii,ias)-
+     .                                   wlpump(ii+natmi,ias))/a
+                end do
+              else
+                wwyn=flxctff
+                wwyg=flxctff
+              end if
+              hlpw=hlpw+wwk+wwp
+              wwk=max(wwk*aa,pwrctff)
+              wwp=max(wwp*aa,pwrctff)
+              wwt=max(wwk+wwp,pwrctff)
             else
               wwyn=flxctff
               wwyg=flxctff
@@ -227,10 +301,16 @@ c*** Calculate the net and gross erosion
             end if
             write (hlp_frm,'(a,i2,a)')
      ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
-            write (lun,hlp_frm) pltzlbl(il),
+            if (ic.eq.0) then
+              write (lun,hlp_frm) pltzlbl(il),
+     ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
+     ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k)
+            else
+              write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
+            end if
           end do
           write(*,*) 'Neutral power to wall: ',pltzlbl(il),il,hlpw
         end if
