@@ -4927,7 +4927,7 @@ cwdk    Todo: corrections for BCCON.ne.14
 #ifdef WG_TODO
 
           if(ncall_b2stbc_phys.eq.0) then
-            write(*,*) 'BCENE = 16 (style = 1) : '//
+            write(*,'(a)') 'BCENE = 16 (style = 1) : '//
      &       'Given integrated electron heat flux with constant Te '
 !          write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
@@ -7464,8 +7464,8 @@ cwdk     * need to correct this BC for hybrid scheme
 #ifdef WG_TODO
 !IYS 04.03.2013 {
         if(ncall_b2stbc_phys.eq.0) then
-          write(*,*) 'BCENI = 24 : Given integrated ion heat flux',
-     &               ' with constant Ti '
+          write(*,'(a)') 'BCENI = 24 : Given integrated ion heat flux',
+     &                   ' with constant Ti '
 !          write all boundaries with this type of boundary condition
           DO IBW=IB,NBC
             if (BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB)) THEN
@@ -9129,7 +9129,7 @@ c end of implementation
 !xpb  Special attention is paid to the case where there is a discontinuity in B
 !xpb
         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
-          if (ncall_b2stbc_phys.eq.0) write(*,'(a,i2,a,i2)')
+          if (ncall_b2stbc_phys.eq.0) write(*,'(1x,a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
      &          ib,' because potential is imposed by BCPOT =',BCPOT(IB)
         ELSE IF(BCCHAR(IB).EQ.'S') THEN
