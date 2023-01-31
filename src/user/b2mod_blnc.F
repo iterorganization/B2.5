@@ -834,8 +834,6 @@ c======================================================================
       end subroutine b2blncc
 c
       subroutine b2blncs
-      implicit none
-      logical file_open
 
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
