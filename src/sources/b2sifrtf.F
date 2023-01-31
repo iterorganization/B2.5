@@ -80,9 +80,7 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,           !som 23.02.21
      &  Zhdanov_tf_fr = 1                                               !som 01.07.21
       integer, save :: icase = 0                                        !som 05.03.21
-#ifdef NO_OPENMP_B2NPMO
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
-#endif
       character chns*3, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
@@ -111,9 +109,7 @@
 #endif
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
-#ifdef NO_OPENMP_B2NPMO
-      !$OMP THREADPRIVATE(ncall, styl0, phm0, phm1, phm2, phm3)
-#endif
+      !$OMP THREADPRIVATE(ncall, phm1, phm2)
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
 
@@ -224,11 +220,7 @@
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
-#ifndef NO_OPENMP_B2NPMO
-!$OMP& PRIVATE(styl0, phm0)
-#else
-!$OMP& COPYIN(styl0, phm0)
-#endif
+!$OMP& FIRSTPRIVATE(styl0, phm0)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
         do is = 0, ns-1
@@ -242,7 +234,7 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction)
+             !$omp critical (ionfriction_1)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -258,7 +250,7 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction)
+             !$omp end critical (ionfriction_1)
             endif
            enddo
           enddo
@@ -272,11 +264,7 @@
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua)
-#ifndef NO_OPENMP_B2NPMO
-!$OMP& PRIVATE(styl0, phm0)
-#else
-!$OMP& COPYIN(styl0, phm0)
-#endif
+!$OMP& FIRSTPRIVATE(styl0, phm0)
 !$OMP& REDUCTION(+: smbfrial)
 #endif
         do is = 0, ns-1
@@ -291,7 +279,7 @@
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
              t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
-             !$omp critical (ionfriction)
+             !$omp critical (ionfriction_2)
              if (styl0.eq.0) then
                smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+
      &          coef*t0*ua(ix,iy,is)
@@ -307,7 +295,7 @@
                smbfrial(ix,iy,3) = smbfrial(ix,iy,3)+(-coef*t0/
      &                       roxa(ix,iy,isb))
              endif
-             !$omp end critical (ionfriction)
+             !$omp end critical (ionfriction_2)
             endif
            enddo
           enddo
@@ -395,11 +383,7 @@
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface, ka)
-#ifdef NO_OPENMP_B2NPMO
-!$OMP& PRIVATE(phm3)
-#else
-!$OMP& SHARED(phm3)
-#endif
+!$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
         do is = 0, ns-1
@@ -458,11 +442,7 @@ c   .... apply flux limit
 !$OMP& SHARED(ns, isb, is_neutral, nx, ny, leftix, rightix)
 !$OMP& SHARED(rz2, am, zetap, na, ua, bb, gti, cflim, ti, rightiy)
 !$OMP& SHARED(on_closed_surface, ka)
-#ifdef NO_OPENMP_B2NPMO
-!$OMP& PRIVATE(phm3)
-#else
-!$OMP& SHARED(phm3)
-#endif
+!$OMP& FIRSTPRIVATE(phm3)
 !$OMP& REDUCTION(+: smbtfial, smbtfial_nofl)
 #endif
         do is = 0, ns-1
