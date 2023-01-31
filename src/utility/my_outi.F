@@ -3,7 +3,7 @@
       integer iarr(-1:nx,-1:ny)
       character *(*) first_name
 
-      character *64 filename
+      character*64 filename
       character(23) hlp_frm                               !srv 11.03.13
       integer ix, iy
       integer, save :: ncall = 0
@@ -13,7 +13,7 @@
 
       inquire(unit=nwrite,opened=file_opened)
       if (file_opened) then
-         write(*,fmt="(a23,i3,a20)"),
+         write(*,'(a23,i3,a20)')
      & 'Error in my_outi: unit ',nwrite,' is already opened'
       else
         if (ncall.eq.0) then

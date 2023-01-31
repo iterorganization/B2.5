@@ -19,7 +19,7 @@
       !$OMP CRITICAL(synch_my_out)
       inquire(unit=nwrite,opened=file_opened)
       if (file_opened) then
-         write(*,fmt="(a22,i3,a20)"),
+         write(*,'(a22,i3,a20)')
      & 'Error in my_out: unit ',nwrite,' is already opened'
       else
         if (ncall.eq.0) then
@@ -29,7 +29,7 @@
           ncall = 1
 *    ..try to create a file in optional output folder
 !        if (file_opened) then
-!         write(*,fmt="(a22,i3,a20)"),
+!         write(*,'(a22,i3,a20)'),
 !     & 'Error in my_out: unit ',nwrite,' is already opened'
 !         return
 !        endif
