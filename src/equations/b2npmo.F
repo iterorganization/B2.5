@@ -548,6 +548,7 @@
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
 *    ..compute rob, pb
+       smb = 0.0_R8
        call b2scopy (n2, na(-1,-1,is), 1, rob, 1)
        call b2sscal (n2, am(is)*mp, rob, 1)
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
