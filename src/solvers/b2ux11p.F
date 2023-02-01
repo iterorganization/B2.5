@@ -67,8 +67,8 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+      real (kind=R4) :: cpu_start, cpu_end, c_end, c_start
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -163,7 +163,11 @@
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -186,14 +190,26 @@
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
        endif
       else if (style.eq.2) then
+#ifdef _OPENMP
+       c_start = real(omp_get_wtime(),R4)
+#else
        call cpu_time(c_start)
+#endif
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
      *                  indices, ipsave, jpsave, name)
+#ifdef _OPENMP
+       c_end = real(omp_get_wtime(),R4)
+#else
        call cpu_time(c_end)
+#endif
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
      &               c_end-c_start
 *    ..use ma28
+#ifdef _OPENMP
+       cpu_start = real(omp_get_wtime(),R4)
+#else
        call cpu_time(cpu_start)
+#endif
 !       call ilutern_9(NX+2, NY+2, NX+2,
 !    &   aa11(-1,-1,-3),
 !    &   aa11(-1,-1,-2), aa11(-1,-1,-1), aa11(-1,-1,0),
@@ -214,7 +230,11 @@
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
+#ifdef _OPENMP
+      cpu_end = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &                                  cpu_end-cpu_start
 
