@@ -10,6 +10,9 @@ subroutine coprocessor(nVx, nFc, nCv, step, time, geo, state)
   use b2mod_types
   use b2us_geo
   use b2us_plasma
+#ifdef _OPENMP
+  use b2mod_openmp
+#endif
 
   implicit none
   integer, intent(in) :: nVx, nFc, nCv, step
@@ -17,9 +20,13 @@ subroutine coprocessor(nVx, nFc, nCv, step, time, geo, state)
   type(geometry), intent(in) :: geo
   type(B2State), intent(in) :: state
   integer :: flag
-  real :: start, finish
+  real (kind=R4) :: start, finish
 
+#ifdef _OPENMP
+  start = real(omp_get_wtime(),R4)
+#else
   call cpu_time(start)
+#endif
 
 ! Query Catalyst to see if there is something to do this time step.
   call requestdatadescription(step,time,flag)
@@ -93,7 +100,11 @@ subroutine coprocessor(nVx, nFc, nCv, step, time, geo, state)
      call adddata(state%rt%rlpi(:,1,:),"rlpi1"//char(0),nCv,state%ns)
 
      call coprocess()
+#ifdef _OPENMP
+     finish = real(omp_get_wtime(),R4)
+#else
      call cpu_time(finish)
+#endif
      print*, "Coprocessing time: ",finish-start
   end if
   return

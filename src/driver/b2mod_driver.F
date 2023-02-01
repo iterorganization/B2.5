@@ -153,9 +153,10 @@
       integer, save :: shot = 0, run = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
+      real (kind=R4) :: cpuval, cpustart, cpuinit
       real (kind=R8) ::
      *  na_min, na_new, dtim, etim,
-     &  b2mndr_cpu, cpuval, cpustart, cpuinit,
+     &  b2mndr_cpu,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
@@ -1959,7 +1960,9 @@ c new CDF movie option (1st frame at t=0)
       character*1 ss
       logical ok, found
 *   ..procedures
+#ifndef _OPENMP
       intrinsic cpu_time
+#endif
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
 
@@ -1979,7 +1982,11 @@ c new CDF movie option (1st frame at t=0)
       quit_residual=.false.                                         !jwk
       res_max = 10.0_R8*res_quit
       ne_wanted_next_time=tim
+#ifdef _OPENMP
+      cpuinit = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpuinit)
+#endif
       elapsedinit=epoch_seconds()
 cwdk  set some integers
       nCv = mpg%nCv
@@ -2004,7 +2011,11 @@ cwdk  set some integers
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
+#ifdef _OPENMP
+      cpustart = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpustart)
+#endif
       elapsedstart=epoch_seconds()
 #ifndef FIXED_POINT
 *   ..loop test
@@ -2316,14 +2327,18 @@ c new CDF movie option
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
+#ifdef _OPENMP
+        cpuval = real(omp_get_wtime(),R4)
+#else
         call cpu_time(cpuval)
+#endif
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
      &            min((ntim-itim)*(cpuval-cpustart),
-     &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
+     &      max(0.0_R4,real(b2mndr_cpu,R4)-(cpuval-cpuinit)))            !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
@@ -2379,7 +2394,12 @@ c new CDF movie option
      2      (etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.
      &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
+#ifdef _OPENMP
+        write_save=(cpuval-cpuinit).gt.cputarget.and.
+     &              cpuincrement.gt.0.0_R8
+#else
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
+#endif
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.

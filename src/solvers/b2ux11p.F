@@ -65,8 +65,8 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz                                      !srv 29.05.02
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end
+      real (kind=R4) :: cpu_start, cpu_end
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -151,7 +151,11 @@
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -172,20 +176,40 @@
      &   aa11(-1,-1,1), aa11(-1,-1,2), aa11(-1,-1,3),               !srv 11.01.00
      &   resfun, corfun, name)
       else if (style.eq.3) then                                     !srv 29.05.02 {
-!        call cpu_time(cpu_start)
+!#ifdef _OPENMP
+!        c_start = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(c_start)
+!#endif
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
      *                   indexes, iasave, jasave, name)
-!        call cpu_time(cpu_end)
-!        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
+!#ifdef _OPENMP
+!        c_end = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(c_end)
+!#endif
+!        write (*,"(' Time of transform is',1pd9.2)") c_end-c_start
 !        write(*,*) 'STORAGE_11: nz = ',nz
         call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
-!        call cpu_time(cpu_start)
+!#ifdef _OPENMP
+!        c_start = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(c_start)
+!#endif
         call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)        !srv 29.05.02 }
-!        call cpu_time(cpu_end)
-!        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
+!#ifdef _OPENMP
+!        c_end = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(c_end)
+!#endif
+!        write (*,"(' Time of illtern_7 is',1pd9.2)") c_end-c_start
       endif
+#ifdef _OPENMP
+      cpu_end = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &                                  cpu_end-cpu_start
 
