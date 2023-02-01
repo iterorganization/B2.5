@@ -2941,7 +2941,7 @@
 				<default>1.0e-7</default>
 				<type>real</type>
 				<description>
-					Threshold of the maximum residual among the equations solved below which the run is stopped. Only meaningful when compiled with FIXED_POINT and with adjoint AD code
+					Threshold of the maximum residual among the equations solved below which the run is stopped. Only meaningful when compiled with FIXED_POINT and with adjoint AD code.
 				</description>
 			</switch>
 			<switchgroup>
@@ -6217,7 +6217,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>TRANSPORT_FILENAME</name>
+				<name>TRANSPORT_IP_FILENAME</name>
 				<default>b2.transport.inputfile</default>
 				<type>character*256</type>
 				<description>
@@ -6225,21 +6225,21 @@
 				</description>
 			</switch>
 			<switch>
-				<name>TRANSPORT_TIME_MOD</name>
+				<name>TRANSPORT_IP_TIME_MOD</name>
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_TIME_MOD), reaches or exceeds TRANSPORT_TIME_SWITCH, reads the new namelist from TRANSPORT_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_TIME_MOD) changes. Only active if TRANSPORT_TIME_MOD is greater than 0.
+					When the B2.5 run simulation time, in seconds, modulo(TRANSPORT_IP_TIME_MOD), reaches or exceeds TRANSPORT_IP_TIME_SWITCH, reads the new namelist from TRANSPORT_IP_FILENAME. Also switches to the new namelist if the ELM count (here time/TRANSPORT_IP_TIME_MOD) changes. Only active if TRANSPORT_IP_TIME_MOD is greater than 0.
 				</description>
 			</switch>
 			<switch>
-				<name>TRANSPORT_TIME_SWITCH</name>
+				<name>TRANSPORT_IP_TIME_SWITCH</name>
 				<default>0.0</default>
 				<type>real*8</type>
 				<description>
-					If TRANSPORT_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
-					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_FILENAME.
-					Only active if TRANSPORT_TIME_SWITCH is greater than 0.
+					If TRANSPORT_IP_TIME_MOD is greater than 0, time (in seconds) within an ELM cycle at which a new TRANSPORT namelist is read.
+					Otherwise, B2.5 simulation time, in seconds, when to read the next TRANSPORT namelist file from TRANSPORT_IP_FILENAME.
+					Only active if TRANSPORT_IP_TIME_SWITCH is greater than 0.
 				</description>
 			</switch>
 			<switch>
@@ -6842,16 +6842,16 @@
 				<type>integer array of size (NCF)</type>
 				<description>
 					Specifies the type of cost function for index icf. Valid options are:
-					0 - Sum of weighted least squares cost functions. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9)
-					1 - Difference, on the desired CVs, of calculated electron density and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-3})
-					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV)
-					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV)
-					4 - Maximum electron temperature on the desired CVs (output in eV)
-					5 - Maximum heat flux on the desired FCs (output in W)
-					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9)
-					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4})
-					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m)
-					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m)
+					0 - Sum of weighted least squares cost functions. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
+					1 - Difference, on the desired CVs, of calculated electron density and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-3}).
+					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV).
+					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV).
+					4 - Maximum electron temperature on the desired CVs (output in eV).
+					5 - Maximum heat flux on the desired FCs (output in W).
+					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
+					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4}).
+					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
+					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
 				</description>
 			</switch>
 			<switch>
@@ -6879,7 +6879,7 @@
 				<default>0</default>
 				<type>integer array of size (mxnCf)</type>
 				<description>
-					Listing for each cost function the corresponding domain CVs or FCs. WARNING! No attempt is made to check if these CVs or FCs are connected, sorted or even available in the current geometry: it is up to the user to make sure the list is correct. mxnCf is a hard coded maximum length defined in b2mod_user_namelist
+					Listing for each cost function the corresponding domain CVs or FCs. WARNING! No attempt is made to check if these CVs or FCs are connected, sorted or even available in the current geometry: it is up to the user to make sure the list is correct. mxnCf is a hard coded maximum length defined in b2mod_user_namelist.
 				</description>
 			</switch>
 			<switch>
@@ -6887,7 +6887,7 @@
 				<default>0</default>
 				<type>integer array of size (NCF, 2)</type>
 				<description>
-					CF_REGP(icf, 1) points, for cost function icf, to the first index in the CF_REG list
+					CF_REGP(icf, 1) points, for cost function icf, to the first index in the CF_REG list.
 					CF_REGP(icf, 2) number of items in CF_REG list for cost function icf.
 				</description>
 			</switch>
@@ -6945,10 +6945,10 @@
 				<default>-1</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are
+					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are:
 					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
 					1 - Uninformative Gaussian prior.
-					NNVAR refers to the optimization namelist
+					NNVAR refers to the optimization namelist.
 				</description>
 			</switch>
 			<switch>
@@ -6957,8 +6957,8 @@
 				<type>real*8 array of size (NNVAR,2)</type>
 				<description>
 					Indicates parameters for the prior distributions.
-					For PRIOR_TYPE=0, not used
-					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution
+					For PRIOR_TYPE=0, not used.
+					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution.
 				</description>
 			</switch>
 			<switch>
@@ -6966,7 +6966,7 @@
 				<default>10*p_infty</default>
 				<type>real*8 array of size (NNVAR,2)</type>
 				<description>
-					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30)
+					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30).
 				</description>
 			</switch>
 			<switch>
@@ -7175,7 +7175,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of optimization parameters (radially varying transport coefficients count as 1)
+					Number of optimization parameters (radially varying transport coefficients count as 1).
 				</description>
 			</switch>
 			<switch>
@@ -7231,7 +7231,7 @@
 				<default>.true.</default>
 				<type>logical array of size (NSIGMA)</type>
 				<description>
-					For each sigma, spcifies whether it is optimized or fixed
+					For each sigma, spcifies whether it is optimized or fixed.
 				</description>
 			</switch>
 			<switch>
@@ -7240,7 +7240,7 @@
 				<type>logical array of size (NNVAR)</type>
 				<description>
 					For each optimization variables, specifies if radially varying coefficients are optimized.
-					Meaningful only for partype = 1 to 9
+					Meaningful only for partype = 1 to 9.
 				</description>
 			</switch>
 			<switch>
@@ -7248,7 +7248,7 @@
 				<default>0</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Number of spatial points optimized (should be the same as ndata in b2.transport.inputfile). The actual number of optimized variables (NPAR_OPT) is then equal to the total number of spatial points + any other additional parameter
+					Number of spatial points optimized (should be the same as ndata in b2.transport.inputfile). The actual number of optimized variables (NPAR_OPT) is then equal to the total number of spatial points + any other additional parameter.
 				</description>
 			</switch>
 			<switch>
@@ -7256,7 +7256,7 @@
 				<default>0</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Specifies the species of the optimization parameter. Only meaningful for partype = [1-3,5,7,12,13,16]
+					Specifies the species of the optimization parameter. Only meaningful for partype = [1-3,5,7,12,13,16].
 				</description>
 			</switch>
 			<switch>
@@ -7264,7 +7264,7 @@
 				<default>0</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Specifies the boundary/strata of the optimization parameter. Only meaningful for partype = [10-16]
+					Specifies the boundary/strata of the optimization parameter. Only meaningful for partype = [10-16].
 				</description>
 			</switch>
 			<switch>
@@ -7272,7 +7272,7 @@
 				<default>1.0</default>
 				<type>real*8 array of size (NPAR_OPT)</type>
 				<description>
-					Coefficient to rescale optimization parameters (and their gradient). Note dimension is NPAR_OPT, so need to specify it also for each point in case of spatially varying coefficients
+					Coefficient to rescale optimization parameters (and their gradient). Note dimension is NPAR_OPT, so need to specify it also for each point in case of spatially varying coefficients.
 				</description>
 			</switch>
 			<switch>
@@ -7280,7 +7280,7 @@
 				<default>10*p_infty</default>
 				<type>real*8 array of size (NPAR_OPT)</type>
 				<description>
-					Initial guess for each optimization parameter. (p_infty is a parameter currently set to 1e30)
+					Initial guess for each optimization parameter. (p_infty is a parameter currently set to 1e30).
 				</description>
 			</switch>
 			<switch>
@@ -7304,7 +7304,7 @@
 				<default>100</default>
 				<type>integer</type>
 				<description>
-					Maximum number of optimization iterations. Can overridden with PETCs/Tao by using command line options for the optimization
+					Maximum number of optimization iterations. Can overridden with PETCs/Tao by using command line options for the optimization.
 				</description>
 			</switch>
 			<switch>
@@ -7336,7 +7336,7 @@
 				<default>'bfgs'</default>
 				<type>character*256</type>
 				<description>
-					Specifies which kind of Hessian approximation is employed if HESSIAN_APPROXIMATION is set to 'limited-memory'. Can overridden with PETCs/Tao by using command line options for the optimization
+					Specifies which kind of Hessian approximation is employed if HESSIAN_APPROXIMATION is set to 'limited-memory'. Can overridden with PETCs/Tao by using command line options for the optimization.
 				</description>
 			</switch>
 			<switch>
