@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_ma28_for_9diag
       use b2mod_indirect
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       IMPLICIT NONE
 C
 

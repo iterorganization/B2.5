@@ -53,6 +53,7 @@
      & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
       use b2mod_trace
       use b2mod_ipmain
+      use b2mod_openmp
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
