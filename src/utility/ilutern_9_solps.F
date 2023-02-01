@@ -16,7 +16,7 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K
-      real (kind=R8) :: cpu_start, cpu_end
+      real (kind=R4) :: cpu_start, cpu_end
       integer iflag
 
       real (kind=R8) ::
@@ -61,7 +61,11 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
+#ifdef _OPENMP
+      cpu_start = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_start)
+#endif
       iflag=0
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -219,7 +223,11 @@ cdpc
       enddo
 
 *  ---------------------------------------------------------------------
+#ifdef _OPENMP
+      cpu_end = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_end)
+#endif
       ncall=ncall+1
       RETURN
 *=======================================================================
