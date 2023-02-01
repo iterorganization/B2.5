@@ -13,6 +13,9 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
 !simulation data to ParaView Catalyst.
 
   use b2mod_types
+#ifdef _OPENMP
+  use b2mod_openmp
+#endif
   implicit none
   integer :: nx, ny, ns, step, flag, numC !, ix, iy
   integer, intent(in) :: ncrx
@@ -28,9 +31,13 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
   real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
   real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
       & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
-  real :: start, finish
+  real (kind=R4) :: start, finish
 
+#ifdef _OPENMP
+  start = real(omp_get_wtime(),R4)
+#else
   call cpu_time(start)
+#endif
 
   !velocity(10,10,1) = 0
   !do ix = -1,nx
@@ -116,7 +123,11 @@ numC=(nx+2)*(ny+2) !number of cells
      call adddata(rlpi(:,:,1,:),"rlpi1"//char(0),numC,ns)
 
      call coprocess()
+#ifdef _OPENMP
+     finish = real(omp_get_wtime(),R4)
+#else
      call cpu_time(finish)
+#endif
      print*, "Coprocessing time: ",finish-start
   end if
 end subroutine

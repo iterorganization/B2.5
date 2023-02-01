@@ -1382,7 +1382,7 @@ c   ..ADAS impurity data
 
          write(yearz,'(i2)') isyear(is)
          cbuf8 = ppaddsp( ' YEARZ', izs )
-         call ppcstr( nwrite, cbuf8//':' // yearz )
+         call ppcstr( nwrite, cbuf8 // ':' // yearz )
       enddo
 
       return
