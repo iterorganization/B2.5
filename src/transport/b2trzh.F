@@ -39,12 +39,9 @@
      &  chci0_al_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  chci0_a_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz0(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz0_nofl(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz0_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz_drho_luc(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa0_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho_luc(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_hAdp(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
@@ -87,6 +84,8 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
+
+*   ..local variables
       integer ncall
       integer ix, iy, is, inucl, iz,i, j
       real (kind=R8) :: temp
@@ -137,7 +136,11 @@
      &  c_hwB(0:nspecies-1),c_rwB(0:nspecies-1),
      &  c_hTB(0:nspecies-1),c_rTB(0:nspecies-1),
      &  kappa_hTA(0:nspecies-1,0:nspecies-1),kappa_hTB(0:nspecies-1),
-     &  kappa_rTA(0:nspecies-1,0:nspecies-1),kappa_rTB(0:nspecies-1)
+     &  kappa_rTA(0:nspecies-1,0:nspecies-1),kappa_rTB(0:nspecies-1),
+     &  cvsahz_drho(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa0(-1:nx,-1:ny,0:1,0:ns-1),
+     &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1)
+
       save ncall
       data ncall/0/
 *-----------------------------------------------------------------------
@@ -212,11 +215,6 @@
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       czetap = t0*sqrt(mp)
       zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
-
-*   ..clean output coefficients
-      chci0_luc=0.0_R8
-      cvsahz0_luc=0.0_R8
-      cvsa0_luc=0.0_R8
 
 *   ..compute viscous flux limit profile
       call cfl_tanh_profile(nx, ny, cflim(2),
@@ -594,6 +592,8 @@
       enddo
 
 *    ..ion velocity-dependent viscosity on the cell boundary
+      cvsa_drho   = 0.0_R8                                               !srv 30.01.23
+      cvsahz_drho = 0.0_R8                                               !srv 30.01.23
       volhz = hz*vol
       do is = 0, ns-1
         wrk(-1:nx,-1:ny) =
@@ -628,8 +628,9 @@
       enddo
 
 *    ..apply Luciani correction for the ion conductivity
+      chci0_luc=0.0_R8
       do iy = -1, ny
-        do ix = 0, nx
+        do ix = -1, nx                                                   !srv 30.01.23
           if (on_closed_surface(ix,iy)) then
             chci0_luc(ix,iy,0) = chci0(ix,iy,0)*f_luc_ki(ix,iy)
           else
@@ -639,7 +640,7 @@
       enddo
       do i = 0, nspecies-1
         do iy = -1, ny
-          do ix = 0, nx
+          do ix = -1, nx                                                 !srv 30.01.23
             if (on_closed_surface(ix,iy)) then
               chci0_al_luc(ix,iy,0,i) = chci0_al(ix,iy,0,i)*
      &         f_luc_ki(ix,iy)
@@ -651,7 +652,7 @@
       enddo
       do is = 0, ns-1
         do iy = -1, ny
-          do ix = 0, nx
+          do ix = -1, nx                                                 !srv 30.01.23
             if (on_closed_surface(ix,iy)) then
               chci0_a_luc(ix,iy,0,is) = chci0_a(ix,iy,0,is)*
      &         f_luc_ki(ix,iy)
@@ -663,29 +664,25 @@
       enddo
 
 *    ..apply Luciani correction for the ion velocity-dependent viscosity
+      cvsahz0_luc     = cvsahz0                                          !srv 30.01.23 {
+      cvsahz_drho_luc = cvsahz_drho
+      cvsa0_luc       = cvsa0
+      cvsa_drho_luc   = cvsa_drho                                        !srv 30.01.23 }
       do is = 0, ns-1
-        if(.not.is_neutral(is)) then
-          do iy = -1, ny
-            do ix = 0, nx
-              if (on_closed_surface(ix,iy)) then
-                cvsahz0_luc(ix,iy,0,is) = cvsahz0(ix,iy,0,is)*
-     &           f_luc_et(ix,iy)
-                cvsahz_drho_luc(ix,iy,0,is) =
-     &           cvsahz_drho(ix,iy,0,is)*f_luc_et(ix,iy)
-                cvsa0_luc(ix,iy,0,is) = cvsa0(ix,iy,0,is)*
-     &           f_luc_et(ix,iy)
-                cvsa_drho_luc(ix,iy,0,is) = cvsa_drho(ix,iy,0,is)*
-     &           f_luc_et(ix,iy)
-              else
-                cvsahz0_luc(ix,iy,0,is) = cvsahz0(ix,iy,0,is)
-                cvsahz_drho_luc(ix,iy,0,is) =
-     &                                  cvsahz_drho(ix,iy,0,is)
-                cvsa0_luc(ix,iy,0,is) = cvsa0(ix,iy,0,is)
-                cvsa_drho_luc(ix,iy,0,is) = cvsa_drho(ix,iy,0,is)
-              endif
-            enddo
+        do iy = -1, ny
+          do ix = -1, nx                                                 !srv 30.01.23
+            if (on_closed_surface(ix,iy) .and. .not.is_neutral(is)) then !srv 30.01.23
+              cvsahz0_luc(ix,iy,0,is) = cvsahz0(ix,iy,0,is)*
+     &         f_luc_et(ix,iy)
+              cvsahz_drho_luc(ix,iy,0,is) =
+     &         cvsahz_drho(ix,iy,0,is)*f_luc_et(ix,iy)
+              cvsa0_luc(ix,iy,0,is) = cvsa0(ix,iy,0,is)*
+     &         f_luc_et(ix,iy)
+              cvsa_drho_luc(ix,iy,0,is) = cvsa_drho(ix,iy,0,is)*
+     &         f_luc_et(ix,iy)
+            endif
           enddo
-        endif
+        enddo
       enddo
 
 *    ..apply Luciani and neoclassical corrections for the ion heat flux
@@ -693,7 +690,7 @@
       do i = 0, nspecies-1
         do j = 0, nspecies-1
           do iy = -1, ny
-            do ix = 0, nx
+            do ix = -1, nx                                               !srv 30.01.23
               if (on_closed_surface(ix,iy)) then
                 cvsahz_hAdp_luc(ix,iy,0,i,j) =
      &           cvsahz_hAdp(ix,iy,0,i,j)*
@@ -710,7 +707,7 @@
         enddo
 
         do iy = -1, ny
-          do ix = 0, nx
+          do ix = -1, nx                                                 !srv 30.01.23
             if (on_closed_surface(ix,iy)) then
               cvsahz_hBdp_luc(ix,iy,0,i) = cvsahz_hBdp(ix,iy,0,i)*
      &         f_luc_et(ix,iy)*alpha1(ix,iy)

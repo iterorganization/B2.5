@@ -39,6 +39,7 @@
      *  sputter_yield(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2),
      *  sputter_yield2(-1:NXMAX,-1:NYMAX,0:NSDMAX-1,1:2)
 #endif
+      !$OMP THREADPRIVATE(sputter_yield, sputter_yield2)
       integer, save :: jagged_rates=0
 
       integer, save :: nx_sp, ny_sp, ns_sp
