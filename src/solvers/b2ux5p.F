@@ -64,8 +64,8 @@
 *   ..local variables
       integer ncall, style, n2, itmax, iters, itpar, cpu, ix, iy
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end
+      real (kind=R4) :: cpu_start, cpu_end
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -160,7 +160,11 @@
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -189,7 +193,11 @@
      2   aa5(-1,-1,1), aa5(-1,-1,2),
      .   resfun, corfun, name)                   !srv 18.03.10
       endif
+#ifdef _OPENMP
+      cpu_end = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu ',cpu_end-cpu_start
 
 * ..return
