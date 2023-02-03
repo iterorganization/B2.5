@@ -139,14 +139,15 @@
      2  sput_chem_model, reflection_on, sputter_energy_on
       real (kind=R8) ::
 #ifdef WG_TODO
-     *  start_time,end_time,pfrpuff,mainpuff,corepuff,
-     *  sum_start,sum_end,lnorm,
-     *  sum_strti,sum_ndi,sum_nde,
+     *  pfrpuff, mainpuff, corepuff,
+     *  sum_start, sum_end, lnorm,
+     *  sum_strti, sum_ndi, sum_nde,
      *  work(nCv,0:1), wrk2(nCv), wrk3(nCv),
 #endif
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  f_redep(nCv,0:ns-1)
 #ifdef WG_TODO
+      real (kind=R4) :: start_time, end_time
       logical equilibrium(ntrack), over_erosion
 #endif
       logical new_sputter_namelist
@@ -208,7 +209,11 @@
      *       in_no_of_start_points)
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
+#ifdef _OPENMP
+           start_time = real(omp_get_wtime(),R4)
+#else
            call cpu_time(start_time)
+#endif
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
      *          in_no_of_start_points,nx,ny,switch%in_dl)
@@ -228,7 +233,11 @@
      >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
              enddo
            enddo
+#ifdef _OPENMP
+           end_time = real(omp_get_wtime(),R4)
+#else
            call cpu_time(end_time)
+#endif
            write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
@@ -467,7 +476,11 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
+#ifdef _OPENMP
+        start_time = real(omp_get_wtime(),R4)
+#else
         call cpu_time(start_time)
+#endif
         if (output.ge.1) then
           open(88,file='start')
           open(89,file='end')
@@ -568,7 +581,11 @@ c   --> better solution wanted here..
           close(88)
           close(89)
         endif
+#ifdef _OPENMP
+        end_time = real(omp_get_wtime(),R4)
+#else
         call cpu_time(end_time)
+#endif
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
         if (balance_netcdf.ne.0) then

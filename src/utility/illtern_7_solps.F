@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_ysmp_sdrv
       use b2mod_indirect
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       IMPLICIT NONE
 C
 
@@ -16,7 +19,7 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K
-      real (kind=R8) :: cpu_start,cpu_end
+      real (kind=R4) :: cpu_start, cpu_end
       integer iflag
 
 *  -- PROCEDURES --
@@ -26,8 +29,8 @@ C
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
       integer       ::  path                                          !sv 29.05.02
       integer, save ::  nltrsol                                       !sv 29.05.02
-!      real (kind=R8) :: time_begin, time_end                          !sv 29.05.02
-      save ncall, nwrite_fmt, nwrite_bnr                      !sv 29.05.02
+!      real (kind=R4) :: time_begin, time_end                         !sv 29.05.02
+      save ncall, nwrite_fmt, nwrite_bnr                              !sv 29.05.02
       data ncall /0/, nwrite_fmt /0/, nwrite_bnr /0/ !sv 29.05.02
 
 *=======================================================================
@@ -43,7 +46,11 @@ C
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
+#ifdef _OPENMP
+      cpu_start = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_start)
+#endif
       iflag = 0                                                    !sv 16.04.02
       if(ncall.lt.10) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -118,12 +125,20 @@ cdpc
       if(lfirst_ill7) then
 C
         PATH = 2
-!          call cpu_time(time_begin)
+!#ifdef _OPENMP
+!        time_begin = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(time_begin)
+!#end
         CALL ODRV
      *     (N, NZ, IA, JA, A, P, IP, NSP, ISP, PATH, IFLAG)
 C
+!#ifdef _OPENMP
+!        time_end = real(omp_get_wtime(),R4)
+!#else
 !        call cpu_time(time_end)
-!          write (*,"(' Time for ODRV is',1pd9.2)") time_end - time_begin
+!#endif
+!        write (*,"(' Time for ODRV is',1pd9.2)") time_end - time_begin
         if(IFLAG.ne.0) then                                             !sv 13.02.03 {
          write(*,"(' ODRV ',': iflag =',i9,'  NSP =',I9)") iflag, NSP
          call xerrab ('IFLAG <> 0')
@@ -133,13 +148,21 @@ C
      *    write(*,"(' ODRV ',': iflag =',i9,'  NSP =',I9)") iflag, NSP  !sv 09.07.02
 C
         PATH = 4
-!          call cpu_time(time_begin)
-C                             Perform symbolyc LDL' factorization (SSF)
+!#ifdef _OPENMP
+!        time_begin = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(time_begin)
+!#endif
+C                             Perform symbolyc LDL factorization (SSF)
         CALL SDRV
      *     (N, NZ, P, IP, IA, JA, A, rr1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
+!#ifdef _OPENMP
+!        time_end = real(omp_get_wtime(),R4)
+!#else
 !        call cpu_time(time_end)
+!#endif
 
 !        write (*,"(' Time for SDRV (SSF) is',1pd9.2)") time_end-time_begin
         if(IFLAG.ne.0) then                                             !sv 13.02.03 {
@@ -156,21 +179,37 @@ C
        if(.not.lfirst_ill7) then
 C
         PATH = 3
-!          call cpu_time(time_begin)
+!#ifdef _OPENMP
+!        time_begin = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(time_begin)
+!#endif
 C       REORDER SYMMETRICALLY STORED MATRIX AS SPECIFIED BY INPUT PERMUTATION
         CALL ODRV
      *     (N, NZ, IA, JA, A, P, IP, NSP, ISP, PATH, IFLAG)
 C
+!#ifdef _OPENMP
+!        time_end = real(omp_get_wtime(),R4)
+!#else
 !        call cpu_time(time_end)
+!#endif
 C
         PATH = 6
-!          call cpu_time(time_begin)
-C                             Perform numerical LDL' factorization
+!#ifdef _OPENMP
+!        time_begin = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(time_begin)
+!#endif
+C                             Perform numerical LDL factorization
          CALL SDRV
      *     (N, NZ, P, IP, IA, JA, A, rr1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
+!#ifdef _OPENMP
+!        time_end = real(omp_get_wtime(),R4)
+!#else
 !        call cpu_time(time_end)
+!#endif
 
 !        write (6,"(' Time for SDRV (SNF) is',1pd9.2)") time_end-time_begin
         if(IFLAG.ne.0) then                                             !sv 13.02.03 {
@@ -183,13 +222,21 @@ C
      *       ESP, Iflag, NSP
 C
         PATH = 3
-!          call cpu_time(time_begin)
+!#ifdef _OPENMP
+!        time_begin = real(omp_get_wtime(),R4)
+!#else
+!        call cpu_time(time_begin)
+!#endif
 C                                 Solve A * X = B
          CALL SDRV
      *     (N, NZ, P,IP, IA, JA, A, rr1, s1, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
+!#ifdef _OPENMP
+!        time_end = real(omp_get_wtime(),R4)
+!#else
 !        call cpu_time(time_end)
+!#endif
 
 !        write (6,"(' Time for SDRV (SNS) is',1pd9.2)") time_end-time_begin
         if(iflag.ne.0) then                                             !sv 13.02.03 {
@@ -211,7 +258,11 @@ C
   50  CONTINUE
 
 *  ---------------------------------------------------------------------
+#ifdef _OPENMP
+      cpu_end = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_end)
+#endif
       ncall=ncall+1
       RETURN
 *=======================================================================
