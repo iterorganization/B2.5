@@ -7,6 +7,9 @@
       use b2mod_exp_file_names
       use b2mod_par_opt
      , , only : par_opt_phys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
 #ifdef WINDOWS
       USE DFLIB ! IGNORE
 #endif
@@ -79,7 +82,8 @@
 #endif
       logical(4) :: b2fstate_exist
       integer npoint
-      real (kind=R8) :: cpu_s, cpu_f, dif, fcain, fab, shift(1:2)
+      real (kind=R4) :: cpu_s, cpu_f
+      real (kind=R8) :: dif, fcain, fab, shift(1:2)
       character*12 hlp_frm
 *   ..procedures
       external subini, subend
@@ -129,7 +133,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(70) par_opt_phys
       close(70)
 
+#ifdef _OPENMP
+      cpu_s = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_s)
+#endif
 
 #ifdef WINDOWS
       iresult = RUNQQ ('B2mnOpt','')
@@ -155,7 +163,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #endif
       endif
 #endif
+#ifdef _OPENMP
+      cpu_f = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_f)
+#endif
       write(71,"(' b2obfn takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
       call read_results

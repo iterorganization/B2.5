@@ -111,7 +111,7 @@ c                                       !number of particles per cell
       common /nag22/ igen, iseed
       external G05KBF
 #endif
-      real (kind=R8) ::
+      real (kind=R4) ::
      *   cpu_start, cpu_end
 
       integer destmode                     !mode for destroying
