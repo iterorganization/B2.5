@@ -143,7 +143,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      real (kind=R8) :: cpu_s, cpu_f
+      real (kind=R4) :: cpu_s, cpu_f
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin
@@ -174,7 +174,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
       call prgini ('b2mnastra')
+#ifdef _OPENMP
+      cpu_s = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_s)
+#endif
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -264,7 +268,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          if (file_open) close(nout(io))
       enddo
 
+#ifdef _OPENMP
+      cpu_f = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_f)
+#endif
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
 
 * ..end of computation

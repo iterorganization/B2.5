@@ -4,6 +4,9 @@
       use b2mod_ma28_for_7diag
       use b2mod_indirect
       use b2mod_subsys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       IMPLICIT NONE
       external bd1copy3                                            !srv 26.12.17
 C
@@ -25,7 +28,7 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K, IK, NZ
-      real (kind=R8) :: cpu_start, cpu_end
+      real (kind=R4) :: cpu_start, cpu_end
       integer iflag
 
       real (kind=R8) ::
@@ -75,7 +78,11 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
+#ifdef _OPENMP
+      cpu_start = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_start)
+#endif
 !      if(ncall.lt.1000) then                                       !srv 26.12.17 {
 !*  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
 !         IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
@@ -294,7 +301,11 @@ cdpc
       ENDDO
 
 *  ---------------------------------------------------------------------
+#ifdef _OPENMP
+      cpu_end = real(omp_get_wtime(),R4)
+#else
       call cpu_time(cpu_end)
+#endif
       ncall=ncall+1
       call subend ()
       RETURN
