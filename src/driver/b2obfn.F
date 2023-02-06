@@ -87,6 +87,12 @@
       character*12 hlp_frm
 *   ..procedures
       external subini, subend
+#ifdef _OPENMP
+#ifdef CRAY
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

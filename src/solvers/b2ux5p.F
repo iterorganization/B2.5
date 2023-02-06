@@ -73,6 +73,12 @@
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter
+#ifdef _OPENMP
+#ifdef CRAY
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialisation
       save ncall, style, acpar, cpu
 !!FR The save variables used by ilutern need to be declared threadprivate

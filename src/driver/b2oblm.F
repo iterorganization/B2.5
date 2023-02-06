@@ -85,6 +85,12 @@
       real (kind=R4) :: cpu_s, cpu_f
       real (kind=R8) :: func, fcain, fab, shift
       character*12 hlp_frm
+#ifdef _OPENMP
+#ifdef CRAY
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

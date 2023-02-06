@@ -2148,6 +2148,12 @@ c new CDF movie option (1st frame at t=0)
       logical streql
       external streql
 #endif
+#ifdef CRAY
+#ifdef _OPENMP
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 
       call subini ('b2mndr_1')
 *   ..no error so far
