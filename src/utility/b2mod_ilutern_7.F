@@ -63,6 +63,12 @@ c
 
 *  -- PROCEDURES --
       EXTERNAL XERRAB
+#ifdef _OPENMP
+#ifdef CRAY
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02

@@ -147,6 +147,12 @@
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin
+#ifdef _OPENMP
+#ifdef CRAY
+      real(kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET

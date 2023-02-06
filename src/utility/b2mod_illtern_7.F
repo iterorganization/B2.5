@@ -32,6 +32,11 @@ c
 
 *  -- PROCEDURES --
       EXTERNAL XERRAB
+#ifdef _OPENMP
+#ifdef CRAY
+      real(kind=R8) :: omp_get_wtime
+#endif
+#endif
 
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
       integer       :: path                                           !sv 29.05.02
