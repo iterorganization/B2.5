@@ -66,7 +66,11 @@
 *   ..local variables
       integer ncall, style, n2, itmax, iters, itpar, cpu, ix, iy
       parameter (itmax=100)
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end
+#else
       real (kind=R4) :: cpu_start, cpu_end
+#endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
@@ -75,6 +79,12 @@
 *   ..procedures
       intrinsic min, cpu_time
       external xertst, ipgeti, ipgetr, slv5pt, iluter
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialisation
       save ncall, style, acpar, cpu
       data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
@@ -155,7 +165,7 @@
 
 *   ..solve the correction equation
 #ifdef _OPENMP
-      cpu_start = real(omp_get_wtime(),R4)
+      cpu_start = omp_get_wtime()
 #else
       call cpu_time(cpu_start)
 #endif
@@ -178,7 +188,7 @@
      .   resfun, corfun, name)                   !srv 18.03.10
       endif
 #ifdef _OPENMP
-      cpu_end = real(omp_get_wtime(),R4)
+      cpu_end = omp_get_wtime()
 #else
       call cpu_time(cpu_end)
 #endif

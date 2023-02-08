@@ -209,7 +209,7 @@
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
 #ifdef _OPENMP
-           start_time = real(omp_get_wtime(),R4)
+           start_time = omp_get_wtime()
 #else
            call cpu_time(start_time)
 #endif
@@ -233,7 +233,7 @@
              enddo
            enddo
 #ifdef _OPENMP
-           end_time = real(omp_get_wtime(),R4)
+           end_time = omp_get_wtime()
 #else
            call cpu_time(end_time)
 #endif
@@ -476,7 +476,7 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
 #ifdef _OPENMP
-        start_time = real(omp_get_wtime(),R4)
+        start_time = omp_get_wtime()
 #else
         call cpu_time(start_time)
 #endif
@@ -581,7 +581,7 @@ c   --> better solution wanted here..
           close(89)
         endif
 #ifdef _OPENMP
-        end_time = real(omp_get_wtime(),R4)
+        end_time = omp_get_wtime()
 #else
         call cpu_time(end_time)
 #endif
