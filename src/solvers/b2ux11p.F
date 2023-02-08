@@ -67,7 +67,11 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz
       parameter (itmax=100)
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end, c_end, c_start
+#else
       real (kind=R4) :: cpu_start, cpu_end, c_end, c_start
+#endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
@@ -79,7 +83,7 @@
       external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
 #ifdef _OPENMP
 #ifdef CRAY
-      real(kind=R8) :: omp_get_wtime
+      real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
 #endif
 #endif
@@ -170,7 +174,7 @@
 
 *   ..solve the correction equation
 #ifdef _OPENMP
-      cpu_start = real(omp_get_wtime(),R4)
+      cpu_start = omp_get_wtime()
 #else
       call cpu_time(cpu_start)
 #endif
@@ -197,14 +201,14 @@
        endif
       else if (style.eq.2) then
 #ifdef _OPENMP
-       c_start = real(omp_get_wtime(),R4)
+       c_start = omp_get_wtime()
 #else
        call cpu_time(c_start)
 #endif
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
      *                  indices, ipsave, jpsave, name)
 #ifdef _OPENMP
-       c_end = real(omp_get_wtime(),R4)
+       c_end = omp_get_wtime()
 #else
        call cpu_time(c_end)
 #endif
@@ -212,7 +216,7 @@
      &               c_end-c_start
 *    ..use ma28
 #ifdef _OPENMP
-       cpu_start = real(omp_get_wtime(),R4)
+       cpu_start = omp_get_wtime()
 #else
        call cpu_time(cpu_start)
 #endif
@@ -237,7 +241,7 @@
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
 #ifdef _OPENMP
-      cpu_end = real(omp_get_wtime(),R4)
+      cpu_end = omp_get_wtime()
 #else
       call cpu_time(cpu_end)
 #endif

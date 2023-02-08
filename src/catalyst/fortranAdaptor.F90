@@ -33,10 +33,14 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
       & rlza,rlpt,rlpi
   real(kind=R8), dimension(-1:nx,-1:ny,0:1,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
       & uadia,vadia,vaecrb
-  real (kind=R4) :: start, finish
+#ifdef _OPENMP
+  real(kind=R8) :: start, finish
+#else
+  real(kind=R4) :: start, finish
+#endif
 
 #ifdef _OPENMP
-  start = real(omp_get_wtime(),R4)
+  start = omp_get_wtime()
 #else
   call cpu_time(start)
 #endif
@@ -128,7 +132,7 @@ numC=(nx+2)*(ny+2) !number of cells
 
      call coprocess()
 #ifdef _OPENMP
-     finish = real(omp_get_wtime(),R4)
+     finish = omp_get_wtime()
 #else
      call cpu_time(finish)
 #endif

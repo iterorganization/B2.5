@@ -83,14 +83,16 @@
 #endif
       logical(4) :: b2fstate_exist
       integer npoint
-      real (kind=R4) :: cpu_s, cpu_f
       real (kind=R8) :: func, fcain, fab, shift
       character*12 hlp_frm
 #ifdef _OPENMP
+      real (kind=R8) :: cpu_s, cpu_f
 #ifdef CRAY
-      real(kind=R8) :: omp_get_wtime
+      real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
 #endif
+#else
+      real (kind=R4) :: cpu_s, cpu_f
 #endif
 *-----------------------------------------------------------------------
 *.computation
@@ -138,7 +140,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       close(70)
 
 #ifdef _OPENMP
-      cpu_s = real(omp_get_wtime(),R4)
+      cpu_s = omp_get_wtime()
 #else
       call cpu_time(cpu_s)
 #endif
@@ -168,7 +170,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
 #ifdef _OPENMP
-      cpu_f = real(omp_get_wtime(),R4)
+      cpu_f = omp_get_wtime()
 #else
       call cpu_time(cpu_f)
 #endif

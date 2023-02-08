@@ -37,7 +37,11 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K, IK, NZ
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end
+#else
       real (kind=R4) :: cpu_start, cpu_end
+#endif
       integer iflag
 
       real (kind=R8) ::
@@ -65,7 +69,7 @@ c
       EXTERNAL XERRAB
 #ifdef _OPENMP
 #ifdef CRAY
-      real(kind=R8) :: omp_get_wtime
+      real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
 #endif
 #endif
@@ -111,7 +115,7 @@ c
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
 #ifdef _OPENMP
-      cpu_start = real(omp_get_wtime(),R4)
+      cpu_start = omp_get_wtime()
 #else
       call cpu_time(cpu_start)
 #endif
@@ -334,7 +338,7 @@ cdpc
 
 *  ---------------------------------------------------------------------
 #ifdef _OPENMP
-      cpu_end = real(omp_get_wtime(),R4)
+      cpu_end = omp_get_wtime()
 #else
       call cpu_time(cpu_end)
 #endif
