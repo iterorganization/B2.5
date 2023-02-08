@@ -142,7 +142,11 @@
      1  sput_phys_alpha, in_dl, alpha, therm_evap, sput_res,
      3  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4  sput_mixed_alpha, sput_mixed_beta, redep_alpha
+#ifdef _OPENMP
+      real (kind=R8) :: start_time, end_time
+#else
       real (kind=R4) :: start_time, end_time
+#endif
       real (kind=R8) ::
      *  pfrpuff, mainpuff, corepuff,
      *  sum_start, sum_end, neutral_rescale, neutral_sources_rescale,
@@ -172,7 +176,7 @@
       intrinsic mod
 #ifdef _OPENMP
 #ifdef CRAY
-      real(kind=R8) :: omp_get_wtime
+      real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
 #endif
 #endif
@@ -262,7 +266,7 @@
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
 #ifdef _OPENMP
-           start_time = real(omp_get_wtime(),R4)
+           start_time = omp_get_wtime()
 #else
            call cpu_time(start_time)
 #endif
@@ -286,7 +290,7 @@
              enddo
            enddo
 #ifdef _OPENMP
-           end_time = real(omp_get_wtime(),R4)
+           end_time = omp_get_wtime()
 #else
            call cpu_time(end_time)
 #endif
@@ -582,7 +586,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shitmp=shi0
         endif
 #ifdef _OPENMP
-        start_time = real(omp_get_wtime(),R4)
+        start_time = omp_get_wtime()
 #else
         call cpu_time(start_time)
 #endif
@@ -687,7 +691,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           close(89)
         endif
 #ifdef _OPENMP
-        end_time = real(omp_get_wtime(),R4)
+        end_time = omp_get_wtime()
 #else
         call cpu_time(end_time)
 #endif

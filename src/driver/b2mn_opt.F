@@ -145,7 +145,11 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       logical file_open
+#ifdef _OPENMP
+      real(kind=R8) :: cpu_s, cpu_f
+#else
       real(kind=R4) :: cpu_s, cpu_f
+#endif
 *   ..procedures
       external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
@@ -176,7 +180,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #endif
       call prgini ('b2mn_opt')
 #ifdef _OPENMP
-      cpu_s = real(omp_get_wtime(),R4)
+      cpu_s = omp_get_wtime()
 #else
       call cpu_time(cpu_s)
 #endif
@@ -273,7 +277,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       enddo
 
 #ifdef _OPENMP
-      cpu_f = real(omp_get_wtime(),R4)
+      cpu_f = omp_get_wtime()
 #else
       call cpu_time(cpu_f)
 #endif

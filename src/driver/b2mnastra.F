@@ -143,13 +143,17 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_s, cpu_f
+#else
       real (kind=R4) :: cpu_s, cpu_f
+#endif
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin
 #ifdef _OPENMP
 #ifdef CRAY
-      real(kind=R8) :: omp_get_wtime
+      real (kind=R8) :: omp_get_wtime
       external omp_get_wtime
 #endif
 #endif
@@ -181,7 +185,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #endif
       call prgini ('b2mnastra')
 #ifdef _OPENMP
-      cpu_s = real(omp_get_wtime(),R4)
+      cpu_s = omp_get_wtime()
 #else
       call cpu_time(cpu_s)
 #endif
@@ -275,7 +279,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       enddo
 
 #ifdef _OPENMP
-      cpu_f = real(omp_get_wtime(),R4)
+      cpu_f = omp_get_wtime()
 #else
       call cpu_time(cpu_f)
 #endif
