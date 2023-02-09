@@ -2402,7 +2402,7 @@ c new CDF movie option
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
-     &            min((ntim-itim)*(cpuval-cpustart),
+     &            min((ntim-itim)*real(cpuval-cpustart,R8),
      &      max(0.0_R8,b2mndr_cpu-real(cpuval-cpuinit,R8)))              !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
