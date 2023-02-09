@@ -232,9 +232,7 @@
       endif
 
 * ..main computation
-      tep = te                                                          !srv 07.07.21 {
-      tip = ti
-      if(style_b2mndt.eq.2) then
+      if(style_b2mndt.eq.2) then                                        !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2shdt (nx, ny, ns, dtim, BoRiS,
      &   vol, nap, tep, tip, ne, ni, kinrgyp, shedt, shidt, .false.)
@@ -278,10 +276,16 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvereg(0:nregionv))).or.
      &                    get_residuals.eq.1) then                      !srv 22.05.18
         call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
+        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
+          reshe=reshe+(te-tep)*ne*shedt(:,:,3)
+        endif                                                           !srv 10.10.22 }
       endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:nregionv))).or.
      &                   get_residuals.eq.1) then                       !srv 22.05.18
         call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
+        if(style_b2mndt.eq.2) then                                      !srv 10.10.22 {
+          reshi=reshi+(ti-tip)*ni(:,:,0)*shidt(:,:,3)
+        endif                                                           !srv 10.10.22 }
       endif                                                             !srv 22.05.18
       do iy = -1, ny
        do ix = -1, nx

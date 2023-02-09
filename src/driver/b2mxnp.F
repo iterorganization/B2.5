@@ -40,7 +40,7 @@
        enddo
       else
 *      (faster code for common special case)
-       call b2scopy (n, fun0, 1, funp, 1)
+       call b2scopy (n, funq, 1, funp, 1)                                !srv 10.10.22
        call b2scopy (n, funq, 1, fun0, 1)
 *      (leave funq unchanged)
       endif

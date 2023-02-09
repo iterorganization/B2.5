@@ -184,14 +184,13 @@
        call b2xvff (nx, ny, fnb, 'fnb')
       endif
 
-      nap(:,:,isb) = nb                                                 !srv 07.07.21 {
-      if(style_b2mndt.eq.2) then
+      if(style_b2mndt.eq.2) then                                        !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nx, ny, isb, guard_flows, dtim,
      &   vol, nap(-1,-1,isb), snadt(-1,-1,0,isb), .false.)
 *  .. add contribution from time-dependent source
         snb(:,:,:) = snb(:,:,:) + snadt(:,:,:,isb)
-      endif                                                             !srv 24.05.21 }
+      endif                                                             !srv 07.07.21 }
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
@@ -211,18 +210,21 @@ cdjm Jan2017 update particle source components for balance
 * ..particle balance
 *   ..compute residual
       if((solving.and.any(solvcreg(0:nnreg(0))))
-     &           .or.get_residuals.eq.1) then                          !srv 22.05.18
-      call b2ursc (nx, ny, nb, snb, fnb, rescb)
-      if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
+     &           .or.get_residuals.eq.1) then                           !srv 22.05.18
+       call b2ursc (nx, ny, nb, snb, fnb, rescb)
+       if(style_b2mndt.eq.2) then                                       !srv 10.10.22 {
+         rescb = rescb + (nb-nap(:,:,isb))*snadt(:,:,1,isb)
+       endif                                                            !srv 10.10.22 }
+       if(guard_flows.eq.2 .or.                                         !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then                 !srv 15.02.10 { this part should be re-written
-       do iy=-1, ny, ny+1                                               !srv 27.06.08 {
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-          rescb(ix,iy) = 0.0_R8
-         endif
-        enddo
-       enddo                                                            !srv 27.06.08 }
-      endif                                                             !srv 15.02.10 }
+        do iy=-1, ny, ny+1                                              !srv 27.06.08 {
+         do ix = -1, nx
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+           rescb(ix,iy) = 0.0_R8
+          endif
+         enddo
+        enddo                                                           !srv 27.06.08 }
+       endif                                                            !srv 15.02.10 }
       endif                                                             !srv 22.05.18
 *   ..compute correction
       write (chns,'(i3.3)') isb
