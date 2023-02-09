@@ -211,11 +211,9 @@ c
 c
 c*** Tracing unit assignment (see b2file, b2blnc, etc.)
 c
-c<<<
-      NTRC(ntrc_tst) = 80
+      NTRC(ntrc_tst) = 39
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
-c>>>
-      NTRC(ntrc_srt) = 71
+      NTRC(ntrc_srt) = 59
       fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
       NTRC(ntrc_res) = 72
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
