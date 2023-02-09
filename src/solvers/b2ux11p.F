@@ -65,8 +65,12 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end, c_end, c_start
+#else
+      real (kind=R4) :: cpu_start, cpu_end, c_end, c_start
+#endif
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -75,6 +79,12 @@
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialisation
       save ncall, style, acpar, cpu
       !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
@@ -149,7 +159,11 @@
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -172,14 +186,26 @@
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
        endif
       else if (style.eq.2) then
+#ifdef _OPENMP
+       c_start = omp_get_wtime()
+#else
        call cpu_time(c_start)
+#endif
        call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
      *                  indexes, iasave, jasave, name)
+#ifdef _OPENMP
+       c_end = omp_get_wtime()
+#else
        call cpu_time(c_end)
+#endif
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_11 ',
      &               c_end-c_start
 *    ..use ma28
+#ifdef _OPENMP
+       cpu_start = omp_get_wtime()
+#else
        call cpu_time(cpu_start)
+#endif
 !       call ilutern_9(NX+2, NY+2, NX+2,
 !     & aa11(-1,-1,-3,0), aa11(-1,-1,-1,0), aa11(-1,-1,0,0), aa11(-1,-1,1,0),
 !     & aa11(-1,-1, 3,0),
@@ -188,7 +214,11 @@
 !     & resfun, corfun, name)                                          !srv 18.05.02
        call ILUTERN_11(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !srv 02.04.18
       endif
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &                                  cpu_end-cpu_start
 

@@ -145,7 +145,11 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       logical file_open
-      real (kind=R8) :: cpu_s, cpu_f
+#ifdef _OPENMP
+      real(kind=R8) :: cpu_s, cpu_f
+#else
+      real(kind=R4) :: cpu_s, cpu_f
+#endif
 *   ..procedures
       external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
@@ -175,7 +179,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
       call prgini ('b2mn_opt')
+#ifdef _OPENMP
+      cpu_s = omp_get_wtime()
+#else
       call cpu_time(cpu_s)
+#endif
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -268,7 +276,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          if (file_open) close(nout(io))
       enddo
 
+#ifdef _OPENMP
+      cpu_f = omp_get_wtime()
+#else
       call cpu_time(cpu_f)
+#endif
       write(*,"(/' b2mn_opt takes ',f12.1,' sec'/)") cpu_f - cpu_s
       deallocate(par_opt0, par_opt, par_opt_phys)
 

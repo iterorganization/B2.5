@@ -142,10 +142,15 @@
      1  sput_phys_alpha, in_dl, alpha, therm_evap, sput_res,
      3  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      4  sput_mixed_alpha, sput_mixed_beta, redep_alpha
+#ifdef _OPENMP
+      real (kind=R8) :: start_time, end_time
+#else
+      real (kind=R4) :: start_time, end_time
+#endif
       real (kind=R8) ::
-     *  start_time,end_time,pfrpuff,mainpuff,corepuff,
-     *  sum_start,sum_end,neutral_rescale,neutral_sources_rescale,
-     *  sum_strti,sum_ndi,sum_nde,core_sources_rescale,
+     *  pfrpuff, mainpuff, corepuff,
+     *  sum_start, sum_end, neutral_rescale, neutral_sources_rescale,
+     *  sum_strti, sum_ndi, sum_nde, core_sources_rescale,
      *  shi0_ff(-1:nx,-1:ny,0:nscx-1), wrk0(-1:nx,-1:ny),
      *  work(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),
      *  f_redep(-1:nx,-1:ny,0:ns-1)
@@ -169,6 +174,12 @@
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,
@@ -254,7 +265,11 @@
      *       in_no_of_start_points)
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
+#ifdef _OPENMP
+           start_time = omp_get_wtime()
+#else
            call cpu_time(start_time)
+#endif
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
      *          in_no_of_start_points,nx,ny,in_dl)
@@ -274,7 +289,11 @@
      >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
              enddo
            enddo
+#ifdef _OPENMP
+           end_time = omp_get_wtime()
+#else
            call cpu_time(end_time)
+#endif
            write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
@@ -566,7 +585,11 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           shetmp=she0
           shitmp=shi0
         endif
+#ifdef _OPENMP
+        start_time = omp_get_wtime()
+#else
         call cpu_time(start_time)
+#endif
         if (output.ge.1) then
           open(88,file='start')
           open(89,file='end')
@@ -667,7 +690,11 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           close(88)
           close(89)
         endif
+#ifdef _OPENMP
+        end_time = omp_get_wtime()
+#else
         call cpu_time(end_time)
+#endif
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
         if (balance_netcdf.ne.0) then
