@@ -117,7 +117,7 @@
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),             !srv 21.10.10
      &   kmpr(-1:nx,-1:ny), dkmprr(-1:nx,-1:ny,0:1),
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
-     &   rdiv, scur, vsprcur, scur9                                     !srv 05.03.16
+     &   rdiv, scur, vsprcur, scur9                                     !srv 05.03.16 02.04.18
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
@@ -853,7 +853,7 @@ cwdk as long as y-faces are flux-surface aligned, no actual change in computatio
 
        else           ! drift_style                                      ! IYS 11.02.2020 {
 
-         write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
+         write(*,'(2(a20,i4))') 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
          call xerrab (
      &   'faulty definition of drift_style and redef_gmtry, ' //

@@ -98,6 +98,7 @@ c-----------------------------------------------------------------------
       integer, save :: ntgs(ntrgs_tmp)
       data ntgs / ntrgs_tmp*0 /
       integer, allocatable :: ltgs(:,:)
+
 c*** Identification suffices:
       data hlp_trgs / 'il','ol','wl','  ','  ',
      ,                'il','iu','ou','ol','wl'/
@@ -808,6 +809,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c=======================================================================
   190 write(*,*) 'b2blne: cannot open file ',trim(f)
@@ -829,6 +831,12 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       deallocate(limp_tmp)
       deallocate(ltgs)
       deallocate(radim_tmp)

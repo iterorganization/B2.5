@@ -298,7 +298,7 @@ cwdk precomputation of differences on faces
 
         else         ! drift_style                                       ! IYS 11.02.2020 {
 
-          write(*,fmt="(2(a20,i4))") 'drift_style = ',drift_style,
+          write(*,'(2(a20,i4))') 'drift_style = ',drift_style,
      &      'redef_gmtry = ',redef_gmtry
           call xerrab (
      &    'faulty definition of drift_style and redef_gmtry, ' //

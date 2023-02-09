@@ -1038,6 +1038,7 @@ c
         read(lun,*,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2blns: cannot open file ',trim(f)
@@ -1062,6 +1063,12 @@ c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       if (allocated(flxic))
      &  deallocate(
      &    flxic, flxnc, flxit,
