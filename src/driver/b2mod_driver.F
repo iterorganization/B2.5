@@ -909,7 +909,7 @@
 *     state of the plasma at the start of the present timestep.
 *
 *     nap, uap, tep, tip, pop, fnap, fhep, fhip, fchp - real*8 array.
-*     state of the plasma at the start of the previous timestep.
+*     state of the plasma in the previous timestep.                             !srv 10.10.22
 *
 *     ntim - integer.
 *     ntim specifies the number of timesteps to be performed.
