@@ -784,7 +784,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
               if(latmscl(ia).eq.0) cycle
               if(crcstra(is).eq.'C') then
                 if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) =
-     &           userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
+     &           sna_puff(latmscl(ia)) + userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
               end if
             end do
           enddo
