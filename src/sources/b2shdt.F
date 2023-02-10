@@ -99,8 +99,8 @@
 !$OMP& shared(nx,ny,ns,iftimbound,is_neutral,time_factor)
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(use_eirene,dtim,dtee,dtei)
-!$OMP& shared(phm3,BoRiS,kinrgy0)
-!$OMP& shared(vol,na0,ne0,ni0,ti0,tep,am)
+!$OMP& shared(phm3,BoRiS,kinrgyp)
+!$OMP& shared(vol,nap,nep,nip,tip,tep,am)
 ! these are the result arrays:
 !$OMP& shared(shedt,shidt)
 #endif

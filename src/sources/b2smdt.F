@@ -91,7 +91,7 @@
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(use_eirene,dtim,dtmo)
 !$OMP& shared(phm1)
-!$OMP& shared(vol,na0,ua0,hz,am)
+!$OMP& shared(vol,na,uap,hz,am)
 ! these are the result arrays:
 !$OMP& shared(smodt)
 #endif

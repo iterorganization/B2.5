@@ -95,7 +95,7 @@
 !$OMP& shared(leftix,rightix,bottomiy,topiy,region)
 !$OMP& shared(guard_flows,use_eirene,dtim,dtco)
 !$OMP& shared(phm0)
-!$OMP& shared(vol,na0)
+!$OMP& shared(vol,nap)
 ! these are the result arrays:
 !$OMP& shared(snadt)
 #endif

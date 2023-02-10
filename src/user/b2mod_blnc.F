@@ -79,7 +79,7 @@ c*** from 960808 on
      , blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
      , blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
      , flxid_tmp,flxbl_tmp,flxbr_tmp,
-     , flxrl_tmp 
+     , flxrl_tmp
 
 c*** Column headers:
       data hlp_h /

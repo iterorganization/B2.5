@@ -90,7 +90,6 @@ c      parameter (nssb_tmp=2)
       character, save :: hlp_hg(nglb_tmp)*8
       character, save :: hlp_hr(nrgn_tmp)*8
       character, save :: hlp_hs(nspc_tmp)*8
-      logical file_open
       data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_' /
       data hlp_hb / 'sclfact_', 'sclrtio_', 'Na_stra_', 'sna_str_' /
       data hlp_hf / 'Stratum_' /
