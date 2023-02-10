@@ -497,7 +497,7 @@ c----------------------------------------------------------------------
           return
         end if
 
-   50   read(lun,fmt='(a1)',end=55,err=55) hlp_c
+   50   read(lun,'(a1)',end=55,err=55) hlp_c
         go to 50
    55   backspace lun
 
@@ -578,6 +578,7 @@ c----------------------------------------------------------------------
       end do
 
   155 continue
+!      close(lun)
       return
 c----------------------------------------------------------------------
   190 write(*,*) 'b2mod_usrspb: cannot open file ',trim(f)
@@ -605,6 +606,11 @@ c======================================================================
 c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
 
       if (allocated(Q_pneut_trg))
      &  deallocate(

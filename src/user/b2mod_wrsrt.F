@@ -417,6 +417,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2wrsrt: cannot open file ',trim(f)
@@ -438,6 +439,11 @@ c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
       return
       end subroutine b2wrsrtf
 c=======================================================================

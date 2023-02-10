@@ -1931,6 +1931,7 @@ c*** Limiter case
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
    92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
@@ -1955,8 +1956,15 @@ c=======================================================================
 c=======================================================================
       subroutine b2usrtrf
 c     Finalization step
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       deallocate(hlp_hdr)
       deallocate(hlp_out)
+      
       return
       end subroutine b2usrtrf
 c=======================================================================
