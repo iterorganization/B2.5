@@ -80,9 +80,15 @@ function run_test {
   fi
   rsync -avP $1/. $2
   cd $2
-  if [ -s b2.feedback_save.parameters.i ] mv b2.feedback_save.parameters.i b2.feedback_save.parameters
-  if [ -s b2.sputter_save.parameters.i ] mv b2.sputter_save.parameters.i b2.sputter_save.parameters
-  if [ -s b2.wall_save.parameters.i ] mv b2.wall_save.parameters.i b2.wall_save.parameters
+  if [ -s b2.feedback_save.parameters.i ]; then
+    mv b2.feedback_save.parameters.i b2.feedback_save.parameters
+  fi
+  if [ -s b2.sputter_save.parameters.i ]; then
+    mv b2.sputter_save.parameters.i b2.sputter_save.parameters
+  fi
+  if [ -s b2.wall_save.parameters.i ]; then
+    mv b2.wall_save.parameters.i b2.wall_save.parameters
+  fi
   touch b2fstati
   # Change the number of time steps
   sed -i "s/\('b2mndr_ntim'\s*\)'[0-9]\+'/\1'$3'/" b2mn.dat
