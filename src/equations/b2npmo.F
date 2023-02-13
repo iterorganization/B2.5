@@ -476,7 +476,7 @@
 !$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
 !$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn, uap)
 !$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, smodt, resmo)
-!$OMP$ SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
+!$OMP& SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
 !$OMP& SHARED(b2npmo_smav, solving, get_residuals, solvemt, solvemo)
 !$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, style_b2mndt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
