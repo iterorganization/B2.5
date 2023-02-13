@@ -80,17 +80,20 @@ function run_test {
   fi
   rsync -avP $1/. $2
   cd $2
+  if [ -s b2.feedback_save.parameters.i ] mv b2.feedback_save.parameters.i b2.feedback_save.parameters
+  if [ -s b2.sputter_save.parameters.i ] mv b2.sputter_save.parameters.i b2.sputter_save.parameters
+  if [ -s b2.wall_save.parameters.i ] mv b2.wall_save.parameters.i b2.wall_save.parameters
   touch b2fstati
-  # change the number of time steps
+  # Change the number of time steps
   sed -i "s/\('b2mndr_ntim'\s*\)'[0-9]\+'/\1'$3'/" b2mn.dat
 
-  # disable eirene
+  # Disable Eirene
   sed -i "s/\('b2mndr_eirene'\s*\)'1'/\1'0'/" b2mn.dat
 
-  # Turn off excessive io for the 98 species test case
+  # Turn off excessive I/O for the 98 species test case
   sed -i "s/\('b2npmo_iout' *\)'.'/\1'0'/" b2mn.dat
 
-  #set number of threads, compact pinning, and stack size
+  # Set number of threads, compact pinning, and stack size
   export OMP_NUM_THREADS=$4
   export KMP_AFFINITY=verbose,norespect,compact
   export KMP_STACKSIZE=32MB
@@ -107,11 +110,11 @@ function run_test {
 
 DATESTAMP=$(datestamp)
 
-# run B2 with 1 and MAX_THREADS cores
+# Run B2.5 with 1 and MAX_THREADS cores
 run_test $SOURCEDIR test1_$DATESTAMP $STEPS 1
 run_test $SOURCEDIR test2_$DATESTAMP $STEPS $MAX_THREADS
 
-# compare the results
+# Compare the results
 # run_checks will call check_b2_output, make sure it is compiled
 # cd $SOLPSTOP/modules/B2.5/src/test/
 # ifort -g -O2 check_b2_output.F90 -o check_b2_output
