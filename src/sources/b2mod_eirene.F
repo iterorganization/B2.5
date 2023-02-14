@@ -48,6 +48,9 @@
       use eirmod_wneutrals
       use eirmod_clgin
      ,   , only : iliin
+      use b2mod_b2plot
+     & , only : nx_b2plot => nx, ny_b2plot => ny, ns_b2plot => ns,
+     &          nxtl_b2plot => nxtl, nxtr_b2plot => nxtr
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -125,11 +128,11 @@
 
       contains
 
-      subroutine eirene_mc(nx, ny, ns, dtim, BoRiS,
+      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
       use b2mod_subsys
       implicit none
-      integer nx,ny,ns
+      integer nx,ny,ns,ismain
       real (kind=R8) ::
      * dtim, BoRiS,
      * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -138,7 +141,7 @@
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion,iflag
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, b2stbc_feedback
       logical feedback_stratum
@@ -851,15 +854,26 @@ csw 25jan2011 LTIME=.false. in eirsrt call
      1   eirene_step_cpu)
 #ifdef B25_EIRENE
         if(.not.ex) then
-          do is=1,nnatmi
-            if(streql(textan(is-1),' ')) textan(is-1) = texts(is+nsph)
-          end do
-          do is=1,nnmoli
-            if(streql(textmn(is-1),' ')) textmn(is-1) = texts(is+nspa)
-          end do
-          do is=1,nnioni
-            if(streql(textin(is-1),' ')) textin(is-1) = texts(is+nspam)
-          end do
+          if (ncall.eq.0.and.filedata(ntrc_uss)) then
+            nx_b2plot = nx
+            ny_b2plot = ny
+            ns_b2plot = ns
+            nxtr_b2plot = nxtr
+            nxtl_b2plot = nxtl
+            open(unit=44,file=filename)
+            call ngread(ismain,iflag)
+          else
+            do is=1,nnatmi
+              if(streql(textan(is-1),' ')) textan(is-1) = texts(is+nsph)
+            end do
+            do is=1,nnmoli
+              if(streql(textmn(is-1),' ')) textmn(is-1) = texts(is+nspa)
+            end do
+            do is=1,nnioni
+              if(streql(textin(is-1),' ')) textin(is-1) =
+     .                                                   texts(is+nspam)
+            end do
+          end if
           call map_ion_components
         end if
 #endif

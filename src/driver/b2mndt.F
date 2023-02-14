@@ -492,7 +492,6 @@ ctmp.dpc
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
              if (ncall.eq.0.and.istg(2).eq.0) then
-               call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
                call b2filei(ns,nnreg(0))
              end if
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)

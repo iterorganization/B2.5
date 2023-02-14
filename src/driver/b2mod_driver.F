@@ -2024,6 +2024,8 @@ cxpb initialize the numerics data
         call read_b2mod_numerics_namelist(nx,ny,ns,nsmin,nsmax)
         call write_b2mod_numerics_namelist
       endif
+      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
+      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       nlimi = 0
@@ -2033,7 +2035,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       CALL EIRENE_SETCON
       CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
-     &    delta_ids_time.gt.0.0_R8) then
+     &    delta_ids_time.gt.0.0_R8.or.filedata(ntrc_uss)) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
         if (use_eirene.ne.0.and.ex) then
@@ -2050,7 +2052,6 @@ cxpb for neutral fluxes used in b2stbc_phys
      .                         natm,nmol,nion,nlimps)
 #endif
       call b2stbr_init (nx, ny, ns, BoRiS)
-      call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
