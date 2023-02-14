@@ -351,8 +351,7 @@ c Create a format string for the column headers
      ,     na_tmp*nrg_tmp*nsp_tmp,'(1x,a8,i2.2,''_'',a2))'
 #ifdef DBG
 c        print *,'%%%b2wrsrt: nsp_tmp,nfl_tmp= ',nsp_tmp,nfl_tmp
-         print *,'hlp_frm:'
-         print *,trim(hlp_frm)
+         print *,'hlp_frm:',trim(hlp_frm)
 #endif
         endif
         if (nfl_tmp.gt.0) then

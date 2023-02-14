@@ -721,7 +721,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         fatm_eir = 0.0_R8
-        call eirene_mc(nx, ny, ns, dtim, BoRiS,                     !srv 29.04.10 {
+        call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,             !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call)
 
