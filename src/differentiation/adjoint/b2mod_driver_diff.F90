@@ -7940,6 +7940,7 @@ CONTAINS
       write(*,*) 'GRADIENT recyc 2',b2recycb(1,2)
       CALL ADSTACK_RESETREPEAT()
     END DO
+    write(*,*) 'TOTAL ADJOINT GRADIENT ITERATIONS ',ITERCOUNT
     switchb = switchb0
     state_extb = state_extb0
     geob = geob0

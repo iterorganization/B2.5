@@ -5375,6 +5375,7 @@ CONTAINS
     INTEGER :: arg1
     INTEGER :: nd
     INTEGER :: nbdirs
+    LOGICAL, SAVE :: first_opt_call=.true.
 !
     CALL SUBINI('b2mndr_1')
 !   ..no error so far
@@ -5483,6 +5484,7 @@ CONTAINS
     DO nd=1,nbdirsmax
       jd(nd, :) = 0.D0
     END DO
+    if (first_opt_call) then
     DO nd=1,nbdirsmax
       stated%pl%na(nd, :, :) = 0.D0
     END DO
@@ -6095,6 +6097,8 @@ CONTAINS
     DO nd=1,nbdirsmax
       stated%psnc%kinrgy(nd, :, :) = 0.D0
     END DO
+    first_opt_call = .false.
+    endif
  1  WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
 &   'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr, &
 &   quit
