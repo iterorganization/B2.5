@@ -707,8 +707,8 @@ c*** Set default values according to current species list
       end do
       ! find ii in fsFcP(ifs,1):fsFcP(ifs,1)+fsFcP(ifs,2)
       do ifs = 1, size(m%fsFcP,1)
-        ifc1 = m%fsFcP(ifssep,1)
-        ifc2 = ifc1 + m%fsFcP(ifssep,2) - 1
+        ifc1 = m%fsFcP(ifs,1)
+        ifc2 = ifc1 + m%fsFcP(ifs,2) - 1
         if (ii.ge.ifc1 .and. ii.le.ifc2) exit
       enddo
       ifssep = ifs
