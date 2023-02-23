@@ -5589,7 +5589,7 @@ contains
                     if (imneut(is).eq.js) then
                       do ix = -1, nx
                         do iy = -1, ny
-                           tmpCv(ix,iy) = tmpCV(ix,iy)-emolrad(ix+1,iy+1,is,0)
+                           tmpCv(ix,iy) = tmpCv(ix,iy)-emolrad(ix+1,iy+1,is,0)
                         end do
                       end do
                     end if
