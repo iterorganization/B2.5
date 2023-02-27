@@ -68,7 +68,11 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz                                      !srv 29.05.02
       parameter (itmax=100)
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end
+#else
       real (kind=R4) :: cpu_start, cpu_end
+#endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
@@ -77,6 +81,12 @@
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialisation
       save ncall, style, acpar, cpu
       data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
@@ -155,7 +165,7 @@
 
 *   ..solve the correction equation
 #ifdef _OPENMP
-      cpu_start = real(omp_get_wtime(),R4)
+      cpu_start = omp_get_wtime()
 #else
       call cpu_time(cpu_start)
 #endif
@@ -209,7 +219,7 @@
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") c_end-c_start
       endif
 #ifdef _OPENMP
-      cpu_end = real(omp_get_wtime(),R4)
+      cpu_end = omp_get_wtime()
 #else
       call cpu_time(cpu_end)
 #endif

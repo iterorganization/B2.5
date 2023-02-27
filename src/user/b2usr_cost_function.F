@@ -87,7 +87,7 @@
             if (mapToOMP(icf)) then
             ! FIXME to be considerably improved!
             !for now assume radial data rigidly moved at the OMP (like in ST code)
-            ! simply use as b2rr the OMP radial coordiantes.
+            ! simply use as b2rr the OMP radial coordinates.
               call xertst(mpg%isClassicalGrid.eq.1,
      &         'Mapping to OMP need revision for extended grids')
               ! check on, and then use, only internal Cvs in OMP list

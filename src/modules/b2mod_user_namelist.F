@@ -19,13 +19,13 @@
       integer l_h_mol(DEF_NMOL,3)
 #endif
 ! VARIABLES RELATED TO DEFINITION OF MIDPLANES AND SEPARATRIX
-! - [oi]mp: list of CVs beloning to the [OI]MP, defined through the segment rz[oi]mp
+! - [oi]mp: list of CVs belonging to the [OI]MP, defined through the segment rz[oi]mp
 !           it should be built as an ordered list from core to SOL. 
 ! - nromp: pre-defined maximum size for these lists
-! - icsep[oi]mp: location of the separatrix position in the [oi]omp list
+! - icsep[oi]mp: location of the separatrix position in the [oi]mp list
 ! - n[oi]mp: number of CVs in the [oi]mp list
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
-!             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordiantes 
+!             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates 
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
       integer, parameter :: nromp=DEF_NYD*4
       integer, save :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp),
@@ -52,17 +52,17 @@
 ! - cfdata(nncf,3,DEF_NLIM): stores the experimental data points for each cost function
 !   column 1 stores the curvilinear spatial coordinate (e.g. along OMP or target)
 !   column 2 stores the experimental data value
-!   column 3 stores the uncertianty
+!   column 3 stores the uncertainty
 ! - nvmx: maximum number of variables that can be used for optimization
 ! - nsigmx: maximum number of sigma values used in the Bayesian MAP cost function
 ! - nsigma: actual number of sigmas read and used for Bayesian MAP
 ! - prior_type: type of prior for each design parameter optimized in the MAP estimation
-! - prior_par: parameters related to the type of prior (e.g. standard deviation for gaussian prior)
+! - prior_par: parameters related to the type of prior (e.g. standard deviation for Gaussian prior)
 ! - prior_range: range of validity of the prior, outside this interval the MAP cost function returns NaN
 ! - scale_sigma: tells of the sigma in the MAP cost function is intended as relative (true) or absolute (false)
 ! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP 
 ! - read_sigma: tells to read or not the experimental data uncertainty
-! - sigma: stores the values of the standard deviation in  the MAP cost function
+! - sigma: stores the values of the standard deviation in the MAP cost function
 ! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
       integer, parameter :: mxnCf=1000
       integer cfstart(nncf),cfend(nncf),cftype(nncf)
@@ -402,8 +402,8 @@ c***  Standard set-up:
 
             call xertst(cfstart(icf) /= 0 .and. cfend(icf) /= 0,
      &        'cfdef=2 requires cfstart/cfend>0')
-! check if other CFs have same domain (must have same start/end, same type of definition (fcLabl)
-! and also same type of domain (FcLabl can be used to identify either CVs or FCs)
+! check if other CFs have same domain (must have same start/end, same type of definition (fcLbl)
+! and also same type of domain (fcLbl can be used to identify either CVs or FCs)
             do icff = 1, icf-1
               if (cfstart(icf) .eq. cfstart(icff) .and.
      &            cfend(icf) .eq. cfend(icff) .and.
@@ -474,7 +474,7 @@ c***  Standard set-up:
             ! FIXME no attempt to sort or check if they belong together somehow
             m%cfRegP(icf,2) = incf+1 - m%cfRegP(icf,1)
 
-          case (4) !defined using cf_reg (No attempt whatsoever to check if they are sorted)
+          case (4) ! defined using cf_reg (No attempt whatsoever to check if they are sorted)
 
             call xertst(cf_RegP(icf,2).gt.0,'cf_RegP not defined')
             ! csc can we check somehow if this has already been filled?
@@ -520,13 +520,13 @@ c***  Standard set-up:
      &     'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
         end do
       endif
-! now allocate vector that will be used to interpolate solps onto data grid
+! now allocate vector that will be used to interpolate SOLPS onto data grid
       if (any(cfread)) then
         ndata = maxval(ncfdata(1:ncf),1)
         allocate(b2volOnCf(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
         allocate(b2dataOnCf(ndata)) !variable to store SOLPS data interpolated onto CF radial points
         ndata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
-        allocate(b2rr(ncf,ndata)) !store here radial distance coordiante of SOLPS data
+        allocate(b2rr(ncf,ndata)) !store here radial distance coordinate of SOLPS data
         allocate(b2data(ndata)) !temporary variable to store SOLPS data for interpolation
         b2rr = 0.0_R8
         b2volOnCf = 0.0_R8
