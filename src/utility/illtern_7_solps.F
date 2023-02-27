@@ -19,12 +19,21 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end
+#else
       real (kind=R4) :: cpu_start, cpu_end
+#endif
       integer iflag
 
 *  -- PROCEDURES --
       INTRINSIC cpu_time
       EXTERNAL XERRAB
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+#endif
+#endif
 
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
       integer       ::  path                                          !sv 29.05.02
@@ -47,7 +56,7 @@ C
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
 #ifdef _OPENMP
-      cpu_start = real(omp_get_wtime(),R4)
+      cpu_start = omp_get_wtime()
 #else
       call cpu_time(cpu_start)
 #endif
@@ -126,7 +135,7 @@ cdpc
 C
         PATH = 2
 !#ifdef _OPENMP
-!        time_begin = real(omp_get_wtime(),R4)
+!        time_begin = omp_get_wtime()
 !#else
 !        call cpu_time(time_begin)
 !#end
@@ -134,7 +143,7 @@ C
      *     (N, NZ, IA, JA, A, P, IP, NSP, ISP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
-!        time_end = real(omp_get_wtime(),R4)
+!        time_end = omp_get_wtime()
 !#else
 !        call cpu_time(time_end)
 !#endif
@@ -149,7 +158,7 @@ C
 C
         PATH = 4
 !#ifdef _OPENMP
-!        time_begin = real(omp_get_wtime(),R4)
+!        time_begin = omp_get_wtime()
 !#else
 !        call cpu_time(time_begin)
 !#endif
@@ -159,7 +168,7 @@ C                             Perform symbolyc LDL factorization (SSF)
      *      ESP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
-!        time_end = real(omp_get_wtime(),R4)
+!        time_end = omp_get_wtime()
 !#else
 !        call cpu_time(time_end)
 !#endif
@@ -180,7 +189,7 @@ C
 C
         PATH = 3
 !#ifdef _OPENMP
-!        time_begin = real(omp_get_wtime(),R4)
+!        time_begin = omp_get_wtime()
 !#else
 !        call cpu_time(time_begin)
 !#endif
@@ -189,14 +198,14 @@ C       REORDER SYMMETRICALLY STORED MATRIX AS SPECIFIED BY INPUT PERMUTATION
      *     (N, NZ, IA, JA, A, P, IP, NSP, ISP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
-!        time_end = real(omp_get_wtime(),R4)
+!        time_end = omp_get_wtime()
 !#else
 !        call cpu_time(time_end)
 !#endif
 C
         PATH = 6
 !#ifdef _OPENMP
-!        time_begin = real(omp_get_wtime(),R4)
+!        time_begin = omp_get_wtime()
 !#else
 !        call cpu_time(time_begin)
 !#endif
@@ -206,7 +215,7 @@ C                             Perform numerical LDL factorization
      *      ESP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
-!        time_end = real(omp_get_wtime(),R4)
+!        time_end = omp_get_wtime()
 !#else
 !        call cpu_time(time_end)
 !#endif
@@ -223,7 +232,7 @@ C
 C
         PATH = 3
 !#ifdef _OPENMP
-!        time_begin = real(omp_get_wtime(),R4)
+!        time_begin = omp_get_wtime()
 !#else
 !        call cpu_time(time_begin)
 !#endif
@@ -233,7 +242,7 @@ C                                 Solve A * X = B
      *      ESP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
-!        time_end = real(omp_get_wtime(),R4)
+!        time_end = omp_get_wtime()
 !#else
 !        call cpu_time(time_end)
 !#endif
@@ -259,7 +268,7 @@ C
 
 *  ---------------------------------------------------------------------
 #ifdef _OPENMP
-      cpu_end = real(omp_get_wtime(),R4)
+      cpu_end = omp_get_wtime()
 #else
       call cpu_time(cpu_end)
 #endif

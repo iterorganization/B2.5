@@ -20,10 +20,14 @@ subroutine coprocessor(nVx, nFc, nCv, step, time, geo, state)
   type(geometry), intent(in) :: geo
   type(B2State), intent(in) :: state
   integer :: flag
-  real (kind=R4) :: start, finish
+#ifdef _OPENMP
+  real(kind=R8) :: start, finish
+#else
+  real(kind=R4) :: start, finish
+#endif
 
 #ifdef _OPENMP
-  start = real(omp_get_wtime(),R4)
+  start = omp_get_wtime()
 #else
   call cpu_time(start)
 #endif
@@ -101,7 +105,7 @@ subroutine coprocessor(nVx, nFc, nCv, step, time, geo, state)
 
      call coprocess()
 #ifdef _OPENMP
-     finish = real(omp_get_wtime(),R4)
+     finish = omp_get_wtime()
 #else
      call cpu_time(finish)
 #endif

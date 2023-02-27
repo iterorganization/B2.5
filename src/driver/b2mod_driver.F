@@ -154,7 +154,11 @@
       integer, save :: shot = 0, run = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
+#ifdef _OPENMP
+      real (kind=R8) :: cpuval, cpustart, cpuinit
+#else
       real (kind=R4) :: cpuval, cpustart, cpuinit
+#endif
       real (kind=R8) ::
      *  na_min, na_new, dtim, etim,
      &  b2mndr_cpu,
@@ -1972,7 +1976,7 @@ c new CDF movie option (1st frame at t=0)
 *   ..initialise counters
       itim = 0
       itim_plas = 0
-      cpuval = 0.0_R8
+      cpuval = 0.0
       elapsedval = 0.0_R8
       stack_ptr = 0
       first_time_step=.true.
@@ -1983,7 +1987,7 @@ c new CDF movie option (1st frame at t=0)
       res_max = 10.0_R8*res_quit
       ne_wanted_next_time=tim
 #ifdef _OPENMP
-      cpuinit = real(omp_get_wtime(),R4)
+      cpuinit = omp_get_wtime()
 #else
       call cpu_time(cpuinit)
 #endif
@@ -2012,7 +2016,7 @@ cwdk  set some integers
      1            itim,dtim,ntim,stack_ptr,quit
 
 #ifdef _OPENMP
-      cpustart = real(omp_get_wtime(),R4)
+      cpustart = omp_get_wtime()
 #else
       call cpu_time(cpustart)
 #endif
@@ -2322,7 +2326,7 @@ c new CDF movie option
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
 #ifdef _OPENMP
-        cpuval = real(omp_get_wtime(),R4)
+        cpuval = omp_get_wtime()
 #else
         call cpu_time(cpuval)
 #endif
@@ -2331,8 +2335,8 @@ c new CDF movie option
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
-     &            min((ntim-itim)*(cpuval-cpustart),
-     &      max(0.0_R4,real(b2mndr_cpu,R4)-(cpuval-cpuinit)))            !srv 18.05.09
+     &            min((ntim-itim)*real(cpuval-cpustart,R8),
+     &      max(0.0_R8,b2mndr_cpu-real(cpuval-cpuinit,R8)))              !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
