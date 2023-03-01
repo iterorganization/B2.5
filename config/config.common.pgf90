@@ -46,6 +46,11 @@ ifndef SOLPS_CPP
     IMAS_PKG_LIST = fundamental-constants
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
   endif
+  ifdef TAO
+    ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
+      IMAS_PKG_LIST += petsc
+    endif
+  endif
   ifdef IMAS_VERSION
     UAL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
     UAL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )

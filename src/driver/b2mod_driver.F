@@ -1948,7 +1948,7 @@ c new CDF movie option (1st frame at t=0)
       type(B2StateExt), intent (inout) :: state_ext
       type(switches), intent (inout)      :: switch
 #ifdef FIXED_POINT
-      type(B2State)   :: state0
+      type(B2State) :: state0
 #endif
       real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
      * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
