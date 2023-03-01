@@ -41,10 +41,10 @@
 ! - mxnCf: maximum number of cost functions allowed
 ! - ncf: actual number of cost functions
 ! - cftype: type of cost function, 0-9 possible options
-! - cfdef: defines how the cost function domain is defined 1-4 possible options
+! - cfdef: defines how the cost function domain is defined, 1-4 possible options
 ! - cfstart/cfend: starting and ending element for the cost function
-! - cf_reg: Listing for each cost function the corresponding domain CVs or FCs
-! - cf_regP: Points for each cost function to the first index in the CF_REG list, and its number of items.
+! - cf_reg: listing for each cost function the corresponding domain CVs or FCs
+! - cf_regP: points for each cost function to the first index in the CF_REG list, and its number of items.
 ! - cfReg and cfRegP: same as above, but allocatable and used to pass CF data into mapping structure
 ! - cfweight: multiplier to the cost function
 ! - cfread: according to cftype, decide if reading experimental data from file for cost function

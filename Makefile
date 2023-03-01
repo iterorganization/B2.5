@@ -207,10 +207,15 @@ SOLPSINCLUDE += -I${SRCB2}/${DIFFDIR}
 ##SOLPSINCLUDE += -I${SRCDIR}/differentiated_files${EXT_DIFF}
 TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
 #TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
+IDSDIFFMODS = ${patsubst %,${SRCDIR}/ids/%,b2mod_cellhelper.F90 b2mod_connectivity.F90 b2mod_constants.F90 b2mod_grid_mapping.F90 b2mod_interp.F90 carre_constants.F90 helper.F90 logging.F90 tradui_constants.F90}
 endif
 ifdef TAO
-SOLPSINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
-MODINCLUDE += -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
+SOLPSINCLUDE += -I${PETSC_DIR}/include
+MODINCLUDE += -I${PETSC_DIR}/include
+ifdef PETSC_ARCH
+SOLPSINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
+MODINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
+endif
 endif
 
 ifdef USE_MPI
@@ -307,7 +312,7 @@ FFPATH += :${SRCDIR}/user
 DIFFPATH =
 ifdef DIFF
 DIFFPATH += ${SRCB2}/${DIFFDIR}
-VPATH=:${SRCB2}/${DIFFDIR}
+VPATH =: ${SRCB2}/${DIFFDIR}
 FPATH := ${SRCB2}/${DIFFDIR}
 FFPATH = :${SRCB2}/${DIFFDIR}
 endif
@@ -325,10 +330,10 @@ MODLISTF += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2us_*.F
 MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 else
 MODLIST += ${DIFFPATH}/b2mod_*.F ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90
-MODLIST += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${SRCDIR}/ids/*.F90}
+MODLIST += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${IDSDIFFMODS}}
 MODLISTF += ${DIFFPATH}/b2mod_*.F
-MODLISTF90 += ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90 
-MODLISTF90 += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${SRCDIR}/ids/*.F90}
+MODLISTF90 += ${DIFFPATH}/b2mod_*.F90 ${DIFFPATH}/b2us_*.F90
+MODLISTF90 += ${patsubst ${SRCDIR}/ids/%,${DIFFPATH}/%,${IDSDIFFMODS}}
 endif
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
@@ -1097,7 +1102,6 @@ ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
 ${DBGAD}: ${DIFFPATH}/adDebug.c ${DIFFPATH}/adDebug.h
 	cc -c $< -o $@
 
-
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
 
@@ -1237,7 +1241,7 @@ endif
 
 else
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EX90DIFFLIST:.o=.F90} ${EXDIFFLIST:.o=.F}
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${SOLPSINCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
 	sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies
