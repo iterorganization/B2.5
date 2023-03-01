@@ -141,9 +141,12 @@
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion,iflag
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol,iion
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, b2stbc_feedback
+#ifdef B25_EIRENE
+      integer iflag
+#endif
       logical feedback_stratum
       real (kind=R8) ::
      * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
