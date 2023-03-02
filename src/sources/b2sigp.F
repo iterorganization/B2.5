@@ -271,10 +271,11 @@ cdjm compute b2sigp_pstat0to3 on left cell face
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
+        wrk3  = nb*tb
         wrk5  = 0.0e0_R8
         wrk6  = 0.0e0_R8
 *   ..  compute gradients in cell centers
-        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, nb*tb, wrkv, wrk0)
+        call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk3, wrkv, wrk0)
         call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrk1)
 *   ..  compute smbgp
         do iCv = 1, mpg%nCi

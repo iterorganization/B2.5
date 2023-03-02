@@ -1940,6 +1940,7 @@ c     Finalization step
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)
 
+      if (.not.allocated(hlp_hdr)) return
       deallocate(hlp_hdr)
       deallocate(hlp_out)
 
