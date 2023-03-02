@@ -159,10 +159,9 @@ c
       return
       end subroutine b2trace
 c======================================================================
-      subroutine b2trci(nx,ny,ns,nregionv,switch)
+      subroutine b2trci(switch)
       implicit none
       type(switches), intent(in) :: switch
-      integer, intent(in) :: nx, ny, ns, nregionv
 c*** Initialisation call
       if (tracing_initialised) return
 !WG_TODO     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
