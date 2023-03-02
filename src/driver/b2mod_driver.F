@@ -2314,7 +2314,7 @@ c new CDF movie option
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
      .                           switch)
-!WG_TODO          call b2trci(nx,ny,ns,nnreg(0),switch)
+          call b2trci(switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then

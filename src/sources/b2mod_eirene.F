@@ -956,7 +956,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'in b2mod_eirene: main_call = ', main_call
       end if
       if (ncall.eq.0) then
-!WG_TODO        if (main_call) call b2trci(nx,ny,ns,nnreg(0),switch)
+        if (main_call) call b2trci(switch)
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
