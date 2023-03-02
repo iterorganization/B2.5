@@ -370,7 +370,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(nx,ny,ns,nnreg(0),switch)
+        call b2trci(switch)
         call b2trcc(nout(1),nx,nxtl,nxtr)
         call b2filei(0,ns,nnreg(0))
         call b2filec(0,ns,nnreg(0))
