@@ -476,5 +476,5 @@
       write(*,*) 'b2ye failed because compiled with NO_CDF option'
 #endif
 
-  999 stop
+  999 stop 'b2ye'
       end program b2ye

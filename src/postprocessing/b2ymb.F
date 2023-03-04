@@ -223,8 +223,8 @@
          close(INUNIT);
       ENDDO
       DEALLOCATE(MM,BB,rr,zz,dd,rout,zout)
-      stop
-      end
+      stop 'b2ymb'
+      end program b2ymb
 
 !##########################################################################
       subroutine interp( xData, yData, xVal, yVal, nData, nVal )
