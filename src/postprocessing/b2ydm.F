@@ -95,8 +95,8 @@
 
       DEALLOCATE(MM,BB)
 
-      stop
-      end
+      stop 'b2ydm'
+      end program b2ydm
 
 !##########################################################################
       subroutine interp( xData, yData, xVal, yVal, nData, nVal )
