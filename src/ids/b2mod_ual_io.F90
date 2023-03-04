@@ -3323,8 +3323,8 @@ contains
           iyn = leftiy( ix, iy )
         end if
         if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          ! stop "compute_Coordinate_Unit_Vectors: "// &
-          ! & "not able to find poloidal neighbour for cell"
+          ! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+          ! & "not able to find poloidal neighbour for cell" )
           !! skip cell
           cycle
         end if
@@ -3356,8 +3356,8 @@ contains
           iyn = bottomiy( ix, iy )
         end if
         if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          ! stop "compute_Coordinate_Unit_Vectors: "// &
-          ! &  "not able to find toroidal neighbour for cell"
+          ! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+          ! &  "not able to find toroidal neighbour for cell" )
           !! skip cell
           cycle
         end if
@@ -3785,7 +3785,8 @@ contains
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find poloidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find poloidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if
@@ -3818,7 +3819,8 @@ contains
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find toroidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find toroidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if

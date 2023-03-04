@@ -745,8 +745,10 @@ c
                    case(GRID_INTERNAL, GRID_BOUNDARY)
                       if (abs(bp(ix,iy) - bb_tmp(ix,iy,0)) > 1e-7 .or.
      $                    abs(bt(ix,iy) - bb_tmp(ix,iy,2)) > 1e-7) then
-                         write (*,*) "b2agfs: not matching carre bb at",
-     $                        ix, iy
+                         write (*,'(a,2i5,4e15.8)')
+     $                    "b2agfs: not matching carre bb at",
+     $                        ix, iy, bp(ix,iy), bt(ix,iy),
+     $                                bb_tmp(ix,iy,0), bb_tmp(ix,iy,2)
                       endif
                    end select
                 enddo
