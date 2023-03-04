@@ -2407,9 +2407,10 @@ contains
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(grid_ggd, "Outer core boundary")
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc: "// &
+        if (iCoreGS == B2_GRID_UNDEFINED) &
+            & call xerrab ( "fill_In_GridSubset_Desc: "// &
             & "did not find core boundary grid subset for assembling " // &
-            & " outer midplane grid subset"
+            & " outer midplane grid subset" )
 
         !! Figure out starting points for inner and outer midplane on core
         !! boundary
@@ -3700,8 +3701,10 @@ contains
       if (iCoreSg == GRID_UNDEFINED) then
           iCoreSg = gridFindSubGridByName(itmgrid, "Outer core boundary")
       end if
-      if (iCoreSg == GRID_UNDEFINED) stop "fillInSubGridDescription: "// &
-          & "did not find core boundary subgrid for assembling outer midplane subgrid"
+      if (iCoreSg == GRID_UNDEFINED) &
+          & call xerrab ( "fillInSubGridDescription: "// &
+          & "did not find core boundary subgrid for assembling "// &
+          & "outer midplane subgrid" )
 
       !! Figure out starting points for inner and outer midplane on core boundary
       call find_Midplane_Cells(itmgrid%subgrids(iCoreSg), gmap, crx, xIn, yIn, xOut, yOut)
@@ -3866,7 +3869,8 @@ contains
                indexList(iVx, SPACE_POLOIDALPLANE) =    &
                 &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
             else
-               stop "collectRadialVertexIndexList: cannot find expected vertex index"
+               call xerrab ( "collectRadialVertexIndexList: "// &
+                &            "cannot find expected vertex index" )
             end if
 
             ix = nix
