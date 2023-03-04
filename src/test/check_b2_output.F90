@@ -3,7 +3,7 @@
 !
 ! Compile: ifort -g -O2 check_b2_output.F90 -o check_b2_output
 !
-! Usage: ./check_b2_output original_run/b2mn.exe.dir/b2fstate run2/b2mn.exe.dir/b2fstate 
+! Usage: ./check_b2_output original_run/b2mn.exe.dir/b2fstate run2/b2mn.exe.dir/b2fstate
 
 module b2mod_types_local
   implicit none
@@ -24,29 +24,30 @@ module check_module_local
     module procedure check_variable_c0, check_variable_i1, check_variable_r1
   end interface
 
- contains 
+ contains
 
  function check_variable_c0(val, orig, name) result(n_error)
   implicit none
   character(len=*), intent(in) :: val, orig
   character(len=*), intent(in) :: name
-  integer :: n_error 
+  integer :: n_error
   if (val.ne.orig) then
     write (*,*) 'Error in ',name,', values: ', val, orig
     n_error = 1
   else
     n_error = 0
   end if
-  end function 
+  return
+ end function
 
-  function check_variable_i1(val, orig, name) result(n_error)
+ function check_variable_i1(val, orig, name) result(n_error)
   implicit none
   integer, dimension(:), intent(in) :: val, orig
   character(len=*), intent(in) :: name
   integer :: n_error
   integer :: error, error_max
   integer :: i1
-  
+
   n_error = 0
   error_max = 0
   if (ubound(val,1).ne.ubound(orig,1)) then
@@ -73,9 +74,10 @@ module check_module_local
     endif
     write (*,*) 'Max error is ', error_max, ' in array ', name
   end if
-  end function
+  return
+ end function
 
-  function check_variable_r1(val, orig, name) result(n_error)
+ function check_variable_r1(val, orig, name) result(n_error)
   implicit none
   double precision, dimension(:), intent(in) :: val, orig
   character(len=*), intent(in) :: name
@@ -84,7 +86,7 @@ module check_module_local
   double precision :: error, error_max, avg_abs_diff, avg_rel_error, avg_abs_val
   double precision :: error_max_abs
   integer :: i1, ub, max_err_idx
-  
+
   n_error = 0
   error_max = 0
   error_max_abs = 0
@@ -141,7 +143,9 @@ module check_module_local
     write (*,'(a30,F5.1,a1)')   'Number of errors / array size ', n_error * 100.0 / ub, '%'
     write (*,*) ' '
   end if
-end function
+  return
+ end function
+
 end module
 
 module b2_file_io
@@ -149,24 +153,25 @@ module b2_file_io
   implicit none
   private
   public read_unknown_type !< read in an array when we do not know which type to expect
- 
+
   contains
- 
+
   subroutine read_record_description(nget, chf, idcod, idtyp, n, id, ierr)
-      implicit none
-      integer, intent(in) :: nget
-      character, intent(out) :: chf*12, idcod*8, idtyp*8, id*32
-      integer, intent(out) :: n
-      integer, optional, intent(out) :: ierr
-      integer :: ierror
-      inquire (nget,form=chf)
-      if (chf=='formatted' .or. chf=='FORMATTED') then
-        chf = 'FORMATTED'
-        read (nget,'(2a8,i12,4x,a32)',iostat=ierror) idcod, idtyp, n, id
-      else
-        read (nget,iostat=ierror) idcod, idtyp, n, id
-      endif
-      if (present(ierr)) ierr = ierror
+    implicit none
+    integer, intent(in) :: nget
+    character, intent(out) :: chf*12, idcod*8, idtyp*8, id*32
+    integer, intent(out) :: n
+    integer, optional, intent(out) :: ierr
+    integer :: ierror
+    inquire (nget,form=chf)
+    if (chf=='formatted' .or. chf=='FORMATTED') then
+      chf = 'FORMATTED'
+      read (nget,'(2a8,i12,4x,a32)',iostat=ierror) idcod, idtyp, n, id
+    else
+      read (nget,iostat=ierror) idcod, idtyp, n, id
+    endif
+    if (present(ierr)) ierr = ierror
+    return
   end subroutine
 
   subroutine check_record_description(idcod, id0, id1, idtyp0, idtyp1, n0, n1, strict)
@@ -195,11 +200,12 @@ module b2_file_io
         endif
       endif
     endif
+    return
   end subroutine
 
   subroutine read_unknown_type(nget, n1, refun, infun, chfun, id1, idtyp)
 !     The file stores real, integer or character data.
-!     We check which type of data is next, and read it into one 
+!     We check which type of data is next, and read it into one
 !     of the output buffers (refun, infun or chfun)
 !     The variable name (id1) and type (idtyp) are also returned,
 !     together with the size of the array that is read (n1)
@@ -237,7 +243,7 @@ module b2_file_io
             else
               read (nget) (refun(i),i=0,n1-1)
             endif
-          endif  
+          endif
         case ('int')
           allocate(infun(0:n1-1))
           if (0.lt.n1) then
@@ -263,7 +269,9 @@ module b2_file_io
             endif
           endif
      end select
+     return
   end subroutine
+
 end module
 
 
@@ -291,18 +299,18 @@ program test_b2output
   u1 = open_file(input1)
   u2 = open_file(input2)
 
-  n_errors = 0 
+  n_errors = 0
   call read_unknown_type (u1, size_n1, r1, i1, ch1, vname1, idtyp1)
   call read_unknown_type (u2, size_n2, r2, i2, ch2, vname2, idtyp2)
-  
+
   ! Read variables (arrays) one by one from the files, and compare them.
   do while(vname1 /= 'end-of-file')
     if (vname1 /= vname2 .or. (idtyp1 /= idtyp2)) then
       write(*,*) 'Error, variable name or type differ'
       write(*,*) trim(vname1), ' ', idtyp1
       write(*,*) trim(vname2), ' ', idtyp2
-    else 
-        
+    else
+
         select case(idtyp1)
           case ('real')
             write(*,'(a15,a12,a7,i8,a6,a8)') 'Checking array ', vname1, ' size: ', size_n1, ' type ', idtyp1
@@ -334,7 +342,7 @@ program test_b2output
 
   close(u1)
   close(u2)
-  
+
  contains
 
  subroutine get_filenames(input1, input2)
@@ -362,8 +370,9 @@ program test_b2output
 
   write (*,*) 'File1: ', trim(input1)
   write (*,*) 'File2: ', trim(input2)
+  return
  end subroutine
- 
+
  function open_file(filename) result(my_unit)
 ! Open the file, read the header, and return the file unit specifier.
 ! B2.5 output files can be either binary or text files. We open first as
@@ -378,7 +387,7 @@ program test_b2output
    integer newunit
    external newunit
 #endif
-   
+
 #ifdef F2003
    open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #else
@@ -418,7 +427,9 @@ program test_b2output
    endif
    if (ierr == 0) write(*,*) trim(filename),' opened successfully'
    write(*,*) label, ' ', version_in
+   return
  end function
+
 end program
 
 !!!Local Variables:

@@ -130,6 +130,6 @@ c              write(*,*) 'Do not yet know about ',i_n,i_m,i_l,i_k
       enddo
       write(*,'(''# end of data'')') 
 
-      stop
+      stop 'calc_atomic_data'
 
       end program calc_atomic_data
