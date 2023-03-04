@@ -299,6 +299,7 @@ contains
       ! internal
       ! real(R8), parameter :: del = 1.0e-1_R8
       integer :: nodeAO, nodeBO
+      real(R8), dimension(-1:nx,-1:ny,0:3) :: val
 
       ! Copy face endpoint to new face startpoint
       !crx(tix, tiy, nodeA1) = crx(oix, oiy, nodeB1)
@@ -324,11 +325,21 @@ contains
           nodeBO = nodeB1
       end if
 
-      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, crx(:,:,1:4) )
-      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, cry(:,:,1:4) )
-      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, psi(:,:,1:4,0) )
-      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, psi(:,:,1:4,1) )
-      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, psi(:,:,1:4,2) )
+      val = crx(:,:,1:4)
+      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, val )
+      crx(:,:,1:4) = val
+      val = cry(:,:,1:4)
+      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, val )
+      cry(:,:,1:4) = val
+      val = psi(:,:,1:4,0)
+      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, val )
+      psi(:,:,1:4,0) = val
+      val = psi(:,:,1:4,1)
+      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, val )
+      psi(:,:,1:4,1) = val
+      val = psi(:,:,1:4,2)
+      call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, val )
+      psi(:,:,1:4,2) = val
       call extendValue( oix, oiy, nodeA1, nodeB1, nodeAO, nodeBO, tix, tiy, ffbz)
     end subroutine extendFace        
     
@@ -446,7 +457,7 @@ contains
           gix = ix - 1
           giy = iy + 1
       else
-          stop 'getCanonicalCornerGhostSlot: strange face combination'
+          call xerrab ( 'getCanonicalCornerGhostSlot: strange face combination' )
       end if
     end subroutine getCanonicalCornerGhostSlot
 
@@ -459,7 +470,7 @@ contains
       integer :: gix, giy
 
       call getNoncanonicalGhostSlot(ix, iy, iFace, gix, giy)
-      if (gix == NO_CONNECTIVITY) stop "populateNoncanonicalGhostSlot: no free slot left"
+      if (gix == NO_CONNECTIVITY) call xerrab ( "populateNoncanonicalGhostSlot: no free slot left" )
       call logmsg(LOGDEBUG, "populateNoncanonicalGhostSlot: face "&
           & //int2str(ix)//", "//int2str(iy)//", "//int2str(iFace)//" using slot "//int2str(gix)//", "//int2str(giy))
       call setGhostSlot(ix, iy, iFace, gix, giy, .true.)
