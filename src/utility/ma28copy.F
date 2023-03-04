@@ -761,7 +761,7 @@ c  find the first solution.
 c
       call ma28cdcopy(n, a, licn, icn, ikeep, x, w, mtype)
 c
-c  stop the computations if   maxit=0.
+c  stop the computations if maxit=0.
 c
    20 if (maxit.eq.0) go to 160
 c

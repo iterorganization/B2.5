@@ -626,6 +626,7 @@ c     Finalization step
       inquire(unit=lun,opened=file_open)
       if (file_open) close(lun)
 
+      if (.not.allocated(equs_tmp)) return
       deallocate(equs_tmp)
       deallocate(nisp_tmp)
       deallocate(zisp_tmp)

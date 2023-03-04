@@ -167,7 +167,7 @@ c*** read the file
           write(0,*) 'b2paspwr: wrong format of the existing file ',
      ,                                                           hlp_fn
           write(0,*) '  -- no header found'
-          stop
+          call xerrab ('No header found in spec_pwr.dat file !')
         end if
         backspace(lun)
    30   read(lun,hlp_frm,err=40,end=40) j,(hlp_r,i=1,n_hlp),m

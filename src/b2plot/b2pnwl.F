@@ -206,7 +206,6 @@ c*** Calculate the net and gross erosion
                   ias=eirdiag_nds_ind(iss)+(nytg-js+1)
                 end if
               end do
-              write(*,*) 'j,js,ias : ' , j,js,ias
               wwk=0.0_R8
               wwp=0.0_R8
               k=0

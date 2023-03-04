@@ -133,6 +133,6 @@
       call dealloc_anomalous_transport
       call prgend ()
 
-      stop
+      stop 'b2plasmastate_inspect'
       end program b2plasmastate_inspect
 
