@@ -18,6 +18,7 @@ ifndef SOLPS_CPP
   endif
   ifdef TAO
     ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
+      SOLPSINCLUDE += `pkg-config petsc --cflags`
       IMAS_PKG_LIST += petsc
     endif
   endif
