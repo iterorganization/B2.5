@@ -2336,13 +2336,13 @@ c
 c see block data for comments on variables in common.
       common /ma30hd/ resid
       !$OMP THREADPRIVATE(/ma30hd/)
-#ifdef DBG
-      real (kind=R8) :: product
-#endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
      * iend, iback, ifirst, ilast, iblock, iblend,
      * jpiv, jpivp1, lt, ltend, numblk
+#ifdef DBG
+      real (kind=R8) :: product
+#endif
 c
       data zero /0.0e0_R8/
 c

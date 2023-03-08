@@ -318,7 +318,7 @@
             enddo
           endif
         enddo
-        do ix = 0, nx-1
+        do ix = -1, nx
           if (leftix(ix,iy).eq.-2.and.rightix(ix,iy).ne.nx+1) then
             do inucl = 0, nspecies-1
               gtalc(ix,iy,inucl)=
@@ -328,8 +328,16 @@
             do inucl = 0, nspecies-1
               gtalc(ix,iy,inucl)=
      &         gtalc(leftix(ix,iy),leftiy(ix,iy),inucl)
-             enddo
+            enddo
           endif
+        enddo
+      enddo
+      do ix = -1, nx
+        do inucl = 0, nspecies-1
+          gtalc(ix,-1,inucl)=
+     &     gtalc(topix(ix,-1),topiy(ix,-1),inucl)
+          gtalc(ix,ny,inucl)=
+     &     gtalc(bottomix(ix,ny),bottomiy(ix,ny),inucl)
         enddo
       enddo
 
@@ -350,17 +358,21 @@
       do iy = 0, ny-1
         do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-           gavm_uc(ix,iy) = 0.5e0_R8*bb(ix,iy,0)/bb(ix,iy,3)*
-     &     (gavm_u(ix,iy)+gavm_u(rightix(ix,iy),rightiy(ix,iy)))
+            gavm_uc(ix,iy) = 0.5e0_R8*bb(ix,iy,0)/bb(ix,iy,3)*
+     &      (gavm_u(ix,iy)+gavm_u(rightix(ix,iy),rightiy(ix,iy)))
           endif
         enddo
-        do ix = 0, nx-1
+        do ix = -1, nx
           if (leftix(ix,iy).eq.-2.and.rightix(ix,iy).ne.nx+1) then
             gavm_uc(ix,iy) = gavm_uc(rightix(ix,iy),rightiy(ix,iy))
           else if (rightix(ix,iy).eq.nx+1.and.leftix(ix,iy).ne.-2) then
             gavm_uc(ix,iy) = gavm_uc(leftix(ix,iy),leftiy(ix,iy))
           endif
         enddo
+      enddo
+      do ix = -1, nx
+        gavm_uc(ix,-1) = gavm_uc(topix(ix,-1),topiy(ix,-1))
+        gavm_uc(ix,ny) = gavm_uc(bottomix(ix,ny),bottomiy(ix,ny))
       enddo
 
       return

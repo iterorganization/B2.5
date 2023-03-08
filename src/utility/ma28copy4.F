@@ -1612,7 +1612,7 @@ c if pivot is zero, rest of column is and so multiplier is zero.
                       au = cutlo
                     end if
                   end if
-                end if 
+                end if
 #else
                 au = -a(jj)/a(ijpos)
 #endif
@@ -2200,7 +2200,7 @@ c innermost loop.
           do 40 jayjay=ipivj,jfin
             jay = icn(jayjay)
 #ifdef DBG
-            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
+            if((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)) .and.
      &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
@@ -3496,22 +3496,19 @@ c
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer ndrop, maxit, noiter, nsrch, istart
-      logical lblock, grow
-      logical abort1, abort2
-      logical lbig
+      logical lblock, grow, abort1, abort2, lbig
       common /ma28edc4/ lp, mp, lblock, grow
       common /ma28fdc4/ eps, rmin, resid, irncp, icncp, minirn, minicn,
      * irank, abort1, abort2
+c     common /ma28gdc4/ idisp(2)
       common /ma28hdc4/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
-c     common /ma28gdc4/ idisp(2)
       !$OMP THREADPRIVATE(/ma28edc4/,/ma28fdc4/,/ma28hdc4/)
-      data eps /1.0e-4_R8/
-      data tol /0.0e0_R8/, cgce /0.5e0_R8/
-      data lp /6/, mp /6/
-      data maxit /16/, nsrch /32768/, istart /0/, lbig /.false./
+      data eps /1.0e-4_R8/, tol /0.0e0_R8/, cgce /0.5e0_R8/
+      data maxit /16/
+      data lp /6/, mp /6/, nsrch /32768/, istart /0/
       data abort1 /.true./, abort2 /.true./
-      data lblock /.true./, grow /.true./
+      data lblock /.true./, grow /.true./, lbig /.false./
       end block data bd1copy4
       block data bd2copy4
       use b2mod_types
