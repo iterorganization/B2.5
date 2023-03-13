@@ -567,7 +567,11 @@
      &    (g%fcHc(iFc,1) + g%fcHc(iFc,2))
        g%fcQgam(iFc,1) = ( fcQgam1(iFc,1)*g%fcHc(iFc,1) + 
      &    fcQgam2(iFc,1)*g%fcHc(iFc,2)) /
-     &    (g%fcHc(iFc,1) + g%fcHc(iFc,2))      
+     &    (g%fcHc(iFc,1) + g%fcHc(iFc,2))
+
+       ! Correction to comply with sin**2 + cos**2 = 1       
+       g%fcQgam(iFc,1) = sign(1.0,g%fcQgam(iFc,1))* 
+     &    sqrt(1 - g%fcQgam(iFc,0)**2) 
 
        !OLD METHOD to compute gamma
        !g%fcQgam(iFc,0) = cosin(econf(0), econf(1),fn(0), fn(1) )
