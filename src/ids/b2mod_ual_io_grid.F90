@@ -271,7 +271,8 @@ module b2mod_ual_io_grid
 
     !! IMAS uses GGD grid subset identifier definitions defined in GSL
     !! (in ids_grid_common)
-#if GGD_MINOR_VERSION < 9
+#ifdef IMAS
+# if GGD_MINOR_VERSION < 9
     !! IMAS GGD grid subset identifier definitions
     integer, parameter :: GRID_SUBSET_TYPES = 106
 
@@ -461,8 +462,7 @@ module b2mod_ual_io_grid
        &    'Point on non-active separatrix at outer active target                                        ' , &
        &    'Point on non-active separatrix at inner active target                                        '   &
        &   /)
-#endif
-#ifdef IMAS
+# endif
 # if GGD_MINOR_VERSION < 10
     !> All volumes
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
@@ -513,13 +513,13 @@ module b2mod_ual_io_grid
         !< all x-aligned (poloidally) aligned edges belonging to the associated
         !< space (order given by grid map)
     integer, parameter :: B2_GSUBSET_X_ALIGNED_EDGES = 3    !< Grid subset
-        !< containing  all x-aligned (poloidally) aligned edges belonging to
+        !< containing all x-aligned (poloidally) aligned edges belonging to
         !< the associated  space (order given by grid map)
     integer, parameter :: B2_SUBGRID_EDGES_Y = 4    !< Grid subset containing
         !< all y-aligned (radially) aligned edges belonging to the associated
         !< space (order given by grid map)
     integer, parameter :: B2_GSUBSET_Y_ALIGNED_EDGES = 4 !< Grid subset
-        !< containing  all y-aligned (radially) aligned edges belonging to
+        !< containing all y-aligned (radially) aligned edges belonging to
         !< the associated  space (order given by grid map)
     integer, parameter :: B2_SUBGRID_CELLS = 5 !< Grid subset containing all
         !< cells belonging to the associated space

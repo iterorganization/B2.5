@@ -557,21 +557,8 @@ cwdk  can be derived directly from data in that file
       m%nnreg(0) = maxval(m%cvReg)
       m%nnreg(1) = maxval(m%fcReg)
 
-*   ..identify cells on closed surfaces
-      if (m%nnreg(0).eq.1) then
-        call xerrab ('periodic_bc not yet supported for nnreg(0)=1.')
-!WG_TODO        m%cvOnClosedSurface = periodic_bc.eq.1
-      else if (m%nnreg(0).eq.2 .or. m%nnreg(0).eq.4 .or.
-     .         m%nnreg(0).eq.5 .or. m%nnreg(0).eq.8) then
-        m%cvOnClosedSurface = mod(m%cvReg,4).eq.1
-      else
-        call xerrab ('Unknown number of regions!')
-      end if
-
 *   ..set up connectivity information for the matrix stencil
-
       allocate (indCv(4*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
-
       iNv = 1
       do iCv = 1, m%nCv
         m%cvNvP(iCv,1) = iNv
@@ -609,9 +596,6 @@ cwdk  can be derived directly from data in that file
       m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
       deallocate(indCv)
-
-
-
       return
       end subroutine init_mapping
 

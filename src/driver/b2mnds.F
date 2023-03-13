@@ -301,10 +301,11 @@
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c The switches are now also loaded in a module b2mod_switches.
-c Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a new way using this module.
-c The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
+c Hence, they can be accessed in the classical way using ipgeti/ipgetr
+c or in a new way using this module.
+c The b2mod_switches is mainly intended for switches that are used in
+c different functions/subroutines to reduce code duplication
 c and to centralize consistency checks on the switches.
-
 
 c load default values of switches
       call set_defaults_switches(switch,ns)
