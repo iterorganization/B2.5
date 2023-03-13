@@ -385,6 +385,21 @@
       nFc = mpg%nFc
       nVx = mpg%nVx
 
+*   ..identify periodicity
+      call is_periodic( mpg, gm, periodic_bc )
+
+*   ..identify cells on closed surfaces
+      if (mpg%nnreg(0).eq.1) then
+        mpg%cvOnClosedSurface = periodic_bc.eq.1
+      else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
+     .         mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
+        mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
+      else if (mpg%nnreg(0).eq.7) then
+        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+      else
+        call xerrab ('Unknown number of regions!')
+      end if
+
 *   ..set weights for interpolation to faces
       if (switch%fcVol_style.eq.0) then
        ! weights for inverse volume interpolation
@@ -488,7 +503,6 @@
      &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
       gm%fcEb(:,2) = gm%fcEb(:,2)/
      &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
-
 
 *   ..compute cvHz
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
@@ -670,6 +684,74 @@
       return
       end subroutine calc_conn
 
+**********************************************************************
+
+      subroutine is_periodic ( mpg, gm, periodic_bc )
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: gm
+      integer, intent(out) :: periodic_bc
+      integer :: ic, iCvm, iCvn, iCvp, iCv, iFc, iFt, count
+      logical :: closed, end_found, all_closed
+
+      periodic_bc = 0
+      if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.5) then
+        periodic_bc = 1
+      else if (mpg%nnreg(0).eq.1) then
+        all_closed = mpg%nFt.gt.0
+        do iFt = 1, mpg%nFt
+          closed = .false.
+          iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%ftCvP(iFt,2).gt.1) then
+            iCvm = iCv
+            do iFc = mpg%cvFcP(iCv,1),
+     &               mpg%cvFcP(iCv,1) + mpg%cvFcP(iCv,2) - 1
+              if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
+              if (mpg%fcCv(mpg%cvFc(iFc,1)).eq.iCv) then
+                iCvn = mpg%fcCv(mpg%cvFc(iFc,2))
+              else
+                iCvn = mpg%fcCv(mpg%cvFc(iFc,1))
+              end if
+            end do
+            end_found = .false.
+            do while (.not.end_found)
+              iCvp = 0
+              do iFc = mpg%cvFcP(iCvn,1),
+     &                 mpg%cvFcP(iCvn,1) + mpg%cvFcP(iCvn,2) - 1
+                if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
+                if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCvm) cycle
+                if (mpg%fcCv(mpg%cvFc(iFc),2).eq.iCvm) cycle
+                if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCvn) then
+                  iCvp = mpg%fcCv(mpg%cvFc(iFc),2)
+                else
+                  iCvp = mpg%fcCv(mpg%cvFc(iFc),1)
+                end if
+              end do
+              iCvm = iCvn
+              iCvn = iCvp
+              closed = iCvp.eq.iCv
+              end_found = closed .or. iCvp.eq.0
+            end do
+          else if (mpg%ftCvP(iFt,2).eq.1) then
+            count = 0
+            iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
+            do iFc = mpg%cvFcP(iCv,1), mpg%cvFcP(iCv,1) +
+     &                                 mpg%cvFcP(iCv,2) - 1
+              if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
+              if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCv .and.
+     &            mpg%fcCv(mpg%cvFc(iFc),2).eq.iCv) icount = icount + 1
+            end do
+            closed = icount.eq.2
+          else if (mpg%ftCvP(iFt,2).eq.0) then
+            closed = .true.
+          end if
+          all_closed = all_closed .and. closed
+        end do
+        if (all_closed) periodic_bc = 1
+      end if
+
+      return
+      end subroutine is_periodic
 
 ***********************************************************************
 

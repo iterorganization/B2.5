@@ -1404,7 +1404,7 @@ csw 09oct2012
 
 *   ..read geometry and metric
       call read_b2fgmtry (ninp(1), mpg, geo)
-      call init_geometry(mpg, geo, switch)
+      call init_geometry (mpg, geo, switch)
 
       call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
       if (b2mndr_redef_pbs.ne.0) then
