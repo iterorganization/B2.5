@@ -468,9 +468,9 @@ c mw added transport
 c mw end
       elseif(user_transport.eq.6) then                                    !srv 13.06.08
 !! FIXME: Need to fix clash with ank blobby transport model
-        call set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0,
-     &  alf0, wrk0)
+        call set_transport_srv(nx, ny, ns, jsep, jxa, bb, na, te, ti,
+     &  ni, ne, ne2, hy, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &  hcib, hce0, sig0, alf0, wrk0)
 !! FIXME: in routines below, remove hvi0, hve0 ???
       elseif(user_transport.eq.7) then
         call set_transport_disruption(nx, ny, ns,
@@ -725,9 +725,9 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       return
       end subroutine set_transport
 
-      subroutine set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne,     !srv 12.06.08 {
-     &  ne2, hy, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0,
-     &  sig0, alf0, wrk0)
+      subroutine set_transport_srv(nx, ny, ns, jsep, jxa, bb, na, te,     !SOM 17.07.19 !srv 12.06.08 {
+     &  ti, ni, ne, ne2, hy, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &  hcib, hce0, sig0, alf0, wrk0)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -736,13 +736,15 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmpt
+      use b2mod_transport_namelist      !SOM 17.07.19 
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, jsep, jxa
+      integer, save :: jsep_cnv, jxa_cnv
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
@@ -758,6 +760,9 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
+      real (kind=R8) :: vla0_cnv(-1:nx,-1:ny,0:1,0:ns-1)
+      real (kind=R8) ::  vout_cnv_single, pw0_cnv_single,
+     &  pw1_cnv_single, pw2_cnv_single
 *   ..common blocks
 *   ..local variables
       integer ncall, n2, ix, iy, is
@@ -906,6 +911,23 @@ c
        call ipgetr ('b2tqna_vl_delta2', vl_delta2)
        call xertst (0.le.vl_delta1,'faulty argument b2tqna_vl_delta1')
        call xertst (0.le.vl_delta2,'faulty argument b2tqna_vl_delta2') !srv 19.04.10 }
+       	   
+       vout_cnv_single = 0.0_R8
+       pw0_cnv_single = 1.0_R8
+       pw1_cnv_single = 5.0_R8
+       pw2_cnv_single = 2.0_R8
+       jsep_cnv = jsep
+       jxa_cnv = jxa
+       call ipgetr ('b2tqna_vout_cnv', vout_cnv_single)          !SOM 17.07.19 
+       call ipgetr ('b2tqna_pw0_cnv', pw0_cnv_single)
+       call ipgetr ('b2tqna_pw1_cnv', pw1_cnv_single)
+       call ipgetr ('b2tqna_pw2_cnv', pw2_cnv_single)
+       call ipgeti ('b2tqna_jsep_cnv', jsep_cnv)
+       call ipgeti ('b2tqna_jxa_cnv', jxa_cnv)
+       vout_cnv = vout_cnv_single
+       pw0_cnv = pw0_cnv_single
+       pw1_cnv = pw1_cnv_single
+       pw2_cnv = pw2_cnv_single
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -989,6 +1011,10 @@ c
           enddo
         enddo
       enddo
+
+      vla0_cnv = 0.0e0_R8                                             !SOM 17.07.19   
+      call set_transport_blob(nx, ny, ns, jsep_cnv, jxa_cnv, vla0_cnv)
+      vla0 = vla0 + vla0_cnv
 
       if(iout.ne.0) then                             !srv 15.06.08 {
        do is = 0,ns-1
