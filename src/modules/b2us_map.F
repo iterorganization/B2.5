@@ -3,7 +3,7 @@
       use b2mod_types
       use b2mod_version
       implicit none
-      
+
       private
       public :: alloc_mapping, dealloc_mapping,
      .          alloc_mapping_bc, dealloc_mapping_bc,
@@ -11,22 +11,22 @@
      .          alloc_mapping_cf, dealloc_mapping_cf,
      .          read_mapping, write_mapping,
      .          init_mapping, get_version
-      
+
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
-     &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv, 
-     &             nCf, mxnCf, mxStencil
-        integer :: nnreg(0:1)
+     &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
+     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt
+        integer :: nnreg(0:1), periodic_bc
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
-        integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers 
+        integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
         integer, allocatable :: fcCv(:,:)              ! (nFc,2) listing for every face the two corresponding cells
         integer, allocatable :: fcVx(:,:)              ! (nFc,2) listing for every face the two corresponding vertices
-        integer, allocatable :: cvVxP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
-        integer, allocatable :: cvVx(:)                !         listing for every cell the corresponding vertex numbers        
-        integer, allocatable :: vxFcP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
+        integer, allocatable :: cvVxP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices
+        integer, allocatable :: cvVx(:)                !         listing for every cell the corresponding vertex numbers
+        integer, allocatable :: vxFcP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
         integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
-        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
+        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
         integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
         integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
         integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
@@ -35,7 +35,7 @@
         integer, allocatable :: cvFt(:)                !         listing for every cell the corresponding flux tube
         integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
         integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
-        integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces 
+        integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
         logical, allocatable :: cvOnClosedSurface(:)   ! Logical to indicate whether a cell is on a closed flux surface
@@ -65,13 +65,18 @@
         integer, allocatable :: cvNvP(:,:)             !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
         integer, allocatable :: cvNv(:)                !         listing for each cell the numbers of the cells in its stencil
 
+        integer, allocatable :: fsVxP(:,:)             !(nFs,2): for each flux surface, starting point of its list of vertices in fsVx array [(,1) component], and the number of vertices on the flux surface [(,2) component]
+        integer, allocatable :: fsVx(:)                ! list of vertices belonging to the flux surfaces
+        integer, allocatable :: vxFs(:)                ! for each vertex, the flux surface it belongs to
+
+        integer, allocatable :: Xpt(:)                 ! vertex numbers for the X-points
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut, nctcnt               ! some parameters related to the original grid
         integer, allocatable :: imapCv(:,:)            ! back projection of cv indices to structured grid
         integer, allocatable :: imapFcx(:,:)           ! back projection of fc indices for x-faces to structured grid
         integer, allocatable :: imapFcy(:,:)           ! back projection of fc indices for y-faces to structured grid
-        integer, allocatable :: imapVx(:,:)            ! back projection of Vx indices to structured grid 
+        integer, allocatable :: imapVx(:,:)            ! back projection of Vx indices to structured grid
 
         integer, allocatable :: icornVx(:)             ! corner indices; to be used in converting target information
         integer, allocatable :: ictcntrl(:)            ! indices of central cuts; to be used in converting triangle information
@@ -95,16 +100,16 @@
 
       if (allocated(m%cvFcP)) return
 
-      allocate (m%cvFcP(m%nCv,2)) 
+      allocate (m%cvFcP(m%nCv,2))
       allocate (m%cvFc(m%nCmxFc))
       allocate (m%fcCv(m%nFc,2))
       allocate (m%fcVx(m%nFc,2))
       allocate (m%cvVxP(m%nCv,2))
       allocate (m%cvVx(m%nCmxVx))
-      allocate (m%vxFcP(m%nVx,2)) 
+      allocate (m%vxFcP(m%nVx,2))
       allocate (m%vxFc(m%nVmxFc))
-      allocate (m%vxCvP(m%nVx,2))  
-      allocate (m%vxCv(m%nVmxCv)) 
+      allocate (m%vxCvP(m%nVx,2))
+      allocate (m%vxCv(m%nVmxCv))
       allocate (m%ftCv(m%nCv))
       allocate (m%ftCvP(m%nFt,2))
       allocate (m%ftFc(m%nFc))
@@ -116,7 +121,7 @@
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
       allocate (m%cvOnClosedSurface(m%nCv))
-      
+
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
       allocate (m%intcellP(m%nCmxFc))
@@ -124,6 +129,9 @@
 
       allocate (m%cvNvP(m%nCv,2))
       allocate (m%cvNv(m%nCmxNv))
+
+      allocate (m%fsVxP(m%nFs,2))
+      allocate (m%vxFs(m%nVx))
 
       if (m%isClassicalGrid.eq.1) then
         allocate (m%imapCv(-1:m%nx,-1:m%ny))
@@ -159,16 +167,16 @@
 
       write (*,*) '=================================='
       write (*,*) 'Mapping allocated'
-      write (*,*) 'nCv, nCi, nCg', m%nCv, m%nCi, m%nCg
-      write (*,*) 'nFc, nVx, nFt', m%nFc, m%nVx, m%nFt
-      write (*,*) 'nFs'          , m%nFs
+      write (*,*) 'nCv, nCi, nCg ', m%nCv, m%nCi, m%nCg
+      write (*,*) 'nFc, nVx, nFt ', m%nFc, m%nVx, m%nFt
+      write (*,*) 'nFs           ', m%nFs
       write (*,*) 'nCmxVx, nCmxFc', m%nCmxVx, m%nCmxFc
       write (*,*) 'nVmxCv, nVmxFc', m%nVmxCv, m%nVmxFc
       write (*,*) '=================================='
 
       return
       end subroutine alloc_mapping
-      
+
 **********************************************************************
 
       subroutine initialize_mapping (m)
@@ -178,16 +186,16 @@
       implicit none
       type(mapping), intent(inout) :: m
 
-      m%cvFcP = 0 
+      m%cvFcP = 0
       m%cvFc = 0
       m%fcCv = 0
       m%fcVx = 0
       m%cvVxP = 0
       m%cvVx = 0
-      m%vxFcP = 0 
+      m%vxFcP = 0
       m%vxFc = 0
-      m%vxCvP = 0  
-      m%vxCv = 0 
+      m%vxCvP = 0
+      m%vxCv = 0
       m%ftCv = 0
       m%ftCvP = 0
       m%ftFc = 0
@@ -197,7 +205,7 @@
       m%cvReg = 0
       m%ftReg = 0
       m%cvOnClosedSurface = .false.
-      
+
 !      m%intfaceV = 0._R8
 !      m%intvertexV = 0._R8
       m%intcellP = 0._R8
@@ -205,6 +213,9 @@
 
       m%cvNvP = 0
       m%cvNv = 0
+
+      m%fsVxP = 0
+      m%vxFs = 0
 
       if (m%isClassicalGrid.eq.1) then
         m%imapCv = 0
@@ -229,7 +240,7 @@
       write (*,*) '=================================='
 
       return
-      end subroutine initialize_mapping 
+      end subroutine initialize_mapping
 
 **********************************************************************
 
@@ -247,16 +258,16 @@
 
       if (.not.allocated(m%cvFcP)) return
 
-      deallocate (m%cvFcP) 
+      deallocate (m%cvFcP)
       deallocate (m%cvFc)
       deallocate (m%fcCv)
       deallocate (m%fcVx)
       deallocate (m%cvVxP)
       deallocate (m%cvVx)
-      deallocate (m%vxFcP) 
-      deallocate (m%vxFc) 
-      deallocate (m%vxCvP)  
-      deallocate (m%vxCv) 
+      deallocate (m%vxFcP)
+      deallocate (m%vxFc)
+      deallocate (m%vxCvP)
+      deallocate (m%vxCv)
       deallocate (m%ftCv)
       deallocate (m%ftCvP)
       deallocate (m%ftFc)
@@ -267,18 +278,24 @@
       deallocate (m%ftReg)
       deallocate (m%cvOnClosedSurface)
 
-!      deallocate (m%intfaceV) 
-!      deallocate (m%intvertexV) 
-      deallocate (m%intcellP) 
-      deallocate (m%intcellR)   
+!      deallocate (m%intfaceV)
+!      deallocate (m%intvertexV)
+      deallocate (m%intcellP)
+      deallocate (m%intcellR)
 
       deallocate (m%cvNvP)
-      deallocate (m%cvNv)  
-    
+      deallocate (m%cvNv)
+
+      deallocate (m%fsVxP)
+      deallocate (m%fsVx)
+      deallocate (m%vxFs)
+
+      if (allocated(m%Xpt)) deallocate (m%Xpt)
+
       deallocate (m%imapCv)
-      deallocate (m%imapFcx)  
-      deallocate (m%imapFcy)  
-      deallocate (m%imapVx)  
+      deallocate (m%imapFcx)
+      deallocate (m%imapFcy)
+      deallocate (m%imapVx)
       deallocate (m%icornVx)
       if (allocated(m%ictcntrl)) deallocate (m%ictcntrl)
 #ifdef WG_DEBUG
@@ -291,9 +308,9 @@
       deallocate (m%fcLbl)
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
-      
+
       return
-      end subroutine dealloc_mapping 
+      end subroutine dealloc_mapping
 
 **********************************************************************
 
@@ -317,7 +334,7 @@
       m%bcFcOr = 0._R8
 
       return
-      end subroutine alloc_mapping_bc 
+      end subroutine alloc_mapping_bc
 
 **********************************************************************
 
@@ -333,7 +350,7 @@
       deallocate ( m % bcFcP  )
       deallocate ( m % bcFc   )
       deallocate ( m % bcFcOr )
-      
+
       return
       end subroutine dealloc_mapping_bc
 
@@ -358,8 +375,8 @@
       m%rcFc = 0
       m%rcFcOr = 0._R8
 
-      return      
-      end subroutine alloc_mapping_rc 
+      return
+      end subroutine alloc_mapping_rc
 
 **********************************************************************
 
@@ -376,8 +393,8 @@
       deallocate ( m % rcFc   )
       deallocate ( m % rcFcOr )
 
-      return      
-      end subroutine dealloc_mapping_rc 
+      return
+      end subroutine dealloc_mapping_rc
 
 **********************************************************************
 
@@ -399,7 +416,7 @@
       m%cfFcOr = 0._R8
 
       return
-      end subroutine alloc_mapping_cf 
+      end subroutine alloc_mapping_cf
 
 **********************************************************************
 
@@ -414,7 +431,7 @@
       deallocate ( m % cfReg   )
       deallocate ( m % cfOnCv )
       deallocate ( m % cfFcOr   )
-      
+
       return
       end subroutine dealloc_mapping_cf
 
@@ -533,7 +550,7 @@
         call cfwuin (nout, 0, idum, 'imapFcy')
         call cfwuin (nout, 0, idum, 'imapVx')
         call cfwuin (nout, 0, idum, 'icornVx')
-      endif      
+      endif
 
       call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')
       call cfwuin (nout, mpg%nCv,  mpg%cvLbl,'cvLbl')
@@ -547,10 +564,12 @@
       subroutine init_mapping(m)
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: i, iCv, iVx, iVx1, iNv, iNv1, iNv2, iNvmx
-      integer, allocatable :: indCv(:)
+      integer :: i, j
+      integer :: iCv, iFc, iVx, iFs, iVx1, iVx2, iNv, iNv1, iNv2, iNvmx
+      integer :: totalcount, regcount, Fscount
+      integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:)
 cwdk  This initialization routine precomputes a number of arrays
-cwdk  in the mapping that are not stored in the b2fgmtry file, but 
+cwdk  in the mapping that are not stored in the b2fgmtry file, but
 cwdk  can be derived directly from data in that file
 
 *   ..regions
@@ -577,7 +596,7 @@ cwdk  can be derived directly from data in that file
         m%cvNv(m%cvNvP(iCv,1)) = indCv(1)
         i = 1
         outer: do iNv1 = 2, iNvmx
-          do iNv2 = 1, i 
+          do iNv2 = 1, i
             if (m%cvNv(m%cvNvP(iCv,1)+iNv2-1).eq.indCv(iNv1)) then
               ! duplicate element
               cycle outer
@@ -596,6 +615,79 @@ cwdk  can be derived directly from data in that file
       m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
       deallocate(indCv)
+
+      allocate (indFsVx(m%nVx))
+      indFsVx = 0
+      totalcount = 0
+      do iFs = 1, m%nFs
+        Fscount = 0
+        do i = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
+          iFc = m%fsFc(i)
+          iVx1 = m%fcVx(iFc,1)
+          iVx2 = m%fcVx(iFc,2)
+          if (m%vxFs(iVx1).ne.0) then
+            m%vxFs(iVx1) = iFs
+            m%nFsVxmx = m%nFsVxmx + 1
+            Fscount = Fscount + 1
+            totalcount = totalcount + 1
+            indFsVx(totalcount) = iVx1
+          end if
+          if (m%vxFs(iVx2).ne.0) then
+            m%vxFs(iVx2) = iFs
+            m%nFsVxmx = m%nFsVxmx + 1
+            Fscount = Fscount + 1
+            totalcount = totalcount + 1
+            indFsVx(totalcount) = iVx2
+          end if
+        end do
+        if (Fscount.gt.0) then
+          m%fsVxP(iFs,1) = totalcount - Fscount + 1
+          m%fsVxP(iFs,2) = Fscount
+        end if
+      end do
+      m%nFsVxmx = totalcount
+      allocate(m%fsVx(m%nFsVxmx))
+      m%fsVx(1:m%nFsVxmx) = indFsVx(1:m%nFsVxmx)
+      deallocate(indFsVx)
+
+      allocate(indXpt(m%nVx))
+      allocate(ireg(maxval(m%vxCvP(:,2))))
+      indXpt = 0
+      m%nXpt = 0
+      do iVx = 1, m%nVx
+        ireg = 0
+        do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
+          iCv = m%vxCv(i)
+          ireg(i-m%vxCvP(iVx,1)+1) = m%cvReg(iCv)
+        end do
+        regcount = 0
+        do i = 1, maxval(m%vxCvP(:,2))
+          if (ireg(i).eq.0) cycle
+          if (i.eq.1) then
+            regcount = 1
+          else
+            do j = 1, i-1
+              if (ireg(i).eq.ireg(j)) cycle
+              regcount = regcount + 1
+            end do
+          end if
+        end do
+        if (regcount.ge.3) then
+          m%nXpt = m%nXpt + 1
+          indXpt(m%nXpt) = iVx
+        end if
+      end do
+      deallocate(ireg)
+
+      if (m%nXpt.gt.0) then
+        allocate (m%Xpt(m%nXpt))
+        m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
+      end if
+      deallocate(indXpt)
+
+      write (*,*) 'nXpt          ', m%nXpt
+      write (*,*) 'nFsVxmx       ', m%nFsVxmx
+
       return
       end subroutine init_mapping
 

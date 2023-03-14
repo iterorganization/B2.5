@@ -1169,8 +1169,8 @@ c.. Make a list of core boundaries
 #endif
           endif
         enddo
-        if (ny.gt.1) then
-          if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
+        if (maxval(m%fsVxP(:,2)).gt.2) then
+          if (m%nnreg(0).gt.1 .or. m%periodic_bc.eq.1) then
             call xertst(1.le.ncbs, 'faulty parameters ncbs')
           end if
         end if

@@ -3506,7 +3506,7 @@ contains
         & topix,topiy,bottomix,bottomiy, &
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
-    call xertst( geometryId( nnreg, periodic_bc, topcut ) == GEOMETRY_SN,   &
+    call xertst( geometryId( mpg, geo ) == GEOMETRY_SN,   &
         &   "write_cpo: can only do single null" )
 
     !! Write plasma state
