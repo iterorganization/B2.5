@@ -632,7 +632,7 @@ contains
         integer :: nFc  !< Number of all faces/edges (x + y aligned)
         integer :: geometryType  !< Geometry identifier index
 
-        geometryType = geometryId(nnreg, periodic_bc, topcut)
+        geometryType = geometryId( mpg, geo )
 
         allocate( grid_ggd%identifier%name(1) )
         grid_ggd%identifier%name = geometryName(geometryType)
@@ -1484,7 +1484,7 @@ contains
 #endif
 
         if (ncall.eq.0) then
-          geoId = geometryId(nnreg, periodic_bc, topcut)
+          geoId = geometryId( mpg, geo )
           call get_jsep( nx, ny, jxi, jxa, jsep )
           call get_nxt ( nx, nxtl, nxtr )
         end if
@@ -2305,7 +2305,7 @@ contains
       !! procedures
       external xertst
 
-      geoId = geometryId(nnreg, periodic_bc, topcut)
+      geoId = geometryId( mpg, geo )
 
       !! Figure out total number of subgrids
       !! Do generic subgrids + subgrids

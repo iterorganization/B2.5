@@ -2176,12 +2176,19 @@ contains
 
   !> Identify what geometry/topology is present from cut and periodicity data.
   !> Returns one of the GEOMETRY_* constants. Stops if unknown geometry.
-  integer function geometryId( nnreg, periodic_bc, topcut )
-    integer, intent(in) :: nnreg(0:2), periodic_bc, topcut(:)
+  integer function geometryId( mpg, geo )
+    use b2us_map
+    use b2us_geo
+    implicit none
+    type(mapping), intent(in) :: mpg
+    type(geometry), intent(in) :: geo
+    integer :: i, j, iCv, iXpt
+    real(kind=R8) :: Xpsi_active, Xpsi_snowflake
+    logical :: active, psi_growing
     logical, save :: first
     data first/.true./
 
-    if (nnreg(0) == 1 .and. periodic_bc.le.0) then
+    if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc.le.0) then
         geometryId = GEOMETRY_LINEAR
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LINEAR")
@@ -2190,7 +2197,7 @@ contains
         return
     end if
 
-    if (nnreg(0) == 1 .and. periodic_bc == 1) then
+    if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc == 1) then
         geometryId = GEOMETRY_CYLINDER
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CYLINDER")
@@ -2199,7 +2206,7 @@ contains
         return
     end if
 
-    if (nnreg(0) == 2) then
+    if (mpg%nnreg(0) == 2) then
         geometryId = GEOMETRY_LIMITER
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LIMITER")
@@ -2208,7 +2215,7 @@ contains
         return
     end if
 
-    if (nnreg(0) == 4) then
+    if (mpg%nnreg(0) == 4) then
         geometryId = GEOMETRY_SN
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
@@ -2217,7 +2224,7 @@ contains
         return
     end if
 
-    if (nnreg(0) == 5) then
+    if (mpg%nnreg(0) == 5) then
         geometryId = GEOMETRY_STELLARATORISLAND
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_STELLARATORISLAND")
@@ -2226,16 +2233,43 @@ contains
         return
     end if
 
-    if (nnreg(0) == 7) then
-        if (topcut(1) < topcut(2)) then
+    if (mpg%nnreg(0) == 7) then
+        active = .false.
+        do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
+                                      & mpg%vxCvP(mpg%Xpt(1),2) - 1
+          iCv = mpg%vxCv(i)
+          if (mpg%cvReg(iCv).eq.1) active = .true.
+        end do
+        if (active) then
+          iXpt = 1
+          Xpsi_active = geo%fsPsi(mpg%vxFs(mpg%Xpt(1)))
+          Xpsi_snowflake = geo%fsPsi(mpg%vxFs(mpg%Xpt(2)))
+        else
+          iXpt = 2
+          Xpsi_active = geo%fsPsi(mpg%vxFs(mpg%Xpt(2)))
+          Xpsi_snowflake = geo%fsPsi(mpg%vxFs(mpg%Xpt(1)))
+        end if
+        do i = mpg%vxCvP(mpg%Xpt(iXpt),1), mpg%vxCvP(mpg%Xpt(iXpt),1) + &
+                                         & mpg%vxCvP(mpg%Xpt(iXpt),2) - 1
+          iCv = mpg%vxCv(i)
+          if (mpg%cvReg(iCv).eq.1) then
+            do j = mpg%cvVxP(iCv,1), mpg%cvVxP(iCv,1) + mpg%cvVxP(iCV,2) - 1
+              if (mpg%vxFs(mpg%cvVx(j)).eq.mpg%vxFs(mpg%Xpt(iXpt))) cycle
+              psi_growing = geo%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt. &
+                          & geo%fsPsi(mpg%vxFs(mpg%Xpt(iXpt)))
+            end do
+          end if
+        end do
+        if ((Xpsi_active.lt.Xpsi_snowflake.and.psi_growing).or. &
+          & (Xpsi_active.gt.Xpsi_snowflake.and..not.psi_growing)) then
             geometryId = GEOMETRY_LFS_SNOWFLAKE_MINUS
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_MINUS")
                 first = .false.
             end if
             return
-        end if
-        if (topcut(1) > topcut(2)) then
+        else if ((Xpsi_active.gt.Xpsi_snowflake.and.psi_growing).or. &
+              &  (Xpsi_active.lt.Xpsi_snowflake.and..not.psi_growing)) then
             geometryId = GEOMETRY_LFS_SNOWFLAKE_PLUS
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LFS_SNOWFLAKE_PLUS")
@@ -2243,7 +2277,7 @@ contains
             end if
             return
         end if
-        if (topcut(1) == topcut(2)) then
+        if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_UNSPECIFIED
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): unknown GEOMETRY_UNSPECIFIED")
@@ -2253,31 +2287,38 @@ contains
         end if
     end if
 
-    if (nnreg(0) == 8) then
+    if (mpg%nnreg(0) == 8) then
 
-        if (topcut(1) == topcut(2)) then
+        if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_CDN
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CDN")
                 first = .false.
             end if
             return
-        end if
-        if (topcut(1) < topcut(2)) then
+        else
+          active = .false.
+          do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
+                                        & mpg%vxCvP(mpg%Xpt(1),2) - 1
+            iCv = mpg%vxCV(i)
+            if (mpg%cvReg(iCv).eq.1) active = .true.
+          end do
+          if ((geo%vxY(mpg%Xpt(1)) < geo%vxY(mpg%Xpt(2)).and.active).or. &
+           &  (geo%vxY(mpg%Xpt(1)) > geo%vxY(mpg%Xpt(2)).and..not.active)) then
             geometryId = GEOMETRY_DDN_BOTTOM
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_BOTTOM")
                 first = .false.
             end if
             return
-        end if
-        if (topcut(1) > topcut(2)) then
+          else
             geometryId = GEOMETRY_DDN_TOP
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_TOP")
                 first = .false.
             end if
             return
+          end if
         end if
     end if
 

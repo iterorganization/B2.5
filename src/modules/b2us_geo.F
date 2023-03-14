@@ -375,7 +375,7 @@
       use b2us_map
       implicit none
       type (switches), intent (in) :: switch
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
       real (kind=R8) :: hzconst, dux, duy, du, sbf
@@ -386,11 +386,11 @@
       nVx = mpg%nVx
 
 *   ..identify periodicity
-      call is_periodic( mpg, gm, periodic_bc )
+      call is_periodic( mpg, gm )
 
 *   ..identify cells on closed surfaces
       if (mpg%nnreg(0).eq.1) then
-        mpg%cvOnClosedSurface = periodic_bc.eq.1
+        mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
       else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
      .         mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
         mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
@@ -686,17 +686,17 @@
 
 **********************************************************************
 
-      subroutine is_periodic ( mpg, gm, periodic_bc )
+      subroutine is_periodic ( mpg, gm )
+      use b2us_map
       implicit none
-      type(mapping), intent(in) :: mpg
+      type(mapping), intent(inout) :: mpg
       type(geometry), intent(in) :: gm
-      integer, intent(out) :: periodic_bc
-      integer :: ic, iCvm, iCvn, iCvp, iCv, iFc, iFt, count
+      integer :: ic, iCvm, iCvn, iCvp, iCv, iFc, iFt, icount
       logical :: closed, end_found, all_closed
 
-      periodic_bc = 0
+      mpg%periodic_bc = 0
       if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.5) then
-        periodic_bc = 1
+        mpg%periodic_bc = 1
       else if (mpg%nnreg(0).eq.1) then
         all_closed = mpg%nFt.gt.0
         do iFt = 1, mpg%nFt
@@ -704,16 +704,18 @@
           iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
           if (mpg%ftCvP(iFt,2).gt.1) then
             iCvm = iCv
+            iCvn = 0
             do iFc = mpg%cvFcP(iCv,1),
      &               mpg%cvFcP(iCv,1) + mpg%cvFcP(iCv,2) - 1
               if (gm%fcQalf(mpg%cvFc(iFc),0).eq.0.0_R8) cycle
-              if (mpg%fcCv(mpg%cvFc(iFc,1)).eq.iCv) then
-                iCvn = mpg%fcCv(mpg%cvFc(iFc,2))
+              if (mpg%fcCv(mpg%cvFc(iFc),1).eq.iCv) then
+                iCvn = mpg%fcCv(mpg%cvFc(iFc),2)
               else
-                iCvn = mpg%fcCv(mpg%cvFc(iFc,1))
+                iCvn = mpg%fcCv(mpg%cvFc(iFc),1)
               end if
             end do
-            end_found = .false.
+            closed = iCvn.eq.0
+            end_found = iCvn.eq.0
             do while (.not.end_found)
               iCvp = 0
               do iFc = mpg%cvFcP(iCvn,1),
@@ -733,7 +735,7 @@
               end_found = closed .or. iCvp.eq.0
             end do
           else if (mpg%ftCvP(iFt,2).eq.1) then
-            count = 0
+            icount = 0
             iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
             do iFc = mpg%cvFcP(iCv,1), mpg%cvFcP(iCv,1) +
      &                                 mpg%cvFcP(iCv,2) - 1
@@ -747,7 +749,7 @@
           end if
           all_closed = all_closed .and. closed
         end do
-        if (all_closed) periodic_bc = 1
+        if (all_closed) mpg%periodic_bc = 1
       end if
 
       return
