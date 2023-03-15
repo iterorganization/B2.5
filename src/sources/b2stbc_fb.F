@@ -208,7 +208,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_user_namelist
-     & ,only : omp, icsepomp, ifssep
+     & ,only : omp, icsepomp
 #ifdef WG_TODO
       use b2mod_user_namelist
      & ,only : nomp
@@ -964,8 +964,8 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                 if(b2espcr(is).eq.ispecies+1) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  ifc1 = mpg%fsFcP(ifssep,1)
-                  ifc2 = ifc1 + mpg%fsFcP(ifssep,2) - 1
+                  ifc1 = mpg%fsFcP(mpg%iFssep,1)
+                  ifc2 = ifc1 + mpg%fsFcP(mpg%iFssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   do iFc = ifc1, ifc2

@@ -95,7 +95,7 @@ module b2mod_ual_io
 #if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
-     & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS_Cell, &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Face, &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
@@ -253,14 +253,12 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: configuration
   character*8, save :: imas_version, ual_version, adas_version
   character*32, save :: B25_git_version
-  logical, save :: IDSmapInitialized = .false.
 #ifndef NO_GETENV
   integer lenval, ierror
 #ifndef USE_PXFGETENV
   intrinsic get_environment_variable
 #endif
 #endif
-  type(B2GridMap), save :: IDSmap
 
 contains
 
@@ -743,52 +741,24 @@ contains
         !! Write grid & grid subsets/subgrids
 #if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
 #if IMAS_MINOR_VERSION < 15
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_profiles%ggd( time_sind )%grid,                        &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_transport%model(1)%ggd( time_sind )%grid,              &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_profiles%ggd( time_sind )%grid )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_transport%model(1)%ggd( time_sind )%grid )
         do is = 1, nsources
-            call b2_IMAS_Fill_Grid_Desc( IDSmap,                              &
-                &   edge_sources%source(is)%ggd( time_sind )%grid,            &
-                &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),      &
-                &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, &
-                &   bottomiy, nnreg, topcut, region, cflags,                  &
-                &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            call b2_IMAS_Fill_Grid_Desc( mpg, geo,                          &
+                &   edge_sources%source(is)%ggd( time_sind )%grid )
         end do
 #else
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_profiles%grid_ggd( time_sind ),                        &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_transport%grid_ggd( time_sind ),                       &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   edge_sources%grid_ggd( time_sind ),                         &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_profiles%grid_ggd( time_sind ) )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_transport%grid_ggd( time_sind ) )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   edge_sources%grid_ggd( time_sind ) )
 #if IMAS_MINOR_VERSION > 21
-        call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
-            &   radiation%grid_ggd( time_sind ),                            &
-            &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
-            &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
-            &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+        call b2_IMAS_Fill_Grid_Desc( mpg, geo,                              &
+            &   radiation%grid_ggd( time_sind ) )
 #endif
 #endif
 #else
@@ -2388,7 +2358,7 @@ contains
       select case (ndim)
       case ( 1 ) !< Grid subset consists of nodes
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
-                     &   basegrid, iSubset, IDSmap, tmpVx )
+                     &   basegrid, iSubset, mpg, tmpVx )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2397,7 +2367,7 @@ contains
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
-                     &   basegrid, iSubset, IDSmap, tmpFace )
+                     &   basegrid, iSubset, mpg, tmpFace )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2405,8 +2375,8 @@ contains
 #endif
         deallocate( idsdata )
       case ( 3 ) !< Grid subset consists of cells
-        idsdata => b2_IMAS_Transform_Data_B2_To_IDS(                 &
-                      &  basegrid, iSubset, IDSmap, value )
+        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(          &
+                      &  basegrid, iSubset, mpg, value )
 #if GGD_MINOR_VERSION > 8
         call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2515,8 +2485,8 @@ contains
        end if
        if (ndim.ne.3) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS(  &
-          &   basegrid, iSubset, IDSmap, b2CellData )
+       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(  &
+          &   basegrid, iSubset, mpg, b2CellData )
 #if GGD_MINOR_VERSION > 8
        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -2632,8 +2602,8 @@ contains
         end select
       end if
       if (ndim.ne.3) cycle
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(           &
-                   &   basegrid, iSubset, IDSmap, b2CellData )
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(       &
+                   &   basegrid, iSubset, mpg, b2CellData )
       call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
           &   ggdID, iSubsetID, vectorID, idsdata )
       deallocate(idsdata)
@@ -2772,7 +2742,7 @@ contains
     type(ids_generic_grid_vector_components), intent(inout),    &
        &   pointer :: vectorComponent(:) !< Type of IDS data structure,
                                          !> designed for vector data handling
-    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc, 0:1)
+    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc )
     real(IDS_real), dimension(:), pointer :: idsdata    !< Array for
                                          !< handling data field values
     character(len=*), intent(in) :: vectorID    !< Vector ID (e.g.
@@ -2852,8 +2822,8 @@ contains
         end select
       end if
       if (ndim.ne.2) cycle
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS( &
-                   &   basegrid, iSubset, IDSmap, b2FaceData )
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face( &
+                   &   basegrid, iSubset, mpg, b2FaceData )
       call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
                    &   ggdID, iSubsetID, vectorID, idsdata )
       deallocate(idsdata)
@@ -2955,7 +2925,7 @@ contains
        if (ndim.ne.1) cycle
 
        idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
-          &   basegrid, iSubset, IDSmap, b2VertexData )
+          &   basegrid, iSubset, mpg, b2VertexData )
 #if GGD_MINOR_VERSION > 8
        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
@@ -3009,7 +2979,7 @@ contains
     type(ids_generic_grid_scalar), intent(inout) :: vector
         !< Type of IDS data structure, designed for scalar data handling
         !< (in this case 1D vector)
-    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc, 0:1)
+    real(IDS_real), intent(in) :: b2FaceData( mpg%nFc )
     integer, intent(in) :: gridID                    !< Grid identifier index
     integer, intent(in), optional :: gridSubsetID    !< Grid subset identifier index
     integer, intent(in), optional :: gridSubsetInd   !< Base grid subset index
@@ -3018,16 +2988,16 @@ contains
 
     if ( .not. present(gridSubsetInd) ) then
       !! Fill in vector component data
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-               &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, IDSmap, b2FaceData)
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
+               &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, mpg, b2FaceData)
 #if GGD_MINOR_VERSION > 8
       call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
       call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #endif
       deallocate(idsdata)
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-               &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, IDSmap, b2FaceData)
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
+               &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, mpg, b2FaceData)
 #if GGD_MINOR_VERSION > 8
       call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
@@ -3035,8 +3005,8 @@ contains
 #endif
       deallocate(idsdata)
     else
-      idsdata => b2_IMAS_Transform_Data_B2_To_IDS(    &
-               &   basegrid, gridSubsetInd, IDSmap, b2FaceData)
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
+               &   basegrid, gridSubsetInd, mpg, b2FaceData)
 #if GGD_MINOR_VERSION > 8
       call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
