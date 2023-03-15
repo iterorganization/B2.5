@@ -124,8 +124,7 @@
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3)
       real (kind=R8), allocatable, save :: t1(:)                        !iyv 07.03.18 }
-      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8,         !srv 12.04.08
-     *                        sna_corr = 0.0_R8                         !iyv 07.03.18
+      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8
       character chns*3, chk*1                                           !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
@@ -156,7 +155,7 @@
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
      *  old_erosion(:,:), old_deposition(:,:)
-      real (kind=R8), save :: c_pumpavr=0.02_R8, taumax=0.05_R8         !iyv 07.03.18
+      real (kind=R8), save :: c_pumpavr=0.02_R8
       logical new_sputter_namelist, catch_up
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
@@ -239,11 +238,11 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
-        call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
+!        call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !IYS 27.11.2018
-        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
+!        call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
         call ipgetr ('b2stbr_c_pumpavr', c_pumpavr)
-        if( sna_corr .gt. 0.0_R8 ) then
+        if( sum(sna_corr) .gt. 0.0_R8 ) then
            allocate(t1(1:nspecies))
            t1=0.0_R8
         endif                                                        !iyv 07.03.18 }
@@ -726,42 +725,45 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &                 main_call)
 
 *   ..main part of implementation of method of effective sources (ES)
-        if (sna_corr .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
+        if (sum(sna_corr) .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
           if ( iout .ne. 0 )
      >      write(*,*) '******* sna_eir correction calculations *******'
           sna_core = 0.0_R8
           iy = 0
-          do ix = -1, nx
-            if(on_closed_surface(ix,iy)) then
-              do is = 0, ns-1
-                if ( is_neutral(is) ) cycle
-                k = b2espcr(is)
+          do is = 0, ns-1
+            k = b2espcr(is)
+            if ( is_neutral(is) .or. (.not. do_sna_corr_core(k))) cycle
+            do ix = -1, nx
+              if(on_closed_surface(ix,iy)) then
                 if (mdf_fnb.ne.0) then
                   sna_core(k) = sna_core(k) + fna_mdf(ix,iy,1,is)
                 else
                   sna_core(k) = sna_core(k) + fna(ix,iy,1,is)
                 end if
+              end if
+            end do
+
+!  Subsract contribution from Eirene core boundary fluxes
+            if (is_neutral(is-1)) then ! to account this contribution only once
+              do k = 1, ncns
+                ix = nnlimi + lcns(k)
+                do ia = 1, nnatmi
+                  if (latmscl(ia).eq.b2espcr(is)) then
+                 sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
+     &           wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
+                    do im = 1, nnmoli
+                      if (mlcmp(ia,im).gt.0) then
+                      sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
+     &                 mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
+     &                              - wldpm(ix,im,0))
+                      end if
+                    end do
+                  end if
+                end do
               end do
             end if
-          end do
 
-!  Add contribution from Eirene core boundary fluxes
-!          do k = 1, ncns
-!            ix = nnlimi + lcns(k)
-!            do ia = 1, nnatmi
-!           if (latmscl(ia).eq.b2espcr(is)) then
-!              sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
-!     &          wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
-!              do im = 1, nnmoli
-!                if (mlcmp(ia,im).gt.0) then
-!                  sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
-!     &              mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
-!     &                              - wldpm(ix,im,0))
-!                end if
-!              end do
-!            end do
-!           end if
-!          end do
+          end do
 
           sna_eir= 0.0_R8
           ext_sna_tot= 0.0_R8
@@ -826,7 +828,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 
           do k = 1, nspecies
             if (sna_eir(k).ne.0.0_R8) then
-              t01(k) =  sna_corr*( sna_puff(k) + sna_core(k) +
+              t01(k) =  sna_corr(k)*( sna_puff(k) + sna_core(k) +
      &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
      &            sna_eir(k)
             else
@@ -836,7 +838,7 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
      &                     exp(-c_pumpavr)*t1(k)
  !           t1(k) = t01(k)
             t(k) = 1.0_R8 +
-     &              max( min( taumax,t1(k) ), -taumax )
+     &              max( min( taumax(k),t1(k) ), -taumax(k) )
             if ( iout .ne. 0 )
      &       write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
             sna_eir(k) = sna_eir(k)*t(k)

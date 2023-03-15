@@ -3403,6 +3403,7 @@
 			  <default>0.0</default>
 			  <type>real</type>
 			  <description>
+			        Now it is an obsolette switch. After the speed-up scheme of artificial sources became species-resolved, it is turned on/off through the similar parameters in numerics namelist. Please refer to the corresponding part of the documentation.
 				Multiplier to the neutral source differential between puffing and pumping strata for code speed-up.
 				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details.
 			  </description>
@@ -3804,6 +3805,7 @@
 				<default>0.05</default>
 				<type>real</type>
 				<description>
+					Now it is an obsolette switch. Since the speed-up scheme became species resolved, this parameter should be set in numerics namelist.
 					Maximum allowed fraction of source to be added or substracted to the real source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
@@ -7141,6 +7143,31 @@
 				<description>
 				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
+				<name>SNA_CORR</name>
+				<default>0.0</default>
+				<type>real*8</type>
+				<description>
+				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus external source) and pumping which is further added to the ionization source for code speed-up. Now it has dimension SNA_CORR(1:NSPECIES) to allow different multipliers for different isonuclear sequences - such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper this scheme was suggested as NOT species resolved.
+				</description>
+			</switch>
+			<switch>
+				<name>TAUMAX</name>
+				<default>0.05</default>
+				<type>real*8</type>
+				<description>
+				Maximum allowed fraction of ionization source from neutral state (coming from Eirene) to be added or substracted to the real Eirene source in the method of effective sources for code speed-up - now each isonuclear sequence may have its own TAUMAX, which has dimensions TAUMAX(1:NSPECIES)
+				</description>
+			</switch>
+			<switch>
+				<name>DO_SNA_CORR_CORE</name>
+				<default>.TRUE.</default>
+				<type>logical</type>
+				<description>
+				Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up - also species resolved. If .TRUE., then the flux through the core boundary of certain species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .FALSE., then the particle disbalance is computed as puffing plus sputtering plus external source minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such setting might be helpful if core flux is much bigger than puffing and core is isolated from SOL by strong transport barrier) 
 				</description>
 			</switch>
 			<switch>
