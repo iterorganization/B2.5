@@ -28,8 +28,8 @@
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordiantes 
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
       integer, parameter :: nromp=DEF_NYD*4
-      integer, save :: omp(nromp), icsepomp, nomp, ifssep, imp(nromp),
-     ,  icsepimp, nimp
+      integer, save :: omp(nromp), icsepomp, nomp,
+     ,                 imp(nromp), icsepimp, nimp
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
@@ -227,8 +227,8 @@ c***  Standard set-up:
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        ic1, ic2, icff, icv, ifc, ifcc, ifc1, ifc2, ifs,
-     >        ii, ifc11, ifc22, jj
+     >        ic1, ic2, icff, iCv, iFc, iFcc, iFc1, iFc2, iFs, iVx,
+     >        ii, iFc11, iFc22, jj
 
       logical :: file_ok
       character*260 filename, cffile
@@ -237,11 +237,9 @@ c***  Standard set-up:
       integer, allocatable :: cfReg(:)
       logical done, ifail, found
       integer, save :: use_eirene, neutrals_namelist
-#ifdef WG_TODO
       integer j, k, is, im
       logical old_style
       logical, save :: hydrogen, helium, neon
-#endif
       external ipgeti, find_file, xertst
 #ifndef F2003
       integer newunit
@@ -287,19 +285,26 @@ c***  Standard set-up:
      & ' OMP list need to be revised for fully unstructured grids')
       do ic=2,nomp
         if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
-     & call xerrab('OMP LIST NOT SORTED')
+     &   call xerrab('OMP LIST NOT SORTED')
       end do
-*   ..Definition of separatrix position in OMP list (to be improved for DN)
+*   ..Definition of separatrix position in OMP list
 ! Separatrix is defined by checking when cvReg changes value inside the OMP list
       icsepomp = 0
       ic = 1
       found = .false.
       do while (ic.le.nomp .and..not.found)
-        if (m%cvReg(omp(ic)).ne.m%cvReg(omp(ic+1))) then
-          found = .true.
-          icsepomp = ic+1
-        endif
-      ic = ic + 1
+        do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+          do j = 1, 2
+            if (found) cycle
+            iVx = m%fcVx(m%cvFc(i),j)
+            if (m%vxFs(iVx).eq.m%iFssep.and.m%iFssep.ne.0) then
+              icsepomp = ic+1
+              found = .true.
+            end if
+          end do
+        end do
+        ic = ic + 1
       end do
 
       call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
@@ -534,7 +539,6 @@ c***  Standard set-up:
         b2dataOnCf = 0.0
       endif
 
-#ifdef WG_TODO
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
       old_style = maxval(j_h_at).eq.0
       if (j_h_at(1).ne.0.and.j_h_at(2).eq.0.and.j_h_at(3).eq.0) then
@@ -589,10 +593,12 @@ c*** Set default values according to current species list
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
+#ifdef WG_TODO
       call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
       call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
       call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
       call xertst (abs(lpfrt_o).le.nx, 'faulty input lpfrt_o')
+#endif
       call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),
@@ -659,7 +665,7 @@ c*** Set default values according to current species list
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
-#endif
+
 *   ..Create list of IMP control volumes
 ! Same logic as OMP list, find CVs intersected by rzimp segment
       nimp = 0
@@ -669,52 +675,33 @@ c*** Set default values according to current species list
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp
         if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
-     & call xerrab('IMP LIST NOT SORTED')
+     &   call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)
       icsepimp = 0
       ic = 1
       found = .false.
       do while (ic.le.nimp .and..not.found)
-        if (m%cvReg(imp(ic)).ne.m%cvReg(imp(ic+1))) then
-          found = .true.
-          icsepimp = ic+1
-        endif
-      ic = ic + 1
+        do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+          do j = 1, 2
+            if (found) cycle
+            iVx = m%fcVx(m%cvFc(i),j)
+            if (m%vxFs(iVx).eq.m%iFssep.and.m%iFssep.ne.0) then
+              icsepimp = ic+1
+              found = .true.
+            end if
+          end do
+        end do
+        ic = ic + 1
       end do
       if (.not.found) write(*,'(a/a)')
      &  'Warning: did not find separatrix location in IMP definition, '\
      &  '         check specification of RZIMP in b2.user.parameters'\
      &  '         if IMP is needed.'
-      ifssep = 0 !flux surface of separatrix
-      ic1 = omp(icsepomp-1) !cv of flux tube just inside sep
-      ic2 = omp(icsepomp) !cv of flux tube just outside sep
-      ifc1 = m%cvFcP(ic1,1)
-      ifc2 = ifc1 + m%cvFcP(ic1,2) - 1
-      ifc11 = m%cvFcP(ic2,1)
-      ifc22 = ifc11 + m%cvFcP(ic2,2) - 1
-      ! find face belonging to both ic1 and ic2
-      do ii = ifc1, ifc2
-        ifc = m%cvFc(ii)
-        do jj = ifc11, ifc22
-          ifcc = m%cvFc(jj)
-          if (ifc.eq.ifcc) exit
-        enddo
-      end do
-      ! find this face in fsFc --> ii
-      do ii = 1, size(m%fsFc,1)
-        if (ifc.eq.m%fsFc(ii)) exit
-      end do
-      ! find ii in fsFcP(ifs,1):fsFcP(ifs,1)+fsFcP(ifs,2)
-      do ifs = 1, size(m%fsFcP,1)
-        ifc1 = m%fsFcP(ifs,1)
-        ifc2 = ifc1 + m%fsFcP(ifs,2) - 1
-        if (ii.ge.ifc1 .and. ii.le.ifc2) exit
-      enddo
-      ifssep = ifs
-      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(ifssep,2).gt.0,
+      if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')
-      write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep
+      write(*,*) 'SEPARATRIX FLUX SURFACE AT iFs=',m%iFssep
 
       call subend ()
       return

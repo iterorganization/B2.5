@@ -16,7 +16,7 @@
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt
-        integer :: nnreg(0:1), periodic_bc
+        integer :: nnreg(0:1), periodic_bc, iFssep
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
@@ -234,6 +234,8 @@
       m%fcLbl = 0
       m%ftLbl = 0
       m%cvLbl = 0
+
+      m%iFssep = 0
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
@@ -566,7 +568,7 @@
       type (mapping), intent (inout) :: m
       integer :: i, j
       integer :: iCv, iFc, iVx, iFs, iVx1, iVx2, iNv, iNv1, iNv2, iNvmx
-      integer :: totalcount, regcount, Fscount
+      integer :: totalcount, regcount, Fscount, iactive
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:)
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -654,6 +656,7 @@ cwdk  can be derived directly from data in that file
       allocate(ireg(maxval(m%vxCvP(:,2))))
       indXpt = 0
       m%nXpt = 0
+      iactive = 0
       do iVx = 1, m%nVx
         ireg = 0
         do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
@@ -675,13 +678,23 @@ cwdk  can be derived directly from data in that file
         if (regcount.ge.3) then
           m%nXpt = m%nXpt + 1
           indXpt(m%nXpt) = iVx
+          if (iactive.eq.0) then
+            do i = 1, regcount
+              if (ireg(i).eq.1) iactive = m%nXpt
+            end do
+          end if
         end if
       end do
       deallocate(ireg)
 
       if (m%nXpt.gt.0) then
-        allocate (m%Xpt(m%nXpt))
+        allocate(m%Xpt(m%nXpt))
         m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
+        if (iactive.ne.0) then
+          m%iFssep = m%vxFs(m%Xpt(iactive))
+        else if (m%nnreg(0).eq.1) then
+          call ipgeti ('b2mwti_jsep', m%iFssep)
+        end if
       end if
       deallocate(indXpt)
 

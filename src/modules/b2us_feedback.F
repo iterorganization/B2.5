@@ -16,7 +16,7 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & , only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp
 #ifdef B25_EIRENE
       use eirmod_extrab25
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
@@ -1179,8 +1179,8 @@ cxpb size is changed in DIMENSIONS.F
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
-                  ifc1 = mpg%fsFcP(ifssep,1)
-                  ifc2 = ifc1 + mpg%fsFcP(ifssep,2) - 1
+                  ifc1 = mpg%fsFcP(mpg%iFssep,1)
+                  ifc2 = ifc1 + mpg%fsFcP(mpg%iFssep,2) - 1
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   do iFc = ifc1, ifc2

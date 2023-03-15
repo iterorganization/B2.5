@@ -278,11 +278,7 @@
 				<default>See description (integer)</default>
 				<type>integer</type>
 				<description>
-					Cell index, on the basis mesh, of the last poloidal ring before the separatrix. Can only be provided for slab geometries, otherwise calculated from geometry:
-					Single-null : jsep=topcut(1)-1
-					Stellarator : jsep=topcut(1)-1
-					Double-null : jsep=min(topcut(1),topcut(2))-1
-					Default for straight geometries : jsep=ny/2
+					Flux surface index, on the basis mesh, of the active separatrix. Can only be provided for slab geometries, otherwise deduced from geometry.
 				</description>
 			</switch>
 			<switch>
