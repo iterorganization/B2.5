@@ -181,12 +181,14 @@ contains
                 nFmxCv0 = idum2(2)
                 nVmxCv0 = idum2(3)
                 nVmxFc0 = idum2(4)
-                call cfruin (lun, 3, idum, 'nx,ny,nncut') ! here still add nncut?? 
-                m%nx = idum(0)
-                m%ny = idum(1)
-                nncut = idum(2)
                 call cfruin (lun, 1, idum, 'isClassicalGrid')
                 m%isClassicalGrid = idum(0)
+                if (m%isClassicalGrid.eq.1) then
+                 call cfruin (lun, 3, idum, 'nx,ny,nncut')
+                 m%nx = idum(0)
+                 m%ny = idum(1)
+                 nncut = idum(2)
+                end if
             end if
         end if
         
