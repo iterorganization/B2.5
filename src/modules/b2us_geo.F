@@ -2,7 +2,7 @@
 
       use b2mod_types
       implicit none
-      
+
       private
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
@@ -45,13 +45,15 @@
         real (kind=R8), allocatable  :: vxHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: vxVol(:)       ! Part of volume of surrounding cell centers associated with the vertex; for interpolation
         real (kind=R8), allocatable  :: vxFfbz(:)      !
-        real (kind=R8), allocatable  :: vxFpsi(:)      ! 
+        real (kind=R8), allocatable  :: vxFpsi(:)      !
         real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
         real (kind=R8), allocatable  :: vxBzb(:)       ! Factor for P-S/mdf flows
 
 !  flux tube/surface quantities
         real (kind=R8), allocatable  :: cvConn(:)      ! (nCv) Connection length for each CV
+        real (kind=R8), allocatable  :: vxConn(:)      ! (nVx) Connection length for each vertex
         real (kind=R8), allocatable  :: ftConn(:)      ! (nFt) Connection length for each flux tube
+        real (kind=R8), allocatable  :: fsConn(:)      ! (nFs) Connection length for each flux surface
         real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio
         real (kind=R8), allocatable  :: ftBbav2(:)     ! (nFt) Average B**2 on the flux tube
 
@@ -72,7 +74,7 @@
       if (allocated(g%cvBb)) return
 
 !  cell quantites
-      allocate (g%cvBb(nCv,0:3)) 
+      allocate (g%cvBb(nCv,0:3))
       allocate (g%cvX(nCv))
       allocate (g%cvY(nCv))
       allocate (g%cvSz(nCv))
@@ -82,22 +84,22 @@
       allocate (g%cvVol(nCv))
       allocate (g%cvOnedBsq(nCv))
       allocate (g%cvBzb(nCv))
-      allocate (g%cvEb(nCv,0:2)) 
+      allocate (g%cvEb(nCv,0:2))
 
 !  face quantites
-      allocate (g%fcBb(nFc,0:3)) 
+      allocate (g%fcBb(nFc,0:3))
       allocate (g%fcS(nFc))
       allocate (g%fcHc(nFc,1:2))
       allocate (g%fcHt(nFc))
       allocate (g%fcHz(nFc))
-      allocate (g%fcVol(nFc,1:2))      
+      allocate (g%fcVol(nFc,1:2))
       allocate (g%fcQgam(nFc,0:1))
       allocate (g%fcQalf(nFc,0:1))
       allocate (g%fcQbet(nFc,0:1))
       allocate (g%fcPbs(nFc))
       allocate (g%fcPbshz(nFc))
       allocate (g%fcBzb(nFc))
-      allocate (g%fcEb(nFc,0:2)) 
+      allocate (g%fcEb(nFc,0:2))
 
 !  vertex quantites
       allocate (g%vxBb(nVx,0:3))
@@ -117,10 +119,12 @@
       allocate (g%ftBbav2(nFt))
 
 !  flux surface quantities
+      allocate (g%vxConn(nVx))
+      allocate (g%fsConn(nFs))
       allocate (g%fsPsi(nFs))
 
       call initialize_geometry(g)
-      
+
       return
       end subroutine alloc_geometry
 
@@ -150,7 +154,7 @@
       g%fcHc = 0._R8
       g%fcHt = 0._R8
       g%fcHz = 0._R8
-      g%fcVol = 0._R8    
+      g%fcVol = 0._R8
       g%fcQgam = 0._R8
       g%fcQalf = 0._R8
       g%fcQbet = 0._R8
@@ -170,14 +174,17 @@
       g%vxOnedBsq = 0._R8
       g%vxBzb = 0._R8
 
-!  flux surface quantites
+!  flux tube quantites
       g%cvConn = 0._R8
       g%ftConn = 0._R8
       g%ftEps = 0._R8
       g%ftBbav2 = 0._R8
 
+!  flux surface quantities
+      g%vxConn = 0._R8
+      g%fsConn = 0._R8
       g%fsPsi = 0._R8
-      
+
       return
       end subroutine initialize_geometry
 
@@ -191,7 +198,7 @@
       if (.not.allocated(g%cvBb)) return
 
 !  cell quantites
-      deallocate (g%cvBb) 
+      deallocate (g%cvBb)
       deallocate (g%cvX)
       deallocate (g%cvY)
       deallocate (g%cvSz)
@@ -201,23 +208,23 @@
       deallocate (g%cvVol)
       deallocate (g%cvOnedBsq)
       deallocate (g%cvBzb)
-      deallocate (g%cvEb) 
-      
+      deallocate (g%cvEb)
+
 !  face quantites
-      deallocate (g%fcBb) 
+      deallocate (g%fcBb)
       deallocate (g%fcS)
       deallocate (g%fcHc)
       deallocate (g%fcHt)
       deallocate (g%fcHz)
-      deallocate (g%fcVol)      
+      deallocate (g%fcVol)
       deallocate (g%fcQgam)
       deallocate (g%fcQalf)
       deallocate (g%fcQbet)
       deallocate (g%fcPbs)
       deallocate (g%fcPbshz)
       deallocate (g%fcBzb)
-      deallocate (g%fcEb) 
-      
+      deallocate (g%fcEb)
+
 !  vertex quantites
       deallocate (g%vxBb)
       deallocate (g%vxX)
@@ -229,13 +236,17 @@
       deallocate (g%vxOnedBsq)
       deallocate (g%vxBzb)
 
-!  flux surface quantites
+!  flux tube quantites
       deallocate (g%cvConn)
       deallocate (g%ftConn)
       deallocate (g%ftEps)
       deallocate (g%ftBbav2)
+
+!  flux surface quantites
+      deallocate (g%vxConn)
+      deallocate (g%fsConn)
       deallocate (g%fsPsi)
-      
+
       return
       end subroutine dealloc_geometry
 
@@ -251,7 +262,7 @@
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
-! cell volumes 
+! cell volumes
       call cfrure (iun, nCv*4, gm%cvBb,   'cvBb')
       call cfrure (iun, nCv*3, gm%cvEb,   'cvEb')
       call cfrure (iun, nCv,   gm%cvX,    'cvX')
@@ -291,14 +302,14 @@
 
 ***********************************************************************
 
-      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nFt, 
+      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nFt,
      .                           nVmxCv, gm)
 
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (in) :: gm
 
-! cell volumes 
+! cell volumes
       call cfwure (nout, nCv*4, gm%cvBb,   'cvBb')
       call cfwure (nout, nCv*3, gm%cvEb,   'cvEb')
       call cfwure (nout, nCv,   gm%cvX,    'cvX')
@@ -425,7 +436,7 @@
        do iVx = 1, nVx
         do inCv = 1, mpg%vxCvP(iVx,2)
          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &     (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
         enddo
        enddo
@@ -441,7 +452,7 @@
          else
           ! Make sure guard cells dominate in the interpolation
           ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &      (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
          endif
         enddo
@@ -477,14 +488,14 @@
         ! Construct unit vector normal to face
         dux =   gm%vxY(mpg%fcVx(iFc,2))-gm%vxY(mpg%fcVx(iFc,1))
         duy = -(gm%vxX(mpg%fcVx(iFc,2))-gm%vxX(mpg%fcVx(iFc,1)))
-          
+
         ! Normalize
         du  = sqrt(dux**2+duy**2)
         dux = dux/du
         duy = duy/du
 
         ! Sign of toroidal field (1: out of page; -1: into page)
-        sbf = sign(1.0_R8,gm%fcQalf(iFc,0)*gm%fcQbet(iFc,0) - 
+        sbf = sign(1.0_R8,gm%fcQalf(iFc,0)*gm%fcQbet(iFc,0) -
      &                    gm%fcQalf(iFc,1)*gm%fcQbet(iFc,1))
 
         ! Rotate over angle -alpha; scale with poloidal pitch
@@ -584,28 +595,29 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nfx, iCv, iCv1, iCv2, iFt, j, ic, iFc
+      integer :: nfx, iCn, iCp, iCv, iCv1, iCv2, idir, ic
+      integer :: iFc, iFn, iFs, iFt, iVx, iVm, iVp, iVn, i, ii, j, jj
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), Lr, Ll,
      .  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)
 
-      call ipgeti ('b2mndr_conn_style',conn_style)
-      call ipgeti ('b2mndr_conn_iout',iout)
+      call ipgeti ('b2mndr_conn_style', conn_style)
+      call ipgeti ('b2mndr_conn_iout', iout)
 
       if (mpg%isClassicalGrid.eq.1) then
        ! reconstruct cvHx into wrk1
        nfx = maxval(mpg%imapFcx)
        wrk1 = 0.0_R8
-       do ifc = 1, nfx
-         icv1 = mpg%fcCv(ifc,1)
-         icv2 = mpg%fcCv(ifc,2)
-         wrk1(icv1) = wrk1(icv1) + gm%fcHc(ifc,1)
-         wrk1(icv2) = wrk1(icv2) + gm%fcHc(ifc,2)
+       do iFc = 1, nfx
+         iCv1 = mpg%fcCv(iFc,1)
+         iCv2 = mpg%fcCv(iFc,2)
+         wrk1(iCv1) = wrk1(iCv1) + gm%fcHc(iFc,1)
+         wrk1(iCv2) = wrk1(iCv2) + gm%fcHc(iFc,2)
        enddo
        ! 'N/S guard cells': take length of face
-       do ifc = nfx+1, mpg%nFc
-         icv = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))
-         if (icv.gt.mpg%nCi) wrk1(icv) = gm%fcHt(ifc)
+       do iFc = nfx+1, mpg%nFc
+         iCv = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))
+         if (iCv.gt.mpg%nCi) wrk1(iCv) = gm%fcHt(iFc)
        enddo
        ! construct wrk arrays
        wrk0 = 0.0_R8
@@ -613,12 +625,12 @@
        tt1 = 0.0_R8
        tt2 = 0.0_R8
        tt3 = 0.0_R8
-       do iFt = 1, mpg%nFt 
+       do iFt = 1, mpg%nFt
          do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
-           icv = mpg%ftCv(j)
-           wrk0(icv) = wrk1(icv)*gm%cvBb(icv,3)/gm%cvBb(icv,0)
-           tt0(iFt) = tt0(iFt) + wrk1(icv)
-           tt1(iFt) = tt1(iFt) + wrk1(icv)*gm%cvVol(icv)/gm%cvSz(icv)
+           iCv = mpg%ftCv(j)
+           wrk0(iCv) = wrk1(iCv)*gm%cvBb(iCv,3)/gm%cvBb(iCv,0)
+           tt0(iFt) = tt0(iFt) + wrk1(iCv)
+           tt1(iFt) = tt1(iFt) + wrk1(iCv)*gm%cvVol(iCv)/gm%cvSz(iCv)
            tt2(iFt) = tt2(iFt) + gm%cvBb(iCv,3)*gm%cvBb(iCv,3)*
      .         gm%cvVol(iCv)
            tt3(iFt) = tt3(iFt) + gm%cvVol(iCv)
@@ -628,7 +640,7 @@
        gm%ftConn = 0.0_R8
        gm%ftEps = 0.0_R8
        gm%ftBbav2 = 0.0_R8
-       do iFt = 1, mpg%nFt 
+       do iFt = 1, mpg%nFt
          Ll = 0.0_R8
          do j=mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
           Ll = Ll + wrk0(mpg%ftCv(j))
@@ -642,7 +654,7 @@
        ! 'effective' connection length for use in k-eps model
        if (conn_style.ne.0) then ! if 0, assumed to be read from b2fgmtry
         gm%cvConn = 0.0_R8
-        do iFt = 1, mpg%nFt 
+        do iFt = 1, mpg%nFt
          iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
          if (mpg%cvOnClosedSurface(iCv)) then
           !core region: actual connection length (same as ftConn)
@@ -660,22 +672,198 @@
            do j = mpg%ftCvP(iFt,1), ic-1
             Ll = Ll + wrk0(mpg%ftCv(j))
            end do
-           if (conn_style.eq.1) then
+           if (conn_style.ne.2) then
             gm%cvConn(iCv) = min(Lr,Ll)
            elseif (conn_style.eq.2) then
-            gm%cvConn(iCv) = Lr*Ll/(Lr+Ll)
-           else
-            write (*,*) 'b2mndr_conn_style=',conn_style
-            call xerrab ('parameter b2mndr_conn_style not coded')
+            call xerrab ('Use of conn_style.eq.2 is deprecated')
            endif
           end do
          endif
         end do
        endif
       else
-       write(*,*) 
-     &   'WARNING: connection length not yet available for US grids'
-      endif  
+       write(*,*) 'WARNING: '//
+     &  'ftConn and cvConn calculations for US grids are approximate'
+       wrk0 = 0.0_R8
+       wrk1 = 0.0_R8
+       tt0 = 0.0_R8
+       tt1 = 0.0_R8
+       tt2 = 0.0_R8
+       tt3 = 0.0_R8
+       do iFt = 1, mpg%nFt
+         !! First fill in the length of each cell in the poloidal direction
+         !! Guard cells do not contribute
+         do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+           iCv = mpg%ftCv(j)
+           if (iCv.gt.mpg%nCi) cycle
+           do i = mpg%cvFcP(iCv,1), mpg%cvFcP(iCv,1)+mpg%cvFcP(iCv,2)-1
+             iFc = mpg%cvFc(i)
+             if (gm%fcQalf(iFc,0).eq.0.0_R8) cycle
+             iCv1 = mpg%fcCv(iFc,1)
+             iCv2 = mpg%fcCv(iFc,2)
+             wrk1(iCv1) = wrk1(iCv1) + gm%fcHc(iFc,1)*gm%fcQalf(iFc,0)
+             wrk1(iCv2) = wrk1(iCv2) + gm%fcHc(iFc,2)*gm%fcQalf(iFc,0)
+           end do
+         end do
+         !! Compute flux tube totals
+         do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+           iCv = mpg%ftCv(j)
+           if (iCv.gt.mpg%nCi) cycle
+           wrk0(iCv) = wrk1(iCv)*gm%cvBb(iCv,3)/gm%cvBb(iCv,0)
+           tt0(iFt) = tt0(iFt) + wrk1(iCv)
+           tt1(iFt) = tt1(iFt) + wrk1(iCv)*gm%cvVol(iCv)/gm%cvSz(iCv)
+           tt2(iFt) = tt2(iFt) + gm%cvBb(iCv,3)*gm%cvBb(iCv,3)*
+     .         gm%cvVol(iCv)
+           tt3(iFt) = tt3(iFt) + gm%cvVol(iCv)
+           gm%ftConn(iFt) = gm%ftConn(iFt) + wrk0(iCv)
+         end do
+         !! Now compute the connection length from each CV to the flux tube ends
+       end do
+       do iFt = 1, mpg%nFt
+       !! For closed flux tubes, compute aspect ratio and average B**2
+       !! Also assign the same connection length to all CVs
+         if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
+           gm%ftEps(iFt) = tt0(iFt)**2/tt1(iFt)
+           gm%ftBbav2(iFt) = tt2(iFt)/tt3(iFt)
+           do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+             iCv = mpg%ftCv(j)
+             gm%cvConn(iCv) = gm%ftConn(iFt)
+           end do
+         else
+           do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+             iCv = mpg%ftCv(j)
+             if (iCv.gt.mpg%nCi) cycle
+             Ll = 0.5_R8*wrk0(iCv)
+             Lr = 0.5_R8*wrk0(iCv)
+             iCp = iCv
+             iCn = 0
+             idir = 0
+             do i = mpg%cvFcP(iCv,1),
+     &              mpg%cvFcP(iCv,1)+mpg%cvFcp(iCv,2)-1
+               iFc = mpg%cvFc(i)
+               if (gm%fcQalf(iFc,0).eq.0.0_R8) cycle
+               idir = idir + 1
+               if (idir.eq.3) cycle
+               if (mpg%fcCv(iFc,1).eq.iCp) then
+                 iCn = mpg%fcCv(iFc,2)
+               else
+                 iCn = mpg%fcCv(iFc,1)
+               end if
+               do while (iCn.le.mpg%nCi)
+                 do ii = mpg%cvFcP(iCn,1),
+     &                   mpg%cvFcP(iCn,1)+mpg%cvFcp(iCn,2)-1
+                   iFn = mpg%cvFc(ii)
+                   if (gm%fcQalf(iFn,0).eq.0.0_R8) cycle
+                   if (mpg%fcCv(iFn,1).ne.iCn.and.
+     &                 mpg%fcCv(iFn,1).ne.iCp) then
+                     iCp = iCn
+                     iCn = mpg%fcCv(iFn,1)
+                   else if (mpg%fcCv(iFn,2).ne.iCn.and.
+     &                      mpg%fcCv(iFn,2).ne.iCp) then
+                     iCp = iCn
+                     iCn = mpg%fcCv(iFn,2)
+                   end if
+                 end do
+                 if (idir.eq.1) Ll = Ll + wrk0(iCp)
+                 if (idir.eq.2) Lr = Lr + wrk0(iCp)
+               end do
+             end do
+             gm%cvConn(iCv) = min(Lr,Ll)
+           end do
+         end if
+       end do
+      endif
+
+      gm%fsConn = 0.0_R8
+      gm%vxConn = 0.0_R8
+      do iFs = 1, mpg%nFs
+        do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+          iFc = mpg%fsFc(i)
+          gm%fsConn(iFs) = gm%fsConn(iFs) +
+     &                     gm%fcHt(iFc)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3)
+        end do
+        iFc = mpg%fsFc(mpg%fsFcP(iFs,1))
+        iCv1 = mpg%fcCv(iFc,1)
+        iCv2 = mpg%fcCv(iFc,2)
+        if (((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
+     &       (mpg%cvOnClosedSurface(iCv2).or.iCv2.gt.mpg%nCi)) .or.
+     &        iFs.eq.mpg%iFssep ) then
+          do j = mpg%fsVxP(iFs,1), mpg%fsVxP(iFs,1)+mpg%fsVxP(iFs,2)-1
+            iVx = mpg%fsVx(j)
+            gm%vxConn(iVx) = gm%fsConn(iFs)
+          end do
+        else
+          do i = mpg%fsFcP(iFs,1), mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+            iFc = mpg%fsFc(i)
+            iVx = mpg%fcVx(iFc,1)
+            iVp = iVx
+            iVm = iVx
+            Ll = 0.0_R8
+            ! First go left, i.e. do not include the face and step backward
+            do j = mpg%vxFcP(iVx,1), mpg%vxFcP(iVx,1)+mpg%vxFcP(iVx,2)-1
+              iFn = mpg%vxFc(j)
+              iVn = 0
+              if (iFn.eq.iFc) cycle ! we eliminate the current face
+              if (mpg%fcVx(iFn,1).ne.iVx.and.
+     &            mpg%vxFs(mpg%fcVx(iFn,1)).eq.iFs) then
+                Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,0)/gm%fcBb(iFn,3)
+                iVn = mpg%fcVx(iFn,1)
+              else if (mpg%fcVx(iFn,2).ne.iVx.and.
+     &                 mpg%vxFs(mpg%fcVx(iFn,2)).eq.iFs) then
+                Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,0)/gm%fcBb(iFn,3)
+                iVn = mpg%fcVx(iFn,2)
+              end if
+              do while (iVn.ne.0)
+                iVp = iVn
+                iVn = 0
+                do jj = mpg%vxFcP(iVp,1),
+     &                  mpg%vxFcP(iVp,1)+mpg%vxFcP(iVp,2)-1
+                  iFn = mpg%vxFc(jj)
+                  if (mpg%fcVx(iFn,1).ne.iVp.and.
+     &                mpg%fcVx(iFn,1).ne.iVm.and.
+     &                mpg%vxFs(mpg%fcVx(iFn,1)).eq.iFs) then
+                    Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,0)/gm%fcBb(iFn,3)
+                    iVn = mpg%fcVx(iFn,1)
+                    iVm = iVp
+                  else if (mpg%fcVx(iFn,2).ne.iVp.and.
+     &                     mpg%fcVx(iFn,2).ne.iVm.and.
+     &                     mpg%vxFs(mpg%fcVx(iFn,2)).eq.iFs) then
+                    Ll = Ll + gm%fcHt(iFn)*gm%fcBb(iFn,0)/gm%fcBb(iFn,3)
+                    iVn = mpg%fcVx(iFn,2)
+                    iVm = iVp
+                  end if
+                end do
+              end do
+            end do
+            ! Now we go right, i.e. we include the face and step forward
+            Lr = gm%fcHt(iFc)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3)
+            iVn = mpg%fcVx(iFc,2)
+            iVm = iVx
+            do while (iVn.ne.0)
+              iVp = iVn
+              iVn = 0
+              do jj = mpg%vxFcP(iVp,1),
+     &                mpg%vxFcP(iVp,1)+mpg%vxFcP(iVp,2)-1
+                iFn = mpg%vxFc(jj)
+                if (mpg%fcVx(iFn,1).ne.iVp.and.
+     &              mpg%fcVx(iFn,1).ne.iVm.and.
+     &              mpg%vxFs(mpg%fcVx(iFn,1)).eq.iFs) then
+                  Lr = Lr + gm%fcHt(iFn)*gm%fcBb(iFn,0)/gm%fcBb(iFn,3)
+                  iVn = mpg%fcVx(iFn,1)
+                  iVm = iVp
+                else if (mpg%fcVx(iFn,2).ne.iVp.and.
+     &                   mpg%fcVx(iFn,2).ne.iVm.and.
+     &                   mpg%vxFs(mpg%fcVx(iFn,2)).eq.iFs) then
+                  Lr = Lr + gm%fcHt(iFn)*gm%fcBb(iFn,0)/gm%fcBb(iFn,3)
+                  iVn = mpg%fcVx(iFn,2)
+                  iVm = iVp
+                end if
+              end do
+            end do
+            gm%vxConn(iVx) = min(Lr,Ll)
+          end do
+        end if
+      end do
 
       if (iout.ne.0) then
        call my_out_us(70,mpg%nCv,0,gm%cvConn,'calc_conn_cvConn')
