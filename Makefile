@@ -214,8 +214,10 @@ ifdef TAO
 SOLPSINCLUDE += -I${PETSC_DIR}/include
 MODINCLUDE += -I${PETSC_DIR}/include
 ifdef PETSC_ARCH
+ifeq ($(shell [ -d ${PETSC_DIR}/${PETSC_ARCH}/include ] && echo yes || echo no ),yes)
 SOLPSINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
 MODINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
+endif
 endif
 endif
 endif
