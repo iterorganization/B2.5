@@ -27,30 +27,30 @@ module b2mod_ual_io_grid
      & , only : IDS_real
 # endif
 # if GGD_MAJOR_VERSION > 0
-# if IMAS_MINOR_VERSION > 11
+#  if IMAS_MINOR_VERSION > 11
     use ids_grid_subgrid  & ! IGNORE
      & , only : getGridSubsetSize, getGridSubsetObject, findGridSubsetByName, &
      &          CreateGridSubsetForClass, CreateEmptyGridSubset, &
      &          CreateExplicitObjectListSingleSpace
     use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_dynamic
-#  if IMAS_MINOR_VERSION > 14
+#   if IMAS_MINOR_VERSION > 14
     use ids_grid_object    & ! IGNORE
      & , only : ids_generic_grid_aos3_root
-#  endif
+#   endif
     use ids_grid_object   & ! IGNORE
      & , only : ids_generic_grid_dynamic_grid_subset, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
-#  if GGD_MINOR_VERSION > 9
+#   if GGD_MINOR_VERSION > 9
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES
-#  else
+#   else
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_FACES, GRID_SUBSET_Y_ALIGNED_FACES, &
      &          GRID_SUBSET_FACES
-#  endif
+#   endif
     use ids_grid_structured & ! IGNORE
      & , only : GridWriteData, GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
@@ -87,22 +87,26 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,                       &
      &          GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,                       &
      &          IDS_GRID_UNDEFINED => GRID_UNDEFINED
-#  if GGD_MINOR_VERSION > 9
+#   if GGD_MINOR_VERSION > 9
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_VOLUMES
-#  endif
-#  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
+#   endif
+#   if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
-#  endif
-#  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 )
+#   endif
+#   if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,   &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,   &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
+#   endif
 #  endif
 # endif
+# if IMAS_MINOR_VERSION > 19
+    use b2mod_ppout &
+     & , only : labgeo
 # endif
 #else
 # ifdef ITM_ENVIRONMENT_LOADED
@@ -126,8 +130,6 @@ module b2mod_ual_io_grid
     use b2mod_cellhelper
 
     use b2mod_b2cmfs
-    use b2mod_ppout &
-     & , only : labgeo
     use b2mod_user_namelist
     use b2us_map
     use b2us_geo
@@ -324,7 +326,7 @@ module b2mod_ual_io_grid
     !> Point on non-active separatrix at inner active target
     integer, parameter :: GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE = 106
 
-    character*(26), parameter, private :: UU = &
+    character*(26), parameter, private :: UG = &
        &    'UNSPECIFIED               ' !< Unspecified string
 
     character*(26), dimension (0:GRID_SUBSET_TYPES), parameter :: gridSubsetName = &
@@ -378,12 +380,12 @@ module b2mod_ual_io_grid
        &    'OUTER_SF_LEG_ENTRANCE_2   ' , &
        &    'OUTER_SF_PFR_CONNECTION_1 ' , &
        &    'OUTER_SF_PFR_CONNECTION_2 ' , &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, &
-       &     UU,                                     &
+       &     UG,                                     &
+       &     UG, UG, UG, UG, UG, UG, UG, UG, UG, UG, &
+       &     UG, UG, UG, UG, UG, UG, UG, UG, UG, UG, &
+       &     UG, UG, UG, UG, UG, UG, UG, UG, UG, UG, &
+       &     UG, UG, UG, UG, UG, UG, UG, UG, UG, UG, &
+       &     UG, UG, UG, UG, UG, UG, UG, UG, UG, UG, &
        &    'MAGNETIC_AXIS             ' , &
        &    'OUTER_MIDPLANE_SEPARATRIX ' , &
        &    'INNER_MIDPLANE_SEPARATRIX ' , &
@@ -957,7 +959,7 @@ contains
         type(mapping), intent(in) :: mpg
         type(geometry), intent(in) :: geo
 
-        !! Optional B2 measure information
+        !! Optional B2 measure information and switches
         real(kind=R8), save :: width = 1.0_R8
 
         !! Internal variables
@@ -1107,18 +1109,31 @@ contains
             if (isymm.eq.0 .or. isymm.eq.1 .or. isymm.eq.2) then
               grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
                   &   objects_per_dimension( IDS_CLASS_NODE )%       &
-                  &   object( iVx )%geometry(1) = geo%vxX(iVx)
+                  &   object( iVx )%geometry(1) = geo%vxX( iVx )
               grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
                   &   objects_per_dimension( IDS_CLASS_NODE )%       &
-                  &   object( iVx )%geometry(2) = geo%vxY(iVx)
+                  &   object( iVx )%geometry(2) = geo%vxY( iVx )
             else if (isymm.eq.3 .or. isymm.eq.4) then
               grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
                   &   objects_per_dimension( IDS_CLASS_NODE )%       &
-                  &   object( iVx )%geometry(1) = geo%vxY(iVx)
+                  &   object( iVx )%geometry(1) = geo%vxY( iVx )
               grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
                   &   objects_per_dimension( IDS_CLASS_NODE )%       &
-                  &   object( iVx )%geometry(2) = geo%vxX(iVx)
+                  &   object( iVx )%geometry(2) = geo%vxX( iVx )
             end if
+
+            !! Provide connection length
+            if ( mpg%vxFs(iVx) .ne. US_GRID_UNDEFINED )              &
+                & grid_ggd%space( SPACE_POLOIDALPLANE )%             &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%geometry(3) =                      &
+                &   geo%fsConn(mpg%vxFs(iVx))
+
+            !! Provide distance to nearest solid surface
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_NODE )%         &
+                &   object( iVx )%geometry(4) =                      &
+                &   geo%vxConn(iVx)
 
             !! Set additional vertex/node index (REQUIRED!)
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
@@ -1264,6 +1279,17 @@ contains
             grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
                 &   objects_per_dimension( IDS_CLASS_CELL )%         &
                 &   object( iCv )%geometry(3) = geo%cvVol(iCv)
+            !! Provide connection length
+            if ( mpg%cvFt(iCv) .ne. US_GRID_UNDEFINED )              &
+                & grid_ggd%space( SPACE_POLOIDALPLANE )%             &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(4) =                      &
+                &   geo%ftConn(mpg%cvFt(iCv))
+            !! Provide distance to nearest solid surface
+            grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(5) =                      &
+                &   geo%cvConn(iCv)
             !! 2D object measure: cell area
             grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
                 &   objects_per_dimension( IDS_CLASS_CELL )%         &
@@ -1954,7 +1980,7 @@ contains
     integer cflag(-1:nx,-1:ny, CARREOUT_NCELLFLAGS)
     logical, intent(in) :: includeGhostCells
     ! Optional B2 measure information
-    real(ITM_R8), intent(in), optional :: vol(-1:nx,-1:ny,0:4), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+    real(ITM_R8), intent(in), optional :: vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
     real(ITM_R8), save :: width = 1.0_ITM_R8
 
     ! internal
@@ -2310,7 +2336,7 @@ contains
 
               call createSubGridForExplicitList( itmgrid, itmgrid % subgrids( subgridCount ), &
                   & cls(1:SPACE_COUNT), &
-                  & collectIndexListForRegion(gmap, region, iType, iRegion), &
+                  & collectIndexListForRegion(gmap, cflag, region, iType, iRegion), &
                   & regionName(geoId, iType, iRegion) )
 
           end do
@@ -2324,7 +2350,7 @@ contains
       if (iCoreSg == GRID_UNDEFINED) then
           iCoreSg = gridFindSubGridByName(itmgrid, "Outer core boundary")
       end if
-      if (iCoreSg == GRID_UNDEFINED)
+      if (iCoreSg == GRID_UNDEFINED) &
           & call xerrab ( "fillInSubGridDescription: "// &
           & "did not find core boundary subgrid for assembling "// &
           & "outer midplane subgrid" )
@@ -2502,7 +2528,7 @@ contains
 
     end function collectRadialVertexIndexList
 
-    !> Collect the grid indices of all CVs on the radial grid line outward
+    !> Collect the grid indices of all vertices on the radial grid line outward
     !! starting at the vertex at position six,siy in computational space.
     subroutine collectRadialVertexIndexListSubroutine(gmap, cflag, six, siy, &
             &   topix, topiy, indexList)
@@ -2612,7 +2638,7 @@ contains
         integer, intent(in) :: iRegionType, iRegion
 
         !! internal
-        integer :: iCv, iFc, nInd, iInd, ind
+        integer :: iCv, iFc, nInd, iInd
 
         !! procedures
         external xertst
@@ -2677,7 +2703,7 @@ contains
         integer, intent(in) :: iRegion
 
         !! Internal variables
-        integer :: iCv, iFc, nInd, iInd, ind
+        integer :: iCv, iFc, nInd, iInd
 
         !! Procedures
         external xertst
