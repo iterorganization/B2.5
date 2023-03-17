@@ -275,6 +275,10 @@ PROGRAM B2MN_B
 !
   CALL B2MN_INIT_B(switch, geo, geob, mpg, mpgb, state, stateb, &
 &            state_ext, state_extb)
+  call xertst(switch%b2optim_namelist.eq.1, &
+&   'Sensitivity calculation needs b2optim_namelist=1!')
+  par_opt_physb = 0.0_R8
+  call print_adj_parameters()
   CALL B2MN_STEP_B(switch, switchb, geo, geob, mpg, mpgb, state, stateb&
 &            , state_ext, state_extb, j)
   CALL B2MN_FIN_B(switch, geo, geob, mpg, mpgb, state, stateb, state_ext&
