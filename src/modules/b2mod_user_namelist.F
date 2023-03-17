@@ -295,6 +295,8 @@ c*** Set default values according to current species list
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
+      if (filedata(ntrc_uss)) call xertst(nlim.le.DEF_NLIM,
+     . 'insufficient size of DEF_NLIM in DIMENSIONS.F !')
 
       call subend ()
       return
