@@ -7167,7 +7167,7 @@
 				<namelist>OPTIMIZATION</namelist>
 				<description>
 					Read if 'b2optim_namelist' is set to 1.
-					Necessary for optimization runs or for standard B2.5(-EIRENE) runs when MAP cost function is used.
+					Necessary for sensitivity and optimization runs or for standard B2.5(-EIRENE) runs when MAP cost function is used.
 				</description>
 			</introduction>
 			<switch>
@@ -7175,7 +7175,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of optimization parameters (radially varying transport coefficients count as 1).
+					Number of sensitivity/optimization parameters (radially varying transport coefficients count as 1).
 				</description>
 			</switch>
 			<switch>
@@ -7183,7 +7183,7 @@
 				<default>-1</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					 Indicates the type of optimization parameter. Valid options are:
+					 Indicates the type of sensitivity/optimization parameter. Valid options are:
 					 0 - sigma, standard deviation in liklelihood function for Bayesian inference (one for each plasma quantity and location used). These must ALWAYS be the last parameters in the vector!
 					 1 - parm_dna or tdata(:,:,1,:)
 					 2 - parm_dpa or tdata(:,:,2,:)
@@ -7231,7 +7231,7 @@
 				<default>.true.</default>
 				<type>logical array of size (NSIGMA)</type>
 				<description>
-					For each sigma, spcifies whether it is optimized or fixed.
+					For each sigma, spcifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
 				</description>
 			</switch>
 			<switch>
@@ -7239,7 +7239,7 @@
 				<default>.false.</default>
 				<type>logical array of size (NNVAR)</type>
 				<description>
-					For each optimization variables, specifies if radially varying coefficients are optimized.
+					For each sensitivity/optimization variables, specifies if radially varying coefficients are optimized.
 					Meaningful only for partype = 1 to 9.
 				</description>
 			</switch>
@@ -7248,7 +7248,7 @@
 				<default>0</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Number of spatial points optimized (should be the same as ndata in b2.transport.inputfile). The actual number of optimized variables (NPAR_OPT) is then equal to the total number of spatial points + any other additional parameter.
+					Number of spatial points for sensitivity/optimization parameter ipar (should be the same as ndata in b2.transport.inputfile). The actual number of optimized variables (NPAR_OPT) is then equal to the total number of spatial points + any other additional parameter.
 				</description>
 			</switch>
 			<switch>
@@ -7256,7 +7256,7 @@
 				<default>0</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Specifies the species of the optimization parameter. Only meaningful for partype = [1-3,5,7,12,13,16].
+					Specifies the species of the sensitivity/optimization parameter. Only meaningful for partype = [1-3,5,7,12,13,16].
 				</description>
 			</switch>
 			<switch>
@@ -7264,7 +7264,7 @@
 				<default>0</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
-					Specifies the boundary/strata of the optimization parameter. Only meaningful for partype = [10-16].
+					Specifies the boundary/strata of the sensitivity/optimization parameter. Only meaningful for partype = [10-16].
 				</description>
 			</switch>
 			<switch>

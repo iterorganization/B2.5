@@ -5444,6 +5444,7 @@ CONTAINS
 &   ns-1)
     REAL(kind=r8) :: jsave(nncf)
     REAL(kind=r8) :: jb(nncf)
+    REAL(kind=r8) :: dummygrad(npar_opt)
     INTEGER :: ncv, nfc, nvx
     INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
@@ -7931,13 +7932,7 @@ CONTAINS
       ITERCOUNT = ITERCOUNT + 1
       write(*,*) 'GRADIENT ITERATION ',ITERCOUNT
       write(*,*) 'GRADIENT MAX RES ',cumul
-      write(*,*) 'GRADIENT dna ',parm_dnab(1)
-      write(*,*) 'GRADIENT hce ',parm_hceb
-      write(*,*) 'GRADIENT hci ',parm_hcib(1)
-      write(*,*) 'GRADIENT conpar 1',conparb(1,1,1)
-      write(*,*) 'GRADIENT enepar 1',eneparb(1,1)
-      write(*,*) 'GRADIENT enipar 1',eniparb(1,1)
-      write(*,*) 'GRADIENT recyc 2',b2recycb(1,2)
+      call set_adj_gradient(npar_opt,dummygrad,switchb)
       CALL ADSTACK_RESETREPEAT()
     END DO
     write(*,*) 'TOTAL ADJOINT GRADIENT ITERATIONS ',ITERCOUNT
@@ -8736,6 +8731,7 @@ CONTAINS
     stateb1%psnc%ua = 0.D0
     stateb1%pl%na = stateb1%pl%na + stateb1%psnc%na
     stateb1%psnc%na = 0.D0
+    call set_adj_gradient(npar_opt,dummygrad,switchb)
     stateb1%pl%na = 0.0_R8
     stateb1%pl%ua = 0.0_R8
     stateb1%pl%po = 0.0_R8
