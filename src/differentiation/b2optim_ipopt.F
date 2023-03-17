@@ -71,6 +71,7 @@
 #endif
 
 #ifdef ADJ
+      call print_adj_parameters()
       par_opt_physb = 0.0_R8
 #endif
 
