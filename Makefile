@@ -1172,6 +1172,9 @@ endif
 	${MAKE} depend
 
 include ${OBJDIR}/dependencies
+ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)
+include ${SRCB2}/config/dependencies.local
+endif
 
 ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F
