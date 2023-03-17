@@ -1404,17 +1404,25 @@ contains
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
         integer, save :: geoId
+#if GGD_MINOR_VERSION > 8
         integer :: iRegion
+        integer :: iPrivateB2
+#endif
         integer :: GSubsetCount
         integer :: iType
+        integer :: RegionsInSubset(14)
         integer :: nGSubset !< Total number of grid subsets
-        integer :: iCoreGS !< Core grid subset ID
+        integer :: nInd     !< Size of grid subset element list
+        integer :: iCoreGS  !< Core grid subset ID
         integer :: cls(SPACE_COUNT_MAX)
-        integer :: nInd !< Size of indexList1d
-        integer, allocatable :: indexList1d(:)
         integer, allocatable :: xpoints(:,:)
-        integer, dimension(:,:), allocatable :: indexList2d
+        integer, allocatable :: indexList1d(:)
+        integer, dimension(:,:), allocatable :: indexList2d, indexPart2d, indextmp2d
         integer :: i    !< Iterator
+        integer :: iSubset !< Iterator on standard subsets
+        integer :: ireg    !< Iterator on regions included in subset
+        integer :: isize
+        character*26 SubsetName
         character*128 RegionDescription
 
         !! Procedures
@@ -1428,8 +1436,32 @@ contains
         end if
 
         !! Figure out total number of grid subsets
-        !! Do generic grid subsets + region grid subsets
+        !! Do generic + private grid subsets
+#if GGD_MINOR_VERSION > 8
         nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
+#else
+        nGSubset = B2_GENERIC_GSUBSET_COUNT
+#endif
+        !! Add pre-defined grid subsets (regions + points)
+        select case ( geoId )
+        case ( GEOMETRY_LINEAR )
+            nGSubset = nGSubset + 6 + 2
+            if ( mpg%iFssep .ne. US_GRID_UNDEFINED ) nGSubset = nGSubset + 2
+        case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
+            nGSubset = nGSubset + 3
+        case ( GEOMETRY_LIMITER )
+            nGSubset = nGSubset + 11 + 2
+        case ( GEOMETRY_SN )
+            nGSubset = nGSubset + 21 + 2
+        case ( GEOMETRY_STELLARATORISLAND )
+            nGSubset = nGSubset + 15 + 2
+        case ( GEOMETRY_CDN)
+            nGSubset = nGSubset + 33 + 4
+        case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
+            nGSubset = nGSubset + 34 + 4
+        case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+            nGSubset = nGSubset + 33 + 4
+        end select
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
         !! Inner/outer midplane separatrix
@@ -1529,7 +1561,10 @@ contains
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
 
 #if GGD_MINOR_VERSION > 8
+        iPrivateB2 = 0
         !! Cell + edge grid subset
+        !! These are the "private" B2 regions, so will be given negative
+        !! grid subset identifiers
         do iType = REGIONTYPE_CELL, REGIONTYPE_EDGE
 
             select case(iType)
@@ -1540,6 +1575,7 @@ contains
             end select
 
             do iRegion = 1, regionCount(geoId, iType)
+                iPrivateB2 = iPrivateB2 - 1
                 GSubsetCount = GSubsetCount + 1
                 select case(iType)
                 case( REGIONTYPE_CELL )
@@ -1564,9 +1600,9 @@ contains
                     &   regionName(geoId, iType, iRegion) )
 
                 !! Create grid subset with one object list
-                call createEmptyGridSubset(                                &
-                    &   grid_ggd%grid_subset( GSubsetCount ),              &
-                    &   GSubsetCount, regionName( geoId, iType, iRegion ), &
+                call createEmptyGridSubset(                              &
+                    &   grid_ggd%grid_subset( GSubsetCount ),            &
+                    &   iPrivateB2, regionName( geoId, iType, iRegion ), &
                     &   RegionDescription )
 
                 !! Get explicit object list of the grid subset using
@@ -1588,6 +1624,662 @@ contains
 
         deallocate(indexList2d)
 #endif
+
+!! Do the grid subsets that map directly to B2 regions
+        do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE
+            if (iSubset == GRID_SUBSET_OUTER_MIDPLANE ) cycle ! Already handled below
+            if (iSubset == GRID_SUBSET_INNER_MIDPLANE ) cycle ! Already handled below
+            if (iSubset == GRID_SUBSET_BETWEEN_SEPARATRICES ) cycle ! Handled below
+
+            select case( iSubset )
+            case ( GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+                & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+                & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                iType = REGIONTYPE_CELL
+            case ( GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+                & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_SECOND_SEPARATRIX )
+                iType = REGIONTYPE_YEDGE
+            case ( GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+                & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+                & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+                & GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
+                & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+                & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+                & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+                & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
+                iType = REGIONTYPE_XEDGE
+            case ( GRID_SUBSET_FULL_WALL, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+                & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+                & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+                & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+                & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+                & GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE, &
+                & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+                & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, GRID_SUBSET_INNER_PFR_WALL_INACTIVE )
+                iType = REGIONTYPE_EDGE
+            case default
+                iType = NODIRECTION
+            end select
+            if ( iType == NODIRECTION ) cycle
+
+            select case(iType)
+            case( REGIONTYPE_CELL )
+                cls = CLASS_CELL
+            case( REGIONTYPE_EDGE, REGIONTYPE_YEDGE, REGIONTYPE_XEDGE )
+                cls = CLASS_POLOIDALRADIAL_EDGE
+            end select
+
+            RegionsinSubset = 0
+            select case( geoId )
+            case ( GEOMETRY_LINEAR )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL, GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 2
+                    RegionsinSubset(3) = 4
+                end select
+            case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL, GRID_SUBSET_MAIN_WALL, &
+                    &  GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 3
+                end select
+            case ( GEOMETRY_LIMITER )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_SEPARATRIX, GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL, GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    if (geo%LSN) then
+                      RegionsinSubset(1) = 2
+                    else
+                      RegionsinSubset(1) = 1
+                    end if
+                case ( GRID_SUBSET_INNER_TARGET )
+                    if (geo%LSN) then
+                      RegionsinSubset(1) = 1
+                    else
+                      RegionsinSubset(1) = 2
+                    end if
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 2
+                    RegionsinSubset(3) = 6
+                end select
+            case ( GEOMETRY_SN )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_DIVERTOR )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 4
+                    else
+                        RegionsinSubset(1) = 3
+                    end if
+                case ( GRID_SUBSET_INNER_DIVERTOR )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 3
+                    else
+                        RegionsinSubset(1) = 4
+                    end if
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL )
+                    RegionsinSubset(1) = 12
+                case ( GRID_SUBSET_OUTER_BAFFLE )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 13
+                    else
+                        RegionsinSubset(1) = 11
+                    end if
+                case ( GRID_SUBSET_INNER_BAFFLE )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 11
+                    else
+                        RegionsinSubset(1) = 13
+                    end if
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 9
+                    else
+                        RegionsinSubset(1) = 7
+                    end if
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 7
+                    else
+                        RegionsinSubset(1) = 9
+                    end if
+                case ( GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 11
+                    RegionsinSubset(2) = 12
+                    RegionsinSubset(3) = 13
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 7
+                    RegionsinSubset(2) = 9
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 11
+                    RegionsinSubset(3) = 12
+                    RegionsinSubset(4) = 13
+                    RegionsinSubset(5) = 4
+                    RegionsinSubset(6) = 9
+                    RegionsinSubset(7) = 7
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_PFR_CUT )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 3
+                    else
+                        RegionsinSubset(1) = 2
+                    end if
+                case ( GRID_SUBSET_INNER_THROAT )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 2
+                    else
+                        RegionsinSubset(1) = 3
+                    end if
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 4
+                    else
+                        RegionsinSubset(1) = 1
+                    end if
+                case ( GRID_SUBSET_INNER_TARGET )
+                    if (geo%LSN) then
+                        RegionsinSubset(1) = 1
+                    else
+                        RegionsinSubset(1) = 4
+                    end if
+                end select
+            case ( GEOMETRY_STELLARATORISLAND )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 9
+                case ( GRID_SUBSET_SEPARATRIX )
+                    RegionsinSubset(1) = 12
+                    RegionsinSubset(2) = 11
+                    RegionsinSubset(3) = 13
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 11
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 8
+                    RegionsinSubset(2) = 10
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 8
+                    RegionsinSubset(2) = 1
+                    RegionsinSubset(3) = 4
+                    RegionsinSubset(4) = 10
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_PFR_CUT )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_INNER_THROAT )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 1
+                end select
+            case ( GEOMETRY_CDN )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 5
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                    RegionsinSubset(2) = 6
+                case ( GRID_SUBSET_OUTER_DIVERTOR )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_INNER_DIVERTOR )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 14
+                    RegionsinSubset(2) = 21
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 16
+                    RegionsinSubset(2) = 23
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL )
+                    RegionsinSubset(1) = 18
+                    RegionsinSubset(2) = 25
+                case ( GRID_SUBSET_OUTER_BAFFLE )
+                    RegionsinSubset(1) = 26
+                case ( GRID_SUBSET_INNER_BAFFLE )
+                    RegionsinSubset(1) = 17
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    RegionsinSubset(1) = 22
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    RegionsinSubset(1) = 13
+                case ( GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 17
+                    RegionsinSubset(2) = 18
+                    RegionsinSubset(3) = 19
+                    RegionsinSubset(4) = 24
+                    RegionsinSubset(5) = 25
+                    RegionsinSubset(6) = 26
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 13
+                    RegionsinSubset(2) = 15
+                    RegionsinSubset(3) = 20
+                    RegionsinSubset(4) = 22
+                case ( GRID_SUBSET_OUTER_BAFFLE_INACTIVE )
+                    RegionsinSubset(1) = 24
+                case ( GRID_SUBSET_INNER_BAFFLE_INACTIVE )
+                    RegionsinSubset(1) = 19
+                case ( GRID_SUBSET_OUTER_PFR_WALL_INACTIVE )
+                    RegionsinSubset(1) = 20
+                case ( GRID_SUBSET_INNER_PFR_WALL_INACTIVE )
+                    RegionsinSubset(1) = 15
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 9
+                case ( GRID_SUBSET_PFR_CUT )
+                    RegionsinSubset(1) = 12
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_INNER_THROAT )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_CORE_CUT_INACTIVE )
+                    RegionsinSubset(1) = 11
+                case ( GRID_SUBSET_PFR_CUT_INACTIVE )
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_OUTER_THROAT_INACTIVE )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_INNER_THROAT_INACTIVE )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_OUTER_DIVERTOR_INACTIVE )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_OUTER_TARGET_INACTIVE )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 17
+                    RegionsinSubset(3) = 18
+                    RegionsinSubset(4) = 19
+                    RegionsinSubset(5) = 4
+                    RegionsinSubset(6) = 15
+                    RegionsinSubset(7) = 20
+                    RegionsinSubset(8) = 5
+                    RegionsinSubset(9) = 24
+                    RegionsinSubset(10)= 25
+                    RegionsinSubset(11)= 26
+                    RegionsinSubset(12)= 8
+                    RegionsinSubset(13)= 22
+                    RegionsinSubset(14)= 13
+                end select
+            case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_INNER_DIVERTOR )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_OUTER_DIVERTOR )
+                    RegionsinSubset(1) = 4
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 6
+                    RegionsinSubset(4) = 7
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 15
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 17
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL )
+                    RegionsinSubset(1) = 19
+                case ( GRID_SUBSET_OUTER_BAFFLE )
+                    RegionsinSubset(1) = 20
+                    RegionsinSubset(2) = 24
+                    RegionsinSubset(3) = 25
+                    RegionsinSubset(4) = 26
+                case ( GRID_SUBSET_INNER_BAFFLE )
+                    RegionsinSubset(1) = 18
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    RegionsinSubset(1) = 16
+                    RegionsinSubset(2) = 21
+                    RegionsinSubset(3) = 22
+                    RegionsinSubset(4) = 23
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    RegionsinSubset(1) = 14
+                case ( GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 18
+                    RegionsinSubset(2) = 19
+                    RegionsinSubset(3) = 20
+                    RegionsinSubset(4) = 24
+                    RegionsinSubset(5) = 25
+                    RegionsinSubset(6) = 26
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 14
+                    RegionsinSubset(2) = 16
+                    RegionsinSubset(3) = 21
+                    RegionsinSubset(4) = 22
+                    RegionsinSubset(5) = 23
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 9
+                case ( GRID_SUBSET_PFR_CUT )
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_INNER_THROAT )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 4
+                    RegionsinSubset(2) = 5
+                    RegionsinSubset(3) = 8
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2 )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1 )
+                    RegionsinSubset(1) = 12
+                    RegionsinSubset(2) = 13
+                case ( GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 )
+                    RegionsinSubset(1) = 11
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 18
+                    RegionsinSubset(3) = 19
+                    RegionsinSubset(4) = 20
+                    RegionsinSubset(5) = 24
+                    RegionsinSubset(5) = 4
+                    RegionsinSubset(6) = 21
+                    RegionsinSubset(7) = 22
+                    RegionsinSubset(8) = 5
+                    RegionsinSubset(9) = 25
+                    RegionsinSubset(10)= 26
+                    RegionsinSubset(12)= 8
+                    RegionsinSubset(13)= 23
+                    RegionsinSubset(14)= 14
+                end select
+            case ( GEOMETRY_DDN_BOTTOM )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 5
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                    RegionsinSubset(2) = 6
+                case ( GRID_SUBSET_OUTER_DIVERTOR )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_INNER_DIVERTOR )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 15
+                    RegionsinSubset(2) = 22
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 17
+                    RegionsinSubset(2) = 24
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL )
+                    RegionsinSubset(1) = 19
+                    RegionsinSubset(2) = 26
+                case ( GRID_SUBSET_OUTER_BAFFLE )
+                    RegionsinSubset(1) = 27
+                case ( GRID_SUBSET_INNER_BAFFLE )
+                    RegionsinSubset(1) = 18
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    RegionsinSubset(1) = 23
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    RegionsinSubset(1) = 14
+                case ( GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 18
+                    RegionsinSubset(2) = 19
+                    RegionsinSubset(3) = 20
+                    RegionsinSubset(4) = 25
+                    RegionsinSubset(5) = 26
+                    RegionsinSubset(6) = 27
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 14
+                    RegionsinSubset(2) = 16
+                    RegionsinSubset(3) = 21
+                    RegionsinSubset(4) = 23
+                case ( GRID_SUBSET_OUTER_BAFFLE_INACTIVE )
+                    RegionsinSubset(1) = 25
+                case ( GRID_SUBSET_INNER_BAFFLE_INACTIVE )
+                    RegionsinSubset(1) = 20
+                case ( GRID_SUBSET_OUTER_PFR_WALL_INACTIVE )
+                    RegionsinSubset(1) = 21
+                case ( GRID_SUBSET_INNER_PFR_WALL_INACTIVE )
+                    RegionsinSubset(1) = 16
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 9
+                case ( GRID_SUBSET_PFR_CUT )
+                    RegionsinSubset(1) = 12
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_INNER_THROAT )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_CORE_CUT_INACTIVE )
+                    RegionsinSubset(1) = 11
+                case ( GRID_SUBSET_PFR_CUT_INACTIVE )
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_OUTER_THROAT_INACTIVE )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_INNER_THROAT_INACTIVE )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_OUTER_DIVERTOR_INACTIVE )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_OUTER_TARGET_INACTIVE )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 18
+                    RegionsinSubset(3) = 19
+                    RegionsinSubset(4) = 20
+                    RegionsinSubset(5) = 4
+                    RegionsinSubset(6) = 16
+                    RegionsinSubset(7) = 21
+                    RegionsinSubset(8) = 5
+                    RegionsinSubset(9) = 25
+                    RegionsinSubset(10)= 26
+                    RegionsinSubset(11)= 27
+                    RegionsinSubset(12)= 8
+                    RegionsinSubset(13)= 23
+                    RegionsinSubset(14)= 14
+                end select
+            case ( GEOMETRY_DDN_TOP )
+                select case( iSubset )
+                case ( GRID_SUBSET_CORE )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 5
+                case ( GRID_SUBSET_SOL )
+                    RegionsinSubset(1) = 2
+                    RegionsinSubset(2) = 6
+                case ( GRID_SUBSET_OUTER_DIVERTOR )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_INNER_DIVERTOR )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_CORE_BOUNDARY )
+                    RegionsinSubset(1) = 15
+                    RegionsinSubset(2) = 22
+                case ( GRID_SUBSET_ACTIVE_SEPARATRIX )
+                    RegionsinSubset(1) = 17
+                    RegionsinSubset(2) = 28
+                case ( GRID_SUBSET_MAIN_CHAMBER_WALL )
+                    RegionsinSubset(1) = 19
+                    RegionsinSubset(2) = 26
+                case ( GRID_SUBSET_OUTER_BAFFLE )
+                    RegionsinSubset(1) = 25
+                case ( GRID_SUBSET_INNER_BAFFLE )
+                    RegionsinSubset(1) = 20
+                case ( GRID_SUBSET_OUTER_PFR_WALL )
+                    RegionsinSubset(1) = 21
+                case ( GRID_SUBSET_INNER_PFR_WALL )
+                    RegionsinSubset(1) = 16
+                case ( GRID_SUBSET_MAIN_WALL )
+                    RegionsinSubset(1) = 18
+                    RegionsinSubset(2) = 19
+                    RegionsinSubset(3) = 20
+                    RegionsinSubset(4) = 25
+                    RegionsinSubset(5) = 26
+                    RegionsinSubset(6) = 27
+                case ( GRID_SUBSET_PFR_WALL )
+                    RegionsinSubset(1) = 14
+                    RegionsinSubset(2) = 16
+                    RegionsinSubset(3) = 21
+                    RegionsinSubset(4) = 23
+                case ( GRID_SUBSET_OUTER_BAFFLE_INACTIVE )
+                    RegionsinSubset(1) = 27
+                case ( GRID_SUBSET_INNER_BAFFLE_INACTIVE )
+                    RegionsinSubset(1) = 18
+                case ( GRID_SUBSET_OUTER_PFR_WALL_INACTIVE )
+                    RegionsinSubset(1) = 23
+                case ( GRID_SUBSET_INNER_PFR_WALL_INACTIVE )
+                    RegionsinSubset(1) = 14
+                case ( GRID_SUBSET_CORE_CUT )
+                    RegionsinSubset(1) = 11
+                case ( GRID_SUBSET_PFR_CUT )
+                    RegionsinSubset(1) = 10
+                case ( GRID_SUBSET_OUTER_THROAT )
+                    RegionsinSubset(1) = 6
+                case ( GRID_SUBSET_INNER_THROAT )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_OUTER_TARGET )
+                    RegionsinSubset(1) = 5
+                case ( GRID_SUBSET_INNER_TARGET )
+                    RegionsinSubset(1) = 4
+                case ( GRID_SUBSET_CORE_CUT_INACTIVE )
+                    RegionsinSubset(1) = 9
+                case ( GRID_SUBSET_PFR_CUT_INACTIVE )
+                    RegionsinSubset(1) = 12
+                case ( GRID_SUBSET_OUTER_THROAT_INACTIVE )
+                    RegionsinSubset(1) = 7
+                case ( GRID_SUBSET_INNER_THROAT_INACTIVE )
+                    RegionsinSubset(1) = 2
+                case ( GRID_SUBSET_OUTER_DIVERTOR_INACTIVE )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+                    RegionsinSubset(1) = 3
+                case ( GRID_SUBSET_OUTER_TARGET_INACTIVE )
+                    RegionsinSubset(1) = 1
+                case ( GRID_SUBSET_INNER_TARGET_INACTIVE )
+                    RegionsinSubset(1) = 8
+                case ( GRID_SUBSET_FULL_WALL )
+                    RegionsinSubset(1) = 1
+                    RegionsinSubset(2) = 18
+                    RegionsinSubset(3) = 19
+                    RegionsinSubset(4) = 20
+                    RegionsinSubset(5) = 4
+                    RegionsinSubset(6) = 16
+                    RegionsinSubset(7) = 21
+                    RegionsinSubset(8) = 5
+                    RegionsinSubset(9) = 25
+                    RegionsinSubset(10)= 26
+                    RegionsinSubset(11)= 27
+                    RegionsinSubset(12)= 8
+                    RegionsinSubset(13)= 23
+                    RegionsinSubset(14)= 14
+                end select
+            case ( GEOMETRY_UNSPECIFIED )
+                continue
+            end select
+            if (RegionsinSubset(1) == 0) cycle
+            GSubsetCount = GSubsetCount + 1
+
+            SubsetName = gridSubsetName( iSubset )
+            RegionDescription = gridSubsetDescription( iSubset )
+#if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+            if ( iSubset == GRID_SUBSET_FULL_WALL ) then
+              SubsetName = 'FULL_WALL'
+              RegionDescription = &
+               &  'All edges defining walls, baffles, and targets'
+            end if
+#endif
+            call logmsg( LOGDEBUG,                                     &
+               &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+               &   int2str(GSubsetCount)//": "//                       &
+               &   trim(SubsetName)//", iType "//int2str(iType) )
+
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                     &
+               &   grid_ggd%grid_subset( GSubsetCount ),    &
+               &   iSubset, SubsetName, RegionDescription )
+
+            !! Get explicit object list of the grid subset using
+            !! subroutine collectIndexListForRegionSubroutine
+            !! (function collectIndexListForRegion transferred to subroutine,
+            !! as array of certain dimension is required as an output)
+            select case ( iType )
+            case ( REGIONTYPE_CELL )
+                allocate( indextmp2d ( mpg%nCv , SPACE_COUNT ) )
+            case ( REGIONTYPE_XEDGE, REGIONTYPE_YEDGE, REGIONTYPE_EDGE )
+                allocate( indextmp2d ( mpg%nFc , SPACE_COUNT ) )
+            end select
+            indextmp2d = 1
+            isize = 0
+            do ireg = 1, size(RegionsinSubset)
+                if (RegionsinSubset(ireg) == 0) cycle
+                call collectIndexListForRegionSubroutine( mpg, &
+                      &   iType, RegionsinSubset( ireg ), indexPart2d )
+                indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
+                isize = isize + size(indexPart2d,1)
+            end do
+            allocate( indexList2d ( isize, SPACE_COUNT ) )
+            indexList2d(1:isize,:) = indextmp2d(1:isize,:)
+
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+               &   grid_ggd%grid_subset( GSubsetCount ), sum(cls),  &
+               &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
+               &   SPACE_POLOIDALPLANE )
+            deallocate(indexList2d,indexPart2d,indextmp2d)
+
+        end do
+
         !! Add midplane node grid subsets
         !! Find the core boundary grid subset by looking for its name as
         !! defined in b2mod_connectivity
