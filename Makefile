@@ -1131,7 +1131,6 @@ ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
 ${DBGAD}: ${DIFFPATH}/adDebug.c ${DIFFPATH}/adDebug.h
 	cc -c $< -o $@
 
-
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
 
@@ -1268,7 +1267,6 @@ ifdef MODLISTF90
 endif
 endif
 
-
 else
 
 depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EX90DIFFLIST:.o=.F90} ${EXDIFFLIST:.o=.F}
@@ -1296,8 +1294,6 @@ endif
 endif
 
 endif
-
-
 
 tags:
 	rm -f ${SRCB2}/TAGS ; ctags -e -f ${SRCB2}/TAGS ${TAGSLIST} || touch ${SRCB2}/TAGS
@@ -1377,6 +1373,9 @@ endif
 	${MAKE} depend
 
 include ${OBJDIR}/dependencies
+ifeq ($(shell [ -e ${SRCB2}/config/dependencies.local ] && echo yes || echo no ),yes)
+include ${SRCB2}/config/dependencies.local
+endif
 
 ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F
