@@ -277,29 +277,17 @@ PROGRAM B2MN_DV
 !-----------------------------------------------------------------------
 !.computation
 !
-  nbdirs=3
+!  nbdirs=3
   CALL B2MN_INIT_DV(switch, geo, geod, mpg, mpgd, state, stated, &
-&             state_ext, state_extd, nbdirs)
-  parm_dnad = 0.0_R8
-  parm_hcid = 0.0_R8
-  parm_hced = 0.0_R8
-  parm_vsad = 0.0_R8
-  parm_sigd = 0.0_R8
-  parm_alfd = 0.0_R8
-  conpard = 0.0_R8
-  mompard = 0.0_R8
-  potpard = 0.0_R8
-  enepard = 0.0_R8
-  enipard = 0.0_R8
-  enkpard = 0.0_R8
-  enkpard = 0.0_R8
-  tdatad = 0.0_R8
-  b2recycd = 0.0_R8
+&             state_ext, state_extd, npar_opt)
+  call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
+  call xertst(switch%b2optim_namelist.eq.1, 'Sensitivity calculation needs b2optim_namelist=1!')
+  call set_tgt_perturbation(switchd)
 ! default case, valid for any species mix
 ! the first dimension of these variables refers to the number of directions "nbdirs"
-  parm_hcid(3,1) = 1.0_R8
-  parm_hced(2) = 1.0_R8
-  parm_dnad(1,1) = 1.0_R8
+!  parm_hcid(3,1) = 1.0_R8
+!  parm_hced(2) = 1.0_R8
+!  parm_dnad(1,1) = 1.0_R8
 
 !  nbdirs=7 !example multispecies case D D+ He He+ He++
 !  parm_dnad(1,1) = 1.0_R8
@@ -409,9 +397,9 @@ PROGRAM B2MN_DV
 !  potpard(18,6,1) = 1.0_R8
 
   CALL B2MN_STEP_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
-&             , state_ext, state_extd, j, jd, nbdirs)
+&             , state_ext, state_extd, j, jd, npar_opt-nsigma_opt)
   CALL B2MN_FIN_DV(switch, geo, geod, mpg, mpgd, state, stated, &
-&            state_ext, state_extd, nbdirs)
+&            state_ext, state_extd, npar_opt)
 !
   STOP
 END PROGRAM B2MN_DV
