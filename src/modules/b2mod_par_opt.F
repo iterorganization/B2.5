@@ -153,6 +153,17 @@
       call xertst(sum(spatial_points(1:nnvar)) .le. nvmx,
      &  'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
       do ii=1,nnvar
+       if (spatial_dep(ii) .and. 
+     &     (partype(ii).lt.1 .or. partype(ii).gt.9)) !only parm_XXX can be spatially dependent
+     > call xerrab('b2mod_par_opt: spatial_points optimization '//
+     &             'is available only for partype 1-9')
+       if (spatial_dep(ii) .and. spatial_points(ii).le.1) then
+         write(*,*) 'ipar, spatial_dep, spatial_points=',
+     &     ii, spatial_dep(ii), spatial_points(ii)
+         call xerrab(' b2mod_par_opt: seems you want to optimize '//
+     &    'spatially dependent transport coefficients but you only '//
+     &    'specify one!')
+       endif
        if (partype(ii) .eq. 1 .or. partype(ii) .eq. 2 .or.
      &     partype(ii) .eq. 3 .or. partype(ii) .eq. 5 .or.
      &     partype(ii) .eq. 7 .or. partype(ii) .eq. 12 .or.

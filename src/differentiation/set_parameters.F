@@ -21,6 +21,10 @@
       do ip = 1, nnvar - nsigma_opt
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
+          if (partype(ip).lt.1 .or. partype(ip).gt.9) then
+            write(*,*) partype(ip)
+            call xerrab ('partype incompatible with spatial points')
+          endif
           do ii = 1, spatial_points(ip)
             tdata(2,ii,partype(ip),paris(ip)) = par_opt_phys(idir)
             idir = idir + 1

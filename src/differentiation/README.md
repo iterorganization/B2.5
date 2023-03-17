@@ -18,12 +18,7 @@ Source files differentiated in multidirectional tangent mode for standalone B2.5
     $ gmake listobj depend b25_tgt
     $ b2run -tgt b2mn
 
-By default, running this version of the code will calculate the derivative of ANY cost function wrt three basic parameters
- - parm_dna(1): particle diffusion coefficient for species 1
- - parm_hce:  electron heat diffusion coefficient
- - parm_hci(1): ion heat diffusion coefficient for species 1
-
-If any other coefficient is needed, then b2mn_d.F90 must be modified accordingly, as suggested by the commented example in the file itself, recalling that "nbdirs" must be set to the desired number of independent variables.
+The user needs to supply a "b2.optimization.parameters" file to specify wrt which input parameters the derivatives are evaluated. The tangent mode will then evaluate the derivative of all cost function wrt such parameters.
 
 The code will automatically print in run.log the value of the cost function(s) and their derivatives.
 
@@ -45,8 +40,6 @@ To compile and run the optimization version, for example with PETCs/TAO optimiza
     $ gmake b25_tgt
     $ b2run -opt_tgt b2mn
 
-Note that b2mn_d.F90 need not be modified to run the optimization with a certain set of parameters! One need only to specify them with b2.optimization.parameters.
-
 Adjoint AD
 -------------------------------------------
 
@@ -55,17 +48,7 @@ Source files differentiated in adjoint mode for standalone B2.5. To compile and 
     $ gmake listobj depend b25_adj
     $ b2run -adj b2mn
 
-By default, running this version of the code will calculate the derivative of the FIRST cost function wrt all the default parameters indicated above
-At each iteration however it will print out in run.log only the derivative of:
- - parm_dna(1): particle diffusion coefficient for species 1
- - parm_hce:  electron heat diffusion coefficient
- - parm_hci(1): ion heat diffusion coefficient for species 1
- - conpar(1,1,1): continuty BC for species 1 at boundary 1
- - enepar(1,1): electron heat BC at boundary 1
- - enipar(1,1): ion heat BC at boundary 1
- - b2recyc(1,2): recycling coefficient for species 1 at stratum 2
-
-At the end of the run it will eventually print the gradient of all the default parameters for species [0-1], boundaries [1-6], and strata [1-5]. If more printout is needed during or at the end of the run then b2mod_driver_diff.F90 and b2mod_main_diff.F90 need to be modified accordingly.
+By default, running this version of the code will calculate the derivative of the FIRST cost function wrt the parameters indicated in "b2.optimization.parameters".
 
 To compile and run the optimization version, for example with PETCs/TAO optimization library:
 

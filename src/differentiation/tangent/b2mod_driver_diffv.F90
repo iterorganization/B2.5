@@ -6207,22 +6207,11 @@ CONTAINS
         END IF
       END DO
 !    ..call cost function
-      if (flag_optim) then
-        nndirs = nbdirs+nsigma_opt
-      else
-        nndirs = nbdirs
-      endif
       CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &                           mpgd, state, stated, state_ext, state_extd, &
-&                           switch%boris, j, jd, nndirs)
+&                           switch%boris, j, jd, nbdirs+nsigma_opt)
       if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
-      DO ICF=1, NCF
-      DO nd=1,nbdirs
-        write (ss,'(I1)') icf
-        if (icf.gt.9) write (ss,'(I2)') icf
-        write(*,*) 'Cost function gradient '//trim(ss)//': ',Jd(nd,icf)
-      END DO
-      END DO
+      call print_tgt_gradient(jd,ncf)
       DO icf=1,ncf
         WRITE(ss, '(I1)') icf
         WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
