@@ -59,6 +59,8 @@
 
         real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
 
+        logical :: LSN ! Identifies topologies where the western target is
+                       ! the inner one
       end type geometry
 
       contains
@@ -184,6 +186,8 @@
       g%vxConn = 0._R8
       g%fsConn = 0._R8
       g%fsPsi = 0._R8
+
+      g%LSN = .true.
 
       return
       end subroutine initialize_geometry
@@ -388,7 +392,7 @@
       type (switches), intent (in) :: switch
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
+      integer :: i, nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
       real (kind=R8) :: hzconst, dux, duy, du, sbf
       intrinsic maxval
 
@@ -583,6 +587,31 @@
 
 *   ..calculate connection length
       call calc_conn(mpg, gm)
+
+*   ..determine topology
+      if (mpg%nnreg(0).eq.2) then
+!! TODO: Need to identify the tangency point
+!! LSN = .false. if the tangency point is above or
+!!               at the same level and to the left of the O-point
+      else if (mpg%nnreg(0).eq.4) then
+        do i = mpg%vxFcP(mpg%Xpt(1),1),
+     &         mpg%vxFcP(mpg%Xpt(1),1)+mpg%vxFcP(mpg%Xpt(1),2)-1
+          iFc = mpg%vxFc(i)
+          if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
+     &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
+            if ( mpg%fcVx(iFc,1).eq.mpg%Xpt(1)) then
+              iVx = mpg%fcVx(iFc,2)
+            else
+              iVx = mpg%fcVx(iFc,1)
+            end if
+            if ( gm%vxY(mpg%Xpt(1)).gt.gm%vxY(iVx) .or.
+     &          (gm%vxY(mpg%Xpt(1)).eq.gm%vxY(iVx) .and.
+     &           gm%vxX(mpg%Xpt(1)).gt.gm%vxX(iVx)) ) then
+              gm%LSN = .false.
+            end if
+          end if
+        end do
+      end if
 
       return
       end subroutine init_geometry
