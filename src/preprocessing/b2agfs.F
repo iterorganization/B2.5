@@ -965,6 +965,7 @@ cxpb  if just below the top corner, make the corner cell follow
 
              !Starting point 
              new_verts(1:nv) = 0
+             new_faces(1:nf) = 0
              new_verts(1) = verts(1)
 
              verts_of_faces = m%fcVx(faces,:)
