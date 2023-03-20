@@ -110,7 +110,8 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      1  alf(nCv,0:1), vsa(nCv,0:1,0:ns-1),
      2  hci(nCv,0:1), sigin(nCv,0:1,0:ns-1,0:nscx-1),
      3  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrkc(nCv),                  !srv 01.07.99 09.01.01
-     4  tef(nFc), tif(nFc), ne2f(nFc), k1f(nFc), k2f(nFc), gtec(nCv)
+     4  tef(nFc), tif(nFc), ne2f(nFc), k1f, k2f, gtec(nCv),
+     5  nu1f, nu2f, tauf(nFc), tauiaf(nFc)
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax                                                    !srv 22.04.16
@@ -393,11 +394,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        k2 = 1.6e0_R8
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
+       tau = t2/dv%lnlam*pl%te/ev*sqrt(pl%te/ev)/dv%ne2
        do iCv = 1, nCv
          if (mpg%cvOnClosedSurface(iCv)) then
            iFt = mpg%cvFt(iCv)
-           tau(iCv) = t2/dv%lnlam(iCv)*pl%te(iCv)/ev*
-     &      sqrt(pl%te(iCv)/ev)/dv%ne2(iCv)
            nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
      &      sqrt(pl%te(iCv)/me)*2.0e0_R8*pi*geo%ftEps(iFt)**1.5e0_R8)
            k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
@@ -414,13 +414,14 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &      /(1.0e0_R8+0.74e0_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
          endif
        enddo                                                             !lk 19.09.07 }
-*    ..interpolate k1, k2, te, ti and ne2 to cell faces
+*    ..interpolate te, ti and ne2 to cell faces
        wrk1 = 1.0_R8
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%ti,tif)
        call intface(nCv,nFc,mpg%fcCv,wrk1,dv%ne2,ne2f)
-       call intface(nCv,nFc,mpg%fcCv,wrk1,k1,k1f)
-       call intface(nCv,nFc,mpg%fcCv,wrk1,k2,k2f)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,tau,tauf)
+       call intface(nCv,nFc,mpg%fcCv,wrk1,tauia(:,ismain),tauiaf)
+*    ..compute flux limits at faces
        do iFc = 1, nFc                                                    !lkw 12.10.22 {
         if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
      &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
@@ -442,11 +443,24 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
             connf = 0.5*connf
             epsf  = 0.5*epsf
           endif
+          ! parameters at faces
+          nu1f = connf/(tauf(iFc)*
+     &     sqrt(tef(iFc)/me)*2.0e0_R8*pi*epsf**1.5e0_R8)
+          k1f = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1f)
+     &     +1.53e0_R8*nu1f)
+     &     +0.52e0_R8*(epsf**3)*nu1f
+     &     /(1.0e0_R8+0.89e0_R8*sqrt(epsf**3)*nu1f)
+          nu2f = connf/(tauiaf(iFc)
+     &     *sqrt(tif(iFc)/(mp*am(ismain)))
+     &     *2.0e0_R8*pi*epsf**1.5e0_R8)
+          k2f = (0.66e0_R8+1.88e0_R8*sqrt(epsf)
+     &     -1.54e0_R8*epsf)
+     &     /(1.0e0_R8+1.03e0_R8*sqrt(nu2f)+0.31e0_R8*nu2f)
+     &     +1.17e0_R8*(epsf**3)*nu2f
+     &     /(1.0e0_R8+0.74e0_R8*sqrt(epsf**3)*nu2f)
           ! compute flux limits
-          co%f_luc_ke(iFc) = 1.0_R8/k1f(iFc)*0.58e0_R8*
-     .      sqrt(epsf**3)
-          co%f_luc_ki(iFc) = 1.0_R8/k2f(iFc)*1.60e0_R8*
-     .      sqrt(epsf**3)
+          co%f_luc_ke(iFc) = 1.0_R8/k1f*0.58e0_R8*sqrt(epsf**3)
+          co%f_luc_ki(iFc) = 1.0_R8/k2f*1.60e0_R8*sqrt(epsf**3)
           co%f_luc_et(iFc)=switch%cvsa_mltpl/
      1      (1.0e0_R8+15.12e16_R8/connf*
      2      (tif(iFc)/ev)**2/ne2f(iFc))/
