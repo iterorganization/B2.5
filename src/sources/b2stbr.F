@@ -749,11 +749,11 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
                 ix = nnlimi + lcns(k)
                 do ia = 1, nnatmi
                   if (latmscl(ia).eq.b2espcr(is)) then
-                 sna_core(latmscl(ia)) = sna_core(latmscl(ia)) -
-     &           wldna(ix,ia,0) + wldra(ix,ia,0) + wldpa(ix,ia,0)
+                 sna_core(latmscl(ia)) = sna_core(latmscl(ia)) +
+     &           wldna(ix,ia,0) - wldra(ix,ia,0) - wldpa(ix,ia,0)
                     do im = 1, nnmoli
                       if (mlcmp(ia,im).gt.0) then
-                      sna_core(latmscl(ia))= sna_core(latmscl(ia)) -
+                      sna_core(latmscl(ia))= sna_core(latmscl(ia)) +
      &                 mlcmp(ia,im) * (wldnm(ix,im,0) - wldrm(ix,im,0)
      &                              - wldpm(ix,im,0))
                       end if
@@ -845,11 +845,18 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
           enddo
 
           do is = 0, ns-1
-            if( is_neutral(is) ) cycle
             k = b2espcr(is)
+            if( is_neutral(is) ) cycle
 !            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
-            sna0_eir(:,:,0,is) = sna0_eir(:,:,0,is)*t(k)
-            sna0_eir(:,:,1,is) = sna0_eir(:,:,1,is)*t(k)
+            do ix = -1, nx
+             do iy = -1, ny
+              if (.not. do_sna_corr_core(k) .and. 
+     &                on_closed_surface(ix,iy)) cycle
+              sna0_eir(ix,iy,0,is) = sna0_eir(ix,iy,0,is)*t(k)
+              sna0_eir(ix,iy,1,is) = sna0_eir(ix,iy,1,is)*t(k)
+              ! end if
+             end do
+            end do
 
 ! { IYS 12.01.2018,
 !      sna_eir = 0.0_R8
@@ -867,7 +874,8 @@ cxpb This formula is meant for tungsten when l_ion < 5 * rho_i
 !!     &   'Source correction is not applied for sputtered particles k=',
 !!     &       k,  'is=', is, eirtxt(k)
 !          endif
-          enddo
+
+          end do
 
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
 

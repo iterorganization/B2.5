@@ -30,7 +30,7 @@
 #else
 #     include "DIMENSIONS.F"
       integer NSDMAX, maxnsps
-      parameter (NSDMAX=DEF_NSD, maxnsps=10)
+      parameter (NSDMAX=DEF_NSD, maxnsps=DEF_NSPECIES)
       real (kind=R8), save :: 
      &    dtco(0:nsdmax-1,0:NNREGMAX), dtco_SOL(0:nsdmax-1)
       real (kind=R8), save :: 
