@@ -173,7 +173,11 @@ contains
                 m%nCg = idum(3)
                 m%nFs = idum(4)
                 m%nFt = idum(5)
+                ! if (m%nCg.eq.0) then
                 doGhostCells = .true.
+                ! else
+                ! doGhostCells = .false.
+                ! endif
         ! obtain nCmxFc and nCmxVx from geometry file
                 call cfruin (lun, 5, idum2, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
                 nCmxVx0 = idum2(0)
