@@ -27,7 +27,7 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFt, is, k
+      integer ic, iCv, iFc, iFt, is, k
       integer, save :: nsmooth = 2
       integer, save :: ncall = 0
       real (kind=R8) ::
@@ -81,12 +81,37 @@
               enddo
              endif
             enddo
+            !to ensure that subsequent steps lead to well-defined value on separatrix:
+            !copy value of qip0 across separatrix
+            !wdk todo: rationalize this when separatrix-structure is introduced?
+            do iFc = 1, nFc
+              if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
+              endif
+              if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &                 mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,1)) = qip0(mpg%fcCv(iFc,2))
+              endif
+            enddo
 
             !smoothing: interpolate to faces and back to cell centers
             wght = 1.0_R8
             do k = 1, nsmooth
              call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
              call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
+             !copy value of qip0 across separatrix
+             !wdk todo: rationalize this when separatrix-structure is introduced?
+             do iFc = 1, nFc
+               if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &             .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                 qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
+               endif
+               if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &                  mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                 qip0(mpg%fcCv(iFc,1)) = qip0(mpg%fcCv(iFc,2))
+               endif
+             enddo
             enddo
 
           endif
@@ -105,6 +130,20 @@
              endif
             enddo
 
+            !to ensure that subsequent steps lead to well-defined value on separatrix:
+            !copy value of qip0 across separatrix
+            !wdk todo: rationalize this when separatrix-structure is introduced?
+            do iFc = 1, nFc
+              if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &            .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,2)) = qip0(mpg%fcCv(iFc,1))
+              endif
+              if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &                 mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+                qip0(mpg%fcCv(iFc,1)) = qip0(mpg%fcCv(iFc,2))
+              endif
+            enddo
+
           endif
 
 *       ..compute qip1
@@ -113,6 +152,15 @@
 *       ..compute qipgen and its poloidal gradient on faces
           qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))                                                                  
           call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, gqipgen)
+
+          !set gqipgen to zero on faces not in touch with core
+          !wdk todo: rationalize this when separatrix-structure is introduced?
+          do iFc = 1, nFc
+            if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &          .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+              gqipgen(iFc) = 0.0_R8
+            endif
+          enddo
 
 *       ..compute tau, nu, alpha, and interpolate to faces
           tauia1 = 0.0e0_R8
@@ -143,6 +191,22 @@
      &           0.7e0_R8*sqrt(nu1(iCv))+
      &           nu1(iCv)**2*geo%ftEps(iFt)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
               enddo
+            endif
+          enddo
+
+          !to ensure that subsequent steps lead to well-defined value on separatrix:
+          !copy values of tauia1, nu1, alpha1 across separatrix
+          !wdk todo: rationalize this when separatrix-structure is introduced?
+          do iFc = 1, nFc
+            if (     mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &          .not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+              tauia1(mpg%fcCv(iFc,2)) = tauia1(mpg%fcCv(iFc,1))
+              alpha1(mpg%fcCv(iFc,2)) = alpha1(mpg%fcCv(iFc,1))
+            endif
+            if (.not.mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &               mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+              tauia1(mpg%fcCv(iFc,1)) = tauia1(mpg%fcCv(iFc,2))
+              alpha1(mpg%fcCv(iFc,1)) = alpha1(mpg%fcCv(iFc,2))
             endif
           enddo
 
