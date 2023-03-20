@@ -747,13 +747,19 @@ cxpb  if just below the top corner, make the corner cell follow
         nnFmxCv = idum(2)
         nnVmxCv = idum(3)
         nnVmxFc = idum(4)
+        
+        ! read isClassicalGrid
+        call cfruin (nrid, 1, idum, 'isClassicalGrid')
+        m%isClassicalGrid = idum(0)
+        
+        if (m%isClassicalGrid.eq.1) then
         !read nx, ny, nncut
         call cfruin (nrid, 3, idum, 'nx,ny,nncut')
         m%nx = idum(0)
         m%ny = idum(1)
         m%nncut = idum(2)
-        call cfruin (nrid, 1, idum, 'isClassicalGrid')
-        m%isClassicalGrid = idum(0)
+        endif
+
         !read vertex information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('Vx',id)) then
