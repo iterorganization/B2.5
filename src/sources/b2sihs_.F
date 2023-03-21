@@ -4,7 +4,7 @@
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
      &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
-     &  rza, rz2, st_ext, she0, shi0, shn0)
+     &  rza, rz2, st_ext, she0, shi0, shn0, srw)
       use b2mod_types
       use b2mod_tallies
 !      use b2mod_anomalous_transport
@@ -14,7 +14,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-      use B2us_plasma
+      use b2us_plasma
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
 !WG_TODO     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
@@ -37,6 +37,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
+      type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
@@ -472,7 +473,7 @@
        shefr(:,0) =  ue*shefr(:,0)
 
 !WG_TODO       b2joule=0.0_R8
-!WG_TODO       b2sihs_joule=0.0_R8
+       srw%b2sihs_joule=0.0_R8
 !WG_TODO       b2fraa=0.0_R8
 !WG_TODO       b2sihs_fraa=0.0_R8
        do iCv = 1, mpg%nCi
@@ -484,7 +485,7 @@
      &      (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
      &      (ne(iCv)*te(iCv))
 !WG_TODO           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
-!WG_TODO           b2sihs_joule(iCv)=t0
+           srw%b2sihs_joule(iCv)=t0
            t0 = -switch%b2sihs_phm4*(1.0_R8-switch%BoRiS)*geo%cvVol(iCv)
      &          *shifr(iCv,0)
 !          shifr(iCv,0) = t0
@@ -508,7 +509,7 @@
        if (switch%istyle_Joule_heating.eq.0)
      &   call b2xehy (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehy)       !srv 13.01.17
 !WG_TODO       b2joule=0.0_R8
-!WG_TODO       b2sihs_joule=0.0_R8
+       srw%b2sihs_joule=0.0_R8
        do iFc = 1, nFc
          wrkf(iFc,0) = fch(iFc,0)*ehx(iFc)/
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
@@ -533,7 +534,7 @@
      &    (min(0.0e0_R8,t0)-switch%b2sihs__rf3*abs(t0))/
      &    (ne(iCv)*te(iCv))
 !WG_TODO          b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
-!WG_TODO          b2sihs_joule(iCv)=t0
+          srw%b2sihs_joule(iCv)=t0
         endif                                                        !srv 26.11.02
        enddo
       endif                                                           !srv 05.07.17

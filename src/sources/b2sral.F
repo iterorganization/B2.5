@@ -7,8 +7,6 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_tallies
-!      use b2mod_sources
-!     &     , only: rcxna, rcxhi, rcxmo
       use b2mod_input_profile
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
@@ -400,9 +398,9 @@
       rcxnareg=0.0_R8
       rcxhireg=0.0_R8
       rcxmoreg=0.0_R8
-!WG_TODO      rcxna=0.0_R8
-!WG_TODO      rcxhi=0.0_R8
-!WG_TODO      rcxmo=0.0_R8
+      st%srw%rcxna=0.0_R8
+      st%srw%rcxhi=0.0_R8
+      st%srw%rcxmo=0.0_R8
 
       if (switch%iout_b2wdat .eq. 4) then  ! IYS 06.11.2017
         if (.not. allocated(shi0_cx)) then
@@ -425,7 +423,8 @@
         call b2stcx (nCv, nFc, ns, iscx(k), ismain, switch,
      &    geo, mpg, st%pl%na, st%pl%ua, st%pl%ti, st%pl%tn, st%dv%ni,
      &    st%rtw%rcx,
-     &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0)       !srv 07.07.09
+     &    st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%shn0,
+     &    st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
          call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))

@@ -329,7 +329,7 @@ program b2_ual_rewrite
       call xertst( status.eq.0, 'Error creating new IDS !')
     end if
     !! Create/Write the set data to IDSs
-    call B25_process_ids( geo, mpg, state, switch, &
+    call B25_process_ids( geo, mpg, state, state_ext, switch, &
       &  edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21

@@ -311,7 +311,7 @@ program b2_ual_write
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( geo, mpg, state, switch, &
+          call B25_process_ids( geo, mpg, state, state_ext, switch, &
              &  edge_profiles, edge_sources, edge_transport, &
              &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21
@@ -336,7 +336,7 @@ program b2_ual_write
       if (database.eq.'iter') database = 'ITER'
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( geo, mpg, state, switch, &
+      call B25_process_ids( geo, mpg, state, state_ext, switch, &
          &  edge_profiles, edge_sources, edge_transport, &
          &  radiation, description, equilibrium, &
 #if IMAS_MINOR_VERSION > 21

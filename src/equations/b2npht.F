@@ -4,7 +4,7 @@
       subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,           !srv 05.07.17
      &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf,
-     &  pl, dv, co, rt, sr, st_ext, ierr)
+     &  pl, dv, co, rt, sr, srw, st_ext, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -45,6 +45,7 @@
       type (B2Derivatives), intent (inout) :: dv
       type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
+      type (B2SourceWork), intent (inout) :: srw
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
@@ -164,7 +165,7 @@ c make sure fhn is zero when not solving a separate neutral energy equation
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
      &  pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne, dv%fch,
      &  co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c,
-     &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0)
+     &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0, srw)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
