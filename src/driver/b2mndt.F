@@ -524,7 +524,7 @@ ctmp.dpc
      &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
      &       switch%b2mndt_rxf,
-     &       st%pl, st%dv, st%co, st%rt, st%sr, st_ext, ier0)
+     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
           endif
 *     ..end intermediate iteration
           istg(1) = istg(1)+1

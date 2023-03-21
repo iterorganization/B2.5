@@ -5,10 +5,10 @@
      &  na0, ua0, te0, ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0,
      &  na, ua, te, ti, tn, ne, ni, nn, kinrgy, kt, zt,                 !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
-      use b2mod_types 
-      use b2mod_numerics_namelist 
-      use b2mod_constants 
-      use b2mod_b2cmpa 
+      use b2mod_types
+      use b2mod_numerics_namelist
+      use b2mod_constants
+      use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -57,7 +57,7 @@
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) :: !djm Jan2017
-     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
+     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
      &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
 *   ..procedures
       external xertst
@@ -103,115 +103,112 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO           if(iftimbound(ix,iy) .ne. 0) cycle
 !WG_TODO           if((guard_flows.eq.2 .or.
-!WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
+!WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-         ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
-         sr%sna(iCv,0,is) = sr%sna(iCv,0,is)+
-     &    (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
-         sr%sna(iCv,1,is) = sr%sna(iCv,1,is)-
-     &    (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
+          ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
+          sr%snadt(iCv,0,is) =
+     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
+          sr%snadt(iCv,1,is) = -
+     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
+          sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
       enddo
+
 *   ..modify smodt
       do is = 0, ns-1
         do iCv = 1, nCv
-*        smodt(-1,iy,0:3,is) = (unchanged at 0.0)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 
-            ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
-            t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)         !srv 09.01.01
-            sr%smo(iCv,0,is) = sr%smo(iCv,0,is)+
-     1       t0*am(is)*mp*ua0(iCv,is)*
-     &       na0(iCv,is)
-*        smodt(iCv,1,is) = (unchanged)
-*        smodt(iCv,2,is) = (unchanged)
-            sr%smo(iCv,3,is) = sr%smo(iCv,3,is)-t0
+          ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
+          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
+          sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
+          sr%smodt(iCv,1,is) = 0.0_R8
+          sr%smodt(iCv,2,is) = 0.0_R8
+          sr%smodt(iCv,3,is) = -t0
+          sr%smo(iCv,:,is) = sr%smo(iCv,:,is)+sr%smodt(iCv,:,is)
         enddo
       enddo
-*   ..modify shedt, shidt, schdt, snedt
+
+*   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
+#ifndef NO_OPENMP_B2SRDT
+!$OMP DO
+#endif
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-          ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
-          sr%she(iCv,0) = sr%she(iCv,0)+
-     &     1.5_R8*t0*ne0(iCv)*te0(iCv)
-*         shedt(iCv,1) = (unchanged)
-*         shedt(iCv,2) = (unchanged)
-          sr%she(iCv,3) = sr%she(iCv,3)-1.5_R8*t0
+        ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
+        sr%shedt(iCv,1) = 0.0_R8
+        sr%shedt(iCv,2) = 0.0_R8
+        sr%shedt(iCv,3) = -1.5_R8*t0
+        sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
 
-          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
-          sr%skt(iCv,0) = sr%skt(iCv,0)+
-     &     t0*ni0(iCv,1)*kt0(iCv)
-*         sktdt(iCv,1) = (unchanged)
-*         sktdt(iCv,2) = (unchanged)
-          sr%skt(iCv,3) = sr%skt(iCv,3)-t0
+        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        sr%sktdt(iCv,0) = t0*ni0(iCv,1)*kt0(iCv)
+        sr%sktdt(iCv,1) = 0.0_R8
+        sr%sktdt(iCv,2) = 0.0_R8
+        sr%sktdt(iCv,3) = -t0
+        sr%sktdt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
 
-          sr%szt(iCv,0) = sr%szt(iCv,0)+
-     &     t0*ni0(iCv,1)*zt0(iCv)
-*         sztdt(iCv,1) = (unchanged)
-*         sztdt(iCv,2) = (unchanged)
-          sr%szt(iCv,3) = sr%szt(iCv,3)-t0
-
+        sr%sztdt(iCv,0) = t0*ni0(iCv,1)*zt0(iCv)
+        sr%sztdt(iCv,1) = 0.0_R8
+        sr%sztdt(iCv,2) = 0.0_R8
+        sr%sztdt(iCv,3) = -t0
+        sr%sztdt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
+
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
 
-          if (switch%BoRiS.eq.1.0_R8.and.switch%tn_style.ne.0) then
-              call xerrab('BoRiS only with default energy eq.')
+        if (switch%tn_style.eq.0) then
+
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,1) = 0.0_R8
+          sr%shidt(iCv,2) = 0.0_R8
+          sr%shidt(iCv,3) = -1.5_R8*t0
+          if (switch%BoRiS.eq.1.0_R8) then
+            do is = 0, ns-1
+              sr%shidt(iCv,0) = sr%shidt(iCv,0)+t0*
+     &         kinrgy0(iCv,is)*na0(iCv,is)
+              sr%shidt(iCv,2) = sr%shidt(iCv,2)-t0*
+     &         kinrgy0(iCv,is)*na0(iCv,is)/
+     &         ni0(iCv,0)
+            enddo
           endif
 
-          if (switch%tn_style.eq.0) then
-            sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+        elseif (switch%tn_style.eq.1) then
 
-            if (switch%BoRiS.eq.1.0_R8) then
-              do is = 0, ns-1
-                sr%shi(iCv,0) = sr%shi(iCv,0)+t0*
-     &           kinrgy0(iCv,is)*na0(iCv,is)
-                sr%shi(iCv,2) = sr%shi(iCv,2)-t0*
-     &           kinrgy0(iCv,is)*na0(iCv,is)/
-     &           ni0(iCv,0)
-              enddo
-            endif
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,1) = 0.0_R8
+          sr%shidt(iCv,2) = 0.0_R8
+          sr%shidt(iCv,3) = -1.5_R8*t0
 
-*           shidt(iCv,1) = (unchanged)
-*           shidt(iCv,2) = (otherwise unchanged)
-            sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
+        else
 
-          elseif (switch%tn_style.eq.1) then
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,1) = 0.0_R8
+          sr%shidt(iCv,2) = 0.0_R8
+          sr%shidt(iCv,3) = -1.5_R8*t0
 
-            sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shndt(iCv,0) = 1.5_R8*t0*nn0(iCv)*tn0(iCv)
+          sr%shndt(iCv,1) = 0.0_R8
+          sr%shndt(iCv,2) = 0.0_R8
+          sr%shndt(iCv,3) = -1.5_R8*t0
+          sr%shn(iCv,:) = sr%shn(iCv,:)+sr%shndt(iCv,:)
+        endif
 
-*           shidt(iCv,1) = (unchanged)
-*           shidt(iCv,2) = (otherwise unchanged)
-            sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
-
-          else
-
-            sr%shi(iCv,0) = sr%shi(iCv,0)+
-     &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
-*           shidt(iCv,1) = (unchanged)
-*           shidt(iCv,2) = (otherwise unchanged)
-            sr%shi(iCv,3) = sr%shi(iCv,3)-1.5_R8*t0
-
-            sr%shn(iCv,0) = sr%shn(iCv,0)+
-     &       1.5_R8*t0*nn0(iCv)*tn0(iCv)
-*           shndt(iCv,1) = (unchanged)
-*           shndt(iCv,2) = (otherwise unchanged)
-            sr%shn(iCv,3) = sr%shn(iCv,3)-1.5_R8*t0
-          endif
-
+        sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
       enddo
+
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
@@ -219,19 +216,22 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
-          t0 = (switch%b2srdt_phm4/dtim)
-     &               *geo%cvVol(iCv)*qe*time_factor(iCv)                 !xpb
-          sr%sch(iCv,0) = sr%sch(iCv,0)+t0*(ni0(iCv,0)-ne0(iCv))         !xpb
-*         schdt(iCv,1) = (unchanged)
-*         schdt(iCv,2) = (unchanged)
-          sr%sch(iCv,3) = sr%sch(iCv,3)-t0                               !xpb
+        t0 = (switch%b2srdt_phm4/dtim)
+     &               *geo%cvVol(iCv)*qe*time_factor(iCv)                !xpb
+        sr%schdt(iCv,0) = t0*(ni0(iCv,0)-ne0(iCv))                      !xpb
+        sr%schdt(iCv,1) = 0.0_R8
+        sr%schdt(iCv,2) = 0.0_R8
+        sr%schdt(iCv,3) = -t0                                           !xpb
+        sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
       enddo
+
       do iCv = 1, nCv
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-          t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
-     &                                  *time_factor(iCv)                !xpb
-          sr%sne(iCv,0) = sr%sne(iCv,0)+t0*ne0(iCv)
-          sr%sne(iCv,1) = sr%sne(iCv,1)-t0
+        t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
+     &                                  *time_factor(iCv)               !xpb
+        sr%snedt(iCv,0) = t0*ne0(iCv)
+        sr%snedt(iCv,1) = -t0
+        sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
       enddo
 
 cdjm Store the total change in linearised sources for balance
@@ -243,32 +243,32 @@ cdjm Store the total change in linearised sources for balance
 !WG_TODO      endif
 
       if ((switch%b2npmo_iout.eq.1.or.
-     &                   switch%iout_b2wdat .eq. 4).and.lout) then           !srv 11.09.09 {
-       do is = 0, ns-1 
+     &                   switch%iout_b2wdat .eq. 4).and.lout) then      !srv 11.09.09 {
+       do is = 0, ns-1
          write (chns,'(i3.3)') is
-         wrk0=sr%smo(:,0,is)+
-     &        sr%smo(:,1,is)*ua(:,is)+
-     &        sr%smo(:,2,is)*na(:,is)*mp*am(is)+
-     &        sr%smo(:,3,is)*ua(:,is)*na(:,is)*mp*am(is)
+         wrk0=sr%smodt(:,0,is)+
+     &        sr%smodt(:,1,is)*ua(:,is)+
+     &        sr%smodt(:,2,is)*na(:,is)*mp*am(is)+
+     &        sr%smodt(:,3,is)*ua(:,is)*na(:,is)*mp*am(is)
          call my_out_us(70,nCv,0,wrk0,'b2srdt_smodt'//chns)
        enddo
       endif
-      if ((switch%b2npco_iout.eq.1 
+      if ((switch%b2npco_iout.eq.1
      &    .or. switch%iout_b2wdat.eq.4) .and. lout) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-          wrk0=sr%sna(:,0,is)+sr%sna(:,1,is)*na(:,is)
+          wrk0=sr%snadt(:,0,is)+sr%snadt(:,1,is)*na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2srdt_snadt'//chns)
         enddo
       endif
-      if ((switch%b2npht_iout.eq.1 .or. 
+      if ((switch%b2npht_iout.eq.1 .or.
      &                      switch%iout_b2wdat.eq.4) .and. lout) then
-        wrk0=sr%she(:,0)+sr%she(:,1)*te+
-     &       sr%she(:,2)*ne + sr%she(:,3)*te*ne
+        wrk0=sr%shedt(:,0)+sr%shedt(:,1)*te+
+     &       sr%shedt(:,2)*ne + sr%shedt(:,3)*te*ne
         call my_out_us(70,nCv,0,wrk0,'b2srdt_shedt')
-        wrk0=sr%shi(:,0)+sr%shi(:,1)*ti+
-     &       sr%shi(:,2)*ni(:,0)+
-     &       sr%shi(:,3)*ti*ni(:,0)
+        wrk0=sr%shidt(:,0)+sr%shidt(:,1)*ti+
+     &       sr%shidt(:,2)*ni(:,0)+
+     &       sr%shidt(:,3)*ti*ni(:,0)
         call my_out_us(70,nCv,0,wrk0,'b2srdt_shidt')
       endif
 
@@ -277,22 +277,24 @@ cdjm Store the total change in linearised sources for balance
         write (chns,'(i3.3)') is
         do k=0,3
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,0,sr%smo(1,k,is),
+         call my_out_us(70,nCv,0,sr%smodt(1,k,is),
      &                       'b2srdt_smodt'//chk//chns)
         enddo
         do k=0,1
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,0,sr%sna(1,k,is),
+         call my_out_us(70,nCv,0,sr%snadt(1,k,is),
      &                       'b2srdt_snadt'//chk//chns)
         enddo
        enddo
        do k=0,3
         write (chk,'(i1)') k
-        call my_out_us(70,nCv,0,sr%she(1,k),'b2srdt_shedt'//chk)
-        call my_out_us(70,nCv,0,sr%shi(1,k),'b2srdt_shidt'//chk)
-        call my_out_us(70,nCv,0,sr%sch(1,k),'b2srdt_schdt'//chk)
-        call my_out_us(70,nCv,0,sr%skt(1,k),'b2srdt_sktdt'//chk)
-        call my_out_us(70,nCv,0,sr%szt(1,k),'b2srdt_sztdt'//chk)
+        call my_out_us(70,nCv,0,sr%shedt(1,k),'b2srdt_shedt'//chk)
+        call my_out_us(70,nCv,0,sr%shidt(1,k),'b2srdt_shidt'//chk)
+        if (switch%tn_style.ge.2)
+     &  call my_out_us(70,nCv,0,sr%shndt(1,k),'b2srdt_shndt'//chk)
+        call my_out_us(70,nCv,0,sr%schdt(1,k),'b2srdt_schdt'//chk)
+        call my_out_us(70,nCv,0,sr%sktdt(1,k),'b2srdt_sktdt'//chk)
+        call my_out_us(70,nCv,0,sr%sztdt(1,k),'b2srdt_sztdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
 
