@@ -14,9 +14,6 @@
 !WG_TODO      use b2mod_first_flight
       use b2mod_constants
 !WG_TODO      use b2mod_neutrals_namelist
-!WG_TODO      use b2mod_sources
-!     1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-!     2          b2stbr_sne
 !      use b2mod_balance !djm Jan2017
 !     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
 !     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
@@ -699,37 +696,51 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
       endif
 
 * ..sources
-#ifdef WG_TODO
-      b2stbr_sna(nCv,0:ns-1)=
-     1 sna0(nCv,0,0:ns-1)+
-     2 sna0(nCv,1,0:ns-1)*na(nCv,0:ns-1)
+      st%srw%b2stbr_sna(:,0:ns-1)=
+     1 st%srw%sna0(:,0,0:ns-1)+
+     2 st%srw%sna0(:,1,0:ns-1)*st%pl%na(:,0:ns-1)
       do is=0,ns-1
-        b2stbr_smo(nCv,is)=
-     1   smo0(nCv,0,is)+
-     2   smo0(nCv,1,is)*ua(nCv,is)+
-     3   smo0(nCv,2,is)*am(is)*mp*na(nCv,is)+
-     4   smo0(nCv,3,is)*am(is)*mp*na(nCv,is)*
-     5   ua(nCv,is)
+        st%srw%b2stbr_smo(:,is)=
+     1   st%srw%smo0(:,0,is)+
+     2   st%srw%smo0(:,1,is)*st%pl%ua(:,is)+
+     3   st%srw%smo0(:,2,is)*am(is)*mp*st%pl%na(:,is)+
+     4   st%srw%smo0(:,3,is)*am(is)*mp*st%pl%na(:,is)*st%pl%ua(:,is)
       enddo
-      b2stbr_she(nCv)=
-     1 she0(nCv,0)+
-     2 she0(nCv,1)*te(nCv)+
-     3 she0(nCv,2)*ne(nCv)+
-     4 she0(nCv,3)*ne(nCv)*te(nCv)
-      b2stbr_shi(nCv)=
-     1 shi0(nCv,0)+
-     2 shi0(nCv,1)*ti(nCv)+
-     3 shi0(nCv,2)*ni(nCv,0)+
-     4 shi0(nCv,3)*ni(nCv,0)*ti(nCv)
-      b2stbr_sch(nCv)=
-     1 sch0(nCv,0)+
-     2 sch0(nCv,1)*po(nCv)+
-     3 sch0(nCv,2)*ne(nCv)+
-     4 sch0(nCv,3)*ne(nCv)*po(nCv)
-      b2stbr_sne(nCv)=
-     1 sne0(nCv,0)+
-     2 sne0(nCv,1)*ne(nCv)
+      st%srw%b2stbr_she(:)=
+     1 st%srw%she0(:,0)+
+     2 st%srw%she0(:,1)*st%pl%te(:)+
+     3 st%srw%she0(:,2)*st%dv%ne(:)+
+     4 st%srw%she0(:,3)*st%dv%ne(:)*st%pl%te(:)
+      st%srw%b2stbr_shi(:)=
+     1 st%srw%shi0(:,0)+
+     2 st%srw%shi0(:,1)*st%pl%ti(:)+
+     3 st%srw%shi0(:,2)*st%dv%ni(:,0)+
+     4 st%srw%shi0(:,3)*st%dv%ni(:,0)*st%pl%ti(:)
+      st%srw%b2stbr_shn(:)=
+     1 st%srw%shn0(:,0)+
+     2 st%srw%shn0(:,1)*st%pl%ti(:)+
+     3 st%srw%shn0(:,2)*st%dv%nn(:)+
+     4 st%srw%shn0(:,3)*st%dv%nn(:)*st%pl%tn(:)
+      st%srw%b2stbr_sch(:)=
+     1 st%srw%sch0(:,0)+
+     2 st%srw%sch0(:,1)*st%pl%po(:)+
+     3 st%srw%sch0(:,2)*st%dv%ne(:)+
+     4 st%srw%sch0(:,3)*st%dv%ne(:)*st%pl%po(:)
+      st%srw%b2stbr_skt(:)=
+     1 st%srw%skt0(:,0)+
+     2 st%srw%skt0(:,1)*st%pl%kt(:)+
+     3 st%srw%skt0(:,2)*st%dv%ni(:,1)+
+     4 st%srw%skt0(:,3)*st%dv%ni(:,1)*st%pl%kt(:)
+      st%srw%b2stbr_szt(:)=
+     1 st%srw%szt0(:,0)+
+     2 st%srw%szt0(:,1)*st%pl%zt(:)+
+     3 st%srw%szt0(:,2)*st%dv%ni(:,1)+
+     4 st%srw%szt0(:,3)*st%dv%ni(:,1)*st%pl%zt(:)
+      st%srw%b2stbr_sne(:)=
+     1 st%srw%sne0(:,0)+
+     2 st%srw%sne0(:,1)*st%dv%ne(:)
 
+#ifdef WG_TODO
       if(main_call) then
         do ibnd = 1, nbnd
           over_erosion = .false.
@@ -909,7 +920,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
 !        enddo
-!WG_TODO         call my_out_us(70,nCv,0,b2stbr_smo(1,is),'b2stbr_smo'//chns)
+         call my_out_us(70,nCv,0,st%srw%b2stbr_smo(1,is),
+     &                  'b2stbr_smo'//chns)
         endif
 !       call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
 !       call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
@@ -937,7 +949,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !         write (chk,'(i1)') k
 !         call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
 !        enddo
-!WG_TODO         call my_out_us(70,nCv,0,b2stbr_sna(1,is),'b2stbr_sna'//chns)
+         call my_out_us(70,nCv,0,st%srw%b2stbr_sna(1,is),
+     *                  'b2stbr_sna'//chns)
         endif
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
@@ -1000,8 +1013,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !       call my_out_us(70,nCv,0,she0(-1,-1,k),'b2stbr_she'//chk)
 !       call my_out_us(70,nCv,0,shi0(-1,-1,k),'b2stbr_shi'//chk)
 !      enddo
-!WG_TODO       call my_out_us(70,nCv,0,b2stbr_she,'b2stbr_she')
-!WG_TODO       call my_out_us(70,nCv,0,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_she,'b2stbr_she')
+       call my_out_us(70,nCv,0,st%srw%b2stbr_shi,'b2stbr_shi')        !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_shn,'b2stbr_shn')        !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_skt,'b2stbr_skt')        !srv 29.04.10
+       call my_out_us(70,nCv,0,st%srw%b2stbr_szt,'b2stbr_szt')        !srv 29.04.10
       endif
       if (switch%b2stbr_iout.eq.1 .or.
      &  (switch%b2npp7_iout.eq.1 .or. switch%b2nppo_iout.eq.1)
@@ -1011,7 +1027,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !          write (chk,'(i1)') k
 !          call my_out_us(70,nCv,0,sch0(-1,-1,k),'b2stbr_sch'//chk)
 !       enddo
-!WG_TODO        call my_out_us(70,nCv,0,b2stbr_sch,'b2stbr_sch')
+        call my_out_us(70,nCv,0,st%srw%b2stbr_sch,'b2stbr_sch')
        endif
       endif                                                           !srv 11.09.09 }
 
@@ -1047,7 +1063,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
       call subini ('b2stbr_neutr_scl')
       if (ncall.eq.0) then
-        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+        call xertst(0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
         call xertst(1.le.ns, 'faulty argument ns')
         call ipgeti('b2mndr_eirene', use_eirene)
         call ipgeti('eirene_ank_mods', ank_mods)
@@ -1088,7 +1104,7 @@ c        write(*,*) 'Called neutr_scl'
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: ns
-      type (switches), intent (in) :: switch
+      type (switches), intent(in) :: switch
       type (mapping), intent(inout) :: mpg
 *-----------------------------------------------------------------------
 *.documentation

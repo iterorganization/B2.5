@@ -48,6 +48,7 @@
         real (kind=R8), allocatable  :: vxFpsi(:)      !
         real (kind=R8), allocatable  :: vxOnedBsq(:)   ! 1/B**2 at vertices
         real (kind=R8), allocatable  :: vxBzb(:)       ! Factor for P-S/mdf flows
+        real (kind=R8), allocatable  :: vxEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
 
 !  flux tube/surface quantities
         real (kind=R8), allocatable  :: cvConn(:)      ! (nCv) Connection length for each CV
@@ -113,6 +114,7 @@
       allocate (g%vxFpsi(nVx))
       allocate (g%vxOnedBsq(nVx))
       allocate (g%vxBzb(nVx))
+      allocate (g%vxEb(nVx,0:2))
 
 !  flux tube quantites
       allocate (g%cvConn(nCv))
@@ -175,6 +177,7 @@
       g%vxFpsi = 0._R8
       g%vxOnedBsq = 0._R8
       g%vxBzb = 0._R8
+      g%vxEb = 0._R8
 
 !  flux tube quantites
       g%cvConn = 0._R8
@@ -239,6 +242,7 @@
       deallocate (g%vxFpsi)
       deallocate (g%vxOnedBsq)
       deallocate (g%vxBzb)
+      deallocate (g%vxEb)
 
 !  flux tube quantites
       deallocate (g%cvConn)
@@ -518,6 +522,8 @@
      &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
       gm%fcEb(:,2) = gm%fcEb(:,2)/
      &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
+
+!WG_TODO: Need to provide a calculation for gm%vxEb
 
 *   ..compute cvHz
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing

@@ -713,7 +713,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ncall_b2news_, ismain, b2news_solving, solveee, solveei,          !srv 22.05.18
      &  solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3,
-     &  st%pl, st%dv, st%co, st%rt, st%sr, st_ext, ier0)
+     &  st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)
 csw 16aug2011 init potential
       if(switch%pot_eq.eq.0) st%pl%po=0.0_R8                              !srv 13.07.05
       if(switch%pot_eq.eq.2) st%pl%po=3.1_R8*st%pl%te/qe
