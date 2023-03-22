@@ -1184,11 +1184,9 @@ c
         targety(i,2) = real(i)
         targety(i,1) = real(i)-0.5_R8
       end do
-#ifdef WG_TODO
-      call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
-      call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
-      call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
-#endif
+      call b2xppr_st(nx,ny,ns,ne,na,te,ti,pr)
+      call b2xppz_st(nx,ny,ns,ne,na,te,ti,pz)
+      call b2xzef_st(nx,ny,ns,rz2,na,ne,zeff)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
       icell=0
