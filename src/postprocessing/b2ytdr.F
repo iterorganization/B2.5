@@ -476,7 +476,8 @@ c 2002-09-11: logic revised
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
      5  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1) 
+!     7  sna_corr, taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
       character cnamip*80, cvalip*80, cswitch*80
@@ -603,6 +604,7 @@ c 2002-09-11: logic revised
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+!      data sna_corr/0.0_R8/, taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
@@ -1388,6 +1390,8 @@ c 2002-09-11: logic revised
       call xertst (ns.gt.sput_dst, 'faulty input sput_dst')
       call ipgeti ('b2stbr_sput_dst2', sput_dst2)
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
+      call ipgetr ('b2stbr_sna_corr', sna_corr)                    !iyv 07.03.18 {
+      call ipgetr ('b2stbr_taumax', taumax)                        !IYS 07.12.2018
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
       call ipgeti ('nrings_for_no_speedup_averaging', nrings)
@@ -11055,8 +11059,22 @@ cxpb as they no longer necessarily point to the same species
           end do
         endif
 #endif
+#ifdef B25_EIRENE
         if (maxpoin.ne.2000) write(99,'(1x,a,i6,a)')
      >   'MAXPOIN=', maxpoin,','
+        if (maxval(sna_corr).gt.0.0) then    
+          write(hlp_frm,'(a,i2,a)') 
+     .           '(1x,a,',nspecies,'(1x,f10.7,'',''))'
+          write(99, hlp_frm)
+     .             'SNA_CORR=',(sna_corr(ib),ib=1,nspecies)
+          write(99, hlp_frm)
+     .             'TAUMAX=',(taumax(ib),ib=1,nspecies)
+          write(hlp_frm,'(a,i2,a)')  
+     .           '(1x,a,',nspecies,'(1x,L1,'',''))'
+          write(99, hlp_frm)
+     .       'DO_SNA_CORR_CORE=',(.TRUE.,ib=1,nspecies)
+        endif
+#endif
         if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')

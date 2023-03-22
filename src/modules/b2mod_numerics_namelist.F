@@ -29,8 +29,8 @@
      *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
 #     include "DIMENSIONS.F"
-      integer NSDMAX, maxnsps
-      parameter (NSDMAX=DEF_NSD, maxnsps=DEF_NSPECIES)
+      integer NSDMAX, NATMMAX
+      parameter (NSDMAX=DEF_NSD, NATMMAX=DEF_NATM)
       real (kind=R8), save :: 
      &    dtco(0:nsdmax-1,0:NNREGMAX), dtco_SOL(0:nsdmax-1)
       real (kind=R8), save :: 
@@ -38,7 +38,7 @@
       real (kind=R8), save :: dtee(0:NNREGMAX), dtee_SOL
       real (kind=R8), save :: dtei(0:NNREGMAX), dtei_SOL
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
-      real (kind=R8), save :: sna_corr(maxnsps), taumax(maxnsps)       ! IYS 10.03.2023
+      real (kind=R8), save :: sna_corr(NATMMAX), taumax(NATMMAX)       ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemt(0:NNREGMAX)
@@ -51,7 +51,7 @@
       logical, save :: last_solve_9(0:NNREGMAX)
       logical, save :: last_solve_11(0:NNREGMAX)           !srv 02.04.18
       logical, save :: add_te_corr_to_po(0:NNREGMAX)       ! IYS 21.09.2018
-      logical, save :: do_sna_corr_core(maxnsps)          ! IYS 21.09.2018
+      logical, save :: do_sna_corr_core(NATMMAX)          ! IYS 10.03.2023
 #endif
       !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
       !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
