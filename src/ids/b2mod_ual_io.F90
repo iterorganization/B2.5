@@ -94,12 +94,18 @@ module b2mod_ual_io
 #ifdef IMAS
     !! UAL Access
     use b2mod_ual_io_grid &
-     & , only : INCLUDE_GHOST_CELLS, GEOMETRY_LINEAR
+     & , only : INCLUDE_GHOST_CELLS, US_GRID_UNDEFINED,  &
+     &          GEOMETRY_LINEAR, GEOMETRY_LIMITER,       &
+     &          GEOMETRY_SN, GEOMETRY_STELLARATORISLAND, &
+     &          GEOMETRY_CDN,                            &
+     &          GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP,   &
+     &          GEOMETRY_LFS_SNOWFLAKE_PLUS,             &
+     &          GEOMETRY_LFS_SNOWFLAKE_MINUS
 #if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
-     & , only : b2_IMAS_Transform_Data_B2_To_IDS_Cell, &
-     &          b2_IMAS_Transform_Data_B2_To_IDS_Face, &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS_Cell,  &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Face,  &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
      & , only : b2_IMAS_Fill_Grid_Desc
@@ -397,7 +403,11 @@ contains
         integer :: i      !< Iterator
         integer :: j      !< Iterator
         integer :: k      !< Iterator
-        integer :: iCv    !< Iterator
+        integer :: iFc    !< Iterator on faces
+        integer :: iCv    !< Iterator on control volumes
+        integer :: iFcsep !< Index of the face at the OMP separatrix
+        integer :: iCv1, Icv2 !< Indices of the two CVs of both sides
+                              !< of the OMP separatrix
         integer :: istrai !< Stratum iterator
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
@@ -437,6 +447,8 @@ contains
         real(IDS_real) :: zeff( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
+        real(IDS_real) :: u, v,                                        &
+            &             vtor, nisep, nasum
 #ifdef B25_EIRENE
 #ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
@@ -3655,6 +3667,228 @@ contains
 #endif
         end if
 
+#if IMAS_MINOR_VERSION > 21
+! Summary separatrix data
+        allocate( summary%local%separatrix%position%psi( num_time_slices ) )
+        summary%local%separatrix%position%psi( time_sind ) = geo%fsPsi(mpg%iFssep)
+#if IMAS_MINOR_VERSION > 36
+        allocate( summary%local%separatrix_average%position%psi( num_time_slices ) )
+        summary%local%separatrix_average%position%psi( time_sind ) = geo%fsPsi(mpg%iFssep)
+#endif
+        iFcsep = US_GRID_UNDEFINED
+        do i = mpg%cvFcP(icsepomp,1), mpg%cvFcP(icsepomp,1) + mpg%cvFcP(icsepomp,2) - 1
+          if (iFcsep .ne. US_GRID_UNDEFINED) cycle
+          iFc = mpg%cvFc(i)
+          if (mpg%fcFs(iFc).eq.mpg%iFssep) then
+            iFcsep = iFc
+          end if
+        end do
+        iCv1 = mpg%fcCv(iFcsep,1)
+        iCv2 = mpg%fcCv(iFcsep,2)
+        call write_sourced_value( summary%local%separatrix%t_e, &
+           &  0.5_R8 * (state%pl%te(iCv1) + state%pl%te(iCv2))/ev )
+        call write_sourced_value( summary%local%separatrix%t_i_average, &
+           &  0.5_R8 * (state%pl%ti(iCv1)+ state%pl%ti(iCv2))/ev )
+        call write_sourced_value( summary%local%separatrix%n_e, &
+           &  0.5_R8 * (state%dv%ne(iCv1)+ state%dv%ne(iCv2)) )
+#if IMAS_MINOR_VERSION > 36
+        tmpFace = 1.0_IDS_real
+        u = separatrix_average( state%pl%te, tmpFace )
+        call write_sourced_value( summary%local%separatrix_average%t_e, u/ev )
+        u = separatrix_average( state%pl%ti, tmpFace )
+        call write_sourced_value( summary%local%separatrix_average%t_i_average, u/ev )
+        u = separatrix_average( state%dv%ne, tmpFace )
+        call write_sourced_value( summary%local%separatrix_average%n_e, u )
+#endif
+        do is = 1, nspecies
+          is1 = eb2spcr(is)
+          if (nint(zamax(is1)).eq.0) is1 = is1 + 1
+          is2 = is1 + nfluids(is) - 1
+          nisep = 0.0_R8
+          nasum = 0.0_R8
+          vtor = 0.0_R8
+          do i = is1, is2
+            nisep = nisep + &
+              &  0.5_R8 * (state%pl%na(iCv1,i) + state%pl%na(iCv2,i))
+            nasum = nasum + state%pl%na(icsepomp,i)
+            vtor = vtor + state%pl%ua(icsepomp,i)*                 &
+              &    abs(geo%cvBb(icsepomp,2)/geo%cvBb(icsepomp,3))* &
+              &    state%pl%na(icsepomp,i)
+          end do
+          if (nasum.gt.0.0_R8) vtor = vtor / nasum
+          totCv = 0.0_IDS_real
+          tmpCv = 0.0_IDS_real
+          do i = is1, is2
+            tmpCv(:) = tmpCv(:) + state%pl%na(:,i)
+            totCv(:) = totCv(:) + state%pl%ua(:,1)*state%pl%na(:,i)* &
+                &                 abs(geo%cvBb(:,2)/geo%cvBb(:,3))
+          end do
+          if (nasum.gt.0.0_R8) totCv(:) = totCv(:)/tmpCv(:)
+          u = separatrix_average( tmpCv, tmpFace )
+          v = separatrix_average( totCv, tmpFace )
+          select case (is_codes(eb2spcr(is)))
+          case ('H')
+            call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%hydrogen, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%hydrogen, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%hydrogen, v )
+#endif
+          case ('D')
+            call write_sourced_value( summary%local%separatrix%n_i%deuterium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%deuterium, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%deuterium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%deuterium, v )
+#endif
+          case ('T')
+            call write_sourced_value( summary%local%separatrix%n_i%tritium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%tritium, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%tritium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, v )
+#endif
+          case ('He')
+            if (nint(am(eb2spcr(is))).eq.3) then
+              call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
+              call write_sourced_value( summary%local%separatrix%velocity_tor%helium_3, vtor )
+#if IMAS_MINOR_VERSION > 36
+              call write_sourced_value( summary%local%separatrix_average%n_i%helium_3, u )
+              call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_3, v )
+#endif
+            else if (nint(am(eb2spcr(is))).eq.4) then
+              call write_sourced_value( summary%local%separatrix%n_i%helium_4, nisep )
+              call write_sourced_value( summary%local%separatrix%velocity_tor%helium_4, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%helium_4, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%helium_4, v )
+#endif
+            end if
+          case ('Li')
+            call write_sourced_value( summary%local%separatrix%n_i%lithium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%lithium, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%lithium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%lithium, v )
+#endif
+          case ('Be')
+            call write_sourced_value( summary%local%separatrix%n_i%beryllium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%beryllium, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%beryllium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%beryllium, v )
+#endif
+          case ('C')
+            call write_sourced_value( summary%local%separatrix%n_i%carbon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%carbon, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%carbon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%carbon, v )
+#endif
+          case ('N')
+            call write_sourced_value( summary%local%separatrix%n_i%nitrogen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%nitrogen, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%nitrogen, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%nitrogen, v )
+#endif
+          case ('O')
+            call write_sourced_value( summary%local%separatrix%n_i%oxygen, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%oxygen, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%oxygen, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%oxygen, v )
+#endif
+          case ('Ne')
+            call write_sourced_value( summary%local%separatrix%n_i%neon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%neon, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%neon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%neon, v )
+#endif
+          case ('Ar')
+            call write_sourced_value( summary%local%separatrix%n_i%argon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%argon, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%argon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%argon, v )
+#endif
+#if IMAS_MINOR_VERSION > 30
+          case ('Fe')
+            call write_sourced_value( summary%local%separatrix%n_i%iron, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%iron, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%iron, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%iron, v )
+#endif
+          case ('Kr')
+            call write_sourced_value( summary%local%separatrix%n_i%krypton, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%krypton, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%krypton, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%krypton, v )
+#endif
+#endif
+          case ('Xe')
+            call write_sourced_value( summary%local%separatrix%n_i%xenon, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%xenon, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%xenon, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%xenon, v )
+#endif
+          case ('W')
+            call write_sourced_value( summary%local%separatrix%n_i%tungsten, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_tor%tungsten, vtor )
+#if IMAS_MINOR_VERSION > 36
+            call write_sourced_value( summary%local%separatrix_average%n_i%tungsten, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_tor%tungsten, v )
+#endif
+          end select
+        end do
+        call write_sourced_value( summary%local%separatrix%n_i_total, &
+          & 0.5_R8 * (state%dv%ni(iCv1,1) + state%dv%ni(iCv2,1)) )
+        u = separatrix_average( state%dv%ni(:,1), tmpFace )
+#if IMAS_MINOR_VERSION > 36
+        call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
+#endif
+        u = separatrix_average( zeff, tmpFace )
+        call write_sourced_value( summary%local%separatrix%zeff, &
+          & 0.5_R8 * (zeff(iCv1) + zeff(iCv2)) )
+#if IMAS_MINOR_VERSION > 36
+        call write_sourced_value( summary%local%separatrix_average%zeff, u )
+#endif
+
+        call fill_summary_data( geo, summary )
+        u = 0.0_IDS_real
+        do iCv = 1, mpg%nCi
+          if (geometryType.eq.GEOMETRY_LIMITER .or. &
+           &  geometryType.eq.GEOMETRY_SN .or. &
+           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+            if (mpg%cvReg(iCv).ne.2) cycle
+          else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
+            if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.5) cycle
+         else if (geometryType.eq.GEOMETRY_CDN .or. &
+               &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
+               &  geometryType.eq.GEOMETRY_DDN_TOP) then
+            if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.6) cycle
+          else
+            cycle
+          end if
+          do is = 0, ns-1
+            u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+          end do
+#ifdef B25_EIRENE
+          do is = 1, natmi
+            u = u - eneutrad(iCv,is,0)
+          end do
+#endif
+        end do
+        if (u.ne.0.0_IDS_real) then
+          call write_sourced_value( summary%scrape_off_layer%power_radiated, u )
+        end if
+#endif
+
         deallocate(ionstt,istion,ispion)
 #ifdef B25_EIRENE
         if (switch%use_eirene.ne.0) then
@@ -3676,6 +3910,37 @@ contains
         return
         end function roxa
 
+        function separatrix_average( field, weight )
+        ! This function is devoted to obtain the weighted average along the active separatrix
+        ! of a plasma field quantity
+        ! The average is made using face-centered quantities on the cell faces forming the separatrix
+        ! The weighting automatically includes the areas of the cell faces
+        implicit none
+        real(kind=IDS_real) :: separatrix_average
+        real(kind=IDS_real), intent(in) :: field(mpg%nCv), weight(mpg%nFc)
+        real(kind=IDS_real) :: sum, area_sum
+
+        separatrix_average = IDS_REAL_INVALID
+        sum = 0.0_IDS_real
+        area_sum = 0.0_IDS_real
+        do i = mpg%fsFcP(mpg%iFssep,1), &
+           &   mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+          iFc = mpg%fsFc(i)
+          iCv1 = mpg%fcCv(iFc,1)
+          iCv2 = mpg%fcCv(iFc,2)
+          if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
+            & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
+            & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+            sum = sum + geo%fcS(iFc) * weight(iFc) * &
+                & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
+            area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
+          end if
+        end do
+        if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
+
+        return
+        end function separatrix_average
+
 #if IMAS_MINOR_VERSION > 29
         subroutine write_timed_integer( ival, ivalue )
             type(ids_signal_int_1d), intent(inout) :: ival
@@ -3690,6 +3955,22 @@ contains
             return
 
         end subroutine write_timed_integer
+#endif
+
+#if IMAS_MINOR_VERSION > 30
+        subroutine write_timed_value( val, value )
+            type(ids_signal_flt_1d), intent(inout) :: val
+                !< Type of IDS data structure, designed for scalar data handling
+            real(IDS_real), intent(in) :: value
+
+            allocate( val%data( num_slices ) )
+            val%data( slice_index ) = value
+            allocate( val%time( num_slices ) )
+            val%time( slice_index ) = time_slice_value
+
+            return
+
+        end subroutine write_timed_value
 #endif
 
     end subroutine B25_process_ids
@@ -4368,6 +4649,38 @@ contains
     ncall = ncall + 1
     return
     end subroutine put_equilibrium_data
+
+#if IMAS_MINOR_VERSION > 21
+    subroutine fill_summary_data( geo, summary )
+    implicit none
+    type (geometry), intent(in) :: geo
+    type (ids_summary), intent(inout) :: summary
+
+    select case (GeometryType)
+    case( GEOMETRY_LIMITER )
+      call write_sourced_integer( summary%boundary%type, 0 )
+    case( GEOMETRY_SN )
+      if ( isymm.ne.0 ) then
+        if ( geo%LSN ) then
+          call write_sourced_integer( summary%boundary%type, 11 )
+        else
+          call write_sourced_integer( summary%boundary%type, 12 )
+        end if
+      else
+        call write_sourced_integer( summary%boundary%type, 1 )
+      end if
+    case( GEOMETRY_CDN , GEOMETRY_DDN_BOTTOM , GEOMETRY_DDN_TOP )
+      call write_sourced_integer( summary%boundary%type, 13 )
+    case( GEOMETRY_LFS_SNOWFLAKE_MINUS , &
+        & GEOMETRY_LFS_SNOWFLAKE_PLUS )
+      call write_sourced_integer( summary%boundary%type, 14 )
+    end select
+
+    call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real )
+
+    return
+    end subroutine fill_summary_data
+#endif
 
 #if IMAS_MINOR_VERSION > 32
     subroutine write_ids_midplane( midplane, midplane_id )

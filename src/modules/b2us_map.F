@@ -35,6 +35,7 @@
         integer, allocatable :: cvFt(:)                !         listing for every cell the corresponding flux tube
         integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
         integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
+        integer, allocatable :: fcFs(:)                ! for every flux surface the corresponding flux surface number
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
@@ -117,7 +118,8 @@
       allocate (m%cvFt(m%nCv))
       allocate (m%fsFc(m%nFc))
       allocate (m%fsFcP(m%nFs,2))
-      allocate (m%fcReg(m%nFC))
+      allocate (m%fcFs(m%nFc))
+      allocate (m%fcReg(m%nFc))
       allocate (m%cvReg(m%nCv))
       allocate (m%ftReg(m%nFt))
       allocate (m%cvOnClosedSurface(m%nCv))
@@ -619,12 +621,14 @@ cwdk  can be derived directly from data in that file
       deallocate(indCv)
 
       allocate (indFsVx(m%nVx))
+      m%fcFs = 0
       indFsVx = 0
       totalcount = 0
       do iFs = 1, m%nFs
         Fscount = 0
         do i = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
           iFc = m%fsFc(i)
+          m%fcFs(iFc) = iFs
           iVx1 = m%fcVx(iFc,1)
           iVx2 = m%fcVx(iFc,2)
           if (m%vxFs(iVx1).ne.0) then
