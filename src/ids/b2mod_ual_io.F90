@@ -3283,20 +3283,20 @@ contains
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%rcxna(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                     &
+                    call write_cell_scalar( sources_grid, mpg,                &
                         &   scalar = edge_sources%source(9)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                    &
+                    call write_cell_scalar( sources_grid, mpg,                &
                         &   scalar = edge_sources%source(9)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                 !! smo: Neutral parallel momentum sources
                     do iCv = 1, mpg%nCv
-                      tmpCv(iCv) = ( state%sr%smo(iCv,0,js) +                         &
-                        &            state%sr%smo(iCv,1,js) * state%pl%ua(iCv,js) +   &
-                        &            state%sr%smo(iCv,2,js) * roxa(iCv,js) +          &
-                        &            state%sr%smo(iCv,3,js) * roxa(iCv,js) *          &
+                      tmpCv(iCv) = ( state%sr%smo(iCv,0,js) +                       &
+                        &            state%sr%smo(iCv,1,js) * state%pl%ua(iCv,js) + &
+                        &            state%sr%smo(iCv,2,js) * roxa(iCv,js) +        &
+                        &            state%sr%smo(iCv,3,js) * roxa(iCv,js) *        &
                         &            state%pl%ua(iCv,js) ) / geo%cvVol(iCv)
                     end do
                     call write_cell_vector_component( sources_grid, mpg,      &
@@ -3408,6 +3408,108 @@ contains
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                !! tn: Fluid Neutral Temperature
+                    tmpCv(:) = state%pl%tn(:)/qe
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%temperature,                   &
+                        &   value = tmpCv )
+                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                        &   val = edge_profiles%ggd( time_sind )%             &
+                        &         neutral( j )%state(1)%temperature,          &
+                        &   value = tmpCv )
+                    tmpCv(:) = state%co%hcn0(:)/state%dv%nn(:)
+                    call write_IDS_quantity( transport_grid, mpg, geo,        &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%d,                      &
+                        &   value = tmpCv )
+                    call write_IDS_quantity( transport_grid, mpg, geo,        &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%d,             &
+                        &   value = tmpCv )
+                !! fhn : Fluid neutral heat flux
+                    flxFace(:,0) = state%dv%fhn(:,0) / geo%fcS(:)
+                    flxFace(:,1) = state%dv%fhn(:,1) / geo%fcS(:)
+                    call write_face_flux( transport_grid, mpg,                &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%energy%flux,                   &
+                        &   value = flxFace )
+                    call write_face_flux( transport_grid, mpg,                &
+                        &   val = edge_transport%model(1)%ggd( time_sind )%   &
+                        &         neutral( j )%state(1)%energy%flux,          &
+                        &   value = flxFace )
+                !! Fluid neutral energy sources
+                    tmpCv(:) = ( state%sr%shn(:,0) +                          &
+                        &        state%sr%shn(:,1) * state%pl%tn(:) +         &
+                        &        state%sr%shn(:,2) * state%dv%nn(:) +         &
+                        &        state%sr%shn(:,3) * state%dv%nn(:) *         &
+                        &        state%pl%tn(:) ) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%b2stbc_shn(:) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(3)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = ( state%sr%shndt(:,0) +                        &
+                        &        state%sr%shndt(:,1) * state%pl%tn(:) +       &
+                        &        state%sr%shndt(:,2) * state%dv%nn(:) +       &
+                        &        state%sr%shndt(:,3) * state%dv%nn(:) *       &
+                        &       state%pl%tn(:) ) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(4)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%b2stbr_shn(:) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rsahi(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(7)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(7)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rrahi(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(8)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(8)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
+                    tmpCv(:) = state%srw%rcxhi(:,js) / geo%cvVol(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(9)%ggd( time_sind )% &
+                        &            neutral( j )%energy,                     &
+                        &   b2CellData = tmpCv )
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(9)%ggd( time_sind )% &
+                        &            neutral( j )%state(1)%energy,            &
+                        &   b2CellData = tmpCv )
                 end do
             end if
 
@@ -3553,6 +3655,13 @@ contains
 #endif
         end if
 
+        deallocate(ionstt,istion,ispion)
+#ifdef B25_EIRENE
+        if (switch%use_eirene.ne.0) then
+          deallocate(isstat,imneut,imiion)
+          deallocate(in_species)
+        end if
+#endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_process_ids: done" )
         ncall = ncall + 1
 

@@ -46,7 +46,7 @@
         real(R8), allocatable :: fhi(:,:), fhi_mdf(:,:), fhit(:,:),
      .                           fhiPSch(:,:), fhi_eir(:,:),
      .                           fhi_ExB(:,:)
-        real(R8), allocatable :: fnn (:,:), fnn_32(:,:), fnn_52(:,:),
+        real(R8), allocatable :: fnn(:,:), fnn_32(:,:), fnn_52(:,:),
      .                           fhn(:,:)
         real(R8), allocatable :: fhm(:,:,:), fhp(:,:,:), fhj(:,:),
      .                           fht(:,:), fkt(:,:), fzt(:,:)
