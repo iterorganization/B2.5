@@ -411,7 +411,7 @@ c accounted for)
      &         rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
      &                                             pl%na(iCv,is)    !srv 05.06.18
 *      ..compute bremsstrahlung radiation
-!WG_TODO          rqbrm(iCv,is) = t0
+          srw%rqbrm(iCv,is) = t0
           rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0
           b2bremreg(mpg%cvReg(iCv))=b2bremreg(mpg%cvReg(iCv))-t0
 !WG_TODO          b2brem=b2brem-t0
@@ -515,7 +515,7 @@ c accounted for)
         do is=0,ns-1                                                 !srv 03.02.12 {
           write(chns,'(i3.3)') is
           call my_out_us(70,nCv,0,srw%rqrad(1,is),'b2stel_rqrad'//chns)
-!WG_TODO          call my_out_us(70,nCv,0,rqbrm(1,is),'b2stel_rqbrm'//chns)
+          call my_out_us(70,nCv,0,srw%rqbrm(1,is),'b2stel_rqbrm'//chns)
         enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 
