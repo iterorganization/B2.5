@@ -78,8 +78,8 @@
       logical, save :: scale_sigma(nsigmx) = .true.
       logical, save :: mapToOMP(nncf) = .false.
       logical, save :: read_sigma(nncf) = .false.
-      real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
-      double precision, parameter :: inf_opt = 1.0e30
+      real (kind=R8), save :: sigma(nsigmx) = 0.0_R8
+      real (kind=R8), parameter :: inf_opt = 1.0e30_R8
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -193,8 +193,8 @@ c***  Standard set-up:
       prior_type = -1
       prior_par = -1.0_R8
 ! sc  Set prior range to (-inf,+inf)
-      prior_range(:,1) = -inf_opt*10.0
-      prior_range(:,2) = inf_opt*10.0
+      prior_range(:,1) = -inf_opt*10.0_R8
+      prior_range(:,2) = inf_opt*10.0_R8
       cf_reg = 0
       cf_regP = 0
       mapToOMP = .false.
