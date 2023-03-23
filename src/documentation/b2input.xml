@@ -2232,7 +2232,7 @@
 			</switch>
 			<switch>
 				<name>b2stel_phm0</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					Multiplier of the sources due to atomic physics.
@@ -2531,6 +2531,27 @@
 				<type>real</type>
 				<description>
 					Another option for plasma state file output. If greater than 0, gives the real-time interval between successive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals (see b2mndr_savecpu and b2mndr_ntim_save).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_ids_save</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Frequency, in timesteps, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_time and b2mndr_ids_av.
+					If used, an IDS time slice will be written at the end of run.
+					If negative, a single IDS will be written at the end of the run.
+					Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_ids_time</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Frequency, in simulation seconds, at which an IDS is saved containing the plasma state. Can be used in conjunction with b2mndr_ids_save and b2mndr_ids_av.
+					If used, an IDS time slice will be written at the end of run.
+					Will not work if running a "0 timesteps" simulation, in which case the use of b2_ual_write is recommended.
 				</description>
 			</switch>
 			<switch>
@@ -2870,6 +2891,15 @@
 					'5.1' for a fort.44 file produced from SOLPS5.1 runs
 					'5.2' for a fort.44 file produced from SOLPS5.2 runs
 					'iter' for input files from SOLPS-ITER runs (no conversion necessary)
+				</description>
+			</switch>
+			<switch>
+				<name>ids_from_43</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is to be used when running the b2_ual_write utility program to obtain an IDS from the SOLPS run results.
+					If set to 1, the IDS will indicate that the results come from a converted SOLPS4.3 run with no additional calculation. By default, the IDS will indicate a SOLPS-ITER run.
 				</description>
 			</switch>
 		</category>
@@ -4118,7 +4148,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '0', drift velocities are calculated in cell centers. When set to '1', drift velocities are calculated in cell faces.
+					When set to '0', drift velocities are calculated in cell centers (NO LONGER SUPPORTED IN WG CODE). When set to '1', drift velocities are calculated in cell faces.
 					 It is recommended '1'.
 				</description>
 			</switch>
@@ -5766,6 +5796,7 @@
 			</switch>
 			<switch>
 				<name>LCBS</name>
+				<default>0</default>
 				<type>integer array of size (NBC)</type>
 				<description>
 					List of core boundary segments, according to their numbering in the current /BOUNDARY/ namelist.

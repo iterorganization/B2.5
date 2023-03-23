@@ -599,11 +599,6 @@ program b2_ual_write_b2mod
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
-#if IMAS_MINOR_VERSION > 21
-        &   summary, &
-#endif
-        &   description )
     call close_ual(idx)
     idx = 0
 
