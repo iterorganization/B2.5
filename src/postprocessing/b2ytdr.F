@@ -11055,7 +11055,7 @@ cxpb as they no longer necessarily point to the same species
       new_filename='b2.optimization.parameters.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename),' already present!'
-      if (todo.and..not.found.and..not.same_atoms) then
+      if (todo.and..not.found.and..not.same_bundling) then
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
