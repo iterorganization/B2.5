@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2spcx (nCv, ns, ev, amh0, th0, ne, 
-     *   rlcx0)
+      subroutine b2spcx (nCv, ns, ev, amh0, th0, ne, rlcx0)
       use b2mod_types
       use b2mod_b2cmrc
+      use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -61,7 +61,7 @@
       intrinsic min, max, log
       real (kind=R8) ::
      *   trimg
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, trimg
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)

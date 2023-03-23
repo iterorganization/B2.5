@@ -1,5 +1,5 @@
 c
-C RHW 18.08.92:  UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
+C RHW 18.08.92: UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
 *//NGREAD//
 *=======================================================================
@@ -24,14 +24,17 @@ c
       use b2mod_b2plot
       use b2mod_indirect
       use b2mod_b2cmpa
-      use b2mod_neutrals_namelist
+      use b2mod_subsys
 #ifdef B25_EIRENE
+      use b2mod_neutrals_namelist
       use eirmod_parmmod
-     .   , only : natm, nmol, nion, nstra, nlmpgs, nspz, ndx, ndy
+     .   , only : natm, nmol, nion, nstra, nlmpgs, nspz
+#ifdef WG_TODO
+     ,          , ndx, ndy
+#endif
       use eirmod_extrab25
       use eirmod_clogau
-      use eirmod_braeir
-     .   , only : pux, puy, pvx, pvy
+      use eirmod_cinit
 #endif
       implicit none
 
@@ -58,7 +61,7 @@ c
 
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
-      external subini, subend, ipgeti, xertst
+      external ipgeti, xertst
 
 *=======================================================================
 *//COMPUTATION//
@@ -72,6 +75,8 @@ C
       do is = 0, ns-1
         if (.not.is_neutral(is)) nplsi = nplsi + 1
       end do
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'faulty argument ismain')
 
 #ifdef B25_EIRENE
 C
@@ -79,18 +84,12 @@ C
 *  READ EIRENE SPECIES DENSITIES AND TEMPERATURES
 * ----------------------------------------------------------------------
 *
-
       rewind (44)
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-#ifndef HPUX
-      write(*,'(a,5i4)')
-     . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
-#else
-      write(*,'(a,5i4)')
-     . ' Dimensions in ftn44 = ',nnx,nny,natmi,nmoli,nioni
-#endif
+      write(*,'(3a,t27,5i5)')
+     . ' Dimensions in ',fort_lc,'44 = ',nnx,nny,natmi,nmoli,nioni
 !WG_TODO      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -101,39 +100,32 @@ C
       allocate(ft44data(0:nx+1,0:ny+1))
       filename='input.dat'
       call find_file(filename,ex)
-#ifndef HPUX
-      filename='fort.33'
-#else
-      filename='ftn33'
-#endif
+      filename=fort_lc//'33'
       if (.not.ex) call find_file(filename,nlwrmsh)
 c
 * labels
 * neutral atoms
 C
       do 11 IS = 1, NATMI
-        READ(44,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        READ(44,'(A)',END=99,ERR=99) TEXTAN(IS-1)
         charns=textan(is-1)(1:3)
         call strip_spaces(charns)
         atoms_list(is)=charns(1:2)
    11 CONTINUE
-      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
-#ifndef HPUX
-      write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
-#else
-      write(*,hlp_frm) 'atoms_list (ftn44) : ', atoms_list(1:natmi)
-#endif
+      write(hlp_frm,'(a7,i3,a8)') '(1x,3a,',natmi,'(a2,1x))'
+      write(*,hlp_frm) 'atoms_list (',fort_lc,'44) : ',
+     . (trim(atoms_list(is)),is=1,natmi)
 C
 * neutral molecules
 C
       do 12 IS = 1, NMOLI
-        READ(44,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
+        READ(44,'(A)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
 C
 * test ions
 C
       do 13 IS = 1, NIONI
-        READ(44,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
+        READ(44,'(A)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
 C
 * data
@@ -178,49 +170,49 @@ C
 C
       do 114 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
- 114  CONTINUE
+  114 CONTINUE
 
 * neutral molecules radial particle flux
 C
       do 115 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
- 115  CONTINUE
+  115 CONTINUE
 
 * neutral atom poloidal particle flux
 C
       do 214 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
- 214  CONTINUE
+  214 CONTINUE
 
 * neutral molecules poloidal particle flux
 C
       do 215 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
- 215  CONTINUE
+  215 CONTINUE
 
 * neutral atom radial energy flux
 C
       do 314 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
- 314  CONTINUE
+  314 CONTINUE
 
 * neutral molecules radial energy flux
 C
       do 415 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
- 415  CONTINUE
+  415 CONTINUE
 
 * neutral atom poloidal energy flux
 C
       do 514 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
- 514  CONTINUE
+  514 CONTINUE
 
 * neutral molecules poloidal energy flux
 C
       do 515 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
- 515  CONTINUE
+  515 CONTINUE
 
       call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
       call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
@@ -282,7 +274,7 @@ c*** read the wall geometry
 cank
 cank-960727
       if(jvft44 .ge. 960623) then
-        print *,'natmi,nmoli,nioni,nplsi=',
+        print *,'natmi,nmoli,nioni,nplsi = ',
      .           natmi,nmoli,nioni,nplsi
         call rdneutrs(44,wldra,natmi)
         call rdneutrs(44,wldrm,nmoli)
@@ -626,7 +618,7 @@ cank
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
         end if
- 999    continue
+  999   continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
 #ifdef WG_TODO
@@ -656,21 +648,26 @@ cc<<<
       call extend(pefluxm,ndx,ndy,nmol,nnx,nny,nmoli)
       call extend(emiss,ndx,ndy,1,nnx,nny,1)
       call extend(emissmol,ndx,ndy,1,nnx,nny,1)
+cxpb We do not extend the volumetric losses quantities
 cank 960511
-      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
-      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
-      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
+c      call extend(emolrad,ndx,ndy,nmol,nnx,nny,nmoli)
+c      call extend(eionrad,ndx,ndy,nion,nnx,nny,nioni)
+cxpb
+cxpb 20180323
 cxpb
 #endif
       deallocate(ft44data)
-#endif
-      NFEND = 1
-
-*  ---------------------------------------------------------------------
-   99 CONTINUE
  1028 format()
+      NFEND = 1
+   99 CONTINUE
+#endif
+      close (44)
+*  ---------------------------------------------------------------------
 C
       call subend ()
       RETURN
@@ -678,7 +675,7 @@ C
 *=======================================================================
 *//END NGREAD//
 
-      END
+      END SUBROUTINE NGREAD
 
 
 

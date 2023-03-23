@@ -2,14 +2,16 @@
 *.specification
 
       subroutine b2wfrc (nprt, ns0, nidis, idis, njdis, jdis, rtt, nt,
-     &  rtn, nn, zamin, zamax, zn, 
-     &  rtlsa, rtlra, rtlqa, rtlqa_ra, rtlcx, rtlza, rtlz2, rtlpt, 
+     &  rtn, nn, zamin, zamax, zn, fix_recomb, zmax_recomb,
+     &  rtlsa, rtlra, rtlqa, rtlqr, rtlcx, rtlza, rtlz2, rtlpt,
      &  rtlpi)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, ns0, nidis, idis(0:nidis-1), njdis, 
-     &  jdis(0:njdis-1), nt, nn
+     &  jdis(0:njdis-1), nt, nn, fix_recomb, zmax_recomb
       real (kind=R8) ::
      *  rtt(0:nt), rtn(0:nn), 
      &  zamin(0:ns0-1), zamax(0:ns0-1), zn(0:ns0-1),
@@ -17,7 +19,7 @@
      &  rtlqa(0:nt,0:nn,0:ns0-1), rtlcx(0:nt,0:nn,0:ns0-1),
      &  rtlza(0:nt,0:nn,0:ns0-1), rtlz2(0:nt,0:nn,0:ns0-1),
      &  rtlpt(0:nt,0:nn,0:ns0-1), rtlpi(0:nt,0:nn,0:ns0-1),
-     &  rtlqa_ra(0:nt,0:nn,0:ns0-1)
+     &  rtlqr(0:nt,0:nn,0:ns0-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -27,7 +29,7 @@
 *  1. purpose
 *
 *     B2WFRC writes to a formatted file a table of atomic rate
-*     coefficients that has been prepared for b2.
+*     coefficients that has been prepared for B2.
 *
 *
 *  3. description
@@ -112,17 +114,17 @@
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
 *     charge state k, excluding the contributions 
-*     coming from potential energy of recombination and other recombination 
-*     process contributions. In short, it includes the processes not 
-*     accounted for in EIRENE. rtqa has dimension ev*m**3/s. 
+*     coming from potential energy of recombination and other recombination
+*     process contributions. In short, it includes the processes not
+*     accounted for in Eirene. rtqa has dimension eV*m**3/s.
 *
-*     rtlqa_ra - (0:nt,0:nn,0:ns0-1) real*8 array, input.
-*     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqa_ra(i,j,k)) specifies
+*     rtlqr - (0:nt,0:nn,0:ns0-1) real*8 array, input.
+*     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlqr(i,j,k)) specifies
 *     the electron heat loss rate coefficient at electron temperature
 *     rtt(i) and electron density rtn(j) for processes starting from
-*     charge state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. 
-*     rtqa_ra has dimension ev*m**3/s. 
+*     charge state k. rtqr only includes the contribution of recombination
+*     which replaces AMJUEL when Eirene is not used.
+*     rtqr has dimension eV*m**3/s.
 *
 *     rtlcx - (0:nt,0:nn,0:ns0-1) real*8 array, input.
 *     For (i,j,k) in (0:nt,0:nn,0:ns0-1), expu(rtlcx(i,j,k)) specifies
@@ -159,16 +161,8 @@
 
 *   ..local variables
       integer i, j, k, ind
-      real (kind=R8) ::
-     *   cutll, t0
 *   ..procedures
-      intrinsic max, exp, log
-      real (kind=R8) ::
-     *   machsfr, expu1
-      external subini, subend, xertst, machsfr, b2xvsg
-      expu1(t0) = exp(max(t0,cutll))
-*     (expu1 is the exponential function with underflow set to a tiny
-*     positive value.)
+      external xertst, b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -183,7 +177,7 @@
       call b2xvsg (nt+1, rtt, 1, 'rtt', '.gt.')
       call b2xvsg (nn+1, rtn, 1, 'rtn', '.gt.')
 *   ..set cutll
-      cutll = log(machsfr())
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..write summary of table
 *   ..write rtsa as function of rtt for several rtn
@@ -234,20 +228,32 @@
      &    zamin(k), zamax(k), zn(k), (expu1(rtlqa(i,j,k)),j=0,nn)
        enddo
       enddo
-*   ..write rtqa_ra as function of rtt for several rtn
+*   ..write rtqa (with fix_recomb) as function of rtn for several rtt
+      if (fix_recomb.ne.0) then
+       do k = 0, ns0-1
+        if (nint(zn(k)).gt.zmax_recomb) cycle
+        do ind = 0, nidis-1
+         i = idis(ind)
+         write (nprt,102) 'rtqa[with fix_recomb](',i,',0:nn,',k,')',
+     &    zamin(k), zamax(k), zn(k),
+     &   (expu1(rtlqa(i,j,k))-expu1(rtlra(i,j,k))*rtlpi(i,j,k),j=0,nn)
+        enddo
+       enddo
+      endif
+*   ..write rtqr as function of rtt for several rtn
       do k = 0, ns0-1
        do ind = 0, njdis-1
         j = jdis(ind)
-        write (nprt,102) 'rtqa_ra(0:nt,',j,',',k,')',
-     &    zamin(k), zamax(k), zn(k), (expu1(rtlqa_ra(i,j,k)),i=0,nt)
+        write (nprt,102) 'rtqr(0:nt,',j,',',k,')',
+     &    zamin(k), zamax(k), zn(k), (expu1(rtlqr(i,j,k)),i=0,nt)
        enddo
       enddo
-*   ..write rtqa_ra as function of rtn for several rtt
+*   ..write rtqr as function of rtn for several rtt
       do k = 0, ns0-1
        do ind = 0, nidis-1
         i = idis(ind)
-        write (nprt,102) 'rtqa_ra(',i,',0:nn,',k,')',
-     &    zamin(k), zamax(k), zn(k), (expu1(rtlqa_ra(i,j,k)),j=0,nn)
+        write (nprt,102) 'rtqr(',i,',0:nn,',k,')',
+     &    zamin(k), zamax(k), zn(k), (expu1(rtlqr(i,j,k)),j=0,nn)
        enddo
       enddo
 *   ..write rtcx as function of rtt for several rtn
@@ -345,4 +351,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfrc
 
-      end
+      end subroutine b2wfrc

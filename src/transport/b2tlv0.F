@@ -10,6 +10,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tlv0_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -38,7 +39,7 @@
 *   ..initialization
 *   ..procedures
       intrinsic max, abs, sqrt
-      external subini, subend, xertst
+      external xertst
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlv0')
@@ -82,7 +83,7 @@
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
             maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
-	  enddo
+           enddo
          endif
         enddo
        else
@@ -110,7 +111,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
             maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
-	  enddo
+          enddo
          endif
         enddo
        endif
@@ -134,4 +135,4 @@ cwdk    or radial contributions, since neutral transport is isotropic
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2tlv0

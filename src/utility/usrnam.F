@@ -12,10 +12,11 @@
 *     value of an appropriate environment variable.
 *     ------------------------------------------------------------------
       character usrnm*16
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
-#else
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
+#endif
 #endif
       save usrnm
       data usrnm/' '/
@@ -27,25 +28,36 @@
 *     ------------------------------------------------------------------
       if (usrnm.eq.' ') then
 *      (this is the first call to usrnam)
+#ifndef NO_GETENV
 #ifdef USE_PXFGETENV
-        CALL PXFGETENV ('LOGNAME', 0, usrnm, lenval, ierror)
+       CALL PXFGETENV ('LOGNAME', 0, usrnm, lenval, ierror)
 #else
-       call get_environment_variable ('LOGNAME', usrnm)
+       call get_environment_variable('LOGNAME',
+     .   status=ierror, length=lenval)
+       if (ierror.eq.0)
+     >   call get_environment_variable('LOGNAME', value=usrnm)
 #endif
        if (usrnm.eq.' ') then
 #ifdef USE_PXFGETENV
         CALL PXFGETENV ('USER', 0, usrnm, lenval, ierror)
 #else
-        call get_environment_variable ('USER', usrnm)
+        call get_environment_variable('USER',
+     .    status=ierror, length=lenval)
+        if (ierror.eq.0)
+     >    call get_environment_variable('USER', value=usrnm)
 #endif
         if (usrnm.eq.' ') then
 #ifdef USE_PXFGETENV
-        CALL PXFGETENV ('user', 0, usrnm, lenval, ierror)
+         CALL PXFGETENV ('user', 0, usrnm, lenval, ierror)
 #else
-         call get_environment_variable ('user', usrnm)
+         call get_environment_variable('user',
+     .     status=ierror, length=lenval)
+         if (ierror.eq.0)
+     >     call get_environment_variable('user', value=usrnm)
+#endif
 #endif
          if (usrnm.eq.' ') then
-          usrnm = 'anonymous'
+           usrnm = 'anonymous'
          endif
         endif
        endif
@@ -53,4 +65,4 @@
       usrnam = usrnm
       return
 *     ------------------------------------------------------------------
-      end
+      end function usrnam

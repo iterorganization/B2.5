@@ -2,38 +2,28 @@
 *.specification
 
       subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,
-     & crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,
-     1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
-     4 periodic_bc,nncut,nncutmax)
+     1 cflag,lblgm,periodic_bc,nncut,nncutmax)
 
+      use b2mod_geo
+     . ,only: geom_match_dist
+      use b2mod_geo2
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
+      use b2mod_ipmain
       use b2mod_connectivity
       use b2mod_indirect
      . ,only: GRID_N_CELLFLAGS
       use b2ag_parameters
       use b2ag_ghostcells
       use carre_constants
+      use b2mod_subsys
       implicit none
 #include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
-*   .. output arguments
-      real (kind=R8) ::
-     * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3,0:2),
-     2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
-      integer
-     *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
-     1  rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1),
-     2  topix1(-1:nx1,-1:ny1),topiy1(-1:nx1,-1:ny1),
-     3  bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1),
-     4  leftcut1(nncutmax),rightcut1(nncutmax),
-     5  bottomcut1(nncutmax),topcut1(nncutmax),
-     6  periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
+*   ..output arguments
+      integer :: periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
       character*(*) lblgm
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -57,17 +47,17 @@
 *
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
-*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
+*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
 *
 *     periodic_bc - integer, read from file.
-*     periodic_bc specifies if this is either an island or limiter geometry. 
+*     periodic_bc specifies if this is either an island or limiter geometry.
 *     If periodic_bc.eq.1 then island/limiter treatment is turned on.
 *     We differentiate between the two case through nncut:
 *      nncut.eq.0 = limiter case
@@ -106,7 +96,7 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, ic, ixl, ixr, iyl, iyr, inseltop, inselbot
+      integer ix, iy, ixl, ixr, iyl, iyr, inseltop, inselbot
       integer Bt_adjust, Bt_reversal
       character*256 local_sonnet
       data local_sonnet /'upgrade.geometry'/
@@ -120,31 +110,19 @@
      6     wbbc(-1:nx1+1,-1:ny1+1,0:3)
       real (kind=R8) ::
      *  xoffset, yoffset, xrescale, yrescale, Bt_rescale, pit_rescale,
-     .  min_pitch, distval,
+     .  min_pitch,
      .  r1,r2,r3,rf,z1,z2,z3,z4,numer,denom,aaa,bbb,
      .  nhatr,nhatz,bphatr,bphatz,bdotn,beta,cosa,cosb,cose,sinb
-      integer ireg,errors
+      integer ireg
       character*1 zone(-1:nx1)
-      logical found, concave
-      real (kind=R8), save ::  geom_match_dist = 1.0e-6_R8
+      logical concave
       data xoffset /0.0_R8/, yoffset /0.0_R8/, Bt_rescale/1.0_R8/,
-     .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/, 
+     .  Bt_adjust/0/, Bt_reversal/0/, xrescale/1.0_R8/,
      .  yrescale/1.0_R8/, pit_rescale/1.0_R8/, min_pitch/1.0_R8/
 
 *   ..procedures
-      external subini, subend, ipgetc, ipgeti, ipgetr, xertst,
-     * b2xvsg, b2gxdr_dummy
-      intrinsic abs, sqrt, cos, sin, min, max, sign, acos
-      real (kind=R8) ::
-     *  dist
-      integer ix1,iy1,ip1,ix2,iy2,ip2
-      dist(ix1,iy1,ip1,ix2,iy2,ip2)=
-     1 sqrt((crx1(ix1,iy1,ip1)-crx1(ix2,iy2,ip2))**2+
-     2 (cry1(ix1,iy1,ip1)-cry1(ix2,iy2,ip2))**2)
-      logical match
-c      match(ix1,iy1,ix2,iy2)=
-c     1 (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt.
-c     2 switch%geom_match_dist
+      external ipgeti, ipgetr, xertst, b2xvsg, b2gxdr_dummy
+      intrinsic abs, cos, sin, sign, acos
 
 *-----------------------------------------------------------------------
 *.computation
@@ -186,8 +164,9 @@ c     2 switch%geom_match_dist
 
       ! Read in grid input file (as typically produced by traduit)
       ! This routine also ensures the existence of ghost cells
-      call b2gxdr_dummy(local_sonnet, nx1, ny1, istyle, isymm,
-     &     crxs, crys, psi, bp, bt, ffbz, wbbc, cflag)
+      call b2gxdr_dummy(local_sonnet,
+     & nx1, ny1, istyle, isymm,
+     & crxs, crys, psi, bp, bt, ffbz, wbbc, cflag)
 
       ! Set up magnetic field and shift coordinates
       do  iy = -1, ny1
@@ -209,7 +188,7 @@ c     2 switch%geom_match_dist
           else if (ix.eq.nx1 .and. iy.eq.ny1) then
             wbbc1(nx1+1,ny1+1,0:3) = wbbc(nx1+1,ny1+1,0:3)
           end if
-          if(Bt_adjust.eq.1) then
+          if (Bt_adjust.eq.1) then
             if (isymm.eq.1 .and. xoffset.ne.0.0_R8) then
               bb1(ix,iy,2)=bt(ix,iy)*
      &          crxs(ix,iy,0)/(crxs(ix,iy,0)+xoffset)
@@ -280,19 +259,15 @@ c     2 switch%geom_match_dist
       endif
       bb1(:,:,3)=sqrt(bb1(:,:,0)**2+bb1(:,:,1)**2+bb1(:,:,2)**2)
       wbbc1(:,:,3)=sqrt(wbbc1(:,:,0)**2+wbbc1(:,:,1)**2+wbbc1(:,:,2)**2)
-      
+
  9999 continue
 
-      call init_connectivity(nx1,ny1,crx1,cry1,cflag,
-     & leftix1,leftiy1,rightix1,rightiy1, 
-     & topix1,topiy1,bottomix1,bottomiy1, 
-     & leftcut1,rightcut1,bottomcut1,topcut1, 
-     & periodic_bc,nncut,nncutmax, inseltop, inselbot, 
-     & geom_match_dist, istyle )
+      call init_connectivity( nx1, ny1, cflag,
+     & periodic_bc, nncut, inseltop, inselbot, istyle )
 
       call test_connectivity(nx1,ny1,crx1,cry1,cflag,
-     & leftix1,leftiy1,rightix1,rightiy1, 
-     & topix1,topiy1,bottomix1,bottomiy1 )      
+     & leftix1,leftiy1,rightix1,rightiy1,
+     & topix1,topiy1,bottomix1,bottomiy1 )
 
 cxpb For classical grids only
 cxpb Check the pitch angle at the plates and make sure it is at least min_pitch
@@ -302,7 +277,6 @@ cxpb Do not correct corner cells
           do iy = 0, ny1-1
 !             Skip unused cells
              if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-
 cxpb Western edge
             if (.not.isInDomain(nx1,ny1,leftix1(ix,iy),leftiy1(ix,iy)))
      >       then
@@ -322,9 +296,9 @@ cxpb Western edge
      .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
               bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
               cosa = nhatr*bphatr+nhatz*bphatz
-              concave = ((r2-r1)*(rf-r1)+(z2-z1)*(z4-z1)).lt.0.0_R8 
+              concave = ((r2-r1)*(rf-r1)+(z2-z1)*(z4-z1)).lt.0.0_R8
      &            .and. ((r2-r1)*(z4-z1)-(z2-z1)*(rf-r1)).lt.0.0_R8
-              if(concave) write(*,'(a,i4,a,i4,a)') 
+              if(concave) write(*,'(a,i4,a,i4,a)')
      >         'Cell ',ix,',',iy,' is concave !'
               if(abs(bdotn).lt.
      >         bb1(ix,iy,3)*cos(pi*(90.0_R8-min_pitch)/180.0_R8)) then
@@ -344,7 +318,7 @@ cxpb  and keep the new coordinates as the intersection of the rotated line
 cxpb  and the parallel to Bp line between point 4 and the original point 1
                   numer = (r1 - r2) * cosb - (z1 - z2) * sinb
                   denom = (r1 - r2) * sinb + (z1 - z2) * cosb
-                  if(denom.ne.0.0_R8) then 
+                  if(denom.ne.0.0_R8) then
                     aaa = numer / denom
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
@@ -359,10 +333,10 @@ cxpb  and the parallel to Bp line between point 4 and the original point 1
                   else
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
-                      r1 = rf - (z4-z2)/bbb  
+                      r1 = rf - (z4-z2)/bbb
                     else
                       r1 = rf
-                    endif   
+                    endif
                     z1 = z2
                   endif
 cxpb  Copy the changes onto crx1, cry1
@@ -377,15 +351,15 @@ cxpb  ALSO MOVE THE BACK OF THE GUARD CELLS!
      .                                   topiy1(ix,iy))) then
                     crx1(topix1(ix,iy),topiy1(ix,iy),1) = r1
                     cry1(topix1(ix,iy),topiy1(ix,iy),1) = z1
-                    crx1(topix1(ix,iy),topiy1(ix,iy),0) = 
+                    crx1(topix1(ix,iy),topiy1(ix,iy),0) =
      .               r1 + (r1-rf)/1000.0_R8
-                    cry1(topix1(ix,iy),topiy1(ix,iy),0) = 
+                    cry1(topix1(ix,iy),topiy1(ix,iy),0) =
      .               z1 + (z1-z4)/1000.0_R8
                     crx1(topix1(rightix1(ix,iy),rightiy1(ix,iy)),
-     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0) 
+     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0)
      .               = r1
                     cry1(topix1(rightix1(ix,iy),rightiy1(ix,iy)),
-     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0) 
+     .                   topiy1(rightix1(ix,iy),rightiy1(ix,iy)),0)
      .               = z1
                   endif
 cxpb  if just below the top corner, make the corner cell follow
@@ -394,9 +368,9 @@ cxpb  if just below the top corner, make the corner cell follow
                     cry1(ix,ny1,3) = z1 + (z1-z2)/1000.0_R8
                     crx1(ix,ny1,2) = r1 + (r1-r3)/1000.0_R8
                     cry1(ix,ny1,2) = z1 + (z1-z3)/1000.0_R8
-                    crx1(rightix1(ix,ny1),rightiy1(ix,ny1),2) = 
+                    crx1(rightix1(ix,ny1),rightiy1(ix,ny1),2) =
      .               r1 + (r1-r2)/1000.0_R8
-                    cry1(rightix1(ix,ny1),rightiy1(ix,ny1),2) = 
+                    cry1(rightix1(ix,ny1),rightiy1(ix,ny1),2) =
      .               z1 + (z1-z2)/1000.0_R8
                   end if
                   nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
@@ -404,11 +378,11 @@ cxpb  if just below the top corner, make the corner cell follow
                   bphatr = (r1-rf+r2-r3)/
      .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                   bphatz = (z1-z4+z2-z3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)     
+     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                 else  ! rotation correction impossible
                   bb1(ix,iy,0) = sign(
      .             cos(pi*(90.0_R8-min_pitch)/180.0_R8)/
-     .             (nhatr*bphatr+nhatz*bphatz), 
+     .             (nhatr*bphatr+nhatz*bphatz),
      1             bb1(ix,iy,0))
                   bb1(ix,iy,3) = sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
                 endif
@@ -436,9 +410,9 @@ cxpb Eastern edge
      .         sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
               bdotn = (nhatr*bphatr+nhatz*bphatz)*bb1(ix,iy,0)
               cosa = nhatr*bphatr+nhatz*bphatz
-              concave = ((rf-r1)*(r2-r1)+(z4-z1)*(z2-z1)).lt.0.0_R8 
+              concave = ((rf-r1)*(r2-r1)+(z4-z1)*(z2-z1)).lt.0.0_R8
      &            .and. ((rf-r1)*(z2-z1)-(z4-z1)*(r2-r1)).lt.0.0_R8
-              if(concave) write(*,'(a,i4,a,i4,a)') 
+              if(concave) write(*,'(a,i4,a,i4,a)')
      >         'Cell ',ix,',',iy,' is concave !'
               if(abs(bdotn).lt.
      >         bb1(ix,iy,3)*cos(pi*(90.0_R8-min_pitch)/180.0_R8)) then
@@ -458,7 +432,7 @@ cxpb  and keep the new coordinates as the intersection of the rotated line
 cxpb  and the parallel to Bp line between point 4 and the original point 1
                   numer = (r1 - r2) * cosb - (z1 - z2) * sinb
                   denom = (r1 - r2) * sinb + (z1 - z2) * cosb
-                  if(denom.ne.0.0_R8) then 
+                  if(denom.ne.0.0_R8) then
                     aaa = numer / denom
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
@@ -473,10 +447,10 @@ cxpb  and the parallel to Bp line between point 4 and the original point 1
                   else
                     if (rf.ne.r1) then
                       bbb = (z4 - z1)/(rf - r1)
-                      r1 = rf - (z4-z2)/bbb   
+                      r1 = rf - (z4-z2)/bbb
                     else
                       r1 = rf
-                    endif   
+                    endif
                     z1 = z2
                   endif
 cxpb  Copy the changes onto crx1, cry1
@@ -491,15 +465,15 @@ cxpb ALSO MOVE THE BACK OF THE GUARD CELLS!
      .                                   topiy1(ix,iy))) then
                     crx1(topix1(ix,iy),topiy1(ix,iy),0) = r1
                     cry1(topix1(ix,iy),topiy1(ix,iy),0) = z1
-                    crx1(topix1(ix,iy),topiy1(ix,iy),1) = 
+                    crx1(topix1(ix,iy),topiy1(ix,iy),1) =
      .               r1 + (r1-rf)/1000.0_R8
-                    cry1(topix1(ix,iy),topiy1(ix,iy),1) = 
+                    cry1(topix1(ix,iy),topiy1(ix,iy),1) =
      .               z1 + (z1-z4)/1000.0_R8
                     crx1(topix1(leftix1(ix,iy),leftiy1(ix,iy)),
-     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1) 
+     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1)
      .               = r1
                     cry1(topix1(leftix1(ix,iy),leftiy1(ix,iy)),
-     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1) 
+     .                   topiy1(leftix1(ix,iy),leftiy1(ix,iy)),1)
      .               = z1
                   endif
 cxpb  if just below the top corner, make the corner cell follow
@@ -508,9 +482,9 @@ cxpb  if just below the top corner, make the corner cell follow
                     cry1(ix,ny1,2) = z1 + (z1-z2)/1000.0_R8
                     crx1(ix,ny1,3) = r1 + (r1-r3)/1000.0_R8
                     cry1(ix,ny1,3) = z1 + (z1-z3)/1000.0_R8
-                    crx1(leftix1(ix,ny1),leftiy1(ix,ny1),3) = 
+                    crx1(leftix1(ix,ny1),leftiy1(ix,ny1),3) =
      .               r1 + (r1-r2)/1000.0_R8
-                    cry1(leftix1(ix,ny1),leftiy1(ix,ny1),3) = 
+                    cry1(leftix1(ix,ny1),leftiy1(ix,ny1),3) =
      .               z1 + (z1-z2)/1000.0_R8
                   end if
                   nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
@@ -518,11 +492,11 @@ cxpb  if just below the top corner, make the corner cell follow
                   bphatr = (r1-rf+r2-r3)/
      .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                   bphatz = (z1-z4+z2-z3)/
-     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)     
+     .             sqrt((r1-rf+r2-r3)**2+(z1-z4+z2-z3)**2)
                 else  ! rotation correction impossible
                   bb1(ix,iy,0) = sign(
      .             cos(pi*(90.0_R8-min_pitch)/180.0_R8)/
-     .             (nhatr*bphatr+nhatz*bphatz), 
+     .             (nhatr*bphatr+nhatz*bphatz),
      1             bb1(ix,iy,0))
                   bb1(ix,iy,3) = sqrt(bb1(ix,iy,0)**2+bb1(ix,iy,2)**2)
                 endif
@@ -596,9 +570,22 @@ cxpb  if just below the top corner, make the corner cell follow
 *-----------------------------------------------------------------------
 *.end b2agfs
 
+      contains
+
+      logical function match(ix1,iy1,ix2,iy2)
+      use b2mod_geo2
+      implicit none
+      integer, intent(in) :: ix1, iy1, ix2, iy2
+      match=
+     1 (distc1(ix1,iy1,1,ix2,iy2,0)+distc1(ix1,iy1,3,ix2,iy2,2)).lt.
+     2 geom_match_dist
+      return
+      end function match
+
       end subroutine b2agfs
 c
-      subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
+      subroutine b2gxdr_dummy(local_sonnet,
+     & nx, ny, istyle, isymm,
      & crxs, crys, psi, bp, bt, ffbz, wbbc, cflag)
       use b2mod_types
       use b2mod_version
@@ -608,6 +595,7 @@ c
       use carre_constants
       use b2ag_ghostcells
       use carre_b2ag
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -615,25 +603,28 @@ c
       integer nx, ny, istyle, isymm
       integer :: cflag(0:nx+1,0:ny+1,GRID_N_CELLFLAGS)
       real (kind=R8) ::
-     *   crxs(0:nx+1,0:ny+1,0:4),
+     * crxs(0:nx+1,0:ny+1,0:4),
      1 crys(0:nx+1,0:ny+1,0:4),
-     2 bp(0:nx+1,0:ny+1),
-     3 bt(0:nx+1,0:ny+1),
-     4 psi(0:nx+1,0:ny+1,0:4,0:2),
-     5 ffbz(0:nx+1,0:ny+1,0:3),
+     2 bp(0:nx+1,0:ny+1),bt(0:nx+1,0:ny+1),
+     4 psi(0:nx+1,0:ny+1,0:4,0:2),ffbz(0:nx+1,0:ny+1,0:3),
      6 wbbc(0:nx+2,0:ny+2,0:3)
       character*(*) local_sonnet
 
+      logical no_flux_data            ! IYS 21.02.2020
       ! nnx, nny: dimension of the grid as read from the file
       ! nx, ny: dimension of the grid as used by B2
       ! NOTE: the nx, ny here corresponds to nx1, ny1 in b2agfs
-  
+
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
+      character*12 device_env
+      logical streql
+      external streql
       integer lenval, ierror
-#else
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
+#endif
 #endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
@@ -643,10 +634,13 @@ c
       character*80 format_string(4)
       integer, save :: new_format
       character*12 device
-      logical open_file, uop, first_read
+      character*16 username
+      logical open_file, uop, first_read, ex
       character uline*(line_length)
-      external xertst, subini, subend, open_file
+      character*16 usrnam
+      external xertst, open_file, usrnam
       intrinsic index, sqrt
+      real (kind=R8) :: t0
 
       data new_format/1/
       data format_string/
@@ -665,25 +659,33 @@ c
       i=-1
       j=-1
       lun=96
-      meshpath = 'data.local/meshes|data/meshes'
+      meshpath = 'data.local/meshes'
 #ifdef JET
       device = 'jet'
 #else
       device = 'iter'
 #endif
 #ifndef NO_GETENV
+      device_env = ' '
 #ifdef USE_PXFGETENV
-      CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+      CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
 #else
-      call get_environment_variable ('DEVICE', device)
+      call get_environment_variable('DEVICE',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0)
+     > call get_environment_variable('DEVICE', value=device_env)
 #endif
+      if (.not.streql(device_env,' ')) device = device_env
 #endif
-      if(istyle.eq.-1) then      	 !xpb  DG-CARRE-format geometry input
+      username = usrnam()
+      if(istyle.eq.-1) then        !xpb  DG-CARRE-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
+     .   //'|modules/Carre/meshes/'//trim(device)//'/'//trim(username)
+        call find_file(local_sonnet,ex)
         if(open_file(lun,local_sonnet,meshpath)) then
           write(*,*)
-     1     "Reading the geometry file assuming the 'new' format"
+     1     "Reading the geometry file assuming the Carre format"
           call cfverr(lun,grid_version)
           read(lun,*) nnx,nny
           if (grid_version.lt."01.001.028") then
@@ -691,8 +693,8 @@ c
              ! Ghost cells are given, nnx,nny - nx,ny have to be the same
 
              if(nnx.ne.nx.or.nny.ne.ny) then
-               write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
-     1          nx,ny,nnx,nny
+               write(*,'(a,4i5)')
+     1       'b2gxdr_dummy: nx,ny code and data disagree',nx,ny,nnx,nny
                call xerrab ('Mismatch nx/ny and nnx/nny')
              endif
              do iy=0,ny+1
@@ -719,7 +721,8 @@ c
      1                  (crxs(ix,iy,i),crys(ix,iy,i),
      $                   psi(ix,iy,i,0),psi(ix,iy,i,1),
      $                   psi(ix,iy,i,2),ffbz(ix,iy,i-1),i=1,4),
-     3                  bp(ix,iy),bt(ix,iy),cflag(ix,iy,:)
+     3                  bp(ix,iy),bt(ix,iy),
+     4                  (cflag(ix,iy,i),i=1,GRID_N_CELLFLAGS)
                 enddo
              enddo
 
@@ -742,8 +745,10 @@ c
                    case(GRID_INTERNAL, GRID_BOUNDARY)
                       if (abs(bp(ix,iy) - bb_tmp(ix,iy,0)) > 1e-7 .or.
      $                    abs(bt(ix,iy) - bb_tmp(ix,iy,2)) > 1e-7) then
-                         write (*,*) "b2agfs: not matching carre bb at",
-     $                        ix, iy
+                         write (*,'(a,2i5,4e15.8)')
+     $                    "b2agfs: not matching carre bb at",
+     $                        ix, iy, bp(ix,iy), bt(ix,iy),
+     $                                bb_tmp(ix,iy,0), bb_tmp(ix,iy,2)
                       endif
                    end select
                 enddo
@@ -751,15 +756,34 @@ c
 
           end if
           close(lun)
+! If the toroidal flux function is not provided, compute it
+          if (maxval(ffbz).eq.0.0_R8 .and. minval(ffbz).eq.0.0_R8) then
+            if (isymm.eq.1 .or. isymm.eq.3) then
+              write(*,*) 'Toroidal flux function missing!'
+              write(*,*) 'Trying to fix this automatically'
+            end if
+            t0 = 0.0_R8
+            do iy=0,ny+1
+              do ix=0,nx+1
+                if (isymm.eq.1) then
+                  t0 = t0 + bt(ix,iy) * crxs(ix,iy,4)
+                else if (isymm.eq.3) then
+                  t0 = t0 + bt(ix,iy) * crys(ix,iy,4)
+                end if
+              end do
+            end do
+            ffbz = 2.0_R8 * pi * t0 / (nx + 2) / (ny + 2)
+          endif
         else
           call xerrab('Error in reading geometry file')
         endif
-      elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+      elseif(istyle.eq.-2) then   !xpb  SONNET-format geometry input
         meshpath = trim(meshpath)
      .   //'|modules/DivGeo/device/'//trim(device)
+     .   //'|modules/DivGeo/device/'//trim(device)//'/'//trim(username)
         if(open_file(lun,local_sonnet,meshpath)) then
-	  write(*,*)
-     1	   "Reading the geometry file assuming the 'old' format"
+          write(*,*)
+     1     "Reading the geometry file assuming the Sonnet format"
           write(*,'(a,i3,2a)') '==== b2gxdr_dummy: read unit',lun,
      1     '  file  ',trim(local_sonnet)
    20     read (lun,'(a)', end=990) uline
@@ -768,12 +792,12 @@ c
      ,       '(e30.0)') ubr
             write(*,*) ' R*Btor = ',ubr
             go to 20
-          elseif(index(uline,'===============================').eq.0) 
+          elseif(index(uline,'===============================').eq.0)
      >     then
             go to 20
           end if
 c----------------------------------------------------------------------
-          if(ubr.eq.0.0_R8) then
+          if(ubr.eq.0.0_R8.and.(isymm.eq.1.or.isymm.eq.3)) then
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'
             write(*,*)
      1       'It must be defined in the header of the grid file '
@@ -787,10 +811,10 @@ c
           mx=0
           my=0
    30     uop=.false.
-          if(first_read) 
+          if(first_read)
      &         write(*,*) 'Trying with format_string option ',
      &         new_format
-          read (lun,format_string(new_format),end=40,err=31) 
+          read (lun,format_string(new_format),end=40,err=31)
      ,       i,j,crxs(i,j,3),crys(i,j,3),crxs(i,j,4),crys(i,j,4)
           go to 32
    31     continue
@@ -807,7 +831,9 @@ c
           end if
    32     continue
           first_read = .false.
-          uop = i.le.5 .and. j.le.1 .and. .false.
+#ifdef DBG
+          uop = i.le.5 .and. j.le.1
+#endif
           if(uop) then
             print *,'*3* ',i,j,crxs(i,j,3),crys(i,j,3)
             print *,'*4* ',i,j,crxs(i,j,4),crys(i,j,4)
@@ -827,8 +853,15 @@ c
             endif
           end if
           read (lun,710,end=990) upsi,crxs(i,j,0),crys(i,j,0)
-          read (lun,720,end=990) crxs(i,j,1),crys(i,j,1),
-     ,     crxs(i,j,2),crys(i,j,2)
+          read (lun,'(a)',end=990) uline
+          if (uline(32:32).eq.'(') then
+            read (uline,720) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          else if (uline(30:30).eq.'(') then
+            read (uline,721) crxs(i,j,1),crys(i,j,1),
+     ,        crxs(i,j,2),crys(i,j,2)
+          end if
+          read (lun,'()')
           if(uop) then
             print *,'*0* ',i,j,crxs(i,j,0),crys(i,j,0)
             print *,'*1* ',i,j,crxs(i,j,1),crys(i,j,1)
@@ -855,7 +888,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
      .             (crxs(i,j,1)**2-crxs(i,j,3)**2)
                   bp(i,j)=min(ubr,bp(i,j))
                 endif
-                if(j.gt.0) bp(i,j)=max(bp(i,j),bp(i,j-1))    
+                if(j.gt.0) bp(i,j)=max(bp(i,j),bp(i,j-1))
               enddo
             enddo
           else if (isymm.eq.4) then
@@ -869,7 +902,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
      .             (crys(i,j,1)**2-crys(i,j,2)**2)
                   bp(i,j)=min(ubr,bp(i,j))
                 endif
-                if(i.gt.0) bp(i,j)=max(bp(i-1,j),bp(i,j))    
+                if(i.gt.0) bp(i,j)=max(bp(i-1,j),bp(i,j))
               enddo
             enddo
           endif
@@ -885,7 +918,38 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             call xerrab
      .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
+          psi=0.0_R8
+          ffbz=0.0_R8
+
+!          write(*,*) "Somebody has filled ffbz with zeroes"
+!          write(*,*) " ... and is going to read it from some file again"
+
+! IYS 21.02.2020
+! I could not find a solution without 'GOTO' here
+! Sorry for that ...
+          read(lun,'(a)',end=210,err=210) uline
+          no_flux_data = .FALSE.
+          GOTO 211    ! Wenn es meine Wille gaebe...
+  210     no_flux_data = .TRUE.
+  211     if (no_flux_data) then
+            if (isymm.eq.1.or.isymm.eq.3) then
+              ffbz = 2.0_R8 * pi * ubr  ! IYS 14.05.2019
+              write(*,*) "No flux data is found the 'old' format file"
+              write(*,*) "Trying to recover ffbz using Rtor*Btor"
+            endif
+          else
+            backspace (lun)
+            do iy=0,nny-1
+              do ix=0,nnx-1
+                read(lun,*,err=10,iostat=iostat) ixd,iyd,
+     1                  crxs(ix,iy,0),crys(ix,iy,0),
+     1                  (psi(ix,iy,i,0),i=1,4),
+     $                  (ffbz(ix,iy,i),i=0,3)
+              enddo
+            enddo
+          endif
           close(lun)
+! IYS 21.02.2020
         else
           call xerrab('Error in reading geometry file')
         endif
@@ -899,11 +963,9 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
       write(*,*) 'ix=',ix,' iy=',iy,' ixd=',ixd,' iyd=',iyd
       call xerrab ('Error in reading grid file')
 
-  700 format(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
-  710 format(18x,e17.0,14x,e17.0,1x,e17.0)
-  720 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
+  710 format(18x,e17.10,14x,e17.10,1x,e17.10)
+  720 format(32x,e17.10,1x,e17.10,8x,e17.10,1x,e17.10)
+  721 format(30x,e17.10,1x,e17.10,8x,e17.10,1x,e17.10)
 
   990 continue
       write(*,*) 'Error: i,j ',i,j

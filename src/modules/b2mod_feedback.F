@@ -85,6 +85,7 @@
       logical found
       character*256 filename
       logical file_ok
+      external find_file
 
       if (edition.eq.'    ') then
         filename = 'b2.feedback_save.parameters'
@@ -113,7 +114,9 @@
      .            .gt. 0.0_R8
       return
 
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
+#endif
       end subroutine read_b2mod_feedback
 
       subroutine write_b2mod_feedback(nwrite,edition)
@@ -150,7 +153,8 @@ cxpb size is changed in DIMENSIONS.F
      > write(nwrite,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
       write(hlp_frm,'(a,i2,a)')
      > '(a,1p,',nspecies,'(1x,1e15.8,'',''))'
-      write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
+      if (maxval(abs(saved_na_feedback_actuator)).gt.0.0_R8)
+     > write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
      > (saved_na_feedback_actuator(is),is=0,nspecies-1)
       write(nwrite,'(a1)') '/'
       close(nwrite)
@@ -164,6 +168,7 @@ cxpb size is changed in DIMENSIONS.F
       integer nread
       character*256 filename
       logical file_ok
+      external find_file
 
       if (control_read) return
       vacuum_communication = 0
@@ -192,7 +197,9 @@ cxpb size is changed in DIMENSIONS.F
       endif
       return
 
- 999  call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#endif
       end subroutine read_b2mod_feedback_control
 
       subroutine write_b2mod_feedback_control(nwrite)

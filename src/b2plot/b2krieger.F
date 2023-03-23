@@ -5,7 +5,7 @@ c version : 16.07.2004 16:20
 c=======================================================================
 c***  Produces a file with coordinates of the grid cell centers and
 c***  the plasma parameters (density, temperatures, fluid velocity)
-c***  in the outer divertor - for K. Krieger
+c***  - for K. Krieger
 c***
 c*** Output files:
 c***
@@ -26,15 +26,11 @@ c-----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,is,i,j,k,l,m,n
+      integer ix,iy,is,i,j,k,l
       integer, allocatable :: mz_hlp(:)
-      real (kind=R8) :: vr,vz,vt,u
       real (kind=R8), allocatable :: n_hlp(:),v_hlp(:)
-      character hlp_frmr*600
+      character hlp_frmr*600, hlp_frm*200
       character*2, allocatable :: hlp_al(:)
-      real (kind=R8) :: pit
-c-----------------------------------------------------------------------
-      pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c
@@ -69,11 +65,15 @@ c
      ,  '# n...99 and vp...99 stand for the ',
      ,  'total density and average velocity of the ion species'
       write (lun,*)
-      write(hlp_frmr,710) nspecies+ns
-  710 format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,3hpit,9x,',
-     ,  '2hne,11x,2hTe,10x,2hTi,4x,',
-     ,  i3,'(4x,1hn,a2,i2.2,6x,2hvp,a2,i2.2,3x)/)')
-      write (lun,hlp_frmr) ((hlp_al(i),mz_hlp(i),j=1,2),i=1,nspecies+ns)
+      write (hlp_frmr,'(a,i3,a)')
+     ,  '(a9,7x,a1,11x,a1,10x,a3,9x,a2,11x,a2,10x,a2,4x,',
+     ,    nspecies+ns,'(4x,a3,i2.2,6x,a4,i2.2,3x)/)'
+      write (lun,hlp_frmr)
+     ,  '#  ix  iy','R','Z','pit','ne','Te','Ti',
+     ,  ('n'//hlp_al(i),mz_hlp(i),
+     ,  'vp'//hlp_al(i),mz_hlp(i),i=1,nspecies+ns)
+      write (hlp_frm,'(a,i3,a)')
+     ,  '(1x,1p,2i4,',6+2*(nspecies+ns),'e12.4)'
 
       do iy=0,ny-1 !{
         write (lun,*)
@@ -89,11 +89,10 @@ c
             end do !}
             v_hlp(j)=v_hlp(j)/n_hlp(j)
           end do !}
-          write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),pit(ix,iy),
-     ,                    ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,                    (n_hlp(j),v_hlp(j),j=1,nspecies),
-     ,                    (na(ix,iy,k),ua(ix,iy,k),k=0,ns-1)
-  700     format(1x,1p,2i4,48e12.4)
+          write (lun,hlp_frm) ix,iy,cr(ix,iy),cz(ix,iy),pit(ix,iy),
+     ,                        ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
+     ,                       (n_hlp(j),v_hlp(j),j=1,nspecies),
+     ,                       (na(ix,iy,k),ua(ix,iy,k),k=0,ns-1)
         end do !}
       end do !}
       close (lun)
@@ -101,4 +100,4 @@ c
       deallocate(n_hlp,v_hlp)
       return
 c=======================================================================
-      end
+      end subroutine b2krieger

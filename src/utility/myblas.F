@@ -1,5 +1,6 @@
       function b2ssum (n, sx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       real (kind=R8) ::
      *   b2ssum
@@ -16,10 +17,7 @@
       integer i, ix
       real (kind=R8) ::
      *   t
-      intrinsic max
       external xerrab
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
        call xerrab ('b2ssum--error, incx.eq.0')
@@ -40,9 +38,10 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end function b2ssum
       function b2sasum (n, sx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       real (kind=R8) ::
      *   b2sasum
@@ -59,10 +58,8 @@
       integer i, ix
       real (kind=R8) ::
      *   t
-      intrinsic abs, max
+      intrinsic abs
       external xerrab
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
        call xerrab ('b2sasum--error, incx.eq.0')
@@ -86,6 +83,7 @@
       end function b2sasum
       function b2s2sum (n1, n2, sx, inc1x, inc2x)
       use b2mod_types
+      use b2mod_math
       implicit none
       real (kind=R8) ::
      *   b2s2sum
@@ -97,12 +95,10 @@
 *     (N1, N2, SX, INC1X, INC2X). BLAS**2 STORAGE CONVENTIONS.
 *     RETURN WITH B2S2SUM = 0 WHEN N1 .LT. 1 OR N2 .LT. 1.
 *     ------------------------------------------------------------------
-      integer i, i2, ibase
+      integer i, i2
       real (kind=R8) ::
      *   t, b2ssum
-      intrinsic max
       external b2ssum
-      ibase(n1, inc1x) = max(1, 1+(1-n1)*inc1x)
 *     ------------------------------------------------------------------
       if (n1 .lt. 1 .or. n2 .lt. 1) then
          b2s2sum = 0.0_R8
@@ -114,7 +110,7 @@
 *        - - - - - - -
       else
          t = 0.0_R8
-         i2 = ibase(n2, inc2x)
+         i2 = ibase1(n2, inc2x)
          do 1, i = 1, n2
             t = t + b2ssum (n1, sx(i2), inc1x)
             i2 = i2 + inc2x
@@ -127,6 +123,7 @@
       end function b2s2sum
       subroutine b2sscal (n, sa, sx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n, incx
       real (kind=R8) ::
@@ -138,10 +135,7 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-      intrinsic max
       external xerrab
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
        call xerrab ('b2sscal--error, incx.eq.0')
@@ -159,10 +153,11 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end subroutine b2sscal 
+      end subroutine b2sscal
 ! $AD NOCHECKPOINT
       subroutine b2scopy (n, sx, incx, sy, incy)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n, incx, incy
       real (kind=R8) ::
@@ -174,10 +169,7 @@
 *     Undefined if incy.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix, iy
-      intrinsic max
       external xerrab
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incy.eq.0) then
        call xerrab ('b2scopy--error, incy.eq.0')
@@ -200,6 +192,7 @@
 ! $AD NOCHECKPOINT
       subroutine b2saxpy (n, sa, sx, incx, sy, incy)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n, incx, incy
       real (kind=R8) ::
@@ -212,10 +205,7 @@
 *     Undefined if incy.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix, iy
-      intrinsic max
       external xerrab
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incy.eq.0) then
        call xerrab ('b2saxpy--error, incy.eq.0')
@@ -238,6 +228,7 @@
       end subroutine b2saxpy
       function b2s2min (n1, n2, sx, inc1x, inc2x)
       use b2mod_types
+      use b2mod_math
       implicit none
       real (kind=R8) ::
      *   b2s2min
@@ -249,12 +240,11 @@
 *     (N1, N2, SX, INC1X, INC2X). BLAS**2 STORAGE CONVENTIONS.
 *     N1 AND N2 MUST BE POSITIVE.
 *     ------------------------------------------------------------------
-      integer i, i2, ibase
+      integer i, i2
       real (kind=R8) ::
      *   t, smin
-      intrinsic max, min
+      intrinsic min
       external smin, xerrab
-      ibase(n1, inc1x) = max(1, 1+(1-n1)*inc1x)
 *     ------------------------------------------------------------------
       if (n1 .lt. 1 .or. n2 .lt. 1) then
          call xerrab ('b2s2min: invalid n1/n2 values')
@@ -264,7 +254,7 @@
          return
 *        - - - - - - -
       else
-         i2 = ibase(n2, inc2x)
+         i2 = ibase1(n2, inc2x)
          t = smin (n1, sx(i2), inc1x)
          i2 = i2 + inc2x
          do 1, i = 2, n2

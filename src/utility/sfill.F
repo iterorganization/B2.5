@@ -1,10 +1,11 @@
 ! $AD NOCHECKPOINT
       subroutine sfill (n, sa, sx, incx)
       use b2mod_types
+      use b2mod_math
       implicit none
       integer n, incx
       real (kind=R8) ::
-     *   sa, sx(0:*)
+     *   sa, sx(0:(n*incx)-1)
 *     ------------------------------------------------------------------
 *     SFILL (BLAS-like routine) fills a vector with a constant value.
 *     sfill(n,sa,sx,incx) sets all elements of the s.p. real*8 vector x
@@ -13,9 +14,7 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-      intrinsic max
-      integer ibase
-      ibase(n,incx) = max(0,(1-n)*incx)
+      external xerrab
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
        call xerrab ('sfill--error, incx.eq.0')
@@ -32,4 +31,4 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine sfill

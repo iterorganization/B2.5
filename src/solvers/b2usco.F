@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,            !srv 13.10.06 26.09.12
+      subroutine b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv, !srv 13.10.06 26.09.12
      &   solvereg, itcnt, rxg, nb, pb, snbv, flob, conb,
-     &   rescb, corpb, aa, name)                              !srv 18.05.02
+     &   rescb, corpb, aa, name)                                         !srv 18.05.02
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -12,6 +12,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2usco
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, itcnt, isb, nregionv
@@ -25,20 +26,20 @@
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   corpb(nCv)
+     *  corpb(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa(mpg%nCmxNv)
+     *  aa(mpg%nCmxNv)
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     b2usco computes a correction towards the solution of the
+*     B2USCO computes a correction towards the solution of the
 *     continuity equation for one atomic species on an unstructured 
 *     mesh.
-*     
+*
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
 !                 |     |     |                     |     |     |
@@ -64,18 +65,13 @@
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                     !srv 13.10.06
       real (kind=R8) ::
-     *   t1, t2, t3, t11, t22, wrk0(nFc), tr
+     *   t1, t2, t3, t11, t22
       character chns*3
       logical lnonzero
 *   ..procedures
       intrinsic abs
-      real (kind=R8) ::
-     *   rscal
-      external subini, subend, xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2xvfx                                  !srv 02.01.07
-!      rscal(tr) = tr
-      rscal(tr) = 1.0e0_R8                                             !srv 13.10.06
-*   ..initialization
+      external xertst, ipgetr, sfill
+      external b2xvsg, b2xvff, b2xvfx                                 !srv 02.01.07
 
 *-----------------------------------------------------------------------
 *.computation
@@ -83,12 +79,12 @@ c      integer, save :: iadd_9 = 1                                     !srv 13.1
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2usco')
-*   ..set internal parameters on first call                              !srv 25.08.99
-      if (ncall_b2usco.eq.0) then                                               !srv 06.07.06 {
+*   ..set internal parameters on first call
+      if (ncall_b2usco.eq.0) then                                     !srv 06.07.06 {
 c       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 c       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 13.10.06
-      endif                                                              !srv 06.07.06 }
+c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
+      endif                                                           !srv 06.07.06 }
 *   ..test nCv, nFc
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt, rxg
@@ -112,7 +108,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
         ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
           aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv)+         !srv 13.10.06 {
-     &     abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))        !srv 13.10.06 }
+     &     abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))              !srv 13.10.06 }
         else
           aa(mpg%cvNvP(iCv,1)) = rscal(pb(iCv))
         endif
@@ -223,15 +219,14 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
         if (.not.solvereg(ireg)) rescb(iCv) = 0.0_R8
       enddo
 
-
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)                 !srv 18.05.02
+      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)             !srv 18.05.02
 *   ..redo the scaling
 ! $AD II-LOOP
       do iCv = 1, nCv
         corpb(iCv) = corpb(iCv)*rscal(pb(iCv))
       enddo
-      if (switch%b2usco_iout.ne.0) then                                     !srv 17.06.02 {
+      if (switch%b2usco_iout.ne.0) then                                 !srv 17.06.02 {
         write (chns,'(i3.3)') isb
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-6),name//'_aam6'//chns)
 !WG_TODO        call my_out_us(70,nx,ny,aa(-1,-1,-5),name//'_aam5'//chns)
@@ -259,4 +254,15 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                              !srv 1
 *-----------------------------------------------------------------------
 *.end b2usco
 
-      end
+      contains
+
+      function rscal(t0)
+      implicit none
+      real(kind=R8) :: rscal, t0
+! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
+      rscal = t0                                                  !srv 13.10.06
+!      rscal = 1.0e0_R8                                           !srv 13.10.06
+      return
+      end function rscal
+
+      end subroutine b2usco

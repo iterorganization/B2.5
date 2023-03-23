@@ -6,7 +6,7 @@
      *   fun(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2XXMM computes the locations of the minimum and maximum entries
-*     of a quantity defined on the b2 mesh.
+*     of a quantity defined on the B2 mesh.
 *     ------------------------------------------------------------------
       integer kxb, kyb, kx0, ky0, kx1, ky1, kx, ky
       external xertst
@@ -44,4 +44,4 @@
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2xxmm

@@ -2,7 +2,11 @@
       use b2mod_types
       implicit none
       integer ioun
-      character chname*(*), chstat*(*), chform*(*)
+      character, intent(in) :: chname*(*), chstat*(*), chform*(*)
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 *     ------------------------------------------------------------------
 *     CFOPEN opens an external file. The file may be formatted or
 *     unformatted.
@@ -19,7 +23,7 @@
       parameter (fform0='formatted')
       intrinsic len
       logical streql
-      external xertst, xerrab, xerget, chcase, streql
+      external xertst, xerrab, chcase, streql
 *     ------------------------------------------------------------------
 *!!   Note 0: set fform0 to the desired mode for un*formatted output.
 *!!   Note 1, on porting this routine to another operating system:
@@ -73,11 +77,34 @@
       if (ioun.ne.0) then
        open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
       else
+#ifdef F2003
        open (newunit=ioun,iostat=ios,file=fname,status=fstat,form=fform)
+#else
+       ioun = newunit()
+       open (unit=ioun,iostat=ios,file=fname,status=fstat,form=fform)
+#endif
       endif
       call xertst (ios.eq.0.and.ioun.ne.0,
-     &  'cfopen--open failure: file='//
+     & 'cfopen--open failure: file='//
      &  trim(fname)//', status='//fstat//', form='//fform)
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfopen
+
+#ifndef F2003
+      integer function newunit ()
+      implicit none
+      logical used
+      external xertst
+
+      newunit = 99
+      used = .true.
+      do while (newunit.gt.0 .and. used)
+        inquire(unit=newunit,opened=used)
+        if (used) newunit = newunit - 1
+      end do
+      call xertst(.not.used,
+     . 'No available free unit numbers for output!')
+      return
+      end function newunit
+#endif

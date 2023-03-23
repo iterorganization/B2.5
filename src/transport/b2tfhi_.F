@@ -3,6 +3,7 @@
       subroutine b2tfhi_ (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,   !srv 13.10.06
      &   pl, dv, co, rt, balance)                                                 !djm Jan2017
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
@@ -18,6 +19,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfhi, b2tfhi_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -50,9 +52,12 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, ib, meth
+      integer iFc, is, meth
       real (kind=R8) ::
-     *   floi0(nFc,0:1), flomx, coni0(nFc,0:1),
+     *   floi0(nFc,0:1), coni0(nFc,0:1),
+#ifdef WG_TODO
+     &   flomx,
+#endif
      &   floi0_mdf(nFc,0:1), wght(nFc,2), dumm0(nFc,0:1),
      &   dumm1(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), flokt0(nFc,0:1), flozt0(nFc,0:1),
@@ -60,14 +65,15 @@
 cpax      
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
-     *   tif(nFc), tnf(nFc),
+     *   tif(nFc), tnf(nFc), wrkf(nFc,0:1),
      *   nati(nCv), nati2(nCv), nativ(nVx), nati2v(nVx),
      *   dnati2(nFc,0:1), cddi(nFc,0:1), cdkt0(nFc,0:1), cdzt0(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
+      real (kind=R8) :: upfac, hybfac
 #endif
-      real (kind=R8) :: upfac, hybfac, scur(nFc,0:1) !djm Jan2017
+      real (kind=R8) :: scur(nFc,0:1) !djm Jan2017
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
 c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
@@ -76,8 +82,7 @@ c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03 
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialization
 
@@ -109,12 +114,18 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
        call b2xvsg (nCv, dv%ni, 1, 'ni', '.gt.')
        call b2xvsg (nCv, pl%ti, 1, 'ti', '.gt.')
        call b2xvsg (nCv, pl%kt, 1, 'kt', '.ge.')
-       call b2xvsg (nFc, co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
-       call b2xvsg (nFc, co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
-       call b2xvsg (nFc, co%cdkt(:,0)*geo%fcQalf(:,0),1,'cdkt0','.ge.')
-       call b2xvsg (nFc, co%cdkt(:,1)*geo%fcQalf(:,1),1,'cdkt1','.ge.')
-       call b2xvsg (nFc, co%cdzt(:,0)*geo%fcQalf(:,0),1,'cdzt0','.ge.')
-       call b2xvsg (nFc, co%cdzt(:,1)*geo%fcQalf(:,1),1,'cdzt1','.ge.')
+       wrkf(:,0) = co%chci(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'chci0', '.ge.')
+       wrkf(:,1) = co%chci(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,1), 1, 'chci1', '.ge.')
+       wrkf(:,0) = co%cdkt(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'cdkt0', '.ge.')
+       wrkf(:,1) = co%cdkt(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,1), 1, 'cdkt1', '.ge.')
+       wrkf(:,0) = co%cdzt(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'cdzt0', '.ge.')
+       wrkf(:,1) = co%cdzt(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,1), 1, 'cdzt1', '.ge.')
       endif
 
       meth = switch%b2tfhi_discr_meth
@@ -122,9 +133,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..set dummy arrays
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
-
-
-      facdriftm  = maxval(dv%facdrift)
+      facdriftm = maxval(dv%facdrift)
       dv%fhiPSch = 0.0e0_R8                                                !srv 13.10.06
       dv%coni    = 0.0e0_R8                                                !srv 02.01.07
       dv%floi    = 0.0e0_R8
@@ -887,4 +896,4 @@ c neutrals
 *-----------------------------------------------------------------------
 *.end b2tfhi_
 
-      end
+      end subroutine b2tfhi_

@@ -1,4 +1,4 @@
-      module b2mod_ma28_for_11diag                                     !sv 13.10.06 {
+      module b2mod_ma28_for_11diag                                     !srv 02.04.18 {
 
       use b2mod_types
       real (kind=R8), allocatable, save ::
@@ -82,4 +82,4 @@
 
       end subroutine dealloc_b2mod_ma28_for_11diag
 
-      end module b2mod_ma28_for_11diag                                 !sv 13.10.06 }
+      end module b2mod_ma28_for_11diag                                 !srv 02.04.18 }

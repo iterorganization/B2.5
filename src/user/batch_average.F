@@ -48,8 +48,9 @@
 
       implicit none
  
+      integer :: n
       real (kind=R8) :: var(1:n), aver(1:n), gnew, gold
-      integer :: n, it, batch_size, ii
+      integer :: it, batch_size, ii
       real (kind=R8) :: rratio
       external rratio
 

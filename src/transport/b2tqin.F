@@ -1,9 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tqin (nCv, ns, nscx, iscx, switch, geo, 
+      subroutine b2tqin (nCv, ns, nscx, iscx, switch, geo,
      &                   pl, rt, sigin)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
@@ -13,6 +14,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tqin
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, nscx
@@ -23,7 +25,7 @@
       type (B2Rates), intent (in) :: rt
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *	sigin(nCv,0:1,0:ns-1,0:nscx-1)                                      !sv 01.07.99 !xpb
+     *  sigin(nCv,0:1,0:ns-1,0:nscx-1)                                 !sv 01.07.99 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -60,10 +62,10 @@
 *   ..local variables
       integer iCv, is, is0, k
       real (kind=R8) ::
-     *   rcx, expu, t0, tav
+     *   rcx, t0, tav
 *   ..procedures
-      intrinsic sqrt, log, exp, max
-      external subini, subend, xertst, sfill, expu
+      intrinsic sqrt, log
+      external xertst, sfill
       external b2xvsg
 *   ..initialisation
 
@@ -126,4 +128,4 @@
 *-----------------------------------------------------------------------
 *.end b2tqin
 
-      end
+      end subroutine b2tqin

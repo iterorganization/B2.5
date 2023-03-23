@@ -9,6 +9,7 @@
 *$$$  call subini ('b2wfr2')
       write (nprt,101)
       write (nprt,102)
+      write (nprt,'()')
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
@@ -21,7 +22,7 @@
      &  '"year" number, the higher numbers indicating more complete ',
      &  'physics models. ADAS also supports bundling of charge states ',
      &  'which can be applied to SOLPS runs.'//,
-     &  'The database can be condulted at ',
+     &  'The database can be consulted at ',
      &  'http://adas.phys.strath.ac.uk/' //,
      &  ' Hydrogen rate coefficients are taken from code by Jon C. We',
      &  'isheit, described in Refs. /2/ and /3/. These data were'/,
@@ -43,4 +44,4 @@
      &  'Heifetz and J. C. Weisheit, ''Survey of Atomic Processes in'/,
      &  ' Edge Plasmas'', J. Nuclear Mater. 121 (1984) 10-16.')
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2wfr2

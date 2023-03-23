@@ -34,4 +34,7 @@
   b2obfn
   b2oblm
   dfmin
+  b2plasmastate_inspect
+  b2_ual_rewrite
+  check_b2_output
 

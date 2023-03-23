@@ -14,10 +14,10 @@
      *   dna0(:,:,:),
      *   vsa0(:,:,:),
      *   vla0(:,:,:,:),
-     *   csig_an(:,:,:,:),                                                 !xpb 
-     *   calf_an(:,:,:,:),                                                 !xpb 
-     *   cvsa_an(:,:,:,:,:),                                               !srv 04.10.99 11.06.08
-     *   vma0(:,:,:,:),                                                    !srv 15.12.05 11.06.08
+     *   csig_an(:,:,:,:),                                              !xpb
+     *   calf_an(:,:,:,:),                                              !xpb
+     *   cvsa_an(:,:,:,:,:),                                            !srv 04.10.99 11.06.08
+     *   vma0(:,:,:,:),                                                 !srv 15.12.05 11.06.08
      *   dkt0(:,:),
      *   dzt0(:,:),
      *   dna_ExB(:,:),
@@ -42,8 +42,8 @@
       deallocate(vla0)
       deallocate(csig_an)
       deallocate(calf_an)
-      deallocate(cvsa_an)                                                !srv 15.12.05 11.06.08
-      deallocate(vma0)                                                   !srv 15.12.05 11.06.08
+      deallocate(cvsa_an)                                               !srv 15.12.05 11.06.08
+      deallocate(vma0)                                                  !srv 15.12.05 11.06.08
       deallocate(dkt0)
       deallocate(dzt0)
       deallocate(dna_ExB)
@@ -55,7 +55,7 @@
 
       subroutine alloc_b2mod_anomalous_transport(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd                                                !xpb
+      integer nxd,nyd,nsd                                               !xpb
 
       allocate(sig0(-1:nxd,-1:nyd))
       allocate(hce0(-1:nxd,-1:nyd))
@@ -68,10 +68,10 @@
       allocate(dna0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vsa0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vla0(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(csig_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
-      allocate(calf_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
-      allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                       !srv 04.10.99 11.06.08
-      allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                          !srv 15.12.05 11.06.08
+      allocate(csig_an(-1:nxd,-1:nyd,0:1,0:1))                          !xpb
+      allocate(calf_an(-1:nxd,-1:nyd,0:1,0:1))                          !xpb
+      allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                  !srv 04.10.99 11.06.08
+      allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !srv 15.12.05 11.06.08
       allocate(dkt0(-1:nxd,-1:nyd))
       allocate(dzt0(-1:nxd,-1:nyd))
       allocate(dna_ExB(-1:nxd,-1:nyd))
@@ -83,8 +83,9 @@
 
       subroutine read_b2mod_anomalous_transport(nxd,nyd,nsd,nread)
       implicit none
-      integer        :: nxd,nyd,nsd, nread
+      integer :: nxd,nyd,nsd,nread
       real (kind=R8) :: cloc(-1:nxd,-1:nyd,0:1)
+      external cfrure, cfrure_opt
 
       if(b2fplasma_version.gt.'01.001.001') then
         call cfrure (nread, size(sig0), sig0, 'sig0')
@@ -115,13 +116,13 @@
         calf_an(:,:,1,1) = cloc(:,:,1)
       endif
       if(b2fplasma_version.ge.'03.000.009') then
-        call cfrure (nread, size(dkt0), dkt0, 'dkt0')
+        call cfrure_opt (nread, size(dkt0), dkt0, 'dkt0')
         if(b2fplasma_version.ge.'03.002.000') then
           call cfrure (nread, size(dzt0), dzt0, 'dzt0')
         endif
-        call cfrure (nread, size(dna_ExB), dna_ExB, 'dna_ExB')
-        call cfrure (nread, size(hce_ExB), hce_ExB, 'hce_ExB')
-        call cfrure (nread, size(hci_ExB), hci_ExB, 'hci_ExB')
+        call cfrure_opt (nread, size(dna_ExB), dna_ExB, 'dna_ExB')
+        call cfrure_opt (nread, size(hce_ExB), hce_ExB, 'hce_ExB')
+        call cfrure_opt (nread, size(hci_ExB), hci_ExB, 'hci_ExB')
       endif
 
       return
@@ -130,6 +131,7 @@
       subroutine write_b2mod_anomalous_transport(nwrite)
       implicit none
       integer nwrite
+      external cfwure
 
       if(newversion.gt.'01.001.001') then
         call cfwure (nwrite, size(sig0), sig0, 'sig0')
@@ -147,11 +149,9 @@
       if(newversion.ge.'01.001.029') then
         call cfwure (nwrite, size(calf_an), calf_an, 'calf_an')
       endif
-      if(newversion.ge.'03.000.009') then
+      if(newversion.ge.'03.002.000') then
         call cfwure (nwrite, size(dkt0), dkt0, 'dkt0')
-        if(newversion.ge.'03.002.000') then
-          call cfwure (nwrite, size(dzt0), dzt0, 'dzt0')
-        endif
+        call cfwure (nwrite, size(dzt0), dzt0, 'dzt0')
         call cfwure (nwrite, size(dna_ExB), dna_ExB, 'dna_ExB')
         call cfwure (nwrite, size(hce_ExB), hce_ExB, 'hce_ExB')
         call cfwure (nwrite, size(hci_ExB), hci_ExB, 'hci_ExB')

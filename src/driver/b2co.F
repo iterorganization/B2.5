@@ -23,16 +23,21 @@
 #endif
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_file
+      use b2mod_xerset
+      use b2mod_ipmain
 #ifdef B25_EIRENE
       use eirmod_parmmod
      .   , ncv_eir => ncv
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
+#ifdef WG_TODO
       use eirmod_cinit
-     , , only: eirene_init_cinit
+     , , only: eirene_init_cinit, fort_lc
       use eirmod_comprt
      , , only: iunout
+#endif
       use eirmod_eirbra
      & , smo_eir => smo
 #else
@@ -41,9 +46,6 @@
      & , smo_eir => smo
 #endif
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 #include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
@@ -68,33 +70,48 @@
 !      type(switches), save   :: switch
 
 *   ..local variables
-#ifdef USE_PXFGETENV
+#ifndef NO_GETENV
       integer lenval, ierror
+#ifdef WG_TODO
+      logical streql
+      external streql
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
+#endif
 #endif
       integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io
-      integer iflag
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
 #ifndef NAGF95
+#ifndef NAGFOR
       integer iargc
 #endif
+#endif
+#ifdef WG_TODO
+      integer iflag
       integer :: b2time = 1, ntim_batch = 500
       integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: boundary_namelist, neutrals_namelist = 0
       real (kind=R8) :: BoRiS = 0.0_R8
       real (kind=R8) :: dtim = 1.0_R8
+#endif
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
+#ifdef WG_TODO
       character filename*256
+      character b2fstate_only*256
+#ifdef B25_EIRENE
       character extension*4
-      character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists
-*   ..procedures
+#endif
+      logical file_exists, todo
       integer lnblnk
+      external lnblnk
+#endif
+      character cnamip*80, cvalip*80, line*500
+      logical file_open
+*   ..procedures
       logical is_comment
-      external lnblnk, is_comment
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external is_comment
+      external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -105,22 +122,13 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2co_mpi_child'
-      endif
-#endif
       call prgini ('b2co')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
       call cfopen (ninp(2),'b2fpardf','old','un*formatted')
       call cfopen (ninp(3),'b2fstati','old','un*formatted')
+#ifndef NAGFOR
       call xertst (iargc().ge.1,
      &  'program should be supplied with a state number')
 #ifdef USE_PXFGETENV
@@ -128,8 +136,12 @@
 #else
       call getarg(1,arg)
 #endif
+#else
+      call xertst (command_argument_count().ge.1,
+     &  'program should be supplied with a state number')
+      call get_command_argument(1,arg,lenval,ierror)
+#endif
       savefile=arg
-      extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
       call cfopen (ninp(4), trim(savefile), 'old','unformatted')
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(1),'b2co.files','new','formatted')
@@ -209,12 +221,12 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)
+*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and mapping
       call read_b2fgmtry (ninp(1), mpg, geo)
 !WG_TODO      call get_nxt(nx, nxtl, nxtr)
 *   ..read initial state
-      call cfverr (ninp(4), plasmastate_version)
+      call cfverr (ninp(4), plasmastate_version)                        !xpb
       call read_b2fstate (ninp(4), nCv, nFc, ns, state)
 *   ..obtain external species data if any
 !WG_TODO      call ipgeti ('b2mndr_external_species', external_species)
@@ -335,16 +347,14 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
 #ifdef WG_TODO
       call init_wall(nx,ny)
 #endif
+      first_time_step = .true.  ! IYS 21.06.2022
       if (use_eirene.eq.0) then
         nnatmi = 0
         nnmoli = 0
       else
 #ifdef B25_EIRENE
-#ifndef HPUX
-        filename='fort.44.'//extension
-#else
-        filename='ftn44.'//extension
-#endif
+        extension=savefile(lnblnk(savefile)-3:lnblnk(savefile))
+        filename=fort_lc//'44.'//extension
         call find_file(filename,file_exists)
 #else
         file_exists = .false.
@@ -359,18 +369,34 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
           nnmoli = 0
         end if
       end if
-#ifdef WG_TODO
       if (ank_tracing.ne.0) then
-        call b2trci(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
-        call b2trcc(nout(1),nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
+        call b2trci(switch)
+        call b2trcc(nout(1),nx,nxtl,nxtr)
         call b2filei(0,ns,nnreg(0))
         call b2filec(0,ns,nnreg(0))
       end if
-#endif
 *   ..rewrite NetCDF files
+#ifdef NO_GETENV
+      todo=.true.
+#else
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('B2FSTATE_ONLY', 0, b2fstate_only, lenval, ierror)
+      if (ierror.ne.0) b2fstate_only='no'
+#else
+      call get_environment_variable('B2FSTATE_ONLY',
+     . status=ierror, length=lenval)
+      if (ierror.eq.0) then
+        call get_environment_variable('B2FSTATE_ONLY',
+     .                           value=b2fstate_only)
+      elseif (ierror.eq.1) then
+        b2fstate_only='no'
+      endif
+#endif
+      todo=.not.streql(b2fstate_only,'yes')
+#endif
       call ipgeti ('b2mndr_b2time', b2time)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (b2time.gt.0 .or. ntim_batch.gt.0) then
+      if (todo.and.b2time.gt.0) then
         filename='b2time.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -382,8 +408,20 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
      .               'no b2time.nc file found'
         end if
       end if
+      if (todo.and.ntim_batch.gt.0) then
+        filename='b2batch.nc'
+        call find_file(filename,file_exists)
+        if(file_exists) then
+          write(*,*) 'Truncating ', trim(filename)
+          call b2co_time_cdf(nx, ny, ns, tim)
+          write(*,*) 'Returned from b2co_time_cdf'
+        else
+          write(*,*) 'Skipped calling b2co_time_cdf because '//
+     .               'no b2batch.nc file found'
+        end if
+      end if
       call ipgeti ('b2stbr_b2wall_netcdf', b2wall_netcdf)
-      if (b2wall_netcdf.gt.0) then
+      if (todo.and.b2wall_netcdf.gt.0) then
         filename='b2wall.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -396,7 +434,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       call ipgeti ('b2mndr_tally', tally)
-      if (tally.gt.0) then
+      if (todo.and.tally.gt.0) then
         filename='b2tallies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -409,7 +447,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       call ipgeti ('b2mndr_mvnum', mvnum)
-      if (mvnum.gt.0) then
+      if (todo.and.mvnum.gt.0) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
         if(file_exists) then
@@ -437,10 +475,6 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       call dealloc_geometry (geo)
       call dealloc_mapping (mpg)
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2co'
 
 *-----------------------------------------------------------------------

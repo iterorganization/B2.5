@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, switch, geo, mpg, 
+      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, switch, geo, mpg,
      &  pl, dv, co, rt, balance)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -12,20 +12,21 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!      use b2mod_balance                                                  !djm Jan2017
+!      use b2mod_balance                                                 !djm Jan2017
 !     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
 !     &          fna_ch, fna_pschused, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfnb, b2tfnb_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type(B2Plasma), intent (in) :: pl 
+      type(B2Plasma), intent (in) :: pl
       type(B2Rates), intent (in) :: rt
       logical balance                                                   !djm Jan2017
 *   ..input/output arguments
@@ -50,44 +51,43 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, ib, meth                             !srv 13.10.06
-      character chns*3                                                   !srv 16.09.02
+      integer iCv1, iCv2, iFc, meth                                     !srv 13.10.06
+      character chns*3                                                  !srv 16.09.02
       real (kind=R8) :: drift_hyb
       real (kind=R8) ::
-     *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1), 
+     *   flo(nFc,0:1), flo_mdf(nFc,0:1), flo_nodrift(nFc,0:1),
      *   flo2dia(nFc,0:1), flo_he(nFc,0:1), flo_53(nFc,0:1),
      *   alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1), fl
-      real (kind=R8) :: 
-     &   vbecrb_(nCv,0:1), wbdia_(nCv,0:1),
-     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                         !srv 21.10.10
-     &   kmpr(nCv), kmprv(nVx),
-     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
-     &   rdiv                                                            !srv 05.03.16
+     *   term(nFc), flob0(nFc,0:1), conb0(nFc,0:1), scur(nFc,0:1)
       real (kind=R8) ::
-     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc), 
+     &   kmprti(nCv), kmprtif(nFc), kmprtiv(nVx),                       !srv 21.10.10
+     &   kmpr(nCv), kmprv(nVx),
+     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
+     &   rdiv                                                           !srv 05.03.16
+      real (kind=R8) ::
+     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc),! wrk4(nFc),
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
-     *   wrk(nCv), wrkVx(nVx), wpo(nCv), wpb(nCv),
+     *   wrk(nCv), wrkVx(nVx),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
-     *   ub2dia(nFc,0:1), 
-     *   nbcor(nVx),                                             !srv 01.10.99 !lk 09.06.11
+     *   ub2dia(nFc,0:1),
+     *   nbcor(nVx),                                                    !srv 01.10.99 !lk 09.06.11
      *   nbti(nCv),
-     *   nbzb(nCv), nbzbc(nVx),                          !srv 13.05.16
+     *   nbzb(nCv), nbzbc(nVx),                                         !srv 13.05.16
      *   dnb(nFc,0:1), dpb(nFc,0:1), dpbc(nCv), dpbm(nFc),
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
      *   nbf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
-      real (kind=R8) :: weight(nFc,2)                              !lk
-      integer :: xcount, ycount
+      real (kind=R8) :: weight(nFc,2)                                   !lk
+      integer :: xcount
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
+c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
+      external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, b2xvff, intface, diff
-      intrinsic abs, max, min, mod, sqrt, sign
+      intrinsic abs, max, sqrt
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -106,14 +106,14 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 0
        call b2xvsg (nCv, pl % na(:,isb), 1, 'nb', '.gt.')
        call b2xvsg (nCv, dv % ne       , 1, 'ne', '.gt.')
        call b2xvsg (nCv, dv % pa(:,isb), 1, 'pb', '.gt.')
-       call b2xvsg (nFc, co%cdna(:,0,isb)*geo%fcQalf(:,0), 1,
-     &   'cdna0','.ge.')
-       call b2xvsg (nFc, co%cdna(:,1,isb)*geo%fcQalf(:,1), 1,
-     &   'cdna1','.ge.')
-       call b2xvsg (nFc, co%cdpa(:,0,isb)*geo%fcQalf(:,0), 1,
-     &   'cdpa0','.ge.')
-       call b2xvsg (nFc, co%cdpa(:,1,isb)*geo%fcQalf(:,1), 1,
-     &   'cdna1','.ge.')
+       wrk0(:) = co%cdna(:,0,isb)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk0, 1, 'cdna0','.ge.')
+       wrk1(:) = co%cdna(:,1,isb)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
+       wrk0(:) = co%cdpa(:,0,isb)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk0, 1, 'cdpa0','.ge.')
+       wrk1(:) = co%cdpa(:,1,isb)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
@@ -137,7 +137,7 @@ c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 0
 
       write(chns,'(i3.3)') isb
       if(switch%mdf_fnb .ne. 0 .and.
-     &  (maxval(dv % facdrift)   .ne. 0.0_R8  .or. 
+     &  (maxval(dv % facdrift)   .ne. 0.0_R8  .or.
      &   maxval(dv % fac_ExB )   .ne. 0.0_R8) .and.
      &   minval(rt % rza(:,isb)) .gt. 0.0_R8) then
 *   ..compute kmpr*ti on the faces and vertices, and differences
@@ -156,12 +156,12 @@ c Drift terms
       dv%vadia(:,:,isb)   = 0.0_R8
       dv%wadia(:,:,isb)   = 0.0_R8
       dv%vaecrb(:,:,isb)  = 0.0_R8
-      dv%fnaPSch(:,:,isb) = 0.0_R8                                                 !srv 13.10.06
-      dv%fna_mdf(:,:,isb) = 0.0_R8                                                 !srv 19.11.09
+      dv%fnaPSch(:,:,isb) = 0.0_R8                                       !srv 13.10.06
+      dv%fna_mdf(:,:,isb) = 0.0_R8                                       !srv 19.11.09
       dv%flob  = 0.0_R8
-      dv%conb  = 0.0_R8                                                   !srv 13.10.06
-      ub2dia   = 0.0_R8                                                      !srv 01.10.99
-      if((maxval(dv%facdrift).ne.0.0_R8 .or. 
+      dv%conb  = 0.0_R8                                                  !srv 13.10.06
+      ub2dia   = 0.0_R8                                                  !srv 01.10.99
+      if((maxval(dv%facdrift).ne.0.0_R8 .or.
      &    maxval(dv%fac_ExB) .ne.0.0_R8) .and.
      &    minval(rt%rza(:,isb)).gt.0.0_R8) then
 cwdk    in the unstructured solver, we only support drifts defined
@@ -175,7 +175,7 @@ cwdk                   (original code: simple averaging)
         call intvertex(nCv,nVx,mpg,geo%vxVol,nbzb,nbzbc)
         call grad(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkVx, dpo)
         call grad(nCv, nFc, nVx, 0, geo, mpg, nbti, wrkVx, dnbti)
-        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
+        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &   geo%vxOnedBsq, dOnedBsq)
 *     ..computation of ExB drift
         wrk0 = geo%fcBb(:,2)/geo%fcBb(:,3)**2
@@ -183,7 +183,7 @@ cwdk                   (original code: simple averaging)
         dv%vaecrb(:,1,isb) =  switch%radeldr*dv%fac_ExB*wrk0*dpo(:,0)
 *     ..restriction ExB drift
         xcount = 0
-        if (switch%ion_vlct_restrict.eq.2) then                        !iyv 06.02.14 {
+        if (switch%ion_vlct_restrict.eq.2) then                          !iyv 06.02.14 {
           do iFc = 1, nFc
             !wdk for unstructured grids: apply ExB velocity restriction
             !    to total ExB velocity (instead of individual poloidal and radial
@@ -222,16 +222,16 @@ cwdk                   (original code: simple averaging)
 *     ..computation of grad-B drift
 cwdk    use (na*Ti)_f/na_f for consistency with fchdia
 cwdk    check treatment of rza for consistency with other drifts
-        wrk  = pl%na(:,isb)*pl%ti/(qe*rt%rza(:,isb))
+        wrk = pl%na(:,isb)*pl%ti/(qe*rt%rza(:,isb))
         call intface(nCv,nFc,mpg%fcCv,weight,wrk,wrk1)
 cwdk    to be checked: interpolation of geometric factors (hy1)
 cwdk                   now consistent between x and y faces
 cwdk                   (and consistent with treatment of other drifts)
 cwdk                   (implicitly through grad-routine)
-        dv%vadia(:,0,isb) = 
+        dv%vadia(:,0,isb) =
      &    switch%poldidr*
      &    dv%facdrift*wrk1*dOnedBsq(:,1)*geo%fcBb(:,2)/nbf
-        dv%vadia(:,1,isb) = 
+        dv%vadia(:,1,isb) =
      &   -switch%raddidr*
      &    dv%facdrift*wrk1*dOnedBsq(:,0)*geo%fcBb(:,2)/nbf
 *     ..computation of diamagnetic drift
@@ -292,7 +292,7 @@ cwdk                   (original code: simple averaging)
             vbar = geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
      &        sqrt(8.0_R8*t0/(pi*am(isb)*mp))
             t2 = 1.0_R8 + sqrt((switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*
-     .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 + 
+     .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
      .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
      .        (vbar*t1)
             dv%fnaPSch(:,0,isb) = dv%fnaPSch(:,0,isb)/t2
@@ -344,7 +344,7 @@ cwdk                   (original code: simple averaging)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_he(:,0) = geo%fcPbs*wrk0 +
-     &  5.0_R8/3.0_R8*co%cvla(:,0,isb) + 
+     &  5.0_R8/3.0_R8*co%cvla(:,0,isb) +
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
@@ -363,13 +363,13 @@ cwdk                   (original code: simple averaging)
 
 *   ..add contribution from currents
       if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-        scur(:,0) = 
+        scur(:,0) =
      &     (dv%fchinert(:,0) + dv%fchvispar(:,0) + dv%fchvisper(:,0) +
      &      dv%fchanml(:,0)  + dv%fchvisq(:,0))*switch%b2tfnb_xcur/
      &     (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
-        scur(:,1) = 
-     &     (dv%fchinert(:,1) + dv%fchvispar(:,1) + 
-     &      switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) + 
+        scur(:,1) =
+     &     (dv%fchinert(:,1) + dv%fchvispar(:,1) +
+     &      switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) +
      &      switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
      &     (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
         flo     = flo     + drift_hyb*scur
@@ -381,8 +381,8 @@ cwdk                   (original code: simple averaging)
       end if
 
 *   ..apply discretization scheme for density-part of fna_mdf
-      call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb), 
-     &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:), 
+      call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:),
      &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
      
 !   ..keep the convective flow "correction" factor for further output
@@ -428,36 +428,36 @@ cwdk                   (original code: simple averaging)
      &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
 
       dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +  
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
      &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_mdf(:,0,isb)  = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf - 
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf -
      &   co%cdpa(:,0,isb)*dpb(:,0) - dv%fnaPSch(:,0,isb)
       dv%fna_mdf(:,1,isb)  = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf - 
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf -
      &   co%cdpa(:,1,isb)*dpb(:,1) - dv%fnaPSch(:,1,isb)
 
       dv%fna_fcor(:,0,isb) = fna_mdf0(:,0)*geo%fcHz +
      &  (1.0_R8-drift_hyb)*geo%fcHz*
-     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf + 
-     &  (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf - 
+     &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
+     &  (flo2dia(:,0) - flo_mdf(:,0)*geo%fcHz)*nbf -
      &   co%cdpahz(:,0,isb)*dpb(:,0)
       dv%fna_fcor(:,1,isb) = fna_mdf0(:,1)*geo%fcHz +
      &  (1.0_R8-drift_hyb)*geo%fcHz*
-     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf + 
-     &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf - 
+     &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
+     &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf -
      &   co%cdpahz(:,1,isb)*dpb(:,1)
 
       dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) +
      &  (1.0_R8-drift_hyb)*
-     &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf + 
-     &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf - 
+     &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
+     &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
       dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) +
      &  (1.0_R8-drift_hyb)*
-     &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf + 
-     &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf - 
+     &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
+     &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
@@ -470,27 +470,27 @@ cwdk                   (original code: simple averaging)
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
      &  (flo(:,1) - flo_mdf(:,1))*nbf
 
-      dv%fna_52(:,0,isb)   = dv%fna_52(:,0,isb) - 
+      dv%fna_52(:,0,isb)   = dv%fna_52(:,0,isb) -
      &   co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_52(:,1,isb)   = dv%fna_52(:,1,isb) - 
+      dv%fna_52(:,1,isb)   = dv%fna_52(:,1,isb) -
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..apply discretization scheme for density-part of fna_nodrift
       call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &     flo_nodrift, co%cdna(:,:,isb), dv%fna_nodrift(:,:,isb), 
+     &     flo_nodrift, co%cdna(:,:,isb), dv%fna_nodrift(:,:,isb),
      &     dv%fna_32nd(:,0,isb), dv%fna_52nd(:,0,isb))
 
 *   ..compute _nodrift fluxes
-      dv%fna_nodrift(:,0,isb) = dv%fna_nodrift(:,0,isb) - 
+      dv%fna_nodrift(:,0,isb) = dv%fna_nodrift(:,0,isb) -
      &   co%cdpa(:,0,isb)*dpb(:,0) + term
-      dv%fna_nodrift(:,1,isb) = dv%fna_nodrift(:,1,isb) - 
+      dv%fna_nodrift(:,1,isb) = dv%fna_nodrift(:,1,isb) -
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_32nd(:,0,isb) = dv%fna_32nd(:,0,isb) + term
 
-      dv%fna_52nd(:,0,isb) = dv%fna_52nd(:,0,isb) - 
+      dv%fna_52nd(:,0,isb) = dv%fna_52nd(:,0,isb) -
      &   co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_52nd(:,1,isb) = dv%fna_52nd(:,1,isb) - 
+      dv%fna_52nd(:,1,isb) = dv%fna_52nd(:,1,isb) -
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..compute ExB fluxes for k-model
@@ -513,19 +513,19 @@ cwdk                   (original code: simple averaging)
         flob0 = flob0 + flo - flo_mdf
       endif
       do iFc = 1, nFc
-        dv%flob(iFc,0)   = dv%flob(iFc,0) + 
+        dv%flob(iFc,0)   = dv%flob(iFc,0) +
      &     0.5_R8*flob0(iFc,0)*
-     &     (kmpr(mpg%fcCv(iFc,1))+kmpr(mpg%fcCv(iFc,2))) - 
+     &     (kmpr(mpg%fcCv(iFc,1))+kmpr(mpg%fcCv(iFc,2))) -
      &     conb0(iFc,0)*(kmpr(mpg%fcCv(iFc,2))-kmpr(mpg%fcCv(iFc,1)))
-        dv%flob(iFc,1)   = dv%flob(iFc,1) + 
+        dv%flob(iFc,1)   = dv%flob(iFc,1) +
      &     0.5_R8*flob0(iFc,1)*
-     &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 
+     &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) -
      &     conb0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
         dv%conb(iFc,0,0) = dv%conb(iFc,0,0) +
      &     0.5_R8*conb0(iFc,0)*
      &     (kmpr(mpg%fcCv(iFc,1))+kmpr(mpg%fcCv(iFc,2))) - 0.25_R8*
      &     flob0(iFc,0)*(kmpr(mpg%fcCv(iFc,2))-kmpr(mpg%fcCv(iFc,1)))
-        dv%conb(iFc,1,0) = dv%conb(iFc,1,0) + 
+        dv%conb(iFc,1,0) = dv%conb(iFc,1,0) +
      &     0.5_R8*conb0(iFc,1)*
      &     (kmprv(mpg%fcVx(iFc,1))+kmprv(mpg%fcVx(iFc,2))) - 0.25_R8*
      &     flob0(iFc,1)*(kmprv(mpg%fcVx(iFc,2))-kmprv(mpg%fcVx(iFc,1)))
@@ -551,11 +551,11 @@ cwdk try to introduce a common flux limit here?
      *        pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
         vbar = sqrt(8.0_R8 * t2 / (pi * am(isb)*mp))
         t0 = (1.0_R8 + (abs(dv%fna(iFc,0,isb) / (0.5_R8*
-     &   (pl%na(mpg%fcCv(iFc,1),isb) + pl%na(mpg%fcCv(iFc,2),isb))* 
+     &   (pl%na(mpg%fcCv(iFc,1),isb) + pl%na(mpg%fcCv(iFc,2),isb))*
      &    alpha*vbar/4.0_R8*geo%fcS(iFc)*geo%fcQalf(iFc,0))))**gamma)**
      &   (1.0_R8/gamma)
         t1 = (1.0_R8 + (abs(dv%fna(iFc,1,isb) / (0.5_R8*
-     &   (pl%na(mpg%fcCv(iFc,1),isb) + pl%na(mpg%fcCv(iFc,2),isb))* 
+     &   (pl%na(mpg%fcCv(iFc,1),isb) + pl%na(mpg%fcCv(iFc,2),isb))*
      &    alpha*vbar/4.0_R8*geo%fcS(iFc)*geo%fcQalf(iFc,1))))**gamma)**
      &   (1.0_R8/gamma)
 *     ..poloidal direction
@@ -594,11 +594,11 @@ cwdk try to introduce a common flux limit here?
 
 
       if(switch%b2npco_iout.ne.0
-     &                     .or. switch%b2tfnb_iout .eq. 1 .or. 
+     &                     .or. switch%b2tfnb_iout .eq. 1 .or.
      &                               switch%iout_b2wdat.eq.4) then                   !srv 11.09.09 {
-cwdk to be considered: con_mdf, con_2dia not easily recoverable? 
+cwdk to be considered: con_mdf, con_2dia not easily recoverable?
 cwdk should this be conb in general? (but without the rescaling for pressure)
-       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb) 
+       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%na(:,isb), wrkVx, dnb)
        wrk1 = geo%fcPbs*wrk0*nbf
        wrk2 = term
        wrk3 = dv%vaecrb(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0) 
@@ -624,19 +624,19 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
        call my_out_us(70,nFc,1,wrk2,'b2tfnb_dpccorna_th'//chns)
        call my_out_us(70,nFc,1,dpb(1,0),'b2tfnb_dpb_th'//chns)
        call my_out_us(70,nFc,1,dpbm,'b2tfnb_dpbm'//chns)
-       if (switch%iout_b2wdat .ne. 4) 
+       if (switch%iout_b2wdat .ne. 4)
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_dpccorhzna_th'//chns)            !srv 05.11.09
-       if (switch%b2tfnb_iout.eq.1) 
+       if (switch%b2tfnb_iout.eq.1)
      &  call my_out_us(70,nFc,1,wrk8,'b2tfnb_cvlbna_th'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
-      
-      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 .or. 
+
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 .or.
      &                                  switch%b2tfnb_iout.eq.1) then
        write(chns,'(i3.3)') isb
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)
-       if(.not. is_neutral(isb)) 
+       if(.not. is_neutral(isb))
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadiana_th'//chns)
        wrk6 = dv%vadia(:,0,isb)*nbf*geo%fcS*geo%fcQalf(:,0)*geo%fcHz
        if(.not. is_neutral(isb) .and. switch%iout_b2wdat.ne.4)
@@ -645,9 +645,9 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &              'b2tfnb_fnb_fcor_th'//chns)
       endif                                                     !srv 11.09.09 }
 
-      if (alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8 
-     > .and. ncall_b2tfnb.lt.100) then 
-       write(*,'(a,1p,e12.5,a,e12.5,a,2e12.5)') 
+      if (alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8
+     > .and. ncall_b2tfnb.lt.100) then
+       write(*,'(a,1p,e12.5,a,e12.5,a,2e12.5)')
      .   'b2tfnb: maxfluxlimit for zb = ',maxval(rt%rza(:,isb)),
      1   ' mb = ',am(isb),' are ',maxfluxlimit
       endif
@@ -677,12 +677,12 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 !       call my_out_us(70,nFc,1,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out_us(70,nFc,1,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
-      
-      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 
+
+      if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4
      &                         .or. switch%b2tfnb_iout.eq.1) then
        write(chns,'(i3.3)') isb
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)
-       if(.not. is_neutral(isb)) 
+       if(.not. is_neutral(isb))
      &  call my_out_us(70,nFc,1,wrk6,'b2tfnb_vadiana_r'//chns)
        wrk6 = dv%vadia(:,1,isb)*nbf*geo%fcS*geo%fcQalf(:,1)*geo%fcHz
        if(.not. is_neutral(isb) .and. switch%iout_b2wdat.ne.4)
@@ -713,21 +713,22 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
           if(switch%b2tfnb_iout.ne.0) then
             write(*,*)
             write(*,*) 'Before flux correction in b2tfnb, is = ', isb
-            write(*,fmt=
-     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
-     $       isb, div_fnb, div_fnb_mdf
+            write(*,'(a,i4,a,es18.11,a,es18.11)')
+     $       ' isb = ',isb,' fnb_tot = ',div_fnb,
+     $       ' fnb_mdf_tot = ',div_fnb_mdf
 
             call b2tbfl(nCv, nFc, .true., mpg, dv%fna(:,:,isb),
      &        tbfl_fnb, div_fnb)
             call b2tbfl(nCv, nFc, .true., mpg, dv%fna_mdf(:,:,isb),
      &        tbfl_fnb_mdf, div_fnb_mdf)
             write(*,*) 'After flux correction in b2tfnb, is = ', isb
-            write(*,fmt=
-     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
-     $       isb, div_fnb, div_fnb_mdf
+            write(*,'(a,i4,a,es18.11,a,es18.11)')
+     $       ' isb = ',isb,' fnb_tot = ',div_fnb,
+     $       ' fnb_mdf_tot = ',div_fnb_mdf
             write(*,*)
-!            write(*,"(' is =',i3,' rdiv =',es15.7,' div_fnb =',es15.7,
-!     &       ' div_fnb_mdf =',es15.7)") isb, rdiv, div_fnb, div_fnb_mdf
+!            write(*,'(a,i3,a,es15.7,a,es15.7,a,es15.7)')
+!     &       ' is =',isb,' rdiv =',rdiv,' div_fnb =',div_fnb,
+!     &       ' div_fnb_mdf =',div_fnb_mdf
           endif
         endif
       endif                                                             !srv 05.03.16 }

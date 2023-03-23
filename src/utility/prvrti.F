@@ -1,7 +1,8 @@
       subroutine prvrti (n, kx, incx)
       use b2mod_types
       implicit none
-      integer n, kx(0:*), incx
+      integer n, incx
+      integer kx(0:(n*incx)-1)
 *     ------------------------------------------------------------------
 *     PRVRTI sets all elements of an integer array to a value that is
 *     expected to cause an error when used in an arithmetic operation.
@@ -26,11 +27,17 @@
       external ifill
 *     ------------------------------------------------------------------
       rnan = -1.0_R8
+#ifdef GFORTRAN
+#ifndef DBG
       call ifill (n, inan(1), kx, incx)
+#endif
+#else
+      call ifill (n, inan(1), kx, incx)
+#endif
 *     (The second argument to ifill is deliberately of wrong type.)
 *     ------------------------------------------------------------------
 *     Note: When porting this routine to another operating system,
 *     check if the IEEE not-a-number is available; if so, consider to
 *     use it as the second argument to ifill.
 *     ------------------------------------------------------------------
-      end
+      end subroutine prvrti

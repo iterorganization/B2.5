@@ -1,26 +1,39 @@
 module b2mod_cdf
   use b2mod_types , only : R8
-  Implicit None
+  use b2mod_subsys
+  implicit none
 #ifndef NO_CDF
+# include <netcdf.inc>
+#ifndef SOLPS4_3
   public :: rwcdf, rwcdf_settime, rwcdf_setbatch, b2crtimecdf
 #endif
+  character*(maxncnam), save :: timsav, batchsav
+  integer, save :: ntsav, nasav
+  data timsav /'!!!! INVALID NAME !!!!'/
+  private
+
 contains
 
-
-#ifndef NO_CDF
-  subroutine b2crtimecdf(filename, nCv, nc, ns, write_2d, &
+#ifndef SOLPS4_3
+  subroutine b2crtimecdf(filename, &
+   nCv, nc, ns, write_2d, &
    ncid, batch_only, iret)
     use b2mod_constants
-#     include <netcdf.inc>
-    integer nCv, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, iret
+#   include <netcdf.inc>
+    integer nCv, nc, ns, iret
+#ifdef WG_TODO
+    integer nybl, nytl, nytr, nybr, nya, nyi
+#endif
     integer, intent(in) :: write_2d
     logical, intent(in) :: batch_only
     character*256 :: filename
-    ! netcdf id
+    ! NetCDF id
     integer  ncid
     ! dimension ids
-    integer :: ncvdim, nydim, nsdim, timedim, batchdim, &
-         nybldim, nytldim, nytrdim, nybrdim, nyadim, nyidim, ncdim, idirdim
+    integer :: ncvdim, nsdim, timedim, batchdim, ncdim, idirdim
+#ifdef WG_TODO
+    integer :: nydim, nybldim, nytldim, nytrdim, nybrdim, nyadim, nyidim
+#endif
     ! variable ids
     integer :: ntstepid, timesaid, fnixipid, feexipid, feixipid, &
          fnixapid, feexapid, feixapid, nesepiid, tesepiid, tisepiid, &
@@ -30,32 +43,37 @@ contains
          pwmxipid, pwmxapid, tmneid, tmteid, tmtiid, tmhacoreid, &
          tmhasolid, tmhadivid, fnisipid, feesipid, feisipid, fnisapid, &
          feesapid, feisapid, fnisippid, feesippid, feisippid, fnisappid, &
-         feesappid, feisappid, ne3dlid, te3dlid, ti3dlid, ne3diid, &
-         te3diid, ti3diid, ne3daid, te3daid, ti3daid, ne3drid, te3drid, &
-         ti3drid, an3dlid, mn3dlid, an3diid, mn3diid, an3daid, mn3daid, &
-         an3drid, mn3drid, fn3dlid, fe3dlid, fi3dlid, fn3drid, fe3drid, &
-         fi3drid, ne3dtlid, te3dtlid, ti3dtlid, ne3dtrid, te3dtrid, &
-         ti3dtrid, an3dtlid, mn3dtlid, &
-         an3dtrid, mn3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
-         fe3dtrid, fi3dtrid, fetxipid, fetxapid, fetyipid, fetyapid, &
+         feesappid, feisappid, ne3dlid, te3dlid, ti3dlid, an3dlid, mn3dlid, &
+         ne3diid, te3diid, ti3diid, an3diid, mn3diid, &
+         ne3daid, te3daid, ti3daid, an3daid, mn3daid, &
+         ne3drid, te3drid, ti3drid, an3drid, mn3drid, &
+         fn3dlid, fe3dlid, fi3dlid, fn3drid, fe3drid, fi3drid, &
+         fetxipid, fetxapid, fetyipid, fetyapid, &
          fetsipid, fetsapid, fetsippid, fetsappid
-    integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
+#ifdef WG_TODO
+    integer :: an3dtlid, mn3dtlid, an3dtrid, mn3dtrid, &
+         ne3dtlid, te3dtlid, ti3dtlid, ne3dtrid, te3dtrid, &
+         ti3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
+         fe3dtrid, fi3dtrid, fc3dtlid, fc3dtrid, &
+         fl3dtlid, fl3dtrid, fo3dtlid, fo3dtrid, &
+         ft3dtlid, ft3dtrid, po3dtlid, po3dtrid, &
+         tp3dtlid, tp3dtrid
+     integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
          rsana2did, rrahi2did, rrana2did, rcxhi2did, rcxna2did, rqrad2did, &
          rqahe2did, fch2did, fhe2did, fhi2did, fna2did
+#endif
     integer :: fchxipid, fchxapid, posepiid, posepmid, posepaid, &
          pomxipid, pomxapid, fchyipid, fchyapid, &
          fchsipid, fchsapid, fchsippid, fchsappid, po3dlid, &
          po3diid, po3daid, po3drid, fc3dlid, fc3drid, &
          fl3dlid, fl3drid, fo3dlid, fo3drid, &
-         ft3dlid, ft3drid, po3dtlid, po3dtrid, fc3dtlid, fc3dtrid, &
-         fl3dtlid, fl3dtrid, fo3dtlid, fo3dtrid, &
-         ft3dtlid, ft3dtrid, &
+         ft3dlid, ft3drid, &
          dn3diid, dn3daid, dp3diid, dp3daid, ke3diid, ke3daid, &
          ki3diid, ki3daid, vx3diid, vx3daid, vy3diid, vy3daid, &
          vs3diid, vs3daid, lh3diid, lh3daid, ln3diid, ln3daid, &
          dnsepmid, dpsepmid, kesepmid, kisepmid, &
          vxsepmid, vysepmid, vssepmid, &
-         tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
+         tpmxipid, tpmxapid, tp3drid, tp3dlid, &
          tpsepiid, tpsepaid, &
          ktsepmid, ktsepaid, ktsepiid, &
          nastepid, ntimbatchid, batchsaid, &
@@ -74,6 +92,7 @@ contains
     ! variable shapes
     integer :: dims(2)
     real (kind=R8) :: dvals(1)
+
     ! Create and enter define mode
     iret = nf_create(trim(filename), ncclob, ncid)
     call check_cdf_status(iret)
@@ -105,6 +124,8 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
       call check_cdf_status(iret)
+      iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
+      call check_cdf_status(iret)
     else
       iret = nf_def_dim(ncid, 'nc', nc, ncdim)
       call check_cdf_status(iret)
@@ -120,15 +141,15 @@ contains
       iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
       call check_cdf_status(iret)
       dvals(1) = 1.0_R8/ev
-#ifdef WG_TODO
       if (write_2d .ge. 1) then
-        iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
+#ifdef WG_TODO
+        iret = nf_def_var(ncid, 'ne2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ne2did, 'units', 4, 'm^-3')
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'te2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
+        iret = nf_def_var(ncid, 'te2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, te2did, 'long_name', 2, 'Te')
         call check_cdf_status(iret)
@@ -136,7 +157,7 @@ contains
         call check_cdf_status(iret)
         iret = nf_put_att_double(ncid, te2did, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
-        iret = nf_def_var(ncid, 'ti2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
+        iret = nf_def_var(ncid, 'ti2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, ti2did, 'long_name', 2, 'Ti')
         call check_cdf_status(iret)
@@ -145,99 +166,94 @@ contains
         iret = nf_put_att_double(ncid, ti2did, 'scale', NCDOUBLE, 1, dvals(1))
         call check_cdf_status(iret)
         if (write_2d .ge. 2) then
-          iret = nf_def_var(ncid, 'po2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
+          iret = nf_def_var(ncid, 'po2d', NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, po2did, 'long_name', 9, 'potential')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, po2did, 'units', 1, 'V')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'kin2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
+          iret = nf_def_var(ncid, 'kin2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, kin2did, 'long_name', 23, 'parallel kinetic energy')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, kin2did, 'units', 1, 'J')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rsahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
+          iret = nf_def_var(ncid, 'rsahi2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsahi2did, 'long_name', 21, 'iz energy source/sink')
           call check_cdf_status(iret)
-          iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')      
+          iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rsana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
+          iret = nf_def_var(ncid, 'rsana2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsana2did, 'long_name', 7, 'iz rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rsana2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rrahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
+          iret = nf_def_var(ncid, 'rrahi2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrahi2did, 'long_name', 21, 'rc energy source/sink')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrahi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rrana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
+          iret = nf_def_var(ncid, 'rrana2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrana2did, 'long_name', 7, 'rc rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rrana2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rcxhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
+          iret = nf_def_var(ncid, 'rcxhi2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxhi2did, 'long_name', 21, 'cx energy source/sink')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxhi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rcxna2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
+          iret = nf_def_var(ncid, 'rcxna2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxna2did, 'long_name', 7, 'cx rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rcxna2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rqrad2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
+          iret = nf_def_var(ncid, 'rqrad2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqrad2did, 'long_name', 19, 'Line radiation rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqrad2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'rqahe2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
+          iret = nf_def_var(ncid, 'rqahe2d', NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqahe2did, 'long_name', 21, 'Electron cooling rate')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, rqahe2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-        
-          iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
-          call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fhe2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
+          iret = nf_def_var(ncid, 'fhe2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhe2did, 'long_name', 18, 'Electron heat flux')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhe2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
+          iret = nf_def_var(ncid, 'fhi2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fhi2did, 'long_name', 13, 'Ion heat flux')
           call check_cdf_status(iret)
-          iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')      
+          iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fch2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
+          iret = nf_def_var(ncid, 'fch2d', NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fch2did, 'long_name', 7, 'Current')
           call check_cdf_status(iret)
-          iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')      
+          iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')
           call check_cdf_status(iret)
-          iret = nf_def_var(ncid, 'fna2d'  , NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
+          iret = nf_def_var(ncid, 'fna2d', NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fna2did, 'long_name', 13, 'Particle flux')
           call check_cdf_status(iret)
           iret = nf_put_att_text(ncid, fna2did, 'units', 3, '1/s')
           call check_cdf_status(iret)
         endif
-      endif
 #endif
-    endif
+      endif
 
-    if (.not.batch_only) then
       dims(1) = ncdim
       dims(2) = timedim
       iret = nf_def_var(ncid, 'fnixip', NCDOUBLE, 2, dims, fnixipid)
@@ -636,7 +652,7 @@ contains
       iret  = nf_def_var(ncid, 'tesepa_av', NCDOUBLE, 2, dims, tesepa_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepa_avid)
-     call check_cdf_status(iret)
+      call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepa_avid)
       call check_cdf_status(iret)
       iret  = nf_def_var(ncid, 'ktsepa_av', NCDOUBLE, 2, dims, ktsepa_avid)
@@ -711,67 +727,67 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fnixipid, 'long_name', 51, 'integrated poloidal particle flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fnixipid, 'long_name', 47, 'integrated poloidal particle flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnixipid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feexipid, 'long_name', 58, 'integrated poloidal electron energy flux, inboard divertor')
+      iret = nf_put_att_text(ncid, feexipid, 'long_name', 54, 'integrated poloidal electron energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feexipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feixipid, 'long_name', 53, 'integrated poloidal ion energy flux, inboard divertor')
+      iret = nf_put_att_text(ncid, feixipid, 'long_name', 49, 'integrated poloidal ion energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feixipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 53, 'integrated poloidal tot energy flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fetxipid, 'long_name', 60, 'integrated poloidal total internal energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetxipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fchxipid, 'long_name', 45, 'integrated poloidal current, inboard divertor')
+      iret = nf_put_att_text(ncid, fchxipid, 'long_name', 41, 'integrated poloidal current, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchxipid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fnixapid, 'long_name', 52, 'integrated poloidal particle flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fnixapid, 'long_name', 47, 'integrated poloidal particle flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnixapid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feexapid, 'long_name', 59, 'integrated poloidal electron energy flux, outboard divertor')
+      iret = nf_put_att_text(ncid, feexapid, 'long_name', 54, 'integrated poloidal electron energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feexapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feixapid, 'long_name', 54, 'integrated poloidal ion energy flux, outboard divertor')
+      iret = nf_put_att_text(ncid, feixapid, 'long_name', 49, 'integrated poloidal ion energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feixapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 54, 'integrated poloidal tot energy flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fetxapid, 'long_name', 60, 'integrated poloidal total internal energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetxapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fchxapid, 'long_name', 46, 'integrated poloidal current, outboard divertor')
+      iret = nf_put_att_text(ncid, fchxapid, 'long_name', 41, 'integrated poloidal current, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchxapid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nesepiid, 'long_name', 45, 'separatrix electron density, inboard divertor')
+      iret = nf_put_att_text(ncid, nesepiid, 'long_name', 41, 'separatrix electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepiid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tesepiid, 'long_name', 49, 'separatrix electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tesepiid, 'long_name', 45, 'separatrix electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tesepiid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tisepiid, 'long_name', 44, 'separatrix ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tisepiid, 'long_name', 40, 'separatrix ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepiid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tpsepiid, 'long_name', 46, 'separatrix plate temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tpsepiid, 'long_name', 42, 'separatrix plate temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tpsepiid, 'units', 2, 'K ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, posepiid, 'long_name', 38, 'separatrix potential, inboard divertor')
+      iret = nf_put_att_text(ncid, posepiid, 'long_name', 34, 'separatrix potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepiid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepiid, 'long_name', 53, 'separatrix turbulent kinetic energy, inboard divertor')
+      iret = nf_put_att_text(ncid, ktsepiid, 'long_name', 49, 'separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepiid, 'units', 2, 'eV')
       call check_cdf_status(iret)
@@ -825,67 +841,67 @@ contains
       iret = nf_put_att_text(ncid, vssepmid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
 
-      iret = nf_put_att_text(ncid, nesepaid, 'long_name', 46, 'separatrix electron density, outboard divertor')
+      iret = nf_put_att_text(ncid, nesepaid, 'long_name', 41, 'separatrix electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepaid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tesepaid, 'long_name', 50, 'separatrix electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tesepaid, 'long_name', 45, 'separatrix electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tesepaid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tisepaid, 'long_name', 45, 'separatrix ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tisepaid, 'long_name', 40, 'separatrix ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepaid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tpsepaid, 'long_name', 47, 'separatrix plate temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tpsepaid, 'long_name', 42, 'separatrix plate temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tpsepaid, 'units', 2, 'K ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, posepaid, 'long_name', 43, 'separatrix potential, outboard divertor')
+      iret = nf_put_att_text(ncid, posepaid, 'long_name', 34, 'separatrix potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepaid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepaid, 'long_name', 54, 'separatrix turbulent kinetic energy, outboard divertor')
+      iret = nf_put_att_text(ncid, ktsepaid, 'long_name', 50, 'separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepaid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nemxipid, 'long_name', 42, 'maximum electron density, inboard divertor')
+      iret = nf_put_att_text(ncid, nemxipid, 'long_name', 38, 'maximum electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxipid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, temxipid, 'long_name', 46, 'maximum electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, temxipid, 'long_name', 42, 'maximum electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, temxipid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, timxipid, 'long_name', 41, 'maximum ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, timxipid, 'long_name', 37, 'maximum ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timxipid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tpmxipid, 'long_name', 43, 'maximum plate temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tpmxipid, 'long_name', 39, 'maximum plate temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tpmxipid, 'units', 2, 'K ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pomxipid, 'long_name', 35, 'maximum potential, inboard divertor')
+      iret = nf_put_att_text(ncid, pomxipid, 'long_name', 31, 'maximum potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxipid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nemxapid, 'long_name', 43, 'maximum electron density, outboard divertor')
+      iret = nf_put_att_text(ncid, nemxapid, 'long_name', 38, 'maximum electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxapid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, temxapid, 'long_name', 47, 'maximum electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, temxapid, 'long_name', 42, 'maximum electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, temxapid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, timxapid, 'long_name', 43, 'maximum ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, timxapid, 'long_name', 38, 'maximum ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timxapid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tpmxapid, 'long_name', 45, 'maximum plate temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tpmxapid, 'long_name', 40, 'maximum plate temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tpmxapid, 'units', 2, 'K ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pomxapid, 'long_name', 37, 'maximum potential, outboard divertor')
+      iret = nf_put_att_text(ncid, pomxapid, 'long_name', 32, 'maximum potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxapid, 'units', 2, 'V ')
       call check_cdf_status(iret)
@@ -901,7 +917,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feiyipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 47, 'integrated radial tot energy flux, main chamber')
+      iret = nf_put_att_text(ncid, fetyipid, 'long_name', 58, 'integrated radial total internal energy flux, main chamber')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetyipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -921,7 +937,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feiyapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 50, 'integrated radial tot energy flux, divertor region')
+      iret = nf_put_att_text(ncid, fetyapid, 'long_name', 61, 'integrated radial total internal energy flux, divertor region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetyapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -929,11 +945,11 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchyapid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pwmxipid, 'long_name', 42, 'maximum total power flux, inboard divertor')
+      iret = nf_put_att_text(ncid, pwmxipid, 'long_name', 38, 'maximum total power flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pwmxipid, 'units', 6, 'W.m^-2')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pwmxapid, 'long_name', 43, 'maximum total power flux, outboard divertor')
+      iret = nf_put_att_text(ncid, pwmxapid, 'long_name', 38, 'maximum total power flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pwmxapid, 'units', 6, 'W.m^-2')
       call check_cdf_status(iret)
@@ -965,43 +981,43 @@ contains
       call check_cdf_status(iret)
 
       ! internal flux quantities
-      iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into inboard separatrix throat')
+      iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnisipid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feesipid, 'long_name', 61, 'poloidal electron energy flux, into inboard separatrix throat')
+      iret = nf_put_att_text(ncid, feesipid, 'long_name', 61, 'poloidal electron energy flux, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feesipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feisipid, 'long_name', 56, 'poloidal ion energy flux, into inboard separatrix throat')
+      iret = nf_put_att_text(ncid, feisipid, 'long_name', 56, 'poloidal ion energy flux, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 58, 'poloidal total energy flux, into inboard separatrix throat')
+      iret = nf_put_att_text(ncid, fetsipid, 'long_name', 67, 'poloidal total internal energy flux, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fchsipid, 'long_name', 48, 'poloidal current, into inboard separatrix throat')
+      iret = nf_put_att_text(ncid, fchsipid, 'long_name', 48, 'poloidal current, into Western separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchsipid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fnisapid, 'long_name', 55, 'poloidal particle flux, into outboard separatrix throat')
+      iret = nf_put_att_text(ncid, fnisapid, 'long_name', 54, 'poloidal particle flux, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fnisapid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feesapid, 'long_name', 62, 'poloidal electron energy flux, into outboard separaatrix throat')
+      iret = nf_put_att_text(ncid, feesapid, 'long_name', 61, 'poloidal electron energy flux, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feesapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, feisapid, 'long_name', 57, 'poloidal ion energy flux, into outboard separatrix throat')
+      iret = nf_put_att_text(ncid, feisapid, 'long_name', 56, 'poloidal ion energy flux, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 59, 'poloidal total energy flux, into outboard separatrix throat')
+      iret = nf_put_att_text(ncid, fetsapid, 'long_name', 67, 'poloidal total internal energy flux, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fchsapid, 'long_name', 49, 'poloidal current, into outboard separatrix throat')
+      iret = nf_put_att_text(ncid, fchsapid, 'long_name', 48, 'poloidal current, into Eastern separatrix throat')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchsapid, 'units', 2, 'A ')
       call check_cdf_status(iret)
@@ -1017,7 +1033,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisippid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 49, 'poloidal total energy flux, core x-pt flux region')
+      iret = nf_put_att_text(ncid, fetsippid, 'long_name', 58, 'poloidal total internal energy flux, core x-pt flux region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsippid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -1037,7 +1053,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, feisappid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 52, 'poloidal total energy flux, x-pt private flux region')
+      iret = nf_put_att_text(ncid, fetsappid, 'long_name', 61, 'poloidal total internal energy flux, x-pt private flux region')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fetsappid, 'units', 2, 'W ')
       call check_cdf_status(iret)
@@ -1045,78 +1061,78 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fchsappid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-#ifdef WG_TODO
-      ! inboard divertor quantities
-      iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 34, 'electron density, inboard divertor')
+
+      ! Western edge (inboard divertor for LSN, outboard divertor for USN) quantities
+      iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 30, 'electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3dlid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, te3dlid, 'long_name', 38, 'electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, te3dlid, 'long_name', 34, 'electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, te3dlid, 'units', 2, 'eV')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, te3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ti3dlid, 'long_name', 33, 'ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, ti3dlid, 'long_name', 29, 'ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ti3dlid, 'units', 2, 'eV')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, ti3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tp3dlid, 'long_name', 35, 'plate temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tp3dlid, 'long_name', 31, 'plate temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tp3dlid, 'units', 2, 'K ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, po3dlid, 'long_name', 26, 'potential, inboard divertor')
+      iret = nf_put_att_text(ncid, po3dlid, 'long_name', 23, 'potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, po3dlid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, an3dlid, 'long_name', 30, 'atom density, inboard divertor')
+      iret = nf_put_att_text(ncid, an3dlid, 'long_name', 26, 'atom density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, an3dlid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, mn3dlid, 'long_name', 34, 'molecule density, inboard divertor')
+      iret = nf_put_att_text(ncid, mn3dlid, 'long_name', 30, 'molecule density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, mn3dlid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
       dvals(1) = -1.0_R8
-      iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 44, 'poloidal main species flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 40, 'poloidal main species flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fn3dlid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, fn3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fl3dlid, 'long_name', 40, 'poloidal electron flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fl3dlid, 'long_name', 36, 'poloidal electron flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fl3dlid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, fl3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fo3dlid, 'long_name', 35, 'poloidal ion flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fo3dlid, 'long_name', 31, 'poloidal ion flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fo3dlid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, fo3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fe3dlid, 'long_name', 47, 'poloidal electron energy flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fe3dlid, 'long_name', 43, 'poloidal electron energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fe3dlid, 'units', 2, 'W ')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, fe3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fi3dlid, 'long_name', 42, 'poloidal ion energy flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fi3dlid, 'long_name', 38, 'poloidal ion energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fi3dlid, 'units', 2, 'W ')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, fi3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ft3dlid, 'long_name', 44, 'poloidal total energy flux, inboard divertor')
+      iret = nf_put_att_text(ncid, ft3dlid, 'long_name', 40, 'poloidal total energy flux, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ft3dlid, 'units', 2, 'W ')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, ft3dlid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fc3dlid, 'long_name', 35, 'poloidal current, inboard divertor')
+      iret = nf_put_att_text(ncid, fc3dlid, 'long_name', 31, 'poloidal current, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fc3dlid, 'units', 2, 'A ')
       call check_cdf_status(iret)
@@ -1189,7 +1205,7 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, vs3diid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
-
+#ifdef WG_TODO
       ! upper inboard divertor quantities
       if(nytl.gt.0) then
         iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', 40, 'electron density, upper inboard divertor')
@@ -1228,7 +1244,7 @@ contains
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, fn3dtlid, 'units', 4, 's^-1')
         call check_cdf_status(iret)
-        iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', 46, 'poloidal electron flux, inboard divertor')
+        iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', 46, 'poloidal electron flux, upper inboard divertor')
         call check_cdf_status(iret)
         iret = nf_put_att_text(ncid, fl3dtlid, 'units', 4, 's^-1')
         call check_cdf_status(iret)
@@ -1253,7 +1269,7 @@ contains
         iret = nf_put_att_text(ncid, fc3dtlid, 'units', 2, 'A ')
         call check_cdf_status(iret)
       endif
-
+#endif
       ! outboard midplane quantities
       iret = nf_put_att_text(ncid, ne3daid, 'long_name', 35, 'electron density, outboard midplane')
       call check_cdf_status(iret)
@@ -1320,68 +1336,68 @@ contains
       iret = nf_put_att_text(ncid, vs3daid, 'units', 12, 'm.kg^-1.s^-1')
       call check_cdf_status(iret)
 
-      ! outboard divertor quantities
-      iret = nf_put_att_text(ncid, ne3drid, 'long_name', 35, 'electron density, outboard divertor')
+      ! Eastern edge (outboard divertor for LSN, inboard divertor for USN) quantities
+      iret = nf_put_att_text(ncid, ne3drid, 'long_name', 30, 'electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ne3drid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, te3drid, 'long_name', 39, 'electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, te3drid, 'long_name', 34, 'electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, te3drid, 'units', 2, 'eV')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, te3drid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ti3drid, 'long_name', 34, 'ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, ti3drid, 'long_name', 29, 'ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ti3drid, 'units', 2, 'eV')
       call check_cdf_status(iret)
       iret = nf_put_att_double(ncid, ti3drid, 'scale', NCDOUBLE, 1, dvals(1))
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tp3drid, 'long_name', 36, 'plate temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tp3drid, 'long_name', 31, 'plate temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tp3drid, 'units', 2, 'K ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, po3drid, 'long_name', 28, 'potential, outboard divertor')
+      iret = nf_put_att_text(ncid, po3drid, 'long_name', 23, 'potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, po3drid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, an3drid, 'long_name', 31, 'atom density, outboard divertor')
+      iret = nf_put_att_text(ncid, an3drid, 'long_name', 26, 'atom density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, an3drid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, mn3drid, 'long_name', 35, 'molecule density, outboard divertor')
+      iret = nf_put_att_text(ncid, mn3drid, 'long_name', 30, 'molecule density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, mn3drid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fn3drid, 'long_name', 45, 'poloidal main species flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fn3drid, 'long_name', 40, 'poloidal main species flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fn3drid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fl3drid, 'long_name', 41, 'poloidal electron flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fl3drid, 'long_name', 36, 'poloidal electron flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fl3drid, 'units', 4, 's^-1')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fo3drid, 'long_name', 36, 'poloidal ion flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fo3drid, 'long_name', 31, 'poloidal ion flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fo3drid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fe3drid, 'long_name', 48, 'poloidal electron energy flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fe3drid, 'long_name', 43, 'poloidal electron energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fe3drid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fi3drid, 'long_name', 43, 'poloidal ion energy flux, outboard divertor')
+      iret = nf_put_att_text(ncid, fi3drid, 'long_name', 38, 'poloidal ion energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fi3drid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ft3drid, 'long_name', 45, 'poloidal total energy flux, outboard divertor')
+      iret = nf_put_att_text(ncid, ft3drid, 'long_name', 40, 'poloidal total energy flux, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ft3drid, 'units', 2, 'W ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, fc3drid, 'long_name', 36, 'poloidal current, outboard divertor')
+      iret = nf_put_att_text(ncid, fc3drid, 'long_name', 30, 'poloidal current, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, fc3drid, 'units', 2, 'A ')
       call check_cdf_status(iret)
-
+#ifdef WG_TODO
       ! upper outboard divertor quantities
       if(nytr.gt.0) then
         iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', 41, 'electron density, upper outboard divertor')
@@ -1483,80 +1499,80 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepm_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nesepi_avid, 'long_name', 54, 'averaged separatrix electron density, inboard divertor')
+      iret = nf_put_att_text(ncid, nesepi_avid, 'long_name', 50, 'averaged separatrix electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepi_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tesepi_avid, 'long_name', 58, 'averaged separatrix electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tesepi_avid, 'long_name', 54, 'averaged separatrix electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tesepi_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tisepi_avid, 'long_name', 53, 'averaged separatrix ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tisepi_avid, 'long_name', 49, 'averaged separatrix ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepi_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, posepi_avid, 'long_name', 47, 'averaged separatrix potential, inboard divertor')
+      iret = nf_put_att_text(ncid, posepi_avid, 'long_name', 43, 'averaged separatrix potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepi_avid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepi_avid, 'long_name', 62, 'averaged separatrix turbulent kinetic energy, inboard divertor')
+      iret = nf_put_att_text(ncid, ktsepi_avid, 'long_name', 58, 'averaged separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nesepa_avid, 'long_name', 55, 'averaged separatrix electron density, outboard divertor')
+      iret = nf_put_att_text(ncid, nesepa_avid, 'long_name', 50, 'averaged separatrix electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepa_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tesepa_avid, 'long_name', 59, 'averaged separatrix electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tesepa_avid, 'long_name', 54, 'averaged separatrix electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tesepa_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tisepa_avid, 'long_name', 54, 'averaged separatrix ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tisepa_avid, 'long_name', 49, 'averaged separatrix ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepa_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, posepa_avid, 'long_name', 52, 'averaged separatrix potential, outboard divertor')
+      iret = nf_put_att_text(ncid, posepa_avid, 'long_name', 43, 'averaged separatrix potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepa_avid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepa_avid, 'long_name', 63, 'averaged separatrix turbulent kinetic energy, outboard divertor')
+      iret = nf_put_att_text(ncid, ktsepa_avid, 'long_name', 58, 'averaged separatrix turbulent kinetic energy, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepa_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nemxip_avid, 'long_name', 51, 'averaged maximum electron density, inboard divertor')
+      iret = nf_put_att_text(ncid, nemxip_avid, 'long_name', 47, 'averaged maximum electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxip_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, temxip_avid, 'long_name', 55, 'averaged maximum electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, temxip_avid, 'long_name', 51, 'averaged maximum electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, temxip_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, timxip_avid, 'long_name', 50, 'averaged maximum ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, timxip_avid, 'long_name', 46, 'averaged maximum ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timxip_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pomxip_avid, 'long_name', 44, 'averaged maximum potential, inboard divertor')
+      iret = nf_put_att_text(ncid, pomxip_avid, 'long_name', 40, 'averaged maximum potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxip_avid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nemxap_avid, 'long_name', 52, 'averaged maximum electron density, outboard divertor')
+      iret = nf_put_att_text(ncid, nemxap_avid, 'long_name', 47, 'averaged maximum electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxap_avid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, temxap_avid, 'long_name', 56, 'averaged maximum electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, temxap_avid, 'long_name', 51, 'averaged maximum electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, temxap_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, timxap_avid, 'long_name', 52, 'averaged maximum ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, timxap_avid, 'long_name', 46, 'averaged maximum ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timxap_avid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pomxap_avid, 'long_name', 46, 'averaged maximum potential, outboard divertor')
+      iret = nf_put_att_text(ncid, pomxap_avid, 'long_name', 40, 'averaged maximum potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxap_avid, 'units', 2, 'V ')
       call check_cdf_status(iret)
 
-      !wdk standard deviation of averaged quantities
+    !wdk standard deviation of averaged quantities
       iret = nf_put_att_text(ncid, nesepm_stdid, 'long_name', 55, 'variance of separatrix electron density, outer midplane')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepm_stdid, 'units', 4, 'm^-3')
@@ -1578,77 +1594,77 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepm_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nesepi_stdid, 'long_name', 57, 'variance of separatrix electron density, inboard divertor')
+      iret = nf_put_att_text(ncid, nesepi_stdid, 'long_name', 53, 'variance of separatrix electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepi_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tesepi_stdid, 'long_name', 61, 'variance of separatrix electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tesepi_stdid, 'long_name', 57, 'variance of separatrix electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tesepi_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tisepi_stdid, 'long_name', 56, 'variance of separatrix ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, tisepi_stdid, 'long_name', 52, 'variance of separatrix ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepi_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, posepi_stdid, 'long_name', 50, 'variance of separatrix potential, inboard divertor')
+      iret = nf_put_att_text(ncid, posepi_stdid, 'long_name', 46, 'variance of separatrix potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepi_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'long_name', 65, &
-           'variance of separatrix turbulent kinetic energy, inboard divertor')
+           'variance of separatrix turbulent kinetic energy, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepi_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nesepa_stdid, 'long_name', 58, 'variance of separatrix electron density, outboard divertor')
+      iret = nf_put_att_text(ncid, nesepa_stdid, 'long_name', 53, 'variance of separatrix electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nesepa_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tesepa_stdid, 'long_name', 62, 'variance of separatrix electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tesepa_stdid, 'long_name', 57, 'variance of separatrix electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tesepa_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, tisepa_stdid, 'long_name', 57, 'variance of separatrix ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, tisepa_stdid, 'long_name', 52, 'variance of separatrix ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tisepa_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, posepa_stdid, 'long_name', 55, 'variance of separatrix potential, outboard divertor')
+      iret = nf_put_att_text(ncid, posepa_stdid, 'long_name', 46, 'variance of separatrix potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, posepa_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, ktsepa_stdid, 'long_name', 66, &
-           'variance of separatrix turbulent kinetic energy, outboard divertor')
+      iret = nf_put_att_text(ncid, ktsepa_stdid, 'long_name', 61, &
+           'variance of separatrix turbulent kinetic energy, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, ktsepa_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nemxip_stdid, 'long_name', 54, 'variance of maximum electron density, inboard divertor')
+      iret = nf_put_att_text(ncid, nemxip_stdid, 'long_name', 50, 'variance of maximum electron density, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxip_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, temxip_stdid, 'long_name', 58, 'variance of maximum electron temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, temxip_stdid, 'long_name', 54, 'variance of maximum electron temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, temxip_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, timxip_stdid, 'long_name', 53, 'variance of maximum ion temperature, inboard divertor')
+      iret = nf_put_att_text(ncid, timxip_stdid, 'long_name', 49, 'variance of maximum ion temperature, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timxip_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pomxip_stdid, 'long_name', 47, 'variance of maximum potential, inboard divertor')
+      iret = nf_put_att_text(ncid, pomxip_stdid, 'long_name', 43, 'variance of maximum potential, Western edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxip_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, nemxap_stdid, 'long_name', 55, 'variance of maximum electron density, outboard divertor')
+      iret = nf_put_att_text(ncid, nemxap_stdid, 'long_name', 50, 'variance of maximum electron density, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, nemxap_stdid, 'units', 4, 'm^-3')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, temxap_stdid, 'long_name', 59, 'variance of maximum electron temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, temxap_stdid, 'long_name', 54, 'variance of maximum electron temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, temxap_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, timxap_stdid, 'long_name', 55, 'variance of maximum ion temperature, outboard divertor')
+      iret = nf_put_att_text(ncid, timxap_stdid, 'long_name', 50, 'variance of maximum ion temperature, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, timxap_stdid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-      iret = nf_put_att_text(ncid, pomxap_stdid, 'long_name', 49, 'variance of maximum potential, outboard divertor')
+      iret = nf_put_att_text(ncid, pomxap_stdid, 'long_name', 43, 'variance of maximum potential, Eastern edge')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, pomxap_stdid, 'units', 2, 'V ')
       call check_cdf_status(iret)
@@ -1663,34 +1679,33 @@ contains
   end subroutine b2crtimecdf
 
   subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
-#     include <netcdf.inc>
-    
+#   include <netcdf.inc>
+
     character*(*) rw,data_name
     integer ncid,imap(*),iret,i,varid,dimlen
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
-    character*(*) timnam,batchnam
-    character*(maxncnam) timsav,batchsav
-    integer ntsav,ntstep,nasav,nastep
     integer :: istride, imax
+#ifdef DBG
+    logical, parameter :: debug = .true.
+#else
     logical, parameter :: debug = .false.
-    save timsav,ntsav,batchsav,nasav
-    data timsav /'!!!! INVALID NAME !!!!'/
-    external subini, subend, xerrab
+#endif
+    external check_cdf_status, xerrab
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
     call check_cdf_status(iret)
     if(iret.ne.0) then
       write(*,*) 'Error: Could not inquire data_name: ',trim(data_name)
-      call xerrab('Data name not declared')
+      call xerrab('Data name '//trim(data_name)//' not declared')
     endif
     if (debug) write(*,*) "Subroutine rwcdf in mode: ", rw
     if (debug) write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
     if (debug) write(*,*) "Variable has nvdims=", nvdims
-    if (debug) write(*,*) "Input imap(:)=", imap(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
     call check_cdf_status(iret)
     mycount(1) = 1 ! for scalars
@@ -1709,8 +1724,8 @@ contains
         start(i)=1
       endif
     enddo
-    if (debug) write(*,*) "start(:)=", start(1:nvdims)
-    if (debug) write(*,*) "mycount(:)=", mycount(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "start(:)=", start(1:nvdims)
+    if (debug.and.nvdims.gt.0) write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1
@@ -1743,21 +1758,34 @@ contains
 
     call subend ()
     return
+  end subroutine rwcdf
     !
-    entry rwcdf_settime(timnam,ntstep)
+  subroutine rwcdf_settime(timnam,ntstep)
+    implicit none
+    character*(*) timnam
+    integer ntstep
     write(*,*) 'Saving ',trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
     return
+  end subroutine rwcdf_settime
     !
-    entry rwcdf_setbatch(batchnam,nastep)
+  subroutine rwcdf_setbatch(batchnam,nastep)
+    implicit none
+    character*(*) batchnam
+    integer nastep
     write(*,*) 'Saving ',trim(batchnam),' as the batch dimension'
     write(*,*) 'nastep = ',nastep
     batchsav=batchnam
     nasav=nastep
     return
-  end subroutine rwcdf
+  end subroutine rwcdf_setbatch
+#endif
 #endif
 
 end module b2mod_cdf
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

@@ -4,6 +4,7 @@
       use b2us_map
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2nxdv_smo0to3, balance_netcdf
+      use b2mod_subsys
       implicit none
       integer nCv, isb
       type (switches), intent (in) :: switch
@@ -17,7 +18,7 @@
 *     that is required to make the total friction force cancel.
 *     ------------------------------------------------------------------
       integer iCv
-      external subini, subend, xertst
+      external xertst
 *   ..initialisation
 *     ------------------------------------------------------------------
       call subini ('b2nxdv')
@@ -45,4 +46,4 @@ cdjm Store the total change in linearised source for balance
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2nxdv

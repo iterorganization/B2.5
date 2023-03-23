@@ -14,6 +14,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tiner
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -31,8 +32,7 @@
 *
 *  1. purpose
 *
-*     B2TINER computes the X,Y-COMPONENTS OF INERTIAL CURRENT
-*
+*     B2TINER computes the X and Y components of the inertial current.
 *
 *  8. further comments
 *
@@ -40,15 +40,13 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer is
-      integer, save :: guard_flows
       real (kind=R8) :: wght(nFc,2), gOnedBsq(nFc,0:1),
      &  wrk(nCv), wrk0(nFc), wrk1(nFc)
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
 *-----------------------------------------------------------------------
@@ -89,7 +87,7 @@ c Drift terms
      &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
       else
-        fchinert =0.0e0_R8
+        fchinert = 0.0e0_R8
       endif
 
 * ..return
@@ -100,4 +98,4 @@ c Drift terms
 *-----------------------------------------------------------------------
 *.end b2tiner
 
-      end                                                              !srv 20.09.06 }
+      end subroutine b2tiner                                            !srv 20.09.06 }

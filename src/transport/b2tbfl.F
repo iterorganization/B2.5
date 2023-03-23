@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_boundary_namelist
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc
@@ -14,9 +15,9 @@
 *
 *  1. purpose
 *
-*     B2TBFL computes the total flux through the boundaries
-*            if lcore is true then all boundaries are included
-*            if lcore is false then Core boundary is not included
+*     B2TBFL computes the total flux through the boundaries.
+*            if lcore is .true. then all boundaries are included
+*            if lcore is .false. then the core boundary is not included
 *
 *  8. further comments
 *

@@ -102,17 +102,17 @@ c     avoids double module definition in case code is compiled with Eirene
         isrftype=0
       endif
 
-cwdk  copy-paste from eirene_extrab25_eirpbls_alloc (Eirene_dummy, only case im=1)
+cwdk  copy-paste from eirene_extrab25_eirpbls allocations (Eirene_dummy, only case im=1)
 c     avoids double module definition in case code is compiled with Eirene  
 c     Note: all arrays allocated in eirene_extrab25_eirpbls_init (Eirene) are allocated here,
 c     so the standard cleanup routine can still be used (checks on allocation of lkindp)
       if(.not.allocated(lkindm)) then 
 #ifdef B25_EIRENE
-        allocate(lkindm(nmol))
+        if (.not.allocated(lkindm)) allocate(lkindm(nmol))
         if (.not.allocated(lkindp)) allocate(lkindp(npls))
-        allocate(lkindi(nion))
-        allocate(srccrfc(natm,nstra))
-        allocate(srcstrn(nstra))
+        if (.not.allocated(lkindi)) allocate(lkindi(nion))
+        if (.not.allocated(srccrfc)) allocate(srccrfc(natm,nstra))
+        if (.not.allocated(srcstrn)) allocate(srcstrn(nstra))
 #endif
         lkindm=0
         lkindp=0
@@ -122,4 +122,4 @@ c     so the standard cleanup routine can still be used (checks on allocation of
       endif 
 
       return
-      end
+      end subroutine eirene_mc_init

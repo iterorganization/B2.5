@@ -1,6 +1,7 @@
       module b2us_map
 
       use b2mod_types
+      use b2mod_version
       implicit none
       
       private
@@ -426,7 +427,7 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: idum(0:9), n2, nx
+      integer :: n2, nx
       type (mapping), intent (inout) :: mpg
 
 #ifdef WG_DEBUG
@@ -531,6 +532,7 @@
         call cfwuin (nout, 0, idum, 'imapFcx')
         call cfwuin (nout, 0, idum, 'imapFcy')
         call cfwuin (nout, 0, idum, 'imapVx')
+        call cfwuin (nout, 0, idum, 'icornVx')
       endif      
 
       call cfwuin (nout, mpg%nFc,  mpg%fcLbl,'fcLbl')

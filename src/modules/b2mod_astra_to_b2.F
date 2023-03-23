@@ -1,4 +1,4 @@
-      module b2mod_astra_to_b2                              !srv 28.07.11 {
+      module b2mod_astra_to_b2                                !srv 28.07.11 {
        use b2mod_types
        implicit none
        
@@ -39,7 +39,7 @@
        real (kind=R8), allocatable, save :: Vcovv_astra(:)    ! convective anomalous velocity       [m/s]
        real (kind=R8), allocatable, save :: PeNB_astra(:)     ! electron NB source                  [MW/m^3]
        real (kind=R8), allocatable, save :: PiNB_astra(:)     ! ion NB source                       [MW/m^3]
-       real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva's ions heat conduct.[s/m**2]
+       real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva ions heat conduct.  [s/m**2]
 
        real (kind=R8), allocatable, save :: bbaverage2(:)     ! 
        real (kind=R8), allocatable, save :: sheNB_astra(:,:,:)
@@ -145,6 +145,7 @@
        end subroutine dealloc_b2mod_astra_to_b2
 
        subroutine read_astra_to_b2(nyd, nread)
+       use b2mod_subsys
        implicit none
        integer :: nyd, nread
 #ifdef ASTRA
@@ -155,9 +156,11 @@
        character(6)  :: chname
        real (kind=R8) :: b(1:nyd+2),c(1:nyd+2),d(1:nyd+2), dseval
 #endif
-       external subini, subend, xerrab
+       external xerrab
 
        call subini ('read_astra_to_b2')
+       call xertst (0.le.nyd, 'faulty argument nyd')
+       call xertst (1.le.nread, 'faulty argument nread')
 #ifndef ASTRA
        call xerrab ('Compile with -DASTRA option to couple to ASTRA!')
 #else

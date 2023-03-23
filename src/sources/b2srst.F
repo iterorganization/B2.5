@@ -16,6 +16,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns                                  !srv 01.07.08
@@ -43,15 +44,15 @@
 *   ..local variables
       integer iCv, is, k
       real (kind=R8) ::
-     *  snast(nCv,0:1,0:ns-1), smost(nCv,0:3,0:ns-1), 
+     *  snast(nCv,0:1,0:ns-1), smost(nCv,0:3,0:ns-1),
      &  shest(nCv,0:3), shist(nCv,0:3),
      &  schst(nCv,0:3), snest(nCv,0:1),
      &  sktst(nCv,0:3), sztst(nCv,0:3), wrk0(nCv)
-      character chns*3, chk*1                                        !srv 11.09.09 }
+      character chns*3, chk*1                                         !srv 11.09.09 }
       real (kind=R8) :: t0
 *   ..procedures
       intrinsic min, max
-      external subini, subend, xertst, ipgetr, b2xvsg
+      external xertst, ipgetr, b2xvsg
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -69,9 +70,9 @@
         call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, te, 1, 'te', '.gt.')
-        call b2xvsg (nCv, ti, 1, 'ti', '.gt.') 
+        call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
         call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
-        call b2xvsg (nCv, zt, 1, 'zt', '.ge.')  
+        call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
       endif
 
 *  .. save sources
@@ -101,15 +102,15 @@
        enddo
 !WG_TODO       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
 !WG_TODO     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
-!WG_TODO*     The corner cell value is defined by interpolation in b2npco and b2npc9
+!WG_TODO*     The corner cell value is defined by interpolation in b2npco
 !WG_TODO*   ..There is some problem for 9-point stencil case.
 !WG_TODO        do iy=-1, ny, ny+1                                           !srv 27.06.08 {
 !WG_TODO          do ix = -1, nx
-!WG_TODO	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-!WG_TODO	     if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
-!WG_TODO	   endif
-!WG_TODO	 enddo 
-!WG_TODO       enddo                                                        !srv 27.06.08 }
+!WG_TODO            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+!WG_TODO              if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
+!WG_TODO            endif
+!WG_TODO          enddo
+!WG_TODO        enddo                                                        !srv 27.06.08 }
 !WG_TODO       endif                                                         !srv 01.07.08 }
       enddo
 *   ..modify smo
@@ -234,57 +235,57 @@ cdjm Jan2017 Store for balance
 
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
-!	  write (chns,'(i3.3)') is
-!          wrk0=smost(:,0,is)+              !srv 07.10.09
+!         write (chns,'(i3.3)') is
+!         wrk0=smost(:,0,is)+                               !srv 07.10.09
 !     &        smost(:,1,is)*ua(:,is)+
 !     &        smost(:,2,is)*na(:,is)*mp*am(is)+
 !     &        smost(:,3,is)*ua(:,is)*na(:,is)*mp*am(is)
-!	  call my_out_us(70,nCv,0,wrk0,'b2srst_smost'//chns)
+!         call my_out_us(70,nCv,0,wrk0,'b2srst_smost'//chns)
 !       enddo
 !      endif
-!      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+!      if (iout_b2npco.eq.1) then
 !       do is = 0, ns-1
-!	  write (chns,'(i3.3)') is
+!         write (chns,'(i3.3)') is
 !         wrk0=snast(:,0,is)+              !srv 07.10.09
 !     &        snast(:,1,is)*na(:,is)
-!	  call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
+!         call my_out_us(70,nCv,0,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
       if (switch%b2npht_iout.eq.1 .or. 
      &                              switch%iout_b2wdat.eq.4)   then
         wrk0=shest(:,0)+shest(:,1)*te+  !srv 07.10.09
      &       shest(:,2)*ne + shest(:,3)*te*ne
-	call my_out_us(70,nCv,0,wrk0,'b2srst_shest')
+        call my_out_us(70,nCv,0,wrk0,'b2srst_shest')
         wrk0=shist(:,0)+shist(:,1)*ti+
      &       shist(:,2)*ni(:,0)+shist(:,3)*ti*ni(:,0)
-	call my_out_us(70,nCv,0,wrk0,'b2srst_shist')
+        call my_out_us(70,nCv,0,wrk0,'b2srst_shist')
       endif
 !      if (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) then
 !        wrk0=schst(:,0)+schst(:,1)*po+  !srv 07.10.09
 !     &       schst(:,2)*ne+schst(:,3)*po*ne(:)
-!	 call my_out_us(70,nCv,0,wrk0,'b2srst_schst')
+!        call my_out_us(70,nCv,0,wrk0,'b2srst_schst')
 !      endif
 
       if (switch%b2srst_iout.eq.1) then                       !srv 11.09.09 {
         do is = 0, ns-1
-	  write (chns,'(i3.3)') is
-	  do k=0,3
-	   write (chk,'(i1)') k
-	   call my_out_us(70,nCv,0,smost(1,k,is),
+          write (chns,'(i3.3)') is
+          do k=0,3
+            write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,smost(1,k,is),
      &                       'b2srst_smost'//chk//chns)
-	  enddo
-	  do k=0,1
-	   write (chk,'(i1)') k
-	   call my_out_us(70,nCv,0,snast(1,k,is),
+          enddo
+          do k=0,1
+            write (chk,'(i1)') k
+            call my_out_us(70,nCv,0,snast(1,k,is),
      &                       'b2srst_snast'//chk//chns)
-	  enddo
+          enddo
         enddo
-	do k=0,3
-	  write (chk,'(i1)') k
-	  call my_out_us(70,nCv,0,shest(1,k),'b2srst_shest'//chk)
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out_us(70,nCv,0,shest(1,k),'b2srst_shest'//chk)
           call my_out_us(70,nCv,0,shist(1,k),'b2srst_shist'//chk)
-	  call my_out_us(70,nCv,0,schst(1,k),'b2srst_schst'//chk)
-	enddo
+          call my_out_us(70,nCv,0,schst(1,k),'b2srst_schst'//chk)
+        enddo
       endif                                                 !srv 11.09.09 }
 
 * ..return

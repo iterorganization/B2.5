@@ -20,6 +20,7 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tiner, ncall_b2ttia
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
@@ -43,8 +44,6 @@
 *     B2TFCH_ computes the currents and the coefficients that specify the
 *     linearized response to changes in electric potential.
 *
-*  8. further comments
-*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -61,8 +60,7 @@ c The following switches are only used in 'WG-TODO' blocks, i.e. not yet convert
 c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
 c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
 
@@ -72,7 +70,7 @@ c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch_')
-*   ..set internal parameters on first call 
+*   ..set internal parameters on first call
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
 c       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
@@ -84,10 +82,14 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 *    ..test sign of ne, te, csig, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
-       call b2xvsg (nFc, co%csig(:,0)*geo%fcQalf(:,0),1,'csig0','.ge.')
-       call b2xvsg (nFc, co%csig(:,1)*geo%fcQalf(:,1),1,'csig1','.ge.')
-       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
+       wrk(:,0) = co%csig(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk(:,0), 1, 'csig0', '.ge.')
+       wrk(:,1) = co%csig(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk(:,1), 1, 'csig1', '.ge.')
+       wrk(:,0) = co%chce(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc, wrk(:,0), 1, 'chce0', '.ge.')
+       wrk(:,1) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrk(:,1), 1, 'chce1', '.ge.')
       endif
 
       facdriftm = maxval(dv%facdrift)
@@ -125,7 +127,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis,dv%fchvisper)
 *     ..calculate the parallel viscosity current connected with the heat flux
         call b2tvsq (nCv, nFc, nVx, ns, switch, geo, mpg, dv%fac_vis,
-     &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni, co%hcix_c,
+     &    dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, dv%ni(:,1), co%hcix_c,
      &    dv%fchvisq)
 *     ..calculate inertia current                                        !srv 07.07.99
         call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%ua,
@@ -136,8 +138,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 #ifdef WG_TODO
 *     ..calculate the y-component of electron current associated with
 *       stochastization of magnetic field
-        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,   !srv 07.07.14
-     &    fchstoch)                                                      !srv 25.01.02 {
+        call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)          !srv 25.01.02 {
 #endif
 *     ..calculate the parallel current
         call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,
@@ -222,7 +223,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
         enddo
        enddo
       endif                                                              !srv 18.06.08 }
-      
+
       if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0
      &                           .or. switch%iout_b2wdat.eq.4) then
        call my_out_us(70,nFc,1,dv%fch(1,0),'b2tfch__fch_th')
@@ -255,4 +256,4 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 *-----------------------------------------------------------------------
 *.end b2tfch_
 
-      end                                                                !srv 29.01.20 }
+      end subroutine b2tfch_                                             !srv 09.01.20 }

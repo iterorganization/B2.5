@@ -32,7 +32,7 @@
       real (kind=R8), save :: b2tfhi_cutlo = 1.0e-60_R8
       real (kind=R8), save :: b2tfhe_cutlo = 1.0e-60_R8
 
-      real (kind=R8), save :: b2sian_eps=1.0e-60_R8
+      real (kind=R8), save :: b2sian_eps = 1.0e-60_R8
 
       real (kind=R8), save :: b2tqna_keps_eps = 1.0e-10
 

@@ -6,7 +6,7 @@
      *   a(0:m*n-1), b(0:m*n-1), c(0:m*n-1), d(0:m*n-1),
      &  e(0:m*n-1)
 *     ------------------------------------------------------------------
-*     ILU5F computes the ILU factorisation of a 2d-5point matrix.
+*     ILU5F computes the ILU factorisation of a 2d 5-point matrix.
 *     ------------------------------------------------------------------
       integer i
       external xertst
@@ -33,4 +33,4 @@
       enddo
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine ilu5f

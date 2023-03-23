@@ -9,6 +9,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2ursc
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc
@@ -31,7 +32,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine computes the residual of a scalar conservation
-*     equation, integrated over cells of the b2 mesh. The equation has
+*     equation, integrated over cells of the B2 mesh. The equation has
 *     the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
@@ -53,7 +54,7 @@
 *   ..local variables
       integer iFc
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff
 *   ..initialisation
 
@@ -72,7 +73,6 @@
       endif
 
 * ..compute residual
-
 *   ..contribution from right hand side
       resfn = sfn(:,0)+sfn(:,1)*fun
 

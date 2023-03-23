@@ -10,6 +10,7 @@
       use b2mod_switches
       use b2mod_numerics_namelist
      , , only : corr_core_dn
+      use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -39,16 +40,16 @@
 *.declarations
 
 *   ..local variables
-      integer i, iCv, iFc, iFt, ireg
+      integer i, iCv, iFt, ireg
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *  wrk0(nFc), wrk(nCv), wrkv(nVx)
+     *  wrk(nCv), wrkv(nVx)
       real (kind=R8) :: t0,
-     *  pb_(nCv), nb_(nCv) ,                                        !lk 30.06.17
+     *  pb_(nCv), nb_(nCv),                                         !lk 30.06.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt)                    !lk 30.06.17
       logical too_low_density                                       ! IYS 27.11.2017
 *   ..procedures
-      external subini, subend, xertst, ipgetr, b2xxgs
+      external xertst, ipgetr, b2xxgs
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -150,4 +151,4 @@
 *-----------------------------------------------------------------------
 *.end b2upco
 
-      end
+      end subroutine b2upco

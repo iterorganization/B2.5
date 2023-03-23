@@ -23,9 +23,23 @@ lib/
 
 # ignore local backup copies
 *.orig
+*.bak
 
 # ignore local files created by scripts
 grep.lis
 
 # genmod
 *__genmod*
+
+# ignore files and directories connected with project in MS VS in Windows
+*.vfproj
+*.htm
+*.advixeproj
+*.advixeexp
+*.obj
+*.exe
+*.exe.intermediate.manifest
+Debug/
+x64/
+Add_Mod/
+B2mn/

@@ -4,6 +4,7 @@
       subroutine b2mwq0 (nput, ns, switch)
       use b2mod_types
       use b2mod_switches
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, ns
@@ -41,7 +42,7 @@
       integer idum(0:9), nfld, k, is, iix, iiy, ll(0:1)
       character chtit*60, chlab*12, id*3, idr*7
 *   ..procedures
-      external subini, subend, xertst, ipgeti, cfwuin, cfwuch
+      external xertst, ipgeti, cfwuin, cfwuch
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -458,4 +459,4 @@
 *-----------------------------------------------------------------------
 *.end b2mwq0
 
-      end
+      end subroutine b2mwq0

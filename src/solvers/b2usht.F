@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
-     &  itcnt, rxg, ne, ni, nn, te, ti, tn, kt, zt,
+      subroutine b2usht (nCv, nFc, nVx, ns, switch, geo, mpg,
+     &  itcnt, ne, ni, nn, te, ti, tn, kt, zt,
      &  floe, cone, floi, coni, flon, conn, flokt, conkt, flozt, conzt,
      &  she, shi, shn, skt, szt, ceqp,
      &  resht, reshe, reshi, reshn, reskt, reszt,
@@ -10,6 +10,7 @@
       use b2mod_types
       use b2mod_numerics_namelist
       use b2mod_switches
+      use b2mod_constants
       use b2us_geo
       use b2us_map
       use b2mod_ma28_for_us
@@ -18,27 +19,28 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2usht
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nregionv, itcnt
+      integer nCv, nFc, nVx, ns, itcnt
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxg, ne(nCv), ni(nCv,0:1), nn(nCv), te(nCv), ti(nCv), tn(nCv), 
+     *  ne(nCv), ni(nCv,0:1), nn(nCv), te(nCv), ti(nCv), tn(nCv),
      &  kt(nCv), zt(nCv), floe(nFc,0:1), floi(nFc,0:1), flon(nFc,0:1),
      &  flokt(nFc,0:1), flozt(nFc,0:1),
      &  cone(nFc,0:1,0:2), coni(nFc,0:1,0:2),
      &  conn(nFc,0:1), conkt(nFc,0:1), conzt(nFc,0:1)
       real (kind=R8) ::
      *  she(nCv,0:3), shi(nCv,0:3), shn(nCv,0:3), skt(nCv,0:3),
-     &  szt(nCv,0:3),  
+     &  szt(nCv,0:3),
      &  ceqp(nCv), resht(nCv), reshe(nCv), reshi(nCv), reshn(nCv),
      &  reskt(nCv), reszt(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   cortt(nCv), corte(nCv), corti(nCv), cortn(nCv), corkt(nCv),
-     &   corzt(nCv)
+     *  cortt(nCv), corte(nCv), corti(nCv), cortn(nCv), corkt(nCv),
+     &  corzt(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  flo0(nFc,0:1), con0(nFc,0:1,0:2), aa(mpg%nCmxNv)
@@ -48,7 +50,7 @@
 *
 *  1. purpose
 *
-*     b2usht computes a correction to the fields te and ti.
+*     B2USHT computes a correction to the fields te and ti.
 *
 *-----------------------------------------------------------------------
 !                 2_____3_____4                     5___________6
@@ -76,7 +78,6 @@
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
 c      integer, save :: iadd_9 = 1                                      !srv 02.01.07
-      integer, save :: last_ion
       integer ireg
       logical lnonzero
       real (kind=R8) ::
@@ -84,7 +85,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvff, b2xvfx, b2uxus                           !srv 02.01.07
 *   ..initialization
 
@@ -101,7 +102,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
-      call xertst (0.lt.rxg, 'faulty argument rxg')
+      call xertst (0.0_R8.lt.switch%b2npht_rxg, 'faulty argument rxg')
 *   ..extensive tests on first few calls
       if (ncall_b2usht.lt.3) then
 *    ..test sign of ne, ni, te, ti
@@ -136,9 +137,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       if (any(solveee(0:mpg%nnreg(0))).and.
      &    any(solveei(0:mpg%nnreg(0))).and.
      &    any(solveen(0:mpg%nnreg(0))).and.
-     &    any(solveet(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
+     &    any(solveet(0:mpg%nnreg(0)))) then                                !srv 22.05.18
       new_matrix = .false.
-      do ireg = 0, nregionv
+      do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
@@ -160,19 +161,19 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t0 = min(t0,te(iCv))
         endif
         if (solveei(ireg)) then
-          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &    -shi(iCv,1)-shi(iCv,3)*ni(iCv,0)
           t0 = min(t0,ti(iCv))
         endif
         if (solveen(ireg).and.switch%tn_style.eq.2) then
-          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) 
+          aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &    -shn(iCv,1)-shn(iCv,3)*nn(iCv)
           t0 = min(t0,tn(iCv))
         endif
         if (solveee(ireg).or.solveei(ireg).or.
      &      (solveen(ireg).and.switch%tn_style.eq.2)) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
-     &      +abs(resht(iCv))/(rxg*t0)
+     &      +abs(resht(iCv))/(switch%b2npht_rxg*t0)
         endif
       enddo
 ! $AD II-LOOP
@@ -181,13 +182,13 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         if (solveee(mpg%cvReg(iCv1)).or.solveei(mpg%cvReg(iCv1)).or.
      &      (solveen(ireg).and.switch%tn_style.eq.2)) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -197,9 +198,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
@@ -224,8 +225,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
@@ -235,8 +236,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -250,8 +251,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
@@ -261,8 +262,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -283,8 +284,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
-      endif                                                              !srv 22.05.18
-      
+      endif                                                             !srv 22.05.18
+
       if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2usht_total_aam6')
@@ -308,7 +309,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 * ..electron temperature correction equation
       if (any(solveee(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
-      do ireg = 0, nregionv
+      do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
@@ -327,7 +328,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
      &    -she(iCv,1)-she(iCv,3)*ne(iCv)+
      &    dim(1.0_R8,1.5_R8*(te(iCv)-ti(iCv))/te(iCv))*               !srv 02.01.07
      &    ceqp(iCv)*ne(iCv)*ni(iCv,0)/(te(iCv)*sqrt(te(iCv)))
-     &    +abs(reshe(iCv))/(rxg*te(iCv))                              !srv 02.01.07
+     &    +abs(reshe(iCv))/(switch%b2npht_rxg*te(iCv))                !srv 02.01.07
         endif
       enddo
 ! $AD II-LOOP
@@ -336,12 +337,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         if (solveee(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -350,9 +351,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
@@ -376,8 +377,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
@@ -387,8 +388,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -401,8 +402,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
@@ -412,8 +413,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -434,7 +435,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
-      endif                                                              !srv 22.05.18
+      endif                                                            !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0) then
 #ifdef WG_TODO
@@ -459,7 +460,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 * ..atom temperature correction equation
       if (any(solveei(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
       new_matrix = .false.
-      do ireg = 0, nregionv
+      do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
@@ -477,7 +478,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           aa(mpg%cvNvP(iCv,1)) =
      &    (-shi(iCv,1)-shi(iCv,3)*ni(iCv,0)+
      &    ceqp(iCv)*ne(iCv)*ni(iCv,0)/(te(iCv)*sqrt(te(iCv)))
-     &    +abs(reshi(iCv))/(rxg*ti(iCv)))
+     &    +abs(reshi(iCv))/(switch%b2npht_rxg*ti(iCv)))
         endif
       enddo
 ! $AD II-LOOP
@@ -486,12 +487,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         if (solveei(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -500,9 +501,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
@@ -526,8 +527,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
@@ -537,8 +538,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -551,8 +552,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
@@ -562,8 +563,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -614,9 +615,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
       if (switch%tn_style.eq.2) then
 * ..neutral atom temperature correction equation
-      if (any(solveen(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
+      if (any(solveen(0:mpg%nnreg(0)))) then                                !srv 22.05.18
       new_matrix = .false.
-      do ireg = 0, nregionv
+      do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveen(ireg).neqv.solveei(ireg)
       end do
@@ -632,8 +633,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solveen(ireg)) then
           aa(mpg%cvNvP(iCv,1)) =
-     &    (-shn(iCv,1)-shn(iCv,3)*nn(iCv)+
-     &    +abs(reshn(iCv))/(rxg*tn(iCv)))
+     &    (-shn(iCv,1)-shn(iCv,3)*nn(iCv)
+     &     +abs(reshn(iCv))/(switch%b2npht_rxg*tn(iCv)))
         endif
       enddo
 ! $AD II-LOOP
@@ -642,12 +643,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         if (solveen(mpg%cvReg(iCv1))) then
          aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
          where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                   mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
+          aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
      &     aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) +
      &     t2
          end where
@@ -656,9 +657,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
          where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                   mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
+          aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
      &     aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) +
-     &     t1 
+     &     t1
          end where
         endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
@@ -682,8 +683,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
@@ -693,8 +694,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                    mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -707,8 +708,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
@@ -718,8 +719,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                    mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -784,7 +785,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solvekt(ireg))
      &   aa(mpg%cvNvP(iCv,1)) =
-     &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1)
+     &    -skt(iCv,1)-skt(iCv,3)*ni(iCv,1) +
+     &     abs(reskt(iCv))/(switch%b2npht_rxg*(kt(iCv)+1.0e-5_R8*ev))
        enddo
 ! $AD II-LOOP
        do iFc = 1, nFc
@@ -792,12 +794,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         if (solvekt(mpg%cvReg(iCv1))) then
           aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)= 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)=
      &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t2
           end where
@@ -806,9 +808,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)= 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)=
      &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
-     &      t1 
+     &      t1
           end where
         endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
@@ -832,8 +834,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
@@ -843,8 +845,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -857,8 +859,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
@@ -868,8 +870,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -931,7 +933,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         ireg = mpg%cvReg(iCv)
         if (solvezt(ireg))
      &   aa(mpg%cvNvP(iCv,1)) =
-     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1)
+     &    -szt(iCv,1)-szt(iCv,3)*ni(iCv,1) +
+     &     abs(reszt(iCv))/(switch%b2npht_rxg*(zt(iCv)+1.0e-5_R8*ev))
        enddo
 ! $AD II-LOOP
        do iFc = 1, nFc
@@ -939,12 +942,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
 *     ..contributions from flo0(:,0), con0(:,0,:) ('5-point' contributions)
         t1 = - 0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
-        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0) 
+        t2 =   0.5_R8*flo0(iFc,0) - con0(iFc,0,0)
         if (solvezt(mpg%cvReg(iCv1))) then
           aa(mpg%cvNvP(iCv1,1)) = aa(mpg%cvNvP(iCv1,1)) - t1
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv2)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)= 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)=
      &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t2
           end where
@@ -953,9 +956,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           aa(mpg%cvNvP(iCv2,1)) = aa(mpg%cvNvP(iCv2,1)) - t2
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv1)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)= 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)=
      &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
-     &      t1 
+     &      t1
           end where
         endif
 *     ..contributions from flo0(:,1), con0(:,1,:) ('9-point' contributions)
@@ -979,8 +982,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)- 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)-
      &      t3*t1
           end where
          enddo
@@ -990,8 +993,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv1,1):
      &                  mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) = 
-     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+ 
+           aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1) =
+     &      aa(mpg%cvNvP(iCv1,1):mpg%cvNvP(iCv1,1)+mpg%cvNvP(iCv1,2)-1)+
      &      t3*t2
           end where
          enddo
@@ -1004,8 +1007,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx1,1) + inCv - 1)*t11)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+ 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)+
      &      t3*t1
           end where
          enddo
@@ -1015,8 +1018,8 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           t3  = 1/(geo%vxVol(mpg%vxCvP(iVx2,1) + inCv - 1)*t22)
           where (mpg%cvNv(mpg%cvNvP(iCv2,1):
      &                  mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) == iCv)
-           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) = 
-     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)- 
+           aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1) =
+     &      aa(mpg%cvNvP(iCv2,1):mpg%cvNvP(iCv2,1)+mpg%cvNvP(iCv2,2)-1)-
      &      t3*t2
           end where
          enddo
@@ -1073,4 +1076,4 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *-----------------------------------------------------------------------
 *.end b2usht
 
-      end
+      end subroutine b2usht

@@ -15,6 +15,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:2), nx, ny, ns
@@ -26,7 +27,7 @@
       real (kind=R8) :: za(0:ns-1)
       character lblgm*120, lblcp*120, lblmn*120
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external cfruch, cfruin
       external b2rugm, b2rucp, b2ruzd, b2rups, b2xvps, process
 
@@ -47,9 +48,7 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
 #ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')

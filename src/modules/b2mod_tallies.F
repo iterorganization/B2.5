@@ -316,6 +316,8 @@
       subroutine read_b2mod_tallies(nread)
       implicit none
       integer nread
+      external xertst
+
       call xertst(0.lt.nread, 'faulty argument nread')
 
       return
@@ -324,6 +326,8 @@
       subroutine write_b2mod_tallies(nwrite)
       implicit none
       integer nwrite
+      external xertst
+
       call xertst(0.lt.nwrite, 'faulty argument nwrite')
 
       return
@@ -340,6 +344,7 @@
       integer :: status, varid, ndims, dimids(NF_MAX_VAR_DIMS),
      1 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
      2 time_dep
+      external check_cdf_status
 
       if(ntstep.ge.0) then
         time_dep=1
@@ -352,10 +357,12 @@
       call check_cdf_status(status)
       status=nf_inq_vardimid(ncid,varid,dimids)
       call check_cdf_status(status)
-      do i=1,ndims-time_dep
-        start(i)=1
-        status=nf_inq_dimlen(ncid,dimids(i),count(i))
-      enddo
+      if (ndims.gt.time_dep) then
+        do i=1,ndims-time_dep
+          start(i)=1
+          status=nf_inq_dimlen(ncid,dimids(i),count(i))
+        enddo
+      end if
       if(time_dep.eq.1) then
         start(ndims)=ntstep
         count(ndims)=1
@@ -376,6 +383,7 @@
       integer :: status, varid, ndims, dimids(NF_MAX_VAR_DIMS),
      1 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
      2 time_dep
+      external check_cdf_status
 
       if(ntstep.ge.0) then
         time_dep=1
@@ -408,6 +416,7 @@
       character*(*) :: varname, units, long_name
 #include <netcdf.inc>
       integer :: status, varid
+      external check_cdf_status
 
       status=nf_def_var(ncid,varname,vartype,ndims,vdims,varid)
       call check_cdf_status(status)
@@ -428,6 +437,7 @@
       integer :: status, 
      1 vregid, xregid, yregid, nsid, tid, varid, specid
       integer :: vdims(3)
+      external check_cdf_status
 
       status=nf_create(filename,NF_WRITE,ncid)
       call check_cdf_status(status)
@@ -592,6 +602,9 @@
       call create_cdf_var_with_attrs(
      *  ncid,'b2radreg',NF_DOUBLE,
      *  2,vdims,'W','b2radreg')
+      call create_cdf_var_with_attrs(
+     *  ncid,'rdneureg',NF_DOUBLE,
+     *  2,vdims,'W','rdneureg')
 
       vdims(1)=vregid
       vdims(2)=nsid

@@ -9,6 +9,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2nxdu
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -36,7 +37,7 @@
 *   ..local variables
       integer iCv, is
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg, b2xvfx
 *   ..initialisation
 
@@ -63,8 +64,8 @@
       call sfill (nCv, 0.0_R8, wrk1, 1)
       do is = 0, ns-1
        wrk0 = wrk0 + smq(:,1,is) + smq(:,3,is)*am(is)*mp*na(:,is)
-       wrk1 = wrk1 + smq(:,0,is) + 
-     &               smq(:,1,is)*ua(:,is) + 
+       wrk1 = wrk1 + smq(:,0,is) +
+     &               smq(:,1,is)*ua(:,is) +
      &               smq(:,2,is)*am(is)*mp*na(:,is) +
      &               smq(:,3,is)*am(is)*mp*na(:,is)*ua(:,is)
       enddo
@@ -85,4 +86,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxdu
 
-      end
+      end subroutine b2nxdu

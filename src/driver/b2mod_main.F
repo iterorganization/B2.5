@@ -17,13 +17,32 @@
       use b2us_io
       use b2mod_switches
       use b2mod_recycle
+      use b2mod_xerset
+#ifdef B25_EIRENE
+#ifdef USE_MPI
+      use eirmod_parmmod
+     , , only : ifoff
+      use eirmod_cpes
+     , , only : my_pe
+#endif
+#endif
+#if MPI_MOD > 0
+#ifdef USE_MPI
+      use mpi  ! IGNORE
+#else
+#ifdef USE_IMPGYRO
+      use mpi  ! IGNORE
+#endif
+#endif
+#endif
       implicit none
-#     include <git_version_B25.h>
+#if MPI_MOD < 1
 #ifdef USE_MPI
       include 'mpif.h'
 #else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
+#endif
 #endif
 #endif
 
@@ -32,7 +51,7 @@
 *
 *  1. purpose
 *
-*     B2MOD_MAIN contains the main program for the b2 code. The code solves a
+*     B2MOD_MAIN contains the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.
@@ -94,10 +113,10 @@
 *  4. references
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -147,9 +166,12 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
 #endif
+      character*32 B25_git_version
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      character*32 get_B25_hash
+      external get_B25_hash
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/
 #ifdef JET
@@ -177,6 +199,8 @@ csw 28feb2011 mpi
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
       if(rank_mpi .ne. 0) then
 #ifdef B25_EIRENE
+        my_pe=rank_mpi
+        iunout=7+ifoff
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
@@ -196,7 +220,7 @@ csw
       endif
 #else
 #ifdef USE_IMPGYRO
-      write(*,*) 'b2ig: running B25EIRENE'
+      write(*,*) 'b2ig: running B2.5-EIRENE'
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
@@ -221,13 +245,14 @@ csw
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
+*   ..obtain version numbers                                             !xpb
+      B25_git_version = get_B25_hash()
       call cfverw (nout(0), newversion)
       write(6,'(4a)')
-     &  'Running with VERSION ',newversion,' ', git_version_B25
-      call cfverr (ninp(1), b2fgmtry_version)        !xpb
-      call cfverr (ninp(2), b2fparam_version)        !xpb
-      call cfverr (ninp(3), b2fstati_version)        !xpb
+     &  'Running with VERSION ',newversion,' ', trim(B25_git_version)
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstati_version)                            !xpb
 ! csc UNCOMMENT WITH AD
 !    CALL CFOPEN(ninp(6), 'b2fdiffi', 'old', 'un*formatted')
 !    CALL CFVERR(ninp(6), b2fdiffi_version)
@@ -317,6 +342,7 @@ csw
 
       call b2mndr_1 (nout, ns, switch, geo, mpg, state, state_ext, J)
 
+      return
       end subroutine b2mn_step
 
       subroutine b2mn_fin (switch, geo, mpg, state, state_ext)

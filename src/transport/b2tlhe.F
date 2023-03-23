@@ -1,4 +1,4 @@
-      subroutine b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, ne, te, 
+      subroutine b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, ne, te,
      &  chvemx)
       use b2mod_types
       use b2mod_switches
@@ -8,6 +8,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlhe
+      use b2mod_subsys
       implicit none
       integer nCv, nFc
       type (switches), intent (in) :: switch
@@ -23,10 +24,9 @@
       real (kind=R8) ::
      *   t0, t1
 *   ..procedures
-      real (kind=R8) :: pit
       intrinsic max, sqrt
-      external subini, subend, xertst, b2xvsg
-      pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+      external xertst, b2xvsg
+
 *   ..initialisation
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
@@ -45,28 +45,40 @@
 
 *   ..compute flux limit velocity
       if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then  ! SOLPS5.0 treatments
-cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_model, 
+cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_model,
 c    because now both options are interchangeable
         do iFc = 1, nFc
           t0 = max(te(mpg%fcCv(iFc,1)),te(mpg%fcCv(iFc,2)))
-          chvemx(iFc) = cflme*sqrt(t0/me)*abs(geo%fcPbs(iFc))                 !srv 11.01.13
+          chvemx(iFc) = cflme*sqrt(t0/me)*abs(geo%fcPbs(iFc))            !srv 11.01.13
         enddo
       else if (switch%b2tqce_model.eq.2) then  ! SOLPS4.0 treatment
         do iFc = 1, nFc
           t0 = te(mpg%fcCv(iFc,2))
           t1 = te(mpg%fcCv(iFc,1))
-cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same information 
+cwdk 10.03.16 Divide by ne*te at cell faces, so chvemx contains the same information
 c           as case b2tqce_model.eq.1
-c           Removes need for different treatment later on in the code (b2tfhe), and 
+c           Removes need for different treatment later on in the code (b2tfhe), and
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
-	  chvemx(iFc) = cflme * geo%fcS(iFc) * abs(geo%fcQalf(iFc,0)) *
-     .	     (ne(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/me)*t0 +
-     .	      ne(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/me)*t1)/
-     .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))  
+          chvemx(iFc) = cflme * geo%fcS(iFc) * abs(geo%fcQalf(iFc,0)) *
+     .       (ne(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/me)*t0 +
+     .        ne(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/me)*t1)/
+     .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))
         enddo
       endif
       ncall_b2tlhe = ncall_b2tlhe+1
       call subend ()
       return
 *     ------------------------------------------------------------------
+      contains
+
+      function pit(iCv)
+      implicit none
+      real (kind=R8) :: pit
+      integer, intent(in) :: iCv
+
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+
+      return
+      end function pit
+
       end subroutine b2tlhe

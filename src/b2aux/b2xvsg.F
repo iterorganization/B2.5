@@ -50,7 +50,7 @@
 *$$$  call subend ()
       return
 *     -----------------------------------------------------------------
-      end
+      end subroutine b2xvsg
 
       subroutine b2xvsg1(nx1, ny1, fun, inc, vrname, chsg)
       use b2mod_types

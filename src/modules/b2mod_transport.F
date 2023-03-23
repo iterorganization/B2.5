@@ -299,7 +299,7 @@
         fllim_al=0.0_R8
         fllim_al_c=0.0_R8
       endif
-      if(b2fplasma_version.ge.'03.000.009') then
+      if(b2fplasma_version.ge.'03.002.000') then
         call cfrure (nread, size(cdkt), cdkt, 'cdkt')
       else
         cdkt=0.0_R8
@@ -358,7 +358,7 @@
         call cfwure (nwrite, size(fllim_al), fllim_al, 'fllim_al')
         call cfwure (nwrite, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
       endif
-      if(newversion.ge.'03.000.009') then
+      if(newversion.ge.'03.002.000') then
         call cfwure (nwrite, size(cdkt), cdkt, 'cdkt')
       endif
       if(newversion.ge.'03.002.000') then

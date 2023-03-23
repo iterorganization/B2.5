@@ -444,7 +444,7 @@ C   4          *
       use b2us_io_diff
      , , only : write_b2fstate
       use b2mod_version
-     , , only : newversion
+     , , only : newversion, cfverw
       use b2mod_b2cmpa_diff
       implicit none
       integer ALG_MODE, ITER_COUNT, LS_TRIAL

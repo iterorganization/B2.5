@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_ma28_for_us
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, itcnt
@@ -61,23 +62,17 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, itmax, iters, itpar, cpu
-      parameter (itmax=100)
+      integer ncall, style, cpu
       real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
-      real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
-      integer, allocatable, save :: iwrk(:)
-
+     *   acpar, cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
-
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
-      intrinsic min, cpu_time
-      external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
+      intrinsic cpu_time
+      external xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu

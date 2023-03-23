@@ -1,123 +1,119 @@
 ! Fortran part of the adaptor for paraview catalyst
-! for b2.5 simulation.
+! for B2.5 simulation.
 ! Author: Jure Bartol
 
 
-subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
-     &                 bzb,OnedBsq,ne,qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
-     &                 fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,&
-     &                 fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,&
-     &                 fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,&
-     &                 rlpi, rightix, topiy)
+subroutine coprocessor(nVx, nFc, nCv, step, time, geo, state)
 !Coprocessor is called each time step in b2mndr_1 to output
 !simulation data to ParaView Catalyst.
 
-  implicit none
-  integer :: nx, ny, ns, step, flag, numC, ix, iy
-  integer, intent(in) :: ncrx
-  real(kind=8) :: time
-  integer, dimension(-1:nx,-1:ny) :: rightix, topiy
-  real(kind=8), dimension(-1:nx,-1:ny) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
-  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
-      & fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper &
-      & !,velocity
-  real(kind=8), dimension(-1:nx,-1:ny,3) :: gs
-  real(kind=8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
-  real(kind=8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
-  real(kind=8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
-      & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
-  real :: start, finish
-  
-  call cpu_time(start)
+  use b2mod_types
+  use b2us_geo
+  use b2us_plasma
+#ifdef _OPENMP
+  use b2mod_openmp
+#endif
 
-  !velocity(10,10,1) = 0
-  !do ix = -1,nx
-  !   do iy = -1,ny
-  !      velocity(ix,iy,1) = 0.5 * (fna(ix,iy,0,0) / gs(ix,iy,1) + fna(rightix(ix,iy)+1,iy,0,0) / gs(rightix(ix,iy)+1,iy,1))
-  !      velocity(ix,iy,2) = 0.5 * (fna(ix,iy,1,0) / gs(ix,iy,2) + fna(ix,topiy(ix,iy)+1,1,0) / gs(ix,topiy(ix,iy)+1,2))
-  !   enddo
-  !enddo
-  !velocity(:,:,1) = velocity(:,:,1) / ne
-  !velocity(:,:,2) = velocity(:,:,2) / ne
+  implicit none
+  integer, intent(in) :: nVx, nFc, nCv, step
+  real(kind=R8), intent(in) :: time
+  type(geometry), intent(in) :: geo
+  type(B2State), intent(in) :: state
+  integer :: flag
+#ifdef _OPENMP
+  real(kind=R8) :: start, finish
+#else
+  real(kind=R4) :: start, finish
+#endif
+
+#ifdef _OPENMP
+  start = omp_get_wtime()
+#else
+  call cpu_time(start)
+#endif
 
 ! Query Catalyst to see if there is something to do this time step.
   call requestdatadescription(step,time,flag)
   if (flag .ne. 0) then
      call needtocreategrid(flag)
      if (flag .ne. 0) then
-        call creategrid(crx, cry, ncrx, nx, ny)
+        call creategrid(geo%vxX, geo%vxY, nVx)
      end if
 
 ! Add field data to cells.
-numC=(nx+2)*(ny+2) !number of cells
 ! 1 component in each cell
-     call adddata(vol,"vol"//char(0),numC,1)
-     call adddata(hx,"hx"//char(0),numC,1)
-     call adddata(hy,"hy"//char(0),numC,1)
-     call adddata(qc,"qc"//char(0),numC,1)
-     call adddata(ti,"ti"//char(0),numC,1)
-     call adddata(te,"te"//char(0),numC,1)
-     call adddata(po,"po"//char(0),numC,1)
-     call adddata(bzb,"bzb"//char(0),numC,1)
-     call adddata(OnedBsq,"OnedBsq"//char(0),numC,1)
-     call adddata(ne,"ne"//char(0),numC,1)
-     !call adddata(velocity,"velocity"//char(0),numC,2)
+     call adddata(geo%cvVol,"vol"//char(0),nCv,1)
+     call adddata(geo%cvHx,"hx"//char(0),nCv,1)
+     call adddata(state%pl%ti,"ti"//char(0),nCv,1)
+     call adddata(state%pl%te,"te"//char(0),nCv,1)
+     call adddata(state%pl%po,"po"//char(0),nCv,1)
+     call adddata(geo%cvBzb,"bzb"//char(0),nCv,1)
+     call adddata(geo%cvOnedBsq,"OnedBsq"//char(0),nCv,1)
+     call adddata(state%dv%ne,"ne"//char(0),nCv,1)
+     call adddata(geo%fcPbs,"pbs"//char(0),nFc,1)
+     call adddata(geo%fcPbshz,"pbshz"//char(0),nFc,1)
+     call adddata(geo%fcS,"gs"//char(0),nFc,1)
+     call adddata(geo%cvSz,"sz"//char(0),nCv,1)
 ! 2 components in each cell
-     call adddata(qz,"qz"//char(0),numC,2)
-     call adddata(pbs,"pbs"//char(0),numC,2)
-     call adddata(fhe,"fhe"//char(0),numC,2)
-     call adddata(fhi,"fhi"//char(0),numC,2)
-     call adddata(fch,"fch"//char(0),numC,2)
-     call adddata(pbshz,"pbshz"//char(0),numC,2)
-     call adddata(fhe_mdf,"fhe_mdf"//char(0),numC,2)
-     call adddata(fhi_mdf,"fhi_mdf"//char(0),numC,2)
-     call adddata(fchvispar,"fchvispar"//char(0),numC,2)
-     call adddata(fchvisq,"fchvisq"//char(0),numC,2)
-     call adddata(fchinert,"fchinert"//char(0),numC,2)
-     call adddata(fchdia,"fchdia"//char(0),numC,2)
-     call adddata(fchin,"fchin"//char(0),numC,2)
-     call adddata(fch_p,"fch_p"//char(0),numC,2)
-     call adddata(fchvisper,"fchvisper"//char(0),numC,2)
+     call adddata(geo%fcQgam,"qc"//char(0),nFc,2)
+     call adddata(geo%cvQgam,"qz"//char(0),nCv,2)
+     call adddata(state%dv%fhe,"fhe"//char(0),nFc,2)
+     call adddata(state%dv%fhi,"fhi"//char(0),nFc,2)
+     call adddata(state%dv%fch,"fch"//char(0),nFc,2)
+     call adddata(state%dv%fhe_mdf,"fhe_mdf"//char(0),nFc,2)
+     call adddata(state%dv%fhi_mdf,"fhi_mdf"//char(0),nFc,2)
+     call adddata(state%dv%fchvispar,"fchvispar"//char(0),nFc,2)
+     call adddata(state%dv%fchvisq,"fchvisq"//char(0),nFc,2)
+     call adddata(state%dv%fchinert,"fchinert"//char(0),nFc,2)
+     call adddata(state%dv%fchdia,"fchdia"//char(0),nFc,2)
+     call adddata(state%dv%fchin,"fchin"//char(0),nFc,2)
+     call adddata(state%dv%fch_p,"fch_p"//char(0),nFc,2)
+     call adddata(state%dv%fchvisper,"fchvisper"//char(0),nFc,2)
 ! 3 components in each cell
-     call adddata(gs,"gs"//char(0),numC,3) 
-     call adddata(bb,"bb"//char(0),numC,3)
+     call adddata(geo%cvBb(:,0:2),"bb"//char(0),nCv,3)
 ! ns components
-     call adddata(na,"na"//char(0),numC,ns)
-     call adddata(ua,"ua"//char(0),numC,ns)
-     call adddata(kinrgy,"kinrgy"//char(0),numC,ns)
-     call adddata(rra,"rra"//char(0),numC,ns)
-     call adddata(rqa,"rqa"//char(0),numC,ns)
-     call adddata(rsa,"rsa"//char(0),numC,ns)
-     call adddata(fna(:,:,0,:),"fnax1"//char(0),numC,ns)
-     call adddata(fna(:,:,1,:),"fnay1"//char(0),numC,ns)
-     call adddata(fna_mdf(:,:,0,:),"fna_mdfx"//char(0),numC,ns)
-     call adddata(fna_mdf(:,:,1,:),"fna_mdfy"//char(0),numC,ns)
-     call adddata(fna_fcor(:,:,0,:),"fna_fcorx"//char(0),numC,ns)
-     call adddata(fna_fcor(:,:,1,:),"fna_fcory"//char(0),numC,ns)
-     call adddata(uadia(:,:,0,:),"uadiax"//char(0),numC,ns)
-     call adddata(uadia(:,:,1,:),"uadiay"//char(0),numC,ns)
-     call adddata(vadia(:,:,0,:),"vadiax"//char(0),numC,ns)
-     call adddata(vadia(:,:,1,:),"vadiay"//char(0),numC,ns)
-     call adddata(vaecrb(:,:,0,:),"vaecrbx"//char(0),numC,ns)
-     call adddata(vaecrb(:,:,1,:),"vaecrby"//char(0),numC,ns)
-     call adddata(rlsa(:,:,0,:),"rlsa0"//char(0),numC,ns)
-     call adddata(rlsa(:,:,1,:),"rlsa1"//char(0),numC,ns)
-     call adddata(rlra(:,:,0,:),"rlra0"//char(0),numC,ns)
-     call adddata(rlra(:,:,1,:),"rlra1"//char(0),numC,ns)
-     call adddata(rlqa(:,:,0,:),"rlqa0"//char(0),numC,ns)
-     call adddata(rlqa(:,:,1,:),"rlqa1"//char(0),numC,ns)
-     call adddata(rlza(:,:,0,:),"rlza0"//char(0),numC,ns)
-     call adddata(rlza(:,:,1,:),"rlza1"//char(0),numC,ns)
-     call adddata(rlpt(:,:,0,:),"rlpt0"//char(0),numC,ns)
-     call adddata(rlpt(:,:,1,:),"rlpt1"//char(0),numC,ns)
-     call adddata(rlpi(:,:,0,:),"rlpi0"//char(0),numC,ns)
-     call adddata(rlpi(:,:,1,:),"rlpi1"//char(0),numC,ns)
+     call adddata(state%pl%na,"na"//char(0),nCv,state%ns)
+     call adddata(state%pl%ua,"ua"//char(0),nCv,state%ns)
+     call adddata(state%dv%kinrgy,"kinrgy"//char(0),nCv,state%ns)
+!WG_TODO     call adddata(state%rt%rra,"rra"//char(0),nCv,state%ns)
+!WG_TODO     call adddata(state%rt%rqa,"rqa"//char(0),nCv,state%ns)
+!WG_TODO     call adddata(state%rt%rsa,"rsa"//char(0),nCv,state%ns)
+     call adddata(state%dv%fna(:,0,:),"fnax"//char(0),nFc,state%ns)
+     call adddata(state%dv%fna(:,1,:),"fnay"//char(0),nFc,state%ns)
+     call adddata(state%dv%fna_mdf(:,0,:),"fna_mdfx"//char(0),nFc,state%ns)
+     call adddata(state%dv%fna_mdf(:,1,:),"fna_mdfy"//char(0),nFc,state%ns)
+     call adddata(state%dv%fna_fcor(:,0,:),"fna_fcorx"//char(0),nFc,state%ns)
+     call adddata(state%dv%fna_fcor(:,1,:),"fna_fcory"//char(0),nFc,state%ns)
+     call adddata(state%dv%uadia(:,0,:),"uadiax"//char(0),nFc,state%ns)
+     call adddata(state%dv%uadia(:,1,:),"uadiay"//char(0),nFc,state%ns)
+     call adddata(state%dv%vadia(:,0,:),"vadiax"//char(0),nFc,state%ns)
+     call adddata(state%dv%vadia(:,1,:),"vadiay"//char(0),nFc,state%ns)
+     call adddata(state%dv%vaecrb(:,0,:),"vaecrbx"//char(0),nFc,state%ns)
+     call adddata(state%dv%vaecrb(:,1,:),"vaecrby"//char(0),nFc,state%ns)
+     call adddata(state%rt%rlsa(:,0,:),"rlsa0"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlsa(:,1,:),"rlsa1"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlra(:,0,:),"rlra0"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlra(:,1,:),"rlra1"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlqa(:,0,:),"rlqa0"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlqa(:,1,:),"rlqa1"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlza(:,0,:),"rlza0"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlza(:,1,:),"rlza1"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlpt(:,0,:),"rlpt0"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlpt(:,1,:),"rlpt1"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlpi(:,0,:),"rlpi0"//char(0),nCv,state%ns)
+     call adddata(state%rt%rlpi(:,1,:),"rlpi1"//char(0),nCv,state%ns)
 
      call coprocess()
+#ifdef _OPENMP
+     finish = omp_get_wtime()
+#else
      call cpu_time(finish)
+#endif
      print*, "Coprocessing time: ",finish-start
   end if
-end subroutine
+  return
+
+end subroutine coprocessor
 
 !!!Local Variables:
 !!! mode: f90

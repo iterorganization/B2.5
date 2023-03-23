@@ -1,5 +1,6 @@
       subroutine interp2d(nx,ny,nx1,ny1,xx,yy,xx1,yy1,fa,fb)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *..   input arguments
       integer nx, ny, nx1, ny1
@@ -13,7 +14,7 @@
       integer ib, ih, it, jb, jh, jt
       real (kind=R8) :: fx, fy
 *..   procedures
-      external subini, subend, xertst
+      external xertst
 
 cxpb
 c     This routine is intended to do a 2D bi-linear interpolation
@@ -34,15 +35,15 @@ cxpb
         it=nx
         do while (it-ib.gt.1)
           ih=(ib+it)/2
-	  if(xx1(i).eq.xx(it)) then
-	    ib=it-1
+          if(xx1(i).eq.xx(it)) then
+            ib=it-1
           elseif(xx1(i).lt.xx(ih)) then
             it=ih
           elseif(xx1(i).gt.xx(ih)) then
             ib=ih
           elseif(xx1(i).eq.xx(ih)) then
-	    ib=ih
-	    it=ih+1
+            ib=ih
+            it=ih+1
           endif
         end do
         call xertst(xx(it).gt.xx(ib), 'XX array non-monotonic!')

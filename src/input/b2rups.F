@@ -15,6 +15,7 @@
       use b2mod_time
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny, ns
@@ -23,33 +24,33 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny), kt(-1:nx,-1:ny), zt(-1:nx,-1:ny),
+     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
+     &  tn(-1:nx,-1:ny), kt(-1:nx,-1:ny), zt(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fhn(-1:nx,-1:ny,0:1,0:1), 
-     &  fch(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fhn(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
      2  fch_p(-1:nx,-1:ny,0:1,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),    !srv 10.06.08
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhe_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fhi_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhePSch(-1:nx,-1:ny,0:1,0:1),
-     &  fhiPSch(-1:nx,-1:ny,0:1,0:1), 
+     &  fhiPSch(-1:nx,-1:ny,0:1,0:1),
      &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1,0:1), fhe_eir(-1:nx,-1:ny,0:1,0:1),
      &  fhi_eir(-1:nx,-1:ny,0:1,0:1),
-     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
      &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
      &  fchdia(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1,0:1), vedia(-1:nx,-1:ny,0:1,0:1),
@@ -94,12 +95,12 @@
 *     the parallel velocity of atomic species (is) on the (ix,iy) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
-*    
+*
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-* 
+*
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiax(ix,iy,is) specifies
@@ -109,8 +110,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vadia is computed at cell faces otherwise (default)
 *
 *     wadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let wadiax(,,)=wadia(,,0,) and wadiay(,)=wadia(,,1,).)
@@ -121,8 +122,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     wadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     wadia is computed at cell faces otherwise (default)
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -133,6 +134,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
 *     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
+*     vedia is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vedia is computed at cell faces otherwise (default)
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -143,8 +146,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
-*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*     vaecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     vaecrb is computed at cell faces otherwise (default)
 *
 *     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
@@ -155,6 +158,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
 *     the ExB drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
+*     veecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
+*     veecrb is computed at cell faces otherwise (default)
 *
 *     te - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
@@ -323,7 +328,7 @@
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
+*     the kinetic energy of a particle of species (is) in cell (ix,iy).
 *     The velocity used includes the parallel velocity as well
 *     as the total diamagnetic and ExB drift velocities in both the radial
 *     and diamagnetic directions.
@@ -345,7 +350,7 @@
       real (kind=R8) :: time(1), zero(-1:nx,-1:ny),
      &  floc(-1:nx,-1:ny,0:1), flocs(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..procedures
-      external subini, subend, xertst, cfrure
+      external xertst, cfrure
       external b2xvsg, b2xpne
 
 *-----------------------------------------------------------------------
@@ -400,13 +405,13 @@
 *   ..read fluxes
       fhn = 0.0_R8
       if(b2fstat_version.ge.'03.001.000') then
-        call cfrure (nget, n2*4*ns, fna,    'fna')
-        call cfrure (nget, n2*4,    fhe,    'fhe')
-        call cfrure (nget, n2*4,    fhi,    'fhi')
-        call cfrure_opt (nget, n2*4,    fhn,    'fhn')
-        call cfrure (nget, n2*4,    fch,    'fch')
-        call cfrure (nget, n2*4,    fch_32, 'fch_32')
-        call cfrure (nget, n2*4,    fch_52, 'fch_52')
+        call cfrure (nget, n2*4*ns,  fna,    'fna')
+        call cfrure (nget, n2*4,     fhe,    'fhe')
+        call cfrure (nget, n2*4,     fhi,    'fhi')
+        call cfrure_opt (nget, n2*4, fhn,    'fhn')
+        call cfrure (nget, n2*4,     fch,    'fch')
+        call cfrure (nget, n2*4,     fch_32, 'fch_32')
+        call cfrure (nget, n2*4,     fch_52, 'fch_52')
       else
         call cfrure (nget, n2*2*ns, flocs, 'fna')
         fna = 0.0_R8
@@ -424,7 +429,7 @@
         fch = 0.0_R8
         fch(:,:,0,0) = floc(:,:,0)
         fch(:,:,1,1) = floc(:,:,1)
-        if(b2fstat_version.ge.'01.001.005') then                 	 !xpb
+        if(b2fstat_version.ge.'01.001.005') then                         !xpb
           call cfrure (nget, n2*2, floc, 'fch_32')
           fch_32 = 0.0_R8
           fch_32(:,:,0,0) = floc(:,:,0)
@@ -433,10 +438,10 @@
           fch_52 = 0.0_R8
           fch_52(:,:,0,0) = floc(:,:,0)
           fch_52(:,:,1,1) = floc(:,:,1)
-        else                                                     	 !dpc
+        else                                                             !dpc
           fch_32 = 0.0_R8
           fch_32(:,:,0,0)=fch(:,:,0,0)
-          fch_52=0.0_R8
+          fch_52 = 0.0_R8
           fch_52(:,:,1,1)=fch(:,:,1,1)
         endif
       endif
@@ -462,7 +467,7 @@
         call cfrure (nget, n2*4, fch_p, 'fch_p')
       elseif(b2fstat_version.ge.'01.001.069') then               !srv 09.09.11
         fch_p = 0.0_R8
-	call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
+        call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.025' .and.
      &       b2fstat_version.le.'01.001.031') then  ! clash between 5.0/1 and 5.2
 ! cxpb This code looks strange but the idea is that cfrure_opt will fail and rewind
@@ -475,19 +480,19 @@
         write(6,*) 'Recovering by reading fch_p with array size ', n2
         call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.032' .and.
-     &       b2fstat_version.le.'01.001.068') then                          !xpb srv 10.06.08 {
+     &       b2fstat_version.le.'01.001.068') then               !xpb srv 10.06.08 {
         call cfrure (nget, n2*2, floc, 'fch_p')
         fch_p = 0.0_R8
         fch_p(:,:,0,0) = floc(:,:,0)
         fch_p(:,:,1,1) = floc(:,:,1)
       elseif (b2fstat_version.ge.'01.001.022' .and.
-     &        b2fstat_version.ge.'01.001.024') then                          !srv 10.06.08 }
+     &        b2fstat_version.ge.'01.001.024') then              !srv 10.06.08 }
         fch_p = 0.0_R8
         call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       else
         fch_p = 0.0_R8
         fch_p(:,:,0,0) = fch(:,:,0,0)     ! this ensures the old behaviour is kept
-      endif                                                             !srv 10.06.08 }
+      endif                                                      !srv 10.06.08 }
 *   ..adding various fluxes and velocities needed by advanced SOLPS-ITER features
       if(b2fstat_version.ge.'03.001.000') then
         call cfrure (nget, n2*4*ns, fna_mdf, 'fna_mdf')
@@ -664,10 +669,14 @@
         fna_eir = fna
         fhe_eir = fhe
         fhi_eir = fhi
-        fna_32(:,:,:,:,0)=fna(:,:,:,:,0)
-        fna_32(:,:,:,:,1)=0.0_R8
-        fna_52(:,:,:,:,0)=0.0_R8
-        fna_52(:,:,:,:,1)=fna(:,:,:,:,1)
+        fna_32(:,:,0,0,:)=fna(:,:,0,0,:)
+        fna_32(:,:,0,1,:)=0.0_R8
+        fna_32(:,:,1,0,:)=fna(:,:,1,0,:)
+        fna_32(:,:,1,1,:)=0.0_R8
+        fna_52(:,:,0,0,:)=0.0_R8
+        fna_52(:,:,0,1,:)=fna(:,:,0,1,:)
+        fna_52(:,:,1,0,:)=0.0_R8
+        fna_52(:,:,1,1,:)=fna(:,:,1,1,:)
         call b2xpfi_st (nx, ny, ns, fna_32, fni_32)
         call b2xpfi_st (nx, ny, ns, fna_52, fni_52)
         call b2xpfe_st (nx, ny, ns, 0, qe,
@@ -690,6 +699,7 @@
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif
+
 * ..return
       call subend ()
       return

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
+      subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
      &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
@@ -32,11 +32,10 @@
 #endif
      &          ncall_b2stbc,
      &          ncall_b2stbc_phys, nsdmax
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
-      real (kind=R8) ::
-     *  BoRiS
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -65,26 +64,30 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, regcnt, ixx
+      integer is
+      real (kind=R8) :: praverage(2), testqe, testqi
+      real (kind=R8) :: wrk(nFc)
+#ifdef WG_TODO
+      integer regcnt, ixx
       real (kind=R8) ::
-     *   t0, testqe, testqi,
-     &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
-     1   nasum(0:ns-1,2), teave(2), tiave(2),
-     1   naave(0:ns-1,2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
+     *   t0,
+     &   prsum(2), gssum(2), tesum(2), tisum(2),
+     1   nasum(0:ns-1,2),
+     1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol
-!WG_TODO      integer element_done(-1:nx)
-*   ..procedures
-      intrinsic mod, nint
+      integer element_done(-1:nx)
       real (kind=R8) ::
      *   b2ssum
-      external subini, subend, xertst, sfill, b2ssum, b2saxpy,
-     *   ipgetr, ipgeti
+#endif
+*   ..procedures
+      intrinsic nint
+      external xertst, sfill, b2saxpy, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys
 #ifdef WG_TODO
-     &          b2stbc_bas                                              !srv 27.06.21
+     & , b2stbc_bas, b2ssum                                            !srv 27.06.21
 #endif
 *   ..initialisation
 *-----------------------------------------------------------------------
@@ -121,13 +124,17 @@
 *    ..test state
        call b2xvps (nCv, nFc, ns, pl, dv)
 *    ..test sign of chce, chci
-       call b2xvsg (nCv,co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nCv,co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
-       call b2xvsg (nCv,co%chci(:,0)*geo%fcQalf(:,0),1,'chci0','.ge.')
-       call b2xvsg (nCv,co%chci(:,1)*geo%fcQalf(:,1),1,'chci1','.ge.')
+       wrk(:) = co%chce(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc,wrk,1,'chce0','.ge.')
+       wrk(:) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc,wrk,1,'chce1','.ge.')
+       wrk(:) = co%chci(:,0)*geo%fcQalf(:,0)
+       call b2xvsg (nFc,wrk,1,'chci0','.ge.')
+       wrk(:) = co%chci(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc,wrk,1,'chci1','.ge.')
       endif
 *   ..test facdrift           !xpb
-      call xertst (0.0_R8.le.minval(dv%facdrift) .and. 
+      call xertst (0.0_R8.le.minval(dv%facdrift) .and.
      & 1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
 !      if (ncall_b2stbc.eq.1 .and. main_call) then                               !xpb !srv 18.05.09
 !        if (maxval(facdrift).eq.0.0_R8) then                             !xpb
@@ -138,11 +145,11 @@
 !      endif
 *   ..check kinetic secondary electron emission model
       if (ncall_b2stbc.eq.0 .and. switch%secmodel.eq.1) then
-        call xertst (nint(zn(ismain)).eq.1, 
+        call xertst (nint(zn(ismain)).eq.1,
      &   'Kinetic secondary emission model only for hydrogen plasmas!')
         write (*,*) 'Kinetic secondary emission model turned on'
         write (*,*) 'Graphite target plates are assumed'
-        if (nint(zamax(ismain)).ne.1) write(*,*) 
+        if (nint(zamax(ismain)).ne.1) write(*,*)
      .   'WARNING! Kinetic secondary emission expects HYDROGEN plasmas!'
       endif
 *   ..initialise sources to 0
@@ -160,7 +167,7 @@
 *   (This code placed here for want of a better location)
 *   ..low-level particle source
       do is = 0, ns-1
-        call b2saxpy (nCv,switch%sna0ep,geo%cvVol,1,srw%sna0(1,0,is),1)
+       call b2saxpy (nCv,switch%sna0ep,geo%cvVol,1,srw%sna0(1,0,is),1)
       enddo
       call b2saxpy (nCv, switch%she0ep, geo%cvVol, 1, srw%she0(1,0), 1)
       call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
@@ -234,12 +241,11 @@
           volsum(1)=volsum(1) + vol(ix,iy)
         endif                                                            !xpb
       enddo                                                      !sv 24.03.99
-      praverage(1)=prsum(1)/volsum(1)                                    !xpb
-      qeaverage(1)=qesum(1)/gssum(1)
-      qiaverage(1)=qisum(1)/gssum(1)
-      teave(1)=tesum(1)/gssum(1)
-      tiave(1)=tisum(1)/gssum(1)
-      naave(:,1)=nasum(:,1)/gssum(1)
+      if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb
+      if (gssum(1).gt.0.0_R8) then
+        qeaverage(1)=qesum(1)/gssum(1)
+        qiaverage(1)=qisum(1)/gssum(1)
+      end if
 *   ..find the average pressure for island center flux surface           !xpb
       iy = ny                                                            !xpb
       tesum(2)=0.0_R8
@@ -319,13 +325,10 @@
           volsum(2)=volsum(2) + vol(ix,iy)
         endif                                                            !xpb
       enddo                                                              !xpb
+      if (volsum(2).gt.0.0_R8) praverage(2)=prsum(2)/volsum(2)           !xpb
       if (gssum(2).gt.0.0_R8) then
-        praverage(2)=prsum(2)/volsum(2)                                  !xpb
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
-        teave(2)=tesum(2)/gssum(2)
-        tiave(2)=tisum(2)/gssum(2)
-        naave(:,2)=nasum(:,2)/gssum(2)
       endif
       if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
 #endif
@@ -336,50 +339,44 @@
      &     main_call, switch%b2stbc_diagno)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
-        call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0, BoRiS,
-     &    switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
-     &    wrong_flow, main_call, switch%b2stbc_diagno,
-     &    switch%b2stbc_fchy_dia, switch%b2stbc_neoclassical, praverage,
-     &    switch%b2stbc_fchy_dia_coreonly,
-     &    switch%secmodel, switch%sheath_drift_fix)
-        if(wrong_flow) write(*,*) 
+        call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0,
+     &   switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &   wrong_flow, main_call, praverage)
+        if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
 #ifdef WG_TODO
         if(lbndusr) then
           if(ncall_b2stbc.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
-     1     facdrift, vol, hx, hy, qz, qc, gs,
-     1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1     facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &     sna0, smo0, she0, shi0, sch0, sne0, 
+     &     sna0, smo0, she0, shi0, sch0, sne0,
      &     wrong_flow, main_call, diagno,
      &     b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
      &     area_fix, sheath_drift_fix)
-          if(wrong_flow) write(*,*) 
+          if(wrong_flow) write(*,*)
      &           'b2stbc: wrong_flow returned from b2stbc_bas'
         endif      !lbndusr
 #endif
       else      !boundary_namelist.ge.1
-#ifdef WG_TODO        
+#ifdef WG_TODO
         call b2stbc_bas(nx, ny, ns, ismain,
-     1   facdrift, vol, hx, hy, qz, qc, gs,
-     1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
+     1   facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &   sna0, smo0, she0, shi0, sch0, sne0, 
+     &   sna0, smo0, she0, shi0, sch0, sne0,
      &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
      &   area_fix, sheath_drift_fix)
-        if(wrong_flow) write(*,*) 
+        if(wrong_flow) write(*,*)
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
 #endif
       endif
 
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain, BoRiS,
-!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call, 
-!WG_RM     &    switch%b2stbc_diagno)
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
+!WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
 
 * ..compute conditions on the cuts
 *     (no flow)
@@ -405,10 +402,10 @@ c from diamagnetic drifts
         do ix=-1,nx
           iy=0                                        ! south side
           if(.not.on_closed_surface(ix,iy) .and.
-     &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for private flux 
+     &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for private flux
             do is=0,ns-1
               if(.not.is_neutral(is)) then
-                t0 = 
+                t0 =
      &           -2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -423,7 +420,7 @@ c from diamagnetic drifts
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
                 she0(ix,-1,0) = she0(ix,-1,0) + t0
                 testqe = testqe + t0
-                t0 = 
+                t0 =
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -473,7 +470,7 @@ c from diamagnetic drifts
      &           b2stbc_fchy_dia_coreonly.eq.0) then  ! North boundary
             do is = 0, ns-1
               if (.not.is_neutral(is)) then
-                t0 = 
+                t0 =
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -659,13 +656,8 @@ cdjm Jan2017 Keep linearised sources for balance
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer ix, iy
 *   ..procedures
-      real (kind=R8) ::
-     *  hy1
       external xertst, xerrab
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------
 *.computation

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, switch, 
+      subroutine b2mwqt (nput, nCv, ns, itim, itcnt, BoRiS, switch,
      &  geo, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
@@ -9,6 +9,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nCv, ns, itim, itcnt
@@ -143,14 +144,21 @@
 *   ..local variables
       integer nfldmx, nfld
       parameter (nfldmx=1000)
-      integer k, icv, is, iicv, il, ix0(-1:5), iy0(-1:5)
+      integer k, is
+#ifdef WG_TODO
+      integer il, ix0(-1:5), iy0(-1:5)
+      real (kind=R8) :: t0, t1, tv
+#endif
       real (kind=R8) ::
-     *   z(0:nfldmx-1), t0, t1, tv
+     *   z(0:nfldmx-1)
 *   ..procedures
-      intrinsic min, max
       real (kind=R8) ::
-     *   smin, b2ssum
-      external subini, subend, xertst, ipgeti, smin, b2ssum, cfwure
+     *   smin
+#ifdef WG_TODO
+      real (kind=R8) :: b2ssum
+      external b2ssum
+#endif
+      external xertst, ipgeti, smin, cfwure
 *-----------------------------------------------------------------------
 *.documentation-internal
 *

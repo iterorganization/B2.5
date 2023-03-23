@@ -12,57 +12,11 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
-
-CPP = /lib/cpp -traditional -DNO_IEEE
-CPPOPTS = -P -I${srcdir} ${EQUIVS}
-SED = sed s:\#PREC\#:d:g
-SED =
-LINK_MOD = 
+CPP = /lib/cpp -traditional
 
 FC = gfortran
 
-ifdef SOLPS_DEBUG
-FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ftrapv
-else
-FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
-endif
-
-ifdef IMAS_PREFIX
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
-endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran
-IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
-endif
-
-DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
-DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
-
-INCMOD = -B
-MOD = mod
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
-endif
-
-LD = $(FC)
-# LDOPTS = -Bstatic
-
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

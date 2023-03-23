@@ -13,6 +13,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2urmo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -39,7 +40,7 @@
 *
 *     This routine computes the residual of the parallel momentum
 *     balance equation for one species, integrated over the cells of
-*     the b2 mesh. The equation has the form
+*     the B2 mesh. The equation has the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
 *       resmb = rhs-div(flux) .
@@ -65,12 +66,11 @@
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
       character chns*3                                                  !srv 02.06.11
       real (kind=R8) ::
-     *   flf(nFc,0:1), flv(nFc,0:1), dub(nFc,0:1), ubv(nVx),
+     *   flf(nFc,0:1), flv(nFc,0:1),
      *   wrk(nCv), wrkf(nFc,0:1), wrkv(nVx)
       real (kind=R8), parameter :: eps = 1.0e-60_R8
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, calcflow, calccoef
 *   ..initialisation
 
@@ -89,8 +89,10 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nCv, smb(1,1), 1, 'smb1', '.le.')
        call b2xvsg (nCv, smb(1,3), 1, 'smb3', '.le.')
 *    ..test sign of cvsb
-       call b2xvsg (nFc, cvsb(:,0)*geo%fcQalf(:,0), 1, 'cvsb0', '.ge.')
-       call b2xvsg (nFc, cvsb(:,1)*geo%fcQalf(:,1), 1, 'cvsb1', '.ge.')
+       wrkf(:,0) = cvsb(:,0)*geo%fcQalf(:,0)
+       wrkf(:,1) = cvsb(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'cvsb0', '.ge.')
+       call b2xvsg (nFc, wrkf(:,1), 1, 'cvsb1', '.ge.')
       endif
 
 * ..compute flux
@@ -126,7 +128,6 @@ cwdk store effective viscosity, for use in viscous heating
       fkb(:,1) = fkb(:,1)/geo%fcHz
 
 * ..compute residual
-
 *   ..contribution from right hand side
       resmb = smb(:,0) + smb(:,1)*ub + smb(:,2)*rob + smb(:,3)*rob*ub
 

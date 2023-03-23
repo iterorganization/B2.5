@@ -21,9 +21,17 @@
       use b2mod_astra_to_b2
       use b2mod_b2_to_astra
       use b2mod_driver
+      use b2mod_xerset
+#ifdef USE_MPI
+#if MPI_MOD > 0
+      use mpi      ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_MOD < 1
       include 'mpif.h'
+#endif
 #endif
 
 *-----------------------------------------------------------------------
@@ -31,7 +39,7 @@
 *
 *  1. purpose
 *
-*     B2MNASTRA is the main program for the b2 code. The code solves a
+*     B2MNASTRA is the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.
@@ -44,7 +52,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The b2 code /1,2/ solves a system of fluid equations that models
+*     The B2 code /1,2/ solves a system of fluid equations that models
 *     a multi-species plasma in a two-dimensional geometry. Its main
 *     application is simulation of the edge plasma in tokamaks.
 *
@@ -90,10 +98,10 @@
 *  4. references
 *
 *     (Refs. /1/ and /2/ are out of date; !! to be replaced.)
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -135,10 +143,20 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+#ifdef _OPENMP
       real (kind=R8) :: cpu_s, cpu_f
+#else
+      real (kind=R4) :: cpu_s, cpu_f
+#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET
@@ -166,7 +184,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
       call prgini ('b2mnastra')
+#ifdef _OPENMP
+      cpu_s = omp_get_wtime()
+#else
       call cpu_time(cpu_s)
+#endif
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -185,10 +207,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *   ..mark output unit for error messages
       call xerset (0)
 
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstati_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstati_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -256,7 +278,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          if (file_open) close(nout(io))
       enddo
 
+#ifdef _OPENMP
+      cpu_f = omp_get_wtime()
+#else
       call cpu_time(cpu_f)
+#endif
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
 
 * ..end of computation

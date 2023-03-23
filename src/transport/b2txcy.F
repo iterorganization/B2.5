@@ -4,6 +4,7 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
       integer nCv, nFc, mode
       type (geometry), intent (in) :: geo
@@ -11,14 +12,14 @@
       real (kind=R8) ::
      &   fcVol(nFc,2), fcS(nFc), kapy(nCv), cony(nFc)
 *     ------------------------------------------------------------------
-*     B2TXCY computes radial conductances between neighbouring cells, 
+*     B2TXCY computes radial conductances between neighbouring cells,
 *     given the conductivities.
 *     ------------------------------------------------------------------
       integer iFc
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
@@ -87,4 +88,4 @@ cwdk note that fcHc is typically hx/2 or hy/2!
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txcy

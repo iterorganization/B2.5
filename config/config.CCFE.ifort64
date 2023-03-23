@@ -1,0 +1,93 @@
+# Test whether necessary variables are set
+FULLHOST    ?= $(shell echo `fullhost`)
+ifeq (,$(findstring cumulus,$(FULLHOST)))
+NCDIR       ?= /usr/local/depot/netcdf-fortran-4.5.3-ifort-2018.2.046
+MSCL_ROOT   ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/mscl
+GR_ROOT     ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/gr
+GLI_HOME    ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/gks
+H5DIR       ?= /usr/local/depot/hdf5-1.8.13-C
+NCARG_ROOT  ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/NCARG
+NAGDIR      ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/nag
+MDSPLUS_DIR ?= /usr/local/depot/mdsplus-6.1
+else
+NCDIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NETCDF
+MSCL_ROOT ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/mscl
+H5DIR ?= ${HDF5_HOME}
+GR_ROOT ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/gr
+GLI_HOME ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/gks
+NCARG_ROOT ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NCARG
+NAGDIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/nag
+MDSPLUS_DIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/MDSPLUS
+endif
+
+LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
+LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
+LD_NAG      ?= -L${NAGDIR} -lnag
+ifeq (,$(findstring cumulus,$(FULLHOST)))
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lm -lX11 -lXext -lfontconfig -lfreetype -lpthread -lXrender -lbz2 -lgfortran
+else
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+endif
+
+DEFINES += -DNO_OPT # -DNO_CDF
+
+CPP      = /lib/cpp -C -traditional -ffreestanding
+
+ifdef USE_MPI
+FC       = mpifort
+else
+ifdef USE_IMPGYRO
+FC       = mpifort
+else
+FC       = ifort
+endif
+endif
+
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+
+ifdef SOLPS_DEBUG
+FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
+else
+FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
+endif
+
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
+endif
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+LDOPTS  += -i_dynamic
+endif
+
+INCMOD   = -I
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+
+ifndef SOLPS_CPP
+DEFINES += -DITM
+endif
+
+ifdef IMAS_VERSION
+  ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
+    GGD_VERSION ?= `pkg-config ggd --modversion`
+  else
+    GGD_VERSION ?= '0.0.0'
+  endif
+else
+  ifdef ITM_ENVIRONMENT_LOADED
+    DEFINES += -DGOT_AMNSPROTO
+    INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
+    IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
+  endif
+endif
+
+LD_UAL += -lxml2 -lstdc++
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:

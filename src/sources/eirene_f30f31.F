@@ -1,6 +1,5 @@
-      subroutine copy_background(nCv, nFc, ns, switch, mpg, gm, 
-     &                           pl, dv, BoRiS, kin_frac_hyb,
-     &                           fnn_inc)
+      subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
+     &                           pl, dv, kin_frac_hyb, fnn_inc)
       use b2mod_types
       use b2mod_plasma
       use b2mod_indirect
@@ -14,6 +13,7 @@
       use b2us_plasma
       use b2mod_diag
      &     , only: fluids_list
+      use b2mod_subsys
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_parmmod
@@ -24,6 +24,7 @@
      & , only: crcstra, rcfe, rcfi, mol
 #else
       use parmmod   ! IGNORE
+     .   , ncv_eir => ncv
       use braeir    ! IGNORE
 #endif
 #else
@@ -38,38 +39,35 @@
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       integer nCv, nFc, ns
-      real (kind=R8) :: BoRiS
-      type (switches), intent (in) :: switch
+      type (switches), intent(in) :: switch
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
       type(B2Plasma), intent(in) :: pl
       type(B2Derivatives), intent(in) :: dv
 
-      character chns*3                                                  !srv 16.09.02
+      character chns*3                                                 !srv 16.09.02
       character(2) :: ccall
-      integer, save :: icall = 0             !srv 21.06.08
-      integer ix,iy,is,ncall,in
-      external ipgetr, ipgeti, subini, subend, xerrab
+      integer, save :: icall = 0                                       !srv 21.06.08
+      integer is,ncall
+      external ipgetr, ipgeti, xerrab
       real (kind=R8) ::
-     * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
      * na_min_val, na_max_val, ua_min_val, ua_max_val,
-     * ne_min_val, ne_max_val, ne_min, ne_max
+     * ne_min_val, ne_max_val
       data ncall/0/
       real (kind=R8) :: kintmp(nFc,0:ns-1)
-      real (kind=R8) :: 
+      real (kind=R8) ::
      &  vaecrbc(nCv,0:1,0:ns-1), wadiac(nCv,0:1,0:ns-1),
-     &  vadiac(nCv,0:1,0:ns-1), wrk(nCv)
-      real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:1,0:ns-1),
+     &  vadiac(nCv,0:1,0:ns-1)
+      real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
       integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
      &           iv1, iv2, icp
-      integer, save :: check_target=1
-      real (kind=R8) :: intface_s
-      real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww, pnorm,
-     1 pvxs, pvys, pupv, puxs, puys, puxic, puyic, pvxic, pvyic   
+      real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww,
+     1 pvxs, pvys, puxs, puys
       real (kind=R8) :: wght(nFc,2)
-      real (kind=R8), intent(in) ::kin_frac_hyb(nFc),fnn_inc(nFc,0:ns-1)
+      real (kind=R8), intent(in) ::
+     &  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
       real (kind=R8) :: fnn_inc_b(nFc,1:ns), fnn_mol_b(nFc,1:ns)
 
       call subini ('copy_background')
@@ -152,7 +150,9 @@ c Initialization
         call my_out_us(70,nCv,0,gm%cvBb(1,1),'copy_bb_1')
         call my_out_us(70,nCv,0,gm%cvBb(1,2),'copy_bb_2')
         call my_out_us(70,nCv,0,gm%cvBb(1,3),'copy_bb_3')
-      endif 
+      endif
+
+#ifndef SOLPS4_3
 * cell centred
       do ic=1,nCv
         neb(ic)=max(min(dv%ne(ic),switch%eir_ne_max),switch%eir_ne_min)
@@ -180,11 +180,11 @@ c Initialization
         feib(ifc) = dv%fhi(ifc,0) + dv%fhi(ifc,1)
         feeb(ifc) = dv%fhe(ifc,0) + dv%fhe(ifc,1)
         do is = 0, ns-1
-          feib(ifc) = feib(ifc) + kintmp(ifc,is)*(1.0_R8-BoRiS)
+          feib(ifc) = feib(ifc) + kintmp(ifc,is)*(1.0_R8-switch%BoRiS)
      .                *(dv%fna(ifc,0,is) + dv%fna(ifc,1,is))
         end do
       end do
-
+#endif
 * by ns
 
 *   ..interpolate density to cell faces
@@ -198,50 +198,49 @@ c Initialization
      .                           naf(1:nFc,is)+1.E-30_R8
         end do
         if (switch%eirene_background.eq.0) then
-          fna_tmp(1:nFc,0,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
-     .                              nafsqalf(1:nFc,0,0:ns-1)
+          fna_tmp(1:nFc,0:ns-1) = dv%fna(1:nFc,0,0:ns-1)/
+     .                            nafsqalf(1:nFc,0,0:ns-1)
         else
-          fna_tmp(1:nFc,0,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
-     .                              nafsqalf(1:nFc,0,0:ns-1)
+          fna_tmp(1:nFc,0:ns-1) = dv%fna_eir(1:nFc,0,0:ns-1)/
+     .                            nafsqalf(1:nFc,0,0:ns-1)
         endif
-        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellP,
-     .                fna_tmp(:,0,:),uuc)
+        call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellP,fna_tmp,uuc)
       end if
 
       do is = 0,ns-1
         nafsqalf(1:nFc,1,is) = gm%fcS(1:nFc)*gm%fcQalf(1:nFc,1)*
      .                         naf(1:nFc,is)+1.E-30_R8
         if (switch%eirene_background.eq.0) then
-          fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
-     .                          nafsqalf(1:nFc,1,is)
+          fna_tmp(1:nFc,is) = dv%fna(1:nFc,1,is)/
+     .                        nafsqalf(1:nFc,1,is)
           do ic = mpg%nCi+1, nCv   ! loop over all guard cells
             iFc = mpg%cvFc(mpg%cvFcP(ic,1))
             icp = mpg%fcCv(ifc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
-            fna_tmp(iFc,1,is) = dv%fna(iFc,1,is)/
-     .                         (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
-     .                          pl%na(ic,is)+1.E-30_R8)
+            fna_tmp(iFc,is) = dv%fna(iFc,1,is)/
+     .                       (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
+     .                        pl%na(ic,is)+1.E-30_R8)
           end do
         else
-          fna_tmp(1:nFc,1,is) = dv%fna_eir(1:nFc,1,is)/
-     .                            nafsqalf(1:nFc,1,is)
+          fna_tmp(1:nFc,is) = dv%fna_eir(1:nFc,1,is)/
+     .                        nafsqalf(1:nFc,1,is)
         endif
       end do
-      call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,
-     .              fna_tmp(:,1,:),vvc)
+      call intcell1(nFc,nCv,ns-1,mpg,mpg%intcellR,fna_tmp,vvc)
 
 c for neutrals (needed on Eirene side in case of spatially hybrid neutrals),
 c always use fna instead of fna_eir, regardless of eirene_background switch
-      if (switch%spatial_hybrid.ne.0) then 
+      if (switch%spatial_hybrid.ne.0) then
         do is=0,ns-1
           if (is_neutral(is)) then
-            fna_tmp(1:nFc,1,is) = dv%fna(1:nFc,1,is)/
-     .                            nafsqalf(1:nFc,1,is)
+            fna_tmp(1:nFc,is) = dv%fna(1:nFc,1,is)/
+     .                          nafsqalf(1:nFc,1,is)
             call intcell(nFc,nCv,mpg,mpg%intcellR,
-     .              fna_tmp(1:nFc,1,is),vvc(1:nFc,is))
+     .              fna_tmp(1:nFc,is),vvc(1:nFc,is))
           endif
         enddo
       endif
 
+#ifndef SOLPS4_3
       nflai=0
       do is=0,ns-1
 !!        if(.not.is_neutral(is)) then
@@ -254,8 +253,8 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
           if (zamin(is) == zamax(is)) then
             zab(nflai)=zamin(is)
           else
-            call xerrab ('eirene_mc: do not use bundled ' // 
-     .                   'species for Eirene') 
+            call xerrab ('eirene_mc: do not use bundled ' //
+     .                   'species for Eirene')
           end if
 * cell centred
           do ic = 1, nCv
@@ -275,7 +274,7 @@ c always use fna instead of fna_eir, regardless of eirene_background switch
               prb(ic)=prb(ic)+tnb(ic)*dnib(ic,nflai)
             endif
 c     Velocities uub, vvb, wwb
-c     * cell centered
+c     * cell-centered
 c     * internal cell values used for plasma background properties in infcop
 c     * guard cell values used for source sampling in infcop
             if(switch%eirene_uub_style.eq.0) then
@@ -283,21 +282,23 @@ c     * guard cell values used for source sampling in infcop
 c     internal cell, old treatment -> grad-B drift only
 c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
                 uub(ic,nflai)=max(min(
-     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
-     2               vadiac(ic,0,is)+vaecrbc(ic,0,is),
-     3               switch%eir_ua_max),switch%eir_ua_min)
+     &               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     &               switch%xwdia*vadiac(ic,0,is)+
+     &               switch%xvecrb*vaecrbc(ic,0,is),
+     &               switch%eir_ua_max),switch%eir_ua_min)
               else
 c     internal cell -> full diamagnetic drift
                 uub(ic,nflai)=max(min(
-     1               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
-     2               wadiac(ic,0,is)+vaecrbc(ic,0,is),
-     3               switch%eir_ua_max),switch%eir_ua_min)
+     &               upb(ic,nflai)*gm%cvBb(ic,0)/gm%cvBb(ic,3)+
+     &               switch%xwdia*wadiac(ic,0,is)+
+     &               switch%xvecrb*vaecrbc(ic,0,is),
+     &               switch%eir_ua_max),switch%eir_ua_min)
                  endif
             elseif(switch%eirene_uub_style.eq.1) then
 cwdk  uub computed from face fluxes, and interpolated to cell centers
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
-c     in fna may have been set 0. Should consider using the eirene_uub_style.eq.0 treatment 
+c     in fna may have been set to 0. Should consider using the eirene_uub_style.eq.0 treatment
 c     in these cells!
               uub(ic,nflai)=max(min(uuc(ic,is),switch%eir_ua_max),
      1                                           switch%eir_ua_min)
@@ -307,36 +308,40 @@ cwdk  vvb computed from face fluxes, and interpolated to cell centers
 c     Compatible with SOLPS4.3.
 c     Should be fully compatible with anom. transport, including all contributions to the flow.
 c     Note, computation at E/W boundaries questionable, because (certain/all) terms
-c     in fna may have been set 0. 
+c     in fna may have been set to 0.
             vvb(ic,nflai)=max(min(vvc(ic,is),switch%eir_ua_max),
      1                                         switch%eir_ua_min)
 cwdk  wwb directly computed from cell-centered velocities.
 c     Compatible with SOLPS4.3, and consistent with sign convention ua,
 c     but may not be fully consistent with respect to drifts.
-c     In particular: convective anomalous contribution  (if present) is missing
+c     In particular: convective anomalous contribution (if present) is missing
 c                    (diffusive anomalous contribution zero due to toroidal symm.)
               if (switch%eirene_background.eq.0.or.ic.gt.mpg%nCi) then
 c     internal cell, old treatment -> grad-B drift only (fna)
 c     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
                 wwb(ic,nflai)=max(min(
-     .            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
-     2            (vadiac(ic,0,is)+vaecrbc(ic,0,is))*
-     3            gm%cvBb(ic,0)/gm%cvBb(ic,2),
-     4            switch%eir_ua_max),switch%eir_ua_min)
+     &            upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
+     &            (switch%xwdia*vadiac(ic,0,is)+
+     &             switch%xvecrb*vaecrbc(ic,0,is))*
+     &            gm%cvBb(ic,0)/gm%cvBb(ic,2),
+     &            switch%eir_ua_max),switch%eir_ua_min)
               else
 c     internal cell -> full diamagnetic drift
                  wwb(ic,nflai)=max(min(
-     1             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
-     2             (wadiac(ic,0,is)+vaecrbc(ic,0,is))*
-     3             gm%cvBb(ic,0)/gm%cvBb(ic,2),
-     4             switch%eir_ua_max),switch%eir_ua_min)
+     &             upb(ic,nflai)*gm%cvBb(ic,2)/gm%cvBb(ic,3)-
+     &             (switch%xwdia*wadiac(ic,0,is)+
+     &              switch%xvecrb*vaecrbc(ic,0,is))*
+     &             gm%cvBb(ic,0)/gm%cvBb(ic,2),
+     &             switch%eir_ua_max),switch%eir_ua_min)
               end if
-              
+
               ebx = gm%cvEb(ic,0)
               eby = gm%cvEb(ic,1)
               ebn = sqrt(ebx*ebx + eby*eby)
-              ebx = ebx / ebn
-              eby = eby / ebn
+              if (ebn > 0) then
+                ebx = ebx / ebn
+                eby = eby / ebn
+              endif
               pux(ic) = ebx
               puy(ic) = eby
               pvx(ic) = -eby
@@ -356,7 +361,7 @@ c     internal cell -> full diamagnetic drift
               fnn_mol_b(ifc,nflai) = fna_mol(ifc,is)
             endif
           end do
-          
+
 !!        endif
       enddo
 
@@ -378,7 +383,7 @@ c we derive the guard cell value from its neighbouring interior cell
         enddo
       else
         write(*,*) switch%eirene_extrap,
-     1   ' not avaible as an eirene_extrap option'
+     1   ' not available as an eirene_extrap option'
       endif
 
       if(switch%eirene_print_minmax.ne.0) then
@@ -394,7 +399,7 @@ c we derive the guard cell value from its neighbouring interior cell
      &     te_min_val, te_max_val, ti_min_val, ti_max_val,
      &     na_min_val, na_max_val, ua_min_val, ua_max_val
       endif
-      
+
       if(switch%copy_background_iout.ne.0) then
        nflai=0
        do is=0,ns-1
@@ -413,7 +418,7 @@ c we derive the guard cell value from its neighbouring interior cell
        call my_out_us(70,nCv,0,tnb,'copy_tnb')
        call my_out_us(70,nCv,0,pob,'copy_pob')
        icall = icall + 1
-      endif 
+      endif
 
 !  .. define target data
 
@@ -422,14 +427,16 @@ c we derive the guard cell value from its neighbouring interior cell
         ian = mpg%rcFcP(istra,1)
         ien = ian + mpg%rcFcP(istra,2) - 1
         ntrgdat = ien-ian+1
-        if (ien-ian+1 <= 0) cycle
-        
+        if (ien-ian+1 <= 0) then
+            trgt(istra)%ntrgdat = 0
+            cycle
+        endif
+
 #ifdef B25_EIRENE
         call eirene_alloc_target_data(istra,ntrgdat,nflai,ifoff)
 #else
         call alloc_target_data(istra,ntrgdat,nflai)
 #endif
-
 
         do i = 1, ntrgdat
           iFc = mpg%rcFc(ian+i-1)
@@ -460,14 +467,16 @@ c we derive the guard cell value from its neighbouring interior cell
               write(*,*) 'negative flux !! istra, i, ifl = ',istra,i,ifl
               trgt(istra)%flux(i,ifl) = 0.0_R8
               fnib(iFc,ifl) = 0.0_R8
-            endif 
+            endif
             trgt(istra)%fi(i,ifl) = rcfi(istra)
 
             ebx = gm%fcEb(iFc,0)
             eby = gm%fcEb(iFc,1)
             ebn = sqrt(ebx*ebx + eby*eby)
-            ebx = ebx / ebn
-            eby = eby / ebn
+            if (ebn > 0) then
+              ebx = ebx / ebn
+              eby = eby / ebn
+            endif
             puxs = ebx
             puys = eby
             pvxs = -eby
@@ -485,6 +494,7 @@ c we derive the guard cell value from its neighbouring interior cell
           end do
         end do
       end do
+#endif
 
       ncall=ncall+1
       call subend ()
@@ -519,11 +529,11 @@ c
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       type(mapping), intent(in) :: mpg
-      real*8, allocatable :: dummy(:,:,:)
-      integer :: i, ic, iFc, ifl, ntrgdat, istra
+      integer :: i, ic, ifl, ntrgdat, istra
 
 !  .. use approach to generalized user interface
 
+#ifndef SOLPS4_3
 !  .. plasma data
       rewind(31)
       write (31,'(a)') '* EIRENE PLASMA FILE '
@@ -537,12 +547,12 @@ c
      .      'Tesla','Tesla','Tesla','(V/m)','(V/m)','(V/m)',
      .      'V','??','??',' ',' ',' ',' '
 
-      write (31,'(2i6)') mpg%nCv, mpg%nCi, mpg%nFc
-      
+      write (31,'(3i6)') mpg%nCv, mpg%nCi, mpg%nFc
+
       do ic = 1, mpg%nCi
-        write (31,'(i7,15es15.7)') ic, teb(ic), neb(ic), 
+        write (31,'(i7,15es15.7)') ic, teb(ic), neb(ic),
      .      bbxb(ic), bbyb(ic), bbzb(ic), 0.0_R8, 0.0_R8, 0.0_R8,
-     .      pob(ic), 0.0_R8, 0.0_R8, 
+     .      pob(ic), 0.0_R8, 0.0_R8,
      .      pux(ic), puy(ic), pvx(ic), pvy(ic)
       end do
 
@@ -559,14 +569,14 @@ c
         write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
 
         write (31,'(i6)') mpg%nCi
-      
+
         do ic = 1, mpg%nCi
-          write (31,'(i7,5es15.7)') ic, tib(ic), dnib(ic,ifl), 
+          write (31,'(i7,5es15.7)') ic, tib(ic), dnib(ic,ifl),
      .      vxb(ic,ifl), vyb(ic,ifl), vzb(ic,ifl)
         end do
 
       end do
-  
+
 !  .. target data
       write (31,'(a)') '*'
       write (31,'(a)') '*** TARGET DATA'
@@ -584,13 +594,13 @@ c
      .      'fe','fsh','length'
         write (31,'(a1,2a6,6a15)') '*',' ',' ',' ','(eV)',' ',' ',' '
         write (31,'(i6)') ntrgdat
- 
+
         do i = 1, ntrgdat
           write (31,'(i7,i6,6es15.7)')
      .      i,trgt(istra)%faces(i),trgt(istra)%fcori(i),
      .        trgt(istra)%tet(i),
      .        trgt(istra)%fe(i),trgt(istra)%fsh(i),
-     .        trgt(istra)%fe(i),trgt(istra)%flength(i)
+     .        trgt(istra)%flength(i)
         end do
 
         do ifl = 1, nflai
@@ -607,7 +617,7 @@ c
 
           write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
           write (31,'(i6)') ntrgdat
- 
+
           do i = 1, ntrgdat
             write (31,'(i7,11es15.7)')
      .        i,trgt(istra)%flux(i,ifl),trgt(istra)%tit(i),
@@ -619,5 +629,7 @@ c
           end do
         end do ! ifl
       end do   ! istra
+      flush(31)
+#endif
       return
       end subroutine write_f31

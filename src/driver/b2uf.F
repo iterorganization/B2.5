@@ -11,7 +11,7 @@
       use b2us_plasma
       use b2us_prep
       use b2us_io
-
+      use b2mod_xerset
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -23,7 +23,7 @@
 *  1. purpose
 *
 *     B2UF reads in an unformatted b2fplasma file, and writes out a
-*     a formatted b2fplasmf file.
+*     a formatted b2fplasma (b2fplasmf) ile.
 *
 *
 *-----------------------------------------------------------------------
@@ -39,14 +39,11 @@
 !      type(switches), save   :: switch
 
 *   ..local variables
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, is, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, idum(0:9), io
       logical file_open
-      character lblgm*120, lblcp*120, lblps*120
+      character lblgm*120, lblps*120
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xertst, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
       data nout/60,61,62,63,64,65,66,67/
@@ -55,16 +52,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2uf_mpi_child'
-      endif
-#endif
       call prgini ('b2uf')
 *   ..open files
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -93,8 +80,8 @@
 !     &  'faulty input ns from physics parameters file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
+      mpg%nCi = idum(0)
+      mpg%nCg = idum(1)
       mpg%nCv = idum(2)
       mpg%nFc = idum(3)
       mpg%nVx = idum(4)
@@ -120,7 +107,7 @@
      &  'faulty input nCv, nFc, ns from b2fplasma file')
 *   ..call principal driver routine
       call alloc_mapping (mpg)
-      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
      .  mpg%nFt, mpg%nVmxCv)
       call createB2State (nCv, nFc, ns, state)
 !      call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
@@ -154,7 +141,7 @@
        call read_b2fgmtry (ninp(1), mpg, geo)
        call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
 *    ..convert to structured format and write b2fstate_st, b2fplasmf_st
-       call to_struct_plasma (ns,mpg,state)     
+       call to_struct_plasma (ns,mpg,state)
       endif
 *   ..close files
       do io=0,size(ninp)-1
@@ -171,10 +158,6 @@
       call dealloc_geometry (geo)
       call dealloc_mapping (mpg)
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2uf'
 
 *-----------------------------------------------------------------------

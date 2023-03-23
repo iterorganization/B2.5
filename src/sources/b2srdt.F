@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srdt (nCv, ns, dtim, BoRiS, switch, geo, mpg,
+      subroutine b2srdt (nCv, ns, dtim, switch, geo, mpg,
      &  na0, ua0, te0, ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0,
      &  na, ua, te, ti, tn, ne, ni, nn, kinrgy, kt, zt,                 !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
@@ -20,6 +20,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2srdt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                                !srv 16.07.10
@@ -28,7 +29,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  dtim, BoRiS, na0(nCv,0:ns-1),
+     *  dtim, na0(nCv,0:ns-1),
      &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
      &  ne0(nCv), ni0(nCv,0:1), nn0(nCv),
      &  kinrgy0(nCv,0:ns-1), kt0(nCv), zt0(nCv),
@@ -57,9 +58,9 @@
       real (kind=R8) :: wrk0(nCv)
       real (kind=R8) :: !djm Jan2017
      &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1), 
-     &  shetmp(nCv,0:3), shitmp(nCv,0:3), shntmp(nCv,0:3)
+     &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
 
@@ -164,7 +165,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
           ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
           t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
 
-          if (BoRiS.eq.1.0_R8.and.switch%tn_style.ne.0) then
+          if (switch%BoRiS.eq.1.0_R8.and.switch%tn_style.ne.0) then
               call xerrab('BoRiS only with default energy eq.')
           endif
 
@@ -172,7 +173,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             sr%shi(iCv,0) = sr%shi(iCv,0)+
      &       1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
 
-            if (BoRiS.eq.1.0_R8) then
+            if (switch%BoRiS.eq.1.0_R8) then
               do is = 0, ns-1
                 sr%shi(iCv,0) = sr%shi(iCv,0)+t0*
      &           kinrgy0(iCv,is)*na0(iCv,is)
@@ -219,16 +220,16 @@ csw 24feb2014 check for guard cell (SOLPS4)
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (switch%b2srdt_phm4/dtim)
-     &               *geo%cvVol(iCv)*qe*time_factor(iCv)		 !xpb
-          sr%sch(iCv,0) = sr%sch(iCv,0)+t0*(ni0(iCv,0)-ne0(iCv))	 !xpb
+     &               *geo%cvVol(iCv)*qe*time_factor(iCv)                 !xpb
+          sr%sch(iCv,0) = sr%sch(iCv,0)+t0*(ni0(iCv,0)-ne0(iCv))         !xpb
 *         schdt(iCv,1) = (unchanged)
 *         schdt(iCv,2) = (unchanged)
-          sr%sch(iCv,3) = sr%sch(iCv,3)-t0				 !xpb
+          sr%sch(iCv,3) = sr%sch(iCv,3)-t0                               !xpb
       enddo
       do iCv = 1, nCv
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
           t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
-     &                                  *time_factor(iCv)		 !xpb
+     &                                  *time_factor(iCv)                !xpb
           sr%sne(iCv,0) = sr%sne(iCv,0)+t0*ne0(iCv)
           sr%sne(iCv,1) = sr%sne(iCv,1)-t0
       enddo

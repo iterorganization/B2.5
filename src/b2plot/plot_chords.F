@@ -8,7 +8,7 @@ c
       character*80 dataname
       logical open_file,lcol
       real (kind=R8) ::
-     1	 rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
+     1  rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
       integer icol,npoints,npointsl,i,lnblnk
       external lnblnk
 
@@ -77,4 +77,4 @@ c
       if(lwidth .ne. 1.0_R8) call gslwsc_d(1.0_R8)
       call end_page
       return
-      end
+      end subroutine plot_chords

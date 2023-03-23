@@ -10,7 +10,7 @@
 #endif
       IMPLICIT NONE
       INTEGER KARD,NDIMX,NRDX,
-     & LIM,IX,IY,III
+     & LIM,IX,III
       real (kind=R8) ::
      * DUMMY(NDIMX)
 
@@ -27,4 +27,4 @@
 !pb 27092016   910 FORMAT(5(E16.8))
   910 FORMAT(5(E16.7E3))
 *//END GFSUB2//
-      END
+      END SUBROUTINE GFSUB2

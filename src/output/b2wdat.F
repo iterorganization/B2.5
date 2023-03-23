@@ -1,4 +1,4 @@
-      subroutine b2wdat (nCv, nFc, nVx, ns, ismain, ismain0, 
+      subroutine b2wdat (nCv, nFc, nVx, ns, ismain, ismain0,
      .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
@@ -18,9 +18,12 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_user_namelist
+     , , only : nomp, omp, icsepomp, nimp, imp, icsepimp
 #ifdef WG_DEBUG
       use b2us_debug
-#endif     
+#endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain, ismain0
@@ -45,29 +48,29 @@
 
 *   ..common blocks
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, ibc, iReg
-      integer ncall, iout, is, ic, ix, iy, ib, iw, iout_iout_ASTRA !srv 05.10.01 03.04.13 19.04.13
-      integer nx, ny, n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx, !srv 12.07.10
-     *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
+      integer iCv, iCv1, iCv2, iFc, ibc, iReg
+      integer ncall, iout, is, ic, ib, iout_iout_ASTRA             !srv 05.10.01 03.04.13 19.04.13
+      integer nx, ny                                               !srv 12.07.10
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       integer, save :: use_mms = 0                                 !srv 26.02.18
-      
-      integer nmdpl, nmdpl_i, ilast_closed_surface, iCvp, ncells,
-     *  n_closed_surface, ifirst_open_surface,
-     *  iFcp, iRFc, nRFc, icell
+
+      integer iRFc, nRFc, icell
+#ifdef WG_DEBUG
+      integer nmdpl, nmdpl_i, n_closed_surface, ix, iy,
+     ,        ilast_closed_surface, ifirst_open_surface
       logical first
+      logical found
+#endif
       integer, allocatable :: regFaces(:)
-      real (kind=R8) :: shift                                      !srv
+      real (kind=R8), save :: shift = 0.0_R8                       !srv
       real (kind=R8), allocatable :: fun_st(:,:), clength_r(:),
      *  clength_s(:)
 !   clength_r(i) is the length from the cell center of 1th cell 
 !                to the cell center of i-th cell in "radial direction"
 !   clength_s(i) is the length along a boundary from the face center of 1st face
 !                to the face center of i-th face
-
-      logical found
 
 #ifdef WG_TODO
       real (kind=R8) ::                                            !srv
@@ -76,7 +79,7 @@
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
 #endif
       real (kind=R8) ::                                            !srv
-     *  wrk2(nCv), wrkt(nCv)                                       !srv 23.11.00
+     *  wrk2(nCv)                                                  !srv 23.11.00
 #ifdef WG_TODO
       real (kind=R8) ::                                            !srv
      *  Total_energy_flux(-1:ny), power,                           !srv 23.11.00
@@ -87,45 +90,26 @@
      *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1),
      *  sfvaecrb(-1:ny,0:ns-1), sfna(-1:ny,0:ns-1),
      &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny)
-#endif
-      real (kind=R8) ::                                            !srv
-     &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
-     &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
-     &  t0, phi_app
-#ifdef WG_TODO
       real (kind=R8) ::                                            !srv
      &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
-      real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
+      real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
 #endif
-      real (kind=R8) ::
-     *     hlp, hlp_s, s
-      real (kind=R8)  ::                                           !iyv 15.10.09
-     *   qe_out_sum, qi_out_sum, q_out_sum,                        !iyv 04.02.11
-     *   qe_inn_sum, qi_inn_sum, q_inn_sum,
-     *   qe_oup_sum, qi_oup_sum, q_oup_sum,
-     *   qe_iup_sum, qi_iup_sum, q_iup_sum,
-     *   uvbtot, voltot                                            !iyv 29.11.13
-      character chns*3, chis*3, chib*2                                     !srv 27.04.01
-      character(23) hlp_frm                                        !srv 03.04.13
-      character*26 boundary_location(nbcd)
-      character(7), save :: folder                        !srv 26.09.17
-      logical ex                                          !srv 26.09.17
+      character chis*3, chib*2                                     !srv 27.04.01
+      character*32 hlp_frm                                         !srv 03.04.13
+      character(7), save :: folder                                 !srv 26.09.17
 #ifdef B25_EIRENE
-      integer js
       real (kind=R8), save :: hlp_neu_peak
+      character chns*3
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 #endif
 *   ..procedures
-      external subini, subend, ipgeti, machsfr
-*   ..procedures                                                   !srv
-      intrinsic abs                                                !srv
-      real (kind=R8) ::                                            !srv
-     *   machsfr                                       !srv
+      external ipgeti
 *   ..initialisation
       save ncall, iout, use_astra, boundary_namelist
       data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
+
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -138,7 +122,7 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-       call ipgeti ('b2mndr_use_mms',use_mms)                     !srv 26.02.18
+       call ipgeti('b2mndr_use_mms',use_mms)                      !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
 *    ..try to create a file in optional output folder
@@ -149,18 +133,17 @@
        close(70)
        go to 20
 *    ..folder does not exist: future output will be done in current folder
- 10    folder=''
- 20    continue
+   10  folder=''
+   20  continue
       endif
 
       ! At the moment, some output is only supported for grids that were
       ! originally structured
       if (mpg%isClassicalGrid.eq.1) then
 
-*    ..set nx, ny, n2
+*    ..set nx, ny
        nx = mpg%nx
        ny = mpg%ny
-       n2 = (mpg%nx+2)*(mpg%ny+2)
 
 *    ..allocate and initialize some arrays for structured format
        allocate(fun_st(-1:nx,-1:ny))
@@ -175,6 +158,7 @@
         iout_iout_ASTRA = 0
       endif
 
+#ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then
 
 *      ..find the number of the last closed surface in CORE
@@ -225,7 +209,7 @@
           endif
          enddo
       endif
-
+#endif
 
       if (iout.eq.1) then                                          !srv begin if for iout
 *    .. iout = 1 for outputting plasma state files
@@ -324,26 +308,13 @@
           ! sort faces into continuous surface
           call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
-!        write (*,*) 'Inner target faces, nRFc = ', nRFc, 
-!     &   ', indices = ', regFaces(1:nRFC)
+!          write (*,*) 'Inner target faces, nRFc = ', nRFc, 
+!     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along inner target
-          iRFc = 1
-          iFcp = regFaces(iRFc)
-          clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
-          do iRFc = 2, nRFc
-           iFc = regFaces(iRFc)
-           clength_s(iRFc) = clength_s(iRFc-1) +
-     &        0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
-           iFcp = iFc
-          enddo 
-      
-          shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
-        
-!        shift =(clength_r(ilast_closed_surface+2)+         ! shift +2 because of numbering which was from -1 to ny
-!     &          clength_r(ilast_closed_surface+3))/2.0_R8  ! to shift coordinate
+          call calc_dist_f(mpg,geo,regFaces,nRFc,0,clength_s)
 
-        ! write properties along inner target
+         ! write properties along inner target
           do iRFc = 1, nRFc
            iFc  = regFaces(iRFc)
            iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
@@ -363,8 +334,8 @@
 
           ! identify face region number of outer target
           iReg = 0
-          if (maxval(mpg%cvReg).eq.1) iReg = 2 ! limiter case
-          if (maxval(mpg%cvReg).gt.1) iReg = 4 ! SN case
+          if (maxval(mpg%cvReg).eq.2) iReg = 2 ! limiter case
+          if (maxval(mpg%cvReg).gt.2) iReg = 4 ! SN case
           if (maxval(mpg%cvReg).gt.5) iReg = 8 ! DN case
           if (iReg.eq.0) call xerrab('Problem identifying outer target')
 
@@ -377,23 +348,11 @@
           ! sort faces into continuous surface
           call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
-!        write (*,*) 'Outer target faces, nRFc = ', nRFc, 
-!     &   ', indices = ', regFaces(1:nRFC)
+!          write (*,*) 'Outer target faces, nRFc = ', nRFc, 
+!     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along outer target
-          iRFc = 1
-          iFcp = regFaces(iRFc)
-          clength_s(iRFc) = 0.5_R8*geo%fcHt(iFcp)
-          do iRFc = 2, nRFc
-           iFc = regFaces(iRFc)
-           clength_s(iRFc) = clength_s(iRFc-1) +
-     &        0.5_R8*(geo%fcHt(iFc) + geo%fcHt(iFcp))
-           iFcp = iFc
-          enddo 
-      
-          shift = 0.0_R8 !temp; need to think how to identify separatrix strikepoint
-!        shift =(clength_r(ilast_closed_surface+2)+         ! shift +2 because of numbering which was from -1 to ny
-!     &          clength_r(ilast_closed_surface+3))/2.0_R8  ! to shift coordinate
+          call calc_dist_f(mpg,geo,regFaces,nRFc,0,clength_s)
 
           ! write properties along outer target
           do iRFc = 1, nRFc
@@ -410,51 +369,36 @@
           deallocate (regFaces)
           close(70)
 
+          !! OUTER MIPLANE
           open(70,file=trim(folder)//'midpln.dat')
-          ix = nmdpl
-          ncells = 0
-          do iy = -1, ny
-           if(mpg%imapCv(ix,iy) /= 0) then
-              ncells = ncells + 1
-           endif
-          enddo
-
-          allocate (clength_r(1:ncells))
-          first = .true.
-          icell = 1
-          do iy = -1, ny
-           if(mpg%imapCv(ix,iy) /= 0) then
-            if (first) then
-              clength_r(icell) = 0.0_R8
-              iCvp = mpg%imapCv(ix,iy)
-              first = .false.
-              icell = icell + 1
-            else
-              iCv = mpg%imapCv(ix,iy)
-              clength_r(icell)=clength_r(icell-1) +
-     &         sqrt((geo%cvX(iCv)-geo%cvX(iCvp))**2 +
-     &              (geo%cvY(iCv)-geo%cvY(iCvp))**2)
-              icell = icell + 1
-              iCvp  = iCv
-            endif  
-           endif
-          enddo
-      
-          shift =(clength_r(n_closed_surface) +
-     &          clength_r(n_closed_surface+1))/2.0_R8  ! to shift coordinate
+          allocate (clength_r(1:nomp))
+          call calc_dist(mpg,geo,omp,nomp,icsepomp,clength_r)
 
           icell = 1
-          do iy = -1, ny
-           if(mpg%imapCv(ix,iy) /= 0) then
-            iCv1=mpg%imapCv(ix,iy)
+          do icell = 1, nomp
+            iCv = omp(icell)
             write(70,"(4es14.6)") clength_r(icell)-shift,
-     &            state%dv%ne(iCv1), state%pl%te(iCv1)/ev, 
-     &            state%pl%ti(iCv1)/ev
-            icell = icell + 1
-           endif
+     &            state%dv%ne(iCv), state%pl%te(iCv)/ev, 
+     &            state%pl%ti(iCv)/ev
           enddo
           deallocate (clength_r)
           close(70)
+
+          !! INNER MIPLANE
+          open(70,file=trim(folder)//'midpln_i.dat')
+          allocate (clength_r(1:nimp))
+          call calc_dist(mpg,geo,imp,nimp,icsepimp,clength_r)
+
+          icell = 1
+          do icell = 1, nimp
+            iCv = imp(icell)
+            write(70,"(4es14.6)") clength_r(icell)-shift,
+     &            state%dv%ne(iCv), state%pl%te(iCv)/ev, 
+     &            state%pl%ti(iCv)/ev
+          enddo
+          deallocate (clength_r)
+          close(70)
+
         endif   
       endif                                                             !srv   end for iout=2   
       

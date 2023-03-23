@@ -5,6 +5,7 @@
      &  reshi, reshn, respo, reskt, reszt)
       use b2mod_types
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns
@@ -39,7 +40,7 @@
 *   ..local variables
       integer is, iCv
 *   ..procedures
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvfx, b2xxgs
 *   ..initialisation
 
@@ -131,4 +132,4 @@
 *-----------------------------------------------------------------------
 *.end b2mxzr
 
-      end
+      end subroutine b2mxzr

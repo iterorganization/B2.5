@@ -3,9 +3,10 @@
 
       subroutine ratprt (nprt, nz, npart, nidis, idis, njdis, jdis, 
      &  rtt, nt, rtn, nn, 
-     &  rtsa, rtra, rtqa, rtqa_ra, rtcx, rtrd, rtbr, rtzz, rtz2, 
+     &  rtsa, rtra, rtqa, rtqr, rtcx, rtrd, rtbr, rtzz, rtz2,
      &  rtpt, rtpi)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nz, npart, 
@@ -17,7 +18,7 @@
      &  rtcx(0:nt,0:nn,0:npart-1), rtrd(0:nt,0:nn,0:npart-1),
      &  rtbr(0:nt,0:nn,0:npart-1), rtzz(0:nt,0:nn,0:npart-1),
      &  rtz2(0:nt,0:nn,0:npart-1), rtpt(0:nt,0:nn,0:npart-1),
-     &  rtpi(0:nt,0:nn,0:npart-1), rtqa_ra(0:nt,0:nn,0:npart-1)
+     &  rtpi(0:nt,0:nn,0:npart-1), rtqr(0:nt,0:nn,0:npart-1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -52,7 +53,7 @@
 *     coefficients are supplied.
 *
 *     npart - integer, input.
-*     npart specifies the number of partition of the homonuclear sequence.
+*     npart specifies the number of partition of the isonuclear sequence.
 *
 *     nidis - integer, input.
 *     nidis specifies the dimension of the array idis.
@@ -154,7 +155,7 @@
 *   ..local variables
       integer i, j, k, ind
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation
@@ -198,12 +199,12 @@
      &    (rtqa(i,j,k),i=0,nt)
        enddo
       enddo
-*   ..write rtqa_ra as function of rtt for several rtn
+*   ..write rtqr as function of rtt for several rtn
       do k = 0, npart-1
        do ind = 0, njdis-1
         j = jdis(ind)
-        write (nprt,102) 'rtqa_ra(0:nt,',j,',',k,')',
-     &    (rtqa_ra(i,j,k),i=0,nt)
+        write (nprt,102) 'rtqr(0:nt,',j,',',k,')',
+     &    (rtqr(i,j,k),i=0,nt)
        enddo
       enddo
 *   ..write rtcx as function of rtt for several rtn
@@ -343,6 +344,7 @@
        enddo
       enddo
 
+      write (nprt,'()')
 * ..return
       call subend ()
       return

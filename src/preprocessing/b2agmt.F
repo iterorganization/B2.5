@@ -3,23 +3,25 @@
 
       subroutine b2agmt (nx, ny, isymm, crx, cry,
      & fpsi, bb, vol, hx, hy, hz, hc, ht, qz, qc, qs, qac, qas, ebc,
-     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy, 
+     & gs, cell_width, cell_height, leftix, leftiy, bottomix, bottomiy,
      & rightix, rightiy, topix, topiy, cflag)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
       use b2mod_indirect
-     , ,only : TriangleArea, TriangleCentroid, quadCentroid, quadArea
+     , ,only : quadCentroid, quadArea
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm
-      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny), 
+      integer leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
      &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny),
      &  rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny),
      &  topix(-1:nx,-1:ny), topiy(-1:nx,-1:ny),
-     $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS) 
+     $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS)
       real (kind=R8) ::
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3,0:2), bb(-1:nx,-1:ny,0:3)
@@ -56,13 +58,13 @@
 *
 *     isymm - integer, input.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
-*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational 
-*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4 
-*     indicate rotational symmetry about the cry=0 axis. 
-*     Other values are not allowed. 
-*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e. 
+*     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
+*     Other values are not allowed.
+*     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
-*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e. 
+*     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
 *
 *     crx, cry - (-1:nx,-1:ny,0:3) real*8 array, input.
@@ -95,11 +97,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny,0:1) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,,).le.1.
 *
 *     qs - (-1:nx,-1:ny,0:1) real*8 array, output.
@@ -125,46 +127,25 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j
+      integer ix, iy, i
       integer i1, i2, ii
       integer volhmk, cgeo, cgeon
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, width, centroid(0:1), t0, t1, psic
+     *   width, centroid(0:1), t0, t1, psic
       logical classical
       real (kind=R8) ::
      *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
-     *   isx(0:1), isy(0:1)
+     *   isx(0:1), isy(0:1),
+     *   Xvertices(0:3), Yvertices(0:3)
       integer, save :: style = 0
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
-      real (kind=R8) ::
-     &  sin_t, cos_t, sin_tl, cos_tl, tt
-      external subini, subend, xertst, ipgetr, ipgeti
-      external b2xvsg
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      intrinsic min, max
+      external xertst, ipgetr, ipgeti
+      external b2xvsg1
 *   ..initialisation
       data volhmk/1/, width /1.0_R8/
       save volhmk, width
 
-*-----------------------------------------------------------------------
-*.documentation-internal
-*
-*     Let (p0x,p0y) specify a vector p0, and (p1x,p1y) specify
-*     a vector p1. Then norm(p0x,p0y) is the standard norm of p0,
-*     sinang(p0x,p0y,p1x,p1y) is sin(t), and cosang(p0x,p0y,p1x,p1y)
-*     is cos(t), where t is the complementary angle between p0 and p1.
-*     t=pi/2 when p0 and p1 are parallel, t=0 or t=pi when p0 and p1
-*     are orthogonal, and t=-pi/2 when p0 and p1 are anti-parallel.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -204,12 +185,14 @@
         ! ecc(:,:,0:3,0:1): unit vectors of the centroid-face connections
         ! ebc(:,:,0:2): unit vector magnetic field field in cell center
 
-        cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(ix,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
         select case (cgeo)
         case(CGEO_BROKEN)
           write(*,*) 'Problem in b2agmt: broken cell', ix,iy
-          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,4f12.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
           call xerrab('Broken cell geometry')
         case(CGEO_QUAD)
           ! For quadrangular cells: assume cell center = geometric mean
@@ -220,29 +203,29 @@
           hy(ix,iy) = norm(0.5_R8*(crx(ix,iy,2)+crx(ix,iy,3))-
      &                     0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1)),
      &                     0.5_R8*(cry(ix,iy,2)+cry(ix,iy,3))-
-     &                     0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1))) 
+     &                     0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1)))
           cell_width(ix,iy)  = hx(ix,iy)
           cell_height(ix,iy) = hy(ix,iy)
 
           ! Distances centroid to faces
           hc(ix,iy,0) = 0.5*hx(ix,iy)
           hc(ix,iy,1) = 0.5*hy(ix,iy)
-          hc(ix,iy,2) = 0.5*hx(ix,iy) 
-          hc(ix,iy,3) = 0.5*hy(ix,iy) 
+          hc(ix,iy,2) = 0.5*hx(ix,iy)
+          hc(ix,iy,3) = 0.5*hy(ix,iy)
 
           ! Distances along faces (only W/S)
           ht(ix,iy,0) = dist(ix,iy,0,2)
           ht(ix,iy,1) = dist(ix,iy,0,1)
 
           ! Unit vectors of connector lines cell center to face centers
-          t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
+          t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2))
           t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
           ecc(ix,iy,0,0) = t0/norm(t0,t1)
           ecc(ix,iy,0,1) = t1/norm(t0,t1)
           ecc(ix,iy,2,0) = t0/norm(t0,t1)
           ecc(ix,iy,2,1) = t1/norm(t0,t1)
 
-          t0 = (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)) 
+          t0 = (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1))
           t1 = (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1))
           ecc(ix,iy,1,0) = t0/norm(t0,t1)
           ecc(ix,iy,1,1) = t1/norm(t0,t1)
@@ -259,11 +242,11 @@
             ebc(ix,iy,0) = ecc(ix,iy,0,0)*bb(ix,iy,0)/abs(bb(ix,iy,0))
             ebc(ix,iy,1) = ecc(ix,iy,0,1)*bb(ix,iy,0)/abs(bb(ix,iy,0))
           else
-            ! For arbitrary (quad) cells, compute as average between 
+            ! For arbitrary (quad) cells, compute as average between
             ! poloidal directions at vertices
-            t0 =  0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
+            t0 =  0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) +
      &                     fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
-            t1 = -0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
+            t1 = -0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) +
      &                     fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
             ebc(ix,iy,0) = t0/norm(t0,t1)
             ebc(ix,iy,1) = t1/norm(t0,t1)
@@ -351,7 +334,7 @@ cwdk      4) centroid: average between the intersections with faces
           ! Distances centroid to faces
           hc(ix,iy,0) = norm(
      &      0.5_R8*(crx(ix,iy,0)+crx(ix,iy,2)) - centroid(0),
-     &      0.5_R8*(cry(ix,iy,0)+cry(ix,iy,2)) - centroid(1))          
+     &      0.5_R8*(cry(ix,iy,0)+cry(ix,iy,2)) - centroid(1))
           hc(ix,iy,1) = norm(
      &      0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1)) - centroid(0),
      &      0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1)) - centroid(1))
@@ -367,31 +350,31 @@ cwdk      4) centroid: average between the intersections with faces
           ht(ix,iy,1) = dist(ix,iy,0,1)
 
           ! Unit vectors of connector lines cell center to face centers
-          t0 = centroid(0) - 0.5_R8*(crx(ix,iy,0)+crx(ix,iy,2)) 
+          t0 = centroid(0) - 0.5_R8*(crx(ix,iy,0)+crx(ix,iy,2))
           t1 = centroid(1) - 0.5_R8*(cry(ix,iy,0)+cry(ix,iy,2))
           ecc(ix,iy,0,0) = t0/norm(t0,t1)
           ecc(ix,iy,0,1) = t1/norm(t0,t1)
 
-          t0 = centroid(0) - 0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1)) 
+          t0 = centroid(0) - 0.5_R8*(crx(ix,iy,0)+crx(ix,iy,1))
           t1 = centroid(1) - 0.5_R8*(cry(ix,iy,0)+cry(ix,iy,1))
           ecc(ix,iy,1,0) = t0/norm(t0,t1)
           ecc(ix,iy,1,1) = t1/norm(t0,t1)
 
-          t0 = 0.5_R8*(crx(ix,iy,1)+crx(ix,iy,3)) - centroid(0) 
+          t0 = 0.5_R8*(crx(ix,iy,1)+crx(ix,iy,3)) - centroid(0)
           t1 = 0.5_R8*(cry(ix,iy,1)+cry(ix,iy,3)) - centroid(1)
           ecc(ix,iy,2,0) = t0/norm(t0,t1)
           ecc(ix,iy,2,1) = t1/norm(t0,t1)
 
-          t0 = 0.5_R8*(crx(ix,iy,2)+crx(ix,iy,3)) - centroid(0) 
+          t0 = 0.5_R8*(crx(ix,iy,2)+crx(ix,iy,3)) - centroid(0)
           t1 = 0.5_R8*(cry(ix,iy,2)+cry(ix,iy,3)) - centroid(1)
           ecc(ix,iy,3,0) = t0/norm(t0,t1)
           ecc(ix,iy,3,1) = t1/norm(t0,t1)
 
           ! Unit vector of poloidal field in cell center
           ! WG-TMP: based on simple geom. avg. (consistency with carre_b2agbb)
-          t0 =  0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) + 
+          t0 =  0.25_R8*(fpsi(ix,iy,0,2) + fpsi(ix,iy,1,2) +
      &                   fpsi(ix,iy,2,2) + fpsi(ix,iy,3,2))
-          t1 = -0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) + 
+          t1 = -0.25_R8*(fpsi(ix,iy,0,1) + fpsi(ix,iy,1,1) +
      &                   fpsi(ix,iy,2,1) + fpsi(ix,iy,3,1))
           ebc(ix,iy,0) = t0/norm(t0,t1)
           ebc(ix,iy,1) = t1/norm(t0,t1)
@@ -427,9 +410,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (leftix(ix,iy).eq.-2 .or. 
      &      leftix(ix,iy).eq.NO_CONNECTIVITY) cycle
-        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-        cgeon = cellGeoType( crx(leftix(ix,iy),leftiy(ix,iy),:),
-     &                       cry(leftix(ix,iy),leftiy(ix,iy),:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(iy,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
+        Xvertices(:) = crx(leftix(ix,iy),leftiy(ix,iy),:)
+        Yvertices(:) = cry(leftix(ix,iy),leftiy(ix,iy),:)
+        cgeon = cellGeoType(Xvertices, Yvertices)
 
         ! unit vectors at left faces (not re-normalized)
         if (classical.and.(style.eq.0)) then 
@@ -622,9 +608,12 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
         if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
         if (bottomiy(ix,iy).eq.-2 .or. 
      &      bottomiy(ix,iy).eq.NO_CONNECTIVITY) cycle
-        cgeo  = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
-        cgeon = cellGeoType( crx(bottomix(ix,iy),bottomiy(ix,iy),:),
-     &                       cry(bottomix(ix,iy),bottomiy(ix,iy),:) )
+        Xvertices(:) = crx(ix,iy,:)
+        Yvertices(:) = cry(iy,iy,:)
+        cgeo = cellGeoType(Xvertices, Yvertices)
+        Xvertices(:) = crx(bottomix(ix,iy),bottomiy(ix,iy),:)
+        Yvertices(:) = cry(bottomix(ix,iy),bottomiy(ix,iy),:)
+        cgeon = cellGeoType(Xvertices, Yvertices)
 
         ! unit vectors at bottom faces (not re-normalized)
         if (classical.and.(style.eq.0)) then
@@ -848,7 +837,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
          if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
      &    gs(ix,iy,0) = dist(ix,iy,0,2)*width
-         if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) 
+         if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
      &    gs(ix,iy,1) = dist(ix,iy,0,1)*width
         enddo
        enddo
@@ -900,7 +889,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
           centroid = quadCentroid(crx(ix,iy,0),cry(ix,iy,0),
      &                            crx(ix,iy,1),cry(ix,iy,1),
      &                            crx(ix,iy,2),cry(ix,iy,2),
-     &                            crx(ix,iy,3),cry(ix,iy,3)) 
+     &                            crx(ix,iy,3),cry(ix,iy,3))
          endif
          vol(ix,iy) = gs(ix,iy,2)*2.0_R8*pi*centroid(1)
         enddo
@@ -908,9 +897,9 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
        do iy = -1, ny
         do ix = -1, nx
          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) 
+         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy)))
      &    gs(ix,iy,0) = pi*dist(ix,iy,0,2)*(cry(ix,iy,0)+cry(ix,iy,2))
-         if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) 
+         if (isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
      &    gs(ix,iy,1) = pi*dist(ix,iy,0,1)*(cry(ix,iy,0)+cry(ix,iy,1))
         enddo
        enddo
@@ -926,7 +915,7 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
 *   ..test sign of vol, gs
       call b2xvsg1(nx, ny, vol(-1,-1),  1, 'vol', '.gt.')
-!      call b2xvsg1(nx, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
+!      call b2xvsg1(nx, ny, ny, gs(-1,-1,0), 1, 'gsx', '.gt.')
 !      call b2xvsg1(nx, ny, gs(-1,-1,1), 1, 'gsy', '.gt.')
       call b2xvsg1(nx, ny, gs(-1,-1,2), 1, 'gsz', '.gt.')
 
@@ -936,5 +925,16 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
 
 *-----------------------------------------------------------------------
 *.end b2agmt
+
+      contains
+
+      function dist(ix,iy,i,j)
+      use b2mod_math
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
 
       end subroutine b2agmt

@@ -4,6 +4,7 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
       integer nCv, nFc, mode
       type (geometry), intent (in) :: geo
@@ -18,7 +19,7 @@
       real (kind=R8) ::
      *   t0, t1
       intrinsic max, sqrt
-      external subini, subend, xertst
+      external xertst
       external b2xxgs
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls

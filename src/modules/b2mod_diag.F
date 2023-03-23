@@ -9,7 +9,7 @@
 c
 c  version : 27.04.2005
 c
-      real (kind=R8) :: 
+      real (kind=R8) ::
      1 totaddee, totaddei, totaddni, rad_neutr
 #ifndef SOLPS4_3
       real (kind=R8) :: b2brem, b2rad
@@ -21,20 +21,20 @@ c
      3  recycereg(:), recycireg(:),
      4  sseereg(:), sseireg(:), ssnireg(:,:),
      5  ssnastra(:,:)   ! IYS 29.09.2017
-      REAL (kind=R8), allocatable :: 
+      REAL (kind=R8), allocatable ::
      .      FEEXGT(:), FEEYGT(:),
      .      FEIXGT(:), FEIYGT(:)
-      real (kind=R8), allocatable ::  RADARR(:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable :: RADARR(:)
+      real (kind=R8), allocatable ::
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
      ,     src_ni(:,:,:) , src_mo(:,:,:),
      ,     src_ne(:,:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     cor_ee(:)   , cor_ei(:),
      ,     cor_ni(:,:) , cor_mo(:,:),
      ,     cor_ne(:)
-      real (kind=R8), allocatable :: 
+      real (kind=R8), allocatable ::
      ,     rescoreg(:,:) , resmoreg(:,:),
      ,     reshereg(:), reshireg(:)
 
@@ -75,8 +75,8 @@ c***                    tracing
       parameter (len_ntrc=10)
       integer ntrc_srt, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
      ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
-      parameter (ntrc_srt=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
-     ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
+      parameter (ntrc_srt=1, ntrc_tst=2,  ntrc_res=3, ntrc_src=4,
+     ,           ntrc_bln=5, ntrc_ble=6,  ntrc_int=7, ntrc_usr=8,
      ,           ntrc_blm=9, ntrc_sep=10)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
@@ -88,11 +88,10 @@ c***                    tracing
       integer, allocatable :: ions_list(:), fluids_list(:)
       character*120 label
       integer :: ank_tracing = 0
-
 c
       save
 
-      contains 
+      contains
 
       subroutine alloc_b2mod_diag(nCv,nFc,nsd,nregionv,nstra,natm,
      &                            switch)
@@ -100,12 +99,12 @@ c
       use b2mod_switches
       implicit none
       integer nCv,nFc,nsd,nregionv,nstra,natm
+      type (switches), intent(in) :: switch
       integer i, is, iss
       character*18 hlp_frm
       logical streql
       external streql
 
-      type (switches), intent(in) :: switch
       call xertst(1.le.nCv, 'faulty input nCv')
       call xertst(1.le.nFc, 'faulty input nFc')
       call xertst(1.le.nsd, 'faulty input nsd')
@@ -119,13 +118,13 @@ c
       allocate(IZ(nCv))
       allocate(RESHLP(nCv))
       allocate(rad_imp(1:nspecies))
-      allocate(rdneureg(nregionv),
+      allocate(rdneureg(0:nregionv),
      2  b2radirreg(nregionv),b2radlrreg(nregionv),
      3  recycereg(nregionv), recycireg(nregionv),
      4  sseereg(nregionv), sseireg(nregionv),
      5  ssnireg(nspecies,nregionv))
       allocate(ssnastra(natm,nstra))      ! IYS 29.09.2017
-      allocate( 
+      allocate(
      .      FEEXGT(nFc), FEEYGT(nFc),
      .      FEIXGT(nFc), FEIYGT(nFc))
       allocate(RADARR(nCv))
@@ -195,11 +194,13 @@ c
       write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
       write(*,hlp_frm) 'b2eatcr : ', b2eatcr(0:nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nsd,'(a2,1x))'
-      write(*,hlp_frm) 'is_codes : ', is_codes
+      write(*,hlp_frm) 'is_codes : ', (trim(is_codes(is)),is=0,nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nspecies,'(a2,1x))'
-      write(*,hlp_frm) 'species_list : ', species_list(1:nspecies)
+      write(*,hlp_frm) 'species_list : ',
+     .                        (trim(species_list(is)),is=1,nspecies)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natm,'(a2,1x))'
-      write(*,hlp_frm) 'atoms_list (B2) : ', atoms_list(1:natm)
+      write(*,hlp_frm) 'atoms_list (B2) : ',
+     .                        (trim(atoms_list(is)),is=1,natm)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',i,'i4)'
       write(*,hlp_frm) 'ions_list : ', ions_list(1:i)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nspecies,'i4)'
@@ -210,11 +211,9 @@ c
 c
 c*** Tracing unit assignment (see b2file, b2blnc, etc.)
 c
-c<<<
-      NTRC(ntrc_tst) = 80
+      NTRC(ntrc_tst) = 39
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
-c>>>
-      NTRC(ntrc_srt) = 71
+      NTRC(ntrc_srt) = 59
       fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
       NTRC(ntrc_res) = 72
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'

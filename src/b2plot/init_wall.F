@@ -12,49 +12,30 @@
       use b2mod_b2cmfs
       use b2mod_external
       use b2us_map
+      use b2mod_subsys
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
       implicit none
       type (mapping), intent(in) :: mpg
+#ifdef WG_TODO
+      integer ibnd
       integer nCv, ns
       real (kind=R8) :: BoRiS
 
       integer ix, iy, is, ixn, iyn, idir, ireg
-      integer ibnd, ibndm, i, j, ik, itrack, icoat, ikink, ikink0
+      integer ibnd
       integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:)
       integer, allocatable, save :: xymap_tmp(:,:)
       integer, save :: debug_init_wall
-      real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
-     *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
-     *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
-     *  dist, distp, dint,
-     *  sput_frac(0:ntrack), wrk(ndepth_nml)
-      integer sum
-      character*16 hlp_frm
-      logical wall_namelist_used, default_cooling, correct_quadrant
-      logical error
-
-      integer, save :: hd_linlog, output, sput_frac_flag,
-     *  sput_phys_col, sput_phys_model, refl_model
-      real (kind=R8), save :: hd_ratio, width
-      data hd_linlog/1/, hd_ratio/100.0_R8/, output/0/
-      data sput_frac_flag/0/, sput_phys_col/3/,
-     *  sput_phys_model/1/, refl_model/1/, width/1.0_R8/
 #ifdef DBG
       data debug_init_wall/1/
 #else
       data debug_init_wall/0/
 #endif
+#endif
 
-      real (kind=R8) :: mass_density
-      logical overlap
-      intrinsic mod, max, min, sqrt, abs, int
-      external mass_density, overlap
-      external xertst, subini, subend, ipgeti, ipgetr
-
-      real (kind=R8) :: onemeps
-      parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
+      external xertst, ipgeti, ipgetr
 
       call subini('init_wall')
 #ifdef WG_TODO
@@ -72,7 +53,7 @@ cxpb We must avoid corner cells and dead cells
       nsegments = 0
       itrack_0 = 0
 
-cxpb  We start from the HFS lower corner and go clockwise around the plasma
+cxpb  We start from the lower left corner and go clockwise around the plasma
 cxpb  keeping the plasma to our right (but we are moving in the guard cells!)
 cxpb  Northern boundaries (excluding diverted island)
       iy = ny
@@ -346,19 +327,65 @@ cxpb Recopy geometrical arrays into namelist defaults
       imapx(1:nbnd) = imapx_tmp(1:nbnd)
       imapy(1:nbnd) = imapy_tmp(1:nbnd)
       xymap(-1:nx,-1:ny) = xymap_tmp(-1:nx,-1:ny)
+#endif
       call subend()
       return
+      end subroutine init_wall
 
-      entry get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
+      subroutine get_wall_data(mpg,nx,ny,ns,BoRiS,wall_namelist_used)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_wall
+      use b2mod_plasma
+      use b2mod_sputter
+      use b2mod_indirect
+      use b2mod_external
+      use b2mod_neutrals_namelist
+      use b2mod_subsys
+      use b2us_map
+      implicit none
+      type (mapping), intent(in) :: mpg
+      integer, intent(in) :: nx, ny, ns
+      real(kind=R8), intent(in) :: BoRiS
+      logical, intent(in) :: wall_namelist_used
+
+      integer ibnd
+      character*16 hlp_frm
+#ifdef WG_TODO
+      integer i, j, is, ix, iy
+      integer ibndm, icoat, itrack, ik, ikink, ikink0
+      real(kind=R8) :: xa, xb, ya, yb, xa2, ya2, xo, yo,
+     *  distance, distp, normal_r, normal_z, qin, qel, torl,
+     *  nhalf_r, nhalf_z, nhalf, xint, yint, dint,
+     *  xap, yap, xbm, ybm, xbp, ybp, xbq, ybq, sum
+      real(kind=R8) :: sput_frac(0:ntrack), wrk(ndepth_nml)
+      logical error, correct_quadrant
+
+      integer, save :: output, hd_linlog, refl_model,
+     *  sput_frac_flag, sput_phys_col, sput_phys_model
+      real(kind=R8), save :: hd_ratio, width
+      data hd_ratio/100.0_R8/, hd_linlog/1/, refl_model/1/, output/0/
+      data sput_frac_flag/0/, sput_phys_col/3/, sput_phys_model/1/
+      data width/1.0_R8/
+
+      real (kind=R8) :: onemeps
+      parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
+
+      real (kind=R8) :: mass_density
+      logical overlap
+      external mass_density, overlap
+#endif
+
       call subini('get_wall_data')
 cxpb  Test namelist input
       if (ntargsp.gt.0) then
-        write(hlp_frm,'(a,i2,a)') '(a,',ntargsp,'(a2,1x))'
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',ntargsp,'(a2,1x))'
         write(*,hlp_frm) 'track_species : Bulk ', 
      .   track_species(1:ntargsp)
       else
         write(*,'(1x,a)') 'No tracked wall material species'
       end if
+#ifdef WG_TODO
       if (wall_namelist_used) then
         do is = 1, ntrack
           call xertst(track_species_save(is).eq.track_species(is),
@@ -377,11 +404,9 @@ cxpb  Test namelist input
           end do
         end do
       end if
-
-#endif
-
 cxpb Fill up array data not given in namelist
       layer_composition = 0.0_R8
+#endif
       nbnd = mpg%nCg
       do ibnd = 1, nbnd
         if (backplate_temp(ibnd).eq.0.0_R8)
@@ -395,7 +420,6 @@ cxpb Fill up array data not given in namelist
         if (len_trim(bulk_material_name(ibnd)).eq.0)
      .      bulk_material_name(ibnd)(1:1) = 'C'   ! Graphite
       enddo
-
 
 #ifdef WG_TODO
 cxpb Read material data
@@ -431,7 +455,7 @@ cxpb For mixed materials, if unspecified, use normal material constituents
      1     matsurf_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))
         end if
 cxpb  normalise the layer constituents relative concentrations
-        sum = 0
+        sum = 0.0_R8
         do i = 1, layer_nconstituents(ibnd)
           sum = sum + layer_nrelconstituents(ibnd,i)
         enddo
@@ -542,8 +566,8 @@ c no mixed materials
           xb = r2(ibnd)
           ya = z1(ibnd)
           yb = z2(ibnd)
-          dist = sqrt((xb-xa)**2+(yb-ya)**2)
-          target_width(ibnd,1) = dist
+          distance = sqrt((xb-xa)**2+(yb-ya)**2)
+          target_width(ibnd,1) = distance
           targetcr(ibnd,1,1) = xa
           targetcz(ibnd,1,1) = ya
           targetcr(ibnd,1,2) = xb
@@ -557,13 +581,6 @@ c no mixed materials
           nhalf = sqrt(nhalf_r**2 + nhalf_z**2)
           nhalf_r = nhalf_r/nhalf
           nhalf_z = nhalf_z/nhalf
-          if (ibnd.eq.wall_begin(is)) then
-            xaq = xa + normal_r*target_depth(ibnd,ndepth_nml)
-            yaq = ya + normal_z*target_depth(ibnd,ndepth_nml)
-          else
-            xaq = targetcr(ibnd-1,min(ikink0,ndepth_nml),2)
-            yaq = targetcz(ibnd-1,min(ikink0,ndepth_nml),2)
-          endif
           xbq = xb + nhalf_r*target_depth(ibnd,ndepth_nml)
           ybq = yb + nhalf_z*target_depth(ibnd,ndepth_nml)
           if (abs(normal_r*nhalf_z-normal_z*nhalf_r).le.1.e-10_R8) then  ! parallel case
@@ -638,7 +655,8 @@ cxpb and far enough away from the OAp line
      .         ((xbp-xo)*(yap-yo)-(ybp-yo)*(xap-xo)).gt.0.0_R8
               distp = ((xbp-xo)*(yap-yo)+(ybp-yo)*(xo-xap))/
      .         sqrt((yap-yo)**2+(xo-xap)**2)
-              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8)) then
+              if(.not.(correct_quadrant.and.distp/distance.ge.0.1_R8))
+     .         then
                 ik = min(ik,i)
                 xbp = xo + (xbm-xo) + (xap-xo)
                 ybp = yo + (ybm-yo) + (yap-yo)
@@ -876,11 +894,22 @@ cxpb Use 1-D equilibrium profile
           endif   ! plate_option
         enddo   !  ibnd
       endif   !  ndepth_nml
+#endif
       call subend()
       return
+      end subroutine get_wall_data
 
 * ..finalise time-dependent wall data
-      entry wall_final(nx,ny,ns,wall_namelist_used)
+      subroutine wall_final(nx,ny,ns,wall_namelist_used)
+      use b2mod_types
+      use b2mod_wall
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      logical, intent(inout) :: wall_namelist_used
+
+      integer ibnd
+      logical default_cooling
+
       wall_namelist_used = wall_namelist_used .or. ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp(1:nbnd,1)).gt.plate_temp .or.
@@ -897,12 +926,11 @@ cxpb Use 1-D equilibrium profile
       if (.not.wall_namelist_used) return
       call write_b2mod_wall_namelist(99,nx,ny,ns,'    ')
       return
-
-      contains
+      end subroutine wall_final
 
       subroutine check_ok(nx, ny, ix, iy, idir)
       implicit none
-      integer nx, ny, ix, iy, idir
+      integer, intent(in) :: nx, ny, ix, iy, idir
 ! check on position
       if(ix.eq.-2) then
          write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',
@@ -926,10 +954,6 @@ cxpb Use 1-D equilibrium profile
       endif
       end subroutine check_ok
 
-#endif
-
-      end subroutine init_wall
-
       subroutine add_layer_thickness(ns,ibnd)
       use b2mod_types
       use b2mod_wall
@@ -940,9 +964,8 @@ cxpb Use 1-D equilibrium profile
       implicit none
       integer ns, nz, ibnd
       integer i, is, itrack, icoat
-      real (kind=R8) :: sput_frac(0:ntrack)
-      integer :: sum
-      logical surface_only, found
+      real (kind=R8) :: sum, sput_frac(0:ntrack)
+      logical found
       character*24 filename
       integer, save :: ncall, hd_linlog, sput_frac_flag
       real (kind=R8), save :: hd_ratio,
@@ -955,7 +978,7 @@ cxpb Use 1-D equilibrium profile
       real (kind=R8) :: onemeps
       parameter (onemeps = 1.0_R8 - 1.0e-5_R8)
       logical open_file
-      intrinsic max, sqrt
+      intrinsic max
       external ipgeti, ipgetr, xertst, xerrab
       external mass_density, open_file
 
@@ -981,14 +1004,12 @@ cxpb Use 1-D equilibrium profile
       endif
 
       if (layer_thickness(ibnd).eq.0.0_R8) then
-        surface_only = .true.     ! no idea what it should be, but otherwise an undefined variable is used later
         continue  ! nothing to do
       else if (layer_thickness(ibnd).gt.0.0_R8) then
 cxpb  The deposited layer is included in the first depth element, raising it.
 cxpb  Recall the depth is measured starting at 0 at the nominal surface and
 cxpb  increases going away from the plasma.
         target_depth(ibnd,1) = -layer_thickness(ibnd)
-        surface_only = .true.
       else if (layer_thickness(ibnd).lt.0.0_R8) then
 cxpb  Shallow erosion case, does not cross eventual coating boundary
 cxpb  The net erosion is layer_thickness but the mixed layer is
@@ -1000,7 +1021,6 @@ cxpb  target element
      .       coating_thickness(ibnd) .or.
      .       coating_thickness(ibnd).eq.0.0_R8)) then
           target_depth(ibnd,1) = -layer_thickness(ibnd)
-          surface_only = .true.
         else if ((layer_depth(ibnd)-layer_thickness(ibnd)).lt.
      .       coating_thickness(ibnd) .or.
      .       coating_thickness(ibnd).eq.0.0_R8) then
@@ -1059,7 +1079,6 @@ cxpb  The first target element must be at least layer_depth thick
      .         (hd_ratio - 1.0_R8)
             end do
           endif
-          surface_only = .false.
         else
 cxpb  Very deep erosion case, crosses coating boundary
 cxpb  The first target element must be at least layer_depth thick
@@ -1087,7 +1106,6 @@ cxpb  The first target element must be at least layer_depth thick
      .         (hd_ratio - 1.0_R8)
             end do
           endif
-          surface_only = .false.
           write(*,*)
      .     'Fully eroded coating. Read new bulk surface properties'
           filename='Surface_properties/'//trim(bulk_material_name(ibnd))
@@ -1111,12 +1129,12 @@ cxpb  The first target element must be at least layer_depth thick
             call xerrab ('Deep bulk material surface file not found!')
           endif
 cxpb Normalise surface constituents
-          sum = 0
+          sum = 0.0_R8
           do i = 1, matsurf_nconstituents(ibnd)
             sum = sum + matsurf_nrelconstituents(ibnd,i)
           end do
           do i = 1, matsurf_nconstituents(ibnd)
-            matsurf_nrelconstituents(ibnd,i) =
+            matsurf_relconstituents(ibnd,i) =
      .       matsurf_nrelconstituents(ibnd,i)/sum
           end do
         endif
@@ -1171,7 +1189,7 @@ cxpb  Modify surface layer properties for backscattering
       layer_nconstituents(ibnd)=matsurf_nconstituents(ibnd)+ntargsp
 cxpb  Contributions from the bulk
       layer_nrelconstituents(ibnd,1:matsurf_nconstituents(ibnd))=
-     1  matsurf_nrelconstituents
+     1  matsurf_relconstituents
      .   (ibnd,1:matsurf_nconstituents(ibnd))*
      2  sput_frac(0)
 cxpb  Contributions from the deposited species
@@ -1216,7 +1234,7 @@ cxpb  This will need refinement including alloy formation
       nz = matsurf_nconstituents(ibnd)
 cxpb  Contribution from the bulk
       layer_composition(ibnd,1:nz)=
-     2  matsurf_nrelconstituents(ibnd,1:nz)*sput_frac(0)
+     2  matsurf_relconstituents(ibnd,1:nz)*sput_frac(0)
       if (layer_nconstituents(ibnd).eq.nz) return
 cxpb  Inventory of bulk or coating particles
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1280,7 +1298,7 @@ cxpb  Must check if Z of deposited material already exists in bulk
 
 cxpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1358,7 +1376,7 @@ cxpb Loop over deposited species contributions
 
 cxpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1440,7 +1458,7 @@ cxpb Loop over deposited species contributions
 
 cxpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       if (coating_thickness(ibnd).gt.0.0_R8 .and.
@@ -1530,7 +1548,7 @@ cxpb Loop over deposited species contributions
 
 cxpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
-     .   matsurf_nrelconstituents(ibnd,1)
+     .   matsurf_relconstituents(ibnd,1)
       nz = matsurf_nconstituents(ibnd)
 cxpb The bulk or coating surface parameters
       layer_emissivity = matsurf_blackbody_emiss(ibnd)*frac
@@ -1603,7 +1621,6 @@ cxpb We must now test the intersection of side 41 with 5678
       use b2mod_types
       implicit none
       real (kind=R8) :: x1,y1,x2,y2,x3,y3,x4,y4
-      intrinsic abs, sqrt
 cxpb We aim to find if segment 12 intersects with segment 34
 
 cxpb Check if vector 34 lies between 31 and 32 and vector 12 is between 13 and 14

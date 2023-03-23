@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nCv, nFc, ns, is0, ismain, BoRiS, switch, geo,   !srv 09.01.01
+      subroutine b2stcx (nCv, nFc, ns, is0, ismain, switch, geo,     !srv 09.01.01
      &  mpg, na, ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)        !srv 07.07.09
       use b2mod_types
       use b2mod_constants
@@ -21,6 +21,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2stcx
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, is0, ismain
@@ -28,8 +29,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  BoRiS, na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), tn(nCv),
-     *   ni(nCv,0:1), rcx(nCv,0:ns-1)
+     *  na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv), tn(nCv),
+     *  ni(nCv,0:1), rcx(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(nCv,0:1,0:ns-1), smq0(nCv,0:3,0:ns-1), shi0(nCv,0:3),
@@ -48,21 +49,17 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, js, k
+      integer iCv, is, k
       character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1, tkin, t1n
+#ifdef ASTRA
       real (kind=R8) :: wrk0(nCv)
+#endif
 *   ..procedures
-      intrinsic abs
-      logical lnext
-      real (kind=R8) ::
-     *  samax, roxa
-      external subini, subend, xertst, samax, sfill
+      real (kind=R8) :: samax
+      external xertst, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -152,7 +149,7 @@ ctmp.dpc
             t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &        (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &        ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
-     &        (1.0_R8-BoRiS)
+     &        (1.0_R8-switch%BoRiS)
              shi0(iCv,0) = shi0(iCv,0)+t1
            elseif (switch%tn_style.eq.1) then
              if(is_neutral(is-1)) then ! CX with singly-charged ion
@@ -196,7 +193,7 @@ ctmp.dpc
                t1 = t0*na(iCv,is0)*na(iCv,is)*(mp/2.0_R8)*
      &          (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &          ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
-     &          (1.0_R8-BoRiS)
+     &          (1.0_R8-switch%BoRiS)
                t1n = 0.0_R8
              endif
              shi0(iCv,0) = shi0(iCv,0)+t1
@@ -314,8 +311,8 @@ ctmp.dpc
 #endif
 
       write (chcx,'(i3.3)') is0
-!      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
-!     &              .or. iout_b2wdat.eq.4) then
+!      if (iout.eq.1 .or. iout_b2npco.eq.1
+!     &              .or. iout_b2wdat.eq.4 ) then
 !        do is = 0, ns-1
 !          write (chns,'(i3.3)') is
 !!         do k=0,1
@@ -366,7 +363,6 @@ ctmp.dpc
         enddo
       endif
 
-
 cdjm Jan2017 Keep linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then
 !WG_TODO        b2stcx_sna0to1 = sna0
@@ -381,5 +377,17 @@ cdjm Jan2017 Keep linearised sources for balance
 
 *-----------------------------------------------------------------------
 *.end b2stcx
+
+      contains
+
+      function roxa(iCv,is)
+      implicit none
+      real (kind=R8) :: roxa
+      integer, intent(in) :: iCv, is
+
+      roxa = am(is)*mp*na(iCv,is)
+
+      return
+      end function roxa
 
       end subroutine b2stcx

@@ -42,9 +42,7 @@
       save ncall
 *   ..procedures
       intrinsic sqrt, abs
-      real (kind=R8) ::
-     *  b2sasum
-      external subini, subend, xertst, b2sasum
+      external subini, subend, xertst
 *   ..initialisation
       data ncall/0/
 

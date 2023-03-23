@@ -1,5 +1,6 @@
       subroutine gncolr (acrx, acry, nacra, iaia, igia, naia)
       use b2mod_types
+      use b2mod_lbfill
       implicit none
       integer nacra, naia
       real (kind=R4) acrx(0:nacra-1), acry(0:nacra-1)
@@ -10,7 +11,6 @@
 *     ------------------------------------------------------------------
       logical dofill
       integer i
-      external lbfill
 *     ------------------------------------------------------------------
 *     The routine follows the "colram" example in the NCAR-3 manual,
 *     Contours page 3-199.
@@ -32,7 +32,7 @@
         endif
        endif
        if (i.lt.naia) then
-        call lbfill (1, acrx, acry, nacra, iaia(i))
+        call lbfill (acrx, acry, nacra, iaia(i))
        endif
       endif
       return

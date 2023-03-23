@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, !srv 05.07.17
+      subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,           !srv 05.07.17
      &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, BoRiS, pl, dv, co,
-     &  rt, sr, st_ext, ierr)
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf,
+     &  pl, dv, co, rt, sr, st_ext, ierr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -27,19 +27,19 @@
      &          ncall_b2npht, ncall_b2sikt,  ncall_b2sifrtf,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
      &          ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nregionv, itcnt, ismain                !srv 05.07.17
+      integer nCv, nFc, nVx, ns, itcnt, ismain                          !srv 05.07.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
-     *  rxf, BoRiS
+      real (kind=R8) :: rxf
       logical solving(4),
-     *  solvereg(0:nregionv), solvireg(0:nregionv), 
-     *  solvnreg(0:nregionv), solvtreg(0:nregionv),                     !srv 22.05.18
-     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
-     *  solvkreg(0:nregionv), solvzreg(0:nregionv)
+     *  solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(0)),
+     *  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),             !srv 22.05.18
+     *  solvpreg(0:mpg%nnreg(0)), solvmreg(0:ns-1,0:mpg%nnreg(0)),
+     *  solvkreg(0:mpg%nnreg(0)), solvzreg(0:mpg%nnreg(0))
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
@@ -78,20 +78,19 @@
 *   ..local variables
       integer iCv, is
       real (kind=R8) ::
-     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                !srv 02.01.07
-     1 wrkc(nFc,0:1,0:2), cortt(nCv),               !srv 02.01.07
+     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                   !srv 02.01.07
+     1 wrkc(nFc,0:1,0:2),                                               !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
      4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
-     6 skt_prod(nCv), skt_diss(nCv)                      
+     6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
-      character chncall*5                                          
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, lwget, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht   !srv 02.01.07
-*   ..initialization
+      external xertst, ipgetr, b2saxpy
+      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht           !srv 02.01.07
+*   ..initialisation
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -155,14 +154,14 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       if(switch%b2npht_style.eq.0) then
        call xerrab('b2npht -- style 0 not available for WG')
 #ifdef WG_TODO
-       call b2sihs (nCv, nFc, nVx, ns, geo, mpg, BoRiS, ismain, 
-     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%po, 
-     &  dv%ne, dv%ni, dv%fch, co%cvsa, dv%fchdia, dv%uadia, dv%wadia, 
+       call b2sihs (nCv, nFc, nVx, ns, geo, mpg, switch%BoRiS, ismain,
+     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%po,
+     &  dv%ne, dv%ni, dv%fch, co%cvsa, dv%fchdia, dv%uadia, dv%wadia,
      &  dv%vaecrb, she0, shi0)
 #endif
       else
-       call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, BoRiS, ismain,
-     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn, 
+       call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, ismain,
+     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
      &  pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne, dv%fch,
      &  co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c,
      &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0)
@@ -175,8 +174,8 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       sr%skt_prod = 0.0_R8
       sr%skt_diss = 0.0_R8
       if (switch%solve_keps.gt.0) then
-        call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg, 
-     &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, 
+        call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod,
      &    skt_diss)
         call b2saxpy (nCv*4, 1.0e0_R8, shekt, 1, she0, 1)
         call b2saxpy (nCv*4, 1.0e0_R8, shikt, 1, shi0, 1)
@@ -197,8 +196,8 @@ cdjm Jan2017 update particle source components for balance
       shef = she0
 *   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
-      if ((solving(4).and.any(solvereg(0:nregionv))).or.
-     &     switch%get_residuals.eq.1) then                                     !srv 22.05.18
+      if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then                              !srv 22.05.18
         if (switch%mdf_fhe.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
      &     dv%reshe)
@@ -207,7 +206,7 @@ cdjm Jan2017 update particle source components for balance
      &     dv%fhe_mdf, dv%reshe)
         endif
       endif                                                             !srv 22.05.18
-      if ((solving(4).and.any(solvireg(0:nregionv))).or.
+      if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
           call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
@@ -217,21 +216,22 @@ cdjm Jan2017 update particle source components for balance
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
-      if ((switch%solve_keps.gt.0.and.any(solvkreg(0:nregionv))).or.
+      if ((switch%solve_keps.gt.0.and.any(solvkreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0, 
+        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0,
      &   dv%fkt, dv%reskt)
       endif
-      if ((switch%solve_keps.gt.1.and.any(solvzreg(0:nregionv))).or.
+      if ((switch%solve_keps.gt.1.and.any(solvzreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%zt, szt0, 
+        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%zt, szt0,
      &   dv%fzt, dv%reszt)
       endif
 
 
 c residuals for separate neutral energy equation
       if (switch % tn_style.eq.2) then   !! separate neutral energy equation
-       if (any(solvnreg(0:nregionv)).or.switch%get_residuals.eq.1) then
+       if (any(solvnreg(0:mpg%nnreg(0))).or.
+     &     switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
           call b2ursd (nCv, nFc, geo, mpg, dv%nn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
@@ -259,16 +259,17 @@ c residuals for separate neutral energy equation
 !        dv%reshe = dv%reshe - shei
 !        dv%reshi = dv%reshi + shei
 !      endif                                                             !srv 22.05.18
-      if ((solving(4).and.any(solvereg(0:nregionv)))                     !srv 22.05.18 {
-     &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei                     
-      if ((solving(4).and.any(solvireg(0:nregionv)))
+      if ((solving(4).and.any(solvereg(0:mpg%nnreg(0))))                     !srv 22.05.18 {
+     &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei
+      if ((solving(4).and.any(solvireg(0:mpg%nnreg(0))))
      &    .or.switch%get_residuals.eq.1) dv%reshi = dv%reshi + shei
-      if (solving(4).and.any(solvereg(0:nregionv)).and.            ! if total equation is not solved then resmt = 0            
-     &   any(solvireg(0:nregionv)).and.any(solvtreg(0:nregionv)).or.
+      if (solving(4).and.any(solvereg(0:mpg%nnreg(0))).and.            ! if total equation is not solved then resmt = 0
+     &   any(solvireg(0:mpg%nnreg(0))).and.
+     &   any(solvtreg(0:mpg%nnreg(0))).or.
      &   switch%get_residuals.eq.1)
      &   dv%resht = dv%reshe + dv%reshi + dv%reshn                       !srv 22.05.18 }
-      
-      if(switch%b2npht_iout .eq. 1 .or. switch%iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
+
+      if(switch%b2npht_iout .eq. 1 .or. switch%iout_b2wdat .eq. 4) then  !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')
         call my_out_us(70,nCv,0,co%ceqp,'b2npht_ceqp')
 !        do is = 0,ns-1
@@ -279,27 +280,27 @@ c residuals for separate neutral energy equation
 !        call my_out_us(70,nCv,0,te,'b2npht_te_input')
 !        call my_out_us(70,nCv,0,ti,'b2npht_ti_input')
 !        call my_out_us(70,nCv,0,po,'b2npht_po_input')
-	call my_out_us(70,nCv,0,dv%reshe,'b2npht_reshe')
-	call my_out_us(70,nFc,1,dv%fhe(1,0),'b2npht_fhe_th')
-	call my_out_us(70,nFc,1,dv%fhe(1,1),'b2npht_fhe_r')
+        call my_out_us(70,nCv,0,dv%reshe,'b2npht_reshe')
+        call my_out_us(70,nFc,1,dv%fhe(1,0),'b2npht_fhe_th')
+        call my_out_us(70,nFc,1,dv%fhe(1,1),'b2npht_fhe_r')
         call my_out_us(70,nCv,0,she0(1,0),'b2npht_she0')
         call my_out_us(70,nCv,0,she0(1,1),'b2npht_she1')
         call my_out_us(70,nCv,0,she0(1,2),'b2npht_she2')
         call my_out_us(70,nCv,0,she0(1,3),'b2npht_she3')
         wrk0=she0(:,0)+she0(:,1)*pl%te+she0(:,2)*dv%ne+
      &       she0(:,3)*pl%te*dv%ne
-	call my_out_us(70,nCv,0,wrk0,'b2npht_she')
-	call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
-	call my_out_us(70,nCv,0,dv%reshn,'b2npht_reshn')
-	call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
-	call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhi_th')
-	call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhi_r')
-	call my_out_us(70,nFc,1,dv%fhn(1,0),'b2npht_fhn_th')
-	call my_out_us(70,nFc,1,dv%fhn(1,1),'b2npht_fhn_r')
-	call my_out_us(70,nFc,1,dv%fkt(1,0),'b2npht_fkt_th')
-	call my_out_us(70,nFc,1,dv%fkt(1,1),'b2npht_fkt_r')
-	call my_out_us(70,nFc,1,dv%fzt(1,0),'b2npht_fzt_th')
-	call my_out_us(70,nFc,1,dv%fzt(1,1),'b2npht_fzt_r')
+        call my_out_us(70,nCv,0,wrk0,'b2npht_she')
+        call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
+        call my_out_us(70,nCv,0,dv%reshn,'b2npht_reshn')
+        call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
+        call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhi_th')
+        call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhi_r')
+        call my_out_us(70,nFc,1,dv%fhn(1,0),'b2npht_fhn_th')
+        call my_out_us(70,nFc,1,dv%fhn(1,1),'b2npht_fhn_r')
+        call my_out_us(70,nFc,1,dv%fkt(1,0),'b2npht_fkt_th')
+        call my_out_us(70,nFc,1,dv%fkt(1,1),'b2npht_fkt_r')
+        call my_out_us(70,nFc,1,dv%fzt(1,0),'b2npht_fzt_th')
+        call my_out_us(70,nFc,1,dv%fzt(1,1),'b2npht_fzt_r')
         call my_out_us(70,nCv,0,shi0(1,0),'b2npht_shi0')
         call my_out_us(70,nCv,0,shi0(1,1),'b2npht_shi1')
         call my_out_us(70,nCv,0,shi0(1,2),'b2npht_shi2')
@@ -317,24 +318,21 @@ c residuals for separate neutral energy equation
         wrk0=szt0(:,0)+szt0(:,1)*pl%zt+
      &       szt0(:,2)*dv%ni(:,1)+szt0(:,3)*pl%zt*dv%ni(:,1)
         call my_out_us(70,nCv,0,wrk0,'b2npht_szt')
-      endif            
-
-
-                                                 !srv 17.07.05 01.11.10 }
+      endif                                                             !srv 17.07.05 01.11.10 }
 *   ..compute correction
       if (solving(4)) then                                              !srv 11.01.13
-        call b2usht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv,
-     &  itcnt, switch%b2npht_rxg, dv%ne, dv%ni, dv%nn, pl%te, pl%ti,
+        call b2usht (nCv, nFc, nVx, ns, switch, geo, mpg,
+     &  itcnt, dv%ne, dv%ni, dv%nn, pl%te, pl%ti,
      &  pl%tn, pl%kt, pl%zt, dv%floe, dv%cone, dv%floi, dv%coni,
      &  dv%flon, dv%conn, dv%flokt, dv%conkt, dv%flozt, dv%conzt,
-     &  she0, shi0, shn0, skt0, szt0, 
+     &  she0, shi0, shn0, skt0, szt0,
      &  co%ceqp, dv%resht, dv%reshe, dv%reshi, dv%reshn, dv%reskt,
-     &  dv%reszt, dv%cortt, dv%corte, 
+     &  dv%reszt, dv%cortt, dv%corte,
      &  dv%corti, dv%cortn, dv%corkt, dv%corzt, wrkf, wrkc, aa)
 *   ..apply correction
-        call b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
+        call b2upht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  solving(3), solving(1), solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, switch%b2npht_pcm0,
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf,
      &  dv%cortt, dv%corte, dv%corti, dv%cortn, dv%corkt, dv%corzt,
      &  dv%pccm(1:nCv,0), pl%na, pl%ua, pl%te, pl%ti, pl%tn, pl%kt,
      &  pl%zt, pl%po, dv%ne, dv%ni)
@@ -373,6 +371,6 @@ c residuals for separate neutral energy equation
       return
 
 *-----------------------------------------------------------------------
-*.end b2npht                                                            !srv 02.01.07 }
+*.end b2npht
 
-      end
+      end subroutine b2npht

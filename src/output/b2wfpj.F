@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -18,7 +19,7 @@
      &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
-     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny), 
+     &  ro(-1:nx,-1:ny), rz(-1:nx,-1:ny),
      &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
@@ -79,7 +80,7 @@
      * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
      &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       logical strmas
-      external subini, subend, xertst, strmas, b2ssum
+      external xertst, strmas, b2ssum
       external b2xvsg, b2xvff, b2xvps, b2xxmm, b2xppb
       rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,0,is),nx+2)
       rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,1,is),1)
@@ -339,4 +340,4 @@
 *-----------------------------------------------------------------------
 *.end b2wfpj
 
-      end
+      end subroutine b2wfpj

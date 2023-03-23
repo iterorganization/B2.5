@@ -4,6 +4,7 @@ C ========== Parse extralabel for customisation =====================
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_subsys
 #ifdef NAGF95
       use f90_unix           ! IGNORE
       use f90_unix_proc      ! IGNORE
@@ -15,13 +16,18 @@ C ===================================================================
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
       integer lnblnk
       logical streql
-      external lnblnk, subini, subend, xertst, xerrab, streql
+      external lnblnk, xertst, xerrab, streql
       character var*256,envvar*256,systemarg*256
       character*1 backslash
-#ifdef USE_PXFGETENV
-      integer lenval, ierror
-#else
+#ifdef NAGFOR
+      integer status
+#endif
+      integer ierror
+#ifndef NO_GETENV
+      integer lenval
+#ifndef USE_PXFGETENV
       intrinsic get_environment_variable
+#endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
 *     getenv; it is external on some systems (SunOS, Unicos, ...) and
@@ -30,7 +36,7 @@ C ===================================================================
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
       call subini ('customise_label')
-      backslash='\\'
+      backslash=char(92)
       icpos=1
       jcpos=1
       elength=lnblnk(locallabel)
@@ -38,7 +44,7 @@ C ===================================================================
 #ifndef PLPLOT
       call pcsetc('FC - function code character','@')
 #endif
-  10  istart=icpos
+   10 istart=icpos
       do i=istart,elength
         if(locallabel(icpos:icpos).eq.backslash) then
           if(locallabel(icpos+1:icpos+1).eq.'R') goto 12
@@ -49,6 +55,7 @@ C ===================================================================
           if(locallabel(icpos+1:icpos+1).eq.'n') goto 40
           if(locallabel(icpos+1:icpos+1).eq.'h') goto 50
           if(locallabel(icpos+1:icpos+1).eq.'t') goto 60
+          if(locallabel(icpos+1:icpos+1).eq.'m') goto 70
         endif
         if(locallabel(icpos:icpos+1).eq.'^{') goto 80
         if(locallabel(icpos:icpos+1).eq.'_{') goto 90
@@ -59,47 +66,52 @@ C ===================================================================
         jcpos=jcpos+1
       enddo
       goto 1000
-  12  continue ! Switch to the "Roman" part of the PWRITX database
+   12 continue ! Switch to the "Roman" part of the PWRITX database
       tmp(jcpos:jcpos+2)='@R@'
       icpos=icpos+2
       jcpos=jcpos+3
       goto 10
-  14  continue ! Switch to the "Greek" part of the PWRITX database
+   14 continue ! Switch to the "Greek" part of the PWRITX database
       tmp(jcpos:jcpos+2)='@G@'
       icpos=icpos+2
       jcpos=jcpos+3
       goto 10
-  16  continue ! default characters
+   16 continue ! default characters
       tmp(jcpos:jcpos+3)='@F0@'
       icpos=icpos+2
       jcpos=jcpos+4
       goto 10
-  20  continue ! found greek letters
+   20 continue ! found greek letters
       tmp(jcpos:jcpos+4)='@F33@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10
-  30  continue ! found roman letters
+   30 continue ! found roman letters
       tmp(jcpos:jcpos+4)='@F25@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10
-  40  continue ! switch to normal level
+   40 continue ! switch to normal level
       tmp(jcpos:jcpos+2)='@N@'
       icpos=icpos+2
       jcpos=jcpos+3
       goto 10
-  50  continue ! resize font 130%
+   50 continue ! resize font 130%
       tmp(jcpos:jcpos+5)='@Z150@'
       icpos=icpos+2
       jcpos=jcpos+6
       goto 10
-  60  continue ! resize font 70%
+   60 continue ! resize font 70%
       tmp(jcpos:jcpos+4)='@Z50@'
       icpos=icpos+2
       jcpos=jcpos+5
       goto 10
-  80  continue ! found superscript
+   70 continue ! switch to math font
+      tmp(jcpos:jcpos+4)='@F18@'
+      icpos=icpos+2
+      jcpos=jcpos+5
+      goto 10
+   80 continue ! found superscript
       tmp(jcpos:jcpos+2)='@S@'
       icpos=icpos+1
       jcpos=jcpos+3
@@ -122,7 +134,7 @@ C ===================================================================
      .   'You did not close superscript braces')
       endif
       goto 10
-  90  continue ! found subscript
+   90 continue ! found subscript
       tmp(jcpos:jcpos+2)='@B@'
       icpos=icpos+1
       jcpos=jcpos+3
@@ -164,15 +176,23 @@ C ===================================================================
       elseif(var.eq.'sonnetfile'.or.var.eq.'SONNETFILE') then
         envvar=sonnetfile
       else
+        envvar=' '
+#ifdef NO_GETENV
+        write(*,*) 'Environment variable ',var(1:lnblnk(var)),
+     1       ' cannot be retrieved. Code compiled with NO_GETENV!'
+#else
 #ifdef USE_PXFGETENV
         CALL PXFGETENV (var, 0, envvar, lenval, ierror)
 #else
-        call get_environment_variable (var, envvar)
+        call get_environment_variable(var, status=ierror, length=lenval)
+        if (ierror.eq.0)
+     1   call get_environment_variable(var, value=envvar)
 #endif
-        if(envvar.eq.' ') then
+        if(streql(envvar,' ')) then
           write(*,*) 'Environment variable ',var(1:lnblnk(var)),
      1       ' does not exist'
         endif
+#endif
       endif
       tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
       jcpos=jcpos+lnblnk(envvar)
@@ -187,11 +207,20 @@ C ===================================================================
       call xertst(iend.lt.elength.or.locallabel(iend:iend).eq.'`',
      1 'You did not close `')
       systemarg='echo `'//locallabel(icpos:iend-1)//'` > /tmp/tmp.xxx'
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
       call system(systemarg)
+#endif
       open(99,file='/tmp/tmp.xxx')
       read(99,'(a)') envvar
       close(99)
-      call system('/bin/rm /tmp/tmp.xxx')
+      systemarg='/bin/rm /tmp/tmp.xxx'
+#ifdef NAGFOR
+      call system(systemarg, status, ierror)
+#else
+      call system(systemarg)
+#endif
       tmp(jcpos:jcpos+lnblnk(envvar)-1)=envvar(1:lnblnk(envvar))
       jcpos=jcpos+lnblnk(envvar)
       icpos=iend+1
@@ -205,7 +234,7 @@ C ===================================================================
       else
         write(*,*) 'jcpos = ',jcpos
         write(*,*) 'tmp = ',tmp
-!        call xerrab ('extralabel too long')
+!        call xerrab ('label too long')
         jcpos=256
       endif
       count=0
@@ -223,9 +252,9 @@ C ===================================================================
       enddo
       if(b2plot_debug.ge.4) then
         if (streql(tmp,' ')) then
-          write (*,*) 'parsed empty extralabel'
+          write (*,*) 'parsed empty label'
         else
-          write (*,*) 'parsed extralabel to:   ',trim(tmp)
+          write (*,*) 'parsed label to:   ',trim(tmp)
         end if
       end if
       customlabel=tmp
@@ -246,6 +275,7 @@ C ===================================================================
 c
       subroutine set_wallbarlabel(locallabel)
 C ===================================================================
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
@@ -257,6 +287,7 @@ C ===================================================================
 c
       subroutine set_targetbarlabel(locallabel)
 C ===================================================================
+      use b2mod_types
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel

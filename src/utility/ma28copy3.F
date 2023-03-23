@@ -102,8 +102,8 @@ c see block data for further comments on common block variables.
 c see code for comments on private variables.
 c
       real (kind=R8) ::
-     *   tol, themax, big, dxmax, errmax, dres, cgce,
-     * tol1, big1, upriv, rmin, eps, resid, zero
+     *  tol, themax, big, dxmax, errmax, dres, cgce,
+     *  tol1, big1, upriv, rmin, eps, resid, zero
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
@@ -114,13 +114,13 @@ c
       integer mlp, numnz, num, large
       integer lpiv(10),lnpiv(10),mapiv,manpiv,iavpiv,ianpiv,kountl
       logical grow, lblock, abort, abort1, abort2, abort3, aborta,
-     * abortb, lbig, lbig1
+     *  abortb, lbig, lbig1
       common /ma28edc3/ lp, mp, lblock, grow
       common /ma28fdc3/ eps, rmin, resid, irncp, icncp, minirn, minicn,
-     * irank, abort1, abort2
+     *  irank, abort1, abort2
       common /ma28gdc3/ idisp
       common /ma28hdc3/ tol, themax, big, dxmax, errmax, dres, cgce,
-     * ndrop, maxit, noiter, nsrch, istart, lbig
+     *  ndrop, maxit, noiter, nsrch, istart, lbig
       common /ma30idc3/ tol1, big1, ndrop1, nsrch1, lbig1
       common /ma30edc3/ nlp, aborta, abortb, abort3
       common /ma30fdc3/ mirncp, micncp, mirank, mirn, micn
@@ -128,7 +128,7 @@ c
       common /lpivotc3/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
-     * newpos, knum, length, move
+     *  newpos, knum, length, move
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
@@ -175,7 +175,7 @@ c data check to see if all indices lie between 1 and n.
 c
 c sort matrix into row order.
       call mc20adcopy3(n, nz, a, icn, iw, irn, 0)
-c part of ikeep is used here as a work-array.  ikeep(i,2) is
+c part of ikeep is used here as a work array.  ikeep(i,2) is
 c     the last row to have a nonzero in column i.  ikeep(i,3)
 c     is the off-set of column i from the start of the row.
       do 60 i=1,n
@@ -206,7 +206,7 @@ c first time column has ocurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
-c shift necessary because of  previous duplicate element.
+c shift necessary because of previous duplicate element.
           newpos = jj - move
           a(newpos) = a(jj)
           icn(newpos) = icn(jj)
@@ -257,7 +257,7 @@ c also set lenoff(1) to -1 and set permutation arrays.
   170 if (lbig) big1 = themax
       if (nsrch.le.n) go to 180
 c
-c perform l/u decomosition on diagonal blocks.
+c perform l/u decomposition on diagonal blocks.
       call ma30adcopy3(n, icn, a, licn, ikeep, ikeep(1,4), idisp,
      *ikeep(1,2), ikeep(1,3), irn, lirn, iw(1,2), iw(1,3), iw(1,4),
      *iw(1,5), iw(1,6), iw(1,7), iw(1,8), iw, upriv, iflag)
@@ -301,15 +301,15 @@ c set flag if the only error is due to duplicate elements.
 99998 format (36x, 'nz non positive = ', i10)
 99997 format (36x, 'licn too small = ', i10)
 99996 format (36x, 'lirn too small = ', i10)
-99995 format (' error return from ma28a/adc because indices found out',
+99995 format (' error return from ma28a/adc3 because indices found out',
      * ' of range')
 99994 format (1x, i6, 'th element with value ', 1pd22.14, ' is out o',
      * 'f range with indices ', i8, ' ,', i8)
 99993 format (' duplicate element in position ', i8, ' ,', i8,
      * ' with value ', 1pd22.14)
-99992 format (36x, 'error return from mc23a/adc')
-99991 format (36x, 'error return from ma30a/adc')
-99990 format ('+error return from ma28a/adc because ')
+99992 format (36x, 'error return from mc23a/adc3')
+99991 format (36x, 'error return from ma30a/adc3')
+99990 format ('+error return from ma28a/adc3 because ')
       end subroutine ma28adcopy3
       subroutine ma28bdcopy3
      &  (n, nz, a, licn, ivect, jvect, icn, ikeep, iw, w, iflag)
@@ -447,13 +447,13 @@ c set flag if the only error is due to duplicate elements.
       go to 70
    60 if (lp.ne.0) write (lp,99994)
    70 return
-99999 format (' error return from ma28b/bdc with iflag=', i4/i7,
-     * ' entries dropped from structure by ma28a/adc')
+99999 format (' error return from ma28b/bdc3 with iflag=', i4/i7,
+     * ' entries dropped from structure by ma28a/adc3')
 99998 format (36x, 'n out of range = ', i10)
 99997 format (36x, 'nz non positive = ', i10)
 99996 format (36x, 'licn too small = ', i10)
-99995 format (36x, 'error return from ma30b/bdc')
-99994 format ('+error return from ma28b/bdc because ')
+99995 format (36x, 'error return from ma30b/bdc3')
+99994 format ('+error return from ma28b/bdc3 because ')
       end subroutine ma28bdcopy3
       subroutine ma28cdcopy3(n, a, licn, icn, ikeep, rhs, w, mtype)
       use b2mod_types
@@ -577,7 +577,8 @@ c perform some validity checks on iold and jold.
    30     inew = iw1(iold,1)
           jnew = iw1(jold,2)
 c are we in a valid block and is it diagonal or off-diagonal?
-          if (iw1(inew,3)-iw1(jnew,3)) 40, 60, 50
+          if ((iw1(inew,3)-iw1(jnew,3)).eq.0) goto 60
+          if ((iw1(inew,3)-iw1(jnew,3)).gt.0) goto 50
    40     iflag = -13
           if (lp.ne.0) write (lp,99998) iold, jold
           go to 180
@@ -595,7 +596,8 @@ c binary search of ordered list  .. element in l part of row.
           do 100 jdummy=1,n
             midpt = (j1+j2)/2
             jcomp = iabs(icn(midpt)+0)
-            if (jnew-jcomp) 80, 130, 90
+            if ((jnew-jcomp).eq.0) goto 130
+            if ((jnew-jcomp).gt.0) goto 90
    80       j2 = midpt
             go to 100
    90       j1 = midpt
@@ -744,7 +746,7 @@ c  find the first solution.
 c
       call ma28cdcopy3(n, a, licn, icn, ikeep, x, w, mtype)
 c
-c  stop the computations if   maxit=0.
+c  stop the computations if maxit=0.
 c
    20 if (maxit.eq.0) go to 160
 c
@@ -840,8 +842,8 @@ c
   140 errmax = dd
   150 continue
   160 return
-99999 format (' error return from ma28i/idc with iflag = ', i3/' more ',
-     * 'than', i5, ' iterations required')
+99999 format (' error return from ma28i/idc3 with iflag = ',
+     * i3/'more than', i5, ' iterations required')
 99998 format (' error return from ma28id with iflag = ', i3/' converge', !srv 16.01.18
      * 'nce rate of ', 1pe9.2, ' too slow'/' maximum acceptable rate',
      * ' set to ', 1pe9.2)
@@ -852,6 +854,9 @@ c######alias ma30adcopy3
      * irn, lirn, lenc, ifirst, lastr, nextr, lastc, nextc, iptr, ipc,
      * u, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c if  the user requires a more convenient data interface then the ma28
 c     package should be used.  the ma28 subroutines call the ma30
@@ -915,8 +920,8 @@ c     values in icn. a(1) to a(idisp(1)-1) are neither required nor
 c     altered.
 c licn  is an integer variable which must be set by the user to the
 c     length of arrays icn and a. it must be big enough for a and icn
-c     to hold all the nonzeros of l and u and leave some "elbow
-c     room".  it is possible to calculate a minimum value for licn by
+c     to hold all the nonzeros of l and u and leave some elbow
+c     room.  it is possible to calculate a minimum value for licn by
 c     a preliminary run of ma30a/ad. the adequacy of the elbow room
 c     can be judged by the size of the common block variable icncp. it
 c     is not altered by ma30a/ad.
@@ -952,7 +957,7 @@ c lirn  is an integer variable. it should be greater than the
 c     largest number of nonzeros in a diagonal block of p1*a*q1 but
 c     need not be as large as licn. it is the length of array irn and
 c     should be large enough to hold the active part of any block,
-c     plus some "elbow room", the  a posteriori  adequacy of which can
+c     plus some elbow room, the  a posteriori  adequacy of which can
 c     be estimated by examining the size of common block variable
 c     irncp.
 c lenc,ifirst,lastr,nextr,lastc,nextc are all integer arrays of
@@ -1042,17 +1047,13 @@ c
      * jcount, jdiff, jroom, jmore, jzer, jzero,
      * kdrop, lenpp, lenpiv, msrch, morei,
      * nblock, num, nnm1, nzcol, nzmin, nzrow
-      integer(8) :: jcost, kcost                           !srv 26.02.11 12.03.15
+      integer(kind=I8) :: jcost, kcost                   !srv 26.02.11 12.03.15
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
 #endif
 c
       data umax/.999999999e0_R8/
       data zero /0.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       msrch = nsrch
       ndrop = 0
       do 1272 kk=1,10
@@ -1253,7 +1254,7 @@ c     control.
 c jcost is the markowitz cost of the best pivot so far,.. this
 c     pivot is in row ipiv and column jpiv.
           nz2 = nzmin
-          jcost = int(n,8)*int(n,8)    !srv 26.02.11 12.03.15
+          jcost = int(n,I8)*int(n,I8)    !srv 26.02.11 12.03.15
 c
 c examine rows/columns in order of ascending count.
           do 340 l=1,2
@@ -1262,9 +1263,10 @@ c examine rows/columns in order of ascending count.
             ll = l
 c a pass with l equal to 2 is only performed in the case of singularity.
             do 330 nz=nz2,n
-              if (jcost.le.int((nz-1),8)**2) go to 420               !srv 26.02.11 12.03.15
+              if (jcost.le.int((nz-1),I8)**2) go to 420               !srv 26.02.11 12.03.15
               ijfir = ifirst(nz)
-              if (ijfir) 230, 220, 240
+              if (ijfir.lt.0) goto 230
+              if (ijfir.gt.0) goto 240
   220         if (ll.eq.1) nzmin = nz + 1
               go to 330
   230         ll = 2
@@ -1273,7 +1275,7 @@ c a pass with l equal to 2 is only performed in the case of singularity.
   240         ll = 2
 c scan rows with nz nonzeros.
               do 270 idummy=1,n
-                if (jcost.le.int((nz-1),8)**2) go to 420             !srv 26.02.11 12.03.15
+                if (jcost.le.int((nz-1),I8)**2) go to 420             !srv 26.02.11 12.03.15
                 if (isrch.gt.msrch) go to 420
                 if (ijfir.eq.0) go to 280
 c row ijfir is now examined.
@@ -1286,13 +1288,26 @@ c first calculate multiplier threshold level.
                 do 250 jj=j1,j2
                   amax = max(amax,abs(a(jj)))
   250           continue
+#ifdef DBG
+                if(amax.ge.tiny(1.0_R8).and.u.ge.tiny(1.0_R8)) then
+                  product = log(amax) + log(u)
+                  if (product.ge.cutll) then
+                    au = amax*u
+                  else
+                    au = cutlo
+                  endif
+                else
+                  au = cutlo
+                end if
+#else
                 au = amax*u
+#endif
                 isrch = isrch + 1
 c scan row for possible pivots
                 do 260 jj=j1,j2
                   if (abs(a(jj)).le.au .and. l.eq.1) go to 260
                   j = icn(jj)
-                  kcost = int((nz-1),8)*int((lenc(j)-1),8)           !srv 26.02.11 12.03.15
+                  kcost = int((nz-1),I8)*int((lenc(j)-1),I8)           !srv 26.02.11 12.03.15
                   if (kcost.gt.jcost) go to 260
                   pivr = zero
                   if (amax.ne.zero) pivr = abs(a(jj))/amax
@@ -1303,7 +1318,7 @@ c best pivot so far is found.
                   ijpos = jj
                   ipiv = i
                   jpiv = j
-                  if (msrch.gt.nn+1 .and. jcost.le.int((nz-1),8)**2)
+                  if (msrch.gt.nn+1 .and. jcost.le.int((nz-1),I8)**2)
      *               go to 420                                        !srv 26.02.11 12.03.15
                   pivrat = pivr
   260           continue
@@ -1312,7 +1327,7 @@ c
 c columns with nz nonzeros now examined.
   280         ijfir = ifirst(nz)
               ijfir = -lastr(ijfir)
-  290         if (jcost.le.int(nz,8)*int((nz-1),8)) go to 420         !srv 26.02.11 12.03.15
+  290         if (jcost.le.int(nz,I8)*int((nz-1),I8)) go to 420         !srv 26.02.11 12.03.15
               if (msrch.le.nn) go to 330
               do 320 idummy=1,n
                 if (ijfir.eq.0) go to 330
@@ -1323,7 +1338,7 @@ c columns with nz nonzeros now examined.
 c scan column j.
                 do 310 ii=i1,i2
                   i = irn(ii)
-                  kcost = int((nz-1),8)*int((lenr(i)-lenrl(i)-1),8)   !srv 26.02.11 12.03.15
+                  kcost = int((nz-1),I8)*int((lenr(i)-lenrl(i)-1),I8)   !srv 26.02.11 12.03.15
                   if (kcost.ge.jcost) go to 310
 c pivot has best markowitz count so far ... now check its
 c     suitability on numeric grounds by examining the other nonzeros
@@ -1343,7 +1358,7 @@ c     problems with underdetermined systems.
                   jpiv = j
                   ijpos = jpos
                   if (amax.ne.zero) pivrat = abs(a(jpos))/amax
-                  if (jcost.le.int(nz,8)*int((nz-1),8)) go to 420     !srv 26.02.11 12.03.15
+                  if (jcost.le.int(nz,I8)*int((nz-1),I8)) go to 420     !srv 26.02.11 12.03.15
   310           continue
 c
   320         continue
@@ -1562,7 +1577,29 @@ c
               if (icn(jj).ne.jpiv) go to 570
 c if pivot is zero, rest of column is and so multiplier is zero.
               au = zero
-              if (a(ijpos).ne.zero) au = -a(jj)/a(ijpos)
+              if (a(ijpos).ne.zero) then
+#ifdef DBG
+                if((a(jj).ge.tiny(1.0_R8) .or. a(jj).le.-tiny(1.0_R8))
+     &           .and.(a(ijpos).ge. tiny(1.0_R8).or.
+     &                 a(ijpos).le.-tiny(1.0_R8))) then
+                  product = log(abs(a(jj))) - log(abs(a(ijpos)))
+                  if (product.ge.cutll) then
+                    au = -a(jj)/a(ijpos)
+                  else
+                    if ((a(jj).ge.tiny(1.0_R8).and.
+     &                   a(ijpos).ge.tiny(1.0_R8)).or.
+     &                  (a(jj).le.-tiny(1.0_R8).and.
+     &                   a(ijpos).le.-tiny(1.0_R8))) then
+                      au = -cutlo
+                    else
+                      au = cutlo
+                    end if
+                  end if
+                end if
+#else
+                au = -a(jj)/a(ijpos)
+#endif
+              end if
               if (lbig) big = max(big,abs(au))
               a(jj) = a(j1)
               a(j1) = au
@@ -1600,11 +1637,11 @@ c innermost loop.
               iop = iop + 1
               pivrow = ijpos - iq(j)
 #ifdef DBG
-              if ((au.ge.tiny(1.0_R8).or.au.le.-tiny(1.0_R8)).and.
-     &            (a(pivrow).ge. tiny(1.0_R8).or.
-     &             a(pivrow).le.-tiny(1.0_R8))) then
+              if((au.ge.tiny(1.0_R8) .or. au.le.-tiny(1.0_R8)).and.
+     &           (a(pivrow).ge. tiny(1.0_R8).or.
+     &            a(pivrow).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(pivrow)))
-                if (product.ge.cutlo) a(jj) = a(jj) + au*a(pivrow)
+                if (product.ge.cutll) a(jj) = a(jj) + au*a(pivrow)
               end if
 #else
               a(jj) = a(jj) + au*a(pivrow)
@@ -1753,12 +1790,18 @@ c innermost fill-in loop which also resets icn.
               if((au   .ge.tiny(1.0_R8).or.au   .le.-tiny(1.0_R8)).and.
      &           (a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8))) then
                 product = log(abs(au)) + log(abs(a(jj)))
-                if (product.ge.cutlo) then
+                if (product.ge.cutll) then
                   anew = au*a(jj)
                   aanew = abs(anew)
                 else
-                  anew = 0.0_R8
-                  aanew = 0.0_R8
+                  if ((a(jj).ge. tiny(1.0_R8).and.au.ge. tiny(1.0_R8))
+     &            .or.(a(jj).le.-tiny(1.0_R8).and.au.le.-tiny(1.0_R8)))
+     &             then
+                    anew = cutlo
+                  else
+                    anew = -cutlo
+                  end if
+                  aanew = cutlo
                 end if
               else
                 anew = 0.0_R8
@@ -1842,7 +1885,8 @@ c     ordering arrays.
             go to 890
   850       ifir = ifirst(nz)
             ifirst(nz) = i
-            if (ifir) 860, 880, 870
+            if (ifir.eq.0) goto 880
+            if (ifir.gt.0) goto 870
   860       lastr(i) = ifir
             nextr(i) = 0
             go to 890
@@ -1893,7 +1937,8 @@ c adjust column ordering arrays.
             go to 970
   924       ifir = ifirst(nz)
             lastc(j) = 0
-            if (ifir) 930, 940, 950
+            if (ifir.eq.0) goto 940
+            if (ifir.gt.0) goto 950
   930       ifirst(nz) = -j
             ifir = -ifir
             lastc(ifir) = j
@@ -1984,16 +2029,16 @@ c   ***    error returns    ***
 c
 c
  1120 return
-99999 format (' error return from ma30a/adc because matrix is structu',
-     * 'rally singular')
-99998 format (' error return from ma30a/adc because matrix is numeric',
-     * 'ally singular')
+99999 format (' error return from ma30a/adc3 because matrix is struct',
+     * 'urally singular')
+99998 format (' error return from ma30a/adc3 because matrix is numeri',
+     * 'cally singular')
 99997 format (' lu decomposition destroyed to create more space')
-99996 format (' error return from ma30a/adc because licn not big',
+99996 format (' error return from ma30a/adc3 because licn not big',
      * ' enough')
-99995 format (' error return from ma30a/adc because lirn not big',
+99995 format (' error return from ma30a/adc3 because lirn not big',
      * ' enough')
-99994 format (' error return from ma30a/adc lirn and licn too small')
+99994 format (' error return from ma30a/adc3 lirn and licn too small')
 99993 format (' at stage ', i5, ' in block ', i5, ' with first row ',
      * i5, ' and last row ', i5)
 99992 format (' to continue set lirn to at least ', i8)
@@ -2001,6 +2046,9 @@ c
       subroutine ma30bdcopy3(n, icn, a, licn, lenr, lenrl,idisp,ip,iq,w,
      * iw, iflag)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30b/bd performs the lu decomposition of the diagonal blocks of a
 c     new matrix paq of the same sparsity pattern, using information
@@ -2060,13 +2108,9 @@ c
      * ilend, ipivj, ising
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
 #endif
 c
       data zero /0.0e0_R8/, one /1.0e0_R8/
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
       stab = eps.le.one
       rmin = eps
       ising = 0
@@ -2110,10 +2154,16 @@ c form multiplier au.
      &        (a(ipivj).ge. tiny(1.0_R8).or.
      &         a(ipivj).le.-tiny(1.0_R8))) then
             product = log(abs(w(j))) - log(abs(a(ipivj)))
-            if (product.ge.cutlo) then
+            if (product.ge.cutll) then
               au = -w(j)/a(ipivj)
             else
-              au = 0.0_R8
+              if ((w(j).ge. tiny(1.0_R8).and.a(ipivj).ge. tiny(1.0_R8))
+     &        .or.(w(j).le.-tiny(1.0_R8).and.a(ipivj).le.-tiny(1.0_R8)))
+     &         then
+                au = -cutlo
+              else
+                au = cutlo
+              end if
             end if
           else
             au = 0.0_R8
@@ -2136,7 +2186,7 @@ c innermost loop.
      &         (a(jayjay).ge. tiny(1.0_R8).or.
      &          a(jayjay).le.-tiny(1.0_R8))) then
               product = log(abs(au)) + log(abs(a(jayjay)))
-              if (product.ge.cutlo) w(jay) = w(jay) + au*a(jayjay)
+              if (product.ge.cutll) w(jay) = w(jay) + au*a(jayjay)
             end if
 #else
             w(jay) = w(jay) + au*a(jayjay)
@@ -2202,12 +2252,15 @@ c   ***   error return   ***
       iflag = -i
 c
   180 return
-99999 format (' error return from ma30b/bdc singularity detected in ',
+99999 format (' error return from ma30b/bdc3 singularity detected in ',
      * 'row', i8)
       end subroutine ma30bdcopy3
       subroutine ma30cdcopy3(n, icn, a, licn,lenr,lenrl,lenoff,idisp,ip,
      * iq, x, w, mtype)
       use b2mod_types
+#ifdef DBG
+      use b2mod_math
+#endif
       implicit none
 c ma30c/cd uses the factors produced by ma30a/ad or ma30b/bd to solve
 c     ax=b or a transpose x=b when the matrix p1*a*q1 (paq) is block
@@ -2274,14 +2327,10 @@ c
      * jpiv, jpivp1, lt, ltend, numblk
 #ifdef DBG
       real (kind=R8) :: product
-      real (kind=R8), save :: cutlo
 #endif
 c
       data zero /0.0e0_R8/
 c
-#ifdef DBG
-      cutlo = log(tiny(1.0_R8))
-#endif
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
       resid = zero
@@ -2328,7 +2377,16 @@ c ltend is the end of row i in the off-diagonal blocks.
         ltend = lt + lenoff(i) - 1
         do 20 jj=lt,ltend
           j = icn(jj)
+          if (j.eq.0) cycle
+#ifdef DBG
+          if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
+     &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
+            product = log(abs(a(jj))) + log(abs(w(j)))
+            if (product.ge.cutll) wi = wi - a(jj)*w(j)
+          end if
+#else
           wi = wi - a(jj)*w(j)
+#endif
    20   continue
 c lt is set the beginning of the next off-diagonal row.
         lt = ltend + 1
@@ -2340,11 +2398,12 @@ c iend is the end of the l part of row i in the lu decomposition.
         iend = iblock + lenrl(i) - 1
         do 40 jj=iblock,iend
           j = icn(jj)
+          if (j.eq.0) cycle
 #ifdef DBG
           if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &       (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
             product = log(abs(a(jj))) + log(abs(w(j)))
-            if (product.ge.cutlo) wi = wi + a(jj)*w(j)
+            if (product.ge.cutll) wi = wi + a(jj)*w(j)
           end if
 #else
           wi = wi + a(jj)*w(j)
@@ -2388,11 +2447,12 @@ c jump if row ii of u has no nonzeros.
           wii = w(ii)
           do 80 jj=jpivp1,j2
             j = icn(jj)
+            if (j.eq.0) cycle
 #ifdef DBG
             if((a(jj).ge.tiny(1.0_R8).or.a(jj).le.-tiny(1.0_R8)).and.
      &         (w(j) .ge.tiny(1.0_R8).or.w(j) .le.-tiny(1.0_R8))) then
               product = log(abs(a(jj))) + log(abs(w(j)))
-              if (product.ge.cutlo) wii = wii - a(jj)*w(j)
+              if (product.ge.cutll) wii = wii - a(jj)*w(j)
             end if
 #else
             wii = wii - a(jj)*w(j)
@@ -2582,8 +2642,8 @@ c######alias mc13dcopy3
       integer n, licn, num
       integer ip(n)
       integer icn(licn),lenr(n),ior(n),ib(n),iw(n,3)
-      call
-     & mc13ecopy3(n,icn,licn,ip,lenr,ior,ib,num,iw(1,1),iw(1,2),iw(1,3))
+      call mc13ecopy3
+     & (n,icn,licn,ip,lenr,ior,ib,num,iw(1,1),iw(1,2),iw(1,3))
       return
       end subroutine mc13dcopy3
       subroutine mc13ecopy3
@@ -2692,7 +2752,7 @@ c update value of lowl(iv) if necessary.
       go to 110
 c
 c put new node on the stack.
- 100  arp(iv)=i2-ii-1
+  100 arp(iv)=i2-ii-1
       prev(iw)=iv
       iv=iw
       ist=ist+1
@@ -2815,15 +2875,15 @@ c items kor, kor+1, .... ,kmax are in order
       if(iabs(ice).le.iabs(ik))go to 20
       inum(k-1)=ik
       a(k-1)=a(k)
-10    continue
+   10 continue
       k=kmax+1
-20    inum(k-1)=ice
+   20 inum(k-1)=ice
       a(k-1)=ace
       kor=kor-1
-25    continue
+   25 continue
 c        next column
       kmax=klo-2
-30    continue
+   30 continue
       return
       end subroutine mc20bdcopy3
 c######date   01 jan 1984     copyright ukaea, harwell.
@@ -2988,15 +3048,15 @@ c     positions corresponding to the new position of this row in a/icn.
       j2=jj+length-1
       do 15 j=jj,j2
       iw1(j)=iold
- 15   continue
+   15 continue
       jj=j2+1
- 20   continue
+   20 continue
 c set inverse permutation to iq in iw(.,2).
       do 30 i=1,n
       iold=iq(i)
       iold=iabs(iold)
       iw(iold,2)=i
- 30   continue
+   30 continue
 c permute a and icn in place, changing to new column numbers.
 c
 c ***   main loop   ***
@@ -3029,11 +3089,11 @@ c is chain complete ?
       iold=iw1(ipos)
       iw1(ipos)=0
 c **  end of chain loop  **
- 100  continue
- 130  a(ipos)=aval
- 150  icn(ipos)=iw(jval,2)
+  100 continue
+  130 a(ipos)=aval
+  150 icn(ipos)=iw(jval,2)
 c ***   end of main loop   ***
- 200  continue
+  200 continue
 c
  1000 return
       end subroutine mc22adcopy3
@@ -3240,7 +3300,7 @@ c error return
   200 format(33x,' licn not big enough increase by ',i6)
       idisp(1)=-2
   210 if (lp.ne.0) write(lp,220)
-  220 format('+error return from mc23adc because')
+  220 format('+error return from mc23adc3 because')
 c
   230 return
       end subroutine mc23adcopy3
@@ -3258,7 +3318,7 @@ c######alias mc24adcopy3
       amaxl=zero
       do 10 i=1,n
       w(i)=zero
- 10   continue
+   10 continue
       j0=1
       do 100 i=1,n
       if (lenr(i).eq.0) go to 100
@@ -3269,24 +3329,24 @@ c calculation of 1-norm of l.
       wrowl=zero
       do 30 jj=j0,j1
       wrowl=wrowl+abs(a(jj))
- 30   continue
+   30 continue
 c amaxl is the maximum norm of columns of l so far found.
       amaxl=max(amaxl,wrowl)
       j0=j1+1
 c calculation of norms of columns of u (max-norms).
- 50   j0=j0+1
+   50 j0=j0+1
       if (j0.gt.j2) go to 90
       do 80 jj=j0,j2
       j=icn(jj)
       w(j)=max(abs(a(jj)),w(j))
- 80   continue
- 90   j0=j2+1
- 100  continue
+   80 continue
+   90 j0=j2+1
+  100 continue
 c amaxu is set to maximum max-norm of columns of u.
       amaxu=zero
       do 200 i=1,n
       amaxu=max(amaxu,w(i))
- 200  continue
+  200 continue
 c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
@@ -3338,8 +3398,8 @@ c     new decomposition using ma28a/ad.
 c resid is a real*8 variable which on exit from ma28c/cd gives the value
 c     of the maximum residual over all the equations unsatisfied because
 c     of dependency (zero pivots).
-c irncp,icncp are integer variables which monitor the adequacy of "elbow
-c     room" in irn and a/icn respectively. if either is quite large (say
+c irncp,icncp are integer variables which monitor the adequacy of elbow
+c     room in irn and a/icn respectively. if either is quite large (say
 c     greater than n/10), it will probably pay to increase the size of
 c     the corresponding array for subsequent runs. if either is very low
 c     or zero then one can perhaps save storage by reducing the size of
@@ -3500,7 +3560,7 @@ c     reduced to enable a successful decomposition to the point at
 c     which failure occurred.  notice that, on a successful entry
 c     idisp(2) gives the amount of space in a/icn required for the
 c     decomposition while minicn will usually be slightly greater
-c     because of the need for "elbow room".  if the user is very
+c     because of the need for elbow room.  if the user is very
 c     unsure how large to make licn, the variable minicn can be used
 c     to provide that information. a preliminary run should be
 c     performed with abort3 left set to .false. and licn about 3/2

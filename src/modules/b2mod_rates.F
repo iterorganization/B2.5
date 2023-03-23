@@ -5,7 +5,7 @@
       real (kind=R8), allocatable, save ::
      *  rlcx(:,:,:,:,:),
      *  rlqa(:,:,:,:),
-     *  rlqa_ra(:,:,:,:),
+     *  rlqr(:,:,:,:),
      *  rlrd(:,:,:,:),
      *  rlbr(:,:,:,:),
      *  rlra(:,:,:,:),
@@ -28,7 +28,7 @@
 
       allocate(rlcx(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nscxmax-1))
       allocate(rlqa(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(rlqa_ra(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(rlqr(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(rlrd(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(rlbr(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(rlra(-1:nxd,-1:nyd,0:1,0:nsd-1))
@@ -50,7 +50,7 @@
 
       deallocate(rlcx)
       deallocate(rlqa)
-      deallocate(rlqa_ra)
+      deallocate(rlqr)
       deallocate(rlrd)
       deallocate(rlbr)
       deallocate(rlra)

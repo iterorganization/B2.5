@@ -1,13 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nxfv (nCv, nFc, nVx, isb, switch, geo, mpg,        !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
+      subroutine b2nxfv (nCv, nFc, nVx, isb, switch, geo, mpg,          !srv 19.01.05 01.07.05 11.09.09 { 16.10.17
      &  cvsbhz_cl, cvsbhz, flubv)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, isb
@@ -26,15 +27,16 @@
 *  1. purpose
 *
 *     B2NXFV calculates the convective term due to new form of ion  
-*     viscosity term in the momentum correction  equation.
+*     viscosity term in the momentum correction equation.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
+      integer iVx
       real (kind=R8) ::
-     *   ft, dloghz(nFc,0:1)                                            !srv 16.10.17
-      external subini, subend, xertst, b2scopy
+     *   ft, dloghz(nFc,0:1), logCvHz(nCv), logVxHz(nVx)                !srv 16.10.17
+      external xertst
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
 
@@ -56,13 +58,27 @@
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
       if (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then          !srv 26.10.08
-        call diff_p(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
-     .    dloghz(1,0))
-        flubv(:,0) = switch%b2nxfv_phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)                 !srv 06.12.18
+        logCvHz = log(geo%cvHz)
+        do iVx = 1, nVx
+          if (geo%vxHz(iVx).gt.0.0_R8) then
+            logVxHz(iVx) = log(geo%vxHz(iVx))
+          else
+            logVxHz(iVx) = 0.0_R8
+          end if
+        end do
+        call diff_p(nCv,nFc,nVx,1,geo,mpg,logCvHz,logVxHz,dloghz(1,0))
+        flubv(:,0) = switch%b2nxfv_phm0*ft*cvsbhz_cl(:,0)*dloghz(:,0)   !srv 06.12.18
         flubv(:,1) = 0.0_R8
       elseif (nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.0) then
-        call diff(nCv,nFc,nVx,1,geo,mpg,log(geo%cvHz),log(geo%vxHz),
-     .    dloghz)
+        logCvHz = log(geo%cvHz)
+        do iVx = 1, nVx
+          if (geo%vxHz(iVx).gt.0.0_R8) then
+            logVxHz(iVx) = log(geo%vxHz(iVx))
+          else
+            logVxHz(iVx) = 0.0_R8
+          end if
+        end do
+        call diff(nCv,nFc,nVx,1,geo,mpg,logCvHz,logVxHz,dloghz)
         flubv(:,0) = switch%b2nxfv_phm0*switch%b2nxfv_phm1
      &                                      *cvsbhz(:,0)*dloghz(:,0)
         flubv(:,1) = switch%b2nxfv_phm0*switch%b2nxfv_phm1
@@ -78,4 +94,4 @@
 *-----------------------------------------------------------------------
 *.end b2nxfv
 
-      end                                                               !srv 19.01.05 01.07.05 11.09.09 }
+      end subroutine b2nxfv                                             !srv 19.01.05 01.07.05 11.09.09 }

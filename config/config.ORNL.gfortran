@@ -1,82 +1,41 @@
 # Test whether necessary variables are set
-ifndef MSCL_ROOT
-  $(error MSCL_ROOT not defined)
-endif
-ifndef NCARG_ROOT
-  NCARG_ROOT = /usr/lib64/ncarg  
-endif
-ifndef NCDIR
-  NCDIR = /usr/lib64
-endif
 ifndef SOLPSLIB
   $(error SOLPSLIB not defined)
 endif
-LD_NETCDF  ?= -L${NCDIR} -lnetcdff 
+ifndef MSCL_ROOT
+  $(error MSCL_ROOT not defined)
+endif
+NCARG_ROOT ?= /usr/lib64/ncarg
+NCDIR      ?= /usr/lib64
+LD_NETCDF  ?= -L${NCDIR} -lnetcdff
 LD_MSCL    ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG   ?= -L${NCARG_ROOT} -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG     ?= -L${SOLPSLIB} -lblaslapack
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-
-CPP = /lib/cpp -traditional -DNO_IEEE
-CPPOPTS = -P -I${srcdir} ${EQUIVS}
-SED = 
-LINK_MOD = 
+CPP = /lib/cpp -traditional
 
 ifdef USE_MPI
 FC = mpif90
 else
+ifdef USE_IMPGYRO
+FC = mpif90
+else
 FC = gfortran
 endif
+endif
 
 ifdef SOLPS_DEBUG
-#FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
-FCOPTS = -g -frange-check -fbounds-check -Wcharacter-truncation -fcheck=all -fbacktrace -ffpe-trap=denormal -ftrapv \
--Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Winteger-division -Wreal-q-constant #-Wall
+#FCOPTS = -finit-local-zero
+FCOPTS = -frange-check -Wcharacter-truncation -fcheck=all \
+-Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Wreal-q-constant #-Wall
 # -Wimplicit-interface -Wunused-parameter -Wunused -Wtabs
+LDOPTS = -g -C
 else
-FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+# FCOPTS = -finit-local-zero
+LDOPTS =
 endif
 
-ifdef IMAS_PREFIX
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
-endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran
-IMASLIBS = ${LD_UAL} -lggd-${COMPILER}
-endif
-
-DBLFC = ${FC}
 DBLOPTION =
-DBLSED =
-
-INCMOD = -I
-MOD = mod
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-ifdef USE_MPI
-LD = mpif90
-else
-LD = gfortran
-endif
-
-ifdef SOLPS_DEBUG
-LDOPTS = -g -C 
-else
-LDOPTS = 
-endif
-
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

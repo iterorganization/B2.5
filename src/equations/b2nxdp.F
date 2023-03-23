@@ -1,23 +1,23 @@
-      subroutine b2nxdp (nCv, mpg, nregionv, solvereg, qe, te, nep, ne, 
-     &  delpo)
+      subroutine b2nxdp (nCv, mpg, solvereg, qe, te, nep, ne, delpo)
       use b2mod_types
       use b2us_map
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2nxdp
+      use b2mod_subsys
       implicit none
-      integer nCv, nregionv
+      integer nCv
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  qe, te(nCv), nep(nCv), ne(nCv), delpo(nCv)
-      logical solvereg(0:nregionv)
+      logical solvereg(0:mpg%nnreg(0))
 *     ------------------------------------------------------------------
 *     B2NXDP computes the correction to the electric potential following
 *     an update to the electron density.
 *     ------------------------------------------------------------------
       integer iCv, ireg
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
 *     ------------------------------------------------------------------
@@ -44,4 +44,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2nxdp

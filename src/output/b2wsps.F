@@ -11,6 +11,7 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspc, nx, ny, ns
@@ -41,7 +42,7 @@
 *
 *     This routine is available for use as the occasion may require;
 *     it is a suitable location for code to produce output that is of
-*     interest only for a specific application of b2.
+*     interest only for a specific application of B2.
 *     The routine is set up as an interface to b2wsst.
 *
 *
@@ -59,7 +60,7 @@
      2 ni(-1:nx,-1:ny,0:1), 
      3 ro(-1:nx,-1:ny), rz(-1:nx,-1:ny), pr(-1:nx,-1:ny)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xpni, b2xppr, b2xpro, b2xpfe, b2xpfi, b2wsst
 
 *-----------------------------------------------------------------------
@@ -87,8 +88,8 @@
 #endif
 *   ..call output routine
       call b2wsst (nspc, nx, ny, ns,
-     &  crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
+     &  crx, cry, bb, vol, hx, hy, qz, qc, qs, gs, pbs,
+     &  cell_width, cell_height,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ni,
      &  pr, ro, rz, fne, fni, wrk0, wrk1)
 

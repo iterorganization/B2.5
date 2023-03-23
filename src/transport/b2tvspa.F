@@ -11,6 +11,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -22,14 +23,13 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  fchvispar(nFc,0:1)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
-*     current
+*     current.
 *
 *  8. further comments
 *
@@ -37,15 +37,14 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
-      integer ib, is
+      integer is
       real (kind=R8) ::
      *   dvpar(nFc),
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrkVx(nVx), gOnedBsq(nFc,0:1)
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
 *-----------------------------------------------------------------------
@@ -74,8 +73,8 @@
             wrk = ua(:,is)*sqrt(geo%cvBb(:,3))
             call grad_p(nCv, nFc, nVx, 0, geo, mpg, wrk, wrkVx, wrk1)
             dvpar = dvpar + wrk0*vsaf_cl(:,0,is)*wrk1
-	  endif                                                          !srv 24.06.99
-	enddo                                                            !srv 24.06.99
+          endif                                                          !srv 24.06.99
+        enddo                                                            !srv 24.06.99
 *     ..components of the viscosity parallel current
         fchvispar(:,0) =
      &   -switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,1)
@@ -93,4 +92,4 @@
 *-----------------------------------------------------------------------
 *.end b2tvspa
 
-      end                                                              !srv 20.09.06 }
+      end subroutine b2tvspa                                            !srv 20.09.06 }

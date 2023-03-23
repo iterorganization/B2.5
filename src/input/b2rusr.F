@@ -3,6 +3,7 @@
 
       subroutine b2rusr (nget)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget
@@ -49,7 +50,7 @@
 *   ..local variables
 *     (none)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation
