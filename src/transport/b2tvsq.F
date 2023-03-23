@@ -81,6 +81,7 @@
               enddo
              endif
             enddo
+
             !to ensure that subsequent steps lead to well-defined value on separatrix:
             !copy value of qip0 across separatrix
             !wdk todo: rationalize this when separatrix-structure is introduced?
