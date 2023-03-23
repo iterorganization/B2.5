@@ -50,6 +50,8 @@ c 2002-09-11: logic revised
      ,        natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
+      use b2mod_par_opt
+     , , x0_opt => x0
       use b2mod_work
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -183,6 +185,7 @@ c 2002-09-11: logic revised
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt
+      integer ncon, nele_jac
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
@@ -289,9 +292,7 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
-#ifdef WG_TODO
       integer, allocatable :: l_h_mol1(:,:)
-#endif
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
@@ -11048,7 +11049,79 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'No changes needed in ',trim(filename)
       end if
 
+*   ..write new b2.optimization.parameters, if needed
+      filename='b2.optimization.parameters'
+      call find_file(filename,todo)
+      new_filename='b2.optimization.parameters.2'
+      call find_file(new_filename,found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if (todo.and..not.found.and..not.same_atoms) then
+        write(*,*) 'Writing b2.user.parameters.2'
+        open(99,file=new_filename)
+        write(nout(5),'(a)') trim(new_filename)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, nbc)
 #ifdef WG_TODO
+        if(.not.user_initialised)
+     >   call alloc_b2mod_user(geo,mpg,ns,nlimi,nmoli,ntns)
+#endif
+        write(99,'(a5)') '&OPTIMIZATION'
+        if (nnvar.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNVAR=',nnvar,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'PARTYPE=',(partype(i),i=1,nnvar)
+          write(99,hlp_frm)
+     >     'SPATIAL_POINTS=',(spatial_points(i),i=1,nnvar)
+          write(99,hlp_frm) 'PARIS=',(is1(paris(i)),i=1,nnvar)
+          do i = 1, nnvar
+            if (partype(i).eq.16) then
+              if (.not.savestratum(parib(i))) parib(i)=0
+            end if
+          end do
+          write(99,hlp_frm) 'PARIB=',(parib(i),i=1,nnvar)
+          write(hlp_frm,'(a,i2,a)')
+     >     '(1x,a,',npar_opt,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'PAR_RESCALE=',(par_rescale(i),i=1,npar_opt)
+          write(99,hlp_frm) 'X0=',(x0_opt(i),i=1,npar_opt)
+          write(99,hlp_frm) 'XL=',(xl(i),i=1,npar_opt)
+          write(99,hlp_frm) 'XU=',(xu(i),i=1,npar_opt)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'l1,a)'
+          write(99,hlp_frm) 'SPATIAL_DEP=',(spatial_dep(i),i=1,nsigma)
+        end if
+        if (nsigma.gt.0) then
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsigma,'l1,a)'
+          write(99,hlp_frm) 'SIGMA_OPT=',(sigma_opt(i),i=1,nsigma)
+        end if
+        write(99,'(1x,a,i6,a)') 'MAXITER=',maxiter,','
+        if (cpu_opt.gt.0.0_R8)
+     >   write(99,'(1x,a,g11.4,a)') 'CPU_OPT=',cpu_opt,','
+        write(99,'(1x,a,g11.4,a)') 'TOL_OPT=',tol_opt,','
+        if (.not.streql(hessian_approximation,'limited-memory'))
+     >   write(99,'(1x,a,a,a)')
+     >   'HESSIAN_APPROXIMATION=''',trim(hessian_approximation),''','
+        if (.not.streql(limited_memory_update_type,'bfgs'))
+     >   write(99,'(1x,a,a,a)') 'LIMITED_MEMORY_UPDATE_TYPE=''',
+     >                      trim(limited_memory_update_type),''','
+        if (nncon.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNCON=',nncon,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nncon,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'GL=',(gl(i),i=1,nncon)
+          write(99,hlp_frm) 'GU=',(gu(i),i=1,nncon)
+        end if
+        if (nnjac.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNJAC=',nnjac,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,i6,'',''))'
+          write(99,hlp_frm) 'JCOL=',(jcol(i),i=1,nnjac)
+          write(99,hlp_frm) 'JROW=',(jrow(i),i=1,nnjac)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'JJ=',(jj(i),i=1,nnjac)
+        end if
+        write(99,'(a1)') '/'
+        close(99)
+      else if (todo) then
+        write(nout(5),'(a)') 'b2.optimization.parameters'
+        write(*,*) 'No changes needed in ',trim(filename)
+      end if
+
 *   ..write new b2.user.parameters, if needed
       filename='b2.user.parameters'
       call find_file(filename,todo)
@@ -11057,9 +11130,12 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or..not.same_grid)) then
+#ifdef WG_TODO
         if(.not.allocated(iz))
-     >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
-        call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
+     >   call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstrat,natm,switch)
+        if(.not.user_initialised)
+     >   call alloc_b2mod_user(geo,mpg,ns,nlimi,nmoli,ntns)
+#endif
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -11075,6 +11151,7 @@ cxpb as they no longer necessarily point to the same species
             write(99,hlp_frm) 'LHETRGTS=',(lhetrgts(j),j=1,ntns)
           end if
         end if
+#ifdef WG_TODO
         write(99,'(1x,a,i2,a)') 'LPFRS_PMP=',LPFRS_PMP,','
         if (lpfrb_i.ne.0) then
           if (lpfrb_i.gt.0) then
@@ -11168,6 +11245,7 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-nxtr1-1),','
           end if
         end if
+#endif
         if (fusion_power.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'FUSION_POWER=',fusion_power,','
         if (Spmp_He_to_D.ne.1.0_R8)
@@ -11201,6 +11279,57 @@ cxpb as they no longer necessarily point to the same species
      ,                         (l_h_mol1(j,i),',',j=1,nmol1)
           end do
           deallocate(l_h_mol1)
+        end if
+        if (maxval(rzomp).gt.0.0_R8) then
+          do i = 1, 2
+            write(99,'(1x,a,i1,a,2(1x,g11.4,'',''))')
+     &       'RZOMP(1,',i,')=',(rzomp(j,i),j=1,2)
+          end do
+        end if
+        if (maxval(rzimp).gt.0.0_R8) then
+          do i = 1, 2
+            write(99,'(1x,a,i1,a,2(1x,g11.4,'',''))')
+     &       'RZIMP(1,',i,')=',(rzimp(j,i),j=1,2)
+          end do
+        end if
+        if (ncf.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'CFSTART=',(cfstart(i),i=1,ncf)
+          write(99,hlp_frm) 'CFEND=',(cfend(i),i=1,ncf)
+          write(99,hlp_frm) 'CFTYPE=',(cftype(i),i=1,ncf)
+          write(99,hlp_frm) 'CFDEF=',(cfdef(i),i=1,ncf)
+          do i = 1, ncf
+            if (cfdef(i).eq.4) then
+              write(99,'(1x,a,i2,a,2(1x,i5,'',''))')
+     &         'CF_REGP(',i,',1:2)=',(cf_regp(i,j),j=1,2)
+              write(hlp_frm,'(a,i4,a)')
+     &         '(1x,a,',sum(cf_regp(:,2)),'(1x,i5,'',''))'
+              write(99,hlp_frm)
+     &         'CF_REG=',(cf_reg(j),j=1,sum(cf_regp(:,2)))
+            end if
+          end do
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'CFWEIGHT=',(cfweight(i),i=1,ncf)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'l1,a)'
+          write(99,hlp_frm) 'MAPTOOMP=',(maptoomp(i),i=1,ncf)
+          write(99,hlp_frm) 'READ_SIGMA=',(read_sigma(i),i=1,ncf)
+        end if
+        if (nsigma.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NSIGMA=',nsigma,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsigma,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'SIGMA=',(sigma(i),i=1,nsigma)
+          write(99,hlp_frm) 'SCALE_SIGMA=',(scale_sigma(i),i=1,nsigma)
+        end if
+        if (nnvar.gt.0) then
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'PRIOR_TYPE=',(prior_type(i),i=1,nnvar)
+          do i = 1, nnvar
+            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
+     &       'PRIOR_PAR(',i,',1:2)=',(prior_par(i,j),j=1,2)
+            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
+     &       'PRIOR_RANGE(',i,',1:2)=',(prior_range(i,j),j=1,2)
+          end do
         end if
         if (npfrgrp.gt.0) then
           write(99,'(1x,a,i3,a)') 'NPFRGRP=',NPFRGRP,','
@@ -11248,7 +11377,6 @@ cxpb as they no longer necessarily point to the same species
         write(nout(5),'(a)') 'b2.user.parameters'
         write(*,*) 'No changes needed in ',trim(filename)
       end if
-#endif
 
 *   ..write new b2yq.dat, if needed
       filename='b2yq.dat'
