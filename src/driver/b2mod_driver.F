@@ -70,7 +70,7 @@
       use b2us_io
       use b2mod_par_opt
      & , only : npar_opt, flag_optim, read_b2mod_par_opt,
-     & par_opt_phys, x0
+     & par_opt_phys, x0, nsigma_opt
       use b2mod_b2plot
      , , only : nlimi
 
