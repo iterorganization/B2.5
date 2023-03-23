@@ -3,6 +3,8 @@
 
       subroutine b2yqdr (ninp, nout, nscr)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nscr(0:0)
@@ -15,14 +17,14 @@
 *
 *  1. purpose
 *
-*     B2YQDR is a postprocessor for b2. It provides a quick display of
+*     B2YQDR is a postprocessor for B2. It provides a quick display of
 *     the evolution data.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This subroutine provides a quick display of the evolution of
-*     a b2 calculation.
+*     a B2 calculation.
 *
 *     ...
 *
@@ -55,7 +57,7 @@
       real (kind=R8) ::
      *  z0(0:nfldmx-1), z1(0:nfldmx-1), z(0:nfldmx-1),
      &  u0(0:nfldmx-1), u1(0:nfldmx-1), zprev(0:nfldmx-1),
-     &  cutlo, x0, x1, y0, y1, t0, t1, t2, osc
+     &  x0, x1, y0, y1, t0, t1, t2, osc
       character lblmn*120, chtit(0:nfldmx-1)*60,
      &  chlab(0:nfldmx-1)*12
       real (kind=R8), allocatable :: wx(:),wy(:)
@@ -63,8 +65,8 @@
       intrinsic min, max, abs, nint, log10
       logical cfendf
       real (kind=R8) ::
-     *  scal10, machsfr
-      external subini, subend, xertst, xerrab, cfruin, cfruch,
+     *  scal10
+      external xertst, xerrab, cfruin, cfruch,
      &  cfrure, cfendf, scal10, machsfr, gacwk, gdawk, pagini, pagend,
      &  gpm_d
 
@@ -99,7 +101,7 @@
      &             1.le.nout(0).and.1.le.nout(1).and.1.le.nscr(0),
      &  'faulty argument ninp, nout, nscr')
 *   ..set cutlo to the machine safe range
-      cutlo = machsfr()
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 
 * ..first pass through data
 *   ..read header information
@@ -232,4 +234,4 @@
 *-----------------------------------------------------------------------
 *.end b2yqdr
 
-      end
+      end subroutine b2yqdr

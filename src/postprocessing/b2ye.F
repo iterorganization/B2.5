@@ -1,7 +1,7 @@
 
-*     B2YE is a post-processor for b2. It calculates statistical errors
+*     B2YE is a post-processor for B2. It calculates statistical errors
 *     based on averaged quantities collected during the averaging phase
-*     of a b2 calculation.
+*     of a B2 calculation.
 
       program b2ye
 
@@ -11,9 +11,6 @@
       use b2mod_b2cmpa
 #ifndef NO_CDF
       use b2mod_cdf
-#endif
-#ifdef B25_EIRENE
-      use eirmod_infcop
 #endif
 
       implicit none
@@ -30,43 +27,38 @@
       real (kind=R8), allocatable, save ::
      *      nemxip_av(:,:),  temxip_av(:,:),  timxip_av(:,:),
      *      nemxap_av(:,:),  temxap_av(:,:),  timxap_av(:,:),
-     *      pomxip_av(:,:),  pomxap_av(:,:),
-     *      nemxip_std(:,:), temxip_std(:,:), timxip_std(:,:),
-     *      nemxap_std(:,:), temxap_std(:,:), timxap_std(:,:),
-     *      pomxip_std(:,:), pomxap_std(:,:)
+     *      pomxip_av(:,:),  pomxap_av(:,:)
       real (kind=R8), allocatable, save ::
      *      nesepi_av(:,:),  tesepi_av(:,:),  tisepi_av(:,:),
      *      nesepm_av(:,:),  tesepm_av(:,:),  tisepm_av(:,:),
      *      nesepa_av(:,:),  tesepa_av(:,:),  tisepa_av(:,:),
      *      posepi_av(:,:),  posepm_av(:,:),  posepa_av(:,:),
-     *      ktsepi_av(:,:),  ktsepm_av(:,:),  ktsepa_av(:,:),
-     *      nesepi_std(:,:), tesepi_std(:,:), tisepi_std(:,:),
-     *      nesepm_std(:,:), tesepm_std(:,:), tisepm_std(:,:),
-     *      nesepa_std(:,:), tesepa_std(:,:), tisepa_std(:,:),
-     *      posepi_std(:,:), posepm_std(:,:), posepa_std(:,:),
-     *      ktsepi_std(:,:), ktsepm_std(:,:), ktsepa_std(:,:)
+     *      ktsepi_av(:,:),  ktsepm_av(:,:),  ktsepa_av(:,:)
       real (kind=R8), allocatable :: dum(:)
       real (kind=R8) :: tstepn(1), eps_s, tmax, meansample, t1, t2
       logical b2ye_tprf, ex
       character(5) :: rw
       integer :: io, iex, iun, idum(2), ns, varid, nbatch
-      character lble*120, lbli*120, check*10
-      character*10, save ::
-     *   b2faveri_version = '00.000.000'
+      character lbli*120, check*10
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
       intrinsic floor
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       naver = 0
       ntotdt = 0
 
-#ifdef B25_EIRENE
-      iun = newunit()
+#ifdef F2003
+      open (newunit=iun,file='b2favere',access='SEQUENTIAL',
+     .        form='FORMATTED',status='OLD',iostat=iex)
 #else
-      iun= 99
-#endif
+      iun = newunit()
       open (unit=iun,file='b2favere',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
+#endif
 
       io = iex
       read (iun,'(A10)',iostat=io) check
@@ -79,9 +71,9 @@
         call cfruch (iun, 120, lbli, 'label')
         call b2ruzd (iun, b2faveri_version, ns,
      &    zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-        call cfruin (iun, 1, idum(1), 'naver')
+        call cfruin (iun, 1, idum, 'naver')
         naver = idum(1)
-        call cfruin (iun, 1, idum(1), 'ntotdt')  
+        call cfruin (iun, 1, idum, 'ntotdt')
         ntotdt = idum(1)
       else
         write (*,*) ' file b2favere not found '
@@ -191,18 +183,18 @@
 
 *  write table of statistical errors
 
-#ifdef B25_EIRENE
-      iout = newunit()
+#ifdef F2003
+      open (newunit=iout,file='b2ye.prt')
 #else
-      iout = 99
-#endif
+      iout = newunit()
       open (unit=iout,file='b2ye.prt')
+#endif
       write (iout,'(a16,5a12)') ' variable ','mean value','t',
      .             't1','t2','eps_s'
       if (b2ye_tprf(nemxip_av(:,1),nastep)) then
         dum = nemxip_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' nemxip ', meansample, tmax,
      .               t1, t2, eps_s
       else
@@ -224,7 +216,7 @@
       if (b2ye_tprf(timxip_av(:,1),nastep)) then
         dum = timxip_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' timxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -235,7 +227,7 @@
       if (b2ye_tprf(pomxip_av(:,1),nastep)) then
         dum = pomxip_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' pomxip ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -246,7 +238,7 @@
       if (b2ye_tprf(nemxap_av(:,1),nastep)) then
         dum = nemxap_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' nemxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -257,7 +249,7 @@
       if (b2ye_tprf(temxap_av(:,1),nastep)) then
         dum = temxap_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' temxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -268,7 +260,7 @@
       if (b2ye_tprf(timxap_av(:,1),nastep)) then
         dum = timxap_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' timxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -279,7 +271,7 @@
       if (b2ye_tprf(pomxap_av(:,1),nastep)) then
         dum = pomxap_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' pomxap ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -290,7 +282,7 @@
       if (b2ye_tprf(nesepi_av(:,1),nastep)) then
         dum = nesepi_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' nesepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -301,7 +293,7 @@
       if (b2ye_tprf(tesepi_av(:,1),nastep)) then
         dum = tesepi_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' tesepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -312,7 +304,7 @@
       if (b2ye_tprf(tisepi_av(:,1),nastep)) then
         dum = tisepi_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' tisepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -323,7 +315,7 @@
       if (b2ye_tprf(posepi_av(:,1),nastep)) then
         dum = posepi_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' posepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -334,7 +326,7 @@
       if (b2ye_tprf(ktsepi_av(:,1),nastep)) then
         dum = ktsepi_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' ktsepi ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -345,7 +337,7 @@
       if (b2ye_tprf(nesepm_av(:,1),nastep)) then
         dum = nesepm_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' nesepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -356,7 +348,7 @@
       if (b2ye_tprf(tesepm_av(:,1),nastep)) then
         dum = tesepm_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' tesepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -367,7 +359,7 @@
       if (b2ye_tprf(tisepm_av(:,1),nastep)) then
         dum = tisepm_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' tisepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -378,7 +370,7 @@
       if (b2ye_tprf(posepm_av(:,1),nastep)) then
         dum = posepm_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' posepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -389,7 +381,7 @@
       if (b2ye_tprf(ktsepm_av(:,1),nastep)) then
         dum = ktsepm_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' ktsepm ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -400,7 +392,7 @@
       if (b2ye_tprf(nesepa_av(:,1),nastep)) then
         dum = nesepa_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' nesepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -411,7 +403,7 @@
       if (b2ye_tprf(tesepa_av(:,1),nastep)) then
         dum = tesepa_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' tesepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -422,7 +414,7 @@
       if (b2ye_tprf(tisepa_av(:,1),nastep)) then
         dum = tisepa_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' tisepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -433,7 +425,7 @@
       if (b2ye_tprf(posepa_av(:,1),nastep)) then
         dum = posepa_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' posepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -444,7 +436,7 @@
       if (b2ye_tprf(ktsepa_av(:,1),nastep)) then
         dum = ktsepa_av(nastep-nbatch+1:nastep,1)
         call b2ye_sterr(dum, nbatch, eps_s, tmax, t1, t2,
-     .                 meansample)
+     .                  meansample)
         write (iout,'(a16,5es12.4)') ' ktsepa ', meansample, tmax,
      .                 t1, t2, eps_s
       else
@@ -484,5 +476,5 @@
       write(*,*) 'b2ye failed because compiled with NO_CDF option'
 #endif
 
-  999 stop
+  999 stop 'b2ye'
       end program b2ye

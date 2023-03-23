@@ -1,33 +1,18 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2rugm (nget, nx, ny, isymm, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
-     &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
+      subroutine b2rugm (nget, nx, ny, isymm)
       use b2mod_types
+      use b2mod_geo
+      use b2mod_math
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
       use b2mod_grid_mapping
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny, isymm
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
-     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3), 
-     &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
-     &  wbbc(-1:nx+1,-1:ny+1,0:3), 
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
-     &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
-     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1), 
-     &  ebc(-1:nx,-1:ny,0:2)
-      type(B2GridMap) :: gmap
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -39,7 +24,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine reads from unit (nget) the specification of a b2
+*     This routine reads from unit (nget) the specification of a B2
 *     geometry and magnetic field. Unit nget must be connected to an
 *     un*formatted file.
 *     The data consists of the coordinates of the four corners of all
@@ -72,10 +57,12 @@
 *     However, there may be cuts in the geometry, in which case these
 *     identities need not hold.
 *
-*     fpsi - (-1:nx,-1:ny,0:3) real*8 array, output.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i) specifies the
+*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array, output.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
 *     potential for the magnetic field components (bx,by) at the
 *     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
@@ -124,11 +111,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
@@ -145,9 +132,9 @@
 *     pbs - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     (parameters in common:)
@@ -185,25 +172,16 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i,j, idum(0:9)
+      integer n2, ix, iy, idum(0:9)
       integer iFace, offset
       real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1, t2
+     *   t0, t1, t2
+      integer, save :: ht_style = 1
 *   ..procedures
-      intrinsic min, max, sqrt
-      real (kind=R8) ::
-     *   trim1, norm, cosang, sinang, dist
-      external subini, subend, xertst, cfrure, cfruin
+      external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
-      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -238,10 +216,10 @@
       call cfrure (nget, n2*2, qz, 'qz')
 cxpb
       if(b2fgmtry_version.ge.'03.001.000') then
-        call cfrure (nget, n2*2, qc, 'qc')
-        call cfrure (nget, n2*2, qs, 'qs')
+       call cfrure (nget, n2*2, qc, 'qc')
+       call cfrure (nget, n2*2, qs, 'qs')
       elseif(b2fgmtry_version.ge.'01.001.022') then
-        call cfrure (nget, n2, qc(-1,-1,0), 'qc')
+       call cfrure (nget, n2, qc(-1,-1,0), 'qc')
       else
        do iy = -1, ny
         do ix = -1, nx
@@ -258,7 +236,7 @@ cxpb
         enddo
        enddo
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -358,7 +336,7 @@ cxpb-end
         call cfruin (nget, 1, idum, 'redef_gmtry')
         redef_gmtry=idum(0)
         call cfrure (nget, n2*4, wbbl, 'wbbl')
-        if (redef_gmtry.eq.0) write(*,*)
+        if (redef_gmtry.eq.0) write(*,'(a)')
      .   'Warning: wbbl value read from b2fgmtry will be overwritten '//
      .   'because redef_gmtry.eq.0 !'
       else
@@ -373,6 +351,7 @@ cxpb-end
      1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
         wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
       endif
+
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then
@@ -470,31 +449,41 @@ cxpb-end
         ! Initialize ebc and ht for 'classical' grids
         do iy=-1,ny
           do ix=-1,nx
-            ! Unit vector of magnetic field in Cartesian X,Y,Z coordinates
+
             ! Unit vectors of line between W/E face centers
             t0 = (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)) 
             t1 = (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2))
             t2 = norm(t0,t1)
 
+            ! Unit vector of magnetic field in Cartesian X,Y,Z coordinates
             ebc(ix,iy,0) = bb(ix,iy,0)/bb(ix,iy,3)*t0/t2
             ebc(ix,iy,1) = bb(ix,iy,0)/bb(ix,iy,3)*t1/t2
             ebc(ix,iy,2) = bb(ix,iy,2)/bb(ix,iy,3)
 
             ! Length along faces, ht
-            ! Note: this implementation ensures backwards compatibility
-            ! Could be made exact using dist, but the loss of backwards
-            ! compatibility
             if (leftix(ix,iy).ne.-2) then
-              ht(ix,iy,0) = 
-     &          0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
-!WG-TODO              ht(ix,iy,0) = dist(ix,iy,0,2)
+              if (ht_style.eq.0) then
+                ! Implementation intended for backwards compatibility
+                ! testing
+                ht(ix,iy,0) =
+     &            0.5_R8*(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))
+              else
+                ! Precise computation
+                ht(ix,iy,0) = dist(ix,iy,0,2)
+              endif
             else
               ht(ix,iy,0) = 0.0_R8
             endif
             if (bottomiy(ix,iy).ne.-2) then
-              ht(ix,iy,1) = 
-     &        0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))
-!WG-TODO              ht(ix,iy,1) = dist(ix,iy,0,1)
+              if (ht_style.eq.0) then
+                ! Implementation intended for backwards compatibility
+                ! testing
+                ht(ix,iy,1) =
+     &            0.5_R8*(hx(bottomix(ix,iy),bottomiy(ix,iy))+hx(ix,iy))
+              else
+                ! Precise computation
+                ht(ix,iy,1) = dist(ix,iy,0,1)
+              endif
             else
               ht(ix,iy,1) = 0.0_R8
             endif
@@ -522,10 +511,12 @@ cxpb-end
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qs, gs, pbs,
      &     cell_width, cell_height)
 *   ..create B2GridMap data structure
-      call b2CreateMap(nx,ny,crx,cry,cflags,
-     &     leftix,leftiy,rightix,rightiy,
-     &     topix,topiy,bottomix,bottomiy,.true.,gmap)
-      mapInitialized = .true.
+      if (nget.ne.70) then ! skip case when reading b2fgmtry.old from b2yt
+        call b2CreateMap(nx, ny, crx, cry, cflags,
+     &     leftix, leftiy, rightix, rightiy,
+     &     topix, topiy, bottomix, bottomiy, .true., gmap, .false.)
+        mapInitialized = .true.
+      endif
 
 * ..return
       call subend ()

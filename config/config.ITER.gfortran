@@ -1,67 +1,63 @@
 # Test whether necessary variables are set
 LD_MSCL   ?= `pkg-config mscl --libs`
+ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lz -lpthread -lXrender -lbz2 -lgfortran
-LD_NAG    ?= `pkg-config nag --libs`
-NCDIR     ?= /work/imas/opt/netcdf-fortran/4.2-GCC-4.1.2
+GLI_HOME  ?= ${EBROOTGLI}
+endif
+ifdef NAGDIR
+LD_NAG    ?= -L${NAGDIR}/lib -lnag_nag
+else
+LD_NAG    ?= `pkg-config openblas --libs`
+endif
+ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
+NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
 LD_NETCDF ?= `nf-config --flibs`
+ifndef SOLPS_CPP
+DEFINES   += -DCDF_MOVIE
+INCMODS   += `pkg-config netcdf-fortran --cflags`
+endif
+else
+ifndef SOLPS_CPP
+DEFINES   += -DNO_CDF
+endif
+endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS
+DEFINES += -DNO_OPT
+ifndef SOLPS_CPP
+DEFINES += -DNO_NAG -DNO_21
+endif
 
-CPP = /lib/cpp -traditional -DNO_IEEE
-CPPOPTS = -P -I${srcdir} ${EQUIVS}
-SED = sed s:\#PREC\#:d:g
-SED =
-LINK_MOD =
+CPP = /lib/cpp -traditional
 
 ifdef USE_MPI
 FC = mpif90
-MPI_CPP ?= `pkg-config mpich2-ch3 --cflags`
-LD_MPI  ?= `pkg-config mpich2-ch3 --libs`
+else
+ifdef USE_IMPGYRO
+FC = mpif90
 else
 FC = gfortran
 endif
+endif
 
+FCOPTS  = -fPIC
+LDOPTS  = -fPIC
 ifdef SOLPS_DEBUG
-FCOPTS = -g -gdwarf-2 -fPIC -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -ffpe-trap=denormal -ftrapv
-else
-FCOPTS = -O2 -fPIC -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
+FCOPTS += -gdwarf-2
 endif
 
-DBLFC = ${FC}
+ifdef USE_MPI
+FCOPTS += ${MPI_CPP}
+endif
+
 DDBLOPTION =
-DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED =
 
-INCMOD = -B
-MOD = mod
-OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+LDLIBES =
 
-BLD = ar rucv
-
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF} -limf -lm # Intel Math must be before -lm
-
-ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
+GGD_VERSION ?= `pkg-config ggd --modversion`
+else
+GGD_VERSION ?= '0.0.0'
 endif
-
-ifdef IMAS_PREFIX
-ifndef SOLPS_CPP
-EQUIVS  += -DIMAS
-endif
-LD_UAL  ?= `pkg-config imas-lowlevel imas-gfortran --libs`
-INCMODS  = -I${IMAS_PREFIX}/include/gfortran
-IMASLIBS = ${LD_UAL} -lggd-${COMPILER} -Wl,-rpath,${EBROOTANACONDA3}/lib
-endif
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
-endif
-
-LD = $(FC)
-LDOPTS = # -Bstatic
-
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

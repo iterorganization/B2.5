@@ -1,23 +1,24 @@
 module carre_b2ag
 
+  use b2mod_types
   use b2mod_indirect
   use b2mod_interp
   implicit none
 
 contains
 
-  subroutine carre_b2agbb (nx,ny,cflag,fpsi,ffbz,wbbc,bb, & 
+  subroutine carre_b2agbb (nx,ny,cflag,fpsi,ffbz,wbbc,bb, &
        &  crx,cry,psidx,psidy,isymm)
 
     !======================================================================
     !   ..input arguments (unchanged on exit)
     integer nx, ny, isymm
     integer cflag(-1:nx,-1:ny,CARREOUT_NCELLFLAGS)
-    real*8 fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3)
-    real*8 crx(-1:nx,-1:ny,0:3),cry(-1:nx,-1:ny,0:3), & 
+    real(kind=R8) :: fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3)
+    real(kind=R8) :: crx(-1:nx,-1:ny,0:3),cry(-1:nx,-1:ny,0:3), &
          &  psidx(-1:nx,-1:ny,0:3),psidy(-1:nx,-1:ny,0:3)
     !   ..output arguments (unspecified on entry)
-    real*8, intent(out) :: bb(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3)
+    real(kind=R8), intent(out) :: bb(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3)
 
     !-----------------------------------------------------------------------
     !.documentation
@@ -72,8 +73,9 @@ contains
 
     !   ..local variables
     integer ix, iy
-    real*8 t0,psdx,psdy,babs,pi
-    real*8 centroid(0:1)
+    real(kind=R8) :: t0,babs,pi
+!   real(kind=R8) :: psdx,psdy
+    real(kind=R8) :: centroid(0:1)
     !   ..procedures
     intrinsic sqrt,sign
     !-----------------------------------------------------------------------
@@ -91,7 +93,7 @@ contains
             if (cflag(ix,iy,CELLFLAG_TYPE) == GRID_UNDEFINED) cycle
             !     ..compute magnetic field at cell center
             if (isymm.ne.0) then
-!WG         WG-TMP back to simple averaging for consistency later on (b2agmt)  
+!WG         WG-TMP back to simple averaging for consistency later on (b2agmt)
 !WG              centroid(0) = 0.25_R8*(crx(ix,iy,0) + crx(ix,iy,1) + &
 !WG     &                               crx(ix,iy,2) + crx(ix,iy,3))
 !WG              centroid(1) = 0.25_R8*(cry(ix,iy,0) + cry(ix,iy,1) + &
@@ -111,7 +113,7 @@ contains
 
             if (t0 == 0.0) cycle
 
-            bb(ix,iy,0) = & 
+            bb(ix,iy,0) = &
                  &     (fpsi(ix,iy,2)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,1))
 
             !       psdx=0.25*(psidx(ix,iy,0)+psidx(ix,iy,1)+psidx(ix,iy,2)
@@ -124,7 +126,7 @@ contains
 !WG             & sqrt(psidx(ix,iy,1)**2+psidy(ix,iy,1)**2),crx(ix,iy,1),cry(ix,iy,1), &
 !WG             & sqrt(psidx(ix,iy,2)**2+psidy(ix,iy,2)**2),crx(ix,iy,2),cry(ix,iy,2), &
 !WG             & sqrt(psidx(ix,iy,3)**2+psidy(ix,iy,3)**2),crx(ix,iy,2),cry(ix,iy,3) )/t0
-!WG         WG-TMP back to simple averaging for consistency later on (b2agmt)  
+!WG         WG-TMP back to simple averaging for consistency later on (b2agmt)
             babs = 0.25_R8*( &
      &        sqrt(psidx(ix,iy,0)**2+psidy(ix,iy,0)**2) + &
      &        sqrt(psidx(ix,iy,1)**2+psidy(ix,iy,1)**2) + &
@@ -146,11 +148,11 @@ contains
             bb(ix,iy,1) = 0.0e0
             wbbc(ix,iy,1) = 0.0e0
 
-!WG         WG-TMP back to simple averaging for consistency later on (b2agmt)  
-            bb(ix,iy,2) = & 
+!WG         WG-TMP back to simple averaging for consistency later on (b2agmt)
+            bb(ix,iy,2) = &
      &            0.25_R8*(ffbz(ix,iy,0) + ffbz(ix,iy,1) + &
      &                     ffbz(ix,iy,2) + ffbz(ix,iy,3) ) / t0
-!WG            bb(ix,iy,2) = & 
+!WG            bb(ix,iy,2) = &
 !WG     &       averageVertex(ffbz(ix,iy,0),crx(ix,iy,0),cry(ix,iy,0),  &
 !WG     &                     ffbz(ix,iy,1),crx(ix,iy,1),cry(ix,iy,1),  &
 !WG     &                     ffbz(ix,iy,2),crx(ix,iy,2),cry(ix,iy,2),  &
@@ -162,9 +164,9 @@ contains
             else
               wbbc(ix,iy,2) = ffbz(ix,iy,0)
             endif
-            bb(ix,iy,3) = & 
+            bb(ix,iy,3) = &
                  &     sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2+bb(ix,iy,2)**2)
-            wbbc(ix,iy,3) = & 
+            wbbc(ix,iy,3) = &
                  &     sqrt(wbbc(ix,iy,0)**2+wbbc(ix,iy,1)**2+wbbc(ix,iy,2)**2)
 
             if (ix.eq.nx .and. iy.lt.ny) then
@@ -186,7 +188,7 @@ contains
               else
                 wbbc(nx+1,iy,2) = ffbz(nx,iy,1)
               endif
-              wbbc(nx+1,iy,3) = & 
+              wbbc(nx+1,iy,3) = &
                  &     sqrt(wbbc(nx+1,iy,0)**2+wbbc(nx+1,iy,1)**2+ &
                  &          wbbc(nx+1,iy,2)**2)
             else if (ix.lt.nx .and. iy.eq.ny) then
@@ -208,7 +210,7 @@ contains
               else
                 wbbc(ix,ny+1,2) = ffbz(ix,ny,2)
               endif
-              wbbc(ix,ny+1,3) = & 
+              wbbc(ix,ny+1,3) = &
                  &     sqrt(wbbc(ix,ny+1,0)**2+wbbc(ix,ny+1,1)**2+ &
                  &          wbbc(ix,ny+1,2)**2)
             else if (ix.eq.nx .and. iy.eq.ny) then
@@ -230,7 +232,7 @@ contains
               else
                 wbbc(nx+1,ny+1,2) = ffbz(nx,ny,3)
               endif
-              wbbc(nx+1,ny+1,3) = & 
+              wbbc(nx+1,ny+1,3) = &
                  &     sqrt(wbbc(nx+1,ny+1,0)**2+wbbc(nx+1,ny+1,1)**2+ &
                  &          wbbc(nx+1,ny+1,2)**2)
             end if

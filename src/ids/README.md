@@ -51,7 +51,7 @@ The examples are available on ITER portal:
 In terminal navigate to directory containing the case required data files
 (b2fgmtry, b2fstate etc.) and run the following command:
 
-    $ $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot <shot> --run <run> --username <username> --device <device> --version <version> --step <number of steps>
+    $ $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot <shot> --run <run> --username <username> --device <device> --version <version> --step <number of steps>
 
 The arguments marked with < ... > are the parameters of the IDS database
 where the data is to be stored:
@@ -64,7 +64,7 @@ where the data is to be stored:
 
 Example of the command:
 
-    $ $HOME/solps-iter/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
+    $ $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod --device solps-iter --version 3 --step 250
 
 CPO2IDS code
 ------------

@@ -1,7 +1,7 @@
       module b2mod_ysmp_sdrv                                    !sv 29.05.02
 
       use b2mod_types
-	implicit none
+      implicit none
       real (kind=R8), allocatable, save ::
      * rr1(:),
      * s1(:),

@@ -7,6 +7,10 @@
       use b2mod_ysmp_sdrv
 !      use b2mod_ma28
       use b2mod_indirect
+      use b2mod_subsys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -33,7 +37,7 @@
 *     with the five-point discretisation of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on the Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *
@@ -64,15 +68,25 @@
       integer ncall, style, n2, itmax, iters, itpar, cpu
       integer, save :: nz                                      !srv 29.05.02
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end
+#else
+      real (kind=R4) :: cpu_start, cpu_end
+#endif
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8)
      *  , allocatable, save :: aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min, cpu_time
-      external subini, subend, xertst, ipgeti, ipgetr, slv5pt, iluter
+      external xertst, ipgeti, ipgetr, slv5pt, iluter
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialisation
       save ncall, style, acpar, cpu
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
@@ -125,10 +139,10 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
-        write(*,*) 
-     .   'Allocating space for solver for 7-point-stencil matrix'  !srv 11.01.00
+        write(*,*)
+     .   'Allocating space for solver for 7-point stencil matrix'  !srv 11.01.00
         if (style.eq.0) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for iluter
           allocate(aaf(1:n2*5))
           allocate(wrk0(1:n2))
@@ -136,7 +150,7 @@
           allocate(wrk2(1:n2))
           allocate(iwrk(1:1))
         else if (style.eq.1) then
-          call xerrab ('Style not applicable to 7-point-stencil!')
+          call xerrab ('Style not applicable to 7-point stencil!')
 *    ..obtain workspace for slv5pt
           allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
           allocate(wrk0(1:n2))
@@ -144,13 +158,20 @@
           allocate(wrk2(1:1))
           allocate(iwrk(1:n2))
         else if (style.eq.2) then
+          continue
+        else if (style.eq.3) then
+          continue
         endif
-        write(*,*) 
-     .   'Allocated space for solver for 7-point-stencil matrix'   !srv 11.01.00
+        write(*,*)
+     .   'Allocated space for solver for 7-point stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -169,20 +190,40 @@
      2   aa7(-1,-1,1), aa7(-1,-1,2), aa7(-1,-1,3),                 !srv 11.01.00
      .   resfun, corfun, name)
        else if (style.eq.3) then                                   !srv 29.05.02 {
+!#ifdef _OPENMP
+!        cpu_start = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_start)
+!#endif
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
-     *                 indexes, iasave, jasave, name)
+     *                 indexes, iasave, jasave)
+!#ifdef _OPENMP
+!        cpu_end = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_end)
+!#endif
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_7: nz = ',nz
         call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
+!#ifdef _OPENMP
+!        cpu_start = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_start)
+!#endif
         call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)       !srv 29.05.02 }
+!#ifdef _OPENMP
+!        cpu_end = omp_get_wtime()
+!#else
 !        call cpu_time(cpu_end)
+!#endif
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &                                  cpu_end-cpu_start
 
@@ -197,14 +238,13 @@
       end subroutine b2ux7p
 
       subroutine storage_7 (nx, ny, aa7, nnz, ip, ja, a, k,          !srv 29.05.02
-     *                      indexes, ipsave, jasave, name)
+     *                      indexes, ipsave, jasave)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *  ..input
       integer nx, ny, nnz
       real (kind=R8) :: aa7(-1:nx,-1:ny,-3:3)
-      character*(*) name
 *  ..output
       integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
      *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)
@@ -311,4 +351,4 @@
        enddo
       endif
 
-      end                                                         !srv 29.05.02
+      end subroutine storage_7                                    !srv 29.05.02

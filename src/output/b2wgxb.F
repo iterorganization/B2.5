@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmgs
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -18,7 +19,7 @@
 *
 *  1. purpose
 *
-*     B2WGXB plots an outline of the b2 mesh on the physical domain.
+*     B2WGXB plots an outline of the B2 mesh on the physical domain.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -63,7 +64,7 @@
       real (kind=R8) ::
      *   xlohi(0:1), ylohi(0:1)
 *   ..procedures
-      external subini, subend, xertst, gpl_d
+      external xertst, gpl_d
 
 *-----------------------------------------------------------------------
 *.computation
@@ -160,4 +161,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgxb
 
-      end
+      end subroutine b2wgxb

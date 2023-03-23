@@ -1,75 +1,40 @@
 # Test whether necessary variables are set
-ifndef LD_NETCDF
-  $(error LD_NETCDF not defined)
-endif
-ifndef LD_MSCL
-  $(error LD_MSCL not defined)
-endif
-ifndef LD_NCARG
-  $(error LD_NCARG not defined)
-endif
-ifndef LD_NAG
-  $(error LD_NAG not defined)
-endif
+IRISLIB     ?= /fusion/projects/codes/solps/SOLPS-ITER/public_lib/GA.ifort64
+MSCL_ROOT   ?= ${IRISLIB}
+NCARG_ROOT  ?= ${IRISLIB}/NCARG
+NAGDIR      ?= ${IRISLIB}
+NCDIR       ?= ${NETCDF_DIR}
+MDSPLUS_DIR ?= ${IRISLIB}/mdsplus
+LD_NAG      ?= -L${NAGDIR} -lnag
+LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -lX11 -lm
+LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
+GLI_HOME    ?= ${IRISLIB}/gli/src
 
-EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS
-
-CPP      = /lib/cpp -C -traditional
-CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
-SED      = sed s:\#PREC\#:d:g
-SED      =
-LINK_MOD = 
+CPP      = /lib/cpp -traditional
 
 ifdef USE_MPI
 FC       = mpif90
 else
+ifdef USE_IMPGYRO
+FC       = mpif90
+else
 FC       = ifort
 endif
+endif
 
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD   = -I
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -vec_report0
+FCOPTS   = -O2
 endif
-
-DBLFC    = ${FC}
-DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
-
-INCMOD   = -I
-MOD      = mod
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-
-BLD      = ar rucv
-
-GRLIBES  = ${LD_NCARG} ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG}
-
-ifdef LD_CATALYST
-CXXFLAGS = -std=c++11 $(shell paraview-config --include)
+ifdef USE_OPENMP
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
 endif
-
-ifdef IMAS_PREFIX
-ifndef SOLPS_CPP
-EQUIVS    += -DIMAS
-endif
-LD_UAL    ?= `pkg-config imas-lowlevel imas-ifort --libs`
-INCMODS   += -I${IMAS_PREFIX}/include/ifort
-IMASLIBS   = ${LD_UAL} -lggd-ifort
-endif
-
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
-ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
-endif
-
-LD       = ${FC}
-LDOPTS   = -i_dynamic
-
-LCPP     = ${LD_SONNET}
 
 
 #!!!Local Variables:

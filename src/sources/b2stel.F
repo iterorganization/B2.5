@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stel (nCv, nFc, nVx, ns, ismain, BoRiS,
+      subroutine b2stel (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
 !      use b2mod_diag
@@ -29,11 +29,10 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2stel
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
-      real (kind=R8) ::
-     *  BoRiS
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -59,9 +58,9 @@
 
 #     include <DIMENSIONS.F>
 *   ..local variables
-      integer iCv, is, js, k
+      integer iCv, is!, k
 !WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
-      character chns*3, chk*1                                           !srv 30.06.08
+      character chns*3!, chk*1                                          !srv 30.06.08
       real (kind=R8) ::
      *  rf0, t0, t1, tkin, t1i, t1n
       real (kind=R8) :: wrk0(nCv)
@@ -71,15 +70,9 @@
      &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
      &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
-      intrinsic abs
-      logical lnext
-      real (kind=R8) ::
-     *   samax, roxa
-      external subini, subend, xertst, ipgeti, ipgetr, samax, sfill
+      real (kind=R8) :: samax
+      external xertst, ipgeti, ipgetr, samax, sfill
       external b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.1.0e-3_R8
-      roxa(iCv,is) = am(is)*mp*pl%na(iCv,is)
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -89,7 +82,7 @@
 *   ..subprogram start-up calls
       call subini ('b2stel')
 *   ..set internal parameters on first call
-*   ..identify impurity homonuclear sequences
+*   ..identify impurity isonuclear sequences
 !WG_TODO       nimp_tmp=0
 !WG_TODO       jimp_tmp=0
 !WG_TODO       do is = 1, nspecies !{
@@ -101,6 +94,8 @@
 *   ..test nCv, ns
       call xertst (0.le.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     * 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if (ncall_b2stel.lt.3) then
 *    ..test sign of vol
@@ -141,8 +136,6 @@
       call sfill (nCv*4, 0.0_R8, shi0_rec, 1)
       call sfill (nCv*4, 0.0_R8, shn0_ion, 1)
       call sfill (nCv*4, 0.0_R8, shn0_rec, 1)
-
-
 *   ..compute sources due to ionisation
       rsanareg=0.0_R8
       rsahireg=0.0_R8
@@ -173,7 +166,7 @@
            rsanareg(mpg%cvReg(iCv),is)=rsanareg(mpg%cvReg(iCv),is)+
      1      t0*pl%na(iCv,is)
 *       ..compute atom heat source
-           t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+           t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &        ((am(is)+am(is+1))/2.0_R8)*(mp/2.0_R8)*
      &        ((pl%ua(iCv,is)-pl%ua(iCv,is+1))**2)
            if (switch%tn_style.eq.0.or.zn(is).ne.1
@@ -204,8 +197,6 @@
 !WG_TODO           rsahi(iCv,is) = t1
           endif
         enddo
-
-
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
@@ -299,7 +290,7 @@
 *       ..compute atom heat source
            if (switch%tn_style.eq.0.or.zn(is).ne.1
      &                             .or..not.is_neutral(is-1)) then      !! combined ion-neutral, and/or non-hydrogenic (default)
-             t1 = t0*pl%na(iCv,is)*(1.0_R8-BoRiS)*
+             t1 = t0*pl%na(iCv,is)*(1.0_R8-switch%BoRiS)*
      &         ((am(is)+am(is-1))/2.0_R8)*(mp/2.0_R8)*
      &         ((pl%ua(iCv,is)-pl%ua(iCv,is-1))**2)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1
@@ -308,7 +299,7 @@
            elseif (switch%tn_style.eq.1) then !! pure ion
              !! case of hydrogenic atoms
              t1i = t0*pl%na(iCv,is)*(-1.5_R8*pl%ti(iCv))*
-     *         (1.0_R8-BoRiS)
+     *         (1.0_R8-switch%BoRiS)
              shi0_rec(iCv,0) = shi0_rec(iCv,0)+(1.0_R8+rf0)*t1i
              shi0_rec(iCv,3) = shi0_rec(iCv,3)-
      *                         rf0*t1i/(dv%ni(iCv,0)*pl%ti(iCv))
@@ -327,15 +318,13 @@
      *                         pl%tn(iCv))
            endif
 !WG_TODO           rrahi(iCv,is) = t1
-
-
            rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
-           if(switch%fix_recomb_energy.ne.0) then
-c the default treatment is to have the entire ionization potential
+           if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
+c the default treatment is to have the entire ionisation potential
 c difference lost, and the only additional cooling rate correction
 c to be the Bremsstrahlung
-c this treatment changes this --- the ionization potential difference
+c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
@@ -351,8 +340,6 @@ c accounted for)
            endif
          endif
         enddo
-
-
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
@@ -360,7 +347,7 @@ c accounted for)
            rf0 = switch%b2stel_rg1 +
      &           switch%b2stel_rxm3*max(0.0_R8,-rt%rlra(iCv,1,is))
 *       ..compute rate for is->is-1
-           t0 =switch%b2stel_phm0*
+           t0 = switch%b2stel_phm0*
      &              rtw%rra(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*      !srv 05.06.18
      &         pl%na(iCv,is)*geo%cvHz(iCv)                          !srv 09.01.01
 *       ..compute parallel momentum source
@@ -397,8 +384,8 @@ c accounted for)
           rf0 = switch%b2stel_rxm4*max(0.0_R8,rt%rlqa(iCv,1,is))
 *      ..compute electron cooling rate for is->any
 *      ..includes line radiation, bremsstrahlung and ionisation contributions
-*      ..if adpak_used, also contains recombination and CX terms
-          t0 = switch%b2stel_phm0*(rtw%rqa(iCv,is)+rtw%rqa_ra(iCv,is))
+*      ..for adpak rates, also contains recombination and CX terms
+          t0 = switch%b2stel_phm0*(rtw%rqa(iCv,is)+rtw%rqr(iCv,is))
      &         *geo%cvVol(iCv)*dv%ne(iCv)*pl%na(iCv,is)    !srv 05.06.18
 *      ..compute electron heat sink
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
@@ -551,16 +538,18 @@ cdjm Jan2017 Keep linearised sources for balance
       return
 
 *-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Consider to calculate sna0, she0, shi0 over (-1:nx,-1:ny)
-*     instead of over (0:nx-1,0:ny-1).
-*xpb  Went back to using just (0:nx-1,0:ny-1). Otherwise sources (in
-*xpb  particular recombination sources) in guard cells are not balanced
-*xpb  by anything and this can lead to particle accumulation and
-*xpb  temperature collapse.
-
-*-----------------------------------------------------------------------
 *.end b2stel
+
+      contains
+
+      function roxa(iCv,is)
+      implicit none
+      real (kind=R8) :: roxa
+      integer, intent(in) :: iCv, is
+
+      roxa = am(is)*mp*pl%na(iCv,is)
+
+      return
+      end function roxa
 
       end subroutine b2stel

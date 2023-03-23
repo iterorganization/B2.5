@@ -19,7 +19,7 @@
 *     Attention! There is no multiplication by vol/hx. 
 *     It will be done later in B2XPIF.
 *     ------------------------------------------------------------------
-      integer ic, is
+      integer is
       integer, save :: ncall = 0
       external sfill
 *     ------------------------------------------------------------------

@@ -7,6 +7,9 @@
       use b2mod_exp_file_names
       use b2mod_par_opt
      , , only : par_opt_phys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
 #ifdef WINDOWS
       USE DFLIB ! IGNORE
 #endif
@@ -70,15 +73,30 @@
 
 *   ..local variables
 #ifdef WINDOWS
-      integer(2) ::  iresult
-      logical(4) ::  lresult
+      integer(2) :: iresult
+      logical(4) :: lresult
+#else
+#ifdef NAGFOR
+      integer status, ierror
 #endif
-      logical(4) ::  b2fstate_exist
+#endif
+      logical(4) :: b2fstate_exist
       integer npoint
-      real (kind=R8) :: cpu_s, cpu_f, dif, fcain, fab, shift(1:2)
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_s, cpu_f
+#else
+      real (kind=R4) :: cpu_s, cpu_f
+#endif
+      real (kind=R8) :: dif, fcain, fab, shift(1:2)
       character*12 hlp_frm
 *   ..procedures
       external subini, subend
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -125,7 +143,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(70) par_opt_phys
       close(70)
 
+#ifdef _OPENMP
+      cpu_s = omp_get_wtime()
+#else
       call cpu_time(cpu_s)
+#endif
 
 #ifdef WINDOWS
       iresult = RUNQQ ('B2mnOpt','')
@@ -135,14 +157,27 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
       endif
 #else
+#ifdef NAGFOR
+      call system('./B2mnOpt.exe', status, ierror)
+#else
       call system('./B2mnOpt.exe')
+#endif
       inquire(file='b2fstate',exist=b2fstate_exist)
       if(b2fstate_exist) then
+#ifdef NAGFOR
+       call system('rm b2fstati', status, ierror)
+       call system('cp b2fstate b2fstati', status, ierror)
+#else
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
+#endif
       endif
 #endif
+#ifdef _OPENMP
+      cpu_f = omp_get_wtime()
+#else
       call cpu_time(cpu_f)
+#endif
       write(71,"(' b2obfn takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
       call read_results
@@ -358,14 +393,14 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       logical(1) :: l_ne_outer_mdpl
       character(*) :: fnm_ne_outer_mdpl
       integer :: ny, npoint, ndat_ne
-      real (kind=R8) ::  func,
+      real (kind=R8) :: func,
      &   cy_ne_outer_mdpl(-1:ny),
      &   ne_outer_mdpl_mod(-1:ny), b_ne_outer_mdpl_mod(-1:ny),
      & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
      & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)
 
-      integer ::  iy
-      real (kind=R8) ::  dif, nemod, dseval
+      integer :: iy
+      real (kind=R8) :: dif, nemod, dseval
       character(128) :: fmt
 
       fmt="(8x,'y',7x,1x,'"//trim(fnm_ne_outer_mdpl)//"_exp'"//
@@ -374,8 +409,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         call approx_profile_mod(ny+2,
      &                 cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      &   b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
-!         write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
-!     &   'ne_outer_mdpl_mod',8x,'dif')")
         write(71,trim(fmt))
         do iy=1,ndat_ne
           if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy)

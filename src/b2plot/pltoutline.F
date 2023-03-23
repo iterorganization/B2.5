@@ -156,8 +156,11 @@ c
       use b2mod_b2plot_debug
 #ifdef B25_EIRENE
       use eirmod_ctrig
+#endif
       implicit none
-      integer is,i
+      integer is
+#ifdef B25_EIRENE
+      integer i
       real (kind=R8) ::
      * fmax,fmay,fmmax,dfx,dfy,uuu,vvv,r,sb,cb,rl,rd,brx,bzy,
      * uu1,vv1,uu2,vv2

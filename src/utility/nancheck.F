@@ -8,7 +8,7 @@
        my_isnan=.false.
       endif
       return
-      end function
+      end function my_isnan
 #endif
 
       subroutine nancheck(nCv, data, label)
@@ -39,5 +39,5 @@
       enddo
 
       return
-      end
+      end subroutine nancheck
 

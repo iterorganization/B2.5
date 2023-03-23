@@ -9,17 +9,19 @@
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_subsys
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       integer ncidcdf,istep
 #ifndef NO_CDF
+#     include <netcdf.inc>
       integer :: iret, start(4), count(4), varid
       real (kind=R8) :: time(1)
       real (kind=R8), allocatable :: dummy(:,:,:)
 #endif
-      external subini, subend, xertst
+      external xertst
 
       call subini ('get_from_movie_cdf')
       call xertst (0.lt.ncidcdf, 'faulty input ncidcdf')
@@ -71,28 +73,28 @@
       iret=nf_get_vara_double(ncidcdf,varid,start,count,na)
       call check_cdf_status(iret)
       if(natmi.gt.0) then
-	allocate(dummy(0:nx+1,0:ny+1,1:natmi))
-	count(3)=natmi
-	write(*,*) 'Getting dab2 for slice ',istep
-	iret=nf_inq_varid(ncidcdf,'dab2',varid)
-	call check_cdf_status(iret)
-	iret=nf_get_vara_double(ncidcdf,varid,start,count,dab2)
-	call check_cdf_status(iret)
-!WG_TODO	dab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
-	deallocate(dummy)
+        allocate(dummy(0:nx+1,0:ny+1,1:natmi))
+        count(3)=natmi
+        write(*,*) 'Getting dab2 for slice ',istep
+        iret=nf_inq_varid(ncidcdf,'dab2',varid)
+        call check_cdf_status(iret)
+        iret=nf_get_vara_double(ncidcdf,varid,start,count,dab2)
+        call check_cdf_status(iret)
+!WG_TODOdab2(0:nx+1,0:ny+1,1:natmi,1)=dummy(0:nx+1,0:ny+1,1:natmi)
+        deallocate(dummy)
       endif
       if(nmoli.gt.0) then
-	allocate(dummy(0:nx+1,0:ny+1,1:nmoli))
-	count(3)=nmoli
-	write(*,*) 'Getting dmb2 for slice ',istep
-	iret=nf_inq_varid(ncidcdf,'dmb2',varid)
-	call check_cdf_status(iret)
-	iret=nf_get_vara_double(ncidcdf,varid,start,count,dummy)
-	call check_cdf_status(iret)
-!WG_TODO	dmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
-	deallocate(dummy)
+        allocate(dummy(0:nx+1,0:ny+1,1:nmoli))
+        count(3)=nmoli
+        write(*,*) 'Getting dmb2 for slice ',istep
+        iret=nf_inq_varid(ncidcdf,'dmb2',varid)
+        call check_cdf_status(iret)
+        iret=nf_get_vara_double(ncidcdf,varid,start,count,dummy)
+        call check_cdf_status(iret)
+!WG_TODOdmb2(0:nx+1,0:ny+1,1:nmoli,1)=dummy(0:nx+1,0:ny+1,1:nmoli)
+        deallocate(dummy)
       endif
 #endif
       call subend ()
       return
-      end
+      end subroutine get_from_movie_cdf

@@ -1,17 +1,20 @@
-      subroutine b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
+      subroutine b2yt_wall_init
+     . (nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
       use b2mod_types
       use b2mod_geo2
       use b2mod_wall
       use b2mod_wall2
       use b2mod_layer
       use b2mod_b2cmpb
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
       integer nncut1, nx1, ny1, nncut, nx, ny, nlim, nsts
-      integer ix, iy, ixn, iyn, is, ibnd, ibnd1, idir, ireg, 
+      integer ix, iy, ixn, iyn, is, ibnd, ibnd1, idir, ireg,
      .        nxtl1, nxtr1
       real (kind=R8) :: ub, lb, ub1, lb1
-      external subini, subend, xertst, get_nxt
+      real (kind=R8) :: rratio
+      external xertst, get_nxt, rratio
 
       call subini('b2yt_wall_init')
 #ifdef WG_TODO
@@ -28,7 +31,7 @@ cxpb We must avoid corner cells and dead cells
       nsegments = 0
 
 cxpb  We follow the same order as in init_wall
-cxpb  Starting for HFS lower corner and going clockwise around the plasma
+cxpb  Starting for lower left corner and going clockwise around the plasma
 cxpb  keeping the plasma to our right (but we are moving in the guard cells!)
 cxpb  First fill up the b2cmpb needed data
       cbirso = 0
@@ -42,19 +45,19 @@ cxpb  First fill up the b2cmpb needed data
       call xertst (cbnrso+cbnrno+cbnrwe+cbnrea.le.cbnrmx,
      &  'faulty parameter cbnrmx')
       if (nncut.eq.1) then
-        cbrbrk(cbirso) = real(leftcut1(1))/real(nx1)
-        cbrbrk(cbirso+1) = real(rightcut1(1))/real(nx1) 
+        cbrbrk(cbirso) = rratio(leftcut1(1),nx1)
+        cbrbrk(cbirso+1) = rratio(rightcut1(1),nx1)
       else if (nncut.eq.2) then
         call b2yt_nxt(nx1,nxtl1,nxtr1)
-        cbrbrk(cbirso) = real(leftcut1(1))/real(nx1)
-        cbrbrk(cbirso+1) = real(rightcut1(2))/real(nx1) 
-        cbrbrk(cbirso+2) = real(nxtl1)/real(nx1) 
-        cbrbrk(cbirso+3) = real(leftcut1(2))/real(nx1) 
-        cbrbrk(cbirso+4) = real(rightcut1(2))/real(nx1) 
+        cbrbrk(cbirso  ) = rratio(leftcut1(1),nx1)
+        cbrbrk(cbirso+1) = rratio(rightcut1(2),nx1)
+        cbrbrk(cbirso+2) = rratio(nxtl1,nx1)
+        cbrbrk(cbirso+3) = rratio(leftcut1(2),nx1)
+        cbrbrk(cbirso+4) = rratio(rightcut1(2),nx1)
       endif
       cbrbrk(cbirso+cbnrso-1) = 2.00_R8
       if (nncut.eq.2) then
-        cbrbrk(cbirno) = real(nxtl1)/real(nx1) 
+        cbrbrk(cbirno) = rratio(nxtl1,nx1)
       endif
       cbrbrk(cbirno+cbnrno-1) = 2.00_R8
       cbrbrk(cbirwe:cbirwe+cbnrwe-1) = 2.00_R8
@@ -84,14 +87,14 @@ cxpb  Northern boundaries (excluding diverted island)
             plate_area1(nbnd1) = gs1(topix1(ix,iy),topiy1(ix,iy),1)
             ixn = leftix1(ix,iy)
             iyn = leftiy1(ix,iy)
-            if (leftix1(ixn,iyn).eq.-2) then 
+            if (leftix1(ixn,iyn).eq.-2) then
               idir = 3
               ixn = leftix1(topix1(ix,iy),topiy1(ix,iy))
               iyn = leftiy1(topix1(ix,iy),topiy1(ix,iy))
               wall_end1(nsegments) = nbnd1
               nsegments = nsegments + 1
               wall_begin1(nsegments) = nbnd1+1
-            endif 
+            endif
           case(1)
             plate_area1(nbnd1) = gs1(ix,iy,0)
             r1(nbnd1)=crx1(ix,iy,2)
@@ -107,7 +110,7 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_end1(nsegments) = nbnd1
               nsegments = nsegments + 1
               wall_begin1(nsegments) = nbnd1+1
-            endif 
+            endif
           case(2)
             plate_area1(nbnd1) = gs1(ix,iy,1)
             r1(nbnd1)=crx1(ix,iy,0)
@@ -152,28 +155,28 @@ cxpb  We now identify the b2ah region numbers
         iy = imapy1(ibnd)
         if(iy.eq.ny1) then
           ireg = cbirno
-          do while (cbrbrk(ireg)*nx1.lt.ix+0.5_R8 .and. 
+          do while (cbrbrk(ireg)*nx1.lt.ix+0.5_R8 .and.
      &                     ireg.le.cbirno+cbnrno-1)
             ireg = ireg + 1
           enddo
           imapreg(ibnd) = ireg
         elseif (ix.eq.nx1) then
           ireg = cbirea
-          do while (cbrbrk(ireg)*ny1.lt.iy+0.5_R8 .and. 
+          do while (cbrbrk(ireg)*ny1.lt.iy+0.5_R8 .and.
      &                     ireg.le.cbirea+cbnrea-1)
             ireg = ireg + 1
           enddo
           imapreg(ibnd) = ireg
         elseif (iy.eq.-1) then
           ireg = cbirso
-          do while (cbrbrk(ireg)*nx1.lt.ix+0.5_R8 .and. 
+          do while (cbrbrk(ireg)*nx1.lt.ix+0.5_R8 .and.
      &                     ireg.le.cbirso+cbnrso-1)
             ireg = ireg + 1
           enddo
           imapreg(ibnd) = ireg
         elseif (ix.eq.-1) then
           ireg = cbirwe
-          do while (cbrbrk(ireg)*ny1.lt.iy+0.5_R8 .and. 
+          do while (cbrbrk(ireg)*ny1.lt.iy+0.5_R8 .and.
      &                     ireg.le.cbirwe+cbnrwe-1)
             ireg = ireg + 1
           enddo
@@ -182,7 +185,7 @@ cxpb  We now identify the b2ah region numbers
           imapreg(ibnd) = -1
         endif
       enddo
-      
+
       do is = nsegments+1, nwall_segments
         wall_begin1(is) = nbnd1+1
       enddo
@@ -190,10 +193,10 @@ cxpb  We now identify the b2ah region numbers
       call xertst (nbnd1.le.2*(DEF_NXD+2)+(DEF_NCUT+2)*(DEF_NYD+2),
      & 'Increase size of B2 contribution to nwall in b2mod_wall')
 #endif
- 
+
 cxpb We map per segment
 cxpb We interpolate according to the area along the segment
-      do is= 1, nsegments
+      do is = 1, nsegments
         acc_area(wall_begin(is)) = plate_area(wall_begin(is))
         do ibnd = wall_begin(is)+1, wall_end(is)
           acc_area(ibnd) = acc_area(ibnd-1) + plate_area(ibnd)
@@ -210,9 +213,9 @@ cxpb We interpolate according to the area along the segment
           acc_area1(ibnd) = acc_area1(ibnd)/acc_area1(wall_end1(is))
         end do
         acc_area1(wall_end1(is)) = 1.0_R8
-cxpb The contr_area(ibnd,ibnd1) contains the fraction of the plate area from 
+cxpb The contr_area(ibnd,ibnd1) array contains the fraction of the plate area from
 cxpb old wall element ibnd that is to be found as part of new wall element ibnd1
-cxpb lb and ub and lower and upper interval bounds
+cxpb lb and ub are lower and upper interval bounds
         ibnd = wall_begin(is)
         lb = 0.0_R8
         ibnd1 = wall_begin1(is)
@@ -242,11 +245,11 @@ cxpb lb and ub and lower and upper interval bounds
             contr_area(ibnd,ibnd1) = (ub1-lb)/(ub-lb)
             ibnd1 = ibnd1 + 1
             lb1 = ub1
-          else if (lb.gt.lb1 .and. ub.eq.ub1) then 
+          else if (lb.gt.lb1 .and. ub.eq.ub1) then
             contr_area(ibnd,ibnd1) = 1.0_R8
             ibnd = ibnd + 1
             lb = ub
-            ibnd1 = ibnd1 + 1 
+            ibnd1 = ibnd1 + 1
             lb1 = ub1
           end if
         end do
@@ -256,8 +259,9 @@ cxpb lb and ub and lower and upper interval bounds
       return
       end subroutine b2yt_wall_init
 
-      subroutine b2yt_wall(nx1,ny1,ns,ns1,natm,natm1,nmol,nmol1,nion,
-     *   is_neutral1,iatm1,imol1,bundle_frac,zn1,l_chem_sput,
+      subroutine b2yt_wall(ns,ns1,
+     *   natm,natm1,nmol,nmol1,nion,nion1,
+     *   is_neutral1,iatm1,imol1,iion1,bundle_frac,zn1,l_chem_sput,
      *   itrack1,itrack2,itrack3)
       use b2mod_types
       use b2mod_wall
@@ -266,38 +270,34 @@ cxpb lb and ub and lower and upper interval bounds
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_sputter
+      use b2mod_subsys
 #     include "DIMENSIONS.F"
       implicit none
 
-      integer nx1, ny1, ns, ns1, natm, natm1, nmol, nmol1, nion
-      integer nwrite
+      integer ns, ns1, natm, natm1, nmol, nmol1, nion, nion1
       integer itrack1, itrack2, itrack3
-      integer iatm1(natm), imol1(nmol)
+      integer iatm1(natm), imol1(nmol), iion1(nion)
       real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1), zn1(0:ns1-1)
       logical is_neutral1(0:ns1-1), l_chem_sput
 
-      integer ix, iy, iz, is, ibnd, ibnd1, imax, i, itrack
+      integer iz, is, ibnd, ibnd1, imax, i
       integer ibegin, iend, iw, iw1, ifail
-      integer ndepth1
-      integer nsm, natmm, nbndm, nmolm, nwallm
+      integer nsm, natmm, nmolm, nionm, nwallm
       real (kind=R8) :: sum
       real (kind=R8), allocatable :: wall_data(:,:)
       real (kind=R8), allocatable :: data_tmp(:)
-      real (kind=R8) :: xx(nwall+2), xx1(nwall+2) 
+      real (kind=R8) :: xx(nwall+2), xx1(nwall+2)
       real (kind=R8) :: track_data(nwall), track_source(nwall)
       real (kind=R8), allocatable :: yy(:), yy1(:)
       real (kind=R8), allocatable :: fa(:,:), fx(:), d(:)
       real (kind=R8) :: fb(3,ndepth), fc(3)
-      logical wall_namelist_used, layer_model
-      save layer_model
-      data layer_model/.false./
+      logical wall_namelist_used
       character*400 line
       character*256 filename
-      character*17 numstr
       logical found
 
-      intrinsic mod, max, min, sqrt
-      external xertst, subini, subend
+      intrinsic max
+      external xertst
       external convert_bundle_r
       external E01BEF, E01BFF
 
@@ -315,17 +315,17 @@ cxpb lb and ub and lower and upper interval bounds
         call ipgeti('b2ytdr_ndepth1', ndepth1)
         call xertst(ndepth1.le.ndepth .and. ndepth1.ge.1,
      .   'Invalid array size NDEPTH1!')
-        call alloc_b2mod_wall2(ns1,natm1,nmol,nion,ndepth1)
+        call alloc_b2mod_wall2(ns1,natm1,nmol1,nion1,ndepth1)
         if (plate_model.eq.0) then
-          write(*,*) 
+          write(*,*)
      .     'Using O-D time-independent plate temperature model'
         else if (plate_model.eq.1) then
           write(*,*) 'Using 1-D time-dependent plate temperature model'
-          call xertst (ndepth1.gt.1, 
+          call xertst (ndepth1.gt.1,
      .     'Inconsistent values of ndepth1 and plate_model')
         else if (plate_model.eq.2) then
           write(*,*) 'Using 2-D time-dependent plate temperature model'
-          call xertst (ndepth1.gt.1, 
+          call xertst (ndepth1.gt.1,
      .     'Inconsistent values of ndepth1 and plate_model')
         else
           call xerrab ('Invalid value for b2stbr_plate_model')
@@ -359,7 +359,7 @@ cxpb For mixed materials, if unspecified, use normal material constituents
           layer_nzconstituents(ibnd,1:layer_nconstituents(ibnd))=
      1     matsurf_nzconstituents(ibnd,1:layer_nconstituents(ibnd))
           layer_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))=
-     1     matsurf_nrelconstituents(ibnd,1:layer_nconstituents(ibnd))
+     1     matsurf_relconstituents(ibnd,1:layer_nconstituents(ibnd))
         else
           layer_model = .true.
         end if
@@ -377,9 +377,9 @@ cxpb Fill up the new wall arrays
       nsm = max(ns,ns1)
       natmm = max(natm,natm1)
       nmolm = max(nmol,nmol1)
-      nbndm = max(nbnd,nbnd1)
+      nionm = max(nion,nion1)
       nwallm= max(nwall,nwall1)
-      allocate(wall_data(nwall,0:nsm-1+natmm+nmolm+DEF_NION))
+      allocate(wall_data(nwall,0:nsm-1+natmm+nmolm+nionm))
       allocate(data_tmp(nwallm))
 cxpb We map per segment
 cxpb We interpolate according to the area along the segment
@@ -390,7 +390,7 @@ cxpb the old element with the largest areal contribution
         do ibnd1 = wall_begin1(is), wall_end1(is)
           imax = wall_begin(is)
           do ibnd = wall_begin(is)+1, wall_end(is)
-            if (contr_area(ibnd,ibnd1).gt.contr_area(imax,ibnd1)) 
+            if (contr_area(ibnd,ibnd1).gt.contr_area(imax,ibnd1))
      >       imax = ibnd
           end do
           surface_material_name1(ibnd1) = surface_material_name(imax)
@@ -401,7 +401,7 @@ cxpb the old element with the largest areal contribution
           layer_nzconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
      1     matsurf_nzconstituents(imax,1:layer_nconstituents1(ibnd1))
           layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1)) =
-     1     matsurf_nrelconstituents(imax,1:layer_nconstituents1(ibnd1))
+     1     matsurf_relconstituents(imax,1:layer_nconstituents1(ibnd1))
 cxpb  normalise the layer constituents relative concentrations
           sum = 0.0_R8
           do i = 1, layer_nconstituents1(ibnd1)
@@ -440,10 +440,11 @@ cxpb Copy data arrays into new geometry
         do iw1 = 1, nbnd1
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .     zn1(sput_dst)
+     .     nint(zn1(sput_dst))
         end do
+        track_source = 0.0_R8
         do iw = 1, nbnd
-          track_source(iw) = 
+          track_source(iw) =
      .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+1)
         end do
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
@@ -470,14 +471,15 @@ cxpb Copy data arrays into new geometry
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           if (itrack2.eq.2) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst2)
+     .       nint(zn1(sput_dst2))
           else if (itrack2.eq.1) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst)
+     .       nint(zn1(sput_dst))
           end if
         end do
+        track_source = 0.0_R8
         do iw = 1, nbnd
-          track_source(iw) = 
+          track_source(iw) =
      .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+2)
         end do
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
@@ -504,17 +506,18 @@ cxpb Copy data arrays into new geometry
           layer_nconstituents1(iw1) = layer_nconstituents1(iw1)+1
           if (itrack3.eq.3) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst3)
+     .       nint(zn1(sput_dst3))
           else if (itrack3.eq.2) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst2)
+     .       nint(zn1(sput_dst2))
           else if (itrack3.eq.1) then
             layer_nzconstituents1(iw1,layer_nconstituents1(iw1)) =
-     .       zn1(sput_dst)
+     .       nint(zn1(sput_dst))
           endif
         end do
+        track_source = 0.0_R8
         do iw = 1, nbnd
-          track_source(iw) = 
+          track_source(iw) =
      .     layer_nrelconstituents(iw,matsurf_nconstituents(iw)+3)
         end do
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
@@ -533,57 +536,65 @@ cxpb Copy data arrays into new geometry
      .   layer_nrelconstituents1(ibnd1,1:layer_nconstituents1(ibnd1))/
      .   sum
       end do
-      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+      wall_data = 0.0_R8
+      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      . physical_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     . iatm1,imol1,iion1,nwall,nwall1,
      . wall_data,contr_area,plate_area)
-      physical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
-      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+      physical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
+      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      . physical_sputtering_energy(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     . iatm1,imol1,iion1,nwall,nwall1,
      . wall_data,contr_area,plate_area)
-      physical_sputtering_energy1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
+      physical_sputtering_energy1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
       if (l_chem_sput) then
-        wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+        wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      .   chemical_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
         call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     .   natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,
+     .   natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     .   iatm1,imol1,iion1,
      .   nwall,nwall1,wall_data,contr_area,plate_area)
-        chemical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
-        wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+        chemical_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
+        wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      .   RES_sputtering(1:nbnd,0:ns-1+natm+nmol+nion)
         call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     .   natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,
+     .   natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     .   iatm1,imol1,iion1,
      .   nwall,nwall1,wall_data,contr_area,plate_area)
-        RES_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
+        RES_sputtering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     .   wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
       endif
-      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      . thermal_evaporation(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     . iatm1,imol1,iion1,nwall,nwall1,
      . wall_data,contr_area,plate_area)
-      thermal_evaporation1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
-      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+      thermal_evaporation1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
+      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      . backscattering(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     . iatm1,imol1,iion1,nwall,nwall1,
      . wall_data,contr_area,plate_area)
-      backscattering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
-      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) = 
+      backscattering1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
+      wall_data(1:nbnd,0:ns-1+natm+nmol+nion) =
      . backscattering_energy(1:nbnd,0:ns-1+natm+nmol+nion)
       call b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     . natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     . iatm1,imol1,iion1,nwall,nwall1,
      . wall_data,contr_area,plate_area)
-      backscattering_energy1(1:nbnd1,0:ns1-1+natm1+nmol1+nion) =
-     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion)
+      backscattering_energy1(1:nbnd1,0:ns1-1+natm1+nmol1+nion1) =
+     . wall_data(1:nbnd1,0:ns1-1+natm1+nmol1+nion1)
       do is = 1, nsegments
         do ibnd1 = wall_begin1(is), wall_end1(is)
 cxpb We do a simple interpolation of the target temperature,
@@ -603,7 +614,7 @@ cxpb but in computational space
           if (.not.found.and.iend.le.wall_end(is)) iend = iend-1
           if (ibegin.gt.wall_end(is).or.iend.gt.wall_end(is)) then
             write(6,*) 'ibegin, iend : ', ibegin, iend
-            write(6,*) 'contr_area:', 
+            write(6,*) 'contr_area:',
      .       (contr_area(iw,ibnd1),iw=wall_begin(is),wall_end(is))
             write(line,'(a,i5,a)') 'Wall element ',ibnd1,' not found!'
             call xerrab (trim(line))
@@ -636,7 +647,7 @@ cxpb but in computational space
           do iw = ibegin, iend
             xx(iw+2-ibegin) = (acc_area(iw)+xx(iw+1-ibegin))/2.0_R8
             if (ndepth_nml.gt.1) then
-              fa(iw+2-ibegin,1:ndepth_nml) = 
+              fa(iw+2-ibegin,1:ndepth_nml) =
      .         target_temp(iw,1:ndepth_nml)
             else
               fx(iw+1-ibegin) = target_temp(iw,1)
@@ -645,7 +656,7 @@ cxpb but in computational space
           if (iend.eq.wall_end(is)) then
             xx(iend+3-ibegin) = 1.0_R8
             if (ndepth_nml.gt.1) then
-              fa(iend+3-ibegin,1:ndepth_nml) = 
+              fa(iend+3-ibegin,1:ndepth_nml) =
      .         target_temp(iend,1:ndepth_nml)
             else
               fx(iend+3-ibegin) = target_temp(iend,1)
@@ -653,7 +664,7 @@ cxpb but in computational space
           else
             xx(iend+3-ibegin) = acc_area(iend+1)
             if (ndepth_nml.gt.1) then
-              fa(iend+3-ibegin,1:ndepth_nml) = 
+              fa(iend+3-ibegin,1:ndepth_nml) =
      .         target_temp(iend+1,1:ndepth_nml)
             else
               fx(iend+3-ibegin) = target_temp(iend+1,1)
@@ -685,19 +696,33 @@ cxpb but in computational space
             call E01BFF(iend-ibegin+3,xx,fx,d,3,xx1,fc,ifail)
             target_temp1(ibnd1,1) = fc(2)
             deallocate(d,fx)
-          end if   
-        end do          
+          end if
+        end do
       end do
 
       if (ndepth_nml.gt.1) deallocate(yy,yy1)
       deallocate(wall_data)
       call subend()
       return
+      end subroutine b2yt_wall
 
 * ..finalise time-dependent wall data
-      entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      subroutine b2yt_wall_final(nwrite,nx1,ny1,ns1)
+      use b2mod_wall
+      use b2mod_wall2
+      use b2mod_layer
+      implicit none
+      integer, intent(in) :: nwrite, nx1, ny1, ns1
+      integer :: i, is, ix, iy, ibnd1, itrack
+      logical :: wall_namelist_used
+      character*400 line
+      character*17 numstr
+
+      logical streql
+      external streql
+
       wall_namelist_used = ntargsp.gt.0 .or.
-     .  layer_thermal_contact.ne.1.0_R8 .or. 
+     .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.
      .  maxval(thermal_evaporation1(1:nbnd1,0:ns1-1)).gt.0.0_R8 .or.
      .  maxval(physical_sputtering1(1:nbnd1,0:ns1-1)).gt.0.0_R8 .or.
@@ -710,17 +735,17 @@ cxpb but in computational space
       write(6,*) 'Writing b2.wall_save.parameters.2'
       write(99,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
-        if(layer_alloys(itrack).ne.' ') write(99,'(a13,i1,a4,a6,a2)')
-     .    'LAYER_ALLOYS(',itrack,')= ''',
-     .     layer_alloys(itrack),''','
+        if(.not.streql(layer_alloys(itrack),' '))
+     .   write(99,'(a13,i1,a4,a6,a2)')
+     .    'LAYER_ALLOYS(',itrack,')= ''',layer_alloys(itrack),''','
       enddo
       write(99,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
-      if (layer_thermal_contact.ne.1.0_R8) write(99,'(a22,1es15.8,a1)') 
+      if (layer_thermal_contact.ne.1.0_R8) write(99,'(a22,1es15.8,a1)')
      > 'LAYER_THERMAL_CONTACT=',layer_thermal_contact,','
       if (.not.(plate_model.ge.1.and.ndepth_nml.gt.1)) then
-	do ibnd1 = 1, nbnd1
-        if (target_temp1(ibnd1,1).gt.plate_temp) 
-     >     write(99,'(a12,i4,a4,1x,1es15.8,a1)') 
+        do ibnd1 = 1, nbnd1
+          if (target_temp1(ibnd1,1).gt.plate_temp)
+     >     write(99,'(a12,i4,a4,1x,1es15.8,a1)')
      .     'TARGET_TEMP(',ibnd1,',1)=',target_temp1(ibnd1,1),','
         enddo
       endif
@@ -733,7 +758,7 @@ cxpb but in computational space
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         thermal_evaporation1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -748,7 +773,7 @@ cxpb but in computational space
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1e15.8,a1)') 
+              write(numstr,'(1x,1e15.8,a1)')
      .         physical_sputtering1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -756,13 +781,13 @@ cxpb but in computational space
           enddo
           do i = 1, (nbnd1-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a29,i3,a2)') 
+              write(line,'(a29,i3,a2)')
      .         'PHYSICAL_SPUTTERING_ENERGY(1,',is,')='
             else
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         physical_sputtering_energy1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -772,13 +797,13 @@ cxpb but in computational space
         if (maxval(chemical_sputtering1(1:nbnd1,is)).gt.0.0_R8) then
           do i = 1, (nbnd1-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a22,i3,a2)') 
+              write(line,'(a22,i3,a2)')
      .         'CHEMICAL_SPUTTERING(1,',is,')='
             else
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         chemical_sputtering1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -788,13 +813,13 @@ cxpb but in computational space
         if (maxval(RES_sputtering1(1:nbnd1,is)).gt.0.0_R8) then
           do i = 1, (nbnd1-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a17,i3,a2)') 
+              write(line,'(a17,i3,a2)')
      .         'RES_SPUTTERING(1,',is,')='
             else
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         RES_sputtering1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -804,13 +829,13 @@ cxpb but in computational space
         if (maxval(backscattering1(1:nbnd1,is)).gt.0.0_R8) then
           do i = 1, (nbnd1-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a17,i3,a2)') 
+              write(line,'(a17,i3,a2)')
      .         'BACKSCATTERING(1,',is,')='
             else
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         backscattering1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -818,13 +843,13 @@ cxpb but in computational space
           enddo
           do i = 1, (nbnd1-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a24,i3,a2)') 
+              write(line,'(a24,i3,a2)')
      .         'BACKSCATTERING_ENERGY(1,',is,')='
             else
               line = ''
             endif
             do ibnd1 = (i-1)*nline+1, min(i*nline,nbnd1)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         backscattering_energy1(ibnd1,is),','
               line = trim(line)//numstr
             enddo
@@ -837,38 +862,38 @@ cxpb  Use explicit writing of non-default elements only
         do ix = -1, nx1
           do iy = -1, ny1
             if (xymap1(ix,iy).ne.0) write(99,'(a6,i4,a1,i4,a2,i4,a1)')
-     .       'XYMAP(',ix,',',iy,')=',xymap1(ix,iy),','     
+     .       'XYMAP(',ix,',',iy,')=',xymap1(ix,iy),','
           end do
         end do
         do ibnd1 = 1, nbnd1
-          write(99,'(a6,i4,a2,i4,a1,1x,a6,i4,a2,i4,a1)') 
+          write(99,'(a6,i4,a2,i4,a1,1x,a6,i4,a2,i4,a1)')
      .     'IMAPX(',ibnd1,')=',imapx1(ibnd1),',',
      .     'IMAPY(',ibnd1,')=',imapy1(ibnd1),','
           if (inertial_cooling1(ibnd1))
      .     write(99,'(a17,i4,a2,l1,a1)')
      .     'INERTIAL_COOLING(',ibnd1,')=',inertial_cooling1(ibnd1),','
-          if (backplate_temp1(ibnd1).ne.plate_temp) 
-     .     write(99,'(a15,i4,a2,1es15.8,a1)') 
+          if (backplate_temp1(ibnd1).ne.plate_temp)
+     .     write(99,'(a15,i4,a2,1es15.8,a1)')
      .     'BACKPLATE_TEMP(',ibnd1,')=',backplate_temp1(ibnd1),','
           if (plate_thickness1(ibnd1).ne.plate_thick)
-     .     write(99,'(a16,i4,a2,1es15.8,a1)') 
+     .     write(99,'(a16,i4,a2,1es15.8,a1)')
      .     'PLATE_THICKNESS(',ibnd1,')=',plate_thickness1(ibnd1),','
           if (coating_thickness1(ibnd1).gt.0.0_R8)
-     .     write(99,'(a18,i4,a2,1es15.8,a1)') 
+     .     write(99,'(a18,i4,a2,1es15.8,a1)')
      .     'COATING_THICKNESS(',ibnd1,')=',coating_thickness1(ibnd1),','
           if (plate_time_factor1(ibnd1).ne.1.0_R8)
-     .     write(99,'(a18,i4,a2,1es15.8,a1)') 
+     .     write(99,'(a18,i4,a2,1es15.8,a1)')
      .     'PLATE_TIME_FACTOR(',ibnd1,')=',plate_time_factor1(ibnd1),','
-          if (trim(surface_material_name1(ibnd1)).ne.'C') 
-     .     write(99,'(a22,i4,a4,a6,a2)') 
+          if (trim(surface_material_name1(ibnd1)).ne.'C')
+     .     write(99,'(a22,i4,a4,a6,a2)')
      .     'SURFACE_MATERIAL_NAME(',ibnd1,')= ''',
      .      surface_material_name1(ibnd1),''','
-          if (coating_thickness1(ibnd1).gt.0.0_R8) 
-     .     write(99,'(a22,i4,a4,a6,a2)') 
+          if (coating_thickness1(ibnd1).gt.0.0_R8)
+     .     write(99,'(a22,i4,a4,a6,a2)')
      .     'COATING_MATERIAL_NAME(',ibnd1,')= ''',
      .      coating_material_name1(ibnd1),''','
-          if (trim(bulk_material_name1(ibnd1)).ne.'C') 
-     .     write(99,'(a19,i4,a4,a6,a2)') 
+          if (trim(bulk_material_name1(ibnd1)).ne.'C')
+     .     write(99,'(a19,i4,a4,a6,a2)')
      .     'BULK_MATERIAL_NAME(',ibnd1,')= ''',
      .      bulk_material_name1(ibnd1),''','
           if (layer_model) then
@@ -890,7 +915,7 @@ cxpb  Use explicit writing of non-default elements only
      .        'DEPOSITION(',ibnd1,',',itrack,')=',
      1        deposition1(ibnd1,itrack),','
             if (monolayer_deposition1(ibnd1,itrack).ne.0.0_R8)
-     .       write(99,'(a,i4,a,i1,a,1es15.8,a)') 
+     .       write(99,'(a,i4,a,i1,a,1es15.8,a)')
      .        'MONOLAYER_DEPOSITION(',ibnd1,',',itrack,')=',
      1         monolayer_deposition1(ibnd1,itrack),','
             if (erosion1(ibnd1,itrack).ne.0.0_R8)
@@ -898,7 +923,7 @@ cxpb  Use explicit writing of non-default elements only
      .        'EROSION(',ibnd1,',',itrack,')=',
      1         erosion1(ibnd1,itrack),','
             if (monolayer_erosion1(ibnd1,itrack).ne.0.0_R8)
-     .       write(99,'(a,i4,a,i1,a,1es15.8,a)') 
+     .       write(99,'(a,i4,a,i1,a,1es15.8,a)')
      .        'MONOLAYER_EROSION(',ibnd1,',',itrack,')=',
      1         monolayer_erosion1(ibnd1,itrack),','
           enddo
@@ -909,17 +934,17 @@ cxpb  Use explicit writing of non-default elements only
      .     write(99,'(a11,i4,a2,1es15.8,a1)')
      .      'PLATE_AREA(',ibnd1,')=',plate_area1(ibnd1),','
         enddo
-        if (plate_model.ge.1.and.ndepth1.gt.1) then 
+        if (plate_model.ge.1.and.ndepth1.gt.1) then
           do ibnd1 = 1, nbnd1
             do i = 1, (ndepth1-1)/nline+1
               if (i.eq.1) then
-                write(line,'(a12,i4,a3,i4,a2)') 
+                write(line,'(a12,i4,a3,i4,a2)')
      .           'TARGET_TEMP(',ibnd1,',1:',ndepth1,')='
               else
                 line = ''
               endif
               do is = (i-1)*nline+1, min(i*nline,ndepth1)
-                write(numstr,'(1x,1es15.8,a1)') 
+                write(numstr,'(1x,1es15.8,a1)')
      .           target_temp1(ibnd1,is),','
                 line = trim(line)//numstr
               enddo
@@ -931,34 +956,36 @@ cxpb  Use explicit writing of non-default elements only
       write(99,'(a1)') '/'
       close(99)
       return
-        
-      end subroutine b2yt_wall
+      end subroutine b2yt_wall_final
 
       subroutine b2yt_wall_copy(ns,ns1,nsm,is_neutral1,bundle_frac,
-     .  natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,nwall,nwall1,
+     .  natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     .  iatm1,imol1,iion1,nwall,nwall1,
      .  wall_data,contr_area,plate_area)
       use b2mod_types
       implicit none
-      integer ns,ns1,nsm,natm,natm1,natmm,nmol,nmol1,nmolm,nion
+      integer ns,ns1,nsm
+      integer natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm
       integer nwall,nwall1
       integer iatm1(natm)
       integer imol1(nmol)
+      integer iion1(nion)
       logical is_neutral1(0:ns1-1)
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
       real (kind=R8) plate_area(nwall)
-      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nion)
-      integer iw, iatm, imol
+      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nionm)
+      integer iw, iatm, imol, iion
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
-      real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion)
+      real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion1)
       real (kind=R8) wall_tmp(0:nsm-1)
       real (kind=R8) species_source(nwall)
       real (kind=R8) species_map(nwall1)
-      
+
 cxpb We do the species mapping first
       do iw = 1, nwall
         wall_map = 0.0_R8
-        wall_source(0:ns-1+natm+nmol+nion) = 
+        wall_source(0:ns-1+natm+nmol+nion) =
      .   wall_data(iw,0:ns-1+natm+nmol+nion)
         wall_tmp(0:ns-1) = wall_source(0:ns-1)
         call average_bundle
@@ -975,13 +1002,17 @@ cxpb We do the species mapping first
      .       wall_source(ns-1+natm+imol)
           end if
         end do
-        wall_map(ns1+natm1+nmol1:ns1-1+natm1+nmol1+nion) =
-     .   wall_source(ns+natm+nmol:ns-1+natm+nmol+nion)
-        wall_data(iw,0:ns1-1+natm1+nmol1+nion) =
-     .   wall_map(0:ns1-1+natm1+nmol1+nion)
+        do iion = 1, nion
+          if (iion1(iion).gt.0 .and. iion1(iion).le.nion1) then
+            wall_map(ns1-1+natm1+nmol1+iion1(iion)) =
+     .       wall_source(ns-1+natm+nmol+iion)
+          end if
+        end do
+        wall_data(iw,0:ns1-1+natm1+nmol1+nion1) =
+     .   wall_map(0:ns1-1+natm1+nmol1+nion1)
       end do
 cxpb Now for each new species, we do the space mapping
-      do iatm = 0, ns1-1+natm1+nmol1+nion
+      do iatm = 0, ns1-1+natm1+nmol1+nion1
         species_map = 0.0_R8
         species_source(1:nwall) = wall_data(1:nwall,iatm)
         call b2yt_wall_average(nwall,nwall1,contr_area,plate_area,
@@ -1002,11 +1033,11 @@ cxpb Now for each new species, we do the space mapping
       real (kind=R8) wall_source(nwall)
       real (kind=R8) wall_map(nwall1)
       integer iw, iw1
-      real (kind=R8) sum
-      
+      real (kind=R8) :: sum
+
       wall_map = 0.0_R8
-      if (maxval(wall_source(1:nwall)).eq.minval(wall_source(1:nwall)))
-     > then
+      if (maxval(wall_source(1:nwall)).eq.
+     .    minval(wall_source(1:nwall))) then
         wall_map(1:nwall1) = wall_source(1)
       else
         do iw1 = 1, nwall1
@@ -1018,7 +1049,7 @@ cxpb Now for each new species, we do the space mapping
           end do
           if (sum.gt.0.0_R8) wall_map(iw1) = wall_map(iw1)/sum
         end do
-      end if 
+      end if
 
       return
       end subroutine b2yt_wall_average
@@ -1032,7 +1063,7 @@ cxpb Now for each new species, we do the space mapping
       real (kind=R8) wall_source(nwall)
       real (kind=R8) wall_map(nwall1)
       integer iw, iw1
-      
+
       wall_source(1:nwall) = wall_data(1:nwall)
       wall_map = 0.0_R8
       do iw1 = 1, nwall1
@@ -1047,18 +1078,20 @@ cxpb Now for each new species, we do the space mapping
       end subroutine b2yt_wall_sum
 
       subroutine b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,
-     .  bundle_frac,natm,natm1,natmm,nmol,nmol1,nmolm,nion,iatm1,imol1,
+     .  bundle_frac,natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm,
+     .  iatm1,imol1,iion1,
      .  nwall,nwall1,nwallm,wall_data,contr_area)
       use b2mod_types
       implicit none
-      integer ns,ns1,nsm,natm,natm1,natmm,nmol,nmol1,nmolm,nion
+      integer ns,ns1,nsm
+      integer natm,natm1,natmm,nmol,nmol1,nmolm,nion,nion1,nionm
       integer nwall,nwall1,nwallm
-      integer iatm1(natm),imol1(nmol)
+      integer iatm1(natm),imol1(nmol),iion1(nion)
       logical is_neutral1(0:ns1-1)
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
-      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nion)
-      integer iw, iatm, imol
+      real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmolm+nionm)
+      integer iw, iatm, imol, iion
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
       real (kind=R8) wall_map(0:ns1-1+natm1+nmol1+nion)
       real (kind=R8) wall_tmp(0:nsm-1)
@@ -1084,13 +1117,17 @@ cxpb We do the species mapping first
      .       wall_source(ns-1+natm+imol)
           end if
         end do
-        wall_map(ns1+natm1+nmol1:ns1-1+natm1+nmol1+nion) = 
-     .   wall_source(ns+natm+nmol:ns-1+natm+nmol+nion)
-        wall_data(iw,0:ns1-1+natm1+nmol1+nion) =
-     .   wall_map(0:ns1-1+natm1+nmol1+nion)
+        do iion = 1, nion
+          if (iion1(iion).gt.0 .and. iion1(iion).le.nion1) then
+            wall_map(ns1-1+natm1+nmol1+iion1(iion)) =
+     .       wall_source(ns-1+natm+nmol+iion)
+          end if
+        end do
+        wall_data(iw,0:ns1-1+natm1+nmol1+nion1) =
+     .   wall_map(0:ns1-1+natm1+nmol1+nion1)
       end do
 cxpb Now for each new species, we do the space mapping
-      do iatm = 0, ns1-1+natm1+nmol1+nion
+      do iatm = 0, ns1-1+natm1+nmol1+nion1
         species_source(1:nwall) = wall_data(1:nwall,iatm)
         call b2yt_wall_sum(nwall,nwall1,nwallm,
      .   contr_area,species_source)
@@ -1099,4 +1136,3 @@ cxpb Now for each new species, we do the space mapping
 
       return
       end subroutine b2yt_wall_bundle_sum
-      

@@ -4,6 +4,7 @@
 
       subroutine setwrk0 (phi,ph,v,gg0,np,nv,e,b,vwrk0,gwrk0)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer np, nv
@@ -48,8 +49,6 @@
 *   ..local variables
       integer iv, ipinf, ipsup
       real (kind=R8) :: phinf, phsup, gginf, ggsup
-*   ..procedures
-      external subini, subend, xertst
 *-----------------------------------------------------------------------
 *.computation
 

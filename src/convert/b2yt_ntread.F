@@ -1,9 +1,9 @@
 c
-C RHW 18.08.92:  UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
+C RHW 18.08.92: UEBERARBEITETE VERSION VON RFS UEBERNOMMEN.
 C
-*//B2YT_NGREAD//
+*//B2YT_NTREAD//
 *=======================================================================
-*                 S U B R O U T I N E  B 2 Y T _ N G R E A D
+*                 S U B R O U T I N E  B 2 Y T _ N T R E A D
 *=======================================================================
 *
 *
@@ -16,7 +16,8 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(natm1, iatm1, nmol1, imol1)
+      subroutine b2yt_ntread(
+     &  natm1, iatm1, nmol1, imol1, nion1, iion1)
 c
 c  version : 06.11.97 22:11
 c
@@ -32,15 +33,17 @@ c
      *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
       use eirmod_extrab25
       use eirmod_ctrig
+      use eirmod_cinit
       use eirmod_cestim
       use eirmod_braeir
      :   , only : pux, puy, pvx, pvy
 #endif
+      use b2mod_subsys
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      integer natm1, nmol1
-      integer iatm1(natm), imol1(nmol)
+      integer natm1, nmol1, nion1
+      integer iatm1(natm), imol1(nmol), iion1(nion)
 
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
@@ -48,7 +51,8 @@ c
       integer is, i, j, n, jvftnew, nstra1, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
-      character*16, allocatable :: textan1(:), textmn1(:)
+      character*16, allocatable :: textan1(:), textmn1(:), textin1(:)
+      character*256 filename
       data jvftnew / 20170930 /
 
 *   ..initialisation
@@ -56,11 +60,9 @@ c
       save width
 
 *  -- PROCEDURES --
-      character*32 :: get_B25_hash
-      logical streql
-      external ipgeti, ipgetr, xertst, streql, get_B25_hash
+      character*32 :: get_Eir_hash
+      external ipgeti, ipgetr, xertst, get_Eir_hash
 #endif
-      external subini, subend
 
 *=======================================================================
 *//COMPUTATION//
@@ -89,24 +91,21 @@ C
 C
       READ(33,*,IOSTAT=IO,ERR=1983) NRKNOT  !VK IO
       IF(IO.NE.0) NRKNOT=0 !VK
-      WRITE(*,'(a14,i6)') 'NRKNOT      = ',NRKNOT
+      WRITE(*,'(a14,i8)') 'NRKNOT      = ',NRKNOT
 C
 C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ(34,*,IOSTAT=IO,ERR=1984) NTRII   !VK IO
       IF(IO.NE.0) NTRII=0 !VK
-      WRITE(*,'(a14,i6)') 'NTRII       = ',NTRII
+      WRITE(*,'(a14,i8)') 'NTRII       = ',NTRII
 
       READ (35,*,IOSTAT=IO,ERR=1985) IDUMMY
       IF(IO.NE.0) IDUMMY=0 !VK
       IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
         WRITE (*,*) ' IN ELEMENTS AND NEIGHBOR FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
-#ifndef HPUX
-        call xerrab('Mismatch between fort.34 and fort.35 files!')
-#else
-        call xerrab('Mismatch between ftn34 and ftn35 files!')
-#endif
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
+        call xerrab
+     .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'35 files!')
       END IF
 
       CALL EIRENE_ALLOC_CTRIG
@@ -118,11 +117,7 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
       READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
       IF(IO.GT.0) THEN
 C TO READ THE FILE PRODUCED BY DOS
-#ifndef HPUX
-        WRITE(*,*) "Cannot read fort.33 in regular way"
-#else
-        WRITE(*,*) "Cannot read ftn33 in regular way"
-#endif
+        WRITE(*,*) "Cannot read "//fort_lc//"33 in regular way"
         WRITE(*,*) "Trying to read line by line..."
         REWIND 33
         READ(33,*) NRKNOT
@@ -156,206 +151,305 @@ C TO READ THE FILE PRODUCED BY DOS
       CLOSE (UNIT=35)
 C
       rewind (46)
-#ifndef HPUX
-      open(unit=47,file='fort.46.2',status='unknown')
-      write(*,*) 'Writing fort.46.2'
-#else
-      open(unit=47,file='ftn46.2',status='unknown')
-      write(*,*) 'Writing ftn46.2'
-#endif
+      filename=fort_lc//'46.2'
+      open(unit=47,file=trim(filename),status='unknown')
+      write(*,*) 'Writing '//trim(filename)
 C
       READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
-        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
+        WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH'
         WRITE (*,*) ' IN GRID AND DATA FILES'
-        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
-#ifndef HPUX
-        call xerrab('Mismatch between fort.34 and fort.46 files!')
-#else
-        call xerrab('Mismatch between ftn34 and ftn46 files!')
-#endif
+        WRITE (*,*) ' PLEASE CHECK THE GEOMETRY'
+        call xerrab
+     .   ('Mismatch between '//fort_lc//'34 and '//fort_lc//'46 files!')
       END IF
-      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
-      READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
-      WRITE(47,'(I4,2X,I4,2X,i4)')              natm1,nmol1,nioni
-#ifndef HPUX
-      write(*,'(a,4i6)')
-     . ' Dimensions in fort.46 =   ',ntrii,natmi,nmoli,nioni
-      write(*,'(a,4i6)')
-     . ' Dimensions in fort.46.2 = ',ntrii,natm1,nmol1,nioni
-#else
-      write(*,'(a,4i6)')
-     . ' Dimensions in ftn46 =   ',ntrii,natmi,nmoli,nioni
-      write(*,'(a,4i6)')
-     . ' Dimensions in ftn46.2 = ',ntrii,natm1,nmol1,nioni
-#endif
+      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_Eir_hash()
+      READ (46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
+      WRITE(47,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
+      write(*,'(3a,4i6)')
+     . ' Dimensions in ',fort_lc,'46 =   ',ntrii,natmi,nmoli,nioni
+      write(*,'(3a,4i6)')
+     . ' Dimensions in ',fort_lc,'46.2 = ',ntrii,natm1,nmol1,nion1
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
-      allocate(field1(ntrii,max(natm1,nmol1)))
+      allocate(field1(max(1,natm1,nmol1,nion1),ntrii))
 
 c
 * labels
 * neutral atoms
 C
       do 11 IS = 1, NATMI
-        READ (46,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
+        READ (46,'(A)',END=99,ERR=99) TEXTAN(IS-1)
    11 CONTINUE
-      allocate(textan1(0:natm1-1))
-      do is = 1, natmi
-        if (iatm1(is).ne.0) TEXTAN1(iatm1(is)-1) = TEXTAN(is-1)
-      end do
-      do is = 1, natm1
-        WRITE(47,'(A8)') TEXTAN1(IS-1)
-      end do
-      deallocate(textan1)
+      if (natm1.gt.0) then
+        allocate(textan1(0:natm1-1))
+        do is = 1, natmi
+          if (iatm1(is).ne.0) TEXTAN1(iatm1(is)-1) = TEXTAN(is-1)
+        end do
+        do is = 1, natm1
+          WRITE(47,'(A)') TEXTAN1(IS-1)
+        end do
+        deallocate(textan1)
+      end if
 C
 * neutral molecules
 C
       do 12 IS = 1, NMOLI
-        READ (46,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
+        READ (46,'(A)',END=99,ERR=99) TEXTMN(IS-1)
    12 CONTINUE
-      allocate(textmn1(0:nmol1-1))
-      do is = 1, nmoli
-        if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
-      end do
-      do is = 1, nmol1
-        WRITE(47,'(A8)') TEXTMN1(IS-1)
-      end do
-      deallocate(textmn1)
+      if (nmol1.gt.0) then
+        allocate(textmn1(0:nmol1-1))
+        do is = 1, nmoli
+          if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
+        end do
+        do is = 1, nmol1
+          WRITE(47,'(A)') TEXTMN1(IS-1)
+        end do
+        deallocate(textmn1)
+      end if
 C
 * test ions
 C
       do 13 IS = 1, NIONI
-        READ (46,'(A8)',END=99,ERR=99) TEXTIN(IS-1)
-        WRITE(47,'(A8)')               TEXTIN(IS-1)
+        READ (46,'(A)',END=99,ERR=99) TEXTIN(IS-1)
    13 CONTINUE
+      if (nion1.gt.0) then
+        allocate(textin1(0:nion1-1))
+        do is = 1, nioni
+          if (iion1(is).ne.0) TEXTIN1(iion1(is)-1) = TEXTIN(is-1)
+        end do
+        do is = 1, nion1
+          WRITE(47,'(A)') TEXTIN1(IS-1)
+        end do
+        deallocate(textin1)
+      end if
 C
 * data
 * densities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((PDENA(i,j),j=1,ntrii),i=1,max(1,natmi))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,max(1,nmoli))
       call read_title(46)
-      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
-      do is = 1, natmi
-        if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = pdena(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'pdena',ntrii*natm1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = pdenm(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'pdenm',ntrii*nmol1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'pdeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,max(1,nioni))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = pdena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'pdena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'pdena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      if (nmol1.gt.0) then
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field1(imol1(is),1:ntrii) = pdenm(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'pdenm',ntrii*nmol1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'pdenm (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+      if (nion1.gt.0) then
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field1(iion1(is),1:ntrii) = pdeni(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'pdeni',ntrii*nion1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'pdeni (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nion1))
 
 * average energies
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((EDENA(i,j),j=1,ntrii),i=1,max(1,natmi))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,max(1,nmoli))
       call read_title(46)
-      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
-      do is = 1, natmi
-        if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = edena(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'edena',ntrii*natm1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = edenm(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'edenm',ntrii*nmol1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'edeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,max(1,nioni))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = edena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'edena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'edena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      if (nmol1.gt.0) then
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field1(imol1(is),1:ntrii) = edenm(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'edenm',ntrii*nmol1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'edenm (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+      if (nion1.gt.0) then
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field1(iion1(is),1:ntrii) = edeni(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'edeni',ntrii*nion1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'edeni (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nion1))
 
 * X-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VXDENA(i,j),j=1,ntrii),i=1,max(1,natmi))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,max(1,nmoli))
       call read_title(46)
-      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
-      do is = 1, natmi
-        if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = vxdena(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'vxdena',ntrii*natm1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = vxdenm(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'vxdenm',ntrii*nmol1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'vxdeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,max(1,nioni))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = vxdena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vxdena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vxdena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      if (nmol1.gt.0) then
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field1(imol1(is),1:ntrii) = vxdenm(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vxdenm',ntrii*nmol1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vxdenm (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+      if (nion1.gt.0) then
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field1(iion1(is),1:ntrii) = vxdeni(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vxdeni',ntrii*nion1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vxdeni (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nion1))
 
 * Y-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VYDENA(i,j),j=1,ntrii),i=1,max(1,natmi))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,max(1,nmoli))
       call read_title(46)
-      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
-      do is = 1, natmi
-        if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = vydena(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'vydena',ntrii*natm1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = vydenm(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'vydenm',ntrii*nmol1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'vydeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,max(1,nioni))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = vydena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vydena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vydena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      if (nmol1.gt.0) then
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field1(imol1(is),1:ntrii) = vydenm(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vydenm',ntrii*nmol1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vydenm (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+      if (nion1.gt.0) then
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field1(iion1(is),1:ntrii) = vydeni(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vydeni',ntrii*nion1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vydeni (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nion1))
 
 * Z-directed velocities
 C
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,natmi)
+      read(46,'(6e15.7)') ((VZDENA(i,j),j=1,ntrii),i=1,max(1,natmi))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,nmoli)
+      read(46,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,max(1,nmoli))
       call read_title(46)
-      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
-      do is = 1, natmi
-        if (iatm1(is).ne.0) then
-          field1(1:ntrii,iatm1(is)) = vzdena(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'vzdena',ntrii*natm1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      do is = 1, nmoli
-        if (imol1(is).ne.0) then
-          field1(1:ntrii,imol1(is)) = vzdenm(1:ntrii,is)
-        end if
-      end do
-      call write_title(47,'vzdenm',ntrii*nmol1)
-      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
-      call write_title(47,'vzdeni',ntrii*nioni)
-      write(47,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
+      read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,max(1,nioni))
+      if (natm1.gt.0) then
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            field1(iatm1(is),1:ntrii) = vzdena(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vzdena',ntrii*natm1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vzdena (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,natm1))
+      if (nmol1.gt.0) then
+        do is = 1, nmoli
+          if (imol1(is).ne.0) then
+            field1(imol1(is),1:ntrii) = vzdenm(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vzdenm',ntrii*nmol1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vzdenm (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nmol1))
+      if (nion1.gt.0) then
+        do is = 1, nioni
+          if (iion1(is).ne.0) then
+            field1(iion1(is),1:ntrii) = vzdeni(is,1:ntrii)
+          end if
+        end do
+        call write_title(47,'vzdeni',ntrii*nion1)
+      else
+        field1(1,1:ntrii) = 0.0_R8
+        call write_title(47,'vzdeni (not computed)',ntrii)
+      end if
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,max(1,nion1))
 
 * Triangle volumes
 C
@@ -426,45 +520,29 @@ C
 
       deallocate(field1)
       deallocate(pux,puy,pvx,pvy)
+   99 CONTINUE
 #endif
 
 *  ---------------------------------------------------------------------
-   99 CONTINUE
       close(46)
       close(47)
 C
       call subend ()
-      RETURN
+      return
 
 *=======================================================================
 *//END B2YT_NTREAD//
-
-#ifndef HPUX
-1983  WRITE(*,*)
-     w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.33 ",
+#ifdef B25_EIRENE
+ 1983 WRITE(*,*)
+     w     "ERROR IN B2YT_NTREAD: CANNOT OPEN "//FORT//"33 ",
      .     "(NODES OF TRIANGULAR GRID)"
-      call xerrab('Cannot open fort.33 file!')
-1984  WRITE(*,*)
-     w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.34 ",
+      call xerrab('Cannot open '//fort_lc//'33 file!')
+ 1984 WRITE(*,*)
+     w     "ERROR IN B2YT_NTREAD: CANNOT OPEN "//FORT//"34 ",
      .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open fort.34 file!')
-1985  WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN FORT.35 ",
+      call xerrab('Cannot open '//fort_lc//'34 file!')
+ 1985 WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN "//FORT//"35 ",
      .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open fort.35 file!')
-#else
-1983  WRITE(*,*)
-     w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN33 ",
-     .     "(NODES OF TRIANGULAR GRID)"
-      call xerrab('Cannot open ftn33 file!')
-1984  WRITE(*,*)
-     w     "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN34 ",
-     .     "(TABLE OF CELLS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open ftn34 file!')
-1985  WRITE(*,*) "ERROR IN B2YT_NTREAD: CANNOT OPEN FTN35 ",
-     .           "(TABLE OF NEIGHBORS OF TRIANGULAR GRID)"
-      call xerrab('Cannot open ftn35 file!')
+      call xerrab('Cannot open '//fort_lc//'35 file!')
 #endif
-      END
-
-
-
+      end subroutine b2yt_ntread

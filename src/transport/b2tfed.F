@@ -12,6 +12,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfed
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx
@@ -35,11 +36,10 @@
 
 *   ..local variables
       real (kind=R8) ::
-     * pof(nFc), pov(nVx), dpo(nFc,0:1), dOnedBsq(nFc,0:1), nef(nFc),
+     * pov(nVx), dpo(nFc,0:1), dOnedBsq(nFc,0:1), nef(nFc),
      * wrk(nCv), wrk0(nFc), wght(nFc,2)
 *   ..procedures
-      intrinsic min
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 *   ..initialisation
 
@@ -67,7 +67,7 @@ c Drift terms
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
 cwdk precomputation of gradients on faces
         call grad(nCv, nFc, nVx, 0, geo, mpg, po, pov, dpo)
-        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq, 
+        call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &   geo%vxOnedBsq, dOnedBsq)
 *     ..computation of ExB drift
 cwdk    to be checked: now we use inverse volume weighting

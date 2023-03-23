@@ -15,10 +15,10 @@
 *$$$  call subini ('b2xzef')
       zeff = 0.0_R8
       do is = 0, ns-1
-        zeff = zeff + rz2(:,is)*na(:,is)
+       zeff = zeff + rz2(:,is)*na(:,is)
       enddo
       do is = 0, st_ext%ns-1
-        zeff = zeff + st_ext%za2(:,is)*st_ext%na(:,is)
+       zeff = zeff + st_ext%za2(:,is)*st_ext%na(:,is)
       enddo
       zeff=zeff/ne
 *$$$  call subend ()

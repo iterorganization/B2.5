@@ -3,6 +3,7 @@
 
       subroutine b2agx0 (nrid, nx, ny, nx1, ny1)
       use b2mod_types
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid
@@ -54,7 +55,7 @@
       character id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
 
 *-----------------------------------------------------------------------
 *.computation
@@ -85,4 +86,4 @@
 *-----------------------------------------------------------------------
 *.end b2agx0
 
-      end
+      end subroutine b2agx0

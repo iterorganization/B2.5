@@ -5,6 +5,10 @@
       use b2mod_types
       use b2mod_ma28_for_9diag
       use b2mod_indirect
+      use b2mod_subsys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -32,7 +36,7 @@
 *     with the five-point discretization of a single scalar partial
 *     differential equation on a topologically rectangular mesh. The
 *     routine is an interface to one of two solvers. If the internal
-*     parameter "style" has the value 0 then a solver based on Stone's
+*     parameter "style" has the value 0 then a solver based on the Stone
 *     SIP-ILU procedure is used; if style.eq.1 then a direct band
 *     solver is used.
 *
@@ -62,8 +66,12 @@
 *   ..local variables
       integer ncall, style, n2, itmax, iters, itpar, cpu
       parameter (itmax=100)
-      real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+#ifdef _OPENMP
+      real (kind=R8) :: cpu_start, cpu_end, c_end, c_start
+#else
+      real (kind=R4) :: cpu_start, cpu_end, c_end, c_start
+#endif
+      real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
      1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
       integer, allocatable, save :: iwrk(:)
@@ -72,14 +80,21 @@
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
+      !$OMP THREADPRIVATE(indexes, iasave, jasave, nz)
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min, cpu_time
-      external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
-     &  slv5pt, iluter, xerrab
+      external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 *   ..initialization
       save ncall, style, acpar, cpu
+      !$OMP THREADPRIVATE(ncall, style, acpar, cpu)
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -125,6 +140,8 @@
        write(*,*) 'Allocating space for solver b2ux9p'
        if (style.eq.0) then
         call xerrab ('b2ux9p: Style 0 is not implemented')
+! if the error abort is removed, then make sure to define OMP threadprivate
+! attribute for the workspace arguments
 *    ..obtain workspace for iluter
         allocate(aaf(1:n2*5))
         allocate(wrk0(1:n2))
@@ -133,6 +150,8 @@
         allocate(iwrk(1:1))
       else if (style.eq.1) then
         call xerrab ('b2ux9p: Style 1 is not implemented')
+! if the error abort is removed, then make sure to define OMP threadprivate
+! attribute for the workspace arguments
 *    ..obtain workspace for slv5pt
         allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
         allocate(wrk0(1:n2))
@@ -147,7 +166,11 @@
       endif
 
 *   ..solve the correction equation
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -162,23 +185,39 @@
        call slv5pt (nx+2, ny+2, aa9, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
       else if (style.eq.2) then
+#ifdef _OPENMP
+       c_start = omp_get_wtime()
+#else
        call cpu_time(c_start)
+#endif
        call storage_9 (nx, ny, aa9, n_nonzeros, irnh, icnh, a1h, nz,
-     *                 indexes, iasave, jasave, name)       
+     *                 indexes, iasave, jasave, name)
+#ifdef _OPENMP
+       c_end = omp_get_wtime()
+#else
        call cpu_time(c_end)
+#endif
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_9 ',
      &               c_end-c_start
 *    ..use ma28
+#ifdef _OPENMP
+       cpu_start = omp_get_wtime()
+#else
        call cpu_time(cpu_start)
+#endif
 !       call ilutern_9(NX+2, NY+2, NX+2,
-!     & aa9(-1,-1,-3,0), aa9(-1,-1,-1,0), aa9(-1,-1,0,0), aa9(-1,-1,1,0), 
-!     & aa9(-1,-1, 3,0), 
+!     & aa9(-1,-1,-3,0), aa9(-1,-1,-1,0), aa9(-1,-1,0,0), aa9(-1,-1,1,0),
+!     & aa9(-1,-1, 3,0),
 !     & aa9(-1,-1,-4,0), aa9(-1,-1,-2,0), aa9(-1,-1,2,0), aa9(-1,-1,4,0),
 !     & aa9(-1,-1,-4,1), aa9(-1,-1,-2,1), aa9(-1,-1,2,1), aa9(-1,-1,4,1),
 !     & resfun, corfun, name)                        !sv 18.05.02
        call ILUTERN_9(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !sv 13.10.06
       endif
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &             cpu_end-cpu_start
 
@@ -190,7 +229,7 @@
 *-----------------------------------------------------------------------
 *.end b2ux9p
 
-      end
+      end subroutine b2ux9p
 
       subroutine storage_9 (nx, ny, aa9, nnz, ia, ja, a, k,            !sv 22.11.06
      *                      indexes, iasave, jasave, name)
@@ -232,6 +271,7 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
+      !$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
 
       if(ncall.eq.0) then
         call ipgeti ('storage_9_kwrite_fmt', kwrite_fmt)
@@ -357,7 +397,7 @@
               ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
-*       Case (ix+1,iy-1) 
+*       Case (ix+1,iy-1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixb = bottomix(ix,iy)
@@ -382,7 +422,7 @@
               ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
               ner = ner+1
             endif
-*       Case (ix+1,iy+1) 
+*       Case (ix+1,iy+1)
             ixr = rightix(ix,iy)
             iyr = rightiy(ix,iy)
             ixt = topix(ix,iy)
@@ -487,5 +527,5 @@
 
       ncall = ncall + 1
 
-      end                                                             !sv 22.11.06
+      end subroutine storage_9                                        !sv 22.11.06
 

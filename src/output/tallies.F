@@ -16,6 +16,7 @@
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_switches
+      use b2mod_subsys
       implicit none
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
@@ -25,6 +26,7 @@
 #     include <netcdf.inc>
       integer status, ncid, xtypev, ndims, nvars, natts, unlimid, timd
       integer dimids(NF_MAX_VAR_DIMS), dimsize(NF_MAX_VAR_DIMS)
+      integer, save :: ntstep
       real (kind=R8) :: tim_arr(1)
       real (kind=R8) :: naregtmp(0:nnreg(0),0:ns-1)
       real (kind=R8) :: cdftmp(0:nnreg(0))
@@ -35,11 +37,11 @@
       external streql
 #endif
 *   ..common blocks
-      integer ncall,ntstep
+      integer ncall
       integer ix,iy,is,ir,tallies_netcdf
       character*256 tally_format, species_format
       character*13, allocatable, save :: species_name(:)
-      save ncall,tallies_netcdf,ntstep
+      save ncall,tallies_netcdf
       data ncall/0/,tallies_netcdf/0/
 #ifdef NO_LONG_LINES
       data tally_format, species_format
@@ -75,7 +77,7 @@
       fheyreg=0.0_R8
       fchxreg=0.0_R8
       fchyreg=0.0_R8
-      fhtxreg=0.0_R8                                      	 !cjk
+      fhtxreg=0.0_R8                                             !cjk
       fhtyreg=0.0_R8
       fhjxreg=0.0_R8
       fhjyreg=0.0_R8
@@ -87,7 +89,7 @@
       nireg=0.0_R8
       poreg=0.0_R8
       volreg=0.0_R8
-      qconvixreg=0.0_R8                                   	 !cjk
+      qconvixreg=0.0_R8                                          !cjk
       qconviyreg=0.0_R8
       qconvexreg=0.0_R8
       qconveyreg=0.0_R8
@@ -129,13 +131,13 @@
             fnayreg(region(ix,iy,2),is)=fnayreg(region(ix,iy,2),is)+
      1       fna(ix,iy,1,1,is)
             fhmxreg(region(ix,iy,1),is)=fhmxreg(region(ix,iy,1),is)+
-     1	     fhm(ix,iy,0,0,is)
+     1       fhm(ix,iy,0,0,is)
             fhmyreg(region(ix,iy,2),is)=fhmyreg(region(ix,iy,2),is)+
-     1	     fhm(ix,iy,1,1,is)
+     1       fhm(ix,iy,1,1,is)
             fhpxreg(region(ix,iy,1),is)=fhpxreg(region(ix,iy,1),is)+
-     1	     fhp(ix,iy,0,0,is)
+     1       fhp(ix,iy,0,0,is)
             fhpyreg(region(ix,iy,2),is)=fhpyreg(region(ix,iy,2),is)+
-     1	     fhp(ix,iy,1,1,is)
+     1       fhp(ix,iy,1,1,is)
             nareg(region(ix,iy,0),is)=nareg(region(ix,iy,0),is)+
      1       na(ix,iy,is)*vol(ix,iy)
             b2stbr_sna_reg(region(ix,iy,0),is)=
@@ -167,30 +169,30 @@
             resmo_reg(region(ix,iy,0),is)=resmo_reg(region(ix,iy,0),is)+
      1       resmo(ix,iy,is)
             if (leftix(ix,iy).ne.-2) then
-              qconvixreg(region(ix,iy,1),is)=                   	 !cjk
+              qconvixreg(region(ix,iy,1),is)=                           !cjk
      1         qconvixreg(region(ix,iy,1),is)+
      1         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,0,0,is)+2.5_R8*fna_52(ix,iy,0,0,is))         
-              qconvexreg(region(ix,iy,1))=                      	 !cjk
+     1         (1.5_R8*fna_32(ix,iy,0,0,is)+2.5_R8*fna_52(ix,iy,0,0,is))
+              qconvexreg(region(ix,iy,1))=                              !cjk
      1         qconvexreg(region(ix,iy,1))+
      1         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8*
      1         (1.5_R8*fna_32(ix,iy,0,0,is)+
      1          2.5_R8*fna_52(ix,iy,0,0,is))*
      2         (rza(leftix(ix,iy),leftiy(ix,iy),is)+
-     2          rza(ix,iy,is))/2.0_R8         
+     2          rza(ix,iy,is))/2.0_R8
             endif
             if (bottomiy(ix,iy).ne.-2) then
               qconviyreg(region(ix,iy,2),is)=
      1         qconviyreg(region(ix,iy,2),is)+
      1         (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,1,1,is)+2.5_R8*fna_52(ix,iy,1,1,is))         
+     1         (1.5_R8*fna_32(ix,iy,1,1,is)+2.5_R8*fna_52(ix,iy,1,1,is))
               qconveyreg(region(ix,iy,2))=
      1         qconveyreg(region(ix,iy,2))+
      1         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8*
      1         (1.5_R8*fna_32(ix,iy,1,1,is)+
      1          2.5_R8*fna_52(ix,iy,1,1,is))*
      2         (rza(bottomix(ix,iy),bottomiy(ix,iy),is)+rza(ix,iy,is))
-     2         /2.0_R8                  
+     2         /2.0_R8
             endif
           enddo
           fhixreg(region(ix,iy,1))=fhixreg(region(ix,iy,1))+
@@ -215,7 +217,7 @@
      1     fht(ix,iy,1,1)+fhi_ext(ix,iy,1,1)
           do is=0,ns_ext-1
             if (leftix(ix,iy).ne.-2) then
-              fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+	 !cjk
+              fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+        !cjk
      1         (1.0-BoRiS)*(0.5_R8*mp*am_ext(is)*
      .         0.5_R8*(ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
      2                 ua_ext(ix,iy,is)**2)+
@@ -225,7 +227,7 @@
      2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,0,0,is)*ev
             endif
             if (bottomiy(ix,iy).ne.-2) then
-              fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+	 !cjk
+              fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+        !cjk
      1         (1.0-BoRiS)*(0.5_R8*mp*am_ext(is)*
      .         0.5_R8*(ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
      2                 ua_ext(ix,iy,is)**2)+
@@ -372,7 +374,7 @@
         fhpyreg(0,is)=0.0_R8
         fhmxreg(0,is)=0.0_R8
         fhmyreg(0,is)=0.0_R8
-        qconvixreg(0,is)=0.0_R8                                    	 !cjk
+        qconvixreg(0,is)=0.0_R8                                         !cjk
         qconviyreg(0,is)=0.0_R8
       enddo
       fhixreg(0)=0.0_R8
@@ -385,7 +387,7 @@
       fhjyreg(0)=0.0_R8
       fchxreg(0)=0.0_R8
       fchyreg(0)=0.0_R8
-      qconvexreg(0)=0.0_R8                                         	 !cjk
+      qconvexreg(0)=0.0_R8                                              !cjk
       qconveyreg(0)=0.0_R8
       tereg(0)=0.0_R8
       nereg(0)=0.0_R8
@@ -425,6 +427,7 @@
       reshi_reg(0)=0.0_R8
       resmt_reg(0)=0.0_R8
       respo_reg(0)=0.0_R8
+      rdneureg(0)=0.0_R8
       do ir=1,nnreg(0)
         tereg(0)=tereg(0)+tereg(ir)
         nereg(0)=nereg(0)+nereg(ir)
@@ -469,6 +472,7 @@
         reshi_reg(0)=reshi_reg(0)+reshi_reg(ir)
         resmt_reg(0)=resmt_reg(0)+resmt_reg(ir)
         respo_reg(0)=respo_reg(0)+respo_reg(ir)
+        rdneureg(0)=rdneureg(0)+rdneureg(ir)
       enddo
 *    ..write tallies
       write(*,tally_format) 'Start tallies by region'
@@ -502,7 +506,7 @@
       write(*,tally_format) 'fhmyreg',fhmyreg
       write(*,tally_format) 'fchxreg',fchxreg
       write(*,tally_format) 'fchyreg',fchyreg
-      write(*,tally_format) 'fhtxreg',fhtxreg                 	 !cjk
+      write(*,tally_format) 'fhtxreg',fhtxreg                    !cjk
       write(*,tally_format) 'fhtyreg',fhtyreg
       write(*,tally_format) 'fhjxreg',fhjxreg
       write(*,tally_format) 'fhjyreg',fhjyreg
@@ -567,19 +571,20 @@
       write(*,tally_format) 'reshi_reg',reshi_reg
       write(*,tally_format) 'resmt_reg',resmt_reg
       write(*,tally_format) 'respo_reg',respo_reg
+      write(*,tally_format) 'rdneureg',rdneureg
       write(*,tally_format) 'End tallies by region'
 
 #ifndef NO_CDF
       if(tallies_netcdf.ne.0) then
-	if(ncall.eq.0.or.mod(ncall,tallies_netcdf).eq.0) then
-	  write(*,tally_format) 'Start (CDF) tallies by region'
-	  if(ncall.eq.0) then
-            filename='b2tallies.nc'
-            call find_file(filename,ex)
+        if(ncall.eq.0.or.mod(ncall,tallies_netcdf).eq.0) then
+          write(*,tally_format) 'Start (CDF) tallies by region'
+          filename='b2tallies.nc'
+          call find_file(filename,ex)
+          if(ncall.eq.0) then
             if (.not.ex.or.switch%b2mndr_stim.ge.0.0_R8) then
               ntstep = 0
               call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
-              status=nf_open(filename,NF_WRITE,ncid)
+              status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
               call check_cdf_status(status)
               write(6,'(a)') trim(filename)//' will be created'
             else if (ex.and.switch%b2mndr_stim.lt.0.0_R8) then
@@ -599,220 +604,222 @@
               ntstep = dimsize(1)
               status=nf_close(ncid)
               call check_cdf_status(status)
-              status=nf_open(filename,NF_WRITE,ncid)
+              status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
               call check_cdf_status(status)
               write(6,'(a)') trim(filename)//' will be appended'
             else
               ntstep = 0
               write(6,'(a)') trim(filename)//' will be replaced'
               call define_cdf_b2mod_tallies(filename,ncid,nnreg,ns)
-              status=nf_open(filename,NF_WRITE,ncid)
+              status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
               call check_cdf_status(status)
             end if
             write(6,'(a,i8)') trim(filename)//' : ntstep = ', ntstep
-	    if (ntstep.eq.0) call write_cdf_char_variable(ncid,-1,
-     *	     'species',species_name(0:ns-1))
+            if (ntstep.eq.0) call write_cdf_char_variable(ncid,-1,
+     *       'species',species_name(0:ns-1))
           else
-            status=nf_open(filename,NF_WRITE,ncid)
+            status=nf_open(filename,or(NF_WRITE,NF_SHARE),ncid)
             call check_cdf_status(status)
-	  endif
-	  ntstep=ntstep+1
+          endif
+          ntstep=ntstep+1
 
-	  tim_arr=tim
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'times',tim_arr)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rsanareg',rsanareg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rsahireg',rsahireg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rsamoreg',rsamoreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rranareg',rranareg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rrahireg',rrahireg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rramoreg',rramoreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rqahereg',rqahereg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rqradreg',rqradreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rqbrmreg',rqbrmreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rcxnareg',rcxnareg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rcxhireg',rcxhireg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'rcxmoreg',rcxmoreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fnaxreg',fnaxreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fnayreg',fnayreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhixreg',fhixreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhiyreg',fhiyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhexreg',fhexreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fheyreg',fheyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhpxreg',fhpxreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhpyreg',fhpyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhmxreg',fhmxreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhmyreg',fhmyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fchxreg',fchxreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fchyreg',fchyreg)
-	  call write_cdf_variable(ncid,ntstep,                 	 !cjk
-     *	   'fhtxreg',fhtxreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhtyreg',fhtyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhjxreg',fhjxreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'fhjyreg',fhjyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'qconvixreg',qconvixreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'qconviyreg',qconviyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'qconvexreg',qconvexreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'qconveyreg',qconveyreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbr_sna_reg',b2stbr_sna_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbr_smo_reg',b2stbr_smo_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbr_sne_reg',b2stbr_sne_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbr_she_reg',b2stbr_she_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbr_shi_reg',b2stbr_shi_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbr_sch_reg',b2stbr_sch_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbc_sna_reg',b2stbc_sna_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbc_smo_reg',b2stbc_smo_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbc_sne_reg',b2stbc_sne_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbc_she_reg',b2stbc_she_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbc_shi_reg',b2stbc_shi_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbc_sch_reg',b2stbc_sch_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbm_sna_reg',b2stbm_sna_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbm_smo_reg',b2stbm_smo_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbm_sne_reg',b2stbm_sne_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbm_she_reg',b2stbm_she_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbm_shi_reg',b2stbm_shi_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2stbm_sch_reg',b2stbm_sch_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2sext_sna_reg',b2sext_sna_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2sext_smo_reg',b2sext_smo_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2sext_sne_reg',b2sext_sne_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2sext_she_reg',b2sext_she_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2sext_shi_reg',b2sext_shi_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2sext_sch_reg',b2sext_sch_reg)
-	  do is=0,ns-1
-	    naregtmp(:,is)=nareg(:,is)/volreg(:)
-	  enddo
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'nareg',naregtmp)
-	  cdftmp=tereg/nereg/qe
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'tereg',cdftmp)
-	  cdftmp=nereg/volreg
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'nereg',cdftmp)
-	  cdftmp=ne2reg/volreg
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'ne2reg',cdftmp)
-	  cdftmp=tireg/nireg/qe
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'tireg',cdftmp)
-	  cdftmp=nireg/volreg
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'nireg',cdftmp)
-	  cdftmp=poreg/volreg
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'poreg',cdftmp)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'volreg',volreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2bremreg',b2bremreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2radreg',b2radreg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2qie',b2qie)
+          tim_arr=tim
+          call write_cdf_variable(ncid,ntstep,
+     *     'times',tim_arr)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rsanareg',rsanareg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rsahireg',rsahireg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rsamoreg',rsamoreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rranareg',rranareg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rrahireg',rrahireg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rramoreg',rramoreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rqahereg',rqahereg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rqradreg',rqradreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rqbrmreg',rqbrmreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rcxnareg',rcxnareg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rcxhireg',rcxhireg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rcxmoreg',rcxmoreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fnaxreg',fnaxreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fnayreg',fnayreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhixreg',fhixreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhiyreg',fhiyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhexreg',fhexreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fheyreg',fheyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhpxreg',fhpxreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhpyreg',fhpyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhmxreg',fhmxreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhmyreg',fhmyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fchxreg',fchxreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fchyreg',fchyreg)
+          call write_cdf_variable(ncid,ntstep,                   !cjk
+     *     'fhtxreg',fhtxreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhtyreg',fhtyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhjxreg',fhjxreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'fhjyreg',fhjyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'qconvixreg',qconvixreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'qconviyreg',qconviyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'qconvexreg',qconvexreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'qconveyreg',qconveyreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbr_sna_reg',b2stbr_sna_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbr_smo_reg',b2stbr_smo_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbr_sne_reg',b2stbr_sne_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbr_she_reg',b2stbr_she_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbr_shi_reg',b2stbr_shi_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbr_sch_reg',b2stbr_sch_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbc_sna_reg',b2stbc_sna_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbc_smo_reg',b2stbc_smo_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbc_sne_reg',b2stbc_sne_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbc_she_reg',b2stbc_she_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbc_shi_reg',b2stbc_shi_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbc_sch_reg',b2stbc_sch_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbm_sna_reg',b2stbm_sna_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbm_smo_reg',b2stbm_smo_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbm_sne_reg',b2stbm_sne_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbm_she_reg',b2stbm_she_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbm_shi_reg',b2stbm_shi_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2stbm_sch_reg',b2stbm_sch_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2sext_sna_reg',b2sext_sna_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2sext_smo_reg',b2sext_smo_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2sext_sne_reg',b2sext_sne_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2sext_she_reg',b2sext_she_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2sext_shi_reg',b2sext_shi_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2sext_sch_reg',b2sext_sch_reg)
+          do is=0,ns-1
+            naregtmp(:,is)=nareg(:,is)/volreg(:)
+          enddo
+          call write_cdf_variable(ncid,ntstep,
+     *     'nareg',naregtmp)
+          cdftmp=tereg/nereg/qe
+          call write_cdf_variable(ncid,ntstep,
+     *     'tereg',cdftmp)
+          cdftmp=nereg/volreg
+          call write_cdf_variable(ncid,ntstep,
+     *     'nereg',cdftmp)
+          cdftmp=ne2reg/volreg
+          call write_cdf_variable(ncid,ntstep,
+     *     'ne2reg',cdftmp)
+          cdftmp=tireg/nireg/qe
+          call write_cdf_variable(ncid,ntstep,
+     *     'tireg',cdftmp)
+          cdftmp=nireg/volreg
+          call write_cdf_variable(ncid,ntstep,
+     *     'nireg',cdftmp)
+          cdftmp=poreg/volreg
+          call write_cdf_variable(ncid,ntstep,
+     *     'poreg',cdftmp)
+          call write_cdf_variable(ncid,ntstep,
+     *     'volreg',volreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2bremreg',b2bremreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2radreg',b2radreg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2qie',b2qie)
 !       call write_cdf_variable(ncid,ntstep,
 !     *  'b2vdp',b2vdp)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2divue',b2divue)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2divua',b2divua)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2exbe',b2exbe)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2exba',b2exba)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2visa',b2visa)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2joule',b2joule)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2fraa',b2fraa)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2str',b2str)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2wrong1',b2wrong1)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2wrong2',b2wrong2)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2wrong3',b2wrong3)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2she',b2she)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2shi',b2shi)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2she0',b2she0)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'b2shi0',b2shi0)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'resco_reg',resco_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'resmo_reg',resmo_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'reshe_reg',reshe_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'reshi_reg',reshi_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'resmt_reg',resmt_reg)
-	  call write_cdf_variable(ncid,ntstep,
-     *	   'respo_reg',respo_reg)
-	  write(*,tally_format) 'End (CDF) tallies by region'
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2divue',b2divue)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2divua',b2divua)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2exbe',b2exbe)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2exba',b2exba)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2visa',b2visa)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2joule',b2joule)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2fraa',b2fraa)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2str',b2str)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2wrong1',b2wrong1)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2wrong2',b2wrong2)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2wrong3',b2wrong3)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2she',b2she)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2shi',b2shi)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2she0',b2she0)
+          call write_cdf_variable(ncid,ntstep,
+     *     'b2shi0',b2shi0)
+          call write_cdf_variable(ncid,ntstep,
+     *     'resco_reg',resco_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'resmo_reg',resmo_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'reshe_reg',reshe_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'reshi_reg',reshi_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'resmt_reg',resmt_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'respo_reg',respo_reg)
+          call write_cdf_variable(ncid,ntstep,
+     *     'rdneureg',rdneureg)
+          write(*,tally_format) 'End (CDF) tallies by region'
 
-	  status=nf_close(ncid)
-	  call check_cdf_status(status)
-	endif
+          status=nf_close(ncid)
+          call check_cdf_status(status)
+        endif
       endif
 #endif
 * ..return

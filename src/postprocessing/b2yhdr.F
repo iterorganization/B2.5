@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:0), nx, ns
@@ -19,13 +20,13 @@
 *
 *  1. purpose
 *
-*     B2YHDR is a postprocessor for b2. It reads and displays the table
+*     B2YHDR is a postprocessor for B2. It reads and displays the table
 *     of physics parameters.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
+*     This routine is a postprocessor for the B2 code. It reads the
 *     file containing the physics parameters and produces printed
 *     output.
 *
@@ -62,7 +63,7 @@
       character lblcp*120, id*8
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql, cfruch
+      external xertst, xerrab, streql, cfruch
       external b2rucp, b2xvcp, b2wfcp
 
 *-----------------------------------------------------------------------
@@ -345,4 +346,4 @@
 *-----------------------------------------------------------------------
 *.end b2yhdr
 
-      end
+      end subroutine b2yhdr

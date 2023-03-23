@@ -20,7 +20,10 @@
       use b2mod_ppout
       use b2mod_diag
       use b2mod_work
+      use b2mod_math
       use b2mod_external
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -33,22 +36,21 @@
       integer itim, itcnt, n2
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
-      real (kind=R8) :: t0, t1
+#ifdef WG_TODO
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
+#endif
 *   ..initialisation
       save ismain, external_species
       data ismain/1/, external_species/0/
 *   ..procedures
-      logical ltst, is_comment, cfendf
-      intrinsic sqrt
-      external subini, subend, xertst, xerrab, is_comment
-      external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
+      logical is_comment, cfendf
+      external xertst, xerrab, is_comment
+      external cfruch, cfruin, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *   ..subprogram start-up calls
       call subini ('b2pldr')
@@ -75,9 +77,7 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
 #ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
@@ -195,6 +195,7 @@
      &   rlcx(-1,-1,0,0,k))
       enddo
 *   ..compute charge exchange rate coefficients
+      rcx = 0.0_R8
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)

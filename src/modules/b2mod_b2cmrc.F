@@ -1,7 +1,7 @@
       module b2mod_b2cmrc
       use b2mod_types
 *     (/b2cmrc/ contains atomic rate coefficients)
-      integer, save :: rtnt, rtnn, rtns, fix_recomb = 0
+      integer, save :: rtnt, rtnn, rtns
       integer, save :: rtdumm
 ! old      parameter (rtnt=40, rtnn=16, rtnsmx=75)
       real (kind=R8), allocatable, save ::
@@ -10,7 +10,7 @@
      &  rtlsa(:,:,:),
      &  rtlra(:,:,:),
      &  rtlqa(:,:,:),
-     &  rtlqa_ra(:,:,:),
+     &  rtlqr(:,:,:),
      &  rtlrd(:,:,:),
      &  rtlbr(:,:,:),
      &  rtlcx(:,:,:),
@@ -20,7 +20,8 @@
      &  rtlpi(:,:,:)
       integer, allocatable, save ::
      &  rtyr(:)
-      logical, save ::  adpak_used
+      integer, save :: fix_recomb, zmax_recomb
+      logical, save :: adpak_used
 
       contains
 
@@ -42,7 +43,7 @@
       allocate(rtlsa(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlra(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlqa(0:rtnt,0:rtnn,0:rtns-1))
-      allocate(rtlqa_ra(0:rtnt,0:rtnn,0:rtns-1))
+      allocate(rtlqr(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlrd(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlbr(0:rtnt,0:rtnn,0:rtns-1))
       allocate(rtlcx(0:rtnt,0:rtnn,0:rtns-1))
@@ -68,7 +69,7 @@
       deallocate(rtlsa)
       deallocate(rtlra)
       deallocate(rtlqa)
-      deallocate(rtlqa_ra)
+      deallocate(rtlqr)
       deallocate(rtlrd)
       deallocate(rtlbr)
       deallocate(rtlcx)
@@ -80,5 +81,12 @@
       
       return
       end subroutine dealloc_b2mod_b2cmrc
+
+      logical function lrtnext(k,k1)
+      implicit none
+      integer, intent(in) :: k, k1
+      lrtnext = rtzmax(k).lt.rtzmin(k1).and.rtzn(k).eq.rtzn(k1)
+      return
+      end function lrtnext
 
       end module b2mod_b2cmrc

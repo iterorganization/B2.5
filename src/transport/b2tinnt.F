@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
-     &       facdrift, fac_ExB, ismain, ismain0, te, po, ti, na, fna, 
+      subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
+     &       facdrift, fac_ExB, ismain, ismain0, te, po, ti, na, fna,
      &       csigin, fchin)                                              !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_constants
@@ -21,7 +21,7 @@
       integer nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) ::
      & facdrift(nFc), fac_ExB(nFc), te(nCv), po(nCv), ti(nCv),
-     & na(nCv,0:ns-1), fna(nFc,0:1,0:ns-1), 
+     & na(nCv,0:ns-1), fna(nFc,0:1,0:ns-1),
      & csigin(nFc,0:1,0:ns-1,0:ns-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -40,12 +40,15 @@
 *
 *-----------------------------------------------------------------------
 *.declarations
-     
+
 *   ..local variables
-      integer is, is0, iamain
+      integer is, is0
+#ifdef WG_TODO
+      integer iamain
 #ifdef B25_EIRENE
       integer ia, im
       character chns*3
+#endif
 #endif
       integer, save :: ncall = 0
       real (kind=R8), parameter :: eps = 1.0e-60_R8
@@ -54,11 +57,12 @@
      *   vntrf(nFc,0:1), tif(nFc), naf(nFc,0:ns-1), dpo(nFc,0:1),
      *   fnan(nFc,0:1,0:ns-1),!WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
      *   wrk(nCv), wrk0(nFc,0:1,0:ns-1), wrk1(nFc,0:1), wrk2(nFc),
-     *   wrkVx(nVx)
+     *   wrkVx(nVx), wrk3(nFc,0:1), wrkv(nCv)
       real (kind=R8) ::
-     &   sec(nCv), sigia(nCv), 
-     &   csigia(nFc,0:1),                                                 !srv 15.02.11
-     &   sigi(nCv), facdriftm, fac_ExBm                                   !srv 20.10.17
+#ifdef WG_TODO
+     &   sigia(nCv), sec(nCv), csigia(nFc,0:1), sigi(nCv),                !srv 15.02.11
+#endif
+     &   facdriftm, fac_ExBm                                   !srv 20.10.17
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: mode = 1
 c      integer, save :: iout = 0
@@ -154,9 +158,9 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
             call intfacev(nx, ny, bottomix, bottomiy, vol, ti, tib)
 *   ..pre-computation of differences
             wght = 1.0e0_R8
-            wrk  = log(na(:,:,ismain))
+            wrk = log(na(:,:,ismain))
             call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
-            call diff(nx, ny, hx, hy, wght, qs, wrk, 
+            call diff(nx, ny, hx, hy, wght, qs, wrk,
      &        wrk0(-1,-1,0,0,ismain))
             call diff(nx, ny, hx, hy, wght, qs, ti, wrk1)
           else
@@ -168,7 +172,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *   ..pre-computation of differences
             wght = 1.0e0_R8
             call diff(nx, ny, hx, hy, wght, qs, po,   dpo)
-            call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,ismain)*ti, 
+            call diff(nx, ny, hx, hy, wght, qs, na(-1,-1,ismain)*ti,
      &        wrk0(-1,-1,0,0,ismain))
           endif
 *       X-COMPONENT OF ION-NEUTRAL CURRENT
@@ -212,8 +216,8 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
                   fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
      &              csigin(ix,iy,0,0,ismain,ismain0)*(
      &            ( -dpo(ix,iy,0,0)
-     &              -(wrk1(ix,iy,0,0) + 
-     &                til(ix,iy)*wrk0(ix,iy,0,0,ismain))/
+     &              -(wrk1(ix,iy,0,0)
+     &               +til(ix,iy)*wrk0(ix,iy,0,0,ismain))/
      &                     (qe*rza(ix,iy,ismain)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
      &         +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,0,ismain0)*
@@ -223,10 +227,10 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
                   fchin(ix,iy,0,1)=fchin(ix,iy,0,1)+
      &              csigin(ix,iy,0,1,ismain,ismain0)*(
      &              -dpo(ix,iy,0,1)
-     &              -(wrk1(ix,iy,0,1) + 
-     &                til(ix,iy)*wrk0(ix,iy,0,1,ismain))/
+     &              -(wrk1(ix,iy,0,1)
+     &               +til(ix,iy)*wrk0(ix,iy,0,1,ismain))/
      &                     (qe*rza(ix,iy,ismain)) )
-     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,ismain0)*
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,3)*fnan(ix,iy,0,1,ismain0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
@@ -251,7 +255,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
      &              -dpo(ix,iy,0,1)
      &              -wrk0(ix,iy,0,1,ismain)/
      &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )
-     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,2)*fnan(ix,iy,0,1,ismain0)*
+     &         -csigia(ix,iy,0,1)*wbbl(ix,iy,3)*fnan(ix,iy,0,1,ismain0)*
      &              (hy1(ix,iy)+hy1(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -276,7 +280,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
      &            -(wrk1(ix,iy,1,1)+tib(ix,iy)*wrk0(ix,iy,1,1,ismain))/
      &              (qe*rza(ix,iy,ismain))
      &                                                      )
-     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -293,7 +297,7 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
      &            - wrk0(ix,iy,1,1,ismain)/
      &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
-     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
+     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*fnan(ix,iy,1,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
@@ -320,10 +324,10 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *    ..test sign of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
-                call b2xvsg (nFc, csigin(:,0,is,is0)*geo%fcQalf(:,0), 1,
-     .            'csigin0', '.ge.')
-                call b2xvsg (nFc, csigin(:,1,is,is0)*geo%fcQalf(:,1), 1,
-     .            'csigin1', '.ge.')
+                wrk3(:,0) = csigin(:,0,is,is0)*geo%fcQalf(:,0)
+                wrk3(:,1) = csigin(:,1,is,is0)*geo%fcQalf(:,1)
+                call b2xvsg (nFc, wrk3(:,0), 1, 'csigin0', '.ge.')
+                call b2xvsg (nFc, wrk3(:,1), 1, 'csigin1', '.ge.')
               enddo
             enddo
           endif
@@ -344,7 +348,8 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
               call intface(nCv, nFc, mpg%fcCv, geo%fcVol, na(:,is),
      &          naf(:,is))
 *   ..pre-computation of differences
-              call diff(nCv, nFc, nVx, 0, geo, mpg, na(:,is)*ti, wrkVx,
+              wrkv(:) = na(:,is)*ti(:)
+              call diff(nCv, nFc, nVx, 0, geo, mpg, wrkv, wrkVx,
      &          wrk0(:,:,is))
             enddo
             call diff(nCv, nFc, nVx, 0, geo, mpg, po, wrkVx, dpo)
@@ -400,9 +405,10 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
           enddo                                                           !srv 08.07.09 }
         endif
       endif  !
+
 #ifdef B25_EIRENE
 #ifdef WG_TODO
-      if(iout.ne.0) then
+      if(iout.ne.0.and.switch%use_eirene.ne.0) then
        do ia = 1,natm
         write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
@@ -447,4 +453,4 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 
 *-----------------------------------------------------------------------
 *.end b2tinnt
 
-      end
+      end subroutine b2tinnt

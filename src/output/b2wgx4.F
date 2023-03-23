@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_b2cmwg
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, iloc
@@ -29,7 +30,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine produces a log-contour plot of some quantity on a
-*     sequence of cartesian representations of the b2 mesh.
+*     sequence of cartesian representations of the B2 mesh.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -95,7 +96,7 @@
      *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny)
 *   ..procedures
       intrinsic nint
-      external subini, subend, xertst
+      external xertst
       external b2wgxq
 
 *-----------------------------------------------------------------------
@@ -117,11 +118,9 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf,
-     &   yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..make plot
-       call b2wgxq (nx, ny, header, xc, xf, yc, yf,
-     &   fun, iloc, scal)
+       call b2wgxq (nx, ny, header, xc, xf, yc, yf, fun, iloc, scal)
       enddo
 
 * ..return
@@ -131,4 +130,4 @@
 *-----------------------------------------------------------------------
 *.end b2wgx4
 
-      end
+      end subroutine b2wgx4

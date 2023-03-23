@@ -11,6 +11,7 @@
       use b2mod_transport
       use b2mod_work
       use b2mod_indirect
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns, itim
@@ -81,7 +82,7 @@
       real (kind=R8) ::
      *   rdum(0:9)
 *   ..procedures
-      external subini, subend, xertst, b2scopy, b2saxpy, cfwuin, cfwure
+      external xertst, b2scopy, b2saxpy, cfwuin, cfwure
       external b2xvsg, b2xvfx
 *   ..initialisation
       data ncall/0/

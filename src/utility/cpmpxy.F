@@ -1,6 +1,3 @@
-#ifndef GRREAL
-#define GRREAL 4
-#endif
       subroutine cpmpxy (imap, xinp, yinp, xotp, yotp)
       use b2mod_types
       implicit none
@@ -28,4 +25,4 @@
       endif
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine cpmpxy

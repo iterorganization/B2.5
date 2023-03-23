@@ -1,20 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne,          !srv 07.07.14
-     *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
+      subroutine b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)     !lk 31.01.08 {
       use b2mod_types
+      use b2mod_geo
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
+     & po(-1:nx,-1:ny),
+     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      & csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
@@ -24,15 +24,15 @@
 *
 *  1. purpose
 *
-*     B2Tstch computes the y-component of electron current 
-*       associated with stochastization of magnetic field
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
 *
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
@@ -40,13 +40,9 @@
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hy1                                                            !srv 07.07.14
-      external subini, subend, ipgetr, ipgeti, xertst, xerrab
+      external ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
 *   ..initialization
       data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
 *-----------------------------------------------------------------------
@@ -60,10 +56,10 @@
         call ipgetr ('b2tstch_delta', delta_stoch)
         call ipgetr ('b2tstch_sig', sig_stoch)
         call xertst (0.0_R8.le.sig_stoch,
-     &	 'faulty internal parameter sig_stoch')
+     &   'faulty internal parameter sig_stoch')
         call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
         call xertst (0.0_R8.lt.delta_stoch.or.fch_stochastic.eq.0.0_R8,
-     &	 'faulty internal parameter delta_stoch')
+     &   'faulty internal parameter delta_stoch')
         call get_jsep(nx,ny,jxi,jxa,jsep)
         ixref=jxa
         call ipgeti ('b2tqna_ixref', ixref)
@@ -106,7 +102,7 @@
            endif
           enddo
         enddo
-      endif                                                               !lk 31.01.08 }
+      endif                                                             !lk 31.01.08 }
 
 !      call my_out(70,nx,ny,csig_stoch,'b2tstch_csigy_stoch')
 !      call my_out(70,nx,ny,fchstoch,'b2tstch_fchstochy')
@@ -119,4 +115,4 @@
 *-----------------------------------------------------------------------
 *.end b2tstch
 
-      end                                                              !lk 31.01.08 }
+      end subroutine b2tstch                                            !lk 31.01.08 }

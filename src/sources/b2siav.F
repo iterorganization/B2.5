@@ -16,6 +16,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2siav, ncall_b2ttia
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb
@@ -48,7 +49,7 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFc, iFt, k
+      integer ic, iCv, iFt, k
       integer, save :: nsmooth = 2
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
@@ -59,9 +60,8 @@
      *     qip1(nCv), qipgen(nCv),                                      !srv 23.07.99 19.01.05
      &     tauia1(nCv), alpha1(nCv), nu1(nCv), s2,                      !lk !iyv 02.12.13
      &     gti(nCv,0:1)
-      integer mintopcut                                                 !lk 23.05.06 05.07.07 }
 *   ..procedures
-      intrinsic abs, sqrt
+      intrinsic sqrt
 *-----------------------------------------------------------------------
 *.computation
 
@@ -212,10 +212,10 @@
       endif                                                             !srv 26.10.08
 
       if (switch%b2siav_iout.ne.0) then                                 !srv 17.06.02 {
+        write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,alpha1,'b2siav_alpha1')
         call my_out_us(70,nCv,0,kt_neo,'b2siav_kt_neo')
         call my_out_us(70,nCv,0,tauia1,'b2siav_tauia1')
-        write (chns,'(i3.3)') isb
         do k=0,3
           write (chk,'(i1)') k
           call my_out_us(70,nCv,0,smbvv(1,k),'b2siav_smovv'//chk//chns)

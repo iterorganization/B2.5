@@ -50,4 +50,4 @@
       strmas = k.eq.len1
       return
 *     ------------------------------------------------------------------
-      end
+      end function strmas

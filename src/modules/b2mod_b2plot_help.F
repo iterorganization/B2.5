@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=355,nfns=209,nsparameters=32,nelabels=36,
+      parameter(nlabels=355,nfns=205,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -29,13 +29,13 @@
      5  'dfch', 'dfna', 'dfmo', 'dfhm', 'dfhp',
      6  'zeff', 'up'  , 'fnax', 'fnay', 'fmox',
      7  'fmoy', 'fhex', 'fhey', 'fhetx','fhety',
-     8  'fhix', 'fhiy', 'fhitx','fhity','fhmx', 
-     9  'fhmy', 'fhpx', 'fhpy', 'fhjx', 'fhjy', 
+     8  'fhix', 'fhiy', 'fhitx','fhity','fhmx',
+     9  'fhmy', 'fhpx', 'fhpy', 'fhjx', 'fhjy',
      *  'fhtx', 'fhty', 'cvsx', 'cvsy', 'ebld'/
       data labels(51:100) /
-     1  'ebls', 'ebal', 'pbal', 'hx'  , 'hy'  , 
-     2  'hy1' , 'sx'  , 'sy'  , 'vol' , 'mach', 
-     3  'ehx' , 'ehy' , 'dab2', 'dmb2', 'ahal', 
+     1  'ebls', 'ebal', 'pbal', 'hx'  , 'hy'  ,
+     2  'hy1' , 'sx'  , 'sy'  , 'vol' , 'mach',
+     3  'ehx' , 'ehy' , 'dab2', 'dmb2', 'ahal',
      4  'mhal', 'rqae', 'rsai', 'rsan', 'rsam',
      5  'rran', 'rrai', 'rram', 'rcxn', 'rcxi',
      6  'rcxm', 'b2br', 'fetx', 'fety', 'tab2',
@@ -52,7 +52,7 @@
      6  'cut' , 'cte' , 'cti' , 'cpo' , 'ixlt',
      7  'ixeq', 'ixgt', 'iylt', 'iyeq', 'iygt',
      8  'islt', 'iseq', 'isgt', 'q'   , 's'   ,
-     9  'alph', 'd'   , 'dp'  , 'kye' , 'kyi' , 
+     9  'alph', 'd'   , 'dp'  , 'kye' , 'kyi' ,
      *  'kyi0', 'vlax', 'vlay', 'visc', 'bvis'/
       data labels(151:200) /
      1  'sig' , 'alf' , 'fchx', 'fchy', 'ud'  ,
@@ -62,9 +62,9 @@
      5  'liy' , 'rix' , 'riy' , 'bix' , 'biy' ,
      6  'tix' , 'tiy' , 'rlcl', 'gdcl', 'dib2',
      7  'tib2', 'brna', 'brmo', 'brhe', 'brhi',
-     8  'brch', 'bcna', 'bcmo', 'bche', 'bchi', 
+     8  'brch', 'bcna', 'bcmo', 'bche', 'bchi',
      9  'bcch', 'dvue', 'dvua', 'exbe', 'exba',
-     *  'visa', 'joul', 'fraa', 'str' , 'ke'  / 
+     *  'visa', 'joul', 'fraa', 'str' , 'ke'  /
       data labels(201:250) /
      1  'facdrift', 'fac_ExB' , 'fac_vis' , 'xymap'   , 'fnax32'  ,
      2  'fnay32'  , 'fnax52'  , 'fnay52'  , 'fnix32'  , 'fniy32'  ,
@@ -116,18 +116,18 @@
      2    'Ion temperature (eV)',
      3    'Static pressure (Pa)',
      4    'Electron density (m^{-3})',
-     5    'phi (V)',
-     6    'diff.fhe (W)',
-     7    'diff.fhi (W)',
-     8    'diff.fhet (W)',
-     9    'diff.fhit (W)',
-     *    'diff.fhj (W)'/
+     5    'Electric potential (V)',
+     6    '\mtD\dfhe (W)',
+     7    '\mtD\dfhi (W)',
+     8    '\mtD\dfhet (W)',
+     9    '\mtD\dfhit (W)',
+     *    '\mtD\dfhj (W)'/
       data descriptions(21:30) /
-     1    'diff.fch (A)',
-     2    'div.fna (particles/s)',
-     3    'div.fmo (N.s)',
-     4    'div.fhm (W)',
-     5    'div.fhp (W)',
+     1    '\mtD\dfch (A)',
+     2    '\mtD\dfna (particles/s)',
+     3    '\mtD\dfmo (N.s)',
+     4    '\mtD\dfhm (W)',
+     5    '\mtD\dfhp (W)',
      6    'Z_{eff}',
      7    'Poloidal velocity (up) (m.s^{-1})',
      8    'Poloidal particle flux (s^{-1})',
@@ -216,13 +216,13 @@
      3    'ua at previous time step (m.s^{-1})',
      4    'po at previous time step (V)',
      5    'Thermal force (proportional to exhp)',
-     6    'Thermal force (proportional to Ti and Te gradients)',
-     7    'Friction force', 
+     6    'Thermal force (proportional to T_{i} and T_{e} gradients)',
+     7    'Friction force',
      8    'Potential energy (eV) (cum. ionisation energy)',
      9    'Ionisation energy (eV)',
      *    'Ionisation energy (eV) [shifted down one]'/
       data descriptions(111:120) /
-     1    'Self pressure force',
+     1    'Self-pressure force',
      2    'Region',
      3    'Parallel momentum source (N)',
      4    'Momentum sources from atomic physics (N)',
@@ -264,7 +264,7 @@
      7    'Poloidal pinch velocity (m.s^{-1})',
      8    'Radial pinch velocity (m.s^{-1})',
      9    'Viscosity (m.kg^{-1}.s^{-1})',
-     *    'Bas'' viscosity piece ()'/
+     *    'Braams viscosity piece (m.kg^{-1}.s^{-1})'/
       data descriptions(151:160) /
      1   'Anomalous conductivity (mho.m^{-1})',
      2   'Thermo-electric coefficient (mho.m^{-1})',
@@ -277,8 +277,8 @@
      9   'pol comp of the total ion diamag vel [wadia.x] (m.s^{-1})',
      *   'rad comp of the total ion diamag vel [wadia.y] (m.s^{-1})'/
       data descriptions(161:170) /
-     1    'pol comp of the ion ExB vel [vaecrb.x] (m.s^{-1})',
-     2    'rad comp of the ion ExB vel [vaecrb.y] (m.s^{-1})',
+     1    'pol comp of the ion E\mU\dB vel [vaecrb.x] (m.s^{-1})',
+     2    'rad comp of the ion E\mU\dB vel [vaecrb.y] (m.s^{-1})',
      3    'fchdia.x',
      4    'fchdia.y',
      5    'Isolating region',
@@ -301,12 +301,12 @@
       data descriptions(181:190) /
      1    'Test ion temperature (eV)',
      2    'Recycling particle source (#/s^{-1})',
-     3    'Recycling parallel momentium source (N)',
+     3    'Recycling parallel momentum source (N)',
      4    'Recycling electron heat source (W)',
      5    'Recycling ion heat source (W)',
      6    'Recycling charge source (A)',
      7    'Boundary particle source (#/s^{-1})',
-     8    'Boundary parallel momentium source (N)',
+     8    'Boundary parallel momentum source (N)',
      9    'Boundary electron heat source (W)',
      *    'Boundary ion heat source (W)'/
       data descriptions(191:200) /
@@ -440,7 +440,7 @@
      7    'iyle',
      8    'iyge',
      9    'isle',
-     *    'isge'/  
+     *    'isge'/
       data descriptions(311:320) /
      1    'Centrifugal force term',
      2    'Modified poloidal particle flux (s^{-1})',
@@ -467,8 +467,8 @@
      1    'Radial current due to inertia and gyroviscosity (A)',
      2    'pol comp of div part of el diamag vel [vedia.x] (m.s^{-1})',
      3    'rad comp of div part of el diamag vel [vedia.y] (m.s^{-1})',
-     4    'pol comp of the electron ExB vel [veecrb.x] (m.s^{-1})',
-     5    'rad comp of the electron ExB vel [veecrb.y] (m.s^{-1})',
+     4    'pol comp of the electron E\mU\dB vel [veecrb.x] (m.s^{-1})',
+     5    'rad comp of the electron E\mU\dB vel [veecrb.y] (m.s^{-1})',
      6    'ixne',
      7    'iyne',
      8    'isne',
@@ -489,7 +489,7 @@
      1    'Poloidal electron flux (s^{-1})',
      2    'Radial electron flux (s^{-1})',
      3    'Poloidal magnetic flux function (Wb)',
-     4    'Toroidal magnetic flux function (Wb)',
+     4    'Toroidal magnetic flux function (Wb/m)',
      5    'Plasma pressure (Pa)'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
@@ -500,8 +500,8 @@
      6    2,      3,      3,      3,      3,
      7    3,      2,      2,      2,      2,
      8    2,      2,      2,      2,      3,
-     9    3,      3,      3,      2,      2,      
-     *    2,      2,      3,      3,      2/      
+     9    3,      3,      3,      2,      2,
+     *    2,      2,      3,      3,      2/
       data dimensions(51:100) /
      1    2,      2,      3,      2,      2,
      2    2,      2,      2,      2,      2,
@@ -531,7 +531,7 @@
      4    2,      2,      2,      2,      2,
      5    2,      2,      2,      2,      2,
      6    2,      2,      2,      2,      3,
-     7    3,      3,      3,      2,      2,      
+     7    3,      3,      3,      2,      2,
      8    2,      3,      3,      2,      2,
      9    2,      2,      2,      2,      2,
      *    2,      2,      2,      2,      3/
@@ -541,11 +541,11 @@
      3    2,      2,      2,      2,      2,
      4    2,      2,      2,      2,      2,
      5    3,      3,      2,      2,      2,
-     6    3,      2,      3,      2,      2, 
+     6    3,      2,      3,      2,      2,
      7    3,      3,      3,      3,      3,
      8    2,      2,      2,      2,      2,
      9    2,      2,      2,      2,      2,
-     *    2,      3,      2,      2,      3/  
+     *    2,      3,      2,      2,      3/
       data dimensions(251:300) /
      1    2,      2,      2,      2,      2,
      2    2,      2,      3,      3,      3,
@@ -556,7 +556,7 @@
      7    3,      3,      3,      3,      3,
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
-     *    3,      2,      3,      3,      3/  
+     *    3,      2,      3,      3,      3/
       data dimensions(301:350) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
@@ -574,12 +574,12 @@
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
      3 'line', 'both', 'phys', 'comp', 'mesh',
-     4 'page', 'logf', 'linf', 'logx', 'linx', 
+     4 'page', 'logf', 'linf', 'logx', 'linx',
      5 'psx' , 'psy' , 'abs' , 'clvs', 'clvd',
-     6 'clvn', 'eclv', 'fclv', 'font', 'lacl', 
+     6 'clvn', 'eclv', 'fclv', 'font', 'lacl',
      7 'lhor', 'lbon', 'lbof', 'lwid', 'grid',
-     8 'clvl', 'sumz', 'spln', 'arow', 'arww', 
-     9 'pvol', 'sep' , 'vesl', 'nocp', 'sepw', 
+     8 'clvl', 'sumz', 'spln', 'arow', 'arww',
+     9 'pvol', 'sep' , 'vesl', 'nocp', 'sepw',
      * 'pne' , 'sq'  , 'a4p' , 'a4l' , 'same'/
       data fns(51:100) /
      1 'filo', 'spec', 'writ', 'm+'  , 'm-'  ,
@@ -588,7 +588,7 @@
      4 'r-'  , 'r*'  , 'r/'  , 'r**' , 'xsel',
      5 'ysel', 'zsel', 'mmin', 'mmax', 'rmmi',
      6 'rmma', 'new' , 'user', 'log' , 'ln'  ,
-     7 'lbsz', 'ndec', 'zrng', 'aspc', 'chs' , 
+     7 'lbsz', 'ndec', 'zrng', 'aspc', 'chs' ,
      8 'sqrt', 'exp' , 'col' , 'bw'  , 'zero',
      9 'bala', 'outl', 'stdl', 'mvsk', 'ave' ,
      * 'traj', 't_#p', 'reso', 'coro', 'cora'/
@@ -614,8 +614,9 @@
      8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
      9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
      * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
-      data fns(201:204) /
-     1 'trigmesh', 'earox', 'earoy', 'earow'/ 
+      data fns(201:205) /
+     1 'trigmesh', 'earox', 'earoy', 'earow',
+     2 'glsz' /
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',
@@ -627,11 +628,11 @@
      8 'ero_ml'  , 'depo_ml' , 'time'    , 'imapx'   , 'imapy'   ,
      9 'kappa_a' , 'kappa_b' , 'kappa_a1', 'kappa_a2', 'kappa_a3',
      * 'kappa_a4', 'kappapa1', 'kappapa2', 'kappapa3', 'kappapa4',
-     1 'tgdns'   , 'cp_b1'   , 'cp_b2'   , 'cp_b3'   , 'erel'    , 
+     1 'tgdns'   , 'cp_b1'   , 'cp_b2'   , 'cp_b3'   , 'erel'    ,
      2 'bbdyemis', 'vapprs_a', 'vapprs_b', 'vapprs'  , 'qevap'   ,
-     3 'qrad'    , 'stckcoef', 'sublheat', 'ckappa_a', 'ckappa_b', 
-     4 'ckappaa1', 'ckappaa2', 'ckappaa3', 'ckappaa4', 'ckapppa1', 
-     5 'ckapppa2', 'ckapppa3', 'ckapppa4', 'ctgdns'  , 'c_cp_b1' , 
+     3 'qrad'    , 'stckcoef', 'sublheat', 'ckappa_a', 'ckappa_b',
+     4 'ckappaa1', 'ckappaa2', 'ckappaa3', 'ckappaa4', 'ckapppa1',
+     5 'ckapppa2', 'ckapppa3', 'ckapppa4', 'ctgdns'  , 'c_cp_b1' ,
      6 'c_cp_b2' , 'c_cp_b3' , 'coathick', 'lkappa'  , 'lrho'    ,
      7 'lcp'     , 'lemis'   , 'sputfrac', 'lthick'  , 'ldepth'  ,
      8 'iwle'    , 'iwge'    , 'iswle'   , 'iswge'   , 'c_cp_b4' ,
@@ -787,17 +788,17 @@
      9 'wmle' , 'wmeq'    , 'wmne' , 'wmgt' , 'wmge' ,
      * 'wlog' , 'wln'     , 'wsqrt', 'wexp' , 'wzrng',
      1 'wchs' , 'wtos'    , 'wtot' , 'wpos' , 'wsaw' ,
-     2 'wallf', 'outpw'   , 'wprt' , 'wtab' , 'wlld' , 
+     2 'wallf', 'outpw'   , 'wprt' , 'wtab' , 'wlld' ,
      3 'woff' , 'wlist'/
       data trgfns /
      1 'logtrg'  , 'lintrg'  , 'tclvs'   , 'tclvd'   , 'tclvn'   ,
-     2 'trg.w'   , 'trg.z'   , 'sumtrgw' , 'sumtrgz' , 'inttrgw' , 
-     3 'inttrgz' , 'trgddw'  , 'trgddp'  , 'trgddz'  , 'rtrgm+'  , 
-     4 'rtrgm-'  , 'rtrgm*'  , 'rtrgm/'  , 'rtrgm**' , 'trgdrop' , 
-     5 'trgtemp' , 'trgwsel' , 'rtrgmmi' , 'rtrgmma' , 'trglt'   , 
-     6 'trgle'   , 'trgeq'   , 'trgne'   , 'trggt'   , 'trgge'   , 
-     7 'trglog'  , 'trgln'   , 'trgsqrt' , 'trgexp'  , 'trgchs'  , 
-     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgl'    , 
+     2 'trg.w'   , 'trg.z'   , 'sumtrgw' , 'sumtrgz' , 'inttrgw' ,
+     3 'inttrgz' , 'trgddw'  , 'trgddp'  , 'trgddz'  , 'rtrgm+'  ,
+     4 'rtrgm-'  , 'rtrgm*'  , 'rtrgm/'  , 'rtrgm**' , 'trgdrop' ,
+     5 'trgtemp' , 'trgwsel' , 'rtrgmmi' , 'rtrgmma' , 'trglt'   ,
+     6 'trgle'   , 'trgeq'   , 'trgne'   , 'trggt'   , 'trgge'   ,
+     7 'trglog'  , 'trgln'   , 'trgsqrt' , 'trgexp'  , 'trgchs'  ,
+     8 'trgtow'  , 'trgpos'  , 'outptrg' , 'trgprt'  , 'trgl'    ,
      9 'trgsurf' , 'kappa_ab', 'kappa'   , 'dkappadt', 'kappap'  , 
      * 'kappapdt', 'cp'      , 'trgwidth', 'trgdepth', 'trgdup'  , 
      1 'trgswap' , 'trgover' , 'trgmmin' , 'trgmmax' , 'trgr1'   , 
@@ -833,31 +834,31 @@
      4 'Atoms energy density (eV.m^{-3})',
      5 'Molecules energy density (eV.m^{-3})',
      6 'Test ions energy density (eV.m^{-3})',
-     7 'Atoms X-directed momentum density (kg.m^{-2}.s^{-1})',
-     8 'Molecules X-directed momentum density (kg.m^{-2}.s^{-1})',
-     9 'Test ions X-directed momentum density (kg.m^{-2}.s^{-1})',
-     * 'Atoms Y-directed momentum density (kg.m^{-2}.s^{-1})'/
+     7 'Atoms Cartesian X-momentum density (kg.m^{-2}.s^{-1})',
+     8 'Molecules Cartesian X-momentum density (kg.m^{-2}.s^{-1})',
+     9 'Test ions Cartesian X-momentum density (kg.m^{-2}.s^{-1})',
+     * 'Atoms Cartesian Y-momentum density (kg.m^{-2}.s^{-1})'/
       data edescriptions(11:20) /
-     1 'Molecules Y-directed momentum density (kg.m^{-2}.s^{-1})',
-     2 'Test ions Y-directed momentum density (kg.m^{-2}.s^{-1})',
-     3 'Atoms Z-directed momentum density (kg.m^{-2}.s^{-1})',
-     4 'Molecules Z-directed momentum density (kg.m^{-2}.s^{-1})',
-     5 'Test ions Z-directed momentum density (kg.m^{-2}.s^{-1})',
+     1 'Molecules Cartesian Y-momentum density (kg.m^{-2}.s^{-1})',
+     2 'Test ions Cartesian Y-momentum density (kg.m^{-2}.s^{-1})',
+     3 'Atoms Cartesian Z-momentum density (kg.m^{-2}.s^{-1})',
+     4 'Molecules Cartesian Z-momentum density (kg.m^{-2}.s^{-1})',
+     5 'Test ions Cartesian Z-momentum density (kg.m^{-2}.s^{-1})',
      6 'Triangle area (m^{2})',
      7 'Triangle volume (m^{3})',
      8 'Triangle centroid R coordinate (m)',
      9 'Triangle centroid Z coordinate (m)',
      * 'Triangle index'/
       data edescriptions(21:30) /
-     1 'Atoms X-directed velocity (m.s^{-1})',
-     2 'Molecules X-directed velocity (m.s^{-1})',
-     3 'Test ions X-directed velocity (m.s^{-1})',
-     4 'Atoms Y-directed velocity (m.s^{-1})',
-     5 'Molecules Y-directed velocity (m.s^{-1})',
-     6 'Test ions Y-directed velocity (m.s^{-1})',
-     7 'Atoms Z-directed velocity (m.s^{-1})',
-     8 'Molecules Z-directed velocity (m.s^{-1})',
-     9 'Test ions Z-directed velocity (m.s^{-1})',
+     1 'Atoms Cartesian X-directed velocity (m.s^{-1})',
+     2 'Molecules Cartesian X-directed velocity (m.s^{-1})',
+     3 'Test ions Cartesian X-directed velocity (m.s^{-1})',
+     4 'Atoms Cartesian Y-directed velocity (m.s^{-1})',
+     5 'Molecules Cartesian Y-directed velocity (m.s^{-1})',
+     6 'Test ions Cartesian Y-directed velocity (m.s^{-1})',
+     7 'Atoms Cartesian Z-directed velocity (m.s^{-1})',
+     8 'Molecules Cartesian Z-directed velocity (m.s^{-1})',
+     9 'Test ions Cartesian Z-directed velocity (m.s^{-1})',
      * 'Atom mass (kg)'/
       data edescriptions(31:36) /
      1 'Molecule mass (kg)',
@@ -878,7 +879,7 @@
      1 'me'    ,'mp' , 'ev'  , 'qe'   , 'mu0',
      2 'eps0'  ,'pi' , 'c'   , 'avogr', 'kbolt'/
       data constant_value /
-     1  me,      mp,    ev,     qe,      mu0,  
+     1  me,      mp,    ev,     qe,      mu0,
      2  eps0,    pi,    c,      avogr,   kbolt/
 
       end module b2mod_b2plot_help

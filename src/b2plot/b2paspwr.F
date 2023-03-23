@@ -37,7 +37,7 @@ c
      ,  (hlp_rdfr,equ_hlp(1,7)),    (hlp_rad_tot,equ_hlp(1,8)),
      ,  (hlp_area_t,equ_hlp(1,9))
       logical ex
-      character tab,hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
+      character hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
      ,  hlp_hdr(m_hlp)*4,hlp_hda(m_hlpa)*4,hlp_inp*8
       data hlp_fn / 'spec_pwr.dat' /
       data hlp_c / 'i', 'o' /
@@ -46,7 +46,6 @@ c
       data hlp_hda / 'Pin' /
 c======================================================================
 
-      tab=char(9)
       n_hlp=2*m_hlp+m_hlpa
       isep=jsep+1
 
@@ -150,38 +149,38 @@ c*** Produce the output
 
       call find_file(hlp_fn,ex)
       open(lun,file=hlp_fn,err=900)
-      write(hlp_frm,'(10h(1x,i4,1p,, i3, 9he12.4,i5))') n_hlp
-c      print *,'hlp_frm: ',hlp_frm
+      write(hlp_frm,'(a14,i3,a9)') '(1x,a12,1x,1p,',n_hlp,'e12.4,i5)'
+c      print *,'hlp_frm: ',trim(hlp_frm)
       if(ex) then
 
 c*** read the file
 
         l=0
- 10     read(lun,'(a1)',end=20) hlp_u
+   10   read(lun,'(a1)',end=20) hlp_u
         if(hlp_u.eq.'#') then
           l=l+1
           go to 10
         end if
- 20     if(l.eq.0) then
+   20   if(l.eq.0) then
           write(0,*) 'b2paspwr: wrong format of the existing file ',
      ,                                                           hlp_fn
           write(0,*) '  -- no header found'
-          stop
+          call xerrab ('No header found in spec_pwr.dat file !')
         end if
         backspace(lun)
- 30     read(lun,hlp_frm,err=40,end=40) j,(hlp_r,i=1,n_hlp),m
+   30   read(lun,hlp_frm,err=40,end=40) j,(hlp_r,i=1,n_hlp),m
         if(m.eq.1234) go to 30
- 40     backspace(lun)
+   40   backspace(lun)
       else
 
 c*** Write the header
 
         rewind(lun)
-        write(hlp_frh,'(16h(1p,6h#case'//tab//
-     /                       ',a4,,i3, 12h(1h'//tab//',a4,a1)))') n_hlp
+        write(hlp_frh,'(a,i1,a,i3,a)')
+     .   '(a5,14x,',m_hlpa,'a4,7x,',2*m_hlp,'(a4,a1,7x))'
 c        print *,'hlp_frh: ',hlp_frh
-        write(lun,hlp_frh) (hlp_hda(i),i=1,m_hlpa),
-     -                           ((hlp_hdr(i),hlp_c(j),i=1,m_hlp),j=1,2)
+        write(lun,hlp_frh) '#case',(hlp_hda(i),i=1,m_hlpa),
+     -    ((hlp_hdr(i),hlp_c(j),i=1,m_hlp),j=1,2)
       end if
 
 c*** Extract the case number
@@ -202,7 +201,7 @@ c*** Write the data
       close(lun)
       return
 c======================================================================
- 900  write(0,*) 'b2paspwr: unable to open ',hlp_fn
-      stop
+  900 write(0,*) 'b2paspwr: unable to open ',hlp_fn
+      call xerrab ('Unable to open spec_pwr.dat file!')
 c======================================================================
-      end
+      end subroutine b2paspwr

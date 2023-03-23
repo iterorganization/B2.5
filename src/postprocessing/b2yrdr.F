@@ -6,6 +6,8 @@
       use b2mod_version
       use b2mod_b2cmrc
       use b2mod_ppout
+      use b2mod_ipmain
+      use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"
 *   ..input arguments (unchanged on exit)
@@ -18,7 +20,7 @@
 *
 *  1. purpose
 *
-*     B2YRDR is a postprocessor for b2. It reads and displays a table
+*     B2YRDR is a postprocessor for B2. It reads and displays a table
 *     of atomic rate coefficients.
 *
 *
@@ -26,7 +28,7 @@
 *
 *     This routine displays a table of atomic rate coefficients for the
 *     processes of ionisation, recombination, heat loss, and charge
-*     exchange. The table is in the form required for use by the b2
+*     exchange. The table is in the form required for use by the B2
 *     code /1,2/. It is read from unit ninp(1) and is stored in the
 *     common block /b2cmrc/.
 *
@@ -54,21 +56,21 @@
 *
 *  4. references
 *
-*     /1/ B. J. Braams, "Computational Studies in Tokamak Equilibrium
-*     and Transport", thesis, State University at Utrecht, June 1986.
-*     /2/ B. J. Braams, "A Multi-Fluid Code for Simulation of the Edge
-*     Plasma in Tokamaks", NET Report Nr 68, January 1987.
-*     /3/ R. A. Hulse, "Numerical Studies of Impurities in Fusion
-*     Plasmas", Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
+*     /1/ B. J. Braams, Computational Studies in Tokamak Equilibrium
+*     and Transport, thesis, State University at Utrecht, June 1986.
+*     /2/ B. J. Braams, A Multi-Fluid Code for Simulation of the Edge
+*     Plasma in Tokamaks, NET Report Nr 68, January 1987.
+*     /3/ R. A. Hulse, Numerical Studies of Impurities in Fusion
+*     Plasmas, Nuclear Technol./Fusion, vol.3 (1983) pp.259-272.
 *     /4/ R. A. Hulse, !! (detailed description?).
-*     /5/ K. Behringer, "Description of the Impurity Transport Code
-*     STRAHL", JET Report R(87)08, 1987.
+*     /5/ K. Behringer, Description of the Impurity Transport Code
+*     STRAHL, JET Report R(87)08, 1987.
 *     /6/ K. Behringer, !! (journal article?).
-*     /7/ Jon C. Weisheit, "Recombination in Dense Plasmas", J. Phys. B
+*     /7/ Jon C. Weisheit, Recombination in Dense Plasmas, J. Phys. B
 *     (Atom. Molec. Phys.) 8 (1975) 2556.
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
-*     Heifetz and J. C. Weisheit, "Survey of Atomic Processes in Edge
-*     Plasmas", J. Nuclear Mater. 121 (1984) 10-16.
+*     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
+*     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
 *
 *
 *  5. parameters (see also routine b2cdcv)
@@ -99,11 +101,12 @@
       integer idum(0:9)
       logical lt0, lt1, lt2
       integer i, is, is1, nx, ny, ns, ns1
-      character id*8, lblrc*120, lblcp*120, cnamip*80, cvalip*80
+      character id*8, lblrc*120, lblcp*120
+      character cnamip*80, cvalip*80, line*80, ligne*80
 *   ..procedures
-      logical streql, strmas
-      external subini, subend, xertst, xerrab, cfverr, cfruch
-      external cfruin, streql, strmas, ipsetc, ipgeti, gacwk, gdawk
+      logical streql, is_comment, strmas
+      external xertst, xerrab, cfruch
+      external cfruin, streql, strmas, ipgeti, gacwk, gdawk, is_comment
       external b2rurc, b2rucp, b2wfr0, b2wfr1, b2wfrc, b2wgrc
 
 *-----------------------------------------------------------------------
@@ -125,21 +128,21 @@
 *     rtns specifies the total number of atomic species; i.e.
 *       (sum inuc : 0.le.inuc.lt.nnuc : izhi(inuc)-izlo(inuc)+1) ,
 *     where inuc is a nuclear species index, izlo(inuc) is the lowest
-*     and izhi(inuc) is the highest atomic charge considered in b2 for
+*     and izhi(inuc) is the highest atomic charge considered in B2 for
 *     that nuclear species.
-*     rtns equals the variable ns used elsewhere in b2.
+*     rtns equals the variable ns used elsewhere in B2.
 *      rtdumm - integer.
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
 *      rtzmin, rtzmax, rtzn - (0:rtns-1) real*8 array.
-*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic 
+*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic
 *     charge range, and rtzn(is) specifies the nuclear charge
-*     of atomic species (is). 
+*     of atomic species (is).
 *     The izhi(inuc)-izlo(inuc)+1 charge states for each nuclear
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
-*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
-*     zamin, zamax and zn used elsewhere in b2.
+*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays
+*     zamin, zamax and zn used elsewhere in B2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
 *     variable, expressed in ev, for which the rate coefficients are
@@ -164,22 +167,22 @@
 *     logu(rtrra), where rtrra is the recombination rate coefficient at
 *     electron temperature rtt(i) and electron density rtn(j), for the
 *     process k->k-1. rtrra has dimension m**3/s.
-*     rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*      rtlqa - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlqa(i,j,k) specifies the
-*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient 
-*     at electron temperature rtt(i) and electron density rtn(j) for 
-*     processes starting from charge state k, excluding the contributions 
-*     coming from potential energy of recombination and other recombination 
-*     process contributions. In short, it includes the processes not 
-*     accounted for in EIRENE.
+*     logu(rtrqa), where rtrqa is the electron heat loss rate coefficient
+*     at electron temperature rtt(i) and electron density rtn(j) for
+*     processes starting from charge state k, excluding the contributions
+*     coming from potential energy of recombination and other recombination
+*     process contributions. In short, it includes the processes not
+*     accounted for in Eirene.
 *     rtqa has dimension eV*m**3/s.
-*     rtlqa_ra - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
-*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqa(i,j,k) specifies the
-*     logu(rtrqa_ra), where rtrqa_ra is electron heat loss rate 
+*      rtlqr - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
+*     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtqr(i,j,k) specifies the
+*     logu(rtrqr), where rtrqr is the electron heat loss rate
 *     coefficient at electron temperature rtt(i)
 *     and electron density rtn(j) for processes starting from charge
-*     state k. rtqa_ra only includes the contribution of recombination
-*     which replaces amjuel when EIRENE is not used. rtqa_ra has 
+*     state k. rtqr only includes the contribution of recombination
+*     which replaces AMJUEL when Eirene is not used. rtqr has
 *     dimension eV*m**3/s.
 *      rtlcx - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlcx(i,j,k) specifies
@@ -190,22 +193,22 @@
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlza(i,j,k) specifies
 *     the effective charge state at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlza has dimension e. 
+*     superstage k. rtlza has dimension e.
 *      rtlz2 - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlz2(i,j,k) specifies
 *     the effective squared charge at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlz2 has dimension e**2. 
+*     superstage k. rtlz2 has dimension e**2.
 *      rtlpt - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpt(i,j,k) specifies
 *     the cumulative ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k. rtlpt has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k. rtlpt has dimension eV.
 *      rtlpi - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpi(i,j,k) specifies
 *     the effective ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k from superstage k-1. rtlpi has dimension eV.
 *
 *     Description of some local variables:
 *
@@ -285,9 +288,16 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),*,end=2,err=97) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-       call ipsetc (cnamip, cvalip)
+       read (ninp(0),*,end=2,err=97) line
+       if (.not.is_comment(line)) then
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
+       endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
@@ -327,9 +337,9 @@
        write (nout(0),'(/a/a)')
      &   ' Please check the origin of these rate coefficients;'//
      &   ' this program is unable to determine if they stem from',
-     &   ' the ADPAK package, the STRAHL package, or from some'//
-     &   ' other source.'
-      endif
+     &   ' the ADPAK package, the STRAHL package, ADAS,'//
+     &   ' or from some other source.'
+      end if
 *   ..write rtns, rtzmin, rtzmax, rtzn
       write (nout(0),'(/2x,a,i3)')
      &  'number of species in this table: ',rtns
@@ -349,24 +359,26 @@
 *   ..initialise species index
       is = 0
 *   ..loop over nuclear species
- 10   if (is.ne.rtns) then
+   10 if (is.ne.rtns) then
 *    ..find range of this nuclear species
        is1 = is+1
- 20    if (is1.ne.rtns) then
-	 if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
+   20  if (is1.ne.rtns) then
+         if (rtzn(is).eq.rtzn(is1).and.rtzmax(is).lt.rtzmin(is1)) then
          is1 = is1+1
          goto 20
         endif
        endif
 *    ..display table
        call b2wfrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is), 
-     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqa_ra(0,0,is), 
+     &   rtnt, rtn, rtnn, rtzmin(is), rtzmax(is), rtzn(is),
+     &   fix_recomb, zmax_recomb,
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqr(0,0,is),
      &   rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
        call b2wgrc (nout(0), is1-is, nidis, idis, njdis, jdis, rtt,
-     &   rtnt, rtn, rtnn, rtzn(is), rtlsa(0,0,is),
-     &   rtlra(0,0,is), rtlqa(0,0,is), rtlqa_ra(0,0,is), rtlcx(0,0,is),
+     &   rtnt, rtn, rtnn, rtzn(is), fix_recomb, zmax_recomb,
+     &   rtlsa(0,0,is), rtlra(0,0,is), rtlqa(0,0,is), rtlqr(0,0,is),
+     &   rtlcx(0,0,is),
      &   rtlza(0,0,is), rtlz2(0,0,is), rtlpt(0,0,is), rtlpi(0,0,is))
 *    ..increment and loop
        is = is1

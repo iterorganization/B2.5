@@ -10,6 +10,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2ttia
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -26,7 +27,7 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFc, iFt, is, k
+      integer ic, iCv, iFt, is, k
       integer, save :: nsmooth = 2
       integer, save :: ncall = 0
       real (kind=R8) ::
@@ -35,8 +36,7 @@
      *    tauia1(nCv), alpha1(nCv), nu1(nCv), tauia(nCv,0:ns-1),        !srv 28.03.99 11.07.99
      *    gti(nCv,0:1), gOnedBsq(nFc,0:1)
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation

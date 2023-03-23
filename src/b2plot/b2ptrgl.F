@@ -23,9 +23,12 @@ c======================================================================
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     .   , only : natm, nmol
+     .   , only : natm
       use eirmod_extrab25
       use eirmod_ccona
+      use eirmod_cinit
+#else
+      use b2mod_eirbra
 #endif
       implicit none
 #include <DIMENSIONS.F>
@@ -33,31 +36,42 @@ c======================================================================
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
-#ifndef B25_EIRENE
+      integer, save :: use_eirene = 0
+#ifdef B25_EIRENE
+      integer eb2atm(nspecies)
+#else
+#ifdef WG_TODO
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
+#endif
       character*8 TEXTA(DEF_NATM)
 #endif
 c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
-      integer i1,i2,i3,ia,ib,ic,is,ix,ik,imin,imax,ind,ims,ias
+      integer i1,i2,i3,ia,ib,ic,is,ix,ik,ind,ims,ias,nclm_na,nclm_nm
+      integer kval, kflx
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx)
       logical match_found,do_sput(ntrgsx)
+c*  s:        area of target segments cut by the grid
+c*  wid_par:  ideal parallel power flux at the targets
+c*  wid_trg:  ideal power on the targets
+c*  xwhm_tt:  exp. decay length on target, calc. from hw & mapped to OMP
       real (kind=R8) ::
-     *  h,t,u,a,b,d,p,wo,wt,mion,mmol,t1(2),
-     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
+     *  h,ha,hb,u,a,b,d,p,wo,wt,mion,t1(2),
+     ,  z_hlp(ntrgsx),xtg_hlp(-1:ny,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
      ,  xmc_hlp(0:ny-1,ntrgsx),s(0:ny-1,ntrgsx),wi(ntrgsx),
-     ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),xctrg(0:ny-1,ntrgsx),
+     ,  zctrg(0:ny-1,ntrgsx),rctrg(0:ny-1,ntrgsx),
      ,  xtrg(0:ny-1,ntrgsx),netrg(0:ny-1,ntrgsx),tetrg(0:ny-1,ntrgsx),
      ,  titrg(0:ny-1,ntrgsx),wpttrg(0:ny-1,ntrgsx),
      ,  wpltrg(0:ny-1,ntrgsx),wnutrg(0:ny-1,ntrgsx),
      ,  wrdtrg(0:ny-1,ntrgsx,0:DEF_NATM),wtttrg(0:ny-1,ntrgsx),
-     ,  wpk_tt(0:ntrgsx),wpk_rd(0:ntrgsx),
+     ,  wpk_rd(0:ntrgsx),
+     ,  wpk_tt(0:ntrgsx),
      ,  wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),
      ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx),
      ,  pwr_tt(ntrgsx),pwr_rd(ntrgsx),fwht_tt(ntrgsx),fwxt_tt(ntrgsx),
-     ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwhx_tt(ntrgsx),hwxt_tt(ntrgsx),
+     ,  hwht_tt(ntrgsx),hwhm_tt(ntrgsx),hwxt_tt(ntrgsx),
      ,  hwxm_tt(ntrgsx),lcnnt(0:ny-1,ntrgsx),lcnnx(0:ny-1,ntrgsx)
 c
 c*** Arrays for particle fluxes and erosion
@@ -70,54 +84,58 @@ c***  sje  erosion rate [mm/y]
 c***    suffix "_t" denotes totals from distributions,
 c***    and "_w" the totals from Eirene.
 c
-c*** Recap of fluxes from eirene
-c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
-c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
-c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
+c*** Recap of fluxes from Eirene
+c***    wldnek  :   net kinergy energy deposited by neutrals. Evaluated as
+c***                    EOTAT+EOTML+EOTIO-ERFAAT-ERFMAT-ERFIAT-ERFAML-ERFMML-ERFIML
+c***    wldnep  :   energy released by recombination into molecules. Evaluated as
+c***                    diss_pot_H2*(PRFAML+PRFPML)
 c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
-c***    ewlda   :   their average energy. Equal to EOTAT/POTAT*wldna
+c***    ewlda   :   their average energy. Equal to EOTAT/POTAT
 c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
-c***    ewldm   :   their average energy. Equal to EOTML/POTML*wldnm
+c***    ewldm   :   their average energy. Equal to EOTML/POTML
 c***    wldra   :   flux of reflected atoms. Equal to PRFAAT+PRFMAT+PRFIAT
 c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
 c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
 c***    wldpa   :   flux of emitted atoms from BI. Equal to PRFPAT
 c***    wldpm   :   flux of emitted molecules from BI. Equal to PRFPML
-c***    wldpeb  :   power carried away by these atoms and molecules. Equal to ERFPAT+ERFPML+ERFPIO
+c***    wldpeb  :   power carried away by these atoms and molecules. Equal to
+c***                  ERFPAT+ERFPML+ERFPIO
 c***    wldspt  :   flux of sputtered wall material
 c***    wldspta :   sputtered flux by emitted atom
 c***    wldsptm :   sputtered flux by emitted molecule
 c***    wlarea  :   areas of the surface segments from Eirene
-c***    wlabsrp :   absorption at the surfaces (1-recyct from Eirene)
-c***    ewldea_res  :   emitted energy flux of atoms. Equal to ERFAAT+ERFMAT+ERFIAT+ERFPHAT
-c***    ewldem_res  :   emitted energy flux due of molecules. Equal to ERFAML+ERFMML+
-c***                      ERFIML+ERFPHML
-c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions. ERFPAT+ERFPML
-c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()PRFAML+PRFPML)*H_EDISS
+c***    wlabsrp :   absorption at the surfaces (1-RECYCT from Eirene)
+c***    ewldea_res  :   emitted energy flux of atoms. Equal to
+c***                      ERFAAT+ERFMAT+ERFIAT+ERFPHAT
+c***    ewldem_res  :   emitted energy flux due to molecules. Equal to
+c***                      ERFAML+ERFMML+ERFIML+ERFPHML
+c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions.
+c***                      ERFPAT+ERFPML
+c***    ewldmr_res  :   energy due to recombination of atoms and atomic ions into molecules.
+c***                     (PRFAML+PRFPML)*H_EDISS
 
       real (kind=R8) ::
-     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM), 
+     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM),
      *  sjt(0:ny-1,ntrgsx,DEF_NATM), spa(0:ny-1,ntrgsx,DEF_NATM),
      *  sje(0:ny-1,ntrgsx), sjs(0:ny-1,ntrgsx),
      *  sjm(0:ny-1,ntrgsx,DEF_NMOL),spm(0:ny-1,ntrgsx,DEF_NMOL)
       real (kind=R8) ::
      *   sja_t(0:ntrgsx,DEF_NATM), sjp_t(0:ntrgsx,DEF_NATM),
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
-     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL), 
+     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL),
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
-     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
-     ,   sb_t,ss_t,sn_t,sg_t, spt_out(2),mol_out(2*DEF_NMOL)
-      integer eb2atm(nspecies)
-      character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
+     ,   sjs_s(0:ntrgsx), sjs_t(ntrgsx), sjs_w(ntrgsx), sptmass,
+     ,   sn_t, spt_out(2), mol_out(2*DEF_NMOL)
+      character*11 spt_str(2,ntrgsx), fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
-      character*10 ssmol,ssion
+      character*16 ssmol, ssion
       real (kind=R8) ::
      *   ers_factor, nsecyr
-      parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
+      parameter (nsecyr=24.0_R8*3600.0_R8*365.2425_R8)
       parameter (ers_factor=nsecyr*1.0e-3_R8/avogr)
       real (kind=R8) ::
-     *   ss(ntrgsx),ersn_a(ntrgsx),ss_m,ersn_am,ersn_p(ntrgsx),ersn_pm,
-     *   ersn_l(ntrgsx)
+     *   ss(ntrgsx), ersn_a(ntrgsx),
+     *   ss_m, ersn_am, ersn_p(ntrgsx), ersn_pm, ersn_l(ntrgsx)
       logical ft44
       logical streql
       external streql
@@ -125,17 +143,17 @@ c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()P
 c*** Data for erosion calculations
 c***  n_srfs_m  : number of possible target materials
 c***  srfs_m    : list of possible target materials
-c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible target materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
-      character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
+      character srfs_m(n_srfs_m)*4
       data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
-      data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo' ,'W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 96. , 184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 10.2, 19.3/
+      data srfs_a /  9.0_R8, 12.0_R8, 12.0_R8, 56.0_R8,
+     .              56.0_R8, 96.0_R8,184.0_R8/
+      data srfs_d /  1.8_R8,  2.0_R8,  2.0_R8,  7.8_R8,
+     .               7.8_R8, 10.2_R8, 19.3_R8/
 c
 c*** Text variables:
 c***  ftrg    filenames for the profiles along the targets
@@ -147,7 +165,8 @@ c***  fsumm   filenames for the summaries
       character*12 ftrg(ntrgsx,2),fsumm(4),fn_hlp
       character fmt_peak*80,tab*1,tl*1,
      ,  trg_label(ntrgsx)*9,trg_short(ntrgsx)*2,hlp_trg(ntrgsx)*2,
-     ,  pkl_label(2)*9,hdr_2(n_intgrs)*8
+     ,  pkl_label(2)*9,
+     ,  hdr_2(n_intgrs)*8
       data ftrg /
      ,  'ld_tg_i.dat', 'ld_tg_iu.dat', 'ld_tg_ou.dat', 'ld_tg_o.dat',
      ,  'fp_tg_i.dat', 'fp_tg_iu.dat', 'fp_tg_ou.dat', 'fp_tg_o.dat'/
@@ -156,7 +175,7 @@ c***  fsumm   filenames for the summaries
       data trg_label /'inner','inner_top','outer_top','outer'/
       data trg_short / 'il'  ,    'iu'   ,    'ou'   , 'ol'  /
       data pkl_label /'     ','- top'/
-      data hdr_2 / 'int_rad','int_tot','fwht_tot','fwxt_tot',
+      data hdr_2 / ' int_rad',' int_tot','fwht_tot','fwxt_tot',
      ,  'hwht_tot','hwhm_tot','hwxt_tot','hwxm_tot' /
 c======================================================================
 c*** At present, only a crude estimate is available for the neutrals:
@@ -168,24 +187,29 @@ c*** Here n and T are the density and temperature of the hydrogenic
 c*** atoms near the target.
 c*** The proportionality factor is adjusted to match the integrals
 c*** which are calculated in Eirene.
-c
-c      print *,'Starting b2ptrgl...'
-c      print *,'ers_factor= ',ers_factor
-      tab=char(9)
-#ifndef HPUX
-      filename='fort.44'
-#else
-      filename='ftn44'
+#ifdef DBG
+      print *,'Starting b2ptrgl...'
+      print *,'ers_factor,lrdlsp= ',ers_factor,lrdlsp
 #endif
-      call find_file(filename,ft44)
+      tab=char(9)
+      call ipgeti ('b2mndr_eirene', use_eirene)
+      if (use_eirene.ne.0) then
+        filename=fort_lc//'44'
+        call find_file(filename,ft44)
+      else
+        ft44 = .false.
+      end if
 
 c----------------------------------------------------------------------
 c*** Power loading:
 c*** Radiation load onto the targets
-c
+
       call b2ptrdl(wrdtrg)
-c      print *,'After b2ptrdl: ntrgts,lytg,nytg,lrdlsp = ',   !###
-c     ,         ntrgts,lytg,nytg,lrdlsp                       !###
+#ifdef DBG
+      print '(2a,3i5,2(1x,l1))','After b2ptrdl: ',
+     ,        'ntrgts,lytg,nytg,lrdlsp = ',   !###
+     ,         ntrgts,lytg,nytg,lrdlsp        !###
+#endif
 c-----------------------------------------------------------------------
 c*** Target geometry
 
@@ -208,15 +232,16 @@ c*** Target geometry
           z_hlp(j)=z_hlp(j)+0.5_R8*h
           xtg_hlp(iy,j)=z_hlp(j)
         end do !}
+        xtg_hlp(ny,j)=xtg_hlp(ny-1,j)+0.5_R8*h
       end do !}
-c!###{
-c      print *
-c      print *,'ny,xtg_hlp:',ny
-c      do j=1,ntrgts !{
-c        print '(1x,i3,10f9.5/(4x,10f9.6))',lseppos(j)+1,
-c     ,                                         (xtg_hlp(i,j),i=0,ny-1)
-c      end do !}
-c!###}
+#ifdef DBG
+      print *
+      print *,'ny,xtg_hlp:',ny
+      do j=1,ntrgts !{
+        print '(1x,i3,10(1x,f9.6)/(4x,10(1x,f9.6)))',lseppos(j)+1,
+     ,                                         (xtg_hlp(i,j),i=-1,ny)
+      end do !}
+#endif
 
 c*** Midplane coordinates
 
@@ -263,91 +288,97 @@ c!###}
 c-----------------------------------------------------------------------
 c*** Power loading:
 
+      ixstart(1,1)=jxi
+      ixend(1,1)=0
+      ixstart(1,2)=leftcut(1)-1
+      ixend(1,2)=0
+      if (ntrgts.gt.0) then
+        ixstart(ntrgts,1)=jxa
+        ixend(ntrgts,1)=nx-1
+        ixstart(ntrgts,2)=rightcut(1)
+        ixend(ntrgts,2)=nx-1
+      end if
+      if (ntrgts.gt.2) then
+        ixstart(2,1)=jxi
+        ixend(2,1)=nxtl-1
+        ixstart(3,1)=jxa
+        ixend(3,1)=nxtr+1
+        ixstart(2,2)=leftcut(2)
+        ixend(2,2)=nxtl-1
+        ixstart(3,2)=rightcut(2)-1
+        ixend(3,2)=nxtr+1
+      endif
 c
 c*** Plasma and neutrals
 c
       l=1
       u=-1.0_R8
-      ixstart(1,1)=jxi
-      ixend(1,1)=0
-      ixstart(ntrgts,1)=jxa
-      ixend(ntrgts,1)=nx
-      ixstart(1,2)=leftcut(1)-1
-      ixend(1,2)=0
-      ixstart(ntrgts,2)=rightcut(1)
-      ixend(ntrgts,2)=nx
-      if (ntrgts.gt.2) then
-        ixstart(2,1)=jxi
-        ixend(2,1)=nxtl
-        ixstart(3,1)=jxa
-        ixend(3,1)=nxtr
-        ixstart(2,2)=leftcut(2)
-        ixend(2,2)=nxtl
-        ixstart(2,2)=rightcut(2)-1
-        ixend(3,2)=nxtr
-      endif
       do j=1,ntrgts !{
         k=ltrgpos(j)
+        kval=k+l
+        kflx=k+1-l
         ISS=ltns(j)
         IND=eirdiag_nds_ind(ISS)
         IAS=IND+1
         do iy=lytg,ny-1 !{
           wnutrg(iy,j)=0.0_R8
-          wo=fhe(k+1-l,iy,0,0)+fhi(k+1-l,iy,0,0)+fhi_ext(k+1-l,iy,0,0)
+          wo=fhe(kflx,iy,0,0)+fhi(kflx,iy,0,0)+fhi_ext(kflx,iy,0,0)
           do is=0,ns-1 !{
             if (ft44) then
-              wo=wo+fna(k+1-l,iy,0,0,is)*(rpt(k+l,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
+              wo=wo+fna(kflx,iy,0,0,is)*(rpt(kval,iy,is)*ev
+     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(kval,iy)))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
             else
               if (is_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,0,is)
-     .           *(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy))
+                wnutrg(iy,j)=wnutrg(iy,j)+fna(kflx,iy,0,0,is)
+     .           *(1.0_R8-BoRiS)*(kinrgy(kval,iy,is)+ti(kval,iy))
               else
-                wo=wo+fna(k+1-l,iy,0,0,is)*(rpt(k+l,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
+                wo=wo+fna(kflx,iy,0,0,is)*(rpt(kval,iy,is)*ev
+     .           +(1.0_R8-BoRiS)*(kinrgy(kval,iy,is)+ti(kval,iy)))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               endif
             endif
           end do !}
           do is=0,ns_ext-1 !{
             if (ft44) then
-              wo=wo+fa_ext(k+1-l,iy,0,0,is)*(pt_ext(k+l,iy,is)*ev
+              wo=wo+fa_ext(kflx,iy,0,0,is)*(pt_ext(kval,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
+     .             ua_ext(kval,iy,is)**2+ta_ext(kval,iy,is)))
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
             else
               if (is_ext_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,0,is)
+                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(kflx,iy,0,0,is)
      .           *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is))
+     .             ua_ext(kval,iy,is)**2+ta_ext(kval,iy,is))
               else
-                wo=wo+fa_ext(k+1-l,iy,0,0,is)*(pt_ext(k+l,iy,is)*ev
+                wo=wo+fa_ext(kflx,iy,0,0,is)*(pt_ext(kval,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
+     .             ua_ext(kval,iy,is)**2+ta_ext(kval,iy,is)))
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               endif
             end if
           end do !}
-          wo=wo+(1.0_R8-BoRiS)*fne(k+1-l,iy,0,0)*te(k+l,iy)
+          wo=wo+(1.0_R8-BoRiS)*fne(kflx,iy,0,0)*te(kval,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
-c        wo=-1.0e-6_R8*wo/s(iy,1)
+c        wo=-1.0e-6_R8*wo/s(iy,j)
           wo= wo/s(iy,j)
           wpltrg(iy,j)=wo*u
           if(.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
-          netrg(iy,j)=ne(k+l,iy)
-          tetrg(iy,j)=te(k+l,iy)/ev
-          titrg(iy,j)=ti(k+l,iy)/ev
+          netrg(iy,j)=ne(kval,iy)
+          tetrg(iy,j)=te(kval,iy)/ev
+          titrg(iy,j)=ti(kval,iy)/ev
           if (ft44) then
             do is=1,natmi
 c             carlis Using values directly calculated from Eirene
-              wnutrg(iy,j)=wnutrg(iy,j)+(ewlda_res(is,iy+IAS)
+              wnutrg(iy,j)=wnutrg(iy,j)+
+     .                                 (ewlda_res(is,iy+IAS)
      .                                 -ewldea_res(is,iy+IAS))*
      .                                  sarea_res(iy+IAS)
             enddo
             do is=1,nmoli
 c             carlis Using values directly calculated from Eirene
-              wnutrg(iy,j)=wnutrg(iy,j)+(ewldm_res(is,iy+IAS)
+              wnutrg(iy,j)=wnutrg(iy,j)+
+     .                                 (ewldm_res(is,iy+IAS)
      .                                 -ewldem_res(is,iy+IAS)
      .                                 +ewldmr_res(is,iy+IAS))*
      .                                  sarea_res(iy+IAS)
@@ -370,12 +401,12 @@ c             carlis Using values directly calculated from Eirene
                 imol=imol+1
               enddo
 #ifdef WG_TODO
-              t=tib2(k+l+1,iy+1,is,1)/ev
+              t=tib2(kval+1,iy+1,is,1)/ev
               if (mion.gt.0.0_R8)
      >         wnutrg(iy,j)=wnutrg(iy,j)+
-     .          s(iy,j)*dib2(k+l+1,iy+1,is,1)*
+     .          s(iy,j)*dib2(kval+1,iy+1,is,1)*
      *          sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .          (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+     .          (2.0_R8*tib2(kval+1,iy+1,is,1)+EionH2*ev)
 #endif
             enddo
           endif
@@ -384,10 +415,11 @@ c         and from x-point to targets
           do ik=1,2
             ix=ixstart(j,ik)
             t1(ik)=0.0_R8
+            if (ix.eq.-2) cycle
             if (ik.eq.1.and.iy.gt.jsep) then
 c carlis If starting @midplane in SOL then remove half of starting cell
               t1(ik)=t1(ik)-hx(ix,iy)/2.0_R8/
-     1             (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))            
+     1             (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
             end if
             if (l.eq.1) then
               do ix=ixend(j,ik),ixstart(j,ik)
@@ -407,16 +439,19 @@ c carlis If starting @midplane in SOL then remove half of starting cell
         l=1-l
         u=-u
       end do !}
-      do iy=lytg,jsep !{
+      if (ntrgts.ge.2) then
+        do iy=lytg,jsep !{
 c carlis  If in PFR region then connection length from midplane to target will
 c         be equal to connection length from target to target
-        lcnnt(iy,1)=lcnnx(iy,1)+lcnnx(iy,2)
-        lcnnt(iy,ntrgts)=lcnnx(iy,ntrgts)+lcnnx(iy,ntrgts-1)
-        if (ntrgts.gt.2) then
-          lcnnt(iy,2)=lcnnt(iy,1)
-          lcnnt(iy,3)=lcnnt(iy,ntrgts)
-        end if
-      end do
+          lcnnt(iy,1)=lcnnx(iy,1)+lcnnx(iy,2)
+          lcnnt(iy,ntrgts)=lcnnx(iy,ntrgts)+
+     .                     lcnnx(iy,ntrgts-1)
+          if (ntrgts.gt.2) then
+            lcnnt(iy,2)=lcnnt(iy,1)
+            lcnnt(iy,3)=lcnnt(iy,ntrgts)
+          end if
+        end do
+      end if
 
 c
 c*** Re-scale the neutral target loading and calculate the sums
@@ -427,7 +462,7 @@ c
           wi(j)=wi(j)+wnutrg(i,j)
         end do !}
       end do !}
-c      print *,'ntrgts, wi: ',ntrgts,wi
+c      print *,'ntrgts, wi: ',ntrgts,(wi(i),i=1,ntrgts)  !####
       do j=1,ntrgts !{
         if (ft44) then
           if(ntns .eq. ntrgts) then !{
@@ -440,9 +475,10 @@ c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
               wi(j)=0.0_R8
             end if !}
           else !}{
-            write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
+            write(*,'(a,i2,a,i2,a)')
+     ,               'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
      ,               ' ) - no neutral load onto the targets calculated'
-            write(*,*) '  ==> check specification of ltns in ',
+            write(*,'(2a)') '  ==> check specification of ltns in ',
      ,                               'b2.neutrals.parameters'
             wi(j)=0.0_R8
           end if !}
@@ -454,17 +490,24 @@ c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
           wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j,0)
         end do !}
       end do !}
-c      write(*,'(1x,a,1p,16e12.3)')
-c     -                   'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
-c
+      write(*,'(1x,a,1p,16e12.3)')
+     -           'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
+
       nclm_ld=14
-      if(lrdlsp) nclm_ld=nclm_ld+natmi
+#ifdef B25_EIRENE
+      nclm_na=natmi
+      nclm_nm=nmoli
+#else
+      nclm_na=nspecies
+      nclm_nm=0
+#endif
+      if(lrdlsp) nclm_ld=nclm_ld+nclm_na
       do j=1,ntrgts !{
         jj=j
         if(j.eq.ntrgts) jj=ntrgsx
         open(lun,file=ftrg(jj,1))
-        write(fmt_peak,710) nclm_ld,tab
-        write(lun,740) 'Target loading - ',trg_label(jj),label
+        write(fmt_peak,710) nclm_ld
+        write(lun,740) 'Target loading - ',trg_label(jj),trim(label)
         write(lun,740) 'x',tab,'coordinate along target [m]. <0 in PFR'
         write(lun,740) 'ne',tab,'electron density [1/m^3]'
         write(lun,740) 'Te',tab,'electron temperature [eV]'
@@ -480,27 +523,29 @@ c
      .   '(IMP for inner target(s), OMP for outer(s)) [m]'
         write(lun,740) 'Rclfc',tab,'radial coordinate on target [m]'
         write(lun,740) 'Zclfc',tab,'vertical coordinate on target [m]'
-c        write(lun,740) 'Wpar_xpt',tab,'parallel power flux around 
-c     ,x-point [W/m^2]'
-c        write(lun,740) 'WWpar',tab,'would-be parallel power flux 
-c     ,without dissipation in divertor [W/m^2]'
-c        write(lun,740) 'WWtrg',tab,'would-be target power flux 
-c     ,without dissipation in divertor [W/m^2]'
+        write(lun,740) 'Wpar_xpt',tab,'parallel power flux around',
+     ,   ' x-point [W/m^2]'
+        write(lun,740) 'WWpar',tab,'would-be parallel power flux',
+     ,   ' without dissipation in divertor [W/m^2]'
+        write(lun,740) 'WWtrg',tab,'would-be target power flux',
+     ,   ' without dissipation in divertor [W/m^2]'
         write(lun,740) 'Lcnnt',tab,
      .   'connection length from midplane to target [m]'
         write(lun,740) 'Lcnnx',tab,
      .   'connection length from x-point to target [m]'
         if(lrdlsp) then !{
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
+     ,            'Wrad','Wpls','Wneut',
+     ,            'xMP','Rclfc','Zclfc',
      ,            'Lcnnt','Lcnnx',
-     ,            ('rad_'//textan(is)(2:3),is=0,natmi-1)
+     ,            ('rad_'//textan(is)(2:3),is=0,nclm_na-1)
         else !}{
-          write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
-     ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
+          write(lun,fmt_peak) '#','x','ne','Te','Ti','Wtot','Wpart',
+     ,            'Wrad','Wpls','Wneut',
+     ,            'xMP','Rclfc','Zclfc',
      ,            'Lcnnt','Lcnnx'
         end if !}
-        write(fmt_peak,720) nclm_ld,tab
+        write(fmt_peak,720) nclm_ld
         if(ntrgts.eq.4) then !{
           k=j
         else !}{
@@ -508,16 +553,22 @@ c     ,without dissipation in divertor [W/m^2]'
         end if !}
         do i=lytg,ny-1 !{
           if(lrdlsp) then !{
-            write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
-     ,              titrg(i,j),wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),
-     ,              wpltrg(i,j),wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),
-     ,              zctrg(i,j),lcnnt(i,j),lcnnx(i,j),
-     ,              (wrdtrg(i,j,is),is=1,natmi)
+            write(lun,fmt_peak) xtrg(i,j),
+     ,              netrg(i,j),tetrg(i,j),titrg(i,j),
+     ,              wtttrg(i,j),wpttrg(i,j),
+     ,              wrdtrg(i,j,0),wpltrg(i,j),
+     ,              wnutrg(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              lcnnt(i,j),lcnnx(i,j),
+     ,             (wrdtrg(i,j,is),is=1,nclm_na)
           else !}{
-            write(lun,fmt_peak) xtrg(i,j),netrg(i,j),tetrg(i,j),
-     ,              titrg(i,j),wtttrg(i,j),wpttrg(i,j),wrdtrg(i,j,0),
-     ,              wpltrg(i,j),wnutrg(i,j),xmp_hlp(i,k),rctrg(i,j),
-     ,              zctrg(i,j),lcnnt(i,j),lcnnx(i,j)
+            write(lun,fmt_peak) xtrg(i,j),
+     ,              netrg(i,j),tetrg(i,j),titrg(i,j),
+     ,              wtttrg(i,j),wpttrg(i,j),
+     ,              wrdtrg(i,j,0),wpltrg(i,j),
+     ,              wnutrg(i,j),
+     ,              xmp_hlp(i,k),rctrg(i,j),zctrg(i,j),
+     ,              lcnnt(i,j),lcnnx(i,j)
           end if !}
         end do !}
         close (lun)
@@ -526,6 +577,7 @@ c----------------------------------------------------------------------
 c*** Calculate the peak power loads onto the targets and write them
 c*** down to the summary file
 c
+      l=1
       wpk_tt(0)=0
       wpk_rd(0)=0
       wpk_pl(0)=0
@@ -559,37 +611,55 @@ c
             wlc_nu(j)=xtrg(i,j)
           end if !}
         end do !}
+        l=1-l
       end do !}
 
-      write(fmt_peak,700) 20,tab
-  700 format('(1p,e12.5,',i3,'(1h',a1,',e12.4))')
+      write(fmt_peak,700) 20
+  700 format('(1p,e12.5,',i3,'(a1,e12.5))')
       i1=1
       i2=ntrgts
       fn_hlp=fsumm(1)
       tl=' '
       do j=1,2 !{
-        if(j.eq.1 .or. ntrgts.eq.4) then !{
+        if((j.eq.1 .or. ntrgts.eq.4).and.ntrgts.gt.0) then !{
           open(lun,file=fn_hlp)
-          write(lun,740) 'Peak powers ',pkl_label(j),label
+          write(lun,740) 'Peak powers ',pkl_label(j),trim(label)
           i3=i2-i1
+
           wpk_tt(0)=max(wpk_tt(i1),wpk_tt(i2))
           wpk_rd(0)=max(wpk_rd(i1),wpk_rd(i2))
           wpk_pl(0)=max(wpk_pl(i1),wpk_pl(i2))
           wpk_nu(0)=max(wpk_nu(i1),wpk_nu(i2))
-          write(lun,'(a5,20(a1,2a))') '#time',
-     -     tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
-     ,     tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
-     ,     tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
-     ,     tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
-     ,     tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
-     ,     tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
-     ,     tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
-     ,     tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+          if (i1.ne.i2) then
+           write(lun,'(a6,a1,20(a1,2a))') '# time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_o',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,tab, 'loc_t_o',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_o',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,tab, 'loc_r_o',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_o',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,tab, 'loc_p_o',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_o',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl,tab, 'loc_n_o',tl
+          else
+           write(lun,'(a6,a1,13(a1,2a))') '# time',tab,
+     -      tab,'peak_t_i',tl,tab,'peak_t_x',tl,
+     ,      tab, 'loc_t_i',tl,
+     ,      tab,'peak_r_i',tl,tab,'peak_r_x',tl,
+     ,      tab, 'loc_r_i',tl,
+     ,      tab,'peak_p_i',tl,tab,'peak_p_x',tl,
+     ,      tab, 'loc_p_i',tl,
+     ,      tab,'peak_n_i',tl,tab,'peak_n_x',tl,
+     ,      tab, 'loc_n_i',tl
+          end if
           write(lun,fmt_peak) tim,
-     ,     (wpk_tt(i),i=i1,i2,i3), wpk_tt(0), (wlc_tt(i),i=1,2),
-     ,     (wpk_rd(i),i=i1,i2,i3), wpk_rd(0), (wlc_rd(i),i=1,2),
-     ,     (wpk_pl(i),i=i1,i2,i3), wpk_pl(0), (wlc_pl(i),i=1,2),
-     ,     (wpk_nu(i),i=i1,i2,i3), wpk_nu(0), (wlc_nu(i),i=1,2)
+     ,     (tab, wpk_tt(i),i=i1,i2,i3), tab, wpk_tt(0),
+     ,     (tab, wlc_tt(i),i=i1,i2,i3),
+     ,     (tab, wpk_rd(i),i=i1,i2,i3), tab, wpk_rd(0),
+     ,     (tab, wlc_rd(i),i=i1,i2,i3),
+     ,     (tab, wpk_pl(i),i=i1,i2,i3), tab, wpk_pl(0),
+     ,     (tab, wlc_pl(i),i=i1,i2,i3),
+     ,     (tab, wpk_nu(i),i=i1,i2,i3), tab, wpk_nu(0),
+     ,     (tab, wlc_nu(i),i=i1,i2,i3)
           close (lun)
         end if !}
         i1=2
@@ -601,6 +671,12 @@ c-----------------------------------------------------------------------
 c*** Calculate the integral loads onto the targets and power load widths
 c*** and write them down to a summary file
 
+      ia=-2
+      ib=-2
+      ic=-2
+      ha=0.0_R8
+      hb=0.0_R8
+      hc=0.0_R8
       do j=1,ntrgts !{
         hlp_trg(j)=trg_short(j)
         pwr_tt(j)=0.0_R8
@@ -613,7 +689,8 @@ c*** and write them down to a summary file
         hwxm_tt(j)=0.0_R8
         do i=lytg+1,ny-1 !{
           pwr_tt(j)=pwr_tt(j)+wtttrg(i,j)*s(i,j)
-          pwr_rd(j)=pwr_rd(j)+wrdtrg(i,j,0)*s(i,j)
+          pwr_rd(j)=pwr_rd(j)+
+     .                      wrdtrg(i,j,0)*s(i,j)
         end do !}
         p=0.5_R8*wpk_tt(j)
         a=xtg_hlp(-1,j)
@@ -628,6 +705,7 @@ c*** and write them down to a summary file
               end if !}
               a=xtg_hlp(i,j)*(1.0_R8-h)+xtg_hlp(i+1,j)*h
               ia=i  !###
+              ha=h  !###
               exit
             end if !}
           end do !}
@@ -643,9 +721,10 @@ c*** and write them down to a summary file
               else !}{
                 h=1.0_R8
               end if !}
-              b=xtg_hlp(i+1,j)*(1.0_R8-h)+xtg_hlp(i,j)*h
-              d=xmc_hlp(i+1,j)*(1.0_R8-h)+xmc_hlp(i,j)*h
+              b=xtg_hlp(i,j)*(1.0_R8-h)+xtg_hlp(i-1,j)*h
+              d=xmc_hlp(i,j)*(1.0_R8-h)+xmc_hlp(i-1,j)*h
               ib=i  !###
+              hb=h  !###
               exit
             end if !}
           end do !}
@@ -664,20 +743,26 @@ c*** Total power outside the strike point position and power half-width
         wo=0.0_R8
         do i=lseppos(j)+1,ny-1 !{
           if(xtg_hlp(i,j).ge.hwxt_tt(j)) then !{
-            h=(hwxt_tt(j)-h)/(xtg_hlp(i,j)-xtg_hlp(i-1,j))
-            hwxm_tt(j)=wo*(1.0_R8-h)+xmc_hlp(i,j)*h
+            h=(hwxt_tt(j)-xtg_hlp(i-1,j))/
+     .       (xtg_hlp(i,j)-xtg_hlp(i-1,j))
+            hwxm_tt(j)=
+     .        xmc_hlp(i-1,j)*(1.0_R8-h)+xmc_hlp(i,j)*h
             ic=i  !###
+            hc=h  !###
             exit
           end if !}
-          h=xtg_hlp(i,j)
-          wo=xmc_hlp(i,j)
+c*          h=xtg_hlp(i,j)
+c*          wo=xmc_hlp(i,j)
         end do !}
 !###{
-        if(fwht_tt(j).lt.0.0_R8 .or. hwht_tt(j).lt.0.0_R8 .or.
-     .                               hwhm_tt(j).lt.0.0_R8) then !{
-          print *,'!!!! NEGATIVE POWER WIDTH - target ',j,' time ',tim
-          print *,'fwht,hwht,hwhm = ',fwht_tt(j),hwht_tt(j),hwhm_tt(j)
-          print *,'xtg_hlp:'
+        if(fwht_tt(j).lt.0.0_R8 .or.
+     .     hwht_tt(j).lt.0.0_R8 .or.
+     .     hwhm_tt(j).lt.0.0_R8) then !{
+          print *,'!!!! NEGATIVE POWER WIDTH - target ',j,
+     ,            ' time ',tim
+          print '(1x,a,3(f10.5,4x))','fwht,hwht,hwhm = ',
+     ,              fwht_tt(j),hwht_tt(j),hwhm_tt(j)
+          print *,'xtg_hlp:',xtg_hlp(-1,j)
           print '(1x,i3,10f10.5/(4x,10f10.5))',lseppos(j)+1,
      ,                                          (xtg_hlp(i,j),i=0,ny-1)
           print *,'xmc_hlp:'
@@ -686,47 +771,53 @@ c*** Total power outside the strike point position and power half-width
           print *,'m_hlp,wtttrg:',m_hlp(j)
           print '(1x,i3,1p,10e10.2/(4x,10e10.2))',lseppos(j)+1,
      ,                                          (wtttrg(i,j),i=0,ny-1)
-          print '(5a4,a7,2a12)','j','imx','ia','ib','ic','a','b','d'
-          print '(5i4,1p,3e12.4)',j,m_hlp(j),ia,ib,ic,a,b,d
+          print '(5a4,a7,5a12)','j','imx','ia','ib','ic','a','b','d',
+     ,      'ha','hb','hc'
+          print '(5i4,1p,6e12.4)',j,m_hlp(j),ia,ib,ic,a,b,d,ha,hb,hc
         end if !}
 !###}
       end do !}
-      hlp_trg(ntrgts)=trg_short(ntrgsx)
+      if(ntrgts.gt.0) hlp_trg(ntrgts)=trg_short(ntrgsx)
       fn_hlp=fsumm(4)
       tl=' '
       open(lun,file=fn_hlp)
-      write(lun,740) 'Power integrals ','and widths',label
+      write(lun,740) 'Power integrals ','and widths',trim(label)
       write(lun,750) 'Divertors are marked "il", "ol" ,"iu", "ou"'
-      write(lun,750) hdr_2(1),' : integrated radiation power to the ',
-     ,  'target'
-      write(lun,750) hdr_2(2),' : integrated total power to the target'
-      write(lun,750) hdr_2(3),' : FWHM of total power at the target'
-      write(lun,750) hdr_2(4),' : double-sided exponential width of ',
-     ,  'total power at the target'
-      write(lun,750) hdr_2(5),' : HWHM of total power at the target'
-      write(lun,750) hdr_2(6),' : the same mapped to the OMP'
-      write(lun,750) hdr_2(7),' : exponential width of the SOL side ',
-     ,  'of total power at the target'
-      write(lun,750) hdr_2(8),' : the same mapped to the OMP'
-      write(fmt_peak,'(a,i3,a)') '(a6,',n_intgrs*ntrgs,'(a1,a))'
-      write(lun,fmt_peak) '# time',
+      write(lun,750) trim(hdr_2(1)),' : integrated radiation power ',
+     ,  'to the target'
+      write(lun,750) trim(hdr_2(2)),' : integrated total power ',
+     ,  'to the target'
+      write(lun,750) trim(hdr_2(3)),' : FWHM of total power ',
+     ,  'at the target'
+      write(lun,750) trim(hdr_2(4)),' : double-sided exponential ',
+     ,  'width of total power at the target'
+      write(lun,750) trim(hdr_2(5)),' : HWHM of total power ',
+     ,  'at the target'
+      write(lun,750) trim(hdr_2(6)),' : the same mapped to the OMP'
+      write(lun,750) trim(hdr_2(7)),' : exponential width of the SOL ',
+     ,  'side of total power at the target'
+      write(lun,750) trim(hdr_2(8)),' : the same mapped to the OMP'
+      write(fmt_peak,'(a,i3,a)') '(a6,a1,',n_intgrs*ntrgs,'(a1,a))'
+      write(lun,fmt_peak) '# time',tab,
      -  ((tab,trim(hdr_2(i))//'_'//hlp_trg(j),i=1,n_intgrs),j=1,ntrgs)
-      write(fmt_peak,705) n_intgrs*ntrgs,tab
-  705 format('(1p,e12.5,',i3,'(1h',a1,',e12.4))')
+      write(fmt_peak,705) n_intgrs*ntrgs
+  705 format('(1p,e12.5,',i3,'(a1,e12.5))')
       write(lun,fmt_peak) tim,
-     ,        (pwr_rd(j),pwr_tt(j),fwht_tt(j),fwxt_tt(j),
-     ,         hwht_tt(j),hwhm_tt(j),hwxt_tt(j),hwxm_tt(j),j=1,ntrgs)
+     ,    (tab, pwr_rd(j),tab, pwr_tt(j),
+     ,     tab,fwht_tt(j),tab,fwxt_tt(j),
+     ,     tab,hwht_tt(j),tab,hwhm_tt(j),
+     ,     tab,hwxt_tt(j),tab,hwxm_tt(j),j=1,ntrgs)
       close (lun)
 c----------------------------------------------------------------------
 c*** Calculate the particle fluxes and erosion - if present
-c     carlis eb2atm contains the indexes of the B2 atoms mapped to Eirene
+c     carlis eb2atm contains the indices of the B2 atoms mapped to Eirene
 c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
 c            eb2atm will be [1 4 2 3]
-#ifndef B25_EIRENE      
-      do ia=1,natmi
-        TEXTA(ia)=adjustl(TEXTAN(ia-1))
+#ifndef B25_EIRENE
+      do ia=1,nspecies
+        TEXTA(ia)=species_list(ia)
       end do
-#endif
+#else
       do ia=1,nspecies !initialize
         eb2atm(ia)=ia
       end do
@@ -737,68 +828,70 @@ c            eb2atm will be [1 4 2 3]
           end if
         end do
       end do
+#endif
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,i3))'
       write(6,hlp_frm) 'eb2spcr',(eb2spcr(is),is=1,nspecies)
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
       write(6,hlp_frm) 'b2ptrgl: list of species according to B2: ',
      ,                 (species_list(is),is=1,nspecies)
+#ifdef B25_EIRENE
       write(hlp_frm,'(a,i2,a)') '(a,',natmi,'(1x,a8))'
-      write(6,hlp_frm) 'list of atoms according to Eirene: ',
+      write(6,hlp_frm) 'List of atoms according to Eirene: ',
      .                 (TEXTA(is),is=1,natmi)
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
-      write(6,hlp_frm) 'ordering of B2 atoms according to Eirene: ',
+      write(6,hlp_frm) 'Ordering of B2 atoms according to Eirene: ',
      ,                 (atoms_list(eb2atm(i)),i=1,nspecies)
+#endif
 c*** Calculate the particle fluxes
 
 c      print *,'Particle fluxes...' !###
-      if(ntns.eq.ntrgts) then !{
-        do j=1,ntrgts !{
-          do iy=0,ny-1 !{
-            do ia=1,natmi
-              sja(iy,j,ia)=0.0_R8
-            end do
-            do is=1,nspecies
-              sjp(iy,j,is)=0.0_R8
-              sjt(iy,j,is)=0.0_R8
-            end do
-            do imol=1,nmoli
-              sjm(iy,j,imol)=0.0_R8
-            end do
-          end do !}
-          ersn_a(j)=0.0_R8
-          ersn_p(j)=0.0_R8
-          ersn_l(j)=0.0_R8   
-          sjs_w(j)=0.0_R8
-          sjs_t(j)=0.0_R8
-          do ia=1,natmi
-            sja_w(j,ia)=0.0_R8
-            sja_t(j,ia)=0.0_R8
+      do j=1,ntrgsx !{
+        do iy=0,ny-1 !{
+          do ia=1,nclm_na
+            sja(iy,j,ia)=0.0_R8
           end do
           do is=1,nspecies
-            sjp_w(j,is)=0.0_R8
-            sjt_w(j,is)=0.0_R8
-            sjp_t(j,is)=0.0_R8
-          end do    
+            sjp(iy,j,is)=0.0_R8
+            sjt(iy,j,is)=0.0_R8
+          end do
           do imol=1,nmoli
-            sjm_w(j,imol)=0.0_R8
-            sjm_t(j,imol)=0.0_R8
-          end do  
+            sjm(iy,j,imol)=0.0_R8
+          end do
         end do !}
+        ersn_a(j)=0.0_R8
+        ersn_p(j)=0.0_R8
+        ersn_l(j)=0.0_R8
+        sjs_w(j)=0.0_R8
+        sjs_t(j)=0.0_R8
+        sjs_s(j)=0.0_R8
+        do ia=1,nclm_na
+          sja_w(j,ia)=0.0_R8
+          sja_t(j,ia)=0.0_R8
+        end do
+        do is=1,nspecies
+          sjp_w(j,is)=0.0_R8
+          sjt_w(j,is)=0.0_R8
+          sjp_t(j,is)=0.0_R8
+        end do
+        do imol=1,nmoli
+          sjm_w(j,imol)=0.0_R8
+          sjm_t(j,imol)=0.0_R8
+        end do
+      end do !}
 
-c        do is=0,ns-1
-c          print *,'is,am(is)',is,am(is)
-c        end do
-c        js=ltns(1)+nlim
-c        do is=1,natmi
-c          print *,'is,wldna(js,is,0)',is,wldna(js,is,0)
-c        end do
-c        do is=1,ns-nspecies
-c          print *,'is,wldpp(js,is,0)',is,wldpp(js,is,0)
-c        end do
-c        print *,'ismain,ismain0',ismain,ismain0
-        u=-1.0_R8
-        l=1
-        do j=1,ntrgts !{
+c      do is=0,ns-1
+c        print *,'is,am(is)',is,am(is)
+c      end do
+c      js=ltns(1)+nlim
+c      do is=1,nclm_na
+c        print *,'is,js,wldna(js,is,0)',is,js,wldna(js,is,0)
+c      end do
+c      do is=1,ns-nspecies
+c        print *,'is,wldpp(js,is,0)',is,wldpp(js,is,0)
+c      end do
+      u=-1.0_R8
+      l=1
+      do j=1,ntrgts !{
           k=ltrgpos(j)
 c          print *,'j,ltrgpos = ',j,k  !###
           ISS=ltns(j)
@@ -809,14 +902,24 @@ c          print *,'j,ltrgpos = ',j,k  !###
               i1=eb2spcr(ia)+1
               i2=eb2spcr(ia)+nfluids(ia)
               do is=i1,i2
-                sjp(iy,j,ia)=sjp(iy,j,ia)+u*fna(k+1-l,iy,0,0,is)
+                sjp(iy,j,ia)=sjp(iy,j,ia)+
+     .           u*fna(k+1-l,iy,0,0,is)
               end do
             end do
             if (ft44) then
               do ia=1,natmi !loop on atoms according to Eirene
                 sja(iy,j,ia)=wldna_res(ia,iy+IAS)*sarea_res(iy+IAS)
 #ifdef WG_TODO
-                spa(iy,j,ia)=dab2(k+l+1,iy+1,ia,1)*tab2(k+l+1,iy+1,ia,1)
+                spa(iy,j,ia)=
+     .           dab2(k+l+1,iy+1,ia,1)*tab2(k+l+1,iy+1,ia,1)
+#endif
+              end do
+              do imol=1,nmoli
+                sjm(iy,j,imol)=wldnm_res(imol,iy+IAS)*
+     .                         sarea_res(iy+IAS)
+#ifdef WG_TODO
+                spm(iy,j,imol)=dmb2(k+l+1,iy+1,imol,1)*
+     *                         tmb2(k+l+1,iy+1,imol,1)
 #endif
               end do
             else
@@ -824,122 +927,117 @@ c          print *,'j,ltrgpos = ',j,k  !###
                 sja(iy,j,is)=u*fna(k+1-l,iy,0,0,eb2spcr(is))
                 spa(iy,j,is)=na(k+l,iy,eb2spcr(is))*ti(k+l,iy)
               end do
+              do imol=1,nmoli
+                sjm(iy,j,imol)=0.0_R8
+                spm(iy,j,imol)=0.0_R8
+              end do
             endif
             do is=1,nspecies
               sjp_t(j,is)=sjp_t(j,is)+sjp(iy,j,is)
             end do
-            do ia=1,natmi
+            do ia=1,nclm_na
               sja_t(j,ia)=sja_t(j,ia)+sja(iy,j,ia)
             end do
             do imol=1,nmoli
-              if (ft44) then
-                sjm(iy,j,imol)=wldnm_res(imol,iy+IAS)*
-     .                       sarea_res(iy+IAS)
-#ifdef WG_TODO
-                spm(iy,j,imol)=dmb2(k+l+1,iy+1,imol,1)*
-     *                       tmb2(k+l+1,iy+1,imol,1)
-#endif
-              else
-                sjm(iy,j,imol)=0.0
-                spm(iy,j,imol)=0.0
-              endif
-              sjm_t(j,imol)=sjm_t(j,imol)+sjm(iy,j,imol)
+              sjm_t(j,imol)=
+     .         sjm_t(j,imol)+sjm(iy,j,imol)
             end do
           end do !}
-          l=1-l
-          u=-u
-        end do !}
+        l=1-l
+        u=-u
+      end do !}
 c!###{
-c        print '(6(3x,a7,2x)/1p(6e12.4))','sjha_t','sjhea_t',
+c      print '(6(3x,a7,2x)/1p(6e12.4))','sjha_t','sjhea_t',
 c     ,    'sjca_t','sjhp_t','sjhep_t','sjcp_t',
-c     ,    (sjha_t(i),sjhea_t(i),sjca_t(i),sjhp_t(i),
-c     ,                          sjhep_t(i),sjcp_t(i),i=1,ntrgts)
-c          print '(2a5,6(3x,a7,2x))','j','js',                        !###
+c     ,    ( sjha_t(i),sjhea_t(i),
+c     ,      sjca_t(i), sjhp_t(i),
+c     ,     sjhep_t(i), sjcp_t(i),i=1,ntrgts)
+c      print '(2a5,6(3x,a7,2x))','j','js',                        !###
 c     ,      'sjha_w','sjhea_w','sjca_w','sjhp_w','sjhep_w','sjcp_w'
 c!###}
 c
-c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
-        if (ft44) then
-          do j=1,ntrgts !{
+c      print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
+      if (ft44) then
+        do j=1,ntrgts !{
             js=ltns(j)+nlim
             do ia=1,natmi !loop over Eirene atoms
               sja_w(j,ia)=sja_w(j,ia)+wldna(js,ia,0)
             end do
             do is=1,ns-nspecies !loop over Eirene background ions
-              sjp_w(j,lkindp(is))=sjp_w(j,lkindp(is))+wldpp(js,is,0)
-            end do
-            do ia=1,natmi !loop over Eirene atoms
-              if(sja_t(j,ia).gt.0.0_R8) then !{
-                sja_t(j,ia)=sja_w(j,ia)/sja_t(j,ia)
-              else !}{
-                sja_t(j,ia)=0.0_R8
-              end if !}
-              do iy=lytg,ny-1 !{
-                sja(iy,j,ia)=sja(iy,j,ia)*sja_t(j,ia)
-                sjt(iy,j,latmscl(ia))=sjt(iy,j,latmscl(ia))+sjp(iy,j,ia)
-              end do !}
-            end do
-            do is=1,nspecies !loop over B2.5 species
-              sjt_w(j,is)=sja_w(j,is)+sjp_w(j,is)
-              if(sjp_t(j,is).gt.0.0_R8) then !{
-                sjp_t(j,is)=sjp_w(j,is)/sjp_t(j,is)
-              else !}{
-                sjp_t(j,is)=0.0_R8
-              end if !}
-              do iy=lytg,ny-1 !{
-                sjp(iy,j,is)=sjp(iy,j,is)*sjp_t(j,is)
-                sjt(iy,j,is)=sjt(iy,j,is)+sjp(iy,j,is)
-              end do !}
+              ia=latmscl(lkindp(is))
+              if (ia.eq.0) cycle
+              sjp_w(j,ia)=sjp_w(j,ia)+wldpp(js,is,0)
             end do
             do imol=1,nmoli
-              sjm_w(j,imol)=wldnm(js,imol,0)
-              if(sjm_t(j,imol).gt.0.0_R8) then !{
-                sjm_t(j,imol)=sjm_w(j,imol)/sjm_t(j,imol)
-              else !}{
-                sjm_t(j,imol)=0.0_R8
-              end if !}
-              do iy=lytg,ny-1 !{
-                sjm(iy,j,imol)=sjm(iy,j,imol)*sjm_t(j,imol)
-              end do !}
+              sjm_w(j,imol)=sjm_w(j,imol)+wldnm(js,imol,0)
             end do
-          end do !}
-        end if
-c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD : ',
-c     ,                                           (sjha_t(i),i=1,ntrgts)
-c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD+: ',
-c     ,                                           (sjhp_t(i),i=1,ntrgts)
-c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jC : ',
-c     ,                                           (sjca_t(i),i=1,ntrgts)
-c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jC+: ',
-c     ,                                           (sjcp_t(i),i=1,ntrgts)
-c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe : ',
-c     ,                                           (sjhea_t(i),i=1,ntrgts)
-c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe+: ',
-c     ,                                           (sjhep_t(i),i=1,ntrgts)
+          do ia=1,natmi !loop over Eirene atoms
+            if(sja_t(j,ia).gt.0.0_R8) then !{
+              sja_t(j,ia)=sja_w(j,ia)/sja_t(j,ia)
+            else !}{
+              sja_t(j,ia)=0.0_R8
+            end if !}
+            do iy=lytg,ny-1 !{
+              sja(iy,j,ia)=sja(iy,j,ia)*sja_t(j,ia)
+              sjt(iy,j,latmscl(ia))=
+     .                 sjt(iy,j,latmscl(ia))+sjp(iy,j,ia)
+            end do !}
+          end do
+          do is=1,nspecies !loop over B2.5 species
+            sjt_w(j,is)=sja_w(j,is)+sjp_w(j,is)
+            if(sjp_t(j,is).gt.0.0_R8) then !{
+              sjp_t(j,is)=sjp_w(j,is)/sjp_t(j,is)
+            else !}{
+              sjp_t(j,is)=0.0_R8
+            end if !}
+            do iy=lytg,ny-1 !{
+              sjp(iy,j,is)=sjp(iy,j,is)*sjp_t(j,is)
+              sjt(iy,j,is)=sjt(iy,j,is)+sjp(iy,j,is)
+            end do !}
+          end do
+          do imol=1,nmoli
+            if(sjm_t(j,imol).gt.0.0_R8) then !{
+              sjm_t(j,imol)=
+     .         sjm_w(j,imol)/sjm_t(j,imol)
+            else !}{
+              sjm_t(j,imol)=0.0_R8
+            end if !}
+            do iy=lytg,ny-1 !{
+              sjm(iy,j,imol)=
+     .         sjm(iy,j,imol)*sjm_t(j,imol)
+            end do !}
+          end do
+        end do !}
+      end if
+c      write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for atoms : ',
+c     ,           ((sja_t(i,is),i=1,ntrgts),is=1,natmi)
+c      write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for species: ',
+c     ,           ((sjp_t(i,is),i=1,ntrgts),is=1,nspecies)
 
 c*** Calculate sputtering
-        do_sput=.false.
-        if (ntargsp.gt.0.and.ft44) then !sputtering happening
-          do j=1,ntrgts
+      l=1
+      do_sput=.false.
+      if (ntargsp.gt.0.and.ft44) then !sputtering happening
+        do j=1,ntrgts
 c           Check if sputtering is happening and which material is being sputtered
 c           and its atomic mass and density
-c carlis It is needed a variable that tells for each target or surface which is the sputtered atom.
+c carlis A variable is needed that tells for each target or surface which is the sputtered atom.
 c        Temporary solution for this routine is to use the bulk track_species
-            do ia=1,n_srfs_m
-             if (streql(mtrtrgsg(j),srfs_m(ia))) then
-               spt_mat(j)=ia
-             end if
-            end do
-            ISS=ltns(j)
-            IND=eirdiag_nds_ind(ISS)
-            IAS=IND+1
-            sptlis(j)=0
-            do iy=lytg,ny-1
+          do ia=1,n_srfs_m
+            if (streql(mtrtrgsg(j),srfs_m(ia))) then
+              spt_mat(j)=ia
+            end if
+          end do
+          ISS=ltns(j)
+          IND=eirdiag_nds_ind(ISS)
+          IAS=IND+1
+          sptlis(j)=0
+          do iy=lytg,ny-1
               do ia=1,natmi
                 if (wldspta_res(ia,iy+IAS).gt.0.0_R8) then
                   sptlis(j)=ia
                   sjs(iy,j)=wldspta_res(ia,iy+IAS)*
-     .                    sarea_res(iy+IAS)
+     .                      sarea_res(iy+IAS)
                   sjs_t(j)=sjs_t(j)+sjs(iy,j)
                 end if
               end do
@@ -947,119 +1045,117 @@ c        Temporary solution for this routine is to use the bulk track_species
                 if (wldsptm_res(imol,iy+IAS).gt.0.0_R8) then
                   sptlis(j)=imol+natmi
                   sjs(iy,j)=wldsptm_res(imol,iy+IAS)*
-     .                    sarea_res(iy+IAS)
+     .                      sarea_res(iy+IAS)
                   sjs_t(j)=sjs_t(j)+sjs(iy,j)
                 end if
               end do
-            end do
+          end do
 
-            if(ntns.eq.2 .or. ntns.eq.4 .and.
-     .         sptlis(j).ne.0) then
+          if(sptlis(j).ne.0) then
               js=ltns(j)+nlim
               if (sptlis(j).le.natmi) then
-                sjs_w(j)=wldspta(js,sptlis(j),0)
+                sjs_w(j)=sjs_w(j)+
+     .                   wldspta(js,sptlis(j),0)
               else
-                sjs_w(j)=wldsptm(js,sptlis(j)-natmi,0)
+                sjs_w(j)=sjs_w(j)+
+     .                   wldsptm(js,sptlis(j)-natmi,0)
               end if
-              if(sjs_t(j).gt.0.0_R8) then
-                sjs_t(j)=sjs_w(j)/sjs_t(j)
-              else
-                sjs_t(j)=0.0_R8
-              end if
+            if(sjs_t(j).gt.0.0_R8) then
+              sjs_t(j)=sjs_w(j)/sjs_t(j)
             else
               sjs_t(j)=0.0_R8
             end if
+          else
+            sjs_t(j)=0.0_R8
+          end if
 
-            if (sjs_t(j).gt.0.0_R8) then
-              do_sput(j)=.true.
-              do iy=lytg,ny-1!{
-                sjs(iy,j)=sjs_t(j)*sjs(iy,j)
+          if (sjs_t(j).gt.0.0_R8) then
+            do_sput(j)=.true.
+            do iy=lytg,ny-1 !{
+              sjs(iy,j)=sjs_t(j)*sjs(iy,j)
 c carlis The erosion of the wall is evaluated using the wall material and not the emitted atom/molecule
 c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/srfs_d[g/cm3]/s[m2]
-                sje(iy,j)=ers_factor*srfs_a(spt_mat(j))*sjs(iy,j)/
-     .                   srfs_d(spt_mat(j))/s(iy,j)
-                if (sptlis(j).le.natmi) then
-                  sptmass=am(eb2atcr(sptlis(j)))
-                else
-                  imol = sptlis(j)-natmi
-                  sptmass=0.0_R8
-                  do ia = 1, natmi
-                    if (mlcmp(ia,imol).gt.0) then
-                      sptmass=sptmass+mlcmp(ia,imol)*am(eb2atcr(ia))
-                    end if
-                  end do
-                end if
+              sje(iy,j)=
+     .          ers_factor*srfs_a(spt_mat(j))*sjs(iy,j)/
+     .                     srfs_d(spt_mat(j))/s(iy,j)
+              if (sptlis(j).le.natmi) then
+                sptmass=am(eb2atcr(sptlis(j)))
+              else
+                imol = sptlis(j)-natmi
+                sptmass=0.0_R8
+                do ia = 1, natmi
+                  if (mlcmp(ia,imol).gt.0) then
+                    sptmass=sptmass+mlcmp(ia,imol)*am(eb2atcr(ia))
+                  end if
+                end do
+              end if
 c carlis The emitted amount in g/y is evaluated using the sputtered atom or molecule
 c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
-                sjs(iy,j)=sjs(iy,j)*sptmass*nsecyr/avogr
-                sjs_w(j)=sjs_w(j)+sjs(iy,j)
-              end do
-              if (sptlis(j).le.natmi) then
-                ssmol=texta(sptlis(j))
-              else
-                ssmol=textmn(sptlis(j)-natmi-1)
-                ssmol=adjustl(ssmol)
-              end if
-              print *,'target material = ', mtrtrgsg(j)
-              print *,'sputtered atom from target = ',
-     ,                ssmol
-              write(*,'(1x,a,1p,16e12.3)') 
-     .         'Scaling factors for '//mtrtrgsg(j)//' Sp : ',
-     ,          (sjs_t(i),i=1,ntrgts)
-            else ! no sputtering
-              print *,
-     ,'b2ptrgl, zero sputtering flux for target j=',j
-              sjs_w(j)=0.0_R8
-            end if
-          end do !loop on targets
-        else
-          print *, 'b2ptrgl, no sputtering calculated:',
-#ifndef HPUX
-     ,     ' track_species=0 or no fort.44 file available'
-#else
-     ,     ' track_species=0 or no ftn44 file available'
-#endif
-        end if 
-        
-        if (do_sput(j)) then
-          nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
-        else
-          nclm_er=2+3*natmi+nspecies+2*nmoli
-        endif
-        l=1
-	do ia=1,natmi
-          fpt_str(1+3*(ia-1))=trim(TEXTA(ia))//'_flux_atm'
-          fpt_str(2+3*(ia-1))=trim(TEXTA(ia))//'_temp_atm'
-          fpt_str(3+3*(ia-1))=trim(TEXTA(ia))//'_pres_atm'
-        end do
-        do is=1,nspecies
-          fpt_str(is+3*natmi)=species_list(is)//'_flux_ion'
-        end do
-        do k=1,ntrgts
-          if (do_sput(k)) then
+              sjs(iy,j)=sjs(iy,j)*sptmass*nsecyr/avogr
+              sjs_s(j)=sjs_s(j)+sjs(iy,j)
+            end do !}
             if (sptlis(j).le.natmi) then
-              spt_str(1,k)=trim(TEXTA(sptlis(j)))//'_sput'
+              ssmol=texta(sptlis(j))
             else
               ssmol=textmn(sptlis(j)-natmi-1)
               ssmol=adjustl(ssmol)
-              spt_str(1,k)=trim(ssmol)//'_sput'
             end if
-            spt_str(2,k)=trim(mtrtrgsg(k))//'_ersn'
+            print *,'target material = ', mtrtrgsg(j)
+            print *,'sputtered atom from target = ',
+     ,               ssmol
+            write(*,'(1x,a,1p,16e12.3)')
+     .         'Scaling factors for '//mtrtrgsg(j)//' Sp : ',
+     ,          (sjs_t(i),i=1,ntrgts)
+          else ! no sputtering
+            print *,'b2ptrgl, zero sputtering flux for target j=',
+     ,                                                        j
+            sjs_s(j)=0.0_R8
           end if
-        end do
-        do imol=1,nmoli
-          ssmol=textmn(imol-1)
-          ssmol=adjustl(ssmol)
-          mol_str(1,imol)=trim(ssmol)//'_flux_mol'
-          mol_str(2,imol)=trim(ssmol)//'_pres_mol'
-        end do
-        do j=1,ntrgts !{
+        end do !loop on targets
+      else
+        print '(4a)', 'b2ptrgl, no sputtering calculated:',
+     ,     ' track_species=0 or no ',fort_lc,'44 file available'
+      end if
+
+      l=1
+      do ia=1,nclm_na
+        fpt_str(1+3*(ia-1))=trim(TEXTA(ia))//'_flux_atm'
+        fpt_str(2+3*(ia-1))=trim(TEXTA(ia))//'_temp_atm'
+        fpt_str(3+3*(ia-1))=trim(TEXTA(ia))//'_pres_atm'
+      end do
+      do is=1,nspecies
+        fpt_str(is+3*nclm_na)=trim(species_list(is))//'_flux_ion'
+      end do
+      do k=1,ntrgts
+        if (do_sput(k)) then
+          if (sptlis(j).le.natmi) then
+            spt_str(1,k)=trim(TEXTA(sptlis(j)))//'_sput'
+          else
+            ssmol=textmn(sptlis(j)-natmi-1)
+            ssmol=adjustl(ssmol)
+            spt_str(1,k)=trim(ssmol)//'_sput'
+          end if
+          spt_str(2,k)=trim(mtrtrgsg(k))//'_ersn'
+        end if
+      end do
+      do imol=1,nmoli
+        ssmol=textmn(imol-1)
+        ssmol=adjustl(ssmol)
+        mol_str(1,imol)=trim(ssmol)//'_flux_mol'
+        mol_str(2,imol)=trim(ssmol)//'_pres_mol'
+      end do
+      do j=1,ntrgts !{
           nx_hlp=ltrgpos(j)+l
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
           open(lun,file=ftrg(jj,2))
-          write(fmt_peak,710) nclm_er,tab
-          write(lun,740) 'Target erosion - ',trg_label(jj),label
+          if (do_sput(j)) then
+            nclm_er=2+3*nclm_na+nspecies+2*ntrgts+2*nclm_nm
+          else
+            nclm_er=2+3*nclm_na+nspecies+2*nclm_nm
+          endif
+          write(fmt_peak,710) nclm_er
+          write(lun,740) 'Target erosion - ',trg_label(jj),trim(label)
           write(lun,740) 'x',tab,
      .     'coordinate along target [m]. <0 in PFR'
           write(lun,740) 'XX_flux_atm',tab,
@@ -1070,10 +1166,12 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      .     'temperature of neutral atoms of species XX [eV]'
           write(lun,740) 'XX_pres_atm',tab,
      .     'pressure of neutral atoms of species XX [Pa]'
+#ifdef B25_EIRENE
           write(lun,740) 'XX_flux_mol',tab,
      .     'incident flux of molecules XX [1/m^2/s]'
           write(lun,740) 'XX_pres_mol',tab,
      .     'pressure of molecules XX [Pa]'
+#endif
           write(lun,740) 'XX_sput',tab,
      .     'gross sputtering of material XX [g/y]'
           write(lun,740) 'XX_ersn',tab,
@@ -1081,16 +1179,15 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           write(lun,740) 'xMP',tab,'radial coordinate in midplane '//
      .     '(IMP for inner target(s), OMP for outer(s)) [m]'
           if (do_sput(j)) then
-            write(lun,fmt_peak) 'x',
-     ,           (fpt_str(ia),ia=1,3*natmi+nspecies),
-     ,           (mol_str(:,ia),ia=1,nmoli),spt_str(:,j),'xMP'
-            write(fmt_peak,720) nclm_er,tab
-          else 
-            nclm_er=2+3*natmi+nspecies+2*nmoli
-            write(lun,fmt_peak) 'x',
-     ,           (fpt_str(ia),ia=1,3*natmi+nspecies),
-     ,           (mol_str(:,ia),ia=1,nmoli),'xMP'
-            write(fmt_peak,720) nclm_er,tab
+            write(lun,fmt_peak) '#','x',
+     ,           (fpt_str(ia),ia=1,3*nclm_na+nspecies),
+     ,           (mol_str(:,ia),ia=1,nclm_nm),spt_str(:,j),'xMP'
+            write(fmt_peak,720) nclm_er
+          else
+            write(lun,fmt_peak) '#','x',
+     ,           (fpt_str(ia),ia=1,3*nclm_na+nspecies),
+     ,           (mol_str(:,ia),ia=1,nclm_nm),'xMP'
+            write(fmt_peak,720) nclm_er
           end if
           if(ntrgts.eq.4) then !{
             k=j
@@ -1098,15 +1195,19 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             k=ntrgts
           end if !}
           do iy=lytg,ny-1 !{
-            do ia=1,natmi
+            do ia=1,nclm_na
               fpt_out(1+3*(ia-1))=sja(iy,j,ia)/s(iy,j)
+#ifdef B25_EIRENE
 #ifdef WG_TODO
               fpt_out(2+3*(ia-1))=tab2(nx_hlp+1,iy+1,ia,1)/ev
+#endif
+#else
+              fpt_out(2+3*(ia-1))=ti(nx_hlp,iy)/ev
 #endif
               fpt_out(3+3*(ia-1))=spa(iy,j,ia)
             end do
             do is=1,nspecies
-              fpt_out(is+3*natmi)=sjp(iy,j,is)/s(iy,j)
+              fpt_out(is+3*nclm_na)=sjp(iy,j,is)/s(iy,j)
             end do
             do imol=1,nmoli
               mol_out(1+2*(imol-1))=sjm(iy,j,imol)/s(iy,j)
@@ -1116,131 +1217,138 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
               spt_out(1)=sjs(iy,j)
               spt_out(2)=sje(iy,j)
               write(lun,fmt_peak) xtrg(iy,j),
-     ,         (fpt_out(ia),ia=1,3*natmi+nspecies),
-     ,         (mol_out(ia),ia=1,2*nmoli),
+     ,         (fpt_out(ia),ia=1,3*nclm_na+nspecies),
+     ,         (mol_out(ia),ia=1,2*nclm_nm),
      ,          spt_out,xmp_hlp(iy,k)
-            else 
+            else
               write(lun,fmt_peak) xtrg(iy,j),
-     ,         (fpt_out(ia),ia=1,3*natmi+nspecies),
-     ,         (mol_out(ia),ia=1,2*nmoli),
+     ,         (fpt_out(ia),ia=1,3*nclm_na+nspecies),
+     ,         (mol_out(ia),ia=1,2*nclm_nm),
      ,          xmp_hlp(iy,k)
             end if
           end do !}
           close (lun)
-          l=1-l
-        end do !}
+        l=1-l
+      end do !}
 c----------------------------------------------------------------------
 c*** Produce a summary file for target sputtering
 c
-        do ia=1,natmi
-          sja_w(0,ia)=0.0_R8
+      do ia=1,nclm_na
+        sja_w(0,ia)=0.0_R8
+      end do
+      do is=1,nspecies
+        sjp_w(0,is)=0.0_R8
+        sjt_w(0,is)=0.0_R8
+      end do
+      do imol=1,nmoli
+        sjm_w(0,imol)=0.0_R8
+      end do
+      sjs_s(0)=0.0_R8
+      do j=1,ntrgts
+        do ia=1,nclm_na
+          sja_w(0,ia)=sja_w(0,ia)+sja_w(j,ia)
         end do
         do is=1,nspecies
-          sjp_w(0,is)=0.0_R8
-          sjt_w(0,is)=0.0_R8
+          sjp_w(0,is)=sjp_w(0,is)+sjp_w(j,is)
+          sjt_w(0,is)=sjt_w(0,is)+sjt_w(j,is)
         end do
         do imol=1,nmoli
-          sjm_w(0,imol)=0.0_R8
+          sjm_w(0,imol)=sjm_w(0,imol)+sjm_w(j,imol)
         end do
-        sjs_w(0)=0.0_R8
-        do j=1,ntrgts
-          do ia=1,natmi
-            sja_w(0,ia)=sja_w(0,ia)+sja_w(j,ia)
-          end do
-          do is=1,nspecies
-            sjp_w(0,is)=sjp_w(0,is)+sjp_w(j,is)
-            sjt_w(0,is)=sjt_w(0,is)+sjt_w(j,is)
-          end do
-          do imol=1,nmoli
-            sjm_w(0,imol)=sjm_w(0,imol)+sjm_w(j,imol)
-          end do
-        end do !}
-        k=1     
-        if(ntrgts.eq.2) k=ntrgsx-1
-          open(lun,file=fsumm(2))
-          write(lun,*) 'Target erosion summary: ',label
-          write(lun,*)
-          write(lun,'(12x,3(a1,a12))')
+      end do !}
+      k=1
+      if(ntrgts.eq.1) k=ntrgsx
+      if(ntrgts.eq.2) k=ntrgsx-1
+      open(lun,file=fsumm(2))
+      write(lun,'(2a)') 'Target erosion summary: ',trim(label)
+      write(lun,*)
+      write(lun,'(12x,5(a1,a12))')
      -                   (tab,trg_label(i),i=1,ntrgsx,k),tab,'total   '
-          write(fmt_peak,730) ntrgts+1,tab
-  730     format('(1p,1x,a12,',i3,'(1h',a1,',e12.4))')
-          write(lun,*) 'Particle fluxes [1/s]'
-          do is=1,nspecies
-            write(lun,fmt_peak) trim(species_list(is))//' ions on',
-     ,                          (sjp_w(i,is),i=1,ntrgts),sjp_w(0,is)
-          end do
-          do ia=1,natmi
-            write(lun,fmt_peak) trim(TEXTA(ia))//' atoms on',
-     ,                          (sja_w(i,ia),i=1,ntrgts),sja_w(0,ia)
-          end do
-          do is=1,nspecies
-            write(lun,fmt_peak) trim(species_list(is))//' total on',
-     ,                          (sjt_w(i,is),i=1,ntrgts),sjt_w(0,is)
-          end do
+      write(fmt_peak,730) ntrgts+1
+  730 format('(1p,1x,a12,',i3,'(a1,e12.4))')
+      write(lun,*) 'Particle fluxes [1/s]'
+      do is=1,nspecies
+        write(lun,fmt_peak) trim(species_list(is))//' ions on',
+     ,                       (tab,sjp_w(i,is),i=1,ntrgts),
+     ,                        tab,sjp_w(0,is)
+      end do
+      do ia=1,nclm_na
+        write(lun,fmt_peak) trim(TEXTA(ia))//' atoms on',
+     ,                       (tab,sja_w(i,ia),i=1,ntrgts),
+     ,                        tab,sja_w(0,ia)
+      end do
+      do is=1,nspecies
+        write(lun,fmt_peak) trim(species_list(is))//' total on',
+     ,                       (tab,sjt_w(i,is),i=1,ntrgts),
+     ,                        tab,sjt_w(0,is)
+      end do
+      if (use_eirene.ne.0.and.nmoli.gt.0) then
+        write(lun,*)
+        write(lun,*) 'Molecule fluxes [1/s]'
+        do imol=1,nmoli
+          ssmol=textmn(imol-1)
+          ssmol=adjustl(ssmol)
+          write(lun,fmt_peak) trim(ssmol)//' mols on',
+     ,               (tab,sjm_w(i,imol),i=1,ntrgts),
+     ,                tab,sjm_w(0,imol)
+        end do
+      end if
+      if (ntargsp.gt.0.and.ft44) then
+        k=0
+        do j=1,ntrgts
+          sjs_s(0)=sjs_s(0)+sjs_s(j)
+          if(k.eq.0.and..not.streql(mtrtrgsg(j),' ')) k=j
+        end do
+        if (k.ne.0) then
           write(lun,*)
-          write(lun,*) 'Molecule fluxes [1/s]'
-          do imol=1,nmoli
-            ssmol=textmn(imol-1)
-            ssmol=adjustl(ssmol)
-            write(lun,fmt_peak) trim(ssmol)//' molecules on',
-     ,                          (sjm_w(i,imol),i=1,ntrgts),sjm_w(0,imol)
-          end do
-          if (ntargsp.gt.0.and.ft44) then
-            do j=1,ntrgts
-              sjs_w(0)=sjs_w(0)+sjs_w(j)
-            end do
-            do j=1,ntrgts
-              write(lun,*)
-              write(lun,*) 'Total sputtering [g/y]'
-              write(lun,fmt_peak) trim(mtrtrgsg(j)),
-     ,             (sjs_w(i),i=1,ntrgts),sjs_w(0)
-            end do
-            write(lun,*)
-            write(lun,*) 'Erosion [mm/y]'
-            ersn_pm=0.0_R8
-            ersn_am=0.0_R8
-            ss_m=0.0_R8
-            do j=1,ntrgts !{
-              if (do_sput(j)) then
-                ss(j)=0.0_R8
-                ersn_p(j)=0.0_R8
-                do iy=lytg,ny-1 !{
-                  sn_t=0.0_R8
-                  ss(j)=ss(j)+s(iy,j)
-                  sn_t=sn_t+sje(i,j)
-                  if(sn_t .gt. ersn_p(j)) then !{
-                    ersn_p(j)=sn_t
-                    ersn_l(j)=xtrg(iy,j)
-                  end if !}
-                end do !}
-                ersn_a(j)=0.0_R8
-                ersn_a(j)=ersn_a(j)+sjs_w(j)/ss(j)
-                ersn_pm=max(ersn_p(j),ersn_pm)
-                ss_m=ss_m+ss(j)
-                ersn_am=ersn_am+ersn_a(j)*ss(j)
-              else
-                ersn_a(j)=0.0_R8     
-                ersn_p(j)=0.0_R8  
-                ersn_l(j)=0.0_R8       
-              end if
+          write(lun,*) 'Total sputtering [g/y]'
+          write(lun,fmt_peak) trim(mtrtrgsg(k)),
+     ,                       (tab,sjs_s(i),i=1,ntrgts),
+     ,                        tab,sjs_s(0)
+        end if
+        write(lun,*)
+        write(lun,*) 'Erosion [mm/y]'
+        ersn_pm=0.0_R8
+        ersn_am=0.0_R8
+        ss_m=0.0_R8
+        do j=1,ntrgts !{
+          if (do_sput(j)) then
+            sn_t=0.0_R8
+            ss(j)=0.0_R8
+            ersn_p(j)=0.0_R8
+            do iy=lytg,ny-1 !{
+              ss(j)=ss(j)+s(iy,j)
+              sn_t=sn_t+sje(iy,j)*s(iy,j)
+              if(sje(iy,j) .gt. ersn_p(j)) then !{
+                ersn_p(j)=sje(iy,j)
+                ersn_l(j)=xtrg(iy,j)
+              end if !}
             end do !}
-            ersn_am=ersn_am/ss_m
-            write(lun,fmt_peak) 'average',(ersn_a(i),i=1,ntrgts),ersn_am
-            write(lun,fmt_peak) 'peak',(ersn_p(i),i=1,ntrgts),ersn_pm
-            write(lun,fmt_peak) 'peak pos.',(ersn_l(i),i=1,ntrgts)
-            close (lun)
+            ersn_a(j)=sn_t/ss(j)
+            ersn_pm=max(ersn_p(j),ersn_pm)
+            ss_m=ss_m+ss(j)
+            ersn_am=ersn_am+sn_t
+          else
+            ersn_a(j)=0.0_R8
+            ersn_p(j)=0.0_R8
+            ersn_l(j)=0.0_R8
           end if
-        else
-          write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
-     ,                                 ' ) - no sputtering calculated.'
-          write(*,*) '  ==> check specification of ltns in ',
-     ,                               'b2.parameters (section NEUTRALS)'
-        end if    
+        end do !}
+        ersn_am=ersn_am/ss_m
+        write(lun,fmt_peak) 'average',(tab,ersn_a(i),i=1,ntrgts),
+     .                                 tab,ersn_am
+        write(lun,fmt_peak) 'peak',(tab,ersn_p(i),i=1,ntrgts),
+     .                              tab,ersn_pm
+        write(lun,fmt_peak) 'peak pos.',(tab,ersn_l(i),i=1,ntrgts)
+        close (lun)
+      end if
+
       return
+
 c======================================================================
-  710 format('(2h# ,',i3,'(1x,a11,1h',a1,'))')
-  720 format('(2x,1p,',i3,'(e12.4,1h',a1,'))')
-  740 format('# ',2a,' : ',a)
+  710 format('(a1,',i3,'(1x,a11,2x))')
+  720 format('(1x,1p,',i3,'(e12.5,2x))')
+  740 format('# ',2a,' : ',2a)
   750 format('# ',4a)
 c=======================================================================
       end subroutine b2ptrgl

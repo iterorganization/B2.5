@@ -24,14 +24,14 @@ c
         call customise_label(tmpstring,titlestring)
         if(b2plot_debug.ge.7) write(*,*) 'physical domain'
         call init_page(titlestring,
-     1	 values(5),values(6),values(7),values(8),1,.true.,.true.,
+     1   values(5),values(6),values(7),values(8),1,.true.,.true.,
      2   .true.)
         call plottripatch(nx,ny,ntrii,nrknot,is,xtrian,ytrian,necke,
-     3	 eirene_stack(:,is,iewrk),
+     3   eirene_stack(:,is,iewrk),
      4   values(38),values(39),linlog)
         if(earrowl .gt. 0.0_R8) call plot_trig_arrows(is)
         call end_page
       enddo
 #endif
       return
-      end
+      end subroutine triangle_surf

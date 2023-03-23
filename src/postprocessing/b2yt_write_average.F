@@ -56,9 +56,9 @@
 
 *   ..write average state and sources
       idum(0) = naver
-      call cfwuin (iun, 1, idum(0), 'naver')
+      call cfwuin (iun, 1, idum, 'naver')
       idum(0) = ntotdt
-      call cfwuin (iun, 1, idum(0), 'ntotdt')
+      call cfwuin (iun, 1, idum, 'ntotdt')
 
       call cfwure (iun, n2*ns1, na1_mean, 'na_mean')
       call cfwure (iun, n2,     te1_mean, 'te_mean')

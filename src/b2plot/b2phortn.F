@@ -22,7 +22,10 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer i,ix,iy,is,in,im,nf
+      integer i,ix,is,in,im,nf
+#ifdef WG_TODO
+      integer iy
+#endif
       integer, allocatable :: mz_hlp(:),imol(:)
       real (kind=R8), allocatable :: hlp_f(:)
       character hlp_frmr*600
@@ -117,4 +120,5 @@ c
       close (lun)
       deallocate(mz_hlp,hlp_al,hlp_ml,hlp_f,imol)
 c
-      end
+      return
+      end subroutine b2phortn

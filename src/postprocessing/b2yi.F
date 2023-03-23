@@ -10,17 +10,15 @@
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2YI (main program) is a postprocessor for b2. It reads and
+*     B2YI (main program) is a postprocessor for B2. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2yidr for the actual computation.
 *
@@ -33,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yi performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2yidr to control the actual computation.
@@ -70,12 +68,9 @@
 
 *   ..local variables
       integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open, ex
 *   ..procedures
-      external prgini, prgfin, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgfin, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2yidr
 *   ..initialise input/output units
@@ -111,16 +106,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yi_mpi_child'
-      endif
-#endif
       call prgini ('b2yi')
 *   ..open gks
       call gopks (0, 0)
@@ -140,10 +125,10 @@
       call gnopen (nout(1),'b2yi.plt')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fstate_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fstate_version)                            !xpb
       call cfverr (ninp(2), b2frates_version)
-      call cfverr (ninp(3), b2fgmtry_version)				 !xpb
+      call cfverr (ninp(3), b2fgmtry_version)                            !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(3), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -160,7 +145,7 @@
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                 	 !xpb
+      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
       call b2yidr (ninp, nout, nx, ny, ns)
 *   ..close graphics files
@@ -185,10 +170,6 @@
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
       call prgfin ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yi'
 
 *-----------------------------------------------------------------------

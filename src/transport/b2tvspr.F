@@ -13,6 +13,7 @@
 #ifdef WG_DEBUG
      &        , my_out_sf                                               !srv 27.06.21
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -30,14 +31,13 @@
 
 *   ..local variables
       integer is
-      integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
+      integer, save :: ncall = 0                                         !srv 06.12.17
       real (kind=R8) :: fac_vism
       real (kind=R8) :: va(nCv), dva(nCv), gpo(nFc), gpa(nFc),
      &  wrkc(nCv), wrkf(nFc), wrkv(nVx)
       real (kind=R8) :: weight(nFc,2)
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
 *.computation
@@ -49,10 +49,10 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
-!      call b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy,                   !srv 10.10.17
-!     &              qz, bb, avisper, bvisper, cvisper)
+!      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
+!     &              avisper, bvisper, cvisper)
 
-*   ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
+*   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0e0_R8.and.
      &   switch%no_current.eq.0) then
