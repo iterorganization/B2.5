@@ -6905,7 +6905,7 @@
 				<type>logical array of size (NCF)</type>
 				<description>
 					Indicates if cost function icf is to be re-mapped to the OMP, according to CFTYPE.
-					Warning! The mapping is a rigid traslation of the data to the OMP and is safe to work only for non-extended grids and for cost functions defined on the same number of elements as the OMP list.
+					Warning! The mapping is a rigid translation of the data to the OMP and is safe to work only for non-extended grids and for cost functions defined on the same number of elements as the OMP list.
 				</description>
 			</switch>
 			<switch>
@@ -7184,7 +7184,7 @@
 				<type>integer array of size (NNVAR)</type>
 				<description>
 					 Indicates the type of sensitivity/optimization parameter. Valid options are:
-					 0 - sigma, standard deviation in liklelihood function for Bayesian inference (one for each plasma quantity and location used). These must ALWAYS be the last parameters in the vector!
+					 0 - sigma, standard deviation in likelihood function for Bayesian inference (one for each plasma quantity and location used). These must ALWAYS be the last parameters in the vector!
 					 1 - parm_dna or tdata(:,:,1,:)
 					 2 - parm_dpa or tdata(:,:,2,:)
 					 3 - parm_hci or tdata(:,:,3,:)

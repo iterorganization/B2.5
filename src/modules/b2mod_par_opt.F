@@ -17,7 +17,7 @@
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
 !        number of spatial points!)
 ! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
-! - nncon: number of nonlinear constriants (not used for now)
+! - nncon: number of nonlinear constraints (not used for now)
 ! - gl/gu: lowr/upper bound of such nonlinear constraints (not used for now)
 ! - nnjac: number of non-zeros in the jacobian of the nonlinear constraints (not used for now)
 ! - jcol/jrow: column/row indicex for each non-zero element of the jacobian
@@ -27,14 +27,14 @@
      &       par_opt_phys(:)
       logical, save :: flag_optim = .false.
       integer nnvar, nncon, nnjac
-      double precision :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
+      real (kind=R8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
      &  gu(nvmx), jj(nvmx*nvmx),
      &  par_rescale(nvmx)
       integer :: jcol(nvmx*nvmx), jrow(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
-      character*256, save :: filename, limited_memory_update_type,
+      character*256, save :: limited_memory_update_type,
      &  hessian_approximation 
-      double precision, save :: cpu_opt=0.0, tol_opt=1.0e-7
+      real (kind=R8), save :: cpu_opt=0.0_R8, tol_opt=1.0e-7_R8
       integer, save :: maxiter=100, partype(nvmx), nsigma_opt = 0 
       integer, save :: paris(nvmx),parib(nvmx)
       logical, save :: sigma_opt(nsigmx)
@@ -56,17 +56,18 @@
       use b2mod_types
       implicit none
       integer ncon, nele_jac, ns, nbc, ii, isigma, ipp
+      character*256 filename
 
       filename='b2.optimization.parameters'
       write (*,*) 'OPTIM: max number of readable parameters '//
      & 'and constraints:',nvmx
       write (*,*) 'OPTIM: infinity bound set to:',inf_opt
-      x0 = inf_opt*10.0
-      xl = -inf_opt*10.0
-      xu = inf_opt*10.0
-      gl = -inf_opt*10.0
-      gu = inf_opt*10.0
-      par_rescale = 1.0
+      x0 = inf_opt*10.0_R8
+      xl = -inf_opt*10.0_R8
+      xu = inf_opt*10.0_R8
+      gl = -inf_opt*10.0_R8
+      gu = inf_opt*10.0_R8
+      par_rescale = 1.0_R8
       NELE_JAC = 0
       nnjac = 0
       jcol = 0
