@@ -695,9 +695,9 @@ c*** Set default values according to current species list
         end do
         ic = ic + 1
       end do
-      if (.not.found) write(*,'(a/a)')
-     &  'Warning: did not find separatrix location in IMP definition, '\
-     &  '         check specification of RZIMP in b2.user.parameters'\
+      if (.not.found) write(*,'(a/a/a)')
+     &  'Warning: did not find separatrix location in IMP definition,',
+     &  '         check specification of RZIMP in b2.user.parameters',
      &  '         if IMP is needed.'
       if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(m%iFssep,2).gt.0,
      & 'No separatrix faces!')

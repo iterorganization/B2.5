@@ -20,36 +20,21 @@ module b2mod_ual_io
 
     use b2mod_types
     use b2mod_b2cmpa
-!    use b2mod_b2cmrc
-!    use b2mod_geo
-!    use b2mod_work
     use b2mod_diag &
      & , only : nfluids, species_list, label
-!    use b2mod_mwti
-    use b2mod_rates &
-     & , only : nscxmax
     use b2us_map
     use b2us_geo
     use b2us_plasma
-!    use b2mod_elements
+    use b2mod_elements
     use b2mod_constants
-!    use b2mod_sources
 !    use b2mod_feedback
-!    use b2mod_transport
-!    use b2mod_anomalous_transport
 !    use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
     use b2mod_user_namelist
-!    use b2mod_indirect
-!    use b2mod_external
-!    use b2mod_interp
     use b2mod_ipmain
-!    use b2mod_b2cmrc
-!    use b2mod_b2cmfs
-!    use b2mod_b2cmpb
-!    use b2mod_version
+    use b2mod_b2cmfs
+    use b2mod_version
     use b2mod_switches
-!    use b2mod_grid_mapping
 #ifdef IMAS
 #ifdef WG_TODO
     use b2mod_balance &
@@ -437,7 +422,6 @@ contains
                                           !< from Eirene molecular ions to IDS ion sequences
         integer :: ixx, iyy
 #endif
-        integer :: nscx, iscx(0:nscxmax-1)
         real(IDS_real) :: flxFace( mpg%nFc, 0:1 )
         real(IDS_real) :: totflux( mpg%nFc, 0:1 )
         real(IDS_real) :: tmpFace( mpg%nFc )
@@ -556,16 +540,17 @@ contains
 
 !   ..find nscx, iscx
 !     (indices for neutral hydrogen species)
-        nscx = 0
+        state%rt%nscx = 0
         do is = 0, ns-1
           if (is_neutral(is).and.nint(zn(is)).eq.1) then
-            call xertst (nscx.lt.nscxmax, 'too many neutral hydrogen species')
-            iscx(nscx) = is
-            nscx = nscx+1
+            call xertst (state%rt%nscx.lt.state%rt%nscxmax, &
+                & 'too many neutral hydrogen species')
+            state%rt%iscx(state%rt%nscx) = is
+            state%rt%nscx = state%rt%nscx+1
           endif
         enddo
-        do k = nscx, nscxmax-1
-          iscx(k) = -1
+        do k = state%rt%nscx, state%rt%nscxmax-1
+          state%rt%iscx(k) = -1
         enddo
         call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
         call b2xpnn (mpg%nCv, ns, state%pl%na, state%dv%nn)
@@ -575,12 +560,15 @@ contains
         call b2trql (mpg%nCv, mpg%nFc, ns, switch, geo, mpg, &
             &        state%pl, state%dv, state_ext,          &
             &        state%co%chvemx, state%co%chvimx)
-        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns, nscx, nscxmax, iscx, ismain, &
+        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,          &
+            &        state%rt%nscx, state%rt%nscxmax,        &
+            &        state%rt%iscx, ismain,                  &
             &        switch, geo, mpg, state%pl, state%dv,   &
             &        state%rt, state_ext, state%co)
 !   ..compute sources
         call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns, nxtl, nxtr, &
-     &   nscx, nscxmax, iscx, ismain, ismain0, dtim,             &
+     &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,         &
+     &   ismain, ismain0, dtim,                                  &
      &   switch, geo, mpg, state, state_ext, wrong_flow, .false.)
 
         !! Preparing database for writing
@@ -3868,7 +3856,7 @@ contains
             if (mpg%cvReg(iCv).ne.2) cycle
           else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
             if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.5) cycle
-         else if (geometryType.eq.GEOMETRY_CDN .or. &
+          else if (geometryType.eq.GEOMETRY_CDN .or. &
                &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
                &  geometryType.eq.GEOMETRY_DDN_TOP) then
             if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.6) cycle
