@@ -20,4 +20,4 @@
      1 60 * (timval(6)-timval(4)) + 3600 * (timval(5) + 24 * iday)
 
       return
-      end
+      end function epoch_seconds

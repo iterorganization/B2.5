@@ -9,6 +9,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlnl
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
@@ -40,8 +41,7 @@
       real (kind=R8) :: lambda
       integer iCv
 *   ..procedures
-      intrinsic sqrt
-      external subini, subend, xertst, sfill
+      external xertst, sfill
       external b2xvsg
 *   ..initialization
 
@@ -71,55 +71,55 @@
       lambda = switch%b2trcl_lambda
 * ..compute lnlam
       if (lambda.lt.0.0_R8) then
-	select case(icase)
-	 case(0)      ! Braginsky formula
-        do iCv = 1, nCv
-	    if(te(iCv)/ev .le. 50.0_R8) then
-           lnlam(iCv)=max(-lambda,
-     &     23.4_R8 - 1.15_R8*log10(ne(iCv)/1.0e6_R8) +
+        select case(icase)
+         case(0)      ! Braginskii formula
+           do iCv = 1, nCv
+            if(te(iCv)/ev .le. 50.0_R8) then
+             lnlam(iCv)=max(-lambda,
+     &        23.4_R8 - 1.15_R8*log10(ne(iCv)/1.0e6_R8) +
      &                            3.45_R8*log10(te(iCv)/ev))
-	    else
-           lnlam(iCv)=max(-lambda,
+            else
+             lnlam(iCv)=max(-lambda,
      &             25.3_R8 - 1.15_R8*log10(ne(iCv)/1.0e6_R8) + 
      &                            2.30_R8*log10(te(iCv)/ev))
-	    endif
-	    if(lnlam(iCv).le.0.0_R8) then
-	     open(70,file='info_b2tlnl.dat')
-	     write(70,"(a)")
+            endif
+            if(lnlam(iCv).le.0.0_R8) then
+             open(70,file='info_b2tlnl.dat')
+             write(70,"(a)")
      &     ' ix   iy   ne(iCv)      te(iCv)  lnlam(iCv)'
-	     write(70,"(i5,3es13.4)")
+             write(70,"(i5,3es13.4)")
      &       iCv,ne(iCv),te(iCv),lnlam(iCv)
-	     close(70)
-	     write(*,"(a)")
+             close(70)
+             write(*,"(a)")
      &     ' ix   iy   ne(iCv)      te(iCv)  lnlam(iCv)'
-	     write(*,"(i5,3es13.4)")
+             write(*,"(i5,3es13.4)")
      &       iCv,ne(iCv),te(iCv),lnlam(iCv)
-	     call xertst (lnlam(iCv).gt.0.0_R8,
+             call xertst (lnlam(iCv).gt.0.0_R8,
      &                  'Negative Coulomb logarithm')     !srv 12.01.16
-	    endif
-        enddo
-	 case(1)     ! Wesson formula for ion-ion collisions
-        do iCv = 1, nCv
-           lnlam(iCv)=max(-lambda,17.3_R8-
+            endif
+          enddo
+         case(1)     ! Wesson formula for ion-ion collisions
+          do iCv = 1, nCv
+            lnlam(iCv)=max(-lambda,17.3_R8-
      &       log(ne(iCv)/1.0e20_R8)/2.0_R8+
      &       1.5_R8*log(ti(iCv)/ev/1000.0_R8))
-        enddo
-	 case(2)    ! Wesson formula for electron-electron collisions
-        do iCv = 1, nCv
-           lnlam(iCv)=max(-lambda,14.9_R8-
-     &	   log(ne(iCv)/1.0e20_R8)/2.0_R8+
-     &	   log(te(iCv)/ev/1000.0_R8))
-        enddo
-	 case(3)   !  Wesson formula for electron-ion collisions
-        do iCv = 1, nCv
-           lnlam(iCv)=max(-lambda,15.2-
-     &	  log(ne(iCv)/1e20_R8)/2.0_R8+
-     &	  log(te(iCv)/ev/1000.0_R8))
-        enddo
-	 case default
-	  write(*,*) ' b2tlnl: incorrect value icase =',icase
-	  call xerrab ('Incorrect icase value in b2tlnl')
-	 end select
+          enddo
+         case(2)    ! Wesson formula for electron-electron collisions
+           do iCv = 1, nCv
+            lnlam(iCv)=max(-lambda,14.9_R8-
+     &       log(ne(iCv)/1.0e20_R8)/2.0_R8+
+     &       log(te(iCv)/ev/1000.0_R8))
+           enddo
+         case(3)   !  Wesson formula for electron-ion collisions
+          do iCv = 1, nCv
+            lnlam(iCv)=max(-lambda,15.2-
+     &       log(ne(iCv)/1e20_R8)/2.0_R8+
+     &       log(te(iCv)/ev/1000.0_R8))
+           enddo
+         case default
+          write(*,*) ' b2tlnl: incorrect value icase =',icase
+          call xerrab ('Incorrect icase value in b2tlnl')
+        end select
       else
         lnlam = lambda
       endif
@@ -131,4 +131,4 @@
 *-----------------------------------------------------------------------
 *.end b2tlnl
 
-      end                                                            !srv 01.07.09 }
+      end subroutine b2tlnl                                          !srv 01.07.09 }

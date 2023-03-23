@@ -13,4 +13,4 @@ c
   100 textline='eof'
       ipos=1
       return
-      end
+      end subroutine readline

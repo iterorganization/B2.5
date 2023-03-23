@@ -1,12 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg, nregionv, 
+      subroutine b2upht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  po_solve, ua_solve, solvereg, solvireg, solvnreg, solvtreg,       !srv 22.05.18
-     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, pcm0, cortt, corte,
+     &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, cortt, corte,
      &  corti, cortn, corkt, corzt, pccm0, na, ua, te, ti, tn, kt, zt,
      &  po, ne, ni)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
@@ -18,20 +19,21 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2upht
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nregionv
+      integer nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rxf, pcm0, cortt(nCv), corte(nCv),
+     *  rxf, cortt(nCv), corte(nCv),
      &  corti(nCv), cortn(nCv), corkt(nCv), corzt(nCv), pccm0(nCv)
       logical po_solve, ua_solve,
-     &  solvereg(0:nregionv), solvireg(0:nregionv),
-     &  solvnreg(0:nregionv), solvtreg(0:nregionv),                             !srv 22.05.18
-     &  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
-     &  solvkreg(0:nregionv), solvzreg(0:nregionv)
+     &  solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(0)),
+     &  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),                             !srv 22.05.18
+     &  solvpreg(0:mpg%nnreg(0)), solvmreg(0:ns-1,0:mpg%nnreg(0)),
+     &  solvkreg(0:mpg%nnreg(0)), solvzreg(0:mpg%nnreg(0))
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1),
@@ -54,14 +56,11 @@
       real (kind=R8) ::
      *  ctt, dte(nCv), dti(nCv), dtn(nCv), dkt(nCv), dzt(nCv), t0,
      *  wrk(nCv), wrk0(nCv), wrkv(nVx)
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  dte1(nCv), dti1(nCv),                                       !lk 26.10.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)      !lk 26.10.17
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *  med
-      external subini, subend, xertst, b2xvsg, xerrab, med
+      external xertst, b2xvsg, xerrab
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -74,9 +73,9 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test rxf, pcm0
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      & 'faulty argument rxf')
-      call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
+      call xertst (0.0_R8.le.switch%b2npht_pcm0, 'faulty argument pcm0')
 *   ..test sign of na, ni, vol, te, ti, ne
       if(ncall_b2upht.lt.3) then
         call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
@@ -88,7 +87,7 @@
         call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
         call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
         call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
-      endif 
+      endif
 
 * ..apply the correction
 *   ..adjust te, ti, po
@@ -100,7 +99,7 @@
         ireg = mpg%cvReg(iCv)
 *!!   (stylec is a numerical switch, needs experiments)
         if (switch%stylec.eq.0) then
-         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
           dte(iCv) = rxf*max(-te(iCv),(corte(iCv)+cortt(iCv))/2.0_R8)
           dti(iCv) = rxf*max(-ti(iCv),(corti(iCv)+cortt(iCv))/2.0_R8)
          else
@@ -116,7 +115,7 @@
          endif
         else if (switch%stylec.eq.1) then
 
-         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then     !srv 22.05.18
+         if (solvereg(ireg).and.solvireg(ireg).and.solvtreg(ireg)) then  !srv 22.05.18
           ctt = cortt(iCv) - med(corte(iCv),cortt(iCv),corti(iCv))
           dte(iCv) = rxf*max(-te(iCv),corte(iCv)+ctt)
           dti(iCv) = rxf*max(-ti(iCv),corti(iCv)+ctt)
@@ -139,7 +138,7 @@
         endif
         dkt(iCv)  = rxf*max(-kt(iCv),corkt(iCv))
         dzt(iCv)  = rxf*max(-zt(iCv),corzt(iCv))
- 	dte1(iCv) = dte(iCv)
+        dte1(iCv) = dte(iCv)
         dti1(iCv) = dti(iCv)
 *   ..smooth the correction for inner flux surfaces                 !lk 26.10.2017{
         if(mpg%cvOnClosedSurface(iCv).and.(iCv.le.mpg%nCi)) then    ! IYS 27.03.2019
@@ -171,9 +170,9 @@
         end if
         if (solvireg(ireg)) ti(iCv) = max(1.0e-5_R8*ev,ti(iCv)+dti(iCv))  !xpb
         if (solvnreg(ireg)) tn(iCv) = max(1.0e-5_R8*ev,tn(iCv)+dtn(iCv))
-        if (switch%solve_keps.gt.0.and.solvkreg(ireg)) 
+        if (switch%solve_keps.gt.0.and.solvkreg(ireg))
      &    kt(iCv) = max(1.0e-5_R8*ev,kt(iCv)+dkt(iCv))
-        if (switch%solve_keps.gt.1.and.solvzreg(ireg)) 
+        if (switch%solve_keps.gt.1.and.solvzreg(ireg))
      &    zt(iCv) = max(1.0e-8_R8*ev,zt(iCv)+dzt(iCv))
       enddo
 *   ..adjust ua
@@ -182,7 +181,7 @@
       if (ua_solve) then
        do iCv = 1, mpg%nCi
         ireg = mpg%cvReg(iCv)
-        t0 = pcm0*pccm0(iCv)*wrk(iCv)
+        t0 = switch%b2npht_pcm0*pccm0(iCv)*wrk(iCv)
         do is = 0, ns-1
          if (solvmreg(is,ireg)) ua(iCv,is) = ua(iCv,is)-t0
         enddo

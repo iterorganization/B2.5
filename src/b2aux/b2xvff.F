@@ -7,7 +7,7 @@
       character vrname*(*)
 *     -----------------------------------------------------------------
 *     B2XVFF verifies the zero entries in the edge locations of some
-*     quantity defined on faces of the b2 mesh. This routine is an
+*     quantity defined on faces of the B2 mesh. This routine is an
 *     interface to b2xvfx and b2xvfy.
 *     funf(,,0,) is defined on x-faces and funf(,,1,) on y-faces. The
 *     entries funf(-1,-1:ny,0,0:1) and funf(-1:nx,-1,1,0:1) must vanish
@@ -25,4 +25,4 @@
 *$$$  call subend ()
       return
 *     -----------------------------------------------------------------
-      end
+      end subroutine b2xvff

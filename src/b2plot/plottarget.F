@@ -30,15 +30,15 @@ C =====================================================================
       real floor,ceil
       external floor,ceil
 
-      zlo=zlod
-      zhi=zhid
-      RLO=target_stack(1,1)
-      RHI=target_stack(1,1)
+      zlo=real(zlod,R4)
+      zhi=real(zhid,R4)
+      RLO=real(target_stack(1,1),R4)
+      RHI=real(target_stack(1,1),R4)
       do I=1,ndepth
         do ibnd=1,nbnd
           if(.not.physical)then
-            RLO=MIN(RLO,REAL(target_stack(ibnd,i)))
-            RHI=MAX(RHI,REAL(target_stack(ibnd,i)))
+            RLO=MIN(RLO,REAL(target_stack(ibnd,i),R4))
+            RHI=MAX(RHI,REAL(target_stack(ibnd,i),R4))
           endif
         end do
       end do
@@ -48,11 +48,11 @@ C =====================================================================
       end if
 
       if(zlo.eq.zhi) then
-        zlo=min(zlo*0.9,zlo*1.1)
-        zhi=max(zhi*0.9,zhi*1.1)
+        zlo=min(zlo*0.9_R4,zlo*1.1_R4)
+        zhi=max(zhi*0.9_R4,zhi*1.1_R4)
         if(zlo.eq.zhi) then
-          zlo=-1.0
-          zhi=+1.0
+          zlo=-1.0_R4
+          zhi=+1.0_R4
         end if
       end if
 
@@ -78,15 +78,15 @@ C =====================================================================
           ENDDO
         ELSE  ! ==> do log plot <=======================================
           if(b2plot_debug.ge.10) write (*,*) 'STANDARD CONTOURING'
-          if(zhi.le.0.0) then
+          if(zhi.le.0.0_R4) then
             write(*,*) 'zhi <= 0 and logarithmic axes chosen'
-            zhi=1.0
+            zhi=1.0_R4
           endif
-          if(zlo.le.0.0) zlo=10.0**(-ndec)*zhi
-          ZHI=10.0**CEIL(LOG10(ZHI))
-          ZLO=max(10.0**FLOOR(LOG10(ZLO)),10.0**(-ndec)*zhi)
+          if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
+          ZHI=10.0_R4**CEIL(LOG10(ZHI))
+          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO))
+          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3
@@ -98,14 +98,14 @@ C =====================================================================
 #ifndef PLPLOT
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
-              zval=10.0**((i-1)/3)*zlo
+              zval=10.0_R4**((i-1)/3)*zlo
               if(mod(i-1,3).eq.1) zval=zval*2
               if(mod(i-1,3).eq.2) zval=zval*5
               tclval(i)=zval
             enddo
           else
             do i=1,ncont+1
-              zval=10.0**(i-1)*zlo
+              zval=10.0_R4**(i-1)*zlo
               tclval(i)=zval
             enddo
           endif
@@ -124,11 +124,11 @@ C =====================================================================
         if(noftcls.eq.0) then ! standard contouring
           WRITE (LBLS(I), FMTZ) CLV
         else
-          if(abs(clv).ge.1e3.or.abs(clv).lt.1e-2) then
+          if(abs(clv).ge.1.0e3_R4.or.abs(clv).lt.1.0e-2_R4) then
             write(LBLS(I),'(1p,e10.3)') CLV
-          elseif(abs(clv).ge.1e2) then
+          elseif(abs(clv).ge.1.0e2_R4) then
             write(LBLS(I),'(f8.3)') CLV
-          elseif(abs(clv).ge.1e1) then
+          elseif(abs(clv).ge.1.0e1_R4) then
             write(LBLS(I),'(f8.4)') CLV
           else
             write(LBLS(I),'(f8.5)') CLV
@@ -180,23 +180,23 @@ C =====================================================================
         do ibnd=1,nbnd
           if(physical) then
             do ic=1,2
-              xbox(ic)=targetcr(ibnd,i,ic)
-              ybox(ic)=targetcz(ibnd,i,ic)
+              xbox(ic)=real(targetcr(ibnd,i,ic),R4)
+              ybox(ic)=real(targetcz(ibnd,i,ic),R4)
             enddo
             do ic=1,2
-              xbox(5-ic)=targetcr(ibnd,min(i+1,ndepth),ic)
-              ybox(5-ic)=targetcz(ibnd,min(i+1,ndepth),ic)
+              xbox(5-ic)=real(targetcr(ibnd,min(i+1,ndepth),ic),R4)
+              ybox(5-ic)=real(targetcz(ibnd,min(i+1,ndepth),ic),R4)
             enddo
           endif
           if(.not.physical) then
-            xbox(1)=ibnd-0.5
-            xbox(2)=ibnd+1-0.5
-            xbox(3)=ibnd+1-0.5
-            xbox(4)=ibnd-0.5
-            ybox(1)=i-0.5
-            ybox(2)=i-0.5
-            ybox(3)=i+1-0.5
-            ybox(4)=i+1-0.5
+            xbox(1)=ibnd-0.5_R4
+            xbox(2)=ibnd+1-0.5_R4
+            xbox(3)=ibnd+1-0.5_R4
+            xbox(4)=ibnd-0.5_R4
+            ybox(1)=i-0.5_R4
+            ybox(2)=i-0.5_R4
+            ybox(3)=i+1-0.5_R4
+            ybox(4)=i+1-0.5_R4
           endif
           n=4
           call clip_box(xbox,ybox,xlo,ylo,xhi,yhi,n)

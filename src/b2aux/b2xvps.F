@@ -4,6 +4,7 @@
       subroutine b2xvps (nCv, nFc, ns, pl, dv)
       use b2mod_types
       use b2us_plasma
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: nCv, nFc, ns
@@ -29,16 +30,14 @@
 *  5. parameters (see also routine b2cdcv)
 *
 *     ncv, nfc, ns - integer, input.
-*     state - B2State, input
+*     state - B2State, input.
 *     See the calling routine for description.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..local variables
-      integer is
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
       external b2xvsg
 
 *-----------------------------------------------------------------------
@@ -67,4 +66,4 @@
 *-----------------------------------------------------------------------
 *.end b2xvps
 
-      end
+      end subroutine b2xvps

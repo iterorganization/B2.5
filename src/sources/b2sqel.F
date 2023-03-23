@@ -3,6 +3,7 @@
 
       subroutine b2sqel (nCv, ns, ismain, switch, ev, te, rt, rtw)
       use b2mod_types
+      use b2mod_math
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_switches
@@ -10,6 +11,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2sqel
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, ns, ismain
@@ -51,10 +53,10 @@
 *   ..local variables
       integer iCv, is
       real (kind=R8) :: tnorm, art_rad
-      real (kind=R8) :: wrk0(1:nCv), expu
+      real (kind=R8) :: wrk0(1:nCv)
 *   ..procedures
-      intrinsic log, exp, min, max
-      external subini, subend, xertst, expu
+      intrinsic log, min
+      external xertst
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -88,8 +90,8 @@
 *      ..compute heat loss rate coefficient
          rtw%rqa(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlqa(iCv,0,is)+rt%rlqa(iCv,1,is)*wrk0(iCv))
-         rtw%rqa_ra(iCv,is) = switch%b2sqel_phm2*
-     &     ev*expu(rt%rlqa_ra(iCv,0,is)+rt%rlqa_ra(iCv,1,is)*wrk0(iCv))
+         rtw%rqr(iCv,is) = switch%b2sqel_phm2*
+     &     ev*expu(rt%rlqr(iCv,0,is)+rt%rlqr(iCv,1,is)*wrk0(iCv))
 *      ..compute line radiation rate coefficient
          rtw%rrd(iCv,is) = switch%b2sqel_phm2*
      &     ev*expu(rt%rlrd(iCv,0,is)+rt%rlrd(iCv,1,is)*wrk0(iCv))

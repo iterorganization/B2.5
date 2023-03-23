@@ -10,6 +10,7 @@
       use tradui_constants
       use b2mod_connectivity
       use b2mod_cellhelper
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isymm, periodic_bc, nncut
@@ -55,10 +56,12 @@
 *     vol, crx, cry, qz - real*8 array, input.
 *     See the calling routine for description.
 *
-*     fpsi - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i) specifies the
+*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array, input.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
 *     potential for the magnetic field components (bx,by) at the
 *     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
@@ -84,15 +87,14 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j
-      real (kind=R8) ::
-     *  t0, p0x, p0y, width, bb0, babs
+      integer ix, iy
+      real (kind=R8) :: width, bb0, babs
       real (kind=R8) :: hzl(-1:nx,-1:ny),    ! hz at the left cell face
      *                  hzr(-1:nx,-1:ny),    ! hz at the right cell face
      *                  hzb(-1:nx,-1:ny)     ! hz at the bottom cell face
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst
+      external xertst
       data width /1.0_R8/
       save width
 

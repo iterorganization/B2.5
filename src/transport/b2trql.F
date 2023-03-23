@@ -15,6 +15,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2trql, ncall_b2tlhe
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns
@@ -53,7 +54,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
-      external subini, subend, xertst, smin, smax
+      external xertst, smin, smax
       external b2tlhe, b2tlhi, b2tlmv, b2xpnr, b2xvsg
 *   ..initialisation
 
@@ -128,4 +129,4 @@
 *-----------------------------------------------------------------------
 *.end b2trql
 
-      end
+      end subroutine b2trql

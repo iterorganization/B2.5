@@ -1,14 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nCv, nFc, ns, switch, geo, mpg, csig_an, po,       !srv 20.09.06 {
-     &                    fchanml)
+      subroutine b2tanml (nCv, nFc, ns, switch, geo, mpg,
+     & csig_an, po, fchanml)                                            !srv 20.09.06 {
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns
@@ -26,7 +27,7 @@
 *
 *  1. purpose
 *
-*     B2TANML computes the x,y-components of anomalous current
+*     B2TANML computes the X and Y components of the anomalous current.
 *
 *
 *  8. further comments
@@ -35,18 +36,12 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
-      integer iCv, iFc
-      integer, save :: guard_flows
-      real (kind=R8) :: dpo(nFc,0:1),
-     *  wght(nCv), pov(mpg%nVx)
+      real (kind=R8) :: dpo(nFc,0:1), pov(mpg%nVx)
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx, diff_r
-*   ..initialization
-      data guard_flows/2/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -57,18 +52,17 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
 
       if(switch%no_current.ne.0.or.
-     &   switch%fch_anomalous.eq.0.0e0_R8) then                !srv 27.02.13
+     &   switch%fch_anomalous.eq.0.0e0_R8) then                         !srv 27.02.13
         fchanml = 0.0e0_R8
-      else                                                    !srv 27.02.13
+      else                                                              !srv 27.02.13
 
 *   ..compute differences of po
-        wght = 1.0_R8
         call diff(nCv, nFc, mpg%nVx, 0, geo, mpg, po, pov, dpo)
 
 *   ..compute the current
         fchanml = -csig_an*dpo
 
-      endif                                                   !srv 27.02.13
+      endif                                                             !srv 27.02.13
 
 * ..return
       call subend ()
@@ -77,4 +71,4 @@
 *-----------------------------------------------------------------------
 *.end b2tanml
 
-      end                                                             !srv 20.09.06 }
+      end subroutine b2tanml                                             !srv 20.09.06 }

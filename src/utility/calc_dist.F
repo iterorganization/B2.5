@@ -12,6 +12,7 @@
       use b2mod_types
       use b2us_geo
       use b2us_map
+      use b2mod_subsys
       implicit none
       ! Input variables
       type(geometry), intent(in) :: geo 
@@ -26,18 +27,15 @@
       integer :: iCv
 
       ! External functions
-      external subini, subend, xertst
+      external xertst
 
-      ! Intrinsic functions
-      intrinsic sqrt
-    
       ! Main program
       !=============
       ! Call subini
-      call subini ('output_ds_us')
+      call subini ('calc_dist')
       ! csc added safety for possible reference not within list number
-      call xertst(iref.gt.1 .and. iref.le.nc,
-     & 'output_ds_us: iref out of range')
+      call xertst(iref.ge.0 .and. iref.le.nc,
+     & 'calc_dist: iref out of range')
 
       ! Compute the initial length as the distance of the first cell to 
       ! the first boundary face
@@ -51,11 +49,14 @@
      &    + (geo%cvY(clist(iCv)) - geo%cvY(clist(iCv-1)) )**2  )
       enddo
 
-      ! Compute reference point
-      dsref = (ds(iref) + ds(iref-1))/2.0_R8
+      ! If reference cell provided, shift distance computation
+      if (iref.gt.1) then
+        ! Compute reference point
+        dsref = (ds(iref) + ds(iref-1))/2.0_R8
 
-      ! Subtract reference length
-      ds = ds - dsref
+        ! Subtract reference length
+        ds = ds - dsref
+      endif
     
       ! Call subend and return
       call subend ()

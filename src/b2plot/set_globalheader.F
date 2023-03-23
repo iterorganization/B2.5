@@ -5,4 +5,4 @@
       globalheader=extralabel
       extralabel=' '
       return
-      end
+      end subroutine set_globalheader

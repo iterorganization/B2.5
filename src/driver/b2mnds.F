@@ -3,6 +3,7 @@
 
       subroutine b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
       use b2mod_types
+      use b2mod_math
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmfs
@@ -11,10 +12,12 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_ipmain
       use b2mod_ppout
       use b2mod_diag
      . , only : label
       use b2mod_switches
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0
@@ -27,12 +30,12 @@
 *
 *  1. purpose
 *
-*     B2MNDS performs initialisation functions for a b2 calculation.
+*     B2MNDS performs initialisation functions for a B2 calculation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine performs initialisation for a b2 calculation.  It
+*     This routine performs initialisation for a B2 calculation. It
 *     reads and checks header records from the input files, writes
 *     header records to the output files, and initialises variables in
 *     common.
@@ -94,20 +97,16 @@
 *   ..local variables
       integer is, idum(0:9)
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
-     &  lblmn*120, cnamip*80, cvalip*80, line*80, lblpsd*120
+     &  lblmn*120, cnamip*80, cvalip*80, line*80, ligne*80!, lblpsd*120
       real (kind=R8) ::
-     *   zpdum(0:nsdecl-1,4), t0, t1
+     *   zpdum(0:nsdecl-1,4)
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
-      external subini, subend, xertst, xerrab, ipsetc, cfruch, cfruin,
-     &  cfwuch, cfwuin
+      logical is_comment
+      external xertst, xerrab, cfruch, cfruin, cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
       external is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
-! csc UNCOMMENT WITH AD
-!      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -146,9 +145,10 @@
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
      &             1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
-     &             1.le.ninp(6).and.1.le.nout(0).and.1.le.nout(1).and.
-     &             1.le.nout(2).and.1.le.nout(3).and.1.le.nout(4).and.
-     &             1.le.nout(5).and.1.le.nout(9).and.1.le.nout(10),
+     &             1.le.ninp(6).and.
+     &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
+     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5).and.
+     &             1.le.nout(9).and.1.le.nout(10),
      &    'faulty argument ninp, nout')
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
@@ -163,6 +163,10 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
 #ifdef JET
       labgeo=lblgm
+#else
+#ifdef IMAS
+      labgeo=lblgm
+#endif
 #endif
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
@@ -252,9 +256,13 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
+           call ipsetc (cnamip, cvalip)
+         endif
        endif
        goto 1
     2 continue
@@ -268,7 +276,7 @@
       call b2wfcp (nout(0), 0, ns)
 *   ..write header to nout(1)
       idum(0) = ns
-      call cfverw (nout(1), newversion)					 !xpb
+      call cfverw (nout(1), newversion)                                 !xpb
       call cfwuin (nout(1), 1, idum, 'ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
 *   ..save physics parameters to nout(1)
@@ -277,15 +285,15 @@
       idum(0) = nCv
       idum(1) = nFc
       idum(2) = ns
-      call cfverw (nout(2), newversion)					 !xpb
+      call cfverw (nout(2), newversion)                                 !xpb
       call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(3), newversion)					 !xpb
+      call cfverw (nout(3), newversion)                                 !xpb
       call cfwuin (nout(3), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(3), 120, lblmn, 'label')
       call b2wuzd (nout(3), newversion, ns, zamin, zamax, zn, am)
-      call cfverw (nout(5), newversion)					 !xpb
+      call cfverw (nout(5), newversion)                                 !xpb
       call cfwuin (nout(5), 3, idum, 'nCv,nFc,ns')
       call cfwuch (nout(5), 120, lblmn, 'label')
       call b2wuzd (nout(5), newversion, ns, zamin, zamax, zn, am)
@@ -307,8 +315,6 @@ c check the values of the switches
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-
-
 ! csc UNCOMMENT WITH AD
 !  call cfverw (nout(9), newversion)
 !  call cfwuin (nout(9), 3, idum, 'nCv,nFc,ns')
@@ -319,7 +325,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       call cfwuin (nout(4), 1, idum, 'ns')
       call cfwuch (nout(4), 120, lblmn, 'label')
       call b2mwq0 (nout(4), ns, switch)
-
 
 * ..return
       call subend ()

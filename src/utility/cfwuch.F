@@ -39,4 +39,4 @@
 *     ------------------------------------------------------------------
    91 call xerrab ('cfwuch--error return from inquire statement')
 *     ------------------------------------------------------------------
-      end
+      end subroutine cfwuch

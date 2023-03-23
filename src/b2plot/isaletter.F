@@ -5,4 +5,4 @@ c
       isaletter=(c.ge.'A' .and. c.le.'Z') .or.
      &          (c.ge.'a' .and. c.le.'z')
       return
-      end
+      end function isaletter

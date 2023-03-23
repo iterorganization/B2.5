@@ -12,6 +12,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2treq, ncall_b2tlnl
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -53,8 +54,8 @@
 *     lnlam is the log of the plasma parameter.
 *     cfeqp is a numerical coefficient in the energy transfer rate.
 *   ..procedures
-      intrinsic sqrt, log, max
-      external subini, subend, xertst
+      intrinsic sqrt
+      external xertst
       external b2xvsg
 *   ..initialisation
 

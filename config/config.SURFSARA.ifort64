@@ -1,0 +1,65 @@
+# Test whether necessary variables are set
+#ifndef LD_NETCDF
+#  $(error LD_NETCDF not defined)
+#endif
+ifndef LD_MSCL
+  $(error LD_MSCL not defined)
+endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
+endif
+ifndef LD_NAG
+  $(error LD_NAG not defined)
+endif
+
+CPP      = /lib/cpp -C -traditional -ffreestanding
+
+ifdef USE_MPI
+FC       = mpiifort
+else
+ifdef USE_IMPGYRO
+FC       = mpiifort
+else
+FC       = ifort
+endif
+endif
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2)
+
+ifndef SOLPS_DEBUG
+FCOPTS  += -O2 
+else
+FCOPTS  += -g -C -traceback -debug all -check all
+endif
+ifdef USE_MPI
+FCOPTS  += ${MPI_CPP}
+LDOPTS  += ${LD_MPI}
+endif
+
+ifdef USE_OPENMP
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
+endif
+endif
+
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+LDOPTS  += -i_dynamic
+endif
+
+INCMOD   = -I
+OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+
+ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
+GGD_VERSION ?= `pkg-config ggd --modversion`
+else
+GGD_VERSION ?= '0.0.0'
+endif
+
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

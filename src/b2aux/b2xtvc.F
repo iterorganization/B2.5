@@ -4,6 +4,8 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk1)
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
       implicit none
       integer nx, ny, nx1, ny1, nncutmax
       real (kind=R8) ::
@@ -15,6 +17,7 @@
       integer rightcut(nncutmax), rightcut1(nncutmax)
       integer bottomcut(nncutmax), bottomcut1(nncutmax)
       integer topcut(nncutmax), topcut1(nncutmax)
+      logical isSnowflake
 *     ------------------------------------------------------------------
 *     B2XTVC transfers a cell center variable to a new mesh.
 *     ------------------------------------------------------------------
@@ -23,16 +26,20 @@
       integer ixm, ixp, iym, iyp
       integer inseliy, inseliy1
       real (kind=R8), allocatable :: d(:)
-      real (kind=R8) :: xx(-1:nx), xx1(-1:nx1), yy(-1:ny), yy1(-1:ny1) 
+      real (kind=R8) :: xx(-1:nx), xx1(-1:nx1), yy(-1:ny), yy1(-1:ny1)
       external E01BEF, E01BFF
       real (kind=R8) ::
      *   t0, t1, t2
-      external xerrab, subini, subend, interp2d, med
+      external xerrab, interp2d
       intrinsic min, max, real
-      real (kind=R8) ::
-     *   med
 *     ------------------------------------------------------------------
       call subini ('b2xtvc')
+      isSnowflake = .False.
+      if (nncut.eq.2) then
+         if (rightcut(1).le.rightcut(2)) then
+            isSnowflake = .True.
+         endif
+      endif
       if (non_commensurate.eq.0) then   ! commensurate mapping
 *   ..interpolate in the second index
        do ix = -1, nx
@@ -109,7 +116,7 @@
         iya = 0
         iym = 0
         iyb = ny-1
-        iyp = ny-1 
+        iyp = ny-1
         iyc = 0
         iyd = ny1-1
         xx(ixa-1) = 0.0_R8
@@ -163,12 +170,12 @@
           ixa = 0
           ixb = nx-1
           ixm = nx-1
-          ixp = 0 
+          ixp = 0
           ixc = 0
           ixd = nx1-1
           fun1(-1,iyc:iyd) = fun(-1,(iya+iyb)/2)    ! western dead cells
           fun1(nx1,iyc:iyd) = fun(nx1,(iya+iyb)/2)  ! eastern dead cells
-        else if (nncut.eq.1) then    ! SN topologies
+        else if (nncut.eq.1 .or. isSnowflake) then  ! SN and SF topologies
           ixa = leftcut(1)
           ixb = rightcut(1)-1
           ixp = leftcut(1)
@@ -209,16 +216,16 @@
        wrk1(ixa-1,iya-1) = fun(ixm,iym)
        wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
        wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-       wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-       wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
-       wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-       wrk1(ixb+1,iya-1) = fun(ixp,iym)
        wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
        wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+       wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+       wrk1(ixb+1,iya-1) = fun(ixp,iym)
+       wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+       wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
        call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .  xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .  wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
-*    .. region 2 : 
+*    .. region 2 :
        if (periodic_bc.eq.1) then   ! limiter or stellarator island case
         ixa = 0
         ixm = 0
@@ -253,7 +260,7 @@
           inseliy1 = inseliy1+1
          enddo
          iyd = inseliy1
-        endif         
+        endif
         do iy = iya-1, iyb+1
           yy(iy) = (iy+0.5_R8-iya)/real(iyb-iya+1)
         enddo
@@ -282,7 +289,7 @@
         iyc = jsep1+1
         ixa = leftcut(1)
         ixc = leftcut1(1)
-        if (nncut.eq.1) then
+        if (nncut.eq.1 .or. isSnowflake) then
          ixm = leftcut(1)-1
          ixb = rightcut(1)-1
          ixp = rightcut(1)
@@ -356,12 +363,12 @@
         wrk1(ixa-1,iya-1) = fun(ixm,iym)
         wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
         wrk1(ixa-1,iyb+1) = fun(ixm,iyp)
-        wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
-        wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
-        wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
-        wrk1(ixb+1,iya-1) = fun(ixp,iym)
         wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
         wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
+        wrk1(ixa:ixb,iyb+1) = fun(ixa:ixb,iyp)
+        wrk1(ixb+1,iya-1) = fun(ixp,iym)
+        wrk1(ixb+1,iya:iyb) = fun(ixp,iya:iyb)
+        wrk1(ixb+1,iyb+1) = fun(ixp,iyp)
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
@@ -433,8 +440,10 @@
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
-        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
-         if (topcut(1).lt.topcut(2)) ixp = leftcut(1)
+        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
+         if (topcut(1).lt.topcut(2) .and. .not.isSnowflake) then
+          ixp = leftcut(1)
+         endif
          iya = min(topcut(1),topcut(2))
          iym = min(topcut(1),topcut(2))-1
          iyb = max(topcut(1),topcut(2))
@@ -478,7 +487,7 @@
           iya = jsep+1
           iym = jsep
           iyc = jsep1
-         else  
+         else
           iya = max(topcut(1),topcut(2))+1
           iym = max(topcut(1),topcut(2))
           iyc = max(topcut1(1),topcut1(2))+1
@@ -520,8 +529,8 @@
          call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
      .               ixd-ixc+1,xx1(ixc:ixd),fun1(ixc:ixd,ny1),ifail)
         endif
-       endif 
-*    .. region 4 : 
+       endif
+*    .. region 4 :
        if (nncut.ge.1) then
         iya = 0
         iyb = jsep
@@ -536,6 +545,13 @@
          ixp = nx-1
          ixc = rightcut1(1)
          ixd = nx1-1
+        else if (isSnowflake) then
+         ixa = rightcut(1)
+         ixm = leftcut(1)-1
+         ixb = leftcut(2)-1
+         ixp = leftcut(2)-1
+         ixc = rightcut1(1)
+         ixd = leftcut1(2)-1
         else if (nncut.eq.2) then
          ixa = leftcut(2)
          ixm = rightcut(2)-1
@@ -545,6 +561,7 @@
           ixb = ixb + 1
          enddo
          ixb = ixb - 1   ! step back to avoid counting guard cells
+         ixp = ixb
          ixd = ixc
          do while (region1(ixd+1,jsep1,0).eq.4)
           ixd = ixd + 1
@@ -577,8 +594,8 @@
         wrk1(ixb+1,iya-1) = fun(ixb+1,iym)
         wrk1(ixb+1,iya:iyb) = fun(ixb+1,iya:iyb)
         wrk1(ixb+1,iyb+1) = fun(ixb+1,iyp)
-        call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(ixb+1,iya-1:iyb+1),d,
-     .              ifail)
+        call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
+     .              wrk1(ixb+1,iya-1:iyb+1),d,ifail)
         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(ixb+1,iya-1:iyb+1),d,
      .              iyd-iyc+1,yy1(iyc:iyd),fun1(ixd+1,iyc:iyd),ifail)
 *    .. region 4 : eastern SN PFR or DN HFS top PFR : central part
@@ -594,8 +611,10 @@
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
-        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then
-         if (topcut(1).gt.topcut(2)) ixp = leftcut(2)-1
+        if (nncut.eq.2 .and. topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
+         if (topcut(1).gt.topcut(2) .and. .not.isSnowflake) then
+          ixm = leftcut(2)-1
+         endif
          iya = min(topcut(1),topcut(2))
          iym = min(topcut(1),topcut(2))-1
          iyb = max(topcut(1),topcut(2))
@@ -631,7 +650,7 @@
      .    wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
         endif
         if (periodic_bc.eq.0) then
-         ixm = leftcut(2)-1
+         ixm = ixa-1
          iyb = ny-1
          iyp = ny-1
          iyd = ny1-1
@@ -639,7 +658,7 @@
           iya = jsep+1
           iym = jsep
           iyc = jsep1
-         else  
+         else
           iya = max(topcut(1),topcut(2))+1
           iym = max(topcut(1),topcut(2))
           iyc = max(topcut1(1),topcut1(2))+1
@@ -655,10 +674,12 @@
          wrk1(ixb+1,iya-1) = fun(ixb+1,iym)
          wrk1(ixb+1,iya:iyb) = fun(ixb+1,iya:iyb)
          wrk1(ixb+1,iyb+1) = fun(ixb+1,iyp)
-         call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(ixb+1,iya-1:iyb+1),
-     .               d,ifail)
-         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),wrk1(ixb+1,iya-1:iyb+1),
-     .               d,iyd-iyc+1,yy1(iyc:iyd),fun1(ixd+1,iyc:iyd),ifail)
+         call E01BEF(iyb-iya+3,yy(iya-1:iyb+1),
+     .               wrk1(ixb+1,iya-1:iyb+1),d,ifail)
+         call E01BFF(iyb-iya+3,yy(iya-1:iyb+1),
+     .               wrk1(ixb+1,iya-1:iyb+1),
+     .               d,iyd-iyc+1,yy1(iyc:iyd),
+     .               fun1(ixd+1,iyc:iyd),ifail)
 *    .. region 4 : eastern SN or DN HFS top divertor : above the separatrices : central part
          wrk1(ixa-1,iya-1) = fun(ixm,iym)
          wrk1(ixa-1,iya:iyb) = fun(ixm,iya:iyb)
@@ -682,7 +703,7 @@
      .               ixd-ixc+1,xx1(ixc:ixd),fun1(ixc:ixd,ny1),ifail)
         endif
        endif
-*    .. region 5 : 
+*    .. region 5 :
        if (nncut.eq.1 .and. periodic_bc.eq.1) then
         ixa = 0
         ixb = nx-1
@@ -781,29 +802,50 @@
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
        endif
-*    .. region 6 : 
+*    .. region 6 :
        if (nncut.eq.2) then
-        iya = jsep+1
-        iym = jsep
-        iyc = jsep1+1
-        ixa = rightcut(1)
-        ixb = rightcut(2)-1
-        ixc = rightcut1(1)
-        ixd = rightcut1(2)-1
-        if (topcut(1).eq.topcut(2)) then
-         ixm = rightcut(2)-1
-         ixp = rightcut(1)
-         iyb = ny-1
-         iyp = ny-1
-         iyd = ny1-1
-        else if (topcut(1).lt.topcut(2)) then
-         ixm = leftcut(2)-1
-         ixp = rightcut(1)
-        else if (topcut(1).gt.topcut(2)) then
-         ixm = rightcut(2)-1
-         ixp = leftcut(1)
+        if (isSnowflake) then
+          ixb = rightcut(2)-1
+          ixd = rightcut1(2)-1
+          do while (region(ixa-1,jsep,0).eq.6)
+            ixa = ixa-1
+          enddo
+          ixa = ixa + 1  ! step back to not count guard cell
+          ixm = ixa
+          ixc = ixd
+          do while (region1(ixc-1,jsep1,0).eq.6)
+           ixc = ixc-1
+          enddo
+          ixc = ixc + 1  ! step back to not count guard cell
+          iya = 0
+          iym = 0
+          iyc = 0
+        else
+          ixa = rightcut(2)
+          ixb = rightcut(1)-1
+          ixc = rightcut1(2)
+          ixd = rightcut1(1)-1
+          iya = jsep+1
+          iym = jsep
+          iyc = jsep1+1
+          if (topcut(1).eq.topcut(2)) then
+            ixm = rightcut(2)-1
+            ixp = rightcut(1)
+            iyb = ny-1
+            iyp = ny-1
+            iyd = ny1-1
+          else if (isSnowflake) then
+            ixm = leftcut(2)-1
+            ixp = rightcut(1)
+          else if (topcut(1).lt.topcut(2)) then
+            ixm = leftcut(2)-1
+            ixp = rightcut(1)
+          else if (topcut(1).gt.topcut(2)) then
+            ixm = rightcut(2)-1
+            ixp = leftcut(1)
+          endif
         endif
-        if (topcut(1).ne.topcut(2)) then
+        if (topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
          iyb = max(topcut(1),topcut(2))
          iyp = max(topcut(1),topcut(2))+1
          iyd = max(topcut1(1),topcut1(2))
@@ -829,9 +871,14 @@
          wrk1(ixb+1,iya-1) = fun(ixp,iym)
          wrk1(ixa:ixb,iya-1) = fun(ixa:ixb,iym)
          wrk1(ixa:ixb,iya:iyb) = fun(ixa:ixb,iya:iyb)
-!!!! To be done !!!!
+         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
+     .    xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
+     .    wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
          ixm = rightcut(2)-1
          ixp = rightcut(1)
+         iya = max(topcut(1),topcut(2))+1
+         iym = max(topcut(1),topcut(2))
+         iyc = max(topcut1(1),topcut1(2))+1
          iyb = ny-1
          iyp = ny-1
          iyd = ny1-1
@@ -873,20 +920,29 @@
        endif
 *    .. region 7 :
        if (nncut.eq.2) then
-        ixb = rightcut(2)-1
-        ixp = leftcut(2)
-        ixd = rightcut1(2)-1
-        ixa = ixb
-        do while (region(ixa-1,jsep,0).eq.7)
-         ixa = ixa-1
-        enddo
-        ixa = ixa + 1  ! step back to not count guard cell
-        ixm = ixa
-        ixc = ixd
-        do while (region1(ixc-1,jsep1,0).eq.7)
-         ixc = ixc-1
-        enddo
-        ixc = ixc + 1  ! step back to not count guard cell
+        if (isSnowflake) then
+          ixa = rightcut(2)
+          ixm = leftcut(1)-1
+          ixc = rightcut1(2)
+          ixb = nx-1
+          ixp = nx-1
+          ixd = nx1-1
+        else
+          ixb = rightcut(2)-1
+          ixp = leftcut(2)
+          ixd = rightcut1(2)-1
+          ixa = ixb
+          do while (region(ixa-1,jsep,0).eq.7)
+            ixa = ixa-1
+          enddo
+          ixa = ixa + 1  ! step back to not count guard cell
+          ixm = ixa
+          ixc = ixd
+          do while (region1(ixc-1,jsep1,0).eq.7)
+            ixc = ixc-1
+          enddo
+          ixc = ixc + 1  ! step back to not count guard cell
+        endif
         xx(ixa-1) = 0.0_R8
         do ix = ixa, ixb+1
          xx(ix) = (ix+0.5_R8-ixa)/real(ixb-ixa+1)
@@ -936,8 +992,10 @@
         call interp2d(ixb-ixa+3,iyb-iya+3,ixd-ixc+1,iyd-iyc+1,
      .   xx(ixa-1:ixb+1),yy(iya-1:iyb+1),xx1(ixc:ixd),yy1(iyc:iyd),
      .   wrk1(ixa-1:ixb+1,iya-1:iyb+1),fun1(ixc:ixd,iyc:iyd))
-        if (topcut(1).ne.topcut(2)) then
-         if (topcut(1).gt.topcut(2)) ixp = rightcut(2)
+        if (topcut(1).ne.topcut(2)) then   ! DDN HFS SOL
+         if (topcut(1).gt.topcut(2) .and. .not.isSnowflake) then
+          ixp = rightcut(2)
+         endif
          iya = min(topcut(1),topcut(2))
          iym = min(topcut(1),topcut(2))-1
          iyb = max(topcut(1),topcut(2))
@@ -1016,8 +1074,8 @@
         call E01BFF(ixb-ixa+3,xx(ixa-1:ixb+1),wrk1(ixa-1:ixb+1,ny),d,
      .              ixd-ixc+1,xx1(ixc:ixd),fun1(ixc:ixd,ny1),ifail)
        endif
-*    .. region 8 : 
-       if (nncut.eq.2) then
+*    .. region 8 :
+       if (nncut.eq.2 .and. .not.isSnowflake) then
         ixa = rightcut(1)
         ixm = leftcut(1)-1
         ixc = rightcut1(1)

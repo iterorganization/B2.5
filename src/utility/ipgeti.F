@@ -1,5 +1,6 @@
       subroutine ipgeti (cnam, ival)
       use b2mod_types
+      use b2mod_ipmain
       implicit none
       character cnam*(*)
       integer ival
@@ -11,7 +12,7 @@
 *     earlier call to ipseti or to ipsetc.
 *     ------------------------------------------------------------------
       character cnam0*32, cval0*32
-      external xerrab, ipgetc
+      external xerrab
 *     ------------------------------------------------------------------
       cnam0 = cnam
       cval0 = ' '
@@ -23,4 +24,4 @@
 *     ------------------------------------------------------------------
    91 call xerrab ('ipgeti--invalid stored value for: '//cnam0)
 *     ------------------------------------------------------------------
-      end
+      end subroutine ipgeti

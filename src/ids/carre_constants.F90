@@ -1,5 +1,5 @@
 module carre_constants
-
+  use b2mod_types
   implicit none
 
   private
@@ -31,6 +31,8 @@ module carre_constants
   ! structure). This is used to mark boundary faces in standard grids that
   ! do not touch the wall.
   integer, parameter, public :: BOUNDARY_NOSTRUCTURE = -1
+
+  real(kind=R8), public, save :: geom_match_dist = 1.0e-6_R8
 
 end module carre_constants
 

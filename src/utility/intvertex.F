@@ -31,12 +31,12 @@ c
       do iVx = 1, nVx
         volsum = 0.0_R8
         do iCv = 1,mpg%vxCvP(iVx,2)
-          volsum = volsum + 1/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
+          volsum = volsum + 1._R8/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
           vertex(iVx) = vertex(iVx) + 
      &      centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
      &      vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
         enddo
-        vertex(iVx) = vertex(iVx)/volsum
+        vertex(iVx) = vertex(iVx)/(volsum + 1.0e-30_R8)
       enddo
 
       return
@@ -59,12 +59,12 @@ c
       vertex = 0.0_R8
       volsum = 0.0_R8
       do iCv = 1,mpg%vxCvP(iVx,2)
-        volsum = volsum + 1/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
+        volsum = volsum + 1._R8/vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
         vertex = vertex + 
      &    centre(mpg%vxCv(mpg%vxCvP(iVx,1) + iCv - 1))/
      &    vxvol(mpg%vxCvP(iVx,1) + iCv - 1)
       enddo
-      vertex = vertex/volsum
+      vertex = vertex/(volsum + 1.0e-30_R8)
 
       return
       end function intvertex_s

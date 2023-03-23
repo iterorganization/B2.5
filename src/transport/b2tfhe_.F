@@ -4,6 +4,7 @@
       subroutine b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg, 
      &  pl, dv, co, rt, st_ext, balance)                                 !djm Jan2017 !srv 29.01.20
       use b2mod_types
+      use b2mod_math
       use b2mod_boundary_namelist
       use b2mod_constants
       use b2mod_b2cmfs
@@ -20,6 +21,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns
@@ -29,14 +31,17 @@
       type (B2Plasma), intent (in) :: pl 
       type (B2Rates), intent (in) :: rt 
       type (B2StateExt), intent (in) :: st_ext
-      logical balance                                                   !djm Jan2017
+      logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
       type (B2Coeff), intent (inout) :: co
       type (B2Derivatives), intent (inout) :: dv
 *   ..local variables
-      real (kind=R8) :: upfac, hybfac, harm !djm Jan2017
+#ifdef WG_TODO
+      real (kind=R8) :: harm !djm Jan2017
+      real (kind=R8) :: upfac, hybfac
       external harm
+#endif
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -62,21 +67,26 @@
 *   ..local variables
       integer iCv, is
 csw 10oct2012
-      character(3) :: charns, charns0
+      character(3) :: charns
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 {
       real (kind=R8) ::
-     *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1), flomx,
+     *  ehx(nFc), ehy(nFc), floe0(nFc,0:1), cone0(nFc,0:1),
+#ifdef WG_TODO
+     &  flomx,
+#endif
      &  alfe0(nFc), floe0_mdf(nFc,0:1)                                   !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
-     *    wrk(nFc,0:1), wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc),
+     *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc), wrkf(nFc,0:1),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
-     *    fhe0_mdf(nFc,0:1), fhe_32(nFc,0:1), fhe_52(nFc,0:1)
+     *    fhe0_mdf(nFc,0:1), fhe_32(nFc,0:1), fhe_52(nFc,0:1), pe(nCv)
+#ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
+#endif
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: b2_upwind = 0
 c      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -85,8 +95,7 @@ c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 0
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 *   ..procedures
-      intrinsic max, abs
-      external subini, subend, xertst
+      external xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
 
@@ -113,8 +122,10 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 *    ..test sign of ne, te, chce
        call b2xvsg (nCv, dv%ne, 1, 'ne', '.gt.')
        call b2xvsg (nCv, pl%te, 1, 'te', '.gt.')
-       call b2xvsg (nFc, co%chce(:,0)*geo%fcQalf(:,0),1,'chce0','.ge.')
-       call b2xvsg (nFc, co%chce(:,1)*geo%fcQalf(:,1),1,'chce1','.ge.')
+       wrkf(:,0) = co%chce(:,0)*geo%fcQalf(:,0)
+       wrkf(:,1) = co%chce(:,1)*geo%fcQalf(:,1)
+       call b2xvsg (nFc, wrkf(:,0), 1, 'chce0', '.ge.')
+       call b2xvsg (nFc, wrkf(:,1), 1, 'chce1', '.ge.')
       endif
 
       wght = 1.0_R8
@@ -170,9 +181,10 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       call intface(nCv,nFc,mpg%fcCv,wght,pl%te,tef)
 
 *   ..compute differences of te, po, and pe
+      pe = pl%te*dv%ne
       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
       call diff(nCv, nFc, nVx, 0, geo, mpg, pl%po, wrkv, dpo)
-      call diff(nCv, nFc, nVx, 0, geo, mpg, pl%te*dv%ne, wrkv, dpe)
+      call diff(nCv, nFc, nVx, 0, geo, mpg, pe, wrkv, dpe)
 
 * ..compute fluxes and linearization
        floe0(:,0) = 1.5e0_R8*dv%fne_he(:,0) +
@@ -215,7 +227,6 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       !    this on mdf /= 0?
       dv%floe        = dv%floe + floe0
       dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
-
 
 #ifdef WG_TODO
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
@@ -387,7 +398,6 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
      .      max(0.0d0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
      .      max(b2tfhe_cutlo,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
           endif
-
 
 csw 27nov2012 add check for upwind (SOLPS4 style)
           if(b2_upwind .ne. 0) then
@@ -653,8 +663,8 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 #ifdef WG_TODO
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
-       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                         !srv 16.09.02 {
+     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
+       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                    !srv 16.09.02 {
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_stry')
        call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
        call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
@@ -662,12 +672,12 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 !       call my_out(70,nx,ny,w5,'b2tfhe__qey5')
        call my_out(70,nx,ny,w5,'b2tfhe__qediay')
        call my_out(70,nx,ny,w6,'b2tfhe__chcey_Pat')
-      endif                                                              !srv 16.09.02 }
+      endif                                                         !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
+     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
        deallocate( w1, w2, w3, w4, w5, w6 )
-      endif                                                              !srv 16.09.02 }
+      endif                                                         !srv 16.09.02 }
 #endif
 
 
@@ -729,7 +739,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
       
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                          .or. iout_b2wdat.eq.4) then              !srv 11.09.09 {
+     &                          .or. iout_b2wdat.eq.4) then          !srv 11.09.09 {
        call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2tfhe__fhe_no_mdfx')
        call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2tfhe__fhe_no_mdfy')
 !       call my_out(70,nx,ny,fhe_mdf(-1,-1,0,0),'b2tfhe__fhe_mdfx')
@@ -747,4 +757,4 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 *-----------------------------------------------------------------------
 *.end b2tfhe_
 
-      end
+      end subroutine b2tfhe_

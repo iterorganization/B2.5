@@ -23,12 +23,12 @@ c
 c<<<
 c      print '(a/5a10/1p,l10,3i10,e10.2)','After b2pwinp',
 c     ,          'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
-c     ,                              l2pwinp,lppp,nwldprt,nadsrc,add_rad
+c     ,           l2pwinp , lppp , nwldprt , nadsrc , add_rad
 c      print '(a/(16i5))','Shadowing structure',
 c     ,                                     (lwldlis(i,1),i=1,nwldlis(1)
-c      print '(a/(5(2f8.3,1x)))','Inner target',
+c      print '(a/(5(2f8.3,1x)))','Western target',
 c     ,                             (pp1(1,lppp+i),pp1(2,lppp+i),i=1,ny)
-c      print '(a/(5(2f8.3,1x)))','Outer target',
+c      print '(a/(5(2f8.3,1x)))','Eastern target',
 c     ,                       (pp1(1,lppp+ny+i),pp1(2,lppp+ny+i),i=1,ny)
 c>>>
       if(.not.l2pwinp) then
@@ -56,7 +56,7 @@ c
             k=k+1
             lwldrad(k)=l
           end if
- 100    continue
+  100   continue
       end do
       nwldrad=k
 c
@@ -71,5 +71,6 @@ c
         irdparm=1
         call b2pwrldt
       end if
+      return
 c======================================================================
-      end
+      end subroutine b2pwrldw

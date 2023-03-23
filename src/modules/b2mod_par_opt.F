@@ -22,7 +22,7 @@
       logical, save :: sigma_opt(nsigmx)
       logical, save :: spatial_dep(nvmx)
       integer, save :: spatial_points(nvmx) = 0
-      integer :: idd, ipp
+      integer :: idd
       logical :: file_ok
       real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
       integer :: typeold(nvmx)
@@ -37,7 +37,7 @@
       subroutine read_b2mod_par_opt(ncon, nele_jac, ns, nbc)
       use b2mod_types
       implicit none
-      integer ncon, nele_jac, ns, nbc, ii, isigma
+      integer ncon, nele_jac, ns, nbc, ii, isigma, ipp
 
       filename='b2.optimization.parameters'
       write (*,*) 'OPTIM: max number of readable parameters '//

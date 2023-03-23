@@ -1,16 +1,15 @@
 c
       subroutine pltvessel
       use b2mod_types
+      use b2mod_cellhelper
       use b2mod_b2plot
       use b2mod_b2plot_debug
       implicit none
       logical exist
       real (kind=R8) ::
-     * x1,y1,x2,y2,r1o,z1o,r2o,z2o,r1,z1,r2,z2,dist
+     * r1o,z1o,r2o,z2o,r1,z1,r2,z2
       integer icnt
       character*256 filename
-
-      dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 
 #ifndef PLPLOT
       call lastd
@@ -27,7 +26,7 @@ c
    10     continue
           read(99,*,end=20) r1,z1,r2,z2
           if(r2o .eq. r1 .and. z2o .eq. z1 .and. 
-     1	   dist(r1o,z1o,r2,z2) .lt. 1.0e-2_R8) then
+     1     points_dist(r1o,z1o,r2,z2) .lt. 1.0e-2_R8) then
             r2o=r2
             z2o=z2
             icnt=icnt+1

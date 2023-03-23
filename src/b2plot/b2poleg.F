@@ -25,12 +25,8 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer ix,iy,k
+      integer ix,k
       real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
-      real (kind=R8) :: area, pit
-c----------------------------------------------------------------------
-      area(ix,iy)=gs(ix,iy,0)*qc(ix,iy,0)
-      pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c----------------------------------------------------------------------
 c*** Check the ig value
 c
@@ -42,9 +38,10 @@ c
 c*** Write the header
 c
       open(lun,file='oleg.dat')
-      write (lun,710)
-  710 format(6x,1hx,9x,4hXpol,9x,2hne,10x,2hTe,8x,6hqpol_e,6x,6hqpar_e,
-     ,                               6x,5hS_ion,8x,4hZeff,7x,6hjpar_e/)
+      write (lun,710) 'x','Xpol','ne','Te','qpol_e','qpar_e',
+     .                'S_ion','Zeff','jpar_e'
+  710 format(6x,a1,9x,a4,9x,a2,10x,a2,8x,a6,6x,a6,
+     ,       6x,a5,8x,a4,7x,a6/)
 c
       x=0.0_R8
       z=0.0_R8
@@ -74,4 +71,14 @@ c
       end do
       close (lun)
 c
-      end
+      contains
+
+      function area(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: area
+      area = gs(ix,iy,0)*qc(ix,iy,0)
+      return
+      end function area
+
+      end subroutine b2poleg

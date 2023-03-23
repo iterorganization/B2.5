@@ -27,4 +27,4 @@ c
       call customise_label(stmp,eirene_label(iewrk))
 #endif
       return
-      end
+      end subroutine pstv

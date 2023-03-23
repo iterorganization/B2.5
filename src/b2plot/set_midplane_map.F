@@ -11,4 +11,4 @@ c
         write (*,*) 'Not mapping to midplane'
       endif
       return
-      end
+      end subroutine set_midplane_mapping

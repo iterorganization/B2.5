@@ -37,9 +37,9 @@ c
           do ix=-1,nx
             if(region(ix,iy,0).ne.0) then
               call lined_d(crx(ix,iy,2),cry(ix,iy,2),
-     1	       crx(ix,iy,3),cry(ix,iy,3))
+     1         crx(ix,iy,3),cry(ix,iy,3))
               call lined_d(crx(ix,iy,1),cry(ix,iy,1),
-     1	       crx(ix,iy,3),cry(ix,iy,3))
+     1         crx(ix,iy,3),cry(ix,iy,3))
               call lined_d(crx(ix,iy,0),cry(ix,iy,0),
      1         crx(ix,iy,2),cry(ix,iy,2))
               call lined_d(crx(ix,iy,0),cry(ix,iy,0),
@@ -55,4 +55,4 @@ c
 #endif
       endif
       return
-      end
+      end subroutine meshit

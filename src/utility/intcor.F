@@ -10,7 +10,7 @@
         call intcor(nx,ny,vol,centre(-1,-1,is),corner(-1,-1,is))
       enddo
       return
-      end
+      end subroutine intcor1
 c
       subroutine intcor(nx,ny,vol,centre,corner)
       use b2mod_types
@@ -62,7 +62,8 @@ c
       enddo
 
 c special treatment of standard X-points
-      do iy = 0, ny-1                                                    !xpb
+      if (nncut.gt.0) then
+       do iy = 0, ny-1                                                   !xpb
         do ix = 0, nx-1                                                  !xpb
 !          if(leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2 .and.
 !     .       leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.                 !xpb
@@ -108,9 +109,10 @@ cxpb Check that this is a standard X-point                               !xpb
               corner(ix2,iy)=corner(ix1,iy)                              !xpb
             endif                                                        !xpb
           endif                                                          !xpb
-	   endif
+         endif
         enddo                                                            !xpb
-      enddo                                                              !xpb
+       enddo                                                             !xpb
+      endif
 
 c special treatment of diverted island X-points                          !xpb
       do iy = -1, ny-1                                                   !xpb
@@ -167,4 +169,4 @@ c special treatment of limiter tangency X-points                         !xpb
       enddo                                                              !xpb
 
       return
-      end
+      end subroutine intcor

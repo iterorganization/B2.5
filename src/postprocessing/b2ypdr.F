@@ -6,6 +6,7 @@
       use b2mod_rates
       use b2mod_version
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_indirect
@@ -19,6 +20,9 @@
       use b2mod_ppout
       use b2mod_geo_corner
       use b2mod_external
+      use b2mod_ipmain
+      use b2mod_lbfill
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:2), nx, ny, ns
@@ -30,14 +34,14 @@
 *
 *  1. purpose
 *
-*     B2YPDR is a postprocessor for b2. It displays the plasma state,
+*     B2YPDR is a postprocessor for B2. It displays the plasma state,
 *     making use also of the geometric information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It reads the
-*     result of a b2 calculation, and produces printed and graphical
+*     This routine is a postprocessor for the B2 code. It reads the
+*     result of a B2 calculation, and produces printed and graphical
 *     summaries. Special purpose output may also be produced.
 *
 *
@@ -77,24 +81,24 @@
 *   ..common blocks
 *   ..local variables
       integer is, iftp, iplot, idum(0:9), ismain, external_species
-      real (kind=R8) :: t0, t1,
+#ifdef WG_TODO
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
+#endif
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120, idout*80,
      &  id*8, cnamip*80, cvalip*80, line*500
 *   ..initialisation
       save ismain, external_species
       data ismain/1/, external_species/0/
 *   ..procedures
-      intrinsic abs
-      logical streql, ltst, is_comment
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, lbfilx, ipsetc, ipgeti, is_comment
+      logical streql, is_comment
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, ipgeti, is_comment
       external b2rugm, b2rups, b2rucp, b2wfgm, b2wfcp, b2wfps, b2xvps,
      &  b2wggm, b2wgps, b2wscp, b2wsps, b2ruzd, b2rurc, b2spel, b2sqel,
      &  b2xvcp, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -387,10 +391,12 @@
 *     However, there may be cuts in the geometry, in which case these
 *     identities need not hold.
 *
-*     fpsi - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i) specifies the
+*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
 *     potential for the magnetic field components (bx,by) at the
 *     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
@@ -459,14 +465,6 @@
 *     field pitch)*(surface area), namely the parallel contact area,
 *     on the (ix,iy) cell left and bottom faces respectively.
 *     See routine b2xgbs for the form of interpolation employed.
-*
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
 *
 *     ne - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ne(ix,iy) specifies
@@ -633,9 +631,7 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
 #ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
@@ -644,9 +640,9 @@
       call cfruch (ninp(3), 120, lblmn, 'label')
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,          !xpb
-     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
-     &  kinrgy,
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
+     &  ti, tn, po, kt, zt,
+     &  fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,

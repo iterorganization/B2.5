@@ -10,8 +10,8 @@
      *   dtmo(:,:),
      *   dtee(:),
      *   dtei(:),
-     *   dten(:)
-     *   , corr_core_dn(:)                                 ! IYS 19.12.2017
+     *   dten(:),
+     *   corr_core_dn(:)                                   ! IYS 19.12.2017
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -33,7 +33,7 @@
       real (kind=R8), save :: dtee(0:CVREGMAX)
       real (kind=R8), save :: dtei(0:CVREGMAX)
       real (kind=R8), save :: dten(0:CVREGMAX)
-      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)   ! IYS 19.12.2017 
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -46,9 +46,9 @@
       logical, save :: solvezt(0:CVREGMAX)
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
-      logical, save :: add_te_corr_to_po(0:CVREGMAX)     ! IYS 21.09.2018
+      logical, save :: add_te_corr_to_po(0:CVREGMAX)       ! IYS 21.09.2018
 #endif
-      real (kind=R8), save :: corr_core_dt               ! IYS 19.12.2017
+      real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
       real (kind=R8), allocatable, save :: time_factor(:)
@@ -56,16 +56,19 @@
       real (kind=R8), save :: numerics_time_mod
       real (kind=R8), save :: numerics_time_switch
       logical :: first_time_step
+      logical, save :: b2mod_numerics_allocated = .false.
 
       private :: numerics
       logical, save :: write_nml_num = .true.
-      namelist /numerics/ dtco,dtmo,dtee,dtei,dten,time_factor_required,
-     1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvemt,solvepo,solveee,solveei,solveen,solveet,        !srv 22.05.18
-     3 write_nml_num,numerics_filename,numerics_time_mod,solvekt,
-     $ solvezt,numerics_time_switch,
-     4 corr_core_dn, corr_core_dt, add_te_corr_to_po                           ! IYS 19.12.2017
-
+      namelist /numerics/ dtco, dtmo, dtee, dtei, dten,
+     & time_factor_required,
+     & core_dt_suppression, core_dt_factor,
+     & solveco, solvemo, solvemt, solvepo,
+     & solveee, solveei, solveen, solveet,                 !srv 22.05.18
+     & write_nml_num,
+     & numerics_filename, numerics_time_mod, numerics_time_switch,
+     & solvekt, solvezt,
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po       ! IYS 19.12.2017
 
       contains
 
@@ -77,7 +80,6 @@
 
       if (allocated(time_factor)) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
-
 
       allocate(time_factor(nCv))
 #ifdef ALLOCATE_AND_NAMELIST
@@ -123,7 +125,7 @@
         solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
       endif
       solvepo=.true.
-      add_te_corr_to_po=.true.           ! IYS 21.09.2018
+      add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
       solveee=.true.
       solveei=.true.
       solveen=.true.
@@ -136,7 +138,8 @@
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
       time_factor=1.0_R8
-      write(*,*) 'Allocated space for b2mod_numerics'                !srv 11.11.09
+      write(*,*) 'Allocated space for b2mod_numerics'              !srv 11.11.09
+      b2mod_numerics_allocated = .true.
 
       return
       end subroutine alloc_b2mod_numerics
@@ -144,7 +147,7 @@
       subroutine dealloc_b2mod_numerics
       implicit none
 
-      if (.not.allocated(time_factor)) return
+      if (.not.b2mod_numerics_allocated) return
       deallocate(time_factor)
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(dtco)
@@ -152,12 +155,12 @@
       deallocate(dtee)
       deallocate(dtei)
       deallocate(dten)
-      deallocate(corr_core_dn)     ! IYS 19.12.2017
+      deallocate(corr_core_dn)                                     ! IYS 19.12.2017
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
       deallocate(solvepo)
-      deallocate(add_te_corr_to_po)            ! IYS 21.09.2018
+      deallocate(add_te_corr_to_po)                                ! IYS 21.09.2018
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveen)
@@ -167,6 +170,7 @@
       deallocate(last_solve_5)
       deallocate(last_solve_9)
 #endif
+      b2mod_numerics_allocated = .false.
       return
       end subroutine dealloc_b2mod_numerics
 
@@ -180,8 +184,9 @@
       real (kind=R8) :: ttf
       character*260 filename
 
-
       filename=numerics_filename
+      numerics_time_mod = 0.0_R8
+      numerics_time_switch = 0.0_R8
       call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
@@ -193,13 +198,6 @@
 #endif
         close(99)
         write(*,*) 'Read namelist numerics from ',trim(filename)
-!        do ireg = 0, nnreg(0)
-!          solveet(ireg) = solveee(ireg).or.solveei(ireg)
-!          solvemt(ireg) = .false.
-!          do is = nsmin, nsmax-1
-!            solvemt(ireg) = solvemt(ireg) .or. solvemo(is,ireg)
-!          end do
-!        end do
         do ireg = 0, nnreg(0)                                     !srv 22.05.18 {
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
@@ -238,7 +236,7 @@
       call xertst (0.0_R8.lt.minval(dten),
      & 'faulty parameter dten')
 
-c additional time-modification factor
+c additional time modification factor
       ttf=core_dt_suppression
       do iCv = 1,nCv
         ttf=min(ttf*core_dt_factor,1.0_R8)
@@ -250,7 +248,9 @@ c additional time-modification factor
       enddo
 
       return
- 999  call xerrab ('Error while reading NUMERICS namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading NUMERICS namelist!')
+#endif
       end subroutine read_b2mod_numerics_namelist
 
       subroutine write_b2mod_numerics_namelist

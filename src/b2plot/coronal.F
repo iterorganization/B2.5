@@ -5,15 +5,17 @@ c     =========================================================================
 c     -------------------------------------------------------------------------
 c     subroutine getsa:
 c     calculating the ionisation and recombination coefficents rsa and rra for
-c     impurity belonging to the same homonuclear sequence as species i, for 
+c     impurity belonging to the same isonuclear sequence as species i, for
 c     all charge states, at temperature T in eV and ne=1e16/m3.
 c     -------------------------------------------------------------------------
 
       subroutine getsa(ns,rcsa,rcra,T)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 
@@ -24,14 +26,13 @@ c     -------------------------------------------------------------------------
      *   rcra(0:ns-1), rcsa(0:ns-1), rlte, rlne,
      *   rclra(0:1,0:ns-1), rclsa(0:1,0:ns-1)
       real (kind=R8) ::
-     *  t0, t1, tt, wrk0, ne0, fxte, fxne
-      real (kind=R8) ::
-     *   machsfr, expu, trimg
+     *   t0, t1, tt, wrk0, ne0, fxte, fxne
 
       integer is,ite,ine
       logical ltst0
-      external subini, subend, expu, trimg
-      intrinsic log, max, min
+      real (kind=R8) :: trimg
+      external trimg
+      intrinsic log
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
 
@@ -133,6 +134,7 @@ c     -------------------------------------------------------------------------
       subroutine callgetsa(ns,T,i)
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_subsys
       implicit none
 *   ..common blocks
 
@@ -150,7 +152,7 @@ c     -------------------------------------------------------------------------
       integer c1,c2
       real (kind=R8) ::
      *   result
-      external subini, subend, xertst
+      external xertst
       intrinsic abs
 
       call subini('callgetsa')
@@ -215,16 +217,19 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,is,iss
+      integer ix,iy,iss
 
       real (kind=R8) ::
      *   ssum,gsum
       real (kind=R8) ::
-     *   neco(-1:nx,-1:ny), rcra(-1:nx,-1:ny,0:ns-1),
+     *   neco(-1:nx,-1:ny)
+#ifdef WG_TODO
+     * , rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -235,8 +240,9 @@ c     -------------------------------------------------------------------------
      &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
+      integer is
+#endif
 
-      external subini, subend
       external b2spel, b2sqel
 
       call subini('corora')
@@ -261,6 +267,7 @@ c     initialise array on stack for coronal radiation
         textwk(iss,iwrk)=textsp(iss)
       enddo
       work(:,:,:,iwrk)=0.0_R8
+#ifdef WG_TODO
       do is=0,ns-1
         iss = b2espcr(is)-1
         do ix=-1,nx
@@ -271,7 +278,7 @@ c     initialise array on stack for coronal radiation
           enddo
         enddo
       enddo
-
+#endif
       gsum=0.0_R8
       do iss=0,nspecies-1
         ssum=0.0_R8
@@ -302,21 +309,16 @@ c     -------------------------------------------------------------------------
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_subsys
       implicit none
       integer ismain
 *   ..common blocks
 
-      integer ix,iy,is,is0,isstart,isend
+      integer ix,iy,is
       real (kind=R8) ::
-     *   sum(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   n(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   prod(-1:nx,-1:ny),divid(-1:nx,-1:ny)
-      real (kind=R8) ::
-     *   ntot(-1:nx,-1:ny,0:ns-1)
-      real (kind=R8) ::
-     *   neco(-1:nx,-1:ny), rcra(-1:nx,-1:ny,0:ns-1),
+     *   neco(-1:nx,-1:ny)
+#ifdef WG_TODO
+     * , rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -327,9 +329,17 @@ c     -------------------------------------------------------------------------
      &   rclbr(-1:nx,-1:ny,0:1,0:ns-1), rclza(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclz2(-1:nx,-1:ny,0:1,0:ns-1), rclpt(-1:nx,-1:ny,0:1,0:ns-1),
      &   rclpi(-1:nx,-1:ny,0:1,0:ns-1)
-      integer co1,co2
+      real (kind=R8) ::
+     *   prod(-1:nx,-1:ny),divid(-1:nx,-1:ny)
+      real (kind=R8) ::
+     *   ntot(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) ::
+     *   n(-1:nx,-1:ny,0:ns-1)
+      real (kind=R8) ::
+     *   sum(-1:nx,-1:ny,0:ns-1)
+      integer is0,isstart,isend,co1,co2
+#endif
 
-      external subini, subend
       external b2spel, b2sqel
 
       call subini('coroni')
@@ -361,7 +371,7 @@ c     initialise array on stack for coronal radiation
             enddo
          enddo
       enddo
-
+#ifdef WG_TODO
       is0 = 0
       do while (is0.lt.ns)
         is = is0
@@ -395,10 +405,10 @@ c     coronal equilibrium
           work(-1:nx,-1:ny,co1,iwrk)=
      .     n(-1:nx,-1:ny,co1)*ntot(-1:nx,-1:ny,isstart)
         enddo
-c Move on to next homonuclear sequence
+c Move on to next isonuclear sequence
         is0 = is 
       enddo
-
+#endif
       call subend()
       return
       end subroutine setcoroni

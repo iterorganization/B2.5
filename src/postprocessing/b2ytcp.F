@@ -8,6 +8,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_version
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nput, ns, ns1
@@ -85,7 +87,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     are undefined.
 *
 *     /b2cmpb/ - input/output.
@@ -301,7 +303,7 @@
       logical oldversion
 *   ..procedures
       logical streql
-      external subini, subend, xertst, xerrab, streql
+      external xertst, xerrab, streql
       intrinsic max
 
 *-----------------------------------------------------------------------
@@ -371,7 +373,7 @@
         read (nget,*,err=92) id0, (zpdum(is,i),i=0,3)
         read (id0,'(i8)',err=93) is0
         call xertst (is0.eq.is, 'faulty input under *specs')
-        oldversion = oldversion .and. 
+        oldversion = oldversion .and.
      &   nint(zpdum(is,0)**2).eq.nint(zpdum(is,3)) .and.
      &   zpdum(is,1) .gt. 0.0_R8
        enddo
@@ -396,22 +398,22 @@
          call xertst (0.0_R8.le.zamin(is).and.zamin(is).le.zamax(is),
      .    'faulty input range zamin, zamax')
          call xertst (0.0_R8.lt.zn(is), 'faulty input zn')
-         call xertst (zamin(is).eq.nint(zamin(is)), 
+         call xertst (zamin(is).eq.nint(zamin(is)),
      .    'faulty input zamin; not integer')
-         call xertst (zamax(is).eq.nint(zamax(is)), 
+         call xertst (zamax(is).eq.nint(zamax(is)),
      .    'faulty input zamax; not integer')
-         call xertst (zn(is).eq.nint(zn(is)), 
+         call xertst (zn(is).eq.nint(zn(is)),
      .    'faulty input zn; not integer')
          call xertst (0.0_R8.lt.am(is), 'faulty input am')
          if (is_neutral(is)) then
-           call xertst (0.0_R8.eq.zamax(is), 
+           call xertst (0.0_R8.eq.zamax(is),
      .      'no bundling of neutral species allowed')
          endif
        enddo
 *   ..write species data
        write (nput,'(a)')
      &  '*specs      zamin    zamax    zn      am'
-       write (nput,fmt0) 
+       write (nput,fmt0)
      &  (is,zamin1(is),zamax1(is),zn1(is),am1(is),is=0,ns1-1)
       else if (streql(id,'*cbregs')) then
 *    ..test mode
@@ -445,9 +447,11 @@
        write (nput,'(1x,a,t12,i2,(t17,7f9.3))')
      &  '''north''', cbnrno, (cbrbrk(ireg),ireg=cbirno,cbirno+cbnrno-1)
        write (nput,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''west''', cbnrwe, (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
+     &  '''west''', cbnrwe,
+     &             (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
        write (nput,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''east''', cbnrea, (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
+     &  '''east''', cbnrea,
+     &             (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
       else if (streql(id,'*region')) then
 *    ..test mode
        call xertst (mode.eq.1, 'unexpected header '//id)
@@ -456,12 +460,12 @@
        if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
         call xertst (streql(id1(1:5),'south'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
      &    ''''//trim(id1)//''''
        else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
         call xertst (streql(id1(1:5),'north'),
      &    'faulty input under *region: '//trim(id1))
-        write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
+        write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
      &    ''''//trim(id1)//''''
        else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
         call xertst (streql(id1(1:4),'west'),
@@ -802,6 +806,11 @@
        read (nget,*,err=92) id0, (cflim(i),i=0,7)
        read (id0,'(i8)',err=93) is0
        call xertst (is0.eq.-1, 'faulty input under *cflim')
+       if(b2fstate_version.lt.'03.000.006') then
+! Adding new flux limit coefficients
+         cflim(3) = 0.5_R8
+         cflim(4) = 0.5_R8
+       end if
 *    ..write cflim
        write (nput,'(a)')
      &  '*cflim     (0)       (1)       (2)       (3)       (4)'//

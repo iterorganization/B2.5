@@ -63,7 +63,7 @@
         else
           is_codes(is)=elements(iz)
         end if
-        write(*,*) is,zn(is),am(is),is_codes(is)
+        write(*,*) is,zn(is),am(is),trim(is_codes(is))
       end do
      
       return

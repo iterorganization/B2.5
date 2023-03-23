@@ -10,17 +10,15 @@
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_ppout
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2YP (main program) is a postprocessor for b2. It displays the
+*     B2YP (main program) is a postprocessor for B2. It displays the
 *     plasma state. This program calls the driver routine b2ypdr for
 *     the actual computation.
 *
@@ -33,7 +31,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2yp performs postprocessing of the
-*     result of a b2 calculation.
+*     result of a B2 calculation.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
 *     routine b2ypdr to control the actual computation.
@@ -72,12 +70,9 @@
 
 *   ..local variables
       integer ninp(0:5), nout(0:2), nx, ny, ns, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgend, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2ypdr
 *   ..initialise input/output units
@@ -113,16 +108,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yp_mpi_child'
-      endif
-#endif
       call prgini ('b2yp')
 *   ..open gks
       call gopks (0, 0)
@@ -138,11 +123,11 @@
       call cfopen (nout(2),'b2specp','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstate_version)				 !xpb
-      call cfverr (ninp(4), b2frates_version)				 !xpb
+*   ..obtain version numbers                                             !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                            !xpb
+      call cfverr (ninp(2), b2fparam_version)                            !xpb
+      call cfverr (ninp(3), b2fstate_version)                            !xpb
+      call cfverr (ninp(4), b2frates_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
       nx = idum(0)
@@ -186,10 +171,6 @@
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yp'
 
 *-----------------------------------------------------------------------

@@ -128,7 +128,7 @@
         wsum=wsum+0.5_R8*((hxpface+hxnface)/2._R8+hxface)/bface
        endif
       enddo
-      if(abs(wsum).lt.precision) then		! psauter
+      if(abs(wsum).lt.precision) then  ! psauter
         sfluxav=0.0_R8
       else
         sfluxav=qsum/wsum

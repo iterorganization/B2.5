@@ -1,7 +1,10 @@
+# - encoding utf8
 """
 Generates b2cdci.F
 """
 from __future__ import print_function
+import os
+import re
 import sys
 import xml.etree.ElementTree as ET
 import textwrap
@@ -28,8 +31,8 @@ def fort_switch(name, default, category, note):
         pdefault = default
     fort = "*    "
     fort += pname
-    fort += (27-len(pname) if 27-len(pname) >= 0 else 1) * ' ' + pdefault
-    fort += (55-len(fort) if 55-len(fort) >= 0 else 1) * ' ' + category
+    fort += (27-len(pname) if 26-len(pname) >= 0 else 1) * ' ' + pdefault
+    fort += (55-len(fort) if 54-len(fort) >= 0 else 1) * ' ' + category
     if note:
         fort += (67 - len(fort)) * ' ' + note + '\n'
     else:
@@ -38,18 +41,36 @@ def fort_switch(name, default, category, note):
     return fort
 
 xml_name = "b2input.xml"
-dtd_name = "xhtml-symbol.ent"
-xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
 
 f = open(xml_name, 'r')
 xml_text = f.read()
 f.close()
 
-f = open(dtd_name, 'r')
-dtd_text = f.read()
-f.close()
+# The following flag deactivates resolving entities, namely Greek and math
+# symbols from the definitions dtd file. Default entities such as &lt; &gt;
+# &amp; are resolved by ElementTree
+if 'DO_NOT_RESOLVE_ENTITIES' in os.environ:
+    DO_NOT_RESOLVE_ENTITIES=1
+else:
+    DO_NOT_RESOLVE_ENTITIES=0
 
-text_to_process = xml_text.replace(xml_entities, dtd_text)
+if DO_NOT_RESOLVE_ENTITIES:
+    commands = set(re.findall('&(.+?);', xml_text))
+    text_to_process = xml_text
+    for command in commands:
+        # The following entities are supported by default.
+        if command in ["lt", "gt", "amp"]:
+            continue
+        text_to_process = text_to_process.replace(f'&{command};', f'\\{command}')
+else:
+    dtd_name = "xhtml-symbol.ent"
+    xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
+
+    f = open(dtd_name, 'r')
+    dtd_text = f.read()
+    f.close()
+    text_to_process = xml_text.replace(xml_entities, dtd_text)
+
 tree = ET.ElementTree(ET.fromstring(text_to_process))
 root = tree.getroot()
 
@@ -203,9 +224,11 @@ fort += """*--------------------------------------------------------------------
 
 """
 
-f = open('b2cdci.F', 'w')
+
 if sys.version_info[0] >= 3:
-    f.write(fort)
+    f = open('b2cdci.F', 'wb')
+    f.write(fort.encode())
 else:
+    f = open('b2cdci.F', 'w')
     f.write(fort.encode('utf-8'))
 f.close()

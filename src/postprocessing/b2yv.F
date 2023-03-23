@@ -14,7 +14,9 @@
       use b2mod_ma28
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_b2cmfs
       use b2mod_elements
+      use b2mod_xerset
 #ifdef WINDOWS
 ! AVDef is the AViz module file
       use AVDef    ! IGNORE
@@ -22,9 +24,6 @@
       use DFLIB    ! IGNORE
 #endif
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -32,7 +31,7 @@
 *  1. purpose
 *
 *     B2YV reads in an unformatted b2fplasma file and visualizes
-*     b2plasma's arrays.
+*     b2plasma arrays.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -40,9 +39,9 @@
 *   ..common blocks
 
 *   ..local variables
-      integer :: icase, ix, iy, isymm, is
-      integer :: lbc, ubc, lbr, ubr   
-      real(4), allocatable :: M(:,:)
+      integer :: icase, ix, iy, is
+      integer :: lbc, ubc, lbr, ubr
+      real(kind=R4), allocatable :: M(:,:)
       character(1) :: key
       character lblgm*120
 #ifdef WINDOWS
@@ -50,19 +49,15 @@
       integer status
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
 #else
-      character*1 :: axis1 = 'X', axis2 = 'Y'
       character*40 :: axis3
 #endif
 
       integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       character lblmn*120, title*64
       character hlp_frm*22
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, xerrab, cfopen, cfruin
+      external prgini, prgend, xertst, xerrab, cfopen, cfruin
 *   ..initialize input/output unit numbers
       data ninp/50,51,52,53,54,55/
       data nout/60,61,62,63,64,65,66,67/
@@ -71,16 +66,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2yv_mpi_child'
-      endif
-#endif
       call prgini ('b2yv')
 *   ..open files
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -90,10 +75,10 @@
 !      call cfopen (nout(0),'b2yv.prt','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !srv 18.09.03
+*   ..obtain version number                                             !srv 18.09.03
       call cfverr (ninp(1), b2fgmtry_version)
       call cfverr (ninp(2), b2fparam_version)
-      call cfverr (ninp(3), b2fstati_version)			 !srv 18.09.03
+      call cfverr (ninp(3), b2fstati_version)                           !srv 18.09.03
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -136,9 +121,7 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)                       !srv 25.11.02
 *   ..read geometry and metric
 #ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs, wbbl, wbbr, wbbv,
-     &  wbbc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
 #endif
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)
@@ -160,7 +143,7 @@
      &      (adjustr(is_codes(is)),nint(zamin(is)),is=0,ns-1)
       write(hlp_frm,'(a,i3,a)') '(14x,a,',ns,'(1x,I2,1x)/)'
       write(*,hlp_frm)
-     &        ' - input a number', (is+ns,is=0,ns-1) 
+     &        ' - input a number', (is+ns,is=0,ns-1)
 
       write(*,"(a,a,(1x,I2,1x))") 'To look at electron tempetature',
      &        '       - input a number', ns+ns
@@ -174,61 +157,62 @@
       write(*,"(a,a,(1x,I2,1x))") 'To look at radial electric field',
      &        '    - input a number', ns+ns+3
 
-      read (*,*) icase 
+      read (*,*) icase
 
       if(0.le.icase .and. icase.le.ns-1 )then
-	write(title,"('Density of ',a2,i1)") 
+        write(title,"('Density of ',a2,i1)")
      &     adjustr(is_codes(icase)),nint(zamin(icase))
-	write(axis3,"('Density of ',a2,i1,', [1/m^3]')") 
+        write(axis3,"('Density of ',a2,i1,', [1/m^3]')")
      &     adjustr(is_codes(icase)),nint(zamin(icase))
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = na(ix,iy,icase)
-	  enddo
-	enddo
+            M(iy,ix) = real(na(ix,iy,icase),R4)
+          enddo
+        enddo
       elseif(ns.le.icase .and. icase.le.ns-1+ns )then
-	write(title,"('Parallel velocity of ',a2,i1)") 
+        write(title,"('Parallel velocity of ',a2,i1)")
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
-	write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')") 
+        write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')")
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = ua(ix,iy,icase-ns)
-	  enddo
-	enddo
+            M(iy,ix) = real(ua(ix,iy,icase-ns),R4)
+          enddo
+        enddo
       elseif(icase .eq. ns+ns )then
-	write(title,"('Temperature of electrons')") 
-	write(axis3,"('Temperature of electrons',', [eV]')") 
+        write(title,"('Temperature of electrons')")
+        write(axis3,"('Temperature of electrons',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = te(ix,iy)/ev
-	  enddo
-	enddo
+            M(iy,ix) = real(te(ix,iy)/ev,R4)
+          enddo
+        enddo
       elseif(icase .eq. ns+ns+1 )then
-	write(title,"('Temperature of ions')") 
-	write(axis3,"('Temperature of ions',', [eV]')") 
+        write(title,"('Temperature of ions')")
+        write(axis3,"('Temperature of ions',', [eV]')")
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = ti(ix,iy)/ev
-	  enddo
-	enddo
+            M(iy,ix) = real(ti(ix,iy)/ev,R4)
+          enddo
+        enddo
       elseif(icase .eq. ns+ns+2 )then
-	write(title,"('Electric potential')") 
+        write(title,"('Electric potential')")
         do iy = -1,ny
           do ix = -1,nx
-	    M(iy,ix) = po(ix,iy)
-	  enddo
-	enddo
+            M(iy,ix) = real(po(ix,iy),R4)
+          enddo
+        enddo
       elseif(icase .eq. ns+ns+3 )then
-	write(title,"('Radial electric field')") 
+        write(title,"('Radial electric field')")
         M=0.0d0
-	do iy=0,ny
-	  do ix=-1,nx
-	    M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     *                /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-     *                *2.0e0_R8
-	  enddo
-	enddo
+        do iy=0,ny
+          do ix=-1,nx
+            M(iy,ix)=real(
+     *      -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
+     *      /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     *      *2.0e0_R8,R4)
+          enddo
+        enddo
       else
         call xerrab ('Wrong icase value')
       endif
@@ -248,7 +232,7 @@
       call favSetAxisLabel (hv, y_axis, axis2, status)
       call favSetAxisLabel (hv, z_axis, trim(axis3), status)
 
-!	call faglShow(M, status)
+!       call faglShow(M, status)
       call favShowWindow(hv,AV_TRUE, status)
 
 
@@ -259,13 +243,15 @@
       key = GETCHARQQ()
       call favEndViewer(hv,status)
 !       call faglClose(M, status)
-      call faglEndWatch(M, status)  
+      call faglEndWatch(M, status)
+#else
+      key = ' '
 #endif
 
       select case (key)
-	case ('0':'9')
-	  goto 10
-	case default
+        case ('0':'9')
+          goto 10
+        case default
       end select
 
 *   ..close files
@@ -290,13 +276,9 @@
       deallocate (M)
 * ..end of computation
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2yv'
 
 *-----------------------------------------------------------------------
 *.end b2yv
 
-      end
+      end program b2yv

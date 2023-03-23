@@ -16,7 +16,11 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & ,only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, ifssep, nimp, imp, icsepimp
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+     & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
+#endif
       implicit none
       integer, parameter :: nvac=4, nvacreg=4, nMxFbReg = 1000
 #     include "DIMENSIONS.F"
@@ -28,7 +32,6 @@
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated=.false.
       real (kind=R8) :: charge_frac(DEF_NSD)
-      real (kind=R8), parameter :: amtol = 1.0e-2_R8
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
 
@@ -141,8 +144,9 @@
       endif
       found = maxval(saved_fb_actuator).gt. 0.0_R8
       return
-
- 999  call xerrab ('Error while reading FEEDBACK namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK namelist!')
+#endif
       end subroutine read_b2us_feedback
 
       subroutine write_b2us_feedback(nwrite,edition)
@@ -204,8 +208,9 @@ cxpb size is changed in DIMENSIONS.F
         write(6,*) 'No ',trim(filename)
       endif
       return
-
- 999  call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#ifdef USE_MPI
+  999 call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
+#endif
       end subroutine read_b2us_feedback_control
 
       subroutine write_b2us_feedback_control(nwrite)
@@ -225,7 +230,7 @@ cxpb size is changed in DIMENSIONS.F
       type (mapping), intent (in) :: mpg
       integer :: nCv, nFc, nVx, ns, natmi
       integer ifb, ifbb, istrai, icount
-      integer ifbreg, is, ib, is0, is_start, is_end, is00, iatm
+      integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, done
 
       call subini('init_feedback')
@@ -776,7 +781,7 @@ cxpb size is changed in DIMENSIONS.F
         iatm = b2espcr(fb_species(ifb))
         is0 = eb2spcr(iatm)
         do ifbb = ifb+1, nFb
-          is0 = eb2spcr(b2espcr(fb_species(ifbb)))
+          is00 = eb2spcr(b2espcr(fb_species(ifbb)))
           call xertst(.not.(is0.eq.is00),'init_feedback: cannot '//
      &     'define multiple feedbacks on same atom sequence')
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
@@ -930,7 +935,10 @@ cxpb size is changed in DIMENSIONS.F
       type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
-     & is_end, iss, i, j, k, l
+     & is_end, iss
+#ifdef B25_EIRENE
+      integer :: i, j, k, l
+#endif
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
 
@@ -1975,7 +1983,7 @@ cxpb size is changed in DIMENSIONS.F
       implicit none
       integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
-      integer :: ifb, is, ix, iy, icv, iss, ifbreg
+      integer :: is, ix, iy, icv, iss, ifbreg
       logical :: done
 
       nFb = nspecies !number of feedback imposed
@@ -2032,14 +2040,22 @@ cxpb size is changed in DIMENSIONS.F
 ***********************************************************************
 
       subroutine write_fbparms (ns)
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       integer :: ifb, iout
-      character(10) :: new_feedback_version = '03.002.000'
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
+#ifdef F2003
       open(newunit=iout,file='b2us.feedback_control.parameters')
-
-      call cfverw(iout,new_feedback_version)
+#else
+      iout = newunit()
+      open(unit=iout,file='b2us.feedback_control.parameters')
+#endif
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&feedback_control'
       write (iout,'(1x,a,i0)') 'NFB     = ',nFb
@@ -2085,8 +2101,6 @@ cxpb size is changed in DIMENSIONS.F
   
       write (iout,'(1x,a)') '/'
       close (iout)
-
-      open(newunit=iout,file='b2us.feedback_control.parameters')
 
       return
       end subroutine write_fbparms

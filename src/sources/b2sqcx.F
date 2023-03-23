@@ -5,6 +5,8 @@
      &                  rcx)
       use b2mod_switches
       use b2mod_types
+      use b2mod_math
+      use b2mod_subsys
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -48,13 +50,13 @@
 *.declarations
 
 *   ..local variables
-      integer n2, iCv, is
+      integer iCv, is
       real (kind=R8) :: t_av
       real (kind=R8) ::
-     *   wrk0(nCv), expu
+     *   wrk0(nCv)
 *   ..procedures
-      intrinsic log, exp, max
-      external subini, subend, xertst, expu
+      intrinsic log
+      external xertst
       external b2xvsg
 *   ..initialisation
 

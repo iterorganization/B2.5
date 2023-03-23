@@ -10,10 +10,9 @@
       real(kind=r8) :: segm(2,2)
       integer :: list(nmax), nncv, mode
       integer :: ic, ifc, ii, kk
-      real(kind=r8) :: p1(2), q1(2), p2(2), q2(2), stemp
+      real(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
       logical found, intersects, ifail
       external intersects, xertst
-
 
 ***
 *     This routine finds all the cv intersecting with the segment specified in segm

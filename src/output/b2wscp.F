@@ -8,6 +8,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspc, nx, ny, ns
@@ -27,7 +28,7 @@
 *
 *     This routine is available for use as the occasion may require;
 *     it is a suitable location for code to produce output that is of
-*     interest only for a specific application of b2.
+*     interest only for a specific application of B2.
 *     The basic version of b2wscp produces no output.
 *
 *
@@ -64,7 +65,7 @@
 *   ..local variables
 *     (none)
 *   ..procedures
-      external subini, subend, xertst
+      external xertst
 
 *-----------------------------------------------------------------------
 *.computation
@@ -91,4 +92,4 @@
 *-----------------------------------------------------------------------
 *.end b2wscp
 
-      end
+      end subroutine b2wscp

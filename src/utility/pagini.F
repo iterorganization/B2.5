@@ -38,7 +38,7 @@
 *     -----------------------------------------------------------------
 *   ..test domain parameters
       call xertst (xmin.lt.xmax.and.ymin.lt.ymax,
-     &  'pagini--faulty arguments for domain specification')
+     &  'pagini--faulty domain specification for '//title)
 *   ..set styl4
       if (0.le.style.and.style.lt.8) then
        styl4 = mod(style,4)
@@ -104,8 +104,8 @@
 *     would like to have three minor divisions per major division,
 *     with ticks at values 2 and 5. I would like to see the numeric
 *     y-labels rotated by 90 degrees.)
-      xmin4=xmin
-      ymin4=ymin
+      xmin4=real(xmin,R4)
+      ymin4=real(ymin,R4)
       if (style.eq.0) then
        call gridal (5,  2, 5,  2, 1, 1, 5, xmin4, ymin4)
       else if (style.eq.1) then

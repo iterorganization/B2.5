@@ -1,0 +1,31 @@
+# Test whether necessary variables are set
+IRISLIB     ?= /fusion/projects/codes/solps/SOLPS-ITER/public_lib/GA.gfortran
+NCDIR       ?= ${NETCDF_DIR}
+NAGDIR      ?= ${IRISLIB}
+MSCL_ROOT   ?= ${IRISLIB}
+NCARG_ROOT  ?= ${IRISLIB}/ncarg-6.0.0
+GLI_HOME    ?= ${IRISLIB}/gli/src
+MDSPLUS_DIR ?= ${IRISLIB}/mdsplus
+LD_NAG      ?= -L${NAGDIR} -llapack -lblas
+LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -lX11 -lm
+LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
+
+CPP = /lib/cpp -traditional
+
+ifdef USE_MPI
+FC = mpif90
+else
+ifdef USE_IMPGYRO
+FC = mpif90
+else
+FC = gfortran
+endif
+endif
+
+DDBLOPTION = -Ad # ???
+
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
+

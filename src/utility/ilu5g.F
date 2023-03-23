@@ -6,7 +6,7 @@
      *   a(0:m*n-1), b(0:m*n-1), c(0:m*n-1), d(0:m*n-1),
      &  e(0:m*n-1), r(0:m*n-1), x(0:m*n-1)
 *     ------------------------------------------------------------------
-*     ILU5G computes the ILU factorisation of a 2d-5point matrix and
+*     ILU5G computes the ILU factorisation of a 2d 5-point matrix and
 *     applies the factors for one iteration of an update equation.
 *     ------------------------------------------------------------------
       integer i
@@ -44,4 +44,4 @@
       enddo
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine ilu5g

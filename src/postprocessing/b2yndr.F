@@ -4,6 +4,7 @@
       subroutine b2yndr (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -16,6 +17,9 @@
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       use b2mod_ppout
+      use b2mod_ipmain
+      use b2mod_lbfill
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -27,13 +31,13 @@
 *
 *  1. purpose
 *
-*     B2YNDR is a postprocessor for b2. It displays the progress of
+*     B2YNDR is a postprocessor for B2. It displays the progress of
 *     the inner iterations.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a postprocessor for the b2 code. It displays the
+*     This routine is a postprocessor for the B2 code. It displays the
 *     evolution of the corrections and residuals. This routine does not
 *     require any metric information.
 *
@@ -71,25 +75,27 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, itim, itcnt, idum(0:9), iftp, ismain
-      real (kind=R8) :: t0, t1,
+      integer n2, is, itim, itcnt, idum(0:9), iftp
+#ifdef WG_TODO
+      integer ismain
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
+#endif
       character lblmn*120, lblrc*120, idout*80, id*8
       character cnamip*80, cvalip*80, line*500
+#ifdef WG_TODO
 *   ..initialisation
       save ismain
       data ismain/1/
+#endif
 *   ..procedures
-      logical streql, cfendf, ltst, is_comment
-      intrinsic abs
-      external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, cfrure, cfendf, lbfilx, ipsetc, ipgeti,
-     &  is_comment
+      logical streql, cfendf, is_comment
+      external xertst, xerrab, streql, gacwk,
+     &  gdawk, cfruch, cfruin, cfrure, cfendf, ipgeti, is_comment
       external b2wgcr, b2ruzd, b2rurc, b2spel, b2sqel, b2rups, b2xvps,
      &  b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal

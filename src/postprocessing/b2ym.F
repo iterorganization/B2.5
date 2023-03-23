@@ -11,10 +11,8 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_work
+      use b2mod_xerset
       implicit none
-#ifdef USE_MPI
-      include 'mpif.h'
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -32,7 +30,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     The complete program b2ym is meant to produce a movie to display
-*     the time-evolution of a b2 calculation. Presently only a sequence
+*     the time-evolution of a B2 calculation. Presently only a sequence
 *     of contour plots is produced.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
@@ -67,12 +65,9 @@
 
 *   ..local variables
       integer ninp(0:1), nout(0:1), nx, ny, ns, idum(0:9), io
-#ifdef USE_MPI
-      integer rank_mpi,size_mpi,ierr_mpi
-#endif
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, gnopen, cfruin,
+      external prgini, prgend, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
       external b2ymdr
 *   ..initialise input/output units
@@ -108,16 +103,6 @@
 *.computation
 
 *   ..program start-up calls
-#ifdef USE_MPI
-      call mpi_init(ierr_mpi)
-      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
-      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-      if(rank_mpi .ne. 0) then
-        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-        call mpi_finalize(ierr_mpi)
-        stop 'b2ym_mpi_child'
-      endif
-#endif
       call prgini ('b2ym')
 *   ..open gks
       call gopks (0, 0)
@@ -128,8 +113,8 @@
       call gnopen (nout(1),'b2ym.plt')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version number						 !xpb
-      call cfverr (ninp(1), b2fmovie_version)				 !xpb
+*   ..obtain version number                                              !xpb
+      call cfverr (ninp(1), b2fmovie_version)                            !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')
       nx = idum(0)
@@ -161,10 +146,6 @@
       call dealloc_b2mod_work
       call dealloc_b2mod_plasma
       call prgend ()
-#ifdef USE_MPI
-      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
-      call mpi_finalize(ierr_mpi)
-#endif
       stop 'b2ym'
 
 *-----------------------------------------------------------------------

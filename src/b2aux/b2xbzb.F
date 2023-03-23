@@ -11,7 +11,7 @@
 *     ------------------------------------------------------------------
 *     B2XBZB calculates Bz/B**2 - Bz/<B**2>.
 *     ------------------------------------------------------------------
-      integer iCv
+      integer iCv, iFc, iVx
       real (kind=R8) ::
      *   bbsum, volsum, bzb0
 *     ------------------------------------------------------------------
@@ -27,9 +27,27 @@
       enddo
       if(volsum.gt.0.0_R8) then
         bzb0 = bbsum/volsum
-        bzb  = bb(:,2)/bb(:,3)**2 - bb(:,2)/bzb0
-        bzbf = bbf(:,2)/bbf(:,3)**2 - bbf(:,2)/bzb0
-        bzbv = bbv(:,2)/bbv(:,3)**2 - bbv(:,2)/bzb0
+        do iCv = 1, nCv
+          if (bb(iCv,3).ne.0.0_R8) then
+            bzb(iCv)  = bb(iCv,2)/bb(iCv,3)**2 - bb(iCv,2)/bzb0
+          else
+            bzb(iCv) = 0.0_R8
+          endif
+        enddo
+        do iFc = 1, nFc
+          if (bbf(iFc,3).ne.0.0_R8) then
+            bzbf(iFc) = bbf(iFc,2)/bbf(iFc,3)**2 - bbf(iFc,2)/bzb0
+          else
+            bzbf(iFc) = 0.0_R8
+          endif
+        enddo
+        do iVx = 1, nVx
+          if (bbv(iVx,3).ne.0.0_R8) then
+            bzbv(iVx) = bbv(iVx,2)/bbv(iVx,3)**2 - bbv(iVx,2)/bzb0
+          else
+            bzbv(iVx) = 0.0_R8
+          endif
+        enddo
       else
         bzb  = 0.0_R8
         bzbf = 0.0_R8
@@ -39,4 +57,4 @@
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
-      end                                                               !srv 13.10.06 23.07.10 }
+      end subroutine b2xbzb                                 !srv 13.10.06 23.07.10 }

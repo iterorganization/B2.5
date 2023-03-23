@@ -15,7 +15,7 @@
       type (mapping), intent (inout) :: m
 
       integer :: ncoss, icoss,
-     .           ix, iy, iFc1, i, imn, imx, iFc, 
+     .           iFc1, i, imn, imx,
      .           ncout, istart
       integer, allocatable :: fcss(:), indfc(:)
       logical, allocatable :: lout(:)
@@ -23,8 +23,8 @@
       
       type fcpart
         integer :: fcno
-	integer :: vx1, vx2
-	type(fcpart), pointer :: prev, next
+        integer :: vx1, vx2
+        type(fcpart), pointer :: prev, next
       end type fcpart
 
       type(fcpart), pointer :: head, tail
@@ -72,11 +72,11 @@
               face%vx1 = imn+imx-head%vx1
               face%vx2 = head%vx1
               face%next => head
-              head%prev => face	
-              head => face	
+              head%prev => face
+              head => face
               lout(icoss) = .true.
               ncout = ncout - 1
-              exit	
+              exit
             end if
             if ((tail%vx2 == imn) .or. (tail%vx2 == imx)) then
               allocate(face) 
@@ -90,7 +90,7 @@
               tail => face
               lout(icoss) = .true.
               ncout = ncout - 1
-              exit		
+              exit
             end if
           end do                ! icoss
           if (icoss > ncoss) then

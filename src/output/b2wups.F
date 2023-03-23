@@ -12,40 +12,41 @@
       use b2mod_types
       use b2mod_time
       use b2mod_version
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),                  !xpb
+     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),              !xpb
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), tn(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), kt(-1:nx,-1:ny), zt(-1:nx,-1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
-     &  fhi(-1:nx,-1:ny,0:1,0:1), fhn(-1:nx,-1:ny,0:1,0:1), 
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fhn(-1:nx,-1:ny,0:1,0:1),
      &  fch(-1:nx,-1:ny,0:1,0:1),
      1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
      2  fch_p(-1:nx,-1:ny,0:1,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),          !srv 10.06.08
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhe_mdf(-1:nx,-1:ny,0:1,0:1),
-     &  fhi_mdf(-1:nx,-1:ny,0:1,0:1), 
+     &  fhi_mdf(-1:nx,-1:ny,0:1,0:1),
      &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fhePSch(-1:nx,-1:ny,0:1,0:1),
-     &  fhiPSch(-1:nx,-1:ny,0:1,0:1), 
+     &  fhiPSch(-1:nx,-1:ny,0:1,0:1),
      &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fne_eir(-1:nx,-1:ny,0:1,0:1), fhe_eir(-1:nx,-1:ny,0:1,0:1),
      &  fhi_eir(-1:nx,-1:ny,0:1,0:1),
-     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
      &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
      &  fchdia(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),
-     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1,0:1), vedia(-1:nx,-1:ny,0:1,0:1),
@@ -92,7 +93,7 @@
       integer n2
       real (kind=R8) :: time(1)
 *   ..procedures
-      external subini, subend, xertst, cfwure
+      external xertst, cfwure
       external b2xvps, b2xvsg
 
 *-----------------------------------------------------------------------

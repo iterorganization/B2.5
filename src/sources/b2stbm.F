@@ -28,7 +28,8 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-       implicit none
+      use b2mod_subsys
+      implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
       logical main_call
@@ -73,7 +74,7 @@
 *   ..procedures
       real (kind=R8) ::
      * smin, smax
-      external subini, subend, xertst, sfill,
+      external xertst, sfill,
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
 
@@ -89,9 +90,11 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stbm')
-*   ..test nCv, nFc, ns
+*   ..test nCv, nFc, ns, ismain
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty argument ismain')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -288,7 +291,7 @@ cxpb And then derive: ua_ext
          if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
      .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
 cxpb Computing ua from fa is what we really want to do
-         if (.false.) then
+         if (maxval(fa_ext).ne.0.0_R8.or.minval(fa_ext).ne.0.0_R8) then
           do iy=-1,ny
             do ix=-1,nx
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
@@ -474,7 +477,7 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 
 * ..return
- 999  if (main_call.or.ncall.eq.0) ncall = ncall+1
+  999 if (main_call.or.ncall.eq.0) ncall = ncall+1
       call subend ()
       return
 

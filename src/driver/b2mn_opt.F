@@ -21,9 +21,17 @@
       use b2mod_par_opt
       use b2mod_exp_file_names
       use b2mod_driver
+      use b2mod_xerset
+#ifdef USE_MPI
+#if MPI_MOD > 0
+      use mpi      ! IGNORE
+#endif
+#endif
       implicit none
 #ifdef USE_MPI
+#if MPI_MOD < 1
       include 'mpif.h'
+#endif
 #endif
 
 *-----------------------------------------------------------------------
@@ -31,7 +39,7 @@
 *
 *  1. purpose
 *
-*     B2MN_OPT is the main program for the b2 code. The code solves a
+*     B2MN_OPT is the main program for the B2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
 *     routines b2mndr_[0-2] for the actual computation.
@@ -44,7 +52,7 @@
 *
 *  3. description (see also routine b2cdca)
 *
-*     The b2 code /1,2/ solves a system of fluid equations that models
+*     The B2 code /1,2/ solves a system of fluid equations that models
 *     a multi-species plasma in a two-dimensional geometry. Its main
 *     application is simulation of the edge plasma in tokamaks.
 *
@@ -137,9 +145,13 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       logical file_open
-      real (kind=R8) :: cpu_s, cpu_f
+#ifdef _OPENMP
+      real(kind=R8) :: cpu_s, cpu_f
+#else
+      real(kind=R4) :: cpu_s, cpu_f
+#endif
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfruin
+      external prgini, prgend, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET
@@ -167,7 +179,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
       call prgini ('b2mn_opt')
+#ifdef _OPENMP
+      cpu_s = omp_get_wtime()
+#else
       call cpu_time(cpu_s)
+#endif
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -199,7 +215,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb
 *   ..obtain nx, ny from geometry file
-      if (b2fgmtry_version .lt. 03.002.000) then                         !pb
+      if (b2fgmtry_version .lt. '03.002.000') then                       !pb
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
       ny = idum(1)
@@ -262,7 +278,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          if (file_open) close(nout(io))
       enddo
 
+#ifdef _OPENMP
+      cpu_f = omp_get_wtime()
+#else
       call cpu_time(cpu_f)
+#endif
       write(*,"(/' b2mn_opt takes ',f12.1,' sec'/)") cpu_f - cpu_s
       deallocate(par_opt0, par_opt, par_opt_phys)
 

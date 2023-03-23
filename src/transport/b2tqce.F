@@ -14,6 +14,7 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tqce, ncall_b2tlnl
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv
@@ -68,44 +69,21 @@
 
 *   ..local variables
       integer iCv
+#ifdef WG_TODO
       character(23) hlp_frm                                             !srv 11.03.13
+#endif
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
       parameter (ce = 3.16e0_R8)
 *   ..procedures
-      intrinsic abs, sqrt, max, log
-      real (kind=R8) ::
-     *  pitx, fke, fse, fal, fke_Zh
-      external subini, subend, xertst, sfill
+      intrinsic sqrt
+      external xertst, sfill
       external b2xvsg
-
-      real (kind=R8) c11e, c13e, c15e
-      parameter (c11e = 1.0000_R8, c13e = 0.9487_R8, c15e =-0.8964_R8)
-      real (kind=R8) c31e
-      parameter (c31e = c13e)
-      real (kind=R8) c33e, c35e, c55e
-      real (kind=R8) c53e
-      real (kind=R8) d13e, d15e, d35e
-      real (kind=R8) h135e, h153e, h315e
-      real (kind=R8) f135e
 *   ..initialisation
-      pitx(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
-      fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
-      fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
-      fal(z) = -1.25_R8*z/(1.0_R8+0.41_R8*z)
-      fke_Zh(z) = (3.9_R8+2.3_R8/z)/(0.31_R8+1.2_R8/z+0.41_R8/z**2)     !srv 02.12.10
-      c33e(z) = 1.3000_R8 + 0.5657_R8/z
-      c35e(z) =-1.3040_R8 - 0.3207_R8/z
-      c55e(z) = 1.5464_R8 + 0.9091_R8/z
-      c53e(z) = c35e(z)
-      d13e(z) = c11e   *c33e(z) - c13e   *c13e
-      d15e(z) = c11e   *c55e(z) - c15e   *c15e
-      d35e(z) = c33e(z)*c55e(z) - c35e(z)*c35e(z)
-      h135e(z) = c15e   *c33e(z) - c13e   *c35e(z)
-      h153e(z) = c13e   *c55e(z) - c15e   *c53e(z)
-      h315e(z) = c35e(z)*c11e    - c31e   *c15e
-      f135e(z) = c55e(z)*d13e(z) - c35e(z)*h315e(z) - c15e   *h135e(z)
+
+      alf = 0.0_R8
+      sig = 0.0_R8
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -158,7 +136,7 @@
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then
-        ctaue = t0*sqrt(me)						 !xpb
+        ctaue = t0*sqrt(me)                                                !xpb
       else if (switch%b2tqce_model.eq.2) then
         ctaue = 3.5e11_R8             ! lower precision as per SOLPS4.0
       endif
@@ -171,7 +149,7 @@
       if(switch%b2tqce_style_guard_cells.eq.0) then
        do iCv = 1, nCv
          t0 = pl%te(iCv)/ev
-         tau(iCv) = (ctaue/dv%lnlam(iCv))*t0*sqrt(t0)/dv%ne2(iCv)	   !xpb !srv 01.07.09
+         tau(iCv) = (ctaue/dv%lnlam(iCv))*t0*sqrt(t0)/dv%ne2(iCv)          !xpb !srv 01.07.09
          tnp = tau(iCv)*dv%ne(iCv)*pitx(iCv)**2
          z = dv%ne2(iCv)/dv%ne(iCv)
          if (switch%b2tqce_model.eq.1) then  ! SOLPS5.0 model : Balescu fit
@@ -239,15 +217,16 @@
       else
        call xerrab ('B2TQCE - incorrect value of style_guard_cells')
       endif
-      sig(:,:) = sig(:,:)*switch%prl_cur                                    !srv 15.06.18
-      alf(:,:) = alf(:,:)*switch%prl_cur                                    !srv 15.06.18
 *   ..compute hcey, sigy, alfy
 *!!   (classical perpendicular transport is set to 0)
       call sfill (nCv, 0.0_R8, hce(1,1), 1)
       call sfill (nCv, 0.0_R8, sig(1,1), 1)
       call sfill (nCv, 0.0_R8, alf(1,1), 1)
 
-      if(switch%b2tqce_iout.ne.0) then                                !srv 16.06.08 {
+      sig(:,:) = sig(:,:)*switch%prl_cur                                    !srv 15.06.18
+      alf(:,:) = alf(:,:)*switch%prl_cur                                    !srv 15.06.18
+
+      if(switch%b2tqce_iout.ne.0) then                                      !srv 16.06.08 {
         call my_out_us(70,nCv,0,tau,'taue')
         call my_out_us(70,nCv,0,hce(1,0),'hce_th')
         call my_out_us(70,nCv,0,hce(1,1),'hce_r')
@@ -278,4 +257,16 @@
 *-----------------------------------------------------------------------
 *.end b2tqce
 
-      end
+      contains
+
+      function pitx(iCv)
+      implicit none
+      real (kind=R8) :: pitx
+      integer, intent(in) :: iCv
+
+      pitx = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+
+      return
+      end function pitx
+
+      end subroutine b2tqce
