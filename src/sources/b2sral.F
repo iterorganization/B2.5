@@ -20,6 +20,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : b2sral_elm_count, ncall_b2sral
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
@@ -39,14 +42,15 @@
      & , only : dab2, lkindi, lkindm, lkindp
 #endif
       use b2mod_ad
-     & , only : b2sral_elm_count, my_out_folder,
+     & , only : my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr,
+     &          ncall_b2stbr_phys, ncall_b2stbr,
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
      &          ncall_b2tfrn, ncall_b2tiner
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

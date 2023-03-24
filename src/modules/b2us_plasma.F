@@ -47,10 +47,10 @@
      .                           fhiPSch(:,:), fhi_eir(:,:),
      .                           fhi_ExB(:,:)
         real(R8), allocatable :: fnn(:,:), fnn_32(:,:), fnn_52(:,:),
-     .                           fhn(:,:)
+     .                           fhn(:,:), fnn_inc(:,:)
         real(R8), allocatable :: fhm(:,:,:), fhp(:,:,:), fhj(:,:),
      .                           fht(:,:), fkt(:,:), fzt(:,:)
-
+        real(R8), allocatable :: kin_frac_hyb(:), fluid_frac_hyb(:)
 
         ! kinetic energy
         ! dimensions: cv, species
@@ -804,6 +804,7 @@ cwdk move to dv
       allocate( dv % fnn( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fnn_32( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fnn_52( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fnn_inc( nFc, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( dv % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ), SOURCE=0._R8 )
@@ -842,6 +843,9 @@ cwdk move to dv
       allocate( dv % fht( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fkt( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fzt( nFc, 0:1 ), SOURCE=0._R8 )
+
+      allocate( dv % kin_frac_hyb( nFc ), SOURCE=0._R8)
+      allocate( dv % fluid_frac_hyb( nFc ), SOURCE=0._R8)
 
 ! kinetic energy
       allocate( dv % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -916,6 +920,7 @@ cwdk move to dv
       allocate( dv % fnn( nFc, 0:1 ) )
       allocate( dv % fnn_32( nFc, 0:1 ) )
       allocate( dv % fnn_52( nFc, 0:1 ) )
+      allocate( dv % fnn_inc( nFc, 0:ns-1 ) )
 
       allocate( dv % fna( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fna_mdf( nFc, 0:1 , 0:ns-1 ) )
@@ -954,6 +959,9 @@ cwdk move to dv
       allocate( dv % fht( nFc, 0:1 ) )
       allocate( dv % fkt( nFc, 0:1 ) )
       allocate( dv % fzt( nFc, 0:1 ) )
+
+      allocate( dv % kin_frac_hyb( nFc ) )
+      allocate( dv % fluid_frac_hyb( nFc ) )
 
 ! kinetic energy
       allocate( dv % kinrgy( nCv, 0:ns-1 ) )
@@ -1028,6 +1036,7 @@ cwdk move to dv
       dv % fnn = 0._R8
       dv % fnn_32 = 0._R8
       dv % fnn_52 = 0._R8
+      dv % fnn_inc = 0._R8
 
       dv % fna = 0._R8
       dv % fna_mdf = 0._R8
@@ -1066,6 +1075,9 @@ cwdk move to dv
       dv % fht = 0._R8
       dv % fkt = 0._R8
       dv % fzt = 0._R8
+
+      dv % kin_frac_hyb = 0._R8
+      dv % fluid_frac_hyb = 0._R8
 
 ! kinetic energy
       dv % kinrgy = 0._R8
@@ -1188,6 +1200,7 @@ cwdk move to dv
       deallocate( dv % fnn )
       deallocate( dv % fnn_32 )
       deallocate( dv % fnn_52 )
+      deallocate( dv % fnn_inc )
       deallocate( dv % fch )
       deallocate( dv % fch_32 )
       deallocate( dv % fch_52 )
@@ -1239,9 +1252,11 @@ cwdk move to dv
       deallocate( dv % fac_ExB )
       deallocate( dv % fac_vis )
 
-      deallocate (dv % flob )
-      deallocate (dv % conb )
+      deallocate ( dv % flob )
+      deallocate ( dv % conb )
 
+      deallocate ( dv % kin_frac_hyb )
+      deallocate ( dv % fluid_frac_hyb )
 
 ! kinetic energy
       deallocate( dv % kinrgy )

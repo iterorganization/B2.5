@@ -15,6 +15,7 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_tallies
@@ -47,6 +48,7 @@
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
+#endif
       use b2mod_ad
       use b2mod_subsys
       implicit none
@@ -114,8 +116,6 @@
       intrinsic mod
       real (kind=R8) ::
      *  smin, smax, b2sasum
-      integer len_of_digits
-      external len_of_digits
       external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn, b2xpfe, b2xpfi,

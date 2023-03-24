@@ -17,10 +17,14 @@
 !WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
 !WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
+      use b2mod_ad
+     & , only : ncall_b2tfhe
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
+     & , only : ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

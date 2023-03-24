@@ -17,6 +17,9 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+      use b2mod_ad
+     & , only : ncall_b2trcl, b2trcl_cutlo
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -24,9 +27,10 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2trcl, ncall_b2tlnl,
+     &          ncall_b2tlnl,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
-     &          b2trcl_cutlo, ncall_b2ttia
+     &          ncall_b2ttia
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

@@ -15,10 +15,14 @@
 !      use b2mod_balance                                                 !djm Jan2017
 !     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
 !     &          fna_ch, fna_pschused, balance_netcdf
+      use b2mod_ad
+     & , only : ncall_b2tfnb
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfnb, b2tfnb_cutlo
+     & , only : b2tfnb_cutlo
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

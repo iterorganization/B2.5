@@ -22,16 +22,20 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+      use b2mod_ad
+     & , only : b2npmo_solvedum, ncall_b2npmo
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2npmo_solvedum, ncall_b2npmo, ncall_b2usmo,
+     & , only : ncall_b2usmo,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
