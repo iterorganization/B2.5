@@ -315,6 +315,21 @@ cwdk                   (original code: simple averaging)
             ub2dia(iFc,1) = ub2dia(iFc,1)/(1.0_R8 + t3/vbar)
           enddo
         endif                                                             !lk 02.06.11 }
+        if (isb.eq.ismain) then                                           !lkw 25.10.2022 {
+          do iFc = 1, nFc
+            iCv1 = mpg%fcCv(iFc,1)
+            iCv2 = mpg%fcCv(iFc,2)
+            t0 = max(pl%ti(iCv1), pl%ti(iCv2))
+            t1 = 0.5_R8*(pl%na(iCv1,isb) + pl%na(iCv2,isb))
+            vbar =   sqrt(8.0_R8*t0/(pi*am(isb)*mp))
+            t2 = 1.0_R8 + sqrt((switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*
+     .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
+     .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
+     .        (vbar*t1)
+            dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
+            dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
+           enddo
+         endif                                                            !lkw 25.10.2022}
       endif
 
 *   ..compute differences of pa at cell faces and poloidal gradients
