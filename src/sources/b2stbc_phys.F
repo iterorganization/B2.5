@@ -954,7 +954,7 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             if (mpg%cvOnClosedSurface(icv).and.ishigh)
      >       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 10')
-             call xertst (conpar(is,ib,2).ge.0,                         ! lkw 30.06.2022
+             call xertst (conpar(is,ib,2).ge.0,                         !lkw 30.06.2022
      .        'For BCCON = 10 the CONPAR(:,:,2) should not be negative')
           endif
 cwdk      Note: now total face area taken. Need to check backwards
@@ -9037,6 +9037,7 @@ c end of implementation
         t0 = 0.0e0_R8
         t1 = 0.0e0_R8
         t2 = 0.0e0_R8
+        t4 = 0.0e0_R8 !lkw
         totflux = 0.0e0_R8
         totpar  = 0.0e0_R8
         do ib0 = 1, nbc
@@ -9055,6 +9056,7 @@ c end of implementation
            t0 = t0 + geo%cvVol(iCv2)
            t1 = t1 + geo%cvVol(iCv2)*pl%po(iCv1)
            t2 = t2 + geo%cvVol(iCv2)*pl%po(iCv2)
+           t4 = t4 + geo%cvVol(iCv2)*pl%ti(iCv2)/qe                     ! lkw 10.09.2022{
            totflux = totflux - (dv%fch(iFc,0) + dv%fch(iFc,1))*
      &       mpg%bcFcOr(mpg%bcCvP(ib0,1)+ibc0-1)
           enddo
@@ -9063,10 +9065,14 @@ c end of implementation
         enddo
         t1 = t1/t0
         t2 = t2/t0
+        t4 = t4/t0 !lkw
         if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
         if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
-        t4 = (1.0_R8-t3*(totflux-totpar)/
-     &         max(abs(totflux),abs(totpar),1.0e-10_R8))*t1
+!lkw        t4 = (1.0_R8-t3*(totflux-totpar)/
+!lkw     &         max(abs(totflux),abs(totpar),1.0e-10_R8))*t1
+       t4 = t1-t4*t3*(totflux-totpar)/
+     &         max(abs(totflux),abs(totpar),1.0e-10_R8)                 ! lkw 10.09.2022}
+
 *     ..impose potential with perturbation
         do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
