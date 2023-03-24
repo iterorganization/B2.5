@@ -1,6 +1,7 @@
 c
       subroutine trgw(i)
       use b2mod_types
+      use b2mod_cellhelper
       use b2mod_wall
       use b2mod_b2plot
       use b2mod_b2plot_values
@@ -9,7 +10,7 @@ c
       character*12 izstring
       character*256 tmpstring, titlestring
       real (kind=R8) ::
-     *   lmin,lmax,x1,x2,y1,y2,dist,xmin,xmax
+     *   lmin,lmax,xmin,xmax
       integer ibnd,iseg,lnblnk
       external lnblnk
 
@@ -17,21 +18,20 @@ c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
 
-      intrinsic min,max,mod,sqrt
+      intrinsic min,max,mod
       external xertst
-      dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 c      if(nidim .ne. 1) call line(1)
-      wwrk(1)=dist(targetr(1,i),targetz(1,i),
+      wwrk(1)=points_dist(targetr(1,i),targetz(1,i),
      1          targetcr(1,i,1),targetcz(1,i,1))     
       lmin=target_stack(1,i,itwrk)
       lmax=target_stack(1,i,itwrk)
       do ibnd=2,nbnd
         wwrk(ibnd)=wwrk(ibnd-1)+
-     1   dist(targetr(ibnd-1,i),targetz(ibnd-1,i),
+     1   points_dist(targetr(ibnd-1,i),targetz(ibnd-1,i),
      2        targetcr(ibnd-1,i,2),targetcz(ibnd-1,i,2))+
-     1   dist(targetcr(ibnd-1,i,2),targetcz(ibnd-1,i,2),
+     1   points_dist(targetcr(ibnd-1,i,2),targetcz(ibnd-1,i,2),
      2        targetcr(ibnd  ,i,1),targetcz(ibnd  ,i,1))+
-     1   dist(targetr(ibnd,i),targetz(ibnd,i),
+     1   points_dist(targetr(ibnd,i),targetz(ibnd,i),
      2        targetcr(ibnd,i,1),targetcz(ibnd,i,1))
         lmin=min(lmin,target_stack(ibnd,i,itwrk))
         lmax=max(lmax,target_stack(ibnd,i,itwrk))

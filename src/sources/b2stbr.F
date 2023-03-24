@@ -123,28 +123,29 @@
       real (kind=R8) ::                                              !srv 29.04.10 {
      &  sna0_eir(nCv,0:1,0:ns-1),
      &  smo0_eir(nCv,0:3,0:ns-1),
-     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3),
-     &  fatm_eir(nFc,0:1,nnatmi), datm_eir(nCv,nnatmi)               !srv 29.04.10 }
+     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3)
 #ifdef B25_EIRENE
-     &, fmol_eir(nFc,0:1,nnmoli), dmol_eir(nCv,nnmoli),              !IYS 27.01.17
+     &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
+     &  fmol_eir(nFc,0:1,nnmoli),                                    !IYS 27.01.17
      &  flxtmp(nCv)
 #endif
       integer sput_src,
 #ifdef WG_TODO
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
-#endif
      1  coreregn2,
+#endif
      2  sput_chem_model, reflection_on, sputter_energy_on
       real (kind=R8) ::
 #ifdef WG_TODO
-     *  start_time,end_time,pfrpuff,mainpuff,corepuff,
-     *  sum_start,sum_end,lnorm,
-     *  sum_strti,sum_ndi,sum_nde,
+     *  pfrpuff, mainpuff, corepuff,
+     *  sum_start, sum_end, lnorm,
+     *  sum_strti, sum_ndi, sum_nde,
      *  work(nCv,0:1), wrk2(nCv), wrk3(nCv),
 #endif
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  f_redep(nCv,0:ns-1)
 #ifdef WG_TODO
+      real (kind=R4) :: start_time, end_time
       logical equilibrium(ntrack), over_erosion
 #endif
       logical new_sputter_namelist
@@ -155,25 +156,25 @@
       character*(NF_MAX_NAME) :: dimname(NF_MAX_VAR_DIMS)
       logical ex
       character*256, save :: filename
+      intrinsic cpu_time
 #endif
 *   ..procedures
       external xertst, xerrab, sfill, ipgetr, ipgeti
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-      intrinsic mod, cpu_time
 *   ..initialisation
       save sput_src,
 #ifdef WG_TODO
      *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
-#endif
      1     coreregn2,
+#endif
      5     sput_chem_model, reflection_on, sputter_energy_on
       data sput_src/1/,
 #ifdef WG_TODO
      *     in_no_of_angles/9/,
      *     in_size_of_table/200000/,
-#endif
      1     coreregn2/4/,
+#endif
      7     sput_chem_model/0/,
      8     reflection_on/1/, sputter_energy_on/1/
 
@@ -207,7 +208,11 @@
      *       in_no_of_start_points)
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
+#ifdef _OPENMP
+           start_time = omp_get_wtime()
+#else
            call cpu_time(start_time)
+#endif
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
      *          in_no_of_start_points,nx,ny,switch%in_dl)
@@ -227,7 +232,11 @@
      >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
              enddo
            enddo
+#ifdef _OPENMP
+           end_time = omp_get_wtime()
+#else
            call cpu_time(end_time)
+#endif
            write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
@@ -330,8 +339,9 @@
       call sfill (nCv*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (nCv*4, 0.0_R8, she0_eir, 1)
       call sfill (nCv*4, 0.0_R8, shi0_eir, 1)
+#ifdef B25_EIRENE
       fatm_eir = 0.0_R8
-      datm_eir = 0.0_R8                                            !srv 29.04.10 }
+#endif
 
       tchem=0.0_R8
       tchee=0.0_R8
@@ -431,7 +441,7 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
+     &   na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
@@ -465,7 +475,11 @@ c   --> better solution wanted here..
           shetmp=she0
           shitmp=shi0
         endif
+#ifdef _OPENMP
+        start_time = omp_get_wtime()
+#else
         call cpu_time(start_time)
+#endif
         if (output.ge.1) then
           open(88,file='start')
           open(89,file='end')
@@ -566,7 +580,11 @@ c   --> better solution wanted here..
           close(88)
           close(89)
         endif
+#ifdef _OPENMP
+        end_time = omp_get_wtime()
+#else
         call cpu_time(end_time)
+#endif
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
         if (balance_netcdf.ne.0) then
@@ -593,7 +611,7 @@ c   --> better solution wanted here..
 
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        call eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim,      !srv 29.04.10 {
+        call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
      &                 main_call, switch, geo, mpg, st,
      &                 kin_frac_hyb,fnn_inc)
@@ -650,7 +668,6 @@ c   --> better solution wanted here..
         endif
 #endif
         do ia = 1, nnatmi
-         datm_eir(:,ia)   = dab2(:,ia,1)
 ! IYS 27.01.2017
 ! interpolate atom fluxes to cell faces (for output only)
          flxtmp(:) = pfluxa(:,ia,1)
@@ -663,7 +680,6 @@ c   --> better solution wanted here..
         enddo
 ! IYS 27.01.2017
         do im = 1, nnmoli
-         dmol_eir(:,im)   = dmb2(:,im,1)
 ! interpolate molecule fluxes to cell faces (for output only)
          flxtmp(:) = pfluxm(:,im,1)
          call intface(nCv,nFc,mpg%fcCv,geo%fcVol,
@@ -1097,7 +1113,7 @@ c        write(*,*) 'Called neutr_scl'
       character*256 filename
 #endif
 *   ..procedures
-      intrinsic mod, nint
+      intrinsic mod
       external xertst, xerrab, ipgeti, ipgetr
 *   ..initialisation
       data neutrals_namelist/0/,

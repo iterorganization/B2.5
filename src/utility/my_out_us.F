@@ -11,6 +11,7 @@ c     File names will be appended with "*_st.dat".
 #endif     
       implicit none
 #ifdef WG_DEBUG
+      integer ix, iy
       real (kind=R8) :: fun_st(-1:nx_st,-1:ny_st), 
      .  funf_st(-1:nx_st,-1:ny_st,0:1)
 #endif     
@@ -21,11 +22,9 @@ c     File names will be appended with "*_st.dat".
       character *64 filename, finame
 !      character(len=*), allocatable :: filename, finame
       character(24) hlp_frm
-      integer ic, ix, iy
+      integer ic
       integer, save :: ncall = 0
       integer, save :: iappend = 0, ndigits = 6
-
-      logical ex
 
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
@@ -64,7 +63,6 @@ c     File names will be appended with "*_st.dat".
 #ifdef WG_DEBUG
       else
 
-        
       if (flag.eq.1) then
 
         my_out_sf(0) ='_left_st.dat'
@@ -153,4 +151,4 @@ c     File names will be appended with "*_st.dat".
       endif
 #endif
       return
-      end
+      end subroutine my_out_us

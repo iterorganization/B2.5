@@ -49,10 +49,10 @@
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
-!      call b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy,                   !srv 10.10.17
-!     &              qz, bb, avisper, bvisper, cvisper)
+!      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
+!     &              avisper, bvisper, cvisper)
 
-*   ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
+*   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
       fac_vism = maxval(fac_vis)
       if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0e0_R8.and.
      &   switch%no_current.eq.0) then

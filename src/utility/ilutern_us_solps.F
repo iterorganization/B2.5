@@ -1,6 +1,9 @@
       SUBROUTINE ILUTERN_US(NCV, NZ, RHS, SOL, name)      !srv 13.10.06 (
       use b2mod_types
       use b2mod_ma28_for_us
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       IMPLICIT NONE
 C
 
@@ -14,8 +17,12 @@ C
      *   SOL(NCV)
 
 *  -- LOCAL SCALARS --
-      INTEGER N, I, J, K
+      INTEGER N, I
+#ifdef _OPENMP
       real (kind=R8) :: cpu_start, cpu_end
+#else
+      real (kind=R4) :: cpu_start, cpu_end
+#endif
       integer iflag
 
       real (kind=R8) ::
@@ -37,7 +44,14 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD, cpu_time
+#ifndef _OPENMP
+      INTRINSIC cpu_time
+#else
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
       EXTERNAL XERRAB
 
       integer ncall, nwrite
@@ -60,7 +74,11 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
       iflag=0
       if(ncall.lt.1000) then
 *  -- CHECK NCV, ITERS, ACPAR, ITPAR --
@@ -212,11 +230,15 @@ cdpc
       sol = s1
 
 *  ---------------------------------------------------------------------
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       ncall=ncall+1
       RETURN
 *=======================================================================
 *//END ILUTERN_US//                                                    !srv 13.10.06
 
-      END
+      END SUBROUTINE ILUTERN_US
 

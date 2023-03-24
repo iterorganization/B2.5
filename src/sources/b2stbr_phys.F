@@ -115,7 +115,7 @@ c     output for analysis/debugging
      &                  fenerefl_out(nCv), fenerec_out(nCv),
      &                  fnni_out(nCv)
 *   ..procedures
-      intrinsic abs, exp
+      intrinsic abs
       external xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) ::
@@ -249,6 +249,7 @@ c     output for analysis/debugging
 #endif
 
 c pre-computations for KUL fluid neutrals
+      dnn = 0.0_R8      
       if (switch%recycle_afn.ne.0) then
 
 c     initialize debugging/analysis arrays
@@ -261,7 +262,6 @@ c     initialize debugging/analysis arrays
         fnni_out     = 0.0_R8
         fna_mol      = 0.0_R8  !nh 30.03.21
 
-        dnn = 0.0_R8
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
      &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
       endif !! end pre-computations KUL fluid neutrals

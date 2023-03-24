@@ -1,6 +1,6 @@
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section b2uw_ualio_grid_desc Description
+!>      @section b2uw_ual_io_grid_desc Description
 !!      Module providing routines to set the B2 grid geometry, including grid
 !!      subsets (subgrids), to ITM CPO or IMAS IDS grid description data
 !!      structure.
@@ -10,7 +10,7 @@
 !!            and edge_transport IDSs)
 !!          - b2ITMFillGridDescription (for ITM edge CPO)
 !!
-!!      @subsection b2uw_ualio_grid_syx     Exceptional syntax explanation
+!!      @subsection b2uw_ual_io_grid_syx     Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
@@ -94,6 +94,13 @@ module b2mod_ual_io_grid
 #  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
+#  endif
+#  if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 )
+    use ids_grid_common     & ! IGNORE
+     & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,   &
+     &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,   &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #  endif
 # endif
 # endif
@@ -237,6 +244,10 @@ module b2mod_ual_io_grid
     integer, parameter :: VEC_ALIGN_DIAMAGNETIC = 1005
     !> Diamagnetic vector component ID
     character(len=132), parameter :: VEC_ALIGN_DIAMAGNETIC_ID = "Diamagnetic"
+#endif
+#if GGD_MAJOR_VERSION < 2
+#if GGD_MINOR_VERSION < 11
+#if GGD_MICRO_VERSION < 3
     !> Major radius aligned vector component
     integer, parameter :: VEC_ALIGN_R_MAJOR = 1006
     !> Major radius aligned vector component ID
@@ -245,6 +256,8 @@ module b2mod_ual_io_grid
     integer, parameter :: VEC_ALIGN_Z = 1007
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
+#endif
+#endif
 #endif
 
     !! Subgrid/Grid subset name constants
@@ -1629,9 +1642,10 @@ contains
         if (iCoreGS == B2_GRID_UNDEFINED) then
             iCoreGS = findGridSubsetByName(grid_ggd, "Outer core boundary")
         end if
-        if (iCoreGS == B2_GRID_UNDEFINED) stop "fill_In_GridSubset_Desc: "// &
+        if (iCoreGS == B2_GRID_UNDEFINED) &
+            & call xerrab ( "fill_In_GridSubset_Desc: "// &
             & "did not find core boundary grid subset for assembling " // &
-            & " outer midplane grid subset"
+            & " outer midplane grid subset" )
 
         !! Figure out starting points for inner and outer midplane on core
         !! boundary
@@ -2391,8 +2405,10 @@ contains
       if (iCoreSg == GRID_UNDEFINED) then
           iCoreSg = gridFindSubGridByName(itmgrid, "Outer core boundary")
       end if
-      if (iCoreSg == GRID_UNDEFINED) stop "fillInSubGridDescription: "// &
-          & "did not find core boundary subgrid for assembling outer midplane subgrid"
+      if (iCoreSg == GRID_UNDEFINED)
+          & call xerrab ( "fillInSubGridDescription: "// &
+          & "did not find core boundary subgrid for assembling "// &
+          & "outer midplane subgrid" )
 
       !! Figure out starting points for inner and outer midplane on core boundary
       call find_Midplane_Cells(itmgrid%subgrids(iCoreSg), gmap, crx, xIn, yIn, xOut, yOut)
@@ -2557,7 +2573,8 @@ contains
                indexList(iVx, SPACE_POLOIDALPLANE) =    &
                 &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
             else
-               stop "collectRadialVertexIndexList: cannot find expected vertex index"
+               call xerrab ( "collectRadialVertexIndexList: "// &
+                &            "cannot find expected vertex index" )
             end if
 
             ix = nix
@@ -2650,8 +2667,8 @@ contains
                 indexList(iVx, SPACE_POLOIDALPLANE) =   &
                     &   gmap%mapVxI(ix, iy, VX_UPPERLEFT)
             else
-                stop "collectRadialVertexIndexListSubroutine: cannot " // &
-                   & "find expected vertex index"
+                call xerrab ( "collectRadialVertexIndexListSubroutine: "// &
+                   & " cannot find expected vertex index" )
             end if
 
             ix = nix

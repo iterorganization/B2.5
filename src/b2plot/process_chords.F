@@ -42,7 +42,7 @@ c
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
         yvalues(inpts)=chord_integral(nx,ny,work(-1,-1,is,iwrk),
-     1   crx,cry,bb,npoints,x1,y1,z1,x2,y2,z2,vector)
+     1   npoints,x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
@@ -176,7 +176,7 @@ c
 
       if(use_compile) then
         call compile_chords(maxchords,maxcompile,
-     &   nx,ny,crx,cry,bb,
+     &   nx,ny,crx,cry,
      1   inpts,indchd,indix,indiy,indscl,filename,dataname,
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
@@ -255,7 +255,7 @@ c
       end subroutine process_camera
 c
       subroutine compile_chords(maxchords,maxcompile,
-     & nx,ny,crx,cry,bb,
+     & nx,ny,crx,cry,
      1 inpts,indchd,indix,indiy,indscl,filename,dataname,
      2 nxcam,xmin,xmax,nycam,ymin,ymax)
 
@@ -268,8 +268,7 @@ c
       real (kind=R8) ::
      * indscl(maxcompile),
      1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     2 cry(-1:nx,-1:ny,0:3)
       character*(*) filename,dataname
       integer nxcam,nycam
       real (kind=R8) ::
@@ -297,7 +296,7 @@ c
       ind=1
    10 read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
       inpts=inpts+1
-      call chord_compile(npoints,nx,ny,crx,cry,bb,
+      call chord_compile(npoints,nx,ny,crx,cry,
      1 x1,y1,z1,x2,y2,z2,vector,
      1 indchd(inpts),indix(ind),indiy(ind),indscl(ind))
       indold=ind
@@ -381,7 +380,7 @@ c
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2
         inpts=inpts+1
         zvalues(inpts)=chord_integral(nx,ny,workarr(-1,-1),
-     1   crx,cry,bb,npoints,x1,y1,z1,x2,y2,z2,vector)
+     1   npoints,x1,y1,z1,x2,y2,z2,vector)
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10

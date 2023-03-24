@@ -1,10 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2rugm (nget, nx, ny, isymm, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
-     &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
+      subroutine b2rugm (nget, nx, ny, isymm)
       use b2mod_types
+      use b2mod_geo
       use b2mod_math
       use b2mod_indirect
       use b2mod_version
@@ -14,22 +13,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny, isymm
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
-     &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
-     &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1), wbbl(-1:nx,-1:ny,0:3),
-     &  wbbr(-1:nx,-1:ny,0:3), wbbv(-1:nx,-1:ny,0:3),
-     &  wbbc(-1:nx+1,-1:ny+1,0:3), 
-     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny),
-     &  hc(-1:nx,-1:ny,0:3), ht(-1:nx,-1:ny,0:1), 
-     &  qac(-1:nx,-1:ny,0:1), qas(-1:nx,-1:ny,0:1),
-     &  ebc(-1:nx,-1:ny,0:2)
-      type(B2GridMap) :: gmap
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -74,10 +57,12 @@
 *     However, there may be cuts in the geometry, in which case these
 *     identities need not hold.
 *
-*     fpsi - (-1:nx,-1:ny,0:3) real*8 array, output.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i) specifies the
+*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array, output.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
 *     potential for the magnetic field components (bx,by) at the
 *     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
@@ -187,25 +172,16 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, i,j, idum(0:9)
+      integer n2, ix, iy, idum(0:9)
       integer iFace, offset
+      real (kind=R8) ::
+     *   t0, t1, t2
       integer, save :: ht_style = 1
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y, t0, t1, t2
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *   trim1, cosang, sinang, dist
       external xertst, cfrure, cfruin
       external intfaceh1, intfacer1, intfacev1
       external b2xgbs, b2xvsg, b2xvgm
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      dist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+
 *-----------------------------------------------------------------------
 *.computation
 
