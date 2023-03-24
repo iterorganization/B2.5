@@ -65,7 +65,7 @@
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,    !srv 05.03.16
      &   rdiv                                                           !srv 05.03.16
       real (kind=R8) ::
-     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc),! wrk4(nFc),
+     *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
      *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
      *   wrk(nCv), wrkVx(nVx),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
@@ -399,6 +399,20 @@ cwdk                   (original code: simple averaging)
       call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &     flo_mdf, co%cdna(:,:,isb), fna_mdf0(:,:),
      &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
+*   ..limit flow by sound speed                                          ! lkw 26.10.2022{
+       do iFc = 1, nFc
+            t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
+            t3 = fna_mdf0(iFc,0)+ fna_mdf0(iFc,1)
+            t1 = pl%na(mpg%fcCv(iFc,1),isb)
+            if (t3 .lt. 0) t1 = pl%na(mpg%fcCv(iFc,2),isb)
+            t3 = abs(t3)
+            vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp)) *
+     &        geo%fcS(iFc)
+            wrk4(iFc) = 1.0_R8/(1.0_R8 +
+     &        (t3/(0.5_R8*vbar*t1))**gamma)**(1.0_R8/gamma)
+            fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
+            fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
+        enddo                                                            ! lkw 26.10.2022}
      
 !   ..keep the convective flow "correction" factor for further output
       do iFc = 1, nFc
