@@ -24,11 +24,14 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2sihs_, ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
+     & , only : ncall_b2sihs_
+#ifndef NAGFOR
+     &        , ncall_b2xehy, ncall_b2xehx, ncall_b2tlnl,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2sifrtf
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

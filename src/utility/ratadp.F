@@ -162,7 +162,7 @@
 *   ..local variables
       integer nzm, i, j, k
       real (kind=R8) ::
-     *  cm3, arbn, rad, temp, dens
+     *  cm3, arbn, rad
       parameter (nzm=99, cm3=1.0e-6_R8, arbn=1.0e18_R8)
 *     cm3 is one cm**3, expressed in m**3.
 *     arbn is an arbitrary density, expressed in 1/m**3.
@@ -198,13 +198,7 @@
       real (kind=R8) ::
      *   anneut(0:0), vneut(0:0)
 *   ..procedures
-      real (kind=R8) ::
-     *   hydfud
       external adset, aderc, adbcxr, xertst
-      hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
-     1 temp**(-0.60_R8))
-*!!   (hydfud is the fudge factor for the density dependence in the
-*!!   hydrogen ionisation rate coefficient; see the code.)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -298,4 +292,17 @@
 *-----------------------------------------------------------------------
 *.end ratadp
 
+      contains
+
+*!!   (hydfud is the fudge factor for the density dependence in the
+*!!   hydrogen ionisation rate coefficient; see the code.)
+      function hydfud(temp,dens)
+      implicit none
+      real(kind=R8) :: hydfud
+      real(kind=R8), intent(in) :: temp, dens
+
+      hydfud = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*temp**(-0.60_R8))
+
+      return
+      end function hydfud
       end subroutine ratadp

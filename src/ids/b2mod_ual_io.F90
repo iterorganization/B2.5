@@ -20,8 +20,6 @@ module b2mod_ual_io
 
     use b2mod_types
     use b2mod_b2cmpa
-    use b2mod_diag &
-     & , only : nfluids, species_list, label
     use b2us_map
     use b2us_geo
     use b2us_plasma
@@ -52,6 +50,8 @@ module b2mod_ual_io
      &          b2stel_she_rec_bal, b2stel_shi_rec_bal, &
      &          read_balance
 #endif
+    use b2mod_diag &
+     & , only : nfluids, species_list, label
     use b2mod_b2plot &
      & , only : nxtl, nxtr
 #endif
@@ -2084,9 +2084,8 @@ contains
                 &   val = edge_profiles%ggd( time_sind )%electrons%density, &
                 &   value = state%dv%ne )
             !! fne: Electron particle flux
-            flxFace(:,0) = state%dv%fne(:,0)/geo%fcS(:)
-            flxFace(:,1) = state%dv%fne(:,1)/geo%fcS(:)
-            call write_face_flux( transport_grid, mpg,                    &
+            call divide_by_area( mpg%nFc, geo, state%dv%fne, flxFace)
+            call write_face_flux( transport_grid, mpg,                      &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
                 &   value = flxFace )
@@ -2156,10 +2155,9 @@ contains
             !! fna: Ion particle flux
                 totflux(:,0:1) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  flxFace(:,0) = state%dv%fna(:,0,ispion(is,js)) / geo%fcS(:)
-                  flxFace(:,1) = state%dv%fna(:,1,ispion(is,js)) / geo%fcS(:)
+                  call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,ispion(is,js)), flxFace)
                   totflux(:,:) = totflux(:,:) + flxFace(:,:)
-                  call write_face_flux( transport_grid, mpg,                  &
+                  call write_face_flux( transport_grid, mpg,                &
                       &   val = edge_transport%model(1)%ggd( time_sind )%   &
                       &         ion( is )%state( js )%particles%flux,       &
                       &   value = flxFace )
@@ -2520,8 +2518,7 @@ contains
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%v,                           &
                 &   value = state%co%chve )
-            flxFace(:,0) = state%dv%fhe(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fhe(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fhe, flxFace)
             call write_face_flux( transport_grid, mpg,                  &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
@@ -2607,8 +2604,7 @@ contains
                  &         total_ion_energy%v,                        &
                  &   value = state%co%chvi )
             !! fhi : Ion heat flux
-            flxFace(:,0) = state%dv%fhi(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fhi(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fhi, flxFace)
             call write_face_flux( transport_grid, mpg,                  &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
@@ -3129,8 +3125,7 @@ contains
                         &   b2FaceData = flxFace(:,1),                        &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! fna: Fluid neutral particle flux
-                    flxFace(:,0) = state%dv%fna(:,0,js) / geo%fcS(:)
-                    flxFace(:,1) = state%dv%fna(:,1,js) / geo%fcS(:)
+                    call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,js), flxFace)
                     call write_face_flux( transport_grid, mpg,                &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux,                &
@@ -3428,8 +3423,7 @@ contains
                         &         neutral( j )%state(1)%energy%d,             &
                         &   value = tmpCv )
                 !! fhn : Fluid neutral heat flux
-                    flxFace(:,0) = state%dv%fhn(:,0) / geo%fcS(:)
-                    flxFace(:,1) = state%dv%fhn(:,1) / geo%fcS(:)
+                    call divide_by_area( mpg%nFc, geo, state%dv%fhn, flxFace)
                     call write_face_flux( transport_grid, mpg,                &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%energy%flux,                   &

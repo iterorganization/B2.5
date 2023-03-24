@@ -15,6 +15,9 @@
 !WG_TODO      use b2mod_balance !djm Jan2017
 !WG_TODO     & , only : b2npht_shei_bal, update_balance_sources_heat,
 !WG_TODO     &          balance_netcdf
+      use b2mod_ad
+     & , only : ncall_b2npht
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_numerics_namelist
@@ -24,9 +27,10 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2npht, ncall_b2sikt,  ncall_b2sifrtf,
+     &          ncall_b2sikt, ncall_b2sifrtf,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
      &          ncall_b2ursd, ncall_b2sihs_, ncall_b2tlnl, cvregmax
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)

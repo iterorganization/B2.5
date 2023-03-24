@@ -15,10 +15,14 @@
 !WG_TODO     & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
 !WG_TODO     &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
 !WG_TODO     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+      use b2mod_ad
+     & , only : ncall_b2tfhi
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2tfhi, b2tfhi_cutlo
+     & , only : b2tfhi_cutlo
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
