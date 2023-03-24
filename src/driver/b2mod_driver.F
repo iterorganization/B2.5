@@ -2014,6 +2014,7 @@ c new CDF movie option (1st frame at t=0)
      &  state_ext, J)
       use b2mod_user_namelist
      & , only : ncf
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_batch_average
@@ -2026,6 +2027,7 @@ c new CDF movie option (1st frame at t=0)
      &          int5r, int5l, int1r, int1l, int4r, int4l, uold, mold,
      &          told, fna_mol
       use b2mod_ad
+#endif
       implicit none
 #ifdef JET
       integer nout(0:11), ns, idum(0:9)
@@ -2046,8 +2048,7 @@ c new CDF movie option (1st frame at t=0)
 #ifdef FIXED_POINT
       type(B2State)   :: state0
 #endif
-      real(kind=R8) :: J(nncf), kin_frac_hyb(mpg%nFc),
-     * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
+      real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf
       character*256 filename, fort31name
@@ -2348,8 +2349,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     .                         state%pl, state%dv,
-     .                         kin_frac_hyb, fnn_inc)
+     .                         state%pl, state%dv)
           call write_f31(mpg)
           close(31)
         end if
@@ -2921,12 +2921,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #ifdef WG_TODO
       integer nx, ny
 #endif
-      type (switches), intent (in) :: switch
+      type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      integer nCv, nFc, nVx, is                                            !srv 29.11.18
+      integer nCv, nFc, nVx, is                                          !srv 29.11.18
 #ifdef WG_TODO
       character*256 filename
       logical found
@@ -2940,7 +2940,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
-      if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
+      if(quitexist_) write(*,*) 'stopping because _quit seen'            !srv 13.04.11
       if(cpuval.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8)
      1 write(*,'(1x,a,1p,2(e12.5,1x))')
      . 'stopping because cpu > limit: ',cpuval,b2mndr_cpu
@@ -2984,14 +2984,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       filename='b2.wall_save.parameters'
       call find_file(filename,found)
       call wall_final(nx,ny,ns,found)
-#endif
 * ..display and save the result of the calculation
-#ifdef WG_TODO
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
-!WG_TODO      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
-!WG_TODO     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
+     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -3013,10 +3011,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !    call write_b2fstate_diff (nout(9), nCv, nFc, ns, stated)
 *   ..mms error analysis
       if(use_mms.ne.0) then                                              !srv 26.02.18 {
-        call calc_err(nCv, ns, state % pl, state % dv)
+        call calc_err(nCv, ns, state%pl, state%dv)
       endif                                                              !srv 26.02.18 }
       if(iout.ne.0) then
-        if(use_mms.eq.0) then                                              !srv 29.11.18 {
+        if(use_mms.eq.0) then                                            !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
@@ -3039,15 +3037,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
        call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
        close(nout(8))
       end if
+#endif
 *   ..write out fort.30 and fort.31 files if not yet done
       if (switch%use_eirene.eq.0) then
-       if (switch%save_f30.ne.0) call write_f30(nx, ny)
+!WG_TODO       if (switch%save_f30.ne.0) call write_f30(nx, ny)
        if (switch%save_f31.ne.0) then
-        call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv, kin_frac_hyb, fnn_inc)
-        call write_f31(nx, ny)
+        write(*,*) 'Saving '//trim(fort_lc)//'31 at end of run'
+        open(31,file=trim(fort_lc)//'31')
+        call copy_background(nCv, nFc, ns, switch, mpg, geo,
+     &                       state%pl, state%dv)
+        call write_f31(mpg)
+        close(31)
        end if
       end if
+#ifdef WG_TODO
 *   ..produce data for last frame in movie if not yet done
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
         call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
@@ -3103,6 +3106,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
+#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
@@ -3113,9 +3117,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       end if
       if (delta_ids_time.gt.0.0_R8) then
         ids_done = ids_done .or.
-     .    tim.le.save_ids_time-delta_ids_time+dteff
+     .    tim.le.save_ids_time-delta_ids_time+dtim
         write_ids = write_ids .or.
-     .    tim.gt.save_ids_time-delta_ids_time+dteff
+     .    tim.gt.save_ids_time-delta_ids_time+dtim
       end if
       write_ids = write_ids .or. ids_save.lt.0
       write_ids = write_ids .and. ntim.gt.0 .and. .not.ids_done
@@ -3371,13 +3375,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 * finalise eirene_mc
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,
-     &                        kin_frac_hyb,fnn_inc)
+         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
-#endif
 
       if (iav_run > 0) then
         call run_av_save ('b2favere',nCv,ns,.true.,.true.)
@@ -3394,7 +3396,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1))
      &  deallocate(par_opt_phys)
       deallocate(old_erosion, old_deposition)
-!WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
+      deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
 !WG_RM      call dealloc_b2mod_ma28
       call dealloc_b2mod_wall

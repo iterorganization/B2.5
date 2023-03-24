@@ -113,8 +113,7 @@
 
       subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0,
-     & main_call, switch, geo, mpg, st,
-     & kin_frac_hyb, fnn_inc)
+     & main_call, switch, geo, mpg, st)
       use b2mod_subsys
       implicit none
       integer nCv, nFc, ns
@@ -142,8 +141,7 @@ csw 19oct2012, added save attribute!!!
      * ndes, private_flux_puff, nesepm_sol,
      * nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol,
 #endif
-     * recyctmp, kin_frac_hyb(mpg%nFc), !! only relevant for generalized spatially hybrid models
-     * fnn_inc(mpg%nFc,0:ns-1) !! incident fluid neutral flux
+     * recyctmp
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
      1 SSEISTAB(:),
@@ -458,11 +456,10 @@ csw 26feb2013
       lneustra = switch%spatial_hybrid.ne.0
 !! make sure to keep standard behaviour if generalized spatially hybrid is not used.
       if (switch%use_auto_spatial_hyb.eq.0) then
-          kin_frac_hyb = 1.0_R8
+        st%dv%kin_frac_hyb = 1.0_R8
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv,
-     &                       kin_frac_hyb,fnn_inc)
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -608,14 +605,14 @@ c first save the original NPTS provided by the Eirene input files.
                 tflux(istrai)=tflux(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (st%dv%fna(ifc,0,is)+st%dv%fna(ifc,1,is)))*
-     &              kin_frac_hyb(ifc)
+     &              st%dv%kin_frac_hyb(ifc)
                 tflux0(istrai)=tflux0(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (st%dv%fna(ifc,0,is)+st%dv%fna(ifc,1,is)))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      &            max(0.0_R8,mpg%rcFcOr(ind)*
      &             (st%dv%fna(ifc,0,is)+st%dv%fna(ifc,1,is)))*
-     &              kin_frac_hyb(ifc)
+     &              st%dv%kin_frac_hyb(ifc)
               end do !}
             elseif(is_neutral(is).and.lneustra.and.(mol(istrai).ne.1))
      &        then !{   !! fluid neutral species only if they are needed for hybrid fluid/kinetic models. In a standard Eirene run they are not used.
@@ -624,15 +621,15 @@ c first save the original NPTS provided by the Eirene input files.
                 ifc = mpg%rcFc(ind)
                 tflux(istrai)=tflux(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             fnn_inc(iFc,is))*
-     &              kin_frac_hyb(ifc)
+     &             st%dv%fnn_inc(iFc,is))*
+     &             st%dv%kin_frac_hyb(ifc)
                 tflux0(istrai)=tflux0(istrai)+
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             fnn_inc(iFc,is))
+     &            st%dv%fnn_inc(iFc,is))
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      &            max(0.0_R8,mpg%rcFcOr(ind)*
-     &             fnn_inc(iFc,is))*
-     &              kin_frac_hyb(ifc)
+     &             st%dv%fnn_inc(iFc,is))*
+     &             st%dv%kin_frac_hyb(ifc)
               end do !}
             elseif (lneustra.and.(mol(istrai).eq.1)) then  !nh 31.03.21 stratum of molecules
               do i=1,mpg%rcFcP(istrai,2) !{
@@ -891,8 +888,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg,
-     &                          geo, st%pl, st%dv,
-     &                          kin_frac_hyb, fnn_inc)
+     &                          geo, st%pl, st%dv)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -3532,22 +3528,19 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       end subroutine eirene_mc
 
 * ..finalise save
-      subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st,
-     &                           kin_frac_hyb,fnn_inc)
+      subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st)
       implicit none
       integer, intent(in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
-      real(kind=R8) :: kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
       call copy_background(nCv, nFc, ns, switch,
-     &                     mpg, geo, st%pl, st%dv,
-     &                     kin_frac_hyb, fnn_inc)
+     &                     mpg, geo, st%pl, st%dv)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011

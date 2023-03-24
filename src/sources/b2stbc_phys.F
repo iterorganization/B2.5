@@ -25,13 +25,17 @@
       use eirmod_braeir
 #endif
       use b2mod_astra_to_b2                                          !srv 28.07.11
+      use b2mod_ad
+     & , only : ncall_b2stbc_phys,
+     &          UBIG, VBIG, PBIG, UP00, EPSLON, NE00, US
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbc_phys, senepar, senipar, sconpar, scurpar,
+     & , only : senepar, senipar, sconpar, scurpar,
      &  prev_cur_delta, cur_delta, po_step, po_prev, po_curr, coeff_16,
-     &  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS
+     *  NUEOUT, FS, VS, NAS, TES, TIS, NIVS, FFAC, DFS, POS, S2
+#endif
       use b2mod_subsys
       implicit none
 #     include "DIMENSIONS.F"

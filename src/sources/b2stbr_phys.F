@@ -13,7 +13,7 @@
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  temperature_at_guard_cell, potential_at_guard_cell,
-     4  recycled_neutrals_contr,fluid_frac_hyb, kin_frac_hyb, fnn_inc)
+     4  recycled_neutrals_contr)
       use b2mod_types
 !WG_TODO      use b2mod_sputter
       use b2mod_tallies
@@ -29,12 +29,16 @@
       use b2us_map
       use b2us_plasma
       use b2mod_recycle
+      use b2mod_ad
+     & , only : ncall_b2stbr_phys
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2stbr_phys, my_out_folder
+     & , only : my_out_folder
 #ifdef WG_DEBUG
      &        , my_out_sf                                               !srv 27.06.21
+#endif
 #endif
       use b2mod_subsys
       implicit none
@@ -63,8 +67,6 @@
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
-      real (kind=R8), intent (inout) :: fluid_frac_hyb(nFc),
-     &            kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,0:ns-1)
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
       real (kind=R8) ::
@@ -263,7 +265,7 @@ c     initialize debugging/analysis arrays
         fna_mol      = 0.0_R8  !nh 30.03.21
 
         call precompute_kul_quant(nCv, nFc, nVx, switch, geo, mpg,
-     &   pl, dv, co, rt, dnn, fluid_frac_hyb, kin_frac_hyb)
+     &   pl, dv, co, rt, dnn)
       endif !! end pre-computations KUL fluid neutrals
 
       do istra = 1, nstrat
@@ -901,7 +903,7 @@ c            Calculate recycled neutral particle flux (assuming thin boundary ce
                call CalcRecycledFluxes(iCv,mpg%nCi,iFc,isign,
      &              is0,is2,is,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tif,tef,pof,
+     &              dv%fluid_frac_hyb(iFc),pl,tif,tef,pof,
      &              pl%na(iCv,is),dv%ne(iCv),geo,mpg,t0,
      &              cosa, sina, switch%use_uy_uz_0,
      &              fnnrec,fmomrec,nnrec,nnwwnrec,fenerec)
@@ -1001,7 +1003,7 @@ c          while B2.5 uses internal energy equations.
      &         fnni*neutral_sources_rescale
 
 !! save the incident fluid neutral flux
-             fnn_inc(iFc,is0) = fnni*isign
+             dv%fnn_inc(iFc,is0) = fnni*isign
 
 cmb   net momentum sources from neutral particle reflection
              if (.not.lcore) then
@@ -1009,7 +1011,7 @@ cmb   net momentum sources from neutral particle reflection
                  call CalcReflectedFluxesDiffusion(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),
+     &              dv%fluid_frac_hyb(iFc),
      &              pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
@@ -1021,7 +1023,7 @@ cmb   net momentum sources from neutral particle reflection
                  call CalcReflectedFluxesMaxwellian(iCv,mpg%nCi,iFc,
      &              isign,is0,
      &              istra,iwall,farea,b2recyc(is,istra),
-     &              recycm(is,istra),fluid_frac_hyb(iFc),pl,tnf,
+     &              recycm(is,istra),dv%fluid_frac_hyb(iFc),pl,tnf,
      &              geo,mpg,cosa, sina,
      &              fnnrefl,fmomrefl,nnrefl,nnwwnrefl,fenerefl,
      &              fene_el)
@@ -1031,7 +1033,7 @@ cmb   net momentum sources from neutral particle reflection
      &              iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tif,tnf,
+     &              dv%fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,
@@ -1041,7 +1043,7 @@ cmb   net momentum sources from neutral particle reflection
                  call CalcReflectedFluxesMinKn(iCv,iCn,mpg%nCi,
      &              iFc,isign,is0,is2,isi,istra,iwall,
      &              Phi_app,farea,b2recyc(is,istra),recycm(is,istra),
-     &              fluid_frac_hyb(iFc),pl,tif,tnf,
+     &              dv%fluid_frac_hyb(iFc),pl,tif,tnf,
      &              tef,pof,dv%ne(iCv),
      &              geo,mpg,rt,dnndy,dnndz,
      &              cosa, sina, switch%use_uy_uz_0, switch%use_uy_uz_1,

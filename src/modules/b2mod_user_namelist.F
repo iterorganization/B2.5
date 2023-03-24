@@ -227,8 +227,7 @@ c***  Standard set-up:
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        ic1, ic2, icff, iCv, iFc, iFcc, iFc1, iFc2, iFs, iVx,
-     >        ii, iFc11, iFc22, jj
+     >        ic1, ic2, icff, iCv, iFc, iFcc, iVx
 
       logical :: file_ok
       character*260 filename, cffile

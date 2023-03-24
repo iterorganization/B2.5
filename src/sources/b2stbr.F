@@ -27,11 +27,11 @@
       use b2mod_eirene
      ,  , only : eirene_mc
       use eirmod_extrab25
+      use b2mod_running_average
+     & , only : running_average, run_av_get_sources
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
-      use b2mod_running_average
-     & , only : running_average, run_av_get_sources
 #ifndef NO_CDF
       use b2mod_tallies
 #endif
@@ -46,6 +46,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2stbr, old_deposition, old_erosion
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_recycle
@@ -54,13 +57,13 @@
       use b2mod_boundary_namelist
      & , only : nbcd, potpar
       use b2mod_ad
-     & , only : ntstep_b2wall, old_deposition, old_erosion,
+     & , only : ntstep_b2wall,
      &          my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2stbr,
      &          ncall_b2stbr_phys
+#endif
       implicit none
 *   ..input arguments
       integer nCv, nFc, nVx, ns, nxtl, nxtr
@@ -73,15 +76,12 @@
       type (B2StateExt), intent (in) :: st_ext
       logical main_call
 *   ..local variables
-      real (kind=R8) ::
 #ifdef WG_TODO
-     &                  snatmp(nCv,0:1,0:ns-1), !djm Mar2017
+      real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),
      &                  shetmp(nCv,0:3),
-     &                  shitmp(nCv,0:3),
+     &                  shitmp(nCv,0:3)
 #endif
-     &                  fluid_frac_hyb(nFc),
-     &                  kin_frac_hyb(mpg%nFc), fnn_inc(mpg%nFc,ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -416,8 +416,7 @@ c   --> better solution wanted here..
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  switch%b2stbr_temperature_at_guard_cell,
      4  switch%b2stbr_potential_at_guard_cell,
-     5  switch%recycled_neutrals_contr,fluid_frac_hyb,kin_frac_hyb,
-     &  fnn_inc)
+     5  switch%recycled_neutrals_contr)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
@@ -610,8 +609,7 @@ c   --> better solution wanted here..
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir,
-     &                 main_call, switch, geo, mpg, st,
-     &                 kin_frac_hyb,fnn_inc)
+     &                 main_call, switch, geo, mpg, st)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1

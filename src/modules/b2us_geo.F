@@ -6,7 +6,8 @@
       private
       public :: alloc_geometry, dealloc_geometry,
      .          read_geometry, write_geometry,
-     .          init_geometry, calc_conn, check_geometry
+     .          init_geometry, calc_conn, check_geometry,
+     .          divide_by_area
 
       type, public :: geometry
 
@@ -914,7 +915,7 @@
       implicit none
       type(mapping), intent(inout) :: mpg
       type(geometry), intent(in) :: gm
-      integer :: ic, iCvm, iCvn, iCvp, iCv, iFc, iFt, icount
+      integer :: iCvm, iCvn, iCvp, iCv, iFc, iFt, icount
       logical :: closed, end_found, all_closed
 
       mpg%periodic_bc = 0
@@ -977,6 +978,32 @@
 
       return
       end subroutine is_periodic
+
+      subroutine divide_by_area( nFc, geo, flux, flux_density )
+      implicit none
+      integer, intent(in) :: nFc
+      type(geometry), intent(in) :: geo
+      real(kind=R8), intent(in) :: flux( nFc, 0:1 )
+      real(kind=R8), intent(out) :: flux_density( nFc, 0:1 )
+      integer iFc
+
+      do iFc = 1, nFc
+        if ( geo%fcQalf(iFc,0).ne.0.0_R8 ) then
+          flux_density(iFc,0) = flux(iFc,0)/
+     &      (geo%fcS(iFc)*geo%fcQalf(iFc,0))
+        else
+          flux_density(iFc,0) = 0.0_R8
+        end if
+        if ( geo%fcQalf(iFc,1).ne.0.0_R8 ) then
+          flux_density(iFc,1) = flux(iFc,1)/
+     &      (geo%fcS(iFc)*geo%fcQalf(iFc,1))
+        else
+          flux_density(iFc,1) = 0.0_R8
+        end if
+      end do
+
+      return
+      end subroutine divide_by_area
 
 ***********************************************************************
 

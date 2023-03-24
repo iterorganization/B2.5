@@ -23,6 +23,7 @@
       use b2mod_batch_average
      & , only : batch_av_all
       use b2mod_switches
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_transport_namelist
@@ -47,6 +48,7 @@
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
+#endif
       use b2mod_ad
       use b2mod_subsys
       implicit none

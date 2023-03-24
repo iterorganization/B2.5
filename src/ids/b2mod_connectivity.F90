@@ -420,7 +420,7 @@ contains
 
     integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType,iFace,offset
     integer ix1,ix2
-    integer ixpt,ixbreak
+    integer ixbreak
     integer lefttargetindex(2), righttargetindex(2)
     logical CellToTest
     intrinsic min, max
@@ -700,17 +700,6 @@ contains
     ! We first identify the inner X-point
     ! For DN cases, only the inner X-point is guaranteed to lie within the
     ! valid domain!
-    if (nncut.eq.1) then
-      ixpt = 1
-    else if (nncut.eq.2) then
-      if (topcut(1).le.topcut(2)) then
-        ixpt = 1
-      else
-        ixpt = 2
-      endif
-    else
-      ixpt = 0
-    endif
     do iy=-1,ny
         do ix=-1,nx
             if (cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY) cycle
