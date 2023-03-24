@@ -954,6 +954,8 @@ cwdk      Total flux will be fine, possibly distributed somewhat differently...
             if (mpg%cvOnClosedSurface(icv).and.ishigh)
      >       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 10')
+             call xertst (conpar(is,ib,2).ge.0,                         ! lkw 30.06.2022
+     .        'For BCCON = 10 the CONPAR(:,:,2) should not be negative')
           endif
 cwdk      Note: now total face area taken. Need to check backwards
 cwdk      compatibility for E/W boundaries
@@ -989,6 +991,11 @@ cwdk      compatibility for E/W boundaries
                 srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
      .            t0/pl%na(iCv1,is)
               endif
+              t0 = geo%fcS(iFc)*                                        !lkw 30.06.2022{
+     &         sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
+     &         (am(is)*mp))*conpar(is,ib,2)
+             srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is)+t0*pl%na(iCv1,is)
+             srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is)-t0               !lkw 30.06.2022}
             endif
           enddo
 
