@@ -15,7 +15,7 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
-     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt
+     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc
         integer :: nnreg(0:1), periodic_bc, iFssep
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -35,7 +35,7 @@
         integer, allocatable :: cvFt(:)                !         listing for every cell the corresponding flux tube
         integer, allocatable :: fsFcP(:,:)             ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
         integer, allocatable :: fsFc(:)                !         listing for every flux surface the corresponding cell face numbers
-        integer, allocatable :: fcFs(:)                ! for every flux surface the corresponding flux surface number
+        integer, allocatable :: fcFs(:)                ! for every cell face the corresponding flux surface number, if any
         integer, allocatable :: fcReg(:)               ! Region numbers of the cell faces
         integer, allocatable :: cvReg(:)               ! Region numbers of the cells
         integer, allocatable :: ftReg(:)               ! Region numbers of the flux tubes
@@ -71,6 +71,9 @@
         integer, allocatable :: vxFs(:)                ! for each vertex, the flux surface it belongs to
 
         integer, allocatable :: Xpt(:)                 ! vertex numbers for the X-points
+        integer, allocatable :: vxStrP(:,:)            !(nStr,2): for each Xpt, the list of associated strike points, and their number
+        integer, allocatable :: vxStr(:)               ! list of vertex numbers for the strike points
+        integer, allocatable :: vxTgc(:)               ! list of vertex numbers for the tangency points
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut, nctcnt               ! some parameters related to the original grid
@@ -568,10 +571,12 @@
       subroutine init_mapping(m)
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: i, j
-      integer :: iCv, iFc, iVx, iFs, iVx1, iVx2, iNv, iNv1, iNv2, iNvmx
-      integer :: totalcount, regcount, Fscount, iactive
+      integer :: i, j, k, l
+      integer :: iCv, iCv1, iCv2, iFc, iFcc, iVx, iFs, iVx1, iVx2,
+     *           iNv, iNv1, iNv2, iNvmx
+      integer :: totalcount, regcount, Fscount, iactive, icount, fccount
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:)
+      logical :: duplicate
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
 cwdk  can be derived directly from data in that file
@@ -660,6 +665,8 @@ cwdk  can be derived directly from data in that file
       allocate(ireg(maxval(m%vxCvP(:,2))))
       indXpt = 0
       m%nXpt = 0
+      m%nStr = 0
+      m%nTgc = 0
       iactive = 0
       do iVx = 1, m%nVx
         ireg = 0
@@ -699,11 +706,75 @@ cwdk  can be derived directly from data in that file
         else if (m%nnreg(0).eq.1) then
           call ipgeti ('b2mwti_jsep', m%iFssep)
         end if
+        indXpt = 0
+        icount = 0
+        allocate(m%vxStrP(m%nXpt,2))
+        m%vxStrP = 0
+        m%vxStrP(1,1) = 1
+        do i = 1, m%nXpt
+          if (i.gt.1) then
+            m%vxStrP(i,1) = m%vxStrP(i-1,1) + m%vxStrP(i-1,2)
+          end if
+          iFs = m%vxFs(m%Xpt(i))
+          do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
+            iFc = m%fsFc(j)
+            do k = 1, 2
+              iVx = m%fcVx(iFc,k)
+              fccount = 0
+              do l = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                if (m%fcFs(m%vxFc(l)).eq.iFs) fccount = fccount + 1
+              end do
+              if (fccount.eq.1) then
+                icount = icount + 1
+                m%vxStrP(i,2) = m%vxStrP(i,2) + 1
+                indXpt(icount) = iVx
+              end if
+            end do
+          end do
+        end do
+        m%nStr = icount
+        allocate(m%vxStr(m%nStr))
+        m%vxStr(1:m%nStr) = indXpt(1:m%nStr)
+      else if (m%nnreg(0).eq.2) then
+        iFc = 1
+        icount = 0
+        do while (m%iFssep.eq.0.and.iFc.le.m%nFc)
+          iCv1 = m%fcCv(iFc,1)
+          iCv2 = m%fcCv(iFc,2)
+          if (m%cvReg(iCv1).ne.m%cvReg(iCv2).and.
+     &        m%cvReg(iCv1).ne.0.and.m%cvReg(iCv2).ne.0) then
+            m%iFssep = m%fcFs(iFc)
+          end if
+          if (m%iFssep.eq.0) iFc = iFc + 1
+        end do
+        do i = m%fsFcP(m%iFssep,1),
+     &         m%fsFcp(m%iFssep,1) + m%fsFcp(m%iFssep,2) - 1
+          iFc = m%fsFc(i)
+          do k = 1, 2
+            iVx = m%fcVx(iFc,k)
+            do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+              iFcc = m%vxFc(j)
+              if (m%fcLbl(iFcc).ne.0) then
+                duplicate = .false.
+                do l = 1, icount
+                  if (indXpt(l).eq.iVx) duplicate = .true.
+                end do
+                if (.not.duplicate) then
+                  icount = icount + 1
+                  indXpt(icount) = iVx
+                end if
+              end if
+            end do
+          end do
+        end do
+        m%nTgc = icount
+        allocate(m%vxTgc(m%nTgc))
+        m%vxTgc(1:m%nTgc) = indXpt(1:m%nTgc)
       end if
       deallocate(indXpt)
 
-      write (*,*) 'nXpt          ', m%nXpt
-      write (*,*) 'nFsVxmx       ', m%nFsVxmx
+      write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
+      write (*,*) 'nFsVxmx          ', m%nFsVxmx
 
       return
       end subroutine init_mapping
