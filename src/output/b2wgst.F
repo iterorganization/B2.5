@@ -292,7 +292,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fnex',
      &    header)
@@ -325,7 +325,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fhex',
      &    header)
@@ -356,7 +356,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fchx',
      &    header)
@@ -384,7 +384,7 @@
 *      ..obtain the coordinates
          ixr = nint(cwaxr(iplot)*nx)
          iyr = nint(cwayr(iplot)*ny)
-         call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+         call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *      ..make plot
          call pagini (0, xc(-1), xc(nx), -sc, sc, 'x', 'fnax',
      &     header)
@@ -416,7 +416,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fney',
      &    header)
@@ -449,7 +449,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fhey',
      &    header)
@@ -480,7 +480,7 @@
 *     ..obtain the coordinates
         ixr = nint(cwaxr(iplot)*nx)
         iyr = nint(cwayr(iplot)*ny)
-        call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+        call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *     ..make plot
         call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fchy',
      &    header)
@@ -508,7 +508,7 @@
 *      ..obtain the coordinates
          ixr = nint(cwaxr(iplot)*nx)
          iyr = nint(cwayr(iplot)*ny)
-         call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+         call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *      ..make plot
          call pagini (0, yc(-1), yc(ny), -sc, sc, 'y', 'fnay',
      &     header)

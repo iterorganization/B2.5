@@ -18,10 +18,10 @@ C
 
       subroutine b2yt_ngread(solps_version, eirene_format,
      . nx1, ny1, natm1, iatm1, nmol1, imol1, nion1, iion1, npls1, ipls1,
-     . nfla, savestratum, non_commensurate,
+     . nfla, no_sputtering, savestratum, non_commensurate,
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     . hx, hy, qc, hx1, hy1, qc1)
+     . hx, hy, qc, hxx, hyy, qc1)
 c
 c  version : 06.11.97 22:11
 c
@@ -52,10 +52,10 @@ c
       real (kind=R8) :: e_bundle_contr(npls1,nfla)
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
+     *  hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
       character*4 solps_version
       character*8 eirene_format
-      logical savestratum(0:nstraid)
+      logical savestratum(0:nstraid), no_sputtering
 
 *  -- LOCAL SCALARS --
       integer is, nplsi
@@ -395,7 +395,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
         end if
       end do
       call write_title(45,'rfluxa',n2*natm1)
@@ -417,7 +417,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
           end if
         end do
         call write_title(45,'rfluxm',n2*nmol1)
@@ -439,7 +439,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         end if
       end do
       call write_title(45,'pfluxa',n2*natm1)
@@ -461,7 +461,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
           end if
         end do
         call write_title(45,'pfluxm',n2*nmol1)
@@ -483,7 +483,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
         end if
       end do
       call write_title(45,'refluxa',n2*natm1)
@@ -505,7 +505,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hx, hx1, bottomiy1)
+     &        hx, hxx, bottomiy1)
           end if
         end do
         call write_title(45,'refluxm',n2*nmol1)
@@ -522,13 +522,12 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = pefluxa(0:nx+1,0:ny+1,is,1)
-          call b2xtfx (nx, ny, nx1, ny1,
-     &        field, pefa1(0,0,iatm1(is)),
+          call b2xtfx (nx, ny, nx1, ny1, field, pefa1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
         end if
       end do
       call write_title(45,'pefluxa',n2*natm1)
@@ -550,7 +549,7 @@ C
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
-     &        hy, qc, hy1, qc1)
+     &        hy, qc, hyy, qc1)
           end if
         end do
         call write_title(45,'pefluxm',n2*nmol1)
@@ -566,7 +565,8 @@ C
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emiss1(0,0),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -574,7 +574,8 @@ C
       call b2xtvc(nx, ny, nx1, ny1,
      &        field, emissmol1(0,0),
      &        nncutmax, non_commensurate,
-     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        nnreg, nncut, periodic_bc,
+     &        jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
@@ -823,18 +824,24 @@ cank-960727
         call write_title(45,'wldpeb(0)',nlimps)
         call wrneutrs(45,wldpeb,1)
         call write_title(45,'wldspt(0)',nlimps)
+        if (no_sputtering) wldspt(:,0) = 0.0_R8
         call wrneutrs(45,wldspt,1)
         if (jvftnew .ge. 20170328) then
           allocate(wldspta1(nlimps,natm1,0:nstrai+1))
           allocate(wldsptm1(nlimps,nmol1,0:nstrai+1))
-          do is = 1, natmi
-            if (iatm1(is).ne.0)
-     >       wldspta1(:,iatm1(is),0) = wldspta(:,is,0)
-          end do
-          do is = 1, nmoli
-            if (imol1(is).ne.0)
-     >       wldsptm1(:,imol1(is),0) = wldsptm(:,is,0)
-          end do
+          if (no_sputtering) then
+            wldspta1 = 0.0_R8
+            wldsptm1 = 0.0_R8
+          else
+            do is = 1, natmi
+              if (iatm1(is).ne.0)
+     >          wldspta1(:,iatm1(is),0) = wldspta(:,is,0)
+            end do
+            do is = 1, nmoli
+              if (imol1(is).ne.0)
+     >          wldsptm1(:,imol1(is),0) = wldsptm(:,is,0)
+            end do
+          end if
           call write_title(45,'wldspta(0)',nlimps*natm1)
           call wrneutrs(45,wldspta1,natm1)
           call write_title(45,'wldsptm(0)',nlimps*nmol1)
@@ -851,6 +858,7 @@ cank-960727
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
             call rdneutrs(44,wldpeb(1,istra),1)
             call rdneutrs(44,wldspt(1,istra),1)
+            if (no_sputtering) wldspt(:,istra) = 0.0_R8
             if (jvft44 .ge. 20170328) then
               call rdneutrs(44,wldspta(:,:,istra),natmi)
               call rdneutrs(44,wldsptm(:,:,istra),nmoli)
@@ -869,7 +877,7 @@ cank-960727
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 wldpa1(:,iatm1(is),istra) = wldpa(:,is,istra)
-                if (jvftnew .ge. 20170328) then
+                if (jvftnew .ge. 20170328 .and. .not.no_sputtering) then
                   wldspta1(:,iatm1(is),istra) = wldspta(:,is,istra)
                 end if
               end if
@@ -877,7 +885,7 @@ cank-960727
             do is = 1, nmoli
               if (imol1(is).ne.0) then
                 wldpm1(:,imol1(is),istra) = wldpm(:,is,istra)
-                if (jvftnew .ge. 20170328) then
+                if (jvftnew .ge. 20170328 .and. .not.no_sputtering) then
                   wldsptm1(:,imol1(is),istra) = wldsptm(:,is,istra)
                 end if
               end if
@@ -1250,7 +1258,13 @@ cank
                 ewldm1res(imol1(is),1:NCL) = ewldm_res(is,1:NCL)
                 ewldem1res(imol1(is),1:NCL) = ewldem_res(is,1:NCL)
                 ewldmr1res(imol1(is),1:NCL) = ewldmr_res(is,1:NCL)
-                wldsptm1res(imol1(is),1:NCL) = wldsptm_res(is,1:NCL)
+                if (jvftnew .ge. 20170328) then
+                  if (no_sputtering) then
+                    wldsptm1res(imol1(is),:) = 0.0_R8
+                  else
+                    wldsptm1res(imol1(is),1:NCL) = wldsptm_res(is,1:NCL)
+                  end if
+                end if
               end if
             end do
             call write_title(45,'sarea_res',ncl)

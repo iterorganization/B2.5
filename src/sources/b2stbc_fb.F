@@ -208,7 +208,11 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_user_namelist
-     & ,only : nomp, omp, icsepomp, ifssep
+     & ,only : omp, icsepomp, ifssep
+#ifdef WG_TODO
+      use b2mod_user_namelist
+     & ,only : nomp
+#endif
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -251,21 +255,21 @@
 #endif
      &        ib, iss,
      &        ifc, ifc1, ifc2, ic1, ic2
-      integer, save :: ncall_old, ncall_gap, n_flux_zero
 #ifdef WG_TODO
+      integer, save :: ncall_old, ncall_gap, n_flux_zero
       integer ixl1, ixr1, ixl2, ixr2, icount, istrai
-      integer, save :: jsep, jxa, jxi
+      integer, save :: jsep, jxa, jxi, nesepm_istra, ncallfeedback
       integer, save :: fhiycore_kinetic_energy, iyped, icped
 #endif
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra, ncallfeedback
+     &                 isfeedback
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
-     &  dt_prev, sum_e, sum_s, total_flux,
+     &  dt_prev, sum_e, sum_s, total_flux
 #ifdef WG_TODO
-     &  flux_old, target_flux,
+     & ,flux_old, target_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
      1  fheycore, fheycore_alpha, fheycurr,
      1  fhiycore, fhiycore_alpha, fhiycurr,
@@ -279,9 +283,9 @@
      5  ndes, ndes_sol, ntot, den(0:1), rcbsna(0:1),
      6  cbsnafac, cbsnainc,
      7  private_flux_puff, private_flux_area,
-#endif
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
+#endif
       real (kind=R8), allocatable :: charge_frac(:)
       integer, save :: b2sral_style = 2
       character*72 message
@@ -291,9 +295,9 @@
      .        consistent_pfr2, zeroslope
       save zeroslope
 #endif
-      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save,
+      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save
 #ifdef WG_TODO
-     1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
+     1 ,fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
      3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
      3  nesepm_alpha, nesepm_beta, nesepm_gamma, nesepm_error_old,
@@ -303,22 +307,22 @@
      5  ndes, ndes_sol, den, rcbsna,
      6  cbsnafac,
      7  private_flux_puff, private_flux_area, flux_old,
-#endif
      9  save_core_flux_while_overshot, save_gas_puff_while_overshot,
      9  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot
+#endif
 *   ..procedures
-      intrinsic abs, mod, nint
       external xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
-      data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
+      data ncall/0/,
+     &  dtim/1.0_R8/, na_feedback_save/DEF_NATM*0.0_R8/,
      &  na_feedback_prev/DEF_NATM*0.0_R8/,
 #ifdef WG_TODO
+     &  ncall_old/0/, ncall_gap/5/, n_flux_zero/0/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
-     2  fhiycore_kinetic_energy/0/,
+     2  fhiycore_kinetic_energy/0/, ncallfeedback/0/,
      2  fchycore/-1.0e30_R8/, fchycore_alpha/1.0e-1_R8/,
      3  nesepm/0.0_R8/, nesepm_sol/0.0_R8/, nepedm_sol/0.0_R8/,
      3  nesepm_pfr/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
@@ -331,14 +335,14 @@
      5  ndes/0.0_R8/, ndes_sol/0.0_R8/,
      6  cbsnafac/0.01_R8/,
      7  private_flux_puff/0.0_R8/,
-     l  zeroslope/.false./,
-#endif
+     l  zeroslope/.false./, nesepm_istra/-1/,
      9  save_core_flux_while_overshot/0.0_R8/,
      9  save_gas_puff_while_overshot/0.0_R8/,
      9  save_pfr1_puff_while_overshot/0.0_R8/,
      9  save_pfr2_puff_while_overshot/0.0_R8/,
+#endif
      i  coreregno/1/, coreregn2/4/, solregno/3/,
-     i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, nesepm_istra/-1/
+     i  pfrregno1/0/, pfrregno2/2/, isfeedback/0/
 #ifdef COMPLICATED
 #ifndef B25_EIRENE
       integer i
@@ -527,7 +531,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      &    'b2stbc_nepedm_sol not available yet for extended grids')
          call ipgeti ('b2stbc_iyped', iyped)
          icped = iyped+2
-         call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny 
+         call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny
      &    .and. iyped.le.nomp, 'faulty input iyped')
          call xertst (mpg%cvOnClosedSurface(omp(icped)),
      .    'location of top of pedestal outside core region!')
@@ -967,7 +971,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
                   do iFc = ifc1, ifc2
                     ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
                     ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
-                    if(mpg%cvOnClosedSurface(ic1) .or. 
+                    if(mpg%cvOnClosedSurface(ic1) .or.
      &                 mpg%cvOnClosedSurface(ic2)) then
                       na_feedback_current =
      &                  na_feedback_current + (pl%na(ic1,is) +

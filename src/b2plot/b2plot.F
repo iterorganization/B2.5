@@ -89,7 +89,7 @@ c
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
-     4   pz(-1:nxd,-1:nyd), hy1(-1:nxd,-1:nyd),
+     4   pz(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
      3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
@@ -820,7 +820,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 #ifdef WG_TODO
       call get_wall_data(nx,ny,ns,BoRiS,found)
 #endif
-      hy1(:,:)=hy(:,:)*qz(:,:,1)
 cxpb  We now use the data already computed in init_wall
       do ibnd = 1, nbnd
         ix = imapx(ibnd)
@@ -971,6 +970,8 @@ c
       call mapy(nx,ny,1,fch_32(:,:,1,1),work)
       call mapx(nx,ny,1,fch_52(:,:,0,0),work)
       call mapy(nx,ny,1,fch_52(:,:,1,1),work)
+      call mapx(nx,ny,1,fne(:,:,0,0),work)
+      call mapy(nx,ny,1,fne(:,:,1,1),work)
       call mapx(nx,ny,1,fne_32(:,:,0,0),work)
       call mapy(nx,ny,1,fne_32(:,:,1,1),work)
       call mapx(nx,ny,1,fne_52(:,:,0,0),work)
@@ -1188,8 +1189,6 @@ c
       call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
 #endif
-      cr=0.25_R8*sum(crx,3)
-      cz=0.25_R8*sum(cry,3)
       targetr=0.5_R8*sum(targetcr,3)
       targetz=0.5_R8*sum(targetcz,3)
       icell=0
@@ -1751,6 +1750,14 @@ c
           description='Radial particle flux (s^{-1})'
           nz=ns
           call copy(fnay,1.0_R8,nz,textpl)
+        case('fnex')
+          description='Poloidal electron flux (s^{-1})'
+          nz=1
+          call copy(fne(:,:,0,0),1.0_R8,1,textbl)
+        case('fney')
+          description='Radial electron flux (s^{-1})'
+          nz=1
+          call copy(fne(:,:,1,1),1.0_R8,1,textbl)
         case('fmox')
           description='Poloidal flux of parallel momentum (N)'
           nz=ns
@@ -1944,7 +1951,12 @@ c
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          call copy(hy1,1.0_R8,nz,textbl)
+          do iy = -1, ny
+            do ix = -1, nx
+              mach(ix,iy,0)=hy1(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case('sx')
           description='sx (m^{2})'
           nz=1
@@ -2188,18 +2200,13 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fetx(ix,iy)=fhe(ix,iy,0,0)+fhi(ix,iy,0,0)
+              fetx(ix,iy)=fht(ix,iy,0,0)-fhj(ix,iy,0,0)
      &                                  +fhi_ext(ix,iy,0,0)
-              do is=0,ns-1
-                fetx(ix,iy)=fetx(ix,iy)+
-     .           rpt(ix,iy,is)*ev*fna(ix,iy,0,0,is)+
-     1           fhm(ix,iy,0,0,is)*(1.0_R8-BoRiS)
-              end do
               do is=0,ns_ext-1
                 fetx(ix,iy)=fetx(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,0,is)+
-     .           0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*
-     .           fa_ext(ix,iy,0,0,is)*(1.0_R8-BoRiS)
+     .          (0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
+     .           ta_ext(ix,iy,is))*fa_ext(ix,iy,0,0,is)*(1.0_R8-BoRiS)
               end do
             end do
           end do
@@ -2209,18 +2216,13 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fety(ix,iy)=fhe(ix,iy,1,1)+fhi(ix,iy,1,1)
+              fety(ix,iy)=fht(ix,iy,1,1)-fhj(ix,iy,1,1)
      1                                  +fhi_ext(ix,iy,1,1)
-              do is=0,ns-1
-                fety(ix,iy)=fety(ix,iy)+
-     1           rpt(ix,iy,is)*ev*fna(ix,iy,1,1,is)+
-     1           fhm(ix,iy,1,1,is)*(1.0_R8-BoRiS)
-              end do
               do is=0,ns_ext-1
                 fety(ix,iy)=fety(ix,iy)+
      .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,1,is)+
-     .           0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*
-     .           fa_ext(ix,iy,1,1,is)*(1.0_R8-BoRiS)
+     .          (0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
+     .           ta_ext(ix,iy,is))*fa_ext(ix,iy,1,1,is)*(1.0_R8-BoRiS)
               end do
             end do
           end do
@@ -2473,38 +2475,6 @@ c
           sumjxi=0.0_R8
           suml=0.0_R8
           sumr=0.0_R8
-          iy=0
-          ix=0
-          do while(rightix(ix,iy).eq.ix+1 .and. ix.lt.nx)
-            ix=ix+1
-          end do
-          ixl=ix+1
-          ix=ix+1
-          do while(rightix(ix,iy).eq.ix+1 .and. ix.lt.nx)
-            ix=ix+1
-          end do
-          ixr=ix
-          if(nncut.eq.2) then
-            ix=nx
-            do while(leftix(ix,iy).eq.ix-1 .and. ix.gt.-1)
-              ix=ix-1
-            end do
-            ixl=ix-1
-            ix=ix-1
-            do while(leftix(ix,iy).eq.ix-1 .and. ix.gt.-1)
-              ix=ix-1
-            end do
-            ixr=ix
-            ix=0
-            do while(rightix(ix,iy).ne.nx+1 .and. ix.lt.nx)
-              ix=ix+1
-            end do
-            ixr=ix
-            do while(leftix(ix,iy).ne.-2 .and. ix.lt.nx)
-              ix=ix+1
-            end do
-            ixl=ix
-          endif
           ix=jxa
           do iy=jsep+1,ny
             sumjxa=sumjxa+mach(ix,iy,0)*
@@ -2521,38 +2491,51 @@ c
           endif
           do iy=-1,ny
             ix=0
-            suml(1)=suml(1)+mach(ix,iy,0)*
+            if (iy.ge.topcut(1)) suml(1)=suml(1)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
             ix=nx-1
-            sumr(1)=sumr(1)+mach(ix,iy,0)*
+            if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+              if (iy.ge.topcut(1).and.iy.lt.topcut(2))
+     .              sumr(1)=sumr(1)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
+            else if (nnreg(0).ne.7) then
+              if (iy.ge.topcut(1)) sumr(1)=sumr(1)+mach(ix,iy,0)*
+     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
+     2                hy1(ix,iy)
+            end if
             if(nncut.eq.2) then
-              ix=ixl+1
-              suml(2)=suml(2)+mach(ix,iy,0)*
+              ix=nxtr+1
+              if (iy.ge.topcut(2)) suml(2)=suml(2)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
-              ix=ixr-1
-              sumr(2)=sumr(2)+mach(ix,iy,0)*
+              ix=nxtl-1
+              if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+                if (iy.ge.topcut(2)) sumr(2)=sumr(2)+mach(ix,iy,0)*
      1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
      2                hy1(ix,iy)
+              else
+                if (iy.ge.topcut(1)) sumr(2)=sumr(2)+mach(ix,iy,0)*
+     1                sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)*cr(ix,iy)*
+     2                hy1(ix,iy)
+              endif
             endif
           end do
-          if(nnreg(0).le.5) then
+          if (nnreg(0).eq.7.and.topcut(1).lt.topcut(2)) then
+            write(*,*) 'Midplane pressure: ',sumjxa
+            write(*,*) 'Inner target:      ',suml(1)
+            write(*,*) 'Near SOL target:   ',sumr(1)
+            write(*,*) 'Far SOL target:    ',sumr(2)
+            write(*,*) 'Pressure drop (inner & outer): ',
+     1             suml(1)/sumjxa,sumr(1)+sumr(2)/sumjxa
+          else if (nnreg(0).le.7) then
             write(*,*) 'Midplane pressure: ',sumjxa
             write(*,*) 'Western target:    ',suml(1)
             write(*,*) 'Eastern target:    ',sumr(1)
             write(*,*) 'Pressure drop (inner & outer): ',
      1             suml(1)/sumjxa,sumr(1)/sumjxa
-          else if(nnreg(0).eq.7) then
-            write(*,*) 'Outer midplane pressure: ',sumjxa
-            write(*,*) 'Inner target:            ',suml(1)
-            write(*,*) 'Near SOL target:         ',sumr(1)
-            write(*,*) 'Far SOL target:          ',sumr(2)
-            write(*,*) 'Pressure drop (inner & outer): ',
-     1             suml(1)/sumjxa,sumr(1)+sumr(2)/sumjxa
-          else if(nnreg(0).eq.8) then
+          else if (nnreg(0).eq.8) then
             write(*,*) 'Outer midplane pressure: ',sumjxa
             write(*,*) 'Outer top target:        ',suml(2)
             write(*,*) 'Outer bottom target:     ',sumr(1)
@@ -2678,11 +2661,21 @@ c
         case ('cr')
           description='CR (m)'
           nz=1
-          call copy(cr,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cr(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('cz')
           description='CZ (m)'
           nz=1
-          call copy(cz,1.0_R8,nz,textbl)
+          do ix=-1,nx
+            do iy=-1,ny
+              mach(ix,iy,0)=cz(ix,iy)
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('na0')
           description='na at previous time step (m^{-3})'
           nz=ns
@@ -4472,7 +4465,7 @@ c     assumes that bb is OK for 1d cases
         case ('chhichii')
           description='Chang-Hinton \Gv\R_{i} (m^{2}/s)'
           call chang_hinton(nxd,nyd,nsd_local,jsep,jxa,lambda,
-     1     safetyfactor,cr,cz,crx,bb,ne,te,ti,na,mach)
+     1     safetyfactor,ne,te,ti,na,mach)
           nz=ns
           call copy(mach,1.0_R8,nz,textpl)
 *    end neoclassical part
@@ -6170,7 +6163,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6207,7 +6200,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -6244,7 +6237,7 @@ c          write(*,*) 'Read a new geometry'
           open(99,file=arg,status='old')
           do ix=-1,nx
             do iy=-1,ny
-              read(99,*) cr(ix,iy),cz(ix,iy),
+              read(99,*) dummy,dummy,
      1                   crx(ix,iy,1),cry(ix,iy,1),
      2                   crx(ix,iy,3),cry(ix,iy,3),
      3                   crx(ix,iy,0),cry(ix,iy,0),
@@ -11410,7 +11403,7 @@ c calculate neoclassical diagnostics
       if(rerun_neoclassical) then
         call neo_diagnostics(nx, ny, ns, neo_ic, dn_neo, chi_neo,
      &   vn_neo, vw_neo)
-        call neo_validity(nx, ny, ns, jsep, jxa, cr, safetyfactor,
+        call neo_validity(nx, ny, ns, jsep, jxa, safetyfactor,
      &   nuab, nua, nustar, rhol, lnn, ltt, deltal, wb, deltaw,
      &   deltawn, deltawt, omega, deltab, deltapar, vtha)
         rerun_neoclassical = .false.

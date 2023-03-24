@@ -123,7 +123,6 @@
      1  dcx, dion, vcx, lcx, lion, din, dnn,
      1  poloidal_scale_factor
       real (kind=R8) ::
-     *  t0, t1,
      *  min_df0_tmp, max_df0_tmp, tav
       integer elm_count
 #ifdef WG_TODO
@@ -131,13 +130,9 @@
 #endif
       logical catch_up
 *   ..procedures
-      intrinsic sqrt, max, exp
+      intrinsic sqrt
       external xertst, sfill, ipgeti, ipgetr
 *   ..initialisation
-*   ..statement functions
-      real (kind=R8) ::
-     *  addup
-      addup(t0,t1)=t0+t1
 *-----------------------------------------------------------------------
 *.computation
 * ..preliminaries

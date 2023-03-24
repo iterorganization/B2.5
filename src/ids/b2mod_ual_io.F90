@@ -143,7 +143,8 @@ module b2mod_ual_io
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2, &
+     &          VEC_ALIGN_R_MAJOR_ID, VEC_ALIGN_Z_ID
 #endif
 #endif
     use ids_schemas &     ! IGNORE
@@ -3231,7 +3232,7 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
-#if IMAS_MINOR_VERSION > 37
+#if IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 )
     case( VEC_ALIGN_R_MAJOR_ID )
       !! Writing major radius aligned quantity
       !! Make sure the data field is properly allocated
@@ -3322,8 +3323,8 @@ contains
           iyn = leftiy( ix, iy )
         end if
         if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          ! stop "compute_Coordinate_Unit_Vectors: "// &
-          ! & "not able to find poloidal neighbour for cell"
+          ! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+          ! & "not able to find poloidal neighbour for cell" )
           !! skip cell
           cycle
         end if
@@ -3355,8 +3356,8 @@ contains
           iyn = bottomiy( ix, iy )
         end if
         if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-          ! stop "compute_Coordinate_Unit_Vectors: "// &
-          ! &  "not able to find toroidal neighbour for cell"
+          ! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+          ! &  "not able to find toroidal neighbour for cell" )
           !! skip cell
           cycle
         end if
@@ -3784,7 +3785,8 @@ contains
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find poloidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find poloidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if
@@ -3817,7 +3819,8 @@ contains
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find toroidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find toroidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if

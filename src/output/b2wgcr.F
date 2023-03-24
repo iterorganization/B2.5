@@ -98,7 +98,7 @@
      *  samax, scal10
       logical strmas
       external xertst, samax, b2scopy, sfill, scal10, strmas
-      external b2xpne, b2xpni, b2xxgs, b2wgxp
+      external b2xpne_st, b2xpni, b2xxgs, b2wgxp
 
 *-----------------------------------------------------------------------
 *.computation
@@ -132,9 +132,7 @@
 *   ..make contour plots of (ne) residual
       if (strmas(idout,'cpne')) then
 *      (ignore boundaries and singular regions)
-#ifdef WG_TODO
-       call b2xpne (nx, ny, ns, rza, resco, zero, wrk0)
-#endif
+       call b2xpne_st (nx, ny, ns, rza, resco, zero, wrk0)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -159,9 +157,7 @@
 *   ..make contour plots of (ni) residual
       if (strmas(idout,'cpni')) then
 *      (ignore boundaries and singular regions)
-#ifdef WG_TODO
-       call b2xpni (nx, ny, ns, resco, wrk0)
-#endif
+       call b2xpni (n2, ns, resco, wrk0)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -338,9 +334,7 @@
 * ..make plots of corrections
 *   ..make contour plots of (pr) correction
       if (strmas(idout,'cppr')) then
-#ifdef WG_TODO
-       call b2xpni (nx, ny, ns, corpa, wrk0)
-#endif
+       call b2xpni (n2, ns, corpa, wrk0)
        t0 = scal10(0.8_R8*samax(n2,wrk0,1))
        write (header,fmth) 'TOTAL PRESSURE CORRECTION (J/m**3).', 
      &  t0/50.0_R8

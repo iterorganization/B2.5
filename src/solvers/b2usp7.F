@@ -49,7 +49,6 @@ C     integer ixb, iyb, ixt, iyt
 C     real (kind=R8) :: aa11p2, aa11m2                             !srv 27.01.00
       save ncall, vis_per                                          !srv 27.01.00
 *   ..procedures
-      intrinsic min, abs
       external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p, b2ux9p                      !srv 11.01.00
 *   ..initialisation

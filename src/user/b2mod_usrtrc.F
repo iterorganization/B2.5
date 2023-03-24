@@ -203,7 +203,7 @@ c*** Column headers:
      ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
      ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
       integer mgl3_tmp
-      integer kgl3_tmp(ngl3_tmp) 
+      integer kgl3_tmp(ngl3_tmp)
       data kgl3_tmp / -1, 0, 0, -1 /
       real (kind=R8) ::
      *     equg3_tmp(ngl3_tmp)
@@ -1909,6 +1909,7 @@ c*** Limiter case
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
    92 write(*,*) 'b2usrtrc: wrong format of the file ',trim(f)
@@ -1933,8 +1934,16 @@ c=======================================================================
 c=======================================================================
       subroutine b2usrtrf
 c     Finalization step
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
+      if (.not.allocated(hlp_hdr)) return
       deallocate(hlp_hdr)
       deallocate(hlp_out)
+
       return
       end subroutine b2usrtrf
 c=======================================================================

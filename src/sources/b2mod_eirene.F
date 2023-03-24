@@ -111,13 +111,13 @@
 
       contains
 
-      subroutine eirene_mc(nCv, nFc, ns, nxtl, nxtr, ismain, dtim,
+      subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0,
      & main_call, switch, geo, mpg, st,
      & kin_frac_hyb, fnn_inc)
       use b2mod_subsys
       implicit none
-      integer nCv,nFc,ns,nxtl,nxtr,ismain
+      integer nCv, nFc, ns
       real (kind=R8) ::
      * dtim,
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
@@ -314,7 +314,7 @@ c not sure this is the right place
         allocate(NPTS_input(NSTRAI))
         allocate(tflux0(NSTRAI))
         if (balance_netcdf.ne.0) then !djm Jan2017
-         call alloc_b2mod_eirene_sources(nCv,nFc,ns,nstrat)
+         call alloc_b2mod_eirene_sources(nCv,ns,nstrat)
         endif
 
         write(*,*) 'Calling test_couple'
@@ -717,11 +717,64 @@ c first save the original NPTS provided by the Eirene input files.
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
 #endif
           if (time_dep_puff(istrai)) then !{
-            if (tim.lt.gpdata(1,1,istrai)) then
+            if (time_dep_puff_func(istrai)) then
+             call xertst(time_dep_puff_case(istrai).ge.0
+     1               .and.time_dep_puff_case(istrai).le.5,
+     1         'bad value for time_dep_puff_case')
+             if (time_dep_puff_case(istrai) .eq. 0) then ! sinusoidal
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               +time_dep_puff_param(2,istrai)*(sin(2.d0*pi
+     &               *time_dep_puff_param(3,istrai)*tim
+     &               +time_dep_puff_param(4,istrai)))
+             elseif (time_dep_puff_case(istrai) .eq. 1) then  ! stair+ramp
+               if ((tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &            *2.*time_dep_puff_param(3,istrai)).ge.0. .and.
+     &             (tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &            *2.*time_dep_puff_param(3,istrai)).lt.
+     &             time_dep_puff_param(3,istrai)) then ! mod of tim/step size
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+               else
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *time_dep_pufF_param(2,istrai)
+     &                 +(tim-INT(tim/2.d0/time_dep_puff_param(3,istrai))
+     &                 *2.*time_dep_puff_param(3,istrai)
+     &                 -time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+     &                 /time_dep_puff_param(3,istrai)
+               endif
+             elseif (time_dep_puff_case(istrai) .eq. 2) then  ! stair+ramp
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               +tim*time_dep_puff_param(2,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 3) then  ! linear + sinusoidal
+               tflux(istrai) = time_dep_puff_param(1,istrai)
+     &               + time_dep_puff_param(2,istrai)*(sin(2.d0*3.14159
+     &               *time_dep_puff_param(3,istrai)*tim
+     &               +time_dep_puff_param(4,istrai)))
+     &               +tim*time_dep_puff_param(5,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 4) then  ! step function
+                 tflux(istrai) = time_dep_puff_param(1,istrai)
+     &                 +INT(tim/time_dep_puff_param(3,istrai))
+     &                 *time_dep_puff_param(2,istrai)
+             elseif (time_dep_puff_case(istrai) .eq. 5) then  ! triangle wave
+                 tflux(istrai) = (time_dep_puff_param(1,istrai)
+     &                 -time_dep_puff_param(2,istrai))
+     &                 +(4.d0*time_dep_puff_param(2,istrai)
+     &                 /time_dep_puff_param(3,istrai))
+     &                 * ((time_dep_puff_param(3,istrai)/2.d0)
+     &                 - abs(mod((tim+time_dep_puff_param(3,istrai)/4.d0
+     &                 +time_dep_puff_param(4,istrai))
+     &                  ,(2.d0*(time_dep_puff_param(3,istrai)/2.d0)))
+     &                 - time_dep_puff_param(3,istrai)/2.d0));
+             endif
+            else !if time_dep_puff_func
+             if (tim.lt.gpdata(1,1,istrai)) then
               tflux(istrai)=userfluxparm(istrai,1)
-            else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
+             else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
               tflux(istrai)=gpdata(ngpdata(istrai),2,istrai)
-            else
+             else
               ib=1
               it=ngpdata(istrai)
               do while (it-ib.gt.1)
@@ -744,7 +797,8 @@ c first save the original NPTS provided by the Eirene input files.
               else
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
-            end if
+             endif
+           endif
 #ifdef WG_RM
           else if (ncall.ge.ncallfeedback.and.
      &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
@@ -903,8 +957,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'in b2mod_eirene: main_call = ', main_call
       end if
       if (ncall.eq.0) then
-        if (main_call)
-     .   call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+        if (main_call) call b2trci(switch)
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0

@@ -35,7 +35,6 @@
      &  wrk0(nCv), wrkf(nFc), wrkv(nVx), wrkg(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)
 *   ..procedures
-      intrinsic max, abs
       external xertst
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------

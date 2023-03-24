@@ -75,8 +75,7 @@
      &   kappa(0:ns,0:nzdecl-1,-1:ny),
      &   vw(0:ns,0:nzdecl-1,-1:ny),
      &   dfhcb, dfhce, hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
-     &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5),
-     &   hy1(-1:nx,-1:ny)
+     &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy
@@ -162,13 +161,6 @@
         do istate=0,nzdecl-1
           den(ispecies,istate)=0.0_R8
           zsp(ispecies,istate)=0.0_R8
-        enddo
-      enddo
-
-*   ..calculate hy-projection
-      do ix=-1,nx
-        do iy=-1,ny
-          hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
         enddo
       enddo
 

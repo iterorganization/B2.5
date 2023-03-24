@@ -315,8 +315,8 @@ c   ..geometric centres of mesh polygons & flux
      *                  ( cry(ix,iy,0) + cry(ix,iy,1) + cry(ix,iy,2)
      *                  + cry(ix,iy,3) )
             psi(ix,iy) = 0.25_R8 *
-     *                  ( fpsi(ix,iy,0) + fpsi(ix,iy,1) + fpsi(ix,iy,2)
-     *                  + fpsi(ix,iy,3) )
+     *                  ( fpsi(ix,iy,0,0) + fpsi(ix,iy,1,0)
+     *                  + fpsi(ix,iy,2,0) + fpsi(ix,iy,3,0) )
          enddo
       enddo
 
@@ -1382,7 +1382,7 @@ c   ..ADAS impurity data
 
          write(yearz,'(i2)') isyear(is)
          cbuf8 = ppaddsp( ' YEARZ', izs )
-         call ppcstr( nwrite, cbuf8//':' // yearz )
+         call ppcstr( nwrite, cbuf8 // ':' // yearz )
       enddo
 
       return

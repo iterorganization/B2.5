@@ -38,14 +38,10 @@
 *   ..global named constants
 
 *   ..local variables
-      integer, save :: guard_flows
-      real (kind=R8) :: dpo(nFc,0:1),
-     *  wght(nCv), pov(mpg%nVx)
+      real (kind=R8) :: dpo(nFc,0:1), pov(mpg%nVx)
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx, diff_r
-*   ..initialization
-      data guard_flows/2/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -61,7 +57,6 @@
       else                                                              !srv 27.02.13
 
 *   ..compute differences of po
-        wght = 1.0_R8
         call diff(nCv, nFc, mpg%nVx, 0, geo, mpg, po, pov, dpo)
 
 *   ..compute the current

@@ -47,8 +47,6 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: x(ndepth)
       real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
-      real (kind=R8) :: Cp, Kappa, mass_density
-      external Cp, Kappa, mass_density
 
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
@@ -309,7 +307,7 @@ c  The second term on RHS is grad(K*UX) = dK/dx * UX = dK/dU*(UX)^2
       implicit none
       integer ibnd, i
       real (kind=R8) :: x, t, u, du, ux, uxx
-      real (kind=R8) :: Kappa,dKappabydT,Cp,mass_density, Ts
+      real (kind=R8) :: Kappa, dKappabydT, Cp, mass_density, Ts
 
       Ts = u
       du = (1.0_R8/mass_density(ibnd,i)/Cp(ibnd,i,Ts))*
@@ -853,13 +851,13 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
-        !$OMP CRITICAL (heatdiff1D)
+        !$OMP CRITICAL (qevap_heatdiff1D)
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
-        !$OMP END CRITICAL (heatdiff1D)
+        !$OMP END CRITICAL (qevap_heatdiff1D)
       endif
 
       do is = 0, ns-1

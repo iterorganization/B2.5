@@ -59,10 +59,12 @@
 *     However, there may be cuts in the geometry, in which case these
 *     identities need not hold.
 *
-*     fpsi1 - (-1:nx1,-1:ny1,0:3) real*8 array, output.
-*     For (ix,iy,i) in (-1:nx1,-1:ny1,0:3), fpsi1(ix,iy,i) specifies the
+*     fpsi1 - (-1:nx1,-1:ny1,0:3,0:2) real*8 array, output.
+*     For (ix,iy,i) in (-1:nx1,-1:ny1,0:3), fpsi1(ix,iy,i,0) specifies the
 *     potential for the magnetic field components (bx,by) at the
 *     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
@@ -91,10 +93,10 @@
 *     symmetry it includes a factor 2*pi*cry1.)
 *     It will hold that 0.lt.vol1(,).
 *
-*     hx1, hy1 - (-1:nx1,-1:ny1) real*8 array, output.
-*     For (ix,iy) in (-1:nx1,-1:ny1), hx1(ix,iy) and hy1(ix,iy) specify the
+*     hxx, hyy - (-1:nx1,-1:ny1) real*8 array, output.
+*     For (ix,iy) in (-1:nx1,-1:ny1), hxx(ix,iy) and hyy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.hx1(,) and 0.lt.hy1(,).
+*     It will hold that 0.lt.hxx(,) and 0.lt.hyy(,).
 *
 *     qz1 - (-1:nx1,-1:ny1,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx1,-1:ny1), qz1(ix,iy,0) specifies sin(t) and
@@ -169,17 +171,7 @@
 *   ..local variables
       integer n2, ix, iy, idum(0:9), periodic_bc
       integer iFace, offset
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *   trim1, cosang, sinang
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external xertst, cfrure, cfruin
       external b2xvsg, b2xvgm1
 
@@ -200,14 +192,19 @@
       call cfrure (nget, n2*4, crx1, 'crx')
       call cfrure (nget, n2*4, cry1, 'cry')
 *   ..read flux functions
-      call cfrure (nget, n2*4, fpsi1, 'fpsi')
+      if(b2fgmtry_version.ge.'03.002.000') then
+        call cfrure (nget, n2*12, fpsi1, 'fpsi')
+      else
+        call cfrure (nget, n2*4, fpsi1, 'fpsi')
+        fpsi1(:,:,:,1:2) = 0.0_R8
+      endif
       call cfrure (nget, n2*4, ffbz1, 'ffbz')
 *   ..read magnetic field
       call cfrure (nget, n2*4, bb1, 'bb')
 *   ..read vol, hx, hy
       call cfrure (nget, n2, vol1, 'vol')
-      call cfrure (nget, n2, hx1, 'hx')
-      call cfrure (nget, n2, hy1, 'hy')
+      call cfrure (nget, n2, hxx, 'hx')
+      call cfrure (nget, n2, hyy, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz1, 'qz')
 cxpb
@@ -320,8 +317,9 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
      &     bb1(ix,iy,0:2) - (wbbr1(ix,iy,0:2)-bb1(ix,iy,0:2))
           if (rightix1(ix,iy).eq.nx1+1) wbbr1(ix,iy,0:2) =
      &     bb1(ix,iy,0:2) - (wbbl1(ix,iy,0:2)-bb1(ix,iy,0:2))
-          if (bottomiy1(ix,iy).eq.-2) wbbv1(ix,iy,0:2) = bb1(ix,iy,0:2)
-     &     - (wbbv1(topix1(ix,iy),topiy1(ix,iy),0:2)-bb1(ix,iy,0:2))
+          if (bottomiy1(ix,iy).eq.-2)
+     &     wbbv1(ix,iy,0:2) = bb1(ix,iy,0:2) -
+     &     (wbbv1(topix1(ix,iy),topiy1(ix,iy),0:2)-bb1(ix,iy,0:2))
         enddo
       enddo
 *   .. correct interpolation of magnetic field for diverted island case
@@ -435,8 +433,8 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
           end do
         end do
       end if
-      cell_width1 = hx1
-      cell_height1(:,:) = hy1(:,:)*qz1(:,:,1)
+      cell_width1 = hxx
+      cell_height1(:,:) = hyy(:,:)*qz1(:,:,1)
       if(b2fgmtry_version.ge.'01.001.033') then
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
@@ -455,7 +453,7 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
       call xertst(maxval(region1(-1:nx1,-1:ny1,2)).gt.0 .or.
      &            minval(region1(-1:nx1,-1:ny1,1)).lt.0,
      &            'Y-regions not set, re-run b2ag!')
-      call b2xvgm1(nx1, ny1, vol1, hx1, hy1, qz1, qc1, qs1, gs1, pbs1,
+      call b2xvgm1(nx1, ny1, vol1, hxx, hyy, qz1, qc1, qs1, gs1, pbs1,
      .     cell_width1, cell_height1, bottomiy1)
 *   ..create B2GridMap data structure
       call b2CreateMap(nx1,ny1,crx1,cry1,cflags1,

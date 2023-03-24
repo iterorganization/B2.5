@@ -83,10 +83,9 @@
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
       real (kind=R8) :: zpdum(0:nsdecl-1,4)
-      character savefile*256, lblgm*120, lblmn*120, lblcp*120,
-     *          lblps*120
+      character lblgm*120, lblmn*120, lblcp*120, lblps*120
       character filename*256
-      character cnamip*80, cvalip*80, line*500
+      character cnamip*80, cvalip*80, line*500, ligne*500
       character bcp_filename*260
 #ifdef B25_EIRENE
       logical linq_33, linq_34, linq_35, lcheck
@@ -103,15 +102,13 @@
       integer :: ico, io_33, io_34, io_35, iel, iel2
 #endif
 *   ..procedures
-      integer lnblnk
       logical is_comment
-      external lnblnk, is_comment
+      external is_comment
       external prgini, prgend, xertst, cfopen, cfruin
       external b2rucp, b2rups, b2wuzd, b2wups, b2xvps, ipgeti, ipgetr
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
       data nout/60,61,62,63,64,65,66,67/
-      data savefile/'plasmastate.xxxx'/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -177,8 +174,12 @@
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         call ipsetc (cnamip, cvalip)
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           call ipsetc (cnamip, cvalip)
+         end if
        end if
        goto 1
     2 continue
@@ -188,9 +189,7 @@
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
-      call b2rugm (ninp(1), nx, ny, isymm, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs, wbbl,
-     &  wbbr, wbbv, wbbc, ebc, cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
       call get_nxt(nx, nxtl, nxtr)
 
       call ipgeti ('b2mndr_eirene', use_eirene)

@@ -43,8 +43,8 @@
 
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, cvmgp
-      external cvmgp, hybr
+     *   hybr
+      external hybr
       intrinsic abs
 
 *-----------------------------------------------------------------------

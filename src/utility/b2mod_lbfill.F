@@ -1,7 +1,16 @@
-      subroutine lbfill (iftp, acrx, acry, nacra, indx)
+      module b2mod_lbfill
       use b2mod_types
       implicit none
-      integer iftp, iftp1, nacra, indx
+
+      integer iftp0
+      save iftp0
+      data iftp0/0/
+
+      contains
+
+      subroutine lbfill (acrx, acry, nacra, indx)
+      implicit none
+      integer nacra, indx
       real (kind=R4) acrx(0:nacra-1), acry(0:nacra-1)
 *     ------------------------------------------------------------------
 *     LBFILL is a substitute for a routine of the same name in the
@@ -30,12 +39,9 @@
 *     The parameter iftp1 in the call to lbfilq returns the saved
 *     value of iftp0.
 *     ------------------------------------------------------------------
-      integer iftp0
-      save iftp0
 #ifndef PLPLOT
       external gsfais, gsfaci, gsfasi, gfa
 #endif
-      data iftp0/0/
 *     ------------------------------------------------------------------
 #ifndef PLPLOT
 *   ..branch on style
@@ -96,13 +102,20 @@
       call gsfasi (1)
 #endif
       return
+      end subroutine lbfill
 *     ------------------------------------------------------------------
-      entry lbfilx (iftp)
+      subroutine lbfilx (iftp)
+      implicit none
+      integer, intent(in) :: iftp
       iftp0 = iftp
       return
+      end subroutine lbfilx
 *     ------------------------------------------------------------------
-      entry lbfilq (iftp1)
+      subroutine lbfilq (iftp1)
+      implicit none
+      integer, intent(out) :: iftp1
       iftp1 = iftp0
       return
+      end subroutine lbfilq
 *     ------------------------------------------------------------------
-      end
+      end module b2mod_lbfill
