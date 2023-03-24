@@ -53,6 +53,7 @@
      & , only : batch_av_all_init, batch_av_all_save, batch_av_all_fin
       use b2mod_trace
       use b2mod_ipmain
+      use b2mod_openmp
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
@@ -153,9 +154,14 @@
       integer, save :: shot = 0, run = 0
       integer, save :: use_mms = 0                                   !srv 26.02.18
       integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
+#ifdef _OPENMP
+      real (kind=R8) :: cpuval, cpustart, cpuinit
+#else
+      real (kind=R4) :: cpuval, cpustart, cpuinit
+#endif
       real (kind=R8) ::
      *  na_min, na_new, dtim, etim,
-     &  b2mndr_cpu, cpuval, cpustart, cpuinit,
+     &  b2mndr_cpu,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
@@ -337,6 +343,15 @@
 #endif
       character*256 filename
       logical ex, found
+#ifdef IMAS
+      character(len=24) :: device_env
+#ifndef NO_GETENV
+      integer lenval, ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
+#endif
+#endif
 *   ..initialisation
       data atomic_physics_rescale_flag/0/
       namelist /atomic_physics_rescale/
@@ -1918,12 +1933,12 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_ad
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ns, idum(0:9)
+      integer nout(0:11), ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ns, idum(0:9)
+      integer nout(0:10), ns, idum(0:9)
 #endif
 #ifdef WG_TODO
-      integer ny
+      integer nx, ny
 #endif
 #ifdef WINDOWS
       logical(4) :: lresult
@@ -1943,11 +1958,16 @@ c new CDF movie option (1st frame at t=0)
       character*256 filename, fort31name
 #ifdef B25_EIRENE
       character*256 systemarg
+#ifdef NAGFOR
+      integer ierror
+#endif
 #endif
       character*1 ss
       logical ok, found
 *   ..procedures
+#ifndef _OPENMP
       intrinsic cpu_time
+#endif
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
 
@@ -1957,7 +1977,7 @@ c new CDF movie option (1st frame at t=0)
 *   ..initialise counters
       itim = 0
       itim_plas = 0
-      cpuval = 0.0_R8
+      cpuval = 0.0
       elapsedval = 0.0_R8
       stack_ptr = 0
       first_time_step=.true.
@@ -1967,7 +1987,11 @@ c new CDF movie option (1st frame at t=0)
       quit_residual=.false.                                         !jwk
       res_max = 10.0_R8*res_quit
       ne_wanted_next_time=tim
+#ifdef _OPENMP
+      cpuinit = omp_get_wtime()
+#else
       call cpu_time(cpuinit)
+#endif
       elapsedinit=epoch_seconds()
 cwdk  set some integers
       nCv = mpg%nCv
@@ -1992,7 +2016,11 @@ cwdk  set some integers
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
+#ifdef _OPENMP
+      cpustart = omp_get_wtime()
+#else
       call cpu_time(cpustart)
+#endif
       elapsedstart=epoch_seconds()
 #ifndef FIXED_POINT
 *   ..loop test
@@ -2060,7 +2088,7 @@ cwdk  set some integers
         state%psnc%fkt = state%dv%fkt
         state%psnl%fzt = state%psnc%fzt
         state%psnc%fzt = state%dv%fzt
-        call b2trcs(ns,geo,mpg,switch)
+        call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
           state%pl%po   =0.0e0_R8
@@ -2262,7 +2290,7 @@ c new CDF movie option
         endif
         call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
      .              switch,state%pl,state%dv,state%co,ismain,ismain0,
-     .              switch%BoRiS,lwti,lwav,.true.)
+     .              lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2293,7 +2321,7 @@ c new CDF movie option
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
      .                           switch)
-          call b2trci(ns,nxtl,nxtr,geo,mpg,switch)
+          call b2trci(switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
@@ -2304,14 +2332,18 @@ c new CDF movie option
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
+#ifdef _OPENMP
+        cpuval = omp_get_wtime()
+#else
         call cpu_time(cpuval)
+#endif
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
      &     ' estimated remaining CPU time (s) =',
-     &            min((ntim-itim)*(cpuval-cpustart),
-     &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
+     &            min((ntim-itim)*real(cpuval-cpustart,R8),
+     &      max(0.0_R8,b2mndr_cpu-real(cpuval-cpuinit,R8)))              !srv 18.05.09
         else if (b2mndr_elapsed.gt.0.0_R8) then
           write(*,'(1x,3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      &     ' elapsed ', elapsedval-elapsedstart,
@@ -2367,7 +2399,12 @@ c new CDF movie option
      2      (etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.
      &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
+#ifdef _OPENMP
+        write_save=(cpuval-cpuinit).gt.cputarget.and.
+     &              cpuincrement.gt.0.0_R8
+#else
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
+#endif
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
@@ -2518,9 +2555,12 @@ c new CDF movie option
      & , only : old_erosion, old_deposition
       implicit none
 #ifdef JET
-      integer nout(0:11), nx, ny, ns, idum(0:9)
+      integer nout(0:11), ns, idum(0:9)
 #else
-      integer nout(0:10), nx, ny, ns, idum(0:9)
+      integer nout(0:10), ns, idum(0:9)
+#endif
+#ifdef WG_TODO
+      integer nx, ny
 #endif
       type (switches), intent (in) :: switch
       type(mapping), intent (inout)    :: mpg
@@ -2680,7 +2720,7 @@ c new CDF movie option
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
           call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
      *                switch,state%pl,state%dv,state%co,ismain,ismain0,
-     *                switch%BoRiS,.true.,.false.,.false.)
+     *                .true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif
@@ -2723,7 +2763,7 @@ c new CDF movie option
       if (ibatch_av_all > 0) call batch_av_all_fin
 
 *  .. finalize tracing routines
-      call b2trcf(ns,geo,mpg,switch)
+      call b2trcf
 
 * ..return
       ncall = ncall+1

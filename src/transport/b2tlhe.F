@@ -1,4 +1,4 @@
-      subroutine b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, ne, te, 
+      subroutine b2tlhe (nCv, nFc, me, cflme, switch, geo, mpg, ne, te,
      &  chvemx)
       use b2mod_types
       use b2mod_switches
@@ -24,10 +24,9 @@
       real (kind=R8) ::
      *   t0, t1
 *   ..procedures
-      real (kind=R8) :: pit
       intrinsic max, sqrt
       external xertst, b2xvsg
-      pit(iCv) = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+
 *   ..initialisation
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
@@ -50,7 +49,7 @@ cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqce_m
 c    because now both options are interchangeable
         do iFc = 1, nFc
           t0 = max(te(mpg%fcCv(iFc,1)),te(mpg%fcCv(iFc,2)))
-          chvemx(iFc) = cflme*sqrt(t0/me)*abs(geo%fcPbs(iFc))                 !srv 11.01.13
+          chvemx(iFc) = cflme*sqrt(t0/me)*abs(geo%fcPbs(iFc))            !srv 11.01.13
         enddo
       else if (switch%b2tqce_model.eq.2) then  ! SOLPS4.0 treatment
         do iFc = 1, nFc
@@ -63,11 +62,23 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
           chvemx(iFc) = cflme * geo%fcS(iFc) * abs(geo%fcQalf(iFc,0)) *
      .       (ne(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/me)*t0 +
      .        ne(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/me)*t1)/
-     .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))  
+     .       ((ne(mpg%fcCv(iFc,1))+ne(mpg%fcCv(iFc,2)))*max(t0,t1))
         enddo
       endif
       ncall_b2tlhe = ncall_b2tlhe+1
       call subend ()
       return
 *     ------------------------------------------------------------------
+      contains
+
+      function pit(iCv)
+      implicit none
+      real (kind=R8) :: pit
+      integer, intent(in) :: iCv
+
+      pit = abs(geo%cvBb(iCv,0))/geo%cvBb(iCv,3)
+
+      return
+      end function pit
+
       end subroutine b2tlhe

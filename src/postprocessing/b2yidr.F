@@ -4,6 +4,7 @@
       subroutine b2yidr (ninp, nout, nx, ny, ns)
       use b2mod_types
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_rates
@@ -19,6 +20,7 @@
       use b2mod_geo_corner
 !      use b2mod_work
       use b2mod_ipmain
+      use b2mod_lbfill
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -76,9 +78,9 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, iftp, idum(0:9), ismain
-      real (kind=R8) :: t0, t1
+      integer is, iftp, idum(0:9)
 #ifdef WG_TODO
+      integer ismain
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
@@ -87,18 +89,18 @@
       character lblmn*120, lblrc*120, lblgm*120, idout*80, id*8
       character cnamip*80, cvalip*80, line*500
       logical file_open
+#ifdef WG_TODO
 *   ..initialisation
       save ismain
       data ismain/1/
+#endif
 *   ..procedures
-      intrinsic abs
-      logical streql, ltst, is_comment
+      logical streql, is_comment
       external xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, lbfilx, cfruin, is_comment
+     &  gdawk, cfruch, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
       external ipgeti, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -260,10 +262,7 @@
       isymm = idum(0)
 *   ..read geometry and metric
 #ifdef WG_TODO
-      call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+      call b2rugm (ninp(3), nx, ny, isymm)
 #endif
 *   ..read plasma state file
       call cfruch (ninp(1), 120, lblmn, 'label')

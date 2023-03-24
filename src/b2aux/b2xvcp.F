@@ -58,9 +58,9 @@
 #ifdef WG_TODO
       integer ic
       logical found
+      intrinsic nint
 #endif
 *   ..procedures
-      intrinsic nint
       external xertst
       external b2xvsg
 

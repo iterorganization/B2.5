@@ -34,7 +34,7 @@ c
    10   read(99,*,err=30,end=40) x1,y1,z1,x2,y2,z2,xvalues(inpts+1)
         inpts=inpts+1
         yvalue(inpts)=chord_integral(nx,ny,work(-1,-1,is,iwrk),
-     1   crx,cry,bb,npoints,x1,y1,z1,x2,y2,z2,vector)
+     1   npoints,x1,y1,z1,x2,y2,z2,vector)
         if(inpts .lt. lngarr) goto 10
         call xerrab ('increase array size in process_chord')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))

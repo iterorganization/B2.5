@@ -1,6 +1,7 @@
-      subroutine b2txvspr(nx, ny, ns, fac_vis, vol, hx, hy,              !srv 10.10.17
-     &   qz, bb, avisper, bvisper, cvisper)
+      subroutine b2txvspr(nx, ny, ns, fac_vis,                          !srv 10.10.17
+     &   avisper, bvisper, cvisper)
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_constants
       use b2mod_anomalous_transport
@@ -12,8 +13,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     1   fac_vis(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3) 
+     1   fac_vis(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
@@ -22,19 +22,15 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is
+      integer ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
       real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hy1
       external xertst
       external b2xvsg, b2xvff, b2xvfx
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
 *-----------------------------------------------------------------------
 *.computation
 
@@ -46,8 +42,6 @@
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
        call ipgeti ('b2txvspr_iout',iout)                               !srv 06.12.17
       end if
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 

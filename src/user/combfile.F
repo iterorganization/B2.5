@@ -453,9 +453,9 @@ c*** non-space on both sides of the section borders - the field is split
                       end if !}
                     end if !}
                     if(k.eq.0) then !{ not enough space -> next section
-                      print *,'combfile: next section not ready'  !###
-                      print *,'nrec,l,ncln=',nrec,l,ncln          !###
-                      stop                                        !###
+                      print *,'combfile: next section not ready'   !###
+                      print *,'nrec,l,ncln=',nrec,l,ncln           !###
+                      call xerrab ('Not enough space in combfile') !###
                     end if !}
                   end if !}
                 end do !}

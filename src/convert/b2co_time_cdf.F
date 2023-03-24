@@ -53,11 +53,11 @@
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
       call ipgeti ('b2mwti_target_offset', target_offset)
-      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,
+      call output_ds(ny, -1,+target_offset,jsep,
      .                                        iylstrt,iylend,'dsl')
-      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
-      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,
+      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
+      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
+      call output_ds(ny, nx,-target_offset,jsep,
      .                                        iyrstrt,iyrend,'dsr')
 #ifndef NO_CDF
       if (nnreg(0).ge.7) then
@@ -71,9 +71,9 @@
      .            ixtr.lt.nx)
           ixtr=ixtr+1
         enddo
-        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,
+        call output_ds(ny,ixtl,-target_offset,jsep,
      .                                        iytlstrt,iytlend,'dstl')
-        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,
+        call output_ds(ny,ixtr,+target_offset,jsep,
      .                                        iytrstrt,iytrend,'dstr')
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1

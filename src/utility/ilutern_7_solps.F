@@ -4,6 +4,9 @@
       use b2mod_ma28_for_7diag
       use b2mod_indirect
       use b2mod_subsys
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       IMPLICIT NONE
       external bd1copy3                                            !srv 26.12.17
 C
@@ -25,7 +28,11 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K, IK, NZ
+#ifdef _OPENMP
       real (kind=R8) :: cpu_start, cpu_end
+#else
+      real (kind=R4) :: cpu_start, cpu_end
+#endif
       integer iflag
 
       real (kind=R8) ::
@@ -51,6 +58,12 @@ c
 *  -- PROCEDURES --
       intrinsic cpu_time
       EXTERNAL XERRAB
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02
@@ -75,7 +88,11 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
 !      if(ncall.lt.1000) then                                       !srv 26.12.17 {
 !*  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
 !         IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
@@ -294,7 +311,11 @@ cdpc
       ENDDO
 
 *  ---------------------------------------------------------------------
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       ncall=ncall+1
       call subend ()
       RETURN
