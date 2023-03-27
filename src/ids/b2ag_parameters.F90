@@ -166,7 +166,7 @@ contains
             ! Carre grid input
             if (grid_version.eq."03.002.000") then
 		! obtain nCv, nFc, nVx from geometry file
-      	        call cfruin (lun, 6, idum, 'nCv,nFc,nVx,nCg,nFs,nFt')
+      	        call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
                 nCv0 = idum(0)
                 nFc0 = idum(1)
 	            nVx0 = idum(2)
