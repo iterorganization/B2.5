@@ -71,7 +71,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
   ELSE
     isigma = 0
   END IF
-  DO ii=1,nsigma
+  DO ii=1,nsigma_opt
     SELECT CASE  (prior_type(ii+isigma)) 
     CASE (0) 
       CALL PUSHCONTROL2B(2)
@@ -100,7 +100,7 @@ SUBROUTINE CALC_PRIOR_B(prior, priorb, inrange)
       CALL PUSHCONTROL1B(0)
     END IF
   END DO
-  DO ii=nsigma,1,-1
+  DO ii=nsigma_opt,1,-1
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) priorb = 0.D0
     CALL POPCONTROL2B(branch)
@@ -194,7 +194,7 @@ SUBROUTINE CALC_PRIOR_NODIFF(prior, inrange)
   ELSE
     isigma = 0
   END IF
-  DO ii=1,nsigma
+  DO ii=1,nsigma_opt
     SELECT CASE  (prior_type(ii+isigma)) 
     CASE (0) 
 !Uniform distribution
