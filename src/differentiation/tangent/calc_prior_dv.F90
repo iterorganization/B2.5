@@ -94,7 +94,7 @@ SUBROUTINE CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
   ELSE
     isigma = 0
   END IF
-  DO ii=1,nsigma
+  DO ii=1,nsigma_opt
     SELECT CASE  (prior_type(ii+isigma)) 
     CASE (0) 
 !Uniform distribution
@@ -203,7 +203,7 @@ SUBROUTINE CALC_PRIOR_NODIFF(prior, inrange)
   ELSE
     isigma = 0
   END IF
-  DO ii=1,nsigma
+  DO ii=1,nsigma_opt
     SELECT CASE  (prior_type(ii+isigma)) 
     CASE (0) 
 !Uniform distribution
