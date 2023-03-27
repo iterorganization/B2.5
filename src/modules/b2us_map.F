@@ -71,9 +71,11 @@
         integer, allocatable :: vxFs(:)                ! for each vertex, the flux surface it belongs to
 
         integer, allocatable :: Xpt(:)                 ! vertex numbers for the X-points
-        integer, allocatable :: vxStrP(:,:)            !(nStr,2): for each Xpt, the list of associated strike points, and their number
-        integer, allocatable :: vxStr(:)               ! list of vertex numbers for the strike points
-        integer, allocatable :: vxTgc(:)               ! list of vertex numbers for the tangency points
+        integer, allocatable :: strVxP(:,:)            !(nXpt,2): for each Xpt, the list of associated strike point vertices, and their number
+        integer, allocatable :: strVx(:)               ! list of vertex numbers for the strike points
+        integer, allocatable :: tgVx(:)                ! list of vertex numbers for the tangency points
+        integer, allocatable :: strDiv(:)              ! For every strike point, the index of the divertor plate on which it is located
+                                                       ! The divertor plates are labelled from 1 to 4 starting travelling from West to East in the computational domain
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut, nctcnt               ! some parameters related to the original grid
@@ -701,19 +703,15 @@ cwdk  can be derived directly from data in that file
       if (m%nXpt.gt.0) then
         allocate(m%Xpt(m%nXpt))
         m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
-        if (iactive.ne.0) then
-          m%iFssep = m%vxFs(m%Xpt(iactive))
-        else if (m%nnreg(0).eq.1) then
-          call ipgeti ('b2mwti_jsep', m%iFssep)
-        end if
+        if (iactive.ne.0) m%iFssep = m%vxFs(m%Xpt(iactive))
         indXpt = 0
         icount = 0
-        allocate(m%vxStrP(m%nXpt,2))
-        m%vxStrP = 0
-        m%vxStrP(1,1) = 1
+        allocate(m%strVxP(m%nXpt,2))
+        m%strVxP = 0
+        m%strVxP(1,1) = 1
         do i = 1, m%nXpt
           if (i.gt.1) then
-            m%vxStrP(i,1) = m%vxStrP(i-1,1) + m%vxStrP(i-1,2)
+            m%strVxP(i,1) = m%strVxP(i-1,1) + m%strVxP(i-1,2)
           end if
           iFs = m%vxFs(m%Xpt(i))
           do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
@@ -726,15 +724,33 @@ cwdk  can be derived directly from data in that file
               end do
               if (fccount.eq.1) then
                 icount = icount + 1
-                m%vxStrP(i,2) = m%vxStrP(i,2) + 1
+                m%strVxP(i,2) = m%strVxP(i,2) + 1
                 indXpt(icount) = iVx
               end if
             end do
           end do
         end do
         m%nStr = icount
-        allocate(m%vxStr(m%nStr))
-        m%vxStr(1:m%nStr) = indXpt(1:m%nStr)
+        allocate(m%strVx(m%nStr))
+        m%strVx(1:m%nStr) = indXpt(1:m%nStr)
+        allocate(m%strDiv(m%nStr))
+        m%strDiv = 0
+        do i = 1, m%nStr
+          iVx = m%strVx(i)
+          do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+            if (m%strDiv(i).ne.0) cycle
+            iFc = m%vxFc(j)
+            if (m%fcReg(iFc).eq.1) then
+              m%strDiv(i) = 1
+            else if (m%fcReg(iFc).eq.4) then
+              m%strDiv(i) = 2
+            else if (m%fcReg(iFc).eq.5) then
+              m%strDiv(i) = 3
+            else if (m%fcReg(iFc).eq.8) then
+              m%strDiv(i) = 4
+            end if
+          end do
+        end do
       else if (m%nnreg(0).eq.2) then
         iFc = 1
         icount = 0
@@ -768,8 +784,54 @@ cwdk  can be derived directly from data in that file
           end do
         end do
         m%nTgc = icount
-        allocate(m%vxTgc(m%nTgc))
-        m%vxTgc(1:m%nTgc) = indXpt(1:m%nTgc)
+        allocate(m%tgVx(m%nTgc))
+        m%tgVx(1:m%nTgc) = indXpt(1:m%nTgc)
+        allocate(m%strDiv(2))
+        m%strDiv(1) = 1
+        m%strDiv(2) = 2
+      else if (m%nnreg(0).eq.1) then
+        call ipgeti ('b2mwti_jsep', m%iFssep)
+        if (m%iFssep.gt.0) then
+          indXpt = 0
+          icount = 0
+          allocate(m%strVxP(1,2))
+          m%strVxP(1,1) = 1
+          m%strVxP(1,2) = 2
+          do j = m%fsFcP(m%iFssep,1),
+     &           m%fsFcP(m%iFssep,1) + m%fsFcP(m%iFssep,2) - 1
+            iFc = m%fsFc(j)
+            do k = 1, 2
+              iVx = m%fcVx(iFc,k)
+              fccount = 0
+              do l = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                if (m%fcFs(m%vxFc(l)).eq.m%iFssep) fccount = fccount + 1
+              end do
+              if (fccount.eq.1) then
+                icount = icount + 1
+                indXpt(icount) = iVx
+              end if
+            end do
+          end do
+          m%nStr = icount
+          if (m%nStr.gt.0) then
+            allocate(m%strVx(m%nStr))
+            m%strVx(1:m%nStr) = indXpt(1:m%nStr)
+            allocate(m%strDiv(m%nStr))
+            m%strDiv = 0
+            do i = 1, m%nStr
+              iVx = m%strVx(i)
+              do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                if (m%strDiv(i).ne.0) cycle
+                iFc = m%vxFc(j)
+                if (m%fcReg(iFc).eq.1) then
+                  m%strDiv(i) = 1
+                else if (m%fcReg(iFc).eq.2) then
+                  m%strDiv(i) = 2
+                end if
+              end do
+            end do
+          end if
+        end if
       end if
       deallocate(indXpt)
 

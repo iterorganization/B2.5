@@ -63,6 +63,7 @@
 
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
+        logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
       end type geometry
 
       contains
@@ -192,6 +193,7 @@
       g%fsPsi = 0._R8
 
       g%LSN = .true.
+      g%psi_increasing = .true.
 
       return
       end subroutine initialize_geometry
@@ -397,8 +399,9 @@
       type (switches), intent (in) :: switch
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: i, nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv
+      integer :: i, j, nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv, iXpt
       real (kind=R8) :: hzconst, dux, duy, du, sbf
+      logical active
       intrinsic maxval
 
       nCv = mpg%nCv
@@ -595,11 +598,33 @@
 *   ..calculate connection length
       call calc_conn(mpg, gm)
 
-*   ..determine topology
-      if (mpg%nnreg(0).eq.2) then
-!! TODO: Need to identify the tangency point
-!! LSN = .false. if the tangency point is above or
+*   ..determine topology and sign of psi derivative
+!! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
+      iXpt = 0
+      if (mpg%nnreg(0).eq.1) then
+!! TODO: Find a way to ascertain, if flux surfaces are defined,
+!!       whether the psi valus is increasing or decreasing radially
+      elseif (mpg%nnreg(0).eq.2) then
+        do i = mpg%vxFcP(mpg%tgVx(1),1),
+     &         mpg%vxFcP(mpg%tgVx(1),1)+mpg%vxFcP(mpg%tgVx(1),2)-1
+          iFc = mpg%vxFc(i)
+          if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
+     &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
+            if ( mpg%fcVx(iFc,1).eq.mpg%tgVx(1)) then
+              iVx = mpg%fcVx(iFc,2)
+            else
+              iVx = mpg%fcVx(iFc,1)
+            end if
+            if ( gm%vxY(mpg%tgVx(1)).gt.gm%vxY(iVx) .or.
+     &          (gm%vxY(mpg%tgVx(1)).eq.gm%vxY(iVx) .and.
+     &           gm%vxX(mpg%tgVx(1)).gt.gm%vxX(iVx)) ) then
+              gm%LSN = .false.
+            end if
+            gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
+     &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1)))
+          end if
+        end do
       else if (mpg%nnreg(0).eq.4) then
         do i = mpg%vxFcP(mpg%Xpt(1),1),
      &         mpg%vxFcP(mpg%Xpt(1),1)+mpg%vxFcP(mpg%Xpt(1),2)-1
@@ -618,6 +643,35 @@
             end if
           end if
         end do
+        iXpt = 1
+      else if (mpg%nnreg(0).eq.5) then
+        iXpt = 1
+      else if (mpg%nnreg(0).ge.7) then
+        active = .false.
+        do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) +
+     &                                  mpg%vxCvP(mpg%Xpt(1),2) - 1
+          iCv = mpg%vxCv(i)
+          if (mpg%cvReg(iCv).eq.1) active = .true.
+        end do
+        if (active) then
+          iXpt = 1
+        else
+          iXpt = 2
+        end if
+      end if
+      if (iXpt.ne.0) then
+       do i = mpg%vxCvP(mpg%Xpt(iXpt),1), mpg%vxCvP(mpg%Xpt(iXpt),1) +
+     &                                    mpg%vxCvP(mpg%Xpt(iXpt),2) - 1
+        iCv = mpg%vxCv(i)
+        if (mpg%cvReg(iCv).eq.1) then
+          do j = mpg%cvVxP(iCv,1),
+     &           mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
+            if (mpg%vxFs(mpg%cvVx(j)).eq.mpg%vxFs(mpg%Xpt(iXpt))) cycle
+            gm%psi_increasing = gm%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt.
+     &                          gm%fsPsi(mpg%vxFs(mpg%Xpt(iXpt)))
+          end do
+        end if
+       end do
       end if
 
       return

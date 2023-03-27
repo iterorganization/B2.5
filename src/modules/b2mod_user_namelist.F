@@ -23,13 +23,14 @@
 !           it should be built as an ordered list from core to SOL. 
 ! - nromp: pre-defined maximum size for these lists
 ! - icsep[oi]mp: location of the separatrix position in the [oi]omp list
+! - ifsep[oi]mp: the face index of the separatrix intersection with the [oi]mp
 ! - n[oi]mp: number of CVs in the [oi]mp list
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordiantes 
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
       integer, parameter :: nromp=DEF_NYD*4
-      integer, save :: omp(nromp), icsepomp, nomp,
-     ,                 imp(nromp), icsepimp, nimp
+      integer, save :: omp(nromp), icsepomp, ifsepomp, nomp,
+     ,                 imp(nromp), icsepimp, ifsepimp, nimp
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
@@ -299,6 +300,7 @@ c***  Standard set-up:
             iVx = m%fcVx(m%cvFc(i),j)
             if (m%vxFs(iVx).eq.m%iFssep.and.m%iFssep.ne.0) then
               icsepomp = ic+1
+              ifsepomp = m%cvFc(i)
               found = .true.
             end if
           end do
@@ -688,6 +690,7 @@ c*** Set default values according to current species list
             iVx = m%fcVx(m%cvFc(i),j)
             if (m%vxFs(iVx).eq.m%iFssep.and.m%iFssep.ne.0) then
               icsepimp = ic+1
+              ifsepimp = m%cvFc(i)
               found = .true.
             end if
           end do
