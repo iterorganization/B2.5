@@ -733,7 +733,7 @@ cxpb  if just below the top corner, make the corner cell follow
       
       if (grid_version.eq."03.002.000") then
         !read nCv, nFc, nVx (without ghostcells)
-        call cfruin (nrid, 6, idum, 'nCv,nFc,nVx,nCg,nFs,nFt')
+        call cfruin (nrid, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
         nnCv = idum(0)
         nnFc = idum(1)
 	  nnVx = idum(2)
