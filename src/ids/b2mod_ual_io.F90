@@ -80,12 +80,15 @@ module b2mod_ual_io
     !! UAL Access
     use b2mod_ual_io_grid &
      & , only : INCLUDE_GHOST_CELLS, US_GRID_UNDEFINED,  &
-     &          GEOMETRY_LINEAR, GEOMETRY_LIMITER,       &
+     &          REGIONTYPE_EDGE,                         &
+     &          GEOMETRY_LINEAR, GEOMETRY_CYLINDER,      &
+     &          GEOMETRY_ANNULUS, GEOMETRY_LIMITER,      &
      &          GEOMETRY_SN, GEOMETRY_STELLARATORISLAND, &
      &          GEOMETRY_CDN,                            &
      &          GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP,   &
      &          GEOMETRY_LFS_SNOWFLAKE_PLUS,             &
-     &          GEOMETRY_LFS_SNOWFLAKE_MINUS
+     &          GEOMETRY_LFS_SNOWFLAKE_MINUS,            &
+     &          geometryId, geometryName, regionNumbers
 #if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
@@ -240,12 +243,15 @@ module b2mod_ual_io
   logical, parameter :: B2_WRITE_DATA = .true.
   real(IDS_real) :: time  !< Generic time
   real(IDS_real), save :: b0, r0, b0r0
+  real(IDS_real), save, allocatable :: flux_expansion(:), &
+      &  extension_r(:), extension_z(:), wetted_area(:)
   character(len=ids_string_length), save :: username  !< IDS user name
   character(len=ids_string_length), save :: source    !< Code source
   character(len=ids_string_length), save :: comment   !< IDS properties label
   character(len=ids_string_length), save :: create_date
   character(len=ids_string_length), save :: code_commit
   character(len=ids_string_length), save :: configuration
+  character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
   character*8, save :: imas_version, ual_version, adas_version
   character*8, save :: date
   character*10, save :: ctime
@@ -261,9 +267,13 @@ module b2mod_ual_io
 
 contains
 
-    subroutine IDS_init
+    subroutine IDS_init( mpg, geo )
     implicit none
+    type( mapping ), intent(in) :: mpg
+    type( geometry ), intent(in) :: geo
     integer tvalues(8)
+    integer i, iCv, iFc
+    real(kind=R8) :: r_min, r_max, z_min, z_max
     logical, save :: IDS_initialized = .false.
     character*16 usrnam
     character*32 get_B25_hash
@@ -294,6 +304,80 @@ contains
     create_date = date//' '//ctime//' '//' '//zone
     B25_git_version = get_B25_hash()
     code_commit = B25_git_version
+
+    geometryType = geometryId( mpg, geo )
+    configuration = geometryName( geometryType )
+    select case ( geometryType )
+    case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+      plate_name(1) = 'W'
+      plate_name(2) = 'E'
+    case ( GEOMETRY_LIMITER, GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+      if (geo%LSN) then
+        plate_name(1) = 'W'
+        plate_name(2) = 'E'
+      else
+        plate_name(1) = 'E'
+        plate_name(2) = 'W'
+      end if
+    case ( GEOMETRY_CDN, GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
+      plate_name(1) = 'LI'
+      plate_name(2) = 'UI'
+      plate_name(3) = 'UO'
+      plate_name(4) = 'LO'
+    case ( GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS )
+      plate_name(1) = 'E'
+      plate_name(2) = 'W1'
+      plate_name(3) = 'W2'
+      plate_name(4) = 'W3'
+    end select
+    if (mpg%nStr.gt.0) then
+      allocate(wetted_area( mpg%nStr ) )
+      allocate(extension_r( mpg%nStr ) )
+      allocate(extension_z( mpg%nStr ) )
+      allocate(flux_expansion( mpg%nStr ) )
+    else if (mpg%nTgc.gt.0) then
+      allocate(flux_expansion( mpg%nTgc ) )
+    end if
+    do i = 1, mpg%nStr
+      r_min = huge(1.0_R8)
+      r_max = 0.0_R8
+      z_min = huge(1.0_R8)
+      z_max =-huge(1.0_R8)
+      wetted_area(mpg%strDiv(i)) = 0.0_IDS_real
+      do iFc = 1, mpg%nFc
+        if (mpg%fcReg(iFc).eq. &
+          & regionNumbers(mpg%strDiv(i),REGIONTYPE_EDGE,geometryType)) then
+          if (mpg%fcCv(iFc,1).le.mpg%nCi) then
+            iCv = mpg%fcCv(iFc,1)
+          else
+            iCv = mpg%fcCv(iFc,2)
+          end if
+          r_min = min( r_min, geo%vxX(mpg%fcVx(iFc,1)), &
+               &              geo%vxX(mpg%fcVx(iFc,2)) )
+          r_max = max( r_max, geo%vxX(mpg%fcVx(iFc,1)), &
+               &              geo%vxX(mpg%fcVx(iFc,2)) )
+          z_min = min( z_min, geo%vxY(mpg%fcVx(iFc,1)), &
+               &              geo%vxY(mpg%fcVx(iFc,2)) )
+          z_max = max( z_max, geo%vxY(mpg%fcVx(iFc,1)), &
+               &              geo%vxY(mpg%fcVx(iFc,2)) )
+          wetted_area(mpg%strDiv(i)) = wetted_area(mpg%strDiv(i)) + geo%fcS(iFc)
+        end if
+      end do
+      extension_r(mpg%strDiv(i)) = r_max - r_min
+      extension_z(mpg%strDiv(i)) = z_max - z_min
+      if ( mpg%nnreg(0).eq.8 .and. &
+        & (mpg%strDiv(i).eq.1 .or. mpg%strDiv(i).eq.2) ) then
+        iFc = ifsepimp
+      else
+        iFc = ifsepomp
+      end if
+      flux_expansion(mpg%strDiv(i)) = &
+          & ( geo%fcBb(iFc,0)/geo%fcBb(iFc,3) ) / &
+          & ( geo%vxBb(mpg%strVx(i),0)/geo%vxBb(mpg%strVx(i),3) )
+    end do
+    if (mpg%nStr.eq.0 .and. mpg%nTgc.ge.1 ) flux_expansion(mpg%strDiv(1)) = &
+          & ( geo%fcBb(ifsepomp,0)/geo%fcBb(ifsepomp,3) ) / &
+          & ( geo%fcBb(mpg%tgVx(1),0)/geo%fcBb(mpg%tgVx(1),3) )
 
     IDS_initialized = .true.
     return
@@ -390,9 +474,9 @@ contains
         integer :: k      !< Iterator
         integer :: iFc    !< Iterator on faces
         integer :: iCv    !< Iterator on control volumes
-        integer :: iFcsep !< Index of the face at the OMP separatrix
         integer :: iCv1, Icv2 !< Indices of the two CVs of both sides
                               !< of the OMP separatrix
+        integer :: iVx    !< Iterator on vertices
         integer :: istrai !< Stratum iterator
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
@@ -427,12 +511,18 @@ contains
         real(IDS_real) :: tmpFace( mpg%nFc )
         real(IDS_real) :: tmpCv( mpg%nCv )
         real(IDS_real) :: totCv( mpg%nCv )
+        real(IDS_real) :: tmpVx( mpg%nVx )
         real(IDS_real) :: pe( mpg%nCv )
         real(IDS_real) :: zeff( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
-        real(IDS_real) :: u, v,                                        &
+        real(IDS_real) :: frac, u, v, psi_average, idir,               &
             &             vtor, nisep, nasum
+        real(IDS_real) :: power_convected( mpg%nStr ),                 &
+            &             power_conducted( mpg%nStr ),                 &
+            &             power_recombination_plasma( mpg%nStr ),      &
+            &             power_currents( mpg%nStr ),                  &
+            &             current_incident( mpg%nStr )
 #ifdef B25_EIRENE
 #ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
@@ -516,7 +606,7 @@ contains
         end if
 #endif
 
-        call IDS_init
+        call IDS_init( mpg, geo )
         ns = size( state%pl%na, 2 )
         do is = 0, ns-1
           call b2xppb( mpg%nCv, state%rt%rza(:,is),                 &
@@ -891,6 +981,410 @@ contains
         call write_ids_midplane( summary%midplane, midplane_id )
 #endif
 
+        if (mpg%iFssep.ne.US_GRID_UNDEFINED) then
+          u = 0.0_IDS_real
+          do i = mpg%fsFcP(mpg%iFssep,1), &
+               & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+            iCv1 = mpg%fcCv(mpg%fsFc(i),1)
+            iCv2 = mpg%fcCv(mpg%fsFc(i),2)
+            if (mpg%cvOnClosedSurface(iCv1).neqv. &
+              & mpg%cvOnClosedSurface(iCv2)) u = u + state%dv%fht(mpg%fsFc(i),1)
+          end do
+          if (u.ne.0.0_IDS_real) then
+#if IMAS_MINOR_VERSION > 28
+            call write_sourced_value( summary%global_quantities%power_loss, u )
+#endif
+          end if
+        end if
+
+        select case (GeometryType)
+        case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+          u = 0.0_IDS_real
+          frac = 0.0_IDS_real
+          do iCv = 1, mpg%nCi
+            if (mpg%iFssep.ne.US_GRID_UNDEFINED) then
+              psi_average = 0.0_R8
+              do i = mpg%cvVxP(iCv,1), mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
+                iVx = mpg%cvVx(i)
+                psi_average = psi_average + geo%vxFpsi(iVx)
+              end do
+              psi_average = psi_average / real(mpg%cvVxP(iCv,2))
+              match_found = &
+                & (geo%psi_increasing.and.psi_average.lt.geo%fsPsi(mpg%iFssep)).or. &
+                & (.not.geo%psi_increasing.and.psi_average.gt.geo%fsPsi(mpg%iFssep))
+            else
+              match_found = .false.
+            end if
+            do is = 0, ns-1
+              u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+              if (match_found) frac = frac + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              u = u - eneutrad(iCv,is,0)
+              if (match_found) frac = frac - eneutrad(iCv,is,0)
+            end do
+#endif
+          end do
+          if (u.ne.0.0_IDS_real) then
+            call write_sourced_value( summary%global_quantities%power_radiated, u )
+          end if
+#if IMAS_MINOR_VERSION > 30
+          if (frac.ne.0.0_IDS_real) then
+            call write_sourced_value( summary%global_quantities%power_radiated_inside_lcfs, frac )
+            call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, &
+              &  u - frac )
+          end if
+#endif
+        case ( GEOMETRY_LIMITER, GEOMETRY_SN, &
+            &  GEOMETRY_STELLARATORISLAND, GEOMETRY_ANNULUS , &
+            &  GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          u = 0.0_IDS_real
+          do iCv = 1, mpg%nCi
+            if (mpg%cvOnClosedSurface(iCv).and.mpg%nnreg(0).ne.5) cycle
+            if (mpg%nnreg(0).eq.5.and.mpg%cvReg(iCv).eq.1) cycle
+            do is = 0, ns-1
+              u = u + state%srw%rqrad(iCv,is) + state%srw%rqbrm(iCv,is)
+            end do
+#ifdef B25_EIRENE
+            do is = 1, natmi
+              u = u - eneutrad(iCv,is,0)
+            end do
+#endif
+          end do
+#if IMAS_MINOR_VERSION > 30
+          if (u.ne.0.0_IDS_real) then
+            call write_sourced_value( summary%global_quantities%power_radiated_outside_lcfs, u )
+          end if
+#endif
+        end select
+
+#if IMAS_MINOR_VERSION > 30
+        if ( mpg%nStr.gt.0 ) then
+          do i = 1, mpg%nStr
+            power_conducted(mpg%strDiv(i)) = 0.0_IDS_real
+            power_convected(mpg%strDiv(i)) = 0.0_IDS_real
+            power_recombination_plasma(mpg%strDiv(i)) = 0.0_IDS_real
+            power_currents(mpg%strDiv(i)) = 0.0_IDS_real
+            current_incident(mpg%strDiv(i)) = 0.0_IDS_real
+            do iFc = 1, mpg%nFc
+              if (mpg%fcReg(iFc).eq. &
+                & regionNumbers(mpg%strDiv(i),REGIONTYPE_EDGE,geometryType)) then
+                idir = 0.0_R8
+                do j = 1, size(mpg%bcFc)
+                  if (mpg%bcFc(j).eq.iFc) idir = mpg%bcFcOr(j)
+                end do
+                u = 0.0_R8
+                do is = 0, ns-1
+                  if (is_neutral(is)) then
+                    u = u + idir*state%pl%tn(iCv)* &
+                      & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
+                      &          state%dv%fna_32(iFc,1,is) ) + &
+                      &  2.5_R8*(state%dv%fna_52(iFc,0,is) + &
+                      &          state%dv%fna_52(iFc,1,is) ) )
+                  else
+                    u = u + idir*  &
+                      & (state%pl%ti(iCv) + &
+                      &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
+                      & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
+                      &          state%dv%fna_32(iFc,1,is) ) + &
+                      &  2.5_R8*(state%dv%fna_52(iFc,0,is) + &
+                      &          state%dv%fna_52(iFc,1,is) ) )
+                     power_recombination_plasma(mpg%strDiv(i)) = &
+                      &  power_recombination_plasma(mpg%strDiv(i)) + &
+                      &  idir*( state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
+                  end if
+                end do
+                power_convected(mpg%strDiv(i)) = power_convected(mpg%strDiv(i)) + u
+                power_conducted(mpg%strDiv(i)) = power_conducted(mpg%strDiv(i))   &
+                  & - u + idir*( state%dv%fht(iFc,0) - state%dv%fhj(iFc,0) +        &
+                  &              state%dv%fht(iFc,1) - state%dv%fhj(iFc,1) )
+                power_currents(mpg%strDiv(i)) = &
+                  &  power_currents(mpg%strDiv(i)) + &
+                  &  idir*( state%dv%fhj(iFc,0) + state%dv%fhj(iFc,1) )
+                current_incident(mpg%strDiv(i)) = &
+                  &  current_incident(mpg%strDiv(i)) + &
+                  &  idir*( state%dv%fch(iFc,0) + state%dv%fch(iFc,1) )
+              end if
+            end do
+          end do
+        end if
+        select case ( GeometryType )
+        case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
+          if (mpg%nStr.gt.0) then
+            allocate( divertors%divertor( mpg%nStr ) )
+            do j = 1, mpg%nStr
+              i = mpg%strDiv(j)
+              allocate( divertors%divertor(i)%name(1) )
+              allocate( divertors%divertor(i)%identifier(1) )
+              allocate( divertors%divertor(i)%target(1) )
+              allocate( divertors%divertor(i)%target(1)%name(1) )
+              allocate( divertors%divertor(i)%target(1)%identifier(1) )
+              if (streql(plate_name(i),'W')) then
+                divertors%divertor(i)%name = 'Western divertor'
+                divertors%divertor(i)%target(1)%name = 'Western target'
+              else if (streql(plate_name(i),'E')) then
+                divertors%divertor(i)%name = 'Eastern divertor'
+                divertors%divertor(i)%target(1)%name = 'Eastern target'
+              else
+                divertors%divertor(i)%name = 'Divertor '//int2str(i)
+                divertors%divertor(i)%target(1)%name = 'Target '//int2str(i)
+              end if
+              divertors%divertor(i)%identifier = plate_name(i)
+              divertors%divertor(i)%target(1)%identifier = plate_name(i)
+              divertors%divertor(i)%target(1)%extension_r = extension_r(i)
+              divertors%divertor(i)%target(1)%extension_z = extension_z(i)
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%flux_expansion, &
+                &  flux_expansion(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%wetted_area, &
+                &  wetted_area(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%wetted_area, &
+                &  wetted_area(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_incident_fraction, &
+                &  1.0_IDS_real )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_conducted, &
+                & power_conducted(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_conducted, &
+                & power_conducted(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_convected, &
+                & power_convected(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_convected, &
+                & power_convected(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_recombination_plasma, &
+                & power_recombination_plasma(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_recombination_plasma, &
+                & power_recombination_plasma(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%power_currents, &
+                & power_currents(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%power_currents, &
+                & power_currents(i) )
+#if IMAS_MINOR_VERSION > 32
+              call write_timed_value( &
+                & divertors%divertor(i)%target(1)%current_incident, &
+                & current_incident(i) )
+              call write_timed_value( &
+                & divertors%divertor(i)%current_incident, &
+                & current_incident(i) )
+#endif
+            end do
+          end if
+        case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
+          allocate( divertors%divertor(1) )
+          allocate( divertors%divertor(1)%name(1) )
+          allocate( divertors%divertor(1)%identifier(1) )
+          if (geo%LSN) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LSN'
+          else
+            divertors%divertor(1)%name = 'Upper divertor'
+            divertors%divertor(1)%identifier = 'USN'
+          end if
+          allocate( divertors%divertor(1)%target(2) )
+          allocate( divertors%divertor(1)%target(1)%name(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%name(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          divertors%divertor(1)%target(1)%extension_r = extension_r(1)
+          divertors%divertor(1)%target(1)%extension_z = extension_z(1)
+          divertors%divertor(1)%target(2)%extension_r = extension_r(2)
+          divertors%divertor(1)%target(2)%extension_z = extension_z(2)
+          if (geo%LSN) then
+            divertors%divertor(1)%target(1)%name = "Inner target"
+            divertors%divertor(1)%target(1)%identifier = "ID"
+            divertors%divertor(1)%target(2)%name = "Outer target"
+            divertors%divertor(1)%target(2)%identifier = "OD"
+          else
+            divertors%divertor(1)%target(1)%name = "Outer target"
+            divertors%divertor(1)%target(1)%identifier = "OD"
+            divertors%divertor(1)%target(2)%name = "Inner target"
+            divertors%divertor(1)%target(2)%identifier = "ID"
+          end if
+          do j = 1, mpg%nStr
+            i = mpg%strDiv(j)
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%flux_expansion, &
+              &  flux_expansion(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%wetted_area, &
+              &  wetted_area(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_conducted, &
+              &  power_conducted(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_convected, &
+              &  power_convected(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_recombination_plasma, &
+              &  power_recombination_plasma(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_currents, &
+              &  power_currents(i) )
+#if IMAS_MINOR_VERSION > 32
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%current_incident, &
+              &  current_incident(i) )
+#endif
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, &
+            &  power_recombination_plasma(1)+power_recombination_plasma(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, &
+            &  power_currents(1)+power_currents(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  power_currents(1)+power_currents(2) )
+#if IMAS_MINOR_VERSION > 32
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  current_incident(1)+current_incident(2) )
+#endif
+        case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
+        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+          allocate( divertors%divertor(2) )
+          allocate( divertors%divertor(1)%name(1) )
+          allocate( divertors%divertor(1)%identifier(1) )
+          allocate( divertors%divertor(2)%name(1) )
+          allocate( divertors%divertor(2)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2) )
+          allocate( divertors%divertor(2)%target(2) )
+          allocate( divertors%divertor(1)%target(1)%name(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%name(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          allocate( divertors%divertor(2)%target(1)%name(1) )
+          allocate( divertors%divertor(2)%target(1)%identifier(1) )
+          allocate( divertors%divertor(2)%target(2)%name(1) )
+          allocate( divertors%divertor(2)%target(2)%identifier(1) )
+          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Lower SF divertor'
+            divertors%divertor(2)%identifier = 'LSFD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Snowflake lower outer target"
+            divertors%divertor(2)%target(1)%identifier = "LSFOD"
+            divertors%divertor(2)%target(2)%name = "Snowflake lower inner target"
+            divertors%divertor(2)%target(2)%identifier = "LSFID"
+          else
+            divertors%divertor(1)%name = 'Lower divertor'
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%name = 'Upper divertor'
+            divertors%divertor(2)%identifier = 'UD'
+            divertors%divertor(1)%target(1)%name = "Lower inner target"
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%name = "Lower outer target"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%name = "Upper inner target"
+            divertors%divertor(2)%target(1)%identifier = "UID"
+            divertors%divertor(2)%target(2)%name = "Upper outer target"
+            divertors%divertor(2)%target(2)%identifier = "UOD"
+          endif
+          do j = 1, mpg%nStr
+            i = mpg%strDiv(j)
+            if (i.eq.1.or.i.eq.4) then
+              k = 1
+            else
+              k = 2
+            end if
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%flux_expansion, &
+              &  flux_expansion(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%wetted_area, &
+              &  wetted_area(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_conducted, &
+              &  power_conducted(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_convected, &
+              &  power_convected(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_recombination_plasma, &
+              &  power_recombination_plasma(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_currents, &
+              &  power_currents(i) )
+#if IMAS_MINOR_VERSION > 32
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%current_incident, &
+              &  current_incident(i) )
+#endif
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%wetted_area, &
+            &  wetted_area(1)+wetted_area(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_conducted, &
+            &  power_conducted(1)+power_conducted(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_convected, &
+            &  power_convected(1)+power_convected(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_plasma, &
+            &  power_recombination_plasma(1)+power_recombination_plasma(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_currents, &
+            &  power_currents(1)+power_currents(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  power_currents(1)+power_currents(4) )
+#if IMAS_MINOR_VERSION > 32
+          call write_timed_value( &
+            &  divertors%divertor(1)%current_incident, &
+            &  current_incident(1)+current_incident(4) )
+#endif
+          call write_timed_value( &
+            &  divertors%divertor(2)%wetted_area, &
+            &  wetted_area(2)+wetted_area(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_conducted, &
+            &  power_conducted(2)+power_conducted(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_convected, &
+            &  power_convected(2)+power_convected(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_plasma, &
+            &  power_recombination_plasma(2)+power_recombination_plasma(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_currents, &
+            &  power_currents(2)+power_currents(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%current_incident, &
+            &  power_currents(2)+power_currents(3) )
+#if IMAS_MINOR_VERSION > 32
+          call write_timed_value( &
+            &  divertors%divertor(2)%current_incident, &
+            &  current_incident(2)+current_incident(3) )
+#endif
+        end select
+#endif
 #endif
 
         !! Write grid & grid subsets/subgrids
@@ -3657,16 +4151,8 @@ contains
         allocate( summary%local%separatrix_average%position%psi( num_time_slices ) )
         summary%local%separatrix_average%position%psi( time_sind ) = geo%fsPsi(mpg%iFssep)
 #endif
-        iFcsep = US_GRID_UNDEFINED
-        do i = mpg%cvFcP(icsepomp,1), mpg%cvFcP(icsepomp,1) + mpg%cvFcP(icsepomp,2) - 1
-          if (iFcsep .ne. US_GRID_UNDEFINED) cycle
-          iFc = mpg%cvFc(i)
-          if (mpg%fcFs(iFc).eq.mpg%iFssep) then
-            iFcsep = iFc
-          end if
-        end do
-        iCv1 = mpg%fcCv(iFcsep,1)
-        iCv2 = mpg%fcCv(iFcsep,2)
+        iCv1 = mpg%fcCv(ifsepomp,1)
+        iCv2 = mpg%fcCv(ifsepomp,2)
         call write_sourced_value( summary%local%separatrix%t_e, &
            &  0.5_R8 * (state%pl%te(iCv1) + state%pl%te(iCv2))/ev )
         call write_sourced_value( summary%local%separatrix%t_i_average, &
@@ -3839,6 +4325,234 @@ contains
 #if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%zeff, u )
 #endif
+
+! Data at limiter tangency point
+        if (geometryType.eq.GEOMETRY_LIMITER) then
+          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te, tmpVx )
+          call write_sourced_value( summary%local%limiter%t_e, tmpVx(mpg%tgVx(1))/ev )
+          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti, tmpVx )
+          call write_sourced_value( summary%local%limiter%t_i_average, tmpVx(mpg%tgVx(1))/ev )
+          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne, tmpVx )
+          call write_sourced_value( summary%local%limiter%n_e, tmpVx(mpg%tgVx(1)) )
+          do is = 1, nspecies
+            is1 = eb2spcr(is)
+            if (nint(zamax(is1)).eq.0) is1 = is1 + 1
+            is2 = is1 + nfluids(is) - 1
+            nisep = 0.0_R8
+            do i = is1, is2
+              call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,i), tmpVx )
+              nisep = nisep + tmpVx(mpg%tgVx(1))
+            end do
+            select case (is_codes(eb2spcr(is)))
+            case ('H')
+              call write_sourced_value( summary%local%limiter%n_i%hydrogen, nisep )
+            case ('D')
+              call write_sourced_value( summary%local%limiter%n_i%deuterium, nisep )
+            case ('T')
+              call write_sourced_value( summary%local%limiter%n_i%tritium, nisep )
+            case ('He')
+              if (nint(am(eb2spcr(is))).eq.3) then
+                call write_sourced_value( summary%local%limiter%n_i%helium_3, nisep )
+              else if (nint(am(eb2spcr(is))).eq.4) then
+                call write_sourced_value( summary%local%limiter%n_i%helium_4, nisep )
+              end if
+            case ('Li')
+              call write_sourced_value( summary%local%limiter%n_i%lithium, nisep )
+            case ('Be')
+              call write_sourced_value( summary%local%limiter%n_i%beryllium, nisep )
+            case ('C')
+              call write_sourced_value( summary%local%limiter%n_i%carbon, nisep )
+            case ('N')
+              call write_sourced_value( summary%local%limiter%n_i%nitrogen, nisep )
+            case ('O')
+              call write_sourced_value( summary%local%limiter%n_i%oxygen, nisep )
+            case ('Ne')
+              call write_sourced_value( summary%local%limiter%n_i%neon, nisep )
+            case ('Ar')
+              call write_sourced_value( summary%local%limiter%n_i%argon, nisep )
+#if IMAS_MINOR_VERSION > 30
+            case ('Fe')
+              call write_sourced_value( summary%local%limiter%n_i%iron, nisep )
+            case ('Kr')
+              call write_sourced_value( summary%local%limiter%n_i%krypton, nisep )
+#endif
+            case ('Xe')
+              call write_sourced_value( summary%local%limiter%n_i%xenon, nisep )
+            case ('W')
+              call write_sourced_value( summary%local%limiter%n_i%tungsten, nisep )
+            end select
+          end do
+          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1), tmpVx )
+          call write_sourced_value( summary%local%limiter%n_i_total, tmpVx(mpg%tgVx(1)) )
+          call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff, tmpVx )
+          call write_sourced_value( summary%local%limiter%zeff, tmpVx(mpg%tgVx(1)) )
+          call write_sourced_value( summary%local%limiter%flux_expansion, flux_expansion(mpg%strDiv(1)) )
+        end if
+
+! Summary divertor plate data
+        if (mpg%nStr.gt.0) then
+#if IMAS_MINOR_VERSION > 34
+          allocate ( summary%local%divertor_target( mpg%nStr ) )
+#else
+          allocate ( summary%local%divertor_plate( mpg%nStr ) )
+#endif
+          do i = 1, mpg%nStr
+#if IMAS_MINOR_VERSION > 34
+            call write_sourced_string( summary%local%divertor_target(i)%name, plate_name(i) )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te, tmpVx )
+            call write_sourced_value( summary%local%divertor_target(mpg%strDiv(i))%t_e, &
+              &  tmpVx(mpg%strVx(i))/ev )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti, tmpVx )
+            call write_sourced_value( summary%local%divertor_target(mpg%strDiv(i))%t_i_average, &
+              &  tmpVx(mpg%strVx(i))/ev )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne, tmpVx )
+            call write_sourced_value( summary%local%divertor_target(mpg%strDiv(i))%n_e, &
+              &  tmpVx(mpg%strVx(i)) )
+#else
+            call write_sourced_string( summary%local%divertor_plate(i)%name, plate_name(i) )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te, tmpVx )
+            call write_sourced_value( summary%local%divertor_plate(mpg%strDiv(i))%t_e, &
+              &  tmpVx(mpg%strVx(i))/ev )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti, tmpVx )
+            call write_sourced_value( summary%local%divertor_plate(mpg%strDiv(i))%t_i_average, &
+              &  tmpVx(mpg%strVx(i))/ev )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ne, tmpVx )
+            call write_sourced_value( summary%local%divertor_plate(mpg%strDiv(i))%n_e, &
+              &  tmpVx(mpg%strVx(i)) )
+#endif
+            do is = 1, nspecies
+              is1 = eb2spcr(is)
+              if (nint(zamax(is1)).eq.0) is1 = is1+1
+              is2 = is1 + nfluids(is) - 1
+              nisep = 0.0_R8
+              do j = is1, is2
+                call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%na(1,j), tmpVx )
+                nisep = nisep + tmpVx(mpg%strVx(i))
+              end do
+              select case (is_codes(eb2spcr(is)))
+              case ('H')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%hydrogen, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%hydrogen, nisep )
+#endif
+              case ('D')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%deuterium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium, nisep )
+#endif
+              case ('T')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%tritium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%tritium, nisep )
+#endif
+              case ('He')
+                if (nint(am(eb2spcr(is))).eq.3) then
+#if IMAS_MINOR_VERSION > 34
+                  call write_sourced_value( summary%local%divertor_target(i)%n_i%helium_3, nisep )
+#else
+                  call write_sourced_value( summary%local%divertor_plate(i)%n_i%helium_3, nisep )
+#endif
+                else if (nint(am(eb2spcr(is))).eq.4) then
+#if IMAS_MINOR_VERSION > 34
+                  call write_sourced_value( summary%local%divertor_target(i)%n_i%helium_4, nisep )
+#else
+                  call write_sourced_value( summary%local%divertor_plate(i)%n_i%helium_4, nisep )
+#endif
+                end if
+              case ('Li')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%lithium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%lithium, nisep )
+#endif
+              case ('Be')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%beryllium, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%beryllium, nisep )
+#endif
+              case ('C')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%carbon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%carbon, nisep )
+#endif
+              case ('N')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%nitrogen, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%nitrogen, nisep )
+#endif
+              case ('O')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%oxygen, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%oxygen, nisep )
+#endif
+              case ('Ne')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%neon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%neon, nisep )
+#endif
+              case ('Ar')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%argon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%argon, nisep )
+#endif
+#if IMAS_MINOR_VERSION > 30
+              case ('Fe')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%iron, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%iron, nisep )
+#endif
+              case ('Kr')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%krypton, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%krypton, nisep )
+#endif
+#endif
+              case ('Xe')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%xenon, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%xenon, nisep )
+#endif
+              case ('W')
+#if IMAS_MINOR_VERSION > 34
+                call write_sourced_value( summary%local%divertor_target(i)%n_i%tungsten, nisep )
+#else
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%tungsten, nisep )
+#endif
+              end select
+            end do
+#if IMAS_MINOR_VERSION > 34
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1), tmpVx )
+            call write_sourced_value( summary%local%divertor_target(mpg%strDiv(i))%n_i_total, &
+              &  tmpVx(mpg%strVx(i)) )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff, tmpVx )
+            call write_sourced_value( summary%local%divertor_target(mpg%strDiv(i))%zeff, &
+              &  tmpVx(mpg%strVx(i)) )
+            call write_sourced_value( summary%local%divertor_target(mpg%strDiv(i))%flux_expansion, &
+              & flux_expansion(mpg%strDiv(i)) )
+#else
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%dv%ni(1,1), tmpVx )
+            call write_sourced_value( summary%local%divertor_plate(mpg%strDiv(i))%n_i_total, &
+              &  tmpVx(mpg%strVx(i)) )
+            call intvertex( mpg%nCv, mpg%nVx, mpg, geo%vxVol, zeff, tmpVx )
+            call write_sourced_value( summary%local%divertor_plate(mpg%strDiv(i))%zeff, &
+              &  tmpVx(mpg%strVx(i)) )
+            call write_sourced_value( summary%local%divertor_plate(mpg%strDiv(i))%flux_expansion, &
+              & flux_expansion(mpg%strDiv(i)) )
+#endif
+          end do
+        end if
 
         call fill_summary_data( geo, summary )
         u = 0.0_IDS_real
