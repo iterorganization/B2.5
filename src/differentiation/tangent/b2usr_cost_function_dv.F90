@@ -860,9 +860,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron density radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%dv%ne, funv, &
 &                     gradr)
-        gradr = gradr/1.0e19_R8
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/1.0e19_R8
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -872,9 +872,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !electron temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%te, funv, &
 &                     gradr)
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2
@@ -884,9 +884,9 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 !ion temperature radial gradient
         CALL GRADC_R_NODIFF(ncv, nfc, nvx, 0, geo, mpg, st%pl%ti, funv, &
 &                     gradr)
-        gradr = gradr/ev
+        b2data(1:n1) = gradr(mpg%cfreg(ic1:ic2))/ev
         CALL INTERP1D(n1, n2, b2rr(icf, 1:n1), cfdata(icf, 1, 1:n2), &
-&               gradr(mpg%cfreg(ic1:ic2)), b2dataoncf(1:n2))
+&               b2data(1:n1), b2dataoncf(1:n2))
         DO icv=1,n2
           j(icf) = j(icf) + b2voloncf(icf, icv)*(b2dataoncf(icv)-cfdata(&
 &           icf, 2, icv))**2

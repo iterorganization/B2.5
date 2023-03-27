@@ -1266,7 +1266,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     hce0bsave = dv%ne*hce0b
     hci0bsave = pl%na(:, 1)*(hcibb(:,1) + hci0b)
     last_call_transp = .false.
-  endif
+  END IF
   DO icv=ncv,1,-1
     CALL POPREAL8(alf0(icv), r8/8)
     temp3 = qe/pl%te(icv)

@@ -5443,8 +5443,8 @@ CONTAINS
     REAL(kind=r8) :: j(nncf), kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0:&
 &   ns-1)
     REAL(kind=r8) :: jsave(nncf)
-    REAL(kind=r8) :: jb(nncf)
     REAL(kind=r8) :: dummygrad(npar_opt)
+    REAL(kind=r8) :: jb(nncf)
     INTEGER :: ncv, nfc, nvx
     INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
@@ -6486,6 +6486,7 @@ CONTAINS
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf, r8*SIZE(b2dataoncf&
 &                                   , 1)/8)
     jsave = j
+    if (allocated(par_opt_physb)) par_opt_physb = 0.0_R8
     CALL B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb, &
 &                        state, stateb1, state_ext, state_extb, switch%&
 &                        boris, j, jb)
@@ -8731,7 +8732,6 @@ CONTAINS
     stateb1%psnc%ua = 0.D0
     stateb1%pl%na = stateb1%pl%na + stateb1%psnc%na
     stateb1%psnc%na = 0.D0
-    call set_adj_gradient(npar_opt,dummygrad,switchb)
     stateb1%pl%na = 0.0_R8
     stateb1%pl%ua = 0.0_R8
     stateb1%pl%po = 0.0_R8
@@ -9066,6 +9066,7 @@ CONTAINS
     stateb1%update%zt = 0.0_R8
     jb = 0.D0
     j = jsave
+    call set_adj_gradient(npar_opt,dummygrad,switchb)
   END SUBROUTINE B2MNDR_1_B
 
 !

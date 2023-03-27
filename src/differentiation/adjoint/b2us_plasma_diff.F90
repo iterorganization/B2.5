@@ -1076,7 +1076,6 @@ CONTAINS
 !
       ALLOCATE(coeffb%cssb(nfc), source=0._R8)
       coeffb%cssb = 0.D0
-      ALLOCATE(coeff%cssb(nfc), source=0._R8)
 ! csc the following three have been manually added to enable saving
 ! the sensitivity of transport coefficients for each cell
       ALLOCATE(coeffb%hce0save(ncv), source=0._R8)
@@ -1085,6 +1084,8 @@ CONTAINS
       coeffb%hce0save = 0.D0
       ALLOCATE(coeffb%dna0save(ncv, 0:ns-1), source=0._R8)
       coeffb%dna0save = 0.D0
+!
+      ALLOCATE(coeff%cssb(nfc), source=0._R8)
 !
       RETURN
     END IF
@@ -1530,10 +1531,6 @@ CONTAINS
       END IF
       DEALLOCATE(coeff%hcix_c)
 !
-      IF (ALLOCATED(coeffb%cssb)) THEN
-        DEALLOCATE(coeffb%cssb)
-      END IF
-      DEALLOCATE(coeff%cssb)
 ! csc the following three have been manually added to enable saving
 ! the sensitivity of transport coefficients for each cell
     IF (ALLOCATED(coeffb%dna0save)) THEN
@@ -1545,7 +1542,11 @@ CONTAINS
     IF (ALLOCATED(coeffb%hci0save)) THEN
       DEALLOCATE(coeffb%hci0save)
     END IF
-
+      IF (ALLOCATED(coeffb%cssb)) THEN
+        DEALLOCATE(coeffb%cssb)
+      END IF
+      DEALLOCATE(coeff%cssb)
+!
       RETURN
     END IF
   END SUBROUTINE DESTROYB2COEFF_B

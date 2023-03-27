@@ -244,11 +244,18 @@
        idd = idd + 1 !next index
       enddo
       npar_opt = npar_opt - (nsigma - nsigma_opt)
+      if (flag_optim .or. (cftype(1) .eq. 6)) 
+     >  call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),
+     &   'b2mod_par_opt: initial guess x0 MUST be specified for '//
+     &   'all variables if optimizing or using a MAP cost function')
       isigma = npar_opt - nsigma_opt + 1 ! position of first sigma in x0
       do ii = 1, nsigma
 !      only assign initial value from x0 if that sigma is being optimized
        if (sigma_opt(ii)) then
-        sigma(ii) = dble(x0(isigma))
+        call xertst(x0(isigma).gt.0.0_R8 .and. xl(isigma).gt.0.0_R8
+     &              .and. xu(isigma).gt.0.0_R8, 'b2mod_par_opt: x0,'//
+     &              'xl, and xu for sigmas MUST be >0')
+        sigma(ii) = x0(isigma)
         isigma = isigma + 1 !next sigma in inital vector x0
        endif
       end do
