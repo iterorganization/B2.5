@@ -188,7 +188,7 @@ SUBROUTINE B2RURC_DV(nget, version, nbdirs)
 !   ..procedures
   REAL(kind=r8) :: smax
   INTRINSIC MAXVAL
-  EXTERNAL MAXVAL_DV0
+  EXTERNAL MAXVAL_DV
   INTRINSIC MINVAL
   EXTERNAL MINVAL_DV
   INTEGER :: arg1
@@ -196,7 +196,7 @@ SUBROUTINE B2RURC_DV(nget, version, nbdirs)
   REAL(kind=r8) :: result2
   INTEGER :: nbdirs
   REAL(kind=r8) :: MINVAL_DV
-  REAL(kind=r8) :: MAXVAL_DV0
+  REAL(kind=r8) :: MAXVAL_DV
 !
 !-----------------------------------------------------------------------
 !.computation
