@@ -14,10 +14,88 @@
 !
 MODULE B2MOD_PAR_OPT_DIFF
   USE B2MOD_TYPES
-  USE B2MOD_USER_NAMELIST_DIFF, ONLY : inf_opt, nsigma, sigma, sigmab, &
-& prior_type, prior_par, prior_range, nsigmx, cftype, nvmx
+  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp
+  USE B2MOD_AD_DIFF, ONLY : nncf, b2rr, b2voloncf, b2voloncfb, b2data, &
+& b2datab, b2dataoncf, b2dataoncfb
+  USE B2US_MAP_DIFF
   IMPLICIT NONE
 !
+!  Common dimensions
+!
+!  version : 01.12.98 21:42
+!
+!
+!
+! parameters that are common to Eirene and B2
+!
+!
+! NOTE: DEF_NXD should not include the additional cells to handle the cuts
+!*** Max. number of groups of Eirene surfaces for which the data can
+!*** be transferred from B2 (DG specification "Surface special")
+!
+! new! [2002.04.22]
+! new! [2002.06.14]
+!
+!
+! parameters that are unique to B2
+!
+!
+!
+!
+! parameters that are unique to Eirene
+!
+!
+!
+!
+! parameters needed by uinp
+!
+!
+!
+! VARIABLES RELATED TO COST FUNCTION DEFINITION
+! - mxnCf: maximum number of cost functions allowed
+! - ncf: actual number of cost functions
+! - cftype: type of cost function, 0-9 possible options
+! - cfdef: defines how the cost function domain is defined, 1-4 possible options
+! - cfstart/cfend: starting and ending element for the cost function
+! - cf_reg: listing for each cost function the corresponding domain CVs or FCs
+! - cf_regP: points for each cost function to the first index in the CF_REG list, and its number of items.
+! - cfReg and cfRegP: same as above, but allocatable and used to pass CF data into mapping structure
+! - cfweight: multiplier to the cost function
+! - cfread: according to cftype, decide if reading experimental data from file for cost function
+! - ncfdata: number of experimental data points read from file for each cost function
+! - cfdata(nncf,3,300): stores the experimental data points for each cost function
+!   column 1 stores the curvilinear spatial coordinate (e.g. along OMP or target)
+!   column 2 stores the experimental data value
+!   column 3 stores the uncertainty
+! - nvmx: maximum number of variables that can be used for optimization
+! - nsigmx: maximum number of sigma values used in the Bayesian MAP cost function
+! - nsigma: actual number of sigmas read and used for Bayesian MAP
+! - prior_type: type of prior for each design parameter optimized in the MAP estimation
+! - prior_par: parameters related to the type of prior (e.g. standard deviation for Gaussian prior)
+! - prior_range: range of validity of the prior, outside this interval the MAP cost function returns NaN
+! - scale_sigma: tells of the sigma in the MAP cost function is intended as relative (true) or absolute (false)
+! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP 
+! - read_sigma: tells to read or not the experimental data uncertainty
+! - sigma: stores the values of the standard deviation in the MAP cost function
+! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
+  INTEGER, PARAMETER :: mxncf=1000
+  INTEGER :: cfstart(nncf), cfend(nncf), cftype(nncf)
+  LOGICAL, SAVE :: cfread(nncf)=.false.
+  INTEGER, SAVE :: cfdef(nncf)
+  INTEGER, SAVE :: ncfdata(nncf), ncf, cf_reg(mxncf), cf_regp(nncf, 2)
+  REAL(kind=r8), SAVE :: cfdata(nncf, 3, 300), cfweight(nncf)
+  INTEGER :: nvmx, nsigmx
+  PARAMETER (nvmx=50, nsigmx=10)
+!sc type of prior
+  INTEGER, SAVE :: prior_type(nvmx), nsigma
+!parameters for prior
+  REAL(kind=r8), SAVE :: prior_par(nvmx, 2), prior_range(nvmx, 2)
+  LOGICAL, SAVE :: scale_sigma(nsigmx)=.true.
+  LOGICAL, SAVE :: maptoomp(nncf)=.false.
+  LOGICAL, SAVE :: read_sigma(nncf)=.false.
+  REAL(kind=r8), SAVE :: sigma(nsigmx)=0.0_R8
+  REAL(kind=r8), SAVE :: sigmab(nsigmx)=0.D0
+  REAL(kind=r8), PARAMETER :: inf_opt=1.0e30
 ! VARIABLES RELATED TO OPTIMIZATION
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
@@ -41,13 +119,14 @@ MODULE B2MOD_PAR_OPT_DIFF
   REAL(kind=r8), ALLOCATABLE, SAVE :: par_opt_physb(:)
   LOGICAL, SAVE :: flag_optim=.false.
   INTEGER :: nnvar, nncon, nnjac
-  DOUBLE PRECISION :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx), gu(nvmx), &
-& jcol(nvmx*nvmx), jrow(nvmx*nvmx), jj(nvmx*nvmx), par_rescale(nvmx)
+  REAL(kind=r8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx), gu(nvmx), jj(&
+& nvmx*nvmx), par_rescale(nvmx)
+  INTEGER :: jcol(nvmx*nvmx), jrow(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
-  CHARACTER(len=256), SAVE :: filename, limited_memory_update_type, &
+  CHARACTER(len=256), SAVE :: limited_memory_update_type, &
 & hessian_approximation
-  DOUBLE PRECISION, SAVE :: cpu_opt=0.0
-  DOUBLE PRECISION, SAVE :: tol_opt=1.0e-7
+  REAL(kind=r8), SAVE :: cpu_opt=0.0_R8
+  REAL(kind=r8), SAVE :: tol_opt=1.0e-7_R8
   INTEGER, SAVE :: maxiter=100, partype(nvmx)
   INTEGER, SAVE :: nsigma_opt=0
   INTEGER, SAVE :: paris(nvmx), parib(nvmx)
@@ -62,35 +141,77 @@ MODULE B2MOD_PAR_OPT_DIFF
   NAMELIST /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, jcol&
 &     , jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation, &
 &     limited_memory_update_type, partype, sigma_opt, spatial_dep, &
-&     spatial_points, par_rescale, paris, parib
+&     spatial_points, par_rescale, paris, parib, ncf, cfstart, cfend, &
+&     cftype, cfdef, cfweight, prior_type, prior_par, prior_range, &
+&     scale_sigma, nsigma, sigma, cf_reg, cf_regp, maptoomp, read_sigma
 
 CONTAINS
+!  Differentiation of read_b2mod_par_opt as a context to call adjoint code (with options context noISIZE r8):
+!   Plus diff mem management of: b2voloncf:in-out b2data:in-out
+!                b2dataoncf:in-out m.cffcor:in-out
 !
 !
-  SUBROUTINE READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, nbc)
+  SUBROUTINE READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, m, mb)
     USE B2MOD_TYPES
     IMPLICIT NONE
-    INTEGER :: ncon, nele_jac, ns, nbc, ii, isigma, ipp
+    INTEGER :: ncon, nele_jac
+    TYPE(MAPPING), INTENT(INOUT) :: m
+    TYPE(MAPPING_DIFF), INTENT(INOUT) :: mb
+! csc local variables
+    INTEGER, INTENT(IN) :: ns
+    INTEGER :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff, noss, &
+&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj
+    INTEGER, ALLOCATABLE :: cfreg(:)
+    LOGICAL :: done
+    CHARACTER(len=1) :: str
+    CHARACTER(len=256) :: cffile, filename
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     EXTERNAL XERRAB
-    INTRINSIC ALL
+    EXTERNAL XERRAB_B
+    INTRINSIC MIN
+    INTRINSIC MAX
     INTRINSIC ANY
-    INTRINSIC SUM
+    EXTERNAL ANY_B
+    INTRINSIC ALLOCATED
     INTRINSIC MAXVAL
+    EXTERNAL MAXVAL_B0
+    INTRINSIC ALL
+    INTRINSIC SUM
     INTRINSIC DBLE
-    DOUBLE PRECISION :: result1
+    REAL(kind=r8) :: result1
+    LOGICAL :: ANY_B
 !
     filename = 'b2.optimization.parameters'
+    WRITE(*, *) 'OPTIM: max number of readable cost functions :', nncf
     WRITE(*, *) 'OPTIM: max number of readable parameters '//&
 &   'and constraints:', nvmx
     WRITE(*, *) 'OPTIM: infinity bound set to:', inf_opt
-    x0 = inf_opt*10.0
-    xl = -(inf_opt*10.0)
-    xu = inf_opt*10.0
-    gl = -(inf_opt*10.0)
-    gu = inf_opt*10.0
-    par_rescale = 1.0
+    ncf = 0
+    cfstart = 0
+    cfend = 0
+    cfdef = 0
+    cftype = -1
+    cfdata = 0.0_R8
+    ncfdata = 0
+    read_sigma = .false.
+    cfweight = 1.0_R8
+    nsigma = 0
+    scale_sigma = .true.
+    prior_type = -1
+    prior_par = -1.0_R8
+! sc  Set prior range to (-inf,+inf)
+    prior_range(:, 1) = -(inf_opt*10.0_R8)
+    prior_range(:, 2) = inf_opt*10.0_R8
+    cf_reg = 0
+    cf_regp = 0
+    maptoomp = .false.
+    x0 = inf_opt*10.0_R8
+    xl = -(inf_opt*10.0_R8)
+    xu = inf_opt*10.0_R8
+    gl = -(inf_opt*10.0_R8)
+    gu = inf_opt*10.0_R8
+    par_rescale = 1.0_R8
     nele_jac = 0
     nnjac = 0
     jcol = 0
@@ -115,6 +236,280 @@ CONTAINS
     END IF
     WRITE(*, *) 'OPTIM: read parameters'
     WRITE(*, optimization) 
+! checks on cost function parameters
+    CALL XERTST(ncf .LE. nncf, 'increase nncf in b2mod_user_namelist')
+    IF (ncf .GT. 0) THEN
+      WRITE(*, *) ' Number of cost functions: ', ncf
+      m%ncf = ncf
+      m%mxncf = mxncf
+      CALL ALLOC_MAPPING_CF_B(m, mb)
+      m%cfregp = 0
+      ALLOCATE(cfreg(mxncf))
+      cfreg = 0
+      OPEN(newunit=idb, file='debug_user.out') 
+      incf = 0
+      DO 100 icf=1,ncf
+        IF (cftype(icf) .GT. 10) CALL XERRAB('cftype>10 not coded ')
+        IF (cftype(1) .EQ. 0 .AND. ncf .EQ. 1) CALL XERRAB(&
+&                  'cftype(1)=0 but no other cost functions are defined'&
+&                                                   )
+        IF (cftype(icf) .EQ. 0 .AND. icf .NE. 1) CALL XERRAB(&
+&                                          'only cftype(1) should be =0'&
+&                                                     )
+        IF (cftype(icf) .EQ. 6 .AND. icf .NE. 1) CALL XERRAB(&
+&                                          'only cftype(1) should be =6'&
+&                                                     )
+        IF ((cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6) .AND. ncf .LT. &
+&           cfend(icf) - cfstart(icf) + 2) CALL XERRAB(&
+&               'cost functions specified for sum with cftype 0/6 > nCf'&
+&                                               )
+        IF ((cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6) .AND. cfstart(&
+&           icf) .LT. 2 .AND. cfend(icf) .LT. 2) CALL XERRAB(&
+&                     'cost functions type 0/6 requires cfstart/cfend>1'&
+&                                                     )
+        IF ((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
+&           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) cfread(icf) = .true.
+        IF (cftype(icf) .EQ. 5) m%cfoncv(icf) = .false.
+        IF (cftype(icf) .EQ. 5 .AND. cfdef(icf) .EQ. 3) CALL XERRAB(&
+&                                'cftype 5 must be defined using faces!'&
+&                                                            )
+        IF (cfread(icf)) THEN
+          WRITE(str, '(I1)') icf
+          cffile = 'cf'//TRIM(str)//'.dat'
+          CALL FIND_FILE(cffile, file_ok)
+          IF (.NOT.file_ok) CALL XERRAB(&
+&                                 'Cannot find cost function file '//&
+&                                 TRIM(cffile))
+          OPEN(unit=99, file=cffile, status='old', action='read') 
+          WRITE(*, *) 'Reading cost function data from ', TRIM(cffile)
+          ncfdata(icf) = 0
+!csc File is of unknown length, so first count the number of lines
+ 5        READ(99, *, end=15) str
+          ncfdata(icf) = ncfdata(icf) + 1
+          GOTO 5
+ 15       CLOSE(99) 
+          CALL XERTST(ncfdata(icf) .LE. 300, &
+&               'Cost function data limited to DEF_NLIM!')
+          OPEN(unit=99, file=cffile, status='old', action='read') 
+          DO i=1,ncfdata(icf)
+!csc The data in the file are (r-rsep), data, sigma. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension ((r-rsep)-data-sigma), third
+!    dimension (number of records/data points)
+            IF (read_sigma(icf)) THEN
+              READ(99, *) cfdata(icf, 1:3, i)
+            ELSE
+              READ(99, *) cfdata(icf, 1:2, i)
+            END IF
+          END DO
+          CLOSE(99) 
+        END IF
+!no need to specify domain here
+        IF (.NOT.(cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6)) THEN
+          done = .false.
+!
+!
+! FIXME need to add flag for reversing lists?
+!
+          SELECT CASE  (cfdef(icf)) 
+          CASE (1) 
+!
+!defined on OMP (only internal CVs)
+!
+            CALL XERTST(m%cfoncv(icf), 'This cost function type '//&
+&                 'cannot be evaluated on OMP')
+            CALL XERTST(nomp .GT. 0, 'Asking for OMP cost function '//&
+&                 'but no OMP cells, check rzomp')
+            WRITE(*, *) ' defining cost function ', icf, ' on omp'
+            DO icff=1,icf-1
+              IF (cfdef(icff) .EQ. 1) THEN
+                m%cfregp(icf, :) = m%cfregp(icff, :)
+                done = .true.
+              END IF
+            END DO
+            IF (done) THEN
+              GOTO 100
+            ELSE
+              m%cfregp(icf, 1) = incf + 1
+              ndata = 0
+              DO icv=1,nomp
+!only use internal CVs
+                IF (omp(icv) .LE. m%nci) THEN
+                  m%cfreg(incf+1+ndata) = omp(icv)
+                  ndata = ndata + 1
+                END IF
+              END DO
+              m%cfregp(icf, 2) = ndata
+              incf = incf + ndata
+            END IF
+          CASE (2) 
+!
+!defined using fclabel
+!
+            CALL XERTST(cfstart(icf) .NE. 0 .AND. cfend(icf) .NE. 0, &
+&                 'cfdef=2 requires cfstart/cfend>0')
+! check if other CFs have same domain (must have same start/end, same type of definition (fcLbl)
+! and also same type of domain (fcLbl can be used to identify either CVs or FCs)
+            DO icff=1,icf-1
+              IF (cfstart(icf) .EQ. cfstart(icff) .AND. cfend(icf) .EQ. &
+&                 cfend(icff) .AND. cfdef(icff) .EQ. 2 .AND. (m%cfoncv(&
+&                 icf) .AND. m%cfoncv(icff))) THEN
+                m%cfregp(icf, :) = m%cfregp(icff, :)
+                done = .true.
+              END IF
+            END DO
+            IF (done) THEN
+              GOTO 100
+            ELSE
+! this domain has not yet been done
+              m%cfregp(icf, 1) = incf + 1
+              ncffc = 0
+              noss = cfend(icf) - cfstart(icf) + 1
+              DO iss=1,noss
+                indss = cfstart(icf) + iss - 1
+                WRITE(*, *) ' Defining cost function ', icf
+                WRITE(*, *) ' surface label ', indss
+! find all faces belonging to surface structure INDSS
+                CALL FIND_FACES_NODIFF(indss, incf, ncffc, m%mxncf, m%&
+&                                cfreg, m%cffcor, m, idb)
+              END DO
+! iss	
+              m%cfregp(icf, 2) = ncffc
+! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
+              IF (m%cfoncv(icf)) THEN
+                DO ifc=1,m%cfregp(icf, 2)
+                  ifcc = m%cfreg(m%cfregp(icf, 1)+ifc-1)
+                  IF (m%fccv(ifcc, 1) .GT. m%fccv(ifcc, 2)) THEN
+                    ic1 = m%fccv(ifcc, 2)
+                  ELSE
+                    ic1 = m%fccv(ifcc, 1)
+                  END IF
+                  IF (m%fccv(ifcc, 1) .LT. m%fccv(ifcc, 2)) THEN
+                    ic2 = m%fccv(ifcc, 2)
+                  ELSE
+                    ic2 = m%fccv(ifcc, 1)
+                  END IF
+                  IF (ic1 .LE. m%nci) THEN
+                    m%cfreg(m%cfregp(icf, 1)+ifc-1) = ic1
+                  ELSE IF (ic2 .LE. m%nci) THEN
+                    m%cfreg(m%cfregp(icf, 1)+ifc-1) = ic2
+                  ELSE
+                    CALL XERRAB('cfdef=2 -- problem with boundary face')
+                  END IF
+                END DO
+              END IF
+            END IF
+          CASE (3) 
+!
+!defined using cvlabel
+!
+            CALL XERTST(cfstart(icf) .NE. 0 .AND. cfend(icf) .NE. 0, &
+&                 'cfdef=3 requires cfstart/cfend>0')
+! check if other CFs have same domain !FIXME check if also cfdef is the same
+            DO icff=1,icf-1
+              IF (cfstart(icf) .EQ. cfstart(icff) .AND. cfend(icf) .EQ. &
+&                 cfend(icff) .AND. cfdef(icff) .EQ. 3) THEN
+                m%cfregp(icf, :) = m%cfregp(icff, :)
+                done = .true.
+              END IF
+            END DO
+            IF (done) THEN
+              GOTO 100
+            ELSE
+! this domain has not yet been done
+              m%cfregp(icf, 1) = incf + 1
+              noss = cfend(icf) - cfstart(icf) + 1
+              DO iss=1,noss
+                indss = cfstart(icf) + iss - 1
+                WRITE(*, *) ' Defining cost function ', icf
+                WRITE(*, *) ' cell label ', indss
+                DO icv=1,m%ncv
+                  IF (m%cvlbl(icv) .EQ. indss) THEN
+                    m%cfreg(incf+1) = icv
+                    incf = incf + 1
+                  END IF
+                END DO
+              END DO
+! FIXME no attempt to sort or check if they belong together somehow
+              m%cfregp(icf, 2) = incf + 1 - m%cfregp(icf, 1)
+            END IF
+          CASE (4) 
+!
+! defined using cf_reg (No attempt whatsoever to check if they are sorted)
+!
+            CALL XERTST(cf_regp(icf, 2) .GT. 0, 'cf_RegP not defined')
+! csc can we check somehow if this has already been filled?
+            m%cfregp(icf, 1) = incf + 1
+            m%cfregp(icf, 2) = cf_regp(icf, 2)
+            IF (ANY(cf_reg(cf_regp(icf, 1):cf_regp(icf, 1)+cf_regp(icf, &
+&               2)-1) .LE. 0)) CALL XERRAB('cf_Reg<=0')
+            m%cfreg(incf+1:incf+1+m%cfregp(icf, 2)-1) = cf_reg(cf_regp(&
+&             icf, 1):cf_regp(icf, 1)+cf_regp(icf, 2)-1)
+            incf = incf + cf_regp(icf, 2)
+          CASE DEFAULT
+!
+!
+            CALL XERRAB('cfDef undefined')
+          END SELECT
+!
+          CALL XERTST(incf + 1 .LE. m%mxncf, &
+&               'Increase size of mxnCf in b2mod_user_namelist')
+        END IF
+ 100  CONTINUE
+!icf
+      CLOSE(idb) 
+      IF (ALLOCATED(cfreg)) THEN
+        DEALLOCATE(cfreg)
+      END IF
+    END IF
+!
+    IF (ANY(cftype .EQ. 6)) THEN
+      CALL XERTST(nsigma .GT. 0 .AND. nsigma .LE. nsigmx, &
+&           'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
+! sc  prior_type refers to the prior type for the design variables:
+!     0 - Uniform distribution.
+!     1 - Uninformative, proper, Gaussian prior.
+!     2 - Jeffrey's 1/sigma (only for sigma!!)
+      CALL XERTST(ANY(prior_type(1:nsigma) .GE. 0) .AND. ANY(prior_type(&
+&           1:nsigma) .LE. 2), &
+&           'b2mod_user_namelist: prior_type<=0 or prior_type>=2')
+! sc  prior_par refers to the prior parameters:
+!     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!     For prior_type = 2, not used?
+      DO icf=1,nsigma
+        IF (prior_type(icf) .EQ. 1) CALL XERTST(prior_par(icf, 2) .GT. &
+&                                         0.0_R8, &
+&                                 'b2mod_user_namelist: sigma prior <=0'&
+&                                        )
+        CALL XERTST(prior_range(icf, 1) .LT. prior_range(icf, 2), &
+&             'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
+      END DO
+    END IF
+! now allocate vector that will be used to interpolate SOLPS onto data grid
+    IF (ANY(cfread)) THEN
+      ndata = MAXVAL(ncfdata(1:ncf), 1)
+      ALLOCATE(b2voloncfb(ncf, ndata))
+      b2voloncfb = 0.D0
+      ALLOCATE(b2voloncf(ncf, ndata))
+!stores interpolated B2.5 volumes onto CF radial points
+      ALLOCATE(b2dataoncfb(ndata))
+      b2dataoncfb = 0.D0
+      ALLOCATE(b2dataoncf(ndata))
+!variable to store SOLPS data interpolated onto CF radial points
+!max number of CVs in a cost function
+      ndata = MAXVAL(m%cfregp(1:ncf, 2))
+      ALLOCATE(b2rr(ncf, ndata))
+!store here radial distance coordinate of SOLPS data
+      ALLOCATE(b2datab(ndata))
+      b2datab = 0.D0
+      ALLOCATE(b2data(ndata))
+!temporary variable to store SOLPS data for interpolation
+      b2rr = 0.0_R8
+      b2voloncf = 0.0_R8
+      b2data = 0.0
+      b2dataoncf = 0.0
+    END IF
+!
+! csc Tests on optimization parameters
     CALL XERTST(nnvar .GT. 0 .AND. nnvar .LE. nvmx, &
 &         'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
     CALL XERTST(nncon .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
@@ -172,17 +567,18 @@ CONTAINS
     CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
 &         'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
     DO ii=1,nnvar
-      if (spatial_dep(ii) .and. &
-&         (partype(ii).lt.1 .or. partype(ii).gt.9)) &!only parm_XXX can be spatially dependent
-&       call xerrab('b2mod_par_opt: spatial_points optimization '//&
-&                   'is available only for partype 1-9')
-       if (spatial_dep(ii) .and. spatial_points(ii).le.1) then
-         write(*,*) 'ipar, spatial_dep, spatial_points=',&
-&          ii, spatial_dep(ii), spatial_points(ii)
-         call xerrab(' b2mod_par_opt: seems you want to optimize '//&
-&         'spatially dependent transport coefficients but you only '//&
-&         'specify one!')
-       endif
+!only parm_XXX can be spatially dependent
+      IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
+&         .GT. 9)) CALL XERRAB(&
+&                        'b2mod_par_opt: spatial_points optimization '//&
+&                        'is available only for partype 1-9')
+      IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
+        WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&       spatial_dep(ii), spatial_points(ii)
+        CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+&             'spatially dependent transport coefficients but you only '&
+&             //'specify one!')
+      END IF
       IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
 &         (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
 &         .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
@@ -194,8 +590,542 @@ CONTAINS
 &                                                              .GE. 1 &
 &                                                              .AND. &
 &                                                              parib(ii)&
-&                                                              .LE. nbc&
-&                                                              , &
+&                                                              .LE. m%&
+&                                                              nbc, &
+&                                       'b2mod_par_opt: parib<0 or >nBc'&
+&                                                             )
+    END DO
+    IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
+!      calculate first how many sigmas are being optimized
+      nsigma_opt = 0
+      DO ii=1,nsigma
+        IF (sigma_opt(ii)) nsigma_opt = nsigma_opt + 1
+      END DO
+!      check if sigmas are at the end of the parameter vector, if not, issue error
+! position of first sigma in partype
+      isigma = nnvar - nsigma_opt + 1
+      DO ii=1,nsigma_opt
+        CALL XERTST(partype(ii+isigma-1) .EQ. 0, 'b2mod_par_opt: '//&
+&             'partype 0 variables MUST be at the end of the vector')
+      END DO
+    END IF
+!     Suppose MAP estimation is turned on only when cftype(1)=6
+    IF (cftype(1) .EQ. 6) THEN
+!      prior_type refers to the prior type for the design variables:
+!      0 - Uniform distribution.
+!      1 - Uninformative, proper, Gaussian prior.
+!      2 - Jeffrey's 1/sigma (only for sigma!!)
+      CALL XERTST(ANY(prior_type(1:nnvar) .GE. 0) .AND. ANY(prior_type(1&
+&           :nnvar) .LE. 2), &
+&           'b2mod_par_opt: prior_type<0 or prior_type>2')
+!      prior_par refers to the prior parameters:
+!      For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!      For prior_type = 2, not used?
+      DO ii=1,nnvar
+        IF (prior_type(ii) .EQ. 1) CALL XERTST(prior_par(ii, 2) .GT. &
+&                                        0.0_R8, &
+&                                       'b2mod_par_opt: sigma prior <=0'&
+&                                       )
+        CALL XERTST(prior_range(ii, 1) .LT. prior_range(ii, 2), &
+&             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
+      END DO
+    END IF
+    IF (nnjac .GT. 0) THEN
+      CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
+      CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
+      result1 = MAXVAL(jcol(1:nnjac))
+      CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
+      result1 = MAXVAL(jrow(1:nnjac))
+      CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+    END IF
+!
+!     adjust some arrays when there are radially dependent coefficients
+!     x0, xl, xu are supposed to have the correct dimension already, i.e. one for each spatial point
+!     priors parameters are not
+    npar_opt = 0
+    idd = 1
+    typeold = prior_type
+    parold = prior_par
+    rangeold = prior_range
+    DO ipp=1,nnvar+(nsigma-nsigma_opt)
+      prior_type(idd) = typeold(ipp)
+      prior_par(idd, 1) = parold(ipp, 1)
+      prior_par(idd, 2) = parold(ipp, 2)
+      prior_range(idd, 1) = rangeold(ipp, 1)
+      prior_range(idd, 2) = rangeold(ipp, 2)
+      IF (spatial_dep(ipp)) THEN
+        prior_type(idd:idd+spatial_points(ipp)-1) = typeold(ipp)
+        prior_par(idd:idd+spatial_points(ipp)-1, 1) = parold(ipp, 1)
+        prior_par(idd:idd+spatial_points(ipp)-1, 2) = parold(ipp, 2)
+        prior_range(idd:idd+spatial_points(ipp)-1, 1) = rangeold(ipp, 1)
+        prior_range(idd:idd+spatial_points(ipp)-1, 2) = rangeold(ipp, 2)
+        npar_opt = npar_opt + spatial_points(ipp) - 1
+!next index
+        idd = idd + spatial_points(ipp) - 1
+      END IF
+      npar_opt = npar_opt + 1
+!next index
+      idd = idd + 1
+    END DO
+    npar_opt = npar_opt - (nsigma-nsigma_opt)
+    if (flag_optim .or. (cftype(1) .eq. 6)) &
+&     call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),&
+&      'b2mod_par_opt: initial guess x0 MUST be specified for '//&
+&      'all variables if optimizing or using a MAP cost function')
+! position of first sigma in x0
+    isigma = npar_opt - nsigma_opt + 1
+    DO ii=1,nsigma
+!      only assign initial value from x0 if that sigma is being optimized
+      IF (sigma_opt(ii)) THEN
+        call xertst(x0(isigma).gt.0.0_R8 .and. xl(isigma).gt.0.0_R8&
+&                   .and. xu(isigma).gt.0.0_R8, 'b2mod_par_opt: x0,'//&
+&                   'xl, and xu for sigmas MUST be >0')
+        sigma(ii) = x0(isigma)
+!next sigma in inital vector x0
+        isigma = isigma + 1
+      END IF
+    END DO
+    ncon = nncon
+    nele_jac = nnjac
+    WRITE(*, *) 'NPAR_OPT = ', npar_opt
+    WRITE(*, *) 'NCON = ', ncon
+    WRITE(*, *) 'NELE_JAC = ', nele_jac
+!
+    RETURN
+  END SUBROUTINE READ_B2MOD_PAR_OPT_B
+
+!
+!
+  SUBROUTINE READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, m)
+    USE B2MOD_TYPES
+    IMPLICIT NONE
+    INTEGER, INTENT(OUT) :: ncon, nele_jac
+    TYPE(MAPPING), INTENT(INOUT) :: m
+! csc local variables
+    INTEGER, INTENT(IN) :: ns
+    INTEGER :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff, noss, &
+&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj
+    INTEGER, ALLOCATABLE :: cfreg(:)
+    LOGICAL :: done
+    CHARACTER(len=1) :: str
+    CHARACTER(len=256) :: cffile, filename
+    EXTERNAL FIND_FILE
+    INTRINSIC TRIM
+    EXTERNAL XERRAB
+    INTRINSIC MIN
+    INTRINSIC MAX
+    INTRINSIC ANY
+    INTRINSIC ALLOCATED
+    INTRINSIC MAXVAL
+    INTRINSIC ALL
+    INTRINSIC SUM
+    INTRINSIC DBLE
+    REAL(kind=r8) :: result1
+!
+    filename = 'b2.optimization.parameters'
+    WRITE(*, *) 'OPTIM: max number of readable cost functions :', nncf
+    WRITE(*, *) 'OPTIM: max number of readable parameters '//&
+&   'and constraints:', nvmx
+    WRITE(*, *) 'OPTIM: infinity bound set to:', inf_opt
+    ncf = 0
+    cfstart = 0
+    cfend = 0
+    cfdef = 0
+    cftype = -1
+    cfdata = 0.0_R8
+    ncfdata = 0
+    read_sigma = .false.
+    cfweight = 1.0_R8
+    nsigma = 0
+    scale_sigma = .true.
+    prior_type = -1
+    prior_par = -1.0_R8
+! sc  Set prior range to (-inf,+inf)
+    prior_range(:, 1) = -(inf_opt*10.0_R8)
+    prior_range(:, 2) = inf_opt*10.0_R8
+    cf_reg = 0
+    cf_regp = 0
+    maptoomp = .false.
+    x0 = inf_opt*10.0_R8
+    xl = -(inf_opt*10.0_R8)
+    xu = inf_opt*10.0_R8
+    gl = -(inf_opt*10.0_R8)
+    gu = inf_opt*10.0_R8
+    par_rescale = 1.0_R8
+    nele_jac = 0
+    nnjac = 0
+    jcol = 0
+    jrow = 0
+    jj = 0.0
+    partype = -1
+    sigma_opt = .true.
+    spatial_dep = .false.
+    spatial_points = 0
+    hessian_approximation = 'limited-memory'
+    limited_memory_update_type = 'b2fgs'
+! FIXME set if (read_file)
+    CALL FIND_FILE(filename, file_ok)
+    IF (file_ok) THEN
+      OPEN(99, file=filename) 
+      WRITE(*, *) 'Reading namelist optimization from ', TRIM(filename)
+      READ(99, optimization) 
+      CLOSE(99) 
+      WRITE(*, *) 'Read namelist optimization from ', TRIM(filename)
+    ELSE
+      CALL XERRAB('No '//TRIM(filename))
+    END IF
+    WRITE(*, *) 'OPTIM: read parameters'
+    WRITE(*, optimization) 
+! checks on cost function parameters
+    CALL XERTST(ncf .LE. nncf, 'increase nncf in b2mod_user_namelist')
+    IF (ncf .GT. 0) THEN
+      WRITE(*, *) ' Number of cost functions: ', ncf
+      m%ncf = ncf
+      m%mxncf = mxncf
+      CALL ALLOC_MAPPING_CF(m)
+      m%cfregp = 0
+      ALLOCATE(cfreg(mxncf))
+      cfreg = 0
+      OPEN(newunit=idb, file='debug_user.out') 
+      incf = 0
+      DO 100 icf=1,ncf
+        IF (cftype(icf) .GT. 10) CALL XERRAB('cftype>10 not coded ')
+        IF (cftype(1) .EQ. 0 .AND. ncf .EQ. 1) CALL XERRAB(&
+&                  'cftype(1)=0 but no other cost functions are defined'&
+&                                                   )
+        IF (cftype(icf) .EQ. 0 .AND. icf .NE. 1) CALL XERRAB(&
+&                                          'only cftype(1) should be =0'&
+&                                                     )
+        IF (cftype(icf) .EQ. 6 .AND. icf .NE. 1) CALL XERRAB(&
+&                                          'only cftype(1) should be =6'&
+&                                                     )
+        IF ((cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6) .AND. ncf .LT. &
+&           cfend(icf) - cfstart(icf) + 2) CALL XERRAB(&
+&               'cost functions specified for sum with cftype 0/6 > nCf'&
+&                                               )
+        IF ((cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6) .AND. cfstart(&
+&           icf) .LT. 2 .AND. cfend(icf) .LT. 2) CALL XERRAB(&
+&                     'cost functions type 0/6 requires cfstart/cfend>1'&
+&                                                     )
+        IF ((cftype(icf) .GE. 1 .AND. cftype(icf) .LE. 3) .OR. (cftype(&
+&           icf) .GE. 7 .AND. cftype(icf) .LE. 10)) cfread(icf) = .true.
+        IF (cftype(icf) .EQ. 5) m%cfoncv(icf) = .false.
+        IF (cftype(icf) .EQ. 5 .AND. cfdef(icf) .EQ. 3) CALL XERRAB(&
+&                                'cftype 5 must be defined using faces!'&
+&                                                            )
+        IF (cfread(icf)) THEN
+          WRITE(str, '(I1)') icf
+          cffile = 'cf'//TRIM(str)//'.dat'
+          CALL FIND_FILE(cffile, file_ok)
+          IF (.NOT.file_ok) CALL XERRAB(&
+&                                 'Cannot find cost function file '//&
+&                                 TRIM(cffile))
+          OPEN(unit=99, file=cffile, status='old', action='read') 
+          WRITE(*, *) 'Reading cost function data from ', TRIM(cffile)
+          ncfdata(icf) = 0
+!csc File is of unknown length, so first count the number of lines
+ 5        READ(99, *, end=15) str
+          ncfdata(icf) = ncfdata(icf) + 1
+          GOTO 5
+ 15       CLOSE(99) 
+          CALL XERTST(ncfdata(icf) .LE. 300, &
+&               'Cost function data limited to DEF_NLIM!')
+          OPEN(unit=99, file=cffile, status='old', action='read') 
+          DO i=1,ncfdata(icf)
+!csc The data in the file are (r-rsep), data, sigma. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension ((r-rsep)-data-sigma), third
+!    dimension (number of records/data points)
+            IF (read_sigma(icf)) THEN
+              READ(99, *) cfdata(icf, 1:3, i)
+            ELSE
+              READ(99, *) cfdata(icf, 1:2, i)
+            END IF
+          END DO
+          CLOSE(99) 
+        END IF
+!no need to specify domain here
+        IF (.NOT.(cftype(icf) .EQ. 0 .OR. cftype(icf) .EQ. 6)) THEN
+          done = .false.
+!
+!
+! FIXME need to add flag for reversing lists?
+!
+          SELECT CASE  (cfdef(icf)) 
+          CASE (1) 
+!
+!defined on OMP (only internal CVs)
+!
+            CALL XERTST(m%cfoncv(icf), 'This cost function type '//&
+&                 'cannot be evaluated on OMP')
+            CALL XERTST(nomp .GT. 0, 'Asking for OMP cost function '//&
+&                 'but no OMP cells, check rzomp')
+            WRITE(*, *) ' defining cost function ', icf, ' on omp'
+            DO icff=1,icf-1
+              IF (cfdef(icff) .EQ. 1) THEN
+                m%cfregp(icf, :) = m%cfregp(icff, :)
+                done = .true.
+              END IF
+            END DO
+            IF (done) THEN
+              GOTO 100
+            ELSE
+              m%cfregp(icf, 1) = incf + 1
+              ndata = 0
+              DO icv=1,nomp
+!only use internal CVs
+                IF (omp(icv) .LE. m%nci) THEN
+                  m%cfreg(incf+1+ndata) = omp(icv)
+                  ndata = ndata + 1
+                END IF
+              END DO
+              m%cfregp(icf, 2) = ndata
+              incf = incf + ndata
+            END IF
+          CASE (2) 
+!
+!defined using fclabel
+!
+            CALL XERTST(cfstart(icf) .NE. 0 .AND. cfend(icf) .NE. 0, &
+&                 'cfdef=2 requires cfstart/cfend>0')
+! check if other CFs have same domain (must have same start/end, same type of definition (fcLbl)
+! and also same type of domain (fcLbl can be used to identify either CVs or FCs)
+            DO icff=1,icf-1
+              IF (cfstart(icf) .EQ. cfstart(icff) .AND. cfend(icf) .EQ. &
+&                 cfend(icff) .AND. cfdef(icff) .EQ. 2 .AND. (m%cfoncv(&
+&                 icf) .AND. m%cfoncv(icff))) THEN
+                m%cfregp(icf, :) = m%cfregp(icff, :)
+                done = .true.
+              END IF
+            END DO
+            IF (done) THEN
+              GOTO 100
+            ELSE
+! this domain has not yet been done
+              m%cfregp(icf, 1) = incf + 1
+              ncffc = 0
+              noss = cfend(icf) - cfstart(icf) + 1
+              DO iss=1,noss
+                indss = cfstart(icf) + iss - 1
+                WRITE(*, *) ' Defining cost function ', icf
+                WRITE(*, *) ' surface label ', indss
+! find all faces belonging to surface structure INDSS
+                CALL FIND_FACES_NODIFF(indss, incf, ncffc, m%mxncf, m%&
+&                                cfreg, m%cffcor, m, idb)
+              END DO
+! iss	
+              m%cfregp(icf, 2) = ncffc
+! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
+              IF (m%cfoncv(icf)) THEN
+                DO ifc=1,m%cfregp(icf, 2)
+                  ifcc = m%cfreg(m%cfregp(icf, 1)+ifc-1)
+                  IF (m%fccv(ifcc, 1) .GT. m%fccv(ifcc, 2)) THEN
+                    ic1 = m%fccv(ifcc, 2)
+                  ELSE
+                    ic1 = m%fccv(ifcc, 1)
+                  END IF
+                  IF (m%fccv(ifcc, 1) .LT. m%fccv(ifcc, 2)) THEN
+                    ic2 = m%fccv(ifcc, 2)
+                  ELSE
+                    ic2 = m%fccv(ifcc, 1)
+                  END IF
+                  IF (ic1 .LE. m%nci) THEN
+                    m%cfreg(m%cfregp(icf, 1)+ifc-1) = ic1
+                  ELSE IF (ic2 .LE. m%nci) THEN
+                    m%cfreg(m%cfregp(icf, 1)+ifc-1) = ic2
+                  ELSE
+                    CALL XERRAB('cfdef=2 -- problem with boundary face')
+                  END IF
+                END DO
+              END IF
+            END IF
+          CASE (3) 
+!
+!defined using cvlabel
+!
+            CALL XERTST(cfstart(icf) .NE. 0 .AND. cfend(icf) .NE. 0, &
+&                 'cfdef=3 requires cfstart/cfend>0')
+! check if other CFs have same domain !FIXME check if also cfdef is the same
+            DO icff=1,icf-1
+              IF (cfstart(icf) .EQ. cfstart(icff) .AND. cfend(icf) .EQ. &
+&                 cfend(icff) .AND. cfdef(icff) .EQ. 3) THEN
+                m%cfregp(icf, :) = m%cfregp(icff, :)
+                done = .true.
+              END IF
+            END DO
+            IF (done) THEN
+              GOTO 100
+            ELSE
+! this domain has not yet been done
+              m%cfregp(icf, 1) = incf + 1
+              noss = cfend(icf) - cfstart(icf) + 1
+              DO iss=1,noss
+                indss = cfstart(icf) + iss - 1
+                WRITE(*, *) ' Defining cost function ', icf
+                WRITE(*, *) ' cell label ', indss
+                DO icv=1,m%ncv
+                  IF (m%cvlbl(icv) .EQ. indss) THEN
+                    m%cfreg(incf+1) = icv
+                    incf = incf + 1
+                  END IF
+                END DO
+              END DO
+! FIXME no attempt to sort or check if they belong together somehow
+              m%cfregp(icf, 2) = incf + 1 - m%cfregp(icf, 1)
+            END IF
+          CASE (4) 
+!
+! defined using cf_reg (No attempt whatsoever to check if they are sorted)
+!
+            CALL XERTST(cf_regp(icf, 2) .GT. 0, 'cf_RegP not defined')
+! csc can we check somehow if this has already been filled?
+            m%cfregp(icf, 1) = incf + 1
+            m%cfregp(icf, 2) = cf_regp(icf, 2)
+            IF (ANY(cf_reg(cf_regp(icf, 1):cf_regp(icf, 1)+cf_regp(icf, &
+&               2)-1) .LE. 0)) CALL XERRAB('cf_Reg<=0')
+            m%cfreg(incf+1:incf+1+m%cfregp(icf, 2)-1) = cf_reg(cf_regp(&
+&             icf, 1):cf_regp(icf, 1)+cf_regp(icf, 2)-1)
+            incf = incf + cf_regp(icf, 2)
+          CASE DEFAULT
+!
+!
+            CALL XERRAB('cfDef undefined')
+          END SELECT
+!
+          CALL XERTST(incf + 1 .LE. m%mxncf, &
+&               'Increase size of mxnCf in b2mod_user_namelist')
+        END IF
+ 100  CONTINUE
+!icf
+      CLOSE(idb) 
+      IF (ALLOCATED(cfreg)) THEN
+        DEALLOCATE(cfreg)
+      END IF
+    END IF
+!
+    IF (ANY(cftype .EQ. 6)) THEN
+      CALL XERTST(nsigma .GT. 0 .AND. nsigma .LE. nsigmx, &
+&           'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
+! sc  prior_type refers to the prior type for the design variables:
+!     0 - Uniform distribution.
+!     1 - Uninformative, proper, Gaussian prior.
+!     2 - Jeffrey's 1/sigma (only for sigma!!)
+      CALL XERTST(ANY(prior_type(1:nsigma) .GE. 0) .AND. ANY(prior_type(&
+&           1:nsigma) .LE. 2), &
+&           'b2mod_user_namelist: prior_type<=0 or prior_type>=2')
+! sc  prior_par refers to the prior parameters:
+!     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!     For prior_type = 2, not used?
+      DO icf=1,nsigma
+        IF (prior_type(icf) .EQ. 1) CALL XERTST(prior_par(icf, 2) .GT. &
+&                                         0.0_R8, &
+&                                 'b2mod_user_namelist: sigma prior <=0'&
+&                                        )
+        CALL XERTST(prior_range(icf, 1) .LT. prior_range(icf, 2), &
+&             'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
+      END DO
+    END IF
+! now allocate vector that will be used to interpolate SOLPS onto data grid
+    IF (ANY(cfread)) THEN
+      ndata = MAXVAL(ncfdata(1:ncf), 1)
+      ALLOCATE(b2voloncf(ncf, ndata))
+!stores interpolated B2.5 volumes onto CF radial points
+      ALLOCATE(b2dataoncf(ndata))
+!variable to store SOLPS data interpolated onto CF radial points
+!max number of CVs in a cost function
+      ndata = MAXVAL(m%cfregp(1:ncf, 2))
+      ALLOCATE(b2rr(ncf, ndata))
+!store here radial distance coordinate of SOLPS data
+      ALLOCATE(b2data(ndata))
+!temporary variable to store SOLPS data for interpolation
+      b2rr = 0.0_R8
+      b2voloncf = 0.0_R8
+      b2data = 0.0
+      b2dataoncf = 0.0
+    END IF
+!
+! csc Tests on optimization parameters
+    CALL XERTST(nnvar .GT. 0 .AND. nnvar .LE. nvmx, &
+&         'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
+    CALL XERTST(nncon .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
+    CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
+    CALL XERTST(nnvar .GE. 0, 'b2mod_par_opt: nnvar<0')
+    CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
+    CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
+    CALL XERTST(ALL(par_rescale .GT. 0.d0), &
+&         'b2mod_par_opt: par_rescale<=0')
+!     partype refers to the type of design variable:
+!     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
+!     1  - Dna, density driven particle diffusion coefficient
+!     2  - Dpa, pressure driven particle diffusion coefficient
+!     3  - X_i, ion heat diffusion coefficient
+!     4  - X_e, electron heat diffusion coefficient
+!     5  - vlax, x component of the anomalous velocity
+!     6  - vlay, y component of the anomalous velocity FIXME not yet done
+!     7  - vsa, anomalous viscosity
+!     8  - sig, field-driven current radial conductivity
+!     9  - alf, temperature-driven current radial conductivity
+!     10 - enepar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     11 - enipar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     12 - conpar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
+!     13 - mompar(paris(ipar), parib(ipar), 1), with paris(ipar) identifies species, parib(ipar) identifies boundary
+!     14 - potpar(parib(ipar), 1), with parib(ipar) identifies boundary
+!     15 - enkpar(parib(ipar), 1), k boundary condition, parib(ipar) identifies boundary
+!     16 - b2recyc(paris(ipar),parib(ipar)), with paris(ipar) identifies species, parib(ipar) identifies stratum
+!     17 - b2tqna_ballooning
+!     18 - b2tqna_ballooning_rescale
+!     19 - keps_cd, k-model coefficient in Dna_ExB ~ Cd*sqrt(k) 
+!     20 - keps_heat, multiplier Ce for X_e = Ce*Dna_ExB 
+!     21 - keps_heat_i, multiplier Ci for X_i = Ci*Dna_ExB 
+!     22 - keps_sig
+!     23 - keps_alf
+!     24 - keps_visc
+!     25 - keps_dkt
+!     26 - keps_dzt
+!     27 - b2sikt_fac_diss
+!     28 - b2sikt_fac_diss_core
+!     29 - b2sikt_fac_sheath, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in SOL & PFR)
+!     30 - b2sikt_fac_sheath_core, multiplier Cl for Sk_diss = Cl*k*cs/Lconn (valid in core)
+!     31 - keps_shear
+!     32 - b2tfhi_fsigkt
+!     33 - b2sikt_fac_vis_RS
+!     34 - b2tfhi_fflokt
+!     35 - b2tfhi_fconkt
+!     36 - b2tfhi_fflozt
+!     37 - b2tfhi_fconzt
+!     38 - b2tfhi_fkt_hie
+!     39 - b2tfhe_vis_kt
+    CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
+&         .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
+    CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
+&         'b2mod_par_opt: spatial_points<0')
+    CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
+&         'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+    DO ii=1,nnvar
+!only parm_XXX can be spatially dependent
+      IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
+&         .GT. 9)) CALL XERRAB(&
+&                        'b2mod_par_opt: spatial_points optimization '//&
+&                        'is available only for partype 1-9')
+      IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
+        WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&       spatial_dep(ii), spatial_points(ii)
+        CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+&             'spatially dependent transport coefficients but you only '&
+&             //'specify one!')
+      END IF
+      IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
+&         (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
+&         .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
+&         partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
+&                                    ii) .LE. ns - 1, &
+&                                    'b2mod_par_opt: paris<0 or >ns-1')
+      IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
+&                                                              parib(ii)&
+&                                                              .GE. 1 &
+&                                                              .AND. &
+&                                                              parib(ii)&
+&                                                              .LE. m%&
+&                                                              nbc, &
 &                                       'b2mod_par_opt: parib<0 or >nBc'&
 &                                                             )
     END DO
@@ -297,6 +1227,53 @@ CONTAINS
 !
     RETURN
   END SUBROUTINE READ_B2MOD_PAR_OPT
+
+!  Differentiation of dealloc_b2mod_par_opt as a context to call adjoint code (with options context noISIZE r8):
+!   Plus diff mem management of: b2voloncf:out b2data:out b2dataoncf:out
+!
+  SUBROUTINE DEALLOC_B2MOD_PAR_OPT_B()
+    IMPLICIT NONE
+    INTRINSIC ALLOCATED
+    IF (ALLOCATED(b2rr)) THEN
+      DEALLOCATE(b2rr)
+    END IF
+    IF (ALLOCATED(b2voloncf)) THEN
+      IF (ALLOCATED(b2voloncfb)) THEN
+        DEALLOCATE(b2voloncfb)
+      END IF
+      DEALLOCATE(b2voloncf)
+    END IF
+    IF (ALLOCATED(b2data)) THEN
+      IF (ALLOCATED(b2datab)) THEN
+        DEALLOCATE(b2datab)
+      END IF
+      DEALLOCATE(b2data)
+    END IF
+    IF (ALLOCATED(b2dataoncf)) THEN
+      IF (ALLOCATED(b2dataoncfb)) THEN
+        DEALLOCATE(b2dataoncfb)
+      END IF
+      DEALLOCATE(b2dataoncf)
+    END IF
+  END SUBROUTINE DEALLOC_B2MOD_PAR_OPT_B
+
+!
+  SUBROUTINE DEALLOC_B2MOD_PAR_OPT()
+    IMPLICIT NONE
+    INTRINSIC ALLOCATED
+    IF (ALLOCATED(b2rr)) THEN
+      DEALLOCATE(b2rr)
+    END IF
+    IF (ALLOCATED(b2voloncf)) THEN
+      DEALLOCATE(b2voloncf)
+    END IF
+    IF (ALLOCATED(b2data)) THEN
+      DEALLOCATE(b2data)
+    END IF
+    IF (ALLOCATED(b2dataoncf)) THEN
+      DEALLOCATE(b2dataoncf)
+    END IF
+  END SUBROUTINE DEALLOC_B2MOD_PAR_OPT
 
 END MODULE B2MOD_PAR_OPT_DIFF
 

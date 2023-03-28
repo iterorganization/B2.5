@@ -2,15 +2,15 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata parm_hce parm_hci parm_vsa parm_alf
-!                parm_sig parm_dna *(dv.ne) *(dv.ni) *(dv.ne2)
-!                *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
-!                *(rt.rza) *(rt.rz2) switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2tfhi_fconkt switch.b2tfhi_fconzt
-!                switch.b2tfhi_fsigkt switch.b2tqna_ballooning
+!   gradient     of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
+!                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
+!                switch.keps_heat switch.keps_heat_i switch.keps_sig
+!                switch.keps_alf switch.keps_visc switch.keps_dkt
+!                switch.keps_dzt switch.keps_shear switch.b2tfhi_fconkt
+!                switch.b2tfhi_fconzt switch.b2tfhi_fsigkt switch.b2tqna_ballooning
 !                switch.b2tqna_ballooning_rescale *(co.csig) *(co.calf)
 !                *(co.csig_an) *(co.csigin) *(co.chce) *(co.chce_exb)
 !                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)
@@ -27,15 +27,15 @@
 !                *(co.f_luc_ke) *(co.f_luc_ki) *(co.f_luc_et) *(co.f_luc_sg)
 !                *(co.f_luc_al) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
 !                *(pl.tn) *(pl.kt) *(pl.zt)
-!   with respect to varying inputs: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata parm_hce parm_hci parm_vsa parm_alf
-!                parm_sig parm_dna *(dv.ne) *(dv.ni) *(dv.ne2)
-!                *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa)
-!                *(rt.rza) *(rt.rz2) switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2tfhi_fconkt switch.b2tfhi_fconzt
-!                switch.b2tfhi_fsigkt switch.b2tqna_ballooning
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
+!                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
+!                switch.keps_heat switch.keps_heat_i switch.keps_sig
+!                switch.keps_alf switch.keps_visc switch.keps_dkt
+!                switch.keps_dzt switch.keps_shear switch.b2tfhi_fconkt
+!                switch.b2tfhi_fconzt switch.b2tfhi_fsigkt switch.b2tqna_ballooning
 !                switch.b2tqna_ballooning_rescale *(co.csig) *(co.calf)
 !                *(co.csig_an) *(co.csigin) *(co.chce) *(co.chce_exb)
 !                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)

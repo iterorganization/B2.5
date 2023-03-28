@@ -352,12 +352,14 @@ contains
         & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
 
     !! internal
-    integer :: ix, iy
+    integer :: i, ix, iy, counter
     logical :: rightFace, leftFace, topFace, botFace !! has ... face
     logical :: rightNb, leftNb, topNb, botNb !! has ... neighbour
     logical :: error, thisCellError !! error occurred
+    character*80 :: message
 
     error = .false.
+    counter = 0
 
     do ix = -1, nx
         do iy = -1, ny
@@ -423,15 +425,27 @@ contains
             end select
 
             if (thisCellError) then
-                write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-                write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+                write(*,'(a,4f12.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+                write(*,'(a,4f12.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+                counter = counter + 1
                 error = .true.
             end if
 
         end do
     end do
 
-    if (error) stop "test_connectivity: error(s) found"
+    if (error) then
+      if (counter.eq.1) then
+        message = "test_connectivity: 1 error found"
+      else
+        write(message,'(a,i4,a)') "test_connectivity: ",counter," errors found"
+      end if
+#ifdef BUILDING_CARRE
+      stop "test_connectivity: error(s) found"
+#else
+      call xerrab ( message )
+#endif
+    end if
 
   return
   end subroutine test_connectivity
@@ -2273,7 +2287,11 @@ contains
         first = .false.
     end if
 
+#ifdef BUILDING_CARRE
     stop 'b2mod_connectivity.geometryId: unknown geometry'
+#else
+    call xerrab ( 'b2mod_connectivity.geometryId: unknown geometry' )
+#endif
 
   end function geometryId
 

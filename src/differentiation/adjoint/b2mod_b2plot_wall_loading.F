@@ -113,6 +113,7 @@ c======================================================================
       implicit none
       integer nlim, nsgmx
 
+      if (allocated(indwll)) return
       allocate(indwll(nsgmx), lwldrad(nsgmx))
       allocate(luwrk(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
