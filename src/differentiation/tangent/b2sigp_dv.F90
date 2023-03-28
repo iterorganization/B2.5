@@ -92,10 +92,8 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
   INTRINSIC MIN
   REAL(r8) :: min1
   REAL(r8), DIMENSION(nbdirsmax) :: min1d
-  REAL(kind=r8), DIMENSION(ncv) :: arg1
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg1d
-  CHARACTER(len=12) :: arg10
-  CHARACTER(len=13) :: arg11
+  CHARACTER(len=12) :: arg1
+  CHARACTER(len=13) :: arg10
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
@@ -200,18 +198,18 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 &           'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 ! ..compute pressure gradient term
       smbgp = 0.0e0_R8
+      DO nd=1,nbdirs
+        wrk3d(nd, :) = tb*nbd(nd, :) + nb*tbd(nd, :)
+      END DO
+      wrk3 = nb*tb
       wrk5 = 0.0e0_R8
       wrk6 = 0.0e0_R8
 !   ..  compute gradients in cell centers
-      DO nd=1,nbdirs
-        arg1d(nd, :) = tb*nbd(nd, :) + nb*tbd(nd, :)
-      END DO
-      arg1(:) = nb*tb
       DO nd=1,nbdirsmax
         wrkvd(nd, :) = 0.D0
       END DO
-      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, arg1(:), &
-&               arg1d(:, :), wrkv, wrkvd, wrk0, wrk0d, nbdirs)
+      CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk3, &
+&               wrk3d, wrkv, wrkvd, wrk0, wrk0d, nbdirs)
       CALL GRADC_P_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, &
 &               wrkv, wrkvd, wrk1, wrk1d, nbdirs)
       DO nd=1,nbdirsmax
@@ -297,18 +295,18 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !        write (chk,'(i1)') k
 !        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !      enddo
-    arg10(:) = 'b2sigp_smogp'//chns
-    CALL MY_OUT_US(70, ncv, 0, smbgp(1, 0), arg10(:))
+    arg1(:) = 'b2sigp_smogp'//chns
+    CALL MY_OUT_US(70, ncv, 0, smbgp(1, 0), arg1(:))
     IF (switch%b2sigp_style .EQ. 0 .OR. switch%b2sigp_style .EQ. 1) THEN
-      arg11(:) = 'b2sigp_smogpi'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk5, arg11(:))
-      arg11(:) = 'b2sigp_smogpe'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk6, arg11(:))
+      arg10(:) = 'b2sigp_smogpi'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk5, arg10(:))
+      arg10(:) = 'b2sigp_smogpe'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk6, arg10(:))
     ELSE IF (switch%b2sigp_style .EQ. 2) THEN
-      arg11(:) = 'b2sigp_smogpi'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk5, arg11(:))
-      arg11(:) = 'b2sigp_smogpo'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk6, arg11(:))
+      arg10(:) = 'b2sigp_smogpi'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk5, arg10(:))
+      arg10(:) = 'b2sigp_smogpo'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk6, arg10(:))
     END IF
   END IF
 !
@@ -394,9 +392,8 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
   EXTERNAL XERRAB
   INTRINSIC MIN
   REAL(r8) :: min1
-  REAL(kind=r8), DIMENSION(ncv) :: arg1
-  CHARACTER(len=12) :: arg10
-  CHARACTER(len=13) :: arg11
+  CHARACTER(len=12) :: arg1
+  CHARACTER(len=13) :: arg10
 !   ..initialisation
 !
 !
@@ -464,12 +461,11 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 &           'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 ! ..compute pressure gradient term
       smbgp = 0.0e0_R8
+      wrk3 = nb*tb
       wrk5 = 0.0e0_R8
       wrk6 = 0.0e0_R8
 !   ..  compute gradients in cell centers
-      arg1(:) = nb*tb
-      CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, arg1(:), wrkv, &
-&                   wrk0)
+      CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk3, wrkv, wrk0)
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkv, wrk1)
 !   ..  compute smbgp
       DO icv=1,mpg%nci
@@ -515,18 +511,18 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 !        write (chk,'(i1)') k
 !        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !      enddo
-    arg10(:) = 'b2sigp_smogp'//chns
-    CALL MY_OUT_US(70, ncv, 0, smbgp(1, 0), arg10(:))
+    arg1(:) = 'b2sigp_smogp'//chns
+    CALL MY_OUT_US(70, ncv, 0, smbgp(1, 0), arg1(:))
     IF (switch%b2sigp_style .EQ. 0 .OR. switch%b2sigp_style .EQ. 1) THEN
-      arg11(:) = 'b2sigp_smogpi'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk5, arg11(:))
-      arg11(:) = 'b2sigp_smogpe'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk6, arg11(:))
+      arg10(:) = 'b2sigp_smogpi'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk5, arg10(:))
+      arg10(:) = 'b2sigp_smogpe'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk6, arg10(:))
     ELSE IF (switch%b2sigp_style .EQ. 2) THEN
-      arg11(:) = 'b2sigp_smogpi'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk5, arg11(:))
-      arg11(:) = 'b2sigp_smogpo'//chns
-      CALL MY_OUT_US(70, ncv, 0, wrk6, arg11(:))
+      arg10(:) = 'b2sigp_smogpi'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk5, arg10(:))
+      arg10(:) = 'b2sigp_smogpo'//chns
+      CALL MY_OUT_US(70, ncv, 0, wrk6, arg10(:))
     END IF
   END IF
 !

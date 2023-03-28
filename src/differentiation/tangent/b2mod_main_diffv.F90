@@ -523,17 +523,17 @@ CONTAINS
 !                tdata j
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys parm_hce parm_hci parm_vsa
-!                parm_alf parm_sig parm_dna tdata switch.keps_cd
-!                switch.keps_heat switch.keps_heat_i switch.keps_sig
-!                switch.keps_alf switch.keps_visc switch.keps_dkt
-!                switch.keps_dzt switch.keps_shear switch.b2sikt_fac_sheath
-!                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
-!                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                switch.b2tfhi_fflokt switch.b2tfhi_fconkt switch.b2tfhi_fflozt
-!                switch.b2tfhi_fconzt switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie
-!                switch.b2tfhe_vis_kt switch.b2tqna_ballooning
-!                switch.b2tqna_ballooning_rescale
+!                sigma *par_opt_phys parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
+!                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
+!                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
+!                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
+!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   RW status of diff variables: *rtlsa:in *rtlcx:in *rtlqa:in
 !                *rtlra:in cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:in-out conpar:in-out
@@ -541,8 +541,8 @@ CONTAINS
 !                b2recyc:in userfluxparm:(loc) sigma:in *par_opt_phys:in
 !                cfvla:(loc) cfvsa:(loc) cfalf:(loc) cfdpa:(loc)
 !                cfsig:(loc) cfdna:(loc) cfhce:(loc) cfhci:(loc)
-!                parm_hce:in parm_hci:in parm_vla:(loc) parm_vsa:in
-!                parm_alf:in parm_dpa:(loc) parm_sig:in parm_dna:in
+!                parm_hce:in parm_hci:in parm_vla:in parm_vsa:in
+!                parm_alf:in parm_dpa:in parm_sig:in parm_dna:in
 !                tdata:in-out int4l:(loc) int1l:(loc) int2l:(loc)
 !                int3l:(loc) int0l:(loc) fb_target:(loc) fb_prev:(loc)
 !                fb_current:(loc) fb_const:(loc) charge_frac:(loc)
@@ -870,11 +870,10 @@ CONTAINS
     USE B2MOD_B2CMRC_DIFFV
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
-    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : sigma, sigmad, nsigma
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata, tdatad
     USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, par_opt_physd, &
-&   npar_opt
+&   npar_opt, sigma, sigmad, nsigma
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -906,10 +905,10 @@ CONTAINS
     USE B2MOD_B2CMRC_DIFFV
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
-    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : sigma, nsigma
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata
     USE B2MOD_AD_DIFFV, ONLY : nncf
-    USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, npar_opt
+    USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, npar_opt, sigma, &
+&   nsigma
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch

@@ -2,20 +2,21 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tqna in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata hce_exb hci0 vsa0 sig0 alf0 dna_exb
-!                hcib hcn0 dna0 dkt0 vla0 hce0 dzt0 dpa0 hci_exb
-!   with respect to varying inputs: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci parm_hce parm_hci parm_vsa parm_alf parm_sig
-!                parm_dna tdata hce_exb hci0 vsa0 sig0 *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) alf0 *(rt.rlcx) *(rt.rlsa)
-!                *(rt.rza) dna_exb hcib hcn0 dna0 dkt0 switch.keps_cd
-!                switch.keps_heat switch.keps_heat_i switch.keps_sig
-!                switch.keps_alf switch.keps_visc switch.keps_dkt
-!                switch.keps_dzt switch.keps_shear switch.b2tqna_ballooning
-!                switch.b2tqna_ballooning_rescale *(pl.na) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt) vla0 hce0
-!                dzt0 dpa0 hci_exb
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata hce_exb hci0 vsa0 sig0
+!                alf0 dna_exb hcib hcn0 dna0 dkt0 vla0 hce0 dzt0
+!                dpa0 hci_exb
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata hce_exb
+!                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
+!                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
+!                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                vla0 hce0 dzt0 dpa0 hci_exb
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fcvol:in
@@ -369,9 +370,13 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                             , is), cfdna(0, is), cfdnad(1:nbdirs, 0, is), &
 &                             nbdirs)
 ! dpa
-        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(0, is))
+        CALL TRANSFORM_TRANSPORT_DV(flag_dpa, parm_dpa(is), parm_dpad(:&
+&                             , is), cfdpa(0, is), cfdpad(1:nbdirs, 0, is), &
+&                             nbdirs)
 ! vla
-        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(0, is))
+        CALL TRANSFORM_TRANSPORT_DV(flag_vla, parm_vla(is), parm_vlad(:&
+&                             , is), cfvla(0, is), cfvlad(1:nbdirs, 0, is), &
+&                             nbdirs)
 ! vsa
         CALL TRANSFORM_TRANSPORT_DV(flag_vsa, parm_vsa(is), parm_vsad(:&
 &                             , is), cfvsa(0, is), cfvsad(1:nbdirs, 0, is), &
@@ -689,15 +694,17 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !WG_TODO     &        cfdna(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 ! dpc changed na(iCv,is) to ne(iCv)
       temp3 = rt%rza(icv, is)*pl%te(icv) + pl%ti(icv)
-      temp2 = (cfdpa(0, is)+1.0e20_R8*cfdpa(1, is)/max2+cfdpa(2, is)*df0&
-&       +6.25e-2_R8*cfdpa(3, is)*pl%te(icv)/(ev*abs5))/temp3
+      temp2 = cfdpa(1, is)/max2
+      temp1 = (cfdpa(0, is)+1.0e20_R8*temp2+cfdpa(2, is)*df0+6.25e-2_R8*&
+&       cfdpa(3, is)*pl%te(icv)/(ev*abs5))/temp3
       DO nd=1,nbdirs
-        dpa0d(nd, icv, is) = (cfdpa(2, is)*df0d(nd)-cfdpa(1, is)*&
-&         1.0e20_R8*max2d(nd)/max2**2+cfdpa(3, is)*6.25e-2_R8*pld%te(nd&
-&         , icv)/(ev*abs5)-temp2*(pl%te(icv)*rtd%rza(nd, icv, is)+rt%rza&
-&         (icv, is)*pld%te(nd, icv)+pld%ti(nd, icv)))/temp3
+        dpa0d(nd, icv, is) = (cfdpad(nd, 0, is)+1.0e20_R8*(cfdpad(nd, 1&
+&         , is)-temp2*max2d(nd))/max2+df0*cfdpad(nd, 2, is)+cfdpa(2, is)&
+&         *df0d(nd)+6.25e-2_R8*(pl%te(icv)*cfdpad(nd, 3, is)+cfdpa(3, is&
+&         )*pld%te(nd, icv))/(ev*abs5)-temp1*(pl%te(icv)*rtd%rza(nd, icv&
+&         , is)+rt%rza(icv, is)*pld%te(nd, icv)+pld%ti(nd, icv)))/temp3
       END DO
-      dpa0(icv, is) = temp2
+      dpa0(icv, is) = temp1
 !WG_TODO*
       IF (cfdpa(7, is) .NE. 0.0_R8) dpa0(icv, is) = dpa0(icv, is)
 !WG_TODO     &        cfdpa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -722,13 +729,15 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         abs6 = -geo%cvbb(icv, 3)
       END IF
 ! dpc changed na(iCv,is) to ne(iCv)
+      temp2 = cfvla(1, is)/max3
       DO nd=1,nbdirs
-        vla0d(nd, icv, 1, is) = cfvla(2, is)*df0d(nd) - cfvla(1, is)*&
-&         1.0e20_R8*max3d(nd)/max3**2 + cfvla(3, is)*6.25e-2_R8*pld%te(&
-&         nd, icv)/(ev*abs6)
+        vla0d(nd, icv, 1, is) = cfvlad(nd, 0, is) + 1.0e20_R8*(cfvlad(nd&
+&         , 1, is)-temp2*max3d(nd))/max3 + df0*cfvlad(nd, 2, is) + cfvla&
+&         (2, is)*df0d(nd) + 6.25e-2_R8*(pl%te(icv)*cfvlad(nd, 3, is)+&
+&         cfvla(3, is)*pld%te(nd, icv))/(ev*abs6)
       END DO
-      vla0(icv, 1, is) = cfvla(0, is) + cfvla(1, is)/(max3/1.0e20_R8) + &
-&       cfvla(2, is)*df0 + cfvla(3, is)*6.25e-2_R8*pl%te(icv)/ev/abs6
+      vla0(icv, 1, is) = cfvla(0, is) + 1.0e20_R8*temp2 + cfvla(2, is)*&
+&       df0 + 6.25e-2_R8*(cfvla(3, is)*pl%te(icv)/(ev*abs6))
 !WG_TODO*
       IF (cfvla(7, is) .NE. 0.0_R8) vla0(icv, 1, is) = vla0(icv, 1, is)
 !WG_TODO     &        cfvla(7,is)*hy1(iCv)/hy1(switch%b2tqna_ixref,iy)

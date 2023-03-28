@@ -1153,7 +1153,7 @@ CONTAINS
     INTRINSIC MINVAL
     EXTERNAL MINVAL_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV0
+    EXTERNAL MAXVAL_DV
     INTRINSIC SUM
     INTRINSIC MINLOC
     EXTERNAL MINLOC_DV
@@ -1162,9 +1162,9 @@ CONTAINS
     INTEGER :: nbdirs
     REAL(kind=r8) :: MINVAL_DV
     LOGICAL :: ANY_DV
-    REAL(kind=r8) :: MAXVAL_DV0
     INTEGER :: MINLOC_DV
     INTEGER :: COUNT_DV
+    REAL(kind=r8) :: MAXVAL_DV
 !
     filename = neutrals_filename
     neutrals_time_mod = 0.0_R8

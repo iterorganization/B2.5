@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar_diffv (nCv, ns, nregionv, BoRiS, switch, geo, 
+      subroutine b2mxar_diffv (nCv, ns, nregionv, BoRiS, switch, geo,
      &  mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
@@ -68,7 +68,7 @@
           navi = navi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is))
           movi = movi+abs(geo%cvVol(iCv)*
      &     pl%na(1,iCv,is)*sqrt(abs(pl%ti(1,iCv)*am(is)*mp)))
-!WG_TODO         if (resignore(ix,iy,1).ne.0) 
+!WG_TODO         if (resignore(ix,iy,1).ne.0)
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
 !WG_TODO         if (resignore(ix,iy,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*
@@ -153,9 +153,9 @@
         diag%resmoreg(1,mpg%cvReg(iCv),is)=
      .     diag%resmoreg(1,mpg%cvReg(iCv),is)+abs(dv%resmo(1,iCv,is))
        enddo
-       if (navi .gt. 0.0_R8) 
+       if (navi .gt. 0.0_R8)
      .   diag%rescoreg(1,:,is) = abs(diag%rescoreg(1,:,is)/navi)
-       if (movi .gt. 0.0_R8) 
+       if (movi .gt. 0.0_R8)
      .   diag%resmoreg(1,:,is) = abs(diag%resmoreg(1,:,is)/movi)
       enddo
 *   ..compute prvi
@@ -164,7 +164,7 @@
 !WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
         prvi = prvi+abs(geo%cvVol(iCv)*dv%ne(1,iCv)*pl%te(1,iCv))
         do is = 0, ns-1
-         if (.not.is_neutral(is)) 
+         if (.not.is_neutral(is))
      >    prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
         enddo
       enddo
@@ -173,9 +173,9 @@
       diag%reshireg = 0.0_R8
       do iCv = 1, mpg%nCi
 !WG_TODO: resignore!
-        diag%reshereg(1,mpg%cvReg(iCv)) = 
+        diag%reshereg(1,mpg%cvReg(iCv)) =
      .    diag%reshereg(1,mpg%cvReg(iCv))+abs(dv%reshe(1,iCv))
-        diag%reshireg(1,mpg%cvReg(iCv)) = 
+        diag%reshireg(1,mpg%cvReg(iCv)) =
      .    diag%reshireg(1,mpg%cvReg(iCv))+abs(dv%reshi(1,iCv))
       enddo
       if (prvi .gt. 0.0_R8) diag%reshereg(1,:) = 
