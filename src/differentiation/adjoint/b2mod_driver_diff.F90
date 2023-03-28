@@ -66,6 +66,7 @@ MODULE B2MOD_DRIVER_DIFF
 & batch_av_all_save, batch_av_all_fin
   USE B2MOD_TRACE
   USE B2MOD_IPMAIN
+  USE B2MOD_OPENMP
   USE B2MOD_RUNNING_AVERAGE_DIFF, ONLY : run_av_init, run_av_init_b, &
 & run_av_get_plasma, run_av_save, &
 & run_av_fin, run_av_fin_b
@@ -85,9 +86,7 @@ MODULE B2MOD_DRIVER_DIFF
   USE B2US_GEO_DIFF
   USE B2US_PLASMA_DIFF
   USE B2US_IO_DIFF
-  USE B2MOD_PAR_OPT_DIFF, ONLY : npar_opt, flag_optim, &
-& read_b2mod_par_opt, par_opt_phys, par_opt_physb,&
-& x0
+  USE B2MOD_PAR_OPT_DIFF
   USE B2MOD_B2PLOT_DIFF, ONLY : nlimi
 !
   USE B2MOD_BRAEIR_DIFF
@@ -146,11 +145,13 @@ MODULE B2MOD_DRIVER_DIFF
 !srv 26.02.18
   INTEGER, SAVE :: boundary_sources=0
   INTEGER, SAVE :: equation_sources=0
-  REAL(kind=r8) :: na_min, na_new, dtim, etim, b2mndr_cpu, cpuval, &
-& cpustart, cpuinit, b2mndr_elapsed, elapsedval, elapsedstart, &
-& elapsedinit, density_rescale, ne_wanted, ne_wanted_time, &
-& ne_wanted_next_time, ne_wanted_mod_time, factor, ixfb, iyfb, ax, ay
-  REAL(kind=r8) :: na_minb, na_newb, dtimb, cpustartb,dtimb0, cpustartb0, res_quitb0
+  REAL(kind=r4) :: cpuval, cpustart, cpuinit
+  REAL(kind=r4) :: cpustartb, cpustartb0
+  REAL(kind=r8) :: na_min, na_new, dtim, etim, b2mndr_cpu, &
+& b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit, density_rescale&
+& , ne_wanted, ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, &
+& factor, ixfb, iyfb, ax, ay
+  REAL(kind=r8) :: na_minb, na_newb, dtimb, dtimb0
 !WG_TODO      real (kind=R8), allocatable ::
 !WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
 !WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
@@ -1957,7 +1958,7 @@ MODULE B2MOD_DRIVER_DIFF
   INTEGER :: stack_ntim(20)
   INTEGER :: stack_ptr
   REAL(kind=r8) :: min_areshe, min_areshi, min_aresco, res_quit, res_max
-  REAL(kind=r8) :: res_quitb
+  REAL(kind=r8) :: res_quitb, res_quitb0
   LOGICAL :: quit_residual, test_residual
 !srv 30.01.10
   REAL(kind=r8) :: hzconst
@@ -2030,27 +2031,27 @@ MODULE B2MOD_DRIVER_DIFF
 
 CONTAINS
 !  Differentiation of b2mndr_0 as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: b2voloncf:in-out b2data:in-out
-!                b2dataoncf:in-out rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out par_opt_phys:in-out mpg.bcfcor:in-out
-!                mpg.rcfcor:in-out mpg.cffcor:in-out mpg.intcellp:in-out
-!                mpg.intcellr:in-out geo.cvbb:in-out geo.cvx:in-out
-!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
-!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
-!                geo.fcbb:in-out geo.fcs:in-out geo.fchc:in-out
-!                geo.fcht:in-out geo.fchz:in-out geo.fcvol:in-out
-!                geo.fcqgam:in-out geo.fcqalf:in-out geo.fcqbet:in-out
-!                geo.fcpbs:in-out geo.fcpbshz:in-out geo.fcbzb:in-out
-!                geo.fceb:in-out geo.vxbb:in-out geo.vxx:in-out
-!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
-!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
-!                geo.vxbzb:in-out geo.cvconn:in-out geo.ftconn:in-out
-!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
-!                state.pl.na:in-out state.pl.ua:in-out state.pl.po:in-out
-!                state.pl.te:in-out state.pl.ti:in-out state.pl.tn:in-out
-!                state.pl.kt:in-out state.pl.zt:in-out state.co.csig:in-out
-!                state.co.calf:in-out state.co.csig_an:in-out state.co.calf_an:in-out
+!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
+!                rtlra:out b2voloncf:in-out b2data:in-out b2dataoncf:in-out
+!                par_opt_phys:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
+!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
+!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
+!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
+!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
+!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
+!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
+!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
+!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
+!                geo.ftbbav2:in-out geo.fspsi:in-out state.pl.na:in-out
+!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
+!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
+!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
+!                state.co.csig_an:in-out state.co.calf_an:in-out
 !                state.co.csig_cl:in-out state.co.calf_cl:in-out
 !                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
 !                state.co.chce_exb:in-out state.co.chvi:in-out
@@ -2215,8 +2216,6 @@ CONTAINS
     EXTERNAL XERRAB_B
     INTRINSIC NINT
     INTRINSIC MAX
-    INTRINSIC ANY
-    EXTERNAL ANY_B
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2243,7 +2242,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(SIZE(rtlz2, 1), SIZE(rtlz2, 3)) :: tmp7
     REAL(kind=r8), DIMENSION(SIZE(rtlpt, 1), SIZE(rtlpt, 3)) :: tmp8
     REAL(kind=r8), DIMENSION(SIZE(rtlpi, 1), SIZE(rtlpi, 3)) :: tmp9
-    LOGICAL :: ANY_B
     REAL(kind=r8) :: MINVAL_B
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
@@ -3609,11 +3607,7 @@ CONTAINS
     DO is=0,ns-1
       IF (is_neutral(is)) natmi = natmi + 1
     END DO
-    CALL ALLOC_B2MOD_USER_B(geo, geob, mpg, mpgb, ns, nlim, nmol, nsts)
-    IF (ANY(cftype .EQ. 6)) CALL XERTST(flag_optim .OR. switch%&
-&                                 b2optim_namelist .EQ. 1, &
-&                           'cftype=6 requires b2.optimization.namelist'&
-&                                )
+    CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, nsts)
     IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
       CALL ALLOC_TRANSPORT_NAMELIST(ns)
       CALL READ_B2MOD_TRANSPORT_NAMELIST()
@@ -3625,7 +3619,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg%nbc)
+      CALL READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, mpg, mpgb)
       ALLOCATE(par_opt_physb(npar_opt))
       par_opt_physb = 0.D0
       ALLOCATE(par_opt_phys(npar_opt))
@@ -3701,7 +3695,6 @@ CONTAINS
     EXTERNAL XERRAB
     INTRINSIC NINT
     INTRINSIC MAX
-    INTRINSIC ANY
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -5079,10 +5072,6 @@ CONTAINS
       IF (is_neutral(is)) natmi = natmi + 1
     END DO
     CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, nsts)
-    IF (ANY(cftype .EQ. 6)) CALL XERTST(flag_optim .OR. switch%&
-&                                 b2optim_namelist .EQ. 1, &
-&                           'cftype=6 requires b2.optimization.namelist'&
-&                                )
     IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
       CALL ALLOC_TRANSPORT_NAMELIST(ns)
       CALL READ_B2MOD_TRANSPORT_NAMELIST()
@@ -5094,7 +5083,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg%nbc)
+      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg)
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
@@ -5132,34 +5121,35 @@ CONTAINS
 
 !  Differentiation of b2mndr_1 in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: j
-!   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar b2recyc sigma *rtlsa *rtlcx *rtlqa
-!                *rtlra *par_opt_phys tdata parm_hce parm_hci parm_vsa
-!                parm_alf parm_sig parm_dna j switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
+!                enepar conpar enkpar potpar mompar enipar b2recyc
+!                sigma *par_opt_phys tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna j
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   RW status of diff variables: cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
+!   RW status of diff variables: *rtlsa:out *rtlcx:out *rtlqa:out
+!                *rtlra:out cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:out conpar:out enkpar:out
 !                potpar:out mompar:out enipar:out b2recyc:out userfluxparm:(loc)
-!                sigma:out *rtlsa:out *rtlcx:out *rtlqa:out *rtlra:out
-!                *par_opt_phys:out cfvla:(loc) cfvsa:(loc) cfalf:(loc)
-!                cfdpa:(loc) cfsig:(loc) cfdna:(loc) cfhce:(loc)
-!                cfhci:(loc) tdata:out parm_hce:out parm_hci:out
-!                parm_vla:(loc) parm_vsa:out parm_alf:out parm_dpa:(loc)
-!                parm_sig:out parm_dna:out int4l:(loc) int1l:(loc)
-!                int2l:(loc) int3l:(loc) int0l:(loc) fb_target:(loc)
-!                fb_prev:(loc) fb_current:(loc) fb_const:(loc)
-!                charge_frac:(loc) saved_fb_actuator:(loc) fb_rescale:(loc)
-!                j:in-zero geo.cvbb:(loc) switch.keps_cd:out switch.keps_heat:out
-!                switch.keps_heat_i:out switch.keps_sig:out switch.keps_alf:out
-!                switch.keps_visc:out switch.keps_dkt:out switch.keps_dzt:out
-!                switch.keps_shear:out switch.b2sikt_fac_sheath:out
+!                sigma:out *par_opt_phys:out cfvla:(loc) cfvsa:(loc)
+!                cfalf:(loc) cfdpa:(loc) cfsig:(loc) cfdna:(loc)
+!                cfhce:(loc) cfhci:(loc) tdata:out int4l:(loc)
+!                int1l:(loc) int2l:(loc) int3l:(loc) int0l:(loc)
+!                parm_hce:out parm_hci:out parm_vla:out parm_vsa:out
+!                parm_alf:out parm_dpa:out parm_sig:out parm_dna:out
+!                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
+!                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
+!                fb_rescale:(loc) j:in-zero geo.cvbb:(loc) switch.keps_cd:out
+!                switch.keps_heat:out switch.keps_heat_i:out switch.keps_sig:out
+!                switch.keps_alf:out switch.keps_visc:out switch.keps_dkt:out
+!                switch.keps_dzt:out switch.keps_shear:out switch.b2sikt_fac_sheath:out
 !                switch.b2sikt_fac_sheath_core:out switch.b2sikt_fac_diss:out
 !                switch.b2sikt_fac_diss_core:out switch.b2sikt_fac_vis_rs:out
 !                switch.b2tfhi_fflokt:out switch.b2tfhi_fconkt:out
@@ -5287,8 +5277,8 @@ CONTAINS
 !                *(state.psnc.tn):(loc) *(state.psnc.kt):(loc)
 !                *(state.psnc.ne):(loc) state.psnc.ni:(loc) *(state.psnc.ni):(loc)
 !                state.psnc.nn:(loc) *(state.psnc.nn):(loc) *(state.psnc.kinrgy):(loc)
-!   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
-!                rtlsa:in rtlcx:in rtlqa:in rtlra:in par_opt_phys:in
+!   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
+!                b2voloncf:in b2data:in b2dataoncf:in par_opt_phys:in
 !                mpg.bcfcor:in mpg.rcfcor:in mpg.cffcor:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
@@ -5413,7 +5403,6 @@ CONTAINS
 !
   SUBROUTINE B2MNDR_1_B(nout, ns, switch, switchb, geo, geob, mpg, mpgb&
 &   , state, stateb1, state_ext, state_extb, j, jb)
-    USE B2MOD_USER_NAMELIST_DIFF, ONLY : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFF, ONLY : e_she, e_shi, e_ua, ua_mean, &
@@ -5656,6 +5645,16 @@ CONTAINS
 !    ..perform one time step
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &   'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+    CALL PUSHREAL8(dt_prev, r8/8)
+    CALL PUSHBOOLEAN(feedback_namelist_used)
+    CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
+    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
+    CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
+    CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
+    CALL PUSHREAL8(cum_volrec, r8/8)
+    CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
     IF (ALLOCATED(art_shi)) THEN
       CALL PUSHREAL8ARRAY(art_shi, r8*SIZE(art_shi, 1)*SIZE(art_shi, 2)/&
 &                   8)
@@ -5691,16 +5690,6 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
-    CALL PUSHREAL8(dt_prev, r8/8)
-    CALL PUSHBOOLEAN(feedback_namelist_used)
-    CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
-    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
-    CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
-    CALL PUSHREAL8(cum_volrec, r8/8)
-    CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
     IF (ALLOCATED(bv_na)) THEN
       CALL PUSHREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*SIZE(bv_na, 2)/8)
       CALL PUSHCONTROL1B(1)
@@ -6486,10 +6475,13 @@ CONTAINS
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf, r8*SIZE(b2dataoncf&
 &                                   , 1)/8)
     jsave = j
-    if (allocated(par_opt_physb)) par_opt_physb = 0.0_R8
     CALL B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb, &
 &                        state, stateb1, state_ext, state_extb, switch%&
 &                        boris, j, jb)
+    IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
+    IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
+    IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
+    IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
     eneparb = 0.D0
     conparb = 0.D0
     enkparb = 0.D0
@@ -6498,28 +6490,28 @@ CONTAINS
     eniparb = 0.D0
     b2recycb = 0.D0
     userfluxparmb = 0.D0
-    IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
-    IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
-    IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
-    IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
+    cfvlab = 0.D0
     cfvsab = 0.D0
     cfalfb = 0.D0
+    cfdpab = 0.D0
     cfsigb = 0.D0
     cfdnab = 0.D0
     cfhceb = 0.D0
     cfhcib = 0.D0
     tdatab = 0.D0
-    parm_hceb = 0.D0
-    parm_hcib = 0.D0
-    parm_vsab = 0.D0
-    parm_alfb = 0.D0
-    parm_sigb = 0.D0
-    parm_dnab = 0.D0
     int4lb = 0.D0
     int1lb = 0.D0
     int2lb = 0.D0
     int3lb = 0.D0
     int0lb = 0.D0
+    parm_hceb = 0.D0
+    parm_hcib = 0.D0
+    parm_vlab = 0.D0
+    parm_vsab = 0.D0
+    parm_alfb = 0.D0
+    parm_dpab = 0.D0
+    parm_sigb = 0.D0
+    parm_dnab = 0.D0
     fb_targetb = 0.D0
     fb_prevb = 0.D0
     fb_currentb = 0.D0
@@ -6745,9 +6737,6 @@ CONTAINS
     cpustartb0 = cpustartb
     res_quitb0 = res_quitb
     dtimb0 = dtimb
-    toldb0 = toldb
-    uoldb0 = uoldb
-    moldb0 = moldb
     parm_dnab0(0:nsdmax-1) = parm_dnab(0:nsdmax-1)
     parm_sigb0 = parm_sigb
     parm_dpab0(0:nsdmax-1) = parm_dpab(0:nsdmax-1)
@@ -6758,6 +6747,9 @@ CONTAINS
     parm_hcib0(0:nsdmax-1) = parm_hcib(0:nsdmax-1)
     parm_hceb0 = parm_hceb
     transport_time_switchb0 = transport_time_switchb
+    toldb0 = toldb
+    uoldb0 = uoldb
+    moldb0 = moldb
     core_dt_suppressionb0 = core_dt_suppressionb
     dtmob0(0:nsdmax-1, 0:cvregmax) = dtmob(0:nsdmax-1, 0:cvregmax)
     core_dt_factorb0 = core_dt_factorb
@@ -7466,16 +7458,6 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*&
 &                                     SIZE(bv_na, 2)/8)
-      CALL POPREAL8ARRAY(fb_target, r8*6/8)
-      CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-      CALL POPREAL8ARRAY(fb_current, r8*6/8)
-      CALL POPREAL8(cum_volrec, r8/8)
-      CALL POPREAL8ARRAY(fb_const, r8*6/8)
-      CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-      CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-      CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
-      CALL POPBOOLEAN(feedback_namelist_used)
-      CALL POPREAL8(dt_prev, r8/8)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)&
 &                                     *SIZE(art_sch, 2)/8)
@@ -7493,6 +7475,16 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_shi, r8*SIZE(art_shi, 1)&
 &                                     *SIZE(art_shi, 2)/8)
+      CALL POPREAL8ARRAY(fb_target, r8*6/8)
+      CALL POPREAL8ARRAY(fb_prev, r8*6/8)
+      CALL POPREAL8ARRAY(fb_current, r8*6/8)
+      CALL POPREAL8(cum_volrec, r8/8)
+      CALL POPREAL8ARRAY(fb_const, r8*6/8)
+      CALL POPREAL8ARRAY(charge_frac, r8*42/8)
+      CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
+      CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+      CALL POPBOOLEAN(feedback_namelist_used)
+      CALL POPREAL8(dt_prev, r8/8)
       switchb%keps_cd = 0.D0
       switchb%keps_heat = 0.D0
       switchb%keps_heat_i = 0.D0
@@ -7518,17 +7510,19 @@ CONTAINS
       switchb%b2tqna_ballooning_rescale = 0.D0
       parm_dnab = 0.D0
       parm_sigb = 0.D0
+      parm_dpab = 0.D0
       parm_alfb = 0.D0
       parm_vsab = 0.D0
+      parm_vlab = 0.D0
       parm_hcib = 0.D0
       parm_hceb = 0.D0
+      b2recycb = 0.D0
+      momparb = 0.D0
+      enkparb = 0.D0
       IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
       IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
       IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
       IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
-      b2recycb = 0.D0
-      momparb = 0.D0
-      enkparb = 0.D0
       parm_dnab = 0.D0
       parm_hceb = 0.D0
       parm_hcib = 0.D0
@@ -7944,9 +7938,6 @@ CONTAINS
     cpustartb = cpustartb0
     res_quitb = res_quitb0
     dtimb = dtimb0
-    toldb = toldb0
-    uoldb = uoldb0
-    moldb = moldb0
     parm_dnab(0:nsdmax-1) = parm_dnab0(0:nsdmax-1)
     parm_sigb = parm_sigb0
     parm_dpab(0:nsdmax-1) = parm_dpab0(0:nsdmax-1)
@@ -7957,6 +7948,9 @@ CONTAINS
     parm_hcib(0:nsdmax-1) = parm_hcib0(0:nsdmax-1)
     parm_hceb = parm_hceb0
     transport_time_switchb = transport_time_switchb0
+    toldb = toldb0
+    uoldb = uoldb0
+    moldb = moldb0
     core_dt_suppressionb = core_dt_suppressionb0
     dtmob(0:nsdmax-1, 0:cvregmax) = dtmob0(0:nsdmax-1, 0:cvregmax)
     core_dt_factorb = core_dt_factorb0
@@ -7995,10 +7989,6 @@ CONTAINS
     b2srst_zt_epsb = b2srst_zt_epsb0
     b2news_cutlob = b2news_cutlob0
     b2tlv0_cutlob = b2tlv0_cutlob0
-    rtlrab = rtlrab0
-    rtlqab = rtlqab0
-    rtlcxb = rtlcxb0
-    rtlsab = rtlsab0
     znb0(0:nsdecl-1) = znb1(0:nsdecl-1)
     zamaxb(0:nsdecl-1) = zamaxb0(0:nsdecl-1)
     amb0(0:nsdecl-1) = amb1(0:nsdecl-1)
@@ -8651,16 +8641,6 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*SIZE(&
 &                                   bv_na, 2)/8)
-    CALL POPREAL8ARRAY(fb_target, r8*6/8)
-    CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-    CALL POPREAL8ARRAY(fb_current, r8*6/8)
-    CALL POPREAL8(cum_volrec, r8/8)
-    CALL POPREAL8ARRAY(fb_const, r8*6/8)
-    CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-    CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
-    CALL POPBOOLEAN(feedback_namelist_used)
-    CALL POPREAL8(dt_prev, r8/8)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)*&
 &                                   SIZE(art_sch, 2)/8)
@@ -8676,6 +8656,16 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_shi, r8*SIZE(art_shi, 1)*&
 &                                   SIZE(art_shi, 2)/8)
+    CALL POPREAL8ARRAY(fb_target, r8*6/8)
+    CALL POPREAL8ARRAY(fb_prev, r8*6/8)
+    CALL POPREAL8ARRAY(fb_current, r8*6/8)
+    CALL POPREAL8(cum_volrec, r8/8)
+    CALL POPREAL8ARRAY(fb_const, r8*6/8)
+    CALL POPREAL8ARRAY(charge_frac, r8*42/8)
+    CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
+    CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+    CALL POPBOOLEAN(feedback_namelist_used)
+    CALL POPREAL8(dt_prev, r8/8)
       parm_dnab = 0.D0
       parm_hceb = 0.D0
       parm_hcib = 0.D0
@@ -9071,7 +9061,6 @@ CONTAINS
 
 !
   SUBROUTINE B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, j)
-    USE B2MOD_USER_NAMELIST_DIFF, ONLY : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFF, ONLY : e_she, e_shi, e_ua, ua_mean, &
@@ -9113,7 +9102,7 @@ CONTAINS
 !   ..initialise counters
     itim = 0
     itim_plas = 0
-    cpuval = 0.0_R8
+    cpuval = 0.0
     elapsedval = 0.0_R8
     stack_ptr = 0
     first_time_step = .true.
@@ -9281,37 +9270,37 @@ CONTAINS
   END SUBROUTINE B2MNDR_1
 
 !  Differentiation of b2mndr_2 as a context to call adjoint code (with options context noISIZE r8):
-!   Plus diff mem management of: b2voloncf:out b2data:out b2dataoncf:out
-!                rtlsa:out rtlcx:out rtlqa:out rtlra:out par_opt_phys:out
-!                mpg.bcfcor:in-out mpg.rcfcor:in-out mpg.cffcor:in-out
-!                mpg.intcellp:in-out mpg.intcellr:in-out geo.cvbb:in-out
-!                geo.cvx:in-out geo.cvy:in-out geo.cvsz:in-out
-!                geo.cvhz:in-out geo.cvhx:in-out geo.cvqgam:in-out
-!                geo.cvvol:in-out geo.cvonedbsq:in-out geo.cvbzb:in-out
-!                geo.cveb:in-out geo.fcbb:in-out geo.fcs:in-out
-!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
-!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
-!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
-!                geo.fcbzb:in-out geo.fceb:in-out geo.vxbb:in-out
-!                geo.vxx:in-out geo.vxy:in-out geo.vxhz:in-out
-!                geo.vxvol:in-out geo.vxffbz:in-out geo.vxfpsi:in-out
-!                geo.vxonedbsq:in-out geo.vxbzb:in-out geo.cvconn:in-out
-!                geo.ftconn:in-out geo.fteps:in-out geo.ftbbav2:in-out
-!                geo.fspsi:in-out state_ext.zn:in-out state_ext.am:in-out
-!                state_ext.ne:in-out state_ext.ne2:in-out state_ext.ue:in-out
-!                state_ext.za:in-out state_ext.za2:in-out state_ext.pt:in-out
-!                state_ext.na:in-out state_ext.ni:in-out state_ext.ua:in-out
-!                state_ext.ta:in-out state_ext.fhi:in-out state_ext.fa:in-out
-!                state_ext.sne:in-out state_ext.she:in-out state_ext.shi:in-out
-!                state_ext.sch:in-out state_ext.sna:in-out state_ext.smo:in-out
-!                state.pl.na:in-out state.pl.ua:in-out state.pl.po:in-out
-!                state.pl.te:in-out state.pl.ti:in-out state.pl.tn:in-out
-!                state.pl.kt:in-out state.pl.zt:in-out state.co.csig:in-out
-!                state.co.calf:in-out state.co.csig_an:in-out state.co.calf_an:in-out
-!                state.co.csig_cl:in-out state.co.calf_cl:in-out
-!                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
-!                state.co.chce_exb:in-out state.co.chvi:in-out
-!                state.co.chci:in-out state.co.chci_exb:in-out
+!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
+!                rtlra:out b2voloncf:out b2data:out b2dataoncf:out
+!                par_opt_phys:out mpg.bcfcor:in-out mpg.rcfcor:in-out
+!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
+!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
+!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
+!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
+!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
+!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
+!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
+!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
+!                geo.ftbbav2:in-out geo.fspsi:in-out state_ext.zn:in-out
+!                state_ext.am:in-out state_ext.ne:in-out state_ext.ne2:in-out
+!                state_ext.ue:in-out state_ext.za:in-out state_ext.za2:in-out
+!                state_ext.pt:in-out state_ext.na:in-out state_ext.ni:in-out
+!                state_ext.ua:in-out state_ext.ta:in-out state_ext.fhi:in-out
+!                state_ext.fa:in-out state_ext.sne:in-out state_ext.she:in-out
+!                state_ext.shi:in-out state_ext.sch:in-out state_ext.sna:in-out
+!                state_ext.smo:in-out state.pl.na:in-out state.pl.ua:in-out
+!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
+!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
+!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
+!                state.co.calf_an:in-out state.co.csig_cl:in-out
+!                state.co.calf_cl:in-out state.co.csigin:in-out
+!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
+!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
 !                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
 !                state.co.chvemx:in-out state.co.chvimx:in-out
 !                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
@@ -9572,7 +9561,8 @@ CONTAINS
     CALL DEALLOC_B2MOD_BOUNDARY()
     CALL DEALLOC_B2MOD_NEUTRALS()
     CALL DEALLOC_B2MOD_NUMERICS()
-    CALL DEALLOC_B2MOD_USER_B()
+    CALL DEALLOC_B2MOD_USER()
+    CALL DEALLOC_B2MOD_PAR_OPT_B()
     CALL DEALLOC_FEEDBACK()
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
@@ -9733,6 +9723,7 @@ CONTAINS
     CALL DEALLOC_B2MOD_NEUTRALS()
     CALL DEALLOC_B2MOD_NUMERICS()
     CALL DEALLOC_B2MOD_USER()
+    CALL DEALLOC_B2MOD_PAR_OPT()
     CALL DEALLOC_FEEDBACK()
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
