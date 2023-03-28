@@ -3,16 +3,16 @@
 !
 !  Differentiation of b2news_ in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                userfluxparm cfvsa cfalf cfsig cfdna cfhce cfhci
-!                tdata int4l int1l int2l int3l int0l fb_target
-!                fb_prev fb_current fb_const charge_frac saved_fb_actuator
-!                fb_rescale *(st.pl.na) *(st.pl.ua) *(st.pl.po)
-!                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.pl.kt)
-!                *(st.pl.zt) *(st.co.csig) *(st.co.calf) *(st.co.csig_an)
-!                *(st.co.csigin) *(st.co.chce) *(st.co.chce_exb)
-!                *(st.co.chci) *(st.co.chci_exb) *(st.co.chcn)
-!                *(st.co.cdkt) *(st.co.cdzt) *(st.co.chvemx) *(st.co.chvimx)
-!                *(st.co.cvla) *(st.co.cdna) *(st.co.cdna_exb)
+!                userfluxparm cfvla cfvsa cfalf cfdpa cfsig cfdna
+!                cfhce cfhci tdata int4l int1l int2l int3l int0l
+!                fb_target fb_prev fb_current fb_const charge_frac
+!                saved_fb_actuator fb_rescale *(st.pl.na) *(st.pl.ua)
+!                *(st.pl.po) *(st.pl.te) *(st.pl.ti) *(st.pl.tn)
+!                *(st.pl.kt) *(st.pl.zt) *(st.co.csig) *(st.co.calf)
+!                *(st.co.csig_an) *(st.co.csigin) *(st.co.chce)
+!                *(st.co.chce_exb) *(st.co.chci) *(st.co.chci_exb)
+!                *(st.co.chcn) *(st.co.cdkt) *(st.co.cdzt) *(st.co.chvemx)
+!                *(st.co.chvimx) *(st.co.cvla) *(st.co.cdna) *(st.co.cdna_exb)
 !                *(st.co.cdpa) *(st.co.cvsa) *(st.co.cvlahz) *(st.co.cdpahz)
 !                *(st.co.cvsahz) *(st.co.cddi) *(st.co.cvsahz_cl)
 !                *(st.co.chcb) *(st.co.cvsahz_eff) *(st.co.cvsa_cl)
@@ -58,14 +58,15 @@
 !                *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni)
 !                *(st.psnc.fna) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar userfluxparm cfvsa cfalf cfsig cfdna
-!                cfhce cfhci parm_hce parm_hci parm_vsa parm_alf
-!                parm_sig parm_dna tdata int4l int1l int2l int3l
-!                int0l fb_target fb_prev fb_current fb_const charge_frac
-!                saved_fb_actuator fb_rescale switch.keps_cd switch.keps_heat
-!                switch.keps_heat_i switch.keps_sig switch.keps_alf
-!                switch.keps_visc switch.keps_dkt switch.keps_dzt
-!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                int4l int1l int2l int3l int0l fb_target fb_prev
+!                fb_current fb_const charge_frac saved_fb_actuator
+!                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt

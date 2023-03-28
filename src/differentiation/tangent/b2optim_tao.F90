@@ -6,7 +6,7 @@
       Mat Hess
       end module taomodule
 
-      program b2optim_petsc
+      program b2optim_tao
       use taomodule ! IGNORE
       use b2mod_par_opt_diffv
       use b2mod_main_diffv &
@@ -47,6 +47,7 @@
 #endif
 
 #ifdef ADJ
+      call print_adj_parameters()
       par_opt_physb = 0.0_R8
 #endif
 
@@ -131,10 +132,8 @@
       contains
 
       subroutine InitializeProblem(npar,ierr)
-      use b2mod_user_namelist_diffv &
-     , only : sigma
       use b2mod_par_opt_diffv &
-     , only : x0, xl, xu, par_rescale
+     , only : x0, xl, xu, par_rescale, sigma
       implicit none
       PetscReal zero
       PetscErrorCode ierr
@@ -223,10 +222,8 @@
       use b2mod_version_diffv &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diffv
-      use b2mod_user_namelist_diffv &
-      , only : sigma
       use b2mod_par_opt_diffv &
-     , only : par_rescale
+     , only : par_rescale, sigma
       implicit none
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2)
@@ -307,7 +304,7 @@
       end subroutine FormFunctionGradient
 
       subroutine FormFunction(tao, XX, F, dummy, ierr)
-      use b2mod_user_namelist_diffv &
+      use b2mod_par_opt_diffv &
       , only : sigma
       implicit none
       real(kind=r8) j(nncf)
@@ -353,7 +350,7 @@
       use b2mod_version_diffv &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diffv
-      use b2mod_user_namelist_diffv &
+      use b2mod_par_opt_diffv &
       , only : sigma
       implicit none
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar_opt)
@@ -471,4 +468,4 @@
       return
       end subroutine FormHessian
 
-      end program b2optim_petsc
+      end program b2optim_tao

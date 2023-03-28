@@ -86,10 +86,10 @@
 
       call subini ('get_nxt')
 
-cxpb  Compute position of additional targets in DN configuration
+cxpb  Compute position of additional targets in DN and Snowflake configurations
       nxtl = -2
       nxtr = nx+1
-      if (nnreg(0).eq.8) then
+      if (nnreg(0).ge.7) then
         nxtl = 0
         nxtr = 1
         !wdk First pass: for target/vessel mode grids, these rows of

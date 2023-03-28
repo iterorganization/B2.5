@@ -1,10 +1,9 @@
-      subroutine print_tgt_gradient(jd,ncf)
+      subroutine print_tgt_gradient(jd)
       use b2mod_par_opt_diffv
       use b2mod_ad_diffv
      , , only : nncf
       implicit none
       real(kind=r8), intent(in)  :: jd(nbdirsmax, nncf)
-      integer, intent(in):: ncf
 *-----------------------------------------------------------------------
 *     print_tgt_gradient is used in b2mod_driver to print gradient
 *     of the cost function during sensitivity calculation and optimization
