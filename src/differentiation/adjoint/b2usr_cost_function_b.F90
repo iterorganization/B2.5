@@ -3,18 +3,18 @@
 !
 !  Differentiation of b2usr_cost_function in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: j
-!   with respect to varying inputs: sigma *(st.pl.na) *(st.pl.te)
-!                *(st.pl.ti) *(st.dv.fna) *(st.dv.fne) *(st.dv.fhe)
-!                *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne) *(st.rt.rpt)
-!                (global)*par_opt_phys[_:_]
+!   with respect to varying inputs: sigma *par_opt_phys *(st.pl.na)
+!                *(st.pl.te) *(st.pl.ti) *(st.dv.fna) *(st.dv.fne)
+!                *(st.dv.fhe) *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne)
+!                *(st.rt.rpt)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
-!                mpg.cffcor:in mpg.intcellr:in geo.cvx:in geo.cvy:in
-!                geo.cvvol:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                st_ext.am:in st_ext.na:in st_ext.ta:in st.pl.na:in
-!                st.pl.te:in st.pl.ti:in st.dv.fna:in st.dv.fne:in
-!                st.dv.fhe:in st.dv.fhi:in st.dv.kinrgy:in st.dv.ne:in
-!                st.rt.rpt:in (global)par_opt_phys:in
+!                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
+!                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in st_ext.am:in st_ext.na:in
+!                st_ext.ta:in st.pl.na:in st.pl.te:in st.pl.ti:in
+!                st.dv.fna:in st.dv.fne:in st.dv.fhe:in st.dv.fhi:in
+!                st.dv.kinrgy:in st.dv.ne:in st.rt.rpt:in
 !
 !
 !
@@ -30,12 +30,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 & , st, stb, st_ext, st_extb, boris, j, jb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFF
+  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp
   USE B2MOD_B2CMPA_DIFF, ONLY : am
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
   USE B2US_GEO_DIFF
-  USE B2MOD_PAR_OPT_DIFF, ONLY : npar_opt
+  USE B2MOD_PAR_OPT_DIFF
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : vold, cfnorm, nncf, b2rr, b2voloncf, &
@@ -119,7 +119,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
-! simply use as b2rr the OMP radial coordiantes.
+! simply use as b2rr the OMP radial coordinates.
 ! check on, and then use, only internal Cvs in OMP list
           arg1 = icsepomp - 1
           CALL CALC_DIST_NODIFF(mpg, geo, omp(2:nomp-1), n1, arg1, b2rr(&
@@ -464,6 +464,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     IF (ALLOCATED(b2datab)) b2datab = 0.D0
     IF (ALLOCATED(b2dataoncfb)) b2dataoncfb = 0.D0
     sigmab = 0.D0
+    IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
     stb%pl%na = 0.D0
     stb%pl%te = 0.D0
     stb%pl%ti = 0.D0
@@ -848,6 +849,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     END DO
   ELSE
     sigmab = 0.D0
+    IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
     stb%pl%na = 0.D0
     stb%pl%te = 0.D0
     stb%pl%ti = 0.D0
@@ -890,12 +892,12 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 & st_ext, boris, j)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFF
+  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp
   USE B2MOD_B2CMPA_DIFF, ONLY : am
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
   USE B2US_GEO_DIFF
-  USE B2MOD_PAR_OPT_DIFF, ONLY : npar_opt
+  USE B2MOD_PAR_OPT_DIFF
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFF, ONLY : vold, cfnorm, nncf, b2rr, b2voloncf, b2data,&
@@ -964,7 +966,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
-! simply use as b2rr the OMP radial coordiantes.
+! simply use as b2rr the OMP radial coordinates.
           CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
 &               'Mapping to OMP need revision for extended grids')
 ! check on, and then use, only internal Cvs in OMP list

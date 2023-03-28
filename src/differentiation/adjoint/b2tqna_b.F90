@@ -2,28 +2,28 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tqna in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata parm_hce parm_hci parm_vsa parm_alf
-!                parm_sig parm_dna hce_exb hci0 vsa0 sig0 *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) alf0 *(rt.rlcx) *(rt.rlsa)
-!                *(rt.rza) dna_exb hcib hcn0 dna0 dkt0 switch.keps_cd
-!                switch.keps_heat switch.keps_heat_i switch.keps_sig
-!                switch.keps_alf switch.keps_visc switch.keps_dkt
-!                switch.keps_dzt switch.keps_shear switch.b2tqna_ballooning
-!                switch.b2tqna_ballooning_rescale *(pl.na) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt) vla0 hce0
-!                dzt0 dpa0 hci_exb
-!   with respect to varying inputs: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata parm_hce parm_hci parm_vsa parm_alf
-!                parm_sig parm_dna hce_exb hci0 vsa0 sig0 *(dv.ne)
-!                *(dv.ni) *(dv.vaecrb) alf0 *(rt.rlcx) *(rt.rlsa)
-!                *(rt.rza) dna_exb hcib hcn0 dna0 dkt0 switch.keps_cd
-!                switch.keps_heat switch.keps_heat_i switch.keps_sig
-!                switch.keps_alf switch.keps_visc switch.keps_dkt
-!                switch.keps_dzt switch.keps_shear switch.b2tqna_ballooning
-!                switch.b2tqna_ballooning_rescale *(pl.na) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt) vla0 hce0
-!                dzt0 dpa0 hci_exb
+!   gradient     of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna hce_exb
+!                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
+!                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
+!                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                vla0 hce0 dzt0 dpa0 hci_exb
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna hce_exb
+!                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
+!                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
+!                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!                *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                vla0 hce0 dzt0 dpa0 hci_exb
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fcvol:in
@@ -1423,11 +1423,16 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) CALL POPREAL8(vla0(icv, 1, is), r8/8)
       CALL POPREAL8(vla0(icv, 1, is), r8/8)
-      max3b = -(1.0e20_R8*cfvla(1, is)*vla0b(icv, 1, is)/max3**2)
+      cfvlab(0, is) = cfvlab(0, is) + vla0b(icv, 1, is)
+      tempb0 = 1.0e20_R8*vla0b(icv, 1, is)/max3
+      cfvlab(2, is) = cfvlab(2, is) + df0*vla0b(icv, 1, is)
       df0b = df0b + cfvla(2, is)*vla0b(icv, 1, is)
-      plb%te(icv) = plb%te(icv) + cfvla(3, is)*6.25e-2_R8*vla0b(icv, 1, &
-&       is)/(ev*abs6)
+      tempb = 6.25e-2_R8*vla0b(icv, 1, is)/(ev*abs6)
       vla0b(icv, 1, is) = 0.D0
+      cfvlab(3, is) = cfvlab(3, is) + pl%te(icv)*tempb
+      plb%te(icv) = plb%te(icv) + cfvla(3, is)*tempb
+      cfvlab(1, is) = cfvlab(1, is) + tempb0
+      max3b = -(cfvla(1, is)*tempb0/max3)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         CALL POPREAL8(abs6, r8/8)
@@ -1447,17 +1452,23 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       IF (branch .NE. 0) CALL POPREAL8(dpa0(icv, is), r8/8)
       CALL POPREAL8(dpa0(icv, is), r8/8)
       temp = rt%rza(icv, is)*pl%te(icv) + pl%ti(icv)
+      temp2 = cfdpa(1, is)/max2
       tempb0 = dpa0b(icv, is)/temp
       dpa0b(icv, is) = 0.D0
-      max2b = -(1.0e20_R8*cfdpa(1, is)*tempb0/max2**2)
+      cfdpab(0, is) = cfdpab(0, is) + tempb0
+      tempb = 1.0e20_R8*tempb0/max2
+      cfdpab(2, is) = cfdpab(2, is) + df0*tempb0
       df0b = df0b + cfdpa(2, is)*tempb0
-      tempb2 = -((cfdpa(0, is)+cfdpa(1, is)*(1.0e20_R8/max2)+cfdpa(2, is&
-&       )*df0+cfdpa(3, is)*6.25e-2_R8*(pl%te(icv)/(ev*abs5)))*tempb0/&
-&       temp)
-      plb%te(icv) = plb%te(icv) + cfdpa(3, is)*6.25e-2_R8*tempb0/(ev*&
-&       abs5) + rt%rza(icv, is)*tempb2
+      tempb1 = 6.25e-2_R8*tempb0/(ev*abs5)
+      tempb2 = -((cfdpa(0, is)+1.0e20_R8*temp2+cfdpa(2, is)*df0+&
+&       6.25e-2_R8*(cfdpa(3, is)*pl%te(icv)/(ev*abs5)))*tempb0/temp)
       rtb%rza(icv, is) = rtb%rza(icv, is) + pl%te(icv)*tempb2
+      plb%te(icv) = plb%te(icv) + rt%rza(icv, is)*tempb2 + cfdpa(3, is)*&
+&       tempb1
       plb%ti(icv) = plb%ti(icv) + tempb2
+      cfdpab(3, is) = cfdpab(3, is) + pl%te(icv)*tempb1
+      cfdpab(1, is) = cfdpab(1, is) + tempb
+      max2b = -(temp2*tempb)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         CALL POPREAL8(abs5, r8/8)
@@ -1633,6 +1644,10 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                            , cfhci(0, is), cfhcib(0, is))
         CALL TRANSFORM_TRANSPORT_B(flag_vsa, parm_vsa(is), parm_vsab(is)&
 &                            , cfvsa(0, is), cfvsab(0, is))
+        CALL TRANSFORM_TRANSPORT_B(flag_vla, parm_vla(is), parm_vlab(is)&
+&                            , cfvla(0, is), cfvlab(0, is))
+        CALL TRANSFORM_TRANSPORT_B(flag_dpa, parm_dpa(is), parm_dpab(is)&
+&                            , cfdpa(0, is), cfdpab(0, is))
         CALL TRANSFORM_TRANSPORT_B(flag_dna, parm_dna(is), parm_dnab(is)&
 &                            , cfdna(0, is), cfdnab(0, is))
       END IF
