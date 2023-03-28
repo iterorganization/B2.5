@@ -69,8 +69,6 @@
       use b2us_plasma
       use b2us_io
       use b2mod_par_opt
-     & , only : npar_opt, flag_optim, read_b2mod_par_opt,
-     & par_opt_phys, x0, nsigma_opt
       use b2mod_b2plot
      , , only : nlimi
 
@@ -1840,9 +1838,6 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
-      if (any(cftype.eq.6)) call xertst(
-     & flag_optim.or.(switch%b2optim_namelist .eq. 1),
-     & 'cftype=6 requires b2.optimization.namelist')
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
@@ -1855,7 +1850,7 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg%nBc)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
         allocate(par_opt_phys(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
       endif
@@ -1914,8 +1909,6 @@ c new CDF movie option (1st frame at t=0)
 
       subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
      &  state_ext, J)
-      use b2mod_user_namelist
-     & , only : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_batch_average
@@ -2777,6 +2770,7 @@ c new CDF movie option
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
       call dealloc_b2mod_user
+      call dealloc_b2mod_par_opt
       call dealloc_feedback
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init

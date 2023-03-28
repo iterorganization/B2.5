@@ -6,7 +6,7 @@
       Mat Hess
       end module taomodule
 
-      program b2optim_petsc
+      program b2optim_tao
       use taomodule ! IGNORE
       use b2mod_par_opt_diff
       use b2mod_main_diff &
@@ -132,10 +132,8 @@
       contains
 
       subroutine InitializeProblem(npar,ierr)
-      use b2mod_user_namelist_diff &
-     , only : sigma
       use b2mod_par_opt_diff &
-     , only : x0, xl, xu, par_rescale
+     , only : x0, xl, xu, par_rescale, sigma
       implicit none
       PetscReal zero
       PetscErrorCode ierr
@@ -223,10 +221,8 @@
       use b2mod_version &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
-      use b2mod_user_namelist_diff &
-      , only : sigma
       use b2mod_par_opt_diff &
-     , only : par_rescale
+     , only : par_rescale, sigma
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
       integer ipar, isigma, idum(0:2)
@@ -307,7 +303,7 @@
       end subroutine FormFunctionGradient
 
       subroutine FormFunction(tao, XX, F, dummy, ierr)
-      use b2mod_user_namelist_diffv &
+      use b2mod_par_opt_diff &
       , only : sigma
       implicit none
       real(kind=r8) j(nncf)
@@ -353,7 +349,7 @@
       use b2mod_version &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
-      use b2mod_user_namelist_diff &
+      use b2mod_par_opt_diffv &
       , only : sigma
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
@@ -471,4 +467,4 @@
       return
       end subroutine FormHessian
 
-      end program b2optim_petsc
+      end program b2optim_tao
