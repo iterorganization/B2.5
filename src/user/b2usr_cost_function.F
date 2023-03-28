@@ -3,13 +3,13 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_user_namelist
+     & , only : omp, nomp, icsepomp
       use b2mod_b2cmpa
      & , only : am
       use b2us_map
       use b2us_plasma
       use b2us_geo
       use b2mod_par_opt
-     & , only : npar_opt
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
