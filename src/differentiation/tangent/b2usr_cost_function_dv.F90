@@ -5,17 +5,17 @@
 !   variations   of useful results: cfnorm vold *b2voloncf *b2data
 !                *b2dataoncf j
 !   with respect to varying inputs: cfnorm vold *b2voloncf *b2data
-!                *b2dataoncf sigma *(st.pl.na) *(st.pl.te) *(st.pl.ti)
-!                *(st.dv.fna) *(st.dv.fne) *(st.dv.fhe) *(st.dv.fhi)
-!                *(st.dv.kinrgy) *(st.dv.ne) *(st.rt.rpt) (global)*par_opt_phys[_:_]
+!                *b2dataoncf sigma *par_opt_phys *(st.pl.na) *(st.pl.te)
+!                *(st.pl.ti) *(st.dv.fna) *(st.dv.fne) *(st.dv.fhe)
+!                *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne) *(st.rt.rpt)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
-!                mpg.cffcor:in mpg.intcellr:in geo.cvx:in geo.cvy:in
-!                geo.cvvol:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
-!                st_ext.am:in st_ext.na:in st_ext.ta:in st.pl.na:in
-!                st.pl.te:in st.pl.ti:in st.dv.fna:in st.dv.fne:in
-!                st.dv.fhe:in st.dv.fhi:in st.dv.kinrgy:in st.dv.ne:in
-!                st.rt.rpt:in (global)par_opt_phys:in
+!                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
+!                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in st_ext.am:in st_ext.na:in
+!                st_ext.ta:in st.pl.na:in st.pl.te:in st.pl.ti:in
+!                st.dv.fna:in st.dv.fne:in st.dv.fhe:in st.dv.fhi:in
+!                st.dv.kinrgy:in st.dv.ne:in st.rt.rpt:in
 !
 !
 !
@@ -31,12 +31,12 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 & mpgd, st, std, st_ext, st_extd, boris, j, jd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFFV
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
   USE B2MOD_B2CMPA_DIFFV, ONLY : am
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2US_GEO_DIFFV
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : npar_opt
+  USE B2MOD_PAR_OPT_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : vold, voldd, cfnorm, cfnormd, nncf, b2rr, &
@@ -140,7 +140,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
         IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
-! simply use as b2rr the OMP radial coordiantes.
+! simply use as b2rr the OMP radial coordinates.
           CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
 &               'Mapping to OMP need revision for extended grids')
 ! check on, and then use, only internal Cvs in OMP list
@@ -619,12 +619,12 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 & st_ext, boris, j)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFFV
+  USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp, nomp, icsepomp
   USE B2MOD_B2CMPA_DIFFV, ONLY : am
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2US_GEO_DIFFV
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : npar_opt
+  USE B2MOD_PAR_OPT_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : vold, cfnorm, nncf, b2rr, b2voloncf, b2data&
@@ -695,7 +695,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
         IF (maptoomp(icf)) THEN
 ! FIXME to be considerably improved!
 !for now assume radial data rigidly moved at the OMP (like in ST code)
-! simply use as b2rr the OMP radial coordiantes.
+! simply use as b2rr the OMP radial coordinates.
           CALL XERTST(mpg%isclassicalgrid .EQ. 1, &
 &               'Mapping to OMP need revision for extended grids')
 ! check on, and then use, only internal Cvs in OMP list

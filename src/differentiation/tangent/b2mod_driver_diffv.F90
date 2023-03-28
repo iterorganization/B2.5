@@ -66,6 +66,7 @@ MODULE B2MOD_DRIVER_DIFFV
 & batch_av_all_save, batch_av_all_fin
   USE B2MOD_TRACE
   USE B2MOD_IPMAIN
+  USE B2MOD_OPENMP
   USE B2MOD_RUNNING_AVERAGE_DIFFV, ONLY : run_av_init, run_av_init_dv, &
 & run_av_get_plasma, run_av_save, &
 & run_av_fin, run_av_fin_dv
@@ -85,9 +86,7 @@ MODULE B2MOD_DRIVER_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2US_IO_DIFFV
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : npar_opt, flag_optim, &
-& read_b2mod_par_opt, par_opt_phys, par_opt_physd, nsigma_opt&
-& , x0
+  USE B2MOD_PAR_OPT_DIFFV
   USE B2MOD_B2PLOT_DIFFV, ONLY : nlimi
 !
   USE B2MOD_BRAEIR_DIFFV
@@ -148,10 +147,11 @@ MODULE B2MOD_DRIVER_DIFFV
 !srv 26.02.18
   INTEGER, SAVE :: boundary_sources=0
   INTEGER, SAVE :: equation_sources=0
-  REAL(kind=r8) :: na_min, na_new, dtim, etim, b2mndr_cpu, cpuval, &
-& cpustart, cpuinit, b2mndr_elapsed, elapsedval, elapsedstart, &
-& elapsedinit, density_rescale, ne_wanted, ne_wanted_time, &
-& ne_wanted_next_time, ne_wanted_mod_time, factor, ixfb, iyfb, ax, ay
+  REAL(kind=r4) :: cpuval, cpustart, cpuinit
+  REAL(kind=r8) :: na_min, na_new, dtim, etim, b2mndr_cpu, &
+& b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit, density_rescale&
+& , ne_wanted, ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, &
+& factor, ixfb, iyfb, ax, ay
   REAL(kind=r8), DIMENSION(nbdirsmax) :: na_mind, na_newd
 !WG_TODO      real (kind=R8), allocatable ::
 !WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
@@ -2217,8 +2217,6 @@ CONTAINS
     EXTERNAL XERRAB_DV
     INTRINSIC NINT
     INTRINSIC MAX
-    INTRINSIC ANY
-    EXTERNAL ANY_DV
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2237,7 +2235,6 @@ CONTAINS
     INTEGER :: nd
     INTEGER :: nbdirs
     REAL(kind=r8) :: MINVAL_DV
-    LOGICAL :: ANY_DV
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -3618,12 +3615,7 @@ CONTAINS
     DO is=0,ns-1
       IF (is_neutral(is)) natmi = natmi + 1
     END DO
-    CALL ALLOC_B2MOD_USER_DV(geo, geod, mpg, mpgd, ns, nlim, nmol, nsts&
-&                      , nbdirs)
-    IF (ANY(cftype .EQ. 6)) CALL XERTST(flag_optim .OR. switch%&
-&                                 b2optim_namelist .EQ. 1, &
-&                           'cftype=6 requires b2.optimization.namelist'&
-&                                )
+    CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, nsts)
     IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
       CALL ALLOC_TRANSPORT_NAMELIST(ns)
       CALL READ_B2MOD_TRANSPORT_NAMELIST()
@@ -3635,7 +3627,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg%nbc)
+      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, nbdirs)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.D0
@@ -3716,7 +3708,6 @@ CONTAINS
     EXTERNAL XERRAB
     INTRINSIC NINT
     INTRINSIC MAX
-    INTRINSIC ANY
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -5094,10 +5085,6 @@ CONTAINS
       IF (is_neutral(is)) natmi = natmi + 1
     END DO
     CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, nsts)
-    IF (ANY(cftype .EQ. 6)) CALL XERTST(flag_optim .OR. switch%&
-&                                 b2optim_namelist .EQ. 1, &
-&                           'cftype=6 requires b2.optimization.namelist'&
-&                                )
     IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
       CALL ALLOC_TRANSPORT_NAMELIST(ns)
       CALL READ_B2MOD_TRANSPORT_NAMELIST()
@@ -5109,7 +5096,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg%nbc)
+      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg)
       ALLOCATE(par_opt_phys(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
     END IF
@@ -5150,17 +5137,17 @@ CONTAINS
 !                tdata j
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys parm_hce parm_hci parm_vsa
-!                parm_alf parm_sig parm_dna tdata switch.keps_cd
-!                switch.keps_heat switch.keps_heat_i switch.keps_sig
-!                switch.keps_alf switch.keps_visc switch.keps_dkt
-!                switch.keps_dzt switch.keps_shear switch.b2sikt_fac_sheath
-!                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
-!                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                switch.b2tfhi_fflokt switch.b2tfhi_fconkt switch.b2tfhi_fflozt
-!                switch.b2tfhi_fconzt switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie
-!                switch.b2tfhe_vis_kt switch.b2tqna_ballooning
-!                switch.b2tqna_ballooning_rescale
+!                sigma *par_opt_phys parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
+!                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
+!                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
+!                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
+!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
 !                b2voloncf:in b2data:in b2dataoncf:in par_opt_phys:in
 !                mpg.bcfcor:in mpg.rcfcor:in mpg.cffcor:in mpg.intcellp:in
@@ -5279,7 +5266,6 @@ CONTAINS
 !
   SUBROUTINE B2MNDR_1_DV(nout, ns, switch, switchd, geo, geod, mpg, mpgd&
 &   , state, stated, state_ext, state_extd, j, jd, nbdirs)
-    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : e_she, e_shi, e_ua, ua_mean, &
@@ -5334,11 +5320,13 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: x2
     REAL(r8), DIMENSION(mpg%nCv) :: x3
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x4
-    REAL(kind=r8) :: y1
+    REAL(r8) :: x5
+    REAL(r8) :: y1
     REAL(kind=r8) :: y2
     REAL(kind=r8) :: y3
-    REAL(r8), DIMENSION(mpg%nCv) :: x5
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x6
+    REAL(r8) :: y4
+    REAL(r8), DIMENSION(mpg%nCv) :: x6
+    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x7
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs0
     REAL(r8), DIMENSION(mpg%nCv) :: abs1
     REAL(r8), DIMENSION(mpg%nCv) :: abs2
@@ -5348,7 +5336,7 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: abs6
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs7
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs8
-    REAL(kind=r8) :: min1
+    REAL(r8) :: min1
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: min3
     REAL(r8), DIMENSION(mpg%nCv) :: abs9
@@ -5372,7 +5360,8 @@ CONTAINS
     REAL(r8) :: result6
     REAL(r8) :: result7
     REAL(r8) :: result8
-    INTEGER :: arg1
+    REAL(kind=r4) :: arg1
+    INTEGER :: arg10
     INTEGER :: nd
     INTEGER :: nbdirs
     LOGICAL, SAVE :: first_opt_call=.true.
@@ -5383,7 +5372,7 @@ CONTAINS
 !   ..initialise counters
     itim = 0
     itim_plas = 0
-    cpuval = 0.0_R8
+    cpuval = 0.0
     elapsedval = 0.0_R8
     stack_ptr = 0
     first_time_step = .true.
@@ -5428,10 +5417,16 @@ CONTAINS
       userfluxparmd(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      cfvlad(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       cfvsad(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       cfalfd(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      cfdpad(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       cfsigd(nd, :) = 0.D0
@@ -6359,11 +6354,11 @@ CONTAINS
         ELSEWHERE
           abs17 = -state%pl%po
         END WHERE
-        x5 = (state%pl%po-state%psnc%po)/(abs17+po_eps)
-        WHERE (x5 .GE. 0.0) 
-          abs16 = x5
+        x6 = (state%pl%po-state%psnc%po)/(abs17+po_eps)
+        WHERE (x6 .GE. 0.0) 
+          abs16 = x6
         ELSEWHERE
-          abs16 = -x5
+          abs16 = -x6
         END WHERE
         WHERE ((state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev) .GE. &
 &           0.0) 
@@ -6382,12 +6377,12 @@ CONTAINS
         ELSEWHERE
           abs21 = -(state%pl%na*state%pl%ua)
         END WHERE
-        x6 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(&
+        x7 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(&
 &         abs21+na_eps*ua_eps)
-        WHERE (x6 .GE. 0.0) 
-          abs20 = x6
+        WHERE (x7 .GE. 0.0) 
+          abs20 = x7
         ELSEWHERE
-          abs20 = -x6
+          abs20 = -x7
         END WHERE
         result1 = MAXVAL(abs8)
         result2 = MAXVAL(abs13)
@@ -6475,7 +6470,7 @@ CONTAINS
         IF (.NOT.ALLOCATED(iz)) CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%&
 &                                               nnreg(0), nstra, natm, &
 &                                               switch)
-!WG_TODO          call b2trci(nx,ny,ns,nnreg(0),switch)
+        CALL B2TRCI(switch)
         IF (write_nml_user) CALL WRITE_B2MOD_USER_NAMELIST()
       END IF
       IF (ank_tracing .NE. 0) THEN
@@ -6489,15 +6484,18 @@ CONTAINS
       CALL CPU_TIME(cpuval)
       elapsedval = EPOCH_SECONDS()
       IF (b2mndr_cpu .GT. 0.0_R8) THEN
-        IF (0.0_R8 .LT. b2mndr_cpu - (cpuval-cpuinit)) THEN
-          y1 = b2mndr_cpu - (cpuval-cpuinit)
+        arg1 = cpuval - cpustart
+        x5 = (ntim-itim)*REAL(arg1, r8)
+        y4 = b2mndr_cpu - REAL(cpuval - cpuinit, r8)
+        IF (0.0_R8 .LT. y4) THEN
+          y1 = y4
         ELSE
           y1 = 0.0_R8
         END IF
-        IF ((ntim-itim)*(cpuval-cpustart) .GT. y1) THEN
+        IF (x5 .GT. y1) THEN
           min1 = y1
         ELSE
-          min1 = (ntim-itim)*(cpuval-cpustart)
+          min1 = x5
         END IF
 !srv 18.05.09
         WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
@@ -6645,8 +6643,8 @@ CONTAINS
 !xpb/dpc
 !       ..test plasma state
         CALL B2XVPS_NODIFF(ncv, nfc, ns, state%pl, state%dv)
-        arg1 = ncv*ns
-        CALL B2XVSG_NODIFF(arg1, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
+        arg10 = ncv*ns
+        CALL B2XVSG_NODIFF(arg10, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 !       ..write plasma state
         CALL WRITE_B2FSTATE(nout(6), ncv, nfc, ns, state)
         CLOSE(nout(6)) 
@@ -6676,7 +6674,6 @@ CONTAINS
 
 !
   SUBROUTINE B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, j)
-    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : ncf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : e_she, e_shi, e_ua, ua_mean, &
@@ -6723,11 +6720,13 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: x2
     REAL(r8), DIMENSION(mpg%nCv) :: x3
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x4
-    REAL(kind=r8) :: y1
+    REAL(r8) :: x5
+    REAL(r8) :: y1
     REAL(kind=r8) :: y2
     REAL(kind=r8) :: y3
-    REAL(r8), DIMENSION(mpg%nCv) :: x5
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x6
+    REAL(r8) :: y4
+    REAL(r8), DIMENSION(mpg%nCv) :: x6
+    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x7
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs0
     REAL(r8), DIMENSION(mpg%nCv) :: abs1
     REAL(r8), DIMENSION(mpg%nCv) :: abs2
@@ -6737,7 +6736,7 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: abs6
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs7
     REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs8
-    REAL(kind=r8) :: min1
+    REAL(r8) :: min1
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: min3
     REAL(r8), DIMENSION(mpg%nCv) :: abs9
@@ -6761,7 +6760,8 @@ CONTAINS
     REAL(r8) :: result6
     REAL(r8) :: result7
     REAL(r8) :: result8
-    INTEGER :: arg1
+    REAL(kind=r4) :: arg1
+    INTEGER :: arg10
 !
     CALL SUBINI('b2mndr_1')
 !   ..no error so far
@@ -6769,7 +6769,7 @@ CONTAINS
 !   ..initialise counters
     itim = 0
     itim_plas = 0
-    cpuval = 0.0_R8
+    cpuval = 0.0
     elapsedval = 0.0_R8
     stack_ptr = 0
     first_time_step = .true.
@@ -7019,11 +7019,11 @@ CONTAINS
         ELSEWHERE
           abs17 = -state%pl%po
         END WHERE
-        x5 = (state%pl%po-state%psnc%po)/(abs17+po_eps)
-        WHERE (x5 .GE. 0.0) 
-          abs16 = x5
+        x6 = (state%pl%po-state%psnc%po)/(abs17+po_eps)
+        WHERE (x6 .GE. 0.0) 
+          abs16 = x6
         ELSEWHERE
-          abs16 = -x5
+          abs16 = -x6
         END WHERE
         WHERE ((state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev) .GE. &
 &           0.0) 
@@ -7042,12 +7042,12 @@ CONTAINS
         ELSEWHERE
           abs21 = -(state%pl%na*state%pl%ua)
         END WHERE
-        x6 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(&
+        x7 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(&
 &         abs21+na_eps*ua_eps)
-        WHERE (x6 .GE. 0.0) 
-          abs20 = x6
+        WHERE (x7 .GE. 0.0) 
+          abs20 = x7
         ELSEWHERE
-          abs20 = -x6
+          abs20 = -x7
         END WHERE
         result1 = MAXVAL(abs8)
         result2 = MAXVAL(abs13)
@@ -7135,7 +7135,7 @@ CONTAINS
         IF (.NOT.ALLOCATED(iz)) CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%&
 &                                               nnreg(0), nstra, natm, &
 &                                               switch)
-!WG_TODO          call b2trci(nx,ny,ns,nnreg(0),switch)
+        CALL B2TRCI(switch)
         IF (write_nml_user) CALL WRITE_B2MOD_USER_NAMELIST()
       END IF
       IF (ank_tracing .NE. 0) THEN
@@ -7149,15 +7149,18 @@ CONTAINS
       CALL CPU_TIME(cpuval)
       elapsedval = EPOCH_SECONDS()
       IF (b2mndr_cpu .GT. 0.0_R8) THEN
-        IF (0.0_R8 .LT. b2mndr_cpu - (cpuval-cpuinit)) THEN
-          y1 = b2mndr_cpu - (cpuval-cpuinit)
+        arg1 = cpuval - cpustart
+        x5 = (ntim-itim)*REAL(arg1, r8)
+        y4 = b2mndr_cpu - REAL(cpuval - cpuinit, r8)
+        IF (0.0_R8 .LT. y4) THEN
+          y1 = y4
         ELSE
           y1 = 0.0_R8
         END IF
-        IF ((ntim-itim)*(cpuval-cpustart) .GT. y1) THEN
+        IF (x5 .GT. y1) THEN
           min1 = y1
         ELSE
-          min1 = (ntim-itim)*(cpuval-cpustart)
+          min1 = x5
         END IF
 !srv 18.05.09
         WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
@@ -7305,8 +7308,8 @@ CONTAINS
 !xpb/dpc
 !       ..test plasma state
         CALL B2XVPS_NODIFF(ncv, nfc, ns, state%pl, state%dv)
-        arg1 = ncv*ns
-        CALL B2XVSG_NODIFF(arg1, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
+        arg10 = ncv*ns
+        CALL B2XVSG_NODIFF(arg10, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 !       ..write plasma state
         CALL WRITE_B2FSTATE(nout(6), ncv, nfc, ns, state)
         CLOSE(nout(6)) 
@@ -7628,7 +7631,8 @@ CONTAINS
     CALL DEALLOC_B2MOD_BOUNDARY()
     CALL DEALLOC_B2MOD_NEUTRALS()
     CALL DEALLOC_B2MOD_NUMERICS()
-    CALL DEALLOC_B2MOD_USER_DV(nbdirs)
+    CALL DEALLOC_B2MOD_USER()
+    CALL DEALLOC_B2MOD_PAR_OPT_DV(nbdirs)
     CALL DEALLOC_FEEDBACK()
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
@@ -7788,6 +7792,7 @@ CONTAINS
     CALL DEALLOC_B2MOD_NEUTRALS()
     CALL DEALLOC_B2MOD_NUMERICS()
     CALL DEALLOC_B2MOD_USER()
+    CALL DEALLOC_B2MOD_PAR_OPT()
     CALL DEALLOC_FEEDBACK()
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
