@@ -84,6 +84,7 @@ c 2002-09-11: logic revised
 #endif
       use b2mod_ipmain
       use b2mod_subsys
+      use b2us_map
       implicit none
 #     include "DIMENSIONS.F"
 
@@ -160,6 +161,8 @@ c 2002-09-11: logic revised
 
 *   ..common blocks
 *   ..local variables
+      type(mapping) :: mpg !needed for reading user&optimization namelists..
+! ..probably will be needed in any case for any WG-conversion
       integer, allocatable :: idum(:)
       integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
@@ -11059,12 +11062,47 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, nbc)
-#ifdef WG_TODO
-        if(.not.user_initialised)
-     >   call alloc_b2mod_user(geo,mpg,ns,nlimi,nmoli,ntns)
-#endif
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
         write(99,'(a5)') '&OPTIMIZATION'
+        if (ncf.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'CFSTART=',(cfstart(i),i=1,ncf)
+          write(99,hlp_frm) 'CFEND=',(cfend(i),i=1,ncf)
+          write(99,hlp_frm) 'CFTYPE=',(cftype(i),i=1,ncf)
+          write(99,hlp_frm) 'CFDEF=',(cfdef(i),i=1,ncf)
+          do i = 1, ncf
+            if (cfdef(i).eq.4) then
+              write(99,'(1x,a,i2,a,2(1x,i5,'',''))')
+     &         'CF_REGP(',i,',1:2)=',(cf_regp(i,j),j=1,2)
+              write(hlp_frm,'(a,i4,a)')
+     &         '(1x,a,',sum(cf_regp(:,2)),'(1x,i5,'',''))'
+              write(99,hlp_frm)
+     &         'CF_REG=',(cf_reg(j),j=1,sum(cf_regp(:,2)))
+            end if
+          end do
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'CFWEIGHT=',(cfweight(i),i=1,ncf)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'l1,a)'
+          write(99,hlp_frm) 'MAPTOOMP=',(maptoomp(i),i=1,ncf)
+          write(99,hlp_frm) 'READ_SIGMA=',(read_sigma(i),i=1,ncf)
+        end if
+        if (nsigma.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NSIGMA=',nsigma,','
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsigma,'(1x,g11.4,'',''))'
+          write(99,hlp_frm) 'SIGMA=',(sigma(i),i=1,nsigma)
+          write(99,hlp_frm) 'SCALE_SIGMA=',(scale_sigma(i),i=1,nsigma)
+        end if
+        if (nnvar.gt.0) then
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
+          write(99,hlp_frm) 'PRIOR_TYPE=',(prior_type(i),i=1,nnvar)
+          do i = 1, nnvar
+            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
+     &       'PRIOR_PAR(',i,',1:2)=',(prior_par(i,j),j=1,2)
+            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
+     &       'PRIOR_RANGE(',i,',1:2)=',(prior_range(i,j),j=1,2)
+          end do
+        end if
         if (nnvar.gt.0) then
           write(99,'(1x,a,i3,a)') 'NNVAR=',nnvar,','
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
@@ -11290,45 +11328,6 @@ cxpb as they no longer necessarily point to the same species
           do i = 1, 2
             write(99,'(1x,a,i1,a,2(1x,g11.4,'',''))')
      &       'RZIMP(1,',i,')=',(rzimp(j,i),j=1,2)
-          end do
-        end if
-        if (ncf.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,i5,'',''))'
-          write(99,hlp_frm) 'CFSTART=',(cfstart(i),i=1,ncf)
-          write(99,hlp_frm) 'CFEND=',(cfend(i),i=1,ncf)
-          write(99,hlp_frm) 'CFTYPE=',(cftype(i),i=1,ncf)
-          write(99,hlp_frm) 'CFDEF=',(cfdef(i),i=1,ncf)
-          do i = 1, ncf
-            if (cfdef(i).eq.4) then
-              write(99,'(1x,a,i2,a,2(1x,i5,'',''))')
-     &         'CF_REGP(',i,',1:2)=',(cf_regp(i,j),j=1,2)
-              write(hlp_frm,'(a,i4,a)')
-     &         '(1x,a,',sum(cf_regp(:,2)),'(1x,i5,'',''))'
-              write(99,hlp_frm)
-     &         'CF_REG=',(cf_reg(j),j=1,sum(cf_regp(:,2)))
-            end if
-          end do
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'CFWEIGHT=',(cfweight(i),i=1,ncf)
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',ncf,'l1,a)'
-          write(99,hlp_frm) 'MAPTOOMP=',(maptoomp(i),i=1,ncf)
-          write(99,hlp_frm) 'READ_SIGMA=',(read_sigma(i),i=1,ncf)
-        end if
-        if (nsigma.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NSIGMA=',nsigma,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsigma,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'SIGMA=',(sigma(i),i=1,nsigma)
-          write(99,hlp_frm) 'SCALE_SIGMA=',(scale_sigma(i),i=1,nsigma)
-        end if
-        if (nnvar.gt.0) then
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnvar,'(1x,i5,'',''))'
-          write(99,hlp_frm) 'PRIOR_TYPE=',(prior_type(i),i=1,nnvar)
-          do i = 1, nnvar
-            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
-     &       'PRIOR_PAR(',i,',1:2)=',(prior_par(i,j),j=1,2)
-            write(99,'(1x,a,i2,a,2(1x,g11.4,'',''))')
-     &       'PRIOR_RANGE(',i,',1:2)=',(prior_range(i,j),j=1,2)
           end do
         end if
         if (npfrgrp.gt.0) then
@@ -11584,6 +11583,7 @@ cxpb as they no longer necessarily point to the same species
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_numerics
+      call dealloc_b2mod_par_opt
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_wall2_init
       call dealloc_transport_namelist

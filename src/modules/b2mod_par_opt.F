@@ -1,10 +1,55 @@
       module b2mod_par_opt
       use b2mod_types
       use b2mod_user_namelist
-     & , only : inf_opt, nsigma, sigma,
-     & prior_type, prior_par, prior_range,
-     & nsigmx, cftype, nvmx
+     & , only : omp, nomp
+      use b2mod_ad
+     & , only : nncf, b2rr, b2volOnCf, b2data, b2dataOnCf
+      use b2us_map
       implicit none
+#     include "DIMENSIONS.F"
+! VARIABLES RELATED TO COST FUNCTION DEFINITION
+! - mxnCf: maximum number of cost functions allowed
+! - ncf: actual number of cost functions
+! - cftype: type of cost function, 0-9 possible options
+! - cfdef: defines how the cost function domain is defined, 1-4 possible options
+! - cfstart/cfend: starting and ending element for the cost function
+! - cf_reg: listing for each cost function the corresponding domain CVs or FCs
+! - cf_regP: points for each cost function to the first index in the CF_REG list, and its number of items.
+! - cfReg and cfRegP: same as above, but allocatable and used to pass CF data into mapping structure
+! - cfweight: multiplier to the cost function
+! - cfread: according to cftype, decide if reading experimental data from file for cost function
+! - ncfdata: number of experimental data points read from file for each cost function
+! - cfdata(nncf,3,DEF_NLIM): stores the experimental data points for each cost function
+!   column 1 stores the curvilinear spatial coordinate (e.g. along OMP or target)
+!   column 2 stores the experimental data value
+!   column 3 stores the uncertainty
+! - nvmx: maximum number of variables that can be used for optimization
+! - nsigmx: maximum number of sigma values used in the Bayesian MAP cost function
+! - nsigma: actual number of sigmas read and used for Bayesian MAP
+! - prior_type: type of prior for each design parameter optimized in the MAP estimation
+! - prior_par: parameters related to the type of prior (e.g. standard deviation for Gaussian prior)
+! - prior_range: range of validity of the prior, outside this interval the MAP cost function returns NaN
+! - scale_sigma: tells of the sigma in the MAP cost function is intended as relative (true) or absolute (false)
+! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP 
+! - read_sigma: tells to read or not the experimental data uncertainty
+! - sigma: stores the values of the standard deviation in the MAP cost function
+! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
+      integer, parameter :: mxnCf=1000
+      integer cfstart(nncf),cfend(nncf),cftype(nncf)
+      logical, save :: cfread(nncf) = .false.
+      integer, save :: cfdef(nncf)
+      integer, save :: ncfdata(nncf), ncf, cf_reg(mxnCf),
+     & cf_regp(nncf,2)
+      real (kind=R8), save :: cfdata(nncf,3,DEF_NLIM), cfweight(nncf)
+      integer nvmx, nsigmx
+      parameter (nvmx = 50, nsigmx=10)
+      integer, save :: prior_type(nvmx), nsigma !sc type of prior
+      real (kind=r8), save :: prior_par(nvmx,2), prior_range(nvmx,2) !parameters for prior
+      logical, save :: scale_sigma(nsigmx) = .true.
+      logical, save :: mapToOMP(nncf) = .false.
+      logical, save :: read_sigma(nncf) = .false.
+      real (kind=r8), save :: sigma(nsigmx) = 0.0_R8
+      real (kind=r8), parameter :: inf_opt = 1.0e30
 ! VARIABLES RELATED TO OPTIMIZATION
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
@@ -48,20 +93,51 @@
       namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
      & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
      & limited_memory_update_type, partype, sigma_opt, spatial_dep,
-     & spatial_points, par_rescale, paris, parib
+     & spatial_points, par_rescale, paris, parib, ncf,cfstart,cfend,
+     & cftype, cfdef, cfweight,prior_type, prior_par, prior_range, 
+     & scale_sigma, nsigma, sigma, cf_reg, cf_regP, mapToOMP, read_sigma
 
       contains
 
-      subroutine read_b2mod_par_opt(ncon, nele_jac, ns, nbc)
+      subroutine read_b2mod_par_opt(ncon, nele_jac, ns, m)
       use b2mod_types
       implicit none
-      integer ncon, nele_jac, ns, nbc, ii, isigma, ipp
-      character*256 filename
+      integer, intent (out) :: ncon, nele_jac
+      type(mapping), intent(inout) :: m
+      integer, intent (in) :: ns
+      ! csc local variables
+      integer :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff,
+     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
+     &           ifc1, ifc2, jj
+      integer, allocatable :: cfReg(:)
+      logical done
+      character*1 str
+      character*256 cffile, filename
 
       filename='b2.optimization.parameters'
+      write (*,*) 'OPTIM: max number of readable cost functions :',nncf
       write (*,*) 'OPTIM: max number of readable parameters '//
      & 'and constraints:',nvmx
       write (*,*) 'OPTIM: infinity bound set to:',inf_opt
+      ncf = 0
+      cfstart = 0
+      cfend = 0
+      cfdef = 0
+      cftype = -1
+      cfdata = 0.0_R8
+      ncfdata = 0
+      read_sigma = .false.
+      cfweight = 1.0_R8
+      nsigma = 0
+      scale_sigma = .true.
+      prior_type = -1
+      prior_par = -1.0_R8
+! sc  Set prior range to (-inf,+inf)
+      prior_range(:,1) = -inf_opt*10.0_R8
+      prior_range(:,2) = inf_opt*10.0_R8
+      cf_reg = 0
+      cf_regP = 0
+      mapToOMP = .false.
       x0 = inf_opt*10.0_R8
       xl = -inf_opt*10.0_R8
       xu = inf_opt*10.0_R8
@@ -96,6 +172,240 @@
       endif
       write (*,*) 'OPTIM: read parameters'
       write(*,optimization)
+! checks on cost function parameters
+      call xertst (ncf.le.nncf, 'increase nncf in b2mod_user_namelist')
+      if (ncf > 0) then
+        write (*,*) ' Number of cost functions: ',ncf
+        m%nCf = ncf
+        m%mxnCf = mxnCf
+        call alloc_mapping_cf (m)
+        m%cfRegP = 0
+        allocate(cfReg(mxnCf))
+        cfReg = 0
+#ifdef F2003
+        open (newunit=idb,file='debug_user.out')
+#else
+        idb = newunit()
+        open (unit=idb,file='debug_user.out')
+#endif
+        incf = 0
+        do icf = 1, ncf
+          if (cftype(icf).gt.10) call xerrab ('cftype>10 not coded ')
+          if (cftype(1).eq.0 .and. ncf.eq.1) call xerrab(
+     &     'cftype(1)=0 but no other cost functions are defined')
+          if (cftype(icf).eq.0.and. icf.ne.1) call xerrab (
+     &     'only cftype(1) should be =0')
+          if (cftype(icf).eq.6.and. icf.ne.1) call xerrab (
+     &     'only cftype(1) should be =6')
+          if ((cftype(icf).eq.0 .or. cftype(icf).eq.6) .and.
+     &     ncf.lt.(cfend(icf)-cfstart(icf))+2) call xerrab (
+     &     'cost functions specified for sum with cftype 0/6 > nCf')
+          if ((cftype(icf).eq.0 .or. cftype(icf).eq.6) .and.
+     &     cfstart(icf).lt.2 .and. cfend(icf).lt.2) call xerrab (
+     &     'cost functions type 0/6 requires cfstart/cfend>1')
+          if ((cftype(icf).ge.1 .and. cftype(icf).le.3) .or.
+     &        (cftype(icf).ge.7 .and. cftype(icf).le.10))
+     >         cfread(icf) = .true.
+          if (cftype(icf).eq.5) m%cfOnCv(icf) = .false.
+          if (cftype(icf).eq.5 .and. cfdef(icf).eq.3)
+     &      call xerrab('cftype 5 must be defined using faces!')
+          if (cfread(icf)) then
+            write (str,'(I1)') icf
+            cffile = 'cf'//trim(str)//'.dat'
+            call find_file(cffile,file_ok)
+            if (.not. file_ok) call xerrab
+     &       ('Cannot find cost function file '//trim(cffile))
+            open(unit=99,file=cffile,status='old',action='read')
+            write(*,*) 'Reading cost function data from ',trim(cffile)
+            ncfdata(icf) = 0
+!csc File is of unknown length, so first count the number of lines
+ 5          read(99,*,end=15) str
+              ncfdata(icf) = ncfdata(icf) +1
+            goto 5
+ 15         close(99)
+            call xertst (ncfdata(icf).le.DEF_NLIM,
+     &        'Cost function data limited to DEF_NLIM!')
+            open(unit=99,file=cffile,status='old',action='read')
+            do i=1,ncfdata(icf)
+!csc The data in the file are (r-rsep), data, sigma. Stored in cfdata according to
+!    first dimension (# of cost functions), second dimension ((r-rsep)-data-sigma), third
+!    dimension (number of records/data points)
+              if (read_sigma(icf)) then
+                read(99,*) cfdata(icf,1:3,i)
+              else
+                read(99,*) cfdata(icf,1:2,i)
+              endif
+            enddo
+            close(99)
+          endif
+          if (cftype(icf).eq.0 .or. cftype(icf).eq.6) cycle !no need to specify domain here
+          done  = .false.
+
+! FIXME need to add flag for reversing lists?
+
+          select case(cfdef(icf))
+
+          case (1) !defined on OMP (only internal CVs)
+
+            call xertst(m%cfOnCv(icf), 'This cost function type '//
+     &       'cannot be evaluated on OMP')
+            call xertst(nomp.gt.0, 'Asking for OMP cost function '//
+     &       'but no OMP cells, check rzomp')
+            write (*,*) ' defining cost function ',icf,' on omp'
+            do icff = 1, icf-1
+              if (cfdef(icff) .eq. 1) then
+              m%cfRegP(icf,:) = m%cfRegP(icff,:)
+              done = .true.
+              endif
+            end do
+            if (done) cycle
+            m%cfRegP(icf,1) = incf +1
+            ndata = 0
+            do iCv=1,nomp
+              if (omp(iCv)>m%nCi) cycle !only use internal CVs
+              m%cfReg(incf +1+ndata) = omp(iCv)
+              ndata = ndata + 1
+            enddo
+            m%cfRegP(icf,2) = ndata
+            incf = incf + ndata
+
+          case (2) !defined using fclabel
+
+            call xertst(cfstart(icf) /= 0 .and. cfend(icf) /= 0,
+     &        'cfdef=2 requires cfstart/cfend>0')
+! check if other CFs have same domain (must have same start/end, same type of definition (fcLbl)
+! and also same type of domain (fcLbl can be used to identify either CVs or FCs)
+            do icff = 1, icf-1
+              if (cfstart(icf) .eq. cfstart(icff) .and.
+     &            cfend(icf) .eq. cfend(icff) .and.
+     &            cfdef(icff) .eq. 2 .and.
+     &            (m%cfOnCv(icf) .and. m%cfOnCv(icff))) then
+                m%cfRegP(icf,:) = m%cfRegP(icff,:)
+                done = .true.
+              endif
+            end do
+            if (done) cycle
+! this domain has not yet been done
+            m%cfRegP(icf,1) = incf +1
+            ncffc = 0
+            noss = cfend(icf) - cfstart(icf) + 1
+            do iss = 1, noss
+              indss = cfstart(icf)+iss-1
+              write (*,*) ' Defining cost function ',icf
+              write (*,*) ' surface label ',indss
+! find all faces belonging to surface structure INDSS
+              call find_faces (indss, incf, ncffc,
+     >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
+            end do              ! iss	
+            m%cfRegP(icf,2) = ncffc
+! if cost function is on CV e.g. target for CV-based CF --> substitute FCs with linked CVs
+            if (m%cfOnCv(icf)) then
+              do iFc = 1, m%cfRegP(icf,2)
+                ifcc = m%cfReg(m%cfRegP(icf,1)+ifc-1)
+                ic1 = min(m%fcCv(ifcc,1), m%fcCv(ifcc,2))
+                ic2 = max(m%fcCv(ifcc,1), m%fcCv(ifcc,2))
+                if (ic1 <= m%nCi) then
+                  m%cfReg(m%cfRegP(icf,1)+ifc-1) = ic1
+                elseif (ic2 <= m%nCi) then
+                  m%cfReg(m%cfRegP(icf,1)+ifc-1) = ic2
+                else
+                  call xerrab('cfdef=2 -- problem with boundary face')
+                end if
+              end do
+            endif
+
+          case (3) !defined using cvlabel
+
+            call xertst(cfstart(icf) /= 0 .and. cfend(icf) /= 0,
+     &        'cfdef=3 requires cfstart/cfend>0')
+! check if other CFs have same domain !FIXME check if also cfdef is the same
+            do icff = 1, icf-1
+              if (cfstart(icf) .eq. cfstart(icff) .and.
+     &            cfend(icf) .eq. cfend(icff) .and.
+     &            cfdef(icff) .eq. 3) then
+                m%cfRegP(icf,:) = m%cfRegP(icff,:)
+                done = .true.
+              endif
+            end do
+            if (done) cycle
+! this domain has not yet been done
+            m%cfRegP(icf,1) = incf +1
+            noss = cfend(icf) - cfstart(icf) + 1
+            do iss = 1, noss
+              indss = cfstart(icf)+iss-1
+              write (*,*) ' Defining cost function ',icf
+              write (*,*) ' cell label ',indss
+              do icv = 1, m%nCv
+                if (m%cvLbl(icv).eq.indss) then
+                  m%cfReg(incf+1) = icv
+                  incf = incf + 1
+                endif
+              end do
+            end do
+            ! FIXME no attempt to sort or check if they belong together somehow
+            m%cfRegP(icf,2) = incf+1 - m%cfRegP(icf,1)
+
+          case (4) ! defined using cf_reg (No attempt whatsoever to check if they are sorted)
+
+            call xertst(cf_RegP(icf,2).gt.0,'cf_RegP not defined')
+            ! csc can we check somehow if this has already been filled?
+            m%cfRegP(icf,1) = incf +1
+            m%cfRegP(icf,2) = cf_RegP(icf,2)
+            if (any(cf_Reg(cf_RegP(icf,1) : cf_RegP(icf,1) +
+     &       cf_RegP(icf,2) - 1) .le. 0)) call xerrab('cf_Reg<=0')
+            m%cfReg(incf +1:incf +1+m%cfRegP(icf,2)-1) =
+     &        cf_Reg(cf_RegP(icf,1):cf_RegP(icf,1)+cf_RegP(icf,2)-1)
+            incf = incf + cf_RegP(icf,2)
+
+          case default
+
+            call xerrab('cfDef undefined')
+
+          end select
+
+          call xertst(incf+1.le.m%mxncf,
+     &      'Increase size of mxnCf in b2mod_user_namelist')
+        end do !icf
+        close(idb)
+        if (allocated(cfReg)) deallocate(cfReg)
+      end if
+
+      if (any(cftype.eq.6)) then
+        call xertst(nsigma.gt.0.and.nsigma.le.nsigmx,
+     &   'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
+! sc  prior_type refers to the prior type for the design variables:
+!     0 - Uniform distribution.
+!     1 - Uninformative, proper, Gaussian prior.
+!     2 - Jeffrey's 1/sigma (only for sigma!!)
+        call xertst(any(prior_type(1:nsigma).ge.0).and.
+     &   any(prior_type(1:nsigma).le.2),
+     &   'b2mod_user_namelist: prior_type<=0 or prior_type>=2')
+! sc  prior_par refers to the prior parameters:
+!     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
+!     For prior_type = 2, not used?
+        do icf = 1, nsigma
+          if (prior_type(icf) .eq. 1)
+     &      call xertst(prior_par(icf,2) .gt. 0.0_R8,
+     &     'b2mod_user_namelist: sigma prior <=0')
+          call xertst(prior_range(icf,1).lt.prior_range(icf,2),
+     &     'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
+        end do
+      endif
+! now allocate vector that will be used to interpolate SOLPS onto data grid
+      if (any(cfread)) then
+        ndata = maxval(ncfdata(1:ncf),1)
+        allocate(b2volOnCf(ncf,ndata)) !stores interpolated B2.5 volumes onto CF radial points
+        allocate(b2dataOnCf(ndata)) !variable to store SOLPS data interpolated onto CF radial points
+        ndata = maxval(m%cfRegP(1:ncf,2)) !max number of CVs in a cost function
+        allocate(b2rr(ncf,ndata)) !store here radial distance coordinate of SOLPS data
+        allocate(b2data(ndata)) !temporary variable to store SOLPS data for interpolation
+        b2rr = 0.0_R8
+        b2volOnCf = 0.0_R8
+        b2data = 0.0
+        b2dataOnCf = 0.0
+      endif
+
+! csc Tests on optimization parameters
       call xertst(nnvar.gt.0.and.nnvar.le.nvmx,
      & 'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
       call xertst(nncon.le.nvmx,'b2mod_par_opt: increase size of nvmx')
@@ -172,7 +482,7 @@
      >  call xertst((paris(ii) .ge. 0) .and. (paris(ii) .le. ns-1),
      &  'b2mod_par_opt: paris<0 or >ns-1')
        if (partype(ii) .ge. 10 .and. partype(ii) .le. 16)
-     >  call xertst((parib(ii) .ge. 1) .and. (parib(ii) .le. nBc),
+     >  call xertst((parib(ii) .ge. 1) .and. (parib(ii) .le. m%nBc),
      &   'b2mod_par_opt: parib<0 or >nBc')
       enddo
       if (nsigma .gt. 0 .and. any(sigma_opt(1:nsigma))) then
@@ -267,5 +577,13 @@
 
       return
       end subroutine read_b2mod_par_opt
+
+      subroutine dealloc_b2mod_par_opt
+      implicit none
+      if (allocated(b2rr)) deallocate(b2rr)
+      if (allocated(b2volOnCf)) deallocate(b2volOnCf)
+      if (allocated(b2data)) deallocate(b2data)
+      if (allocated(b2dataOnCf)) deallocate(b2dataOnCf)
+      end subroutine dealloc_b2mod_par_opt
 
       end module b2mod_par_opt

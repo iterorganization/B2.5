@@ -6829,147 +6829,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>NCF</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of cost functions (icf = 1, NCF).
-				</description>
-			</switch>
-			<switch>
-				<name>CFTYPE</name>
-				<default>-1</default>
-				<type>integer array of size (NCF)</type>
-				<description>
-					Specifies the type of cost function for index icf. Valid options are:
-					0 - Sum of weighted least squares cost functions. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
-					1 - Difference, on the desired CVs, of calculated electron density and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-3}).
-					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV).
-					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV).
-					4 - Maximum electron temperature on the desired CVs (output in eV).
-					5 - Maximum heat flux on the desired FCs (output in W).
-					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
-					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4}).
-					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
-					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
-				</description>
-			</switch>
-			<switch>
-				<name>CFDEF</name>
-				<default>0</default>
-				<type>integer array of size (NCF)</type>
-				<description>
-					 Indicates how the domain of cost function ifc is specified. Valid options are:
-					 1 - The cost function is defined on the OMP, using the rzomp array. In this case CFSTART,CFEND are not necessary and ignored.
-					 2 - The cost function is defined using the FC labels specified in CFSTART,CFEND. Cost functions requiring CVs or FCs can both be defined in this way.
-					 3 - The cost function is defined using the CV labels specified in CFSTART,CFEND. Only cost functions requiring CVs can be defined in this way.
-					 4 - The cost function is defined using the CF_REG and CF_REGP arrays. Cost functions requiring CVs or FCs can both be defined in this way.
-				</description>
-			</switch>
-			<switch>
-				<name>CFSTART, CFEND</name>
-				<default>0</default>
-				<type>integer arrays of size (NCF)</type>
-				<description>
-					Specify the starting/ending, face (FC) label fcLbl or control volume (CV) label cvLbl where the cost function icf will be evaluated. For CFTYPE = 0 and CFTYPE = 6 they instead identify which cost functions will be summed together.
-				</description>
-			</switch>
-			<switch>
-				<name>CF_REG</name>
-				<default>0</default>
-				<type>integer array of size (mxnCf)</type>
-				<description>
-					Listing for each cost function the corresponding domain CVs or FCs. WARNING! No attempt is made to check if these CVs or FCs are connected, sorted or even available in the current geometry: it is up to the user to make sure the list is correct. mxnCf is a hard coded maximum length defined in b2mod_user_namelist.
-				</description>
-			</switch>
-			<switch>
-				<name>CF_REGP</name>
-				<default>0</default>
-				<type>integer array of size (NCF, 2)</type>
-				<description>
-					CF_REGP(icf, 1) points, for cost function icf, to the first index in the CF_REG list.
-					CF_REGP(icf, 2) number of items in CF_REG list for cost function icf.
-				</description>
-			</switch>
-			<switch>
-				<name>CFWEIGHT</name>
-				<default>1.0</default>
-				<type>real*8 array of size (NCF)</type>
-				<description>
-					Multipliers to re-scale each cost function separately.
-				</description>
-			</switch>
-			<switch>
-				<name>MapToOMP</name>
-				<default>FALSE</default>
-				<type>logical array of size (NCF)</type>
-				<description>
-					Indicates if cost function icf is to be re-mapped to the OMP, according to CFTYPE.
-					Warning! The mapping is a rigid translation of the data to the OMP and is safe to work only for non-extended grids and for cost functions defined on the same number of elements as the OMP list.
-				</description>
-			</switch>
-			<switch>
-				<name>NSIGMA</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of standard deviation variables used for Bayesian MAP cost function (normally this should be equal to the number of cost functions summed for CFTYPE = 6, i.e. one for each variable on each domain) (isigma = 1, NSIGMA}).
-				</description>
-			</switch>
-			<switch>
-				<name>SIGMA</name>
-				<default>0.0</default>
-				<type>real*8 array of size (NSIGMA)</type>
-				<description>
-					Value of the standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
-				</description>
-			</switch>
-			<switch>
-				<name>SCALE_SIGMA</name>
-				<default>TRUE</default>
-				<type>logical array of size (NSIGMA)</type>
-				<description>
-					Indicates if SIGMA(isigma) is intended as relative standard deviation (SCALE_SIGMA(isigma)=.TRUE.) or absolute (SCALE_SIGMA(isigma)=.FALSE.).
-				</description>
-			</switch>
-			<switch>
-				<name>READ_SIGMA</name>
-				<default>FALSE</default>
-				<type>logical array of size (NSIGMA)</type>
-				<description>
-					(Experimental! Do not use!) Specifies if sigma can be read from the experimental data files cfi.dat.
-				</description>
-			</switch>
-			<switch>
-				<name>PRIOR_TYPE</name>
-				<default>-1</default>
-				<type>integer array of size (NNVAR)</type>
-				<description>
-					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are:
-					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
-					1 - Uninformative Gaussian prior.
-					NNVAR refers to the optimization namelist.
-				</description>
-			</switch>
-			<switch>
-				<name>PRIOR_PAR</name>
-				<default>-1.0</default>
-				<type>real*8 array of size (NNVAR,2)</type>
-				<description>
-					Indicates parameters for the prior distributions.
-					For PRIOR_TYPE=0, not used.
-					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution.
-				</description>
-			</switch>
-			<switch>
-				<name>PRIOR_RANGE</name>
-				<default>10*p_infty</default>
-				<type>real*8 array of size (NNVAR,2)</type>
-				<description>
-					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30).
-				</description>
-			</switch>
-			<switch>
 				<name>LHETRGTS</name>
 				<default>Eirene recycling target surfaces defined in the LTNS array</default>
 				<type>integer array of size (NLIM)</type>
@@ -7170,6 +7029,146 @@
 					Necessary for sensitivity and optimization runs or for standard B2.5(-EIRENE) runs when MAP cost function is used.
 				</description>
 			</introduction>
+			<switch>
+				<name>NCF</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of cost functions (icf = 1, NCF).
+				</description>
+			</switch>
+			<switch>
+				<name>CFTYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					Specifies the type of cost function for index icf. Valid options are:
+					0 - Sum of weighted least squares cost functions. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
+					1 - Difference, on the desired CVs, of calculated electron density and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-3}).
+					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV).
+					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV).
+					4 - Maximum electron temperature on the desired CVs (output in eV).
+					5 - Maximum heat flux on the desired FCs (output in W).
+					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
+					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4}).
+					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
+					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
+				</description>
+			</switch>
+			<switch>
+				<name>CFDEF</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					 Indicates how the domain of cost function ifc is specified. Valid options are:
+					 1 - The cost function is defined on the OMP, using the rzomp array. In this case CFSTART,CFEND are not necessary and ignored.
+					 2 - The cost function is defined using the FC labels specified in CFSTART,CFEND. Cost functions requiring CVs or FCs can both be defined in this way.
+					 3 - The cost function is defined using the CV labels specified in CFSTART,CFEND. Only cost functions requiring CVs can be defined in this way.
+					 4 - The cost function is defined using the CF_REG and CF_REGP arrays. Cost functions requiring CVs or FCs can both be defined in this way.
+				</description>
+			</switch>
+			<switch>
+				<name>CFSTART, CFEND</name>
+				<default>0</default>
+				<type>integer arrays of size (NCF)</type>
+				<description>
+					Specify the starting/ending, face (FC) label fcLbl or control volume (CV) label cvLbl where the cost function icf will be evaluated. For CFTYPE = 0 and CFTYPE = 6 they instead identify which cost functions will be summed together.
+				</description>
+			</switch>
+			<switch>
+				<name>CF_REG</name>
+				<default>0</default>
+				<type>integer array of size (mxnCf)</type>
+				<description>
+					Listing for each cost function the corresponding domain CVs or FCs. WARNING! No attempt is made to check if these CVs or FCs are connected, sorted or even available in the current geometry: it is up to the user to make sure the list is correct. mxnCf is a hard coded maximum length defined in b2mod_par_opt.
+				</description>
+			</switch>
+			<switch>
+				<name>CF_REGP</name>
+				<default>0</default>
+				<type>integer array of size (NCF, 2)</type>
+				<description>
+					CF_REGP(icf, 1) points, for cost function icf, to the first index in the CF_REG list.
+					CF_REGP(icf, 2) number of items in CF_REG list for cost function icf.
+				</description>
+			</switch>
+			<switch>
+				<name>CFWEIGHT</name>
+				<default>1.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Multipliers to re-scale each cost function separately.
+				</description>
+			</switch>
+			<switch>
+				<name>MapToOMP</name>
+				<default>FALSE</default>
+				<type>logical array of size (NCF)</type>
+				<description>
+					Indicates if cost function icf is to be re-mapped to the OMP, according to CFTYPE.
+					Warning! The mapping is a rigid translation of the data to the OMP and is safe to work only for non-extended grids and for cost functions defined on the same number of elements as the OMP list.
+				</description>
+			</switch>
+			<switch>
+				<name>NSIGMA</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of standard deviation variables used for Bayesian MAP cost function (normally this should be equal to the number of cost functions summed for CFTYPE = 6, i.e. one for each variable on each domain) (isigma = 1, NSIGMA}).
+				</description>
+			</switch>
+			<switch>
+				<name>SIGMA</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NSIGMA)</type>
+				<description>
+					Value of the standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
+				</description>
+			</switch>
+			<switch>
+				<name>SCALE_SIGMA</name>
+				<default>TRUE</default>
+				<type>logical array of size (NSIGMA)</type>
+				<description>
+					Indicates if SIGMA(isigma) is intended as relative standard deviation (SCALE_SIGMA(isigma)=.TRUE.) or absolute (SCALE_SIGMA(isigma)=.FALSE.).
+				</description>
+			</switch>
+			<switch>
+				<name>READ_SIGMA</name>
+				<default>FALSE</default>
+				<type>logical array of size (NSIGMA)</type>
+				<description>
+					(Experimental! Do not use!) Specifies if sigma can be read from the experimental data files cfi.dat.
+				</description>
+			</switch>
+			<switch>
+				<name>PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NNVAR)</type>
+				<description>
+					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are:
+					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
+					1 - Uninformative Gaussian prior.
+				</description>
+			</switch>
+			<switch>
+				<name>PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NNVAR,2)</type>
+				<description>
+					Indicates parameters for the prior distributions.
+					For PRIOR_TYPE=0, not used.
+					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution.
+				</description>
+			</switch>
+			<switch>
+				<name>PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NNVAR,2)</type>
+				<description>
+					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30).
+				</description>
+			</switch>
 			<switch>
 				<name>NNVAR</name>
 				<default>0</default>
