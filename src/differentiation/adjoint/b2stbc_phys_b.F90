@@ -423,7 +423,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
             WRITE(*, *) 'Changed to na_min.'
           END IF
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 1 : constant density ', conpar(is, ib, 1), ' on ', &
+&         'BCCON =  1 : constant density ', conpar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
           CALL XERTST(conpar(is, ib, 1) .GT. 0.0_R8, &
 &               'BCCON = 1, CONPAR(,,1) !> 0')
@@ -455,7 +455,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 2 : density gradient ', conpar(is, ib, 1), ' on ', &
+&         'BCCON =  2 : density gradient ', conpar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
           IF (mpg%cvonclosedsurface(icv) .AND. ishigh) CALL XERTST(&
@@ -493,7 +493,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! -- BCCON=3 -- SHEATH CONDITIONS
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,a,a,a,i3)') &
-&                                    'BCCON = 3 : sheath density bc on '&
+&                                   'BCCON =  3 : sheath density bc on '&
 &                                     , bcchar(ib), boundary_location(ib&
 &                                     ), ' for species ', is
 ! loop over number of cells in the boundary
@@ -522,8 +522,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
             WRITE(*, *) 'Changed to na_min.'
           END IF
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 4 : weak density ', conpar(is, ib, 1), ' on ', bcchar&
-&         (ib), boundary_location(ib), ' for species ', is
+&         'BCCON =  4 : weak density ', conpar(is, ib, 1), ' on ', &
+&         bcchar(ib), boundary_location(ib), ' for species ', is
           CALL XERTST(conpar(is, ib, 1) .GT. 0.0_R8, &
 &               'BCCON = 4, CONPAR(,,1) !> 0')
           CALL XERTST(conpar(is, ib, 2) .GT. 0.0_R8, &
@@ -554,7 +554,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                                  'BCCON = 5 : particle flux per area '&
+&                                 'BCCON =  5 : particle flux per area '&
 &                                     , conpar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -634,7 +634,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           IF (is .EQ. ismain .AND. bcchar(ib) .EQ. 'S' .AND. switch%&
 &             use_astra .NE. 0) conpar(is, ib, 1) = fneb_astra
           WRITE(*, '(a,1p,g14.7,a4,a1,a,a13,i3)') &
-&         'BCCON = 8 : total particle flux ', conpar(is, ib, 1), ' on '&
+&         'BCCON =  8 : total particle flux ', conpar(is, ib, 1), ' on '&
 &         , bcchar(ib), boundary_location(ib), ' for species ', is
         END IF
 !wdk      Note: take full area for face, whether "poloidal" or "radial" or mixed
@@ -692,8 +692,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 9 : density decay length ', conpar(is, ib, 1), ' on '&
-&         , bcchar(ib), boundary_location(ib), ' for species ', is
+&         'BCCON =  9 : density decay length ', conpar(is, ib, 1), &
+&         ' on ', bcchar(ib), boundary_location(ib), ' for species ', is
           CALL XERTST(conpar(is, ib, 1) .NE. 0.0_R8, &
 &               'B2STBC -- BCCON=9, CONPAR(,,1) = 0')
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
@@ -1264,7 +1264,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                             'BCMOM = 1 : specified parallel velocity '&
+&                            'BCMOM =  1 : specified parallel velocity '&
 &                                     , mompar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -1285,7 +1285,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                              'BCMOM = 2 : parallel velocity gradient '&
+&                             'BCMOM =  2 : parallel velocity gradient '&
 &                                     , mompar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -1323,7 +1323,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         CALL XERRAB('b2stbc_phys -- BCMOM = 4 not adapted for WG')
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCMOM = 4 : weak velocity ', mompar(is, ib, 1), ' on ', &
+&         'BCMOM =  4 : weak velocity ', mompar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
           CALL XERTST(mompar(is, ib, 2) .GT. 0.0_R8, &
 &               'BCMOM = 4, MOMPAR(,,2) !> 0')
@@ -1345,7 +1345,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                    'BCMOM = 5 : parallel momentum flux per unit area '&
+&                   'BCMOM =  5 : parallel momentum flux per unit area '&
 &                                     , mompar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -1634,7 +1634,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           enepar(ib, 1) = teb_astra*1.0e3_R8
         END IF
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 1 : specified electron temperature ', enepar(ib, 1), &
+&       'BCENE =  1 : specified electron temperature ', enepar(ib, 1), &
 &       ' on ', bcchar(ib), boundary_location(ib)
         CALL XERTST(enepar(ib, 1) .GT. 0.0_R8, &
 &             'BCENE = 1, ENEPAR(,1) !> 0')
@@ -1653,7 +1653,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! -- BCENE=2 -- PRESCRIBE THE GRADIENT OF THE ELECTRON TEMPERATURE
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                           'BCENE = 2 : electron temperature gradient '&
+&                          'BCENE =  2 : electron temperature gradient '&
 &                                   , enepar(ib, 1), ' on ', bcchar(ib)&
 &                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -1686,7 +1686,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
       CALL XERRAB('b2stbc_phys -- BCENE = 4 not adapted for WG')
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 4 : weak electron temperature ', enepar(ib, 1), ' on '&
+&       'BCENE =  4 : weak electron temperature ', enepar(ib, 1), ' on '&
 &       , bcchar(ib), boundary_location(ib)
         CALL XERTST(enepar(ib, 1) .GT. 0.0_R8, &
 &             'BCENE = 4, ENEPAR(,1) !> 0')
@@ -1740,8 +1740,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &                      'Compile with -DASTRA option to couple to ASTRA!'&
 &                                         )
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 8 : total electron energy flux ', enepar(ib, 1), ' on '&
-&       , bcchar(ib), boundary_location(ib)
+&       'BCENE =  8 : total electron energy flux ', enepar(ib, 1), &
+&       ' on ', bcchar(ib), boundary_location(ib)
       END IF
       us = 0.0_R8
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -1790,7 +1790,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 9 : electron temperature decay length ', enepar(ib, 1)&
+&       'BCENE =  9 : electron temperature decay length ', enepar(ib, 1)&
 &       , ' on ', bcchar(ib), boundary_location(ib)
         CALL XERTST(enepar(ib, 1) .NE. 0.0_R8, &
 &             'BCENE = 9, ENEPAR(,1) = 0')
@@ -1807,9 +1807,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &                      'Should use BCENE=19 in conjunction with BCCON=1'
           IF (ism .GT. 0) THEN
 !srv 21.09.12
-            WRITE(*, '(a)') &
+            WRITE(*, '(1x,a)') &
 &           'Please ensure that this boundary condition '//&
-&           'is consistent with density boundary conditions'
+&           'is consistent with the density boundary conditions'
           END IF
         END DO
       END IF
@@ -2292,7 +2292,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           enipar(ib, 1) = tib_astra*1.0e3_R8
         END IF
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 1 : specified ion temperature ', enipar(ib, 1), ' on '&
+&       'BCENI =  1 : specified ion temperature ', enipar(ib, 1), ' on '&
 &       , bcchar(ib), boundary_location(ib)
         CALL XERTST(enipar(ib, 1) .GT. 0.0_R8, &
 &             'BCENI = 1, ENIPAR(,1) !> 0')
@@ -2311,7 +2311,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! -- BCENI=2 -- PRESCRIBE THE GRADIENT OF THE ION TEMPERATURE
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                'BCENI = 2 : ion temperature gradient '&
+&                               'BCENI =  2 : ion temperature gradient '&
 &                                   , enipar(ib, 1), ' on ', bcchar(ib)&
 &                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -2344,7 +2344,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
       CALL XERRAB('b2stbc_phys -- BCENI = 4 not adapted for WG')
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 4 : weak ion temperature ', enipar(ib, 1), ' on ', &
+&       'BCENI =  4 : weak ion temperature ', enipar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
         CALL XERTST(enipar(ib, 1) .GT. 0.0_R8, &
 &             'BCENI = 4, ENIPAR(,1) !> 0')
@@ -2398,7 +2398,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !srv 28.07.11
         IF (switch%use_astra .NE. 0) enipar(ib, 1) = fhib_astra
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 8 : total ion energy flux', enipar(ib, 1), ' on ', &
+&       'BCENI =  8 : total ion energy flux', enipar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
       END IF
       us = 0.0_R8
@@ -2452,7 +2452,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 9 : ion temperature decay length ', enipar(ib, 1), &
+&       'BCENI =  9 : ion temperature decay length ', enipar(ib, 1), &
 &       ' on ', bcchar(ib), boundary_location(ib)
         CALL XERTST(enipar(ib, 1) .NE. 0.0_R8, &
 &             'BCENI = 9, ENIPAR(,1) = 0')
@@ -2468,8 +2468,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           WRITE(0, *) 'Should use BCENI.EQ.9 together with BCCON=9'
           WRITE(*, *) 'Should use BCENI.EQ.9 together with BCCON=9'
 !srv 21.09.12
-          WRITE(*, '(a)') 'Please ensure that this boundary condition '&
-&         //'is consistent with density boundary condition'
+          WRITE(*, '(1x,a)') &
+&         'Please ensure that this boundary condition '//&
+&         'is consistent with '//'the density boundary condition'
         END IF
       END IF
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -3031,9 +3032,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! -- BCPOT=1 -- PRESCRIBE THE VALUE OF THE POTENTIAL
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 1 : specified potential ', &
-&                                   potpar(ib, 1), ' on ', bcchar(ib), &
-&                                   boundary_location(ib)
+&                                   'BCPOT =  1 : specified potential '&
+&                                   , potpar(ib, 1), ' on ', bcchar(ib)&
+&                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -3048,7 +3049,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! -- BCPOT=2 -- PRESCRIBE THE GRADIENT OF THE POTENTIAL
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 2 : potential gradient ', &
+&                                   'BCPOT =  2 : potential gradient ', &
 &                                   potpar(ib, 1), ' on ', bcchar(ib), &
 &                                   boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -3080,7 +3081,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !
       CALL XERRAB('b2stbc_phys -- BCPOT = 4 not adapted for WG')
       IF (ncall_b2stbc_phys .EQ. 0) THEN
-        WRITE(*, '(a,1p,g14.7,a,a,a)') 'BCPOT = 4 : weak potential ', &
+        WRITE(*, '(a,1p,g14.7,a,a,a)') 'BCPOT =  4 : weak potential ', &
 &       potpar(ib, 1), ' on ', bcchar(ib), boundary_location(ib)
         CALL XERTST(potpar(ib, 2) .GT. 0.0_R8, &
 &             'BCPOT = 4, POTPAR(,2) !> 0')
@@ -3104,7 +3105,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 CONSTANT POTENTIAL
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                              'BCPOT = 6 : total current flux density '&
+&                             'BCPOT =  6 : total current flux density '&
 &                                   , potpar(ib, 1), &
 &                                   ' with const potential on ', bcchar(&
 &                                   ib), boundary_location(ib)
@@ -3133,8 +3134,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 FLUX DENSITY
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 8 : total current ', potpar&
-&                                   (ib, 1), ' on ', bcchar(ib), &
+&                                   'BCPOT =  8 : total current ', &
+&                                   potpar(ib, 1), ' on ', bcchar(ib), &
 &                                   boundary_location(ib)
       us = 0.0_R8
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -5087,7 +5088,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL PUSHCONTROL1B(1)
           END IF
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 1 : constant density ', conpar(is, ib, 1), ' on ', &
+&         'BCCON =  1 : constant density ', conpar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
           IF (mpg%cvonclosedsurface(icv)) THEN
@@ -5126,7 +5127,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 2 : density gradient ', conpar(is, ib, 1), ' on ', &
+&         'BCCON =  2 : density gradient ', conpar(is, ib, 1), ' on ', &
 &         bcchar(ib), boundary_location(ib), ' for species ', is
           CALL PUSHCONTROL1B(1)
         ELSE
@@ -5167,7 +5168,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! -- BCCON=3 -- SHEATH CONDITIONS
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,a,a,a,i3)') &
-&                                    'BCCON = 3 : sheath density bc on '&
+&                                   'BCCON =  3 : sheath density bc on '&
 &                                     , bcchar(ib), boundary_location(ib&
 &                                     ), ' for species ', is
 ! loop over number of cells in the boundary
@@ -5204,8 +5205,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL PUSHCONTROL1B(1)
           END IF
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 4 : weak density ', conpar(is, ib, 1), ' on ', bcchar&
-&         (ib), boundary_location(ib), ' for species ', is
+&         'BCCON =  4 : weak density ', conpar(is, ib, 1), ' on ', &
+&         bcchar(ib), boundary_location(ib), ' for species ', is
           CALL PUSHCONTROL1B(1)
         ELSE
           CALL PUSHCONTROL1B(0)
@@ -5232,7 +5233,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                                  'BCCON = 5 : particle flux per area '&
+&                                 'BCCON =  5 : particle flux per area '&
 &                                     , conpar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -5335,7 +5336,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL PUSHCONTROL2B(1)
           END IF
           WRITE(*, '(a,1p,g14.7,a4,a1,a,a13,i3)') &
-&         'BCCON = 8 : total particle flux ', conpar(is, ib, 1), ' on '&
+&         'BCCON =  8 : total particle flux ', conpar(is, ib, 1), ' on '&
 &         , bcchar(ib), boundary_location(ib), ' for species ', is
         ELSE
           CALL PUSHCONTROL2B(2)
@@ -5414,8 +5415,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
-&         'BCCON = 9 : density decay length ', conpar(is, ib, 1), ' on '&
-&         , bcchar(ib), boundary_location(ib), ' for species ', is
+&         'BCCON =  9 : density decay length ', conpar(is, ib, 1), &
+&         ' on ', bcchar(ib), boundary_location(ib), ' for species ', is
           CALL PUSHCONTROL1B(1)
         ELSE
           CALL PUSHCONTROL1B(0)
@@ -6054,7 +6055,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                             'BCMOM = 1 : specified parallel velocity '&
+&                            'BCMOM =  1 : specified parallel velocity '&
 &                                     , mompar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -6081,7 +6082,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                              'BCMOM = 2 : parallel velocity gradient '&
+&                             'BCMOM =  2 : parallel velocity gradient '&
 &                                     , mompar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -6123,7 +6124,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !                 A MIXED BOUNDARY CONDITION
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
-&                                    ) 'BCMOM = 4 : weak velocity ', &
+&                                    ) 'BCMOM =  4 : weak velocity ', &
 &                                     mompar(is, ib, 1), ' on ', bcchar(&
 &                                     ib), boundary_location(ib), &
 &                                     ' for species ', is
@@ -6150,7 +6151,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)'&
 &                                    ) &
-&                    'BCMOM = 5 : parallel momentum flux per unit area '&
+&                   'BCMOM =  5 : parallel momentum flux per unit area '&
 &                                     , mompar(is, ib, 1), ' on ', &
 &                                     bcchar(ib), boundary_location(ib)&
 &                                     , ' for species ', is
@@ -6486,7 +6487,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL PUSHCONTROL2B(2)
         END IF
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 1 : specified electron temperature ', enepar(ib, 1), &
+&       'BCENE =  1 : specified electron temperature ', enepar(ib, 1), &
 &       ' on ', bcchar(ib), boundary_location(ib)
       ELSE
         CALL PUSHCONTROL2B(0)
@@ -6511,7 +6512,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! -- BCENE=2 -- PRESCRIBE THE GRADIENT OF THE ELECTRON TEMPERATURE
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                           'BCENE = 2 : electron temperature gradient '&
+&                          'BCENE =  2 : electron temperature gradient '&
 &                                   , enepar(ib, 1), ' on ', bcchar(ib)&
 &                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -6548,7 +6549,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !                 WEAKLY A MIXED BOUNDARY CONDITION
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                               'BCENE = 4 : weak electron temperature '&
+&                              'BCENE =  4 : weak electron temperature '&
 &                                   , enepar(ib, 1), ' on ', bcchar(ib)&
 &                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -6606,8 +6607,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL PUSHCONTROL1B(0)
         END IF
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 8 : total electron energy flux ', enepar(ib, 1), ' on '&
-&       , bcchar(ib), boundary_location(ib)
+&       'BCENE =  8 : total electron energy flux ', enepar(ib, 1), &
+&       ' on ', bcchar(ib), boundary_location(ib)
       ELSE
         CALL PUSHCONTROL1B(1)
       END IF
@@ -6682,7 +6683,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENE = 9 : electron temperature decay length ', enepar(ib, 1)&
+&       'BCENE =  9 : electron temperature decay length ', enepar(ib, 1)&
 &       , ' on ', bcchar(ib), boundary_location(ib)
         ism = 0
         DO is=0,ns-1
@@ -6698,9 +6699,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           IF (ism .GT. 0) THEN
             CALL PUSHCONTROL1B(1)
 !srv 21.09.12
-            WRITE(*, '(a)') &
+            WRITE(*, '(1x,a)') &
 &           'Please ensure that this boundary condition '//&
-&           'is consistent with density boundary conditions'
+&           'is consistent with the density boundary conditions'
           ELSE
             CALL PUSHCONTROL1B(0)
           END IF
@@ -7338,7 +7339,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL PUSHCONTROL2B(2)
         END IF
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 1 : specified ion temperature ', enipar(ib, 1), ' on '&
+&       'BCENI =  1 : specified ion temperature ', enipar(ib, 1), ' on '&
 &       , bcchar(ib), boundary_location(ib)
       ELSE
         CALL PUSHCONTROL2B(0)
@@ -7363,7 +7364,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! -- BCENI=2 -- PRESCRIBE THE GRADIENT OF THE ION TEMPERATURE
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                'BCENI = 2 : ion temperature gradient '&
+&                               'BCENI =  2 : ion temperature gradient '&
 &                                   , enipar(ib, 1), ' on ', bcchar(ib)&
 &                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -7401,7 +7402,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 4 : weak ion temperature ', enipar(ib, 1), ' on ', &
+&       'BCENI =  4 : weak ion temperature ', enipar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
 !srv 02.02.11
       END IF
@@ -7463,7 +7464,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL PUSHCONTROL2B(1)
         END IF
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 8 : total ion energy flux', enipar(ib, 1), ' on ', &
+&       'BCENI =  8 : total ion energy flux', enipar(ib, 1), ' on ', &
 &       bcchar(ib), boundary_location(ib)
       ELSE
         CALL PUSHCONTROL2B(2)
@@ -7543,7 +7544,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCENI = 9 : ion temperature decay length ', enipar(ib, 1), &
+&       'BCENI =  9 : ion temperature decay length ', enipar(ib, 1), &
 &       ' on ', bcchar(ib), boundary_location(ib)
         decay_length_ok = .true.
         DO is=0,ns-1
@@ -7563,8 +7564,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           WRITE(0, *) 'Should use BCENI.EQ.9 together with BCCON=9'
           WRITE(*, *) 'Should use BCENI.EQ.9 together with BCCON=9'
 !srv 21.09.12
-          WRITE(*, '(a)') 'Please ensure that this boundary condition '&
-&         //'is consistent with density boundary condition'
+          WRITE(*, '(1x,a)') &
+&         'Please ensure that this boundary condition '//&
+&         'is consistent with '//'the density boundary condition'
         ELSE
           CALL PUSHCONTROL1B(1)
         END IF
@@ -8273,9 +8275,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! -- BCPOT=1 -- PRESCRIBE THE VALUE OF THE POTENTIAL
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 1 : specified potential ', &
-&                                   potpar(ib, 1), ' on ', bcchar(ib), &
-&                                   boundary_location(ib)
+&                                   'BCPOT =  1 : specified potential '&
+&                                   , potpar(ib, 1), ' on ', bcchar(ib)&
+&                                   , boundary_location(ib)
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -8296,7 +8298,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! -- BCPOT=2 -- PRESCRIBE THE GRADIENT OF THE POTENTIAL
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 2 : potential gradient ', &
+&                                   'BCPOT =  2 : potential gradient ', &
 &                                   potpar(ib, 1), ' on ', bcchar(ib), &
 &                                   boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -8333,7 +8335,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !                 WEAKLY A MIXED BOUNDARY CONDITION
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 4 : weak potential ', &
+&                                   'BCPOT =  4 : weak potential ', &
 &                                   potpar(ib, 1), ' on ', bcchar(ib), &
 &                                   boundary_location(ib)
 ! loop over number of cells in the boundary
@@ -8360,7 +8362,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         CALL PUSHCONTROL5B(3)
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&       'BCPOT = 6 : total current flux density ', potpar(ib, 1), &
+&       'BCPOT =  6 : total current flux density ', potpar(ib, 1), &
 &       ' with const potential on ', bcchar(ib), boundary_location(ib)
       ELSE
         CALL PUSHCONTROL5B(3)
@@ -8395,8 +8397,8 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !                 FLUX DENSITY
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                                   'BCPOT = 8 : total current ', potpar&
-&                                   (ib, 1), ' on ', bcchar(ib), &
+&                                   'BCPOT =  8 : total current ', &
+&                                   potpar(ib, 1), ' on ', bcchar(ib), &
 &                                   boundary_location(ib)
       CALL PUSHREAL8(us, r8/8)
       us = 0.0_R8
