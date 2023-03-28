@@ -3,7 +3,7 @@
 !
 !!-----------------------------------------------------------------------------
 !! DOCUMENTATION:
-!>      @section b2uw_ualio_grid_desc Description
+!>      @section b2uw_ual_io_grid_desc Description
 !!      Module providing routines to set the B2 grid geometry, including grid
 !!      subsets (subgrids), to ITM CPO or IMAS IDS grid description data
 !!      structure.
@@ -13,7 +13,7 @@
 !!            and edge_transport IDSs)
 !!          - b2ITMFillGridDescription (for ITM edge CPO)
 !!
-!!      @subsection b2uw_ualio_grid_syx     Exceptional syntax explanation
+!!      @subsection b2uw_ual_io_grid_syx     Exceptional syntax explanation
 !!      @code
 !!          ! IGNORE    !! syntax used to ignore this module in list
 !!                      !! dependency when compiling the code
@@ -381,6 +381,7 @@ CONTAINS
     INTEGER :: ivx
 !! Procedures
     EXTERNAL XERTST
+    EXTERNAL XERRAB
 !! First figure out how many points we have: start at six, siy,
 !! go towards top until running out of physical domain
     nvx = 1
@@ -426,7 +427,8 @@ CONTAINS
               indexlist(ivx, space_poloidalplane) = gmap%mapvxi(ix, iy, &
 &               vx_upperleft)
             ELSE
-              STOP
+              CALL XERRAB('collectRadialVertexIndexList: '//&
+&                   'cannot find expected vertex index')
             END IF
             ix = nix
             iy = niy
@@ -478,6 +480,7 @@ CONTAINS
     INTEGER :: ivx
 !! Procedures
     EXTERNAL XERTST
+    EXTERNAL XERRAB
 !! First figure out how many points we have: start at six, siy,
 !! go towards top until running out of physical domain
     nvx = 1
@@ -523,7 +526,8 @@ CONTAINS
               indexlist(ivx, space_poloidalplane) = gmap%mapvxi(ix, iy, &
 &               vx_upperleft)
             ELSE
-              STOP
+              CALL XERRAB('collectRadialVertexIndexListSubroutine: '//&
+&                   ' cannot find expected vertex index')
             END IF
             ix = nix
             iy = niy

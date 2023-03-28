@@ -47,7 +47,7 @@ contains
     case ("DEBUGBULK", "debugbulk")
             call setLogLevel(LOGDEBUGBULK)
     case default
-            stop 'setLogLevelByName: unknown name'
+            call xerrab('setLogLevelByName: unknown name')
     end select
   end subroutine setLogLevelByName
 
