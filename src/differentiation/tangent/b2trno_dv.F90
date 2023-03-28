@@ -2,23 +2,24 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2trno in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata *(co.csig) *(co.calf) *(co.csig_an)
-!                *(co.chce) *(co.chce_exb) *(co.chci) *(co.chci_exb)
-!                *(co.chcn) *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna)
-!                *(co.cdna_exb) *(co.cdpa) *(co.cvsa) *(co.cvlahz)
-!                *(co.cdpahz) *(co.cvsahz) *(co.chcb) *(co.sig0)
-!                *(co.hce0) *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0)
-!                *(co.dzt0) *(co.dna_exb) *(co.hce_exb) *(co.hci_exb)
-!                *(co.dpa0) *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0)
-!   with respect to varying inputs: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci parm_hce parm_hci parm_vsa parm_alf parm_sig
-!                parm_dna tdata *(dv.ne) *(dv.ni) *(dv.vaecrb)
-!                *(rt.rlcx) *(rt.rlsa) *(rt.rza) switch.keps_cd
-!                switch.keps_heat switch.keps_heat_i switch.keps_sig
-!                switch.keps_alf switch.keps_visc switch.keps_dkt
-!                switch.keps_dzt switch.keps_shear switch.b2tfhi_fconkt
-!                switch.b2tfhi_fconzt switch.b2tqna_ballooning
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata *(co.csig) *(co.calf)
+!                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
+!                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
+!                *(co.cvla) *(co.cdna) *(co.cdna_exb) *(co.cdpa)
+!                *(co.cvsa) *(co.cvlahz) *(co.cdpahz) *(co.cvsahz)
+!                *(co.chcb) *(co.sig0) *(co.hce0) *(co.hci0) *(co.hcn0)
+!                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
+!                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
+!                *(co.vsa0) *(co.hcib) *(co.vla0)
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
+!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                switch.keps_sig switch.keps_alf switch.keps_visc
+!                switch.keps_dkt switch.keps_dzt switch.keps_shear
+!                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tqna_ballooning
 !                switch.b2tqna_ballooning_rescale *(co.csig) *(co.calf)
 !                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
 !                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)

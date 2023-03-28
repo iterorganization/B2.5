@@ -1162,6 +1162,7 @@ CONTAINS
 
 !
   FUNCTION FKA(icv, a)
+  USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: icv, a
     REAL(kind=r8) :: fka

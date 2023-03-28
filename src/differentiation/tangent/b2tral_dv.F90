@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci tdata *(dv.lnlam) *(co.csig) *(co.calf)
-!                *(co.csig_an) *(co.csigin) *(co.chce) *(co.chce_exb)
-!                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)
-!                *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata *(dv.lnlam) *(co.csig)
+!                *(co.calf) *(co.csig_an) *(co.csigin) *(co.chce)
+!                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
+!                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
 !                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
 !                *(co.cvsahz) *(co.cddi) *(co.cvsahz_cl) *(co.chcb)
 !                *(co.cvsa_cl) *(co.vsaf_cl) *(co.sig0) *(co.hce0)
@@ -17,30 +17,31 @@
 !                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
-!   with respect to varying inputs: cfvsa cfalf cfsig cfdna cfhce
-!                cfhci parm_hce parm_hci parm_vsa parm_alf parm_sig
-!                parm_dna tdata *(dv.ne) *(dv.ni) *(dv.ne2) *(dv.lnlam)
-!                *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza) *(rt.rz2)
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2tfhi_fconkt switch.b2tfhi_fconzt switch.b2tfhi_fsigkt
-!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!                *(co.csig) *(co.calf) *(co.csig_an) *(co.csigin)
-!                *(co.chce) *(co.chce_exb) *(co.chci) *(co.chci_exb)
-!                *(co.chcn) *(co.cdkt) *(co.cdzt) *(co.chvemx)
-!                *(co.chvimx) *(co.cvla) *(co.cdna) *(co.cdna_exb)
-!                *(co.cdpa) *(co.cvsa) *(co.cvlahz) *(co.cdpahz)
-!                *(co.cvsahz) *(co.cddi) *(co.cvsahz_cl) *(co.chcb)
-!                *(co.cvsa_cl) *(co.vsaf_cl) *(co.sig0) *(co.hce0)
-!                *(co.hci0) *(co.hcn0) *(co.alf0) *(co.dkt0) *(co.dzt0)
-!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.dpa0)
-!                *(co.dna0) *(co.vsa0) *(co.hcib) *(co.vla0) *(co.alfx_c)
-!                *(co.sigx_c) *(co.sigx_kt) *(co.hcix_c) *(co.fllim_ki)
-!                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
-!                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
-!                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al) *(pl.na)
-!                *(pl.ua) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
+!                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
+!                switch.keps_heat switch.keps_heat_i switch.keps_sig
+!                switch.keps_alf switch.keps_visc switch.keps_dkt
+!                switch.keps_dzt switch.keps_shear switch.b2tfhi_fconkt
+!                switch.b2tfhi_fconzt switch.b2tfhi_fsigkt switch.b2tqna_ballooning
+!                switch.b2tqna_ballooning_rescale *(co.csig) *(co.calf)
+!                *(co.csig_an) *(co.csigin) *(co.chce) *(co.chce_exb)
+!                *(co.chci) *(co.chci_exb) *(co.chcn) *(co.cdkt)
+!                *(co.cdzt) *(co.chvemx) *(co.chvimx) *(co.cvla)
+!                *(co.cdna) *(co.cdna_exb) *(co.cdpa) *(co.cvsa)
+!                *(co.cvlahz) *(co.cdpahz) *(co.cvsahz) *(co.cddi)
+!                *(co.cvsahz_cl) *(co.chcb) *(co.cvsa_cl) *(co.vsaf_cl)
+!                *(co.sig0) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.alf0)
+!                *(co.dkt0) *(co.dzt0) *(co.dna_exb) *(co.hce_exb)
+!                *(co.hci_exb) *(co.dpa0) *(co.dna0) *(co.vsa0)
+!                *(co.hcib) *(co.vla0) *(co.alfx_c) *(co.sigx_c)
+!                *(co.sigx_kt) *(co.hcix_c) *(co.fllim_ki) *(co.fllim_ke)
+!                *(co.fllim_al) *(co.fllim_al_c) *(co.fllim_ki_c)
+!                *(co.f_luc_ke) *(co.f_luc_ki) *(co.f_luc_et) *(co.f_luc_sg)
+!                *(co.f_luc_al) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
+!                *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                dv.vaecrb:in mpg.intcellp:in mpg.intcellr:in geo.cvbb:in
 !                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvqgam:in

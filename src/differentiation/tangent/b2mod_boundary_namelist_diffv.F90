@@ -943,12 +943,12 @@ CONTAINS
     INTRINSIC ANY
     EXTERNAL ANY_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV0
+    EXTERNAL MAXVAL_DV
     REAL(kind=r8) :: result1
     INTEGER :: nbdirs
     LOGICAL :: ANY_DV
-    REAL(kind=r8) :: MAXVAL_DV0
     INTEGER :: COUNT_DV
+    REAL(kind=r8) :: MAXVAL_DV
 !
     filename = boundary_filename
     boundary_time_mod = 0.0_R8
