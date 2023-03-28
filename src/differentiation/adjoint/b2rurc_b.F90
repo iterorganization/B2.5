@@ -186,13 +186,13 @@ SUBROUTINE B2RURC_B(nget, version)
 !   ..procedures
   REAL(kind=r8) :: smax
   INTRINSIC MAXVAL
-  EXTERNAL MAXVAL_B0
+  EXTERNAL MAXVAL_B
   INTRINSIC MINVAL
   EXTERNAL MINVAL_B
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
-  REAL(kind=r8) :: MAXVAL_B0
+  REAL(kind=r8) :: MAXVAL_B
   REAL(kind=r8) :: MINVAL_B
 !
 !-----------------------------------------------------------------------

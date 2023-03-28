@@ -232,11 +232,9 @@ CONTAINS
 !
 !*** Tracing unit assignment (see b2file, b2blnc, etc.)
 !
-!<<<
-      ntrc(ntrc_tst) = 80
+      ntrc(ntrc_tst) = 39
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
-!>>>
-      ntrc(ntrc_srt) = 71
+      ntrc(ntrc_srt) = 59
       fn_ntrc(ntrc_srt) = 'tracing/intshrt.trc'
       ntrc(ntrc_res) = 72
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
