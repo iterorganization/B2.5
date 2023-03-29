@@ -522,15 +522,15 @@ CONTAINS
     END IF
 !
 ! csc Tests on optimization parameters
-    CALL XERTST(nnvar .GT. 0 .AND. nnvar .LE. nvmx, &
-&         'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
+    CALL XERTST(nnvar .GE. 0 .AND. nnvar .LE. nvmx, &
+&         'b2mod_par_opt: nnvar<0 or nnvar>nvmx')
     CALL XERTST(nncon .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
     CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
-    CALL XERTST(nnvar .GE. 0, 'b2mod_par_opt: nnvar<0')
     CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
     CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
     CALL XERTST(ALL(par_rescale .GT. 0.d0), &
 &         'b2mod_par_opt: par_rescale<=0')
+    IF (nnvar .GT. 0) THEN
 !     partype refers to the type of design variable:
 !     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
 !     1  - Dna, density driven particle diffusion coefficient
@@ -572,41 +572,42 @@ CONTAINS
 !     37 - b2tfhi_fconzt
 !     38 - b2tfhi_fkt_hie
 !     39 - b2tfhe_vis_kt
-    CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
-&         .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
-    CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
-&         'b2mod_par_opt: spatial_points<0')
-    CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
-&         'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
-    DO ii=1,nnvar
+     CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
+&          .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
+     CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
+&          'b2mod_par_opt: spatial_points<0')
+     CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
+&          'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+     DO ii=1,nnvar
 !only parm_XXX can be spatially dependent
-      IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
-&         .GT. 9)) CALL XERRAB(&
-&                        'b2mod_par_opt: spatial_points optimization '//&
-&                        'is available only for partype 1-9')
-      IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
-        WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
-&       spatial_dep(ii), spatial_points(ii)
-        CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
-&             'spatially dependent transport coefficients but you only '&
-&             //'specify one!')
-      END IF
-      IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
-&         (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
-&         .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
-&         partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
-&                                    ii) .LE. ns - 1, &
-&                                    'b2mod_par_opt: paris<0 or >ns-1')
-      IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
-&                                                              parib(ii)&
-&                                                              .GE. 1 &
-&                                                              .AND. &
-&                                                              parib(ii)&
-&                                                              .LE. m%&
-&                                                              nbc, &
-&                                       'b2mod_par_opt: parib<0 or >nBc'&
-&                                                             )
-    END DO
+       IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
+&          .GT. 9)) CALL XERRAB(&
+&                         'b2mod_par_opt: spatial_points optimization '//&
+&                         'is available only for partype 1-9')
+       IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
+         WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&        spatial_dep(ii), spatial_points(ii)
+         CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+&              'spatially dependent transport coefficients but you only '&
+&              //'specify one!')
+       END IF
+       IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
+&          (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
+&          .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
+&          partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
+&                                     ii) .LE. ns - 1, &
+&                                     'b2mod_par_opt: paris<0 or >ns-1')
+       IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
+&                                                               parib(ii)&
+&                                                               .GE. 1 &
+&                                                               .AND. &
+&                                                               parib(ii)&
+&                                                               .LE. m%&
+&                                                               nbc, &
+&                                        'b2mod_par_opt: parib<0 or >nBc'&
+&                                                              )
+     END DO
+    END IF
     IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
 !      calculate first how many sigmas are being optimized
       nsigma_opt = 0
@@ -642,13 +643,15 @@ CONTAINS
 &             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
       END DO
     END IF
-    IF (nnjac .GT. 0) THEN
+    IF (flag_optim) THEN
+     IF (nnjac .GT. 0) THEN
       CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
       CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
       result1 = MAXVAL(jcol(1:nnjac))
       CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
       result1 = MAXVAL(jrow(1:nnjac))
       CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+     END IF
     END IF
 !
 !     adjust some arrays when there are radially dependent coefficients
@@ -1057,15 +1060,15 @@ CONTAINS
     END IF
 !
 ! csc Tests on optimization parameters
-    CALL XERTST(nnvar .GT. 0 .AND. nnvar .LE. nvmx, &
-&         'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
+    CALL XERTST(nnvar .GE. 0 .AND. nnvar .LE. nvmx, &
+&         'b2mod_par_opt: nnvar<0 or nnvar>nvmx')
     CALL XERTST(nncon .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
     CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
-    CALL XERTST(nnvar .GE. 0, 'b2mod_par_opt: nnvar<0')
     CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
     CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
     CALL XERTST(ALL(par_rescale .GT. 0.d0), &
 &         'b2mod_par_opt: par_rescale<=0')
+    IF (nnvar .GT. 0) then
 !     partype refers to the type of design variable:
 !     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
 !     1  - Dna, density driven particle diffusion coefficient
@@ -1107,41 +1110,42 @@ CONTAINS
 !     37 - b2tfhi_fconzt
 !     38 - b2tfhi_fkt_hie
 !     39 - b2tfhe_vis_kt
-    CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
-&         .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
-    CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
-&         'b2mod_par_opt: spatial_points<0')
-    CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
-&         'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
-    DO ii=1,nnvar
+     CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
+&          .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
+     CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
+&          'b2mod_par_opt: spatial_points<0')
+     CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
+&          'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+     DO ii=1,nnvar
 !only parm_XXX can be spatially dependent
-      IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
-&         .GT. 9)) CALL XERRAB(&
-&                        'b2mod_par_opt: spatial_points optimization '//&
-&                        'is available only for partype 1-9')
-      IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
-        WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
-&       spatial_dep(ii), spatial_points(ii)
-        CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
-&             'spatially dependent transport coefficients but you only '&
-&             //'specify one!')
-      END IF
-      IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
-&         (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
-&         .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
-&         partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
-&                                    ii) .LE. ns - 1, &
-&                                    'b2mod_par_opt: paris<0 or >ns-1')
-      IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
-&                                                              parib(ii)&
-&                                                              .GE. 1 &
-&                                                              .AND. &
-&                                                              parib(ii)&
-&                                                              .LE. m%&
-&                                                              nbc, &
-&                                       'b2mod_par_opt: parib<0 or >nBc'&
-&                                                             )
-    END DO
+       IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
+&          .GT. 9)) CALL XERRAB(&
+&                         'b2mod_par_opt: spatial_points optimization '//&
+&                         'is available only for partype 1-9')
+       IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
+         WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&        spatial_dep(ii), spatial_points(ii)
+         CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+&              'spatially dependent transport coefficients but you only '&
+&              //'specify one!')
+       END IF
+       IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
+&          (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
+&          .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
+&          partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
+&                                     ii) .LE. ns - 1, &
+&                                     'b2mod_par_opt: paris<0 or >ns-1')
+       IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
+&                                                               parib(ii)&
+&                                                               .GE. 1 &
+&                                                               .AND. &
+&                                                               parib(ii)&
+&                                                               .LE. m%&
+&                                                               nbc, &
+&                                        'b2mod_par_opt: parib<0 or >nBc'&
+&                                                              )
+     END DO
+    END IF
     IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
 !      calculate first how many sigmas are being optimized
       nsigma_opt = 0
@@ -1177,13 +1181,15 @@ CONTAINS
 &             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
       END DO
     END IF
-    IF (nnjac .GT. 0) THEN
+    IF (flag_optim) THEN
+     IF (nnjac .GT. 0) THEN
       CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
       CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
       result1 = MAXVAL(jcol(1:nnjac))
       CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
       result1 = MAXVAL(jrow(1:nnjac))
       CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+     END IF
     END IF
 !
 !     adjust some arrays when there are radially dependent coefficients
