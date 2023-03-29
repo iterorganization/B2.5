@@ -299,12 +299,16 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           ! compute conn on the face
           connf = 0.0_R8
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
+           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
            iFt = mpg%cvFt(mpg%fcCv(iFc,1))
            connf = connf + geo%ftConn(iFt)
+           endif
           endif
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
+           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
            iFt = mpg%cvFt(mpg%fcCv(iFc,2))
            connf = connf + geo%ftConn(iFt)
+           endif
           endif
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &        mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
@@ -334,6 +338,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        do iCv = 1, nCv
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
           t0 = 1.0_R8/(1.0_R8 +
      1      7.5e16_R8*(pl%te(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
           co%sigx_c(iCv) = co%sigx_c(iCv)*t0
@@ -341,6 +346,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           t0 = 1.0_R8/(1.0_R8 +
      1      7.5e16_R8*(pl%ti(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
           co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+          endif
         endif
        enddo
       else if (switch%lluciani.eq.2) then  ! SOLPS4.0 formulation
@@ -375,6 +381,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        do iCv = 1, nCv
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
           t0 = 1.0_R8/(1.0_R8 +
      1      0.3e16_R8*(pl%te(iCv)/ev)**2/dv%ne2(iCv))
           co%sigx_c(iCv) = co%sigx_c(iCv)*t0
@@ -382,6 +389,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           t0 = 1.0_R8/(1.0_R8 +
      1      0.3e16_R8*(pl%ti(iCv)/ev)**2/dv%ne2(iCv))
           co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+          endif
         endif
        enddo
       else if (switch%lluciani.eq.3) then  ! new formulation
@@ -398,6 +406,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        do iCv = 1, nCv
          if (mpg%cvOnClosedSurface(iCv)) then
            iFt = mpg%cvFt(iCv)
+           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
            nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
      &      sqrt(pl%te(iCv)/me)*2.0e0_R8*pi*geo%ftEps(iFt)**1.5e0_R8)
            k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
@@ -412,6 +421,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(iCv))+0.31e0_R8*nu2(iCv))
      &      +1.17e0_R8*(geo%ftEps(iFt)**3)*nu2(iCv)
      &      /(1.0e0_R8+0.74e0_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
+           endif
          endif
        enddo                                                             !lk 19.09.07 }
 *    ..interpolate te, ti and ne2 to cell faces
@@ -430,13 +440,17 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           epsf  = 0.0_R8
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1))) then
            iFt = mpg%cvFt(mpg%fcCv(iFc,1))
+           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
            connf = connf + geo%ftConn(iFt)
            epsf  = epsf  + geo%ftEps(iFt)
+           endif
           endif
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))  then
            iFt = mpg%cvFt(mpg%fcCv(iFc,2))
+           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
            connf = connf + geo%ftConn(iFt)
            epsf  = epsf  + geo%ftEps(iFt)
+           endif
           endif
           if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &        mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
@@ -479,16 +493,18 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           csig(iFc,0) = csig(iFc,0)*co%f_luc_sg(iFc)
           calf(iFc,0) = calf(iFc,0)*co%f_luc_al(iFc)
           chci(iFc,0) = chci(iFc,0)*co%f_luc_ki(iFc)
-         endif                                                          !lkw 12.10.22 {
+        endif                                                          !lkw 12.10.22 {
        enddo
        do iCv = 1, nCv
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
+          if (iFt.gt.0.and.iFt.le.mpg%nFt) then
           t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
           co%sigx_c(iCv) = co%sigx_c(iCv)*t0
           co%alfx_c(iCv) = co%alfx_c(iCv)*t0
           t0 = 1.0_R8/k2(iCv)*1.60e0_R8*sqrt(geo%ftEps(iFt)**3)
           co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+          endif
         endif
        enddo
       endif
