@@ -246,7 +246,7 @@ CONTAINS
       m%cfregp = 0
       ALLOCATE(cfreg(mxncf))
       cfreg = 0
-      OPEN(newunit=idb, file='debug_user.out') 
+      OPEN(newunit=idb, file='debug_optimization.out') 
       incf = 0
       DO 100 icf=1,ncf
         IF (cftype(icf) .GT. 10) CALL XERRAB('cftype>10 not coded ')
@@ -786,7 +786,7 @@ CONTAINS
       m%cfregp = 0
       ALLOCATE(cfreg(mxncf))
       cfreg = 0
-      OPEN(newunit=idb, file='debug_user.out') 
+      OPEN(newunit=idb, file='debug_optimization.out') 
       incf = 0
       DO 100 icf=1,ncf
         IF (cftype(icf) .GT. 10) CALL XERRAB('cftype>10 not coded ')
