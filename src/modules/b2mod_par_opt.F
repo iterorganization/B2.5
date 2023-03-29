@@ -113,6 +113,10 @@
       logical done
       character*1 str
       character*256 cffile, filename
+#ifndef F2003
+      integer newunit
+      external newunit
+#endif
 
       filename='b2.optimization.parameters'
       write (*,*) 'OPTIM: max number of readable cost functions :',nncf
@@ -183,10 +187,10 @@
         allocate(cfReg(mxnCf))
         cfReg = 0
 #ifdef F2003
-        open (newunit=idb,file='debug_user.out')
+        open (newunit=idb,file='debug_optimization.out')
 #else
         idb = newunit()
-        open (unit=idb,file='debug_user.out')
+        open (unit=idb,file='debug_optimization.out')
 #endif
         incf = 0
         do icf = 1, ncf
