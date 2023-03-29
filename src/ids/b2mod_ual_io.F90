@@ -474,7 +474,7 @@ contains
         integer :: k      !< Iterator
         integer :: iFc    !< Iterator on faces
         integer :: iCv    !< Iterator on control volumes
-        integer :: iCv1, Icv2 !< Indices of the two CVs of both sides
+        integer :: iCv1, iCv2 !< Indices of the two CVs of both sides
                               !< of the OMP separatrix
         integer :: iVx    !< Iterator on vertices
         integer :: istrai !< Stratum iterator
@@ -2840,8 +2840,7 @@ contains
                 !! fmo: Ion momentum flux
                 totflux(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  flxFace(:,0) = state%dv%fmo(:,0,ispion(is,js)) / geo%fcS(:)
-                  flxFace(:,1) = state%dv%fmo(:,1,ispion(is,js)) / geo%fcS(:)
+                  call divide_by_area( mpg%nFc, geo, state%dv%fmo(1,0,ispion(is,js)), flxFace)
                   call write_face_vector_component( transport_grid, mpg,      &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
@@ -3297,8 +3296,7 @@ contains
 
 #if IMAS_MINOR_VERSION > 32
             !! fch: Total current
-            flxFace(:,0) = state%dv%fch(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fch(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fch, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_total,                               &
@@ -3311,15 +3309,14 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fch_p: Parallel current
-            tmpFace(:) = state%dv%fch_p(:,0) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fch_p, flxFace )
             call write_face_scalar( edge_grid, mpg,                          &
                 &   val = edge_profiles%ggd( time_sind )%j_parallel,         &
-                &   value = tmpFace )
+                &   value = flxFace(:,0) )
 #endif
 
             !! fchanml: Anomalous current
-            flxFace(:,0) = state%dv%fchanml(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchanml(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchanml, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
@@ -3332,8 +3329,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchinert: Inertial current
-            flxFace(:,0) = state%dv%fchinert(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchinert(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchinert, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
@@ -3346,8 +3342,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchin: Ion-neutral friction current
-            flxFace(:,0) = state%dv%fchin(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchin(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchin, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
@@ -3360,8 +3355,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvispar: Parallel viscosity current
-            flxFace(:,0) = state%dv%fchvispar(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchvispar(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchvispar, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
@@ -3374,8 +3368,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvisper: Perpendicular viscosity current
-            flxFace(:,0) = state%dv%fchvisper(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchvisper(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchvisper, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
@@ -3388,8 +3381,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchvisq: Heat viscosity current
-            flxFace(:,0) = state%dv%fchvisq(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchvisq(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchvisq, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
@@ -3402,8 +3394,7 @@ contains
                 &   vectorID = VEC_ALIGN_RADIAL_ID )
 
             !! fchdia: Diamagnetic current
-            flxFace(:,0) = state%dv%fchdia(:,0) / geo%fcS(:)
-            flxFace(:,1) = state%dv%fchdia(:,1) / geo%fcS(:)
+            call divide_by_area( mpg%nFc, geo, state%dv%fchdia, flxFace )
             call write_face_vector_component( edge_grid, mpg,                &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
@@ -4156,16 +4147,16 @@ contains
         call write_sourced_value( summary%local%separatrix%t_e, &
            &  0.5_R8 * (state%pl%te(iCv1) + state%pl%te(iCv2))/ev )
         call write_sourced_value( summary%local%separatrix%t_i_average, &
-           &  0.5_R8 * (state%pl%ti(iCv1)+ state%pl%ti(iCv2))/ev )
+           &  0.5_R8 * (state%pl%ti(iCv1) + state%pl%ti(iCv2))/ev )
         call write_sourced_value( summary%local%separatrix%n_e, &
-           &  0.5_R8 * (state%dv%ne(iCv1)+ state%dv%ne(iCv2)) )
+           &  0.5_R8 * (state%dv%ne(iCv1) + state%dv%ne(iCv2)) )
 #if IMAS_MINOR_VERSION > 36
         tmpFace = 1.0_IDS_real
-        u = separatrix_average( state%pl%te, tmpFace )
+        u = separatrix_average( mpg, geo, state%pl%te, tmpFace )
         call write_sourced_value( summary%local%separatrix_average%t_e, u/ev )
-        u = separatrix_average( state%pl%ti, tmpFace )
+        u = separatrix_average( mpg, geo, state%pl%ti, tmpFace )
         call write_sourced_value( summary%local%separatrix_average%t_i_average, u/ev )
-        u = separatrix_average( state%dv%ne, tmpFace )
+        u = separatrix_average( mpg, geo, state%dv%ne, tmpFace )
         call write_sourced_value( summary%local%separatrix_average%n_e, u )
 #endif
         do is = 1, nspecies
@@ -4178,22 +4169,23 @@ contains
           do i = is1, is2
             nisep = nisep + &
               &  0.5_R8 * (state%pl%na(iCv1,i) + state%pl%na(iCv2,i))
-            nasum = nasum + state%pl%na(icsepomp,i)
-            vtor = vtor + state%pl%ua(icsepomp,i)*                 &
-              &    abs(geo%cvBb(icsepomp,2)/geo%cvBb(icsepomp,3))* &
-              &    state%pl%na(icsepomp,i)
+            nasum = nasum + &
+              &  0.5_R8 * (state%pl%na(iCv1,i) + state%pl%na(iCv2,i))
+            vtor = vtor + state%pl%ua(omp(icsepomp-1),i)*                        &
+              &    abs(geo%cvBb(omp(icsepomp-1),2)/geo%cvBb(omp(icsepomp-1),3))* &
+              &    state%pl%na(omp(icsepomp-1),i)
           end do
           if (nasum.gt.0.0_R8) vtor = vtor / nasum
           totCv = 0.0_IDS_real
           tmpCv = 0.0_IDS_real
           do i = is1, is2
             tmpCv(:) = tmpCv(:) + state%pl%na(:,i)
-            totCv(:) = totCv(:) + state%pl%ua(:,1)*state%pl%na(:,i)* &
+            totCv(:) = totCv(:) + state%pl%ua(:,i)*state%pl%na(:,i)* &
                 &                 abs(geo%cvBb(:,2)/geo%cvBb(:,3))
           end do
           if (nasum.gt.0.0_R8) totCv(:) = totCv(:)/tmpCv(:)
-          u = separatrix_average( tmpCv, tmpFace )
-          v = separatrix_average( totCv, tmpFace )
+          u = separatrix_average( mpg, geo, tmpCv, tmpFace )
+          v = separatrix_average( mpg, geo, totCv, tmpFace )
           select case (is_codes(eb2spcr(is)))
           case ('H')
             call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
@@ -4315,11 +4307,11 @@ contains
         end do
         call write_sourced_value( summary%local%separatrix%n_i_total, &
           & 0.5_R8 * (state%dv%ni(iCv1,1) + state%dv%ni(iCv2,1)) )
-        u = separatrix_average( state%dv%ni(:,1), tmpFace )
+        u = separatrix_average( mpg, geo, state%dv%ni(:,1), tmpFace )
 #if IMAS_MINOR_VERSION > 36
         call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
 #endif
-        u = separatrix_average( zeff, tmpFace )
+        u = separatrix_average( mpg, geo, zeff, tmpFace )
         call write_sourced_value( summary%local%separatrix%zeff, &
           & 0.5_R8 * (zeff(iCv1) + zeff(iCv2)) )
 #if IMAS_MINOR_VERSION > 36
@@ -4606,37 +4598,6 @@ contains
         return
         end function roxa
 
-        function separatrix_average( field, weight )
-        ! This function is devoted to obtain the weighted average along the active separatrix
-        ! of a plasma field quantity
-        ! The average is made using face-centered quantities on the cell faces forming the separatrix
-        ! The weighting automatically includes the areas of the cell faces
-        implicit none
-        real(kind=IDS_real) :: separatrix_average
-        real(kind=IDS_real), intent(in) :: field(mpg%nCv), weight(mpg%nFc)
-        real(kind=IDS_real) :: sum, area_sum
-
-        separatrix_average = IDS_REAL_INVALID
-        sum = 0.0_IDS_real
-        area_sum = 0.0_IDS_real
-        do i = mpg%fsFcP(mpg%iFssep,1), &
-           &   mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
-          iFc = mpg%fsFc(i)
-          iCv1 = mpg%fcCv(iFc,1)
-          iCv2 = mpg%fcCv(iFc,2)
-          if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
-            & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
-            & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
-            sum = sum + geo%fcS(iFc) * weight(iFc) * &
-                & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
-            area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
-          end if
-        end do
-        if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
-
-        return
-        end function separatrix_average
-
 #if IMAS_MINOR_VERSION > 29
         subroutine write_timed_integer( ival, ivalue )
             type(ids_signal_int_1d), intent(inout) :: ival
@@ -4670,6 +4631,40 @@ contains
 #endif
 
     end subroutine B25_process_ids
+
+    function separatrix_average( mpg, geo, field, weight )
+    ! This function is devoted to obtain the weighted average along the active separatrix
+    ! of a plasma field quantity
+    ! The average is made using face-centered quantities on the cell faces forming the separatrix
+    ! The weighting automatically includes the areas of the cell faces
+    implicit none
+    type( mapping ), intent(in) :: mpg
+    type( geometry ), intent(in) :: geo
+    real(kind=IDS_real) :: separatrix_average
+    real(kind=IDS_real), intent(in) :: field(mpg%nCv), weight(mpg%nFc)
+    integer :: i, iFc, iCv1, iCv2
+    real(kind=IDS_real) :: sum, area_sum
+
+    separatrix_average = IDS_REAL_INVALID
+    sum = 0.0_IDS_real
+    area_sum = 0.0_IDS_real
+    do i = mpg%fsFcP(mpg%iFssep,1), &
+       &   mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+      iFc = mpg%fsFc(i)
+      iCv1 = mpg%fcCv(iFc,1)
+      iCv2 = mpg%fcCv(iFc,2)
+      if ( mpg%cvReg(iCv1).eq.1 .or. mpg%cvReg(iCv2).eq.1 .or. &
+        & (mpg%cvReg(iCv1).eq.5 .and. mpg%nnreg(0).eq.8) .or.  &
+        & (mpg%cvReg(iCv2).eq.5 .and. mpg%nnreg(0).eq.8) ) then
+        sum = sum + geo%fcS(iFc) * weight(iFc) * &
+            & ( field(iCv1) + field(iCv2) ) / 2.0_IDS_real
+        area_sum = area_sum + geo%fcS(iFc) * weight(iFc)
+      end if
+    end do
+    if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
+
+    return
+    end function separatrix_average
 
     subroutine write_ids_properties( properties, homo )
     implicit none
@@ -5277,15 +5272,19 @@ contains
           end if
         else if (isymm.ne.0) then
 #if IMAS_MINOR_VERSION > 21
-          if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, -b0 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, -b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0
           edgeprof%vacuum_toroidal_field%r0 = r0
         else
 #if IMAS_MINOR_VERSION > 21
-          if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, b0 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
           edgeprof%vacuum_toroidal_field%r0 = r0
@@ -5302,11 +5301,11 @@ contains
       else
         z_eq = IDS_REAL_INVALID
       end if
-      iVx = mpg%cvVx(mpg%cvVxP(icsepomp,1))
+      iVx = mpg%cvVx(mpg%cvVxP(omp(icsepomp-1),1))
       z_min = geo%vxY(iVx)
       z_max = geo%vxY(iVx)
-      do i = mpg%cvVxP(icsepomp,1) + 1, &
-     &       mpg%cvVxP(icsepomp,1) + mpg%cvVxP(icsepomp,2) - 1
+      do i = mpg%cvVxP(omp(icsepomp-1),1) + 1, &
+     &       mpg%cvVxP(omp(icsepomp-1),1) + mpg%cvVxP(omp(icsepomp-1),2) - 1
         iVx = mpg%cvVx(i)
         z_min = min(z_min,geo%vxY(iVx))
         z_max = max(z_max,geo%vxY(iVx))
@@ -5333,9 +5332,9 @@ contains
       if ( z_eq.ne.IDS_REAL_INVALID .and. &
          & z_min.le.z_eq .and. z_max.ge.z_eq ) then
         midplane_id = 1
-      else if ( icsepomp .eq. icrmax ) then
+      else if ( omp(icsepomp-1) .eq. icrmax ) then
         midplane_id = 2
-      else if ( z_min*z_max.lt.0.0_R8 ) then
+      else if ( z_min*z_max .le. 0.0_R8 ) then
         midplane_id = 3
       else
         midplane_id = 4
@@ -5514,8 +5513,6 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, &
-            & GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -5536,6 +5533,7 @@ contains
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -5642,8 +5640,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -5664,6 +5660,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -5761,7 +5758,6 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -5782,6 +5778,7 @@ contains
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -5870,7 +5867,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -5891,6 +5887,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -5978,7 +5975,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -5999,6 +5995,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -6092,7 +6089,6 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -6113,6 +6109,7 @@ contains
           ndim = 2
         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
@@ -6193,7 +6190,6 @@ contains
              & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
              & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
              & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_SECOND_SEPARATRIX, &
              & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
              & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -6214,6 +6210,7 @@ contains
            ndim = 2
          case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
              & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
              & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
              & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
              & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )

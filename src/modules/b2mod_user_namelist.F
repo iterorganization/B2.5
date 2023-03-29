@@ -284,7 +284,7 @@ c***  Standard set-up:
       call xertst(m%isClassicalGrid.eq.1,
      & ' OMP list need to be revised for fully unstructured grids')
       do ic=2,nomp
-        if (geo%cVx(omp(ic)).lt.geo%cVx(omp(ic-1)))
+        if (geo%cvX(omp(ic)).lt.geo%cvX(omp(ic-1)))
      &   call xerrab('OMP LIST NOT SORTED')
       end do
 *   ..Definition of separatrix position in OMP list
@@ -295,15 +295,12 @@ c***  Standard set-up:
       do while (ic.le.nomp .and..not.found)
         do i = m%cvFcP(omp(ic),1),
      &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
-          do j = 1, 2
-            if (found) cycle
-            iVx = m%fcVx(m%cvFc(i),j)
-            if (m%vxFs(iVx).eq.m%iFssep.and.m%iFssep.ne.0) then
-              icsepomp = ic+1
-              ifsepomp = m%cvFc(i)
-              found = .true.
-            end if
-          end do
+          iFc = m%cvFc(i)
+          if (m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0) then
+            icsepomp = ic + 1
+            ifsepomp = iFc
+            found = .true.
+          end if
         end do
         ic = ic + 1
       end do
@@ -685,15 +682,12 @@ c*** Set default values according to current species list
       do while (ic.le.nimp .and..not.found)
         do i = m%cvFcP(imp(ic),1),
      &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
-          do j = 1, 2
-            if (found) cycle
-            iVx = m%fcVx(m%cvFc(i),j)
-            if (m%vxFs(iVx).eq.m%iFssep.and.m%iFssep.ne.0) then
-              icsepimp = ic+1
-              ifsepimp = m%cvFc(i)
-              found = .true.
-            end if
-          end do
+          iFc = m%cvFc(i)
+          if (m%fcFs(iFc).eq.m%iFssep.and.m%iFssep.ne.0) then
+            icsepimp = ic + 1
+            ifsepimp = iFc
+            found = .true.
+          end if
         end do
         ic = ic + 1
       end do

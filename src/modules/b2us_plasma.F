@@ -1509,8 +1509,8 @@ cwdk move to dv
       allocate( srw % b2stbc_shn( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbc_skt( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbc_szt( nCv ), SOURCE=0._R8 )
-      allocate( srw % b2stbc_sch( nCv ), SOURCE=0._R8 )
 
+      allocate( srw % b2stbr_sch( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_she( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_shi( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_smo( nCv, 0:ns-1 ), SOURCE=0._R8 )

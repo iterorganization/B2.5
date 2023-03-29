@@ -1468,9 +1468,13 @@ contains
             nGSubset = nGSubset + 33 + 4
         end select
         !! Inner/outer midplane grid subsets
-        nGSubset = nGSubset + 2
+        if (nomp.gt.0) nGSubset = nGSubset + 1
+        if (nimp.gt.0) nGSubset = nGSubset + 1
         !! Inner/outer midplane separatrix
-        if (mpg%iFssep /= US_GRID_UNDEFINED) nGSubset = nGSubset + 2
+        if (mpg%iFssep /= US_GRID_UNDEFINED) then
+          if (ifsepomp.ne.US_GRID_UNDEFINED) nGSubset = nGSubset + 1
+          if (ifsepimp.ne.US_GRID_UNDEFINED) nGSubset = nGSubset + 1
+        end if
 
         call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: expecting total of " &
             &//int2str(nGSubset)//" grid subsets" )
@@ -2298,41 +2302,55 @@ contains
             & "did not find core boundary grid subset for assembling " // &
             & " outer midplane grid subset" )
 
-        GSubsetCount = GSubsetCount + 1
+        if (nimp.gt.0) then
+          GSubsetCount = GSubsetCount + 1
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                           &
+          call createEmptyGridSubset(                         &
             &   grid_ggd%grid_subset( GSubsetCount ),         &
             &   GRID_SUBSET_INNER_MIDPLANE, "Inner Midplane", &
             &   "All cells (2D objects) along the inner midplane." )
 
-        allocate( indexList2d( nimp, SPACE_COUNT ) )
-        indexList2d(1:nimp , SPACE_POLOIDALPLANE ) = imp(1:nimp)
-        indexList2d( :     , SPACE_TOROIDALANGLE ) = 1
+          call logmsg( LOGDEBUG,                                    &
+            &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+            &   int2str(GSubsetCount)//": "//                       &
+            &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE ) )
+
+          allocate( indexList2d( nimp, SPACE_COUNT ) )
+          indexList2d(1:nimp , SPACE_POLOIDALPLANE ) = imp(1:nimp)
+          indexList2d( :     , SPACE_TOROIDALANGLE ) = 1
 
         !! Initialize explicit object list for grid subset
-        call createExplicitObjectListSingleSpace( grid_ggd,             &
-            &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE,   &
-            &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,     &
+          call createExplicitObjectListSingleSpace( grid_ggd,           &
+            &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_CELL,   &
+            &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_CELL,     &
             &   SPACE_POLOIDALPLANE )
-        deallocate(indexList2d)
+          deallocate(indexList2d)
+        end if
 
-        GSubsetCount = GSubsetCount + 1
+        if (nomp.gt.0) then
+          GSubsetCount = GSubsetCount + 1
 
         !! Create grid subset with one object list
-        call createEmptyGridSubset(                           &
+          call createEmptyGridSubset(                         &
             &   grid_ggd%grid_subset( GSubsetCount ),         &
             &   GRID_SUBSET_OUTER_MIDPLANE, "Outer Midplane", &
             &   "All cells (2D objects) along the outer midplane." )
 
-        allocate( indexList2d( nomp, SPACE_COUNT ) )
-        indexList2d(1:nomp , SPACE_POLOIDALPLANE ) = omp(1:nomp)
-        indexList2d( :     , SPACE_TOROIDALANGLE ) = 1
+          call logmsg( LOGDEBUG,                                    &
+            &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+            &   int2str(GSubsetCount)//": "//                       &
+            &   gridSubsetName ( GRID_SUBSET_OUTER_MIDPLANE ) )
+
+          allocate( indexList2d( nomp, SPACE_COUNT ) )
+          indexList2d(1:nomp , SPACE_POLOIDALPLANE ) = omp(1:nomp)
+          indexList2d( :     , SPACE_TOROIDALANGLE ) = 1
 
         !! Initialize explicit object list for grid subset
-        call createExplicitObjectListSingleSpace( grid_ggd,             &
-            &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_NODE,   &
-            &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,     &
+          call createExplicitObjectListSingleSpace( grid_ggd,           &
+            &   grid_ggd%grid_subset( GSubsetCount ), IDS_CLASS_CELL,   &
+            &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_CELL,     &
             &   SPACE_POLOIDALPLANE )
+        end if
 
         !! Adding other special cases
         deallocate(indexList2d)
@@ -2362,7 +2380,8 @@ contains
                     do iInd = mpg%fsFcP(mpg%iFssep,1), &
                             & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
                         ind = mpg%fsFc(iInd)
-                        indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                        indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                            &        SPACE_POLOIDALPLANE ) = ind
                     end do
 
                     !! Initialize explicit object list for grid subset
@@ -2397,7 +2416,8 @@ contains
             do iInd = mpg%fsFcP(mpg%iFssep,1), &
                     & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
                 ind = mpg%fsFc(iInd)
-                indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                    &        SPACE_POLOIDALPLANE ) = ind
             end do
 
             !! Initialize explicit object list for grid subset
@@ -2429,7 +2449,8 @@ contains
             do iInd = mpg%fsFcP(mpg%iFssep,1), &
                     & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
                 ind = mpg%fsFc(iInd)
-                indexList2d( iInd, SPACE_POLOIDALPLANE ) = ind
+                indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                    &        SPACE_POLOIDALPLANE ) = ind
             end do
 
             !! Initialize explicit object list for grid subset
@@ -2484,6 +2505,8 @@ contains
         !! Do grid subsets for separatrix points of interest
         !! Outer midplane separatrix
         if (mpg%iFssep .ne. US_GRID_UNDEFINED) then
+
+          if (ifsepomp.ne.US_GRID_UNDEFINED) then
             GSubsetCount = GSubsetCount + 1
 
             call logmsg( LOGDEBUG,                                      &
@@ -2500,7 +2523,7 @@ contains
 
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
-            indexList2d( 1, SPACE_POLOIDALPLANE ) =  mpg%fcVx(ifsepomp,1)
+            indexList2d( 1, SPACE_POLOIDALPLANE ) = mpg%fcVx(ifsepomp,1)
             indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
@@ -2509,8 +2532,10 @@ contains
                 &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
                 &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
+          end if
 
         !! Inner midplane separatrix
+          if (ifsepimp.ne.US_GRID_UNDEFINED) then
             GSubsetCount = GSubsetCount + 1
 
             call logmsg( LOGDEBUG,                                        &
@@ -2536,6 +2561,7 @@ contains
                 &   indexList2d(:,SPACE_POLOIDALPLANE), IDS_CLASS_NODE,   &
                 &   SPACE_POLOIDALPLANE )
             deallocate(IndexList2d)
+          end if
 
         end if
 
