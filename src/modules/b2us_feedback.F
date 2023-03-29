@@ -361,21 +361,13 @@ cxpb size is changed in DIMENSIONS.F
       if(nepedm_sol.gt.0.0_R8) then
         call ipgeti ('b2stbc_iyped', iyped)
         icped = iyped+2
-#ifdef WG_RM
-        call xertst (iyped.gt.-2 .and. iyped.le.mpg%ny 
-     &   .and. iyped.le.nomp, 'faulty input iyped')
-#endif
+        call xertst (icped.ge.1.and.icped.le.nomp, 'faulty input iyped')
         call xertst (mpg%cvOnClosedSurface(omp(icped)),
      .   'location of top of pedestal outside core region!')
       endif
       call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
       call ipgetr ('b2stbc_ndes', ndes)
       call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
-#ifdef WG_RM
-      call ipgetr ('b2stbc_cbsnafac', cbsnafac)
-      call xertst (0.0_R8.lt.cbsnafac,
-     1  'faulty internal parameter cbsnafac')
-#endif
       call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
       call xertst (0.0_R8.le.private_flux_puff,
      1 'faulty internal parameter private_flux_puff')

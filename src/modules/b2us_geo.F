@@ -742,7 +742,7 @@
          endif
        enddo
        ! 'effective' connection length for use in k-eps model
-       if (conn_style.ne.0) then ! if 0, assumed to be read from b2fgmtry
+       if (conn_style.ne.0.or.maxval(gm%cvConn).eq.0.0_R8) then ! if 0, assumed to be read from b2fgmtry
         gm%cvConn = 0.0_R8
         do iFt = 1, mpg%nFt
          iCv = mpg%ftCv(mpg%ftCvP(iFt,1))

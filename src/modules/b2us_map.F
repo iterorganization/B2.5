@@ -638,14 +638,14 @@ cwdk  can be derived directly from data in that file
           m%fcFs(iFc) = iFs
           iVx1 = m%fcVx(iFc,1)
           iVx2 = m%fcVx(iFc,2)
-          if (m%vxFs(iVx1).ne.0) then
+          if (m%vxFs(iVx1).eq.0) then
             m%vxFs(iVx1) = iFs
             m%nFsVxmx = m%nFsVxmx + 1
             Fscount = Fscount + 1
             totalcount = totalcount + 1
             indFsVx(totalcount) = iVx1
           end if
-          if (m%vxFs(iVx2).ne.0) then
+          if (m%vxFs(iVx2).eq.0) then
             m%vxFs(iVx2) = iFs
             m%nFsVxmx = m%nFsVxmx + 1
             Fscount = Fscount + 1
@@ -677,15 +677,16 @@ cwdk  can be derived directly from data in that file
           ireg(i-m%vxCvP(iVx,1)+1) = m%cvReg(iCv)
         end do
         regcount = 0
-        do i = 1, maxval(m%vxCvP(:,2))
+        do i = 1, m%vxCvP(iVx,2)
           if (ireg(i).eq.0) cycle
           if (i.eq.1) then
             regcount = 1
           else
+            duplicate = .false.
             do j = 1, i-1
-              if (ireg(i).eq.ireg(j)) cycle
-              regcount = regcount + 1
+              duplicate = duplicate .or. ireg(i).eq.ireg(j)
             end do
+            if (.not.duplicate) regcount = regcount + 1
           end if
         end do
         if (regcount.ge.3) then
