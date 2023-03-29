@@ -42,7 +42,6 @@ module b2mod_ual_io
     use b2mod_external
     use b2mod_interp
     use b2mod_ipmain
-    use b2mod_b2cmrc
     use b2mod_b2cmfs
     use b2mod_b2cmpb
     use b2mod_version
@@ -94,8 +93,8 @@ module b2mod_ual_io
 #if IMAS_MINOR_VERSION > 11 && GGD_MAJOR_VERSION > 0
     !! B2/CPO Mapping
     use b2mod_ual_io_data &
-     & , only : b2_IMAS_Transform_Data_B2_To_IDS, &
-     &          b2_IMAS_Transform_Data_B2_To_IDS_Face, &
+     & , only : b2_IMAS_Transform_Data_B2_To_IDS,       &
+     &          b2_IMAS_Transform_Data_B2_To_IDS_Face,  &
      &          b2_IMAS_Transform_Data_B2_To_IDS_Vertex
     use b2mod_ual_io_grid &
      & , only : b2_IMAS_Fill_Grid_Desc
@@ -7635,15 +7634,19 @@ contains
           end if
         else if (isymm.ne.0) then
 #if IMAS_MINOR_VERSION > 21
-          if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, -b0 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, -b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = -b0
           edgeprof%vacuum_toroidal_field%r0 = r0
         else
 #if IMAS_MINOR_VERSION > 21
-          if (do_summary_data) &
-            & call write_sourced_value( summary%global_quantities%b0, b0 )
+          if (do_summary_data) then
+            call write_sourced_value( summary%global_quantities%b0, b0 )
+            call write_sourced_constant( summary%global_quantities%r0, r0 )
+          end if
 #endif
           edgeprof%vacuum_toroidal_field%b0( slice_index ) = b0
           edgeprof%vacuum_toroidal_field%r0 = r0
@@ -7661,11 +7664,11 @@ contains
         z_eq = IDS_REAL_INVALID
       end if
       if ( z_eq.ne.IDS_REAL_INVALID .and. &
-         & (cry(jxa,jsep,2)-z_eq)*(cry(jxa,jsep,3)-z_eq).lt.0.0_R8 ) then
+         & (cry(jxa,jsep,2)-z_eq)*(cry(jxa,jsep,3)-z_eq).le.0.0_R8 ) then
         midplane_id = 1
       else if ( jxa .eq. nmdpl ) then
         midplane_id = 2
-      else if ( cry(jxa,jsep,2)*cry(jxa,jsep,3).lt.0.0_R8 ) then
+      else if ( cry(jxa,jsep,2)*cry(jxa,jsep,3).le.0.0_R8 ) then
         midplane_id = 3
       else
         midplane_id = 4
@@ -9631,7 +9634,8 @@ contains
                 iyn = leftiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find poloidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find poloidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if
@@ -9664,7 +9668,8 @@ contains
                 iyn = bottomiy( ix, iy )
             end if
             if ( .not. isInDomain( nx, ny, ixn, iyn ) ) then
-                !stop "compute_Coordinate_Unit_Vectors: not able to find toroidal neighbour for cell"
+                !! call xerrab ( "compute_Coordinate_Unit_Vectors: "// &
+                !! & "not able to find toroidal neighbour for cell" )
                 !! skip cell
                 cycle
             end if
