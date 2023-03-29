@@ -2150,7 +2150,7 @@ contains
                     RegionsinSubset(12)= -8
                     RegionsinSubset(13)= 10
                     RegionsinSubset(14)= 1
-                end select            
+                end select
             case ( GEOMETRY_DDN_TOP )
                 select case( iSubset )
                 case ( GRID_SUBSET_CORE )
@@ -2339,6 +2339,11 @@ contains
             &   GRID_SUBSET_INNER_MIDPLANE, "Inner Midplane", &
             &   "All cells (2D objects) along the inner midplane." )
 
+        call logmsg( LOGDEBUG,                                      &
+            &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+            &   int2str(GSubsetCount)//": "//                       &
+            &   gridSubsetName ( GRID_SUBSET_INNER_MIDPLANE ) )
+
         !! Get explicit object list of the grid subset using
         !! subroutine collectRadialVertexIndexListSubroutine
         !! (function collectRadialVertexIndexList transferred to subroutine,
@@ -2359,6 +2364,11 @@ contains
             &   grid_ggd%grid_subset( GSubsetCount ),         &
             &   GRID_SUBSET_OUTER_MIDPLANE, "Outer Midplane", &
             &   "All cells (2D objects) along the outer midplane." )
+
+        call logmsg( LOGDEBUG,                                      &
+            &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+            &   int2str(GSubsetCount)//": "//                       &
+            &   gridSubsetName ( GRID_SUBSET_OUTER_MIDPLANE ) )
 
         !! Get explicit object list of the grid subset using
         !! subroutine collectRadialVertexIndexListSubroutine
@@ -2398,6 +2408,7 @@ contains
 
                     nInd = gmap%b2nx
                     allocate( indexList2d(nInd, SPACE_COUNT) )
+                    indexList2d(:,SPACE_TOROIDALANGLE) = 1
                     iInd = 0
                     do ix = 0, gmap%b2nx-1
                         iInd = iInd + 1
@@ -2433,6 +2444,7 @@ contains
 
             nInd = gmap%b2nx
             allocate( indexList2d(nInd, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
             iInd = 0
             do ix = 0, gmap%b2nx-1
                 iInd = iInd + 1
@@ -2469,6 +2481,7 @@ contains
                 if (isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) nInd = nInd + 1
             end do
             allocate( indexList2d(nInd, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
             iInd = 0
             do ix = 0, gmap%b2nx-1
                 if (.not.isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) cycle
@@ -2512,6 +2525,7 @@ contains
                 end if
             end do
             allocate( indexList2d(nInd, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
             iInd = 0
             do ix = 0, gmap%b2nx-1
                 if (.not.isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) cycle
@@ -2543,6 +2557,7 @@ contains
 
             nInd = (topcut(2)-topcut(1))*((leftcut(2)+1)+(gmap%b2nx-rightcut(2)))
             allocate( indexList2d(nInd, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
             iInd = 0
             do iy = topcut(1)+1, topcut(2)
                 do ix = 0, leftcut(2)
@@ -2598,6 +2613,7 @@ contains
                 end if
             end do
             allocate( indexList2d(nInd, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
             iInd = 0
             do ix = 0, gmap%b2nx-1
                 if (.not.isRealCell(cflags(ix,jsep,CELLFLAG_TYPE))) cycle
@@ -2629,6 +2645,7 @@ contains
 
             nInd = (topcut(1)-topcut(2))*((nxtl-leftcut(1)-1)+(rightcut(1)-nxtr))
             allocate( indexList2d(nInd, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
             iInd = 0
             do iy = topcut(2)+1, topcut(1)
                 do ix = leftcut(1)+1, nxtl-1
@@ -2679,6 +2696,7 @@ contains
             allocate( indexList2d(nInd, SPACE_COUNT) )
             indexList2d( 1, SPACE_POLOIDALPLANE ) =  &
                 &   gmap%mapVxI( xOut, jsep, VX_UPPERLEFT )
+            indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
@@ -2706,6 +2724,7 @@ contains
             allocate( indexList2d(nInd, SPACE_COUNT) )
             indexList2d( 1, SPACE_POLOIDALPLANE ) =    &
                 &   gmap%mapVxI( xIn, jsep, VX_UPPERLEFT )
+            indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
@@ -2761,6 +2780,7 @@ contains
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
+            indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
@@ -2812,6 +2832,7 @@ contains
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
+            indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
@@ -2824,7 +2845,8 @@ contains
 
         !! Outer strikepoint inactive
         select case ( geoId )
-           case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM )
+           case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, &
+                & GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
               ix = nxtr + 1
               iVx = VX_LOWERLEFT
            case ( GEOMETRY_DDN_TOP )
@@ -2852,6 +2874,7 @@ contains
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
+            indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
@@ -2870,6 +2893,9 @@ contains
            case ( GEOMETRY_DDN_TOP )
               ix = 0
               iVx = VX_LOWERLEFT
+           case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+              ix = gmap%b2nx - 1
+              iVx = VX_LOWERRIGHT
            case default
               ix = B2_GRID_UNDEFINED
               iVx = GRID_UNDEFINED
@@ -2892,6 +2918,7 @@ contains
             nInd = 1
             allocate( indexList2d(nInd, SPACE_COUNT) )
             indexList2d( 1, SPACE_POLOIDALPLANE ) = gmap%mapVxI( ix, jsep, iVx )
+            indexList2d( 1, SPACE_TOROIDALANGLE) = 1
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,           &
