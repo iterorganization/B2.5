@@ -122,8 +122,8 @@
       allocate (m%intcellP(m%nCmxFc))
       allocate (m%intcellR(m%nCmxFc))
 
-      allocate (m%cvNvP(m%nCv,2))
-      allocate (m%cvNv(m%nCmxNv))
+!      allocate (m%cvNvP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxNv))
 
       if (m%isClassicalGrid.eq.1) then
         allocate (m%imapCv(-1:m%nx,-1:m%ny))
@@ -203,8 +203,8 @@
       m%intcellP = 0._R8
       m%intcellR = 0_R8
 
-      m%cvNvP = 0
-      m%cvNv = 0
+!      m%cvNvP = 0
+!      m%cvNv = 0
 
       if (m%isClassicalGrid.eq.1) then
         m%imapCv = 0
@@ -272,8 +272,8 @@
       deallocate (m%intcellP) 
       deallocate (m%intcellR)   
 
-      deallocate (m%cvNvP)
-      deallocate (m%cvNv)  
+      if (allocated(m%cvNvP)) deallocate (m%cvNvP)
+      if (allocated(m%cvNv))  deallocate (m%cvNv)  
     
       deallocate (m%imapCv)
       deallocate (m%imapFcx)  
@@ -548,7 +548,7 @@
       implicit none
       type (mapping), intent (inout) :: m
       integer :: i, iCv, iVx, iVx1, iNv, iNv1, iNv2, iNvmx
-      integer, allocatable :: indCv(:)
+      integer, allocatable :: indCv(:), cvNvLoc(:)
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but 
 cwdk  can be derived directly from data in that file
@@ -569,8 +569,9 @@ cwdk  can be derived directly from data in that file
       end if
 
 *   ..set up connectivity information for the matrix stencil
-
-      allocate (indCv(4*4+4+1)) ! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
+      allocate (m%cvNvP(m%nCv,2))
+      allocate (cvNvLoc(10*m%nCv)) ! initial overestimate of size cvNv array
+      allocate (indCv(100))        ! (over)estimate of max number number of neighbors an individual cell could have
 
       iNv = 1
       do iCv = 1, m%nCv
@@ -587,28 +588,36 @@ cwdk  can be derived directly from data in that file
           iNvmx = iNvmx + m%vxCvP(iVx1,2)
         enddo
         ! remove duplicates
-        m%cvNv(m%cvNvP(iCv,1)) = indCv(1)
+        cvNvLoc(m%cvNvP(iCv,1)) = indCv(1)
         i = 1
         outer: do iNv1 = 2, iNvmx
           do iNv2 = 1, i 
-            if (m%cvNv(m%cvNvP(iCv,1)+iNv2-1).eq.indCv(iNv1)) then
+            if (cvNvLoc(m%cvNvP(iCv,1)+iNv2-1).eq.indCv(iNv1)) then
               ! duplicate element
               cycle outer
             endif
           enddo
           ! new element found
           i = i + 1
-          m%cvNv(m%cvNvP(iCv,1)+i-1) = indCv(iNv1)
+          cvNvLoc(m%cvNvP(iCv,1)+i-1) = indCv(iNv1)
         end do outer
         ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
         m%cvNvP(iCv,2) = i
         iNv = iNv + i
       enddo
 
+      ! allocate and fill m%cvNv
+      m%nCmxNv = iNv - 1
+      allocate (m%cvNv(m%nCmxNv))
+      m%cvNv = cvNvLoc(1:m%nCmxNv)
+
 !csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
       m%mxStencil = maxval(m%cvNvP(1:m%nCv,2))
 
-      deallocate(indCv)
+
+      ! clean up
+      deallocate (cvNvLoc)
+      deallocate (indCv)
 
 
 
