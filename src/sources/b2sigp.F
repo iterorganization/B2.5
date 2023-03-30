@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sigp (nCv, nFc, nVx, isb, switch, geo, mpg, rzb, 
+      subroutine b2sigp (nCv, nFc, nVx, isb, ismain0,
+     &  switch, geo, mpg, rzb,
      &  nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
       use b2mod_types
       use b2mod_constants                                         !srv 23.03.10
@@ -18,13 +19,13 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb
+      integer nCv, nFc, nVx, isb, ismain0
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  rzb(nCv), 
-     &  nb(nCv), ti(nCv), tn(nCv), 
+     *  rzb(nCv),
+     &  nb(nCv), ti(nCv), tn(nCv),
      &  ne(nCv), te(nCv), po(nCv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -79,7 +80,8 @@
       endif
 
 * ..choose the correct temperature
-      if (switch%tn_style.eq.2.and.is_neutral(isb).and.zn(isb).eq.1)then
+      if (switch%tn_style.eq.2.and.is_neutral(isb).and.
+     &      nint(zn(isb)).eq.1.and.isb.eq.ismain0)then
         tb = tn !! tn = ti if no separate neutral energy equation is solved
       else
         tb = ti
@@ -324,7 +326,7 @@ cxpb apply restriction to pressure gradient for minority ions
         if (nb(iCv)/ne(iCv) .lt. 0.1e0_R8) then
          smbgp(iCv,0) = smbgp(iCv,0)*
      &    min(1.0e0_R8,wrk0(iCv)/wrk1(iCv))
-        endif   
+        endif
        enddo                                                          !lk 23.06.17}
       endif
 
@@ -334,9 +336,9 @@ cxpb apply restriction to pressure gradient for minority ions
         b2sigp_pstat0to3 = 0.0_R8
 #endif
         wrk5 = 0.0_R8
-        wrk6 = 0.0_R8       
+        wrk6 = 0.0_R8
       endif                                                           !srv 26.06.18 }
-      
+
       if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then    !srv 17.06.02 {
        write (chns,'(i3.3)') isb
 !      do k=0,3

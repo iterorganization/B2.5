@@ -330,11 +330,11 @@
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
       endif
-      if (ncall_b2stbc.eq.0) lbndusr=.false.                                    !xpb
+      if (ncall_b2stbc.eq.0) lbndusr=.false.                             !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-     &    call compute_feedback(nCv, nFc, nVx, ns, ismain,
+     &    call compute_feedback(nCv, nFc, nVx, ns, ismain, ismain0,
      &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, 
      &     main_call, switch%b2stbc_diagno)
 

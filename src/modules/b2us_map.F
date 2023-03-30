@@ -296,10 +296,14 @@
       deallocate (m%cvNv)
 
       deallocate (m%fsVxP)
-      deallocate (m%fsVx)
+      if (allocated(m%fsVx)) deallocate (m%fsVx)
       deallocate (m%vxFs)
 
       if (allocated(m%Xpt)) deallocate (m%Xpt)
+      if (allocated(m%strVxP)) deallocate (m%strVxP)
+      if (allocated(m%strVx)) deallocate (m%strVx)
+      if (allocated(m%tgVx)) deallocate (m%tgVx)
+      if (allocated(m%strDiv)) deallocate (m%strDiv)
 
       deallocate (m%imapCv)
       deallocate (m%imapFcx)

@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+     &  switch, geo, mpg,
      &  itcnt, solving, rxf, pl, dv, rt, co, sr, st_ext, ierr)
       use b2mod_types
       use b2mod_math
@@ -39,7 +40,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, itcnt                          !srv 13.01.17
+      integer nCv, nFc, nVx, ns, ismain, ismain0, itcnt                 !srv 13.01.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -184,7 +185,7 @@
       endif
 *   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nCv, ns, pl%na, dv%ni)
-      call b2xpnn (nCv, ns, pl%na, dv%nn)
+      call b2xpnn (nCv, ns, ismain0, pl%na, dv%nn)
       call b2xpne (nCv, ns, rt%rza, pl%na, st_ext%ne, dv%ne)
       call b2xpne (nCv, ns, rt%rz2, pl%na, st_ext%ne2, dv%ne2)
       call b2xpro (nCv, ns, mp, am, pl%na, ro, st_ext)
@@ -267,7 +268,8 @@
        endif
 
 *    ..compute pressure gradient term
-       call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(:,is),
+       call b2sigp (nCv, nFc, nVx, is, ismain0,
+     &   switch, geo, mpg, rt%rza(:,is),
      &   pl%na(:,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0, 
      &   wrk1, wrk2)
 *    ..compute flub
