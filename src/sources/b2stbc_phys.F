@@ -181,7 +181,7 @@
       character*260 filename                                            ! RC 27.03.18
       real (kind=R8) :: currentOld(0:nbcd-1)                            ! RC 01.06.18
       real (kind=R8) :: currentNew(0:nbcd-1)                            ! RC 01.06.18
-      integer :: currentCounter(0:nbcd-1)                               ! RC 01.06.18
+      integer, save  :: currentCounter(0:nbcd-1)                        ! RC 01.06.18 added save EW 21.03.23
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
      2  na_min, na_new, bc_type21_ref, ndes_sol,
@@ -3522,13 +3522,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
             if(new_boundary_files) then
               filename = con_fn(is,ib)
               call find_file(filename, ex)
-
               call read_profile(filename,BCSTART(IB),BCEND(IB),
      .             BCPOS(IB),profile_con(-1:ny,is,ib),ny,
      .             conpar(is,ib,1),conpar(is,ib,2))
-  
             endif
-
             IF (BCCHAR(IB).EQ.'W') THEN
               DO IY = 1, BC_LIST_SIZE(IB)
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
@@ -3651,9 +3648,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               call read_profile(filename,BCSTART(IB),BCEND(IB),
      .             BCPOS(IB),profile_con(-1:ny,is,ib),ny,
      .             conpar(is,ib,1),conpar(is,ib,2))
-            
             endif
-
             if (BCCHAR(IB).eq.'W') then
               do IY = 1, BC_LIST_SIZE(IB)
                 sna0(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB),0,IS)=
@@ -4864,7 +4859,7 @@ cxpb  and max(,,) statement for stability
             DO IY = 1, BC_LIST_SIZE(IB)
               SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS) =
      .         UBIG*NE00*AM(IS) *
-     .         sqrt(ev*(te(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) + 
+     .         sqrt(ev*(te(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)) +
      .             GAMMAI*ti(BC_LIST_X(IY,IB), BC_LIST_Y(IY,IB)))/mp) *
      .         MOMPAR(IS,IB,1)*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
@@ -4927,9 +4922,7 @@ cxpb  and max(,,) statement for stability
               call read_profile(filename,BCSTART(IB),BCEND(IB),
      .             BCPOS(IB),profile_mom(-1:ny,is,ib),ny,
      .             mompar(is,ib,1),mompar(is,ib,2))
-        
             end if
-
             IF (BCCHAR(IB).EQ.'W') THEN
               DO IY=BCSTART(IB), BCEND(IB)
                 SMO0(BCPOS(IB),IY,0,IS)=
@@ -10844,7 +10837,7 @@ c end of implementation
             END DO
           END IF
 
-          IF (abs(t0) > 0.1_R8) THEN
+          IF (abs(t0) > 0.0_R8) THEN
             currentCounter(ib) = currentCounter(ib) + 1
           ELSE
             currentCounter(ib) = 0
@@ -10855,7 +10848,7 @@ c end of implementation
             ! current is converged for given potential, determine new potential
             currentCounter(ib) = 0
             potpar(ib, 2) = potpar(ib, 2) + potpar(ib, 1) * t0
-            WRITE (*, '(A,I3,A,2E12.5)') 'bc: ', ib,
+            WRITE (*, '(A,I3,A,2E15.8)') 'bc: ', ib,
      *       ' potential, current:', potpar(ib,2), currentNew(ib)
           END IF
         ENDIF
