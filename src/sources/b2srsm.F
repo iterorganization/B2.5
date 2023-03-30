@@ -243,9 +243,9 @@ c check ion energy
                 endif
               endif
 c check neutral energy
-          if (switch%tn_style.ne.0) then
-            call xerrab('b2srsm not developed for tn_style.ne.0')
-          endif
+              if (switch%tn_style.ne.0) then
+                call xerrab ('b2srsm not developed for tn_style.ne.0')
+              endif
 c check electron energy
               invtimescale =
      1         abs(sr%she(ix,iy,0) + sr%she(ix,iy,1)*te(ix,iy) +

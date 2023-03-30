@@ -226,6 +226,21 @@
          bottomcut = bottomcut1
          topcut = topcut1
          cflags = cflags1
+*   ..extrapolate magnetic field to edges
+         do iy = -1, ny
+           do ix = -1, nx
+            if (.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy)))
+     >       wbbl(ix,iy,0:2) =
+     &        bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
+            if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)))
+     >        wbbr(ix,iy,0:2) =
+     &         bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
+            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))
+     &          .and.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy)))
+     >         wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
+     &       (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
+          enddo
+         enddo
 
          call init_region(nx,ny,nncut,nncutmax,
      1     leftcut,rightcut,topcut,bottomcut,
@@ -888,7 +903,8 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
             if (.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy)))
      >        wbbr(ix,iy,0:2) =
      &         bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
-            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy)))
+            if (.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))
+     &          .and.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy)))
      >         wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
      &       (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
           enddo

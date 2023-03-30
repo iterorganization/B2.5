@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
-     &  nscx, nscxmax, iscx, ismain, dtim,
+     &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &  switch, geo, mpg, st, st_ext, main_call)
       use b2mod_types
 !WG_TODO      use b2mod_wall
@@ -67,7 +67,7 @@
       implicit none
 *   ..input arguments
       integer nCv, nFc, nVx, ns, nxtl, nxtr
-      integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
+      integer nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
@@ -398,25 +398,14 @@ c   --> better solution wanted here..
           shitmp=shi0
         endif
 #endif
-        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
-     &  dtim, switch, geo, mpg,
-     &  st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
-     &  tchem, tchee, tphys, tphye,
-     &  thevp, thvpe, trese, tresn, trfln, trfle,
-     &  switch%b2stbc_boundary_namelist,
-     &  switch%neutral_sources_rescale,
-     &  switch%b2stbr_core_sources_rescale,
-     &  sput_src, switch%b2stbr_sput_chem_alpha, switch%sput_phys_alpha,
-     &  switch%b2stbr_alpha, sput_chem_model, switch%b2stbr_therm_evap,
-     &  switch%b2stbr_sput_res, reflection_on, sputter_energy_on,
-     &  main_call, switch%b2stbr_output, switch%b2stbr_sput_frac_flag,
-     &  switch%b2stbr_sput_chem_cutoff_alpha,
-     &  switch%b2stbr_sput_chem_cutoff_beta,
-     1  switch%b2stbr_sput_mixed_alpha, switch%b2stbr_sput_mixed_beta,
-     2  new_sputter_namelist, shi0_ff, f_redep,
-     3  switch%b2stbr_temperature_at_guard_cell,
-     4  switch%b2stbr_potential_at_guard_cell,
-     5  switch%recycled_neutrals_contr)
+        call b2stbr_phys (nCv, nFc, nVx, ns,
+     &   ismain0, nscx, nscxmax, iscx,
+     &   dtim, switch, geo, mpg,
+     &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
+     &   tchem, tchee, tphys, tphye,
+     &   thevp, thvpe, trese, tresn, trfln, trfle,
+     &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
+     &   main_call, new_sputter_namelist, shi0_ff, f_redep)
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions

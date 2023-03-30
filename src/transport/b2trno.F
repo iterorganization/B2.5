@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
+      subroutine b2trno (nCv, nFc, nVx, ns,
+     &  nscx, nscxmax, iscx, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
 !      use b2mod_anomalous_transport
@@ -38,7 +39,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain
+     *  ismain, ismain0
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -153,7 +154,8 @@
 
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
-      call b2tqna (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
+      call b2tqna (nCv, nFc, nVx, ns,
+     &  nscx, nscxmax, iscx, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co%dna0, co%dpa0, co%vla0,
      &  co%vma0, co%vsa0, co%hci0, co%hcn0, co%hcib, co%hce0, co%sig0,
      &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB,
@@ -354,11 +356,12 @@ c the logic statements below could be simplfied but for now we go for readabilit
           co%chci = co%chci + co%chcb(:,:,is)
          endif
         else                                                       !! separate ion-neutral energy equation
-          if (.not.is_neutral(is).or.zn(is).ne.1) then
+          if (.not.is_neutral(is).or.nint(zn(is)).ne.1
+     &         .or.is.ne.ismain0) then
             co%chci = co%chci + co%chcb(:,:,is)
           endif
         endif
-        if (is_neutral(is).and.zn(is).eq.1) then                   !! hcn for hydrogenic atoms
+        if (is_neutral(is).and.nint(zn(is)).eq.1.and.is.eq.ismain0) then !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
       enddo 

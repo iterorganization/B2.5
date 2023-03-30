@@ -6325,8 +6325,9 @@ cxpb code segment analog to b2tfhi
      &        enipar(ib,1)*sy
           endif
           do is = 0, ns-1
-            if(.not.(is_neutral(is)) .or. switch%tn_style.eq.0 .or.
-     &         (switch%tn_style.eq.2.and.zn(is).ne.1)) then
+            if(.not.is_neutral(is) .or. switch%tn_style.eq.0 .or.
+     &         (switch%tn_style.eq.2.and.
+     &         (nint(zn(is)).ne.1.or.is.ne.ismain0))) then
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &                     2.5_R8*pl%ti(iCv1)*srw%sna0(iCv1,0,is)
               srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +

@@ -251,7 +251,7 @@ c checks for use of new energy equations
 !WG_TODO      call sfill (n2*2, 0.0_R8, snedt, 1)
 *   ..compute ni0
       call b2xpni (nCv, ns, st%psnc%na, st%psnc%ni)
-      call b2xpnn (nCv, ns, st%psnc%na, st%psnc%nn)
+      call b2xpnn (nCv, ns, ismain0, st%psnc%na, st%psnc%nn)
 *   ..compute nasum, na0sum
       nasum = b2sasum(nCv*ns, st%pl%na, 1)
       na0sum = b2sasum(nCv*ns, st%psnc%na, 1)
@@ -265,7 +265,7 @@ c checks for use of new energy equations
       endif
 *   ..compute initial ni
       call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
-      call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
+      call b2xpnn (nCv, ns, ismain0, st%pl%na, st%dv%nn)
 * ..main loop
 *   ..outer iteration
       istg(0) = 0
@@ -299,7 +299,7 @@ ctmp.dpc
 
 *   ..one-off calculation of transport coefficients
           call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
-          call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
+          call b2xpnn (nCv, ns, ismain0, st%pl%na, st%dv%nn)
           call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
      .      st%dv%ne)
           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2,
@@ -307,7 +307,8 @@ ctmp.dpc
 *   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
           call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv,
      .      st_ext, st%co%chvemx, st%co%chvimx)
-          call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
+          call b2tral (nCv, nFc, nVx, ns,
+     .      nscx, nscxmax, iscx, ismain, ismain0,                        !srv 23.11.10
      1      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
 !WG_TODO         newneo=.true.
           call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
@@ -406,14 +407,14 @@ ctmp.dpc
             call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2,
      .       st%dv%ne2)
             call b2xpni (nCv, ns, st%pl%na, st%dv%ni)
-            call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
+            call b2xpnn (nCv, ns, ismain0, st%pl%na, st%dv%nn)
 *      ..zero out residuals on special regions
 *        (this in order to avoid their contribution to the norms)
             call b2mxzr (nCv, ns, mpg, st%dv%resco, st%dv%resmo,
      &       st%dv%resmt, st%dv%reshe, st%dv%reshi, st%dv%reshn,
      &       st%dv%respo, st%dv%reskt, st%dv%reszt)
 *      ..compute norms of the residuals
-            call b2mxar (nCv, ns, nnreg(0), switch%BoRiS, switch,
+            call b2mxar (nCv, ns, ismain0, nnreg(0), switch,
      &       geo, mpg, st%pl, st%dv, st%diag)
             quit_residual=test_residual .and.
      &       ((st%diag%areshe*switch%nstg_areshe).le.
@@ -512,7 +513,7 @@ ctmp.dpc
      .                     st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)
               enddo
               st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
-              st%dv%ue = st%dv%ue/st%dv%ne                                !srv 05.03.11
+              st%dv%ue = st%dv%ue/st%dv%ne                               !srv 05.03.11
             endif
 *   ..compute ceqp                                                       !srv 03.07.03 {
             call b2xpnm (nCv, ns, st%rt%rz2, am, st%pl%na, wrk0)
@@ -523,7 +524,7 @@ ctmp.dpc
 *      ..compute energy sources
             solving = .false.
             call b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
+     &       ncall_b2news_, ismain, ismain0, solving, solveee, solveei,  !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
      &       switch%b2mndt_rxf,
      &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st_ext, ier0)

@@ -1377,7 +1377,7 @@ c  vappres  ->  Vapour Pressure of the target in Pascals.
 cxpb Contribution from bulk if species is part of bulk
       bulk = .false.
       do i = 1, nz
-        if (zn(is).eq.matsurf_nzconstituents(ibnd,i)) then
+        if (nint(zn(is)).eq.matsurf_nzconstituents(ibnd,i)) then
           A = matsurf_vapprs_A(ibnd)
           B = matsurf_vapprs_B(ibnd)
           am2 = atomic_mass(matsurf_nzconstituents(ibnd,i))

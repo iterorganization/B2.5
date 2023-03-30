@@ -909,12 +909,12 @@ cxpb size is changed in DIMENSIONS.F
       return
       end subroutine init_feedback
 
-      subroutine compute_feedback(nCv, nFc, nVx, ns, ismain,
+      subroutine compute_feedback(nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
      &  diagno)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, diagno
+      integer nCv, nFc, nVx, ns, ismain, ismain0, diagno
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -1728,7 +1728,7 @@ cxpb size is changed in DIMENSIONS.F
               psnc%kinrgy = dv%kinrgy
 *   ..compute initial ni
               call b2xpni (nCv, ns, pl%na, dv%ni)
-              call b2xpnn (nCv, ns, pl%na, dv%nn)
+              call b2xpnn (nCv, ns, ismain0, pl%na, dv%nn)
 *   ..compute ni0
               psnl%ni = dv%ni
               psnc%ni = dv%ni

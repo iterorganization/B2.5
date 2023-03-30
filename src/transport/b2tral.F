@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,!srv 23.11.10
+      subroutine b2tral (nCv, nFc, nVx, ns,
+     & nscx, nscxmax, iscx, ismain, ismain0,
      1 switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
       use b2mod_constants
@@ -44,7 +45,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
-     &  ismain
+     &  ismain, ismain0
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -124,7 +125,8 @@
 
 * ..compute transport coefficients
 *   ..compute anomalous terms
-      call b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
+      call b2trno (nCv, nFc, nVx, ns,
+     &  nscx, nscxmax, iscx, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co)
 *   ..compute classical terms
       call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,         !srv 23.11.10
