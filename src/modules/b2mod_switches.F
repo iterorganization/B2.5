@@ -1034,20 +1034,21 @@ c med
       call ipgeti ('b2trcl_lluciani', s % lluciani)
       call ipgeti ('b2trcl_core_cond_limit', s % core_cond_limit)          !csw 13mar2012
       call ipgeti ('b2news_no_solve', s % no_solve)                        !srv 02.07.08
-      call ipgeti ('b2news_no_b2sral_call', s%no_b2sral_call)
-      call ipgeti ('b2news_do_2nd_b2npco_call', s%do_2nd_b2npco_call)
-      call ipgeti ('b2news_re_eval_prtls_fluxes',s%re_eval_prtls_fluxes)   !srv 28.06.13
+      call ipgeti ('b2news_no_b2sral_call', s % no_b2sral_call)
+      call ipgeti ('b2news_do_2nd_b2npco_call', s % do_2nd_b2npco_call)
+      call ipgeti ('b2news_re_eval_prtls_fluxes',
+     &                       s % re_eval_prtls_fluxes)                     !srv 28.06.13
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
-     &                       s%istyle_cur_contr_on_S_and_N)                !srv 01.02.09
-      call ipgeti ('b2mndr_astra', s%use_astra)
+     &                       s % istyle_cur_contr_on_S_and_N)              !srv 01.02.09
+      call ipgeti ('b2mndr_astra', s % use_astra)
       call ipgeti ('b2stbr_phys_lin_shi0', s % lin_shi0)
       call ipgeti ('b2trno_flux_limit_to_dpa', s % flux_limit_to_dpa)
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
-      call ipgeti ('b2trno_csig_an_style', s % csig_an_style)               !srv 15.06.08
-      call ipgeti ('b2tqna_user_transport', s % user_transport)             !mb  11.10.17
+      call ipgeti ('b2trno_csig_an_style', s % csig_an_style)              !srv 15.06.08
+      call ipgeti ('b2tqna_user_transport', s % user_transport)            !mb  11.10.17
 
 c Advanced fluid neutral models
-      call ipgeti ('b2mn_tn_style',s % tn_style)
+      call ipgeti ('b2mn_tn_style', s % tn_style)
       call ipgeti ('b2stbr_recycle_afn', s % recycle_afn)
       call ipgeti ('b2stbr_use_uy_uz_0', s % use_uy_uz_0)
       call ipgeti ('b2stbr_use_uy_uz_1', s % use_uy_uz_1)
@@ -1560,11 +1561,11 @@ c               after solving ti-equation, tn is set equal to ti
 c tn_style = 2: separate neutral energy equation for hydrogenic atoms (H/D/T) solved for tn
 c               all ions and non-hydrogenic atoms combined into ti-equation
       if (s%tn_style.lt.0.or.s%tn_style.gt.2) then
-        call xerrab('tn_tyle should be 0, 1 or 2')
+        call xerrab('tn_style should be 0, 1 or 2')
       endif
 
       if (s%tn_style.ne.0.and.s%BoRiS.ne.0.0_R8) then
-        call xerrab('tn_tyle.ne.0 not compatible with BoRiS.ne.0.0_R8')
+        call xerrab('tn_style.ne.0 not compatible with BoRiS.ne.0.0_R8')
       endif
 
 c get_residuals

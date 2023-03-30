@@ -63,8 +63,11 @@
           bb(:,:,2) =
      .     (ffbz(:,:,0) + ffbz(:,:,1) + ffbz(:,:,2) + ffbz(:,:,3)) /
      .     (4.0_R8 * hz(:,:))
-          wbbl(:,:,2) = (ffbz(:,:,0) + ffbz(:,:,2)) /
-     .     (2.0_R8 * hzl(:,:))
+          wbbl(:,:,2) = bb(:,:,2)
+          where (hzl(:,:).ne.0.0_R8)
+            wbbl(:,:,2) = (ffbz(:,:,0) + ffbz(:,:,2)) /
+     .       (2.0_R8 * hzl(:,:))
+          end where
         end if
       end if
       wbbl(:,:,1) = 0.0_R8
@@ -155,9 +158,14 @@
           if (iseg(ix,iy).eq.0) cycle
           if (ixref(iseg(ix,iy),iy).eq.-2) cycle
 
-          pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
-     &                 gs(ixref(iseg(ix,iy),iy),iy,0) *
-     &                 qc(ixref(iseg(ix,iy),iy),iy,0)
+          if (leftix(ixref(iseg(ix,iy),iy),iy).ne.-2) then
+            pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
+     &                   gs(ixref(iseg(ix,iy),iy),iy,0) *
+     &                   qc(ixref(iseg(ix,iy),iy),iy,0)
+          else
+            pol_flux = bb(ixref(iseg(ix,iy),iy),iy,0) *
+     &                 hy(ixref(iseg(ix,iy),iy),iy)
+          end if
 
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face

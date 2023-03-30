@@ -276,7 +276,7 @@ c   ..collect non-dominant species
          if( is_neutral(is) .and. is.ne.ism0 ) then
              nzs         = nzs + 1
              izs2is(nzs) = is
-             izch(nzs)   = int(zn(is))
+             izch(nzs)   = nint(zn(is))
              zmass(nzs)  = am(is)
          endif
          if( .not.is_neutral(is) .and. zn(is).ne.zn(ism) ) then

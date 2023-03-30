@@ -104,7 +104,8 @@
          prvn = prvi
         else
          do is = 0, ns-1
-          if (.not.is_neutral(is)) then
+          if (.not.is_neutral(is).or.(switch%tn_style.eq.2.and.
+     &       (nint(zn(is)).ne.1.or.is.ne.ismain0))) then
            prvi = prvi+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%ti(1,iCv))
           else
            prvn = prvn+abs(geo%cvVol(iCv)*pl%na(1,iCv,is)*pl%tn(1,iCv))

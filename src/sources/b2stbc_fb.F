@@ -193,7 +193,7 @@
 
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_pre (nCv, nFc, nVx, ns, ismain, BoRiS,
+      subroutine b2stbc_fb_pre (nCv, nFc, nVx, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
      &  diagno)
       use b2mod_types
@@ -224,8 +224,7 @@
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, diagno
-      real (kind=R8) :: BoRiS
+      integer nCv, nFc, nVx, ns, ismain, ismain0, diagno
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -1313,7 +1312,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
               psnc%kinrgy = dv%kinrgy
 *   ..compute initial ni
               call b2xpni (nCv, ns, pl%na, dv%ni)
-              call b2xpnn (nCv, ns, pl%na, dv%nn)
+              call b2xpnn (nCv, ns, ismain0, pl%na, dv%nn)
 *   ..compute ni0
               psnl%ni = dv%ni
               psnc%ni = dv%ni
@@ -1513,7 +1512,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
             fhiycurr=fhiycurr+fhi(topix(ix,-1),topiy(ix,-1),1,1)
             if (fhiycore_kinetic_energy.eq.1) then
               do is = 0, ns-1
-                fhiycurr=fhiycurr+(1.0_R8-BoRiS)*
+                fhiycurr=fhiycurr+(1.0_R8-switch%BoRiS)*
      .           fna(topix(ix,-1),topiy(ix,-1),1,1,is)*0.5_R8*
      .           (kinrgy(topix(ix,-1),topiy(ix,-1),is)+
      .            kinrgy(ix,-1,is))
