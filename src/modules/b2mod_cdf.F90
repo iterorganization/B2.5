@@ -19,10 +19,13 @@ contains
    nCv, nc, ns, write_2d, &
    ncid, batch_only, iret)
     use b2mod_constants
+    use b2mod_user_namelist &
+    , only : nimp, nomp
 #   include <netcdf.inc>
     integer nCv, nc, ns, iret
+    integer nya, nyi
 #ifdef WG_TODO
-    integer nybl, nytl, nytr, nybr, nya, nyi
+    integer nybl, nytl, nytr, nybr
 #endif
     integer, intent(in) :: write_2d
     logical, intent(in) :: batch_only
@@ -31,8 +34,9 @@ contains
     integer  ncid
     ! dimension ids
     integer :: ncvdim, nsdim, timedim, batchdim, ncdim, idirdim
+    integer :: nyadim, nyidim
 #ifdef WG_TODO
-    integer :: nydim, nybldim, nytldim, nytrdim, nybrdim, nyadim, nyidim
+    integer :: nydim, nybldim, nytldim, nytrdim, nybrdim
 #endif
     ! variable ids
     integer :: ntstepid, timesaid, fnixipid, feexipid, feixipid, &
@@ -113,11 +117,17 @@ contains
       endif
       iret = nf_def_dim(ncid, 'nybr', nybr, nybrdim)
       call check_cdf_status(iret)
-      iret = nf_def_dim(ncid, 'nyi', nyi, nyidim)
-      call check_cdf_status(iret)
-      iret = nf_def_dim(ncid, 'nya', nya, nyadim)
-      call check_cdf_status(iret)
 #endif
+      if (nimp.gt.0) then
+        nyi = nimp
+        iret = nf_def_dim(ncid, 'nyi', nyi, nyidim)
+        call check_cdf_status(iret)
+      end if
+      if (nomp.gt.0) then
+        nya = nomp
+        iret = nf_def_dim(ncid, 'nya', nya, nyadim)
+        call check_cdf_status(iret)
+      end if
       iret = nf_def_dim(ncid, 'nc', nc, ncdim)
       call check_cdf_status(iret)
       iret = nf_def_dim(ncid, 'ns', ns, nsdim)
@@ -486,70 +496,80 @@ contains
         iret = nf_def_var(ncid, 'tp3dtl', NCDOUBLE, 2, dims, tp3dtlid)
         call check_cdf_status(iret)
       endif
-      dims(2) = timedim
-      dims(1) = nyidim
-      iret = nf_def_var(ncid, 'ne3di', NCDOUBLE, 2, dims, ne3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'te3di', NCDOUBLE, 2, dims, te3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ti3di', NCDOUBLE, 2, dims, ti3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'po3di', NCDOUBLE, 2, dims, po3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'an3di', NCDOUBLE, 2, dims, an3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'mn3di', NCDOUBLE, 2, dims, mn3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 2, dims, dn3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ln3di', NCDOUBLE, 2, dims, ln3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ke3di', NCDOUBLE, 2, dims, ke3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 2, dims, vx3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 2, dims, vy3diid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 2, dims, vs3diid)
-      call check_cdf_status(iret)
-      dims(2) = timedim
-      dims(1) = nyadim
-      iret = nf_def_var(ncid, 'ne3da', NCDOUBLE, 2, dims, ne3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'te3da', NCDOUBLE, 2, dims, te3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ti3da', NCDOUBLE, 2, dims, ti3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'po3da', NCDOUBLE, 2, dims, po3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'an3da', NCDOUBLE, 2, dims, an3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'mn3da', NCDOUBLE, 2, dims, mn3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 2, dims, dn3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ln3da', NCDOUBLE, 2, dims, ln3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ke3da', NCDOUBLE, 2, dims, ke3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 2, dims, vx3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 2, dims, vy3daid)
-      call check_cdf_status(iret)
-      iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 2, dims, vs3daid)
-      call check_cdf_status(iret)
+#endif
+      if (nimp.gt.0) then
+        dims(2) = timedim
+        dims(1) = nyidim
+        iret = nf_def_var(ncid, 'ne3di', NCDOUBLE, 2, dims, ne3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'te3di', NCDOUBLE, 2, dims, te3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ti3di', NCDOUBLE, 2, dims, ti3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'po3di', NCDOUBLE, 2, dims, po3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'an3di', NCDOUBLE, 2, dims, an3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'mn3di', NCDOUBLE, 2, dims, mn3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 2, dims, dn3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
+        call check_cdf_status(iret)
+#ifdef WG_TODO
+        iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ln3di', NCDOUBLE, 2, dims, ln3diid)
+        call check_cdf_status(iret)
+#endif
+        iret = nf_def_var(ncid, 'ke3di', NCDOUBLE, 2, dims, ke3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 2, dims, vx3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 2, dims, vy3diid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 2, dims, vs3diid)
+        call check_cdf_status(iret)
+      end if
+      if (nomp.gt.0) then
+        dims(2) = timedim
+        dims(1) = nyadim
+        iret = nf_def_var(ncid, 'ne3da', NCDOUBLE, 2, dims, ne3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'te3da', NCDOUBLE, 2, dims, te3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ti3da', NCDOUBLE, 2, dims, ti3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'po3da', NCDOUBLE, 2, dims, po3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'an3da', NCDOUBLE, 2, dims, an3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'mn3da', NCDOUBLE, 2, dims, mn3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 2, dims, dn3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
+        call check_cdf_status(iret)
+#ifdef WG_TODO
+        iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ln3da', NCDOUBLE, 2, dims, ln3daid)
+        call check_cdf_status(iret)
+#endif
+        iret = nf_def_var(ncid, 'ke3da', NCDOUBLE, 2, dims, ke3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 2, dims, vx3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 2, dims, vy3daid)
+        call check_cdf_status(iret)
+        iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 2, dims, vs3daid)
+        call check_cdf_status(iret)
+      end if
+#ifdef WG_TODO
       dims(2) = timedim
       dims(1) = nybrdim
       iret = nf_def_var(ncid, 'ne3dr', NCDOUBLE, 2, dims, ne3drid)

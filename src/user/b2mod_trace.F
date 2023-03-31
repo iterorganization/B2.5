@@ -181,9 +181,9 @@ c*** Initialise tracing routines
       return
       end subroutine b2trci
 c======================================================================
-      subroutine b2trcc(nput,nx,nxtl,nxtr)
+      subroutine b2trcc(nput)
       implicit none
-      integer, intent(in) :: nput, nx, nxtl, nxtr
+      integer, intent(in) :: nput
       integer iline
 c*** Truncate to match savefile
       if(filedata(ntrc_bln)) then
@@ -216,11 +216,13 @@ c*** Truncate to match savefile
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_sep)), iline
       end if
+#ifdef WG_TODO
       if(filedata(ntrc_usr)) then
         call b2usrtrcc(nx,nxtl,nxtr,iline)
         if (iline.gt.0)
      >  write(nput,'(a,i8)') trim(fn_ntrc(ntrc_usr)), iline
       end if
+#endif
       return
       end subroutine b2trcc
 c======================================================================

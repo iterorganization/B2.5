@@ -248,7 +248,7 @@ c      use b2mod_types
           enddo
 !          write(*,*) 'vor region_profile'
           call region_profile
-     .     (kind_data,ndat,r,ndim,pr,nx,ny,ifa,nanf)
+     .     (geo,kind_data,ndat,r,ndim,pr,nx,ny,ifa,nanf)
 !          write (*,*) 'ifa=',ifa
           if (ifa.eq.1) goto 99
 !          allocate (pf(1:ndim))
@@ -634,7 +634,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 #ifdef WG_TODO
-            call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
+            call region_profile(geo,1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
@@ -918,43 +918,39 @@ c*** Clear data to forget previous profiles
 
 *-----------------------------------------------------------------------
 
-      subroutine region_profile(kind_data,ndat,r,ndim,pr,nx,ny,ifa,
+      subroutine region_profile(geo,kind_data,ndat,r,ndim,pr,nx,ny,ifa,
      & nfitanf)
 
       use b2mod_indirect
-      use b2mod_geo
+      use b2mod_user_namelist
+     & , only : nomp, omp, icsepomp
+      use b2us_geo
       use b2mod_mwti
-     & , only: output_ds
+     & , only: output_ds_cv
       implicit none
+      type (geometry), intent(in) :: geo
       integer:: i,nx,ny,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
-      integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
+      integer ncall, nya
       integer ixref, iyref
       character*256 filenamer
       logical exist
       external ipgetr
-      external get_jsep
-      save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
+      save ixref, iyref, ncall
       data ncall/0/
 
       call subini('region_profile')
       if (ncall.eq.0) then
-        call get_jsep(nx,ny,jxi,jxa,jsep)
-        call xertst (-1.le.jsep.and.jsep.le.ny,
-     2   'faulty parameter jsep')
-        call ipgeti ('b2mwti_jxa',jxa)
-        call xertst (-1.le.jxa.and.jxa.le.nx,
-     2   'faulty internal parameter jxa')
-        ixref = jxa
-        iyref = jsep
+#ifdef WG_TODO
         call ipgeti ('set_transport_ixref', ixref)
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument set_transport_ixref')
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-        call output_ds(ny,ixref,0,iyref,iyastrt,iyaend,'dsp')
+#endif
+        if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
@@ -992,7 +988,6 @@ c*** Clear data to forget previous profiles
         if (pra(i).GT.r(ndat)) exit
         nfitend=i
       enddo
-
 
       if (nfitend.LE.nfitanf) goto 97
 

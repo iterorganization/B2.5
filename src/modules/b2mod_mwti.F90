@@ -4,7 +4,7 @@ module b2mod_mwti
   use b2mod_subsys
   implicit none
   private
-  public :: output_ds
+  public :: output_ds_cv, output_ds_fc
 #ifndef SOLPS4_3
   public :: b2mwti, dealloc_b2mod_mwti
 #endif
@@ -32,7 +32,8 @@ contains
 
 #ifndef SOLPS4_3
   subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
-                     nCv, ns, geo, mpg, switch, pl, dv, co, &
+                     nCv, ns, nncutmax, geo, mpg, switch, &
+                     pl, dv, co, rt, srw, &
                      ismain, ismain0, lwti, lwav, luav)
 !    use b2mod_geo
 !    use b2mod_plasma
@@ -41,20 +42,25 @@ contains
 !    use b2mod_sources
 !    use b2mod_transport
 !    use b2mod_anomalous_transport
-!    use b2mod_neutrals_namelist
+    use b2mod_neutrals_namelist
 !    use b2mod_work
 !    use b2mod_indirect
     use b2mod_constants
 !    use b2mod_tallies
 !    use b2mod_wall
-!    use b2mod_b2cmpa
+    use b2mod_b2cmpa
 !    use b2mod_external
     use b2us_geo
     use b2us_map
     use b2us_plasma
+    use b2mod_geometry &
+    , only : geometryID
 #ifndef NO_CDF
+    use b2mod_geometry &
+    , only : GEOMETRY_CDN, GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM, &
+             GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS
     use b2mod_user_namelist &
-    , only : omp
+    , only : omp, imp, nimp, nomp, icsepimp
 #endif
     use b2mod_user_namelist &
     , only : icsepomp
@@ -66,16 +72,18 @@ contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    type(geometry), intent (in) :: geo
+    type (geometry), intent (in) :: geo
     type (mapping), intent (in) :: mpg
     type (switches), intent (in) :: switch
-    type (B2Plasma), intent (in) :: pl
-    type (B2Derivatives), intent (in) :: dv
+    type (B2Plasma), intent (inout) :: pl
+    type (B2Derivatives), intent (inout) :: dv
+    type (B2SourceWork), intent (inout) :: srw
     type (B2Coeff), intent (in) :: co
-    integer, Intent(In) :: itim, ntim, b2time, ntim_batch, &
-                           nCv, ns, ismain, ismain0
-    real (kind=R8), Intent(In) :: tim
-    logical, Intent(In) :: lwti, lwav, luav
+    type (B2Rates), intent (in) :: rt
+    integer, intent(in) :: itim, ntim, b2time, ntim_batch, &
+                           nCv, ns, nncutmax, ismain, ismain0
+    real (kind=R8), intent(in) :: tim
+    logical, intent(in) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
@@ -104,7 +112,6 @@ contains
 
     !   ..local variables
     integer ncall
-    integer, parameter :: nncutmax = 1
     real (kind=R8) :: &
          fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
          fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
@@ -150,10 +157,10 @@ contains
     real(kind=R8) :: fnitmp, feetmp, feitmp, fchtmp, fettmp, pwrtmp
 #endif
     integer, save :: write_2d = 0
-    integer, save :: ntstep, nastep
+    integer, save :: ntstep, nastep, geometryType
 #ifndef NO_CDF
     integer, save :: ncid, nbatch
-    integer imap(maxvdims), iret, ift, cvtrg
+    integer imap(maxvdims), iret, ift, iatm, cvtrg
     integer nvars, natts, ndims, unlimid
     real (kind=R8) :: fac
     real (kind=R8) :: &
@@ -166,9 +173,10 @@ contains
          vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax), &
          ktsepm(nncutmax), ktsepi(nncutmax), ktsepa(nncutmax)
     real (kind=R8) :: &
-         tmhacore(1), tmhasol(1), tmhadiv(1) !, slice(-1:ny)
+         tmhacore(1), tmhasol(1), tmhadiv(1)
     real (kind=R8) :: &
          timesa(1), batchsa(1), tstepn(1)
+    real (kind=R8), allocatable :: slice(:)
     logical ex
     character*5 rw
     character*256, save :: filename, filename_av
@@ -178,8 +186,8 @@ contains
     !   ..initialisation
 #ifdef WG_TODO
     save jxi, jxa, jsep, ixtl, ixtr, &
-         iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
-         iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
+         iylstrt, iyrstrt, iytlstrt, iytrstrt, &
+         iylend,  iyrend,  iytlend,  iytrend, &
          nc, nya, nyi, nybl, nybr, nytl, nytr
 #endif
     save ncall, target_offset
@@ -198,6 +206,7 @@ contains
          'invalid main plasma species index ismain')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
+      geometryType = geometryId ( mpg, geo )
       !   ..test state
       call ipgeti ('b2mwti_2dwrite',write_2d)
       call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')
@@ -205,12 +214,12 @@ contains
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
-      nc = max(nncutmax,1) !WG_TODO to be fixed
+      nc = max(mpg%nXpt,1)
+      if (nimp.gt.0) call output_ds_cv(geo,nimp,imp,icsepimp-1,'dsi')
+      if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsa')
 #ifdef WG_TODO
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call output_ds(ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
-      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
       call output_ds(ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
       if (nnreg(0).ge.7) then
         ixtl = 0
@@ -233,7 +242,7 @@ contains
       nybr = iyrend  - iyrstrt  + 1
       nya  = iyaend  - iyastrt  + 1
       nyi  = iyiend  - iyistrt  + 1
-      nc = max(nncut,1)
+      nc = max(mpg%nXpt,1)
       ! Target areas
       open(99,file='dsL')
       do iy=-1,ny
@@ -562,7 +571,7 @@ contains
       endif
     enddo
 
-    if(nncut.ge.2) then
+    if(mpg%nXpt.ge.2) then
       ix = ixtr ! 3
       ix_off  = ix + target_offset
       do iy = iytrstrt,iytrend
@@ -609,7 +618,7 @@ contains
     fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8
 #ifdef WG_TODO
     if(nnreg(0).ge.3) then
-      do ic = 1, nncut
+      do ic = 1, mpg%nXpt
         do iy = -1,jsep
           ix = leftcut(ic) ! 5
           call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,switch%BoRiS,fettmp,fnitmp,feetmp,feitmp,fchtmp)
@@ -783,156 +792,172 @@ contains
     vssepm = 0.0_R8; nesepa = 0.0_R8; tesepa = 0.0_R8; tisepa = 0.0_R8; tpsepa = 0.0_R8
     posepa = 0.0_R8; ktsepm = 0.0_R8; ktsepi = 0.0_R8; ktsepa = 0.0_R8;
 ! csc For now only identify outer midplane and targets separatrix values using flux tube concept
-    nesepm(1) = 0.5_R8 * (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
-    tesepm(1) = 0.5_R8 * (pl%te(omp(icsepomp-1))+pl%te(omp(icsepomp)))/ev
-    tisepm(1) = 0.5_R8 * (pl%ti(omp(icsepomp-1))+pl%ti(omp(icsepomp)))/ev
-    posepm(1) = 0.5_R8 * (pl%po(omp(icsepomp-1))+pl%po(omp(icsepomp)))
-    dnsepm(1) = 0.5_R8 * (co%dna0(omp(icsepomp-1),ismain0)+co%dna0(omp(icsepomp),ismain0))
-    kesepm(1) = 0.5_R8 * (co%hce0(omp(icsepomp-1))/dv%ne(omp(icsepomp-1))+co%hce0(omp(icsepomp))/dv%ne(omp(icsepomp)))
-    kisepm(1) = 0.5_R8 * (co%hci0(omp(icsepomp-1))/dv%ni(omp(icsepomp-1),0)+co%hci0(omp(icsepomp))/dv%ni(omp(icsepomp),0))
-    ktsepm(1) = 0.5_R8 * (pl%kt(omp(icsepomp-1)) + pl%kt(omp(icsepomp)))/ev
-    ift = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
-    cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
-    nesepi(1) = dv%ne(cvtrg)
-    tesepi(1) = pl%te(cvtrg)/ev
-    tisepi(1) = pl%ti(cvtrg)/ev
-    posepi(1) = pl%po(cvtrg)
-    ktsepi(1) = pl%kt(cvtrg)
-    cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+mpg%ftCvP(ift,2)-1-target_offset) !outer
-    nesepa(1) = dv%ne(cvtrg)
-    tesepa(1) = pl%te(cvtrg)/ev
-    tisepa(1) = pl%ti(cvtrg)/ev
-    posepa(1) = pl%po(cvtrg)
-    ktsepa(1) = pl%kt(cvtrg)
+    if (nomp.gt.0) then
+      nesepm(1) = 0.5_R8 * (dv%ne(omp(icsepomp-1))+dv%ne(omp(icsepomp)))
+      tesepm(1) = 0.5_R8 * (pl%te(omp(icsepomp-1))+pl%te(omp(icsepomp)))/ev
+      tisepm(1) = 0.5_R8 * (pl%ti(omp(icsepomp-1))+pl%ti(omp(icsepomp)))/ev
+      posepm(1) = 0.5_R8 * (pl%po(omp(icsepomp-1))+pl%po(omp(icsepomp)))
+      dnsepm(1) = 0.5_R8 * (co%dna0(omp(icsepomp-1),ismain0)+co%dna0(omp(icsepomp),ismain0))
+      kesepm(1) = 0.5_R8 * (co%hce0(omp(icsepomp-1))/dv%ne(omp(icsepomp-1))+co%hce0(omp(icsepomp))/dv%ne(omp(icsepomp)))
+      if (switch%tn_style.eq.0) then
+        kisepm(1) = 0.5_R8 * (co%hci0(omp(icsepomp-1))/dv%ni(omp(icsepomp-1),0)+co%hci0(omp(icsepomp))/dv%ni(omp(icsepomp),0))
+      else if (switch%tn_style.eq.1) then
+        kisepm(1) = 0.5_R8 * (co%hci0(omp(icsepomp-1))/dv%ni(omp(icsepomp-1),1)+co%hci0(omp(icsepomp))/dv%ni(omp(icsepomp),1))
+      else if (switch%tn_style.eq.2) then
+        kisepm(1) = 0.5_R8 * (co%hci0(omp(icsepomp-1))/ &
+                             (dv%ni(omp(icsepomp-1),0)-dv%nn(omp(icsepomp-1))) &
+                             +co%hci0(omp(icsepomp))/ &
+                             (dv%ni(omp(icsepomp),0)-dv%nn(omp(icsepomp-1))))
+      end if
+      if (switch%tn_style.eq.0.or..not.is_neutral(ismain0)) then
+        dpsepm(1) = 0.5_R8 * ( &
+         co%dpa0(omp(icsepomp-1),ismain0)*( &
+         rt%rza(omp(icsepomp-1),ismain0)*pl%te(omp(icsepomp-1))+pl%ti(omp(icsepomp-1)))+ &
+         co%dpa0(omp(icsepomp),ismain0)*( &
+         rt%rza(omp(icsepomp),ismain0)*pl%te(omp(icsepomp))+pl%ti(omp(icsepomp))))
+      else
+        dpsepm(1) = 0.5_R8 * ( &
+         co%dpa0(omp(icsepomp-1),ismain0)*pl%tn(omp(icsepomp-1))+ &
+         co%dpa0(omp(icsepomp),ismain0)*pl%tn(omp(icsepomp)))
+      endif
+      ktsepm(1) = 0.5_R8 * (pl%kt(omp(icsepomp-1)) + pl%kt(omp(icsepomp)))/ev
+      vxsepm(1) = 0.5_R8 * (co%vla0(omp(icsepomp-1),0,ismain)+ co%vla0(omp(icsepomp),0,ismain))
+      vysepm(1) = 0.5_R8 * (co%vla0(omp(icsepomp-1),1,ismain)+ co%vla0(omp(icsepomp),1,ismain))
+      vssepm(1) = 0.5_R8 * ( &
+         co%vsa0(omp(icsepomp-1),ismain)/(mp*am(ismain)*pl%na(omp(icsepomp-1),ismain))+ &
+         co%vsa0(omp(icsepomp),ismain)/(mp*am(ismain)*pl%na(omp(icsepomp),ismain)))
+      iFt = mpg%cvFt(omp(icsepomp)) !separatrix flux tube
+      cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+target_offset) !inner
+      if (mpg%nXpt.lt.2 .or. geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
+        & geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+        & geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+        nesepi(1) = dv%ne(cvtrg)
+        tesepi(1) = pl%te(cvtrg)/ev
+        tisepi(1) = pl%ti(cvtrg)/ev
+        posepi(1) = pl%po(cvtrg)
+        ktsepi(1) = pl%kt(cvtrg)
+      else
+        nesepa(2) = dv%ne(cvtrg)
+        tesepa(2) = pl%te(cvtrg)/ev
+        tisepa(2) = pl%ti(cvtrg)/ev
+        posepa(2) = pl%po(cvtrg)
+        ktsepa(2) = pl%kt(cvtrg)
+      end if
+      cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
+      if (mpg%nXpt.lt.2 .or. geometryType.ne.GEOMETRY_DDN_TOP) then
+        nesepa(1) = dv%ne(cvtrg)
+        tesepa(1) = pl%te(cvtrg)/ev
+        tisepa(1) = pl%ti(cvtrg)/ev
+        posepa(1) = pl%po(cvtrg)
+        ktsepa(1) = pl%kt(cvtrg)
+      else
+        nesepi(2) = dv%ne(cvtrg)
+        tesepi(2) = pl%te(cvtrg)/ev
+        tisepi(2) = pl%ti(cvtrg)/ev
+        posepi(2) = pl%po(cvtrg)
+        ktsepi(2) = pl%kt(cvtrg)
+      end if
+    end if
+    if (nimp.gt.0.and.mpg%nXpt.eq.2) then
+      nesepm(2) = 0.5_R8 * (dv%ne(imp(icsepimp-1))+dv%ne(imp(icsepimp)))
+      tesepm(2) = 0.5_R8 * (pl%te(imp(icsepimp-1))+pl%te(imp(icsepimp)))/ev
+      tisepm(2) = 0.5_R8 * (pl%ti(imp(icsepimp-1))+pl%ti(imp(icsepimp)))/ev
+      posepm(2) = 0.5_R8 * (pl%po(imp(icsepimp-1))+pl%po(imp(icsepimp)))
+      dnsepm(2) = 0.5_R8 * (co%dna0(imp(icsepimp-1),ismain0)+ &
+        &                   co%dna0(imp(icsepimp),ismain0))
+      kesepm(2) = 0.5_R8 * (co%hce0(imp(icsepimp-1))/dv%ne(imp(icsepimp-1))+ &
+        &                   co%hce0(imp(icsepimp))/dv%ne(imp(icsepimp)))
+      if (switch%tn_style.eq.0) then
+        kisepm(2) = 0.5_R8 * &
+          &  (co%hci0(imp(icsepimp-1))/dv%ni(imp(icsepimp-1),0)+ &
+          &   co%hci0(imp(icsepimp))/dv%ni(imp(icsepimp),0))
+      else if (switch%tn_style.eq.1) then
+        kisepm(2) = 0.5_R8 * &
+          &  (co%hci0(imp(icsepimp-1))/dv%ni(imp(icsepimp-1),1)+ &
+          &   co%hci0(imp(icsepimp))/dv%ni(imp(icsepimp),1))
+      else if (switch%tn_style.eq.2) then
+        kisepm(2) = 0.5_R8 * (co%hci0(imp(icsepimp-1))/ &
+          &                  (dv%ni(imp(icsepimp-1),0)-dv%nn(imp(icsepimp-1))) &
+          &                  +co%hci0(imp(icsepimp))/ &
+          &                  (dv%ni(imp(icsepimp),0)-dv%nn(imp(icsepimp-1))))
+      end if
+      if (switch%tn_style.eq.0.or..not.is_neutral(ismain0)) then
+        dpsepm(2) = 0.5_R8 * ( &
+         co%dpa0(imp(icsepimp-1),ismain0)*( &
+         rt%rza(imp(icsepimp-1),ismain0)*pl%te(imp(icsepimp-1))+pl%ti(imp(icsepimp-1)))+ &
+         co%dpa0(imp(icsepimp),ismain0)*( &
+         rt%rza(imp(icsepimp),ismain0)*pl%te(imp(icsepimp))+pl%ti(imp(icsepimp))))
+      else
+        dpsepm(2) = 0.5_R8 * ( &
+         co%dpa0(imp(icsepimp-1),ismain0)*pl%tn(imp(icsepimp-1))+ &
+         co%dpa0(imp(icsepimp),ismain0)*pl%tn(imp(icsepimp)))
+      endif
+      ktsepm(2) = 0.5_R8 * (pl%kt(imp(icsepimp-1)) + pl%kt(imp(icsepimp)))/ev
+      vxsepm(2) = 0.5_R8 * (co%vla0(imp(icsepimp-1),0,ismain)+ co%vla0(imp(icsepimp),0,ismain))
+      vysepm(2) = 0.5_R8 * (co%vla0(imp(icsepimp-1),1,ismain)+ co%vla0(imp(icsepimp),1,ismain))
+      vssepm(2) = 0.5_R8 * ( &
+         co%vsa0(imp(icsepimp-1),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp-1),ismain))+ &
+         co%vsa0(imp(icsepimp),ismain)/(mp*am(ismain)*pl%na(imp(icsepimp),ismain)))
+      if (geometryType.eq.GEOMETRY_CDN) then
+        iFt = mpg%cvFt(imp(icsepimp)) ! HFS separatrix flux tube
+        cvtrg = mpg%ftCv(mpg%ftCvP(ift,1)+target_offset) !inner
+        nesepi(1) = dv%ne(cvtrg)
+        tesepi(1) = pl%te(cvtrg)/ev
+        tisepi(1) = pl%ti(cvtrg)/ev
+        posepi(1) = pl%po(cvtrg)
+        ktsepi(1) = pl%kt(cvtrg)
+        cvtrg = mpg%ftCv(mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1-target_offset) !outer
+        nesepi(2) = dv%ne(cvtrg)
+        tesepi(2) = pl%te(cvtrg)/ev
+        tisepi(2) = pl%ti(cvtrg)/ev
+        posepi(2) = pl%po(cvtrg)
+        ktsepi(2) = pl%kt(cvtrg)
+      else
+!! TODO: Must have a way to identify the flux tube outside the secondary separatrix
+      end if
+    end if
 #endif
 
 #ifdef WG_TODO            
 #ifndef NO_CDF
     if(nnreg(0).ne.2) then
-      nesepi(1) = 0.5_R8 * (ne(-1+target_offset,jsep)+ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
-      tesepi(1) = 0.5_R8/ev * (te(-1+target_offset,jsep) + te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
-      tisepi(1) = 0.5_R8/ev * (ti(-1+target_offset,jsep) + ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
       if(xymap(-1,jsep).gt.0 .and. xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
         tpsepi(1) = 0.5_R8 * (target_temp(xymap(-1,jsep),1) + target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1))
       else
         tpsepi(1) = 0.0_R8
       endif
-      posepi(1) = 0.5_R8 * (po(-1+target_offset,jsep) + po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
     else
-      nesepi(1) = ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
-      tesepi(1) = 1.0_R8/ev * te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
-      tisepi(1) = 1.0_R8/ev * ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
       if(xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
         tpsepi(1) = target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1)
       else
         tpsepi(1) = 0.0_R8
       endif
-      posepi(1) = po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
     endif
-    nesepm(1) = 0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep)))
-    tesepm(1) = 0.5_R8 * (te(jxa,jsep)+ te(topix(jxa,jsep),topiy(jxa,jsep)))/ev
-    tisepm(1) = 0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev
-    posepm(1) = 0.5_R8 * (po(jxa,jsep)+ po(topix(jxa,jsep),topiy(jxa,jsep)))
-    dnsepm(1) = 0.5_R8 * (dna0(jxa,jsep,ismain)+ dna0(topix(jxa,jsep),topiy(jxa,jsep),ismain))
-    dpsepm(1) = 0.5_R8 * ( &
-         dpa0(jxa,jsep,ismain0)*( &
-         rza(jxa,jsep,ismain0)*te(jxa,jsep)+ti(jxa,jsep))+ &
-         dpa0(topix(jxa,jsep),topiy(jxa,jsep),ismain0)*( &
-         rza(topix(jxa,jsep),topiy(jxa,jsep),ismain0)* &
-         te(topix(jxa,jsep),topiy(jxa,jsep))+ &
-         ti(topix(jxa,jsep),topiy(jxa,jsep))))
-    kesepm(1) = 0.5_R8 * (hce0(jxa,jsep)/ne(jxa,jsep)+ hce0(topix(jxa,jsep),topiy(jxa,jsep))/ &
-         ne(topix(jxa,jsep),topiy(jxa,jsep)))
-    kisepm(1) = 0.5_R8 * (hci0(jxa,jsep)/ni(jxa,jsep,0) + hci0(topix(jxa,jsep),topiy(jxa,jsep))/ &
-         ni(topix(jxa,jsep),topiy(jxa,jsep),0))
-    vxsepm(1) = 0.5_R8 * (vla0(jxa,jsep,0,ismain)+ vla0(topix(jxa,jsep),topiy(jxa,jsep),0,ismain))
-    vysepm(1) = 0.5_R8 * (vla0(jxa,jsep,1,ismain)+ vla0(topix(jxa,jsep),topiy(jxa,jsep),1,ismain))
-    vssepm(1) = 0.5_R8 * ( &
-         vsa0(jxa,jsep,ismain)/(mp*am(ismain)*na(jxa,jsep,ismain))+ &
-         vsa0(topix(jxa,jsep),topiy(jxa,jsep),ismain)/ &
-         (mp*am(ismain)*na(topix(jxa,jsep),topiy(jxa,jsep),ismain)))
     if(nnreg(0).ne.2) then
-      nesepa(1) = 0.5_R8 * (ne(nx-target_offset,jsep)+ ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
-      tesepa(1) = 0.5_R8/ev * (te(nx-target_offset,jsep)+ te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
-      tisepa(1) = 0.5_R8/ev * (ti(nx-target_offset,jsep)+ ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
       if(xymap(nx,jsep).gt.0 .and. xymap(topix(nx,jsep),topiy(nx,jsep)).ge.0) then
         tpsepa(1) = 0.5_R8 * (target_temp(xymap(nx,jsep),1)+ target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1))
       else
         tpsepa(1) = 0.0_R8
       endif
-      posepa(1) = 0.5_R8 *(po(nx-target_offset,jsep)+po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
     else
-      nesepa(1) = ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
-      tesepa(1) = 1.0_R8/ev*te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
-      tisepa(1) = 1.0_R8/ev*ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
       if(xymap(topix(nx,jsep),topiy(nx,jsep)).gt.0) then
         tpsepa(1) = target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1)
       else
         tpsepa(1) = 0.0
       endif
-      posepa(1) = po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
     endif
-    if(nncut.eq.2) then
-      nesepa(2) = 0.5_R8 * (ne(ixtr+target_offset,jsep)+ne(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))
-      tesepa(2) = 0.5_R8 * (te(ixtr+target_offset,jsep)+te(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))/ev
-      tisepa(2) = 0.5_R8 * (ti(ixtr+target_offset,jsep)+ti(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))/ev
+    if(mpg%nXpt.eq.2) then
       if(xymap(ixtr,jsep).gt.0 .and. xymap(topix(ixtr,jsep),topiy(ixtr,jsep)).gt.0) then
         tpsepa(2) = 0.5_R8 *(target_temp(xymap(ixtr,jsep),1)+target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
       else
         tpsepa(2) = 0.0_R8
       endif
-      posepa(2) = 0.5_R8 * (po(ixtr+target_offset,jsep)+ po(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))
-      nesepm(2) = 0.5_R8 * (ne(jxi,jsep)+ ne(topix(jxi,jsep),topiy(jxi,jsep)))
-      tesepm(2) = 0.5_R8 * (te(jxi,jsep)+ te(topix(jxi,jsep),topiy(jxi,jsep)))/ev
-      tisepm(2) = 0.5_R8 * (ti(jxi,jsep)+ ti(topix(jxi,jsep),topiy(jxi,jsep)))/ev
-      posepm(2) = 0.5_R8 * (po(jxi,jsep)+ po(topix(jxi,jsep),topiy(jxi,jsep)))
-      dnsepm(2) = 0.5_R8 * (dna0(jxi,jsep,ismain)+ dna0(topix(jxi,jsep),topiy(jxi,jsep),ismain))
-      dpsepm(2) = 0.5_R8 * ( &
-           dpa0(jxi,jsep,ismain0)*( &
-           rza(jxi,jsep,ismain0)*te(jxi,jsep)+ti(jxi,jsep))+ &
-           dpa0(topix(jxi,jsep),topiy(jxi,jsep),ismain0)*( &
-           rza(topix(jxi,jsep),topiy(jxi,jsep),ismain0)* &
-           te(topix(jxi,jsep),topiy(jxi,jsep))+ &
-           ti(topix(jxi,jsep),topiy(jxi,jsep))))
-      kesepm(2) = 0.5_R8 * (hce0(jxi,jsep)/ne(jxi,jsep)+hce0(topix(jxi,jsep),topiy(jxi,jsep))/ne(topix(jxi,jsep),topiy(jxi,jsep)))
-      kisepm(2) = 0.5_R8 * (hci0(jxi,jsep)/ni(jxi,jsep,0)+ hci0(topix(jxi,jsep),topiy(jxi,jsep))/ &
-           ni(topix(jxi,jsep),topiy(jxi,jsep),0))
-      vxsepm(2) = 0.5_R8 * (vla0(jxi,jsep,0,ismain) + vla0(topix(jxi,jsep),topiy(jxi,jsep),0,ismain))
-      vysepm(2) = 0.5_R8 * (vla0(jxi,jsep,1,ismain) + vla0(topix(jxi,jsep),topiy(jxi,jsep),1,ismain))
-      vssepm(2) = 0.5_R8 * ( &
-           vsa0(jxi,jsep,ismain)/(mp*am(ismain)*na(jxi,jsep,ismain)) + vsa0(topix(jxi,jsep),topiy(jxi,jsep),ismain)/ &
-           (mp*am(ismain)*na(topix(jxi,jsep),topiy(jxi,jsep),ismain)))
-      nesepi(2) = 0.5_R8 * (ne(ixtl-target_offset,jsep)+ ne(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))
-      tesepi(2) = 0.5_R8 * (te(ixtl-target_offset,jsep)+ te(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))/ev
-      tisepi(2) = 0.5_R8 * (ti(ixtl-target_offset,jsep)+ ti(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))/ev
       if(xymap(ixtl,jsep).gt.0 .and. xymap(topix(ixtl,jsep),topiy(ixtl,jsep)).gt.0) then
         tpsepi(2) = 0.5_R8 * (target_temp(xymap(ixtl,jsep),1)+ target_temp(xymap(topix(ixtl,jsep),topiy(ixtl,jsep)),1))
       else
         tpsepi(2) = 0.0_R8
       endif
-      posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
     endif
-    nesepa(nc+1:nncutmax) = 0.0_R8
-    tesepa(nc+1:nncutmax) = 0.0_R8
-    tisepa(nc+1:nncutmax) = 0.0_R8
-    tpsepa(nc+1:nncutmax) = 0.0_R8
-    posepa(nc+1:nncutmax) = 0.0_R8
-    nesepm(nc+1:nncutmax) = 0.0_R8
-    tesepm(nc+1:nncutmax) = 0.0_R8
-    tisepm(nc+1:nncutmax) = 0.0_R8
-    posepm(nc+1:nncutmax) = 0.0_R8
-    dnsepm(nc+1:nncutmax) = 0.0_R8
-    dpsepm(nc+1:nncutmax) = 0.0_R8
-    kesepm(nc+1:nncutmax) = 0.0_R8
-    kisepm(nc+1:nncutmax) = 0.0_R8
-    vxsepm(nc+1:nncutmax) = 0.0_R8
-    vysepm(nc+1:nncutmax) = 0.0_R8
-    vssepm(nc+1:nncutmax) = 0.0_R8
-    nesepi(nc+1:nncutmax) = 0.0_R8
-    tesepi(nc+1:nncutmax) = 0.0_R8
-    tisepi(nc+1:nncutmax) = 0.0_R8
-    tpsepi(nc+1:nncutmax) = 0.0_R8
-    posepi(nc+1:nncutmax) = 0.0_R8
 !NO_CDF
 #endif
     !
@@ -1047,28 +1072,26 @@ contains
       tstepn(1) = ntstep
       call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
       call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
-#ifdef WG_TODO
       if (write_2d .ge. 1) then
-        call rwcdf(rw,ncid,'ne2d',(/1,1,1/),ne,iret)
-        call rwcdf(rw,ncid,'te2d',(/1,1,1/),te,iret)
-        call rwcdf(rw,ncid,'ti2d',(/1,1,1/),ti,iret)
+        call rwcdf(rw,ncid,'ne2d',(/1,1/),dv%ne,iret)
+        call rwcdf(rw,ncid,'te2d',(/1,1/),pl%te,iret)
+        call rwcdf(rw,ncid,'ti2d',(/1,1/),pl%ti,iret)
         if (write_2d .ge. 2) then
-          call rwcdf(rw,ncid,'po2d',(/1,1,1/),po,iret)
-          call rwcdf(rw,ncid,'kin2d',(/1,1,1,1/),kinrgy,iret)
-          call rwcdf(rw,ncid,'rsahi2d',(/1,1,1,1/),rsahi,iret)
-          call rwcdf(rw,ncid,'rsana2d',(/1,1,1,1/),rsana,iret)
-          call rwcdf(rw,ncid,'rrahi2d',(/1,1,1,1/),rrahi,iret)
-          call rwcdf(rw,ncid,'rrana2d',(/1,1,1,1/),rrana,iret)
-          call rwcdf(rw,ncid,'rcxhi2d',(/1,1,1,1/),rcxhi,iret)
-          call rwcdf(rw,ncid,'rcxna2d',(/1,1,1,1/),rcxna,iret)
-          call rwcdf(rw,ncid,'rqrad2d',(/1,1,1,1/),rqrad,iret)
-          call rwcdf(rw,ncid,'fhe2d',(/1,1,1,1/),fhe,iret)
-          call rwcdf(rw,ncid,'fhi2d',(/1,1,1,1/),fhi,iret)
-          call rwcdf(rw,ncid,'fch2d',(/1,1,1,1/),fch,iret)
-          call rwcdf(rw,ncid,'fna2d',(/1,1,1,1,1/),fna,iret)
+          call rwcdf(rw,ncid,'po2d',(/1,1/),pl%po,iret)
+          call rwcdf(rw,ncid,'kin2d',(/1,1/),dv%kinrgy,iret)
+          call rwcdf(rw,ncid,'rsahi2d',(/1,1/),srw%rsahi,iret)
+          call rwcdf(rw,ncid,'rsana2d',(/1,1/),srw%rsana,iret)
+          call rwcdf(rw,ncid,'rrahi2d',(/1,1/),srw%rrahi,iret)
+          call rwcdf(rw,ncid,'rrana2d',(/1,1/),srw%rrana,iret)
+          call rwcdf(rw,ncid,'rcxhi2d',(/1,1/),srw%rcxhi,iret)
+          call rwcdf(rw,ncid,'rcxna2d',(/1,1/),srw%rcxna,iret)
+          call rwcdf(rw,ncid,'rqrad2d',(/1,1/),srw%rqrad,iret)
+          call rwcdf(rw,ncid,'fhe2d',(/1,1/),dv%fhe,iret)
+          call rwcdf(rw,ncid,'fhi2d',(/1,1/),dv%fhi,iret)
+          call rwcdf(rw,ncid,'fch2d',(/1,1/),dv%fch,iret)
+          call rwcdf(rw,ncid,'fna2d',(/1,1,1/),dv%fna,iret)
         endif
       endif
-#endif
       imap(1)=1
       imap(2)=1
       call rwcdf(rw,ncid,'fnixip',imap,fnixip,iret)
@@ -1169,18 +1192,36 @@ contains
       call rwcdf(rw,ncid,'fc3dl',imap,fch(0,iylstrt,0,0),iret)
       call rwcdf(rw,ncid,'fl3dl',imap,fne(0,iylstrt,0,0),iret)
       call rwcdf(rw,ncid,'fo3dl',imap,fni(0,iylstrt,0,0),iret)
-      imap(1)=nx+2     ! i
-      imap(2)=1
-      call rwcdf(rw,ncid,'ne3di',imap,ne(jxi,iyistrt),iret)
-      call rwcdf(rw,ncid,'te3di',imap,te(jxi,iyistrt),iret)
-      call rwcdf(rw,ncid,'ti3di',imap,ti(jxi,iyistrt),iret)
-      call rwcdf(rw,ncid,'po3di',imap,po(jxi,iyistrt),iret)
-      imap(1)=nx+2     ! a
-      imap(2)=1
-      call rwcdf(rw,ncid,'ne3da',imap,ne(jxa,iyastrt),iret)
-      call rwcdf(rw,ncid,'te3da',imap,te(jxa,iyastrt),iret)
-      call rwcdf(rw,ncid,'ti3da',imap,ti(jxa,iyastrt),iret)
-      call rwcdf(rw,ncid,'po3da',imap,po(jxa,iyastrt),iret)
+#endif
+      if (nimp.gt.0) then
+        imap(1)=1     ! i
+        imap(2)=1
+        allocate(slice(nimp))
+        slice(1:nimp)=dv%ne(imp(1:nimp))
+        call rwcdf(rw,ncid,'ne3di',imap,slice,iret)
+        slice(1:nimp)=pl%te(imp(1:nimp))
+        call rwcdf(rw,ncid,'te3di',imap,slice,iret)
+        slice(1:nimp)=pl%ti(imp(1:nimp))
+        call rwcdf(rw,ncid,'ti3di',imap,slice,iret)
+        slice(1:nimp)=pl%po(imp(1:nimp))
+        call rwcdf(rw,ncid,'po3di',imap,slice,iret)
+        deallocate(slice)
+      end if
+      if (nomp.gt.0) then
+        imap(1)=1     ! a
+        imap(2)=1
+        allocate(slice(nomp))
+        slice(1:nomp)=dv%ne(omp(1:nomp))
+        call rwcdf(rw,ncid,'ne3da',imap,slice,iret)
+        slice(1:nomp)=pl%te(omp(1:nomp))
+        call rwcdf(rw,ncid,'te3da',imap,slice,iret)
+        slice(1:nomp)=pl%ti(omp(1:nomp))
+        call rwcdf(rw,ncid,'ti3da',imap,slice,iret)
+        slice(1:nomp)=pl%po(omp(1:nomp))
+        call rwcdf(rw,ncid,'po3da',imap,slice,iret)
+        deallocate(slice)
+      end if
+#ifdef WG_TODO
       imap(1)=nx+2     ! br
       imap(2)=1
       call rwcdf(rw,ncid,'ne3dr',imap,ne(nx-target_offset,iyrstrt),iret)
@@ -1231,24 +1272,34 @@ contains
         enddo
       endif
       call rwcdf(rw,ncid,'an3dl',imap,slice(iylstrt),iret)
-      slice=0.0_R8
-      if (ismain0.ne.ismain) then
-        slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,ismain0)
-        do iatm=1,nnatmi
-          if (b2espcr(ismain0).eq.latmscl(iatm)) &
-           &  slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,iatm,1)
-        enddo
-      endif
-      call rwcdf(rw,ncid,'an3di',imap,slice(iyistrt),iret)
-      slice=0.0_R8
-      if (ismain0.ne.ismain) then
-        slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,ismain0)
-        do iatm=1,nnatmi
-          if (b2espcr(ismain0).eq.latmscl(iatm)) &
-           &  slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,iatm,1)
-        enddo
-      endif
-      call rwcdf(rw,ncid,'an3da',imap,slice(iyastrt),iret)
+#endif
+      imap(1)=1
+      imap(2)=1
+      if (nimp.gt.0) then
+        allocate(slice(nimp))
+        if (ismain0.ne.ismain) then
+          slice(1:nimp)=pl%na(imp(1:nimp),ismain0)
+          do iatm=1,nnatmi
+            if (b2espcr(ismain0).eq.latmscl(iatm)) &
+              &  slice(1:nimp)=slice(1:nimp)+dab2(imp(1:nimp),iatm,1)
+          enddo
+        endif
+        call rwcdf(rw,ncid,'an3di',imap,slice,iret)
+        deallocate(slice)
+      end if
+      if (nomp.gt.0) then
+        allocate(slice(nomp))
+        if (ismain0.ne.ismain) then
+          slice(1:nomp)=pl%na(omp(1:nomp),ismain0)
+          do iatm=1,nnatmi
+            if (b2espcr(ismain0).eq.latmscl(iatm)) &
+              &  slice(1:nomp)=slice(1:nomp)+dab2(omp(1:nomp),iatm,1)
+          enddo
+        endif
+        call rwcdf(rw,ncid,'an3da',imap,slice,iret)
+        deallocate(slice)
+      end if
+#ifdef WG_TODO
       slice=0.0_R8
       if (ismain0.ne.ismain) then
         slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,ismain0)
@@ -1278,14 +1329,25 @@ contains
         endif
         call rwcdf(rw,ncid,'an3dtr',imap,slice(iytrstrt),iret)
       endif
+#endif
       if (nnmoli.gt.0) then
-        slice=0.0_R8
+#ifdef WG_TODO
         slice(0:ny-1)=dmb2(1,1:ny,1,1)
         call rwcdf(rw,ncid,'mn3dl',imap,slice,iret)
-        slice(0:ny-1)=dmb2(jxi+1,1:ny,1,1)
-        call rwcdf(rw,ncid,'mn3di',imap,slice,iret)
-        slice(0:ny-1)=dmb2(jxa+1,1:ny,1,1)
-        call rwcdf(rw,ncid,'mn3da',imap,slice,iret)
+#endif
+        if (nimp.gt.0) then
+          allocate(slice(nimp))
+          slice(1:nimp)=dmb2(imp(1:nimp),1,1)
+          call rwcdf(rw,ncid,'mn3di',imap,slice,iret)
+          deallocate(slice)
+        end if
+        if (nomp.gt.0) then
+          allocate(slice(nomp))
+          slice(1:nomp)=dmb2(omp(1:nomp),1,1)
+          call rwcdf(rw,ncid,'mn3da',imap,slice,iret)
+          deallocate(slice)
+        end if
+#ifdef WG_TODO
         slice(0:ny-1)=dmb2(nx,1:ny,1,1)
         call rwcdf(rw,ncid,'mn3dr',imap,slice,iret)
         if (nnreg(0).ge.7) then
@@ -1294,8 +1356,10 @@ contains
           slice(0:ny-1)=dmb2(ixtr+1,1:ny,1,1)
           call rwcdf(rw,ncid,'mn3dtr',imap,slice,iret)
         endif
+#endif
       endif
     !
+#ifdef WG_TODO
       slice=0.0_R8
       do iy = iylstrt, iylend
         call calc_fet(-1,iy,'L',1._R8,nx,ny,ns,ismain,switch%BoRiS,slice(iy))
@@ -1320,14 +1384,66 @@ contains
         enddo
         call rwcdf(rw,ncid,'ft3dtr',imap,slice(iytrstrt),iret)
       endif
-      slice(-1:ny)=dna0(jxi,-1:ny,ismain)
-      call rwcdf(rw,ncid,'dn3di',imap,slice,iret)
-      slice(-1:ny)=dna0(jxa,-1:ny,ismain)
-      call rwcdf(rw,ncid,'dn3da',imap,slice,iret)
-      slice(-1:ny)=dpa0(jxi,-1:ny,ismain0)* (rza(jxi,-1:ny,ismain0)*te(jxi,-1:ny)+ti(jxi,-1:ny))
-      call rwcdf(rw,ncid,'dp3di',imap,slice,iret)
-      slice(-1:ny)=dpa0(jxa,-1:ny,ismain0)* (rza(jxa,-1:ny,ismain0)*te(jxa,-1:ny)+ti(jxa,-1:ny))
-      call rwcdf(rw,ncid,'dp3da',imap,slice,iret)
+#endif
+      if (nimp.gt.0) then
+        allocate(slice(nimp))
+        slice(1:nimp)=co%dna0(imp(1:nimp),ismain)
+        call rwcdf(rw,ncid,'dn3di',imap,slice,iret)
+        if (switch%tn_style.eq.0.or..not.is_neutral(ismain0)) then
+          slice(1:nimp)=co%dpa0(imp(1:nimp),ismain0)* &
+            &  (rt%rza(imp(1:nimp),ismain0)*pl%te(imp(1:nimp))+pl%ti(imp(1:nimp)))
+        else
+          slice(1:nimp)=co%dpa0(imp(1:nimp),ismain0)*pl%tn(imp(1:nimp))
+        end if
+        call rwcdf(rw,ncid,'dp3di',imap,slice,iret)
+        slice(1:nimp)=co%hce0(imp(1:nimp))/dv%ne(imp(1:nimp))
+        call rwcdf(rw,ncid,'ke3di',imap,slice,iret)
+        if (switch%tn_style.eq.0) then
+          slice(1:nimp)=co%hci0(imp(1:nimp))/dv%ni(imp(1:nimp),0)
+        else if (switch%tn_style.eq.1) then
+          slice(1:nimp)=co%hci0(imp(1:nimp))/dv%ni(imp(1:nimp),1)
+        else if (switch%tn_style.eq.2) then
+          slice(1:nimp)=co%hci0(imp(1:nimp))/(dv%ni(imp(1:nimp),0)-dv%nn(imp(1:nimp)))
+        end if
+        call rwcdf(rw,ncid,'ki3di',imap,slice,iret)
+        slice(1:nimp)=co%vla0(imp(1:nimp),0,ismain)
+        call rwcdf(rw,ncid,'vx3di',imap,slice,iret)
+        slice(1:nimp)=co%vla0(imp(1:nimp),1,ismain)
+        call rwcdf(rw,ncid,'vy3di',imap,slice,iret)
+        slice(1:nimp)=co%vsa0(imp(1:nimp),ismain)/(mp*am(ismain)*pl%na(imp(1:nimp),ismain))
+        call rwcdf(rw,ncid,'vs3di',imap,slice,iret)
+        deallocate(slice)
+      end if
+      if (nomp.gt.0) then
+        allocate(slice(nomp))
+        slice(1:nomp)=co%dna0(omp(1:nomp),ismain)
+        call rwcdf(rw,ncid,'dn3da',imap,slice,iret)
+        if (switch%tn_style.eq.0.or..not.is_neutral(ismain0)) then
+          slice(1:nomp)=co%dpa0(omp(1:nomp),ismain0)* &
+            &  (rt%rza(omp(1:nomp),ismain0)*pl%te(omp(1:nomp))+pl%ti(omp(1:nomp)))
+        else
+          slice(1:nomp)=co%dpa0(omp(1:nomp),ismain0)*pl%tn(omp(1:nomp))
+        end if
+        call rwcdf(rw,ncid,'dp3da',imap,slice,iret)
+        slice(1:nomp)=co%hce0(omp(1:nomp))/dv%ne(omp(1:nomp))
+        call rwcdf(rw,ncid,'ke3da',imap,slice,iret)
+        if (switch%tn_style.eq.0) then
+          slice(1:nomp)=co%hci0(omp(1:nomp))/dv%ni(omp(1:nomp),0)
+        else if (switch%tn_style.eq.1) then
+          slice(1:nomp)=co%hci0(omp(1:nomp))/dv%ni(omp(1:nomp),1)
+        else if (switch%tn_style.eq.2) then
+          slice(1:nomp)=co%hci0(omp(1:nomp))/(dv%ni(omp(1:nomp),0)-dv%nn(omp(1:nomp)))
+        end if
+        call rwcdf(rw,ncid,'ki3da',imap,slice,iret)
+        slice(1:nomp)=co%vla0(omp(1:nomp),0,ismain)
+        call rwcdf(rw,ncid,'vx3da',imap,slice,iret)
+        slice(1:nomp)=co%vla0(omp(1:nomp),1,ismain)
+        call rwcdf(rw,ncid,'vy3da',imap,slice,iret)
+        slice(1:nomp)=co%vsa0(omp(1:nomp),ismain)/(mp*am(ismain)*pl%na(omp(1:nomp),ismain))
+        call rwcdf(rw,ncid,'vs3da',imap,slice,iret)
+        deallocate(slice)
+      end if
+#ifdef WG_TODO
       slice(-1:ny)=fllim0fhi(jxi,-1:ny,1,1,ismain0)
       call rwcdf(rw,ncid,'lh3di',imap,slice,iret)
       slice(-1:ny)=fllim0fhi(jxa,-1:ny,1,1,ismain0)
@@ -1336,26 +1452,6 @@ contains
       call rwcdf(rw,ncid,'ln3di',imap,slice,iret)
       slice(-1:ny)=fllim0fna(jxa,-1:ny,1,1,ismain0)
       call rwcdf(rw,ncid,'ln3da',imap,slice,iret)
-      slice(-1:ny)=hce0(jxi,-1:ny)/ne(jxi,-1:ny)
-      call rwcdf(rw,ncid,'ke3di',imap,slice,iret)
-      slice(-1:ny)=hce0(jxa,-1:ny)/ne(jxa,-1:ny)
-      call rwcdf(rw,ncid,'ke3da',imap,slice,iret)
-      slice(-1:ny)=hci0(jxi,-1:ny)/ni(jxi,-1:ny,0)
-      call rwcdf(rw,ncid,'ki3di',imap,slice,iret)
-      slice(-1:ny)=hci0(jxa,-1:ny)/ni(jxa,-1:ny,0)
-      call rwcdf(rw,ncid,'ki3da',imap,slice,iret)
-      slice(-1:ny)=vla0(jxi,-1:ny,0,ismain)
-      call rwcdf(rw,ncid,'vx3di',imap,slice,iret)
-      slice(-1:ny)=vla0(jxa,-1:ny,0,ismain)
-      call rwcdf(rw,ncid,'vx3da',imap,slice,iret)
-      slice(-1:ny)=vla0(jxi,-1:ny,1,ismain)
-      call rwcdf(rw,ncid,'vy3di',imap,slice,iret)
-      slice(-1:ny)=vla0(jxa,-1:ny,1,ismain)
-      call rwcdf(rw,ncid,'vy3da',imap,slice,iret)
-      slice(-1:ny)=vsa0(jxi,-1:ny,ismain)/(mp*am(ismain)*na(jxi,-1:ny,ismain))
-      call rwcdf(rw,ncid,'vs3di',imap,slice,iret)
-      slice(-1:ny)=vsa0(jxa,-1:ny,ismain)/(mp*am(ismain)*na(jxa,-1:ny,ismain))
-      call rwcdf(rw,ncid,'vs3da',imap,slice,iret)
 #endif
     !
       imap(1)=1
@@ -1568,60 +1664,67 @@ contains
   end subroutine dealloc_b2mod_mwti
 #endif
 !
-  subroutine output_ds(ny,iref,target_offset, &
-       jsep,iystart,iyend,filename)
-    use b2mod_indirect
-    use b2mod_subsys
-    use b2mod_geo
+  subroutine output_ds_cv(geo,nlist,cvlist,isep,filename)
+    use b2us_geo
     implicit none
-    integer ny,iref,jsep,iystart,iyend,target_offset
+    type (geometry), intent(in) :: geo
+    integer nlist,isep
+    integer cvlist(nlist)
     real (kind=R8) :: &
-         ds(-1:ny), ds_offset
+         ds(nlist), ds_offset
     character*(*) filename
-    integer iy
-    external xertst
+    integer i
     intrinsic sqrt
 
-    call subini ('output_ds')
-    iystart=-1
-    do while (region(iref,iystart,0).eq.0 .and. iystart.lt.ny)
-      iystart=iystart+1
+    ds(1)= 0.0_R8
+    do i=2,nlist
+      ds(i)=ds(i-1)+ &
+           sqrt((geo%cvX(cvlist(i))-geo%cvX(cvlist(i-1)))**2+ &
+                (geo%cvY(cvlist(i))-geo%cvY(cvlist(i-1)))**2)
     enddo
-    call xertst(iystart.le.ny, 'faulty parameter iystart')
-    iyend=ny
-    do while (region(iref,iyend,0).eq.0 .and. iyend.gt.-1)
-      iyend=iyend-1
-    enddo
-    call xertst(iyend.ge.-1, 'faulty parameter iyend')
-    if(iystart.eq.ny.and.iyend.eq.-1) then
-      ! special case [DPC]
-      iystart=-1
-      iyend=ny
-      write(*,*) 'special treatment for iystart, iyend for ',trim(filename)
-    endif
-    call xertst(iyend.ge.iystart, 'faulty parameter iystart & iyend')
-    ds(iystart)= &
-         sqrt((cr(iref+target_offset,iystart)-0.5_R8*(crx(iref+target_offset,iystart,0)+crx(iref+target_offset,iystart,1)))**2+ &
-              (cz(iref+target_offset,iystart)-0.5_R8*(cry(iref+target_offset,iystart,0)+cry(iref+target_offset,iystart,1)))**2)
-    do iy=iystart+1,iyend
-      ds(iy)=ds(iy-1)+ &
-           sqrt((cr(iref+target_offset,iy)-cr(iref+target_offset,iy-1))**2+ &
-                (cz(iref+target_offset,iy)-cz(iref+target_offset,iy-1))**2)
-    enddo
-    if(iystart.le.jsep.and.iyend.gt.jsep) then
-      ds_offset=(ds(jsep)+ds(jsep+1))/2.0_R8
-      do iy=iystart,iyend
-        ds(iy)=ds(iy)-ds_offset
+    if(isep.ne.0) then
+      ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
+      do i=1,nlist
+        ds(i)=ds(i)-ds_offset
       enddo
     endif
     open(99,file=filename)
-    do iy=iystart,iyend
-      write(99,*) ds(iy)
+    do i=1,nlist
+      write(99,*) ds(i)
     enddo
     close(99)
-    call subend ()
     return
-  end subroutine output_ds
+  end subroutine output_ds_cv
+
+  subroutine output_ds_fc(geo,nlist,fclist,isep,filename)
+    use b2us_geo
+    implicit none
+    type (geometry), intent(in) :: geo
+    integer nlist,isep
+    integer fclist(nlist)
+    real (kind=R8) :: &
+         ds(nlist), ds_offset
+    character*(*) filename
+    integer i
+    intrinsic sqrt
+
+    ds(1)= 0.5_R8 * geo%fcHt(fclist(1))
+    do i=2,nlist
+      ds(i)=ds(i-1)+ 0.5 * (geo%fcHt(fclist(i-1)) + geo%fcHt(fclist(i)))
+    enddo
+    if(isep.ne.0) then
+      ds_offset=(ds(isep)+ds(isep+1))/2.0_R8
+      do i=1,nlist
+        ds(i)=ds(i)-ds_offset
+      enddo
+    endif
+    open(99,file=filename)
+    do i=1,nlist
+      write(99,*) ds(i)
+    enddo
+    close(99)
+    return
+  end subroutine output_ds_fc
 
 #ifdef WG_TODO
   subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)

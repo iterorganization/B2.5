@@ -1016,7 +1016,7 @@ c med
       call ipgeti ('b2tfnb_mdf', s % mdf_fnb)
       call ipgeti ('b2tfnb_pflux_cor', s % pflux_cor)
       call ipgeti ('b2news_poteq', s % pot_eq)
-      call ipgeti ('b2tfhe_no_current',s % no_current)
+      call ipgeti ('b2tfhe_no_current', s % no_current)
       call ipgeti ('b2stbc_sheath_drift_fix', s % sheath_drift_fix)
       call ipgeti ('b2stbc_secmodel', s % secmodel)
       call ipgeti ('b2stbc_fchy_dia_coreonly',
@@ -1027,7 +1027,7 @@ c med
       call ipgeti ('b2tlnl_ee', s %  icase_ee)
       call ipgeti ('b2tlnl_ei', s %  icase_ei)
       call ipgeti ('b2upht_stylec', s % stylec)
-      call ipgeti('b2xzdd_zero_dead_and_core', s % zero_dead_and_core)
+      call ipgeti ('b2xzdd_zero_dead_and_core', s % zero_dead_and_core)
       call ipgeti ('b2tqce_fke_Zhdanov', s % fke_Zhdanov)                  !srv 02.12.10
       call ipgeti ('b2trcl_conductive_limit', s % conductive_limit)        !srv 16.06.08
       call ipgeti ('b2trcl_core_cond_limit', s % core_cond_limit)          !csw 13mar2012
