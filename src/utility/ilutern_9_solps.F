@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_ma28_for_9diag
       use b2mod_indirect
+#ifdef _OPENMP
+      use b2mod_openmp
+#endif
       IMPLICIT NONE
 C
 
@@ -16,7 +19,11 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K
+#ifdef _OPENMP
       real (kind=R8) :: cpu_start, cpu_end
+#else
+      real (kind=R4) :: cpu_start, cpu_end
+#endif
       integer iflag
 
       real (kind=R8) ::
@@ -38,8 +45,14 @@ c ma28 common blocks
 c
 
 *  -- PROCEDURES --
-      INTRINSIC MOD, cpu_time
+      INTRINSIC cpu_time
       EXTERNAL XERRAB
+#ifdef _OPENMP
+#ifdef CRAY
+      real (kind=R8) :: omp_get_wtime
+      external omp_get_wtime
+#endif
+#endif
 
       integer ncall, nwrite
       integer, save :: kwrite_fmt = -1                                !srv 18.05.02
@@ -61,7 +74,11 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
+#ifdef _OPENMP
+      cpu_start = omp_get_wtime()
+#else
       call cpu_time(cpu_start)
+#endif
       iflag=0
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -219,7 +236,11 @@ cdpc
       enddo
 
 *  ---------------------------------------------------------------------
+#ifdef _OPENMP
+      cpu_end = omp_get_wtime()
+#else
       call cpu_time(cpu_end)
+#endif
       ncall=ncall+1
       RETURN
 *=======================================================================

@@ -87,7 +87,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, b2xvff, intface, diff
-      intrinsic abs, max, min, mod, sqrt, sign
+      intrinsic abs, max, sqrt
 *   ..initialisation
 
 *-----------------------------------------------------------------------

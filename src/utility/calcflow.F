@@ -47,8 +47,8 @@
 
 *   ..procedures
       real (kind=R8) ::
-     *   hybr, upwind, cvmgp
-      external cvmgp, upwind, hybr
+     *   hybr, upwind
+      external upwind, hybr
       intrinsic abs
 *-----------------------------------------------------------------------
 *.computation      

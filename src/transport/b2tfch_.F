@@ -138,8 +138,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
 #ifdef WG_TODO
 *     ..calculate the y-component of electron current associated with
 *       stochastization of magnetic field
-        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,   !srv 07.07.14
-     &    fchstoch)                                                      !srv 25.01.02 {
+        call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)          !srv 25.01.02 {
 #endif
 *     ..calculate the parallel current
         call b2tcpa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%te, pl%po,

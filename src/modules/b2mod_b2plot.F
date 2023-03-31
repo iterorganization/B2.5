@@ -26,8 +26,6 @@
      *  p2(:,:),
      *  xx(:,:),
      *  yy(:,:),
-     *  cr(:,:),
-     *  cz(:,:),
      *  nh(:,:),
      *  zeff(:,:),
      *  uutraj(:,:,:),
@@ -173,8 +171,6 @@ cank
       allocate(p2(2,nlim))
       allocate(xx(-1:nx,2))
       allocate(yy(-1:ny,2))     
-      allocate(cr(-1:nxd,-1:nyd))
-      allocate(cz(-1:nxd,-1:nyd))
       allocate(nh(-1:nxd,-1:nyd))
       allocate(zeff(-1:nxd,-1:nyd))
       allocate(uutraj(-1:nxd,-1:nyd,0:nsd-1))
@@ -273,8 +269,6 @@ cank
       deallocate(p2)
       deallocate(xx)
       deallocate(yy)     
-      deallocate(cr)
-      deallocate(cz)
       deallocate(nh)
       deallocate(zeff)
       deallocate(uutraj)

@@ -62,8 +62,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, itmax, cpu
-      parameter (itmax=100)
+      integer ncall, style, cpu
       real (kind=R8) ::
      *   acpar, cpu_start, cpu_end, c_end, c_start
 !      real (kind=R8), allocatable :: a(:)
@@ -72,7 +71,7 @@
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
-      intrinsic min, cpu_time
+      intrinsic cpu_time
       external xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization

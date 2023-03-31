@@ -1,6 +1,7 @@
 c
       subroutine trgz(ibnd)
       use b2mod_types
+      use b2mod_cellhelper
       use b2mod_wall
       use b2mod_b2plot
       use b2mod_b2plot_values
@@ -9,7 +10,7 @@ c
       character*14 ibstring
       character*256 tmpstring, titlestring
       real (kind=R8) ::
-     *   lmin,lmax,x1,x2,y1,y2,dist,xmin,xmax
+     *   lmin,lmax,xmin,xmax
       integer i,lnblnk
       external lnblnk
 
@@ -17,9 +18,8 @@ c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
 
-      intrinsic min,max,mod,sqrt
+      intrinsic min,max,mod
       external xertst
-      dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 c      if(nidim .ne. 1) call line(1)
       if(ndepth_nml.le.1) then
         write(*,*) 'This requires a 2-D target array!'
@@ -30,7 +30,7 @@ c      if(nidim .ne. 1) call line(1)
       lmax=target_stack(ibnd,1,itwrk)
       do i=2,ndepth_nml
         wwrk(i)=wwrk(i-1)+
-     1   dist(targetr(ibnd,i-1),targetz(ibnd,i-1),
+     1   points_dist(targetr(ibnd,i-1),targetz(ibnd,i-1),
      2        targetr(ibnd,i  ),targetz(ibnd,i  ))
         lmin=min(lmin,target_stack(ibnd,i,itwrk))
         lmax=max(lmax,target_stack(ibnd,i,itwrk))

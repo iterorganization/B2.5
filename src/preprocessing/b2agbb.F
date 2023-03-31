@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agbb (nx, ny, vol, gs, crx, cry, qz, fpsi, ffbz, bb)
+      subroutine b2agbb (nx, ny)
       use b2mod_types
+      use b2mod_geo
       use b2mod_math
       use b2mod_indirect
      , ,only : AverageVertex
@@ -10,14 +11,6 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
-      real (kind=R8) ::
-     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  qz(-1:nx,-1:ny,0:1), fpsi(-1:nx,-1:ny,0:3),
-     &  ffbz(-1:nx,-1:ny,0:3)
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     *   bb(-1:nx,-1:ny,0:3)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -44,10 +37,12 @@
 *     vol, crx, cry, qz - real*8 array, input.
 *     See the calling routine for description.
 *
-*     fpsi - (-1:nx,-1:ny,0:3) real*8 array, input.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i) specifies the
+*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array, input.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
 *     potential for the magnetic field components (bx,by) at the
 *     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
 *     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
 *     In the case of toroidal or cylindrical symmetry,
 *       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
@@ -73,15 +68,10 @@
 *.declarations
 
 *   ..local variables
-      integer ix, iy, i, j
+      integer ix, iy
       real (kind=R8) ::
      *   t0
 *   ..procedures
-      intrinsic sqrt
-      real (kind=R8) ::
-     *  cornerDist
-      cornerDist(ix,iy,i,j) = norm (
-     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
       external xertst
 
 *-----------------------------------------------------------------------
@@ -100,13 +90,13 @@
 *     ..compute magnetic field at cell center
         t0 = vol(ix,iy)/gs(ix,iy,2)
         bb(ix,iy,0) =
-     &   ((fpsi(ix,iy,2)-fpsi(ix,iy,0))*CornerDist(ix,iy,0,2)+
-     &    (fpsi(ix,iy,3)-fpsi(ix,iy,1))*CornerDist(ix,iy,1,3))
+     &   ((fpsi(ix,iy,2,0)-fpsi(ix,iy,0,0))*dist(ix,iy,0,2)+
+     &    (fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))*dist(ix,iy,1,3))
      &   /(2.0_R8*vol(ix,iy))
         bb(ix,iy,1) = 0.0_R8
 *!!     (Note: Consider to introduce nonzero bb(,,1), as below)
 *$$$    bb(ix,iy,1) =
-*$$$ &    -(fpsi(ix,iy,1)-fpsi(ix,iy,0)+fpsi(ix,iy,3)-fpsi(ix,iy,2))*
+*$$$ &    -(fpsi(ix,iy,1,0)-fpsi(ix,iy,0,0)+fpsi(ix,iy,3,0)-fpsi(ix,iy,2,0))*
 *$$$ &    hy(ix,iy)*qz(ix,iy,1)/(2.0_R8*vol(ix,iy))
         bb(ix,iy,2) = averageVertex
      &   (ffbz(ix,iy,0),crx(ix,iy,0),cry(ix,iy,0),

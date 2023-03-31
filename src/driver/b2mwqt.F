@@ -152,10 +152,13 @@
       real (kind=R8) ::
      *   z(0:nfldmx-1)
 *   ..procedures
-      intrinsic min, max
       real (kind=R8) ::
-     *   smin, b2ssum
-      external xertst, ipgeti, smin, b2ssum, cfwure
+     *   smin
+#ifdef WG_TODO
+      real (kind=R8) :: b2ssum
+      external b2ssum
+#endif
+      external xertst, ipgeti, smin, cfwure
 *-----------------------------------------------------------------------
 *.documentation-internal
 *

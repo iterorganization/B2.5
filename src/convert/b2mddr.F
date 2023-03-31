@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_version
       use b2mod_geo
+      use b2mod_math
       use b2mod_work
       use b2mod_plasma
       use b2mod_rates
@@ -41,7 +42,7 @@
 *   ..local variables
       integer k, is, idum(0:9), nscx, iscx(0:nscxmax-1), ismain
       integer external_species
-      real (kind=R8) :: BoRiS, t0, t1
+      real (kind=R8) :: BoRiS
 #ifdef WG_TODO
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
@@ -54,9 +55,7 @@
       save BoRiS, ismain, external_species
       data BoRiS/0.0_R8/, ismain/1/, external_species/0/
 *   ..procedures
-      intrinsic abs
-      logical ltst, is_comment
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      logical is_comment
       external is_comment
       external xertst, xerrab, cfruch, cfruin
       external b2rups, b2rugm, b2rucp, b2mds, ipgetr
@@ -112,10 +111,7 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
 #ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, qs, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc,
-     &  cell_width, cell_height, gmap)
+      call b2rugm (ninp(1), nx, ny, isymm)
 #endif
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')

@@ -352,12 +352,14 @@ contains
         & bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny)
 
     !! internal
-    integer :: ix, iy
+    integer :: i, ix, iy, counter
     logical :: rightFace, leftFace, topFace, botFace !! has ... face
     logical :: rightNb, leftNb, topNb, botNb !! has ... neighbour
     logical :: error, thisCellError !! error occurred
+    character*80 :: message
 
     error = .false.
+    counter = 0
 
     do ix = -1, nx
         do iy = -1, ny
@@ -423,15 +425,27 @@ contains
             end select
 
             if (thisCellError) then
-                write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
-                write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+                write(*,'(a,4f12.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+                write(*,'(a,4f12.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+                counter = counter + 1
                 error = .true.
             end if
 
         end do
     end do
 
-    if (error) stop "test_connectivity: error(s) found"
+    if (error) then
+      if (counter.eq.1) then
+        message = "test_connectivity: 1 error found"
+      else
+        write(message,'(a,i4,a)') "test_connectivity: ",counter," errors found"
+      end if
+#ifdef BUILDING_CARRE
+      stop "test_connectivity: error(s) found"
+#else
+      call xerrab ( message )
+#endif
+    end if
 
   return
   end subroutine test_connectivity
@@ -715,22 +729,14 @@ contains
     ! region it should belong to.
     !
 
-    integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType, iFace, offset
+    integer ix,iy,inseliy,inselix1,inselix2,iyt,geoType,iFace,offset
+    integer ix1,ix2
     integer ixpt,ixbreak
     integer lefttargetindex(2), righttargetindex(2)
     logical CellToTest
     intrinsic min, max
     !
-    real (kind=R8) :: &
-        &  dist
-    integer ix1,iy1,ip1,ix2,iy2,ip2
-    dist(ix1,iy1,ip1,ix2,iy2,ip2)= &
-        & sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+ &
-        &      (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
-    logical match
-    match(ix1,iy1,ix2,iy2)= &
-        & (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. &
-        & geom_match_dist
+    real (kind=R8) :: Xvertices(0:3), Yvertices(0:3)
     !
 #ifndef BUILDING_CARRE
     call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -762,7 +768,9 @@ contains
               ix = -1
               ix1 = -2
               do while (ix1.eq.-2 .and. ix.lt.nx)
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 CellToTest = cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.  &
             &               (cflag(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY .and. &
             &                cflag(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -777,7 +785,9 @@ contains
               ix = nx
               ix2 = -2
               do while (ix2.eq.-2 .and. ix.gt.-2)
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 CellToTest = cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.  &
             &               (cflag(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY .and. &
             &                cflag(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -958,7 +968,9 @@ contains
     do ix=-1,nx
         do iy=-1,ny
             if ( cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY ) cycle
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
 
             if ( cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED &
                  & .and. geoType /= CGEO_TRIA_NOLEFT ) &
@@ -1017,7 +1029,9 @@ contains
                 if (cflag(ix, iy, iFace) == BOUNDARY_NOSTRUCTURE) then
                     offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
                     cflag(ix, iy, iFace) = offset - region(ix, iy, 0)
-                    geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                    Xvertices(:) = crx(ix,iy,:)
+                    Yvertices(:) = cry(ix,iy,:)
+                    geoType = cellGeoType(Xvertices, Yvertices)
                     if (iFace == CELLFLAG_LEFTFACE .and. &
                       & geoType /= CGEO_TRIA_NOLEFT) then
                       cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_RIGHTFACE) =  &
@@ -1047,7 +1061,9 @@ contains
       lefttargetindex(1)=GRID_UNDEFINED
       do while (ix.ge.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
         if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (geoType /= CGEO_TRIA_NOLEFT .and. &
             & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
             lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
@@ -1073,7 +1089,9 @@ contains
       righttargetindex(1)=GRID_UNDEFINED
       do while (ix.le.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
         if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (geoType /= CGEO_TRIA_NORIGHT .and. &
             & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
@@ -1100,7 +1118,9 @@ contains
         ix = -1
         do while (ix.lt.nx .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
                  & region(ix,iy,1)=1
@@ -1117,7 +1137,9 @@ contains
         ix = nx
         do while (ix.gt.-1 .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(1) &
                  & .and. geoType /= CGEO_TRIA_NORIGHT) &
                  & region(rightix(ix,iy),rightiy(ix,iy),1)=2
@@ -1154,7 +1176,9 @@ contains
         iy = ny
         do while (iy.gt.inseliy .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
               & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
               & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1195,7 +1219,9 @@ contains
       lefttargetindex(1)=GRID_UNDEFINED
       do while (ix.gt.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
         if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (geoType /= CGEO_TRIA_NOLEFT .and. &
             & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
             lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
@@ -1221,7 +1247,9 @@ contains
       righttargetindex(1)=GRID_UNDEFINED
       do while (ix.lt.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
         if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (geoType /= CGEO_TRIA_NORIGHT .and. &
             & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
@@ -1248,7 +1276,9 @@ contains
         ix = -1
         do while (ix.lt.nx .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
                  & region(ix,iy,1)=1
@@ -1265,7 +1295,9 @@ contains
         ix = nx
         do while (ix.gt.-1 .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(1) &
                  & .and. geoType /= CGEO_TRIA_NORIGHT) &
                  & region(rightix(ix,iy),rightiy(ix,iy),1)=4*nncut
@@ -1319,7 +1351,9 @@ contains
         lefttargetindex(2)=GRID_UNDEFINED
         do while (ix.gt.ixbreak .and. lefttargetindex(2).eq.GRID_UNDEFINED)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (geoType /= CGEO_TRIA_NOLEFT .and. &
               & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
               lefttargetindex(2) = cflag(ix,iy,CELLFLAG_LEFTFACE)
@@ -1358,7 +1392,9 @@ contains
         righttargetindex(2)=GRID_UNDEFINED
         do while (ix.lt.ixbreak .and. righttargetindex(2).eq.GRID_UNDEFINED)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (geoType /= CGEO_TRIA_NORIGHT .and. &
               & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
               righttargetindex(2) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
@@ -1385,7 +1421,9 @@ contains
           ix = nx
           do while (ix.gt.ixbreak)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(2) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=5
               if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(2) &
@@ -1400,7 +1438,9 @@ contains
           ix = -1
           do while (ix.lt.ixbreak)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(2) &
                  & .and. geoType /= CGEO_TRIA_NORIGHT) &
                  & region(rightix(ix,iy),rightiy(ix,iy),1)=4
@@ -1417,12 +1457,16 @@ contains
       end if  ! DN
       do iy=topcut(1),iyt
 ! We find the location of the inner divertor throat: x-region 2
-        geoType = cellGeoType(crx(leftcut(1),iy,:), cry(leftcut(1),iy,:))
+        Xvertices(:) = crx(leftcut(1),iy,:)
+        Yvertices(:) = cry(leftcut(1),iy,:)
+        geoType = cellGeoType(Xvertices, Yvertices)
         if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE)) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
      &   region(leftcut(1),iy,1) = 2
 ! We find the location of the outer divertor throat: x-region 3 (1 X-point) or 7 (2 X-points)
-        geoType = cellGeoType(crx(rightcut(1),iy,:), cry(rightcut(1),iy,:))
+        Xvertices(:) = crx(rightcut(1),iy,:)
+        Yvertices(:) = cry(rightcut(1),iy,:)
+        geoType = cellGeoType(Xvertices, Yvertices)
         if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
      &   region(rightcut(1),iy,1) = 3 + 4*(nncut-1)
@@ -1430,12 +1474,16 @@ contains
       if (nncut.eq.2) then
         do iy=topcut(2),iyt
 ! We find the location of the inner upper divertor throat: x-region 3
-          geoType = cellGeoType(crx(leftcut(2),iy,:), cry(leftcut(2),iy,:))
+          Xvertices(:) = crx(leftcut(2),iy,:)
+          Yvertices(:) = cry(leftcut(2),iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (isRealCell(cflag(leftcut(2),iy,CELLFLAG_TYPE)) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
      &     region(leftcut(2),iy,1) = 3
 ! We find the location of the outer upper divertor throat: x-region 6
-          geoType = cellGeoType(crx(rightcut(2),iy,:), cry(rightcut(2),iy,:))
+          Xvertices(:) = crx(rightcut(2),iy,:)
+          Yvertices(:) = cry(rightcut(2),iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (isRealCell(cflag(rightcut(2),iy,CELLFLAG_TYPE)) &
                  & .and. geoType /= CGEO_TRIA_NOLEFT) &
      &     region(rightcut(2),iy,1) = 6
@@ -1448,7 +1496,9 @@ contains
         if(nncut.eq.1) then
           if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE))) &
       &    region(leftcut(1),iy,1)=5
-          geoType = cellGeoType(crx(rightcut(1),iy,:), cry(rightcut(1),iy,:))
+          Xvertices(:) = crx(rightcut(1),iy,:)
+          Yvertices(:) = cry(rightcut(1),iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) .and. &
             & cflag(rightcut(1), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED .and. &
             & geoType /= CGEO_TRIA_NOLEFT) region(rightcut(1),iy,1)=6
@@ -1458,7 +1508,9 @@ contains
           else
             if (isRealCell(cflag(leftcut(1),iy,CELLFLAG_TYPE))) region(leftcut(1),iy,1)=13
           endif
-          geoType = cellGeoType(crx(rightcut(1),iy,:), cry(rightcut(1),iy,:))
+          Xvertices(:) = crx(rightcut(1),iy,:)
+          Yvertices(:) = cry(rightcut(1),iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (isRealCell(cflag(rightcut(1),iy,CELLFLAG_TYPE)) .and. &
             & cflag(rightcut(1), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED) &
             & region(rightcut(1),iy,1)=12
@@ -1468,7 +1520,9 @@ contains
 ! x-region 13 is the connection between the two halves of the SOL section between the two separatrices
       if(nncut.eq.2) then
         do iy=bottomcut(2),topcut(2)-1
-          geoType = cellGeoType(crx(leftcut(2),iy,:), cry(leftcut(2),iy,:))
+          Xvertices(:) = crx(leftcut(2),iy,:)
+          Yvertices(:) = cry(leftcut(2),iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (isRealCell(cflag(leftcut(2),iy,CELLFLAG_TYPE)) .and. &
             & cflag(leftcut(2), iy, CELLFLAG_LEFTFACE) == GRID_UNDEFINED .and. &
             & geoType /= CGEO_TRIA_NOLEFT) region(leftcut(2),iy,1)=10
@@ -1505,7 +1559,9 @@ contains
         iy = -1
         do while (iy.lt.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(1) .and. &
               & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1) .and. &
               & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
@@ -1531,7 +1587,9 @@ contains
           iy = ny
           do while (iy.ge.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1589,7 +1647,9 @@ contains
             iy = ny
             do while (iy.ge.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
               if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
                   & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
                   & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1615,7 +1675,9 @@ contains
           iy = -1
           do while (iy.le.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
@@ -1638,7 +1700,9 @@ contains
           iy = ny
           do while (iy.gt.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1676,7 +1740,9 @@ contains
           do while (iy.ge.topcut(1) .and. iy.ge.topcut(2) .and. &
                   & cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2) .and. &
@@ -1707,7 +1773,9 @@ contains
           iy = -1
           do while (iy.lt.topcut(2) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
@@ -1733,7 +1801,9 @@ contains
           iy = ny
           do while (iy.ge.topcut(2) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1758,7 +1828,9 @@ contains
           iy = -1
           do while (iy.lt.topcut(2) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
@@ -1781,7 +1853,9 @@ contains
           iy = ny
           do while (iy.ge.topcut(2) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(2) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1818,7 +1892,9 @@ contains
           do while (iy.ge.topcut(1) .and. iy.ge.topcut(2) .and. &
                   & cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(2) .and. &
@@ -1849,7 +1925,9 @@ contains
           iy = -1
           do while (iy.le.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
@@ -1872,7 +1950,9 @@ contains
           iy = ny
           do while (iy.gt.topcut(1) .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
                 & cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1907,7 +1987,9 @@ contains
       lefttargetindex(1)=GRID_UNDEFINED
       do while (ix.le.nx .and. lefttargetindex(1).eq.GRID_UNDEFINED)
         if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (geoType /= CGEO_TRIA_NOLEFT .and. &
             & cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
             lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
@@ -1932,7 +2014,9 @@ contains
       righttargetindex(1)=GRID_UNDEFINED
       do while (ix.ge.-1 .and. righttargetindex(1).eq.GRID_UNDEFINED)
         if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
           if (geoType /= CGEO_TRIA_NORIGHT .and. &
             & cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
@@ -1957,7 +2041,9 @@ contains
         ix = -1
         do while (ix.lt.nx .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1) .and. &
               & geoType /= CGEO_TRIA_NOLEFT) &
               & region(ix,iy,1)=1
@@ -1974,7 +2060,9 @@ contains
         ix = nx
         do while (ix.gt.-1 .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_RIGHTFACE) == righttargetindex(1) .and. &
               & geoType /= CGEO_TRIA_NORIGHT) &
               & region(rightix(ix,iy),rightiy(ix,iy),1)=2
@@ -1994,7 +2082,9 @@ contains
         iy = -1
         do while (iy.lt.ny .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED .and. &
               & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= lefttargetindex(1) .and. &
               & cflag(ix, iy, CELLFLAG_BOTTOMFACE) /= righttargetindex(1) .and. &
@@ -2019,7 +2109,9 @@ contains
         iy = ny
         do while (iy.gt.-1 .and. cflag(ix,iy,CELLFLAG_TYPE) /= GRID_INTERNAL)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (cflag(ix, iy, CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
               & cflag(ix, iy, CELLFLAG_TOPFACE) /= lefttargetindex(1) .and. &
               & cflag(ix, iy, CELLFLAG_TOPFACE) /= righttargetindex(1) .and. &
@@ -2057,6 +2149,28 @@ contains
     enddo
 
     return
+
+  contains
+
+    function dist(ix1,iy1,ip1,ix2,iy2,ip2)
+    implicit none
+    integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
+    real (kind=R8) :: dist
+
+    dist= sqrt((crx(ix1,iy1,ip1)-crx(ix2,iy2,ip2))**2+ &
+        &      (cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))**2)
+    return
+    end function dist
+
+    logical function match(ix1,iy1,ix2,iy2)
+    implicit none
+    integer, intent(in) :: ix1, iy1, ix2, iy2
+
+    match = (dist(ix1,iy1,1,ix2,iy2,0)+dist(ix1,iy1,3,ix2,iy2,2)).lt. &
+          &  geom_match_dist
+    return
+    end function match
+
   end subroutine init_region
 
 
@@ -2173,7 +2287,11 @@ contains
         first = .false.
     end if
 
+#ifdef BUILDING_CARRE
     stop 'b2mod_connectivity.geometryId: unknown geometry'
+#else
+    call xerrab ( 'b2mod_connectivity.geometryId: unknown geometry' )
+#endif
 
   end function geometryId
 
@@ -2276,24 +2394,7 @@ contains
 !!$    lAbsTol = DEFAULTABSTOL
 !!$    if (present(absTol)) lAbsTol = absTol
 !!$
-!!$    pointsIdentical = ( dist(x1, y1, x2, y2) < lAbsTol )
-!!$
-!!$  contains
-!!$
-!!$    ! For two points (x0,y0), (x1,y1), compute distance between the points
-!!$    REAL(r8) FUNCTION dist(x0,y0,x1,y1)
-!!$
-!!$      !  arguments
-!!$      REAL(r8), intent(in) :: x0,y0,x1,y1
-!!$
-!!$      !  local variables
-!!$      REAL(r8) dx,dy
-!!$
-!!$      dx = x1 - x0
-!!$      dy = y1 - y0
-!!$
-!!$      dist = sqrt( dx**2 + dy**2 )
-!!$    END FUNCTION dist
+!!$    pointsIdentical = ( points_dist(x1, y1, x2, y2) < lAbsTol )
 !!$
 !!$  end function pointsIdentical
 

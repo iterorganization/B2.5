@@ -1,26 +1,29 @@
-      subroutine gnmap3 (xinp, yinp, xotp, yotp)
+      module b2mod_gnmap3
       use b2mod_types
       implicit none
-      integer nxmpd, nympd, nxmp, nymp
-      real (kind=R8) ::
-     *   xmp(0:nxmpd,0:nympd), ymp(0:nxmpd,0:nympd)
-      real (kind=R4) xinp, yinp, xotp, yotp
-*     ------------------------------------------------------------------
-*     GNMAP3 (together with the alternate entry GNDFM3) is a service
-*     routine for use with the CONPACK routines in the NCARG graphics
-*     package. It defines a curvilinear, logically rectangular map for
-*     CONPACK. The map is specified by a call to the entry gndfm3.
-*     ------------------------------------------------------------------
-      integer nmax2d, nxmap, nymap, kx, ky
+
+      integer, save :: nxmap, nymap
+      integer nmax2d
       parameter (nmax2d=20000)
       real (kind=R8) ::
      *   xmap1(0:nmax2d-1), ymap1(0:nmax2d-1)
-      save nxmap, nymap, xmap1, ymap1
+      save xmap1, ymap1
+      data nxmap/-1/, nymap/-1/
+
+      contains
+
+      subroutine gnmap3 (xinp, yinp, xotp, yotp)
+      implicit none
+      real (kind=R4) :: xinp, yinp, xotp, yotp
+*     ------------------------------------------------------------------
+*     GNMAP3 (together with the subroutine GNDFM3) is a service
+*     routine for use with the CONPACK routines in the NCARG graphics
+*     package. It defines a curvilinear, logically rectangular map for
+*     CONPACK. The map is specified by a call to the subroutine gndfm3.
+*     ------------------------------------------------------------------
+      integer kx, ky
       intrinsic nint, min, max
       external xertst
-      integer ind1d
-      ind1d(kx,ky) = kx+ky*(nxmap+1)
-      data nxmap/-1/, nymap/-1/
 *     ------------------------------------------------------------------
 *!!   Note: nmax2d must be set to a reasonable upper bound for the
 *     total number of mesh points.
@@ -46,22 +49,28 @@
       else
        kx = max(0,min(nxmap-1,nint(xinp-0.5_R8)))
        ky = max(0,min(nymap-1,nint(yinp-0.5_R8)))
-       xotp = (kx+1-xinp)*(ky+1-yinp)*xmap1(ind1d(kx,ky))+
-     &   (xinp-kx)*(ky+1-yinp)*xmap1(ind1d(kx+1,ky))+
-     &   (kx+1-xinp)*(yinp-ky)*xmap1(ind1d(kx,ky+1))+
-     &   (xinp-kx)*(yinp-ky)*xmap1(ind1d(kx+1,ky+1))
-       yotp = (kx+1-xinp)*(ky+1-yinp)*ymap1(ind1d(kx,ky))+
-     &   (xinp-kx)*(ky+1-yinp)*ymap1(ind1d(kx+1,ky))+
-     &   (kx+1-xinp)*(yinp-ky)*ymap1(ind1d(kx,ky+1))+
-     &   (xinp-kx)*(yinp-ky)*ymap1(ind1d(kx+1,ky+1))
+       xotp = (kx+1-xinp)*(ky+1-yinp)*real(xmap1(ind1d(kx,ky)),R4)+
+     &   (xinp-kx)*(ky+1-yinp)*real(xmap1(ind1d(kx+1,ky)),R4)+
+     &   (kx+1-xinp)*(yinp-ky)*real(xmap1(ind1d(kx,ky+1)),R4)+
+     &   (xinp-kx)*(yinp-ky)*real(xmap1(ind1d(kx+1,ky+1)),R4)
+       yotp = (kx+1-xinp)*(ky+1-yinp)*real(ymap1(ind1d(kx,ky)),R4)+
+     &   (xinp-kx)*(ky+1-yinp)*real(ymap1(ind1d(kx+1,ky)),R4)+
+     &   (kx+1-xinp)*(yinp-ky)*real(ymap1(ind1d(kx,ky+1)),R4)+
+     &   (xinp-kx)*(yinp-ky)*real(ymap1(ind1d(kx+1,ky+1)),R4)
       endif
       return
+      end subroutine gnmap3
 *     ------------------------------------------------------------------
-      entry gndfm3 (nxmpd, nympd, nxmp, nymp, xmp, ymp)
+      subroutine gndfm3 (nxmpd, nympd, nxmp, nymp, xmp, ymp)
+      implicit none
+      integer nxmpd, nympd, nxmp, nymp
+      real (kind=R8) ::
+     *   xmp(0:nxmpd,0:nympd), ymp(0:nxmpd,0:nympd)
+      integer kx, ky
       call xertst (1.le.nxmp.and.1.le.nymp,
-     &  'xndfm3--faulty argument nxmp, nymp')
+     &  'gndfm3--faulty argument nxmp, nymp')
       call xertst ((nxmp+1)*(nymp+1).le.nmax2d,
-     &  'xndfm3--insufficient internal memory')
+     &  'gndfm3--insufficient internal memory')
       nxmap = nxmp
       nymap = nymp
       do ky = nympd-nymp, nympd
@@ -71,5 +80,13 @@
        enddo
       enddo
       return
+      end subroutine gndfm3
 *     ------------------------------------------------------------------
-      end
+      integer function ind1d(kx,ky)
+      implicit none
+      integer, intent(in) :: kx, ky
+      ind1d = kx+ky*(nxmap+1)
+      return
+      end function ind1d
+
+      end module b2mod_gnmap3

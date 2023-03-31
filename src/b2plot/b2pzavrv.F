@@ -10,6 +10,7 @@ c***
 c***  zaveraev.dat with the data for V. Zaveryaev
 c----------------------------------------------------------------------
       use b2mod_diag
+      use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
@@ -81,7 +82,7 @@ c
             end if
           end do
           write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),
-     ,        (hlp_f(i),i=1,in),
+!WG_TODO     ,        (hlp_f(i),i=1,in),
      ,         ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
      ,         na(ix,iy,k1+1),na(ix,iy,k1)
 !WG_TODO     ,        ,dab2(ix+1,iy+1,k0,1)

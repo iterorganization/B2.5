@@ -57,11 +57,9 @@
       real (kind=R8) :: wrk0(nCv)
 #endif
 *   ..procedures
-      real (kind=R8) ::
-     *  samax, roxa
+      real (kind=R8) :: samax
       external xertst, samax, sfill
       external b2xvsg
-      roxa(iCv,is) = am(is)*mp*na(iCv,is)
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -379,5 +377,17 @@ cdjm Jan2017 Keep linearised sources for balance
 
 *-----------------------------------------------------------------------
 *.end b2stcx
+
+      contains
+
+      function roxa(iCv,is)
+      implicit none
+      real (kind=R8) :: roxa
+      integer, intent(in) :: iCv, is
+
+      roxa = am(is)*mp*na(iCv,is)
+
+      return
+      end function roxa
 
       end subroutine b2stcx

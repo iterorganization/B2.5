@@ -52,7 +52,7 @@
       integer, intent(in) :: nx, ny
       integer :: ix, iy, i, if1, if2, if3, if4, ic, ifc,
      .           vxFc_end, vxCv_end, icut, ix1, ix2, iy1, iy2,
-     .           ivx, ivx1, ivx2, nfx, mxreg, ift, icv, ifs,
+     .           ivx, ivx1, ivx2, mxreg, ift, icv, ifs,
      .           ifcc, icount, n2, ix2o, iy2o,
      .           ncorneri, nghostfcxi, nghostfcyi, ifcy,
      .           nghostvxi, ici, icg, ict, j, itmpx, itmpy, lix, liy,
@@ -545,7 +545,7 @@
      .             .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                     iy2 = iy2 + 1
                     if (iy2 == ny+1) then
-                      iy2 = iy2-1
+                      iy2 = iy2 - 1
                       do while ((ighostvx(ix2,iy2) == 0) .or.
      .                  .not.isUnusedCell
      .                      (cflags(ix2,iy2,CELLFLAG_TYPE)))
@@ -644,16 +644,25 @@
      .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                         iy2 = iy2 + 1
                         if (iy2 == ny+1) then
-                          iy2 = iy2-1
+                          iy2 = iy2 - 1
                           do while ((ighostvx(ix2,iy2) == 0) .or.
      .                      .not.isUnusedCell
      .                          (cflags(ix2,iy2,CELLFLAG_TYPE)))
                             iy2 = iy2 - 1
                             if (iy2 == 0) then
-                              write (*,*) 'ix,  iy  = ', ix, iy
-                              write (*,*) 'ix2, iy2 = ', ix2, iy2
-                              call xerrab
+                              ix2 = tix + 1
+                              iy2 = tiy
+                              do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                          .not.isUnusedCell
+     .                              (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                                ix2 = ix2 + 1
+                                if (ix2 == nx+1) then
+                                  write (*,*) 'ix,  iy  = ', ix, iy
+                                  write (*,*) 'ix2, iy2 = ', ix2, iy2
+                                  call xerrab
      .                          ('No suitable unused cell found (3).')
+                                endif
+                              enddo
                             endif
                           enddo
                         endif
@@ -801,16 +810,25 @@
      .                 .not.isUnusedCell(cflags(ix2,iy2,CELLFLAG_TYPE)))
                         iy2 = iy2 + 1
                         if (iy2 == ny+1) then
-                          iy2 = iy2-1
+                          iy2 = iy2 - 1
                           do while ((ighostvx(ix2,iy2) == 0) .or.
      .                      .not.isUnusedCell
      .                          (cflags(ix2,iy2,CELLFLAG_TYPE)))
                             iy2 = iy2 - 1
                             if (iy2 == 0) then
-                              write (*,*) 'ix,  iy  = ', ix, iy
-                              write (*,*) 'ix2, iy2 = ', ix2, iy2
-                              call xerrab
+                              ix2 = ix
+                              iy2 = iy + 1
+                              do while ((ighostvx(ix2,iy2) == 0) .or.
+     .                         .not.isUnusedCell
+     .                             (cflags(ix2,iy2,CELLFLAG_TYPE)))
+                                ix2 = ix2 + 1
+                                if (ix2 == nx+1) then
+                                  write (*,*) 'ix,  iy  = ', ix, iy
+                                  write (*,*) 'ix2, iy2 = ', ix2, iy2
+                                  call xerrab
      .                          ('No suitable unused cell found (4).')
+                                endif
+                              enddo
                             endif
                           enddo
                         endif
@@ -1216,7 +1234,7 @@
 
       write (*,*) 'face labels set ',count(m%fcLbl /= 0)
 
-      write (*,*) 'face lables '
+      write (*,*) 'face labels '
       do iFc = 1, m%nFc
         if (m%fcLbl(iFc) /= 0) write (*,*) iFc, m%fcLbl(iFc)
       end do
@@ -1361,7 +1379,6 @@
 
 ! list of cell faces and vertices for cells
 ! interpolation coefficients for interpolation to cell centers
-      nfx = (nx+1)*ny
       do iy = 0, ny+1
         do ix = 0, nx+1
           if ((m%imapCv(ix-1,iy-1) /= 0).and.
@@ -2063,21 +2080,16 @@
       implicit none
       integer, intent(in) :: nx, ny, nCv, nCi, nFc, nVx, nFs, nFt,
      .                       nVmxCv
-      integer :: ix, iy, ic, ifc, nfx, ivx, ift
+      integer :: ix, iy, ic, ifc, ivx, ift
 #ifdef WG_TODO
       integer :: i, j, idb, ivx1, ivx2
 #endif
-      real (kind=R8) :: hy1(-1:nx,-1:ny)
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
 #ifndef F2003
       integer newunit
       external newunit
 #endif
-
-      hy1 = hy*qz(:,:,1)
-
-      nfx = (nx+1)*ny
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -2418,7 +2430,6 @@
           st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
           st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
 
-
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
 
@@ -2513,7 +2524,6 @@
           st % co % hci_ExB(ic) = hci_ExB(ix,iy)
           st % co % cthe(ic,0:ns-1) = cthe(ix,iy,0:ns-1)
           st % co % cthi(ic,0:ns-1) = cthi(ix,iy,0:ns-1)
-
 
 ! kinetic energy
           st % dv % kinrgy(ic,0:ns-1) = kinrgy(ix,iy,0:ns-1)
@@ -2772,8 +2782,6 @@
         end if
       end do
 
-
-
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
@@ -2915,10 +2923,7 @@
         end do
       end do
 
-
-
 ! y faces
-
       do ix = 0, nx-1
         do iy = 0, ny
 !          ifc = nfx + iy+1 + ix*(ny+1)
@@ -3013,7 +3018,6 @@
           st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
           st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
 
-
 ! derived quantities
           st % dv % uadia(ifc,0:1,0:ns-1) =
      .              uadia(ix,iy,1,0:1,0:ns-1)
@@ -3046,7 +3050,6 @@
           st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
           st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
 
-
 ! B2PlasmaSnapshot
 !          st % psnl % fch(ifc,0:1) = fch(ix,iy,1,0:1)
 !          st % psnl % fna(ifc,0:1,0:ns-1) = fna(ix,iy,1,0:1,0:ns-1)
@@ -3075,8 +3078,6 @@
 
       end subroutine prep_plasma
 
-
-
 **********************************************************************
 
       subroutine prep_state (nx, ny, ns, nCv, nCi, nFc, mpg, st)
@@ -3090,6 +3091,8 @@
 
       call createB2Plasma( nCv, ns, st % pl )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
+
+!      nfx = (nx+1)*ny
 
       st % ns = ns
       st % ismain = 1
@@ -3206,10 +3209,7 @@
         end do
       end do
 
-
-
 ! y faces
-
       do ix = 0, nx-1
         do iy = 0, ny
 !          ifc = nfx + iy+1 + ix*(ny+1)
@@ -3273,7 +3273,6 @@
           st % dv % fhit(ifc,0:1) = fhit(ix,iy,1,0:1)
           st % dv % fhi_eir(ifc,0:1) = fhi_eir(ix,iy,1,0:1)
 
-
 ! derived quantities
           st % dv % uadia(ifc,0:1,0:ns-1) =
      .              uadia(ix,iy,1,0:1,0:ns-1)
@@ -3299,17 +3298,11 @@
           st % dv % floe_noc(ifc,0:1) = floe_noc(ix,iy,1,0:1)
           st % dv % floi_noc(ifc,0:1) = floi_noc(ix,iy,1,0:1)
 
-
           end if
         end do
       end do
 
-
-
       end subroutine prep_state
-
-
-
 
 **********************************************************************
 
@@ -3320,7 +3313,7 @@
       type(mapping), intent(in) :: mpg
       type(B2State), intent(in) :: st
       integer :: nx, ny, nCi, nCv, nFc
-      integer :: ix, iy, ic, ifc!, nfx
+      integer :: ix, iy, ic, ifc
       integer :: nout_st, io, idum(0:9)
       character lblst*120, lblps*120
 #ifndef F2003
@@ -3348,8 +3341,6 @@
       if (.not.allocated(resco)) call alloc_b2mod_residuals(nx,ny,ns)
       if (.not.allocated(rlqa))  call alloc_b2mod_rates(nx,ny,ns)
       if (.not.allocated(sch))   call alloc_b2mod_sources(nx,ny,ns)
-
-!      nfx = (nx+1)*ny
 
 ! cell volumes
       do iy = 0, ny-1
@@ -4004,7 +3995,6 @@
         enddo                                                         !srv 27.06.08 }
 #endif
 
-
 ! x faces
       do iy = 0, ny-1
         do ix = 0, nx
@@ -4139,10 +4129,7 @@
         end do
       end do
 
-
-
 ! y faces
-
       do ix = 0, nx-1
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
@@ -4239,7 +4226,6 @@
           fhit(ix,iy,1,0:1)    = st % dv % fhit(ifc,0:1)
           fhi_eir(ix,iy,1,0:1) = st % dv % fhi_eir(ifc,0:1)
 
-
 ! derived quantities
           uadia(ix,iy,1,0:1,0:ns-1) =
      .          st % dv % uadia(ifc,0:1,0:ns-1)
@@ -4278,15 +4264,12 @@
 !      aresco(0:ns-1) = st % diag % aresco(0:ns-1)
 !      aresmo(0:ns-1) = st % diag % aresmo(0:ns-1)
 
-
-
 !      rescoreg(0:nnreg(0),0:ns-1) =
 !     .         st % diag % rescoreg(0:nnreg(0),0:ns-1)
 !      resmoreg(0:nnreg(0),0:ns-1)
 !     .         st % diag % resmoreg(0:nnreg(0),0:ns-1)
 !      reshereg(0:nnreg(0)) = st % diag % reshereg(0:nnreg(0))
 !      reshireg(0:nnreg(0)) = st % diag % reshireg(0:nnreg(0))
-
 
 *   ..write b2fstate_st in structured format
 #ifdef F2003
@@ -4346,7 +4329,6 @@
 
       close(nout_st)
 
-
 *   ..deallocate modules for structured grid
       call dealloc_b2mod_plasma
       call dealloc_b2mod_transport
@@ -4356,13 +4338,10 @@
       call dealloc_b2mod_rates
       call dealloc_b2mod_sources
 
-
       return
       end subroutine to_struct_plasma
 
-
 ******************************************************************************
-
 
       subroutine prep_plasma_ext (nx, ny, ns, nCv, nCi, nFc, st_ext)
 
@@ -4376,9 +4355,7 @@
 
       end subroutine prep_plasma_ext
 
-
 ******************************************************************************
-
 
       subroutine conv_regions (nnreg)
         implicit none
@@ -4414,15 +4391,13 @@
       return
       end subroutine conv_regions
 
-
 ******************************************************************************
-
 
       subroutine conv_midplane(nx,ny)                                   !srv 16.11.22 {
         integer :: nx, ny
         real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
         real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
-        integer :: ix, iout, n_omp, n_imp
+        integer :: ix, iy, iout, n_omp, n_imp
 #ifndef F2003
         integer newunit
         external newunit
@@ -4437,37 +4412,49 @@
 
         if(nnreg(0).eq.8) then
           n_omp = rightcut(2)
+          iy = min(topcut(1),topcut(2))
           do ix = rightcut(2)+1, rightcut(1)-1
-            if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
+            if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
+            if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
         elseif(nnreg(0).ge.4) then
           n_omp = leftcut(1)
+          iy = topcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
-            if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
+            if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
+            if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
         else
           write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
           n_omp = (nx+2)/2
+          iy = ny/2
           do ix = -1, nx
-            if(abs(bb(ix,ny,2)).lt.abs(bb(n_omp,ny,2))) n_omp=ix
+            if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
+            if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
           enddo
         endif
+        write(*,*) ' Found OMP location at ix = ' , n_omp
+        do while (isRealCell(cflags(n_omp,iy+1,CELLFLAG_TYPE)))
+          iy = iy + 1
+        end do
         ro(1)=0.25_R8*(crx(n_omp,-1,0)+crx(n_omp,-1,1)+ ! R-coordinate of center of [n_omp,-1] cell
      &                 crx(n_omp,-1,2)+crx(n_omp,-1,3))
         zo(1)=0.25_R8*(cry(n_omp,-1,0)+cry(n_omp,-1,1)+ ! Z-coordinate of center of [n_omp,-1] cell
      &                 cry(n_omp,-1,2)+cry(n_omp,-1,3))
-        ro(2)=0.25_R8*(crx(n_omp,ny,0)+crx(n_omp,ny,1)+ ! R-coordinate of center of [n_omp,ny] cell
-     &                 crx(n_omp,ny,2)+crx(n_omp,ny,3))
-        zo(2)=0.25_R8*(cry(n_omp,ny,0)+cry(n_omp,ny,1)+ ! Z-coordinate of center of [n_omp,ny] cell
-     &                 cry(n_omp,ny,2)+cry(n_omp,ny,3))
+        ro(2)=0.25_R8*(crx(n_omp,iy,0)+crx(n_omp,iy,1)+ ! R-coordinate of center of [n_omp,ny] cell
+     &                 crx(n_omp,iy,2)+crx(n_omp,iy,3))
+        zo(2)=0.25_R8*(cry(n_omp,iy,0)+cry(n_omp,iy,1)+ ! Z-coordinate of center of [n_omp,ny] cell
+     &                 cry(n_omp,iy,2)+cry(n_omp,iy,3))
         if(ro(2).gt.ro(1)) then
-         rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
-         rzomp(2,1)=zo(1)+(rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1)) ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
-         rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
-         rzomp(2,2)=zo(1)+(rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1)) ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+          rzomp(1,1)=ro(1)*0.9_R8                                         ! take a coordinate to the left of ro(1)
+          rzomp(2,1)=zo(1)+                                               ! calculate, corresponding to rzomp(1,1), Z-coordinate of point
+     &              (rzomp(1,1)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
+          rzomp(1,2)=ro(2)*1.1_R8                                         ! take a coordinate to the right of ro(2)
+          rzomp(2,2)=zo(1)+                                               ! calculate, corresponding to rzomp(1,2), Z-coordinate of point
+     &              (rzomp(1,2)-ro(1))*(zo(2)-zo(1))/(ro(2)-ro(1))        ! laying on the straight line going through the points ro(1),zo(1) and ro(2),zo(2)
         else
+          write(*,*) ' ro(1:2) :', ro(1), ro(2)
+          write(*,*) ' zo(1:2) :', zo(1), zo(2)
           call xerrab('conv_midplane: unexpected coordinates for rzomp')
         endif
 
@@ -4475,39 +4462,51 @@
 
         if(nnreg(0).eq.8) then
           n_imp = leftcut(2)
+          iy = min(topcut(1),topcut(2))
           do ix = leftcut(1)+1, leftcut(2)-1
-            if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
+            if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
+            if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
         elseif(nnreg(0).ge.4) then
           n_imp = leftcut(1)
+          iy = topcut(1)
           do ix = leftcut(1)+1, rightcut(1)-1
-            if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
+            if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
+            if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
         else
           write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
           n_imp = (nx+2)/4
+          iy = ny/2
           do ix = -1, nx
-            if(abs(bb(ix,ny,2)).gt.abs(bb(n_imp,ny,2))) n_imp=ix
+            if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
+            if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
           enddo
         endif
+        write(*,*) ' Found IMP location at ix = ' , n_imp
+        do while (isRealCell(cflags(n_imp,iy+1,CELLFLAG_TYPE)))
+          iy = iy + 1
+        end do
 
-        ri(1)=0.25_R8*(crx(n_imp,ny,0)+crx(n_imp,ny,1)+ ! R-coordinate of center of [n_imp,ny] cell
-     &                 crx(n_imp,ny,2)+crx(n_imp,ny,3))
-        zi(1)=0.25_R8*(cry(n_imp,ny,0)+cry(n_imp,ny,1)+ ! Z-coordinate of center of [n_imp,ny] cell
-     &                 cry(n_imp,ny,2)+cry(n_imp,ny,3))
+        ri(1)=0.25_R8*(crx(n_imp,iy,0)+crx(n_imp,iy,1)+ ! R-coordinate of center of [n_imp,ny] cell
+     &                 crx(n_imp,iy,2)+crx(n_imp,iy,3))
+        zi(1)=0.25_R8*(cry(n_imp,iy,0)+cry(n_imp,iy,1)+ ! Z-coordinate of center of [n_imp,ny] cell
+     &                 cry(n_imp,iy,2)+cry(n_imp,iy,3))
         ri(2)=0.25_R8*(crx(n_imp,-1,0)+crx(n_imp,-1,1)+ ! R-coordinate of center of [n_imp,-1] cell
      &                 crx(n_imp,-1,2)+crx(n_imp,-1,3))
         zi(2)=0.25_R8*(cry(n_imp,-1,0)+cry(n_imp,-1,1)+ ! Z-coordinate of center of [n_imp,-1] cell
      &                 cry(n_imp,-1,2)+cry(n_imp,-1,3))
 
         if(ri(2).gt.ri(1)) then
-         rzimp(1,1)=ri(1)*0.9_R8                                         ! take a coordinate to the left of ri(1)
-         rzimp(2,1)=zi(1)+(rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1)) ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
-         rzimp(1,2)=ri(2)*1.1_R8                                         ! take a coordinate to the right of ri(2)
-         rzimp(2,2)=zi(1)+(rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1)) ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
-                                                                         ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+          rzimp(1,1)=ri(1)*0.9_R8                                         ! take a coordinate to the left of ri(1)
+          rzimp(2,1)=zi(1)+                                               ! calculate, corresponding to rzimp(1,1), Z-coordinate of point
+     &              (rzimp(1,1)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))        ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
+          rzimp(1,2)=ri(2)*1.1_R8                                         ! take a coordinate to the right of ri(2)
+          rzimp(2,2)=zi(1)+                                               ! calculate, corresponding to rzimp(1,2), Z-coordinate of point
+     &              (rzimp(1,2)-ri(1))*(zi(2)-zi(1))/(ri(2)-ri(1))        ! laying on the straight line going through the points ri(1),zi(1) and ri(2),zi(2)
         else
+          write(*,*) ' ri(1:2) :', ri(1), ri(2)
+          write(*,*) ' zi(1:2) :', zi(1), zi(2)
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
 
@@ -4545,7 +4544,6 @@
       end subroutine conv_midplane                                       !srv 16.11.22 }
 
 ******************************************************************************
-
 
       end module b2us_prep
 

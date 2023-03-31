@@ -62,7 +62,8 @@ c
       enddo
 
 c special treatment of standard X-points
-      do iy = 0, ny-1                                                    !xpb
+      if (nncut.gt.0) then
+       do iy = 0, ny-1                                                   !xpb
         do ix = 0, nx-1                                                  !xpb
 !          if(leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2 .and.
 !     .       leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.                 !xpb
@@ -110,7 +111,8 @@ cxpb Check that this is a standard X-point                               !xpb
           endif                                                          !xpb
          endif
         enddo                                                            !xpb
-      enddo                                                              !xpb
+       enddo                                                             !xpb
+      endif
 
 c special treatment of diverted island X-points                          !xpb
       do iy = -1, ny-1                                                   !xpb

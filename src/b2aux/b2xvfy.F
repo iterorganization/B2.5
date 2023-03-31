@@ -16,9 +16,7 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       integer ix
-      real (kind=R8) ::
-     *   samax
-      external xertst, samax
+      external xertst
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfy')
       vrnam0 = vrname
@@ -56,9 +54,7 @@
 *     -----------------------------------------------------------------
       character vrnam0*8
       integer ix
-      real (kind=R8) ::
-     *   samax
-      external xertst, samax
+      external xertst
 *     -----------------------------------------------------------------
 *$$$  call subini ('b2xvfy1')
       vrnam0 = vrname

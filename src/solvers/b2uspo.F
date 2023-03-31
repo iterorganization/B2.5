@@ -49,10 +49,8 @@
       real (kind=R8) :: t1, t2, t3, t11, t22
       logical lnonzero
 *   ..procedures
-      intrinsic min
       external xertst, sfill
       external b2xvsg, b2xvff, b2ux5p
-*   ..initialisation
 
 *-----------------------------------------------------------------------
 *.computation
@@ -189,7 +187,7 @@
       enddo
 
 *   ..solve the correction equation
-      write(*,*) 'Calling b2uxus from '//trim(name)
+      write(*,'(1x,a,a)') 'Calling b2uxus from '//trim(name)
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
 
       if (switch%b2uspo_iout.ne.0) then                                          !srv 08.07.08 {

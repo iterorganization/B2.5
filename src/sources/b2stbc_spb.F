@@ -1,12 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, !sv 09.01.01
-     1  qz, pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po,   !sv 14.10.99 12.05.00 09.01.01
-     &  ne, ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,   !sv 13.10.06
+      subroutine b2stbc_spb (nx, ny, ns, facdrift,                      !sv 09.01.01
+     1  na, ua, uadia, vaecrb, vadia, te, ti, po, ne, ni,               !sv 14.10.99 12.05.00 09.01.01
+     &  floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,           !sv 13.10.06
      &  fhePSch, fhiPSch, fne, fni, fch,                                !sv 25.02.00 21.10.02 28.10.02 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !sv 21.10.02
      &  sna0, smo0, she0, shi0, sch0, wrong_flow, switch)               !sv 09.07.99 01.07.05
       use b2mod_types
+      use b2mod_geo
       use b2mod_indirect
       use b2mod_anomalous_transport
       use b2mod_boundary_namelist
@@ -23,10 +24,7 @@
       type (switches), intent (in) :: switch
       integer nx, ny, ns
       real (kind=R8) ::
-     *  facdrift(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),       !sv 09.07.99
-     *  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),       !sv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), !sv
-     1  bb(-1:nx,-1:ny,0:3)
+     *  facdrift(-1:nx,-1:ny)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      1  uadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -75,8 +73,6 @@
      6  s0hz, s1hz, vwest, veast, vminus, vplus  !, v0                !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
      *  pz(-1:nx,-1:ny)                                               !sv 18.01.02
-      real (kind=R8) ::
-     *   UBIG, VBIG, UP00, EPSLON, NE00
       integer, save :: boundary_namelist = 0
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0         !sv 08.08.02 14.02.05
       integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
@@ -89,7 +85,7 @@
      &  ,pzaverage, pzsum, volsum                                     !sv 24.03.99 18.01.02
      &  ,ua2sum, ua2average(0:ns-1)                                   !sv 07.04.00 15.02.02
      &  ,uasum, uaaverage(0:ns-1)                                     !sv 15.02.02
-     &  ,nesum, neaverage, tisum, tiaverage, tesum, teaverage         !sv 15.12.00 25.01.02
+     &  ,nesum, tisum, tiaverage, tesum                               !sv 15.12.00 25.01.02
      &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                   !sv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage                          !lk 20.11.07
       real (kind=R8) :: fchy_inertia                                  !sv 07.04.00
@@ -115,14 +111,10 @@
       integer, save :: iout = 0, k                                    !sv 11.07.05
       save ncall, sna0ep, she0ep, shi0ep
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log
-      real (kind=R8) ::
-     *   machsfr, b2ssum, expu2, hy1
-      external xertst, machsfr, sfill, b2ssum, b2saxpy
-      external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz, expu2                 !sv 18.01.02
-*     (expu2 is the exponential function with underflow set to 0 and
-*     large values limited at a somehwat arbitrary level.)
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+      intrinsic min, max, abs, sqrt
+      real (kind=R8) :: b2ssum
+      external xertst, sfill, b2ssum, b2saxpy
+      external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                 !sv 18.01.02
 *   ..initialization
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1 shi0ep/1.0e-36_R8/
@@ -216,23 +208,13 @@
       call b2saxpy (n2, she0ep, vol, 1, she0(-1,-1,0), 1)
       call b2saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
 
-*  -- INITIALIZE CERTAIN CONSTANTS --
-         EPSLON = 1.e-10_R8
-*  -- SET NE00, UP00, UBIG, VBIG --
-         NE00   = 1.0e20_R8
-         UP00   = SQRT(100*EV/MP)
-         UBIG   = UP00 / EPSLON
-         VBIG   = 1.0e-2_R8*UBIG
-
       if(boundary_namelist.eq.0) then
        write(*,*) 'Doing spb B2.5-style bc'
 
 * ..compute conditions at south boundary
 *   ..initialize ireg
        ireg = cbirso
-#ifdef WG_TODO
-       call b2xppz (nx, ny, ns, ne, na, te, ti, pz)               !sv 18.01.02
-#endif
+       call b2xppz_st (nx, ny, ns, ne, na, te, ti, pz)            !sv 18.01.02
 *   ..find the average pressure for inner flux surface            !sv 24.03.99
        if (istyle_average_pr.eq.0) then                           !sv 08.08.02
         iy = -1                                                   !sv 24.03.99
@@ -277,9 +259,7 @@
         endif                                                     !sv 26.11.02
        enddo                                                      !sv 15.12.00
        bbaverage=bbsum/volsum                                     !sv 18.10.04
-       neaverage=nesum/volsum                                     !sv 15.12.00 25.01.02
        tiaverage=tisum/volsum                                     !sv 15.12.00
-       teaverage=tesum/volsum                                     !sv 15.12.00
        bzhzaverage=bzhzsum/volsum                                 !lk 20.11.07
 *   ..find the average ua**2, na for inner flux surface           !sv 22.01.02 {
        do is = 0, ns-1

@@ -1,6 +1,7 @@
-      subroutine b2pinp(*)
+      subroutine b2pinp(iret)
       use b2mod_types
       implicit none
+      integer iret
 #include <DIMENSIONS.F>
 c
 c  version : 11.11.97 21:29
@@ -18,6 +19,7 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
 c*** Set up the input routine
 c
+      iret=0
       lena=8
       jmess=2
       lfin=72
@@ -41,7 +43,8 @@ c*** ... and read the data from dg
       return
 c----------------------------------------------------------------------
   998 print *,'Error opening the file ',ufile
-      return 1
+      iret=1
+      return
 c----------------------------------------------------------------------
       end subroutine b2pinp
 c
@@ -64,19 +67,19 @@ c----------------------------------------------------------------------
 #include "impcon.inc"
       integer nnns
       real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
-      parameter (nnns=22)
+      parameter (nnns=23)
       character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
      2        'p2      ','segmlist','plotzone','jedgi1  ','jedgi2  ',
      3        'jedgo1  ','jedgo2  ','elemlist','sol_edge','pfr_edge',
      4        'trg_spcf','pltz_lbl','misselem','skipelem','shdw_str',
-     5        'radpower','sources '/
+     5        'radpower','sources ','gleirdat'/
       integer i, j
-      integer ll, lt, luswch, luskel
+      integer ll, lt, luswch
       logical streql
       external streql
-      data ll / 0 /, luswch / 0 /, lt / 0 /, luskel / 0 /
+      data ll / 0 /, luswch / 0 /, lt / 0 /
       save
 c======================================================================
 c
@@ -176,11 +179,11 @@ c*** Plotzone label
         lena=i
       case (18:19)
 c*** Elements not for Eirene
-        call rearri(luwrk(luskel+1),nlim-luskel,i)
-        do j = luskel+1, luskel+i
-          lskip(luwrk(j)) = .true.
+        call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
+        do j = nskipel+1, nskipel+i
+          lskip(lskipel(j)) = .true.
         end do
-        luskel=i+luskel
+        nskipel=nskipel+i
       case (20)
 c*** Shadowing structure
         ll=1
@@ -199,6 +202,10 @@ c*** Coordinates of the additional source points
           addsrc_xy(1,i)=0.001_R8*add_srci(1,i)
           addsrc_xy(2,i)=0.001_R8*add_srci(2,i)
         end do
+c*** DG v. 2.0 or later
+      case (23)
+        call resimi(i)
+        lvdg20=.true.
       case default
         call scipit
       end select

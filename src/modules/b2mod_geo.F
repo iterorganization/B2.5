@@ -36,8 +36,8 @@
 
       logical, save :: b2mod_geo_allocated = .false.
 
-      public :: distc, match
-      public :: sy
+      public :: abs_diff, dist, disx, disy, distc, match
+      public :: cr, cz, hy1, pit, sy
 
       contains
 
@@ -122,17 +122,7 @@
       implicit none
       integer nread, nx, ny, n2
       integer ix, iy
-      real (kind=R8) ::
-     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      intrinsic min, max
-      real (kind=R8) ::
-     *   trim1, cosang, sinang
-      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
-      sinang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1x+p0y*p1y)/(norm(p0x,p0y)*norm(p1x,p1y)))
-      cosang(p0x,p0y,p1x,p1y) = trim1(
-     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
       external cfrure, cfrure_opt, xerrab
 
       n2 = (nx+2)*(ny+2)
@@ -538,6 +528,7 @@ c conn
       integer ixbreak
       integer lefttargetindex(2), righttargetindex(2)
       logical CellToTest
+      real(kind=R8) :: Xvertices(0:3), Yvertices(0:3)
     !
 #ifndef BUILDING_CARRE
       call ipgetr ('b2agfs_geom_match_dist', geom_match_dist)
@@ -569,7 +560,9 @@ c conn
               ix = -1
               ix1 = -2
               do while (ix1.eq.-2 .and. ix.lt.nx)
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 CellToTest =
      &            cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
      &           (cflag(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
@@ -585,7 +578,9 @@ c conn
               ix = nx
               ix2 = -2
               do while (ix2.eq.-2 .and. ix.gt.-2)
-                geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+                Xvertices(:) = crx(ix,iy,:)
+                Yvertices(:) = cry(ix,iy,:)
+                geoType = cellGeoType(Xvertices, Yvertices)
                 CellToTest =
      &            cflag(ix,iy,CELLFLAG_TYPE) == GRID_INTERNAL .or.
      &           (cflag(ix,iy,CELLFLAG_TYPE) == GRID_BOUNDARY .and.
@@ -775,7 +770,9 @@ c conn
       do ix=-1,nx
         do iy=-1,ny
           if ( cflag(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY ) cycle
-          geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+          Xvertices(:) = crx(ix,iy,:)
+          Yvertices(:) = cry(ix,iy,:)
+          geoType = cellGeoType(Xvertices, Yvertices)
 
           if ( cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED
      &        .and. geoType /= CGEO_TRIA_NOLEFT )
@@ -821,7 +818,9 @@ c conn
             if (cflag(ix, iy, iFace) == BOUNDARY_NOSTRUCTURE) then
               offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
               cflag(ix, iy, iFace) = offset - region(ix, iy, 0)
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (iFace == CELLFLAG_LEFTFACE .and.
      &            geoType /= CGEO_TRIA_NOLEFT) then
                 cflag(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_RIGHTFACE) =
@@ -851,7 +850,9 @@ c conn
         lefttargetindex(1)=GRID_UNDEFINED
         do while (ix.ge.-1 .and. lefttargetindex(1).eq.GRID_UNDEFINED)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (geoType /= CGEO_TRIA_NOLEFT .and.
      &          cflag(ix, iy, CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
               lefttargetindex(1) = cflag(ix,iy,CELLFLAG_LEFTFACE)
@@ -888,7 +889,9 @@ c conn
         righttargetindex(1)=GRID_UNDEFINED
         do while (ix.le.nx .and. righttargetindex(1).eq.GRID_UNDEFINED)
           if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-            geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+            Xvertices(:) = crx(ix,iy,:)
+            Yvertices(:) = cry(ix,iy,:)
+            geoType = cellGeoType(Xvertices, Yvertices)
             if (geoType /= CGEO_TRIA_NORIGHT .and.
      &       cflag(ix, iy, CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
               righttargetindex(1) = cflag(ix,iy,CELLFLAG_RIGHTFACE)
@@ -926,7 +929,9 @@ c conn
           do while (ix.lt.nx
      &     .and. cflag(ix, iy, CELLFLAG_TYPE) /= GRID_INTERNAL)
             if (cflag(ix, iy, CELLFLAG_TYPE) == GRID_BOUNDARY) then
-              geoType = cellGeoType(crx(ix,iy,:), cry(ix,iy,:))
+              Xvertices(:) = crx(ix,iy,:)
+              Yvertices(:) = cry(ix,iy,:)
+              geoType = cellGeoType(Xvertices, Yvertices)
               if (cflag(ix, iy, CELLFLAG_LEFTFACE) == lefttargetindex(1)
      &            .and. geoType /= CGEO_TRIA_NOLEFT) region(ix,iy,1)=1
               if (cflag(ix, iy, CELLFLAG_TOPFACE) == lefttargetindex(1)
@@ -2087,6 +2092,37 @@ c conn
       return
       end subroutine init_region_extended
 
+      function abs_diff(p1,p2)
+      implicit none
+      real(kind=R8) :: abs_diff, p1, p2
+      abs_diff = abs(p1-p2)
+      return
+      end function abs_diff
+
+      function cr(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cr
+      cr = 0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
+      return
+      end function cr
+
+      function cz(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: cz
+      cz = 0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+      return
+      end function cz
+
+      function dist(ix,iy,i,j)
+      implicit none
+      integer, intent(in) :: ix, iy, i, j
+      real(kind=R8) :: dist
+      dist = norm(crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      return
+      end function dist
+
       function distc(ix1,iy1,ip1,ix2,iy2,ip2)
       implicit none
       integer, intent(in) :: ix1, iy1, ip1, ix2, iy2, ip2
@@ -2095,6 +2131,32 @@ c conn
      .             cry(ix1,iy1,ip1)-cry(ix2,iy2,ip2))
       return
       end function distc
+
+      function disx(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: disx
+      disx = (dist(bottomix(ix,iy),bottomiy(ix,iy),2,3)+
+     1        dist(ix,iy,0,1))/2.0_R8
+      return
+      end function disx
+
+      function disy(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: disy
+      disy = (dist(leftix(ix,iy),leftiy(ix,iy),1,3)+
+     1        dist(ix,iy,0,2))/2.0_R8
+      return
+      end function disy
+
+      function hy1(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: hy1
+      hy1 = hy(ix,iy)*qz(ix,iy,1)
+      return
+      end function hy1
 
       logical function match(ix1,iy1,ix2,iy2)
       implicit none
@@ -2124,6 +2186,14 @@ c conn
      & geom_match_dist
       return
       end function matchBottom
+
+      function pit(ix,iy)
+      implicit none
+      integer, intent(in) :: ix, iy
+      real(kind=R8) :: pit
+      pit = sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
+      return
+      end function pit
 
       function sy(ix,iy)
       use b2mod_indirect

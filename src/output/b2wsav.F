@@ -76,8 +76,7 @@
        call b2xpxc (nx, ny, ua(-1,-1,is), uac(-1,-1,is))
       enddo
 *   ..produce output
-      call b2wsax (nsav, nx, ny, ns, lblgm, crx, cry, bb, vol,
-     &  hx, hy, qz, qc, qs, gs, pbs, cell_width, cell_height,
+      call b2wsax (nsav, nx, ny, ns, lblgm,
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, ne, ne2, rz2, pr, uac)
 
 * ..return
