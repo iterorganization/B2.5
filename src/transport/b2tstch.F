@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne,          !srv 07.07.14
-     *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
+      subroutine b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)     !lk 31.01.08 {
       use b2mod_types
+      use b2mod_geo
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
@@ -13,9 +13,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3)
+     & po(-1:nx,-1:ny),
+     1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      & csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)
@@ -41,13 +40,9 @@
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
-      intrinsic max, abs
-      real (kind=R8) ::
-     *   hy1                                                            !srv 07.07.14
       external ipgetr, ipgeti, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 04.07.14
 *   ..initialization
       data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
 *-----------------------------------------------------------------------

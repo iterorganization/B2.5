@@ -825,6 +825,7 @@ c
         read(lun,*,err=155,end=155) tdummy
       end do
   155 continue
+!      close(lun)
       return
 c======================================================================
   190 write(*,*) 'b2blnc: cannot open file ',trim(f)
@@ -835,6 +836,7 @@ c======================================================================
       end subroutine b2blncc
 c
       subroutine b2blncs
+
 c----------------------------------------------------------------------
 c*** - to be called BEFORE each timestep
 c----------------------------------------------------------------------
@@ -848,6 +850,12 @@ c----------------------------------------------------------------------
 c*** - finalization step
 c----------------------------------------------------------------------
 c
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       return
       end subroutine b2blncf
 c======================================================================

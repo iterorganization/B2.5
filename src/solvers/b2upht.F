@@ -60,7 +60,6 @@
      *  dte1(nCv), dti1(nCv),                                       !lk 26.10.17
      *  tt0(mpg%nFt), tt1(mpg%nFt), tt2(mpg%nFt), tt3(mpg%nFt)      !lk 26.10.17
 *   ..procedures
-      intrinsic min, max
       external xertst, b2xvsg, xerrab
 *   ..initialisation
 

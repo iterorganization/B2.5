@@ -40,9 +40,6 @@ c======================================================================
       integer i, jj, js, k
       real (kind=R8) :: d, ux, uy, utc, utb, udx, udy, uxe, uye
 c======================================================================
-      real (kind=R8) :: x, y
-      real (kind=R8) :: flin
-      flin(x,y)=(x-xc)*(ys-yc)-(y-yc)*(xs-xc)
       intrinsic min, max, mod, sign
       external xertst
 c======================================================================
@@ -395,4 +392,17 @@ c
       call subend ()
 c======================================================================
       return
+
+      contains
+
+      function flin(x,y)
+      implicit none
+      real (kind=R8), intent(in) :: x, y
+      real (kind=R8) :: flin
+
+      flin = (x-xc)*(ys-yc)-(y-yc)*(xs-xc)
+
+      return
+      end function flin
+
       end subroutine rlshdw

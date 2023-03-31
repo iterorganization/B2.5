@@ -23,7 +23,7 @@
       real (kind=R8) ::
      *   eps, t0, t1
       parameter (eps=0.0_R8)
-      intrinsic min, max, abs
+      intrinsic max, abs
       external b2scopy
 *     ------------------------------------------------------------------
 *     Must set eps to a small non-negative value. eps.eq.0 is safest,

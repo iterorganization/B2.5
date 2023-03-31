@@ -98,7 +98,7 @@
 *    ..obtain the coordinates
        ixr = nint(cwaxr(iplot)*nx)
        iyr = nint(cwayr(iplot)*ny)
-       call b2xgxy (nx, ny, crx, cry, ixr, iyr, xc, xf, yc, yf)
+       call b2xgxy (nx, ny, ixr, iyr, xc, xf, yc, yf)
 *    ..plot the grid
        call pagini (4, xc(-1), xc(nx), yc(-1), yc(ny), 'x', 'y',
      &   header)

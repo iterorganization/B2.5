@@ -1,44 +1,23 @@
-      subroutine b2wrsep(nx,ny,ns,BoRiS,iline,switch)
+      module b2mod_wrsep
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
       use b2mod_time
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sources
-     . , only : sna
-      use b2mod_tallies
-      use b2mod_indirect
-      use b2mod_constants
-      use b2mod_user_namelist
-      use b2mod_neutrals_namelist
-      use b2mod_numerics_namelist
       use b2mod_b2cmpa
-      use b2mod_external
-      use b2mod_switches
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-      use eirmod_eirbra
-#else
-      use b2mod_eirbra
-#endif
-c
-c  version : 10.12.2000 23:36
-c
+      use b2mod_indirect
+      implicit none
+
 c======================================================================
 c*** Puts some separatrix data on the output file "tracing/sepdata.trc"
 c***  - primarily, to provide boundary conditions for core models
 c----------------------------------------------------------------------
-      implicit none
 
-      integer nx, ny, ns, iline
-      real (kind=R8) :: BoRiS
-      type (switches), intent (in) :: switch
 c----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 
       integer lv
       parameter (lv=20000828)
+      integer ltrc
+      parameter (ltrc=ntrc_sep)
 
 c----------------------------------------------------------------------
 c*** Separatrix data:
@@ -71,26 +50,23 @@ c***.............................................................(ions)
 c***     nii_sep_   nisi_tmp    average ni for each ion
 c***     Gii_sep_   gisi_tmp    outward ion flux for each ion
 c----------------------------------------------------------------------
-c
-c*** Global values
-      integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=9)
-      real (kind=R8) ::
-     *     equg_tmp(nglb_tmp)
-      real (kind=R8) ::
-     *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
-     ,     hlp_qisp, hlp_qrsl, hlp_spmn, kintmp
-      equivalence
-     ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
-     ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
-     ,     (equg_tmp(5),  hlp_qtsp), (equg_tmp(6),  hlp_qesp),
-     ,     (equg_tmp(7),  hlp_qisp), (equg_tmp(8),  hlp_qrsl),
-     ,     (equg_tmp(9),  hlp_spmn)
-      character hlp_hg(nglb_tmp)*8
 
-c*** Values by species
-      integer nspc_tmp, nsp_tmp, ns_tmp
+      integer, save :: ng_tmp, nsp_tmp, ns_tmp, ni_tmp, nii_tmp, nis_tmp
+      integer, save :: jxi, jxa, jsep, lun
+      integer, save, allocatable :: ii(:)
+      character*2, save, allocatable :: hlp_a(:)
+      character, save :: f*(lenfnm), hlp_frm*256
+
+      integer nglb_tmp
+      parameter (nglb_tmp=9)
+      integer nspc_tmp
       parameter (nspc_tmp=10)
+      integer nion_tmp
+      parameter (nion_tmp=2)
+      character, save :: hlp_hg(nglb_tmp)*8
+      character, save :: hlp_hs(nspc_tmp)*7
+      character, save :: hlp_hi(nion_tmp)*8
+c*** Values by species
       real (kind=R8), allocatable ::
      *      equs_tmp(:,:)
       real (kind=R8), allocatable ::
@@ -98,44 +74,73 @@ c*** Values by species
      ,      gisp_tmp(:), nasp_tmp(:), tasp_tmp(:),
      ,      gasp_tmp(:), gpuf_tmp(:),
      ,      prsr_tmp(:), nrsr_tmp(:)
-      character hlp_hs(nspc_tmp)*7
 
 c*** Values by ion charge states
-      integer nion_tmp, ni_tmp, nii_tmp, nis_tmp
-      parameter (nion_tmp=2)
       real (kind=R8), allocatable ::
      *     equi_tmp(:,:)
       real (kind=R8), allocatable ::
      *     nisi_tmp(:), gisi_tmp(:)
-      character hlp_hi(nion_tmp)*8
-
-c*** Local variables of general use
-      integer lun, ltrc
-      parameter (ltrc=ntrc_sep)
-      real (kind=R8) ::
-     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
-      real (kind=R8) :: tdummy
-      integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
-      integer, allocatable :: ii(:)
-      logical ex, warn_tmp
-      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      character*2, allocatable :: hlp_a(:)
-c*** Procedures
-      real (kind=R8) :: hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
-     1          'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
-     2          'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
+     1 '  ne_sep','  Te_sep','  Ti_sep',' Zef_sep',
+     2 '  Qt_sep','  Qe_sep','  Qi_sep','Qrad_SOL',
+     3 'Spmp_nom'/
       data hlp_hs /
      1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
       data hlp_hi / 'nii_sep_','Gii_sep_' /
 c----------------------------------------------------------------------
 
+      contains
+
+      subroutine b2wrsep(nx,ny,ns,BoRiS)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_sources
+     . , only : sna
+      use b2mod_tallies
+      use b2mod_constants
+      use b2mod_user_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_external
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+      use eirmod_eirbra
+#else
+      use b2mod_eirbra
+#endif
+      implicit none
+
+      integer nx, ny, ns
+      real (kind=R8) :: BoRiS
+c
+c*** Global values
+      real (kind=R8) ::
+     *     equg_tmp(nglb_tmp)
+      real (kind=R8) ::
+     *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
+     ,     hlp_qisp, hlp_qrsl, hlp_spmn
+      equivalence
+     ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
+     ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
+     ,     (equg_tmp(5),  hlp_qtsp), (equg_tmp(6),  hlp_qesp),
+     ,     (equg_tmp(7),  hlp_qisp), (equg_tmp(8),  hlp_qrsl),
+     ,     (equg_tmp(9),  hlp_spmn)
+
+c*** Local variables of general use
+      real (kind=R8) ::
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
+      integer i,j,k,l,ia,is,ix,iy
+
       save
 c======================================================================
+
+      if(first_time_step) return
+
+      if(ank_tracing.eq.0) return
 
 c*** Initialise the arrays
 c
@@ -186,18 +191,13 @@ c          v=vol(ix,iy)
           hlp_qesp=hlp_qesp+fhe(ix,iy,1,1)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1,1)
           do is=0,ns-1
-            kintmp =
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
-     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,1,is)
+            hlp_qisp=hlp_qisp+(1.0_R8-BoRiS)*fhm(ix,iy,1,1,is)
           enddo
           is=0
           do j=1,nspecies !{
             do k=1,nfluids(j) !{
               is=is+1
               nisi_tmp(is)=nisi_tmp(is)+v*na(ix,iy,ions_list(is))
-              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,1,ions_list(is))
               nisp_tmp(j)=nisp_tmp(j)+v*na(ix,iy,ions_list(is))
               prsr_tmp(j)=prsr_tmp(j)+v*na(ix,iy,ions_list(is))*
      *            (ti(ix,iy)+rza(ix,iy,ions_list(is))*te(ix,iy))
@@ -205,7 +205,8 @@ c          v=vol(ix,iy)
      *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
               zesp_tmp(j)=zesp_tmp(j)+
      *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
-              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,1,ions_list(is))
+              gisi_tmp(is)=gisi_tmp(is)+fna_mdf(ix,iy,1,1,ions_list(is))
+              gisp_tmp(j)=gisp_tmp(j)+fna_mdf(ix,iy,1,1,ions_list(is))
               do i=0,jsep !{
                 gasp_tmp(j)=gasp_tmp(j)+
      1               sna(ix,i,0,ions_list(is))+
@@ -226,6 +227,7 @@ c          v=vol(ix,iy)
       end do !}
 
       do i=2,nnreg(0) !{
+        if(nnreg(0).eq.8.and.(i.eq.5.or.i.eq.6)) cycle
         hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
       end do !}
 
@@ -362,14 +364,25 @@ c*** Write the data in a separate file for plotting...
      ,         ((equi_tmp(i,j),i=1,nii_tmp),j=1,ni_tmp)
       end if !}
       return
+c
+   94 write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+      end subroutine b2wrsep
 c======================================================================
 
-      entry b2wrsepi(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsepi(nx,ny,ns,switch)
+      use b2mod_switches
+      implicit none
+      integer, intent(in) :: nx, ny, ns
+      type (switches), intent (in) :: switch
+      integer i, j, k, nv
+      character hlp_c
+      logical ex, warn_tmp
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
-      tab=char(9)
       call get_jsep(nx,ny,jxi,jxa,jsep)
 
       if(nspecies.le.0) then !{
@@ -401,6 +414,11 @@ c*** f     :  the associated file name
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then
         read(lun,*,err=92) hlp_c,
      ,   nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
@@ -413,7 +431,7 @@ c*** f     :  the associated file name
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 970212) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc)=.false.
             return
@@ -458,15 +476,15 @@ c          end if
         end if
 
         if(.not.filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         ng_tmp=nglb_tmp
@@ -475,21 +493,18 @@ c*** New file
         ni_tmp=nion_tmp
         nii_tmp=nis_tmp
         write(lun,700) lv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
-        write(lun,'(2a)') '#  ',label
+        write(lun,'(2a)') '#  ',trim(label)
 
-        hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
-     /          'i3,12h(1h'//tab//',a7,a2),,'              //
-     /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
-
-        write(hlp_frm,hlp_frf) ng_tmp, ns_tmp*nsp_tmp, ni_tmp*nii_tmp
-
+        write(hlp_frm,'(a,i3,a,i3,a,i3,a)')
+     ,   '(a1,6x,a4,5x,',ng_tmp,'(5x,a8,1x),',
+     ,                   ns_tmp*nsp_tmp,'(5x,a7,a2),',
+     ,                   ni_tmp*nii_tmp,'(1x,a8,a2,i2.2,''+''))'
 c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
-c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
+c     ,                       nb_tmp,nsp_tmp,nfl_tmp
 c        print *,'hlp_frm:'
-c        print *, hlp_frm
+c        print *,trim(hlp_frm)
 c>>>
-
         k=0
         do i=1,nspecies !{
           do j=1,nfluids(i) !{
@@ -499,13 +514,14 @@ c>>>
             if(hlp_a(k)(2:2).eq.' ') hlp_a(k)(2:2)='_'
           end do !}
         end do !}
-        write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+        write(lun,hlp_frm) '#','time',
+     ,    (hlp_hg(i),i=1,ng_tmp),
      ,   ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
      ,   ((hlp_hi(k),hlp_a(i),ii(i),i=1,nii_tmp),k=1,ni_tmp)
 
       end if
-      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
-     -                       ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp
+      write(hlp_frm,'(a,i3,a)') '(1p,e16.7,',
+     -  ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp,'(2x,e12.4))'
 
       allocate(equs_tmp(nspecies,nspc_tmp))
       allocate(nisp_tmp(nspecies))
@@ -523,24 +539,28 @@ c>>>
       allocate(gisi_tmp(ns))
 c<<<
 c      print *,'hlp_frm:'
-c      print *,hlp_frm
+c      print *,trim(hlp_frm)
 c>>>
       return
 c======================================================================
- 90   write(*,*) 'b2wrsep: cannot open file ',trim(f)
+   90 write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
-      filedata(ltrc)=.false.
-      return
-c
- 94   write(*,*) 'b2wrsep: cannot write in the file ',trim(f)
+   92 write(*,*) 'b2wrsept: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
 c======================================================================
+  700 format('#   ',6i8)
+      end subroutine b2wrsepi
+c======================================================================
 c
-      entry b2wrsepc(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsepc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      logical ex
+      real (kind=R8) :: tdummy
+      character hlp_c
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -552,33 +572,44 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
+!      close(lun)
       return
 c======================================================================
- 190  write(*,*) 'b2wrsep: cannot open file ',trim(f)
+  190 write(*,*) 'b2wrsep: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2wrsepc
 c======================================================================
-      entry b2wrseps(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrseps
 c----------------------------------------------------------------------
 c
       return
+      end subroutine b2wrseps
 c======================================================================
-      entry b2wrsepf(nx,ny,ns,BoRiS,iline)
+      subroutine b2wrsepf
+      implicit none
 c----------------------------------------------------------------------
 c     Finalization step
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
+      if (.not.allocated(equs_tmp)) return
       deallocate(equs_tmp)
       deallocate(nisp_tmp)
       deallocate(zisp_tmp)
@@ -596,7 +627,6 @@ c     Finalization step
       deallocate(ii)
       deallocate(hlp_a)
       return
+      end subroutine b2wrsepf
 c======================================================================
-  700 format('#   ',6i8)
-c======================================================================
-      end subroutine b2wrsep
+      end module b2mod_wrsep

@@ -157,13 +157,13 @@
       real (kind=R8) :: rates(0:nt,0:nn)
       character(420) :: row
       character :: FILNAM*8,H123*4,REAC*9,CRC*3
-      real (kind = R8) :: tmin, tmax, nmin, nmax,bremsf,depot
-      parameter (bremsf=1.69e-38_R8/ev,depot=-13.5984340_R8)
+      real (kind = R8) :: tmin, tmax, nmin, nmax, bremsf, depot
+      parameter (bremsf=1.69e-38_R8/ev, depot=-13.5984340_R8)
 
 *   ..procedures
       logical streql
 *   ..initialisation
-      data tmin/0.0/, tmax/1E+30/, nmin/0.0/, nmax/1E+30/
+      data tmin/0.0_R8/, tmax/1E+30_R8/, nmin/0.0_R8/, nmax/1E+30_R8/
       external xertst, b2xvsg, streql, xerrab
 
 *-----------------------------------------------------------------------
