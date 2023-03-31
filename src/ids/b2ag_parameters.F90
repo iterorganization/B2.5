@@ -89,7 +89,7 @@ contains
     ! check that b2ag and geometry file sizes are compatible
     if(nnx+2*niso.ne.nx1.or.nny.ne.ny1) then        
         write(*,'(a,4i4)') 'b2ag_read_parameters: nx,ny code and data disagree',nx1,ny1,nnx+2*niso,nny
-        stop
+        call xerrab ( 'Dimensions mismatch !' )
     endif
 
     

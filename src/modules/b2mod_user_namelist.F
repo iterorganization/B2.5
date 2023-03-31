@@ -227,7 +227,7 @@ c***  Standard set-up:
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        ic1, ic2, icff, icv, ifc, ifcc, ifc1, ifc2,
+     >        ic1, ic2, icff, icv, ifc, ifcc, ifc1, ifc2, ifs,
      >        ii, ifc11, ifc22, jj
 
       logical :: file_ok
@@ -706,11 +706,12 @@ c*** Set default values according to current species list
         if (ifc.eq.m%fsFc(ii)) exit
       end do
       ! find ii in fsFcP(ifs,1):fsFcP(ifs,1)+fsFcP(ifs,2)
-      do ifssep = 1, size(m%fsFcP,1)
-      ifc1 = m%fsFcP(ifssep,1)
-      ifc2 = ifc1 + m%fsFcP(ifssep,2) - 1
+      do ifs = 1, size(m%fsFcP,1)
+        ifc1 = m%fsFcP(ifs,1)
+        ifc2 = ifc1 + m%fsFcP(ifs,2) - 1
         if (ii.ge.ifc1 .and. ii.le.ifc2) exit
       enddo
+      ifssep = ifs
       if (m%IsClassicalGrid.eq.1) call xertst(m%fsFcP(ifssep,2).gt.0,
      & 'No separatrix faces!')
       write(*,*) 'SEPARATRIX FLUX SURFACE AT ifs=',ifssep

@@ -1,10 +1,11 @@
 c
       function chord_value(nx,ny,
-     1 tt,crx,cry,bb,
+     1 tt,
      2 xp,yp,zp,
      3 dxp,dyp,dzp,vector)
 
       use b2mod_types
+      use b2mod_geo
       use b2mod_constants
       use b2mod_subsys
       implicit none
@@ -13,10 +14,7 @@ c
      * chord_value
       integer nx,ny
       real (kind=R8) ::
-     * tt(-1:nx,-1:ny),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     * tt(-1:nx,-1:ny)
       real (kind=R8) ::
      * xp,yp,zp,dxp,dyp,dzp
       logical vector
@@ -31,11 +29,8 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
-
-      pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
       call subini ('chord_value')
       x=xp
@@ -103,7 +98,7 @@ c       write(*,*) 'dl.bl = ',dotprod
       return
       end function chord_value
 c
-      function chord_integral(nx,ny,tt,crx,cry,bb,npoints,
+      function chord_integral(nx,ny,tt,npoints,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector)
       
       use b2mod_types
@@ -114,10 +109,7 @@ c
      * chord_integral 
       integer nx,ny,npoints
       real (kind=R8) ::
-     * tt(-1:nx,-1:ny),
-     1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     * tt(-1:nx,-1:ny)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       logical vector
@@ -149,7 +141,7 @@ c
         y=yp1*(1.0-f)+yp2*f
         z=zp1*(1.0-f)+zp2*f
         chord_integral=chord_integral+dl*
-     1   chord_value(nx,ny,tt,crx,cry,bb,x,y,z,dx,dy,dz,vector)
+     1   chord_value(nx,ny,tt,x,y,z,dx,dy,dz,vector)
       enddo
 
 !DIAG      call chord_diagnostics      ! diag
@@ -158,7 +150,7 @@ c
       return
       end function chord_integral
 c
-      subroutine chord_compile(npoints,nx,ny,crx,cry,bb,
+      subroutine chord_compile(npoints,nx,ny,crx,cry,
      1 xp1,yp1,zp1,xp2,yp2,zp2,vector,
      2 indchd,indix,indiy,indscl)
 
@@ -170,8 +162,7 @@ c
       real (kind=R8) ::
      * tt(-1:nx,-1:ny),score(-1:nx,-1:ny),
      1 crx(-1:nx,-1:ny,0:3),
-     2 cry(-1:nx,-1:ny,0:3),
-     3 bb(-1:nx,-1:ny,0:3)
+     2 cry(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      * xp1,yp1,zp1,xp2,yp2,zp2
       integer indchd,indix(*),indiy(*)
@@ -211,7 +202,7 @@ c
         call chord_find(nx,ny,crx,cry,x,y,z,found,ix,iy)
         if(found) then
           score(ix,iy)=score(ix,iy)+dl*
-     1     chord_value(nx,ny,tt,crx,cry,bb,x,y,z,dxp,dyp,dzp,vector)
+     1     chord_value(nx,ny,tt,x,y,z,dxp,dyp,dzp,vector)
         endif
       enddo
 
@@ -257,9 +248,7 @@ c
      *   x,y,z,r,rmin,rmax,zmin,zmax
 
       logical first
-      integer ir,iz,irpos,izpos
-      real (kind=R8) ::
-     *   rpos,zpos
+      integer ir,iz
       integer lngcov,lngind
       parameter(lngcov=200,lngind=500 000)
       integer covered(lngcov,lngcov),
@@ -285,11 +274,6 @@ c
       save covered,rmin,rmax,zmin,zmax,first,xcov,ycov,icov,ix,iy
 
       data first/.true./
-
-      irpos(r)=(r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1
-      izpos(z)=(z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1
-      rpos(ir)=rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
-      zpos(iz)=zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
 
       call subini ('chord_find')
       if(first) then
@@ -507,6 +491,39 @@ c next try the chain
       found=.true.
       call subend ()
       return
+
+      contains
+
+      integer function irpos(r)
+      implicit none
+      real(kind=R8), intent(in) :: r
+      irpos = int((r-rmin)/(rmax-rmin)*lngcov*0.999999_R8+1)
+      return
+      end function irpos
+
+      integer function izpos(z)
+      implicit none
+      real(kind=R8), intent(in) :: z
+      izpos = int((z-zmin)/(zmax-zmin)*lngcov*0.999999_R8+1)
+      return
+      end function izpos
+
+      function rpos(ir)
+      implicit none
+      integer, intent(in) :: ir
+      real(kind=R8) :: rpos
+      rpos = rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
+      return
+      end function rpos
+
+      function zpos(iz)
+      implicit none
+      integer, intent(in) :: iz
+      real(kind=R8) :: zpos
+      zpos = zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
+      return
+      end function zpos
+
       end subroutine chord_find
 c
       function inside_rectangle(r,z,x1,y1,x2,y2,x3,y3,x4,y4)

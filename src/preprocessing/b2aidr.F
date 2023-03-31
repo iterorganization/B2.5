@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_geo
+      use b2mod_math
       use b2mod_time
       use b2mod_work
       use b2mod_plasma
@@ -75,7 +76,6 @@
 *   ..local variables
       integer n2, is, i, is0, idum(0:9), ninp_us, nout_us, io
       integer, save :: read_b2fstate_file = 0                       !srv 22.12.09
-      real (kind=R8) :: t0, t1                                      !srv 22.12.09
       type(mapping) :: mpg
       type(geometry) :: geo
       type(B2State) :: state
@@ -114,11 +114,9 @@
       external newunit
 #endif
       logical streql, is_comment
-      logical ltst                                                  !srv 22.12.09
       external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))       !srv 22.12.09
 *  ..initialisation
       save na_min
       data na_min/1.0e4_R8/
@@ -538,10 +536,7 @@
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
-      call b2rugm (ninp(2), nx, ny, isymm, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hc, ht, qz, qc, qs, qac, qas, gs, pbs,
-     &  wbbl, wbbr, wbbv, wbbc, ebc,
-     &  cell_width, cell_height, gmap)
+      call b2rugm (ninp(2), nx, ny, isymm)
 
       if(read_b2fstate_file.ne.0) then
 *  .. copy the data of first n=min(ns0,ns1) species
@@ -666,7 +661,7 @@
          fna_mdf(:,:,:,:,is)     = fna_mdf1(:,:,:,:,is)
          fna_fcor(:,:,:,:,is)    = fna_fcor1(:,:,:,:,is)
          fna_nodrift(:,:,:,:,is) = fna_nodrift1(:,:,:,:,is)
-         fna_he(:,:,:,:,is)      = fna_he(:,:,:,:,is)
+         fna_he(:,:,:,:,is)      = fna_he1(:,:,:,:,is)
          fnaPSch(:,:,:,:,is)     = fnaPSch1(:,:,:,:,is)
          fna_eir(:,:,:,:,is)     = fna_eir1(:,:,:,:,is)
          fna_32(:,:,:,:,is)      = fna_321(:,:,:,:,is)

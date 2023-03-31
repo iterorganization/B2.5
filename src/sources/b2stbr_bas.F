@@ -2,7 +2,6 @@
 *.specification
 
       subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &  vol, hx, hy, gs, qz, pbs,
      &  na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
@@ -18,6 +17,7 @@
      &  recycled_neutrals_contr)
 
       use b2mod_types
+      use b2mod_geo
       use b2mod_rates
       use b2mod_sputter
       use b2mod_tallies
@@ -37,10 +37,7 @@
       integer coreregno, coreregn2, sput_src,
      *   sput_chem_model, boundary_namelist, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
-      real (kind=R8) :: dtim, BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2)
+      real (kind=R8) :: dtim, BoRiS
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -97,11 +94,10 @@
       external xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) :: 
-     *   smax, smin, hy1
+     *   smax, smin
 *   ..initialisation
       save ncall
       data ncall/0/
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *-----------------------------------------------------------------------
 *.documentation-internal
 *

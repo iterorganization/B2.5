@@ -1,46 +1,22 @@
-      subroutine b2wrint(nx,ny,ns,nregionv,iline,switch)
+      module b2mod_wrint
       use b2mod_types
-      use b2mod_geo
-      use b2mod_time
       use b2mod_diag
-      use b2mod_rates
+      use b2mod_time
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_tallies
-      use b2mod_indirect
-      use b2mod_external
-      use b2mod_constants
-      use b2mod_numerics_namelist
-      use b2mod_switches
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-      use eirmod_eirbra
-#else
-      use b2mod_eirbra
-#endif
-c
-c  version : 15.03.2002 16:33
-c
+      implicit none
+
 c========================================================================
 c*** Puts some integral quantities on the output file
 c*** "tracing/integral.trc"
 c-----------------------------------------------------------------------
-      implicit none
-c
-#     include <DIMENSIONS.F>
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
-      integer nx, ny, ns, nregionv, iline
-      type (switches), intent (in) :: switch
-c
       integer lv
-c      parameter (lv=970522)
-c#ifndef SCL_IMP_RCI
       parameter (lv=980813)
-c#else
-c      parameter (lv=20010716)
-c#endif
+      integer lun, ltrc
+      parameter (ltrc=ntrc_int)
+
 c
 c-----------------------------------------------------------------------
 c*** Additional integrals:
@@ -79,9 +55,6 @@ c***..............................................(species and regions)
 c***     SSNIreg_  ssna_tmp   neutral-related source of ions
 c***
 c***...........................................................(strata)
-c***     Stratum_  fluxt_tmp  primary sources of neutrals
-c***
-c***...............................................(species and strata)
 c***     SSNIstr_             neutral-related source of ions
 c***     sclfact_  sclf_tmp   scaling factors for neutral fluxes
 c***     sclrtio_  rtio_tmp   figure of merit for scaling (should be 0)
@@ -89,10 +62,76 @@ c***
 c***..........................................................(species)
 c***     res_rci_  rrci_tmp   residuals in impurity balance
 c-----------------------------------------------------------------------
+
+      integer, save :: ns_tmp, na_tmp, nb_tmp, nf_tmp, ng_tmp, nfl_tmp,
+     ,                 nrg_tmp, nr_tmp, nsp_tmp
+      character, save :: hlp_frm*256, f*(lenfnm)
+
+      integer nglb_tmp
+      parameter (nglb_tmp=12) ! Number of global parameters
+      integer nsar_tmp
+!      parameter (nsar_tmp=2)
+      parameter (nsar_tmp=3) ! IYS to add one more record to count the total
+                             ! number of ions (charged) and total number of
+                             ! neutrals
+      integer nssb_tmp
+c      parameter (nssb_tmp=2)
+      parameter (nssb_tmp=4)  ! IYS 29.09.2017
+      integer nstr_tmp
+      parameter (nstr_tmp=1)
+      integer nrgn_tmp
+      parameter (nrgn_tmp=11) ! Number of quantities computed in each region
+      integer nspc_tmp
+!      parameter (nspc_tmp=1)
+      parameter (nspc_tmp=2) ! IYS 29.09.2017 to add total number of neutrals in whole domain
+      character, save :: hlp_ha(nsar_tmp)*8
+      character, save :: hlp_hb(nssb_tmp)*8
+      character, save :: hlp_hf(nstr_tmp)*8
+      character, save :: hlp_hg(nglb_tmp)*8
+      character, save :: hlp_hr(nrgn_tmp)*8
+      character, save :: hlp_hs(nspc_tmp)*8
+      data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_' /
+      data hlp_hb / 'sclfact_', 'sclrtio_', 'Na_stra_', 'sna_str_' /
+      data hlp_hf / 'Stratum_' /
+
+c-----------------------------------------------------------------------
+c*** Column headers:
+      data hlp_hg / ! These are headers for 12 global parameters
+     1          'SSEE_tot','SSEI_tot','SNI_rcmb','SEE_rcmb','SEI_rcmb',
+     2          'Zeff_cor','Zeff_crs','Zeff_crn', 'Brmsreg ','imp_rad ',
+     2          'neu_rad ','tot_rad '/
+      data hlp_hr / ! These are headers for 11 quantities computed in each region
+     1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
+     2          'SSEIreg_','th_enre_','th_enri_',
+     3          'K_en_ri_','N_e_reg_','vol_reg_'/
+      data hlp_hs / 'SSNItot_', 'N_a_tot_' /
+c-----------------------------------------------------------------------
+      save lun
+
+      contains
+
+      subroutine b2wrint(nx,ny,ns,nregionv)
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_tallies
+      use b2mod_indirect
+      use b2mod_external
+      use b2mod_constants
+      use b2mod_numerics_namelist
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+      use eirmod_eirbra
+#else
+      use b2mod_eirbra
+#endif
+      implicit none
+c
+      integer nx, ny, ns, nregionv
+c
+#     include <DIMENSIONS.F>
 c
 c*** Global values
-      integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=12) ! Number of global parameters
       real (kind=R8) ::
      *     equg_tmp(nglb_tmp)
       real (kind=R8) ::
@@ -105,11 +144,8 @@ c*** Global values
      ,     (equg_tmp(7),  hlp_zefs), (equg_tmp(8),  hlp_zefn),
      ,     (equg_tmp(9),  hlp_brms), (equg_tmp(10), hlp_rdim),
      ,     (equg_tmp(11), hlp_rdnu), (equg_tmp(12), hlp_rdtt)
-      character hlp_hg(nglb_tmp)*8
 c
 c*** Values by regions
-      integer nrgn_tmp, nrg_tmp, nr_tmp
-      parameter (nrgn_tmp=11) ! Number of quantities computed in each region
       real (kind=R8) ::
      * radim_tmp(NNREGMAX), radnu_tmp(NNREGMAX),
      1 radtt_tmp(NNREGMAX), ssee_tmp(NNREGMAX),
@@ -127,63 +163,33 @@ c*** Values by regions
      , (equr_tmp(1,7), eesum),     (equr_tmp(1,8), eisum),
      , (equr_tmp(1,9), kisum),
      , (equr_tmp(1,10), nesum),    (equr_tmp(1,11), volsum)
-      character*2 hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
-      integer nspc_tmp, nsp_tmp, ns_tmp
-!      parameter (nspc_tmp=1)
-      parameter (nspc_tmp=2) ! IYS 29.09.2017 to add total number of neutrals in whole domain
       real (kind=R8) ::
      *     equs_tmp(DEF_NATM,nspc_tmp)
       real (kind=R8) ::
      *     ssni_tmp(DEF_NATM), Natm_tmp(DEF_NATM)
       equivalence (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp)
-      character*2 hlp_hs(nspc_tmp)*8
 
-c*** added 20010716
-c#ifdef SCL_IMP_RCI
-c      integer nspc1_tmp, ns1_tmp
-c      parameter (nspc1_tmp=1)
-c      real (kind=R8) ::
-c    *     equs1_tmp(nsd,nspc1_tmp)
-c      real(kind=R8) ::
-c    *      rrci_tmp(nsd)
-c      equivalence (equs1_tmp(1,1), rrci_tmp)
-c      character*2 hlp_hs1(nspc_tmp)*8
-c#endif
-c
 c*** Values by species and regions
-      integer nsar_tmp, na_tmp
-!      parameter (nsar_tmp=2)
-      parameter (nsar_tmp=3) ! IYS to add one more record to count the total
-                             ! number of ions (charged) and total number of
-                             ! neutrals
       real (kind=R8) ::
      *     equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
      *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
      *     ssna_tmp(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)
-      equivalence 
+      equivalence
      -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
      &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
-      character*2 hlp_ha(nsar_tmp)*8
 c
 c*** Values by strata
-      integer nstr_tmp, nf_tmp, nfl_tmp
-      parameter (nstr_tmp=1)
       real (kind=R8) ::
      *     equf_tmp(DEF_NSTRA,nstr_tmp)
-      real (kind=R8) :: fluxt_tmp(DEF_NSTRA)
-      character hlp_hf(nstr_tmp)*8
 c
 c*** Values by species and strata
-      integer nssb_tmp, nb_tmp
-c      parameter (nssb_tmp=2)
-      parameter (nssb_tmp=4)  ! IYS 29.09.2017
       real (kind=R8) ::
      *     equb_tmp(0:DEF_NATM,DEF_NSTRA,nssb_tmp)
       real (kind=R8) ::
-     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA), 
+     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA),
      *     rtio_tmp(0:DEF_NATM,DEF_NSTRA),
      *     Na_stra_tmp(0:DEF_NATM,DEF_NSTRA),
      *     ssna_stra_tmp(0:DEF_NATM,DEF_NSTRA)
@@ -191,78 +197,34 @@ c      parameter (nssb_tmp=2)
       equivalence (equb_tmp(0,1,2), rtio_tmp)
       equivalence (equb_tmp(0,1,3), Na_stra_tmp)    ! IYS 29.09.2017
       equivalence (equb_tmp(0,1,4), ssna_stra_tmp)  ! IYS 29.09.2017
-      character hlp_hb(nssb_tmp)*8
 c-----------------------------------------------------------------------
 c*** Local variables of general use
-      integer lun, ltrc
-      parameter (ltrc=ntrc_int)
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
-      integer i, j, k, ir,is,ix,iy, nv
-      real (kind=R8) :: tdummy
-      logical ex, warn_tmp
-      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
-      integer iatm
+      integer i, j, k, ir, is, ix, iy
 #ifdef B25_EIRENE
+      integer iatm ! IYS 29.09.2017
       integer imol
 #endif
-c-----------------------------------------------------------------------
-c*** Column headers:
-      data hlp_hg / ! These are headers for 12 global parameters
-     1          'SSEE_tot','SSEI_tot','SNI_rcmb','SEE_rcmb','SEI_rcmb',
-     2          'Zeff_cor','Zeff_crs','Zeff_crn', 'Brmsreg ','imp_rad ',
-     2          'neu_rad ','tot_rad '/
-      data hlp_hr / ! These are headers for 11 quantities computed in each region
-     1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
-     2          'SSEIreg_','th_enre_','th_enri_',
-     3          'K_en_ri_','N_e_reg_','vol_reg_'/
-      data hlp_hs / 'SSNItot_', 'N_a_tot_' /
-c#ifdef SCL_IMP_RCI
-c      data hlp_hs1 / 'res_rci_' /
-c#endif
-      data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_' /
-      data hlp_hf / 'Stratum_' /
-      data hlp_hb / 'sclfact_', 'sclrtio_', 'Na_stra_', 'sna_str_' /
-c-----------------------------------------------------------------------
 c
       save
-     +   ng_tmp,
      +  equg_tmp,
      +  hlp_ssee, hlp_ssei, hlp_sumn, hlp_sume, hlp_sumi, hlp_zeff,
      ,     hlp_zefs, hlp_zefn, hlp_brms, hlp_rdim, hlp_rdnu, hlp_rdtt,
-     +  hlp_hg,
-     +  nrg_tmp, nr_tmp,
      +  radim_tmp, radnu_tmp, radtt_tmp,
      ,     ssee_tmp,  ssei_tmp,  brms_tmp,
      +  equr_tmp,
-     +  hlp_hr,
-     +  nsp_tmp, ns_tmp, 
-c#ifdef SCL_IMP_RCI
-c     + ns1_tmp, equs1_tmp, rrci_tmp, hlp_hs1,
-c#endif
      +  equs_tmp,
      +  ssni_tmp,
      +  Natm_tmp,
      +  Na_stra_tmp,
      +  ssna_stra_tmp,
-     +  hlp_hs,
-     +  na_tmp,
      +  equa_tmp,
      +  ssna_tmp,
-     +  hlp_ha,
-     +  nf_tmp, nfl_tmp,
      +  equf_tmp,
-     +  fluxt_tmp,
-     +  hlp_hf,
-     +  nb_tmp, equb_tmp, hlp_hb,
-     +  lun,
+     +  equb_tmp,
      +  hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,
-     +  i, j, k, is, ix, nv,
-c#ifdef SCL_IMP_RCI
-c    +  iy,
-c#endif
-     +  ex, warn_tmp,
-     +  tab, hlp_c, f, hlp_frm, hlp_frf
+     +  i, j, k, is, ix
 c=======================================================================
 
 c*** Initialise the arrays
@@ -270,9 +232,6 @@ c
       equg_tmp=0.0_R8
       equr_tmp=0.0_R8
       equs_tmp=0.0_R8
-c#ifdef SCL_IMP_RCI
-c     equs1_tmp=0.0_R8
-c#endif
       equa_tmp=0.0_R8
       equf_tmp=0.0_R8
       equb_tmp=0.0_R8
@@ -280,15 +239,11 @@ c
 c*** Compute the data
 c
 csw 18nov2013 check alloc
-#ifdef B25_EIRENE
       if(allocated(volsumn)) then
-#endif
-        hlp_sumn=sum(volsumn(1:nstrai))
-        hlp_sume=sum(volsumee(1:nstrai))
-        hlp_sumi=sum(volsumei(1:nstrai))
-#ifdef B25_EIRENE
+        hlp_sumn=sum(volsumn(1:nstrat))
+        hlp_sume=sum(volsumee(1:nstrat))
+        hlp_sumi=sum(volsumei(1:nstrat))
       endif
-#endif
 
       hlp_brms = 0.0_R8
       hlp_rdim = 0.0_R8
@@ -314,8 +269,8 @@ csw 18nov2013 check alloc
           ssna_tmp(is,k) = ssna_tmp(is,k) + ssnireg(is,k)
         end do
       end do
-      do iatm = 1, nnatmi
 #ifdef B25_EIRENE
+      do iatm = 1, nnatmi
         is = latmscl(iatm)
         if (is.eq.0) cycle
         Natm_tmp(is) = Natm_tmp(is) + pdena_int(iatm,0)
@@ -324,8 +279,8 @@ csw 18nov2013 check alloc
      &      Natm_tmp(is)   = Natm_tmp(is) +
      &        mlcmp(is,imol) * pdenm_int(imol,0)
         enddo
-#endif
       end do
+#endif
 
 csw 20sep2013 added
       do iy=0,ny-1
@@ -369,16 +324,6 @@ csw 20sep2013 added
         enddo
       enddo
 
-      do j=1,nstrai
-csw 18nov2013 check alloc
-#ifdef B25_EIRENE
-        if(allocated(srcstrn)) then
-#endif
-          fluxt_tmp(j) = srcstrn(j)
-#ifdef B25_EIRENE
-        endif
-#endif
-      end do
       hlp_s   = 0.0_R8
       hlp_v   = 0.0_R8
       hlp_zs  = 0.0_R8
@@ -414,7 +359,7 @@ csw 18nov2013 check alloc
       if (hlp_zn2 .gt. 0.0_R8) hlp_zefn = hlp_zn1 / hlp_zn2
 
       do i=0,nnatmi
-        do j=1,nstrai
+        do j=1,nstrat
           sclf_tmp(i,j) = sclstra(i,j)
           rtio_tmp(i,j) = sclrtio(i,j)-1.0_R8
 #ifdef B25_EIRENE
@@ -430,19 +375,6 @@ csw 18nov2013 check alloc
 #endif
         end do
       end do
-c#ifdef SCL_IMP_RCI
-c      do i=1,nspecies !{
-c        do ix=0,nx-1 !{
-c          do iy=0,ny-1 !{
-c            rrci_tmp(i)=rrci_tmp(i)+sclirci(ix,iy,i)*snicrcis(ix,iy,i)
-c            do is=nsph(i),nsph(i)-1+nfluids(i) !{
-c              rrci_tmp(i)=rrci_tmp(i)+snivrci(ix,iy,is)*na(ix,iy,is)
-c            end do !}
-c          end do !}
-c        end do !}
-c      end do !}
-c#endif
-c
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then
 c
@@ -458,19 +390,29 @@ c
      ,        (((equb_tmp(i,j,k),j=1,nfl_tmp),i=1,nsp_tmp),k=1,nb_tmp),
      ,         ((equb_tmp(0,j,k),j=1,nfl_tmp),k=1,nb_tmp)
         end if
-c#ifdef SCL_IMP_RCI
-c     ,        ,((equs1_tmp(i,j),i=1,nsp_tmp),j=1,ns1_tmp)
-c#endif
       end if
       return
+c
+   94 write(*,*) 'b2wrint: cannot write in the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+      end subroutine b2wrint
 c=======================================================================
 c
-      entry b2wrinti(nx,ny,ns,nregionv,iline)
+      subroutine b2wrinti(nregionv,switch)
+      use b2mod_switches
+      implicit none
+      integer, intent(in) :: nregionv
+      type (switches), intent(in) :: switch
+      integer i, j, k, nv, nfields
+      character hlp_c, hlp_frf*400
+      logical ex, warn_tmp
+      integer len_of_digits
+      external len_of_digits
 c-----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c-----------------------------------------------------------------------
 c
-      tab=char(9)
 c
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
@@ -480,14 +422,16 @@ c
       call find_file(f,ex)
       open(lun,file=f,err=90)
       rewind(lun)
+      if(ex) read(lun,*,end=91) hlp_c
+      goto 93
+   91 ex = .false.
+   93 continue
+      rewind(lun)
       if(ex.and.switch%b2mndr_stim.lt.0.0_R8) then ! the old file exists and is found
                                      ! and is to be appended
         read(lun,*,err=92) hlp_c, nv,
      &    ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
      ,    nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp
-c#ifdef SCL_IMP_RCI
-c     ,                         ,ns1_tmp
-c#endif
         lv_trc(ltrc)=nv
         warn_tmp=.false.
 
@@ -501,7 +445,7 @@ c Check version
      ,     ' differs from that in the file ',trim(f),' : ',nv
 c          if(nv .lt. 20010716) then
 c*** It was a major change of the file format - impossible to continue
-            write(*,*) 'No tracing file - ',
+            write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
             filedata(ltrc) = .false.
             return
@@ -543,16 +487,6 @@ c Check the number of quantities computed for each species
      ,     ' differs from that in the file ',trim(f),' : ',ns_tmp
           if(ns_tmp .gt. nspc_tmp) filedata(ltrc)=.false.
         end if
-c#ifdef SCL_IMP_RCI
-c       if(ns1_tmp.ne.nspc1_tmp) then
-c         warn_tmp=.true.
-c         write(*,'(a,i4,3a,i4)')
-c     ,    '!!! b2wrint: current number of values by species (ext1) ',
-c     ,    nspc1_tmp,
-c     ,    ' differs from that in the file ',trim(f),' : ',ns1_tmp
-c         if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
-c       end if
-c#endif
 
 c Check the number of species
         if(nsp_tmp .ne. nspecies) then
@@ -583,10 +517,10 @@ c Check the number of quantities computed for each stratum
         end if
 
 c Check the number of strata
-        if(nfl_tmp .ne. nstrai) then
+        if(nfl_tmp .ne. nstrat) then
           warn_tmp = .true.
           write(*,'(a,i3,3a,i3)')
-     ,     '!!! b2wrint: current number of strata ',nstrai,
+     ,     '!!! b2wrint: current number of strata ',nstrat,
      ,     ' differs from that in the file ',trim(f),' : ',nfl_tmp
           filedata(ltrc) = .false.
         end if
@@ -600,77 +534,59 @@ c Check the number quantities computed for each species and for each stratum
      ,     ' differs from that in the file ',trim(f),' : ',nb_tmp
           if(nb_tmp .gt. nssb_tmp) filedata(ltrc) = .false.
         end if
-c
 
 c If inconsistency is found, generate an error message
         if(.not. filedata(ltrc)) then
-          write(*,*) 'No tracing file - ',
+          write(*,*) 'No ',trim(f),' tracing file - ',
      ,                                'remove the existing file first!'
           return
         end if
         if(warn_tmp) write(*,*) ' You should remove the file!'
 c*** Read to the end of the file
- 50     read(lun,'(a1)',end=55) hlp_c
+   50   read(lun,'(a1)',end=55) hlp_c
         go to 50
- 55     backspace lun
+   55   backspace lun
       else
 c*** New file
         ng_tmp  = nglb_tmp
         nr_tmp  = nrgn_tmp
         nrg_tmp = nregionv
         ns_tmp  = nspc_tmp
-c#ifdef SCL_IMP_RCI
-c       ns1_tmp=nspc1_tmp
-c#endif
         nsp_tmp = nspecies
         na_tmp  = nsar_tmp
         nf_tmp  = nstr_tmp
-        nfl_tmp = nstrai
+        nfl_tmp = nstrat
         nb_tmp  = nssb_tmp
         write(lun,700) lv,ng_tmp,nr_tmp,ns_tmp,na_tmp,nf_tmp,
-     ,                      nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
-c#ifdef SCL_IMP_RCI
-c     ,                     ns1_tmp,
-c#endif
-     ,                      label
+     ,                 nrg_tmp,nsp_tmp,nfl_tmp,nb_tmp,
+     ,                 trim(label)
 
 c Create a format string for the column headers
-        hlp_frf='(18h(1h#,7x,4htime,4x,,'              //
-     /          'i3, 9h(1h'//tab//',a8),,'             //
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
-     /          'i3,12h(1h'//tab//',a8,a2),,'          //
-     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
-     /          'i3,14h(1h'//tab//',a8,i2.2),,'        //
-     /          'i3,21h(1h'//tab//',a8,i2.2,1h_,a2),,' //
-     /          'i3,14h(1h'//tab//',a8,i2.2)'          //
-c#ifdef SCL_IMP_RCI
-c     /         ',,i3,12h(1h'//tab//',a8,a2)'          //
-c#endif
-     /          '))'
-
+        hlp_frf='(a,7(i3,a))'
         if (nfl_tmp.gt.0) then
-         write(hlp_frm,hlp_frf) ng_tmp, nr_tmp*nrg_tmp, ns_tmp*nsp_tmp,
-     ,                          na_tmp*nrg_tmp*nsp_tmp, nf_tmp*nfl_tmp,
-     ,                          nb_tmp*nsp_tmp*nfl_tmp, nb_tmp*nfl_tmp
+         write(hlp_frm,hlp_frf)
+     ,    '(a1,7x,a4,7x,',ng_tmp,'(2x,a8,4x),',
+     ,            nr_tmp*nrg_tmp,'(1x,a8,i2.2,3x),',
+     ,            ns_tmp*nsp_tmp,'(1x,a8,a2,3x),',
+     ,    na_tmp*nrg_tmp*nsp_tmp,'(a8,i2.2,''_'',a2,1x),',
+     ,            nf_tmp*nfl_tmp,'(1x,a8,i2.2,3x),',
+     ,    nb_tmp*nsp_tmp*nfl_tmp,'(a8,i2.2,''_'',a2,1x),',
+     ,            nb_tmp*nfl_tmp,'(1x,a8,i2.2,3x))'
         else
           write(*,*)
      &     'Unexpected inconsistency: number of strata NSTRAI = ',
      &      nfl_tmp
-          write(*,*) 'Impossible to write into ', f
+          write(*,*) 'Impossible to write into ', trim(f)
         endif
-c#ifdef SCL_IMP_RCI
-c     ,                        ,ns1_tmp*nsp_tmp
-c#endif
-
 c<<<
-c        print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
-c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
-c        print *,'hlp_frm:'
-c        print *,hlp_frm
+c       print *,'%%%b2wrint: nb_tmp,nsp_tmp,nfl_tmp= ',
+c     ,                      nb_tmp,nsp_tmp,nfl_tmp
+c       print *,'hlp_frm:'
+c       print *,trim(hlp_frm)
 c>>>
-
         if (nfl_tmp.gt.0) then
-          write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+          write(lun,hlp_frm) '#','time',
+     ,           (hlp_hg(i),i=1,ng_tmp),
      ,          ((hlp_hr(j),i,i=1,nrg_tmp),j=1,nr_tmp),
      ,          ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
      ,         (((hlp_ha(k),j,species_list(i),j=1,nrg_tmp),
@@ -680,40 +596,40 @@ c>>>
      ,                                        i=1,nsp_tmp),k=1,nb_tmp),
      ,          ((hlp_hb(k),j,j=1,nfl_tmp),k=1,nb_tmp)
         end if
-c#ifdef SCL_IMP_RCI
-c     ,        ,((hlp_hs1(j),species_list(i),i=1,nsp_tmp),j=1,ns1_tmp)
-c#endif
 
       end if
 
       if (nfl_tmp.gt.0) then
-        write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
+        nfields =
      -      ng_tmp + nr_tmp*nrg_tmp + ns_tmp*nsp_tmp +
-     +      na_tmp*nrg_tmp*nsp_tmp  + nf_tmp*nfl_tmp +
-     +          (nsp_tmp+1)*nfl_tmp*nb_tmp
+     +       na_tmp*nrg_tmp*nsp_tmp + nf_tmp*nfl_tmp +
+     +                    (nsp_tmp+1)*nb_tmp*nfl_tmp
+        write(hlp_frf,'(a,i1,a)') '(a,i',len_of_digits(nfields),',a)'
+        write(hlp_frm,hlp_frf) '(1p,e16.7,',nfields,'(2x,e12.4))'
       end if
-c#ifdef SCL_IMP_RCI
-c     +          + ns1_tmp*nsp_tmp
-c#endif
-c      print *,'hlp_frm:' !###
-c      print *,hlp_frm    !###
+c      print *,'hlp_frm:'       !###
+c      print *,trim(hlp_frm)    !###
 
       return
 c=======================================================================
- 90   write(*,*) 'b2wrint: cannot open file ',trim(f)
+   90 write(*,*) 'b2wrint: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       return
 c
- 92   write(*,*) 'b2wrint: wrong format of the file ',trim(f)
+   92 write(*,*) 'b2wrint: wrong format of the file ',trim(f)
       filedata(ltrc)=.false.
       return
-c
- 94   write(*,*) 'b2wrint: cannot write in the file ',trim(f)
-      filedata(ltrc)=.false.
-      return
+c=======================================================================
+  700 format('#   ',10i8/'#  ',a)
+      end subroutine b2wrinti
 c======================================================================
 c
-      entry b2wrintc(nx,ny,ns,nregionv,iline)
+      subroutine b2wrintc(iline)
+      implicit none
+      integer, intent(out) :: iline
+      real (kind=R8) :: tdummy
+      character hlp_c
+      logical ex
 c----------------------------------------------------------------------
 c*** - to be called by b2co for locating truncation for savefile
 c----------------------------------------------------------------------
@@ -725,39 +641,48 @@ c
       open(lun,file=f,err=190)
       rewind(lun)
       iline = 0
-      read(lun,'(a1)',end=155) hlp_c
+      read(lun,'(a1)',err=155,end=155) hlp_c
       do while (hlp_c.eq.'#')
         iline = iline+1
-        read(lun,'(a1)',end=155) hlp_c
+        read(lun,'(a1)',err=155,end=155) hlp_c
       end do
       backspace lun
-      read(lun,*,end=155) tdummy
+      read(lun,*,err=155,end=155) tdummy
       do while (tdummy.le.tim)
         iline = iline+1
-        read(lun,*,end=155) tdummy
+        read(lun,*,err=155,end=155) tdummy
       end do
- 155  continue
+  155 continue
+!      close(lun)
       return
 c======================================================================
- 190  write(*,*) 'b2wrint: cannot open file ',trim(f)
+  190 write(*,*) 'b2wrint: cannot open file ',trim(f)
       filedata(ltrc)=.false.
       iline=-1
       return
+      end subroutine b2wrintc
 c=======================================================================
-      entry b2wrints(nx,ny,ns,nregionv,iline)
+      subroutine b2wrints
+      implicit none
 c-----------------------------------------------------------------------
 c*** Save the values (not used for this set)
 c-----------------------------------------------------------------------
 c
       return
+      end subroutine b2wrints
 c=======================================================================
-      entry b2wrintf(nx,ny,ns,nregionv,iline)
+      subroutine b2wrintf
 c-----------------------------------------------------------------------
 c*** Finalization step
 c-----------------------------------------------------------------------
 c
+      logical file_open
+
+      lun=ntrc(ltrc)
+      inquire(unit=lun,opened=file_open)
+      if (file_open) close(lun)
+
       return
+      end subroutine b2wrintf
 c=======================================================================
-  700 format('#   ',10i8/'#  ',a)
-c=======================================================================
-      end subroutine b2wrint
+      end module b2mod_wrint
