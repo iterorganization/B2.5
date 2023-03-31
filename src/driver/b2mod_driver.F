@@ -2391,9 +2391,10 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
-     .              switch,state%pl,state%dv,state%co,ismain,ismain0,
-     .              lwti,lwav,.true.)
+        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+     .         nCv,ns,max(1,mpg%nXpt),geo,mpg,switch,
+     .         state%pl,state%dv,state%co,state%rt,state%srw,
+     .         ismain,ismain0,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -3085,9 +3086,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,b2time,ntim_batch,nCv,ns,geo,mpg,
-     *                switch,state%pl,state%dv,state%co,ismain,ismain0,
-     *                .true.,.false.,.false.)
+          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+     *           nCv,ns,max(1,mpg%nXpt),geo,mpg,switch,
+     *           state%pl,state%dv,state%co,state%rt,state%srw,
+     *           ismain,ismain0,.true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif

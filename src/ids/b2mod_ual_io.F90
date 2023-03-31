@@ -3087,7 +3087,13 @@ contains
             call write_IDS_quantity( edge_grid, mpg, geo,             &
                 &   val = edge_profiles%ggd( time_sind )%t_i_average, &
                 &   value = tmpCv )
-            tmpCv(:) = state%co%hci0(:)/state%dv%ni(:,0)
+            if (switch%tn_style.eq.0) then
+              tmpCv(:) = state%co%hci0(:)/state%dv%ni(:,0)
+            else if (switch%tn_style.eq.1) then
+              tmpCv(:) = state%co%hci0(:)/state%dv%ni(:,1)
+            else if (switch%tn_style.eq.2) then
+              tmpCv(:) = state%co%hci0(:)/(state%dv%ni(:,0)-state%dv%nn(:))
+            end if
             call write_IDS_quantity( transport_grid, mpg, geo,        &
                 &   val = edge_transport%model(1)%ggd( time_sind )%   &
                 &         total_ion_energy%d,                         &
@@ -5220,7 +5226,7 @@ contains
           end if
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%b_field_r ) ) then
-            tmpVx(:) = geo%vxBb(:,0)*geo%vxBb(:,0)
+            tmpVx(:) = geo%vxBb(:,0)*geo%vxEb(:,0)
             tmpFace(:) = geo%fcBb(:,0)*geo%fcEb(:,0)
             tmpCv(:) = geo%cvBb(:,0)*geo%cvEb(:,0)
             call write_vertex_scalar( eq_grid, mpg,                           &
