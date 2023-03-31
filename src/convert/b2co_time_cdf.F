@@ -1,23 +1,29 @@
-      subroutine b2co_time_cdf(nx, ny, ns, tim)
+      subroutine b2co_time_cdf(mpg, geo, ns, tim, batch_only)
       use b2mod_types
-      use b2mod_geo
       use b2mod_mwti
-      use b2mod_indirect
       use b2mod_cdf
       use b2mod_subsys
+      use b2us_map
+      use b2us_geo
+      use b2mod_user_namelist
+     , , only : nimp, imp, icsepimp,
+     ,          nomp, omp, icsepomp
       implicit none
-      integer nx, ny, ns
-      real (kind=R8) :: tim
-#ifdef WG_TODO
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
+      type (mapping), intent(in) :: mpg
+      type (geometry), intent(in) :: geo
+      integer ns
+      real (kind=R8) :: tim
+      logical :: batch_only
+#ifdef WG_TODO
       integer :: jxi, jxa, jsep, ixtl, ixtr
-      integer :: iylstrt, iyistrt, iyastrt, iyrstrt, iytlstrt, iytrstrt,
-     1           iylend,  iyiend,  iyaend,  iyrend,  iytlend,  iytrend,
-     2           nybl, nybr, nytl, nytr, nya, nyi, nc, nbatch,
-     3           timedim, batchdim, nastep, ntstep
-      integer, save :: write_2d = 0, target_offset = 1, ntim_batch = 500
+      integer :: iylstrt, iyrstrt, iytlstrt, iytrstrt,
+     1           iylend,  iyrend,  iytlend,  iytrend,
+     2           nybl, nybr, nytl, nytr
+#endif
+      integer, save :: write_2d = 0, ntim_batch = 500
       real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
 #ifndef NO_GETENV
@@ -27,6 +33,7 @@
 #endif
 #endif
       integer :: status
+      integer :: nc, batchdim, nastep, nbatch, ntstep, timedim
       integer :: idim, ivar, iatt, iret, ib, it, ih,
      1 itim, ibatch, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
@@ -41,25 +48,22 @@
       logical :: exists
 #endif
       external ipgeti, ipgetr, xerrab, xertst
-#endif
 
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
 
-#ifdef WG_TODO
-
-      call get_jsep(nx,ny,jxi,jxa,jsep)
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      call ipgeti ('b2mwti_target_offset', target_offset)
-      call output_ds(ny, -1,+target_offset,jsep,
-     .                                        iylstrt,iylend,'dsl')
-      call output_ds(ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
-      call output_ds(ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
-      call output_ds(ny, nx,-target_offset,jsep,
-     .                                        iyrstrt,iyrend,'dsr')
+#ifdef WG_TODO
+      call get_jsep(nx,ny,jxi,jxa,jsep)
+      call output_ds(geo,-1,+target_offset,jsep,iylstrt,iylend,'dsl')
+      call output_ds(geo,nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
+#endif
+      if (nimp.gt.0) call output_ds_cv(geo,nimp,imp,icsepimp-1,'dsi')
+      if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsa')
 #ifndef NO_CDF
+#ifdef WG_TODO
       if (nnreg(0).ge.7) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.
@@ -83,9 +87,8 @@
       endif
       nybl = iylend  - iylstrt  + 1
       nybr = iyrend  - iyrstrt  + 1
-      nya  = iyaend  - iyastrt  + 1
-      nyi  = iyiend  - iyistrt  + 1
-      nc = max(nncut,1)
+#endif
+      nc = max(mpg%nXpt,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
 c access the b2time.nc or b2batch.nc file
       filename='b2time.nc'
@@ -226,8 +229,8 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       call xertst(.not.exists,message)
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
-      call b2crtimecdf(filename, nx, ny, nybl, nytl, nytr, nybr,
-     .                 nya, nyi, nc, ns, nbatch, write_2d, ncid2,
+      call b2crtimecdf(filename, mpg%nCv,
+     .                 nc, ns, write_2d, ncid2,
      .                 batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
@@ -354,10 +357,6 @@ c read and rewrite data
 #else
       write(*,*)
      1 'b2co_time_cdf failed because compiled with NO_CDF option'
-#endif
-#else
-      write(*,*)
-     1 'b2co_time_cdf failed, not yet converted to WG'
 #endif
       call subend ()
       return
