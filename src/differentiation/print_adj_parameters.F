@@ -5,11 +5,11 @@
 *     print_adj_parameters is used in b2mn_b and b2optim_* to print which
 *     parameters are used for sensitivity calculation and optimization
 *-----------------------------------------------------------------------
-      integer :: icf, ii, ip
+      integer :: icf, ii, ip, isigma, imean, ipar
       character*3 ss1
       character*3 ss2
       character*70 key
-      do ip = 1, nnvar - nsigma_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -41,7 +41,7 @@
               write(ss1,"(I3)") paris(ip)
               write (key, *) "parm_alf, species ", ss1
             case default
-              write(*,*) partype(ip)
+              write(*,*) 'partype = ',partype(ip)
               call xerrab ('partype incompatible with spatial points')
           end select
           do ii = 1, spatial_points(ip)
@@ -63,7 +63,7 @@
           case (4)
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_hce, species ", ss1
-          case (5)
+          case (6)
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_vla, species ", ss1
           case (7)
@@ -150,19 +150,52 @@
           case (39)
             write (key, *) "b2tfhe_vis_kt"
           case default
-            write(*,*) partype(ip)
+            write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
           write (*,*) '  Calculating gradient of',trim(key)
         endif
-      end do !nbdirs-nsigma_opt
+      end do !nbdirs-nsigma_opt-nmean_opt
+
+      ipar = nnvar - nmean_opt - nsigma_opt
 
       if (nsigma_opt.gt.0) then
+        isigma = npar_opt - nmean_opt - nsigma_opt + 1
         do ip = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ip)) then
+            ipar = ipar + 1
+            if (.not. (partype(ipar).eq.0)) then
+              write(*,*) ' ipar, partype(ipar) = ', ipar, partype(ipar)
+              write(*,*) ' this was supposed to be a sigma, partype = 0'
+              write(ss1,"(I3)") ip
+              write(ss2,"(I3)") ipar
+              call xerrab('print_adj_parameters: inconsistency '//
+     &         'between sigma '//trim(ss1)//'and partype '//trim(ss2))
+            endif
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      if (nmean_opt.gt.0) then
+        imean = npar_opt - nmean_opt + 1
+        do ip = 1, nmean
+!         only if mean is being optimized!
+          if (mean_opt(ip)) then
+            ipar = ipar + 1
+            if (.not. (partype(ipar).eq.-1)) then
+              write(*,*) ' ipar, partype(ipar) = ', ipar, partype(ipar)
+              write(*,*) ' this was supposed to be a mean, partype = -1'
+              write(ss1,"(I3)") ip
+              write(ss2,"(I3)") ipar
+              call xerrab('print_adj_parameters: inconsistency '//
+     &         'between mean '//trim(ss1)//'and partype '//trim(ss2))
+            endif
+            write(ss2,"(I3)") ip
+            write (key, *) "mean",ss2
             write (*,*) '  Calculating gradient of',trim(key)
           endif
         end do

@@ -318,7 +318,7 @@ csw
       use b2mod_ad
      , , only: nncf
       use b2mod_par_opt
-     & , only : par_opt_phys, npar_opt, sigma, nsigma
+     & , only : par_opt_phys, npar_opt, sigma, nsigma, mean, nmean
       implicit none
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg

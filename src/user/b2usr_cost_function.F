@@ -37,7 +37,7 @@
       real (kind=R8), save :: xx(nn), dd(nn), ff(nn)
       integer :: ii, ij, jj
 #endif
-      integer :: isigma
+      integer :: isigma, imean
       external calc_dist
 
       call subini('b2usr_cost_function')
@@ -56,13 +56,6 @@
           end do
         end do
 #else
-        if (cftype(1).eq.6) then
-          call xertst(npar_opt+nsigma.gt.0,'cftype 6 requires at '//
-     &    'least one sigma in b2.user.parameters')
-          call xertst(cfend(1)-cfstart(1)+1.le.nsigma, 'Each cost '//
-     &    'function summed in cftype 6 must have a sigma value '//
-     &    'assigned in b2.user.parameters')
-        endif
         cfnorm = 0.0_R8
         vold = 0.0_R8
         do icf = 1, ncf
@@ -105,6 +98,7 @@
       J = 0.0_R8
 #ifdef TEST_MAP
       isigma = 1
+      imean = 1
       iicf = 2
       do ii=1,nn
         ff(ii) = parm_dna(1)*(xx(ii)**1.5)
@@ -112,7 +106,7 @@
       call calc_prior(prior, inrange)
       n1 = ncfdata(iicf)
       call calc_loglikelihood(n1, ff, cfdata(iicf,2,1:n1),
-     & lll_cum, isigma)
+     & lll_cum, isigma, imean)
       if (inrange) then
         J(1) = -(log(prior) + lll_cum)*cfweight(1)
       else
@@ -182,8 +176,10 @@
             enddo
           case (6) !loglikelihood + log prior for Bayesian MAP estimate
             call calc_prior(prior, inrange)
+            write(*,*) 'MAP prior value:', prior
             lll_cum = 0.0_R8
             isigma = 1
+            imean = 1
             do iicf = cfstart(1), cfend(1)
               n1 = mpg%cfRegP(iicf,2)
               n2 = ncfdata(iicf)
@@ -224,9 +220,11 @@
               call interp1d(n1,n2,b2rr(iicf,1:n1),cfdata(iicf,1,1:n2),
      &          b2data(1:n1),b2dataOnCf(1:n2))
               call calc_loglikelihood(n2, b2dataOnCf(1:n2), 
-     &          cfdata(iicf,2,1:n2), cfdata(iicf,3,1:n2), lll, isigma)
+     &          cfdata(iicf,2,1:n2), cfdata(iicf,3,1:n2), lll, isigma,
+     &          imean)
               lll_cum = lll_cum + lll
               isigma = isigma + 1
+              imean = imean + 1
             end do
             if (inrange) then
               J(icf) = -(log(prior) + lll_cum)*cfweight(icf)
