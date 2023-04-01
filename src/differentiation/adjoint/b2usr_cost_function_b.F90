@@ -3,7 +3,7 @@
 !
 !  Differentiation of b2usr_cost_function in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: j
-!   with respect to varying inputs: sigma *par_opt_phys *(st.pl.na)
+!   with respect to varying inputs: sigma *par_opt_phys mean *(st.pl.na)
 !                *(st.pl.te) *(st.pl.ti) *(st.dv.fna) *(st.dv.fne)
 !                *(st.dv.fhe) *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne)
 !                *(st.rt.rpt)
@@ -61,7 +61,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   REAL(kind=r8) :: qqb, priorb, lllb, lll_cumb
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
   REAL(kind=r8) :: gradrb(ncv), funvb(nvx), pzb(ncv), rzb(ncv), csb(ncv)
-  INTEGER :: isigma
+  INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
   INTRINSIC MIN
@@ -273,8 +273,10 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL PUSHREAL8(prior, r8/8)
         CALL CALC_PRIOR_NODIFF(prior, inrange)
+        WRITE(*, *) 'MAP prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
+        imean = 1
         DO iicf=cfstart(1),cfend(1)
           n1 = mpg%cfregp(iicf, 2)
           n2 = ncfdata(iicf)
@@ -342,10 +344,12 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
 &                 , b2data(1:n1), b2dataoncf(1:n2))
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
 &                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
-&                                  , lll, isigma)
+&                                  , lll, isigma, imean)
           lll_cum = lll_cum + lll
           CALL PUSHINTEGER4(isigma)
           isigma = isigma + 1
+          CALL PUSHINTEGER4(imean)
+          imean = imean + 1
         END DO
         IF (inrange) THEN
           j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))
@@ -465,6 +469,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
     IF (ALLOCATED(b2dataoncfb)) b2dataoncfb = 0.D0
     sigmab = 0.D0
     IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
+    meanb = 0.D0
     stb%pl%na = 0.D0
     stb%pl%te = 0.D0
     stb%pl%ti = 0.D0
@@ -746,12 +751,13 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
         GOTO 100
       END IF
       DO iicf=cfend(1),cfstart(1),-1
+        CALL POPINTEGER4(imean)
         CALL POPINTEGER4(isigma)
         lllb = lll_cumb
         n2 = ncfdata(iicf)
         CALL CALC_LOGLIKELIHOOD_B(n2, b2dataoncf(1:n2), b2dataoncfb(1:n2&
 &                           ), cfdata(iicf, 2, 1:n2), cfdata(iicf, 3, 1:&
-&                           n2), lll, lllb, isigma)
+&                           n2), lll, lllb, isigma, imean)
         n1 = mpg%cfregp(iicf, 2)
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2dataoncf(1:n2), r8*n2/8)
@@ -850,6 +856,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, geob, mpg, mpgb&
   ELSE
     sigmab = 0.D0
     IF (ALLOCATED(par_opt_physb)) par_opt_physb = 0.D0
+    meanb = 0.D0
     stb%pl%na = 0.D0
     stb%pl%te = 0.D0
     stb%pl%ti = 0.D0
@@ -916,7 +923,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   LOGICAL :: inrange
   REAL(kind=r8) :: qq, prior, lll, lll_cum
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
-  INTEGER :: isigma
+  INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
   INTRINSIC MIN
@@ -933,13 +940,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
     CALL XERTST(mpg%isclassicalgrid .EQ. 1, ' Cost function CVs and '//&
 &         'FCs ordering  and interpolation in case of unstructured grid'&
 &         //' needs to be revised')
-    IF (cftype(1) .EQ. 6) THEN
-      CALL XERTST(npar_opt + nsigma .GT. 0, 'cftype 6 requires at '//&
-&           'least one sigma in b2.user.parameters')
-      CALL XERTST(cfend(1) - cfstart(1) + 1 .LE. nsigma, 'Each cost '//&
-&           'function summed in cftype 6 must have a sigma value '//&
-&           'assigned in b2.user.parameters')
-    END IF
     cfnorm = 0.0_R8
     vold = 0.0_R8
     DO icf=1,ncf
@@ -1067,8 +1067,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_PRIOR_NODIFF(prior, inrange)
+        WRITE(*, *) 'MAP prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
+        imean = 1
         DO iicf=cfstart(1),cfend(1)
           n1 = mpg%cfregp(iicf, 2)
           n2 = ncfdata(iicf)
@@ -1117,9 +1119,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                 , b2data(1:n1), b2dataoncf(1:n2))
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
 &                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
-&                                  , lll, isigma)
+&                                  , lll, isigma, imean)
           lll_cum = lll_cum + lll
           isigma = isigma + 1
+          imean = imean + 1
         END DO
         IF (inrange) THEN
           j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))

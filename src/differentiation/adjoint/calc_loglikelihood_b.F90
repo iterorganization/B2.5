@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of calc_loglikelihood in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: sigma lll ff
-!   with respect to varying inputs: sigma ff
+!   gradient     of useful results: sigma mean lll ff
+!   with respect to varying inputs: sigma mean ff
 !
 !
 !
@@ -15,13 +15,15 @@
 !
 !
 !
-SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, yy, ss, lll, lllb, isigma)
+SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, yy, ss, lll, lllb, isigma, &
+& imean)
   USE B2MOD_TYPES
-  USE B2MOD_PAR_OPT_DIFF, ONLY : sigma, sigmab, scale_sigma
+  USE B2MOD_PAR_OPT_DIFF, ONLY : sigma, sigmab, scale_sigma, mean, meanb&
+& , nmean
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: nn, isigma
+  INTEGER, INTENT(IN) :: nn, isigma, imean
 !SOLPS results
   REAL(kind=r8), INTENT(IN) :: ff(nn)
   REAL(kind=r8) :: ffb(nn)
@@ -39,6 +41,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, yy, ss, lll, lllb, isigma)
   INTRINSIC SUM
   REAL(kind=r8) :: tempb
   INTEGER :: branch
+!
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
 ! sc  TO BE DONE: proper covariance matrix should be built here
 !     for the moment no correlation => only diagonal elements
@@ -50,8 +53,13 @@ SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, yy, ss, lll, lllb, isigma)
     rr = (sigma(isigma)+ss)**2
     CALL PUSHCONTROL1B(1)
   END IF
-! FIXME in principle also -mu
   zz = ff - yy
+  IF (nmean .GT. 0) THEN
+    zz = zz - mean(imean)
+    CALL PUSHCONTROL1B(1)
+  ELSE
+    CALL PUSHCONTROL1B(0)
+  END IF
 !     solution of quadratic problem for DIAGONAL matrix
 ! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz
   DO ii=1,nn
@@ -62,6 +70,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, yy, ss, lll, lllb, isigma)
 ! FIXME, should go away when real cholezky factorization is there
   CALL PUSHREAL8ARRAY(rr, r8*nn/8)
   rr = SQRT(rr)
+!
   invc_zb = 0.D0
   rrb = 0.D0
   rrb = -(2.0_R8*0.5_R8*lllb/rr)
@@ -79,6 +88,8 @@ SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, yy, ss, lll, lllb, isigma)
     zzb(ii) = zzb(ii) + 2*zz(ii)*tempb
     rrb(ii) = rrb(ii) - zz(ii)**2*tempb/rr(ii)
   END DO
+  CALL POPCONTROL1B(branch)
+  IF (branch .NE. 0) meanb(imean) = meanb(imean) - SUM(zzb)
   ffb = ffb + zzb
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
@@ -100,13 +111,13 @@ END SUBROUTINE CALC_LOGLIKELIHOOD_B
 !
 !
 !
-SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
+SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma, imean)
   USE B2MOD_TYPES
-  USE B2MOD_PAR_OPT_DIFF, ONLY : sigma, scale_sigma
+  USE B2MOD_PAR_OPT_DIFF, ONLY : sigma, scale_sigma, mean, nmean
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: nn, isigma
+  INTEGER, INTENT(IN) :: nn, isigma, imean
 !SOLPS results
   REAL(kind=r8), INTENT(IN) :: ff(nn)
 !Data
@@ -119,6 +130,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
   REAL(kind=r8) :: zz(nn), rr(nn), invc_z(nn)
   INTRINSIC SQRT, LOG
   INTRINSIC SUM
+!
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
   CALL SUBINI('calc_loglikelihood')
 ! sc  TO BE DONE: proper covariance matrix should be built here
@@ -129,8 +141,8 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
   ELSE
     rr = (sigma(isigma)+ss)**2
   END IF
-! FIXME in principle also -mu
   zz = ff - yy
+  IF (nmean .GT. 0) zz = zz - mean(imean)
 !     solution of quadratic problem for DIAGONAL matrix
 ! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz
   DO ii=1,nn
@@ -141,6 +153,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
 ! FIXME, should go away when real cholezky factorization is there
   rr = SQRT(rr)
   lll = -(0.5_R8*(nn*LOG(2.0_R8*pi)+SUM(2.0_R8*LOG(rr))+SUM(invc_z)))
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF

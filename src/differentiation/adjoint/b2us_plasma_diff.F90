@@ -1086,7 +1086,6 @@ CONTAINS
       coeffb%dna0save = 0.D0
 !
       ALLOCATE(coeff%cssb(nfc), source=0._R8)
-!
       RETURN
     END IF
   END SUBROUTINE CREATEB2COEFF_B
