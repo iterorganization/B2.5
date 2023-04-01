@@ -4,10 +4,10 @@
 !  Differentiation of b2news_ in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci tdata int4l int1l int2l
-!                int3l int0l parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna fb_target
-!                fb_prev fb_current fb_const charge_frac saved_fb_actuator
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                int4l int1l int2l int3l int0l fb_target fb_prev
+!                fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
@@ -74,10 +74,10 @@
 !                (global)b2recyc[1:nstraid,0:nsdmax-1]
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci tdata int4l int1l int2l
-!                int3l int0l parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna fb_target
-!                fb_prev fb_current fb_const charge_frac saved_fb_actuator
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                int4l int1l int2l int3l int0l fb_target fb_prev
+!                fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear

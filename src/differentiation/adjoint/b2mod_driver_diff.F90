@@ -5123,9 +5123,9 @@ CONTAINS
 !   gradient     of useful results: j
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys tdata parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna j
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
+!                sigma *par_opt_phys mean parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                j switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
 !                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -5138,13 +5138,13 @@ CONTAINS
 !                *rtlra:out cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:out conpar:out enkpar:out
 !                potpar:out mompar:out enipar:out b2recyc:out userfluxparm:(loc)
-!                sigma:out *par_opt_phys:out cfvla:(loc) cfvsa:(loc)
-!                cfalf:(loc) cfdpa:(loc) cfsig:(loc) cfdna:(loc)
-!                cfhce:(loc) cfhci:(loc) tdata:out int4l:(loc)
-!                int1l:(loc) int2l:(loc) int3l:(loc) int0l:(loc)
-!                parm_hce:out parm_hci:out parm_vla:out parm_vsa:out
-!                parm_alf:out parm_dpa:out parm_sig:out parm_dna:out
-!                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
+!                sigma:out *par_opt_phys:out mean:out cfvla:(loc)
+!                cfvsa:(loc) cfalf:(loc) cfdpa:(loc) cfsig:(loc)
+!                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:out
+!                parm_hci:out parm_vla:out parm_vsa:out parm_alf:out
+!                parm_dpa:out parm_sig:out parm_dna:out tdata:out
+!                int4l:(loc) int1l:(loc) int2l:(loc) int3l:(loc)
+!                int0l:(loc) fb_target:(loc) fb_prev:(loc) fb_current:(loc)
 !                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
 !                fb_rescale:(loc) j:in-zero geo.cvbb:(loc) switch.keps_cd:out
 !                switch.keps_heat:out switch.keps_heat_i:out switch.keps_sig:out
@@ -5645,16 +5645,6 @@ CONTAINS
 !    ..perform one time step
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &   'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
-    CALL PUSHREAL8(dt_prev, r8/8)
-    CALL PUSHBOOLEAN(feedback_namelist_used)
-    CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
-    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
-    CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
-    CALL PUSHREAL8(cum_volrec, r8/8)
-    CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
-    CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
     IF (ALLOCATED(art_shi)) THEN
       CALL PUSHREAL8ARRAY(art_shi, r8*SIZE(art_shi, 1)*SIZE(art_shi, 2)/&
 &                   8)
@@ -5690,6 +5680,16 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
+    CALL PUSHREAL8(dt_prev, r8/8)
+    CALL PUSHBOOLEAN(feedback_namelist_used)
+    CALL PUSHREAL8ARRAY(fb_rescale, r8*6/8)
+    CALL PUSHREAL8ARRAY(saved_fb_actuator, r8*6/8)
+    CALL PUSHREAL8ARRAY(charge_frac, r8*42/8)
+    CALL PUSHREAL8ARRAY(fb_const, r8*6/8)
+    CALL PUSHREAL8(cum_volrec, r8/8)
+    CALL PUSHREAL8ARRAY(fb_current, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_prev, r8*6/8)
+    CALL PUSHREAL8ARRAY(fb_target, r8*6/8)
     IF (ALLOCATED(bv_na)) THEN
       CALL PUSHREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*SIZE(bv_na, 2)/8)
       CALL PUSHCONTROL1B(1)
@@ -6498,12 +6498,6 @@ CONTAINS
     cfdnab = 0.D0
     cfhceb = 0.D0
     cfhcib = 0.D0
-    tdatab = 0.D0
-    int4lb = 0.D0
-    int1lb = 0.D0
-    int2lb = 0.D0
-    int3lb = 0.D0
-    int0lb = 0.D0
     parm_hceb = 0.D0
     parm_hcib = 0.D0
     parm_vlab = 0.D0
@@ -6512,6 +6506,12 @@ CONTAINS
     parm_dpab = 0.D0
     parm_sigb = 0.D0
     parm_dnab = 0.D0
+    tdatab = 0.D0
+    int4lb = 0.D0
+    int1lb = 0.D0
+    int2lb = 0.D0
+    int3lb = 0.D0
+    int0lb = 0.D0
     fb_targetb = 0.D0
     fb_prevb = 0.D0
     fb_currentb = 0.D0
@@ -6737,16 +6737,6 @@ CONTAINS
     cpustartb0 = cpustartb
     res_quitb0 = res_quitb
     dtimb0 = dtimb
-    parm_dnab0(0:nsdmax-1) = parm_dnab(0:nsdmax-1)
-    parm_sigb0 = parm_sigb
-    parm_dpab0(0:nsdmax-1) = parm_dpab(0:nsdmax-1)
-    parm_alfb0 = parm_alfb
-    transport_time_modb0 = transport_time_modb
-    parm_vsab0(0:nsdmax-1) = parm_vsab(0:nsdmax-1)
-    parm_vlab0(0:nsdmax-1) = parm_vlab(0:nsdmax-1)
-    parm_hcib0(0:nsdmax-1) = parm_hcib(0:nsdmax-1)
-    parm_hceb0 = parm_hceb
-    transport_time_switchb0 = transport_time_switchb
     toldb0 = toldb
     uoldb0 = uoldb
     moldb0 = moldb
@@ -6760,6 +6750,16 @@ CONTAINS
     dtenb0(0:cvregmax) = dtenb(0:cvregmax)
     dteib0(0:cvregmax) = dteib(0:cvregmax)
     dteeb0(0:cvregmax) = dteeb(0:cvregmax)
+    parm_dnab0(0:nsdmax-1) = parm_dnab(0:nsdmax-1)
+    parm_sigb0 = parm_sigb
+    parm_dpab0(0:nsdmax-1) = parm_dpab(0:nsdmax-1)
+    parm_alfb0 = parm_alfb
+    transport_time_modb0 = transport_time_modb
+    parm_vsab0(0:nsdmax-1) = parm_vsab(0:nsdmax-1)
+    parm_vlab0(0:nsdmax-1) = parm_vlab(0:nsdmax-1)
+    parm_hcib0(0:nsdmax-1) = parm_hcib(0:nsdmax-1)
+    parm_hceb0 = parm_hceb
+    transport_time_switchb0 = transport_time_switchb
     cfdf0b0(0:7, 0:nsdecl-1) = cfdf0b(0:7, 0:nsdecl-1)
     rcionb0(0:nsdmax-1, 1:nstraid) = rcionb(0:nsdmax-1, 1:nstraid)
     e_fcb0 = e_fcb
@@ -7458,6 +7458,16 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*&
 &                                     SIZE(bv_na, 2)/8)
+      CALL POPREAL8ARRAY(fb_target, r8*6/8)
+      CALL POPREAL8ARRAY(fb_prev, r8*6/8)
+      CALL POPREAL8ARRAY(fb_current, r8*6/8)
+      CALL POPREAL8(cum_volrec, r8/8)
+      CALL POPREAL8ARRAY(fb_const, r8*6/8)
+      CALL POPREAL8ARRAY(charge_frac, r8*42/8)
+      CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
+      CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+      CALL POPBOOLEAN(feedback_namelist_used)
+      CALL POPREAL8(dt_prev, r8/8)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)&
 &                                     *SIZE(art_sch, 2)/8)
@@ -7475,16 +7485,6 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_shi, r8*SIZE(art_shi, 1)&
 &                                     *SIZE(art_shi, 2)/8)
-      CALL POPREAL8ARRAY(fb_target, r8*6/8)
-      CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-      CALL POPREAL8ARRAY(fb_current, r8*6/8)
-      CALL POPREAL8(cum_volrec, r8/8)
-      CALL POPREAL8ARRAY(fb_const, r8*6/8)
-      CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-      CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-      CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
-      CALL POPBOOLEAN(feedback_namelist_used)
-      CALL POPREAL8(dt_prev, r8/8)
       switchb%keps_cd = 0.D0
       switchb%keps_heat = 0.D0
       switchb%keps_heat_i = 0.D0
@@ -7938,16 +7938,6 @@ CONTAINS
     cpustartb = cpustartb0
     res_quitb = res_quitb0
     dtimb = dtimb0
-    parm_dnab(0:nsdmax-1) = parm_dnab0(0:nsdmax-1)
-    parm_sigb = parm_sigb0
-    parm_dpab(0:nsdmax-1) = parm_dpab0(0:nsdmax-1)
-    parm_alfb = parm_alfb0
-    transport_time_modb = transport_time_modb0
-    parm_vsab(0:nsdmax-1) = parm_vsab0(0:nsdmax-1)
-    parm_vlab(0:nsdmax-1) = parm_vlab0(0:nsdmax-1)
-    parm_hcib(0:nsdmax-1) = parm_hcib0(0:nsdmax-1)
-    parm_hceb = parm_hceb0
-    transport_time_switchb = transport_time_switchb0
     toldb = toldb0
     uoldb = uoldb0
     moldb = moldb0
@@ -7961,6 +7951,16 @@ CONTAINS
     dtenb(0:cvregmax) = dtenb0(0:cvregmax)
     dteib(0:cvregmax) = dteib0(0:cvregmax)
     dteeb(0:cvregmax) = dteeb0(0:cvregmax)
+    parm_dnab(0:nsdmax-1) = parm_dnab0(0:nsdmax-1)
+    parm_sigb = parm_sigb0
+    parm_dpab(0:nsdmax-1) = parm_dpab0(0:nsdmax-1)
+    parm_alfb = parm_alfb0
+    transport_time_modb = transport_time_modb0
+    parm_vsab(0:nsdmax-1) = parm_vsab0(0:nsdmax-1)
+    parm_vlab(0:nsdmax-1) = parm_vlab0(0:nsdmax-1)
+    parm_hcib(0:nsdmax-1) = parm_hcib0(0:nsdmax-1)
+    parm_hceb = parm_hceb0
+    transport_time_switchb = transport_time_switchb0
     cfdf0b(0:7, 0:nsdecl-1) = cfdf0b0(0:7, 0:nsdecl-1)
     rcionb(0:nsdmax-1, 1:nstraid) = rcionb0(0:nsdmax-1, 1:nstraid)
     e_fcb = e_fcb0
@@ -8641,6 +8641,16 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(bv_na, r8*SIZE(bv_na, 1)*SIZE(&
 &                                   bv_na, 2)/8)
+    CALL POPREAL8ARRAY(fb_target, r8*6/8)
+    CALL POPREAL8ARRAY(fb_prev, r8*6/8)
+    CALL POPREAL8ARRAY(fb_current, r8*6/8)
+    CALL POPREAL8(cum_volrec, r8/8)
+    CALL POPREAL8ARRAY(fb_const, r8*6/8)
+    CALL POPREAL8ARRAY(charge_frac, r8*42/8)
+    CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
+    CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
+    CALL POPBOOLEAN(feedback_namelist_used)
+    CALL POPREAL8(dt_prev, r8/8)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)*&
 &                                   SIZE(art_sch, 2)/8)
@@ -8656,16 +8666,6 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_shi, r8*SIZE(art_shi, 1)*&
 &                                   SIZE(art_shi, 2)/8)
-    CALL POPREAL8ARRAY(fb_target, r8*6/8)
-    CALL POPREAL8ARRAY(fb_prev, r8*6/8)
-    CALL POPREAL8ARRAY(fb_current, r8*6/8)
-    CALL POPREAL8(cum_volrec, r8/8)
-    CALL POPREAL8ARRAY(fb_const, r8*6/8)
-    CALL POPREAL8ARRAY(charge_frac, r8*42/8)
-    CALL POPREAL8ARRAY(saved_fb_actuator, r8*6/8)
-    CALL POPREAL8ARRAY(fb_rescale, r8*6/8)
-    CALL POPBOOLEAN(feedback_namelist_used)
-    CALL POPREAL8(dt_prev, r8/8)
       parm_dnab = 0.D0
       parm_hceb = 0.D0
       parm_hcib = 0.D0
@@ -8684,10 +8684,10 @@ CONTAINS
       switchb%keps_cd = 0.D0
       switchb%keps_heat = 0.D0
       switchb%keps_heat_i = 0.D0
-! csc the next enables to save the sensitivity of transport coefficients 
-! for each point of the domain but only for the call to b2tqna within 
-! the next call to b2mndt
-    last_call_transp = .true. 
+!   csc the next enables to save the sensitivity of transport coefficients
+!   for each point of the domain but only for the call to b2tqna within
+!   the next call to b2mndt
+    last_call_transp = .true.
     CALL B2MNDT_B(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, ismain0, &
 &           state%rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, &
 &           ntim, switch, switchb, geo, geob, mpg, mpgb, state, stateb1&
