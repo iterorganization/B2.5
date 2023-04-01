@@ -523,7 +523,7 @@ CONTAINS
 !                tdata j
 !   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
 !                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys parm_hce parm_hci parm_vla
+!                sigma *par_opt_phys mean parm_hce parm_hci parm_vla
 !                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -539,7 +539,7 @@ CONTAINS
 !                *b2dataoncf:(loc) enepar:in-out conpar:in-out
 !                enkpar:in potpar:in-out mompar:in enipar:in-out
 !                b2recyc:in userfluxparm:(loc) sigma:in *par_opt_phys:in
-!                cfvla:(loc) cfvsa:(loc) cfalf:(loc) cfdpa:(loc)
+!                mean:in cfvla:(loc) cfvsa:(loc) cfalf:(loc) cfdpa:(loc)
 !                cfsig:(loc) cfdna:(loc) cfhce:(loc) cfhci:(loc)
 !                parm_hce:in parm_hci:in parm_vla:in parm_vsa:in
 !                parm_alf:in parm_dpa:in parm_sig:in parm_dna:in
@@ -873,7 +873,7 @@ CONTAINS
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata, tdatad
     USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, par_opt_physd, &
-&   npar_opt, sigma, sigmad, nsigma
+&   npar_opt, sigma, sigmad, nsigma, mean, meand, nmean
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -908,7 +908,7 @@ CONTAINS
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata
     USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, npar_opt, sigma, &
-&   nsigma
+&   nsigma, mean, nmean
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch

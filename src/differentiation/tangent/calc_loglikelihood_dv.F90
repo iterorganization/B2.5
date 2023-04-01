@@ -3,7 +3,7 @@
 !
 !  Differentiation of calc_loglikelihood in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: lll
-!   with respect to varying inputs: sigma ff
+!   with respect to varying inputs: sigma mean ff
 !
 !
 !
@@ -16,15 +16,16 @@
 !
 !
 SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
-& , nbdirs)
+& , imean, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, sigmad, scale_sigma
+  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, sigmad, scale_sigma, mean, &
+& meand, nmean
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: nn, isigma
+  INTEGER, INTENT(IN) :: nn, isigma, imean
 !SOLPS results
   REAL(kind=r8), INTENT(IN) :: ff(nn)
   REAL(kind=r8), INTENT(IN) :: ffd(nbdirsmax, nn)
@@ -48,6 +49,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
   REAL(kind=r8) :: temp
   REAL(kind=r8), DIMENSION(nn) :: temp0
   INTEGER :: nbdirs
+!
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
   CALL SUBINI('calc_loglikelihood')
 ! sc  TO BE DONE: proper covariance matrix should be built here
@@ -64,14 +66,23 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
     END DO
     rr = (sigma(isigma)+ss)**2
   END IF
-! FIXME in principle also -mu
   DO nd=1,nbdirs
     zzd(nd, :) = ffd(nd, :)
   END DO
   zz = ff - yy
-  DO nd=1,nbdirsmax
-    invc_zd(nd, :) = 0.D0
-  END DO
+  IF (nmean .GT. 0) THEN
+    DO nd=1,nbdirs
+      zzd(nd, :) = zzd(nd, :) - meand(nd, imean)
+    END DO
+    zz = zz - mean(imean)
+    DO nd=1,nbdirsmax
+      invc_zd(nd, :) = 0.D0
+    END DO
+  ELSE
+    DO nd=1,nbdirsmax
+      invc_zd(nd, :) = 0.D0
+    END DO
+  END IF
 !     solution of quadratic problem for DIAGONAL matrix
 ! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz
   DO ii=1,nn
@@ -100,6 +111,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
   END DO
   arg2(:) = 2.0_R8*LOG(rr)
   lll = -(0.5_R8*(nn*LOG(arg1)+SUM(arg2(:))+SUM(invc_z)))
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOGLIKELIHOOD_DV
@@ -115,14 +127,14 @@ END SUBROUTINE CALC_LOGLIKELIHOOD_DV
 !
 !
 !
-SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
+SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma, imean)
   USE B2MOD_TYPES
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, scale_sigma
+  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, scale_sigma, mean, nmean
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: nn, isigma
+  INTEGER, INTENT(IN) :: nn, isigma, imean
 !SOLPS results
   REAL(kind=r8), INTENT(IN) :: ff(nn)
 !Data
@@ -137,6 +149,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
   INTRINSIC SUM
   REAL(r8) :: arg1
   REAL(r8), DIMENSION(nn) :: arg2
+!
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
   CALL SUBINI('calc_loglikelihood')
 ! sc  TO BE DONE: proper covariance matrix should be built here
@@ -147,8 +160,8 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
   ELSE
     rr = (sigma(isigma)+ss)**2
   END IF
-! FIXME in principle also -mu
   zz = ff - yy
+  IF (nmean .GT. 0) zz = zz - mean(imean)
 !     solution of quadratic problem for DIAGONAL matrix
 ! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz
   DO ii=1,nn
@@ -161,6 +174,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
   arg1 = 2.0_R8*pi
   arg2(:) = 2.0_R8*LOG(rr)
   lll = -(0.5_R8*(nn*LOG(arg1)+SUM(arg2(:))+SUM(invc_z)))
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF
