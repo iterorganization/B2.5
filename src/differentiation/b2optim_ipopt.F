@@ -270,19 +270,19 @@
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma
+      integer IER, ipar, isigma, imean
       character*3 str
       save j
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
       if (new_x.eq.0) then
-        do ipar = 1, npar - nsigma_opt
+        do ipar = 1, npar - nsigma_opt - nmean_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
         enddo
-        isigma = npar - nsigma_opt + 1
+        isigma = npar - nsigma_opt - nmean_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
             sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
@@ -291,6 +291,17 @@
             write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
      &       sigma(ipar)
             isigma = isigma + 1
+          endif
+        enddo
+        imean= npar - nmean_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (ipar.ge.10) write(str,"(I2)") imean
+            write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &       mean(ipar)
+            imean = imean + 1
           endif
         enddo
         call b2mn_step(switch, geo, mpg, state, state_ext, j)
@@ -307,20 +318,20 @@
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma
+      integer IER, ipar, isigma, imean
       character*3 str
       save jdiff
 !csc important here to check for NEW_X! so that it doesn't recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        do ipar = 1, npar - nsigma_opt
+        do ipar = 1, npar - nsigma_opt - nmean_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
         enddo
-        isigma = npar - nsigma_opt + 1
+        isigma = npar - nsigma_opt - nmean_opt + 1
         do ipar = 1, nsigma
           if (sigma_opt(ipar)) then
             sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
@@ -331,8 +342,19 @@
             isigma = isigma + 1
           endif
         enddo
-! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
-! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+        imean = npar - nmean_opt + 1
+        do ipar = 1, nmean
+          if (mean_opt(ipar)) then
+            mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
+            write(str,"(I1)") imean
+            if (ipar.ge.10) write(str,"(I2)") imean
+            write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &       mean(ipar)
+            imean = imean + 1
+          endif
+        enddo
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
+! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
         call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,
      &   statediff, state_ext, state_extdiff, j, jdiff)
