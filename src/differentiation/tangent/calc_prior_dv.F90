@@ -3,7 +3,7 @@
 !
 !  Differentiation of calc_prior in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: prior
-!   with respect to varying inputs: sigma *par_opt_phys
+!   with respect to varying inputs: sigma *par_opt_phys mean
 !   Plus diff mem management of: par_opt_phys:in
 !
 !
@@ -27,10 +27,9 @@ SUBROUTINE CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
   REAL(kind=r8), INTENT(INOUT) :: prior
   REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(INOUT) :: priord
   LOGICAL, INTENT(INOUT) :: inrange
-  INTEGER :: ii, isigma, nn
+  INTEGER :: ii, isigma, imean
   INTRINSIC SQRT, EXP
   EXTERNAL XERRAB
-  INTRINSIC MAX
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
   REAL(r8) :: arg2
@@ -44,19 +43,11 @@ SUBROUTINE CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
 ! sc  Initialize prior
   prior = 1.0_R8
   inrange = .true.
-! sc  Loop on number of plasma parameters (no sigma)
-  nn = nsigma
-  IF (nsigma_opt .GT. 0) THEN
-    nn = nsigma_opt
-    DO nd=1,nbdirsmax
-      priord(nd) = 0.D0
-    END DO
-  ELSE
-    DO nd=1,nbdirsmax
-      priord(nd) = 0.D0
-    END DO
-  END IF
-  DO ii=1,npar_opt-nn
+  DO nd=1,nbdirsmax
+    priord(nd) = 0.D0
+  END DO
+! sc  Loop on number of plasma parameters (no sigma, no mean)
+  DO ii=1,npar_opt-nsigma_opt-nmean_opt
     SELECT CASE  (prior_type(ii)) 
     CASE (0) 
 !Uniform distribution
@@ -89,11 +80,9 @@ SUBROUTINE CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
       END DO
     END IF
   END DO
-  IF (0 .LT. npar_opt - nn) THEN
-    isigma = npar_opt - nn
-  ELSE
-    isigma = 0
-  END IF
+!
+! Now loop only on sigma vector
+  isigma = npar_opt - nsigma_opt - nmean_opt
   DO ii=1,nsigma_opt
     SELECT CASE  (prior_type(ii+isigma)) 
     CASE (0) 
@@ -126,10 +115,49 @@ SUBROUTINE CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
       prior = temp
     CASE DEFAULT
       WRITE(*, *) prior_type(ii+isigma)
-      CALL XERRAB('prior_type out of bounds')
+      CALL XERRAB('prior_type out of bounds for sigma')
     END SELECT
     IF (sigma(ii) .LT. prior_range(ii+isigma, 1) .OR. sigma(ii) .GT. &
 &       prior_range(ii+isigma, 2)) THEN
+      prior = 0.0_R8
+      inrange = .false.
+      DO nd=1,nbdirsmax
+        priord(nd) = 0.D0
+      END DO
+    END IF
+  END DO
+!
+! Now loop only on mean vector
+  imean = npar_opt - nmean_opt
+  DO ii=1,nmean_opt
+    SELECT CASE  (prior_type(ii+imean)) 
+    CASE (0) 
+!Uniform distribution
+      prior = prior*1.0_R8
+    CASE (1) 
+!Uninformative, proper, Gaussian prior. Factor two because only positive parameters are allowed.
+      arg1 = 2.0_R8*pi
+      result1 = SQRT(arg1)
+      temp = prior_par(ii+imean, 2)*prior_par(ii+imean, 2)
+      DO nd=1,nbdirs
+        arg2d(nd) = -(0.5_R8*2*(mean(ii)-prior_par(ii+imean, 1))*meand(&
+&         nd, ii)/temp)
+      END DO
+      arg2 = -(0.5_R8*((mean(ii)-prior_par(ii+imean, 1))*(mean(ii)-&
+&       prior_par(ii+imean, 1))/temp))
+      temp = prior_par(ii+imean, 2)*result1
+      temp0 = EXP(arg2)
+      DO nd=1,nbdirs
+        priord(nd) = 2.0_R8*(prior*EXP(arg2)*arg2d(nd)/temp+temp0*priord&
+&         (nd)/temp)
+      END DO
+      prior = 2.0_R8*(temp0*(prior/temp))
+    CASE DEFAULT
+      WRITE(*, *) prior_type(ii+imean)
+      CALL XERRAB('prior_type out of bounds for mean')
+    END SELECT
+    IF (mean(ii) .LT. prior_range(ii+imean, 1) .OR. mean(ii) .GT. &
+&       prior_range(ii+imean, 2)) THEN
       prior = 0.0_R8
       inrange = .false.
       DO nd=1,nbdirsmax
@@ -161,10 +189,9 @@ SUBROUTINE CALC_PRIOR_NODIFF(prior, inrange)
   IMPLICIT NONE
   REAL(kind=r8), INTENT(INOUT) :: prior
   LOGICAL, INTENT(INOUT) :: inrange
-  INTEGER :: ii, isigma, nn
+  INTEGER :: ii, isigma, imean
   INTRINSIC SQRT, EXP
   EXTERNAL XERRAB
-  INTRINSIC MAX
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
   REAL(r8) :: arg2
@@ -173,10 +200,8 @@ SUBROUTINE CALC_PRIOR_NODIFF(prior, inrange)
 ! sc  Initialize prior
   prior = 1.0_R8
   inrange = .true.
-! sc  Loop on number of plasma parameters (no sigma)
-  nn = nsigma
-  IF (nsigma_opt .GT. 0) nn = nsigma_opt
-  DO ii=1,npar_opt-nn
+! sc  Loop on number of plasma parameters (no sigma, no mean)
+  DO ii=1,npar_opt-nsigma_opt-nmean_opt
     SELECT CASE  (prior_type(ii)) 
     CASE (0) 
 !Uniform distribution
@@ -198,11 +223,9 @@ SUBROUTINE CALC_PRIOR_NODIFF(prior, inrange)
       inrange = .false.
     END IF
   END DO
-  IF (0 .LT. npar_opt - nn) THEN
-    isigma = npar_opt - nn
-  ELSE
-    isigma = 0
-  END IF
+!
+! Now loop only on sigma vector
+  isigma = npar_opt - nsigma_opt - nmean_opt
   DO ii=1,nsigma_opt
     SELECT CASE  (prior_type(ii+isigma)) 
     CASE (0) 
@@ -220,10 +243,35 @@ SUBROUTINE CALC_PRIOR_NODIFF(prior, inrange)
       prior = prior/sigma(ii)
     CASE DEFAULT
       WRITE(*, *) prior_type(ii+isigma)
-      CALL XERRAB('prior_type out of bounds')
+      CALL XERRAB('prior_type out of bounds for sigma')
     END SELECT
     IF (sigma(ii) .LT. prior_range(ii+isigma, 1) .OR. sigma(ii) .GT. &
 &       prior_range(ii+isigma, 2)) THEN
+      prior = 0.0_R8
+      inrange = .false.
+    END IF
+  END DO
+!
+! Now loop only on mean vector
+  imean = npar_opt - nmean_opt
+  DO ii=1,nmean_opt
+    SELECT CASE  (prior_type(ii+imean)) 
+    CASE (0) 
+!Uniform distribution
+      prior = prior*1.0_R8
+    CASE (1) 
+!Uninformative, proper, Gaussian prior. Factor two because only positive parameters are allowed.
+      arg1 = 2.0_R8*pi
+      result1 = SQRT(arg1)
+      arg2 = -(0.5_R8*((mean(ii)-prior_par(ii+imean, 1))/prior_par(ii+&
+&       imean, 2))**2)
+      prior = prior*2.0_R8/(prior_par(ii+imean, 2)*result1)*EXP(arg2)
+    CASE DEFAULT
+      WRITE(*, *) prior_type(ii+imean)
+      CALL XERRAB('prior_type out of bounds for mean')
+    END SELECT
+    IF (mean(ii) .LT. prior_range(ii+imean, 1) .OR. mean(ii) .GT. &
+&       prior_range(ii+imean, 2)) THEN
       prior = 0.0_R8
       inrange = .false.
     END IF

@@ -65,27 +65,30 @@ MODULE B2MOD_PAR_OPT_DIFFV
 ! - cfweight: multiplier to the cost function
 ! - cfread: according to cftype, decide if reading experimental data from file for cost function
 ! - ncfdata: number of experimental data points read from file for each cost function
-! - cfdata(nncf,3,300): stores the experimental data points for each cost function
+! - cfdata(nncf,4,300): stores the experimental data points for each cost function
 !   column 1 stores the curvilinear spatial coordinate (e.g. along OMP or target)
 !   column 2 stores the experimental data value
-!   column 3 stores the uncertainty
+!   column 3 stores the standard deviation sigma
+!   column 4 stores the mean
 ! - nvmx: maximum number of variables that can be used for optimization
-! - nsigmx: maximum number of sigma values used in the Bayesian MAP cost function
+! - nsigmx: maximum number of sigma and mean values used in the Bayesian MAP cost function
 ! - nsigma: actual number of sigmas read and used for Bayesian MAP
+! - nmean: actual number of error means read and used for Bayesian MAP
 ! - prior_type: type of prior for each design parameter optimized in the MAP estimation
 ! - prior_par: parameters related to the type of prior (e.g. standard deviation for Gaussian prior)
 ! - prior_range: range of validity of the prior, outside this interval the MAP cost function returns NaN
 ! - scale_sigma: tells of the sigma in the MAP cost function is intended as relative (true) or absolute (false)
 ! - mapToOMP: according to cftype, decide if cost function data is to be re-mapped to the OMP 
 ! - read_sigma: tells to read or not the experimental data uncertainty
-! - sigma: stores the values of the standard deviation in the MAP cost function
+! - sigma: stores the values of the prediction error standard deviation in the MAP cost function
+! - mean: stores the values of the prediction error mean in the MAP cost function
 ! - inf_opt: parameter that defines an 'infinity' bound for optimization variables (e.g. prior range)
   INTEGER, PARAMETER :: mxncf=1000
   INTEGER :: cfstart(nncf), cfend(nncf), cftype(nncf)
   LOGICAL, SAVE :: cfread(nncf)=.false.
   INTEGER, SAVE :: cfdef(nncf)
   INTEGER, SAVE :: ncfdata(nncf), ncf, cf_reg(mxncf), cf_regp(nncf, 2)
-  REAL(kind=r8), SAVE :: cfdata(nncf, 3, 300), cfweight(nncf)
+  REAL(kind=r8), SAVE :: cfdata(nncf, 4, 300), cfweight(nncf)
   INTEGER :: nvmx, nsigmx
   PARAMETER (nvmx=50, nsigmx=10)
 !sc type of prior
@@ -98,6 +101,9 @@ MODULE B2MOD_PAR_OPT_DIFFV
   REAL(kind=r8), SAVE :: sigma(nsigmx)=0.0_R8
   REAL(kind=r8), SAVE :: sigmad(nbdirsmax, nsigmx)=0.D0
   REAL(kind=r8), PARAMETER :: inf_opt=1.0e30
+  INTEGER, SAVE :: nmean=0
+  REAL(kind=r8), SAVE :: mean(nsigmx)=0.0_R8
+  REAL(kind=r8), SAVE :: meand(nbdirsmax, nsigmx)=0.D0
 ! VARIABLES RELATED TO OPTIMIZATION
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
@@ -107,10 +113,11 @@ MODULE B2MOD_PAR_OPT_DIFFV
 ! - nsigma_opt stores only the number of sigmas that are actually optimized (which can be .le. nsigma).
 !   similarly sigma_opt stores only such sigmas that are optimized. This differentiation is needed to
 !   correctly pass the optimization variables to the optimization libraries
+! - nmean_opt, mean_opt, do the same as for sigma but for the error mean
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
 !        number of spatial points!)
 ! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
-! - nncon: number of nonlinear constriants (not used for now)
+! - nncon: number of nonlinear constraints (not used for now)
 ! - gl/gu: lowr/upper bound of such nonlinear constraints (not used for now)
 ! - nnjac: number of non-zeros in the jacobian of the nonlinear constraints (not used for now)
 ! - jcol/jrow: column/row indicex for each non-zero element of the jacobian
@@ -131,8 +138,9 @@ MODULE B2MOD_PAR_OPT_DIFFV
   REAL(kind=r8), SAVE :: tol_opt=1.0e-7_R8
   INTEGER, SAVE :: maxiter=100, partype(nvmx)
   INTEGER, SAVE :: nsigma_opt=0
+  INTEGER, SAVE :: nmean_opt=0
   INTEGER, SAVE :: paris(nvmx), parib(nvmx)
-  LOGICAL, SAVE :: sigma_opt(nsigmx)
+  LOGICAL, SAVE :: sigma_opt(nsigmx), mean_opt(nsigmx)
   LOGICAL, SAVE :: spatial_dep(nvmx)
   INTEGER, SAVE :: spatial_points(nvmx)=0
   INTEGER :: idd
@@ -145,7 +153,8 @@ MODULE B2MOD_PAR_OPT_DIFFV
 &     limited_memory_update_type, partype, sigma_opt, spatial_dep, &
 &     spatial_points, par_rescale, paris, parib, ncf, cfstart, cfend, &
 &     cftype, cfdef, cfweight, prior_type, prior_par, prior_range, &
-&     scale_sigma, nsigma, sigma, cf_reg, cf_regp, maptoomp, read_sigma
+&     scale_sigma, nsigma, sigma, cf_reg, cf_regp, maptoomp, read_sigma&
+&     , nmean, mean, mean_opt
 
 CONTAINS
 !  Differentiation of read_b2mod_par_opt as a context to call tangent code (with options multiDirectional context noISIZE r8):
@@ -164,7 +173,7 @@ CONTAINS
 ! csc local variables
     INTEGER, INTENT(IN) :: ns
     INTEGER :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff, noss, &
-&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj
+&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean
     INTEGER, ALLOCATABLE :: cfreg(:)
     LOGICAL :: done
     CHARACTER(len=1) :: str
@@ -182,7 +191,8 @@ CONTAINS
     EXTERNAL MAXVAL_DV0
     INTRINSIC ALL
     INTRINSIC SUM
-    INTRINSIC DBLE
+    INTRINSIC ABS
+    INTEGER :: abs0
     REAL(kind=r8) :: result1
     INTEGER :: nd
     INTEGER :: nbdirs
@@ -203,6 +213,7 @@ CONTAINS
     read_sigma = .false.
     cfweight = 1.0_R8
     nsigma = 0
+    nmean = 0
     scale_sigma = .true.
     prior_type = -1
     prior_par = -1.0_R8
@@ -223,13 +234,13 @@ CONTAINS
     jcol = 0
     jrow = 0
     jj = 0.0
-    partype = -1
+    partype = -2
     sigma_opt = .true.
+    mean_opt = .false.
     spatial_dep = .false.
     spatial_points = 0
     hessian_approximation = 'limited-memory'
     limited_memory_update_type = 'b2fgs'
-! FIXME set if (read_file)
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
       OPEN(99, file=filename) 
@@ -410,7 +421,7 @@ CONTAINS
 !
             CALL XERTST(cfstart(icf) .NE. 0 .AND. cfend(icf) .NE. 0, &
 &                 'cfdef=3 requires cfstart/cfend>0')
-! check if other CFs have same domain !FIXME check if also cfdef is the same
+! check if other CFs have same domain
             DO icff=1,icf-1
               IF (cfstart(icf) .EQ. cfstart(icff) .AND. cfend(icf) .EQ. &
 &                 cfend(icff) .AND. cfdef(icff) .EQ. 3) THEN
@@ -468,28 +479,6 @@ CONTAINS
       END IF
     END IF
 !
-    IF (ANY(cftype .EQ. 6)) THEN
-      CALL XERTST(nsigma .GT. 0 .AND. nsigma .LE. nsigmx, &
-&           'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
-! sc  prior_type refers to the prior type for the design variables:
-!     0 - Uniform distribution.
-!     1 - Uninformative, proper, Gaussian prior.
-!     2 - Jeffrey's 1/sigma (only for sigma!!)
-      CALL XERTST(ANY(prior_type(1:nsigma) .GE. 0) .AND. ANY(prior_type(&
-&           1:nsigma) .LE. 2), &
-&           'b2mod_user_namelist: prior_type<=0 or prior_type>=2')
-! sc  prior_par refers to the prior parameters:
-!     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
-!     For prior_type = 2, not used?
-      DO icf=1,nsigma
-        IF (prior_type(icf) .EQ. 1) CALL XERTST(prior_par(icf, 2) .GT. &
-&                                         0.0_R8, &
-&                                 'b2mod_user_namelist: sigma prior <=0'&
-&                                        )
-        CALL XERTST(prior_range(icf, 1) .LT. prior_range(icf, 2), &
-&             'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
-      END DO
-    END IF
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
     IF (ANY(cfread)) THEN
       ndata = MAXVAL(ncfdata(1:ncf), 1)
@@ -522,17 +511,22 @@ CONTAINS
     END IF
 !
 ! csc Tests on optimization parameters
-    CALL XERTST(nnvar .GT. 0 .AND. nnvar .LE. nvmx, &
-&         'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
+    CALL XERTST(nnvar .GE. 0 .AND. nnvar .LE. nvmx, &
+&         'b2mod_par_opt: nnvar<0 or nnvar>nvmx')
     CALL XERTST(nncon .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
     CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
-    CALL XERTST(nnvar .GE. 0, 'b2mod_par_opt: nnvar<0')
     CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
     CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
     CALL XERTST(ALL(par_rescale .GT. 0.d0), &
 &         'b2mod_par_opt: par_rescale<=0')
+    IF (flag_optim) CALL XERTST(nnvar .GT. 0, &
+&                         'b2mod_par_opt: cannot optimize if nnvar=0!')
+!nnvar>0
+    IF (nnvar .GT. 0) THEN
 !     partype refers to the type of design variable:
-!     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
+!    -1  - mean, bias/mean of the prediction error for Bayesian inference. They must be the last parameters in the vector!
+!     0  - sigma, standard deviation of the prediction error for Bayesian inference. They must be specified after the 'physical' 
+!parameters and before the means
 !     1  - Dna, density driven particle diffusion coefficient
 !     2  - Dpa, pressure driven particle diffusion coefficient
 !     3  - X_i, ion heat diffusion coefficient
@@ -572,57 +566,122 @@ CONTAINS
 !     37 - b2tfhi_fconzt
 !     38 - b2tfhi_fkt_hie
 !     39 - b2tfhe_vis_kt
-    CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
-&         .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
-    CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
-&         'b2mod_par_opt: spatial_points<0')
-    CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
-&         'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
-    DO ii=1,nnvar
+      CALL XERTST(ANY(partype(1:nnvar) .GE. -1) .AND. ANY(partype(1:&
+&           nnvar) .LE. 39), 'b2mod_par_opt: partype<-1 or partype>39')
+      CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
+&           'b2mod_par_opt: spatial_points<0')
+      CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
+&           'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+      DO ii=1,nnvar
 !only parm_XXX can be spatially dependent
-      IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
-&         .GT. 9)) CALL XERRAB(&
-&                        'b2mod_par_opt: spatial_points optimization '//&
-&                        'is available only for partype 1-9')
-      IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
-        WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
-&       spatial_dep(ii), spatial_points(ii)
-        CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+        IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
+&           .GT. 9)) CALL XERRAB(&
+&                          'b2mod_par_opt: spatial_points optimization '&
+&                          //'is available only for partype 1-9')
+        IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
+          WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&         spatial_dep(ii), spatial_points(ii)
+          CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
 &             'spatially dependent transport coefficients but you only '&
-&             //'specify one!')
-      END IF
-      IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
-&         (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
-&         .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
-&         partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
-&                                    ii) .LE. ns - 1, &
-&                                    'b2mod_par_opt: paris<0 or >ns-1')
-      IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
-&                                                              parib(ii)&
-&                                                              .GE. 1 &
-&                                                              .AND. &
-&                                                              parib(ii)&
-&                                                              .LE. m%&
-&                                                              nbc, &
+&               //'specify one!')
+        END IF
+        IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. &
+&           partype(ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii&
+&           ) .EQ. 7) .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13&
+&           ) .OR. partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 &
+&                                             .AND. paris(ii) .LE. ns - &
+&                                             1, &
+&                                      'b2mod_par_opt: paris<0 or >ns-1'&
+&                                            )
+        IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
+&                                                                parib(&
+&                                                                ii) &
+&                                                                .GE. 1 &
+&                                                                .AND. &
+&                                                                parib(&
+&                                                                ii) &
+&                                                                .LE. m%&
+&                                                                nbc, &
 &                                       'b2mod_par_opt: parib<0 or >nBc'&
-&                                                             )
-    END DO
-    IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
-!      calculate first how many sigmas are being optimized
-      nsigma_opt = 0
-      DO ii=1,nsigma
-        IF (sigma_opt(ii)) nsigma_opt = nsigma_opt + 1
-      END DO
-!      check if sigmas are at the end of the parameter vector, if not, issue error
-! position of first sigma in partype
-      isigma = nnvar - nsigma_opt + 1
-      DO ii=1,nsigma_opt
-        CALL XERTST(partype(ii+isigma-1) .EQ. 0, 'b2mod_par_opt: '//&
-&             'partype 0 variables MUST be at the end of the vector')
+&                                                               )
       END DO
     END IF
-!     Suppose MAP estimation is turned on only when cftype(1)=6
+!cftype(1).eq.6
+!
+!     MAP estimation is turned on only when cftype(1)=6
     IF (cftype(1) .EQ. 6) THEN
+!      First do some tests on means as they come last in vector partype
+      CALL XERTST(nmean .LE. nsigmx, &
+&           'b2mod_par_opt: nmean>nsigmx, please increase nsigmx')
+      IF (nmean .GT. 0 .AND. ANY(mean_opt(1:nmean))) THEN
+!       calculate first how many means are being optimized
+        nmean_opt = 0
+        DO ii=1,nmean
+          IF (mean_opt(ii)) nmean_opt = nmean_opt + 1
+        END DO
+!       check how many means are specified as independent variables in partype
+        ipp = 0
+        DO ii=1,nnvar
+          IF (partype(ii) .EQ. -1) ipp = ipp + 1
+        END DO
+        IF (.NOT.ipp .EQ. nmean_opt) THEN
+          WRITE(*, *) 'number of mean specified in partype = ', ipp
+          WRITE(*, *) 'number of mean optimized according'//&
+&         ' to mean_opt = ', nmean_opt
+          CALL XERRAB('b2mod_par_opt: inconsistent number of mean '//&
+&               'between partype and mean_opt')
+        END IF
+!       check if means are at the end of the parameter vector, if not, issue error
+! position of first mean in partype
+        imean = nnvar - nmean_opt + 1
+        DO ii=1,nmean_opt
+          CALL XERTST(partype(ii+imean-1) .EQ. -1, 'b2mod_par_opt: '//&
+&               'partype=-1 variables MUST be at the end of the vector')
+        END DO
+      END IF
+!
+!      Now do some tests on sigmas
+      CALL XERTST(nsigma .LE. nsigmx, &
+&           'b2mod_par_opt: nsigma>nsigmx, please increase nsigmx')
+      IF (cfend(1) - cfstart(1) .GE. 0.) THEN
+        abs0 = cfend(1) - cfstart(1)
+      ELSE
+        abs0 = -(cfend(1)-cfstart(1))
+      END IF
+!      We expect one sigma for each CF used in the MAP
+      ipp = abs0 + 1
+      CALL XERTST(nsigma .EQ. ipp, &
+&         'b2mod_par_opt: must specify a sigma for each CF used in MAP!'&
+&          )
+      IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
+!       calculate first how many sigmas are being optimized
+        nsigma_opt = 0
+        DO ii=1,nsigma
+          IF (sigma_opt(ii)) nsigma_opt = nsigma_opt + 1
+        END DO
+!       check how many sigmas are specified as independent variables in partype
+        ipp = 0
+        DO ii=1,nnvar
+          IF (partype(ii) .EQ. 0) ipp = ipp + 1
+        END DO
+        IF (.NOT.ipp .EQ. nsigma_opt) THEN
+          WRITE(*, *) 'number of sigma specified in partype = ', ipp
+          WRITE(*, *) 'number of sigma optimized according'//&
+&         ' to sigma_opt = ', nsigma_opt
+          CALL XERRAB('b2mod_par_opt: inconsistent number of sigma '//&
+&               'between partype and sigma_opt')
+        END IF
+!       check if sigmas are after the physical parameter vector and before the means, if not, issue error
+! position of first sigma in partype
+        isigma = nnvar - nsigma_opt - nmean_opt + 1
+        DO ii=1,nsigma_opt
+          CALL XERTST(partype(ii+isigma-1) .EQ. 0, 'b2mod_par_opt: '//&
+&            'partype 0 variables MUST be after the physical parameters'&
+&               //' (PARTYPE>0) and before the error means (if any)')
+        END DO
+      END IF
+!
+!      Now do some tests on priors
 !      prior_type refers to the prior type for the design variables:
 !      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
@@ -642,13 +701,26 @@ CONTAINS
 &             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
       END DO
     END IF
-    IF (nnjac .GT. 0) THEN
-      CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
-      CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
-      result1 = MAXVAL(jcol(1:nnjac))
-      CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
-      result1 = MAXVAL(jrow(1:nnjac))
-      CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+!
+    IF (flag_optim) THEN
+!     Now do some tests on constraints
+!     For now no constraints are implemented apart from the trivial one in Ipopt
+      CALL XERTST(ncon .GE. 0 .AND. ncon .LE. 1, &
+&           'b2mod_par_opt: ncon<0 or ncon>1 (not implemented yet)')
+      IF (nncon .GT. 0) WRITE(*, *) &
+&                       'WARNING! Specified ncon>0: one trivial '//&
+&           'constraint is allowed for Ipopt. If different constraints '&
+&                       //&
+&                      'are required they must be implemented first in '&
+&                       //'b2optim_[ipopt-tao]'
+      IF (nnjac .GT. 0) THEN
+        CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
+        CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
+        result1 = MAXVAL(jcol(1:nnjac))
+        CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
+        result1 = MAXVAL(jrow(1:nnjac))
+        CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+      END IF
     END IF
 !
 !     adjust some arrays when there are radially dependent coefficients
@@ -659,7 +731,7 @@ CONTAINS
     typeold = prior_type
     parold = prior_par
     rangeold = prior_range
-    DO ipp=1,nnvar+(nsigma-nsigma_opt)
+    DO ipp=1,nnvar+(nsigma-nsigma_opt)+(nmean-nmean_opt)
       prior_type(idd) = typeold(ipp)
       prior_par(idd, 1) = parold(ipp, 1)
       prior_par(idd, 2) = parold(ipp, 2)
@@ -679,22 +751,34 @@ CONTAINS
 !next index
       idd = idd + 1
     END DO
-    npar_opt = npar_opt - (nsigma-nsigma_opt)
-    if (flag_optim .or. (cftype(1) .eq. 6)) &
-&     call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),&
-&      'b2mod_par_opt: initial guess x0 MUST be specified for '//&
-&      'all variables if optimizing or using a MAP cost function')
+    npar_opt = npar_opt - (nsigma-nsigma_opt) - (nmean-nmean_opt)
+    IF (flag_optim .OR. cftype(1) .EQ. 6) CALL XERTST(ANY(x0(1:npar_opt)&
+&                                               .LT. inf_opt*10.0_R8), &
+&               'b2mod_par_opt: initial guess x0 MUST be specified for '&
+&                                               //&
+&             'all variables if optimizing or using a MAP cost function'&
+&                                              )
 ! position of first sigma in x0
-    isigma = npar_opt - nsigma_opt + 1
+    isigma = npar_opt - nsigma_opt - nmean_opt + 1
     DO ii=1,nsigma
-!      only assign initial value from x0 if that sigma is being optimized
+!      only assign initial value from x0 if that sigma is being optimized or used in MAP
       IF (sigma_opt(ii)) THEN
-        call xertst(x0(isigma).gt.0.0_R8 .and. xl(isigma).gt.0.0_R8&
-&                   .and. xu(isigma).gt.0.0_R8, 'b2mod_par_opt: x0,'//&
-&                   'xl, and xu for sigmas MUST be >0')
+        CALL XERTST(x0(isigma) .GT. 0.0_R8 .AND. xl(isigma) .GT. 0.0_R8 &
+&             .AND. xu(isigma) .GT. 0.0_R8, 'b2mod_par_opt: x0,'//&
+&             'xl, and xu for sigmas MUST be >0')
         sigma(ii) = x0(isigma)
 !next sigma in inital vector x0
         isigma = isigma + 1
+      END IF
+    END DO
+! position of first mean in x0
+    imean = npar_opt - nmean_opt + 1
+    DO ii=1,nmean
+!      only assign initial value from x0 if that mean is being optimized or used in MAP
+      IF (mean_opt(ii)) THEN
+        mean(ii) = x0(imean)
+!next mean in inital vector x0
+        imean = imean + 1
       END IF
     END DO
     ncon = nncon
@@ -717,7 +801,7 @@ CONTAINS
 ! csc local variables
     INTEGER, INTENT(IN) :: ns
     INTEGER :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff, noss, &
-&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj
+&   ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, ifc1, ifc2, jj, imean
     INTEGER, ALLOCATABLE :: cfreg(:)
     LOGICAL :: done
     CHARACTER(len=1) :: str
@@ -732,7 +816,8 @@ CONTAINS
     INTRINSIC MAXVAL
     INTRINSIC ALL
     INTRINSIC SUM
-    INTRINSIC DBLE
+    INTRINSIC ABS
+    INTEGER :: abs0
     REAL(kind=r8) :: result1
 !
     filename = 'b2.optimization.parameters'
@@ -750,6 +835,7 @@ CONTAINS
     read_sigma = .false.
     cfweight = 1.0_R8
     nsigma = 0
+    nmean = 0
     scale_sigma = .true.
     prior_type = -1
     prior_par = -1.0_R8
@@ -770,13 +856,13 @@ CONTAINS
     jcol = 0
     jrow = 0
     jj = 0.0
-    partype = -1
+    partype = -2
     sigma_opt = .true.
+    mean_opt = .false.
     spatial_dep = .false.
     spatial_points = 0
     hessian_approximation = 'limited-memory'
     limited_memory_update_type = 'b2fgs'
-! FIXME set if (read_file)
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
       OPEN(99, file=filename) 
@@ -957,7 +1043,7 @@ CONTAINS
 !
             CALL XERTST(cfstart(icf) .NE. 0 .AND. cfend(icf) .NE. 0, &
 &                 'cfdef=3 requires cfstart/cfend>0')
-! check if other CFs have same domain !FIXME check if also cfdef is the same
+! check if other CFs have same domain
             DO icff=1,icf-1
               IF (cfstart(icf) .EQ. cfstart(icff) .AND. cfend(icf) .EQ. &
 &                 cfend(icff) .AND. cfdef(icff) .EQ. 3) THEN
@@ -1015,28 +1101,6 @@ CONTAINS
       END IF
     END IF
 !
-    IF (ANY(cftype .EQ. 6)) THEN
-      CALL XERTST(nsigma .GT. 0 .AND. nsigma .LE. nsigmx, &
-&           'b2mod_user_namelist: nsigma<=0 or nsigma>nsigmx')
-! sc  prior_type refers to the prior type for the design variables:
-!     0 - Uniform distribution.
-!     1 - Uninformative, proper, Gaussian prior.
-!     2 - Jeffrey's 1/sigma (only for sigma!!)
-      CALL XERTST(ANY(prior_type(1:nsigma) .GE. 0) .AND. ANY(prior_type(&
-&           1:nsigma) .LE. 2), &
-&           'b2mod_user_namelist: prior_type<=0 or prior_type>=2')
-! sc  prior_par refers to the prior parameters:
-!     For prior_type = 1, prior_par(ii,1) = mu, prior_par(ii,2) = sigma
-!     For prior_type = 2, not used?
-      DO icf=1,nsigma
-        IF (prior_type(icf) .EQ. 1) CALL XERTST(prior_par(icf, 2) .GT. &
-&                                         0.0_R8, &
-&                                 'b2mod_user_namelist: sigma prior <=0'&
-&                                        )
-        CALL XERTST(prior_range(icf, 1) .LT. prior_range(icf, 2), &
-&             'b2mod_user_namelist: prior_range(.,1)>prior_range(.,2)')
-      END DO
-    END IF
 ! now allocate vector that will be used to interpolate SOLPS onto data grid
     IF (ANY(cfread)) THEN
       ndata = MAXVAL(ncfdata(1:ncf), 1)
@@ -1057,17 +1121,22 @@ CONTAINS
     END IF
 !
 ! csc Tests on optimization parameters
-    CALL XERTST(nnvar .GT. 0 .AND. nnvar .LE. nvmx, &
-&         'b2mod_par_opt: nnvar<=0 or nnvar>nvmx')
+    CALL XERTST(nnvar .GE. 0 .AND. nnvar .LE. nvmx, &
+&         'b2mod_par_opt: nnvar<0 or nnvar>nvmx')
     CALL XERTST(nncon .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
     CALL XERTST(nnjac .LE. nvmx, 'b2mod_par_opt: increase size of nvmx')
-    CALL XERTST(nnvar .GE. 0, 'b2mod_par_opt: nnvar<0')
     CALL XERTST(nncon .GE. 0, 'b2mod_par_opt: nncon<0')
     CALL XERTST(nnjac .GE. 0, 'b2mod_par_opt: nnjac<0')
     CALL XERTST(ALL(par_rescale .GT. 0.d0), &
 &         'b2mod_par_opt: par_rescale<=0')
+    IF (flag_optim) CALL XERTST(nnvar .GT. 0, &
+&                         'b2mod_par_opt: cannot optimize if nnvar=0!')
+!nnvar>0
+    IF (nnvar .GT. 0) THEN
 !     partype refers to the type of design variable:
-!     0  - sigma, standard deviation on parameters for Bayesian inference. They must be the last parameters in the vector!
+!    -1  - mean, bias/mean of the prediction error for Bayesian inference. They must be the last parameters in the vector!
+!     0  - sigma, standard deviation of the prediction error for Bayesian inference. They must be specified after the 'physical' 
+!parameters and before the means
 !     1  - Dna, density driven particle diffusion coefficient
 !     2  - Dpa, pressure driven particle diffusion coefficient
 !     3  - X_i, ion heat diffusion coefficient
@@ -1107,57 +1176,122 @@ CONTAINS
 !     37 - b2tfhi_fconzt
 !     38 - b2tfhi_fkt_hie
 !     39 - b2tfhe_vis_kt
-    CALL XERTST(ANY(partype(1:nnvar) .GE. 0) .AND. ANY(partype(1:nnvar) &
-&         .LE. 39), 'b2mod_par_opt: partype<0 or partype>39')
-    CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
-&         'b2mod_par_opt: spatial_points<0')
-    CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
-&         'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
-    DO ii=1,nnvar
+      CALL XERTST(ANY(partype(1:nnvar) .GE. -1) .AND. ANY(partype(1:&
+&           nnvar) .LE. 39), 'b2mod_par_opt: partype<-1 or partype>39')
+      CALL XERTST(ANY(spatial_points(1:nnvar) .GE. 0), &
+&           'b2mod_par_opt: spatial_points<0')
+      CALL XERTST(SUM(spatial_points(1:nnvar)) .LE. nvmx, &
+&           'b2mod_par_opt: sum(spatial_points)<=nvmx, increase nvmx')
+      DO ii=1,nnvar
 !only parm_XXX can be spatially dependent
-      IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
-&         .GT. 9)) CALL XERRAB(&
-&                        'b2mod_par_opt: spatial_points optimization '//&
-&                        'is available only for partype 1-9')
-      IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
-        WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
-&       spatial_dep(ii), spatial_points(ii)
-        CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
+        IF (spatial_dep(ii) .AND. (partype(ii) .LT. 1 .OR. partype(ii) &
+&           .GT. 9)) CALL XERRAB(&
+&                          'b2mod_par_opt: spatial_points optimization '&
+&                          //'is available only for partype 1-9')
+        IF (spatial_dep(ii) .AND. spatial_points(ii) .LE. 1) THEN
+          WRITE(*, *) 'ipar, spatial_dep, spatial_points=', ii, &
+&         spatial_dep(ii), spatial_points(ii)
+          CALL XERRAB(' b2mod_par_opt: seems you want to optimize '//&
 &             'spatially dependent transport coefficients but you only '&
-&             //'specify one!')
-      END IF
-      IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. partype&
-&         (ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii) .EQ. 7)&
-&         .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13) .OR. &
-&         partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 .AND. paris(&
-&                                    ii) .LE. ns - 1, &
-&                                    'b2mod_par_opt: paris<0 or >ns-1')
-      IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
-&                                                              parib(ii)&
-&                                                              .GE. 1 &
-&                                                              .AND. &
-&                                                              parib(ii)&
-&                                                              .LE. m%&
-&                                                              nbc, &
+&               //'specify one!')
+        END IF
+        IF (((((((partype(ii) .EQ. 1 .OR. partype(ii) .EQ. 2) .OR. &
+&           partype(ii) .EQ. 3) .OR. partype(ii) .EQ. 5) .OR. partype(ii&
+&           ) .EQ. 7) .OR. partype(ii) .EQ. 12) .OR. partype(ii) .EQ. 13&
+&           ) .OR. partype(ii) .EQ. 16) CALL XERTST(paris(ii) .GE. 0 &
+&                                             .AND. paris(ii) .LE. ns - &
+&                                             1, &
+&                                      'b2mod_par_opt: paris<0 or >ns-1'&
+&                                            )
+        IF (partype(ii) .GE. 10 .AND. partype(ii) .LE. 16) CALL XERTST(&
+&                                                                parib(&
+&                                                                ii) &
+&                                                                .GE. 1 &
+&                                                                .AND. &
+&                                                                parib(&
+&                                                                ii) &
+&                                                                .LE. m%&
+&                                                                nbc, &
 &                                       'b2mod_par_opt: parib<0 or >nBc'&
-&                                                             )
-    END DO
-    IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
-!      calculate first how many sigmas are being optimized
-      nsigma_opt = 0
-      DO ii=1,nsigma
-        IF (sigma_opt(ii)) nsigma_opt = nsigma_opt + 1
-      END DO
-!      check if sigmas are at the end of the parameter vector, if not, issue error
-! position of first sigma in partype
-      isigma = nnvar - nsigma_opt + 1
-      DO ii=1,nsigma_opt
-        CALL XERTST(partype(ii+isigma-1) .EQ. 0, 'b2mod_par_opt: '//&
-&             'partype 0 variables MUST be at the end of the vector')
+&                                                               )
       END DO
     END IF
-!     Suppose MAP estimation is turned on only when cftype(1)=6
+!cftype(1).eq.6
+!
+!     MAP estimation is turned on only when cftype(1)=6
     IF (cftype(1) .EQ. 6) THEN
+!      First do some tests on means as they come last in vector partype
+      CALL XERTST(nmean .LE. nsigmx, &
+&           'b2mod_par_opt: nmean>nsigmx, please increase nsigmx')
+      IF (nmean .GT. 0 .AND. ANY(mean_opt(1:nmean))) THEN
+!       calculate first how many means are being optimized
+        nmean_opt = 0
+        DO ii=1,nmean
+          IF (mean_opt(ii)) nmean_opt = nmean_opt + 1
+        END DO
+!       check how many means are specified as independent variables in partype
+        ipp = 0
+        DO ii=1,nnvar
+          IF (partype(ii) .EQ. -1) ipp = ipp + 1
+        END DO
+        IF (.NOT.ipp .EQ. nmean_opt) THEN
+          WRITE(*, *) 'number of mean specified in partype = ', ipp
+          WRITE(*, *) 'number of mean optimized according'//&
+&         ' to mean_opt = ', nmean_opt
+          CALL XERRAB('b2mod_par_opt: inconsistent number of mean '//&
+&               'between partype and mean_opt')
+        END IF
+!       check if means are at the end of the parameter vector, if not, issue error
+! position of first mean in partype
+        imean = nnvar - nmean_opt + 1
+        DO ii=1,nmean_opt
+          CALL XERTST(partype(ii+imean-1) .EQ. -1, 'b2mod_par_opt: '//&
+&               'partype=-1 variables MUST be at the end of the vector')
+        END DO
+      END IF
+!
+!      Now do some tests on sigmas
+      CALL XERTST(nsigma .LE. nsigmx, &
+&           'b2mod_par_opt: nsigma>nsigmx, please increase nsigmx')
+      IF (cfend(1) - cfstart(1) .GE. 0.) THEN
+        abs0 = cfend(1) - cfstart(1)
+      ELSE
+        abs0 = -(cfend(1)-cfstart(1))
+      END IF
+!      We expect one sigma for each CF used in the MAP
+      ipp = abs0 + 1
+      CALL XERTST(nsigma .EQ. ipp, &
+&         'b2mod_par_opt: must specify a sigma for each CF used in MAP!'&
+&          )
+      IF (nsigma .GT. 0 .AND. ANY(sigma_opt(1:nsigma))) THEN
+!       calculate first how many sigmas are being optimized
+        nsigma_opt = 0
+        DO ii=1,nsigma
+          IF (sigma_opt(ii)) nsigma_opt = nsigma_opt + 1
+        END DO
+!       check how many sigmas are specified as independent variables in partype
+        ipp = 0
+        DO ii=1,nnvar
+          IF (partype(ii) .EQ. 0) ipp = ipp + 1
+        END DO
+        IF (.NOT.ipp .EQ. nsigma_opt) THEN
+          WRITE(*, *) 'number of sigma specified in partype = ', ipp
+          WRITE(*, *) 'number of sigma optimized according'//&
+&         ' to sigma_opt = ', nsigma_opt
+          CALL XERRAB('b2mod_par_opt: inconsistent number of sigma '//&
+&               'between partype and sigma_opt')
+        END IF
+!       check if sigmas are after the physical parameter vector and before the means, if not, issue error
+! position of first sigma in partype
+        isigma = nnvar - nsigma_opt - nmean_opt + 1
+        DO ii=1,nsigma_opt
+          CALL XERTST(partype(ii+isigma-1) .EQ. 0, 'b2mod_par_opt: '//&
+&            'partype 0 variables MUST be after the physical parameters'&
+&               //' (PARTYPE>0) and before the error means (if any)')
+        END DO
+      END IF
+!
+!      Now do some tests on priors
 !      prior_type refers to the prior type for the design variables:
 !      0 - Uniform distribution.
 !      1 - Uninformative, proper, Gaussian prior.
@@ -1177,13 +1311,26 @@ CONTAINS
 &             'b2mod_par_opt: prior_range(.,1)>prior_range(.,2)')
       END DO
     END IF
-    IF (nnjac .GT. 0) THEN
-      CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
-      CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
-      result1 = MAXVAL(jcol(1:nnjac))
-      CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
-      result1 = MAXVAL(jrow(1:nnjac))
-      CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+!
+    IF (flag_optim) THEN
+!     Now do some tests on constraints
+!     For now no constraints are implemented apart from the trivial one in Ipopt
+      CALL XERTST(ncon .GE. 0 .AND. ncon .LE. 1, &
+&           'b2mod_par_opt: ncon<0 or ncon>1 (not implemented yet)')
+      IF (nncon .GT. 0) WRITE(*, *) &
+&                       'WARNING! Specified ncon>0: one trivial '//&
+&           'constraint is allowed for Ipopt. If different constraints '&
+&                       //&
+&                      'are required they must be implemented first in '&
+&                       //'b2optim_[ipopt-tao]'
+      IF (nnjac .GT. 0) THEN
+        CALL XERTST(ANY(jcol(1:nnjac) .GT. 0), 'b2mod_par_opt: jcol<=0')
+        CALL XERTST(ANY(jrow(1:nnjac) .GT. 0), 'b2mod_par_opt: jrow<=0')
+        result1 = MAXVAL(jcol(1:nnjac))
+        CALL XERTST(result1 .LE. nncon, 'b2mod_par_opt: jcol>ncon')
+        result1 = MAXVAL(jrow(1:nnjac))
+        CALL XERTST(result1 .LE. nnvar, 'b2mod_par_opt: jrow>nvar')
+      END IF
     END IF
 !
 !     adjust some arrays when there are radially dependent coefficients
@@ -1194,7 +1341,7 @@ CONTAINS
     typeold = prior_type
     parold = prior_par
     rangeold = prior_range
-    DO ipp=1,nnvar+(nsigma-nsigma_opt)
+    DO ipp=1,nnvar+(nsigma-nsigma_opt)+(nmean-nmean_opt)
       prior_type(idd) = typeold(ipp)
       prior_par(idd, 1) = parold(ipp, 1)
       prior_par(idd, 2) = parold(ipp, 2)
@@ -1214,22 +1361,34 @@ CONTAINS
 !next index
       idd = idd + 1
     END DO
-    npar_opt = npar_opt - (nsigma-nsigma_opt)
-    if (flag_optim .or. (cftype(1) .eq. 6)) &
-&     call xertst(any(x0(1:npar_opt) .lt. inf_opt*10.0_R8),&
-&      'b2mod_par_opt: initial guess x0 MUST be specified for '//&
-&      'all variables if optimizing or using a MAP cost function')
+    npar_opt = npar_opt - (nsigma-nsigma_opt) - (nmean-nmean_opt)
+    IF (flag_optim .OR. cftype(1) .EQ. 6) CALL XERTST(ANY(x0(1:npar_opt)&
+&                                               .LT. inf_opt*10.0_R8), &
+&               'b2mod_par_opt: initial guess x0 MUST be specified for '&
+&                                               //&
+&             'all variables if optimizing or using a MAP cost function'&
+&                                              )
 ! position of first sigma in x0
-    isigma = npar_opt - nsigma_opt + 1
+    isigma = npar_opt - nsigma_opt - nmean_opt + 1
     DO ii=1,nsigma
-!      only assign initial value from x0 if that sigma is being optimized
+!      only assign initial value from x0 if that sigma is being optimized or used in MAP
       IF (sigma_opt(ii)) THEN
-        call xertst(x0(isigma).gt.0.0_R8 .and. xl(isigma).gt.0.0_R8&
-&                   .and. xu(isigma).gt.0.0_R8, 'b2mod_par_opt: x0,'//&
-&                   'xl, and xu for sigmas MUST be >0')
+        CALL XERTST(x0(isigma) .GT. 0.0_R8 .AND. xl(isigma) .GT. 0.0_R8 &
+&             .AND. xu(isigma) .GT. 0.0_R8, 'b2mod_par_opt: x0,'//&
+&             'xl, and xu for sigmas MUST be >0')
         sigma(ii) = x0(isigma)
 !next sigma in inital vector x0
         isigma = isigma + 1
+      END IF
+    END DO
+! position of first mean in x0
+    imean = npar_opt - nmean_opt + 1
+    DO ii=1,nmean
+!      only assign initial value from x0 if that mean is being optimized or used in MAP
+      IF (mean_opt(ii)) THEN
+        mean(ii) = x0(imean)
+!next mean in inital vector x0
+        imean = imean + 1
       END IF
     END DO
     ncon = nncon
