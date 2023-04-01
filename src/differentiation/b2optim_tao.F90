@@ -133,7 +133,7 @@
 
       subroutine InitializeProblem(npar,ierr)
       use b2mod_par_opt_diff &
-     , only : x0, xl, xu, par_rescale, sigma
+     , only : x0, xl, xu, par_rescale, sigma, mean
       implicit none
       PetscReal zero
       PetscErrorCode ierr
@@ -225,7 +225,7 @@
      , only : par_rescale, sigma
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
-      integer ipar, isigma, idum(0:2)
+      integer ipar, isigma, idum(0:2), imean
       integer, save :: iter = 0
       character*3 str
       character(22) :: opt_state_name
@@ -242,13 +242,13 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
-      isigma = npar_opt - nsigma_opt + 1
+      isigma = npar_opt - nsigma_opt - nmean_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
           sigma(ipar) = x_v(isigma)*par_rescale(isigma)
@@ -258,8 +258,18 @@
           isigma = isigma + 1
         endif
       end do
-! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
-! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+      imean = npar_opt - nmean_opt + 1
+      do ipar = 1, nmean
+        if (mean_opt(ipar)) then
+          mean(ipar) = x_v(imean)*par_rescale(imean)
+          write(str,"(I1)") imean
+          if (imean.ge.10) write(str,"(I2)") imean
+          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', mean(ipar)
+          imean = imean + 1
+        endif
+      end do
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
+! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
       call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
      &   statediff, state_ext, state_extdiff, j, jdiff)
@@ -304,10 +314,10 @@
 
       subroutine FormFunction(tao, XX, F, dummy, ierr)
       use b2mod_par_opt_diff &
-      , only : sigma
+      , only : sigma, mean
       implicit none
       real(kind=r8) j(nncf)
-      integer ipar, isigma
+      integer ipar, isigma, imean
       character*3 str
       PetscErrorCode ierr
       PetscInt dummy
@@ -319,13 +329,13 @@
       call VecGetArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
-      isigma = npar_opt - nsigma_opt + 1
+      isigma = npar_opt - nsigma_opt - nmean_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
           sigma(ipar) = x_v(isigma)*par_rescale(isigma)
@@ -333,6 +343,16 @@
           if (isigma.ge.10) write(str,"(I2)") isigma
           write(*,*) 'TAO: eval_F with x',trim(str),'= ', sigma(ipar)
           isigma = isigma + 1
+        endif
+      end do
+      imean = npar_opt - nmean_opt + 1
+      do ipar = 1, nmean
+        if (mean_opt(ipar)) then
+          mean(ipar) = x_v(imean)*par_rescale(imean)
+          write(str,"(I1)") imean
+          if (imean.ge.10) write(str,"(I2)") imean
+          write(*,*) 'TAO: eval_F with x',trim(str),'= ', mean(ipar)
+          imean = imean + 1
         endif
       end do
       call b2mn_step(switch, geo, mpg, state, state_ext, j)
@@ -349,11 +369,11 @@
       use b2mod_version &
       , only : newversion, cfverw
       use b2mod_b2cmpa_diff
-      use b2mod_par_opt_diffv &
-      , only : sigma
+      use b2mod_par_opt_diff &
+      , only : sigma, mean
       implicit none
       real(kind=r8) j(nncf), jdiff(nncf), gradd(npar_opt)
-      integer ipar, isigma, idum(0:2)
+      integer ipar, isigma, idum(0:2), imean
       character*3 str
       integer, save :: iter = 0
       character(22) :: opt_state_name
@@ -370,13 +390,13 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      do ipar = 1, npar_opt - nsigma_opt
+      do ipar = 1, npar_opt - nsigma_opt - nmean_opt
         par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
         write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
       end do
-      isigma = npar_opt - nsigma_opt + 1
+      isigma = npar_opt - nsigma_opt - nmean_opt + 1
       do ipar = 1, nsigma
         if (sigma_opt(ipar)) then
           sigma(ipar) = x_v(isigma)*par_rescale(isigma)
@@ -386,8 +406,18 @@
           isigma = isigma + 1
         endif
       end do
-! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
-! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+      imean = npar_opt - nmean_opt + 1
+      do ipar = 1, nmean
+        if (mean_opt(ipar)) then
+          mean(ipar) = x_v(imean)*par_rescale(imean)
+          write(str,"(I1)") imean
+          if (imean.ge.10) write(str,"(I2)") imean
+          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', mean(ipar)
+          imean = imean + 1
+        endif
+      end do
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
+! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
       call b2mn_step_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state,&
      &   statediff, state_ext, state_extdiff, j, jdiff)

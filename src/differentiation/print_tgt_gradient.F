@@ -17,7 +17,7 @@
        idir = 1 !this indicates the different directions of multidirectional derivative mode
        write (ss,'(I1)') icf
        if (icf.gt.9) write (ss,'(I2)') icf
-       do ip = 1, nnvar - nsigma_opt
+       do ip = 1, nnvar - nsigma_opt - nmean_opt
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -49,7 +49,7 @@
               write(ss1,"(I3)") paris(ip)
               write (key, *) "parm_alf, species ", ss1
             case default
-              write(*,*) partype(ip)
+              write(*,*) 'partype = ',partype(ip)
               call xerrab ('partype incompatible with spatial points')
           end select
           do ii = 1, spatial_points(ip)
@@ -73,7 +73,7 @@
           case (4)
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_hce, species ", ss1
-          case (5)
+          case (6)
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_vla, species ", ss1
           case (7)
@@ -160,7 +160,7 @@
           case (39)
             write (key, *) "b2tfhe_vis_kt"
           case default
-            write(*,*) partype(ip)
+            write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
           write (*,*) '  Cost function gradient '//trim(ss)//': ',
@@ -175,6 +175,19 @@
           if (sigma_opt(ip)) then
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
+            write (*,*) '  Cost function gradient '//trim(ss)//': ',
+     &        Jd(idir,icf),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+       endif
+
+       if (nmean_opt.gt.0) then
+        do ip = 1, nmean
+!         only if mean is being optimized!
+          if (mean_opt(ip)) then
+            write(ss2,"(I3)") ip
+            write (key, *) "mean",ss2
             write (*,*) '  Cost function gradient '//trim(ss)//': ',
      &        Jd(idir,icf),'wrt',trim(key)
             idir = idir + 1
