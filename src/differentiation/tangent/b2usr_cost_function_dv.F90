@@ -5,9 +5,10 @@
 !   variations   of useful results: cfnorm vold *b2voloncf *b2data
 !                *b2dataoncf j
 !   with respect to varying inputs: cfnorm vold *b2voloncf *b2data
-!                *b2dataoncf sigma *par_opt_phys *(st.pl.na) *(st.pl.te)
-!                *(st.pl.ti) *(st.dv.fna) *(st.dv.fne) *(st.dv.fhe)
-!                *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne) *(st.rt.rpt)
+!                *b2dataoncf sigma *par_opt_phys mean *(st.pl.na)
+!                *(st.pl.te) *(st.pl.ti) *(st.dv.fna) *(st.dv.fne)
+!                *(st.dv.fhe) *(st.dv.fhi) *(st.dv.kinrgy) *(st.dv.ne)
+!                *(st.rt.rpt)
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in mpg.cffcor:in mpg.intcellr:in
 !                geo.cvx:in geo.cvy:in geo.cvvol:in geo.fcs:in
@@ -65,7 +66,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
   REAL(kind=r8) :: gradrd(nbdirsmax, ncv), funvd(nbdirsmax, nvx), pzd(&
 & nbdirsmax, ncv), rzd(nbdirsmax, ncv), csd(nbdirsmax, ncv)
-  INTEGER :: isigma
+  INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
   INTRINSIC MIN
@@ -90,13 +91,6 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
     CALL XERTST(mpg%isclassicalgrid .EQ. 1, ' Cost function CVs and '//&
 &         'FCs ordering  and interpolation in case of unstructured grid'&
 &         //' needs to be revised')
-    IF (cftype(1) .EQ. 6) THEN
-      CALL XERTST(npar_opt + nsigma .GT. 0, 'cftype 6 requires at '//&
-&           'least one sigma in b2.user.parameters')
-      CALL XERTST(cfend(1) - cfstart(1) + 1 .LE. nsigma, 'Each cost '//&
-&           'function summed in cftype 6 must have a sigma value '//&
-&           'assigned in b2.user.parameters')
-    END IF
     cfnorm = 0.0_R8
     vold = 0.0_R8
     DO nd=1,nbdirsmax
@@ -330,8 +324,10 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_PRIOR_DV(prior, priord, inrange, nbdirs)
+        WRITE(*, *) 'MAP prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
+        imean = 1
         DO nd=1,nbdirsmax
           lll_cumd(nd) = 0.D0
         END DO
@@ -424,13 +420,14 @@ SUBROUTINE B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
 &                    n2), b2dataoncfd(:, 1:n2), nbdirs)
           CALL CALC_LOGLIKELIHOOD_DV(n2, b2dataoncf(1:n2), b2dataoncfd(:&
 &                              , 1:n2), cfdata(iicf, 2, 1:n2), cfdata(&
-&                              iicf, 3, 1:n2), lll, llld, isigma, nbdirs&
-&                             )
+&                              iicf, 3, 1:n2), lll, llld, isigma, imean&
+&                              , nbdirs)
           DO nd=1,nbdirs
             lll_cumd(nd) = lll_cumd(nd) + llld(nd)
           END DO
           lll_cum = lll_cum + lll
           isigma = isigma + 1
+          imean = imean + 1
         END DO
         IF (inrange) THEN
           DO nd=1,nbdirs
@@ -644,7 +641,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   LOGICAL :: inrange
   REAL(kind=r8) :: qq, prior, lll, lll_cum
   REAL(kind=r8) :: gradr(ncv), funv(nvx), pz(ncv), rz(ncv), cs(ncv)
-  INTEGER :: isigma
+  INTEGER :: isigma, imean
   EXTERNAL CALC_DIST_NODIFF
   INTRINSIC SUM
   INTRINSIC MIN
@@ -662,13 +659,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
     CALL XERTST(mpg%isclassicalgrid .EQ. 1, ' Cost function CVs and '//&
 &         'FCs ordering  and interpolation in case of unstructured grid'&
 &         //' needs to be revised')
-    IF (cftype(1) .EQ. 6) THEN
-      CALL XERTST(npar_opt + nsigma .GT. 0, 'cftype 6 requires at '//&
-&           'least one sigma in b2.user.parameters')
-      CALL XERTST(cfend(1) - cfstart(1) + 1 .LE. nsigma, 'Each cost '//&
-&           'function summed in cftype 6 must have a sigma value '//&
-&           'assigned in b2.user.parameters')
-    END IF
     cfnorm = 0.0_R8
     vold = 0.0_R8
     DO icf=1,ncf
@@ -796,8 +786,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
       CASE (6) 
 !loglikelihood + log prior for Bayesian MAP estimate
         CALL CALC_PRIOR_NODIFF(prior, inrange)
+        WRITE(*, *) 'MAP prior value:', prior
         lll_cum = 0.0_R8
         isigma = 1
+        imean = 1
         DO iicf=cfstart(1),cfend(1)
           n1 = mpg%cfregp(iicf, 2)
           n2 = ncfdata(iicf)
@@ -847,9 +839,10 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
 &                 , b2data(1:n1), b2dataoncf(1:n2))
           CALL CALC_LOGLIKELIHOOD_NODIFF(n2, b2dataoncf(1:n2), cfdata(&
 &                                  iicf, 2, 1:n2), cfdata(iicf, 3, 1:n2)&
-&                                  , lll, isigma)
+&                                  , lll, isigma, imean)
           lll_cum = lll_cum + lll
           isigma = isigma + 1
+          imean = imean + 1
         END DO
         IF (inrange) THEN
           j(icf) = -((LOG(prior)+lll_cum)*cfweight(icf))
