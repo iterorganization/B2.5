@@ -55,12 +55,12 @@ contains
     use b2us_plasma
     use b2mod_geometry &
     , only : geometryID
+    use b2mod_user_namelist &
+    , only : omp, imp, nimp, nomp, icsepimp
 #ifndef NO_CDF
     use b2mod_geometry &
     , only : GEOMETRY_CDN, GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM, &
              GEOMETRY_LFS_SNOWFLAKE_PLUS, GEOMETRY_LFS_SNOWFLAKE_MINUS
-    use b2mod_user_namelist &
-    , only : omp, imp, nimp, nomp, icsepimp
 #endif
     use b2mod_user_namelist &
     , only : icsepomp
@@ -1706,7 +1706,6 @@ contains
          ds(nlist), ds_offset
     character*(*) filename
     integer i
-    intrinsic sqrt
 
     ds(1)= 0.5_R8 * geo%fcHt(fclist(1))
     do i=2,nlist
