@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2tral in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -28,8 +28,8 @@
 !                *(co.f_luc_al) *(pl.na) *(pl.ua) *(pl.te) *(pl.ti)
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci tdata parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
