@@ -420,7 +420,7 @@
        call my_out_us(70,nCv,0,geo%cvBzB,'Cv.BzB')
        call my_out_us(70,nCv,0,geo%cvX,'Cv.cRc')                       ! R-coordinate of the (ix,iy) cell centre
        call my_out_us(70,nCv,0,geo%cvY,'Cv.cZc')                       ! Z-coordinate of the (ix,iy) cell centre 
-       call my_out_us(70,nCv,0,dfloat(mpg%cvReg),'Cv.reg')             !lkw 20.09.2022
+       call my_outi_us(70,nCv,0,mpg%cvReg,'Cv.reg')                    !lkw 20.09.2022
          open(70,file=trim(folder)//'czc.dat')                         !srv 26.09.17
          write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
          write(70,hlp_frm) (geo%cvY(ic),ic=1,nCv)
