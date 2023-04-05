@@ -2413,14 +2413,13 @@ c new CDF movie option
              write(*,*) 'Saved ',run_av_name
           end if
         end if
-#ifdef WG_TODO
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
-            call tallies(nx,ny,ns,switch%BoRiS)
+            call tallies(ns,ismain0,tim,
+     .                   mpg,geo,state,state_ext,switch)
           endif
         endif
-#endif
         if (first_time_step) then
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
@@ -3096,7 +3095,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
-          call tallies(nx,ny,ns,switch%BoRiS)
+          call tallies(ns,ismain0,tim,
+     *                 mpg,geo,state,state_ext,switch)
         endif
       endif
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017

@@ -424,7 +424,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(ns, tim)
+          call b2co_tally_cdf(ns, mpg, tim)
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//
