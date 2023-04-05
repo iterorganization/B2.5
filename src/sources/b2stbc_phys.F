@@ -6039,7 +6039,7 @@ cxpb code segment analog to b2tfhe
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     *            CONPAR(IS,IB,1)*
+!     *            CONPAR(IS,IB,1)*
      *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 enddo
               else
@@ -6080,7 +6080,7 @@ cxpb code segment analog to b2tfhe
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     &            CONPAR(IS,IB,1)*
+!     &            CONPAR(IS,IB,1)*
      &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 enddo
               else
@@ -6131,7 +6131,7 @@ cxpb code segment analog to b2tfhe
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     *            CONPAR(IS,IB,1)*
+!     *            CONPAR(IS,IB,1)*
      *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 enddo
               else
@@ -6175,7 +6175,7 @@ cxpb code segment analog to b2tfhe
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
-     &            CONPAR(IS,IB,1)*
+!     &            CONPAR(IS,IB,1)*
      &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 enddo
               else
