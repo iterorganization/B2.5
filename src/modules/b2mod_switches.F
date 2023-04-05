@@ -777,7 +777,7 @@ c Advanced fluid neutral models
       s % b2npmo_diagno = 0
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
-      s % vlct_diagno = 1
+      s % vlct_diagno = 0
       s % b2tqna_diagno = 0
 
       s % set_na_numerical = 0
