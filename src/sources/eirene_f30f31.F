@@ -21,7 +21,7 @@
       use eirmod_braeir
       use eirmod_extrab25
       use b2mod_neutrals_namelist
-     & , only: crcstra, rcfe, rcfi, mol
+     & , only: rcfe, rcfi, mol
 #else
       use parmmod   ! IGNORE
      .   , ncv_eir => ncv
@@ -30,7 +30,7 @@
 #else
       use b2mod_braeir
       use b2mod_neutrals_namelist
-     & , only : crcstra, rcfe, rcfi, mol
+     & , only : rcfe, rcfi, mol
 #endif
       use b2mod_recycle
      & , only : fna_mol

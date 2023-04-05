@@ -3030,7 +3030,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
          call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')
        endif
       endif                                                              !srv 29.11.18 }
-      call b2wdat (nCv, nFc, nVx, ns, ismain, ismain0,
+      call b2wdat (ns, ismain, ismain0,
      .             mpg, geo, state, state_ext, switch%BoRiS)             !srv 05.10.01
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
