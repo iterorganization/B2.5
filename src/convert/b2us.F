@@ -43,8 +43,6 @@
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_braeir
-      use eirmod_cinit
-     , , only: eirene_init_cinit
       use eirmod_eirbra
      & , smo_eir => smo
 #else

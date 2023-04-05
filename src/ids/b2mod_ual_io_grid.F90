@@ -40,6 +40,7 @@ module b2mod_ual_io_grid
 #   endif
     use ids_grid_object   & ! IGNORE
      & , only : ids_generic_grid_dynamic_grid_subset, &
+     &          ids_generic_grid_dynamic_space_dimension_object, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
 #   if GGD_MINOR_VERSION > 9
@@ -581,7 +582,7 @@ contains
         integer :: iFc  !< Face/edge index
         integer :: iCv  !< Cell index
         integer :: i, j !< Iterators
-        integer :: ing, iFn, nb, nn, nv
+        integer :: iFn, ing, nb, nn, nv
         integer :: ix, iy
         integer :: geometryType  !< Geometry identifier index
 
@@ -829,13 +830,8 @@ contains
             allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
                 &   objects_per_dimension( IDS_CLASS_CELL )%         &
                 &   object( iCv )%nodes(nv) )
-            !! Also store additional geometry information: position in
-            !! computational space, total volume, and connection lengths
-            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
-                &   objects_per_dimension( IDS_CLASS_CELL )%         &
-                &   object( iCv )%geometry(5) )
             do i = 1, nb
-                !! Boundary
+            !! Boundary
                 iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + i - 1)
                 grid_ggd%space( SPACE_POLOIDALPLANE )%               &
                     &   objects_per_dimension( IDS_CLASS_CELL )%     &
@@ -854,12 +850,22 @@ contains
                     &   object( iCv )%boundary(i)%neighbours(1) = ing
             end do
             do i = 1, nv
-                !! Nodes
+            !! Nodes
                 grid_ggd%space( SPACE_POLOIDALPLANE )%               &
                     &   objects_per_dimension( IDS_CLASS_CELL )%     &
                     &   object( iCv )%nodes(i) =                     &
                     &   mpg%cvVx(mpg%cvVxP(iCv,1)+i-1)
             end do
+            !! Re-order nodes, neighbours and boundaries
+            call set_Cells_Conn_Array_Nodes(                         &
+                &   grid_ggd%space( SPACE_POLOIDALPLANE )%           &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv ) )
+            !! Also store additional geometry information: position in
+            !! computational space, total volume, and connection lengths
+            allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%         &
+                &   objects_per_dimension( IDS_CLASS_CELL )%         &
+                &   object( iCv )%geometry(5) )
             !! Geometry grid indices to undefined
             grid_ggd%space( SPACE_POLOIDALPLANE )%                   &
                 &   objects_per_dimension( IDS_CLASS_CELL )%         &
@@ -991,6 +997,106 @@ contains
         return
 
     end subroutine fill_In_Grid_Desc
+
+    !> Set connectivity array for cells by defining nodes that form each cell
+    !> Nodes and bounding faces are ordered to circle around the cell
+    subroutine set_Cells_Conn_Array_Nodes(object)
+        type (ids_generic_grid_dynamic_space_dimension_object) :: object
+        integer :: num_nodes_2D     !< Total number of nodes forming one cell
+        integer :: num_boundary_2D  !< Total number of boundary edges forming
+            !< one cell
+        integer, allocatable :: old_node_list(:), new_node_list(:)
+        integer, allocatable :: old_edge_list(:), new_edge_list(:)
+        integer, allocatable :: old_nghb_list(:), new_nghb_list(:)
+        integer :: i, j, iFc, iVx1, iVx2
+        logical :: match_found, node1_present, node2_present
+
+        num_nodes_2D = size ( object%nodes )
+        num_boundary_2D = size ( object%boundary )
+        allocate( old_node_list(num_nodes_2D) )
+        allocate( old_edge_list(num_boundary_2D) )
+        allocate( old_nghb_list(num_boundary_2D) )
+        allocate( new_node_list(num_nodes_2D) )
+        allocate( new_edge_list(num_boundary_2D) )
+        allocate( new_nghb_list(num_boundary_2D) )
+
+        old_node_list(:) = object%nodes(:)
+        do i = 1, num_boundary_2D
+          old_edge_list(i) = object%boundary(i)%index
+          old_nghb_list(i) = object%boundary(i)%neighbours(1)
+        end do
+        new_node_list = US_GRID_UNDEFINED
+        new_edge_list = US_GRID_UNDEFINED
+        new_nghb_list = US_GRID_UNDEFINED
+
+        !! Re-order here
+        i = 1
+        new_node_list(i) = old_node_list(i)
+        new_edge_list(i) = old_edge_list(i)
+        new_nghb_list(i) = old_nghb_list(i)
+        old_edge_list(i) = US_GRID_UNDEFINED
+        do while (i.lt.num_nodes_2D)
+          iFc = new_edge_list(i)
+          j = 1
+          match_found = .false.
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          do while (.not.match_found .and. j.le.num_nodes_2D)
+            if (iVx1.eq.new_node_list(i)) then
+              match_found = iVx2.eq.old_node_list(j)
+            else if (iVx2.eq.new_node_list(i)) then
+              match_found = iVx1.eq.old_node_list(j)
+            end if
+            if (.not.match_found) j = j + 1
+          end do
+          call xertst ( match_found, 'Next vertex not found !')
+          new_node_list(i+1) = old_node_list(j)
+          j = 2
+          match_found = .false.
+          do while (.not.match_found .and. j.le.num_boundary_2D)
+            if (old_edge_list(j).ne.US_GRID_UNDEFINED) then
+              iFc = old_edge_list(j)
+              node1_present = mpg%fcVx(iFc,1).eq.new_node_list(i+1)
+              node2_present = mpg%fcVx(iFc,2).eq.new_node_list(i+1)
+              match_found = (node1_present.and..not.node2_present).or. &
+                          & (node2_present.and..not.node1_present)
+            end if
+            if (.not.match_found) j = j + 1
+          end do
+          call xertst ( match_found, 'Next edge not found !')
+          new_edge_list(i+1) = old_edge_list(j)
+          new_nghb_list(i+1) = old_nghb_list(j)
+          old_edge_list(j) = US_GRID_UNDEFINED
+          i = i + 1
+        end do
+
+        !! Sanity check
+        do i = 1, num_nodes_2D
+          call xertst ( new_node_list(i).ne.US_GRID_UNDEFINED, &
+                    & 'Node re-ordering failed !')
+        end do
+        do i = 1, num_boundary_2D
+          call xertst ( new_edge_list(i).ne.US_GRID_UNDEFINED, &
+                    & 'Edge re-ordering failed !')
+          call xertst ( new_nghb_list(i).ne.US_GRID_UNDEFINED, &
+                    & 'Neighbour re-ordering failed !')
+        end do
+
+        object%nodes(:) = new_node_list(:)
+        do i = 1, num_boundary_2D
+          object%boundary(i)%index = new_edge_list(i)
+          object%boundary(i)%neighbours(1) = new_nghb_list(i)
+        end do
+
+        deallocate( old_node_list )
+        deallocate( old_edge_list )
+        deallocate( old_nghb_list )
+        deallocate( new_node_list )
+        deallocate( new_edge_list )
+        deallocate( new_nghb_list )
+        return
+
+    end subroutine set_Cells_Conn_Array_Nodes
 
     !> Define grid subsets
     subroutine fill_In_GridSubset_Desc
