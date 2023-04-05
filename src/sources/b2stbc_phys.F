@@ -6056,7 +6056,8 @@ cxpb code segment analog to b2tfhe
      &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0            !srv 07.11.12
+     &           qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)) - 
+     &           potpar(IB,2))*t0                                       !srv 07.11.12
               else                                                      !srv 27.02.13
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
@@ -6094,7 +6095,8 @@ cxpb code segment analog to b2tfhe
      &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
-     &           qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0            !srv 07.11.12
+     &           qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)) - 
+     &                                      potpar(IB,2))*t0            !srv 07.11.12
               else
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
@@ -6137,8 +6139,8 @@ cxpb code segment analog to b2tfhe
               endif                                                     !srv 20.09.17
               t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
      &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
@@ -6146,7 +6148,8 @@ cxpb code segment analog to b2tfhe
                  she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &            (1.0e0_R8-GAMMAE)*
-     &            qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
+     &            qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)) 
+     &                          - potpar(IB,2))*t0
               else                                                      !srv 27.02.13
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -6180,8 +6183,8 @@ cxpb code segment analog to b2tfhe
               endif                                                     !srv 20.09.17 }
               t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
      &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
@@ -6189,7 +6192,8 @@ cxpb code segment analog to b2tfhe
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &           (1.0e0_R8-GAMMAE)*qe*
-     &           po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
+     &           (po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)) 
+     &                                     - potpar(IB,2))*t0
               else                                                      !srv 27.02.13
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
@@ -10014,9 +10018,12 @@ c              fchi=0.0_R8
 !     .       bcint(te,nx,ny,iy,ib))
             fche = sqrt(1/(2*pi))*qe*
      &       ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*vte*s1*
-     &       expu2(-qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
-     &                  potpar(ib,2))/
-     &       te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &       expu2(max(-50.0_R8,
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+!     &       expu2(-qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
+!     &                  potpar(ib,2))/
+!     &       te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             if (secmodel.eq.1) then
               if (ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .          (rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),ismain)*
@@ -10105,9 +10112,12 @@ c              fchi=0.0_R8
             fchi = qe*t0
             fche = sqrt(1/(2*pi))*qe*
      &       ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*vte*s1*
-     &       expu2(-qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
-     &                  potpar(ib,2))/
-     &       te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &       expu2(max(-50.0_R8,
+     &         min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &     - potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+!     &       expu2(-qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
+!     &                  potpar(ib,2))/
+!     &       te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
             if (secmodel.eq.1) then
               if (ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &          (rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),ismain)*
