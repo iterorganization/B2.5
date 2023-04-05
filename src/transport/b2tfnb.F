@@ -295,8 +295,8 @@ cwdk                   (original code: simple averaging)
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
      .        (switch%PSch*dv%facdrift(iFc)*wrk1(iFc)*dnbti(iFc,0))**2)/
      .        (vbar*t1)
-            dv%fnaPSch(:,0,isb) = dv%fnaPSch(:,0,isb)/t2
-            dv%fnaPSch(:,1,isb) = dv%fnaPSch(:,1,isb)/t2
+            dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
+            dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
             t3 = sqrt((dv%vadia(iFc,0,isb)*geo%fcBb(iFc,3)/
      .        geo%fcBb(iFc,2))**2 + dv%vadia(iFc,1,isb)**2)
             dv%vadia(iFc,0,isb) = dv%vadia(iFc,0,isb)/(1.0_R8 + t3/vbar)
