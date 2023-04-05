@@ -4743,11 +4743,10 @@ cxpb code segment analog to b2tfhe
             t0 = 0.0_R8
             t1 = 0.0_R8
             do is = 0, ns-1
-              t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*
-     *          pl%na(iCv1,is)
+              t0 = t0 + rt%rza(iCv1,is)*pl%na(iCv1,is)    !conpar(is,ib,1)*
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &            pl%na(iCv1,is)
+     &            rt%rza(iCv1,is)*pl%na(iCv1,is)
             enddo
             t0 = max(0.0e0_R8, (abs(geo%fcPbs(iFc))*t0*cs -             !srv 05.05.09
      &        dv%fch_p(iFc,0)*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)/qe))    !srv 25.12.06 11.01.13 20.09.17
@@ -4757,7 +4756,7 @@ cxpb code segment analog to b2tfhe
      &          (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0 -                !srv 19.04.13
      &           enepar(ib,2)*t1                                        !wdk to check: correct for gammae?
               srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
-     &           qe*pl%po(iCv1)*(t0 + t1)                               !srv 07.11.12
+     &           qe*(pl%po(iCv1)-potpar(ib,2))*(t0 + t1)                !srv 07.11.12
             else                                                        !srv 27.02.13
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -                     !srv 11.03.09 {
      &          ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+switch%delpo)*t0 - !srv 19.04.13
@@ -4794,21 +4793,20 @@ cwdk    Todo: corrections for BCCON.ne.14
             t0 = 0.0_R8
             t1 = 0.0_R8
             do is = 0, ns-1
-              t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*
-     *          pl%na(iCv1,is)
+              t0 = t0 + rt%rza(iCv1,is)*pl%na(iCv1,is)    !conpar(is,ib,1)*
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &            pl%na(iCv1,is)
+     &            rt%rza(iCv1,is)*pl%na(iCv1,is)
             enddo
-            t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(max(-50.0_R8, !srv 20.09.17
-     &         -qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1)))
+            t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(min(0.0_R8,             !lkw 31.03.2023
+     &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
             t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
      &          (1.0e0_R8+GAMMAE)*t0 - enepar(ib,2)*t1                  !wdk to check: correct 2nd term for gammae?
-              srw%she0(iCv1,0) = srw%she0(iCv1,0) - 
-     &          (1.0e0_R8-GAMMAE)*qe*pl%po(iCv1)*t0 - 
-     &                            qe*pl%po(iCv1)*t1                     !wdk to check: correct 2nd term for gammae?
+              srw%she0(iCv1,0) = srw%she0(iCv1,0) -
+     &          (1.0e0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))*t0 -     !lkw 31.03.2023
+     &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1                     !wdk to check: correct 2nd term for gammae?
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
               srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
@@ -8448,7 +8446,8 @@ c              fchi=0.0_R8
           enddo
           fchi = qe*t0
           fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*
-     &      expu2(-qe*(pl%po(iCv1)- potpar(ib,2))/pl%te(iCv1))
+     &      expu2(min(0.0_R8,                                                   !lkw 31.03.2023
+     &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
           seec = gammae
           t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
 *    ..compute charge source
