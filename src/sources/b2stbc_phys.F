@@ -9018,9 +9018,11 @@ c end of implementation
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
         enddo
 
-* -- BCPOT=23 -- Feedback on the total current, by imposing a flux surface
+* -- BCPOT=23 -- Feedback on the total current for the South core boundary, by imposing a flux surface
 *                averaged potential, with poloidal perturbation taken from flux
-*                tube just inside domain
+*                tube just inside domain. The feedback is scaled by ions temperature.
+*		POTPAR(,,1) specifies the desired integral current through flux surfaces(A).
+*           	POTPAR(,,2) is the strength of the feedback
 
         case(23)
         if(ncall_b2stbc_phys.eq.0) then
@@ -9065,12 +9067,13 @@ c end of implementation
         enddo
         t1 = t1/t0
         t2 = t2/t0
-        t4 = t4/t0 !lkw
-        if (potpar(ib,2).gt.0.0_R8) t3 = potpar(ib,2)
-        if (potpar(ib,2).le.0.0_R8) t3 = 1.0e-2_R8
-!lkw        t4 = (1.0_R8-t3*(totflux-totpar)/
-!lkw     &         max(abs(totflux),abs(totpar),1.0e-10_R8))*t1
-       t4 = t1-t4*t3*(totflux-totpar)/
+        t4 = t4/t0 
+        if (potpar(ib,2).gt.0.0_R8) then
+          t3 = potpar(ib,2)
+        else
+          t3 = 1.0e-2_R8
+        endif
+        t4 = t1-t4*t3*(totflux-totpar)/
      &         max(abs(totflux),abs(totpar),1.0e-10_R8)                 ! lkw 10.09.2022}
 
 *     ..impose potential with perturbation
