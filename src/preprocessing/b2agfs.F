@@ -601,7 +601,7 @@ cxpb  if just below the top corner, make the corner cell follow
      1     "Reading the geometry file assuming the 'new' format"
           rewind lun
           call cfverr(lun,grid_version)
-          call cfruin (lun, 6, idum, 'nCv,nFc,nVx,nCg,nFs,nFt')
+          call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
           nnCv = idum(0)
           nnFc = idum(1)
 	    nnVx = idum(2)
