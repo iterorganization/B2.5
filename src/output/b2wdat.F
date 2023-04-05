@@ -1,4 +1,4 @@
-      subroutine b2wdat (nCv, nFc, nVx, ns, ismain, ismain0,
+      subroutine b2wdat (ns, ismain, ismain0,
      .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
@@ -26,7 +26,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer ns, ismain, ismain0
       real (kind=R8) :: BoRiS
       type(mapping)    :: mpg
       type(geometry)   :: geo
@@ -48,7 +48,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, ibc, iReg
+      integer nCv, nFc, nVx, iCv, iCv1, iCv2, iFc, ibc, iReg
       integer ncall, iout, is, ic, ib, iout_iout_ASTRA             !srv 05.10.01 03.04.13 19.04.13
       integer nx, ny                                               !srv 12.07.10
       integer use_astra
@@ -62,11 +62,11 @@
      ,        ilast_closed_surface, ifirst_open_surface
       logical first
       logical found
+      real (kind=R8), allocatable :: fun_st(:,:)
 #endif
       integer, allocatable :: regFaces(:)
       real (kind=R8), save :: shift = 0.0_R8                       !srv
-      real (kind=R8), allocatable :: fun_st(:,:), clength_r(:),
-     *  clength_s(:)
+      real (kind=R8), allocatable :: clength_r(:), clength_s(:)
 !   clength_r(i) is the length from the cell center of 1th cell 
 !                to the cell center of i-th cell in "radial direction"
 !   clength_s(i) is the length along a boundary from the face center of 1st face
@@ -79,7 +79,7 @@
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
 #endif
       real (kind=R8) ::                                            !srv
-     *  wrk2(nCv)                                                  !srv 23.11.00
+     *  wrk2(mpg%nCv)                                              !srv 23.11.00
 #ifdef WG_TODO
       real (kind=R8) ::                                            !srv
      *  Total_energy_flux(-1:ny), power,                           !srv 23.11.00
@@ -137,6 +137,10 @@
    20  continue
       endif
 
+      nCv = mpg%nCv
+      nFc = mpg%nFc
+      nVx = mpg%nVx
+#ifdef WG_DEBUG
       ! At the moment, some output is only supported for grids that were
       ! originally structured
       if (mpg%isClassicalGrid.eq.1) then
@@ -148,8 +152,8 @@
 *    ..allocate and initialize some arrays for structured format
        allocate(fun_st(-1:nx,-1:ny))
        fun_st = 0.0_R8
-
       endif
+#endif
 
 *   ..initialisation
       if (use_astra.ne.0) then
@@ -520,12 +524,14 @@
 !WG_TODO        call calc_err(nx, ny, ns)
       endif                                                             !srv 26.02.18 }
 
+#ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then
 
 *    ..deallocate arrays for structured format
        if (allocated(fun_st)) deallocate(fun_st)
 
       endif
+#endif
 
 * ..return
       ncall = ncall+1
