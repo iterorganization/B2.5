@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
+      subroutine b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &  switch, geo, mpg, st, st_ext, main_call)
       use b2mod_types
@@ -66,12 +66,12 @@
 #endif
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, ns, nxtl, nxtr
+      integer nCv, nFc, nVx, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (in) :: st_ext
       logical main_call
@@ -1185,7 +1185,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       new_sputter_namelist=
      &         neutrals_namelist.eq.1.or.switch%use_eirene.ne.0
 
-      call read_neutrals_namelist(ns, mpg, switch, new_sputter_namelist)
+      call read_neutrals_namelist(ns, mpg, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
      &   'Increase DEF_NSTRA in DIMENSIONS.F')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
@@ -1205,7 +1205,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       end if
       do while(catch_up)
         write(*,*) 'b2stbr_init: catching up ...'
-        call read_neutrals_namelist(ns, mpg, switch, .true.)
+        call read_neutrals_namelist(ns, mpg, .true.)
         new_sputter_namelist=.true.
         call xertst (nstrat.le.nstraid,
      &       'Increase DEF_NSTRA in DIMENSIONS.F')

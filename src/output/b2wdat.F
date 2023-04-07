@@ -1,5 +1,4 @@
-      subroutine b2wdat (ns, ismain, ismain0,
-     .                   mpg, geo, state, state_ext, BoRiS)     !srv 05.10.01
+      subroutine b2wdat (ns, mpg, geo, state)     !srv 05.10.01
       use b2mod_types
       use b2mod_constants
       use b2mod_neutrals_namelist
@@ -26,12 +25,10 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ns, ismain, ismain0
-      real (kind=R8) :: BoRiS
+      integer ns
       type(mapping)    :: mpg
       type(geometry)   :: geo
       type(B2State)    :: state
-      type(B2StateExt) :: state_ext
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -49,8 +46,10 @@
 *   ..common blocks
 *   ..local variables
       integer nCv, nFc, nVx, iCv, iCv1, iCv2, iFc, ibc, iReg
-      integer ncall, iout, is, ic, ib, iout_iout_ASTRA             !srv 05.10.01 03.04.13 19.04.13
+      integer ncall, iout, is, ic, ib
+#ifdef WG_TODO
       integer nx, ny                                               !srv 12.07.10
+#endif
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
@@ -100,9 +99,7 @@
       character*32 hlp_frm                                         !srv 03.04.13
       character(7), save :: folder                                 !srv 26.09.17
 #ifdef B25_EIRENE
-      real (kind=R8), save :: hlp_neu_peak
       character chns*3
-      data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 #endif
 *   ..procedures
       external ipgeti
@@ -156,12 +153,6 @@
 #endif
 
 *   ..initialisation
-      if (use_astra.ne.0) then
-        iout_iout_ASTRA = 1
-      else
-        iout_iout_ASTRA = 0
-      endif
-
 #ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then
 
@@ -251,16 +242,19 @@
        wrk2=0.0_R8
        do is = 0,ns-1
          write (chis,'(i3.3)') is
-         call my_out_us(70,nCv,0,state%pl%na(1,is),'na'//chis)           !srv
-         call my_out_us(70,nCv,0,state%pl%ua(1,is),'ua'//chis)           !srv
+         call my_out_us(70,nCv,0,state%pl%na(1,is),'na'//chis)          !srv
+         call my_out_us(70,nCv,0,state%pl%ua(1,is),'ua'//chis)          !srv
+         call my_out_us(70,nCv,0,state%srw%rqahe(1,is),'rqahe'//chis)   !srv
+         call my_out_us(70,nCv,0,state%srw%rqrad(1,is),'rqrad'//chis)   !xpb
+         call my_out_us(70,nCv,0,state%srw%rqbrm(1,is),'rqbrm'//chis)   !xpb
        end do
 
-       call my_out_us(70,nCv,0,state%dv%ne,'ne')                               !srv
+       call my_out_us(70,nCv,0,state%dv%ne,'ne')                        !srv
        wrk2=state%pl%te/ev
        call my_out_us(70,nCv,0,wrk2,'te_eV')
        wrk2=state%pl%ti/ev
        call my_out_us(70,nCv,0,wrk2,'ti_eV')
-       call my_out_us(70,nCv,0,state%pl%po,'po')                                !srv
+       call my_out_us(70,nCv,0,state%pl%po,'po')                        !srv
 
         wrk2=0.0_R8
         do ib = 1, nbc
@@ -316,7 +310,7 @@
 !     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along inner target
-          call calc_dist_f(mpg,geo,regFaces,nRFc,0,clength_s)
+          call calc_dist_f(geo,regFaces,nRFc,0,clength_s)
 
          ! write properties along inner target
           do iRFc = 1, nRFc
@@ -356,7 +350,7 @@
 !     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along outer target
-          call calc_dist_f(mpg,geo,regFaces,nRFc,0,clength_s)
+          call calc_dist_f(geo,regFaces,nRFc,0,clength_s)
 
           ! write properties along outer target
           do iRFc = 1, nRFc
@@ -376,7 +370,7 @@
           !! OUTER MIPLANE
           open(70,file=trim(folder)//'midpln.dat')
           allocate (clength_r(1:nomp))
-          call calc_dist(mpg,geo,omp,nomp,icsepomp,clength_r)
+          call calc_dist(geo,omp,nomp,icsepomp,clength_r)
 
           icell = 1
           do icell = 1, nomp
@@ -391,7 +385,7 @@
           !! INNER MIPLANE
           open(70,file=trim(folder)//'midpln_i.dat')
           allocate (clength_r(1:nimp))
-          call calc_dist(mpg,geo,imp,nimp,icsepimp,clength_r)
+          call calc_dist(geo,imp,nimp,icsepimp,clength_r)
 
           icell = 1
           do icell = 1, nimp

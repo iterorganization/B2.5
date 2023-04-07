@@ -321,7 +321,7 @@
 #else
       integer ninp(0:6), nout(0:10)
 #endif
-      integer nCv, nFc, nVx, ns, ns0
+      integer nCv, nFc, ns, ns0
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
@@ -1006,7 +1006,6 @@
 *     (done in b2mnds)
       nCv = mpg%nCv
       nFc = mpg%nFc
-      nVx = mpg%nVx
 *   ..initialise files and common
       call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
 *   ..set internal parameters on first (and only) call
@@ -1930,7 +1929,7 @@ c   --> better way doing this is necessary)
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
       enddo
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,nsts)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
       if (any(cftype.eq.6)) call xertst(
      & flag_optim.or.(switch%b2optim_namelist .eq. 1),
      & 'cftype=6 requires b2.optimization.namelist')
@@ -1957,9 +1956,9 @@ cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
-      call read_neutrals_namelist(ns, mpg, switch, .true.)
+      call read_neutrals_namelist(ns, mpg, .true.)
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
-        call init_feedback(nCv, nFc, nVx, ns, natmi, switch, geo, mpg)
+        call init_feedback(nFc, ns, switch, mpg)
       endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
       nlimi = 0
@@ -1990,9 +1989,7 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(switch%use_eirene.eq.0) then
 #ifndef NO_CDF
-#ifdef WG_TODO
-          call cdfmovie(ncid,nx,ny,ns)
-#endif
+          call cdfmovie(ncid,nCv,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2208,7 +2205,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
      .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
      1                itim,dtim,ntim,stack_ptr
-          call b2mndt (nout, nCv, nFc, nVx, ns, nxtl, nxtr,
+          call b2mndt (nout, nCv, nFc, nVx, ns,
      .      ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
      .      state%rt%iscx, itim, dtim, ntim,
      .      switch, geo, mpg, state, state_ext, ierr)
@@ -2371,18 +2368,16 @@ csw 09oct2012 set default potential already at this point (BCs)
           save_tran_time=save_tran_time+delta_tran_time
         endif
 #endif
-#ifdef WG_TODO
 c new CDF movie option
         if(tim.ge.save_cdfmovie_time.and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nx,ny,ns)
+          call cdfmovie(ncid,nCv,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
-#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2392,9 +2387,9 @@ c new CDF movie option
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
         call b2mwti(itim,tim,ntim,b2time,ntim_batch,
-     .         nCv,ns,max(1,mpg%nXpt),geo,mpg,switch,
+     .         nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .         state%pl,state%dv,state%co,state%rt,state%srw,
-     .         ismain,ismain0,lwti,lwav,.true.)
+     .         state_ext,ismain,ismain0,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2424,7 +2419,7 @@ c new CDF movie option
           if(.not.allocated(iz))
      >     call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,
      .                           switch)
-          call b2trci(switch)
+          call b2trci(geo,mpg,ns,nlim,nmol,switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
         if (ank_tracing.ne.0) then
@@ -2887,7 +2882,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
 #endif
 #ifdef FIXED_POINT
-        call calc_res_fp(nCv, ns, state, state0, res_max)
+        call calc_res_fp(ns, state, state0, res_max)
         write(*,*) 'MAX RESIDUAL ',res_max
         state0 = state
 *   ..end loop
@@ -2926,7 +2921,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       type(geometry), intent (inout)   :: geo
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
-      integer nCv, nFc, nVx, is                                          !srv 29.11.18
+      integer nCv, nFc, is                                               !srv 29.11.18
 #ifdef WG_TODO
       character*256 filename
       logical found
@@ -2967,7 +2962,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
       nCv = mpg%nCv
       nFc = mpg%nFc
-      nVx = mpg%nVx
 
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
@@ -2977,8 +2971,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call write_b2us_feedback(99,'    ')
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
-* finalise sputtering
 #ifdef WG_TODO
+* finalise sputtering
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
       filename='b2.wall_save.parameters'
@@ -3029,8 +3023,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
          call my_out_us(70,nCv,0,state%pl%po,'b2mndr_po_out')
        endif
       endif                                                              !srv 29.11.18 }
-      call b2wdat (ns, ismain, ismain0,
-     .             mpg, geo, state, state_ext, switch%BoRiS)             !srv 05.10.01
+      call b2wdat (ns, mpg, geo, state)                                  !srv 05.10.01
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
@@ -3073,11 +3066,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         endif
       endif
 #endif
+#endif
 *   ..produce last CDF movie frame if not yet done
       if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-        call cdfmovie(ncid,nx,ny,ns)
+        call cdfmovie(ncid,nCv,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -3086,9 +3080,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
           call b2mwti(itim,tim,ntim,b2time,ntim_batch,
-     *           nCv,ns,max(1,mpg%nXpt),geo,mpg,switch,
+     *           nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      *           state%pl,state%dv,state%co,state%rt,state%srw,
-     *           ismain,ismain0,.true.,.false.,.false.)
+     *           state_ext,ismain,ismain0,.true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif
@@ -3099,6 +3093,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      *                 mpg,geo,state,state_ext,switch)
         endif
       endif
+#ifdef WG_TODO
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF

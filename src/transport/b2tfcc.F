@@ -92,7 +92,7 @@
        con(:,1) =  switch%xfac*2.5_R8*co%cdpa(:,1,is)*nwf*wrkf*tef
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
        dv%floe        = dv%floe        + flo0
@@ -115,7 +115,7 @@
        endif
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability
@@ -165,7 +165,7 @@ c the logic statements could be simplified but for now this is not done to impro
       con(:,1) = 0.0_R8
 
 *   ..compute coefficients for stencil
-      call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+      call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *   ..add to previous contributions
       dv%floe        = dv%floe        + flo0
@@ -210,7 +210,7 @@ c the logic statements could be simplified but for now this is not done to impro
        con(:,1) = 0.0_R8
 
 *    ..compute coefficients for stencil
-       call calccoef(nCv,nFc,nVx,0,geo,mpg,flo,con,flo0,con0)
+       call calccoef(nCv,nFc,nVx,0,geo,flo,con,flo0,con0)
 
 *    ..add to previous contributions
 c the logic statements could be simplified but for now this is not done to improve readability

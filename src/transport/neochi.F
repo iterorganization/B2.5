@@ -147,7 +147,7 @@ c       calculate pinch including the ware pinch
       enddo
 
       return 
-      end
+      end subroutine neochi
 
 
 

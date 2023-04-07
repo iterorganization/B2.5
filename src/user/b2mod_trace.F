@@ -159,12 +159,15 @@ c
       return
       end subroutine b2trace
 c======================================================================
-      subroutine b2trci(switch)
+      subroutine b2trci(geo,mpg,ns,nlim,nmol,switch)
       implicit none
+      type(geometry), intent(in) :: geo
+      type(mapping), intent(inout) :: mpg
       type(switches), intent(in) :: switch
+      integer ns, nlim, nmol
 c*** Initialisation call
       if (tracing_initialised) return
-!WG_TODO     call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return

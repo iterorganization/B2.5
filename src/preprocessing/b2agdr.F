@@ -636,7 +636,7 @@ cdpc-debug
       call calc_mapping (nx, ny, mpg)
       write (*,*) 'Mapping created'
       call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
+     .        mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
      .        mpg%nVmxCv, gm, mpg)
       write (*,*) 'Geometry created'
 !     write unstructured b2fgmtry file

@@ -423,7 +423,7 @@ contains
     implicit none
     type(mapping), intent(in) :: mpg
     type(geometry), intent(in) :: geo
-    integer :: i, j, iCv, iXpt
+    integer :: i, iCv
     real(kind=R8) :: Xpsi_active, Xpsi_snowflake
     logical :: active
     logical, save :: first

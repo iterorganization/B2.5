@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, pl, dv, co, rt, rtw, st_ext, sr, srw,
-     &  main_call)
+     &  geo, mpg, pl, dv, st_ext, sr, srw, main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -44,9 +43,6 @@
       type (B2StateExt), intent (inout) :: st_ext
 *   ..input/output arguments 
       type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (inout) :: rt
-      type (B2RatesWork), intent (inout) :: rtw
-      type (B2Coeff), intent (inout) :: co
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks

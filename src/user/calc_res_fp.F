@@ -1,8 +1,8 @@
-      subroutine calc_res_fp(nCv, ns, state, state0, res)
+      subroutine calc_res_fp(ns, state, state0, res)
       use b2mod_types
       use b2us_plasma
       implicit none
-      integer, intent (in) :: nCv, ns
+      integer, intent (in) :: ns
       type(b2state), intent(in) :: state
       type(b2state), intent(in) :: state0
       real(kind=r8), intent (inout) :: res

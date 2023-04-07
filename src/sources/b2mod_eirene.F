@@ -124,7 +124,7 @@
       logical main_call                                           !dpc
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
@@ -953,7 +953,7 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'in b2mod_eirene: main_call = ', main_call
       end if
       if (ncall.eq.0) then
-        if (main_call) call b2trci(switch)
+        if (main_call) call b2trci(geo,mpg,ns,nlim,nmol,switch)
         if (write_nml_user) call write_b2mod_user_namelist
       endif
       if (main_call.and.mod(ncall,eirene_mod).eq.0
@@ -3841,9 +3841,6 @@ c!###}
 #endif
       implicit none
       integer nhistd
-#ifndef B25_EIRENE
-#include "COUPLE/KOPPLDIM.F"
-#endif
 
 ! to store the time history of sources from EIRENE
       allocate(sni_h(size(sni,1),
@@ -3962,9 +3959,7 @@ c!###}
       use b2mod_braeir
 #endif
       implicit none
-#ifndef B25_EIRENE
-#include "COUPLE/KOPPLDIM.F"
-#endif
+
       allocate(sni_s(size(sni,1),
      .               size(sni,2), size(sni,3)))
       allocate(smo_s(size(smo,1),

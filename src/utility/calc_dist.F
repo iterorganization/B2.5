@@ -1,4 +1,4 @@
-      subroutine calc_dist(mpg,geo,clist,nc,iref,ds)
+      subroutine calc_dist(geo,clist,nc,iref,ds)
       ! Description
       !============
       ! Subroutine to compute relative distance between a set of cell
@@ -11,12 +11,10 @@
       ! Modules
       use b2mod_types
       use b2us_geo
-      use b2us_map
       use b2mod_subsys
       implicit none
       ! Input variables
       type(geometry), intent(in) :: geo
-      type(mapping), intent(in) :: mpg
       integer, intent(in) :: nc, iref, clist(1:nc)
 
       ! Output variables

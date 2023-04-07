@@ -1,10 +1,10 @@
-      subroutine cv_intersections (nCv, geo, m, segm, list, nncv, 
+      subroutine cv_intersections (geo, m, segm, list, nncv,
      &  nmax, mode, ifail)
       use b2mod_types
       use b2us_geo
       use b2us_map
       implicit none
-      integer nCv, nmax
+      integer nmax
       type (geometry), intent (in) :: geo
       type(mapping), intent(in) :: m
       real(kind=r8) :: segm(2,2)
@@ -17,7 +17,7 @@
 ***
 *     This routine finds all the cv intersecting with the segment specified in segm
 *     It is assumed that segm(1,:) contains x-coordinate and segm(2,:) the y-coordinates
-*     list will contain all the CVs intersecting (without repetitions) and nncv the number of 
+*     list will contain all the CVs intersecting (without repetitions) and nncv the number of
 *     CVs. The CVs will be sorted according to mode, mode=1 sorted along x-dir, mode=2 sorted along y-dir
 ***
 

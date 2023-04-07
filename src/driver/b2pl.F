@@ -74,7 +74,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
+      integer ninp(0:6), nout(0:2), nx, ny, nCv, ns, idum(0:9), io
       logical file_open
 *   ..procedures
       character*32 get_B25_hash
@@ -170,7 +170,7 @@
       call read_b2mod_transport(nx,ny,ns,ninp(4))
       call read_b2mod_anomalous_transport(nx,ny,ns,ninp(4))
       call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrat)
-      call b2pldr (ninp, nout, nx, ny, ns)
+      call b2pldr (ninp, nout, nx, ny, nCv, ns)
 *   ..close files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

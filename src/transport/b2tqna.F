@@ -578,10 +578,9 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
       endif
 
       if(switch%transport_afn.ne.0) then
-        call set_transport_afn(nCv, nFc,
-     &   nVx, ns, nscx, iscx, ismain0, switch, geo,
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0, hcib)
+        call set_transport_afn(nCv, ns, nscx, iscx, ismain0, switch,
+     &   pl, dv, rt,
+     &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
       endif
 
 cdpc
@@ -3685,10 +3684,9 @@ c      close(14)
 c**************************************************************************************
 c*****************     New KU Leuven transport model for neutrals *********************
 c**************************************************************************************
-      subroutine set_transport_afn(nCv, nFc,
-     &            nVx, ns, nscx, iscx, ismain0, switch, geo,
-     &   mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, hci0,
-     &   hcn0,hcib)
+      subroutine set_transport_afn(nCv, ns, nscx, iscx, ismain0, switch,
+     &            pl, dv, rt,
+     &            dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
@@ -3698,21 +3696,16 @@ c*******************************************************************************
       use b2mod_rates
       use b2mod_transport_namelist
       use b2mod_switches
-      use b2us_geo
-      use b2us_map
       use b2us_plasma
       use b2mod_subsys
       implicit none
 
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, iscx(0:nscxmax-1), ismain0
+      integer nCv, ns, nscx, iscx(0:nscxmax-1), ismain0
       type (switches), intent (in) :: switch
-      type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) :: t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
