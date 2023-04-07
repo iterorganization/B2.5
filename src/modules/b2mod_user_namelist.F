@@ -134,16 +134,15 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol,ntns)
+      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol)
       implicit none
-      integer, intent(in) :: ns, nlim, nmol, ntns
+      integer, intent(in) :: ns, nlim, nmol
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
 
       call xertst(1.le.ns, 'faulty argument ns')
       call xertst(0.le.nlim, 'faulty argument nlim')
       call xertst(0.le.nmol, 'faulty argument nmol')
-      call xertst(0.le.ntns, 'faulty argument ntns')
       if (user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
@@ -199,7 +198,7 @@ c***  Standard set-up:
       cf_reg = 0
       cf_regP = 0
       mapToOMP = .false.
-      call read_b2mod_user_namelist(ns,ntns,geo,m)
+      call read_b2mod_user_namelist(ns,geo,m)
       user_initialised = .true.
 
       return
@@ -219,16 +218,16 @@ c***  Standard set-up:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(ns,ntns,geo,m)
+      subroutine read_b2mod_user_namelist(ns,geo,m)
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
-      integer, intent(in) :: ns,ntns
+      integer, intent(in) :: ns
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
       integer ic, noss, iss, indss,
      >        ncffc, incf, idb, icf,
-     >        ic1, ic2, icff, iCv, iFc, iFcc, iVx
+     >        ic1, ic2, icff, iCv, iFc, iFcc
 
       logical :: file_ok
       character*260 filename, cffile
@@ -273,7 +272,7 @@ c***  Standard set-up:
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
-      call cv_intersections (m%nCv, geo, m, rzomp, omp, nomp, nromp,
+      call cv_intersections (geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
@@ -668,7 +667,7 @@ c*** Set default values according to current species list
 ! Same logic as OMP list, find CVs intersected by rzimp segment
       nimp = 0
       imp = 0
-      call cv_intersections (m%nCv, geo, m, rzimp, imp, nimp, nromp,
+      call cv_intersections (geo, m, rzimp, imp, nimp, nromp,
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp

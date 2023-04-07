@@ -24,7 +24,6 @@
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
-      use b2mod_switches
       use b2mod_feedback
       use b2us_feedback
       use b2us_map
@@ -94,7 +93,6 @@
       type(geometry), save :: gm
       type(B2State), save :: state
       type(B2StateExt), save :: state_ext
-      type(switches), save :: switch
       integer :: ntm, is, natm_loc
 #ifdef B25_EIRENE
       integer :: ico, io_33, io_34, io_35, iel, iel2
@@ -230,7 +228,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       write (*,*) 'Mapping created'
 
       call prep_geometry (nx, ny,
-     .        mpg%nCv, mpg%nCi, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
+     .        mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt,
      .        mpg%nVmxCv, gm, mpg)
       write (*,*) 'Geometry created'
 
@@ -238,8 +236,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
      .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
       write (*,*) 'State created'
 
-      call prep_plasma_ext(nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, state_ext)
+      call prep_plasma_ext(nx, ny, ns, mpg%nCv, mpg%nFc, state_ext)
       write (*,*) 'State_ext created'
 
 *   ..test plasma state and fluxes
@@ -304,7 +301,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
      &                'format. '
           call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-          call conv_bcparms (nx, ny, ns, mpg, gm)
+          call conv_bcparms (ns,mpg)
           call write_bcparms(ns,mpg)
         else
           write (*,*) 'Found b2.boundary.parameters in unstructured '//
@@ -366,12 +363,12 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           call alloc_b2mod_neutrals
      .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
-          call conv_rcparms (nx, ny, ns, mpg, gm)
+          call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else
           call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns,
      .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
-          call read_neutrals_namelist(ns, mpg, switch, .false.)
+          call read_neutrals_namelist(ns, mpg, .false.)
         end if
         call rc_to_struct(mpg)
       end if
@@ -397,11 +394,11 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       else
         write (*,*) ' no files fort.33, fort.34 and fort.35 available'
         write (*,*) ' create files fort.33, fort.34 and fort.35 '
-        call write_triangles(nout(0), mpg, gm, nx, ny)
+        call write_triangles(nout(0), mpg, gm)
       end if
 #else
 !      if (use_eirene.ne.0) then
-        call write_triangles(nout(0),mpg, gm, nx, ny)
+        call write_triangles(nout(0),mpg, gm)
 !      endif
 #endif
 *   ..convert feedback schemes (if present!)
@@ -409,8 +406,8 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
       call find_file(filename,file_exists)
       if (file_exists) then
         call read_b2mod_feedback_control(99)
-        call conv_fbparms (nx, ny, ns, mpg)
-        call write_fbparms(ns)
+        call conv_fbparms (mpg)
+        call write_fbparms
       endif
       call ipgetr ('b2stbc_fnaycore', fnaycore)
       call ipgetr ('b2stbc_fheycore', fheycore)

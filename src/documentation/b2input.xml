@@ -922,7 +922,7 @@
 				<default>0</default>
 				<description>
 					Profiles file indicator. If b2sral_inputfile.eq.1, then the code looks for the file b2.sources.profile in which it expects to find the 'profile' namelist.
-					This namelist will contain profiles of sources measured from the location (ixref,iyref) (default is outer midplane separatrix), which is set with the 'set_transport_i[xy]ref' switches.
+					This namelist will contain profiles of sources measured from the outer midplane separatrix location, which is set with the [RZ]OMP variables in b2.user.parameters.
 				</description>
 			</switch>
 			<switch>
@@ -931,7 +931,7 @@
 				<type>integer</type>
 				<description>
 					Profiles file indicator. If b2tqna_inputfile.eq.1, then the code looks for the file b2.transport.inputfile, in which it expects to find the transport namelist.
-					This namelist will contain profiles of sources transport parameters measured from the location (ixref,iyref) (default is outer midplane separatrix), which is set with the 'set_transport_i[xy]ref' switches.
+					This namelist will contain profiles of transport parameters measured from the outer midplane separatrix location, which is set with the [RZ]OMP variables in b2.user.parameters.
 				</description>
 			</switch>
 			<switch>
@@ -1799,7 +1799,6 @@
 					The transport_eta switches are activated when user_transport.eq.3 and allow modifications of the electron heat conductivity according to a constant eta (Grad Te / Grad Ne) model. See routine set_transport_eta code for details.
 					A model for disruption transport coefficients is available with user_transport.eq.7. See routine set_transport_disruption code for details.
 					The value user_transport.eq.8 activates the neoclassical model for computation of the transport coefficients in the core. See routine set_transport_neo and subroutines called for details. Implemented from the NEOART package.
-					The location given by ixref and iyref can also serve as the anchor point for the transport and/or sources profiles provided by the user in the b2.transport.inputfile and b2.sources.profile files.
 				</description>
 				<switch>
 					<name>b2tqna_user_transport</name>

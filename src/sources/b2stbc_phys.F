@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
       subroutine b2stbc_phys (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
@@ -48,7 +48,6 @@
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       logical main_call                                              !xpb

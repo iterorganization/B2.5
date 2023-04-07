@@ -226,10 +226,10 @@ c     -------------------------------------------------------------------------
 
       real (kind=R8) ::
      *   ssum,gsum
-      real (kind=R8) ::
-     *   neco(-1:nx,-1:ny)
 #ifdef WG_TODO
-     * , rcra(-1:nx,-1:ny,0:ns-1),
+      real (kind=R8) ::
+     *   neco(-1:nx,-1:ny),
+     *   rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -246,9 +246,9 @@ c     -------------------------------------------------------------------------
       external b2spel, b2sqel
 
       call subini('corora')
+#ifdef WG_TODO
       neco(-1:nx,-1:ny) = 1.0e16_R8
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, neco, rclsa, rclra,
      &     rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
@@ -315,10 +315,10 @@ c     -------------------------------------------------------------------------
 *   ..common blocks
 
       integer ix,iy,is
-      real (kind=R8) ::
-     *   neco(-1:nx,-1:ny)
 #ifdef WG_TODO
-     * , rcra(-1:nx,-1:ny,0:ns-1),
+      real (kind=R8) ::
+     *   neco(-1:nx,-1:ny),
+     *   rcra(-1:nx,-1:ny,0:ns-1),
      *   rcsa(-1:nx,-1:ny,0:ns-1), rcqa(-1:nx,-1:ny,0:ns-1),
      *   rcrd(-1:nx,-1:ny,0:ns-1), rcbr(-1:nx,-1:ny,0:ns-1),
      *   rcza(-1:nx,-1:ny,0:ns-1), rcz2(-1:nx,-1:ny,0:ns-1),
@@ -343,9 +343,9 @@ c     -------------------------------------------------------------------------
       external b2spel, b2sqel
 
       call subini('coroni')
+#ifdef WG_TODO
       neco(-1:nx,-1:ny) = 1.0e16_R8
 *    ..compute log-log electron rate coefficients
-#ifdef WG_TODO
       call b2spel (nx, ny, ns, ev, te, neco, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients

@@ -11059,7 +11059,7 @@ cxpb as they no longer necessarily point to the same species
      .   (.not.same_atoms.or..not.same_grid)) then
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
-        call alloc_b2mod_user(nx,ns,nlimi,nmoli,ntns)
+        call alloc_b2mod_user(geo,mpg,ns,nlimi,nmoli)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)

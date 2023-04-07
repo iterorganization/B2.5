@@ -72,6 +72,8 @@
 *   ..test nCv, nFc, ns
       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     &  'faulty argument ismain')
 *   ..test is0
       call xertst (0.le.is0.and.is0.lt.ns-1, 'faulty argument is0')
       call xertst (lnext(is0,is0+1),

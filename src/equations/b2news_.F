@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2news_(nCv, nFc, nVx, ns, nxtl, nxtr, nscx, iscx,
+      subroutine b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, switch, geo, mpg,
      &  st, st_ext, ierr)
       use b2mod_types
@@ -53,12 +53,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nxtl, nxtr
+      integer nCv, nFc, nVx, ns
       integer nscx, nscxmax, iscx(0: nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
@@ -333,7 +333,7 @@ c   extra call at this place within internal iteration)
       if(switch%no_b2sral_call .eq. 0) then
         write(*,*) ' re-compute source '
 *     ..re-compute source linearisation                                  !xpb
-        call b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
+        call b2sral (nCv, nFc, nVx, ns,
      &    nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &    switch, geo, mpg, st, st_ext, wrong_flow, .false.)
 #ifdef WG_TODO
@@ -404,7 +404,7 @@ c   extra call at this place within internal iteration)
       endif
       if(switch%b2news_iout.ne.0) then                                   !srv 05.07.17
        call b2xzef(nCv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff, st_ext)
-       call b2xpic(nCv, ns, mpg, qe, st%rt%rza, geo%cvBb, st%pl%na,
+       call b2xpic(nCv, ns, qe, st%rt%rza, geo%cvBb, st%pl%na,
      &   st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
        call b2xpif (nCv, nFc, switch, geo, mpg, st%dv%fch_pi_c,
      &   st%dv%fch_pi_f)
@@ -598,13 +598,13 @@ csw 16oct2012 init ier0
           call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
 *   ..compute new residual following the tradition
-          call b2ursd (nCv, nFc, geo, mpg, st%dv%ne, st%pl%po,
+          call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
      &     st%sr%sch, st%dv%fch, wrk0)
           t0 = b2sasum(nCv,wrk0,1)
           write(*,*) 'respo after solving',t0
         else
          if(switch%get_residuals.eq.1)
-     &    call b2ursd (nCv, nFc, geo, mpg,
+     &    call b2ursd (nCv, nFc, mpg,
      &                 st%dv%ne, st%pl%po, st%sr%sch, st%dv%fch,
      &                 st%dv%respo)
         endif
@@ -682,7 +682,7 @@ c      with diamagnetic drift part                                       !srv 13
      &  st%pl, st%dv, st%co, st%rt, st_ext, .true.)                      !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,          !srv 13.10.06
-     &  st%pl, st%dv, st%co, st%rt, .true.)                              !djm Jan2017
+     &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
        st%dv%floi_noc = st%dv%floi                                       !srv 24.10.02
        st%dv%floe_noc = st%dv%floe                                       !srv 24.10.02
 

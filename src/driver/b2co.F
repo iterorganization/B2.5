@@ -80,7 +80,7 @@
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns0, idum(0:9), io, is
       integer iflag
 #ifndef NAGF95
 #ifndef NAGFOR
@@ -88,7 +88,7 @@
 #endif
 #endif
       integer :: b2time = 1, ntim_batch = 500
-      integer :: ismain = 1, mvnum = 0, tally = 1
+      integer :: ismain = 1, ismain0 = 0, mvnum = 0, tally = 1
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
       character b2fstate_only*256
@@ -98,7 +98,7 @@
       external lnblnk
 #endif
       character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists, todo
+      logical file_open, file_exists, match_found, todo
 *   ..procedures
       logical is_comment, streql
       external is_comment, streql
@@ -256,6 +256,19 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..truncate tracing files
       call ipgeti ('ank_tracing', ank_tracing)
+      call ipgeti ('b2mndr_ismain', ismain)
+      match_found = .false.
+      is = ismain
+      do while (is.ge.0 .and. .not.match_found)
+        if (is_neutral(is) .and. zn(is).eq.zn(ismain)
+     &                     .and. am(is).eq.am(ismain)) then
+          ismain0 = is
+          match_found = .true.
+        end if
+        is = is - 1
+      end do
+      if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
+      call ipgeti ('b2mwti_ismain0', ismain0)
 #ifdef B25_EIRENE
       filename='input.dat'
       call find_file(filename,file_exists)
@@ -325,7 +338,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
      .  ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (switch%b2stbr_neutrals_namelist.eq.1 .or.
      &    switch%use_eirene.ne.0)
-     > call read_neutrals_namelist(ns, mpg, switch, .false.)
+     > call read_neutrals_namelist(ns, mpg, .false.)
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstraid,natm,
      . switch)
       write_nml_user = .false.
@@ -356,7 +369,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         end if
       end if
       if (ank_tracing.ne.0) then
-        call b2trci(switch)
+        call b2trci(geo,mpg,ns,nlim,nmol,switch)
         call b2trcc(nout(1))
         call b2filei(ns,mpg%nnreg(0),switch)
         call b2filec
@@ -387,7 +400,8 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, tim, .false.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
+     .                       tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -399,7 +413,8 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, tim, .true.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
+     .                       tim, .true.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -437,7 +452,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nx, ny, ns, nnatmi, nnmoli, tim)
+          call b2co_movies_cdf(nCv, ns, nnatmi, nnmoli, tim)
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//

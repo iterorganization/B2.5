@@ -225,8 +225,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 
 *   ..compute floe, cone
       call calccoef(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
-     &  geo,mpg,floe0_mdf,co%chce,
-     &  floe0,cone0)
+     &  geo,floe0_mdf,co%chce,floe0,cone0)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
       dv%floe        = dv%floe + floe0

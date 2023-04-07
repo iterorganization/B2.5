@@ -123,7 +123,7 @@
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
       call b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, dv%ni,
-     &  nirm, st_ext%ni, pl%ti, pl%tn, chvimx)
+     &  nirm, st_ext%ni, pl%ti, chvimx)
 
 * ..return
       ncall_b2trql = ncall_b2trql+1

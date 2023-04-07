@@ -399,9 +399,11 @@
       type (switches), intent (in) :: switch
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: i, j, nCv, nFc, nVx, nFx, iCv, iFc, iVx, inCv, iXpt
-      real (kind=R8) :: hzconst, dux, duy, du, sbf
-      logical active
+      integer :: i, j, k, l, nCv, nFc, nVx, nFx,
+     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2
+      integer, allocatable :: old_face_list(:)
+      real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2
+      logical active, match_found
       intrinsic maxval
 
       nCv = mpg%nCv
@@ -604,7 +606,7 @@
       iXpt = 0
       if (mpg%nnreg(0).eq.1) then
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
-!!       whether the psi valus is increasing or decreasing radially
+!!       whether the psi value is increasing or decreasing radially
       elseif (mpg%nnreg(0).eq.2) then
         do i = mpg%vxFcP(mpg%tgVx(1),1),
      &         mpg%vxFcP(mpg%tgVx(1),1)+mpg%vxFcP(mpg%tgVx(1),2)-1
@@ -622,7 +624,8 @@
               gm%LSN = .false.
             end if
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
-     &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1)))
+     &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1))).or.
+     &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
           end if
         end do
       else if (mpg%nnreg(0).eq.4) then
@@ -668,11 +671,86 @@
      &           mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
             if (mpg%vxFs(mpg%cvVx(j)).eq.mpg%vxFs(mpg%Xpt(iXpt))) cycle
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt.
-     &                          gm%fsPsi(mpg%vxFs(mpg%Xpt(iXpt)))
+     &                          gm%fsPsi(mpg%vxFs(mpg%Xpt(iXpt))).or.
+     &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
           end do
         end if
        end do
       end if
+
+!! Invert the divertor face list if not in correct psi order
+!! and identify strike point face indices
+      do i = 1, maxval(mpg%strDiv)
+        iFc1 = mpg%divFc(mpg%divFcP(i,1))
+        iFc2 = mpg%divFc(mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+        Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
+     &                   gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
+        Psi2 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))+
+     &                   gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2))))
+        if ((gm%psi_increasing .and. Psi1.gt.Psi2) .or.
+     &      (.not.gm%psi_increasing .and. Psi2.gt.Psi1)) then
+          allocate(old_face_list(1:mpg%divFcP(i,2)))
+          old_face_list(1:mpg%divFcP(i,2)) =
+     &     mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+          do j = 1, mpg%divFcP(i,2)
+            mpg%divFc(mpg%divFcP(i,1)+j-1) =
+     &       old_face_list(mpg%divFcP(i,2)-j+1)
+          end do
+          deallocate(old_face_list)
+        end if
+        match_found = .false.
+        do j = mpg%divFcP(i,1), mpg%divFcP(i,1)+mpg%divFcP(i,2)-1
+          iVx1 = mpg%fcVx(mpg%divFc(j),1)
+          iVx2 = mpg%fcVx(mpg%divFc(j),2)
+          do k = 1, mpg%nXpt
+            do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
+              if (iVx1.eq.mpg%strVx(l).and.
+     &      gm%fsPsi(mpg%vxFs(iVx1)).eq.gm%fsPsi(mpg%vxFs(mpg%Xpt(k))))
+     &         then
+                if((gm%psi_increasing .and.
+     &           gm%fsPsi(mpg%vxFs(iVx1)).le.gm%fsPsi(mpg%vxFs(iVx2)))
+     &             .or.(.not.gm%psi_increasing .and.
+     &           gm%fsPsi(mpg%vxFs(iVx1)).gt.gm%fsPsi(mpg%vxFs(iVx2))))
+     &           then
+                  if (mpg%ifdiv(i).eq.0) then
+                    match_found = .true.
+                    mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+                    mpg%ivdiv(i) = iVx1
+                  else ! Two strike points on the same target
+                       ! We label the active one only
+                    if (mpg%vxFs(iVx1).eq.mpg%iFssep) then
+                      mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+                      mpg%ivdiv(i) = iVx1
+                    end if
+                  end if
+                end if
+              else if (iVx2.eq.mpg%strVx(l).and.
+     &      gm%fsPsi(mpg%vxFs(iVx2)).eq.gm%fsPsi(mpg%vxFs(mpg%Xpt(k))))
+     &         then
+                if((gm%psi_increasing .and.
+     &           gm%fsPsi(mpg%vxFs(iVx2)).le.gm%fsPsi(mpg%vxFs(iVx1)))
+     &             .or.(.not.gm%psi_increasing .and.
+     &           gm%fsPsi(mpg%vxFs(iVx2)).gt.gm%fsPsi(mpg%vxFs(iVx1))))
+     &           then
+                  if (mpg%ifdiv(i).eq.0) then
+                    match_found = .true.
+                    mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+                    mpg%ifdiv(i) = iVx2
+                  else ! Two strike points on the same target
+                       ! We label the active one only
+                    if (mpg%vxFs(iVx2).eq.mpg%iFssep) then
+                      mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+                      mpg%ivdiv(i) = iVx2
+                    end if
+                  end if
+                end if
+              end if
+            end do
+          end do
+        end do
+        call xertst (match_found .or. mpg%nXpt.eq.0,
+     &   'No matching face found for strike point !')
+      end do
 
       return
       end subroutine init_geometry

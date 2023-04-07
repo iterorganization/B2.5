@@ -1638,11 +1638,10 @@ c.. Test consistency with region boundaries
 
 ***********************************************************************
 
-      subroutine conv_bcparms (nx, ny, ns, m, g)
+      subroutine conv_bcparms (ns, m)
       implicit none
-      integer, intent(in) :: nx, ny, ns
+      integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
-      type (geometry), intent (inout) :: g
       integer :: ib, ibc, is, inbc, noss, iss, indss,
      .           i, iFc, iCv, idb
       integer :: bcs(nbc), bce(nbc), bcl(nbc)
@@ -1795,8 +1794,8 @@ cwdk also need to correct for degenerate faces?
         ifchit = 0
 ! for all guard cells mark face to plasma cell
         do i = 1, m%nCg
-          icv = m%nCi + i
-          iFc = m%cvFc(m%cvFcP(icv,1))
+          iCv = m%nCi + i
+          iFc = m%cvFc(m%cvFcP(iCv,1))
           ifchit(iFc) = ifchit(iFc) + 1
         end do
 ! remove mark from boundary faces
@@ -1810,7 +1809,7 @@ cwdk also need to correct for degenerate faces?
           write (*,*) 'suspicious faces '
           do i = 1, m%nFc
             if (ifchit(i) /= 0) then
-              write (*,*) 'ifc ',i,ifchit(i)
+              write (*,*) 'iFc ',i,ifchit(i)
               write (*,*) 'fcCv ',m%fcCv(i,1),m%fcCv(i,2)
             end if
           end do
@@ -1955,8 +1954,8 @@ cwdk also need to correct for degenerate faces?
 
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
-      integer :: ib, inbc, ibc, ifc, ic1, ic2
-      integer :: iout, ian, ien, i
+      integer :: ib, inbc, ibc, iFc, ic1, ic2
+      integer :: iout, ian, ien, i, j, k
 #ifndef F2003
       integer newunit
       external newunit
@@ -1970,17 +1969,17 @@ cwdk also need to correct for degenerate faces?
       call alloc_mapping_bc(m)
 
       inbc = 0 ! index in bcCv
-      do ib = 1,m%nBc
+      do ib = 1, m%nBc
         m%bcCvP(ib,1) = inbc + 1
 !pb     m%bcCvP(ib,2) = nbcfaces(ib)
         m%bcCvP(ib,2) = m%bcFcP(ib,2)
 !pb     do ibc = 1, nbcfaces(ib)
         do ibc = 1, m%bcFcP(ib,2)
           inbc = inbc + 1
-!pb       ifc = bc_faces(ibc,ib)
-          ifc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
-          ic1 = min(m%fcCv(ifc,1), m%fcCv(ifc,2))
-          ic2 = max(m%fcCv(ifc,1), m%fcCv(ifc,2))
+!pb       iFc = bc_faces(ibc,ib)
+          iFc = m%bcFc(m%bcFcP(ib,1)+ibc-1)
+          ic1 = min(m%fcCv(iFc,1), m%fcCv(iFc,2))
+          ic2 = max(m%fcCv(iFc,1), m%fcCv(iFc,2))
           if ((ic1 <= m%nCi) .and. (ic2 >m%nCi)) then
             m%bcCv(inbc,1) = ic2
             m%bcCv(inbc,2) = ic1
@@ -1988,6 +1987,15 @@ cwdk also need to correct for degenerate faces?
           else
             call xerrab('bc_to_struct -- problem with boundary face')
           end if
+        end do
+      end do
+
+      do i = 1, maxval(m%strDiv)
+        do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
+          iFc = m%divFc(j)
+          do k = 1, size(m%bcFc)
+            if (m%bcFc(k).eq.iFc) m%divFcOr(j) = m%bcFcOr(k)
+          end do
         end do
       end do
 

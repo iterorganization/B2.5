@@ -352,8 +352,8 @@ csw 21feb2012
 #ifdef WG_TODO
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
-      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
 #endif
+      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write (*,*) ' natm_id,natmid ',natm_in, natmid
       call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')
       call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
@@ -1255,7 +1255,7 @@ c.. Test consistency with physical edges within the computational domain
 #endif
       end subroutine read_neutrals_namelist_st
 
-      subroutine read_neutrals_namelist_us(ns, m, switch, dotest)
+      subroutine read_neutrals_namelist_us(ns, m, dotest)
       use b2mod_wall
      & ,only : track_index, ntrack, track_species
       use b2mod_indirect
@@ -1264,10 +1264,8 @@ c.. Test consistency with physical edges within the computational domain
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
       use b2us_map
-      use b2mod_switches
       implicit none
       type(mapping), intent(inout) :: m
-      type(switches), intent(in) :: switch
       integer ns
       logical dotest
       integer is, ist, ix, istra, i, j, k, n, ii(1), itrack,
@@ -2127,16 +2125,15 @@ c.. Test consistency with physical edges within the computational domain
 
 ***********************************************************************
 
-      subroutine conv_rcparms (nx, ny, ns, m, g)
+      subroutine conv_rcparms (m)
       use b2mod_indirect
       implicit none
-      integer :: nx, ny, ns, istra, istrac, instra,
+      integer :: istra, istrac, instra,
      .           noss, iss, indss, idb
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
       type (mapping), intent (inout) :: m
-      type (geometry), intent (inout) :: g
 #ifndef F2003
       integer newunit
       external newunit
