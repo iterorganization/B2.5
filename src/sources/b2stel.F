@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stel (nCv, nFc, nVx, ns, ismain, ismain0,
+      subroutine b2stel (nCv, nFc, ns, ismain, ismain0,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
 !      use b2mod_diag
@@ -32,7 +32,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer nCv, nFc, ns, ismain, ismain0
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -266,7 +266,7 @@
       srw%rrana=0.0_R8
       srw%rrahi=0.0_R8
       srw%rramo=0.0_R8
-!WG_TODO      rqahe=0.0_R8
+      srw%rqahe=0.0_R8
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source and heat source
@@ -320,7 +320,7 @@
      *                         pl%tn(iCv))
            endif
            srw%rrahi(iCv,is) = t1
-           rrahireg(mpg%cvReg(iCv),is)=rrahireg(mpg%cvReg(iCv),is)+t1
+           rrahireg(mpg%cvReg(iCv),is) = rrahireg(mpg%cvReg(iCv),is)+t1
 *       ..compute electron heat source for is->is-1, if not already included from ADPAK
            if(fix_recomb.ne.0.and.nint(zn(is)).le.zmax_recomb) then
 c the default treatment is to have the entire ionisation potential
@@ -330,12 +330,12 @@ c this treatment changes this --- the ionisation potential difference
 c is given back as energy to the electrons and additional radiative
 c losses should be included (in ADAS terms, the PRB file should be
 c accounted for)
-             srw%she0(iCv,0)=srw%she0(iCv,0)+(1.0_R8+rf0)*
+             srw%she0(iCv,0) = srw%she0(iCv,0)+(1.0_R8+rf0)*
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
-             srw%she0(iCv,3)=srw%she0(iCv,3)-rf0*
+             srw%she0(iCv,3) = srw%she0(iCv,3)-rf0*
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)/(dv%ne(iCv)*pl%te(iCv))
-!WG_TODO             rqahe(iCv,is) = rqahe(iCv,is) -
-!WG_TODO     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+             srw%rqahe(iCv,is) = srw%rqahe(iCv,is) -
+     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
              rqahereg(mpg%cvReg(iCv),is) =
      &        rqahereg(mpg%cvReg(iCv),is) -
      &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
@@ -393,7 +393,7 @@ c accounted for)
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-
      &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
-!WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
+          srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
           t0 = switch%b2stel_phm0*

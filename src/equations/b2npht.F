@@ -206,31 +206,31 @@ cdjm Jan2017 update particle source components for balance
       if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then                              !srv 22.05.18
         if (switch%mdf_fhe.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0, dv%fhe,
+          call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0, dv%fhe,
      &     dv%reshe)
         else
-          call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%te, she0,
+          call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
      &     dv%fhe_mdf, dv%reshe)
         endif
       endif                                                             !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
+          call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi, dv%reshi)
         else
-          call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,0), pl%ti, shi0,
+          call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi_mdf, dv%reshi)
         endif
       endif                                                             !srv 22.05.18
       if ((switch%solve_keps.gt.0.and.any(solvkreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%kt, skt0,
+        call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%kt, skt0,
      &   dv%fkt, dv%reskt)
       endif
       if ((switch%solve_keps.gt.1.and.any(solvzreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
-        call b2ursd (nCv, nFc, geo, mpg, dv%ni(:,1), pl%zt, szt0,
+        call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%zt, szt0,
      &   dv%fzt, dv%reszt)
       endif
 
@@ -240,7 +240,7 @@ c residuals for separate neutral energy equation
        if (any(solvnreg(0:mpg%nnreg(0))).or.
      &     switch%get_residuals.eq.1) then
                                 !! AFN_TODO add neutral energy equation in solving switch?
-          call b2ursd (nCv, nFc, geo, mpg, dv%nn, pl%tn, shn0, dv%fhn,
+          call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
      &     dv%reshn)
        endif
       else

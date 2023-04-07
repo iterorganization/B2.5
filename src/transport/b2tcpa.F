@@ -83,7 +83,7 @@
      &                               calf(:,0)*dtep)*switch%prl_cur
         if(switch%b2sigp_style.eq.2) then
           call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)
-          call b2xpic (nCv, ns, mpg, qe, rza, geo%cvBb, na, ua, zeff, 
+          call b2xpic (nCv, ns, qe, rza, geo%cvBb, na, ua, zeff,
      &      st_ext, fch_pi_c)
           call b2xpif (nCv, nFc, switch, geo, mpg, fch_pi_c, fch_pi_f)
         else

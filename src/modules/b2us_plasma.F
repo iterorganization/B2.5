@@ -192,7 +192,7 @@ cwdk move to dv
         real(R8), dimension(:,:), allocatable :: rsana, rsahi, rsamo,
      .                                           rrana, rrahi, rramo,
      .                                           rcxna, rcxhi, rcxmo,
-     .                                           rqrad, rqbrm
+     .                                           rqahe, rqrad, rqbrm
         real(R8), dimension(:), allocatable :: b2sihs_joule
       end type B2SourceWork
 
@@ -1537,6 +1537,7 @@ cwdk move to dv
       allocate ( srw % rcxna( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate ( srw % rcxmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate ( srw % rcxhi( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate ( srw % rqahe( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate ( srw % rqrad( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate ( srw % rqbrm( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
@@ -1590,6 +1591,7 @@ cwdk move to dv
       allocate ( srw % rcxna( nCv, 0:ns-1 ) )
       allocate ( srw % rcxmo( nCv, 0:ns-1 ) )
       allocate ( srw % rcxhi( nCv, 0:ns-1 ) )
+      allocate ( srw % rqahe( nCv, 0:ns-1 ) )
       allocate ( srw % rqrad( nCv, 0:ns-1 ) )
       allocate ( srw % rqbrm( nCv, 0:ns-1 ) )
 
@@ -1643,6 +1645,7 @@ cwdk move to dv
       srw % rcxna = 0.0_R8
       srw % rcxmo = 0.0_R8
       srw % rcxhi = 0.0_R8
+      srw % rqahe = 0.0_R8
       srw % rqrad = 0.0_R8
       srw % rqbrm = 0.0_R8
 
@@ -1705,6 +1708,7 @@ cwdk move to dv
       deallocate ( srw%rcxna )
       deallocate ( srw%rcxmo )
       deallocate ( srw%rcxhi )
+      deallocate ( srw%rqahe )
       deallocate ( srw%rqrad )
       deallocate ( srw%rqbrm )
 

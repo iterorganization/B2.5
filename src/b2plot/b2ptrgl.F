@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(ismain,ismain0,BoRiS)
+      subroutine b2ptrgl(BoRiS)
 c
 c  version : 07.04.98 13:12
 c
@@ -32,7 +32,6 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
-      integer ismain, ismain0
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)

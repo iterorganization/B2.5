@@ -1,4 +1,4 @@
-      subroutine calc_dist_f(mpg,geo,flist,nf,iref,ds)
+      subroutine calc_dist_f(geo,flist,nf,iref,ds)
       ! Description
       !============
       ! Subroutine to compute distance along a set of consecutive faces.
@@ -9,12 +9,10 @@
       ! Modules
       use b2mod_types
       use b2us_geo
-      use b2us_map
       use b2mod_subsys
       implicit none
       ! Input variables
       type(geometry), intent(in) :: geo
-      type(mapping), intent(in) :: mpg
       integer, intent(in) :: nf, iref, flist(1:nf)
 
       ! Output variables

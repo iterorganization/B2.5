@@ -1,5 +1,5 @@
       subroutine b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, 
-     &  ni, nirm, ni_ext, ti, tn, chvimx)
+     &  ni, nirm, ni_ext, ti, chvimx)
       use b2mod_types
       use b2mod_switches
       use b2us_geo
@@ -12,12 +12,12 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  mp, cflmi, ni(nCv,0:1), nirm(nCv), ni_ext(nCv,0:1), ti(nCv),
-     *  tn(nCv), chvimx(nFc)
+     *  chvimx(nFc)
 *     ------------------------------------------------------------------
 *     B2TLHI computes the all atom heat transport flux limit velocity.
 *     ------------------------------------------------------------------
 *   ..local variables
-      integer iCv, iFc
+      integer iFc
       real (kind=R8) ::
      *   t0,t1
 *   ..procedures

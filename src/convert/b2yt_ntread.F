@@ -30,7 +30,7 @@ c
       use b2mod_b2cmfs
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
+     *   , only : nion, natm, nmol
       use eirmod_extrab25
       use eirmod_ctrig
       use eirmod_cinit
@@ -48,7 +48,7 @@ c
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       integer jvft46
-      integer is, i, j, n, jvftnew, nstra1, io, idummy
+      integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:), textin1(:)

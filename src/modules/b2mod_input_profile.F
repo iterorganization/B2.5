@@ -82,7 +82,7 @@ c      use b2mod_types
         allocate(addspec(nss,nkind_coeff,0:nss))
       endif
 #else
-!      call xertst (nCv.le.DEF_NXD, 'faulty input nx')
+      call xertst (nCv.gt.0, 'faulty input nCv')
       call xertst (ns.le.DEF_NSD, 'faulty input ns')
 #endif
 
@@ -247,8 +247,7 @@ c      use b2mod_types
             if (new_files) write(93,*) r(i),f(i)
           enddo
 !          write(*,*) 'vor region_profile'
-          call region_profile
-     .     (geo,kind_data,ndat,r,ndim,pr,nx,ny,ifa,nanf)
+          call region_profile(geo,kind_data,ndat,r,ndim,pr,ifa,nanf)
 !          write (*,*) 'ifa=',ifa
           if (ifa.eq.1) goto 99
 !          allocate (pf(1:ndim))
@@ -634,7 +633,7 @@ cdjm Jan2017 Keep linearised sources for balance
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
 #ifdef WG_TODO
-            call region_profile(geo,1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
+            call region_profile(geo,1,ndat,r,ndim,pr,ifa,nfitanf)
 !           if (iloop.eq.0) print *,'R=',r(1:ndat)
 !           if (iloop.eq.0) print *,'F=',f(1:ndat)
 !           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
@@ -645,7 +644,7 @@ cdjm Jan2017 Keep linearised sources for balance
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 
-            call calc_dist(mpg,geo,omp,nomp,icsepomp,pr)
+            call calc_dist(geo,omp,nomp,icsepomp,pr)
 
             call E01BEF(ndat,r,f,d,ifail)
             if (elm_data) call E01BEF(ndat,r,felm,delm,ifail)
@@ -918,7 +917,7 @@ c*** Clear data to forget previous profiles
 
 *-----------------------------------------------------------------------
 
-      subroutine region_profile(geo,kind_data,ndat,r,ndim,pr,nx,ny,ifa,
+      subroutine region_profile(geo,kind_data,ndat,r,ndim,pr,ifa,
      & nfitanf)
 
       use b2mod_indirect
@@ -929,28 +928,24 @@ c*** Clear data to forget previous profiles
      & , only: output_ds_cv
       implicit none
       type (geometry), intent(in) :: geo
-      integer:: i,nx,ny,ifa
+      integer:: i,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
-      real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
+      real(kind=R8) :: r(nrr),pr(nrr),prtmp
+      real(kind=R8), allocatable :: pra(:), prdsa(:)
       integer ncall, nya
-      integer ixref, iyref
       character*256 filenamer
       logical exist
       external ipgetr
-      save ixref, iyref, ncall
+      save ncall
       data ncall/0/
 
       call subini('region_profile')
       if (ncall.eq.0) then
-#ifdef WG_TODO
-        call ipgeti ('set_transport_ixref', ixref)
-        call xertst (-1.le.ixref.and.ixref.le.nx,
-     1   'faulty argument set_transport_ixref')
-        call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
-     1   'faulty argument set_transport_iyref')
-#endif
-        if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsp')
+        if (nomp.gt.0) then
+          allocate(pra(nomp))
+          allocate(prdsa(nomp))
+          call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsp')
+        end if
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
@@ -970,7 +965,7 @@ c*** Clear data to forget previous profiles
       read (91,*,END=92,ERR=97) prtmp
       prdsa(i) = prtmp
       nya = i
-      if (i.lt.ny+2) goto 91
+      if (i.lt.nomp) goto 91
    92 continue
       nfitanf=1
       IFA=0

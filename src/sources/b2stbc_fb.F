@@ -1,6 +1,6 @@
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_post (nCv, nFc, nVx, ns, ismain,
+      subroutine b2stbc_fb_post (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, srw, main_call)
       use b2mod_types
 !      use b2mod_rates
@@ -18,7 +18,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -193,8 +193,8 @@
 
 *-----------------------------------------------------------------------
 *.specification
-      subroutine b2stbc_fb_pre (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
+      subroutine b2stbc_fb_pre (nCv, nFc, ns, ismain, ismain0,
+     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call,
      &  diagno)
       use b2mod_types
       use b2mod_rates
@@ -224,7 +224,7 @@
       implicit none
 #include <DIMENSIONS.F>
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0, diagno
+      integer nCv, nFc, ns, ismain, ismain0, diagno
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -233,8 +233,6 @@
       type (B2Rates), intent (in) :: rt
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
-*   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (inout) :: srw
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

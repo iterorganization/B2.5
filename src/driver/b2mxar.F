@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mxar (nCv, ns, ismain0, nregionv,
+      subroutine b2mxar (nCv, ns, ismain0,
      &  switch, geo, mpg, pl, dv, diag)
       use b2mod_types
       use b2mod_constants
@@ -13,7 +13,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, ns, ismain0, nregionv
+      integer nCv, ns, ismain0
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg

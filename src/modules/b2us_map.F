@@ -45,13 +45,13 @@
         integer, allocatable :: bcCv(:,:)              !         listing for each boundary condition the guard cells, and the corresponding domain cells
         integer, allocatable :: bcFcP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
         integer, allocatable :: bcFc(:)                !         listing for each boundary condition the boundary faces
-        real (kind=R8), allocatable :: bcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: bcFcOr(:)       ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
         integer, allocatable :: rcCvP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
         integer, allocatable :: rcCv(:,:)              !         listing for each stratum the guard cells, and the corresponding domain cells
         integer, allocatable :: rcFcP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcFc list, and its number of boundary faces
         integer, allocatable :: rcFc(:)                !         listing for each stratum the boundary faces
-        real (kind=R8), allocatable :: rcFcOr (:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+        real (kind=R8), allocatable :: rcFcOr(:)       ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
 
         integer, allocatable :: cfRegP(:,:)            ! (nCf,2) pointing for each cost function to the first index in the cfReg list, and its number of items
         integer, allocatable :: cfReg(:)               !         listing for each cost function the corresponding domain cells or faces
@@ -74,8 +74,13 @@
         integer, allocatable :: strVxP(:,:)            !(nXpt,2): for each Xpt, the list of associated strike point vertices, and their number
         integer, allocatable :: strVx(:)               ! list of vertex numbers for the strike points
         integer, allocatable :: tgVx(:)                ! list of vertex numbers for the tangency points
-        integer, allocatable :: strDiv(:)              ! For every strike point, the index of the divertor plate on which it is located
-                                                       ! The divertor plates are labelled from 1 to 4 starting travelling from West to East in the computational domain
+        integer, allocatable :: strDiv(:)              ! For every strike point, the index of the divertor target on which it is located
+                                                       ! The divertor targets are labelled from 1 to 4 starting travelling from West to East in the computational domain
+        integer, allocatable :: divFcP(:,:)            ! For each divertor target, the list of associated divertor faces, and their number
+        integer, allocatable :: divFc(:)               ! ORDERED list of faces forming the divertor targets
+        real (kind=R8), allocatable :: divFcOr(:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+        integer, allocatable :: ifdiv(:)               ! List index of the face immediately outside the strike point
+        integer, allocatable :: ivdiv(:)               ! Index of the active strike-point vertex on the divertor target
 
         integer :: isClassicalGrid                     ! indicates whether grid is derived from an "original", structured grid
         integer :: nx, ny, nncut, nctcnt               ! some parameters related to the original grid
@@ -304,6 +309,11 @@
       if (allocated(m%strVx)) deallocate (m%strVx)
       if (allocated(m%tgVx)) deallocate (m%tgVx)
       if (allocated(m%strDiv)) deallocate (m%strDiv)
+      if (allocated(m%divFcP)) deallocate (m%divFcP)
+      if (allocated(m%divFc)) deallocate (m%divFc)
+      if (allocated(m%divFcOr)) deallocate (m%divFcOr)
+      if (allocated(m%ifdiv)) deallocate (m%ifdiv)
+      if (allocated(m%ivdiv)) deallocate (m%ivdiv)
 
       deallocate (m%imapCv)
       deallocate (m%imapFcx)
@@ -578,11 +588,13 @@
       implicit none
       type (mapping), intent (inout) :: m
       integer :: i, j, k, l
-      integer :: iCv, iCv1, iCv2, iFc, iFcc, iVx, iFs, iVx1, iVx2,
-     *           iNv, iNv1, iNv2, iNvmx
+      integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
+     *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, freg, inew
       integer :: totalcount, regcount, Fscount, iactive, icount, fccount
-      integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:)
-      logical :: duplicate
+      integer, allocatable :: indCv(:), indFsVx(:), indXpt(:), ireg(:),
+     *                        indFc(:),
+     *                        old_face_list(:), new_face_list(:)
+      logical :: duplicate, match_found
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
 cwdk  can be derived directly from data in that file
@@ -715,9 +727,7 @@ cwdk  can be derived directly from data in that file
         m%strVxP = 0
         m%strVxP(1,1) = 1
         do i = 1, m%nXpt
-          if (i.gt.1) then
-            m%strVxP(i,1) = m%strVxP(i-1,1) + m%strVxP(i-1,2)
-          end if
+          if (i.gt.1) m%strVxP(i,1) = m%strVxP(i-1,1) + m%strVxP(i-1,2)
           iFs = m%vxFs(m%Xpt(i))
           do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
             iFc = m%fsFc(j)
@@ -839,6 +849,101 @@ cwdk  can be derived directly from data in that file
         end if
       end if
       deallocate(indXpt)
+
+      if (maxval(m%strDiv).gt.0) then
+        allocate(m%ifdiv(maxval(m%strDiv)))
+        allocate(m%ivdiv(maxval(m%strDiv)))
+        allocate(m%divFcP(maxval(m%strDiv),2))
+        allocate(indFc(m%nFc))
+        icount = 0
+        m%ifdiv = 0
+        m%ivdiv = 0
+        m%divFcP(1,1) = 1
+        m%divFcP(:,2) = 0
+        do i = 1, maxval(m%strDiv)  ! first assemble all the faces
+          if (i.gt.1) m%divFcP(i,1) = m%divFcP(i-1,1) + m%divFcP(i-1,2)
+          select case (i)
+          case (1)
+            freg = 1
+          case (2)
+            if (m%nnreg(0).gt.2) then
+              freg = 4
+            else
+              freg = 2
+            end if
+          case (3)
+            freg = 5
+          case (4)
+            freg = 8
+          end select
+          do iFc = 1, m%nFc
+            if (m%fcReg(iFc).eq.freg) then
+              icount = icount + 1
+              m%divFcP(i,2) = m%divFcP(i,2) + 1
+              indFc(icount) = iFc
+            end if
+          end do
+        end do
+        allocate(m%divFc(icount))
+        allocate(m%divFcOr(icount))
+        m%divFcOr = 0.0_R8
+        m%divFc(1:icount) = indFc(1:icount)
+        do i = 1, maxval(m%strDiv) ! now re-order them
+          allocate(old_face_list(m%divFcP(i,2)))
+          allocate(new_face_list(m%divFcP(i,2)))
+          old_face_list(1:m%divFcP(i,2))=
+     &     m%divFc(m%divFcP(i,1):m%divFcP(i,1)+m%divFcP(i,2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = m%divFc(m%divFcP(i,1))
+          old_face_list(1) = 0
+          iVa = m%fcVx(m%divFc(m%divFcP(i,1)),1)
+          iVb = m%fcVx(m%divFc(m%divFcP(i,1)),2)
+          inew = 1
+          do while (inew.lt.m%divFcP(i,2))
+            match_found = .false.
+            do j = 1, m%divFcP(i,2)
+              if (match_found) cycle
+              if (old_face_list(j).eq.0) cycle
+              if (iVa.eq.m%fcVx(old_face_list(j),1)) then
+                match_found = .true.
+                iVa = m%fcVx(old_face_list(j),2)
+              else if (iVa.eq.m%fcVx(old_face_list(j),2)) then
+                match_found = .true.
+                iVa = m%fcVx(old_face_list(j),1)
+              end if
+              if (match_found) then
+                indFc(1:inew) = new_face_list(1:inew)
+                new_face_list(1) = old_face_list(j)
+                new_face_list(2:inew+1) = indFc(1:inew)
+                old_face_list(j) = 0
+                inew = inew + 1
+              end if
+            end do
+            match_found = .false.
+            do j = 1, m%divFcP(i,2)
+              if (match_found) cycle
+              if (old_face_list(j).eq.0) cycle
+              if (iVb.eq.m%fcVx(old_face_list(j),1)) then
+                match_found = .true.
+                iVb = m%fcVx(old_face_list(j),2)
+              else if (iVb.eq.m%fcVx(old_face_list(j),2)) then
+                match_found = .true.
+                iVb = m%fcVx(old_face_list(j),1)
+              end if
+              if (match_found) then
+                new_face_list(inew+1) = old_face_list(j)
+                old_face_list(j) = 0
+                inew = inew + 1
+              end if
+            end do
+          end do
+          m%divFc(m%divFcP(i,1):m%divFcP(i,1)+m%divFcP(i,2)-1)=
+     &     new_face_list(1:m%divFcP(i,2))
+          deallocate(old_face_list)
+          deallocate(new_face_list)
+        end do
+        deallocate(indFc)
+      end if
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx

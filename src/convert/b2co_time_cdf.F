@@ -1,4 +1,5 @@
-      subroutine b2co_time_cdf(mpg, geo, ns, tim, batch_only)
+      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
+     & tim, batch_only)
       use b2mod_types
       use b2mod_mwti
       use b2mod_cdf
@@ -14,16 +15,12 @@
 #endif
       type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
-      integer ns
+      integer ns, ismain, ismain0, nnmoli
       real (kind=R8) :: tim
       logical :: batch_only
-#ifdef WG_TODO
-      integer :: jxi, jxa, jsep, ixtl, ixtr
-      integer :: iylstrt, iyrstrt, iytlstrt, iytrstrt,
-     1           iylend,  iyrend,  iytlend,  iytrend,
-     2           nybl, nybr, nytl, nytr
-#endif
+      integer :: i
       integer, save :: write_2d = 0, ntim_batch = 500
+      integer, allocatable :: fclist(:)
       real (kind=R8), save :: dtim = 1.0_R8
 #ifndef NO_CDF
 #ifndef NO_GETENV
@@ -55,39 +52,34 @@
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-#ifdef WG_TODO
-      call get_jsep(nx,ny,jxi,jxa,jsep)
-      call output_ds(geo,-1,+target_offset,jsep,iylstrt,iylend,'dsl')
-      call output_ds(geo,nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
-#endif
       if (nimp.gt.0) call output_ds_cv(geo,nimp,imp,icsepimp-1,'dsi')
       if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsa')
+      do i = 1, maxval(mpg%strDiv)
+        allocate(fclist(mpg%divFcP(i,2)))
+        fclist(1:mpg%divFcP(i,2)) =
+     &   mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+        select case (i)
+        case (1)
+          call output_ds_fc
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsl')
+        case (2)
+          if (mpg%nnreg(0).ge.7) then
+            call output_ds_fc
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstl')
+          else
+            call output_ds_fc
+     &       (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr')
+          end if
+        case (3)
+          call output_ds_fc
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dstr')
+        case (4)
+          call output_ds_fc
+     &     (geo,mpg%divFcP(i,2),fclist,mpg%ifdiv(i),'dsr')
+        end select
+        deallocate(fclist)
+      end do
 #ifndef NO_CDF
-#ifdef WG_TODO
-      if (nnreg(0).ge.7) then
-        ixtl = 0
-        do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.
-     .            ixtl.lt.nx)
-          ixtl=ixtl+1
-        enddo
-        ixtr = ixtl
-        do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and.
-     .            ixtr.lt.nx)
-          ixtr=ixtr+1
-        enddo
-        call output_ds(ny,ixtl,-target_offset,jsep,
-     .                                        iytlstrt,iytlend,'dstl')
-        call output_ds(ny,ixtr,+target_offset,jsep,
-     .                                        iytrstrt,iytrend,'dstr')
-        nytl = iytlend - iytlstrt + 1
-        nytr = iytrend - iytrstrt + 1
-      else
-        nytl = 0
-        nytr = 0
-      endif
-      nybl = iylend  - iylstrt  + 1
-      nybr = iyrend  - iyrstrt  + 1
-#endif
       nc = max(mpg%nXpt,1)
       nbatch = int((tim/dtim)/ntim_batch) + 1
 c access the b2time.nc or b2batch.nc file
@@ -229,9 +221,8 @@ c prepare the b2time.nc.xxxx or b2batch.nc.xxxx file
       call xertst(.not.exists,message)
       status=nf_create(trim(filename),NF_NOCLOBBER,ncid2)
       call check_cdf_status(status)
-      call b2crtimecdf(filename, mpg%nCv,
-     .                 nc, ns, write_2d, ncid2,
-     .                 batch_only, iret)
+      call b2crtimecdf(filename, mpg, ns, ismain, ismain0, nnmoli,
+     .                 write_2d, ncid2, batch_only, iret)
       status=nf_open(trim(filename),NF_WRITE,ncid2)
       call check_cdf_status(status)
 

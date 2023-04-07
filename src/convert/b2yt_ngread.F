@@ -34,7 +34,10 @@ c
       use b2mod_subsys
 #ifdef B25_EIRENE
       use eirmod_parmmod
-     *   , only : ndx, ndy, nion, nstra, natm, nmol, npls
+     *   , only : nion, natm, nmol, npls
+#ifdef WG_TODO
+     *   ,        ndx, ndy, nstra
+#endif
       use eirmod_extrab25
       use eirmod_clogau
       use eirmod_cinit
@@ -99,13 +102,18 @@ c
       character*3 stnum
 #endif
       character*256 filename
+#ifdef WG_TODO
       logical ex
+#endif
 
 *  -- PROCEDURES --
+#ifdef WG_TODO
       character*32 :: get_Eir_hash
       logical streql
+      external streql, get_Eir_hash
+#endif
       EXTERNAL GFSUB2
-      external ipgeti, streql, get_Eir_hash
+      external ipgeti
 #endif
 
 *=======================================================================
@@ -157,9 +165,7 @@ C
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
       call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
-#ifdef WG_TODO
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
-#endif
       n2 = nx1*ny1
       filename='input.dat'
       call find_file(filename,ex)

@@ -857,8 +857,7 @@
       call read_b2fgmtry (ninp_us, mpg, geo)
 
 *   ..convert plasma to unstructured format
-      call prep_state (nx, ny, ns,
-     .                    mpg%nCv, mpg%nCi, mpg%nFc, mpg, state)
+      call prep_state (nx, ny, ns, mpg%nCv, mpg%nFc, mpg, state)
       write (*,*) 'State created'
       call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 

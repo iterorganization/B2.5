@@ -98,7 +98,7 @@
 *   ..compute residual
       if((solving.and.any(solvereg(0:nregionv))).or.
      &    switch%get_residuals.eq.1) then                           !srv 22.05.18
-        call b2ursd (nCv, nFc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch, 
+        call b2ursd (nCv, nFc, mpg, dv%ne, pl%po, sr%sch, dv%fch,
      &    dv%respo)
       endif                                                         !srv 22.05.18
 c-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
@@ -113,14 +113,14 @@ c-rfs     .  fch(21,-1,0), fch(21,-1,1),
 c-rfs     .  fch(21,0,1), respo(21,-1)
 *   ..compute correction
       if(solving.and.any(solvereg(0:nregionv))) then                !srv 22.05.18
-        call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, switch, 
-     &   geo, mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo,aa, 
+        call b2uspo (nCv, nFc, nVx, nregionv, solvereg, itcnt, switch,
+     &   geo, mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv%corpo,aa,
      &  'b2nppo')
 *   ..apply correction
         call b2uppo (nCv, rxf, dv%corpo, pl%po)
       endif                                                         !srv 22.05.18
 
-      if(switch%b2nppo_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then                    !srv 11.09.09 {
+      if(switch%b2nppo_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then    !srv 11.09.09 {
 !       call my_out_us(70,nCv,0,pl%te,'b2nppo_te')
 !       call my_out_us(70,nCv,0,dv%ne,'b2nppo_ne')
         call my_out_us(70,nCv,0,pl%po,'b2nppo_po')

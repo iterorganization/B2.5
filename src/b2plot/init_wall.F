@@ -20,8 +20,7 @@
       type (mapping), intent(in) :: mpg
 #ifdef WG_TODO
       integer ibnd
-      integer nCv, ns
-      real (kind=R8) :: BoRiS
+      integer nCv
 
       integer ix, iy, is, ixn, iyn, idir, ireg
       integer ibnd

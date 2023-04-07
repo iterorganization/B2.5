@@ -1,4 +1,4 @@
-      subroutine conv_surface_models (nout, mpg, gm,
+      subroutine conv_surface_models (mpg,
      .           bndmdl, trifc, elem_cv, nelem)
 
       use b2mod_types
@@ -6,13 +6,11 @@
       use b2mod_neutrals_namelist
       use b2mod_indirect
       use b2us_map
-      use b2us_geo
 
       implicit none
 
-      integer, intent(in) :: nout, nelem
+      integer, intent(in) :: nelem
       type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: gm
       integer, intent(in) :: trifc(3,nelem), elem_cv(nelem)
       integer, intent(inout) :: bndmdl(3,nelem)
       character(500) :: line
@@ -316,7 +314,7 @@
 
       end subroutine conv_surface_models
 
-      subroutine find_nondef_surfaces (nout, mpg, gm,
+      subroutine find_nondef_surfaces (nout, mpg,
      .           elem, bndmdl, elem_cv,nelem)
 
       use b2mod_types
@@ -324,13 +322,11 @@
       use b2mod_neutrals_namelist
       use b2mod_indirect
       use b2us_map
-      use b2us_geo
 
       implicit none
 
       integer, intent(in) :: nout, nelem
       type(mapping), intent(in) :: mpg
-      type(geometry), intent(in) :: gm
       integer, intent(in) :: elem(3,nelem), elem_cv(nelem)
       integer, intent(inout) :: bndmdl(3,nelem)
       integer, allocatable :: indelm(:), tris(:), jsts(:)

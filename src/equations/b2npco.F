@@ -127,10 +127,10 @@ cdjm Jan2017 update particle source components for balance
       if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
        if (switch%mdf_fnb.eq.0) then
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+        call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna(:,:,isb), dv%resco(:,isb))
        else
-        call b2ursc (nCv, nFc, geo, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+        call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
       endif                                                             !srv 22.05.18

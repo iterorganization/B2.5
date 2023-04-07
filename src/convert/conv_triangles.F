@@ -20,7 +20,7 @@
       logical :: inserted
       integer :: nco_old, ic, nnodes, ico, ivx, nelem, iel, i1, i2, i3,
      .           idum, i, nel2, is, jdum, is1, ifc, icv, icut, ixt, iyt,
-     .           iad, ix, iy, isig, iused, ineir,
+     .           ix, iy, isig, iused, ineir,
      .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
      .           ixl, ixr, iv, icside
 
@@ -251,7 +251,6 @@
         else
 !  ixtri, iytri are in Eirene cell counting
 !  find cell number in B2.5 counting
-          iad = 0
           ixt = ix_eir_b25(ixtri(iel))
           iyt = iy_eir(iytri(iel))
           if (ixt == -2) then
@@ -406,10 +405,10 @@
 !  set recycling boundary model indicators
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
-        call conv_surface_models (nout, mpg, gm,
+        call conv_surface_models (mpg,
      .     bndmdl, trifc, elem_cv, nelem)
       else
-        call find_nondef_surfaces (nout, mpg, gm,
+        call find_nondef_surfaces (nout, mpg,
      .     elem_new, bndmdl, elem_cv, nelem)
       end if
 

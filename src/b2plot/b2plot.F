@@ -4,7 +4,7 @@ c Unfortunately the Juelich compiler complains with error message
 c    (E) The STRICT/NOSTRICT option may only be specified for OPT(3).  STRICT is assumed.
 c so this optimisation is disabled by default.
 c 2002-09-11: logic revised
-      subroutine b2plot(nxd,nyd,nsd_local)
+      subroutine b2plot(nxd,nyd,nCv,nsd_local)
 #ifdef NO_OPT
 #ifdef CRAY
 !DIR$ OPTIMIZE (-O0 -hfp0)
@@ -45,11 +45,13 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpb
       use b2mod_ranges
       use b2mod_external
+      use b2us_plasma
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
 #ifdef B25_EIRENE
       use eirmod_parmmod
+     , , ncv_eir => ncv
       use eirmod_clogau
       use eirmod_ctrcei
       use eirmod_ctrig
@@ -79,7 +81,8 @@ c 2002-09-11: logic revised
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #endif
-      integer nxd,nyd,nsd_local
+      integer nxd,nyd,nCv,nsd_local
+      type (B2State) :: state
 c
 c  version : 27.07.96 20:37
 c
@@ -793,7 +796,7 @@ c
 #ifdef WG_TODO
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natm)
-      call alloc_b2mod_user(nx,ns,nlim,nmol,ntns)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
 #endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
@@ -1495,7 +1498,7 @@ c
      1     .and.lucdf.eq.lu) then
             rewind(lu)
             istepcdf=istepcdf+1
-            call get_from_movie_cdf(ncidcdf,istepcdf)
+            call get_from_movie_cdf(ncidcdf,istepcdf,nCv,ns,state)
             rewind(lu)
           elseif(ntstepcdf.gt.0.and.istepcdf.eq.ntstepcdf
      1     .and.lucdf.eq.lu) then
@@ -6109,7 +6112,7 @@ c
             write(*,*) ntstepcdf,' slices'
             istepcdf=1
             if(istepcdf.le.ntstepcdf) then
-              call get_from_movie_cdf(ncidcdf,istepcdf)
+              call get_from_movie_cdf(ncidcdf,istepcdf,nCv,ns,state)
               write(*,*) 'reading from lu ',lu,' for step ',istepcdf
               call readline(textline,lu,ipos)
             else
@@ -6621,7 +6624,7 @@ cdpc still in testing phase
           graphlabel(iwrk)=' '
           do is=max(istart,1),min(iend,itmp)
             call get_cdf(filename, ncidcdf, is, movietime(1),
-     1       varname, mach, nx, ny)
+     1       varname, mach, nCv)
             write(*,*) 'MOVIE: ',movietime(1)
             write(stmp,'(f13.9,2x,i5,''/'',i5)') movietime(1), is, itmp
             description=trim(filename) // ' ' // trim(varname) //
@@ -6657,7 +6660,7 @@ cdpc still in testing phase
           graphlabel(iwrk)=' '
           do is=max(istart,1),min(iend,itmp)
             call get_cdf(filename, ncidcdf, is, movietime(1),
-     1       varname, mach, nx, ny)
+     1       varname, mach, nCv)
             write(*,*) 'MOVIE: ',movietime(1)
             write(stmp,'(f13.9,2x,i5,''/'',i5)') movietime(1), is, itmp
             description=trim(filename) // ' ' // trim(varname) //
@@ -9499,8 +9502,7 @@ c normalised weights is 1
         case('wlld')     ! ANK wall loading
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          call b2pwld(istack(iistack),ismain,ismain0,boundary_namelist,
-     .                BoRiS)
+          call b2pwld(istack(iistack),boundary_namelist,BoRiS)
           call pop_stack(stack_req)
         case('woff')     ! turn off wall plots
           call walloff

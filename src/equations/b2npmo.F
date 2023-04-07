@@ -403,7 +403,7 @@ c    ..compare matrices
 *    ..compute correction
          pb1 = pb !csc to avoid aliasing in Tapenade
          rob1 = rob !csc to avoid aliasing in Tapenade
-         call b2usmo (nCv, nFc, nVx, is, switch, geo, mpg, mpg%nnreg(0),
+         call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &     b2npmo_solvedum, itcnt, switch%b2npmo_rxg, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
      &     flcb, cvcb, dv%resmo(:,is),  ctcfb, dv%corua(:,is),
@@ -461,7 +461,7 @@ c     ..compare 9-pt stencil matrices
         end do
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
-        call b2usmo (nCv, nFc, nVx, ns, switch, geo, mpg, mpg%nnreg(0),
+        call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &    solvemt, itcnt, switch%b2npmo_rxg, ro, rz, pr, pz, wrk0,
      &    smt, flct, cvct,
      &    dv%resmt, ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')

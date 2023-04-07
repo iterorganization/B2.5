@@ -222,13 +222,11 @@ cxpb size is changed in DIMENSIONS.F
       control_read = .false.
       end subroutine write_b2us_feedback_control
 
-      subroutine init_feedback(nCv, nFc, nVx, ns, natmi, switch, geo,
-     & mpg)
+      subroutine init_feedback(nFc, ns, switch, mpg)
       implicit none
       type (switches), intent (in) :: switch
-      type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      integer :: nCv, nFc, nVx, ns, natmi
+      integer :: nFc, ns
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
       logical consistent, done
@@ -909,12 +907,11 @@ cxpb size is changed in DIMENSIONS.F
       return
       end subroutine init_feedback
 
-      subroutine compute_feedback(nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call,
-     &  diagno)
+      subroutine compute_feedback(nCv, nFc, ns, ismain, ismain0,
+     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0, diagno
+      integer nCv, nFc, ns, ismain, ismain0
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -923,8 +920,6 @@ cxpb size is changed in DIMENSIONS.F
       type (B2Rates), intent (in) :: rt
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
-*   ..output arguments (unspecified on entry)
-      type (B2SourceWork), intent (inout) :: srw
 *   ..local variables
       integer :: ifb, ifc, ifc1, ifc2, icv, ic1, ic2, is, is_start,
      & is_end, iss
@@ -1970,10 +1965,9 @@ cxpb size is changed in DIMENSIONS.F
 
 ***********************************************************************
 
-      subroutine conv_fbparms (nx, ny, ns, m)
+      subroutine conv_fbparms (m)
       use b2mod_feedback
       implicit none
-      integer, intent(in) :: nx, ny, ns
       type (mapping), intent (inout) :: m
       integer :: is, ix, iy, icv, iss, ifbreg
       logical :: done
@@ -2031,10 +2025,9 @@ cxpb size is changed in DIMENSIONS.F
 
 ***********************************************************************
 
-      subroutine write_fbparms (ns)
+      subroutine write_fbparms
       use b2mod_version
       implicit none
-      integer, intent(in) :: ns
       integer :: ifb, iout
 #ifndef F2003
       integer newunit

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sral (nCv, nFc, nVx, ns, nxtl, nxtr,
+      subroutine b2sral (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &  switch, geo, mpg, st, st_ext, wrong_flow, main_call)
       use b2mod_types
@@ -54,12 +54,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nxtl, nxtr,
+      integer nCv, nFc, nVx, ns,
      *  nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
+      type (mapping), intent (inout) :: mpg
 *   ..input/output arguments
       type (B2State), intent (inout) :: st
       type (B2StateExt), intent (inout) :: st_ext
@@ -244,9 +244,8 @@
          write(*,*) ' style=',switch%b2sral_style,' b2stbc called'
        endif
        call b2stbc (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &    geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext,
-     &    st%srw, st%psnc, st%psnl,
-     &    wrong_flow, main_call)
+     &    geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext,
+     &    st%srw, st%psnc, st%psnl, wrong_flow, main_call)
 *   .. store contributions from BCs
        st%sr%sna = st%srw%sna0
        st%sr%smo = st%srw%smo0
@@ -302,7 +301,7 @@
 *   ..initialise smq to 0
       call sfill (nCv*4*ns, 0.0_R8, st%sr%smq, 1)
 *   ..compute special contributions (boundaries and recycling)
-      call b2stbr (nCv, nFc, nVx, ns, nxtl, nxtr,
+      call b2stbr (nCv, nFc, nVx, ns,
      &  nscx, nscxmax, iscx, ismain, ismain0, dtim,
      &  switch, geo, mpg, st, st_ext, main_call)
 *   ..zero out contributions in dead cells
@@ -335,8 +334,7 @@
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext,
-     &  st%sr, st%srw, main_call)
+     &  geo, mpg, st%pl, st%dv, st_ext, st%sr, st%srw, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -381,7 +379,7 @@
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
-      call b2stel (nCv, nFc, nVx, ns, ismain, ismain0,
+      call b2stel (nCv, nFc, ns, ismain, ismain0,
      &  switch, geo, mpg, st%pl, st%dv, st%rt, st%rtw, st%srw) !srv 11.09.09 {
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1

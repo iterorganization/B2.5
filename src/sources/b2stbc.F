@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbc (nCv, nFc, nVx, ns, ismain, ismain0,
-     &  switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &  switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
 !      use b2mod_geo_corner
@@ -42,7 +42,6 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      type (B2RatesWork), intent (in) :: rtw
       type (B2Coeff), intent (inout) :: co
       type (B2StateExt), intent (in) :: st_ext
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
@@ -65,12 +64,12 @@
 
 *   ..local variables
       integer is
-      real (kind=R8) :: praverage(2), testqe, testqi
+      real (kind=R8) :: praverage(2)
       real (kind=R8) :: wrk(nFc)
 #ifdef WG_TODO
       integer regcnt, ixx
       real (kind=R8) ::
-     *   t0,
+     *   t0, testqe, testqi,
      &   prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2),
      1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
@@ -334,13 +333,13 @@
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-     &    call compute_feedback(nCv, nFc, nVx, ns, ismain, ismain0,
-     &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, 
-     &     main_call, switch%b2stbc_diagno)
+     &    call compute_feedback(nCv, nFc, ns, ismain, ismain0,
+     &     switch, geo, mpg, pl, dv, rt, psnc, psnl,
+     &     main_call)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nCv, nFc, nVx, ns, ismain, ismain0,
-     &   switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw,
+     &   switch, geo, mpg, pl, dv, co, rt, st_ext, srw,
      &   wrong_flow, main_call, praverage)
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
@@ -375,7 +374,7 @@
       endif
 
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, nVx, ns, ismain,
+!WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
 !WG_RM     &    switch, geo, mpg, pl, dv, srw, main_call)
 
 * ..compute conditions on the cuts
@@ -392,12 +391,12 @@
 !WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
 !WG_TODO      enddo
 
+#ifdef WG_TODO
 c added 2001.11.26 dpc/xpb
 c to fix problems with the core energy boundary condition arising
 c from diamagnetic drifts
       testqe=0.0_R8
       testqi=0.0_R8
-#ifdef WG_TODO
       if(maxval(facdrift).ne.0.0_R8) then
         do ix=-1,nx
           iy=0                                        ! south side
