@@ -6440,11 +6440,11 @@ cdpc still in testing phase
      1                    work(ixx(ix,iy),iyy(ix,iy),is,iwrk)
               endif
             else
-              write(*,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
+              write(*,'(a,i3,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
      1                 textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is,
      1                 work(ixx(ix,iy),iyy(ix,iy),is,iwrk)
               if(writing_to_file) then
-                write(nwtf,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
+                write(nwtf,'(a,i3,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
      1                    textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is,
      1                    work(ixx(ix,iy),iyy(ix,iy),is,iwrk)
               endif
