@@ -49,6 +49,7 @@ c
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       character*18 hlp_frm
+      character*72 zeile
       character*256 filename, message
       logical ex, target_east, target_west
 #endif
@@ -58,6 +59,10 @@ c
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
       external ipgeti, xertst
+#ifdef B25_EIRENE
+      logical streql
+      external streql
+#endif
 
 *=======================================================================
 *//COMPUTATION//
@@ -751,7 +756,15 @@ cxpb
         if (aver_frac.lt.0.0_R8.or.aver_frac.gt.1.0_R8) then
           aver_frac = 0.99_R8
         else
-          read(48,'(i4)',END=98) idum
+          read(48,'(a72)',END=98) zeile
+          if (.not.streql(zeile,' ')) then
+            read(zeile,'(i4)',END=98) idum
+          else
+            idum = 0
+            do while(streql(zeile,' '))
+              read(48,'(a72)',END=98) zeile
+            end do
+          end if
           write(message,'(a)')
      .     'Mismatched number of plasma species between '//
      .      fort_lc//'44 and '//fort_lc//'44_aver files !'
