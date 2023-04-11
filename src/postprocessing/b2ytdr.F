@@ -264,7 +264,8 @@ c 2002-09-11: logic revised
      4 na_feedback_alpha1(:), na_feedback_beta1(:),
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
-     7 na_feedback_time1(:), gpdata1(:,:,:)
+     7 na_feedback_time1(:), gpdata1(:,:,:),
+     8 sna_corr1(:), taumax1(:)
       real (kind=R8) ::
      & cbsna1(0:7,0:ns-1,0:cbnrmx-1),
      & cbsmo1(0:7,0:ns-1,0:cbnrmx-1),
@@ -476,7 +477,8 @@ c 2002-09-11: logic revised
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
      5  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1),
+     7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
       character cnamip*80, cvalip*80, cswitch*80
@@ -527,6 +529,7 @@ c 2002-09-11: logic revised
       integer :: time_dep_puff_case1(nstraid)
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:), solvtmp(:,:)
+      logical, allocatable :: do_sna_corr_core1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -603,6 +606,7 @@ c 2002-09-11: logic revised
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+      data b2stbr_sna_corr/0.0_R8/, b2stbr_taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
@@ -1388,6 +1392,8 @@ c 2002-09-11: logic revised
       call xertst (ns.gt.sput_dst, 'faulty input sput_dst')
       call ipgeti ('b2stbr_sput_dst2', sput_dst2)
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
+      call ipgetr ('b2stbr_sna_corr', b2stbr_sna_corr)
+      call ipgetr ('b2stbr_taumax', b2stbr_taumax)
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
       call ipgeti ('nrings_for_no_speedup_averaging', nrings)
@@ -1911,6 +1917,8 @@ c 2002-09-11: logic revised
           ycur_done = .true.
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
+        case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          wait = .true.
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -11057,6 +11065,57 @@ cxpb as they no longer necessarily point to the same species
 #endif
         if (maxpoin.ne.2000) write(99,'(1x,a,i6,a)')
      >   'MAXPOIN=', maxpoin,','
+        write(hlp_frm,'(a,i2,a)')
+     .           '(1x,a,',nspecies1,'(1x,f10.7,'',''))'
+        if (maxval(sna_corr).gt.0.0_R8.or.b2stbr_sna_corr.ne.0.0_R8)
+     >   then
+          allocate(sna_corr1(1:nspecies1))
+          if (maxval(sna_corr).eq.0.0_R8.and.b2stbr_sna_corr.ne.0.0_R8)
+     >     then
+            sna_corr1(1:nspecies1) = b2stbr_sna_corr
+          else
+            do is = 1, nspecies
+              if (ispecies1(is).ne.-1) then
+                sna_corr1(ispecies1(is)) = sna_corr(is)
+              end if
+            end do
+          end if
+          write(99, hlp_frm)
+     .             'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
+          deallocate(sna_corr1)
+        end if
+        if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
+     &      .or. b2stbr_taumax.ne.0.05_R8) then
+          allocate(taumax1(1:nspecies1))
+          if (maxval(taumax).eq.0.05_R8 .and. minval(taumax).eq.0.05_R8
+     &      .and. b2stbr_taumax.ne.0.05_R8) then
+            taumax1(1:nspecies1) = b2stbr_taumax
+          else
+            do is = 1, nspecies
+              if (ispecies1(is).ne.-1) then
+                taumax1(ispecies1(is)) = taumax(is)
+              end if
+            end do
+          end if
+          write(99, hlp_frm)
+     .             'TAUMAX=',(taumax1(is),is=1,nspecies1)
+          deallocate(taumax1)
+        end if
+        if (.not.(any(do_sna_corr_core(1:nspecies)))) then
+          allocate(do_sna_corr_core1(1:nspecies1))
+          do is = 1, nspecies
+            if (ispecies1(is).ne.-1) then
+              do_sna_corr_core1(ispecies1(is)) = do_sna_corr_core(is)
+            end if
+          end do
+          if (.not.(any(do_sna_corr_core1(1:nspecies1)))) then
+            write(hlp_frm,'(a,i2,a)')
+     .           '(1x,a,',nspecies1,'l1,'','')'
+            write(99, hlp_frm)
+     .       'DO_SNA_CORR_CORE=',(do_sna_corr_core1(is),is=1,nspecies1)
+          end if
+          deallocate(do_sna_corr_core1)
+        end if
         if (neutrals_time_mod.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
         if (neutrals_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')

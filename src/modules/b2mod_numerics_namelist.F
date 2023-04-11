@@ -9,7 +9,8 @@
      *   dtmo(:,:), dtmo_SOL(:),
      *   dtee(:),
      *   dtei(:),
-     *   corr_core_dn(:)                                   ! IYS 19.12.2017
+     *   corr_core_dn(:),                                  ! IYS 19.12.2017
+     *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
       real (kind=R8), save :: dtee_SOL, dtei_SOL
       logical, allocatable, save ::
      *   solveco(:,:),
@@ -23,18 +24,20 @@
      *   last_solve_7(:),                                  !srv 02.04.18
      *   last_solve_9(:),
      *   last_solve_11(:),                                 !srv 02.04.18
-     *   add_te_corr_to_po(:)  ! IYS 21.09.2018
+     *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
+     *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
 #     include "DIMENSIONS.F"
-      integer NSDMAX
-      parameter (NSDMAX=DEF_NSD)
-      real (kind=R8), save :: 
+      integer NSDMAX, NATMMAX
+      parameter (NSDMAX=DEF_NSD, NATMMAX=DEF_NATM)
+      real (kind=R8), save ::
      &    dtco(0:nsdmax-1,0:NNREGMAX), dtco_SOL(0:nsdmax-1)
-      real (kind=R8), save :: 
+      real (kind=R8), save ::
      &    dtmo(0:nsdmax-1,0:NNREGMAX), dtmo_SOL(0:nsdmax-1)
       real (kind=R8), save :: dtee(0:NNREGMAX), dtee_SOL
       real (kind=R8), save :: dtei(0:NNREGMAX), dtei_SOL
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
+      real (kind=R8), save :: sna_corr(NATMMAX), taumax(NATMMAX)       ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemt(0:NNREGMAX)
@@ -47,6 +50,7 @@
       logical, save :: last_solve_9(0:NNREGMAX)
       logical, save :: last_solve_11(0:NNREGMAX)           !srv 02.04.18
       logical, save :: add_te_corr_to_po(0:NNREGMAX)       ! IYS 21.09.2018
+      logical, save :: do_sna_corr_core(NATMMAX)          ! IYS 10.03.2023
 #endif
       !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
       !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
@@ -72,7 +76,8 @@
      & solveee, solveei, solveet,                          !srv 22.05.18
      & write_nml_num,
      & numerics_filename, numerics_time_mod, numerics_time_switch,
-     & corr_core_dn, corr_core_dt, add_te_corr_to_po       ! IYS 19.12.2017
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
+     & sna_corr, taumax, do_sna_corr_core
 
       contains
 
@@ -91,7 +96,9 @@
       allocate(dtmo_SOL(0:nsd-1))
       allocate(dtee(0:nnreg(0)))
       allocate(dtei(0:nnreg(0)))
-      allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
+      allocate(corr_core_dn(0:nsd-1))                              ! IYS 19.12.2017
+      allocate(sna_corr(nspecies))                                 !iyv 20.09.22
+      allocate(taumax(nspecies))                                   !iyv 20.09.22
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
       allocate(solvemt(0:nnreg(0)))
@@ -104,6 +111,7 @@
       allocate(last_solve_9(0:nnreg(0)))
       allocate(last_solve_11(0:nnreg(0)))                          !srv 02.04.18
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
+      allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in DIMENSIONS.F')
@@ -118,8 +126,10 @@
       dtmo_SOL=1.0_R8
       dtee_SOL=1.0_R8
       dtei_SOL=1.0_R8
-      corr_core_dn=1.0_R8     ! IYS 19.12.2017
-      corr_core_dt=1.0_R8     ! IYS 19.12.2017
+      corr_core_dn=1.0_R8                                          ! IYS 19.12.2017
+      corr_core_dt=1.0_R8                                          ! IYS 19.12.2017
+      sna_corr=0.0_R8                                              !iyv 20.09.22
+      taumax=0.05_R8                                               !iyv 20.09.22
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -128,6 +138,7 @@
       solvemt=.true.
       solvepo=.true.
       add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
+      do_sna_corr_core=.true.                                      !iyv 20.09.22
       solveee=.true.
       solveei=.true.
       solveet=.true.
@@ -156,11 +167,14 @@
       deallocate(dtee)
       deallocate(dtei)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
+      deallocate(sna_corr)                                         !iyv 20.09.22
+      deallocate(taumax)                                           !iyv 20.09.22
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
       deallocate(solvepo)
       deallocate(add_te_corr_to_po)                                ! IYS 21.09.2018
+      deallocate(do_sna_corr_core)                                 !iyv 20.09.22
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveet)
