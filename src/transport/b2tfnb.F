@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, switch, geo, mpg,
-     &  pl, dv, co, rt, balance)
+      subroutine b2tfnb (nCv, nFc, nVx, isb, ismain, ismain0,
+     &  switch, geo, mpg, pl, dv, co, rt, balance)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_constants
@@ -22,7 +22,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb, ismain
+      integer nCv, nFc, nVx, isb, ismain, ismain0
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -401,18 +401,27 @@ cwdk                   (original code: simple averaging)
      &     dv%fna_32(:,:,isb), dv%fna_52(:,:,isb))
 *   ..limit flow by sound speed                                          ! lkw 26.10.2022{
        do iFc = 1, nFc
-            t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
-            t3 = fna_mdf0(iFc,0)+ fna_mdf0(iFc,1)
-            t1 = pl%na(mpg%fcCv(iFc,1),isb)
-            if (t3 .lt. 0) t1 = pl%na(mpg%fcCv(iFc,2),isb)
-            t3 = abs(t3)
-            vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp)) *
+         if (.not.is_neutral(isb).or.switch%tn_style.eq.0.or.
+     &      (switch%tn_style.eq.2.and.
+     &      (nint(zn(isb)).ne.1.or.isb.ne.ismain0))) then
+           t0 = max(pl%ti(mpg%fcCv(iFc,1)), pl%ti(mpg%fcCv(iFc,2)))
+         else if (switch%tn_style.eq.1) then
+           t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
+         else if (switch%tn_style.eq.2.and.nint(zn(isb)).eq.1.and.
+     &            isb.eq.ismain0) then
+           t0 = max(pl%tn(mpg%fcCv(iFc,1)), pl%tn(mpg%fcCv(iFc,2)))
+         end if
+         t3 = fna_mdf0(iFc,0) + fna_mdf0(iFc,1)
+         t1 = pl%na(mpg%fcCv(iFc,1),isb)
+         if (t3.lt.0.0_R8) t1 = pl%na(mpg%fcCv(iFc,2),isb)
+         t3 = abs(t3)
+         vbar = sqrt(8.0_R8 * t0 / (pi * am(isb)*mp)) *
      &        geo%fcS(iFc)
-            wrk4(iFc) = 1.0_R8/(1.0_R8 +
+         wrk4(iFc) = 1.0_R8/(1.0_R8 +
      &        (t3/(0.5_R8*vbar*t1))**gamma)**(1.0_R8/gamma)
-            fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
-            fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
-        enddo                                                            ! lkw 26.10.2022}
+         fna_mdf0(iFc,0)   = fna_mdf0(iFc,0)*wrk4(iFc)
+         fna_mdf0(iFc,1)   = fna_mdf0(iFc,1)*wrk4(iFc)
+       enddo                                                             ! lkw 26.10.2022}
      
 !   ..keep the convective flow "correction" factor for further output
       do iFc = 1, nFc
@@ -421,7 +430,7 @@ cwdk                   (original code: simple averaging)
           flo_factor(iFc,0) = 1.0_R8
         else
          call xertst (flo_mdf(iFc,0) /= 0.0_R8, 'faulty transformation'
-     $ // ' of poloidal convective particle flow, is = '//chns)
+     & // ' of poloidal convective particle flow, is = '//chns)
          flo_factor(iFc,0) = dv%fna_32(iFc,0,isb) / 
      &              (flo_mdf(iFc,0) * nbf(iFc)) 
         endif  
@@ -430,7 +439,7 @@ cwdk                   (original code: simple averaging)
           flo_factor(iFc,1) = 1.0_R8
         else
          call xertst (flo_mdf(iFc,1) /= 0.0_R8, 'faulty transformation'
-     $ // ' of radial convective particle flow, is = '//chns)
+     & // ' of radial convective particle flow, is = '//chns)
          flo_factor(iFc,1) = dv%fna_32(iFc,1,isb) / 
      &              (flo_mdf(iFc,1) * nbf(iFc)) 
         endif  
