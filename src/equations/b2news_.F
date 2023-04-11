@@ -318,8 +318,8 @@ csw 01oct2012 initialize potential if necessary
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))                      !srv 01.10.99
 *    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &      mpg, st%pl, st%dv, st%co, st%rt, .true.)
+          call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
         enddo                                                            !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
@@ -415,7 +415,8 @@ c The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated
 c Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
 c b2npmo with rxf = 0 and recompute fluxes.
       if (ncall_b2news_.eq.0) then
-        call b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+        call b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+     &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8,
      &    st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
         do is = switch%nsmin, switch%nsmax-1
@@ -423,11 +424,12 @@ c b2npmo with rxf = 0 and recompute fluxes.
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &      st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-          call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &      mpg, st%pl, st%dv, st%co, st%rt, .true.)
+          call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &      switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
         enddo
       endif
-      call b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+      call b2npmo (nCv, nFc, nVx, ns, ismain, ismain0,
+     &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1,
      &  st%pl, st%dv, st%rt, st%co, st%sr, st_ext, ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo')
@@ -462,8 +464,8 @@ c b2npmo with rxf = 0 and recompute fluxes.
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &    mpg, st%pl, st%dv, st%co, st%rt, .true.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
 *    ..perform iteration
 csw 16oct2012 init ier0
         ier0=0
@@ -492,8 +494,8 @@ csw 16oct2012 init ier0
 !    &     st%pl%ti, st%pl%tn, is, pb)                                   !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 *    ..re-compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &    mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
@@ -624,8 +626,8 @@ csw 16oct2012 init ier0
 #ifdef DBG
         write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch,
-     &   geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
 
 *   ..compute fne_he, fni_he
@@ -720,8 +722,8 @@ c   recompute particle fluxes
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &  mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
 *    ..perform iteration
         new_matrix = .false.
         solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
@@ -756,8 +758,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,     !srv 01.10.99
      &    st%pl%ti, st%pl%tn, is, st%dv%pa(:,is))
 *    ..compute particle flux
-        call b2tfnb (nCv, nFc, nVx, is, ismain, switch, geo,
-     &    mpg, st%pl, st%dv, st%co, st%rt, .false.)
+        call b2tfnb (nCv, nFc, nVx, is, ismain, ismain0,
+     &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
